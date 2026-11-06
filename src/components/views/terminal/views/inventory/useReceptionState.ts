@@ -136,6 +136,16 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
 
   // ── Form ──────────────────────────────────────────────────
   const [supplier, setSupplier] = useState('');
+  // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot de identificación del
+  // proveedor entregado por SupplierSelector (clasificador). Se congela en
+  // receipts.supplier_code/address/phone/tax_id al registrar la recepción.
+  const [supplierMeta, setSupplierMeta] = useState<{
+    code?: string | null;
+    tax_id?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    source?: 'master' | 'local' | 'manual';
+  } | null>(null);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<ReceptionItem[]>([]);
@@ -355,6 +365,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       localStorage.removeItem(draftKey);
     } catch { /* ignore */ }
     setSupplier('');
+    setSupplierMeta(null); // MISIÓN CLASIFICADOR MAESTRO: limpiar snapshot
     setInvoiceNumber('');
     setNotes('');
     setItems([]);
@@ -1230,6 +1241,14 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       const receiptId = await registerReception.mutateAsync({
         p_store_id: user!.activeStoreId,
         p_supplier: supplier.trim(),
+        // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot de identificación del
+        // proveedor (congelado en receipts; históricos no consultan el maestro).
+        ...(supplierMeta ? {
+          p_supplier_code: supplierMeta.code || null,
+          p_supplier_tax_id: supplierMeta.tax_id || null,
+          p_supplier_phone: supplierMeta.phone || null,
+          p_supplier_address: supplierMeta.address || null,
+        } : {}),
         p_reception_date: receptionDateIso,
         p_invoice_number: invoiceNumber.trim(),
         p_items: finalItems.map(item => ({
@@ -1323,6 +1342,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       } catch { /* ignore */ }
       // Reset form state (el modal de success sigue visible hasta que el usuario cierre)
       setSupplier('');
+      setSupplierMeta(null); // MISIÓN CLASIFICADOR MAESTRO: limpiar snapshot
       setInvoiceNumber('');
       setNotes('');
       setItems([]);
@@ -1451,6 +1471,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
 
       // Reset form
       setSupplier('');
+      setSupplierMeta(null); // MISIÓN CLASIFICADOR MAESTRO: limpiar snapshot
       setInvoiceNumber('');
       setNotes('');
       setItems([]);
@@ -1596,6 +1617,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setShowOCR,
     supplier,
     setSupplier,
+    supplierMeta,
+    setSupplierMeta,
     invoiceNumber,
     setInvoiceNumber,
     notes,

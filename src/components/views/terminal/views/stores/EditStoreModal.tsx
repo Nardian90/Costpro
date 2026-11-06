@@ -51,6 +51,7 @@ interface EditStoreFormState {
     reeup: string;
     nit: string;
     bankAccount: string;
+    bankBranch: string; // CP-STORES-BANK-BRANCH (Objetivo A)
     logoUrl: string;
     signatureUrl: string;
     stampUrl: string;
@@ -82,6 +83,7 @@ const initialFormState: EditStoreFormState = {
     reeup: '',
     nit: '',
     bankAccount: '',
+    bankBranch: '',
     logoUrl: '',
     signatureUrl: '',
     stampUrl: '',
@@ -114,6 +116,7 @@ function editStoreFormReducer(state: EditStoreFormState, action: EditStoreFormAc
                 reeup: action.store.reeup || '',
                 nit: action.store.nit || '',
                 bankAccount: action.store.bank_account || '',
+                bankBranch: action.store.bank_branch || '', // CP-STORES-BANK-BRANCH
                 logoUrl: action.store.logo_url || '',
                 signatureUrl: action.store.signature_url || '',
                 stampUrl: action.store.stamp_url || '',
@@ -146,7 +149,7 @@ export function EditStoreModal({
     const [state, dispatch] = useReducer(editStoreFormReducer, initialFormState);
 
     const {
-        name, address, phone, email, reeup, nit, bankAccount,
+        name, address, phone, email, reeup, nit, bankAccount, bankBranch,
         logoUrl, signatureUrl, stampUrl,
         latitude, longitude, slug, plantilla,
         isUploading, slugChecking, slugAvailable,
@@ -268,6 +271,7 @@ export function EditStoreModal({
             reeup: reeup.trim() || null,
             nit: nit.trim() || null,
             bank_account: bankAccount.trim() || null,
+            bank_branch: bankBranch.trim() || null, // CP-STORES-BANK-BRANCH (Objetivo A)
             logo_url: logoUrl || null,
             signature_url: signatureUrl || null,
             stamp_url: stampUrl || null,
@@ -424,6 +428,21 @@ export function EditStoreModal({
                         className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
                         placeholder={t('bankAccountPlaceholder')}
                         maxLength={30}
+                    />
+                </div>
+                {/* CP-STORES-BANK-BRANCH (Objetivo A): sucursal bancaria de la tienda,
+                    misma disciplina visual que el resto de los datos de identificación. */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">
+                    <Label htmlFor="edit-bank-branch" className="text-left sm:text-right font-black uppercase text-sm tracking-widest text-primary/70">
+                        {t('bankBranch')}
+                    </Label>
+                    <Input
+                        id="edit-bank-branch"
+                        value={bankBranch}
+                        onChange={(e) => dispatch({ type: 'SET_FIELD', field: 'bankBranch', value: e.target.value })}
+                        className="sm:col-span-3 h-11 bg-muted/20 border-primary/10 focus:border-primary/30 transition-all font-bold"
+                        placeholder={t('bankBranchPlaceholder')}
+                        maxLength={120}
                     />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center gap-2 sm:gap-4">

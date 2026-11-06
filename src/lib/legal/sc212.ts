@@ -134,6 +134,9 @@ export interface Sc212SourceData {
     discount_value?: number | null;
     sale_currency?: string | null;
     customer_name?: string | null;
+    /** MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot congelado en la venta. */
+    customer_address?: string | null;
+    customer_code?: string | null;
     invoice_number?: string | null;
     completed_at?: string | null;
     created_at: string;
@@ -158,6 +161,8 @@ export interface Sc212SourceData {
     reeup?: string | null;
     nit?: string | null;
     bank_account?: string | null;
+    /** CP-STORES-BANK-BRANCH (Objetivo A): sucursal bancaria de la tienda. */
+    bank_branch?: string | null;
   } | null;
 }
 
@@ -167,11 +172,13 @@ export interface Sc212ModelData {
   proveedorDireccion: string;
   proveedorCodigo: string;
   proveedorCuentaBancaria: string;
-  proveedorSucursalBancaria: string; // no gestionado → ''
+  /** CP-STORES-BANK-BRANCH: ahora alimentado por stores.bank_branch ('' = sin asignar). */
+  proveedorSucursalBancaria: string;
   proveedorNIT: string;
   compradorNombre: string;
-  compradorDireccion: string; // no gestionado → ''
-  compradorCodigo: string; // no gestionado → ''
+  /** FASE 4: snapshot congelado de la venta (vacío → línea de cumplimentación). */
+  compradorDireccion: string;
+  compradorCodigo: string;
   tipoOperacion: string;
   transportadorNombre: string; // no gestionado → ''
   transportadorCarne: string; // no gestionado → ''
@@ -257,7 +264,9 @@ export function buildSc212ModelData(
     proveedorCodigo: asText(cfg.reeup),
     proveedorNIT: asText(cfg.nit),
     proveedorCuentaBancaria: asText(cfg.bank_account),
-    proveedorSucursalBancaria: '', // stores no gestiona la sucursal bancaria
+    // CP-STORES-BANK-BRANCH (Objetivo A): la tienda gestiona su sucursal
+    // bancaria en Gestión de Tiendas; vacío → línea de cumplimentación manual.
+    proveedorSucursalBancaria: asText(cfg.bank_branch),
     proveedorTelefono: asText(cfg.phone),
     proveedorEmail: asText(cfg.email),
   };
@@ -279,8 +288,12 @@ export function buildSc212ModelData(
     proveedorSucursalBancaria: resolved.proveedorSucursalBancaria.value,
     proveedorNIT: resolved.proveedorNIT.value,
     compradorNombre: transaction.customer_name || '',
-    compradorDireccion: '',
-    compradorCodigo: '',
+    // MISIÓN CLASIFICADOR MAESTRO (FASE 4): Dirección y Código del COMPRADOR
+    // salen del snapshot CONGELADO en la venta (transactions.customer_address
+    // / customer_code). Históricos JAMÁS consultan el maestro dinámicamente;
+    // ventas sin snapshot degradan a línea de cumplimentación manual.
+    compradorDireccion: asText(transaction.customer_address),
+    compradorCodigo: asText(transaction.customer_code),
     tipoOperacion: 'Venta',
     transportadorNombre: '',
     transportadorCarne: '',
@@ -327,7 +340,7 @@ export function sc212PresentationOf(
 // Lectura de datos bajo RLS (solo lectura, tienda de la VENTA)
 // ────────────────────────────────────────────────────────────────────────────
 
-const STORE_CONFIG_COLUMNS = 'name, address, phone, email, reeup, nit, bank_account';
+const STORE_CONFIG_COLUMNS = 'name, address, phone, email, reeup, nit, bank_account, bank_branch';
 
 /**
  * Cliente de lectura opcional para los fetch del SC-2-12. En el browser es
@@ -398,6 +411,7 @@ export async function fetchSc212SourceData(
       reeup?: string | null;
       nit?: string | null;
       bank_account?: string | null;
+      bank_branch?: string | null;
     } | null;
     result.entidadNombre = store?.name || '';
     result.storeConfig = {
@@ -407,6 +421,7 @@ export async function fetchSc212SourceData(
       reeup: store?.reeup ?? null,
       nit: store?.nit ?? null,
       bank_account: store?.bank_account ?? null,
+      bank_branch: store?.bank_branch ?? null,
     };
   }
   if (!sellerRes.error && sellerRes.data) {

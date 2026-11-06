@@ -119,7 +119,15 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <label htmlFor="rec-supplier" className="text-xs font-black uppercase tracking-widest ml-1">Proveedor</label>
-            <SupplierSelector value={s.supplier} onChange={(name) => s.setSupplier(name)} />
+            {/* MISIÓN CLASIFICADOR MAESTRO (FASE 4): el selector entrega el
+                snapshot de identificación del proveedor (maestro o local). */}
+            <SupplierSelector
+              value={s.supplier}
+              onChange={(name, detail) => {
+                s.setSupplier(name);
+                s.setSupplierMeta(detail ?? null);
+              }}
+            />
           </div>
           <div className="space-y-1.5">
             <label htmlFor="rec-invoice" className="text-xs font-black uppercase tracking-widest ml-1">N Factura</label>

@@ -167,6 +167,8 @@ const ProductionOrdersView = dynamic(() => import('@/components/views/terminal/v
 // V1.2: Devoluciones, Clientes, Cotizaciones, Cierre Fiscal
 const DevolutionsView = dynamic(() => import('@/components/views/terminal/views/devolutions/DevolutionsView').then(m => ({ default: m.DevolutionsView })), { ssr: false });
 const CustomersView = dynamic(() => import('@/components/views/terminal/views/customers/CustomersView').then(m => ({ default: m.CustomersView })), { ssr: false });
+// MISIÓN CLASIFICADOR MAESTRO (FASE 3): vista única de terceros por organización
+const ClientesProveedoresView = dynamic(() => import('@/components/views/terminal/views/classifier/ClientesProveedoresView').then(m => ({ default: m.ClientesProveedoresView })), { ssr: false });
 const QuotationsView = dynamic(() => import('@/components/views/terminal/views/quotations/QuotationsView').then(m => ({ default: m.QuotationsView })), { ssr: false });
 const FiscalCloseView = dynamic(() => import('@/components/views/terminal/views/fiscal_close/FiscalCloseView').then(m => ({ default: m.FiscalCloseView })), { ssr: false });
 // V2.0: Lotes, Almacenes, ABC (CP-INFRA-002: BankReconciliationView retirado del producto activo)
@@ -601,6 +603,8 @@ export default function TerminalShell() {
         // V1.2: Devoluciones, Clientes CRM, Cotizaciones, Cierre Fiscal
         case 'devolutions': return <ViewErrorBoundary viewName="Devoluciones"><DevolutionsView /></ViewErrorBoundary>;
         case 'customers': return <ViewErrorBoundary viewName="Clientes"><CustomersView /></ViewErrorBoundary>;
+        // MISIÓN CLASIFICADOR MAESTRO (FASE 3): Clientes y Proveedores (maestro por organización)
+        case 'clientes-proveedores': return <ViewErrorBoundary viewName="Clientes y Proveedores"><ClientesProveedoresView /></ViewErrorBoundary>;
         case 'quotations': return <ViewErrorBoundary viewName="Cotizaciones"><QuotationsView /></ViewErrorBoundary>;
         case 'fiscal-close': return <ViewErrorBoundary viewName="Cierre Fiscal"><FiscalCloseView /></ViewErrorBoundary>;
         // V2.0: Lotes, Almacenes, ABC (CP-INFRA-002: Conciliación Bancaria retirada)

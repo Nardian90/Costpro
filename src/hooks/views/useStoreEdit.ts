@@ -44,6 +44,7 @@ export function useStoreEdit() {
       reeup: data.reeup,
       nit: data.nit,
       bank_account: data.bank_account,
+      bank_branch: data.bank_branch, // CP-STORES-BANK-BRANCH (Objetivo A)
       phone: data.phone,
       email: data.email,
       logo_url: data.logo_url,

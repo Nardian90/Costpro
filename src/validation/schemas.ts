@@ -78,6 +78,9 @@ export const storeSchema = z.object({
   reeup: z.string().nullable().optional(),
   nit: z.string().nullable().optional(),
   bank_account: z.string().nullable().optional(),
+  // CP-STORES-BANK-BRANCH (Objetivo A): sin esta entrada el safeParse la
+  // eliminaba del objeto y el modal «Info» mostraba el campo vacío.
+  bank_branch: z.string().nullable().optional(),
   signature_url: z.string().nullable().optional(),
   stamp_url: z.string().nullable().optional(),
   latitude: z.number().nullable().optional(),
@@ -439,6 +442,9 @@ export const transactionSchema = z.object({
   sale_currency: z.string().catch("CUP").default("CUP").optional(),
   sale_exchange_rate: z.coerce.number().catch(1).default(1).optional(),
   customer_name: z.string().nullable().optional(),
+  // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot COMPRADOR (SC-2-12)
+  customer_address: z.string().nullable().optional(),
+  customer_code: z.string().nullable().optional(),
   invoice_number: z.string().nullable().optional(),
 });
 
@@ -723,6 +729,13 @@ export const registerReceptionParamsSchema = z.object({
   // La RPC los acepta como DEFAULT NULL cuando el caller los omite.
   p_user_id: z.string().regex(uuidRegex).nullable().default(null),
   p_po_id: z.string().regex(uuidRegex).nullable().default(null),
+  // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot de identificación del
+  // PROVEEDOR al momento de la recepción (receipts.supplier_code/address/
+  // phone/tax_id). Opcionales: recepciones legacy siguen siendo válidas.
+  p_supplier_code: z.string().max(30).nullable().optional(),
+  p_supplier_address: z.string().max(200).nullable().optional(),
+  p_supplier_phone: z.string().max(30).nullable().optional(),
+  p_supplier_tax_id: z.string().max(30).nullable().optional(),
 });
 
 export const adjustStockInputSchema = z.object({

@@ -124,6 +124,11 @@ interface CartState {
   // POS-2 MM-7: Customer attached to the sale (null = walk-in)
   customerId: string | null;
   customerName: string | null;
+  // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot COMPRADOR para la Factura
+  // SC-2-12 (Nombre/Dirección/Código). Se congela en la venta — históricos
+  // JAMÁS consultan el maestro dinámicamente.
+  customerAddress: string | null;
+  customerCode: string | null;
   // ── MISIÓN FECHA OPERATIVA (2026-10-17) ──
   // saleDate: fecha económica elegida por el cajero en el selector de Vender
   // ('YYYY-MM-DD' de <input type=date>). null = HOY (Habana) implícito — el
@@ -184,7 +189,7 @@ interface CartState {
   setStoreId: (storeId: string | null) => void;
   clearCartOnStoreSwitch: (newStoreId: string | null) => void;
   setSelectedPayment: (method: PaymentMethod) => void;
-  setCustomer: (customerId: string | null, customerName: string | null) => void;
+  setCustomer: (customerId: string | null, customerName: string | null, customerAddress?: string | null, customerCode?: string | null) => void;
   // FIX-MULTI-MONEDA
   setSaleCurrency: (currency: string, exchangeRate: number) => void;
   getTotalCup: () => number;
@@ -450,6 +455,8 @@ export const useCartStore = create<CartState>()(
       selectedPayment: "cash" as PaymentMethod,
       customerId: null,
       customerName: null,
+      customerAddress: null,
+      customerCode: null,
       // FIX-GLOBAL-RATES: tasas manuales (default vacío, se llenan al editar)
       globalRates: {},
       // ── Vale de Salida: defaults ──
@@ -533,8 +540,16 @@ export const useCartStore = create<CartState>()(
       setSelectedPayment: (method) => set({ selectedPayment: method, lastUpdated: Date.now() }),
 
       // POS-2 MM-7: Attach / detach a customer from the current cart.
-      setCustomer: (customerId, customerName) =>
-        set({ customerId, customerName, lastUpdated: Date.now() }),
+      // MISIÓN CLASIFICADOR MAESTRO (FASE 4): opcionalmente arrastra la
+      // dirección y el código del tercero (snapshot SC-2-12).
+      setCustomer: (customerId, customerName, customerAddress, customerCode) =>
+        set({
+          customerId,
+          customerName,
+          customerAddress: customerAddress ?? null,
+          customerCode: customerCode ?? null,
+          lastUpdated: Date.now(),
+        }),
 
       // FIX-MULTI-MONEDA: cambiar moneda de venta + tasa
       setSaleCurrency: (currency, exchangeRate) =>
@@ -1601,6 +1616,8 @@ export const useCartStore = create<CartState>()(
         // repeatedly sell with the same method) but drop the customer.
         customerId: null,
         customerName: null,
+        customerAddress: null,
+        customerCode: null,
         // FIX-MULTI-MONEDA: resetear moneda de venta a CUP al limpiar
         saleCurrency: 'CUP',
         saleExchangeRate: 1.0,

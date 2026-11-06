@@ -1,15 +1,105 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-10-31T16:58:31.057Z
+-- Captured  : 2026-11-05T19:03:38.377Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 175 (SECURITY DEFINER write functions, public schema)
+-- Functions : 185 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
 -- snapshot as Layer A of the security contract. Re-run the generator to
 -- re-certify after authorized production changes.
 -- =====================================================================
+-- @contract-function name=activate_master_party args="p_party_id uuid, p_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.activate_master_party(p_party_id uuid, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid UUID;
+  v_tenant_store UUID;
+  v_party RECORD;
+  v_customer_id UUID;
+  v_supplier_id UUID;
+  v_already_c BOOLEAN;
+  v_already_s BOOLEAN;
+BEGIN
+  v_caller_uid := CASE WHEN auth.role() = 'service_role'
+                       THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  IF v_caller_uid IS NULL OR p_party_id IS NULL OR p_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT s.tenant_id INTO v_tenant_store FROM public.stores s WHERE s.id = p_store_id;
+  IF v_tenant_store IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: la tienda % no existe', p_store_id;
+  END IF;
+  IF NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: sin acceso a la tienda %', p_store_id;
+  END IF;
+  IF NOT (public.is_admin_check(v_caller_uid)
+     OR public.has_store_role_as(v_caller_uid, p_store_id, ARRAY['admin','manager','encargado'])) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: rol insuficiente para activar terceros compartidos';
+  END IF;
+
+  SELECT * INTO v_party FROM public.master_parties WHERE id = p_party_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_PARTY_NOT_FOUND: el tercero % no existe', p_party_id;
+  END IF;
+  IF v_party.tenant_id <> v_tenant_store THEN
+    RAISE EXCEPTION 'ERR_TENANT_MISMATCH: el tercero % pertenece a otra organización', p_party_id;
+  END IF;
+  IF v_party.status <> 'active' THEN
+    RAISE EXCEPTION 'ERR_PARTY_ARCHIVED: el tercero está archivado en el clasificador';
+  END IF;
+  IF NOT public.is_party_store_connected(v_tenant_store, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_CONNECTED: la tienda no está conectada al clasificador';
+  END IF;
+
+  SELECT count(*) > 0 INTO v_already_c FROM public.customers c
+   WHERE c.master_party_id = p_party_id AND c.store_id = p_store_id;
+  SELECT count(*) > 0 INTO v_already_s FROM public.suppliers sp
+   WHERE sp.master_party_id = p_party_id AND sp.store_id = p_store_id;
+
+  IF v_party.is_client AND NOT v_already_c THEN
+    INSERT INTO public.customers
+      (store_id, name, master_party_id, phone, email, address, notes, created_by)
+    VALUES
+      (p_store_id, v_party.name, p_party_id, v_party.phone, v_party.email,
+       v_party.address, v_party.notes, v_caller_uid)
+    RETURNING id INTO v_customer_id;
+  END IF;
+
+  IF v_party.is_supplier AND NOT v_already_s THEN
+    INSERT INTO public.suppliers
+      (store_id, name, master_party_id, tax_id, phone, email, address, notes)
+    VALUES
+      (p_store_id, v_party.name, p_party_id, v_party.tax_id, v_party.phone,
+       v_party.email, v_party.address, v_party.notes)
+    RETURNING id INTO v_supplier_id;
+  END IF;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, user_id, store_id, metadata)
+  VALUES (
+    'ACTIVATE_MASTER_PARTY', 'master_parties', p_party_id, v_caller_uid, p_store_id,
+    jsonb_build_object('tenant_id', v_tenant_store, 'created_customer', v_customer_id,
+                       'created_supplier', v_supplier_id, 'caller', v_caller_uid)
+  );
+
+  RETURN jsonb_build_object(
+    'status','success',
+    'master_party_id', p_party_id,
+    'customer_id', v_customer_id,
+    'supplier_id', v_supplier_id,
+    'already_active_customer', v_already_c,
+    'already_active_supplier', v_already_s
+  );
+END;
+$function$
+
+
 -- @contract-function name=activate_master_product args="p_master_id uuid, p_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.activate_master_product(p_master_id uuid, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1600,43 +1690,6 @@ BEGIN
 END $function$
 
 
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
-END;
-$function$
-
-
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1673,6 +1726,43 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
+END;
+$function$
+
+
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
 END;
 $function$
 
@@ -2874,6 +2964,58 @@ END;
 $function$
 
 
+-- @contract-function name=connect_party_catalog args="p_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.connect_party_catalog(p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid UUID;
+  v_tenant UUID;
+BEGIN
+  v_caller_uid := CASE WHEN auth.role() = 'service_role'
+                       THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  IF v_caller_uid IS NULL OR p_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT s.tenant_id INTO v_tenant FROM public.stores s WHERE s.id = p_store_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: la tienda % no existe', p_store_id;
+  END IF;
+
+  IF NOT public.is_catalog_governor(v_tenant, v_caller_uid) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el gobernador de la organización conecta tiendas al clasificador';
+  END IF;
+
+  -- Idempotente por upsert: conectar dos veces deja UNA fila connected.
+  INSERT INTO public.party_store_links (tenant_id, store_id, status, connected_at, created_by)
+  VALUES (v_tenant, p_store_id, 'connected', now(), v_caller_uid)
+  ON CONFLICT (store_id) DO UPDATE
+    SET status = 'connected',
+        connected_at = now(),
+        disconnected_at = NULL,
+        reason = NULL,
+        updated_at = now();
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, user_id, store_id, metadata)
+  VALUES (
+    'CATALOG_PARTY_STORE_CONNECT', 'party_store_links', p_store_id, v_caller_uid, p_store_id,
+    jsonb_build_object('tenant_id', v_tenant, 'caller', v_caller_uid)
+  );
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'store_id', p_store_id,
+    'tenant_id', v_tenant,
+    'connected', true
+  );
+END;
+$function$
+
+
 -- @contract-function name=connect_store_catalog args="p_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.connect_store_catalog(p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -3902,6 +4044,180 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=create_master_party args="p_store_id uuid, p_code text, p_name text, p_address text, p_phone text, p_email text, p_tax_id text, p_party_type text, p_is_client boolean, p_is_supplier boolean, p_notes text, p_ci text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_master_party(p_store_id uuid, p_code text, p_name text, p_address text DEFAULT NULL::text, p_phone text DEFAULT NULL::text, p_email text DEFAULT NULL::text, p_tax_id text DEFAULT NULL::text, p_party_type text DEFAULT 'natural'::text, p_is_client boolean DEFAULT true, p_is_supplier boolean DEFAULT false, p_notes text DEFAULT NULL::text, p_ci text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid UUID;
+  v_tenant UUID;
+  v_connected BOOLEAN;
+  v_can_manage BOOLEAN;
+  v_master_id UUID;
+  v_customer_id UUID;
+  v_supplier_id UUID;
+  v_code TEXT;
+  v_name TEXT;
+  v_tax TEXT;
+  v_name_dups JSONB := '[]'::jsonb;
+  v_max_seq INTEGER;
+BEGIN
+  v_caller_uid := CASE WHEN auth.role() = 'service_role'
+                       THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  IF v_caller_uid IS NULL OR p_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT s.tenant_id INTO v_tenant FROM public.stores s WHERE s.id = p_store_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: la tienda % no existe', p_store_id;
+  END IF;
+  IF NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: sin acceso a la tienda %', p_store_id;
+  END IF;
+
+  v_can_manage := public.is_admin_check(v_caller_uid)
+    OR public.has_store_role_as(v_caller_uid, p_store_id, ARRAY['admin','manager','encargado']);
+  IF NOT v_can_manage THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: rol insuficiente para administrar terceros';
+  END IF;
+
+  v_name := btrim(COALESCE(p_name, ''));
+  IF v_name = '' THEN
+    RAISE EXCEPTION 'ERR_PARTY_NAME_REQUIRED: el nombre es obligatorio';
+  END IF;
+  IF NOT (COALESCE(p_is_client, false) OR COALESCE(p_is_supplier, false)) THEN
+    RAISE EXCEPTION 'ERR_PARTY_KIND_REQUIRED: el tercero debe ser cliente, proveedor o ambos';
+  END IF;
+  IF COALESCE(p_party_type, 'natural') NOT IN ('natural','juridica') THEN
+    RAISE EXCEPTION 'ERR_PARTY_TYPE_INVALID: tipo % no admitido', p_party_type;
+  END IF;
+  IF p_email IS NOT NULL AND btrim(p_email) <> '' AND p_email !~* '^[^@\s]+@[^@\s]+\.[^@\s]+$' THEN
+    RAISE EXCEPTION 'ERR_PARTY_EMAIL_INVALID: correo electrónico inválido';
+  END IF;
+
+  v_connected := public.is_party_store_connected(v_tenant, p_store_id);
+  v_code := NULLIF(btrim(COALESCE(p_code, '')), '');
+  v_tax  := NULLIF(btrim(COALESCE(p_tax_id, '')), '');
+
+  IF v_connected THEN
+    -- ── Modo clasificador compartido: alta de identidad maestra + locales ──
+    -- EVOLUCIÓN (misión): código automático CP-0001, CP-0002… bajo advisory
+    -- lock transaccional por organización — sin carreras ni saltos.
+    PERFORM pg_advisory_xact_lock(hashtextextended('master_parties:' || v_tenant::text, 0));
+    IF v_code IS NULL THEN
+      SELECT COALESCE(max(NULLIF(regexp_replace(m.code, '\D', '', 'g'), '')::integer), 0) + 1
+        INTO v_max_seq
+        FROM public.master_parties m
+       WHERE m.tenant_id = v_tenant AND m.code ~ '^CP-\d+$';
+      v_code := 'CP-' || lpad(COALESCE(v_max_seq, 1)::text, 4, '0');
+    END IF;
+
+    -- Duplicados duros (código e identificación fiscal por organización):
+    IF EXISTS (SELECT 1 FROM public.master_parties m WHERE m.tenant_id = v_tenant AND m.code = v_code) THEN
+      RAISE EXCEPTION 'ERR_PARTY_CODE_EXISTS: el código % ya existe en el clasificador de la organización', v_code;
+    END IF;
+    IF v_tax IS NOT NULL AND EXISTS (
+      SELECT 1 FROM public.master_parties m
+       WHERE m.tenant_id = v_tenant AND upper(btrim(m.tax_id)) = upper(v_tax)) THEN
+      RAISE EXCEPTION 'ERR_PARTY_TAX_ID_EXISTS: la identificación fiscal % ya pertenece a otro tercero', v_tax;
+    END IF;
+
+    -- Duplicado suave de nombre (aviso; la UI lo presenta como advertencia):
+    SELECT coalesce(jsonb_agg(jsonb_build_object('id', m2.id, 'code', m2.code, 'name', m2.name)), '[]'::jsonb)
+      INTO v_name_dups
+      FROM (SELECT id, code, name FROM public.master_parties
+             WHERE tenant_id = v_tenant AND lower(btrim(name)) = lower(v_name)
+               AND status = 'active' LIMIT 5) m2;
+
+    INSERT INTO public.master_parties
+      (tenant_id, code, name, address, phone, email, tax_id, party_type,
+       is_client, is_supplier, status, notes, created_by)
+    VALUES
+      (v_tenant, v_code, v_name, p_address, p_phone, p_email, v_tax,
+       COALESCE(p_party_type, 'natural'),
+       COALESCE(p_is_client, true), COALESCE(p_is_supplier, false),
+       'active', p_notes, v_caller_uid)
+    RETURNING id INTO v_master_id;
+
+    INSERT INTO public.party_change_log
+      (master_party_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
+    VALUES
+      (v_master_id, v_tenant, 'code', NULL, v_code, v_caller_uid, p_store_id),
+      (v_master_id, v_tenant, 'name', NULL, v_name, v_caller_uid, p_store_id);
+
+    IF COALESCE(p_is_client, false) THEN
+      INSERT INTO public.customers
+        (store_id, name, master_party_id, ci, phone, email, address, notes, created_by)
+      VALUES
+        (p_store_id, v_name, v_master_id, NULLIF(btrim(COALESCE(p_ci, '')), ''),
+         p_phone, p_email, p_address, p_notes, v_caller_uid)
+      RETURNING id INTO v_customer_id;
+    END IF;
+
+    IF COALESCE(p_is_supplier, false) THEN
+      INSERT INTO public.suppliers
+        (store_id, name, master_party_id, tax_id, phone, email, address, notes)
+      VALUES
+        (p_store_id, v_name, v_master_id, v_tax, p_phone, p_email, p_address, p_notes)
+      RETURNING id INTO v_supplier_id;
+    END IF;
+
+    INSERT INTO public.audit_logs (action, table_name, record_id, user_id, store_id, metadata)
+    VALUES (
+      'CREATE_MASTER_PARTY', 'master_parties', v_master_id, v_caller_uid, p_store_id,
+      jsonb_build_object('tenant_id', v_tenant, 'code', v_code, 'is_client', p_is_client,
+                         'is_supplier', p_is_supplier, 'caller', v_caller_uid)
+    );
+
+    RETURN jsonb_build_object(
+      'status','success',
+      'master_party_id', v_master_id,
+      'customer_id', v_customer_id,
+      'supplier_id', v_supplier_id,
+      'source','master',
+      'name_duplicates', v_name_dups
+    );
+  ELSE
+    -- ── Tienda NO conectada: alta 100% local (independencia preservada) ──
+    IF COALESCE(p_is_client, false) THEN
+      INSERT INTO public.customers
+        (store_id, name, ci, phone, email, address, notes, created_by)
+      VALUES
+        (p_store_id, v_name, NULLIF(btrim(COALESCE(p_ci, '')), ''),
+         p_phone, p_email, p_address, p_notes, v_caller_uid)
+      RETURNING id INTO v_customer_id;
+    END IF;
+    IF COALESCE(p_is_supplier, false) THEN
+      INSERT INTO public.suppliers
+        (store_id, name, tax_id, phone, email, address, notes)
+      VALUES
+        (p_store_id, v_name, v_tax, p_phone, p_email, p_address, p_notes)
+      RETURNING id INTO v_supplier_id;
+    END IF;
+
+    INSERT INTO public.audit_logs (action, table_name, record_id, user_id, store_id, metadata)
+    VALUES (
+      'CREATE_LOCAL_PARTY', CASE WHEN v_supplier_id IS NOT NULL AND v_customer_id IS NULL
+                                 THEN 'suppliers' ELSE 'customers' END,
+      COALESCE(v_customer_id, v_supplier_id), v_caller_uid, p_store_id,
+      jsonb_build_object('tenant_id', v_tenant, 'name', v_name, 'caller', v_caller_uid)
+    );
+
+    RETURN jsonb_build_object(
+      'status','success',
+      'customer_id', v_customer_id,
+      'supplier_id', v_supplier_id,
+      'source','local'
+    );
+  END IF;
+END;
+$function$
+
+
 -- @contract-function name=create_master_product args="p_store_id uuid, p_sku text, p_name text, p_description text, p_image_path text, p_barcode text, p_barcode_type text, p_unit_of_measure text, p_is_service boolean, p_local jsonb, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_master_product(p_store_id uuid, p_sku text, p_name text, p_description text DEFAULT NULL::text, p_image_path text DEFAULT NULL::text, p_barcode text DEFAULT NULL::text, p_barcode_type text DEFAULT NULL::text, p_unit_of_measure text DEFAULT 'unidad'::text, p_is_service boolean DEFAULT false, p_local jsonb DEFAULT '{}'::jsonb, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -4717,8 +5033,8 @@ END;
 $function$
 
 
--- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text, p_payment_components jsonb" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text, p_payment_components jsonb DEFAULT NULL::jsonb)
+-- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text, p_payment_components jsonb, p_customer_code text, p_customer_address text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text, p_payment_components jsonb DEFAULT NULL::jsonb, p_customer_code text DEFAULT NULL::text, p_customer_address text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4870,6 +5186,8 @@ BEGIN
       '|sale_currency=' || COALESCE(p_sale_currency, '') ||
       '|sale_exchange_rate=' || COALESCE(p_sale_exchange_rate::text, '') ||
       '|customer_id=' || COALESCE(p_customer_id::text, '') ||
+      '|customer_code=' || COALESCE(p_customer_code, '') ||
+      '|customer_address=' || COALESCE(p_customer_address, '') ||
       '|customer_name=' || COALESCE(p_customer_name, '') ||
       '|operation_date=' || COALESCE(NULLIF(FLOOR(EXTRACT(EPOCH FROM p_operation_date))::text, ''), '') ||
       '|total_amount=' || COALESCE(p_total_amount::text, '') ||
@@ -5567,6 +5885,8 @@ BEGIN
     sale_currency, sale_exchange_rate, completed_at, idempotency_key, created_at,
     cash_amount, transfer_amount, zelle_amount,
     customer_id, customer_name,
+    -- CLASIFICATOR-PARTIES (2026-11-04): snapshot histórico del comprador
+    customer_code, customer_address,
     -- MISIÓN-FLEX: nota (manual + incidencia) e incidencias estructuradas
     notes, payment_incidents,
     -- MISIÓN CAJA 2026-10-23 (D6): liquidación del cobro (vuelto multimoneda)
@@ -5580,6 +5900,7 @@ BEGIN
     p_sale_currency, v_server_rate, v_eff, p_idempotency_key, v_eff,
     v_cash_amt, v_transfer_amt, v_zelle_amt,
     p_customer_id, p_customer_name,
+    p_customer_code, p_customer_address,
     v_notes_final, v_incidents,
     p_cash_received_cup, p_cash_received_usd, p_change_given_cup, p_change_given_usd,
     CASE WHEN v_settlement_present THEN COALESCE(upper(btrim(p_change_currency)),
@@ -6376,6 +6697,89 @@ END;
 $function$
 
 
+-- @contract-function name=delete_master_party args="p_party_id uuid, p_origin_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.delete_master_party(p_party_id uuid, p_origin_store_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_party record;
+  v_history boolean;
+  v_origin_tenant uuid;
+BEGIN
+  IF v_caller_uid IS NULL OR p_party_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT * INTO v_party FROM public.master_parties WHERE id = p_party_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_PARTY_NOT_FOUND: %', p_party_id;
+  END IF;
+
+  -- Misma autorización que la edición
+  IF NOT public.is_catalog_governor(v_party.tenant_id, v_caller_uid) THEN
+    IF p_origin_store_id IS NULL THEN
+      RAISE EXCEPTION 'ERR_UNAUTHORIZED: se requiere tienda de origen';
+    END IF;
+    SELECT tenant_id INTO v_origin_tenant FROM public.stores WHERE id = p_origin_store_id;
+    IF v_origin_tenant IS NULL OR v_origin_tenant <> v_party.tenant_id THEN
+      RAISE EXCEPTION 'ERR_TENANT_MISMATCH: la tienda de origen no pertenece a la organización del tercero';
+    END IF;
+    IF NOT public.is_party_store_connected(v_party.tenant_id, p_origin_store_id) THEN
+      RAISE EXCEPTION 'ERR_STORE_NOT_CONNECTED: la tienda de origen no usa el clasificador';
+    END IF;
+    IF NOT public.is_admin_check(v_caller_uid)
+       AND NOT public.has_store_role_as(v_caller_uid, p_origin_store_id, ARRAY['admin','manager','encargado']) THEN
+      RAISE EXCEPTION 'ERR_UNAUTHORIZED: sin permiso de eliminación de terceros en la tienda';
+    END IF;
+  END IF;
+
+  -- REGLA DE LA MISIÓN: historial = OPERACIONES reales (ventas o recepciones).
+  -- Los vínculos locales vacíos (customers/suppliers.master_party_id sin
+  -- operaciones) NO son historial: se DESVINCULAN (master_party_id = NULL,
+  -- conservando los datos locales) y el maestro puede eliminarse.
+  -- Historial = ventas (customer_id) o recepciones (snapshot textual del
+  -- proveedor dentro de la organización: receipts no porta FK).
+  SELECT EXISTS (SELECT 1 FROM public.transactions t WHERE t.customer_id = p_party_id)
+      OR EXISTS (
+        SELECT 1 FROM public.receipts r
+          JOIN public.stores st ON st.id = r.store_id
+         WHERE st.tenant_id = v_party.tenant_id
+           AND (r.supplier = v_party.name
+                OR (COALESCE(v_party.tax_id,'') <> '' AND r.supplier_tax_id = v_party.tax_id))
+      )
+    INTO v_history;
+  IF v_history THEN
+    RAISE EXCEPTION 'ERR_PARTY_HAS_HISTORY: el tercero % tiene ventas o recepciones históricas; solo puede desactivarse (status=archived)', p_party_id;
+  END IF;
+
+  -- Sin operaciones → eliminación permitida. Las filas locales vinculadas se
+  -- conservan con master_party_id = NULL (la identidad compartida desaparece,
+  -- los datos de la tienda quedan intactos). party_change_log (FK sin
+  -- CASCADE) se elimina primero: es la traza del propio registro; la huella
+  -- transversal permanece en audit_logs (sin FK).
+  UPDATE public.customers SET master_party_id = NULL WHERE master_party_id = p_party_id;
+  UPDATE public.suppliers SET master_party_id = NULL WHERE master_party_id = p_party_id;
+  DELETE FROM public.party_change_log WHERE master_party_id = p_party_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('DELETE_MASTER_PARTY', 'master_parties', p_party_id,
+          p_origin_store_id, v_caller_uid,
+          jsonb_build_object('code', v_party.code, 'name', v_party.name,
+            'is_client', v_party.is_client, 'is_supplier', v_party.is_supplier,
+            'tenant_id', v_party.tenant_id));
+
+  DELETE FROM public.master_parties WHERE id = p_party_id;
+
+  RETURN jsonb_build_object('status','success','master_party_id', p_party_id, 'deleted', true);
+END;
+$function$
+
+
 -- @contract-function name=delete_pending_reception args="p_receipt_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.delete_pending_reception(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -6538,6 +6942,63 @@ BEGIN
     FROM public.orphaned_users_log o
     WHERE o.status IN ('pending', 'pending_deletion')
     ORDER BY o.detected_at DESC;
+END;
+$function$
+
+
+-- @contract-function name=disconnect_party_catalog args="p_store_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.disconnect_party_catalog(p_store_id uuid, p_reason text DEFAULT ''::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid UUID;
+  v_tenant UUID;
+  v_current TEXT;
+BEGIN
+  v_caller_uid := CASE WHEN auth.role() = 'service_role'
+                       THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  IF v_caller_uid IS NULL OR p_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT s.tenant_id INTO v_tenant FROM public.stores s WHERE s.id = p_store_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: la tienda % no existe', p_store_id;
+  END IF;
+
+  IF NOT public.is_catalog_governor(v_tenant, v_caller_uid) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el gobernador de la organización desconecta tiendas del clasificador';
+  END IF;
+
+  SELECT l.status INTO v_current
+    FROM public.party_store_links l
+   WHERE l.store_id = p_store_id
+   FOR UPDATE;
+  IF v_current IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_CONNECTED: la tienda % nunca se conectó al clasificador', p_store_id;
+  END IF;
+  IF v_current = 'disconnected' THEN
+    RETURN jsonb_build_object('status','success','store_id', p_store_id, 'connected', false, 'already_disconnected', true);
+  END IF;
+
+  -- La desconexión NO borra contrapartes, filas locales ni historial.
+  UPDATE public.party_store_links l
+     SET status = 'disconnected',
+         disconnected_at = now(),
+         reason = NULLIF(btrim(COALESCE(p_reason, '')), ''),
+         updated_at = now()
+   WHERE l.store_id = p_store_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, user_id, store_id, metadata)
+  VALUES (
+    'CATALOG_PARTY_STORE_DISCONNECT', 'party_store_links', p_store_id, v_caller_uid, p_store_id,
+    jsonb_build_object('tenant_id', v_tenant, 'reason', p_reason, 'caller', v_caller_uid)
+  );
+
+  RETURN jsonb_build_object('status','success','store_id', p_store_id, 'connected', false);
 END;
 $function$
 
@@ -7041,6 +7502,132 @@ BEGIN
     'master_product_id', p_master_id,
     'changes_applied', v_changes_applied
   );
+END;
+$function$
+
+
+-- @contract-function name=fn_party_apply_changes args="p_party_id uuid, p_changes jsonb, p_actor uuid, p_origin_store_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fn_party_apply_changes(p_party_id uuid, p_changes jsonb, p_actor uuid, p_origin_store_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_party RECORD;
+  v_key TEXT;
+  v_val JSONB;
+  v_old TEXT;
+  v_new TEXT;
+  v_applied TEXT[] := '{}';
+  v_allowed CONSTANT TEXT[] := ARRAY[
+    'code','name','address','phone','email','tax_id',
+    'party_type','is_client','is_supplier','status','notes'
+  ];
+  v_col TEXT;
+BEGIN
+  -- CI-GATE secdef_no_auth: guard de identidad fail-closed. La función es
+  -- interna (EXECUTE revocado a authenticated); solo la invocan las RPC
+  -- gobernadas (con contexto JWT vivo) o service_role.
+  IF auth.uid() IS NULL AND auth.role() IS DISTINCT FROM 'service_role' THEN
+    RAISE EXCEPTION 'ERR_PERMISSION_DENIED';
+  END IF;
+  SELECT * INTO v_party FROM public.master_parties WHERE id = p_party_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_PARTY_NOT_FOUND: el tercero % no existe', p_party_id;
+  END IF;
+
+  FOR v_key, v_val IN
+    SELECT j.key, j.value FROM jsonb_each(p_changes) j
+  LOOP
+    IF NOT (v_key = ANY (v_allowed)) THEN
+      CONTINUE; -- whitelist: ignora silenciosamente campos no gestionados
+    END IF;
+
+    v_old := (to_jsonb(v_party) ->> v_key);
+    v_new := CASE
+      WHEN jsonb_typeof(v_val) = 'null' THEN NULL
+      ELSE COALESCE(v_val #>> '{}', NULL)
+    END;
+
+    IF v_old IS NOT DISTINCT FROM v_new THEN
+      CONTINUE; -- sin cambio real: no audita ruido
+    END IF;
+
+    -- Validaciones de unicidad cuando aplica
+    IF v_key = 'code' THEN
+      IF v_new IS NULL OR btrim(v_new) = '' THEN
+        RAISE EXCEPTION 'ERR_PARTY_CODE_REQUIRED: el código no puede vaciarse';
+      END IF;
+      IF EXISTS (SELECT 1 FROM public.master_parties m
+                  WHERE m.tenant_id = v_party.tenant_id AND m.code = btrim(v_new)
+                    AND m.id <> p_party_id) THEN
+        RAISE EXCEPTION 'ERR_PARTY_CODE_EXISTS: el código % ya existe en la organización', v_new;
+      END IF;
+      v_new := btrim(v_new);
+    ELSIF v_key = 'name' THEN
+      IF v_new IS NULL OR btrim(v_new) = '' THEN
+        RAISE EXCEPTION 'ERR_PARTY_NAME_REQUIRED: el nombre no puede vaciarse';
+      END IF;
+      v_new := btrim(v_new);
+    ELSIF v_key = 'tax_id' THEN
+      IF v_new IS NOT NULL AND btrim(v_new) <> '' THEN
+        IF EXISTS (SELECT 1 FROM public.master_parties m
+                    WHERE m.tenant_id = v_party.tenant_id
+                      AND upper(btrim(m.tax_id)) = upper(btrim(v_new))
+                      AND m.id <> p_party_id
+                      AND btrim(m.tax_id) <> '') THEN
+          RAISE EXCEPTION 'ERR_PARTY_TAX_ID_EXISTS: la identificación fiscal % ya pertenece a otro tercero de la organización', v_new;
+        END IF;
+        v_new := btrim(v_new);
+      END IF;
+    ELSIF v_key = 'status' THEN
+      IF v_new NOT IN ('active','archived') THEN
+        RAISE EXCEPTION 'ERR_PARTY_STATUS_INVALID: estado % no admitido', COALESCE(v_new,'(null)');
+      END IF;
+    ELSIF v_key = 'party_type' THEN
+      IF v_new NOT IN ('natural','juridica') THEN
+        RAISE EXCEPTION 'ERR_PARTY_TYPE_INVALID: tipo % no admitido', COALESCE(v_new,'(null)');
+      END IF;
+    ELSIF v_key IN ('is_client','is_supplier') THEN
+      IF v_val NOT IN ('true','false') THEN
+        RAISE EXCEPTION 'ERR_PARTY_FLAG_INVALID: % debe ser booleano', v_key;
+      END IF;
+      -- La clasificación no puede quedarse sin rol comercial
+      IF v_key = 'is_client' AND v_val = 'false' AND v_party.is_supplier = false THEN
+        RAISE EXCEPTION 'ERR_PARTY_KIND_REQUIRED: el tercero debe conservar al menos un rol (cliente o proveedor)';
+      END IF;
+      IF v_key = 'is_supplier' AND v_val = 'false' AND v_party.is_client = false THEN
+        RAISE EXCEPTION 'ERR_PARTY_KIND_REQUIRED: el tercero debe conservar al menos un rol (cliente o proveedor)';
+      END IF;
+    END IF;
+
+    UPDATE public.master_parties m
+       SET code        = CASE WHEN v_key = 'code' THEN v_new ELSE m.code END,
+           name        = CASE WHEN v_key = 'name' THEN v_new ELSE m.name END,
+           address     = CASE WHEN v_key = 'address' THEN v_new ELSE m.address END,
+           phone       = CASE WHEN v_key = 'phone' THEN v_new ELSE m.phone END,
+           email       = CASE WHEN v_key = 'email' THEN v_new ELSE m.email END,
+           tax_id      = CASE WHEN v_key = 'tax_id' THEN v_new ELSE m.tax_id END,
+           party_type  = CASE WHEN v_key = 'party_type' THEN v_new ELSE m.party_type END,
+           is_client   = CASE WHEN v_key = 'is_client' THEN (v_val #>> '{}')::boolean ELSE m.is_client END,
+           is_supplier = CASE WHEN v_key = 'is_supplier' THEN (v_val #>> '{}')::boolean ELSE m.is_supplier END,
+           status      = CASE WHEN v_key = 'status' THEN v_new ELSE m.status END,
+           notes       = CASE WHEN v_key = 'notes' THEN v_new ELSE m.notes END
+     WHERE m.id = p_party_id;
+
+    INSERT INTO public.party_change_log
+      (master_party_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
+    VALUES
+      (p_party_id, v_party.tenant_id, v_key, v_old, v_new, p_actor, p_origin_store_id);
+
+    v_applied := array_append(v_applied, v_key);
+  END LOOP;
+
+  IF array_length(v_applied, 1) IS NULL THEN
+    RETURN jsonb_build_object('status','success','applied', '[]'::jsonb, 'changed', false);
+  END IF;
+  RETURN jsonb_build_object('status','success','applied', to_jsonb(v_applied), 'changed', true);
 END;
 $function$
 
@@ -7587,6 +8174,167 @@ BEGIN
 
   RETURN jsonb_build_object('status','success','granted', p_grant,
     'tenant_id', p_tenant_id, 'user_id', p_target_user_id);
+END;
+$function$
+
+
+-- @contract-function name=incorporate_store_parties_to_master args="p_store_id uuid, p_dry_run boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.incorporate_store_parties_to_master(p_store_id uuid, p_dry_run boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid UUID;
+  v_tenant UUID;
+  v_rec RECORD;
+  v_master_id UUID;
+  v_code TEXT;
+  v_seq INTEGER := 0;
+  v_linked INTEGER := 0;
+  v_created INTEGER := 0;
+  v_conflicts INTEGER := 0;
+  v_conflict_rows JSONB := '[]'::jsonb;
+  v_kind TEXT;
+  v_cols TEXT;
+  v_local_tax TEXT;
+  v_existing UUID;
+  v_scope TEXT;
+BEGIN
+  v_caller_uid := CASE WHEN auth.role() = 'service_role'
+                       THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  IF v_caller_uid IS NULL OR p_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT s.tenant_id INTO v_tenant FROM public.stores s WHERE s.id = p_store_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: la tienda % no existe', p_store_id;
+  END IF;
+  IF NOT public.is_catalog_governor(v_tenant, v_caller_uid) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el gobernador de la organización incorpora terceros al clasificador';
+  END IF;
+
+  -- Cerrojo transaccional por organización: evita carreras de códigos secuenciales
+  PERFORM pg_advisory_xact_lock(hashtext('parties_incorporation:' || v_tenant::text));
+
+  FOREACH v_kind IN ARRAY ARRAY['customers','suppliers']
+  LOOP
+    -- Columnas por tabla: customers NO tiene tax_id (su documento es ci);
+    -- suppliers NO tiene ci. Se proyectan como NULL para un RECORD homogéneo.
+    v_cols := CASE WHEN v_kind = 'customers'
+      THEN 'id, name, address, phone, email, notes, ci, NULL::text AS tax_id, created_at'
+      ELSE 'id, name, address, phone, email, notes, NULL::text AS ci, tax_id, created_at' END;
+
+    FOR v_rec IN
+      EXECUTE format(
+        'SELECT %s FROM public.%I WHERE store_id = $1 AND master_party_id IS NULL
+          ORDER BY created_at NULLS LAST, id', v_cols, v_kind)
+      USING p_store_id
+    LOOP
+      v_local_tax := NULLIF(btrim(COALESCE(v_rec.tax_id, '')), '');
+      IF v_local_tax IS NULL AND v_kind = 'customers' THEN
+        v_local_tax := NULLIF(btrim(COALESCE(v_rec.ci, '')), '');
+      END IF;
+
+      -- (1) Conciliación por identificación fiscal, luego por nombre exacto
+      --     dentro de la MISMA organización (nunca se fusionan organizaciones).
+      v_existing := NULL;
+      IF v_local_tax IS NOT NULL THEN
+        SELECT m.id INTO v_existing FROM public.master_parties m
+         WHERE m.tenant_id = v_tenant AND upper(btrim(m.tax_id)) = upper(v_local_tax)
+         LIMIT 1;
+      END IF;
+      IF v_existing IS NULL THEN
+        SELECT m.id INTO v_existing FROM public.master_parties m
+         WHERE m.tenant_id = v_tenant
+           AND lower(btrim(m.name)) = lower(btrim(v_rec.name))
+           AND m.status = 'active'
+         LIMIT 1;
+      END IF;
+
+      IF v_existing IS NOT NULL THEN
+        IF NOT p_dry_run THEN
+          EXECUTE format('UPDATE public.%I SET master_party_id = $1 WHERE id = $2', v_kind)
+            USING v_existing, v_rec.id;
+          UPDATE public.master_parties m
+             SET is_client = m.is_client OR (v_kind = 'customers'),
+                 is_supplier = m.is_supplier OR (v_kind = 'suppliers')
+           WHERE m.id = v_existing
+             AND ((v_kind = 'customers' AND NOT m.is_client)
+                  OR (v_kind = 'suppliers' AND NOT m.is_supplier));
+        END IF;
+        v_linked := v_linked + 1;
+        CONTINUE;
+      END IF;
+
+      -- (2) Alta de identidad nueva: código = identificación fiscal si existe,
+      --     si no secuencial C-/S- determinista por (created_at, id).
+      v_code := v_local_tax;
+      IF v_code IS NULL THEN
+        v_scope := CASE WHEN v_kind = 'customers' THEN 'C' ELSE 'S' END;
+        LOOP
+          v_seq := v_seq + 1;
+          v_code := v_scope || '-' || lpad(v_seq::text, 4, '0');
+          EXIT WHEN NOT EXISTS (
+            SELECT 1 FROM public.master_parties m
+             WHERE m.tenant_id = v_tenant AND m.code = v_code);
+        END LOOP;
+      END IF;
+
+      -- Conflicto de código con un maestro DISTINTO (no se fusiona silenciosamente)
+      IF v_local_tax IS NOT NULL AND EXISTS (
+        SELECT 1 FROM public.master_parties m
+         WHERE m.tenant_id = v_tenant AND m.code = v_code AND m.tax_id IS DISTINCT FROM v_local_tax) THEN
+        v_conflicts := v_conflicts + 1;
+        v_conflict_rows := v_conflict_rows || jsonb_build_object(
+          'table', v_kind, 'local_id', v_rec.id, 'name', v_rec.name, 'conflict_code', v_code);
+        CONTINUE;
+      END IF;
+
+      IF NOT p_dry_run THEN
+        INSERT INTO public.master_parties
+          (tenant_id, code, name, address, phone, email, tax_id, party_type,
+           is_client, is_supplier, status, notes, created_by)
+        VALUES
+          (v_tenant, v_code, btrim(v_rec.name), v_rec.address, v_rec.phone, v_rec.email,
+           v_local_tax,
+           CASE WHEN v_kind = 'suppliers' THEN 'juridica' ELSE 'natural' END,
+           v_kind = 'customers', v_kind = 'suppliers',
+           'active', v_rec.notes, v_caller_uid)
+        RETURNING id INTO v_master_id;
+
+        INSERT INTO public.party_change_log
+          (master_party_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
+        VALUES
+          (v_master_id, v_tenant, 'code', NULL, v_code, v_caller_uid, p_store_id),
+          (v_master_id, v_tenant, 'name', NULL, btrim(v_rec.name), v_caller_uid, p_store_id);
+
+        EXECUTE format('UPDATE public.%I SET master_party_id = $1 WHERE id = $2', v_kind)
+          USING v_master_id, v_rec.id;
+      END IF;
+      v_created := v_created + 1;
+    END LOOP;
+  END LOOP;
+
+  IF NOT p_dry_run THEN
+    INSERT INTO public.audit_logs (action, table_name, record_id, user_id, store_id, metadata)
+    VALUES (
+      'PARTY_INCORPORATION', 'master_parties', NULL, v_caller_uid, p_store_id,
+      jsonb_build_object('tenant_id', v_tenant, 'dry_run', false,
+                         'linked', v_linked, 'created', v_created, 'conflicts', v_conflicts)
+    );
+  END IF;
+
+  RETURN jsonb_build_object(
+    'status','success',
+    'dry_run', COALESCE(p_dry_run, false),
+    'linked_existing_masters', v_linked,
+    'created_masters', v_created,
+    'conflicts', v_conflicts,
+    'conflict_rows', v_conflict_rows
+  );
 END;
 $function$
 
@@ -8447,6 +9195,221 @@ BEGIN
     DELETE FROM public.profiles WHERE id = p_user_id;
 
     RETURN jsonb_build_object('success', true, 'message', 'Perfil de usuario eliminado correctamente.');
+END;
+$function$
+
+
+-- @contract-function name=managed_hard_delete_user args="p_target_id uuid, p_reason text, p_caller_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.managed_hard_delete_user(p_target_id uuid, p_reason text, p_caller_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_caller_id, auth.uid()) ELSE auth.uid() END;
+  v_caller_role public.user_role;
+  v_profile RECORD;
+  v_auth_email text;
+  v_active_superadmins int;
+  v_preserved jsonb;
+  v_member_count int;
+  r record;
+BEGIN
+  IF COALESCE(p_reason, '') ~ '^\s*$' THEN
+    RAISE EXCEPTION 'ERR_REASON_REQUIRED: la eliminación administrativa exige una razón.';
+  END IF;
+
+  -- Autorización: SOLO superadmin (rol real del perfil, no parámetro cliente).
+  SELECT role INTO v_caller_role FROM public.profiles WHERE id = v_caller_uid AND deleted_at IS NULL;
+  IF v_caller_role IS NULL OR v_caller_role <> 'superadmin' THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo un SuperAdmin puede eliminar cuentas de usuario.';
+  END IF;
+
+  IF p_target_id = v_caller_uid THEN
+    RAISE EXCEPTION 'ERR_SELF_DELETE_BLOCKED: no puedes eliminar tu propia cuenta.';
+  END IF;
+
+  SELECT id, email, full_name, role, plan, is_active, deleted_at INTO v_profile
+    FROM public.profiles WHERE id = p_target_id;
+  SELECT email INTO v_auth_email FROM auth.users WHERE id = p_target_id;
+
+  -- IDEMPOTENCIA vs INEXISTENTE: si no queda rastro del usuario, distinguir
+  -- (a) fue eliminado antes por este mecanismo → éxito idempotente, de
+  -- (b) JAMÁS existió (ni auditoría de eliminación) → 404 claro.
+  IF v_profile.id IS NULL AND v_auth_email IS NULL THEN
+    IF EXISTS (
+      SELECT 1 FROM public.user_audit_log
+      WHERE target_user_id = p_target_id AND action = 'USER_HARD_DELETED'
+    ) THEN
+      RETURN jsonb_build_object(
+        'success', true, 'already_deleted', true, 'target_id', p_target_id,
+        'note', 'El usuario ya fue eliminado (operación idempotente).');
+    ELSE
+      RAISE EXCEPTION 'ERR_USER_NOT_FOUND: no existe ninguna cuenta con ese identificador (ni perfil ni identidad de acceso ni registro de eliminación previa).';
+    END IF;
+  END IF;
+
+  IF v_profile.role = 'superadmin' AND v_profile.deleted_at IS NULL THEN
+    SELECT COUNT(*) INTO v_active_superadmins
+      FROM public.profiles
+      WHERE role = 'superadmin' AND is_active = true AND deleted_at IS NULL
+        AND id <> p_target_id;
+    IF v_active_superadmins = 0 THEN
+      RAISE EXCEPTION 'ERR_LAST_SUPERADMIN: no puedes eliminar al último SuperAdmin activo.';
+    END IF;
+  END IF;
+
+  -- Bloqueos NOT NULL (ver preflight): si hay registros contables con FK
+  -- no nullable, la eliminación se BLOQUEA con explicación — no se borra
+  -- historia para poder borrar la cuenta.
+  IF EXISTS (SELECT 1 FROM public.transactions WHERE seller_id = p_target_id)
+     OR EXISTS (SELECT 1 FROM public.transfers WHERE created_by = p_target_id)
+     OR EXISTS (SELECT 1 FROM public.inventory_adjustments WHERE created_by = p_target_id)
+     OR EXISTS (SELECT 1 FROM public.issue_slips WHERE created_by = p_target_id)
+     OR EXISTS (SELECT 1 FROM public.cash_sessions WHERE cashier_id = p_target_id) THEN
+    RAISE EXCEPTION 'ERR_BLOCKING_DEPENDENCIES: el usuario tiene registros contables/operativos con referencia obligatoria (ventas, transferencias, ajustes, vales de emisión o sesiones de caja). Reasigna o anula esos registros antes de eliminar la cuenta. La historia comercial no se borra ni se reescribe (USER-MGMT-DELETE-001).';
+  END IF;
+
+  -- Snapshot de lo que se preserva (auditoría y respuesta).
+  v_preserved := jsonb_build_object(
+    'sales_cashier', (SELECT COUNT(*) FROM public.sales WHERE cashier_id = p_target_id),
+    'receipts_user', (SELECT COUNT(*) FROM public.receipts WHERE user_id = p_target_id),
+    'devolutions_processed_by', (SELECT COUNT(*) FROM public.devolutions WHERE processed_by = p_target_id),
+    'production_orders_created_by', (SELECT COUNT(*) FROM public.production_orders WHERE created_by = p_target_id),
+    'kardex_entries_created_by', (SELECT COUNT(*) FROM public.kardex_entries WHERE created_by = p_target_id),
+    'cost_sheets_created_by', (SELECT COUNT(*) FROM public.cost_sheets WHERE created_by = p_target_id),
+    'purchase_orders_created_by', (SELECT COUNT(*) FROM public.purchase_orders WHERE created_by = p_target_id),
+    'inventory_movements_user', (SELECT COUNT(*) FROM public.inventory_movements WHERE user_id = p_target_id),
+    'audit_logs_user', (SELECT COUNT(*) FROM public.audit_logs WHERE user_id = p_target_id),
+    'payment_transactions_paid_by', (SELECT COUNT(*) FROM public.payment_transactions WHERE paid_by = p_target_id),
+    'telegram_posts_published_by', (SELECT COUNT(*) FROM public.telegram_product_posts WHERE published_by = p_target_id),
+    'whatsapp_posts_published_by', (SELECT COUNT(*) FROM public.whatsapp_product_posts WHERE published_by = p_target_id),
+    'report_runs_executed_by', (SELECT COUNT(*) FROM public.report_runs WHERE executed_by = p_target_id),
+    'report_definitions_created_by', (SELECT COUNT(*) FROM public.report_definitions WHERE created_by = p_target_id),
+    'tenants_owned', (SELECT COUNT(*) FROM public.tenants WHERE owner_id = p_target_id)
+  );
+  SELECT COUNT(*) INTO v_member_count FROM public.user_store_memberships WHERE user_id = p_target_id;
+
+  -- Deshabilitar SOLO el trigger que impide el DELETE físico de profiles
+  -- (política soft-delete del camino de la app; este es el camino
+  -- administrativo, con autorización y auditoría propias). Se re-habilita
+  -- SIEMPRE (excepción incluida).
+  CREATE TEMP TABLE IF NOT EXISTS _mgmt_del_disabled_triggers(table_name text, trg_name text) ON COMMIT DROP;
+  DELETE FROM _mgmt_del_disabled_triggers WHERE true;
+  FOR r IN
+    SELECT t.tgname FROM pg_trigger t
+    JOIN pg_class cl ON cl.oid = t.tgrelid
+    JOIN pg_namespace n ON n.oid = cl.relnamespace
+    WHERE n.nspname = 'public' AND cl.relname = 'profiles'
+      AND NOT t.tgisinternal AND t.tgname = 'prevent_hard_delete_profile'
+  LOOP
+    EXECUTE format('ALTER TABLE public.profiles DISABLE TRIGGER %I', r.tgname);
+    INSERT INTO _mgmt_del_disabled_triggers VALUES ('public.profiles', r.tgname);
+  END LOOP;
+
+  BEGIN
+    -- 1) Asignaciones de acceso: memberships (no son historial comercial).
+    DELETE FROM public.user_store_memberships WHERE user_id = p_target_id;
+
+    -- 2) Datos user-scoped sin valor histórico.
+    DELETE FROM public.user_preferences       WHERE user_id = p_target_id;
+    DELETE FROM public.user_usage             WHERE user_id = p_target_id;
+    DELETE FROM public.user_progress          WHERE user_id = p_target_id;
+    DELETE FROM public.user_strategy_feedback WHERE user_id = p_target_id;
+    DELETE FROM public.saved_analytics_views  WHERE user_id = p_target_id;
+    DELETE FROM public.ai_api_keys            WHERE user_id = p_target_id;
+    DELETE FROM public.idempotency_keys       WHERE user_id = p_target_id;
+    DELETE FROM public.bulk_ops_log           WHERE user_id = p_target_id;
+    DELETE FROM public.pick3_profiles         WHERE user_id = p_target_id;
+    DELETE FROM public.pick3_subscriptions    WHERE user_id = p_target_id;
+    DELETE FROM public.pick3_usage            WHERE user_id = p_target_id;
+    DELETE FROM public.pick3_user_plays       WHERE user_id = p_target_id;
+    DELETE FROM public.pick3_simulations      WHERE user_id = p_target_id;
+    DELETE FROM public.wallet_accounts        WHERE user_id = p_target_id;
+    DELETE FROM public.sync_log               WHERE user_id = p_target_id;
+
+    -- 3) Historial COMERCIAL: se PRESERVA desenlazando la referencia
+    --    (SET NULL manual, solo columnas NULLABLE — ver preflight).
+    UPDATE public.sales                   SET cashier_id    = NULL WHERE cashier_id    = p_target_id;
+    UPDATE public.receipts                SET user_id       = NULL WHERE user_id       = p_target_id;
+    UPDATE public.receipts                SET confirmed_by  = NULL WHERE confirmed_by  = p_target_id;
+    UPDATE public.receipts                SET reversed_by   = NULL WHERE reversed_by   = p_target_id;
+    UPDATE public.devolutions             SET processed_by  = NULL WHERE processed_by  = p_target_id;
+    UPDATE public.devolutions             SET voided_by     = NULL WHERE voided_by     = p_target_id;
+    UPDATE public.devolutions             SET reversed_by   = NULL WHERE reversed_by   = p_target_id;
+    UPDATE public.production_orders       SET created_by    = NULL WHERE created_by    = p_target_id;
+    UPDATE public.kardex_entries          SET created_by    = NULL WHERE created_by    = p_target_id;
+    UPDATE public.cost_sheets             SET created_by    = NULL WHERE created_by    = p_target_id;
+    UPDATE public.cost_sheet_templates    SET created_by    = NULL WHERE created_by    = p_target_id;
+    UPDATE public.purchase_orders         SET created_by    = NULL WHERE created_by    = p_target_id;
+    UPDATE public.inventory_movements     SET user_id       = NULL WHERE user_id       = p_target_id;
+    UPDATE public.audit_logs              SET user_id       = NULL WHERE user_id       = p_target_id;
+    UPDATE public.payment_transactions    SET paid_by       = NULL WHERE paid_by       = p_target_id;
+    UPDATE public.telegram_product_posts  SET published_by  = NULL WHERE published_by  = p_target_id;
+    UPDATE public.whatsapp_product_posts  SET published_by  = NULL WHERE published_by  = p_target_id;
+    UPDATE public.report_runs             SET executed_by   = NULL WHERE executed_by   = p_target_id;
+    UPDATE public.report_definitions      SET created_by    = NULL WHERE created_by    = p_target_id;
+    UPDATE public.tenants                 SET owner_id      = NULL WHERE owner_id      = p_target_id;
+
+    -- 4) Profile físico (trigger deshabilitado DENTRO de esta transacción
+    --    autorizada; la integridad referencial sigue activa y las referencias
+    --    restantes ya se desenlazaron o bloquearon arriba).
+    DELETE FROM public.profiles WHERE id = p_target_id;
+
+    -- 5) Identidad Auth (hijos primero por robustez ante cambios del schema).
+    DELETE FROM auth.refresh_tokens WHERE user_id = p_target_id::text;
+    DELETE FROM auth.sessions       WHERE user_id = p_target_id;
+    DELETE FROM auth.identities     WHERE user_id = p_target_id;
+    DELETE FROM auth.mfa_factors    WHERE user_id = p_target_id;
+    DELETE FROM auth.users          WHERE id = p_target_id;
+
+    -- 6) Auditoría de la operación (user_audit_log no tiene FK a profiles:
+    --    el registro sobrevive a la eliminación de ambas cuentas).
+    INSERT INTO public.user_audit_log (performed_by, target_user_id, action, old_values, new_values, metadata)
+    VALUES (
+      v_caller_uid, p_target_id, 'USER_HARD_DELETED',
+      jsonb_build_object(
+        'email', COALESCE(v_profile.email, v_auth_email),
+        'full_name', v_profile.full_name,
+        'role', v_profile.role, 'plan', v_profile.plan,
+        'is_active', v_profile.is_active
+      ),
+      jsonb_build_object('deleted', true, 'auth_identity_removed', v_auth_email IS NOT NULL),
+      jsonb_build_object(
+        'reason', p_reason,
+        'memberships_removed', v_member_count,
+        'business_records_preserved', v_preserved,
+        'mechanism', 'managed_hard_delete_user (USER-MGMT-DELETE-001)'
+      )
+    );
+  EXCEPTION WHEN OTHERS THEN
+    FOR r IN SELECT table_name, trg_name FROM _mgmt_del_disabled_triggers LOOP
+      BEGIN
+        EXECUTE format('ALTER TABLE %s ENABLE TRIGGER %I', r.table_name, r.trg_name);
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END;
+    END LOOP;
+    RAISE;
+  END;
+
+  -- Re-habilitar el trigger de soft-delete SIEMPRE.
+  FOR r IN SELECT table_name, trg_name FROM _mgmt_del_disabled_triggers LOOP
+    BEGIN
+      EXECUTE format('ALTER TABLE %s ENABLE TRIGGER %I', r.table_name, r.trg_name);
+    EXCEPTION WHEN OTHERS THEN NULL;
+    END;
+  END LOOP;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'target_id', p_target_id,
+    'status', 'hard_deleted',
+    'auth_identity_removed', v_auth_email IS NOT NULL,
+    'memberships_removed', v_member_count,
+    'business_records_preserved', v_preserved
+  );
 END;
 $function$
 
@@ -10652,8 +11615,8 @@ END;
 $function$
 
 
--- @contract-function name=register_reception args="p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.register_reception(p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT ''::text, p_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_po_id uuid DEFAULT NULL::uuid)
+-- @contract-function name=register_reception args="p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid, p_supplier_code text, p_supplier_address text, p_supplier_phone text, p_supplier_tax_id text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.register_reception(p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT ''::text, p_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_po_id uuid DEFAULT NULL::uuid, p_supplier_code text DEFAULT NULL::text, p_supplier_address text DEFAULT NULL::text, p_supplier_phone text DEFAULT NULL::text, p_supplier_tax_id text DEFAULT NULL::text)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -10717,11 +11680,14 @@ BEGIN
   INSERT INTO public.receipts (
     id, store_id, user_id, supplier, reception_date,
     reference_doc, total_cost, status, created_at, updated_at,
-    po_id
+    po_id,
+    -- CLASIFICATOR-PARTIES (2026-11-04): snapshot identificativo del proveedor
+    supplier_code, supplier_address, supplier_phone, supplier_tax_id
   ) VALUES (
     v_receipt_id, p_store_id, v_user_id, p_supplier,
     v_effective_date, p_invoice_number, 0, 'active', v_effective_date, v_effective_date,
-    p_po_id
+    p_po_id,
+    p_supplier_code, p_supplier_address, p_supplier_phone, p_supplier_tax_id
   );
 
   FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
@@ -13450,6 +14416,111 @@ END;
 $function$
 
 
+-- @contract-function name=sec026_membership_audit_fn args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.sec026_membership_audit_fn()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+    v_actor      uuid;
+    v_actor_kind text;
+    v_claims     jsonb;
+    v_action     text;
+    v_old        jsonb;
+    v_new        jsonb;
+    v_changed    jsonb := '{}'::jsonb;
+    v_record_id  uuid;
+    v_store_id   uuid;
+    v_target     uuid;
+BEGIN
+    -- Actor (D1.3): auth.uid() o etiqueta explícita, nunca vacío.
+    v_actor := auth.uid();
+    IF v_actor IS NOT NULL THEN
+        v_actor_kind := 'authenticated';
+    ELSE
+        v_claims := NULLIF(current_setting('request.jwt.claims', true), '')::jsonb;
+        IF v_claims IS NOT NULL AND v_claims ->> 'role' = 'service_role' THEN
+            v_actor_kind := 'service_role';
+        ELSE
+            v_actor_kind := 'sql_directo';
+        END IF;
+    END IF;
+
+    IF TG_OP = 'INSERT' THEN
+        v_action    := 'membership_grant';
+        v_record_id := NEW.id;
+        v_store_id  := NEW.store_id;
+        v_target    := NEW.user_id;
+        v_new       := to_jsonb(NEW);
+    ELSIF TG_OP = 'DELETE' THEN
+        v_action    := 'membership_revoke';
+        v_record_id := OLD.id;
+        v_store_id  := OLD.store_id;
+        v_target    := OLD.user_id;
+        v_old       := to_jsonb(OLD);
+    ELSE
+        -- UPDATE: clasificar. Solo importan los campos relevantes; los UPDATE
+        -- sin cambio real no generan evento (D1.2).
+        v_record_id := NEW.id;
+        v_store_id  := NEW.store_id;
+        v_target    := NEW.user_id;
+        v_old       := to_jsonb(OLD);
+        v_new       := to_jsonb(NEW);
+
+        IF NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+            v_changed := v_changed || jsonb_build_object(
+                'user_id', jsonb_build_object('old', OLD.user_id, 'new', NEW.user_id));
+        END IF;
+        IF NEW.store_id IS DISTINCT FROM OLD.store_id THEN
+            v_changed := v_changed || jsonb_build_object(
+                'store_id', jsonb_build_object('old', OLD.store_id, 'new', NEW.store_id));
+        END IF;
+        IF NEW.role IS DISTINCT FROM OLD.role THEN
+            v_changed := v_changed || jsonb_build_object(
+                'role', jsonb_build_object('old', OLD.role::text, 'new', NEW.role::text));
+        END IF;
+        IF NEW.status IS DISTINCT FROM OLD.status THEN
+            v_changed := v_changed || jsonb_build_object(
+                'status', jsonb_build_object('old', OLD.status::text, 'new', NEW.status::text));
+        END IF;
+
+        IF NEW.status = 'revoked' AND OLD.status <> 'revoked' THEN
+            -- Borrado LÓGICO: cuenta como revoke (D1.2).
+            v_action := 'membership_revoke';
+        ELSIF v_changed <> '{}'::jsonb THEN
+            v_action := 'membership_update';
+        ELSE
+            RETURN NULL; -- UPDATE sin cambio real: 0 eventos.
+        END IF;
+    END IF;
+
+    -- INSERT de auditoría (sin handler de excepciones: si falla, la operación
+    -- sobre la membresía falla con él — D1.4 fail-closed).
+    INSERT INTO public.audit_logs
+        (user_id, table_name, record_id, action, old_data, new_data, metadata, store_id)
+    VALUES
+        (v_actor,
+         'user_store_memberships',
+         v_record_id,
+         v_action,
+         v_old,
+         v_new,
+         jsonb_build_object(
+             'actor_kind',      v_actor_kind,
+             'db_role',         current_user,
+             'target_user_id',  v_target,
+             'changed_fields',  v_changed,
+             'source',          'cp_sec_026_trigger'
+         ),
+         v_store_id);
+
+    RETURN NULL; -- AFTER trigger: no altera la fila.
+END
+$function$
+
+
 -- @contract-function name=set_purchase_order_status args="p_po_id uuid, p_new_status purchase_status_enum, p_user_id uuid, p_reason text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.set_purchase_order_status(p_po_id uuid, p_new_status purchase_status_enum, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text)
  RETURNS jsonb
@@ -14028,6 +15099,74 @@ BEGIN
     WHERE id = NEW.product_id;
 
     RETURN NEW;
+END;
+$function$
+
+
+-- @contract-function name=update_master_party args="p_party_id uuid, p_changes jsonb, p_origin_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.update_master_party(p_party_id uuid, p_changes jsonb, p_origin_store_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid UUID;
+  v_tenant UUID;
+  v_origin_tenant UUID;
+  v_result JSONB;
+  v_via_store BOOLEAN := false;
+BEGIN
+  v_caller_uid := CASE WHEN auth.role() = 'service_role'
+                       THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  IF v_caller_uid IS NULL OR p_party_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT m.tenant_id INTO v_tenant FROM public.master_parties m WHERE m.id = p_party_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_PARTY_NOT_FOUND: el tercero % no existe', p_party_id;
+  END IF;
+
+  IF jsonb_typeof(p_changes) <> 'object' OR p_changes IS NULL THEN
+    RAISE EXCEPTION 'ERR_INVALID_CHANGES: p_changes debe ser un objeto jsonb';
+  END IF;
+
+  -- Autorización (EVOLUCIÓN de la misión): gobernador de la organización, o
+  -- miembro con rol de gestión (admin/manager/encargado) de una tienda
+  -- CONECTADA de la MISMA organización.
+  IF NOT public.is_catalog_governor(v_tenant, v_caller_uid) THEN
+    IF p_origin_store_id IS NULL THEN
+      RAISE EXCEPTION 'ERR_UNAUTHORIZED: se requiere tienda de origen';
+    END IF;
+    SELECT tenant_id INTO v_origin_tenant FROM public.stores WHERE id = p_origin_store_id;
+    IF v_origin_tenant IS NULL OR v_origin_tenant <> v_tenant THEN
+      RAISE EXCEPTION 'ERR_TENANT_MISMATCH: la tienda de origen no pertenece a la organización del tercero';
+    END IF;
+    IF NOT public.is_party_store_connected(v_tenant, p_origin_store_id) THEN
+      RAISE EXCEPTION 'ERR_STORE_NOT_CONNECTED: la tienda de origen no usa el clasificador';
+    END IF;
+    IF NOT public.is_admin_check(v_caller_uid)
+       AND NOT public.has_store_role_as(v_caller_uid, p_origin_store_id, ARRAY['admin','manager','encargado']) THEN
+      RAISE EXCEPTION 'ERR_UNAUTHORIZED: sin permiso de edición de terceros en la tienda';
+    END IF;
+    v_via_store := true;
+  END IF;
+
+  v_result := public.fn_party_apply_changes(p_party_id, p_changes, v_caller_uid, p_origin_store_id);
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, user_id, store_id, metadata)
+  VALUES (
+    'UPDATE_MASTER_PARTY', 'master_parties', p_party_id, v_caller_uid,
+    CASE WHEN v_via_store THEN p_origin_store_id ELSE NULL END,
+    jsonb_build_object('changes', p_changes, 'result', v_result, 'caller', v_caller_uid)
+  );
+
+  RETURN jsonb_build_object(
+    'status','success',
+    'master_party_id', p_party_id,
+    'applied', v_result -> 'applied'
+  );
 END;
 $function$
 

@@ -95,6 +95,9 @@ const checkoutSchema = z.object({
   // eventual"), pero el schema solo aceptaba string|undefined → 400 en TODAS las
   // ventas walk-in V2. El RPC create_sale_v2 ya acepta null (p_customer_name).
   customer_name: z.string().nullable().optional(),
+  // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot COMPRADOR (SC-2-12)
+  customer_address: z.string().max(200).nullable().optional(),
+  customer_code: z.string().max(30).nullable().optional(),
   supervisor_user_id: z.string().regex(uuidRegex).nullable().optional(),
   supervisor_token: z.string().min(10).max(1024).nullable().optional(),
   // E-SEC-FINAL (D2): motivo del descuento autorizado. Texto controlado ≤500.
@@ -273,6 +276,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_sale_exchange_rate: d.sale_exchange_rate,
     p_customer_id: d.customer_id ?? null,
     p_customer_name: d.customer_name ?? null,
+    // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot del comprador
+    p_customer_address: d.customer_address ?? null,
+    p_customer_code: d.customer_code ?? null,
     p_supervisor_user_id: supervisor_user_id,
     p_idempotency_key: d.idempotency_key,
     p_operation_date: d.operation_date ?? null,

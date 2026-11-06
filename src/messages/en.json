@@ -467,6 +467,8 @@
     "emailPlaceholder": "store@example.com",
     "reeupPlaceholder": "XXXXXXXXXXX",
     "bankAccountPlaceholder": "XXXX-XXXX-XXXX-XXXX",
+    "bankBranch": "Bank Branch",
+    "bankBranchPlaceholder": "Bank branch (optional)",
     "nitPlaceholder": "Tax Identification Number",
     "slugPlaceholder": "my_store",
     "latPlaceholder": "Latitude (e.g.: 20.0337)",
