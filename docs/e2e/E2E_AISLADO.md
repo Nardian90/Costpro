@@ -273,8 +273,11 @@ smoke set del workflow SOLO si la prueba es estable (3 corridas verdes).
   `e2e-isolated` (comportamiento de GitHub para `pull_request`) y fallan
   rápido en la validación de config sin exponer nada; los PRs de ramas del
   propio repo sí corren contra la base aislada.
-- Los workflows con `if: false` antiguos (ci.yml / test-coverage.yml)
-  permanecen intactos.
+- Los jobs E2E legados con `if: false` (environment `e2e`, Supabase
+  compartido — ver docs/audits/e2e-contamination-cleanup-20261009.md) se
+  ELIMINARON el 2026-11-06: generaban checks "E2E Tests (Playwright) —
+  skipped" en cada corrida. El E2E corre exclusivamente vía este workflow
+  contra la base aislada.
 
 ## 16. Desviaciones documentadas (resumen)
 
