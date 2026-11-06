@@ -268,19 +268,43 @@ const incluidos = entries.filter((e) => e.estado === 'incluido');
 const excluidos = entries.filter((e) => e.estado !== 'incluido');
 
 // TRANSFORMACIONES TRAMO (documentadas, una por archivo, evidencia exigida).
-// 20261020000002: REVOKE EXECUTE sobre public.profiles_block_privileged_update
-// — trigger protector creado OUT-OF-BAND entre el snapshot (2026-08-28) y
-// 2026-10-20, sin DDL versionado en NINGÚN artefacto del repo (verificado:
-// no está en el snapshot, ni en migrations, ni en el contrato de 137, ni en
-// la evidencia W7 — pre-vuelo 2026-10-22, audit-evidence/INFRA-011/). El
-// REVOKE es inaplicable en E2E: el objeto no existe (nada que revocar).
-// Se omite ESA ÚNICA sentencia; el resto del hardening aplica íntegro.
+// CP-SEC-005 T1 D1.2 (2026-11-06): se RETIRA la transformación que omitía el
+// REVOKE EXECUTE de profiles_block_privileged_update (origen 20261020000002,
+// línea 19): la función ya está versionada por
+// 20261020000000_sec005_profiles_block_privileged_update_prod_literal.sql
+// (cuerpo literal de producción + guard de hash), así que ese REVOKE vuelve a
+// ser aplicable sobre un objeto existente y NO se transforma.
+// CP-SEC-005 T1 D1.1 (2026-11-06): NUEVAS omisiones documentadas para el MISMO
+// archivo 20261020000002, verificadas por catálogo [MEDIDO]:
+//  (1) líneas §1(a) DROP e2e_hard_delete_store/user — en producción son la
+//      limpieza de copias out-of-band (prod no las tiene [MEDIDO]); en el
+//      sandbox E2E esas funciones son INFRAESTRUCTURA re-provisionada a propósito
+//      (las usa e2e/fixtures/hard-cleanup.ts vía RPC; caer al fallback REST
+//      rompería la higiene con triggers fiscales). Omítirlas en el replay
+//      mantiene vivo el sandbox y reproduce EXACTAMENTE el estado actual.
+//  (2) línea §3 REVOKE register_reception(firma /7) — la firma fue reemplazada
+//      por la fase 4 (20261105140000) en AMBOS proyectos [MEDIDO: 1 sobrecarga
+//      con firma nueva en prod y E2E; la /7 no existe en ninguno]. El objeto
+//      del REVOKE no existe: inaplicable (efecto neto cero).
+// El resto del archivo aplica íntegro (REVOKEs de una sola sobrecarga [MEDIDO]).
 const TRANSFORMACIONES_TRAMO = new Map([
-  ['20261020000002_sec_definer_hardening.sql', [{
-    patron: /^REVOKE EXECUTE ON FUNCTION public\.profiles_block_privileged_update[^\n]*;[ \t]*$/im,
-    reemplazo: '-- [CP-INFRA-011 transformación documentada del tramo] REVOKE EXECUTE sobre profiles_block_privileged_update omitido: función out-of-band sin DDL versionado en el repo (no existe en E2E; nada que revocar). Original íntegro en supabase/migrations/.',
-    motivo: 'función out-of-band no versionada; el REVOKE es inaplicable sobre un objeto inexistente',
-  }]],
+  ['20261020000002_sec_definer_hardening.sql', [
+    {
+      patron: /^DROP FUNCTION IF EXISTS public\.e2e_hard_delete_store\(p_store_id uuid\);[ \t]*$/im,
+      reemplazo: '-- [CP-SEC-005 transformación documentada del tramo] §1(a) omitido en el replay: e2e_hard_delete_store es infraestructura del sandbox (hard-cleanup vía RPC); la limpieza de copias out-of-band corresponde SOLO a producción.',
+      motivo: 'infraestructura del sandbox, no aplicar DROP en E2E (prod ya sin la función [MEDIDO])',
+    },
+    {
+      patron: /^DROP FUNCTION IF EXISTS public\.e2e_hard_delete_user\(p_user_id uuid\);[ \t]*$/im,
+      reemplazo: '-- [CP-SEC-005 transformación documentada del tramo] §1(a) omitido en el replay: e2e_hard_delete_user, ídem.',
+      motivo: 'infraestructura del sandbox, no aplicar DROP en E2E (prod ya sin la función [MEDIDO])',
+    },
+    {
+      patron: /^REVOKE EXECUTE ON FUNCTION public\.register_reception\([^\n]*;[ \t]*$/im,
+      reemplazo: '-- [CP-SEC-005 transformación documentada del tramo] §3 omitido: la firma /7 de register_reception fue reemplazada por la fase 4 (20261105140000) en prod y E2E [MEDIDO]; el objeto del REVOKE no existe en ninguna BD viva (efecto neto cero). El estado de grants de la firma vigente lo gestiona 20261105140000.',
+      motivo: 'REVOKE sobre firma obsoleta /7 reemplazada por fase 4 [MEDIDO]',
+    },
+  ]],
 ]);
 
 // ── 3. Validación de orden del tramo ─────────────────────────────────────────
