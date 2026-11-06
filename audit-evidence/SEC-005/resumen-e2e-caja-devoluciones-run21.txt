@@ -1,0 +1,56 @@
+﻿2026-11-06T12:45:06.7455863Z ##[group]Run if [ ! -f test-results/report.json ]; then
+2026-11-06T12:45:06.7456258Z [36;1mif [ ! -f test-results/report.json ]; then[0m
+2026-11-06T12:45:06.7456665Z [36;1m  echo 'Sin reporte JSON disponible (la corrida no llegó a ejecutar pruebas).'[0m
+2026-11-06T12:45:06.7457022Z [36;1m  exit 0[0m
+2026-11-06T12:45:06.7457200Z [36;1mfi[0m
+2026-11-06T12:45:06.7457394Z [36;1mpython3 - << 'PY'[0m
+2026-11-06T12:45:06.7457947Z [36;1mimport json[0m
+2026-11-06T12:45:06.7458152Z [36;1mtry:[0m
+2026-11-06T12:45:06.7458386Z [36;1m    r = json.load(open('test-results/report.json'))[0m
+2026-11-06T12:45:06.7458674Z [36;1m    s = r.get('stats', {})[0m
+2026-11-06T12:45:06.7459247Z [36;1m    print(f"Resumen E2E: total={s.get('total')} passed={s.get('expected')} failed={s.get('unexpected', 0) + s.get('expectedFailed', 0)} flaky={s.get('flaky', 0)} skipped={s.get('skipped')}")[0m
+2026-11-06T12:45:06.7459835Z [36;1m    def walk(suite):[0m
+2026-11-06T12:45:06.7460079Z [36;1m        for spec in suite.get('specs', []):[0m
+2026-11-06T12:45:06.7460388Z [36;1m            tests = spec.get('tests', [])[0m
+2026-11-06T12:45:06.7460693Z [36;1m            status = tests[0].get('status', '?') if tests else '?'[0m
+2026-11-06T12:45:06.7461212Z [36;1m            print(f"  {status.upper():10s} {spec.get('title', '?')[:100]}")[0m
+2026-11-06T12:45:06.7461541Z [36;1m        for sub in suite.get('suites', []):[0m
+2026-11-06T12:45:06.7461779Z [36;1m            walk(sub)[0m
+2026-11-06T12:45:06.7462013Z [36;1m    for suite in r.get('suites', []):[0m
+2026-11-06T12:45:06.7462253Z [36;1m        walk(suite)[0m
+2026-11-06T12:45:06.7462470Z [36;1mexcept Exception as e:[0m
+2026-11-06T12:45:06.7462747Z [36;1m    print('No se pudo parsear test-results/report.json:', e)[0m
+2026-11-06T12:45:06.7463038Z [36;1mPY[0m
+2026-11-06T12:45:06.7510606Z shell: /usr/bin/bash -e {0}
+2026-11-06T12:45:06.7510847Z env:
+2026-11-06T12:45:06.7511161Z   E2E_SUPABASE_URL: ***
+2026-11-06T12:45:06.7511466Z   E2E_SUPABASE_ANON_KEY: ***
+2026-11-06T12:45:06.7512627Z   E2E_SUPABASE_SERVICE_ROLE_KEY: ***
+2026-11-06T12:45:06.7512895Z   E2E_ALLOWED_REMOTE_REF: ***
+2026-11-06T12:45:06.7513126Z   E2E_TARGET_KIND: project
+2026-11-06T12:45:06.7513328Z   E2E_ISOLATION: 1
+2026-11-06T12:45:06.7513527Z   E2E_SKIP_PROTECTED_GUARD: 1
+2026-11-06T12:45:06.7513778Z   PLAYWRIGHT_JSON_OUTPUT_NAME: test-results/report.json
+2026-11-06T12:45:06.7514160Z   NEXT_PUBLIC_SUPABASE_URL: ***
+2026-11-06T12:45:06.7514497Z   NEXT_PUBLIC_SUPABASE_ANON_KEY: ***
+2026-11-06T12:45:06.7515621Z   SUPABASE_SERVICE_ROLE_KEY: ***
+2026-11-06T12:45:06.7515872Z   NEXT_PUBLIC_APP_URL: http://localhost:3000
+2026-11-06T12:45:06.7516137Z   NEXT_PUBLIC_SITE_URL: http://localhost:3000
+2026-11-06T12:45:06.7516404Z   NEXTAUTH_URL: http://localhost:3000
+2026-11-06T12:45:06.7516655Z   NEXT_TELEMETRY_DISABLED: 1
+2026-11-06T12:45:06.7516865Z   CI: true
+2026-11-06T12:45:06.7517099Z   NEXTAUTH_SECRET: QFJ/WvrYGhZAK62m3IkgWpZdQLK/v3BnlM3ME2b1eaM=
+2026-11-06T12:45:06.7517390Z ##[endgroup]
+2026-11-06T12:45:06.7725552Z Resumen E2E: total=None passed=12 failed=0 flaky=0 skipped=0
+2026-11-06T12:45:06.7726054Z   EXPECTED   E2E-CASH-001 (P0) cerrar turno pendiente con cuadre correcto
+2026-11-06T12:45:06.7726783Z   EXPECTED   E2E-CASH-002 (P0) doble cierre → 409 ERR_CLOSURE_NOT_PENDING
+2026-11-06T12:45:06.7727229Z   EXPECTED   E2E-CASH-003 (P1) el reporte de caja refleja el cierre
+2026-11-06T12:45:06.7727883Z   EXPECTED   E2E-CASH-004 (P1) cierre sin sesión → 401
+2026-11-06T12:45:06.7728377Z   EXPECTED   E2E-DEV-001 (P0) devolución restaura stock y registra documento
+2026-11-06T12:45:06.7728928Z   EXPECTED   E2E-DEV-002 (P0) los items de la devolución reflejan cantidad y precio
+2026-11-06T12:45:06.7729450Z   EXPECTED   E2E-DEV-003 (P0) clerk sin permisos de gestión no puede devolver → 403
+2026-11-06T12:45:06.7729863Z   EXPECTED   E2E-DEV-004 (P1) listado de devoluciones de la tienda
+2026-11-06T12:45:06.7730352Z   EXPECTED   E2E-REV-001 (P0) revertir venta anula la transacción y restaura el stock
+2026-11-06T12:45:06.7731153Z   EXPECTED   E2E-REV-002 (P0) invariante: stock final = inicial tras venta+reversión
+2026-11-06T12:45:06.7731605Z   EXPECTED   E2E-REV-003 (P1) motivo demasiado corto → 400
+2026-11-06T12:45:06.7732082Z   EXPECTED   E2E-REV-004 (P1) reversión duplicada → rechazada sin doble restauración

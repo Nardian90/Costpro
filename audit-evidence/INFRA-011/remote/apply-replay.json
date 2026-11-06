@@ -2,47 +2,47 @@
   "modo": "--apply-replay",
   "transporte": "api",
   "ref": "lguovmvrozxgssupkwpf",
-  "inicio": "2026-10-30T12:44:41.029Z",
+  "inicio": "2026-11-06T12:12:17.337Z",
   "pasos": [
     {
       "nombre": "guard-identidad-replay",
       "ok": true,
       "detalle": "identidad validada (centinela diferido al final del replay: desviación documentada)",
-      "ts": "2026-10-30T12:44:41.030Z"
+      "ts": "2026-11-06T12:12:17.338Z"
     },
     {
       "nombre": "tabla-estado-replay",
       "ok": true,
       "detalle": "e2e_infra.e2e_migrations_replay_state (IF NOT EXISTS)",
-      "ts": "2026-10-30T12:44:47.056Z"
+      "ts": "2026-11-06T12:12:23.337Z"
     },
     {
       "nombre": "baseline-ya-aplicado",
       "ok": true,
       "detalle": "sha coincide — reanudación",
-      "ts": "2026-10-30T12:44:49.245Z"
+      "ts": "2026-11-06T12:12:25.480Z"
     },
     {
       "nombre": "replay-completo",
       "ok": true,
-      "detalle": "baseline OK + tramo: 8 aplicadas en esta corrida + 102 reanudadas = 110/110",
-      "ts": "2026-10-30T12:45:21.330Z"
+      "detalle": "baseline OK + tramo: 3 aplicadas en esta corrida + 124 reanudadas = 127/127",
+      "ts": "2026-11-06T12:12:37.251Z"
     },
     {
       "nombre": "centinela-rest-instalado",
       "ok": true,
       "detalle": "HTTP 200 — public.e2e_is_isolated_db() === true",
-      "ts": "2026-10-30T12:45:24.849Z"
+      "ts": "2026-11-06T12:12:40.542Z"
     },
     {
       "nombre": "guard-normal-final",
       "ok": true,
       "detalle": "estado final: guard normal acepta el destino",
-      "ts": "2026-10-30T12:45:25.895Z"
+      "ts": "2026-11-06T12:12:41.306Z"
     }
   ],
-  "manifest_sha256": "d2ce22c0ec02d0f9edf459a393f18f4a1a79b2e00913984786ffc9300bbd925b",
-  "manifest_total_tramo": 110,
-  "aplicadas_esta_corrida": 8,
-  "omitidas_reanudacion": 102
+  "manifest_sha256": "ce98ad81e90defec63d7ab5bda94f9049f416f773ab8512d0bd1526cda0ac70d",
+  "manifest_total_tramo": 127,
+  "aplicadas_esta_corrida": 3,
+  "omitidas_reanudacion": 124
 }
