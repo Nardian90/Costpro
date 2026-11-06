@@ -16,7 +16,8 @@ name: E2E Aislado (CostproE2E)
 #   sin exponer nada. Los PRs de ramas del propio repo sí corren con los
 #   secretos del environment `e2e-isolated`.
 # - Environment separado `e2e-isolated` (NO reutiliza `e2e`). Los jobs
-#   antiguos con if:false (ci.yml / test-coverage.yml) quedan INTACTOS.
+#   legados con if:false (ci.yml / test-coverage.yml) se ELIMINARON el
+#   2026-11-06: ya no generan checks "E2E Tests (Playwright) — skipped".
 # - Modo project: verifica (no construye) la base aislada vía REST y corre
 #   la suite contra ella. Producción está PROHIBIDA por el guard
 #   (e2e/fixtures/assert-isolated-db.ts) — fail-closed, sin fallbacks.
