@@ -1,0 +1,127 @@
+proyecto: wthkddeleylijmonclxg (OK = CostproBD producción)
+
+=== master_products ===
+[
+ {
+  "id": "7b377a31-4e0f-45d9-b266-244c2e235ac5",
+  "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+  "sku": "QA-CM-20261030-01",
+  "name": "QA CM-004 Producto de prueba tecnica v2 (no comercial)",
+  "status": "archived",
+  "image_path": "f31bc30f-bcf9-4fd7-9c1b-98dd0c0a9d75-7c9542aa-0f67-40da-87c1-6079772b479c.png",
+  "unit_of_measure": "unidad",
+  "is_service": false,
+  "created_at": "2026-10-30 14:15:54.215471+00",
+  "updated_at": "2026-10-30 15:03:03.956893+00"
+ }
+]
+
+=== products (filas locales vinculadas) ===
+[]
+
+=== catalog_store_links (conexión del tenant, nivel tienda↔catálogo) ===
+[
+ {
+  "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+  "store_name": "COSTPRO (Prueba)",
+  "status": "disconnected",
+  "connected_at": "2026-10-30 14:14:23.872546+00",
+  "disconnected_at": "2026-10-31 11:30:29.74718+00"
+ },
+ {
+  "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+  "store_name": "ENERVIDA-VITALLCONS",
+  "status": "connected",
+  "connected_at": "2026-10-31 13:53:09.124855+00",
+  "disconnected_at": null
+ },
+ {
+  "store_id": "8eb56fa3-7e22-408e-a44b-8f14cdd7f52f",
+  "store_name": "FERROCARRIL VITALLCONS",
+  "status": "connected",
+  "connected_at": "2026-10-31 13:54:07.634707+00",
+  "disconnected_at": null
+ },
+ {
+  "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+  "store_name": "PUERTO PADRE",
+  "status": "connected",
+  "connected_at": "2026-11-02 13:40:58.565068+00",
+  "disconnected_at": null
+ },
+ {
+  "store_id": "bc94e3d0-32c3-4f2f-8e42-d46a341f9451",
+  "store_name": "SHADDAI",
+  "status": "connected",
+  "connected_at": "2026-11-07 14:45:09.564628+00",
+  "disconnected_at": null
+ }
+]
+
+=== master_change_log (últimos 10) ===
+[
+ {
+  "field": "image_path",
+  "old_value": "f31bc30f-bcf9-4fd7-9c1b-98dd0c0a9d75-973461e6-3d79-4339-a93c-7d1ce86e1a5f.png",
+  "new_value": "f31bc30f-bcf9-4fd7-9c1b-98dd0c0a9d75-7c9542aa-0f67-40da-87c1-6079772b479c.png",
+  "origin_store_id": null,
+  "created_at": "2026-10-30 14:23:31.665436+00"
+ },
+ {
+  "field": "image_path",
+  "old_value": null,
+  "new_value": "f31bc30f-bcf9-4fd7-9c1b-98dd0c0a9d75-973461e6-3d79-4339-a93c-7d1ce86e1a5f.png",
+  "origin_store_id": null,
+  "created_at": "2026-10-30 14:22:46.826321+00"
+ },
+ {
+  "field": "name",
+  "old_value": "QA CM-004 Producto de prueba tecnica (no comercial)",
+  "new_value": "QA CM-004 Producto de prueba tecnica v2 (no comercial)",
+  "origin_store_id": null,
+  "created_at": "2026-10-30 14:21:36.321445+00"
+ },
+ {
+  "field": "sku",
+  "old_value": null,
+  "new_value": "QA-CM-20261030-01",
+  "origin_store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+  "created_at": "2026-10-30 14:15:54.215471+00"
+ },
+ {
+  "field": "name",
+  "old_value": null,
+  "new_value": "QA CM-004 Producto de prueba tecnica (no comercial)",
+  "origin_store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+  "created_at": "2026-10-30 14:15:54.215471+00"
+ }
+]
+
+=== audit_logs relacionados (últimos 10) ===
+[
+ {
+  "action": "UPDATE_MASTER_PRODUCT",
+  "created_at": "2026-10-30 14:23:31.665436+00"
+ },
+ {
+  "action": "UPDATE_MASTER_PRODUCT",
+  "created_at": "2026-10-30 14:22:46.826321+00"
+ },
+ {
+  "action": "UPDATE_MASTER_PRODUCT",
+  "created_at": "2026-10-30 14:21:36.321445+00"
+ },
+ {
+  "action": "CREATE_MASTER_PRODUCT",
+  "created_at": "2026-10-30 14:15:54.215471+00"
+ }
+]
+
+=== referencias operativas (inventory/transactions/receipts) ===
+[
+ {
+  "inventory": 0,
+  "transaction_items": 0,
+  "receipt_items": 0
+ }
+]
