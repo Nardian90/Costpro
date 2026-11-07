@@ -1,0 +1,18 @@
+{
+  "note": "Sin filas sin vínculo.",
+  "status": "success",
+  "dry_run": true,
+  "results": [],
+  "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+  "conflicts": 0,
+  "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+  "exceptions": [],
+  "audit_actor": "a1111111-1111-1111-1111-111111111111",
+  "image_updated": 0,
+  "unlinked_rows": 0,
+  "unlinked_skus": [],
+  "identity_updated": 0,
+  "local_image_synced": 0,
+  "linked_rows_checked": 198,
+  "masters_without_local_correspondence": 1
+}

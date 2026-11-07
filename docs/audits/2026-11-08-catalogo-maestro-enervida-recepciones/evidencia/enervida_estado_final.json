@@ -1,0 +1,2709 @@
+{
+  "stores_enervida_match": [
+    {
+      "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "name": "ENERVIDA-VITALLCONS",
+      "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+      "is_active": true
+    }
+  ],
+  "tenant": {
+    "id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "name": "Vitallcons",
+    "owner_id": "a1111111-1111-1111-1111-111111111111",
+    "created_at": "2026-08-04T05:24:45.016778+00:00"
+  },
+  "enervida_catalog_link": [
+    {
+      "id": "4cb51bfc-1732-4ebb-a316-309f98454242",
+      "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+      "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "status": "connected",
+      "connected_at": "2026-10-31T13:53:09.124855+00:00",
+      "disconnected_at": null,
+      "reason": null
+    }
+  ],
+  "org_catalog_links": [
+    {
+      "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "status": "disconnected"
+    },
+    {
+      "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "status": "connected"
+    },
+    {
+      "store_id": "8eb56fa3-7e22-408e-a44b-8f14cdd7f52f",
+      "status": "connected"
+    },
+    {
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "status": "connected"
+    },
+    {
+      "store_id": "bc94e3d0-32c3-4f2f-8e42-d46a341f9451",
+      "status": "connected"
+    }
+  ],
+  "org_stores": [
+    {
+      "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "name": "COSTPRO (Prueba)",
+      "link_status": "disconnected"
+    },
+    {
+      "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "name": "ENERVIDA-VITALLCONS",
+      "link_status": "connected"
+    },
+    {
+      "id": "8eb56fa3-7e22-408e-a44b-8f14cdd7f52f",
+      "name": "FERROCARRIL VITALLCONS",
+      "link_status": "connected"
+    },
+    {
+      "id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "name": "PUERTO PADRE",
+      "link_status": "connected"
+    },
+    {
+      "id": "bc94e3d0-32c3-4f2f-8e42-d46a341f9451",
+      "name": "SHADDAI",
+      "link_status": "connected"
+    }
+  ],
+  "enervida_products_total": 198,
+  "master_products_total": 199,
+  "reconciliacion_preview": {
+    "sin_maestro": 0,
+    "vinculables": 0,
+    "conflicto_nombre": 0,
+    "ya_vinculado_ok": 198,
+    "ya_vinculado_sku_diverge": 0,
+    "duplicados_sku_local": 0,
+    "sku_invalido": 0,
+    "imagen_diverge": 0,
+    "nombre_diverge": 0,
+    "maestros_otra_tienda": 1
+  },
+  "reconciliacion_detalle": {
+    "sin_maestro": [],
+    "vinculables": [],
+    "conflicto_nombre": [],
+    "ya_vinculado_ok": [
+      {
+        "id": "0012bb78-b717-4c09-bb67-47fe780319e4",
+        "sku": "22",
+        "name": "Conectores MC4",
+        "master_id": "84de3ef7-00ed-46ca-a9ad-f95819c8f559"
+      },
+      {
+        "id": "04ee0798-2912-42c1-8af0-aa04d5b78613",
+        "sku": "95",
+        "name": "Barrena 34mm Madera",
+        "master_id": "3f81d8e1-fdc4-4009-9d52-58f11995e52c"
+      },
+      {
+        "id": "0b42981a-52ba-4f88-bbc6-15ebd0f04bdc",
+        "sku": "41",
+        "name": "Latiguillo MC4",
+        "master_id": "216e503a-7b08-4d68-93c1-d0cb18e2c56d"
+      },
+      {
+        "id": "0ce44331-4402-455f-acfb-44e396ebeb83",
+        "sku": "2",
+        "name": "Abrazadera metálica de 1 pulgada",
+        "master_id": "7476cb09-d2d1-4cd2-a581-351ebf382cb0"
+      },
+      {
+        "id": "0ed7b327-ebe4-474e-8b50-e6a399ac108f",
+        "sku": "71",
+        "name": "Uniones de media/Niple macho",
+        "master_id": "a71d10db-0f35-4046-8da9-45d9c01b49b2"
+      },
+      {
+        "id": "0fcaccef-5e72-482a-aedb-70964190fc15",
+        "sku": "21",
+        "name": "Colchón Milexus",
+        "master_id": "a6164985-eab1-49a6-aab3-c460b91a9ec9"
+      },
+      {
+        "id": "11510a09-32e8-4810-a9c1-faeb22016492",
+        "sku": "93",
+        "name": "Liquidación de OT 12",
+        "master_id": "00640c1a-e50b-434c-9fdd-5a91acce965c"
+      },
+      {
+        "id": "11ca852e-4d72-4be5-8ee6-6777ebaba5df",
+        "sku": "44",
+        "name": "Losa aporcelanada 60x60 con defectos",
+        "master_id": "badf4bc2-8b35-481f-825d-7d68a5fd36ef"
+      },
+      {
+        "id": "1498f8ec-aa50-49a0-bf89-4e7eb7e29b1c",
+        "sku": "4",
+        "name": "Bisagra",
+        "master_id": "d647f7c2-7f68-4fa2-bee6-e651a8a0a940"
+      },
+      {
+        "id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "sku": "112",
+        "name": "Grapas metálicas 3/4 con tornillo roscante",
+        "master_id": "3bf620a7-1dd1-46ed-ae0f-7a0a7b09f7eb"
+      },
+      {
+        "id": "1b0d19fd-e0fe-4ac1-972c-3a1361d61263",
+        "sku": "90",
+        "name": "Cable Solar Rojo 6mm",
+        "master_id": "e7e39003-0792-42a9-8d9a-2938d57a7931"
+      },
+      {
+        "id": "1c85b182-203d-4ecf-bc72-c0f3295034d2",
+        "sku": "80",
+        "name": "Brecker C32A Doble",
+        "master_id": "a6f88f17-2cfb-4f7b-8c50-8354f66d38af"
+      },
+      {
+        "id": "1c945584-bb91-4d29-bab7-4c1050205f82",
+        "sku": "82",
+        "name": "Cripiadora con pela cable Anaranjada",
+        "master_id": "288a626a-a965-4a11-908b-bee9f4d2de55"
+      },
+      {
+        "id": "1e47c4e5-e2c5-434d-8557-5b9f20847f44",
+        "sku": "43",
+        "name": "Losa aporcelanada 60x60",
+        "master_id": "089fc16f-14de-4629-8914-cd07a5e6610a"
+      },
+      {
+        "id": "21f4cf28-3a63-4bd1-8531-87cbda683300",
+        "sku": "57",
+        "name": "Rodillo",
+        "master_id": "e12fecc3-3ab6-4a71-a35a-f62dcf14b63a"
+      },
+      {
+        "id": "21fb9ced-f6d8-4b2a-8194-893188367234",
+        "sku": "62",
+        "name": "T de pulgada a 3/4",
+        "master_id": "d76ef95f-e885-46e6-b7b8-5a48ac3becc9"
+      },
+      {
+        "id": "22c18cf5-e7d6-4217-9e4a-1bd722711883",
+        "sku": "5",
+        "name": "Brecker 16A Sencillo",
+        "master_id": "8c95bd66-570b-4a01-90bc-c7f2d85f2300"
+      },
+      {
+        "id": "243fa509-23d4-4131-a6d8-ff8796f438f2",
+        "sku": "7",
+        "name": "Brecker 32A Trifasico",
+        "master_id": "490576f4-cf0a-4f58-9c48-275a7c37ce48"
+      },
+      {
+        "id": "2b2e648d-feea-4a1b-a3c6-f614ae320ab8",
+        "sku": "72",
+        "name": "Yee de 50",
+        "master_id": "6a1570fc-1803-486e-b7ae-42a81652d3c8"
+      },
+      {
+        "id": "2bc30f23-44cf-4e4f-88db-208ac7d37da5",
+        "sku": "59",
+        "name": "Soporte de papel higiénico",
+        "master_id": "4e3d56ab-cee8-4b7c-8f08-c93c775709bc"
+      },
+      {
+        "id": "2cbc0017-93f5-4d3f-9c12-fc8c8ac44f05",
+        "sku": "15",
+        "name": "Cemento Cola",
+        "master_id": "8097c7dc-a9c0-4148-a4f3-154c973fccf0"
+      },
+      {
+        "id": "30124691-337c-422f-9955-23eeaae3e140",
+        "sku": "81",
+        "name": "Bridas de 4x8 400mm",
+        "master_id": "9209b332-2d13-4ede-8813-b0e432d1bdd1"
+      },
+      {
+        "id": "30dca90c-1606-4ba2-8a06-1fbcb5792e68",
+        "sku": "17",
+        "name": "Césped Artificial",
+        "master_id": "ab088890-a90e-4183-83e2-0a5f85b7e5bd"
+      },
+      {
+        "id": "34f49170-6f4f-426c-a1f2-3c396c416b74",
+        "sku": "999",
+        "name": "Servicio de cripiar",
+        "master_id": "b7c302da-6ae2-465b-ab3e-ae75d6fc4c16"
+      },
+      {
+        "id": "372180f6-9837-44b6-a939-91dc67e21d7a",
+        "sku": "14",
+        "name": "Distribuidor de corriente 4 salidas",
+        "master_id": "81cf9034-7a13-413b-8b69-d39f8e8477ab"
+      },
+      {
+        "id": "39d4e767-4d9d-4cb0-a79c-15c708e400a6",
+        "sku": "78",
+        "name": "Tornillo con tuerca 4.8",
+        "master_id": "5188a159-ee37-493c-a72f-4632492f5320"
+      },
+      {
+        "id": "3c072e9a-1c0d-4adf-add5-b337485bc3e4",
+        "sku": "88",
+        "name": "Cable Solar Rojo 4mm",
+        "master_id": "65ee9331-4a8b-428b-90c9-c9dad962fa7f"
+      },
+      {
+        "id": "3e11bff7-fa4d-4eab-b032-85972bb63092",
+        "sku": "67",
+        "name": "Transfer monofásico 220",
+        "master_id": "b54d2c97-3f41-4a73-8ca2-f149a82a401f"
+      },
+      {
+        "id": "3ee29fd6-ce19-473b-9c26-3e72b6ecfd9f",
+        "sku": "74",
+        "name": "Controlador de línea",
+        "master_id": "d1a6ada4-b857-4c8b-811e-32264d6f6641"
+      },
+      {
+        "id": "490936b7-b7bf-4e17-9de6-8666e0f5c770",
+        "sku": "3",
+        "name": "Araganes",
+        "master_id": "9fd81fc9-81b0-4212-ab8f-02f916169bbd"
+      },
+      {
+        "id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "sku": "111",
+        "name": "Grapas plásticas con clavo de acero",
+        "master_id": "9b37097c-8e89-4bfc-bc99-529153a0d722"
+      },
+      {
+        "id": "4cd310e3-00ed-4b4d-8e60-4b92b8a2c172",
+        "sku": "10",
+        "name": "Brida 58",
+        "master_id": "510fcdc1-4b74-4cfe-95b1-ab00874298dd"
+      },
+      {
+        "id": "5182b826-d245-42eb-b2f8-282eadedd99c",
+        "sku": "30",
+        "name": "Expansiones anaranjada 6*40mm /Rapita",
+        "master_id": "8b600467-d9c0-49fc-aeee-68020f38f4fc"
+      },
+      {
+        "id": "5444f7b6-cf77-4bba-9717-202ddef54c32",
+        "sku": "36",
+        "name": "Impermeable verde 20Kg",
+        "master_id": "b5ff5c74-1f74-4268-aeeb-3f01a6830752"
+      },
+      {
+        "id": "544f9415-1bda-4267-a524-948f836f23bf",
+        "sku": "24",
+        "name": "Cuchilla 2P 63A",
+        "master_id": "d720dcf8-b8c0-4028-b57b-fa4eb52e26cd"
+      },
+      {
+        "id": "55307d87-4105-4ad2-9805-e22ff9013dcf",
+        "sku": "79",
+        "name": "Interruptor y toma corriente",
+        "master_id": "76c37051-d03d-4105-97f1-4ebed70251f0"
+      },
+      {
+        "id": "574373b8-f104-46af-8c6c-4114852ce591",
+        "sku": "118",
+        "name": "Varilla de Tierra",
+        "master_id": "8e5004bc-b00b-4024-8dda-7558c6f29ead"
+      },
+      {
+        "id": "58483ce8-df93-42b4-8168-f30460e0402f",
+        "sku": "42",
+        "name": "Llave de lavamano",
+        "master_id": "dd582447-c378-4fea-8499-0404f21cd1bd"
+      },
+      {
+        "id": "598d7d1d-48d1-4475-bab5-1f222e0eec80",
+        "sku": "23",
+        "name": "Cuchilla 2P 100A",
+        "master_id": "7a7e593a-b220-45bd-8700-d1094c7d1338"
+      },
+      {
+        "id": "5da894db-e432-461b-9411-a92cb0c1dac5",
+        "sku": "13",
+        "name": "Cable Conductor eléctrico 8",
+        "master_id": "a9e6fb47-abbf-4613-862b-c04717b8c8ac"
+      },
+      {
+        "id": "5ecd4e54-7710-4da4-8bd1-510511946b2f",
+        "sku": "64",
+        "name": "Tanqueta de antioxidante gris 20L",
+        "master_id": "21d4a8fe-0406-4fcc-adc0-385a8aacc223"
+      },
+      {
+        "id": "618ce7eb-f90b-4094-ad2e-c104ed3e496c",
+        "sku": "115",
+        "name": "Regleta",
+        "master_id": "b7c10539-9942-453d-b78b-24458d1ad952"
+      },
+      {
+        "id": "6261d0e9-ccd1-4597-9016-6f6aa7485481",
+        "sku": "98",
+        "name": "Limpia parabrisa",
+        "master_id": "46f6033a-58b4-4fb4-a2f7-e499a616af67"
+      },
+      {
+        "id": "65d81028-0eed-41ec-836b-0ae64be5c523",
+        "sku": "56",
+        "name": "Reducido de 3/4",
+        "master_id": "d9a9f2f1-af95-4f63-827e-455fed45bc38"
+      },
+      {
+        "id": "680c132e-b328-4390-926e-18b1368f6444",
+        "sku": "117",
+        "name": "Inversor",
+        "master_id": "452461d9-a2b4-4eff-b32b-c360fa119a9a"
+      },
+      {
+        "id": "6862a061-50d0-4c8d-96d4-7b6d6ed082cd",
+        "sku": "37",
+        "name": "J de techo",
+        "master_id": "67c0736f-7fe4-4501-a22c-98c3498a1812"
+      },
+      {
+        "id": "6cda2af1-6e24-4bfc-a2f8-bcd52797e841",
+        "sku": "39",
+        "name": "Tubo de Lámpara de 40",
+        "master_id": "59df5906-b4d4-45c2-8b46-0ac753d4de5e"
+      },
+      {
+        "id": "6e67d2ac-8f1e-4da1-827a-15f6e6ff8005",
+        "sku": "47",
+        "name": "Mortero",
+        "master_id": "77fcd04f-c62a-4f7f-b385-5b8cc9cb3476"
+      },
+      {
+        "id": "6fb35013-d343-4f2f-8f24-00ff79869cf2",
+        "sku": "61",
+        "name": "T de media",
+        "master_id": "d7004aff-ccb2-4fde-ba5d-5f3311f726ea"
+      },
+      {
+        "id": "73c3ebfa-7a0e-406f-b581-a1e95a7cd300",
+        "sku": "100",
+        "name": "Autorroscante chiquito",
+        "master_id": "ed013304-1702-4191-a023-175b80fce123"
+      },
+      {
+        "id": "765341ce-2a0b-4615-a2fb-c224631218d0",
+        "sku": "105",
+        "name": "Cajita breckera sencilla",
+        "master_id": "ea5150fd-aaa2-45a5-8f5c-4567b535c014"
+      },
+      {
+        "id": "7870cb6b-7417-496f-b9d7-7304ecc3a8f1",
+        "sku": "12",
+        "name": "Cable Conductor eléctrico 10",
+        "master_id": "70972256-a6a2-4045-9cd9-841e806a4bbb"
+      },
+      {
+        "id": "79addf1a-370c-427e-a9a0-328359e94ee5",
+        "sku": "69",
+        "name": "Unión universal de 3/4",
+        "master_id": "e020e26a-65c0-4204-b3ce-e1f7f1e2ac26"
+      },
+      {
+        "id": "7a6af746-d8ca-4325-b0eb-ed4cb574f5ad",
+        "sku": "29",
+        "name": "Expansiones 8x80",
+        "master_id": "6c6a911c-6b7c-4d20-a087-de01d65f707b"
+      },
+      {
+        "id": "7b2f8ec3-2e3e-47f4-8a84-7ed62d0737f5",
+        "sku": "49",
+        "name": "Nudos de 3/4",
+        "master_id": "6f87e020-eaa7-4c33-8dbd-ce67e3aa8c80"
+      },
+      {
+        "id": "7c6c64a2-a1ac-4fb0-9000-90a95d23c78f",
+        "sku": "103",
+        "name": "Perfiles para brecker",
+        "master_id": "390c5eb8-c0a9-4d32-a6ec-86a85f280698"
+      },
+      {
+        "id": "7d50c274-922e-4674-bdff-a452884bf03e",
+        "sku": "52",
+        "name": "Pintura Verde 4L",
+        "master_id": "06eaaf45-7dbc-4380-99bc-e47a8a463c01"
+      },
+      {
+        "id": "7dade8b1-2c22-4ca5-a816-0bc8635e4f7c",
+        "sku": "33",
+        "name": "Extensiones 5M",
+        "master_id": "f418a23a-a576-4305-b0ad-cd9a8e75d5c0"
+      },
+      {
+        "id": "81cf320e-a75e-4585-a4d5-82e21dbf8f6c",
+        "sku": "104",
+        "name": "Terminales cubanas",
+        "master_id": "e8a19222-4782-4ed1-8378-4a7438aba353"
+      },
+      {
+        "id": "84feaebe-2d47-4e5e-abce-03d892aaf56b",
+        "sku": "119",
+        "name": "Yee MC4",
+        "master_id": "81045b9e-7eeb-4b44-8d28-f4c5d0680e06"
+      },
+      {
+        "id": "8769cde9-6135-4011-a56c-86a96e02bf7b",
+        "sku": "48",
+        "name": "Nudo de media",
+        "master_id": "7ded4a2a-96a3-48f8-a76f-23bc3451bc36"
+      },
+      {
+        "id": "8859ef67-f829-4543-8bf8-6bb7e970e92d",
+        "sku": "31",
+        "name": "Expansiones con tornillos M8",
+        "master_id": "008f34bd-1bf2-4f76-b955-cc815da0cf0e"
+      },
+      {
+        "id": "8b05170d-4b3d-4cc4-937e-b4d7daa2a6fd",
+        "sku": "83",
+        "name": "Cripiadora Roja con 6 dabas rojas",
+        "master_id": "d66c1e03-5da2-4a2d-8352-252b488921e7"
+      },
+      {
+        "id": "909e914d-0672-4952-9f7a-57bf60ab07d5",
+        "sku": "89",
+        "name": "Cable Solar Negro 6mm",
+        "master_id": "33fae0fb-c847-4b03-a585-be3a77a8f7dc"
+      },
+      {
+        "id": "94192ab2-2b20-4dd3-980b-9153d1982df9",
+        "sku": "58",
+        "name": "Rosca Chapa",
+        "master_id": "cb6a0296-97d3-484e-9c1d-807bb73651d2"
+      },
+      {
+        "id": "963cd5c6-f496-471f-bf4b-6db083c8929f",
+        "sku": "45",
+        "name": "Malla perli",
+        "master_id": "a35f0a97-c3cf-428d-9296-6fb4f1cfb804"
+      },
+      {
+        "id": "9f279860-e020-4749-a40c-fee16beb35df",
+        "sku": "73",
+        "name": "Interruptor doble",
+        "master_id": "8c86b088-c805-4403-bda4-07ade92b0072"
+      },
+      {
+        "id": "a2396677-560b-417c-947a-b97b5946fae6",
+        "sku": "68",
+        "name": "Transfer trifásico",
+        "master_id": "d372fc28-5e0b-4c94-b80a-4a263964fd59"
+      },
+      {
+        "id": "a2a38a6d-dc40-45a2-af1b-d010735ef366",
+        "sku": "66",
+        "name": "Tornillo M10",
+        "master_id": "bc979be7-8c1d-4f8c-83da-43e0b2a2a321"
+      },
+      {
+        "id": "a38829be-3866-4860-b125-ced53287cee6",
+        "sku": "92",
+        "name": "Juego de pata",
+        "master_id": "9621223a-3fcc-400a-ac45-86c79fa6ecdb"
+      },
+      {
+        "id": "a3c6abc0-87b0-4d4a-bbd4-3a9630dc42d2",
+        "sku": "9",
+        "name": "Brecker D 63A",
+        "master_id": "546bbb00-4491-4272-8d91-94992e38cacc"
+      },
+      {
+        "id": "a648cb46-3b8a-4061-af67-6c0079135114",
+        "sku": "116",
+        "name": "Herraje",
+        "master_id": "532524ed-b348-404c-8a33-6e0e7807ed1b"
+      },
+      {
+        "id": "a764a5b5-e680-49ee-9fcf-88721e0e243e",
+        "sku": "50",
+        "name": "Nudos de 50",
+        "master_id": "7824e3ec-7afb-4b4a-9692-7dbfd3dbd710"
+      },
+      {
+        "id": "a8b0168d-574e-418c-be86-e99053459b39",
+        "sku": "106",
+        "name": "Tornillo con arandela",
+        "master_id": "7d3c249e-6506-427e-b32a-e4e4a477b61c"
+      },
+      {
+        "id": "a918cf13-d5ee-42ff-9f40-8fd074c2279c",
+        "sku": "34",
+        "name": "Fregadero",
+        "master_id": "67bed8fe-9b38-4fa8-99c9-c43bf83bc9f6"
+      },
+      {
+        "id": "aa7216b1-9b78-4b27-8a96-c073af555d9d",
+        "sku": "99",
+        "name": "Electrodo 4mm",
+        "master_id": "57a053f5-dc2c-4df4-83b1-16fd15e2ac42"
+      },
+      {
+        "id": "aabb4a3a-f787-438d-b283-bbb328d9a98f",
+        "sku": "75",
+        "name": "Espigas de 15 AMP",
+        "master_id": "53309ebc-a3e0-48d6-95f2-3d3a067508b0"
+      },
+      {
+        "id": "abe8dc9d-1d76-4216-8958-838c90ac7269",
+        "sku": "6",
+        "name": "Brecker 25 A Sencillo",
+        "master_id": "95f4885a-391d-40e7-9554-8fc55650efef"
+      },
+      {
+        "id": "ac865b9c-53a2-4048-91e6-40a362adb913",
+        "sku": "84",
+        "name": "Conector XT60",
+        "master_id": "cb0122d1-03d3-4859-97c9-6884688bb2c9"
+      },
+      {
+        "id": "aee96e33-8e35-4390-aa65-bdeb917473db",
+        "sku": "35",
+        "name": "Fuete eléctrico",
+        "master_id": "6000f1cd-57aa-4e13-9cf8-b9d62ea96e7d"
+      },
+      {
+        "id": "b05cf797-b8e0-4ba2-892a-173f9d3cd6e2",
+        "sku": "91",
+        "name": "Liquidación OT 16",
+        "master_id": "afca87e2-37be-45f6-9684-dfcad434c1dc"
+      },
+      {
+        "id": "b08987c6-3853-4808-bff8-946492a78393",
+        "sku": "8",
+        "name": "Brecker C32 A Triple",
+        "master_id": "41f8c46d-9612-4caf-affc-59e812da68f1"
+      },
+      {
+        "id": "b1e30ab0-ce01-42b0-a703-844f135b9cc7",
+        "sku": "97",
+        "name": "Disco de corte",
+        "master_id": "75766b93-cb40-4d87-8a84-e9fa0f319e70"
+      },
+      {
+        "id": "b4b2f0e7-14df-4108-a5b4-14577292c35e",
+        "sku": "51",
+        "name": "Pintura Casa Blanca 14L",
+        "master_id": "bcfcd754-d231-4d6b-a019-c2763d5880dd"
+      },
+      {
+        "id": "b5bde54a-0cb8-4305-8f93-82291a134d97",
+        "sku": "38",
+        "name": "Lámpara de 20",
+        "master_id": "a04e5258-4f4e-4094-86f8-4a02fcb76291"
+      },
+      {
+        "id": "b64d50cd-93b0-4001-a798-49167eb62155",
+        "sku": "76",
+        "name": "Toma corriente con tapa",
+        "master_id": "fcd36902-8f71-4388-8ec6-938df51e33fc"
+      },
+      {
+        "id": "bc39c25c-b582-4246-9f6e-44bc5c455d77",
+        "sku": "85",
+        "name": "Panel 585",
+        "master_id": "53a098f2-1117-4748-a872-8cdc8aa7b086"
+      },
+      {
+        "id": "bcd07538-3e64-45d0-a13d-c0c96c769f49",
+        "sku": "77",
+        "name": "Teipe negro",
+        "master_id": "a8c14d73-5b92-4bd4-85d8-4578f2990b15"
+      },
+      {
+        "id": "bd826299-e514-4106-8646-3c27214c54a6",
+        "sku": "63",
+        "name": "Tanqueta de Aceite negro 20 L",
+        "master_id": "a2ec26ab-9603-4454-be05-fef01a3f424c"
+      },
+      {
+        "id": "bd8b0e8c-2a4e-4954-b2da-8afa9c6191c4",
+        "sku": "60",
+        "name": "Supresores de sobretensiones",
+        "master_id": "e6cb64af-d9ae-43c8-8c1d-c972f20407ad"
+      },
+      {
+        "id": "c0ca7553-28e4-4391-9c9e-770d63642948",
+        "sku": "19",
+        "name": "Codo de 90",
+        "master_id": "d00db085-80c0-4708-b9fe-68552e07442d"
+      },
+      {
+        "id": "c2f4df7e-045a-4990-a34a-d211387e3924",
+        "sku": "108",
+        "name": "Cajita Breckera sencilla gris",
+        "master_id": "4b515c3a-9b45-4ba6-8a7d-d139b9adfcff"
+      },
+      {
+        "id": "c8070dfe-85cd-43f9-bc40-a202126958b6",
+        "sku": "96",
+        "name": "Barrena 5mm Madera",
+        "master_id": "3fcbfb19-d17c-44e5-9301-eee4f5f9de10"
+      },
+      {
+        "id": "cb969aba-5b05-4198-9fd6-5857abff2ac8",
+        "sku": "26",
+        "name": "Disco de esmeril",
+        "master_id": "0bfb3f18-cc37-4a8c-a7f3-5cbcdfb69890"
+      },
+      {
+        "id": "cbb05aca-0c14-4a46-b54a-52014e96ac5c",
+        "sku": "11",
+        "name": "Cabilla 70 Cm",
+        "master_id": "dc1c0540-65b5-4ef6-ba27-51602f9e4ac4"
+      },
+      {
+        "id": "cd6aadbd-2a1f-42e1-bc56-372a8ed04d87",
+        "sku": "102",
+        "name": "Cajas eléctricas",
+        "master_id": "ba69d0e6-1a71-485a-9c00-ea865004590a"
+      },
+      {
+        "id": "ce3f2c20-7aaf-4eb6-b6af-38834fb37fc2",
+        "sku": "20",
+        "name": "Codos de 45 grado",
+        "master_id": "b078dee7-81a1-4315-9f9a-2e443031d0d1"
+      },
+      {
+        "id": "d0cab976-b1cc-42a9-a177-97aa48a393a5",
+        "sku": "70",
+        "name": "Unión universal de media",
+        "master_id": "34141103-ef3e-490d-a2cb-b3245bbfaa0f"
+      },
+      {
+        "id": "d33cbe53-01f8-49b2-b0d2-48ec4bf61822",
+        "sku": "65",
+        "name": "Terminales eléctricas",
+        "master_id": "98b1c022-edb1-49d1-887e-ebee108eb1e6"
+      },
+      {
+        "id": "d70d4ec3-2327-40d7-829f-79306f4ab015",
+        "sku": "53",
+        "name": "Planchas de zinc",
+        "master_id": "999b243a-3f07-4617-b327-4937c644cf30"
+      },
+      {
+        "id": "d9650919-c674-4ed3-bd38-fbbb33daa36f",
+        "sku": "46",
+        "name": "Masilla interior blanca",
+        "master_id": "adddca1a-0e1f-488c-8900-c6b910a5faeb"
+      },
+      {
+        "id": "d9f474ad-310d-4c78-8517-665db0bc1c89",
+        "sku": "1",
+        "name": "Abrazadera metálica de 3/4",
+        "master_id": "1021c2b0-c915-4120-af02-75ba8d73d26d"
+      },
+      {
+        "id": "e2d24257-b82d-4ef4-8f8b-c8e3a6394a4b",
+        "sku": "25",
+        "name": "Cuchilla 3P 100A",
+        "master_id": "c9d10800-83ed-4c45-9512-c3067a1a62aa"
+      },
+      {
+        "id": "e356ca7a-b631-4df9-8e3e-a701d9459d25",
+        "sku": "113",
+        "name": "Goma Termo Retráctil",
+        "master_id": "45c4c7a8-bd12-4968-b80f-51be596edf54"
+      },
+      {
+        "id": "e36e1d85-6f84-4d3c-a956-f037d082ffe0",
+        "sku": "114",
+        "name": "Combustible",
+        "master_id": "b4381b3a-71e9-406e-92f8-81d7223ccd32"
+      },
+      {
+        "id": "e3f52f11-6732-4e7d-a7e2-f60c440b58d3",
+        "sku": "109",
+        "name": "Inicio Z",
+        "master_id": "c49adf03-07aa-4d6c-a0b1-2ec2f2dc9dfa"
+      },
+      {
+        "id": "e46b0164-5f65-40b9-8c48-a8154138e2be",
+        "sku": "86",
+        "name": "Panel + 600W",
+        "master_id": "5bc50df9-33d5-4f84-bc48-380e969d4a6a"
+      },
+      {
+        "id": "e54cf638-86f8-4b34-b60d-6dcca0909530",
+        "sku": "55",
+        "name": "Purles",
+        "master_id": "54b5d76a-c782-4f18-8187-b6cf7dad5453"
+      },
+      {
+        "id": "e72c94ec-3986-4486-9f49-81cded6048ca",
+        "sku": "16",
+        "name": "Cemento P425 Tudella",
+        "master_id": "7ffab6f6-4cac-4e2e-8940-a93b9221f980"
+      },
+      {
+        "id": "ea9f3d5e-2d7e-4ae9-adf4-d8469ae24cb3",
+        "sku": "107",
+        "name": "Caja de distribución TRIC",
+        "master_id": "2a099244-4f0e-4c30-8f9d-6e7aa2e59ef8"
+      },
+      {
+        "id": "ebcde03e-b5f3-4271-b074-17264e4eb6b2",
+        "sku": "94",
+        "name": "Barrena 6mm Madera",
+        "master_id": "87138861-526c-4b5c-a66f-295fbad7c950"
+      },
+      {
+        "id": "ede160a4-9500-43c5-b6c8-7c5c5d159147",
+        "sku": "54",
+        "name": "Porta Fusibles",
+        "master_id": "f10384ad-9353-4c94-acd5-b477197dc77a"
+      },
+      {
+        "id": "ef561959-20af-4110-9f41-659b3866e1c0",
+        "sku": "101",
+        "name": "Canal de media",
+        "master_id": "7b8bcfe7-c4f6-4e54-80be-f60ba610d8a2"
+      },
+      {
+        "id": "f253520d-d5c1-4be2-a6b2-e42758c89f89",
+        "sku": "110",
+        "name": "Intermedio",
+        "master_id": "b5a055b3-1769-43b3-aba7-276b5480c9d3"
+      },
+      {
+        "id": "f2757338-f26f-4538-945e-5da97ec10a8f",
+        "sku": "87",
+        "name": "Cable Solar Negro 4mm",
+        "master_id": "54e6e64c-9807-41a8-8e09-bf7474465fe6"
+      },
+      {
+        "id": "f2ad0fc0-59ee-4308-8cb8-e522e5f2bf6d",
+        "sku": "32",
+        "name": "Expansiones con tornillos M6",
+        "master_id": "7ab649cf-da17-46f2-9b28-b8500202d65f"
+      },
+      {
+        "id": "f3d0f5a3-7e9d-46c9-91c1-a166129cb187",
+        "sku": "28",
+        "name": "Espejo",
+        "master_id": "c50a8a7b-c6a4-464a-b0cd-aee431cbb46f"
+      },
+      {
+        "id": "fb5f945c-274c-439f-9535-541a32b7987f",
+        "sku": "18",
+        "name": "Cheques metálicos",
+        "master_id": "f99c82d1-fa7f-46ee-878b-ca4137927481"
+      },
+      {
+        "id": "fcadebcd-1f99-4736-973d-cea194902399",
+        "sku": "40",
+        "name": "Latiguillo de media por 3/8",
+        "master_id": "129d587a-7557-41df-8ee6-769005e7b951"
+      },
+      {
+        "id": "fddc4a93-605c-4e45-b8b9-6bfd80131adf",
+        "sku": "120",
+        "name": "Estación de carga",
+        "master_id": "3014142d-5d8c-4600-a87f-3aee8d92846d"
+      },
+      {
+        "id": "ff5145c8-d43c-4104-82c3-81dacef80e78",
+        "sku": "27",
+        "name": "Escobas",
+        "master_id": "6e7f9c0c-f287-4211-8a07-27708fe3e24b"
+      },
+      {
+        "id": "1f8ab888-9fed-461f-8342-7102b201acbb",
+        "sku": "121",
+        "name": "Supresores de voltaje",
+        "master_id": "76404536-fa92-437a-9f33-63fd3842f70e"
+      },
+      {
+        "id": "dd0f6d35-5542-4713-b12b-9ce2f113e962",
+        "sku": "122",
+        "name": "Controladores de voltaje",
+        "master_id": "324a5769-3a01-4190-936c-2f073597983c"
+      },
+      {
+        "id": "158ffb1e-ac5e-4b44-a52a-edcca969cf1e",
+        "sku": "123",
+        "name": "Alarma",
+        "master_id": "a851b6f3-772a-405d-82f8-7fbdff9108fc"
+      },
+      {
+        "id": "2e7b4157-99a4-4b81-b135-33ff2c983d13",
+        "sku": "128",
+        "name": "Brecker 63 AMP Corriente alterna",
+        "master_id": "2c60a1d4-8c22-455d-ba90-debbbe53f11f"
+      },
+      {
+        "id": "33824dd6-87c0-48c9-aa68-79cc3e8856f7",
+        "sku": "124",
+        "name": "Linterna de casa 4.2 V",
+        "master_id": "2117fe80-24de-4612-837e-626e122dc6d6"
+      },
+      {
+        "id": "4349bba8-ad6e-4a01-8860-02361bf21b1c",
+        "sku": "125",
+        "name": "Linterna de cabeza de 15W",
+        "master_id": "730e2a3f-7619-4614-8fb0-f1641164fa07"
+      },
+      {
+        "id": "d28f0432-f93f-4aa5-8aa2-0b105b4b41db",
+        "sku": "126",
+        "name": "Linterna solar",
+        "master_id": "fbe3fd54-c079-4a5e-8a05-a6c629b1b199"
+      },
+      {
+        "id": "fbe23f67-ee82-4d7b-a085-fb03cb7cb9ed",
+        "sku": "127",
+        "name": "Transfer 220",
+        "master_id": "62bcf44c-8863-46d0-9d5a-7839dc579eb3"
+      },
+      {
+        "id": "616e4b8d-3d27-41d2-a6be-f257d9319fb2",
+        "sku": "129",
+        "name": "Maleta de herramientas",
+        "master_id": "f2afc25c-1a69-44e7-b1d8-5586a0d6aebb"
+      },
+      {
+        "id": "8a065dfe-70d9-4b8c-b175-0fb328dae133",
+        "sku": "130",
+        "name": "Breckera SPC",
+        "master_id": "92175fa3-d30e-411b-a812-7b9db7f78b46"
+      },
+      {
+        "id": "f747f700-ad4c-4c0f-adfb-55317eee74da",
+        "sku": "131",
+        "name": "Panel de 550W",
+        "master_id": "7d6be3e3-f045-448b-8681-e107a45cfd9a"
+      },
+      {
+        "id": "9f2763b9-bb80-4d52-920f-3e694040ce1f",
+        "sku": "132",
+        "name": "Brecker 32 A Alterna Doble",
+        "master_id": "78ce3973-480d-43ac-afb6-b9fc2c3e0a3e"
+      },
+      {
+        "id": "e994e18f-d0f6-46e8-9893-d5c338766403",
+        "sku": "133",
+        "name": "Ventiladores recargables",
+        "master_id": "291e76ee-fc21-48be-916d-a94da6bf890f"
+      },
+      {
+        "id": "3a04318b-3b7c-461e-8be0-9883ef0ea34d",
+        "sku": "134",
+        "name": "U de aluminio o intermedio",
+        "master_id": "7e5b0379-5265-4216-a21f-25289fbc8c42"
+      },
+      {
+        "id": "15c001d1-1ae1-42cb-a0bf-e761cd999f55",
+        "sku": "135",
+        "name": "Cable 6",
+        "master_id": "cfd1fb4c-e95b-4bfd-8b96-9902be52a2fd"
+      },
+      {
+        "id": "9c69332f-dc8f-4a1b-afb0-59ba3a3451e6",
+        "sku": "136",
+        "name": "Batería EKO 5KW",
+        "master_id": "ea68d058-8f59-4211-96c6-d8b99b557721"
+      },
+      {
+        "id": "0966801c-e210-4ecc-9336-cb6916f78222",
+        "sku": "137",
+        "name": "Tubo blanco de condulei de 1/2 de 5M",
+        "master_id": "c8472e7d-562a-48ce-a4e8-6fd698239177"
+      },
+      {
+        "id": "4d69db77-616e-4c32-a55f-317066d7eb12",
+        "sku": "138",
+        "name": "Kit de 6 K Inversor - 5K Batería +Accesorios",
+        "master_id": "80ecc9bf-5529-4f21-afc9-2d3ca48b7387"
+      },
+      {
+        "id": "8436ffa6-8624-496d-b430-cdd5c0dae43f",
+        "sku": "139",
+        "name": "Panel de 640 W Suntech",
+        "master_id": "4aa6e960-d50e-4122-8039-8da9a89fd526"
+      },
+      {
+        "id": "42786221-a958-4351-a640-55d3c89fe03e",
+        "sku": "140",
+        "name": "Breckera de 9 posiciones",
+        "master_id": "7fd1070e-0189-425b-9e09-35c7be17f682"
+      },
+      {
+        "id": "d1afd532-0bad-4af7-8605-b3594c25e864",
+        "sku": "141",
+        "name": "Cemento TBV 50 Kg",
+        "master_id": "8d184d1e-2980-43b5-80ed-09bfa061c0c6"
+      },
+      {
+        "id": "504b9b78-bf54-4e66-a659-ce0c30320cdb",
+        "sku": "142",
+        "name": "Cemento Blanco 2 Kg",
+        "master_id": "4e9d1d34-2cc9-4be6-89f6-292a31a0db1e"
+      },
+      {
+        "id": "6719623e-7ac4-4f24-8e43-fe0fc2aad615",
+        "sku": "143",
+        "name": "Filtros de Gasolina",
+        "master_id": "52095765-fbb4-435a-ac9f-0877ec879790"
+      },
+      {
+        "id": "9d072d97-3df0-4d95-bfa8-097e3287939c",
+        "sku": "144",
+        "name": "Fusible de automóvil",
+        "master_id": "dd848ec9-6dee-4c77-94ff-a64e1ea58df1"
+      },
+      {
+        "id": "61db1b62-376d-40c9-b401-022676a4ac85",
+        "sku": "145",
+        "name": "Tunder 24 Vol",
+        "master_id": "b1a73ce3-1924-42e8-88a3-aa5b312c2bd5"
+      },
+      {
+        "id": "25d97c33-dce5-4afb-8413-b51c7e1e1762",
+        "sku": "146",
+        "name": "Tunder Grande",
+        "master_id": "0f95ec23-65cb-4157-9056-72c183b1bdd4"
+      },
+      {
+        "id": "68ec343f-9aef-482c-8da9-ab67157de06a",
+        "sku": "147",
+        "name": "MPPT",
+        "master_id": "229d2156-1b8e-44d3-a9ec-6ec68d7a8a92"
+      },
+      {
+        "id": "5729da3d-2c97-4dcf-b437-1998699a5f80",
+        "sku": "148",
+        "name": "Huncong (Medir corriente)",
+        "master_id": "1837f6cd-651b-4854-b75f-23e5d51edcfd"
+      },
+      {
+        "id": "32143806-af97-4ed6-9ca9-5b28a3853e68",
+        "sku": "149",
+        "name": "Voltímetro",
+        "master_id": "5e7e6029-ee36-47c9-8e03-420a86f5fee5"
+      },
+      {
+        "id": "6422a883-7f3e-429b-9802-6f464da74c10",
+        "sku": "150",
+        "name": "Batería 7.5 Kilos 21.8 V 314 Ah",
+        "master_id": "62c298dc-38ca-49df-a703-242fef6f404f"
+      },
+      {
+        "id": "d2c9520d-50cd-4ddc-9a1a-90c281537742",
+        "sku": "151",
+        "name": "Inversor Sumry",
+        "master_id": "c3a6582f-928d-493e-a2d0-3c5bfe9fd8c0"
+      },
+      {
+        "id": "1aa3aa89-2238-49fd-b28a-1356bae6ca98",
+        "sku": "152",
+        "name": "Equipo Música DAZONE",
+        "master_id": "431f54ea-d8f3-4e78-bd38-5e3620a65a1f"
+      },
+      {
+        "id": "b59c7a45-b33a-4fe3-a12e-c10be7bad388",
+        "sku": "153",
+        "name": "Taladro con batería y barrena",
+        "master_id": "2de0556a-b153-476f-bef5-c5693f5c8da1"
+      },
+      {
+        "id": "7723c933-9cdd-425d-abc9-6f01fbbf6b46",
+        "sku": "154",
+        "name": "Breckera de 12 posiciones",
+        "master_id": "78ba049f-4170-47e6-99be-0cf81ec8268e"
+      },
+      {
+        "id": "f9cbf736-203e-43c4-ae25-40af005deef7",
+        "sku": "155",
+        "name": "Compresor de aire",
+        "master_id": "b69e7e2c-f362-48b1-bba9-639e89fc88b8"
+      },
+      {
+        "id": "bdc34f3e-fcb7-412e-918d-ff587d6d5b54",
+        "sku": "998",
+        "name": "Servicio de Carga/Capacidad",
+        "master_id": "d948e7f3-a4d6-4027-a531-c56cc9b8bb0d"
+      },
+      {
+        "id": "4f88cb41-e80b-430a-8e37-becc9188dcde",
+        "sku": "156",
+        "name": "Barilla de Aterramientos",
+        "master_id": "77d3626c-eded-4d8f-a77b-21d3a93caf96"
+      },
+      {
+        "id": "da7bb624-d5d6-4766-b46c-26dead861778",
+        "sku": "158",
+        "name": "Detergente liquido",
+        "master_id": "33f9cf88-bbfa-451a-a432-c1c34cfb8873"
+      },
+      {
+        "id": "e6fefdbe-ee35-4572-a332-256d55f27d25",
+        "sku": "157",
+        "name": "Royal Cole",
+        "master_id": "bc081e81-fd2a-4b6c-a93d-3a9858edc6bc"
+      },
+      {
+        "id": "d1fa7bbf-42e9-4243-9073-62cb053519fb",
+        "sku": "159",
+        "name": "Cemento blanco 5kg",
+        "master_id": "074e7e40-9f33-418c-b078-242b1adee914"
+      },
+      {
+        "id": "9b6a55d5-c957-45da-a01d-cc17091cf906",
+        "sku": "174",
+        "name": "Grey cerámico beige 50x50",
+        "master_id": "003ee55b-15d9-40ba-b42d-f1cc37a73a4f"
+      },
+      {
+        "id": "f2601c6c-0550-4a92-92cd-50fadf387844",
+        "sku": "175",
+        "name": "Losa Porcelanato 25x60",
+        "master_id": "66ba9c40-bace-4ef3-bd77-44b6fc3b85ea"
+      },
+      {
+        "id": "8d8df1be-91ed-4ec8-aa77-b85dc4c57887",
+        "sku": "176",
+        "name": "Bateria 12.8V x 100Amp",
+        "master_id": "70556e59-dadd-4cf7-9a6a-08f1d0184c20"
+      },
+      {
+        "id": "d04e927a-a5d3-4392-a59f-485d87604de0",
+        "sku": "177",
+        "name": "MPPT 4000W",
+        "master_id": "32d72461-4de1-4e1b-81a1-a66ba28d3dbd"
+      },
+      {
+        "id": "7f7b9529-07be-4730-8d39-ff4c992b4f21",
+        "sku": "160",
+        "name": "Puertas Negras",
+        "master_id": "c023ea7f-09d3-4963-8ba8-9c6ea9a99303"
+      },
+      {
+        "id": "405a3312-6e38-47ec-a029-2c35fbe6edb4",
+        "sku": "161",
+        "name": "Juego de baño",
+        "master_id": "ef7552cf-58ff-4ff8-89af-5f2834554cd0"
+      },
+      {
+        "id": "402ceab9-93c7-4b4f-9b16-016c8d978a01",
+        "sku": "162",
+        "name": "Ventana de cristal",
+        "master_id": "c9480e59-954d-40fb-a61e-c8e5bca8a239"
+      },
+      {
+        "id": "995b2ab1-233e-421a-b565-887517a8bc55",
+        "sku": "163",
+        "name": "Calentadores de 50 Litros",
+        "master_id": "b6ef68e8-4d61-4968-bdbf-d046cb0bc2b1"
+      },
+      {
+        "id": "46aa777d-e14d-4260-b52a-827aeb3e84de",
+        "sku": "164",
+        "name": "Calentadores de 30 Litros",
+        "master_id": "0dbedff1-b80a-41b0-9d1e-bdd815a9b1fb"
+      },
+      {
+        "id": "c92c1e47-7f16-4f91-9c29-27051305c7df",
+        "sku": "165",
+        "name": "Bote Sifón",
+        "master_id": "dde71455-4f58-4fa8-94d7-c9194b4158bb"
+      },
+      {
+        "id": "34ce777a-d255-4688-8075-351961085c2f",
+        "sku": "166",
+        "name": "Cafetera (6 tasas)",
+        "master_id": "e762097e-eeb7-4042-b5a2-b4ab1d6f28cd"
+      },
+      {
+        "id": "2bced70e-57f9-4e79-a005-c3a4952a5a4f",
+        "sku": "167",
+        "name": "Cafetera (3 tasas)",
+        "master_id": "facfb5ee-3837-46a7-9550-6d0af6f3d1f4"
+      },
+      {
+        "id": "e2dc6417-1d22-4de7-955e-18cbb4b0193e",
+        "sku": "168",
+        "name": "Rollo Lija",
+        "master_id": "13aeb983-8ca9-4d96-b10d-bd5e473755e3"
+      },
+      {
+        "id": "f9ce8886-6ad6-4a20-b3e8-77800f4938d7",
+        "sku": "169",
+        "name": "Lámpara Recargable 40W",
+        "master_id": "9da44cdc-9fd5-4d5a-899a-42736b43e8e0"
+      },
+      {
+        "id": "8f148ce3-bc69-4975-9f03-5ddea867a8ef",
+        "sku": "170",
+        "name": "Lámpara Recargable 20W",
+        "master_id": "8a54607e-5eff-42b8-b376-3f9a7ac54f90"
+      },
+      {
+        "id": "767df9ae-41cf-4082-9c82-34aeca0b7916",
+        "sku": "171",
+        "name": "Lámpara 40W",
+        "master_id": "1e4b8862-6466-40de-9daf-b735cc9eb8a1"
+      },
+      {
+        "id": "77dd64c0-0694-40c8-bb28-6d8557b4dd8a",
+        "sku": "172",
+        "name": "Silla de comedor",
+        "master_id": "7ae2b616-e75f-4251-8029-8599400c7da7"
+      },
+      {
+        "id": "7af15393-9b78-4893-950d-38f86db809b3",
+        "sku": "173",
+        "name": "Banqueta",
+        "master_id": "57640955-bebc-45df-95ca-bf753db1beaf"
+      },
+      {
+        "id": "0889033f-1943-4e87-972a-00c4e941ef1f",
+        "sku": "178",
+        "name": "Brecker DC 125 Doble",
+        "master_id": "fa0c1709-efd4-40b0-a8e4-202121f46b2a"
+      },
+      {
+        "id": "57ebfa9e-fe39-496b-ba6f-e2c6dda5d82a",
+        "sku": "180",
+        "name": "Pintura Blanco 4L",
+        "master_id": "27a7b07f-48a6-46d5-b298-124c333c4c1d"
+      },
+      {
+        "id": "87c443a1-7d39-41ed-bdf9-7625ebe0c35b",
+        "sku": "179",
+        "name": "Brecker AC 25 Doble",
+        "master_id": "774efcef-fb08-475a-a982-4e8570cca164"
+      },
+      {
+        "id": "fd994527-4367-4023-a518-85a8b2a5e0e1",
+        "sku": "181",
+        "name": "Pintura Amarillo 4L",
+        "master_id": "dc0bcfbf-0906-4c94-bb2e-87b79c57119e"
+      },
+      {
+        "id": "d4405fea-6bb2-4873-b367-8a90ef9ea543",
+        "sku": "PBM-001",
+        "name": "PRUEBA MISIÓN 2026-10-22 (puede eliminarse)",
+        "master_id": "f6346884-a1cb-459c-b538-7933eb67c649"
+      },
+      {
+        "id": "b2ad4e59-df98-41b4-9008-482f0367c74d",
+        "sku": "182",
+        "name": "Canaleta gris 60x35",
+        "master_id": "05423400-37c6-440f-a373-827946987397"
+      },
+      {
+        "id": "0fec3b3b-e454-4425-af94-665820928dc1",
+        "sku": "183",
+        "name": "Terminales Cubanas 25mm X M8",
+        "master_id": "71888992-de8c-4303-b97a-27e2754f990a"
+      },
+      {
+        "id": "9b73f09a-91c6-4351-851b-316eb161ab98",
+        "sku": "185",
+        "name": "XT60 I (inteligente)",
+        "master_id": "cf3793aa-6702-4c36-8c5d-bdacdde3810b"
+      },
+      {
+        "id": "9abd3163-a15e-490a-985e-730bac80a705",
+        "sku": "186",
+        "name": "Panel Ronma",
+        "master_id": "6e0b1922-508d-4658-8183-7bf12bcc7151"
+      },
+      {
+        "id": "052b9bbf-6c2c-456b-af64-c743d5d74ff7",
+        "sku": "193",
+        "name": "Convertidor de Oxido",
+        "master_id": "4726486f-821e-4d6f-aae5-a4a29cf7c85c"
+      },
+      {
+        "id": "5ba824a0-2e5f-40ef-8ae7-e145b333e53e",
+        "sku": "192",
+        "name": "Lampara cuadrada (Blanca)",
+        "master_id": "3e745982-2303-4b9f-8fa8-059d7a5d6186"
+      },
+      {
+        "id": "61c6e226-c672-4fd4-9bf4-a6e0527398be",
+        "sku": "188",
+        "name": "Silicona para motor",
+        "master_id": "621ad9b0-d125-43f9-8bd1-1b2517dc7513"
+      },
+      {
+        "id": "737d155f-5e07-44a7-a913-936d4a0496b4",
+        "sku": "196",
+        "name": "Manguera 3/4",
+        "master_id": "04c480d5-16a3-439f-a8d2-7b1af7700c75"
+      },
+      {
+        "id": "847b68c5-7bf2-4c4f-878f-f669472406fd",
+        "sku": "189",
+        "name": "Interruptores Simples",
+        "master_id": "39750cdf-e591-4475-a148-79cec9d76514"
+      },
+      {
+        "id": "88503d72-f53e-4815-a507-01e8dc5c50c9",
+        "sku": "194",
+        "name": "Brecker 100 A Trifásico",
+        "master_id": "286bfcda-b72e-4f14-87d2-48863c3c0f9c"
+      },
+      {
+        "id": "8f024ac0-bdd0-4f44-a956-ad83cd9eaefb",
+        "sku": "190",
+        "name": "Silicona de Olor",
+        "master_id": "99fb7428-5497-4e7d-9494-6002a3800f18"
+      },
+      {
+        "id": "a60978fa-b57d-4ff5-8df4-fcbd92733486",
+        "sku": "195",
+        "name": "Manguera  1/2",
+        "master_id": "c1162ed6-84c0-44d7-b89a-1188d9faf920"
+      },
+      {
+        "id": "a6261501-0ccc-4abe-9b3f-4a0a93ed3a98",
+        "sku": "187",
+        "name": "Candado S.P.C 80mm",
+        "master_id": "52f81235-15df-4b72-813e-353ef7758447"
+      },
+      {
+        "id": "ed6ad9c0-cdc0-4aae-976f-16766ce8621f",
+        "sku": "191",
+        "name": "Expansiones plásticas 8mm",
+        "master_id": "53742045-8428-478a-b579-2f832213196f"
+      }
+    ],
+    "ya_vinculado_sku_diverge": [],
+    "duplicados_sku_local": [],
+    "sku_invalido": [],
+    "imagen_diverge": [],
+    "nombre_diverge": [],
+    "maestros_otra_tienda": [
+      {
+        "id": "7b377a31-4e0f-45d9-b266-244c2e235ac5",
+        "sku": "QA-CM-20261030-01",
+        "name": "QA CM-004 Producto de prueba tecnica v2 (no comercial)",
+        "status": "archived",
+        "otros_vinculos": 0
+      }
+    ]
+  },
+  "masters_con_otros_vinculos": {
+    "510fcdc1-4b74-4cfe-95b1-ab00874298dd": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "10"
+      }
+    ],
+    "81045b9e-7eeb-4b44-8d28-f4c5d0680e06": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "119"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "119"
+      }
+    ],
+    "7d3c249e-6506-427e-b32a-e4e4a477b61c": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "106"
+      }
+    ],
+    "ba69d0e6-1a71-485a-9c00-ea865004590a": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "102"
+      }
+    ],
+    "2a099244-4f0e-4c30-8f9d-6e7aa2e59ef8": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "107"
+      }
+    ],
+    "7b8bcfe7-c4f6-4e54-80be-f60ba610d8a2": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "101"
+      }
+    ],
+    "ea5150fd-aaa2-45a5-8f5c-4567b535c014": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "105"
+      }
+    ],
+    "b4381b3a-71e9-406e-92f8-81d7223ccd32": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "114"
+      }
+    ],
+    "1021c2b0-c915-4120-af02-75ba8d73d26d": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "1"
+      }
+    ],
+    "2c60a1d4-8c22-455d-ba90-debbbe53f11f": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "128"
+      }
+    ],
+    "a9e6fb47-abbf-4613-862b-c04717b8c8ac": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "13"
+      }
+    ],
+    "dc1c0540-65b5-4ef6-ba27-51602f9e4ac4": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "11"
+      }
+    ],
+    "3bf620a7-1dd1-46ed-ae0f-7a0a7b09f7eb": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "112"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "112"
+      }
+    ],
+    "291e76ee-fc21-48be-916d-a94da6bf890f": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "133"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "133"
+      }
+    ],
+    "80ecc9bf-5529-4f21-afc9-2d3ca48b7387": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "138"
+      }
+    ],
+    "c8472e7d-562a-48ce-a4e8-6fd698239177": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "137"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "137"
+      }
+    ],
+    "45c4c7a8-bd12-4968-b80f-51be596edf54": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "113"
+      }
+    ],
+    "fbe3fd54-c079-4a5e-8a05-a6c629b1b199": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "126"
+      }
+    ],
+    "9b37097c-8e89-4bfc-bc99-529153a0d722": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "111"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "111"
+      }
+    ],
+    "324a5769-3a01-4190-936c-2f073597983c": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "122"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "122"
+      }
+    ],
+    "730e2a3f-7619-4614-8fb0-f1641164fa07": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "125"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "125"
+      }
+    ],
+    "e8a19222-4782-4ed1-8378-4a7438aba353": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "104"
+      }
+    ],
+    "8d184d1e-2980-43b5-80ed-09bfa061c0c6": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "141"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "141"
+      }
+    ],
+    "8e5004bc-b00b-4024-8dda-7558c6f29ead": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "118"
+      }
+    ],
+    "3014142d-5d8c-4600-a87f-3aee8d92846d": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "120"
+      }
+    ],
+    "4e9d1d34-2cc9-4be6-89f6-292a31a0db1e": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "142"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "142"
+      }
+    ],
+    "c49adf03-07aa-4d6c-a0b1-2ec2f2dc9dfa": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "109"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "109"
+      }
+    ],
+    "a851b6f3-772a-405d-82f8-7fbdff9108fc": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "123"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "123"
+      }
+    ],
+    "b7c10539-9942-453d-b78b-24458d1ad952": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "115"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "115"
+      }
+    ],
+    "62bcf44c-8863-46d0-9d5a-7839dc579eb3": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "127"
+      }
+    ],
+    "78ce3973-480d-43ac-afb6-b9fc2c3e0a3e": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "132"
+      }
+    ],
+    "452461d9-a2b4-4eff-b32b-c360fa119a9a": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "117"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "117"
+      }
+    ],
+    "2117fe80-24de-4612-837e-626e122dc6d6": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "124"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "124"
+      }
+    ],
+    "b5a055b3-1769-43b3-aba7-276b5480c9d3": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "110"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "110"
+      }
+    ],
+    "70972256-a6a2-4045-9cd9-841e806a4bbb": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "12"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "12"
+      }
+    ],
+    "92175fa3-d30e-411b-a812-7b9db7f78b46": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "130"
+      }
+    ],
+    "cfd1fb4c-e95b-4bfd-8b96-9902be52a2fd": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "135"
+      }
+    ],
+    "7fd1070e-0189-425b-9e09-35c7be17f682": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "140"
+      }
+    ],
+    "4b515c3a-9b45-4ba6-8a7d-d139b9adfcff": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "108"
+      }
+    ],
+    "532524ed-b348-404c-8a33-6e0e7807ed1b": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "116"
+      }
+    ],
+    "81cf9034-7a13-413b-8b69-d39f8e8477ab": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "14"
+      }
+    ],
+    "ed013304-1702-4191-a023-175b80fce123": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "100"
+      }
+    ],
+    "7d6be3e3-f045-448b-8681-e107a45cfd9a": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "131"
+      }
+    ],
+    "ea68d058-8f59-4211-96c6-d8b99b557721": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "136"
+      }
+    ],
+    "4aa6e960-d50e-4122-8039-8da9a89fd526": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "139"
+      }
+    ],
+    "f2afc25c-1a69-44e7-b1d8-5586a0d6aebb": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "129"
+      }
+    ],
+    "7e5b0379-5265-4216-a21f-25289fbc8c42": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "134"
+      }
+    ],
+    "52095765-fbb4-435a-ac9f-0877ec879790": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "143"
+      }
+    ],
+    "390c5eb8-c0a9-4d32-a6ec-86a85f280698": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "103"
+      }
+    ],
+    "76404536-fa92-437a-9f33-63fd3842f70e": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "121"
+      }
+    ],
+    "8097c7dc-a9c0-4148-a4f3-154c973fccf0": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "15"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "15"
+      }
+    ],
+    "c023ea7f-09d3-4963-8ba8-9c6ea9a99303": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "160"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "160"
+      }
+    ],
+    "52f81235-15df-4b72-813e-353ef7758447": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "187"
+      }
+    ],
+    "074e7e40-9f33-418c-b078-242b1adee914": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "159"
+      }
+    ],
+    "cf3793aa-6702-4c36-8c5d-bdacdde3810b": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "185"
+      }
+    ],
+    "facfb5ee-3837-46a7-9550-6d0af6f3d1f4": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "167"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "167"
+      }
+    ],
+    "c9480e59-954d-40fb-a61e-c8e5bca8a239": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "162"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "162"
+      }
+    ],
+    "b6ef68e8-4d61-4968-bdbf-d046cb0bc2b1": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "163"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "163"
+      }
+    ],
+    "66ba9c40-bace-4ef3-bd77-44b6fc3b85ea": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "175"
+      }
+    ],
+    "13aeb983-8ca9-4d96-b10d-bd5e473755e3": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "168"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "168"
+      }
+    ],
+    "0dbedff1-b80a-41b0-9d1e-bdd815a9b1fb": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "164"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "164"
+      }
+    ],
+    "70556e59-dadd-4cf7-9a6a-08f1d0184c20": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "176"
+      }
+    ],
+    "9da44cdc-9fd5-4d5a-899a-42736b43e8e0": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "169"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "169"
+      }
+    ],
+    "8a54607e-5eff-42b8-b376-3f9a7ac54f90": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "170"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "170"
+      }
+    ],
+    "1e4b8862-6466-40de-9daf-b735cc9eb8a1": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "171"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "171"
+      }
+    ],
+    "621ad9b0-d125-43f9-8bd1-1b2517dc7513": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "188"
+      }
+    ],
+    "39750cdf-e591-4475-a148-79cec9d76514": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "189"
+      }
+    ],
+    "57640955-bebc-45df-95ca-bf753db1beaf": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "173"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "173"
+      }
+    ],
+    "6e0b1922-508d-4658-8183-7bf12bcc7151": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "186"
+      }
+    ],
+    "dc0bcfbf-0906-4c94-bb2e-87b79c57119e": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "181"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "181"
+      }
+    ],
+    "003ee55b-15d9-40ba-b42d-f1cc37a73a4f": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "174"
+      }
+    ],
+    "f99c82d1-fa7f-46ee-878b-ca4137927481": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "18"
+      }
+    ],
+    "ef7552cf-58ff-4ff8-89af-5f2834554cd0": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "161"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "161"
+      }
+    ],
+    "32d72461-4de1-4e1b-81a1-a66ba28d3dbd": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "177"
+      }
+    ],
+    "dde71455-4f58-4fa8-94d7-c9194b4158bb": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "165"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "165"
+      }
+    ],
+    "e762097e-eeb7-4042-b5a2-b4ab1d6f28cd": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "166"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "166"
+      }
+    ],
+    "62c298dc-38ca-49df-a703-242fef6f404f": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "150"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "150"
+      }
+    ],
+    "774efcef-fb08-475a-a982-4e8570cca164": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "179"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "179"
+      }
+    ],
+    "c3a6582f-928d-493e-a2d0-3c5bfe9fd8c0": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "151"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "151"
+      }
+    ],
+    "d00db085-80c0-4708-b9fe-68552e07442d": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "19"
+      }
+    ],
+    "7ae2b616-e75f-4251-8029-8599400c7da7": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "172"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "172"
+      }
+    ],
+    "fa0c1709-efd4-40b0-a8e4-202121f46b2a": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "178"
+      }
+    ],
+    "27a7b07f-48a6-46d5-b298-124c333c4c1d": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "180"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "180"
+      }
+    ],
+    "71888992-de8c-4303-b97a-27e2754f990a": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "183"
+      }
+    ],
+    "05423400-37c6-440f-a373-827946987397": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "182"
+      }
+    ],
+    "ab088890-a90e-4183-83e2-0a5f85b7e5bd": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "17"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "17"
+      }
+    ],
+    "229d2156-1b8e-44d3-a9ec-6ec68d7a8a92": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "147"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "147"
+      }
+    ],
+    "78ba049f-4170-47e6-99be-0cf81ec8268e": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "154"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "154"
+      }
+    ],
+    "7ffab6f6-4cac-4e2e-8940-a93b9221f980": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "16"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "16"
+      }
+    ],
+    "bc081e81-fd2a-4b6c-a93d-3a9858edc6bc": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "157"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "157"
+      }
+    ],
+    "77d3626c-eded-4d8f-a77b-21d3a93caf96": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "156"
+      }
+    ],
+    "33f9cf88-bbfa-451a-a432-c1c34cfb8873": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "158"
+      }
+    ],
+    "5e7e6029-ee36-47c9-8e03-420a86f5fee5": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "149"
+      }
+    ],
+    "0f95ec23-65cb-4157-9056-72c183b1bdd4": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "146"
+      }
+    ],
+    "b69e7e2c-f362-48b1-bba9-639e89fc88b8": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "155"
+      }
+    ],
+    "b1a73ce3-1924-42e8-88a3-aa5b312c2bd5": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "145"
+      }
+    ],
+    "dd848ec9-6dee-4c77-94ff-a64e1ea58df1": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "144"
+      }
+    ],
+    "1837f6cd-651b-4854-b75f-23e5d51edcfd": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "148"
+      }
+    ],
+    "431f54ea-d8f3-4e78-bd38-5e3620a65a1f": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "152"
+      }
+    ],
+    "2de0556a-b153-476f-bef5-c5693f5c8da1": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "153"
+      }
+    ],
+    "67bed8fe-9b38-4fa8-99c9-c43bf83bc9f6": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "34"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "34"
+      }
+    ],
+    "badf4bc2-8b35-481f-825d-7d68a5fd36ef": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "44"
+      }
+    ],
+    "089fc16f-14de-4629-8914-cd07a5e6610a": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "43"
+      }
+    ],
+    "6e7f9c0c-f287-4211-8a07-27708fe3e24b": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "27"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "27"
+      }
+    ],
+    "cb6a0296-97d3-484e-9c1d-807bb73651d2": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "58"
+      }
+    ],
+    "7a7e593a-b220-45bd-8700-d1094c7d1338": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "23"
+      }
+    ],
+    "6000f1cd-57aa-4e13-9cf8-b9d62ea96e7d": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "35"
+      }
+    ],
+    "999b243a-3f07-4617-b327-4937c644cf30": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "53"
+      }
+    ],
+    "e12fecc3-3ab6-4a71-a35a-f62dcf14b63a": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "57"
+      }
+    ],
+    "59df5906-b4d4-45c2-8b46-0ac753d4de5e": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "39"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "39"
+      }
+    ],
+    "c50a8a7b-c6a4-464a-b0cd-aee431cbb46f": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "28"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "28"
+      }
+    ],
+    "99fb7428-5497-4e7d-9494-6002a3800f18": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "190"
+      }
+    ],
+    "06eaaf45-7dbc-4380-99bc-e47a8a463c01": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "52"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "52"
+      }
+    ],
+    "4726486f-821e-4d6f-aae5-a4a29cf7c85c": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "193"
+      }
+    ],
+    "3e745982-2303-4b9f-8fa8-059d7a5d6186": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "192"
+      }
+    ],
+    "53742045-8428-478a-b579-2f832213196f": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "191"
+      }
+    ],
+    "d720dcf8-b8c0-4028-b57b-fa4eb52e26cd": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "24"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "24"
+      }
+    ],
+    "7476cb09-d2d1-4cd2-a581-351ebf382cb0": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "2"
+      }
+    ],
+    "d647f7c2-7f68-4fa2-bee6-e651a8a0a940": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "4"
+      }
+    ],
+    "286bfcda-b72e-4f14-87d2-48863c3c0f9c": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "194"
+      }
+    ],
+    "c1162ed6-84c0-44d7-b89a-1188d9faf920": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "195"
+      }
+    ],
+    "04c480d5-16a3-439f-a8d2-7b1af7700c75": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "196"
+      }
+    ],
+    "8c95bd66-570b-4a01-90bc-c7f2d85f2300": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "5"
+      }
+    ],
+    "0bfb3f18-cc37-4a8c-a7f3-5cbcdfb69890": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "26"
+      }
+    ],
+    "54b5d76a-c782-4f18-8187-b6cf7dad5453": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "55"
+      }
+    ],
+    "a35f0a97-c3cf-428d-9296-6fb4f1cfb804": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "45"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "45"
+      }
+    ],
+    "216e503a-7b08-4d68-93c1-d0cb18e2c56d": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "41"
+      }
+    ],
+    "bcfcd754-d231-4d6b-a019-c2763d5880dd": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "51"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "51"
+      }
+    ],
+    "9fd81fc9-81b0-4212-ab8f-02f916169bbd": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "3"
+      }
+    ],
+    "f10384ad-9353-4c94-acd5-b477197dc77a": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "54"
+      }
+    ],
+    "f418a23a-a576-4305-b0ad-cd9a8e75d5c0": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "33"
+      },
+      {
+        "store": "PUERTO PADRE",
+        "sku": "33"
+      }
+    ],
+    "d9a9f2f1-af95-4f63-827e-455fed45bc38": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "56"
+      }
+    ],
+    "84de3ef7-00ed-46ca-a9ad-f95819c8f559": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "22"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "22"
+      }
+    ],
+    "6c6a911c-6b7c-4d20-a087-de01d65f707b": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "29"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "29"
+      }
+    ],
+    "dd582447-c378-4fea-8499-0404f21cd1bd": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "42"
+      }
+    ],
+    "b078dee7-81a1-4315-9f9a-2e443031d0d1": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "20"
+      }
+    ],
+    "6f87e020-eaa7-4c33-8dbd-ce67e3aa8c80": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "49"
+      }
+    ],
+    "7ded4a2a-96a3-48f8-a76f-23bc3451bc36": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "48"
+      }
+    ],
+    "8b600467-d9c0-49fc-aeee-68020f38f4fc": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "30"
+      }
+    ],
+    "77fcd04f-c62a-4f7f-b385-5b8cc9cb3476": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "47"
+      }
+    ],
+    "c9d10800-83ed-4c45-9512-c3067a1a62aa": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "25"
+      }
+    ],
+    "008f34bd-1bf2-4f76-b955-cc815da0cf0e": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "31"
+      }
+    ],
+    "7ab649cf-da17-46f2-9b28-b8500202d65f": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "32"
+      }
+    ],
+    "67c0736f-7fe4-4501-a22c-98c3498a1812": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "37"
+      }
+    ],
+    "a04e5258-4f4e-4094-86f8-4a02fcb76291": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "38"
+      }
+    ],
+    "129d587a-7557-41df-8ee6-769005e7b951": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "40"
+      }
+    ],
+    "a6164985-eab1-49a6-aab3-c460b91a9ec9": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "21"
+      }
+    ],
+    "adddca1a-0e1f-488c-8900-c6b910a5faeb": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "46"
+      }
+    ],
+    "b5ff5c74-1f74-4268-aeeb-3f01a6830752": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "36"
+      }
+    ],
+    "7824e3ec-7afb-4b4a-9692-7dbfd3dbd710": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "50"
+      }
+    ],
+    "490576f4-cf0a-4f58-9c48-275a7c37ce48": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "7"
+      }
+    ],
+    "d372fc28-5e0b-4c94-b80a-4a263964fd59": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "68"
+      }
+    ],
+    "53309ebc-a3e0-48d6-95f2-3d3a067508b0": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "75"
+      }
+    ],
+    "cb0122d1-03d3-4859-97c9-6884688bb2c9": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "84"
+      }
+    ],
+    "53a098f2-1117-4748-a872-8cdc8aa7b086": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "85"
+      }
+    ],
+    "d76ef95f-e885-46e6-b7b8-5a48ac3becc9": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "62"
+      }
+    ],
+    "5188a159-ee37-493c-a72f-4632492f5320": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "78"
+      }
+    ],
+    "87138861-526c-4b5c-a66f-295fbad7c950": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "94"
+      }
+    ],
+    "d7004aff-ccb2-4fde-ba5d-5f3311f726ea": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "61"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "61"
+      }
+    ],
+    "00640c1a-e50b-434c-9fdd-5a91acce965c": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "93"
+      }
+    ],
+    "afca87e2-37be-45f6-9684-dfcad434c1dc": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "91"
+      }
+    ],
+    "54e6e64c-9807-41a8-8e09-bf7474465fe6": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "87"
+      }
+    ],
+    "a71d10db-0f35-4046-8da9-45d9c01b49b2": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "71"
+      }
+    ],
+    "546bbb00-4491-4272-8d91-94992e38cacc": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "9"
+      }
+    ],
+    "6a1570fc-1803-486e-b7ae-42a81652d3c8": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "72"
+      }
+    ],
+    "b7c302da-6ae2-465b-ab3e-ae75d6fc4c16": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "999"
+      }
+    ],
+    "65ee9331-4a8b-428b-90c9-c9dad962fa7f": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "88"
+      }
+    ],
+    "a6f88f17-2cfb-4f7b-8c50-8354f66d38af": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "80"
+      }
+    ],
+    "9209b332-2d13-4ede-8813-b0e432d1bdd1": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "81"
+      }
+    ],
+    "4e3d56ab-cee8-4b7c-8f08-c93c775709bc": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "59"
+      }
+    ],
+    "8c86b088-c805-4403-bda4-07ade92b0072": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "73"
+      }
+    ],
+    "e7e39003-0792-42a9-8d9a-2938d57a7931": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "90"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "90"
+      }
+    ],
+    "34141103-ef3e-490d-a2cb-b3245bbfaa0f": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "70"
+      }
+    ],
+    "e020e26a-65c0-4204-b3ce-e1f7f1e2ac26": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "69"
+      }
+    ],
+    "e6cb64af-d9ae-43c8-8c1d-c972f20407ad": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "60"
+      }
+    ],
+    "f6346884-a1cb-459c-b538-7933eb67c649": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "PBM-001"
+      }
+    ],
+    "46f6033a-58b4-4fb4-a2f7-e499a616af67": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "98"
+      }
+    ],
+    "75766b93-cb40-4d87-8a84-e9fa0f319e70": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "97"
+      }
+    ],
+    "95f4885a-391d-40e7-9554-8fc55650efef": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "6"
+      }
+    ],
+    "41f8c46d-9612-4caf-affc-59e812da68f1": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "8"
+      }
+    ],
+    "b54d2c97-3f41-4a73-8ca2-f149a82a401f": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "67"
+      }
+    ],
+    "d1a6ada4-b857-4c8b-811e-32264d6f6641": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "74"
+      }
+    ],
+    "33fae0fb-c847-4b03-a585-be3a77a8f7dc": [
+      {
+        "store": "PUERTO PADRE",
+        "sku": "89"
+      },
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "89"
+      }
+    ],
+    "57a053f5-dc2c-4df4-83b1-16fd15e2ac42": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "99"
+      }
+    ],
+    "d948e7f3-a4d6-4027-a531-c56cc9b8bb0d": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "998"
+      }
+    ],
+    "fcd36902-8f71-4388-8ec6-938df51e33fc": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "76"
+      }
+    ],
+    "3f81d8e1-fdc4-4009-9d52-58f11995e52c": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "95"
+      }
+    ],
+    "d66c1e03-5da2-4a2d-8352-252b488921e7": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "83"
+      }
+    ],
+    "3fcbfb19-d17c-44e5-9301-eee4f5f9de10": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "96"
+      }
+    ],
+    "21d4a8fe-0406-4fcc-adc0-385a8aacc223": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "64"
+      }
+    ],
+    "a2ec26ab-9603-4454-be05-fef01a3f424c": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "63"
+      }
+    ],
+    "9621223a-3fcc-400a-ac45-86c79fa6ecdb": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "92"
+      }
+    ],
+    "98b1c022-edb1-49d1-887e-ebee108eb1e6": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "65"
+      }
+    ],
+    "76c37051-d03d-4105-97f1-4ebed70251f0": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "79"
+      }
+    ],
+    "bc979be7-8c1d-4f8c-83da-43e0b2a2a321": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "66"
+      }
+    ],
+    "a8c14d73-5b92-4bd4-85d8-4578f2990b15": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "77"
+      }
+    ],
+    "288a626a-a965-4a11-908b-bee9f4d2de55": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "82"
+      }
+    ],
+    "5bc50df9-33d5-4f84-bc48-380e969d4a6a": [
+      {
+        "store": "ENERVIDA-VITALLCONS",
+        "sku": "86"
+      }
+    ]
+  }
+}
