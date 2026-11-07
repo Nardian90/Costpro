@@ -1,7 +1,8 @@
 # COSTPRO_MULTICASHIER_DESIGN_002 — Diseño técnico definitivo del sistema multicajero
 
 **Fecha:** 2026-11-07 · **Base:** `COSTPRO_MULTICASHIER_AUDIT_001.md` (PR #1563, hallazgos revalidados) · **Tipo:** diseño cerrado, sin implementación.
-**Repo:** Nardian90/Costpro @ main `e778f8674` (sin cambios desde la auditoría; rama del PR `audit/multicashier-001` head `3a9ebe931`).
+**Repo:** Nardian90/Costpro @ main `e778f8674` (sin cambios desde la auditoría) · rama del PR `audit/multicashier-001` (head `f7c5ef690` al iniciar la misión 003; esta revisión se incorpora en el commit siguiente de la misma rama).
+**Revisiones:** v1 (misión 002, §D.2-D.13, veredicto revocado en §D.14) → **v2 (misión 003): §D.14 resolución de observaciones y §D.15 veredicto vigente.**
 **Decisión del propietario:** cada vendedor tiene **terminal + gaveta propios**: UNA TIENDA + UN ALMACÉN COMPARTIDO + N CAJAS FÍSICAS + N TERMINALES + N SESIONES FINANCIERAS INDEPENDIENTES.
 **Etiquetas:** [MEDIDO] catálogo vivo (prod agregado sin PII / E2E) · [EN CÓDIGO] archivo:línea · [DECISIÓN] decisión de diseño fundamentada · [NO VERIFICADO] pendiente de censo/prueba.
 
@@ -367,6 +368,260 @@ Verificado en la auditoría §9 y revalidado [EN CÓDIGO, main sin cambios]: sto
 9. **¿Cuál es el orden seguro de implementación?** A (seguridad+modelo) → B (tesorería/traspasos) → C (atribución+censo/backfill) → D (arqueo v3/cierres) → E (UI/reportes) → F (certificación E2E con los 18 escenarios y regresión del modelo actual). Cada fase es desplegable y reversible por separado.
 10. **¿Qué condiciones deben cumplirse antes de desplegar?** P1-02 corregido; censo de cobros sin desviaciones y backfill ejecutado; gavetas y tesorería virtual definidas por tienda; feature flag por tienda (`multicashier_enabled_at`); batería E2E verde (18 escenarios + regresión); plan de contingencia de reactivación del modelo de caja única por tienda.
 
-### Resultado del veredicto
+### Resultado del veredicto (v1, misión 002)
 
 **DISEÑO APROBABLE PARA IMPLEMENTACIÓN** — modelo coherente y completo: entidades resueltas con evidencia, atribución de cobros por movimiento de dinero, tesorería entre gavetas con neto cero demostrado aritméticamente, arqueo individual bimoneda sin doble conteo, consolidado por partición del ledger, seguridad con corrección previa del P1-02, históricos preservados y hoja de ruta reversible. Los dos riesgos señalados (cobertura de cobros y P1-02) están integrados como precondiciones de las fases A y C, no como deuda abierta.
+
+> **REVOCADO por la revisión crítica de la misión 003 (2026-11-07).** El veredicto v1 se emite aquí solo como registro histórico. La revisión detectó errores reales en D.4/D.5 (CHECKs cerrados de `cash_flow_documents` no verificados, idempotencia de clave compartida, tesorería como sesión artificial, unicidad de asignaciones defectuosa, `CONCURRENTLY` incompatible con el migrador). El veredicto vigente es el de la sección **D.15**, emitido tras las correcciones de **D.14**.
+
+---
+
+## D.14. Resolución de observaciones (misión COSTPRO-MULTICASHIER-DESIGN-003)
+
+Revisión crítica del propio diseño sobre el esquema real. Cada observación: problema → evidencia del esquema actual → solución adoptada → cambios estructurales → invariante → escenario E2E. Las secciones D.2-D.13 quedan **modificadas** por lo que sigue; los cambios estructurales se resumen en D.14.9.
+
+### D.14.1 — P0-A · Traspasos y dinero en tránsito
+
+**Problema.** D.4/D.5 v1 declaraban que las piernas `pendiente` "no afectan los arqueos" y a la vez que el dinero sigue siendo custodia del emisor: el dinero de la gaveta A quedaba contado como disponible mientras físicamente ya no estaba, y el consolidado no cuadraba con la custodia real.
+
+**Evidencia del esquema actual.** [MEDIDO prod] `cash_flow_documents.status CHECK IN ('confirmado','anulado')` — sin estado intermedio; `confirmed_at/confirmed_by NOT NULL DEFAULT now()`; `closure_id` apunta a UNA sola sesión (no puede representar dos extremos); el patrón de anulación vigente es "insertar fila contraria y congelar la histórica" (comentario de tabla, `20261021000001_cash_flow_documents.sql:175`).
+
+**Solución adoptada.** Ciclo de vida explícito del traspaso (entidad nueva `cash_transfers`, ver D.14.2) con **la salida física contable desde el momento de la entrega**:
+
+1. **Solicitud** (`solicitada`): documento interno sin efecto contable (ninguna fila del ledger). Cancelable libremente por el emisor o tesorería (`anulada` sin filas).
+2. **Entrega física** (`entregado`): A saca el dinero y lo entrega. RPC `send_cash_transfer` en UNA transacción: fila `payment_transactions` pierna OUT (`direction='out'`, `ref_type='cash_flow'`, `ref_id=transfer.id`, atribuida a la sesión de A) + estado `entregado` + auditoría. **El saldo de A baja aquí** — reflejo exacto de la física.
+3. **Tránsito**: el dinero ya no está en A y aún no está en B. Campo `custodian_user_id` (= emisor por defecto; transportista tercero si lo hay) identifica la custodia mientras dura el tránsito. Visible como "en tránsito" en los paneles de A, de B y del consolidado.
+4. **Recepción física + confirmación** (`recibido`): RPC `confirm_cash_transfer` (una transacción): el receptor cuenta, confirma; fila pierna IN (`direction='in'`, atribuida a la sesión de B); `received_by/received_at`. Transición atómica de estado (`UPDATE … SET status='recibido' WHERE id=$1 AND status='entregado' RETURNING` — el lock de fila serializa confirmaciones simultáneas).
+5. **Rechazo** (`rechazado`, final): B no recibe o el conteo no cuadra: pierna IN en `direction='refund'` atribuida a la **sesión de A** (el dinero vuelve físicamente a A) + motivo obligatorio. El traspaso queda congelado como histórico.
+6. **Anulación tras entrega** (`anulado`, final): misma contabilidad que el rechazo (devolución a A) iniciada por emisor/tesorería; motivo obligatorio. Tras `recibido` no hay anulación: la corrección es un traspaso inverso nuevo (doctrina de contra-movimientos, no mutaciones).
+
+**Custodia y saldos — la identidad obligatoria del consolidado:**
+
+```
+Efectivo en gavetas + efectivo en tesorería + efectivo en tránsito = efectivo total bajo custodia de la tienda
+```
+
+Categorías del pliego: disponible en gaveta (sesión) · en tránsito (`cash_transfers` en `entregado`, con `custodian_user_id`) · custodia del emisor (tránsito con custodio=emisor) · custodia del transportista (tránsito con custodio tercero) · recibido por el destinatario (`recibido`) · total de la tienda (la suma). Los traspasos internos jamás son ingreso/gasto comercial: ambas piernas son `ref_type='cash_flow'` y su suma neta dentro de la tienda es cero.
+
+**Ejemplo numérico** (A=20 000, B=10 000, tesorería=5 000; traspaso de 2 000 CUP de A a B; verificado con código):
+
+| Estado | Gaveta A | Gaveta B | Tesorería | Tránsito | **Total custodia** | Ledger |
+|---|---:|---:|---:|---:|---:|---|
+| Solicitada (sin entrega) | 20 000 | 10 000 | 5 000 | 0 | **35 000** | sin filas |
+| Entregada (custodia: emisor) | 18 000 | 10 000 | 5 000 | 2 000 | **35 000** | OUT en A −2 000 |
+| Recibida y confirmada | 18 000 | 12 000 | 5 000 | 0 | **35 000** | IN en B +2 000 |
+| Rechazada (vuelve a A) | 20 000 | 10 000 | 5 000 | 0 | **35 000** | IN refund→A +2 000 |
+| Anulada tras entrega | 20 000 | 10 000 | 5 000 | 0 | **35 000** | IN refund→A +2 000 |
+| Anulada antes de entrega | 20 000 | 10 000 | 5 000 | 0 | **35 000** | sin filas |
+
+**Cierre con traspasos pendientes [regla]:** una sesión NO puede cerrarse mientras sea **origen** de traspasos en `entregado` (su dinero estaría fuera de la gaveta sin destino confirmado) — `close_cash_session` lo rechaza y exige resolver primero (confirmación del receptor, anulación o rechazo). Sí puede cerrar siendo **destino** pendiente (el dinero no es suyo hasta confirmar; el panel lo advierte). En todos los casos el tránsito conserva `custodian_user_id` — jamás queda dinero sin responsable identificado. Vista operativa `v_cash_transit_alerts` señala tránsitos con edad > 24 h.
+
+**Cambios estructurales:** tabla `cash_transfers` (D.14.2), RPCs `send/confirm/reject/annul_cash_transfer`, columna `custodian_user_id`, vista de alertas. **Invariante I-1:** `Σ sesiones + tesorería + tránsito = custodia total` en todo estado (demostrado en la tabla). **E2E:** escenario 6 y 7 del pliego + los seis estados de la tabla como specs (`e2e/flows/cash-transfers.spec.ts`).
+
+### D.14.2 — P0-B · Compatibilidad con el esquema real de `cash_flow_documents` (Alternativa A vs B)
+
+**Problema.** D.4 v1 afirmaba que "doc_type es text → se documentan tres valores nuevos sin migración de tipo". **Era falso**: el campo tiene CHECK cerrados, y el diseño proponía estados (`pendiente`) y conceptos (`traspaso_cajas`) que la tabla REAL rechaza.
+
+**Evidencia del esquema actual.** [MEDIDO prod, `pg_constraint` en vivo — no solo el archivo de migración]: `cash_flow_documents_doc_type_check ∈ {ingreso, egreso}` · `cash_flow_documents_concept_check ∈ {constitucion_fondo, reposicion_fondo, devolucion_total_fondo, devolucion_parcial_fondo, otro_ingreso, otro_egreso, entrega_efectivo}` (el vivo tiene `entrega_efectivo`, solo egreso — divergencia real frente al replay del archivo) · `cash_flow_documents_type_concept_check` (matriz cerrada tipo↔concepto) · `cash_flow_documents_status_check ∈ {confirmado, anulado}` · `payment_method = 'cash'` · `currency ∈ {CUP, USD}` · `confirmed_at/confirmed_by NOT NULL DEFAULT now()` · `justification NOT NULL`. Además, la cabecera del archivo advierte que la superficie contractual está bajo CI-gate con allowlist (patrón PR #1422).
+
+**Comparación de alternativas:**
+
+| Criterio | A: ampliar `cash_flow_documents` | **B: modelo propio `cash_transfers`** ✅ |
+|---|---|---|
+| Integridad transaccional | Requiere relajar NOT NULL de `confirmed_*`, nuevo estado en CHECK, matriz de conceptos ampliada; riesgo de romper el patrón de anulación vigente | Estado propio con transiciones `WHERE status='entregado'`; sin tocar restricciones existentes |
+| Claridad documental | `traspaso_cajas` colgaría de una matriz pensada para ingresos/egresos ordinarios | Entidad con extremos explícitos (sesión/cuenta origen-destino), custodio y etapas propias |
+| Auditoría | Campos genéricos reutilizados | Campos dedicados: `sent_by`, `custodian_user_id`, `received_by`, `rejected_*`, `annulled_*` |
+| Idempotencia | Clave única por documento; el par requeriría convenciones frágiles | `idempotency_key` propia + claves por pierna (D.14.3) |
+| Reversibilidad | Revertir = restaurar CHECKs y NOT NULL con datos ya escritos (peligroso) | `DROP TABLE cash_transfers` sin tocar datos existentes (aditivo puro) |
+| Complejidad de consultas | Cada consulta de traspaso filtra conceptos nuevos dentro del libro ordinario | Consultas directas a la entidad; el libro ordinario queda limpio |
+| Compatibilidad con el libro actual | Contrato congelado modificado (CI-gate, reportes de Ingresos/Egresos contaminados) | `cash_flow_documents` intacto: queda para movimientos ordinarios de frontera |
+
+**Decisión: Alternativa B.** `cash_flow_documents` conserva su doctrina sin una sola modificación de restricciones y se reserva a los **movimientos de frontera** (dinero que entra/sale de la tienda: constitución desde capital externo, otros ingresos/egresos, `entrega_efectivo`). Los **movimientos internos** (gaveta↔gaveta, gaveta↔tesorería) viven en la entidad nueva:
+
+```sql
+CREATE TABLE IF NOT EXISTS public.cash_transfers (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id uuid NOT NULL REFERENCES public.stores(id),
+  transfer_number text NOT NULL,               -- numeración propia 'TR-000001-2026'
+  from_session_id uuid REFERENCES public.cash_closures(id),   -- origen gaveta
+  from_account_id uuid REFERENCES public.cash_accounts(id),   -- origen tesorería
+  to_session_id   uuid REFERENCES public.cash_closures(id),   -- destino gaveta
+  to_account_id   uuid REFERENCES public.cash_accounts(id),   -- destino tesorería
+  amount numeric NOT NULL CHECK (amount > 0),
+  currency text NOT NULL CHECK (currency IN ('CUP','USD')),
+  status text NOT NULL DEFAULT 'solicitada'
+    CHECK (status IN ('solicitada','entregado','recibido','rechazado','anulado')),
+  sent_by uuid NOT NULL REFERENCES public.profiles(id),
+  sent_at timestamptz,
+  custodian_user_id uuid REFERENCES public.profiles(id),      -- custodia en tránsito
+  received_by uuid REFERENCES public.profiles(id),
+  received_at timestamptz,
+  rejected_by uuid REFERENCES public.profiles(id), rejection_reason text,
+  annulled_by uuid REFERENCES public.profiles(id), annulled_at timestamptz, annulment_reason text,
+  leg_out_payment_id uuid UNIQUE REFERENCES public.payment_transactions(id),
+  leg_in_payment_id  uuid UNIQUE REFERENCES public.payment_transactions(id),
+  idempotency_key text UNIQUE,                                 -- clave de la OPERACIÓN
+  created_by uuid NOT NULL REFERENCES public.profiles(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT ctr_number_uq UNIQUE (store_id, transfer_number),
+  CONSTRAINT ctr_one_origin CHECK (num_nonnulls(from_session_id, from_account_id) = 1),
+  CONSTRAINT ctr_one_destination CHECK (num_nonnulls(to_session_id, to_account_id) = 1),
+  CONSTRAINT ctr_delivery_coherence CHECK (
+    (status = 'solicitada' AND sent_at IS NULL AND leg_out_payment_id IS NULL)
+    OR (status IN ('entregado') AND sent_at IS NOT NULL AND leg_out_payment_id IS NOT NULL
+        AND leg_in_payment_id IS NULL)
+    OR (status IN ('recibido','rechazado','anulado') AND sent_at IS NOT NULL
+        AND leg_out_payment_id IS NOT NULL AND leg_in_payment_id IS NOT NULL)
+  )
+);
+```
+
+Coherencia con la doctrina vigente: "el efecto financiero vive UNA vez en `payment_transactions`" se conserva — las piernas son filas del ledger con `ref_type='cash_flow'` y `ref_id = cash_transfers.id` (`ref_id` existe y ya se usa así [MEDIDO: 2/2 filas cash_flow con ref_id]); la numeración es propia (`UNIQUE(store_id, transfer_number)`) para no extender el CHECK de `document_sequences` (tipos vivos: cash_flow, credit_note, invoice, material_request, vale_salida [MEDIDO]).
+
+### D.14.3 — P0-C · Idempotencia por transferencia
+
+**Problema.** D.4 v1 proponía "clave idempotencia compartida del par" — con `uq_cash_flow_documents_idempotency` y `uniq_payment_txn_idempotency` siendo `UNIQUE(idempotency_key) WHERE key IS NOT NULL` [MEDIDO prod], la segunda pierna habría colisionado con la primera (23505): el traspaso era imposible tal como estaba escrito.
+
+**Solución adoptada.** Esquema de claves separadas y verificables:
+
+- Operación: `cash_transfers.idempotency_key` (p. ej. `xfer-{store}-{fecha}-{seq}`) — el reenvío del request de envío la busca primero y devuelve el traspaso existente.
+- Pierna OUT: `xfer-out-{transfer_id}`; pierna IN: `xfer-in-{transfer_id}` — claves **distintas** por pierna, coherentes con las filas correspondientes de `payment_transactions`.
+- Impedir duplicar una misma pierna: `UNIQUE` sobre `leg_out_payment_id`/`leg_in_payment_id` en `cash_transfers` (una sola pierna de cada tipo por traspaso) + la propia unicidad de clave en `payment_transactions`.
+- RPC atómica de confirmación con transición de estado condicionada (`WHERE status='entregado'`) + `FOR UPDATE` del traspaso: protege frente a dos confirmaciones simultáneas (la segunda no encuentra fila elegible y devuelve el resultado existente).
+- Reintentos tras interrupción: cada RPC es re-ejecutable — busca por `idempotency_key`/`transfer_id` y devuelve el estado actual sin efectos adicionales.
+
+**Demostración (comportamiento definido):** mismo request de envío ×3 → 1 traspaso, 1 pierna OUT (2.º y 3.º devuelven el existente). Confirmación ×2 → 1 pierna IN (la 2.ª ve `status='recibido'`, idempotente). Envío + confirmación concurrentes → orden garantizado por el lock del traspaso. Ningún escenario duplica efectivo, documentos ni filas.
+
+### D.14.4 — P1-D · Asignaciones de cajas
+
+**Problema.** `UNIQUE(register_id, unassigned_at)` no garantiza una asignación vigente única: en PostgreSQL `NULL ≠ NULL`, así que filas con `unassigned_at IS NULL` ilimitadas satisfacen el índice. Además convivían tres fuentes de autoridad (`assigned_user_id`, `assignments`, `session.user_id`).
+
+**Evidencia del esquema actual.** [EN CÓDIGO D.2.C v1] la restricción propuesta era defectuosa; no existe tabla previa de asignaciones (la entidad es nueva).
+
+**Solución adoptada.**
+
+- **Unicidad real de la asignación activa:** `CREATE UNIQUE INDEX cra_one_active_per_register ON cash_register_assignments(register_id) WHERE unassigned_at IS NULL;` (índice parcial — la técnica correcta para "una fila vigente").
+- **Compatibilidad usuario↔tienda:** la asignación se realiza SOLO por RPC `assign_cash_register`, que valida membresía del usuario en la tienda de la gaveta (`user_store_memberships`) y rol del que asigna; trigger defensivo `cra_store_match` que exige el mismo `store_id` (resuelto vía la gaveta) en INSERT.
+- **Varias gavetas por usuario:** permitido a nivel de datos (una persona puede custodiar más de una gaveta); el conflicto operativo lo previene R502 (una sesión abierta por usuario y tienda).
+- **Cambio de custodio:** RPC cierra la asignación vigente (`unassigned_at=now(), unassigned_by`) y abre la nueva en la misma transacción; **bloqueado si la gaveta tiene sesión abierta** (primero cerrar la sesión o transferirla).
+- **Revocación:** cierre de asignación sin reemplazo (gaveta queda sin custodio; aperturas rechazadas si la política lo exige).
+- **Historial:** todas las asignaciones se conservan (nunca DELETE); la vigente es la fila con `unassigned_at IS NULL`.
+- **Fuente de verdad única:** `cash_register_assignments` (vigencia) para la **custodia**; `cash_closures.user_id` para la **responsabilidad de la sesión** (concepto distinto, no es "asignación"); **se elimina `cash_registers.assigned_user_id` del diseño v1** (era una tercera fuente). La UI lee la vista `v_cash_register_current_assignment`. La validación "el cajero pertenece a la tienda de la gaveta" se hace en el RPC de apertura y de asignación, nunca en el cliente.
+
+### D.14.5 — P1-E · Tesorería virtual sin sesiones artificiales
+
+**Problema.** D.4/D.5 v1 representaban la tesorería como un registro virtual `TESORERIA` cuyo saldo vivía en una `cash_closures` — una **sesión artificial** de usuario inexistente, solo para reutilizar la columna `cash_closure_id`.
+
+**Solución adoptada.** Cuenta de tesorería identificada por tienda, **sin sesión**:
+
+```sql
+CREATE TABLE IF NOT EXISTS public.cash_accounts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id uuid NOT NULL REFERENCES public.stores(id),
+  kind text NOT NULL CHECK (kind = 'treasury'),   -- ampliable a futuro
+  name text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT cash_accounts_one_treasury_per_store UNIQUE (store_id, kind)
+);
+ALTER TABLE public.payment_transactions
+  ADD COLUMN IF NOT EXISTS cash_account_id uuid REFERENCES public.cash_accounts(id);
+```
+
+- **Atribución del ledger con regla de exclusión mutua:** un movimiento pertenece a UNA gaveta (vía `cash_closure_id`) O a la tesorería (vía `cash_account_id`) — jamás a ambas, jamás a ninguna (modelo nuevo). CHECK `pt_holder_xor`: `CHECK (NOT (cash_closure_id IS NOT NULL AND cash_account_id IS NOT NULL))`; trigger `pt_holder_required` exige exactamente un titular para filas físicas (`payment_method='cash'`, `direction IN ('in','out')`) creadas tras la activación multicaja de la tienda; los movimientos electrónicos (`transfer`/`zelle`) llevan `cash_closure_id` opcional (conciliación por quien registra) y jamás `cash_account_id`.
+- **Saldo por moneda de la tesorería:** vista `v_cash_treasury_balance` = Σ piernas con `cash_account_id` (in − out) + movimientos de frontera de `cash_flow_documents` con su `payment_transaction_id` atribuido a la cuenta. Entradas: constitución de capital externo, retorno de fondos de gavetas, otros ingresos. Salidas: entregas a gavetas, retiros externos.
+- **Custodia y responsabilidad:** la tesorería no tiene sesión ni cajero; la responsabilidad de sus movimientos es del **rol que ejecuta y firma cada documento** (`responsible_user_id`/`created_by` — encargado/admin según matriz D.7), con las mismas políticas de escritura por RPC.
+- **Consolidación:** el consolidado (D.6) suma `Σ sesiones + v_cash_treasury_balance + tránsito` — la identidad I-1. Se **elimina** la fila `cash_registers(is_treasury=true)` del diseño v1.
+- `cash_transfers` referencia la cuenta (`from_account_id`/`to_account_id`) exactamente igual que las sesiones (D.14.2): un mecanismo uniforme para gaveta↔gaveta y gaveta↔tesorería.
+
+### D.14.6 — P1-F · Migración, R503 y sesiones históricas
+
+**Problema.** Tres defectos del diseño v1: (a) la CHECK R503 (`status <> 'pendiente' OR cash_register_id IS NOT NULL OR closed_at IS NOT NULL`) es incoherente — una sesión `pendiente` nunca tiene `closed_at`, y una ALTER TABLE con CHECK valida las filas existentes: **fallaría la migración** si hay una sesión legacy abierta, y bloquearía el despliegue escalonado (tiendas aún sin multicaja necesitan sesiones sin gaveta); (b) `CREATE INDEX CONCURRENTLY` **no puede ejecutarse dentro del bloque transaccional** con que el migrador de Supabase envuelve cada archivo de migración; (c) no se definía qué pasa con sesiones pendientes sin gaveta al activar la tienda.
+
+**Evidencia del esquema actual.** [MEDIDO prod] `cash_closures`: **1 fila**; `payment_transactions`: 927; `cash_flow_documents`: 2 — tablas minúsculas. [DOC/INFERIDO] el migrador de Supabase (`supabase db push`) ejecuta cada migración en una transacción; `CONCURRENTLY` falla con error 25001 en ese contexto.
+
+**Solución adoptada.**
+
+- **R503 se sustituye por un guard de activación:** trigger `cash_closures_model_guard` (INSERT/UPDATE): si `NEW.status='pendiente'` y `NEW.cash_register_id IS NULL` y la tienda tiene `multicashier_enabled_at` establecido → excepción fail-closed. Las tiendas sin activar siguen operando el modelo legacy con sesiones sin gaveta; las activadas exigen gaveta en toda sesión nueva. Sin CHECK global, sin bloqueo de la transición, sin reasignación retroactiva de históricas.
+- **Unicidades sin CONCURRENTLY:** índices `CREATE UNIQUE INDEX` normales dentro de la migración transaccional (viable: 1/927/2 filas [MEDIDO] — lock sub-segundo). `CONCURRENTLY` queda prohibido en las migraciones de este diseño; si en el futuro el volumen lo exigiera, se ejecutaría fuera del migrador con runbook propio.
+- **Transición por tienda, verificable:** (1) pre-requisito por tienda: **no existir sesión `pendiente` sin gaveta** — la migración de activación incluye un bloque `DO` que lanza excepción con mensaje accionable si existe (falla rápido, no aplica nada); el runbook cierra primero esa sesión con el flujo vigente. (2) `stores.multicashier_enabled_at` marca el corte. (3) El flujo legacy `open_cash_shift` rechaza aperturas nuevas en tiendas activadas (previene sesiones del modelo antiguo post-activación); `open_cash_session` (nuevo) exige gaveta. (4) Las sesiones históricas (cerradas, `cash_register_id IS NULL`) conservan su fórmula de arqueo v2.24 por ventana de tienda — `close_cash_shift` no se reescribe; los reportes separan modelos por el corte.
+- **Rollback que preserva datos:** nada se elimina; desactivar = `multicashier_enabled_at := NULL` + RPCs nuevos rechazan operaciones nuevas; columnas/tablas nuevas permanecen (aditivas, nullable). Prohibido eliminar columnas o tablas con datos válidos ya registrados.
+
+### D.14.7 — P1-G · Censo de cobros y backfill (751/908 → medición completa)
+
+**Problema.** El diseño v1 dejó la cobertura como censo pendiente. La misión exige categorizar las ventas sin filas y definir la condición exacta de activación del arqueo v3, sin inventar cobros.
+
+**Evidencia del esquema actual.** [MEDIDO prod, agregados sin PII, 2026-11-07]:
+- Ventas `completed` **sin** filas `ref_type='sale'` `direction='in'`: **165** — **todas del 2026-07-16 al 2026-08-10** (un único trimestre natural), todas con desglose server-side (`cash_amount/transfer_amount/zelle_amount` > 0 en algún componente; `sin_desglose = 0`; `con_incidencias = 0`). Es la ventana previa a la adopción del ledger de cobros.
+- Ventas **con** filas: **816**. Conciliación fila-a-fila contra el desglose de `transactions` con conversión por la tasa de cada fila (USD→CUP): **0 desviaciones, desvío máximo 0,00** (la primera medición "249 desviadas" fue un artefacto de sumar USD crudo sin convertir; se documenta para trazabilidad).
+- `create_sale_v2` inserta filas por cash/transfer/zelle y valida post-INSERT `SUM(amount_cup) = total ± 0,01` [EN CÓDIGO `20261105140000…sql:1070-1130`].
+
+**Categorización de las 165:** ventas anteriores a la adopción del ledger (todas); ninguna con pago pendiente, ninguna con incidencias, ninguna irrecuperable en principio (el desglose `transactions` existe como evidencia fuente) — pero **no se reconstruyen**: son históricas y no deben mezclarse con el nuevo cálculo.
+
+**Decisiones:** 1. **Fecha de corte:** `2026-08-11` (día siguiente a la última venta sin filas [MEDIDO]; re-verificable con la consulta del censo). 2. **Criterio de inclusión del modelo nuevo:** ventas con `created_at >= corte` de la tienda activada — 100 % con filas y 100 % conciliadas. 3. **Modelo histórico:** las 165 (y toda venta anterior al corte) permanecen identificadas; jamás reciben `cash_closure_id` ni gaveta estimada. 4. **Reconstrucción:** NO se ejecuta backfill — no existe necesidad (toda venta del nuevo modelo genera filas por construcción) y la regla prohíbe fabricar cobros. 5. **Irrecuperables:** ninguna en el modelo nuevo; las históricas quedan marcadas como tales (reporte `v_sale_payment_coverage` distingue `pre_ledger` / `conciliada` / `desviada`). 6. **Invariantes:** pre-activación: 0 ventas con `created_at >= corte` sin filas; 0 desviaciones de conciliación. Post: cada arqueo v3 solo alcanza filas con `cash_closure_id` de su sesión. 7. **Condición exacta de activación del arqueo v3 por tienda:** (i) P1-02 corregido; (ii) sin sesión legacy `pendiente`; (iii) gavetas + cuenta de tesorería definidas; (iv) censo re-ejecutado: 0 sin filas desde el corte y 0 desviaciones; (v) `multicashier_enabled_at` establecido. La conciliación 816/816 hoy **cumple ya** (iv) — el gate es reproducible antes de cada activación.
+
+### D.14.8 — P1-H · Cambio entregado y representación única del efectivo
+
+**Problema.** El diseño v1 añadía al arqueo un término "Δcambio entregado" (filas `out` de cambio o columnas `change_given_*`), además de sumar las filas de cobro: **doble conteo/omisión** según el caso. Había que fijar qué representa `payment_transactions.amount`.
+
+**Evidencia del esquema actual.** [EN CÓDIGO `20261105140000…sql:880-903`] `create_sale_v2` valida `recibido − vuelto = importe de la fila` (`ERR_CASH_SETTLEMENT_MISMATCH`) y **rechaza** sobrepagos sin liquidación registrada (`ERR_OVERPAYMENT_UNREGISTERED_CHANGE`). La fila de cobro de venta guarda el **importe neto aplicado** (lo que queda en la gaveta); `transactions.cash_received_cup/usd` y `change_given_cup/usd` son el desglose informativo del asentamiento; `cash_amount` en `transactions` = mismo neto.
+
+**Solución adoptada — representación inequívoca:**
+
+- **Entrada de dinero** (recibido del cliente): `transactions.cash_received_*` (informativo).
+- **Salida por cambio:** `transactions.change_given_*` (informativo) — identidades `recibido − cambio = fila` validadas server-side.
+- **Importe neto que permanece en la gaveta:** **única cifra contable** = la fila `payment_transactions` (`direction='in'`). El arqueo suma filas; **jamás** vuelve a restar el cambio (el término Δcambio de D.5 v1 se **elimina**). Las filas `out` de cambio no existen y no se introducen (serían un segundo registro del mismo dinero).
+
+**Ejemplo verificado con código:** venta de 750 CUP, el cliente entrega un billete de 1 000: `cash_received=1000`, `change_given=250`, fila `in` = **750**. Gaveta antes X → después X+750: **aumenta exactamente 750** ✔. El doble conteo prohibido (750−250=500) queda excluido por diseño (no hay término de cambio en la fórmula v3).
+
+### D.14.9 — Revisión integral del arqueo (v4) e invariantes verificables
+
+**Fuente única por movimiento** (una cifra, una tabla): cobros de ventas propias y ajenas, cobros posteriores, reembolsos y cambio → `payment_transactions` (neto) · traspasos y fondos → piernas `ref_type='cash_flow'` de `cash_transfers` · egresos/fondos de frontera → `cash_flow_documents` con su fila del ledger · ajustes → `ref_type='adjustment'` · electrónicos → conciliación separada (nunca efectivo físico). Jamás se suma el mismo movimiento desde `payment_transactions` y desde `cash_flow_documents`: el documento es soporte informativo; el efecto vive una vez en el ledger (doctrina vigente del módulo).
+
+**Fórmula v4 por sesión S y moneda M ∈ {CUP, USD} (físico):**
+
+```
+Esperado(S,M) = Apertura(S,M)
+ + Σ filas in  cash   (cash_closure_id=S, currency=M, ref_type IN ('sale','receipt','service','production_order','work'))
+ + Σ piernas IN de traspasos recibidos (ref_type='cash_flow', ref_id∈cash_transfers recibidos)
+ − Σ filas refund cash (devoluciones)
+ − Σ filas out  cash   (gastos, comisiones, egresos documentados)
+ − Σ piernas OUT de traspasos enviados
+ + Σ ajustes (ref_type='adjustment', ±)
+```
+
+Términos **eliminados** respecto a v3: Δcambio (D.14.8); "traspasos pendientes" (no existen en el saldo — D.14.1). Conciliación electrónica aparte por sesión (transfer/zelle in/out/refund). Bimoneda CUP/USD por separado; conversión canónica `amount * exchange_rate` (existe `amount_cup` en el ledger — [EN CÓDIGO `…sql:1126`]).
+
+**Invariantes verificables por SQL (queries de pre-vuelo y E2E):**
+
+| ID | Invariante | Verificación |
+|---|---|---|
+| I-1 | Partición de custodia: `Σ sesiones + tesorería + tránsito = custodia total` | vista `v_cash_custody_partition`; E2E tras cada operación |
+| I-2 | Todo movimiento físico del modelo nuevo tiene exactamente un titular (sesión XOR cuenta) | CHECK `pt_holder_xor` + trigger `pt_holder_required` |
+| I-3 | Conciliación cobros: `Σ filas (por venta, convertido a CUP) = desglose transactions` | `v_sale_payment_coverage` → 0 desviaciones (816/816 hoy [MEDIDO]) |
+| I-4 | Traspaso conserva el total: cada estado del ciclo deja la custodia total invariante | tabla D.14.1 como spec |
+| I-5 | Una pierna por lado: `UNIQUE(leg_out_payment_id)`, `UNIQUE(leg_in_payment_id)` + unicidad de claves | DDL D.14.2; reintento ×3 sin duplicados |
+| I-6 | Sesión origen no cierra con traspasos `entregado` | gate en `close_cash_session` |
+| I-7 | Sesión cerrada inmutable (trigger vigente); correcciones por movimientos nuevos | spec existente de inmutabilidad |
+| I-8 | Arqueo exacto: esperado computado = suma real de filas de la sesión | batería E2E con montos exactos (63 000 del escenario D.5, ahora sin Δcambio) |
+| I-9 | R501/R502: unicidad por gaveta y por usuario/tienda bajo concurrencia | specs de apertura simultánea |
+
+### D.14.10 — Resumen de correcciones estructurales respecto al diseño v1
+
+| # | Diseño v1 (revocado en parte) | Diseño corregido (v2) |
+|---|---|---|
+| 1 | Traspasos como pares de `cash_flow_documents` con estado `pendiente` | Entidad propia `cash_transfers` (5 estados, custodio, extremos sesión/cuenta) — `cash_flow_documents` sin tocar (CHECKs cerrados [MEDIDO]) |
+| 2 | Piernas "pendientes" sin efecto en arqueos | Pierna OUT efectiva desde la entrega; tránsito con `custodian_user_id`; identidad I-1 |
+| 3 | Clave de idempotencia compartida entre piernas | Claves por operación y por pierna + `UNIQUE` de piernas |
+| 4 | Tesorería = registro virtual con sesión artificial | `cash_accounts` por tienda + `cash_account_id` en el ledger + regla XOR (sin sesiones ficticias) |
+| 5 | `cash_registers.assigned_user_id` + assignments + sesión = 3 fuentes | `cash_register_assignments` única fuente de custodia; `assigned_user_id` eliminado |
+| 6 | `UNIQUE(register_id, unassigned_at)` | Índice parcial `WHERE unassigned_at IS NULL` |
+| 7 | R503 como CHECK con `closed_at` | Trigger de guard por activación de tienda (sin bloquear el despliegue escalonado) |
+| 8 | Índices `CONCURRENTLY` | Índices normales en migración transaccional (tablas de 1-927 filas [MEDIDO]) |
+| 9 | Arqueo v3 con término Δcambio | Arqueo v4: la fila del ledger ya es el neto (identidad `recibido−vuelto=fila` validada en `create_sale_v2`) |
+| 10 | Censo 751/908 sin resolver | Censo cerrado: 165 sin filas = ventana pre-ledger 2026-07-16→2026-08-10; corte 2026-08-11; conciliación 816/816 perfecta; sin backfill |
+
+## D.15. Veredicto final (misión 003, vigente)
+
+Todas las observaciones (3×P0, 5×P1) quedan resueltas sobre evidencia del esquema vivo [MEDIDO] y del código [EN CÓDIGO], con aritmética verificada y escenarios E2E definidos. El modelo es coherente con las restricciones reales de PostgreSQL/Supabase (CHECKs cerrados respetados, migraciones transaccionales, unicidades parciales), con los datos existentes (histórico preservado y separado por corte verificable, sin backfill) y con el flujo físico del dinero (la salida de A cuenta desde la entrega; el tránsito conserva custodio; la identidad de custodia se cumple en los seis estados).
+
+**DISEÑO APROBABLE PARA IMPLEMENTACIÓN** — con las precondiciones intactas y exigibles: (1) corrección del P1-02 antes de habilitar multi-sesión (Fase A); (2) activación por tienda según el gate de D.14.7 (censo limpio + sin sesión legacy + gavetas/tesorería definidas + `multicashier_enabled_at`); (3) certificación E2E con los 18 escenarios del pliego, los seis estados de traspaso (D.14.1) y los invariantes I-1…I-9. Esta aprobación es del diseño documentado en este archivo; no representa aprobación de ninguna revisión automática (la revisión Codex del PR quedó agotada por límite de uso, sin hallazgos) ni sustituye la certificación de la Fase F.
