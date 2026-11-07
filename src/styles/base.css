@@ -58,9 +58,22 @@
     text-decoration: none;
   }
 
-  img, video, svg {
+  /* FIX ICONOS COLAPSADOS (2026-11-08):
+   * Antes: `img, video, svg { max-width: 100% }` — desviación del estándar
+   * Tailwind Preflight (que solo aplica max-width a img/video). Los iconos
+   * SVG (lucide-react) tienen width/height fijos; dentro de un contenedor
+   * flex apretado (columna Acciones del catálogo, filas de acciones de
+   * tablas, chips) el max-width:100% los colapsaba a width:0 y el icono
+   * desaparecía — "el botón no muestra el icono" en varias vistas.
+   * Se restaura el estándar: max-width solo para img/video. */
+  img, video {
     display: block;
     max-width: 100%;
+  }
+
+  img, svg, video, canvas, audio, iframe, embed, object {
+    display: block;
+    vertical-align: middle;
   }
 
   button, input, select, textarea {
