@@ -21,6 +21,9 @@ interface ReceptionSuccessModalProps {
   totalCost: number | null;
   receptionDate: string;
   newProductsCount: number;
+  // CP-CAT-MAESTRO-003: cuántos de los productos nuevos quedaron vinculados al
+  // Catálogo Maestro de la organización (null = tienda no conectada / sin dato).
+  newProductsMasterLinkedCount?: number | null;
   priceUpdatedCount: number;
 }
 
@@ -50,6 +53,7 @@ export function ReceptionSuccessModal({
   totalCost,
   receptionDate,
   newProductsCount,
+  newProductsMasterLinkedCount = null,
   priceUpdatedCount,
 }: ReceptionSuccessModalProps) {
   const [copied, setCopied] = useState(false);
@@ -75,6 +79,7 @@ export function ReceptionSuccessModal({
       itemCount,
       totalCost,
       newProductsCount,
+      newProductsMasterLinkedCount,
       priceUpdatedCount,
       generatedAt: new Date().toISOString(),
     };
@@ -97,6 +102,8 @@ export function ReceptionSuccessModal({
       `*Items:* ${itemCount}%0A` +
       `*Total:* ${totalCost === null ? 'No calculable' : formatCurrency(totalCost)}%0A` +
       (newProductsCount > 0 ? `*Productos nuevos:* ${newProductsCount}%0A` : "") +
+      (newProductsMasterLinkedCount != null && newProductsMasterLinkedCount > 0
+        ? `*Vinculados al Catálogo Maestro:* ${newProductsMasterLinkedCount}%0A` : "") +
       (priceUpdatedCount > 0 ? `*Precios actualizados:* ${priceUpdatedCount}%0A` : "");
     window.open(`https://wa.me/?text=${msg}`, "_blank");
   };
@@ -177,6 +184,12 @@ export function ReceptionSuccessModal({
                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-info/10 text-info border border-info/20 text-[10px] font-bold uppercase tracking-wider">
                   <Plus className="w-3 h-3" />
                   {newProductsCount} producto(s) nuevo(s)
+                </span>
+              )}
+              {newProductsMasterLinkedCount != null && newProductsMasterLinkedCount > 0 && (
+                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-success/10 text-success border border-success/20 text-[10px] font-bold uppercase tracking-wider">
+                  <CheckCircle2 className="w-3 h-3" />
+                  {newProductsMasterLinkedCount} vinculado(s) al Catálogo Maestro
                 </span>
               )}
               {priceUpdatedCount > 0 && (

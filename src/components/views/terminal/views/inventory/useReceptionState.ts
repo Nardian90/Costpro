@@ -6,6 +6,8 @@ import { useAuthStore, useUIStore } from '@/store';
 import { useInventory, useRegisterReception } from '@/hooks/api/useInventory';
 // Reception-Flow-Fix: hooks para guardar/confirmar recepciones pendientes.
 import { useSavePendingReception, useConfirmPendingReception } from '@/hooks/api/useReceptions';
+// CP-CAT-MAESTRO-003: verificación de identidad compartida (Catálogo Maestro)
+import { findMasterBySku } from '@/hooks/api/useMasterCatalog';
 // Política de secuencia global (forward-only locking)
 import { useGlobalOperationDate, validateOperationDate } from '@/hooks/api/useGlobalOperationDate';
 // MISIÓN POLÍTICA TEMPORAL (2026-10-18): día de negocio canónico (America/Havana)
@@ -92,6 +94,9 @@ interface SuccessData {
   totalCost: number | null;
   receptionDate: string;
   newProductsCount: number;
+  // CP-CAT-MAESTRO-003: cuántos productos nuevos quedaron vinculados al
+  // Catálogo Maestro (null = sin dato / tienda no conectada).
+  newProductsMasterLinkedCount: number | null;
   priceUpdatedCount: number;
 }
 
@@ -196,7 +201,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   // REC-2 MM-R12: Modal de comprobante post-registro
   const [successData, setSuccessData] = useState<SuccessData>({
     open: false, receiptId: null, supplier: '', invoiceNumber: '',
-    itemCount: 0, totalCost: 0, receptionDate: '', newProductsCount: 0, priceUpdatedCount: 0,
+    itemCount: 0, totalCost: 0, receptionDate: '', newProductsCount: 0,
+    newProductsMasterLinkedCount: null, priceUpdatedCount: 0,
   });
 
   // ── Add Product Modal ─────────────────────────────────────
@@ -685,6 +691,25 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       } finally {
         setIsCheckingSku(false);
       }
+
+      // CP-CAT-MAESTRO-003: aviso informativo si el SKU ya existe en el
+      // Catálogo Maestro de la organización (aún sin fila local). El registro
+      // lo vinculará automáticamente (register_reception sincroniza el maestro
+      // en su transacción); sin pasos manuales extra. Fail-open: cualquier
+      // error (p.ej. tienda no conectada) mantiene el flujo normal.
+      // Fire-and-forget deliberado: el aviso NO debe retrasar ni bloquear el
+      // alta del item (la verificación viaja en segundo plano).
+      void findMasterBySku(user?.activeStoreId, manualSku.trim())
+        .then(master => {
+          if (master) {
+            toast.info(
+              `El SKU "${master.sku}" ya existe en el Catálogo Maestro de la organización como "${master.name}". ` +
+              'Al registrar la recepción quedará vinculado automáticamente.',
+              { duration: 9000 }
+            );
+          }
+        })
+        .catch(() => { /* fail-open: el alta manual continúa */ });
     }
 
     setItems(prev => [...prev, {
@@ -1321,6 +1346,31 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       if (autoCreatedSkus.length > 0) msgs.push(`${autoCreatedSkus.length} producto(s) creado(s) automaticamente`);
       if (priceUpdatedSkus.length > 0) msgs.push(`${priceUpdatedSkus.length} precio(s) actualizado(s)`);
 
+      // CP-CAT-MAESTRO-003: estado real de la sincronía con el Catálogo Maestro.
+      // register_reception sincroniza en su transacción; aquí se verifica el
+      // resultado persistido (master_product_id) para informarlo al usuario.
+      // Fail-open: cualquier error de verificación deja null (sin dato).
+      let masterLinkedCount: number | null = null;
+      if (autoCreatedSkus.length > 0) {
+        try {
+          const { data: newProducts, error: linkedErr } = await supabase
+            .from('products')
+            .select('id, sku, master_product_id')
+            .eq('store_id', user!.activeStoreId)
+            .in('sku', autoCreatedSkus);
+          if (!linkedErr && newProducts) {
+            masterLinkedCount = newProducts.filter(p => p.master_product_id).length;
+            if (masterLinkedCount > 0) {
+              msgs.push(`${masterLinkedCount} vinculado(s) al Catalogo Maestro de la organizacion`);
+            } else {
+              msgs.push('sin vinculo al Catalogo Maestro (tienda no conectada o producto local)');
+            }
+          }
+        } catch (linkedCheckErr) {
+          console.warn('[executeSubmit] no se pudo verificar la sincronía con el Catálogo Maestro:', linkedCheckErr);
+        }
+      }
+
       toast.success(msgs.join('. '));
 
       // REC-2 MM-R12: Mostrar modal de comprobante antes de navegar al historial.
@@ -1333,6 +1383,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         totalCost,
         receptionDate: receptionDateIso,
         newProductsCount: autoCreatedSkus.length,
+        newProductsMasterLinkedCount: masterLinkedCount,
         priceUpdatedCount: priceUpdatedSkus.length,
       });
 
@@ -1447,6 +1498,10 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         items: items.map(item => ({
           product_id: item.product_id || '',
           sku: item.sku,
+          // CP-CAT-MAESTRO-003: el nombre real del item viaja al borrador para
+          // que el producto nuevo (local/maestro) nazca con identidad correcta
+          // (antes se descartaba y el producto nacía con name=SKU).
+          name: item.name,
           quantity: item.quantity,
           unit_cost: item.unit_cost,
           unit_of_measure: item.unit_of_measure,
