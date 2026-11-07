@@ -284,6 +284,11 @@ BEGIN
               RETURNING id INTO v_master_id;
 
               v_master_created_count := v_master_created_count + 1;
+              -- Estado del maestro recién creado (RETURNING solo trae id):
+              -- sin esto, el chequeo posterior leería status NULL y la fila
+              -- local caería por error a la rama "archivado" (sin vínculo).
+              v_master_status := 'active';
+              v_master_name := btrim(v_new_product->>'name');
 
               -- Auditoría de identidad (mismo registro que create_master_product)
               INSERT INTO public.master_change_log
