@@ -407,7 +407,9 @@ describe('SC-2-12 — modelo según Resolución 11/2007', () => {
     expect(model.tipoOperacion).toBe('Venta');                // 4
     expect(model.transportadorNombre).toBe('');               // 5
     expect(model.lineas[0].importe).toBe('2,520.00 CUP');     // 6 (12 × 210)
-    expect(model.lineas[0].saldoExistencia).toBe('');
+    // MISIÓN 2026-11-07: sin ledger en la fuente → «s/d» (jamás cifra inventada;
+    // con saldosPorProducto muestra el saldo posterior real).
+    expect(model.lineas[0].saldoExistencia).toBe('s/d');
     expect(model.importesTotales[0].importe).toBe('5,487.30 CUP'); // 7 (almacenado)
     expect(model.entregaNombre).toBe('');                     // 8 (CP-SALES-024: leyenda genérica, sin nombre)
     expect(model.numeroConsecutivo).toBe('FV-2026-003412');   // 12 (invoice_number real)
@@ -462,7 +464,7 @@ describe('SC-2-16 — modelo según Resolución 11/2007', () => {
     expect(model.lineas[0].cantidad).toBe('-3');              //    (45 − 48, como la vista)
     expect(model.lineas[0].precioUnitario).toBe('');          //    (no gestionado)
     expect(model.lineas[0].importe).toBe('');
-    expect(model.lineas[0].saldoExistencia).toBe('');
+    expect(model.lineas[0].saldoExistencia).toBe(''); // SC-2-16: saldo no gestionado → en blanco
     expect(model.totalAjuste).toBe('');                       // 6 (no gestionado)
     expect(model.realizaInventarioNombre).toBe('Marta Rodríguez'); // 8 (nombre real)
     expect(model.numeroConsecutivo).toBe('');                 // 11 (no gestionado)

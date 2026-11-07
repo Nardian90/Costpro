@@ -375,7 +375,9 @@ export default function ReceptionsHistoryView() {
                     <th className="p-4 text-left">ID / Ref</th>
                     <th className="p-4 text-left">Fecha</th>
                     <th className="p-4 text-left hidden sm:table-cell">Proveedor</th>
-                    <th className="p-4 text-left priority-low hidden sm:table-cell">Factura</th>
+                    {/* MISIÓN 2026-11-07 — anchos proporcionales: la cabecera de
+                        Factura lleva ancho acotado coherente con el truncado. */}
+                    <th className="p-4 text-left priority-low hidden sm:table-cell w-[160px]">Factura</th>
                     <th className="p-4 text-center priority-low">Estado</th>
                     <th className="p-4 text-right">Total Costo</th>
                     <th className="p-4 text-center">Acciones</th>
@@ -399,26 +401,39 @@ export default function ReceptionsHistoryView() {
                         </div>
                       </td>
                       <td className="p-4 priority-low hidden sm:table-cell">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-xs font-bold uppercase">{rec.reference_doc || 'S/N'}</span>
+                        {/* MISIÓN 2026-11-07 — optimización de columnas: la
+                            factura ya no ensancha la tabla (truncado + tooltip
+                            con el valor completo, mismo patrón que Proveedor). */}
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="w-3 h-3 text-muted-foreground shrink-0" />
+                          <span
+                            className="text-xs font-bold uppercase truncate max-w-[140px] inline-block align-middle"
+                            title={rec.reference_doc || 'S/N'}
+                          >
+                            {rec.reference_doc || 'S/N'}
+                          </span>
                         </div>
                       </td>
                       <td className="p-4 text-center priority-low">
-                        <DocumentStatusBadge type="receipt" status={rec.status} />
-                        {/* FIX-PAYMENT-TRACKING (2026-07-12): badge de estado de pago */}
-                        {rec.status !== 'voided' && rec.status !== 'reversed' && (rec as any).payment_status && (
-                          <span className={cn(
-                            "ml-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase",
-                            (rec as any).payment_status === 'paid' ? "bg-success/10 text-success"
-                            : (rec as any).payment_status === 'partial' ? "bg-amber-500/10 text-amber-500"
-                            : "bg-destructive/10 text-destructive"
-                          )}>
-                            {(rec as any).payment_status === 'paid' ? '💰 Pagado'
-                             : (rec as any).payment_status === 'partial' ? '⚖️ Parcial'
-                             : '⏳ Pendiente'}
-                          </span>
-                        )}
+                        {/* MISIÓN 2026-11-07 — badges apilados verticalmente:
+                            documento + estado de pago ocupan menos ancho y no
+                            fuerzan scroll horizontal en escritorio. */}
+                        <div className="flex flex-col items-center gap-1">
+                          <DocumentStatusBadge type="receipt" status={rec.status} />
+                          {/* FIX-PAYMENT-TRACKING (2026-07-12): badge de estado de pago */}
+                          {rec.status !== 'voided' && rec.status !== 'reversed' && (rec as any).payment_status && (
+                            <span className={cn(
+                              "inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase whitespace-nowrap",
+                              (rec as any).payment_status === 'paid' ? "bg-success/10 text-success"
+                              : (rec as any).payment_status === 'partial' ? "bg-amber-500/10 text-amber-500"
+                              : "bg-destructive/10 text-destructive"
+                            )}>
+                              {(rec as any).payment_status === 'paid' ? '💰 Pagado'
+                               : (rec as any).payment_status === 'partial' ? '⚖️ Parcial'
+                               : '⏳ Pendiente'}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4 text-right">
                         <span className="text-base font-black text-primary tabular-nums">{formatCurrency(rec.total_cost)}</span>

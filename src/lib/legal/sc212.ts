@@ -53,7 +53,13 @@
  *  │ 6. Código, descripción, UM, cantidad,       │ transaction_items + products       │ Automáticos (UM desde products);
  *  │    precio unitario total, importe y saldo   │ (sku, name, unit_of_measure,       │ importe = cantidad × precio a la
  *  │    en existencia según almacén              │  quantity, price_at_sale,          │ venta (misma base del modal);
- *  │                                             │  price_currency)                   │ SALDO EN EXISTENCIA en blanco
+ *  │                                             │  price_at_sale_cup, product_id)    │ SALDO EN EXISTENCIA = saldo
+ *  │                                             │                                    │ posterior histórico del almacén
+ *  │                                             │                                    │ tras la venta (lib/inventory/
+ *  │                                             │                                    │ saldo-posterior.ts; ledger real
+ *  │                                             │                                    │ stock_movements con enlace
+ *  │                                             │                                    │ reference_id=venta; «s/d» + nota
+ *  │                                             │                                    │ si el historial es insuficiente)
  *  │ 7. Total de la Factura                      │ transactions.total_amount          │ Automático (almacenado; moneda de
  *  │                                             │ + sale_currency                    │ la venta)
  *  │ 8. Nombre y firma del que entrega + fecha   │ etiqueta genérica constante        │ «Entrega los productos (nombre y
@@ -84,6 +90,13 @@ import { format } from 'date-fns';
 import { supabase } from '@/lib/supabaseClient';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { resolveScLogoDataUrl } from './sc-logo';
+import {
+  calcularSaldoPosterior,
+  fetchMovimientosPorProducto,
+  movimientosDeVenta,
+  type SaldoPosteriorMovement,
+  type SaldoPosteriorResultado,
+} from '@/lib/inventory/saldo-posterior';
 import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
@@ -108,6 +121,8 @@ import {
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface Sc212SourceItem {
+  /** Producto de la línea (enlace con el ledger de inventario). */
+  product_id?: string | null;
   quantity: number;
   price_at_sale: number;
   price_currency?: string | null;
@@ -167,6 +182,12 @@ export interface Sc212SourceData {
     /** Logo de la tienda emisora (multitienda) para el comprobante. */
     logo_url?: string | null;
   } | null;
+  /**
+   * Saldo posterior histórico por producto (Σ líneas del mismo SKU agregadas),
+   * derivado del ledger real de stock_movements tras la venta. Opcional: si
+   * falta, las líneas quedan con «s/d» (jamás una cifra inventada).
+   */
+  saldosPorProducto?: Record<string, SaldoPosteriorResultado>;
 }
 
 export interface Sc212ModelData {
@@ -195,13 +216,19 @@ export interface Sc212ModelData {
     cantidad: string;
     precioUnitario: string;
     importe: string;
-    saldoExistencia: string; // no gestionado → ''
+    /** Saldo en existencia según almacén: saldo posterior histórico de la venta. */
+    saldoExistencia: string;
   }>;
   importesTotales: Array<{ label: string; importe: string }>;
   entregaNombre: string;
   estado: string;
   numeroConsecutivo: string;
   identificadorVenta: string;
+  /**
+   * Nota al pie sobre el saldo en existencia ('' si todo se pudo derivar del
+   * ledger): documenta limitaciones de historial o la proyección aplicada.
+   */
+  saldoNota?: string;
 }
 
 const DEFAULT_CURRENCY = 'CUP';
@@ -222,6 +249,12 @@ function asText(value: string | null | undefined): string {
 // Constructor del modelo (función pura — testeable)
 // ────────────────────────────────────────────────────────────────────────────
 
+/** Celda «Saldo en existencia» del modelo: cifra del ledger o «s/d» (sin dato). */
+export function formatSc212Saldo(saldo: SaldoPosteriorResultado | undefined): string {
+  if (!saldo || !Number.isFinite(saldo.saldoPosterior)) return 's/d';
+  return formatRes11Quantity(saldo.saldoPosterior);
+}
+
 export function buildSc212ModelData(
   source: Sc212SourceData,
   prefs: Sc212FieldsPrefs = DEFAULT_SC212_FIELDS_PREFS,
@@ -240,6 +273,11 @@ export function buildSc212ModelData(
     const pCup = Number(item.price_at_sale_cup);
     const precioUnitarioCup = pCup > 0 ? pCup : (Number(item.price_at_sale) || 0) * rate;
     const importe = (Number(item.quantity) || 0) * precioUnitarioCup;
+    // Dato 6 (saldo en existencia según almacén): saldo posterior histórico
+    // tras la venta — derivado del ledger real stock_movements por
+    // (producto, almacén) con enlace documental reference_id=venta. Varias
+    // líneas del mismo SKU comparten el saldo del documento.
+    const saldo = item.product_id ? source.saldosPorProducto?.[item.product_id] : undefined;
     return {
       codigo: item.products?.sku || '',
       descripcion: item.products?.name || '',
@@ -247,9 +285,25 @@ export function buildSc212ModelData(
       cantidad: formatRes11Quantity(item.quantity),
       precioUnitario: `${formatRes11Money(precioUnitarioCup)} CUP`.trim(),
       importe: `${formatRes11Money(importe)} CUP`.trim(),
-      saldoExistencia: '',
+      saldoExistencia: formatSc212Saldo(saldo),
     };
   });
+
+  // Nota al pie del saldo: fuente y limitaciones — jamás una cifra inventada.
+  const conLimitacion = (source.items || []).some(
+    (i) => i.product_id && source.saldosPorProducto?.[i.product_id]?.fuente === 'limitacion',
+  );
+  const conProyeccion = (source.items || []).some(
+    (i) => i.product_id && source.saldosPorProducto?.[i.product_id]?.fuente === 'proyeccion',
+  );
+  let saldoNota = '';
+  if (conLimitacion) {
+    saldoNota =
+      'Saldo en existencia: «s/d» — el historial de movimientos disponible no permite determinar el saldo de ese producto en el almacén (no se inventa cifra).';
+  } else if (conProyeccion) {
+    saldoNota =
+      'Saldo en existencia: proyección del saldo posterior (venta pendiente de contabilizar = saldo actual del almacén − cantidad vendida).';
+  }
 
   // Dato 7: Total de la Factura — el almacenado por el servidor, en la
   // moneda de la venta (nunca se recalcula ni se mezclan monedas).
@@ -312,6 +366,7 @@ export function buildSc212ModelData(
     numeroConsecutivo: transaction.invoice_number || '',
     logoUrl: source.storeConfig?.logo_url ?? null,
     identificadorVenta: transaction.id?.split('-')[0] || '',
+    saldoNota,
     // Metadatos de presentación (no forman parte del modelo oficial; el
     // render los consume y los tests los ignoran en las igualdades).
     ...({
@@ -392,7 +447,7 @@ export async function fetchSc212SourceData(
   const [itemsRes, storeRes, sellerRes] = await Promise.all([
     db
       .from('transaction_items')
-      .select('quantity, price_at_sale, price_currency, price_at_sale_cup, exchange_rate, products(name, sku, unit_of_measure)')
+      .select('quantity, price_at_sale, price_currency, price_at_sale_cup, exchange_rate, product_id, products(name, sku, unit_of_measure)')
       .eq('transaction_id', transaction.id)
       .order('created_at', { ascending: true }),
     storeIdForSale
@@ -418,6 +473,7 @@ export async function fetchSc212SourceData(
       nit?: string | null;
       bank_account?: string | null;
       bank_branch?: string | null;
+      logo_url?: string | null;
     } | null;
     result.entidadNombre = store?.name || '';
     result.storeConfig = {
@@ -428,10 +484,47 @@ export async function fetchSc212SourceData(
       nit: store?.nit ?? null,
       bank_account: store?.bank_account ?? null,
       bank_branch: store?.bank_branch ?? null,
+      // MISIÓN SC-2-12 (2026-11-07): el logo comercial de la TIENDA emisora
+      // (antes se consultaba pero no se copiaba → el modelo caía siempre al
+      // logo general de la aplicación).
+      logo_url: store?.logo_url ?? null,
     };
   }
   if (!sellerRes.error && sellerRes.data) {
     result.vendedorNombre = (sellerRes.data as { full_name?: string | null } | null)?.full_name || '';
+  }
+
+  // ── Saldo posterior histórico por producto (Σ líneas del mismo SKU) ──
+  // Enlace documental: movimientos 'sale' con reference_id = transaction.id
+  // (nunca se infiere solo por SKU o fecha). Venta pendiente → proyección.
+  const productIds = Array.from(
+    new Set(result.items.map((i) => (i as Sc212SourceItem).product_id).filter((id): id is string => !!id)),
+  );
+  if (storeIdForSale && productIds.length > 0) {
+    try {
+      const ledger = await fetchMovimientosPorProducto(db, productIds, storeIdForSale);
+      const deltaPorProducto: Record<string, number> = {};
+      for (const it of result.items as Sc212SourceItem[]) {
+        if (!it.product_id) continue;
+        // Delta de la venta en unidades de inventario: la venta DESCOUNTA stock.
+        deltaPorProducto[it.product_id] = (deltaPorProducto[it.product_id] || 0) - (Number(it.quantity) || 0);
+      }
+      const pendiente = transaction.status === 'pending';
+      const saldosPorProducto: Record<string, SaldoPosteriorResultado> = {};
+      for (const pid of productIds) {
+        const movs: SaldoPosteriorMovement[] = ledger[pid] || [];
+        saldosPorProducto[pid] = calcularSaldoPosterior({
+          movimientos: movs,
+          movimientosPropios: movimientosDeVenta(movs, transaction.id),
+          deltaDocumento: deltaPorProducto[pid] || 0,
+          pendienteContabilizar: pendiente,
+        });
+      }
+      result.saldosPorProducto = saldosPorProducto;
+    } catch (e) {
+      // El saldo no bloquea la factura: las líneas quedan «s/d» y el pie lo documenta.
+      logger.warn('DATABASE', 'SC212_SALDO_POSTERIOR_READ_FAILED', { error: e });
+    }
   }
 
   return result;
@@ -754,6 +847,15 @@ export async function renderSc212Pdf(model: Sc212ModelData) {
   for (const total of model.importesTotales) {
     doc.text(`${total.label} ${total.importe}`, pageWidth - marginX, finalY, { align: 'right' });
     finalY += 5.5;
+  }
+  // Nota sobre el saldo en existencia (fuente/limitación) — solo cuando aplica.
+  if (model.saldoNota) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(6.5);
+    doc.text(model.saldoNota, marginX, finalY + 1, {
+      maxWidth: pageWidth - marginX * 2,
+    });
+    doc.setFontSize(9.5);
   }
 
   // ── Datos 8–11: firmas ──

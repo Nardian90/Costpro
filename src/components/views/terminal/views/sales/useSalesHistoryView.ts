@@ -219,6 +219,8 @@ export function useSalesHistoryView() {
 
         // Data
         transactions: paginatedTransactions,
+        /** TODAS las transacciones filtradas (para exportaciones: PDF/Excel). */
+        filteredTransactions,
         totalFilteredCount: filteredTransactions.length,
         isLoading: isLoadingTransactions,
         transactionsError: transactionsError ?? null,
