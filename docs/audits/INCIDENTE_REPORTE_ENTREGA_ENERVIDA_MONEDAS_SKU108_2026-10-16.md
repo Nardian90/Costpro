@@ -97,7 +97,7 @@ Fuente única de la **moneda real de cobro** (consumido por las 4 rutas del mód
 |---|---|
 | `src/__tests__/lib/cash-report-collection-currency.test.ts` (**NUEVA**, 17 casos: fixture real del 16/10 + pagos mixtos V2 + zelle legacy/con y sin tasa + sobrepago CUP + sin ítems + reparto proporcional/igualitario + guardas de `lineUsdOf`/`lineCupOf`) | **17/17 ✓** |
 | Regresión: `cash-report-view`, `cash-report-dedicated-view` (comp+nav), `cash-report-icon-variant`, `ipv-ventas-navigation`, `gate1-navigation`, `cash-report-period-attribution` | **163/163 ✓** |
-| TypeScript (scoped `tsconfig.mision-1610.json`: módulo + 4 rutas + PDF + tests) | 0 errores |
+| TypeScript (scoped `docs/audits/configs-tsc-misiones/tsconfig.mision-1610.json`: módulo + 4 rutas + PDF + tests) | 0 errores |
 | ESLint (7 archivos de la misión) | 0 errores |
 
 ### 6.2 Verificación end-to-end con la API real (solo GET, sesión real, servidor local pm2)
@@ -155,7 +155,7 @@ Diferencias documentadas (no corregidas a mano, remitidas a decisión del propie
 | `src/app/api/cash-report/details/route.ts` | Corregido — drill-down por moneda de cobro |
 | `src/components/views/terminal/views/cash/cash-report-pdf.ts` | Corregido — tabla por producto (Efectivo/Transfer CUP + USD), etiqueta MN→CUP, leyenda de incidencias, página USD |
 | `src/__tests__/lib/cash-report-collection-currency.test.ts` | NUEVO — 17 pruebas |
-| `tsconfig.mision-1610.json` | NUEVO — typecheck acotado de la misión |
+| `docs/audits/configs-tsc-misiones/tsconfig.mision-1610.json` | NUEVO — typecheck acotado de la misión |
 | `scripts/repro_monedas_1610.mjs`, `scripts/verify_drilldown_regresion_1610.mjs`, `scripts/descarga_pdf_1610.mjs`, `scripts/captura_ui_1610.mjs`, `scripts/captura_vista_previa_1610.mjs` | NUEVOS — tooling de reproducción/verificación (solo GET) |
 | `audit-evidence/20261017-reporte-entrega-monedas-1610/*` | NUEVO — evidencia (antes/después, PDF real, capturas) |
 

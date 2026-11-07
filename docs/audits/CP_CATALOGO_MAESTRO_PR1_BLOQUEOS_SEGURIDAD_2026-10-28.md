@@ -14,7 +14,7 @@
 | 4 | Nuevo código de error `STORE_TENANT_MISMATCH` (403) + i18n | Lib | `src/lib/api-errors.ts`, `src/messages/es.json` |
 | 5 | Reactivación de E2E-POS-007 (eliminado el `test.skip(true)` del hallazgo) | E2E | `e2e/flows/pos-checkout.spec.ts` |
 | 6 | Pruebas: contrato de migraciones (9 casos) + importador (15 casos, 6 nuevos) | Tests | `src/__tests__/migrations/cp-catalogo-pr1-bloqueos-seguridad-migration.test.ts`, `src/__tests__/api/catalog-bulk-import-validation.test.ts` |
-| 7 | tsconfig focalizado de la misión | Config | `tsconfig.mision-catalogo-pr1.json` |
+| 7 | tsconfig focalizado de la misión | Config | `docs/audits/configs-tsc-misiones/tsconfig.mision-catalogo-pr1.json` |
 
 ## 2. Migración 1 — create_sale_v2 (fallback cross-store)
 
@@ -54,7 +54,7 @@
 | Verificación | Resultado |
 |---|---|
 | `vitest run src/__tests__/api src/__tests__/migrations` | **75 archivos / 759 pruebas — todas verdes** (incluye 9 casos nuevos de contrato de migraciones y 15 del importador: 9 previos actualizados al nuevo contrato de estampado + 6 nuevos de aislamiento) |
-| `tsc -p tsconfig.mision-catalogo-pr1.json` (focalizado) | 0 errores (el `tsc` completo no cabe en la RAM local de 3,9 GB — CI lo ejecuta completo con `bunx tsc`) |
+| `tsc -p docs/audits/configs-tsc-misiones/tsconfig.mision-catalogo-pr1.json` (focalizado) | 0 errores (el `tsc` completo no cabe en la RAM local de 3,9 GB — CI lo ejecuta completo con `bunx tsc`) |
 | `eslint` (archivos del PR) | 0 errores |
 | `node scripts/ci-gate-sql-checks.js` | exit 0 (canario + allowlist sin cambios) |
 | `node scripts/security-contract-test-static.cjs` | OK — 156/156 funciones representadas, 0 divergencias bloqueantes, tras regenerar `supabase/security-contract/contract-surface.sql` desde LIVE (proceso oficial tras cambiar una función certificada; sha256 3791352f…) |

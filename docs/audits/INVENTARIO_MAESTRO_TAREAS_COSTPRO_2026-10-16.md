@@ -13,7 +13,7 @@
 
 **Fuentes recorridas (FASE 2):**
 - `docs/audits/` — 39 documentos (.md/.txt/.json), incluidos los 4 de más de 40 KB por secciones.
-- Documentos de primer nivel: 30 en `docs/*.md`, 3 en la raíz del repo (`DIAGNOSTICO_VALES_SALIDA.md`, `E2E-COVERAGE-REPORT.md`, `README.md`), `docs/quality/`, `docs/evaluations/`, `docs/automation/`, `knowledge/help/…/08-seccion-en-desarrollo.md`, `agent-ctx/*.md`.
+- Documentos de primer nivel: 30 en `docs/*.md`, 3 en la raíz del repo (`docs/audits/DIAGNOSTICO_VALES_SALIDA.md`, `docs/e2e/E2E-COVERAGE-REPORT.md`, `README.md`), `docs/quality/`, `docs/evaluations/`, `docs/automation/`, `knowledge/help/…/08-seccion-en-desarrollo.md`, `docs/audits/agent-ctx/*.md`.
 - Código: `src/` (API routes, hooks, componentes, lib), `supabase/migrations/` (465 migraciones SQL, 2024-01 → 2026-10-15), `e2e/`, `tests/`, `.github/workflows/`, `scripts/` (censo + lectura dirigida), `ecosystem.config.js`, `next.config.ts`, `vercel.json`, `.npmrc`.
 - Git: últimos 60 commits de `main` (2026-10-12 → 2026-10-16) + commits clave citados por los informes.
 
@@ -68,8 +68,8 @@
 | CP-POS-006 | POS | Falta test de integración del pro-rateo del motor de comisiones | PENDIENTE CONFIRMADA | P2 | [DOC] AUDITORIA_TRABAJADORES §14.4 | Fix verificado en vivo pero sin test que lo proteja | CP-INFRA-011 |
 | CP-POS-007 | POS | Notas de venta del Catálogo de Ventas se descartan silenciosamente | PENDIENTE DE VERIFICACIÓN (M2) | P1 | [CÓD] fix 4 puntos (`useSalesCatalog`, `schemas.ts`, `sync/batch`) + [TEST] 8/8 | `confirmCheckout(notes)` no incluye `notes` en el body del checkout | Ninguna |
 | CP-POS-008 | POS | Tasa USD 680 hardcodeada como fallback en 8+ puntos del cliente | PENDIENTE CONFIRMADA | P2 | [CÓD] `usePOSCheckout.ts:184`, `useSalesCatalog.ts:416,464`, `salesCatalogImport.ts:102` | Default de硬codificación pre-validación server-side | Ninguna |
-| CP-POS-009 | POS | Selector de fecha date-only a medianoche; Vales de Salida sin selector de fecha en UI | PENDIENTE CONFIRMADA | P2 | [DOC] agent-ctx/informe-final-mision-multitienda | `validate_operation_date` forward-only + UI date-only | Ninguna |
-| CP-POS-010 | POS | Reporte Entrega: 7 discrepancias contables D1-D7 + migración `ref_type` no aplicada | PARCIALMENTE RESUELTA | P1 | [DOC] auditoria-reporte-entrega.md + FIX_REPORTE_ENTREGA_1510 | Correcciones en repo; dato histórico y deploy pendientes | CP-INFRA-009 |
+| CP-POS-009 | POS | Selector de fecha date-only a medianoche; Vales de Salida sin selector de fecha en UI | PENDIENTE CONFIRMADA | P2 | [DOC] docs/audits/agent-ctx/informe-final-mision-multitienda | `validate_operation_date` forward-only + UI date-only | Ninguna |
+| CP-POS-010 | POS | Reporte Entrega: 7 discrepancias contables D1-D7 + migración `ref_type` no aplicada | PARCIALMENTE RESUELTA | P1 | [DOC] docs/audits/auditoria-reporte-entrega.md + FIX_REPORTE_ENTREGA_1510 | Correcciones en repo; dato histórico y deploy pendientes | CP-INFRA-009 |
 | CP-INV-001 | INV | 4 productos Puerto Padre: `inventory.quantity` ≠ Σ movimientos (seed legacy) | PENDIENTE CONFIRMADA | P2 | [DOC] BACKUP_RESTORE_INVENTORY_TRUTH_MODEL | Seed legacy con cantidades simbólicas; Modelo A (inventory=primary) | Decisión de remediación |
 | CP-INV-002 | INV | Productos 160-177 sin precio/costo y nombre provisional | PENDIENTE CONFIRMADA | P2 | [DOC] REGISTRO_MOVIMIENTOS D-5 | Alta sin datos comerciales (negocio aún no los informó) | Dato de negocio |
 | CP-INV-003 | INV | `unit_cost=1 CUP` placeholder en 13 recepciones | PENDIENTE CONFIRMADA | P2 | [DOC] REGISTRO_MOVIMIENTOS D-6 | Costo no informado al registrar | Dato de negocio |
@@ -332,7 +332,7 @@
 - **ID estable:** CP-POS-009 · **Área:** POS · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
 - **Descripción del problema:** el checkout usa selector date-only (medianoche): registrar una venta del mismo día con hora ≥ 12:00 choca con `validate_operation_date` (forward-only). El modal de Vales de Salida no expone selector de fecha aunque la API lo soporta (`p_operation_date`).
 - **Comportamiento esperado:** la UI permite operar durante todo el día hábil y registrar vales con fecha económica.
-- **Origen documental:** `agent-ctx/informe-final-mision-multitienda.md` (limitaciones UI, 2026-10-12).
+- **Origen documental:** `docs/audits/agent-ctx/informe-final-mision-multitienda.md` (limitaciones UI, 2026-10-12).
 - **Fecha del registro original:** 2026-10-12.
 - **Evidencia en el código actual:** `useSalesCatalog.ts` confirma con `operationDate?: string`; el modal de vales no lo expone (informe + ausencia detectada por exploración).
 - **Pruebas realizadas:** evidencia documental de misión con flujo real.
@@ -349,7 +349,7 @@
 - **ID estable:** CP-POS-010 · **Área:** POS · **Estado verificado:** PARCIALMENTE RESUELTA · **Prioridad:** P1
 - **Descripción del problema:** la auditoría contable del Reporte Entrega documentó 7 discrepancias (D1 ventas sin ×quantity, D2 reparto proporcional sobre base rota, D3 comisión 1% plano inventada, D4 cash_balance_cup excluye tramo mixed, D5 servicios recibidos sin línea, D6 comisiones no gestionables, D7 sin ajustes extraordinarios). La verificación en vivo validó las fórmulas corregidas, pero quedó BLOQUEADO: la confirmación viva de comisiones/ajustes requiere tienda de pruebas con membresía (revocada) y la migración `ref_type='adjustment'` (20261012000001) NO se aplicó a la base compartida (el endpoint responde 409 informativo hasta deploy).
 - **Comportamiento esperado:** reporte contablemente exacto en despliegue, con ajustes y comisiones confirmables en vivo.
-- **Origen documental:** `docs/auditoria-reporte-entrega.md`.
+- **Origen documental:** `docs/audits/auditoria-reporte-entrega.md`.
 - **Fecha del registro original:** ~2026-10 (rama feat/reporte-entrega-auditoria-contable).
 - **Evidencia en el código actual:** migración `20261012000001_cash_report_adjustments.sql` existe en repo; estado de aplicación a la BD compartida: NO VERIFICABLE desde aquí (solo lectura).
 - **Pruebas realizadas:** evidencia documental de la verificación en vivo de esa misión.
@@ -448,7 +448,7 @@
 - **ID estable:** CP-INV-005 · **Área:** INV · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
 - **Descripción del problema:** en la conciliación de 161 SKU quedaron 4 divergencias: SKU 113 (+6 preexistente, ajuste «+85 Cuadre importación» 18/08), SKU 127 (+10 — VS rechazada por prohibición de stock negativo), SKU 135 (+27.5 sin explicación), SKU 141 (+10 preexistente). La política operativa para el caso SKU 127 (permitir stock negativo o no) sigue sin decisión.
 - **Comportamiento esperado:** divergencias explicadas/regularizadas; política de stock negativo documentada y aplicada.
-- **Origen documental:** `agent-ctx/informe-final-mision-multitienda.md` (2026-10-12).
+- **Origen documental:** `docs/audits/agent-ctx/informe-final-mision-multitienda.md` (2026-10-12).
 - **Fecha del registro original:** 2026-10-12.
 - **Evidencia en el código actual:** constraints `products_stock_current_non_negative` / `inventory_quantity_non_negative` (`20260627000003`); CHECK activo que rechazó la VS del SKU 127.
 - **Pruebas realizadas:** evidencia documental (misión con RPC reales).
@@ -613,7 +613,7 @@
 - **ID estable:** CP-IPV-005 · **Área:** IPV · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P3
 - **Descripción del problema:** MatchingEngine acoplado a Dexie (difícil de testear), IPVView/TransactionTable sobredimensionados con exceso de estado local, preparación de datos síncrona pesada >500 transacciones. Estrategia de micro-refactor en 4 fases propuesta sin ejecutar. También el scoring de identidad queda «not implemented in metadata yet» (`src/lib/ipv/identity/metrics.ts:8`).
 - **Comportamiento esperado:** lógica pura testeable, componentes divididos, DTOs compartidos.
-- **Origen documental:** `docs/EVALUACION_IPV.md`.
+- **Origen documental:** `docs/audits/EVALUACION_IPV.md`.
 - **Fecha del registro original:** s/f (análisis estructural).
 - **Evidencia en el código actual:** `src/lib/ipv/engine.ts`, `matching.worker.ts`, `TransactionTable.tsx` (exploración del agente).
 - **Pruebas realizadas:** exploración de código.
@@ -683,7 +683,7 @@
 - **ID estable:** CP-CAT-004 · **Área:** CAT · **Estado verificado:** PENDIENTE DE VERIFICACIÓN (M2, 2026-10-17) · **Prioridad:** P1
 - **Descripción del problema:** el alta manual de producto desde la recepción (`useReceptionState.executeSubmit`) inserta en `products` sin `tenant_id`; la policy RLS `products_tenant_insert` (v2.21) lo rechaza con 403. En la misión del 12/10 el producto solo se pudo crear vía JWT con tenant_id.
 - **Comportamiento esperado:** el alta desde recepción funciona con el tenant de la sesión.
-- **Origen documental:** `agent-ctx/informe-final-mision-multitienda.md` (2026-10-12).
+- **Origen documental:** `docs/audits/agent-ctx/informe-final-mision-multitienda.md` (2026-10-12).
 - **Fecha del registro original:** 2026-10-12.
 - **Evidencia en el código actual [VERIFICADO HOY]:** `src/hooks/api/useReceptions.ts` — `productsData` (~:250-266) construye sku/name/cost_price/price y el `.from('products').insert(productsData)` (~:267-270) sin campo `tenant_id`.
 - **Pruebas realizadas:** lectura del hook hoy; repro documentado en la misión.
@@ -883,9 +883,9 @@
 
 #### CP-SEC-008 — Backlog formal DT-01..DT-18 sin cierre por ítem
 - **ID estable:** CP-SEC-008 · **Área:** SEC · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
-- **Descripción del problema:** el acta de cierre v2.12.50 (`AUDIT_CLOSURE_REPORT_v1.md`) y el snapshot de superficie (`SECURITY_BASELINE_SNAPSHOT_v1.md`) registran deuda técnica formal DT-01…DT-18: DT-01 is_admin≡is_global_admin (57 policies), DT-02 manage_user_memberships sin auth.uid explícito, DT-03 tenant_id, DT-05 plan enum, DT-08/09 cleanup jobs (bulk_ops_log, tokens), DT-12 store laboratorio, DT-13 snapshot externo >100MB, etc. Control de regresión declarado «⚠️ Parcial — CI Gate pendiente».
+- **Descripción del problema:** el acta de cierre v2.12.50 (`docs/audits/AUDIT_CLOSURE_REPORT_v1.md`) y el snapshot de superficie (`docs/audits/SECURITY_BASELINE_SNAPSHOT_v1.md`) registran deuda técnica formal DT-01…DT-18: DT-01 is_admin≡is_global_admin (57 policies), DT-02 manage_user_memberships sin auth.uid explícito, DT-03 tenant_id, DT-05 plan enum, DT-08/09 cleanup jobs (bulk_ops_log, tokens), DT-12 store laboratorio, DT-13 snapshot externo >100MB, etc. Control de regresión declarado «⚠️ Parcial — CI Gate pendiente».
 - **Comportamiento esperado:** cada DT con estado, dueño y cierre.
-- **Origen documental:** `docs/AUDIT_CLOSURE_REPORT_v1.md` + `docs/SECURITY_BASELINE_SNAPSHOT_v1.md`.
+- **Origen documental:** `docs/audits/AUDIT_CLOSURE_REPORT_v1.md` + `docs/audits/SECURITY_BASELINE_SNAPSHOT_v1.md`.
 - **Fecha del registro original:** 2026-08-02.
 - **Evidencia en el código actual:** sin commits de cierre por ítem localizados (salvo los resueltos en la propia iteración 9).
 - **Pruebas realizadas:** evidencia documental.
@@ -902,7 +902,7 @@
 - **ID estable:** CP-SEC-009 · **Área:** SEC · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
 - **Descripción del problema:** 4 deudas de modelo: is_admin()==is_global_admin() idénticas usadas en 57 RLS policies; sincronización role↔role_id unidireccional; `manager` como rol global inconsistente; frontend mezcla rol global y membership en paralelo.
 - **Comportamiento esperado:** modelo de roles unificado (Opción A alias recomendada y marcada «NO implementar ahora» en su día).
-- **Origen documental:** `docs/ITERATION_9_AUTH_MODEL_AUDIT.md`.
+- **Origen documental:** `docs/audits/ITERATION_9_AUTH_MODEL_AUDIT.md`.
 - **Fecha del registro original:** 2026-08-02.
 - **Evidencia en el código actual:** sin migración de unificación posterior; conviven convenciones (ver CP-SEC-015).
 - **Pruebas realizadas:** evidencia documental.
@@ -919,7 +919,7 @@
 - **ID estable:** CP-SEC-010 · **Área:** SEC · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
 - **Descripción del problema:** `tenant_id` está «activo pero no utilizado» (17/18 profiles y 16/16 stores NULL → single-tenant de facto); la decisión de producto (single vs multi vs status quo) está documentada con recomendación «status quo» pero sin aprobación.
 - **Comportamiento esperado:** decisión aprobada y registrada; políticas consistentes con ella.
-- **Origen documental:** `docs/TENANT_ARCHITECTURE_DECISION.md`.
+- **Origen documental:** `docs/decisions/TENANT_ARCHITECTURE_DECISION.md`.
 - **Fecha del registro original:** 2026-08-02.
 - **Evidencia en el código actual:** 6 RLS policies dependen de `has_store_access()`/tenant (v2.21) — consistentes con ambas decisiones, pero el estado NULL general hace el multi-tenant teórico.
 - **Pruebas realizadas:** evidencia documental.
@@ -932,7 +932,7 @@
 - **Método recomendado para verificar la corrección:** registro de decisión.
 - **Limitaciones de la auditoría:** —
 - **CONCILIACIÓN MISIÓN C (2026-10-21):**
-  - **Estado de la decisión:** `DECISIÓN RATIFICADA — EFECTO PARCIAL` — el propietario CONFIRMÓ el 2026-10-19 conservar la arquitectura multi-tenant; single-tenant únicamente como descripción de la situación operativa actual (`DECISIONES_PENDIENTES_MISION_C_2026-10-18.md` §B; protocolo de 6 pasos con evidencia viva en `evidence/20261019-dt03-matriz-acceso/`). Sin contradicción concreta que obligue a reabrir. `TENANT_ARCHITECTURE_DECISION.md` (2026-08-02, «pendiente») quedó sustituido — requiere solo anotación de cierre.
+  - **Estado de la decisión:** `DECISIÓN RATIFICADA — EFECTO PARCIAL` — el propietario CONFIRMÓ el 2026-10-19 conservar la arquitectura multi-tenant; single-tenant únicamente como descripción de la situación operativa actual (`DECISIONES_PENDIENTES_MISION_C_2026-10-18.md` §B; protocolo de 6 pasos con evidencia viva en `evidence/20261019-dt03-matriz-acceso/`). Sin contradicción concreta que obligue a reabrir. `docs/decisions/TENANT_ARCHITECTURE_DECISION.md` (2026-08-02, «pendiente») quedó sustituido — requiere solo anotación de cierre.
   - **Perfiles pendientes — NO asignados automáticamente:** david9999 = backfill EJECUTADO (2026-10-19 18:29:50Z, transaccional + auditado; autorización original D-3 conversacional) → **ratificación a posteriori pendiente (A7 del expediente CP-SEC-027 v5)**; 10 perfiles restantes clasificados SIN EVIDENCIA → validación individual exigida por la propia decisión DT-03.
   - **Registros:** `docs/decisions/2026-10-19-decision-B-dt03-multi-tenant.md` + `MISION_C_CONCILIACION_DECISIONES_2026-10-21.md` §3.3/§4.
 
@@ -961,7 +961,7 @@
 - **ID estable:** CP-SEC-012 · **Área:** SEC · **Estado verificado:** RESUELTA EN CÓDIGO — VERIFICADA (MISIÓN B, 2026-10-21); cierre formal pendiente de sonda de despliegue + índice A4 + actualización de specs · **Prioridad:** **P0**
 - **Descripción del problema:** cuatro bugs con tests invertidos (`test.fail` = el test «pasa» mientras el bug vive): **BUG-017** `/api/legal/incidents` acepta requests sin autenticación (`e2e/auth.spec.ts:46`); **BUG-022** URL de reportes accesible sin autenticación (`e2e/reports.spec.ts:51`, «bug ACTIVO documentado»); **BUG-013** XSS almacenado en filename de academy (`e2e/academy.spec.ts:71`); **BUG-024** incidents.json efímero en serverless (skip permanente, deuda de arquitectura, `e2e/legal.spec.ts:81`).
 - **Comportamiento esperado:** endpoints con auth; XSS sanitizado; persistencia correcta de incidentes.
-- **Origen documental:** `E2E-COVERAGE-REPORT.md` + specs E2E citadas.
+- **Origen documental:** `docs/e2e/E2E-COVERAGE-REPORT.md` + specs E2E citadas.
 - **Fecha del registro original:** 2026-09-27 (report E2E-80).
 - **Evidencia en el código actual:** specs con test.fail/ skip activos en el árbol.
 - **Pruebas realizadas:** lectura de specs (agente CI); sin reproducción activa de los bugs.
@@ -1029,7 +1029,7 @@
 - **ID estable:** CP-SEC-015 · **Área:** SEC · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
 - **Descripción del problema:** `users/route.ts:31` acepta `admin|superadmin|manager|clerk|warehouse|encargado|usuario|costo` mientras `pick3/advisor/route.ts:273` compara contra `super_admin` (dos convenciones); el informe ITERATION_9 también documentó `manager` global inconsistente.
 - **Comportamiento esperado:** un único enum de roles validado en un módulo compartido.
-- **Origen documental:** verificación directa + `ITERATION_9_DEEP_AUDIT.md`.
+- **Origen documental:** verificación directa + `docs/audits/ITERATION_9_DEEP_AUDIT.md`.
 - **Fecha del registro original:** 2026-10-16 (código) / 2026-08-02 (doc).
 - **Evidencia en el código actual [VERIFICADO HOY]:** líneas citadas.
 - **Pruebas realizadas:** lectura de ambos routes.
@@ -1124,7 +1124,7 @@
 - **ID estable:** CP-SEC-020 · **Área:** SEC · **Estado verificado:** PARCIALMENTE RESUELTA · **Prioridad:** P2
 - **Descripción del problema:** PT_9_5 encontró 6 RPCs legacy con anon+PUBLIC y sin auth check (incluida `admin_reset_user_password` crítica). El cierre v2.12.50 resolvió: delete legacy → 410, 5 admin_* dropeadas. Queda `manage_user_memberships` (DT-02) con patrón sin auth.uid explícito.
 - **Comportamiento esperado:** 0 RPCs mutables ejecutables por anon/PUBLIC.
-- **Origen documental:** `docs/PT_9_5_FINAL_SECURITY_VERIFICATION.md` + `docs/AUDIT_CLOSURE_REPORT_v1.md`.
+- **Origen documental:** `docs/audits/PT_9_5_FINAL_SECURITY_VERIFICATION.md` + `docs/audits/AUDIT_CLOSURE_REPORT_v1.md`.
 - **Fecha del registro original:** 2026-08-02.
 - **Evidencia en el código actual:** migraciones de cierre citadas; DT-02 viva en el backlog.
 - **Pruebas realizadas:** evidencia documental.
@@ -1159,9 +1159,9 @@
 #### CP-UI-001 — CRUD de reglas de comisión desde UI + sub-ítems contables
 - **ID estable:** CP-UI-001 · **Área:** UI/POS · **Estado verificado:** PARCIALMENTE RESUELTA — ítem 2 APLICADO EN PRODUCCIÓN (opción B del propietario, duplicado consciente documentado, 2026-11-04) · **Prioridad:** P2
 - **Actualización (misión SEC-025/026/003/005/006, T2, 2026-11-04) — ítem 2 (exclusion constraint):** HALLAZGO: la premisa "el constraint NO existe en producción" era cierta solo por NOMBRE; producción ya tiene `no_overlapping_periods` con definición IDÉNTICA a la de la migración preparada `20261022000002` (origen: `20260714000001_commission_no_overlap_constraint.sql`, committeada y aplicada out-of-band — regla 11). Aplicarla crearía un DUPLICADO. El propietario, informado del duplicado, eligió la OPCIÓN B (aplicar y documentar): migración aplicada vía Management API (HTTP 201); producción quedó con DOS constraints idénticos (`no_overlapping_periods` + `commission_payments_no_overlap`) [MEDIDO]; sonda: INSERT solapado RECHAZADO con exclusion_violation. Limpieza opcional futura del duplicado (rollback: DROP CONSTRAINT commission_payments_no_overlap) a decisión del propietario. Evidencia: `audit-evidence/CP-SEC-003_UI-001/EVIDENCIA_PRODUCCION.md`. Batería de semántica 8/8 en CostproE2E (`supabase/tests/ui001_commission_no_overlap_test.sql`): solapado rechazado, contiguo permitido, frontera compartida '[]' rechazada, cancelado no bloquea, cancelar/recrear funciona, reabrir con competencia rechazado/sin competencia permitido, otro worker no colisiona. La app no genera periodos automáticos que compartan frontera (fechas elegidas por el usuario; no hay flujo de "reabrir" en PATCH [id]). Documento: `docs/audits/SEC-003_UI-001_APLICACION.md` §2.
-- **Descripción del problema:** `decisions-complejas-audit-multi-tienda.md` documentó 5 pendientes: (1) RuleFormModal inexistente — CRUD de reglas de comisión ROTO desde UI (CRÍTICO), (2) exclusion constraint para periodos solapados de commission_payments (CRÍTICO contable), (3) pro-rateo a mitad de periodo sin documentar, (4) HistoryTab con `<a href>` a JSON crudo, (5) tabla de 9 columnas sin colapsar en móvil.
+- **Descripción del problema:** `docs/audits/decisions-complejas-audit-multi-tienda.md` documentó 5 pendientes: (1) RuleFormModal inexistente — CRUD de reglas de comisión ROTO desde UI (CRÍTICO), (2) exclusion constraint para periodos solapados de commission_payments (CRÍTICO contable), (3) pro-rateo a mitad de periodo sin documentar, (4) HistoryTab con `<a href>` a JSON crudo, (5) tabla de 9 columnas sin colapsar en móvil.
 - **Comportamiento esperado:** CRUD completo + constraint de solapes + UX móvil correcta.
-- **Origen documental:** `docs/decisions-complejas-audit-multi-tienda.md`.
+- **Origen documental:** `docs/audits/decisions-complejas-audit-multi-tienda.md`.
 - **Fecha del registro original:** s/f (pre-14/10).
 - **Evidencia en el código actual [VERIFICADO HOY]:** `RuleFormModal` **EXISTS** en `WorkersView.tsx:2770` y se usa en `:768` → ítem (1) RESUELTO. Ítems (2)-(5) sin evidencia de corrección.
 - **Pruebas realizadas:** grep + lectura del componente.
@@ -1178,7 +1178,7 @@
 - **ID estable:** CP-UI-002 · **Área:** UI · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P3
 - **Descripción del problema:** Fases A (tarjetas+⋮+chips) y B (Catálogo en Gestión) implementadas (PR #1373) e Iteración 2 de paridad móvil completada; FASES C (filtros inteligentes, operaciones en lote, vista previa de Vitrina), D (sincronía/persistencia con rollback visual) y E (consistencia) quedan con checklists sin marcar.
 - **Comportamiento esperado:** plan completo o cierre formal del alcance.
-- **Origen documental:** `docs/ux-refinamiento-inventario-vitrina.md` + `docs/ux/auditoria-inventario-vitrina.md`.
+- **Origen documental:** `docs/ux/ux-refinamiento-inventario-vitrina.md` + `docs/ux/auditoria-inventario-vitrina.md`.
 - **Fecha del registro original:** 2026-10-06/08.
 - **Evidencia en el código actual:** componentes de las fases A/B presentes; C/D/E sin commits identificados.
 - **Pruebas realizadas:** evidencia documental.
@@ -1195,7 +1195,7 @@
 - **ID estable:** CP-UI-003 · **Área:** UI · **Estado verificado:** PARCIALMENTE RESUELTA · **Prioridad:** P2
 - **Descripción del problema:** del contrato de alcance UX/IA quedan: UX-002 parcial (breadcrumbs falsos «Módulo No Disponible» en storefront-config/customers/bank-reconciliation/ofertas), UX-004/005/006/007/009/010/013/014 parciales (labels de dashboards, tablón default, vitrina doble entrada, móvil drawer autoabierto, storeId legacy vs activeStoreId, módulos sin dominio, sesión envejecida sin gate, fichas sin listado en terminal). Fases B–F completas; solo Fichas de Costo RESUELTO/CERTIFIED.
 - **Comportamiento esperado:** contrato cerrado o re-negociado con 4 decisiones de producto requeridas.
-- **Origen documental:** `docs/plan-estrategico-ux-ia.md`.
+- **Origen documental:** `docs/ux/plan-estrategico-ux-ia.md`.
 - **Fecha del registro original:** 2026-09-22.
 - **Evidencia en el código actual:** commits 63918468 + a603d7cc para lo resuelto; resto sin constancia.
 - **Pruebas realizadas:** evidencia documental.
@@ -1227,9 +1227,9 @@
 
 #### CP-UI-005 — Diagnóstico Vales de Salida P1-P10
 - **ID estable:** CP-UI-005 · **Área:** UI/INV · **Estado verificado:** PARCIALMENTE RESUELTA · **Prioridad:** P2
-- **Descripción del problema:** `DIAGNOSTICO_VALES_SALIDA.md` documentó 10 problemas (P1 «Crear» abandona el módulo hacia Vender; P2 «Ver» no muestra el documento real; P3 sin modo tabla; P5 `limit(100)` silencioso sin paginación; P7 sin movimientos generados en el detalle; etc.) con plan de 7 commits; el archivo no cita commits de cierre.
+- **Descripción del problema:** `docs/audits/DIAGNOSTICO_VALES_SALIDA.md` documentó 10 problemas (P1 «Crear» abandona el módulo hacia Vender; P2 «Ver» no muestra el documento real; P3 sin modo tabla; P5 `limit(100)` silencioso sin paginación; P7 sin movimientos generados en el detalle; etc.) con plan de 7 commits; el archivo no cita commits de cierre.
 - **Comportamiento esperado:** los 10 puntos resueltos o el diagnóstico cerrado formalmente.
-- **Origen documental:** `DIAGNOSTICO_VALES_SALIDA.md` (raíz).
+- **Origen documental:** `docs/audits/DIAGNOSTICO_VALES_SALIDA.md` (raíz).
 - **Fecha del registro original:** fase 1-2 pre-implementación.
 - **Evidencia en el código actual:** `ValeSalidaDetalleModal.tsx` existe y cubre P2/P7 según la exploración del agente de código («El detalle del vale P7 del diagnóstico ya está cubierto»); el resto sin constancia.
 - **Pruebas realizadas:** exploración de componentes.
@@ -1246,7 +1246,7 @@
 - **ID estable:** CP-UI-006 · **Área:** UI/INFRA · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
 - **Descripción del problema:** pendientes heredados del MVP FC (fichas de costo): (1) bug de sesión en `useSessionManager.ts` (logout por fallo de red, signOut si perfil falla, reload duro — «fix propuesto como ciclo separado» NO corregido), (2) procedimiento manual de sincronización de la copia `/fc/` con releases de fichascosto, (3) hardening de cuentas locales hardcodeadas `usuario`/`admin` en FC.html (PBKDF2), (4) freeEnforce=false (gate comercial dormante), (5) residuo: 1 usuario de prueba baneado.
 - **Comportamiento esperado:** sesión estable; hardening de cuentas; sync automatizada.
-- **Origen documental:** `docs/fc-mvp-integration.md` + `docs/fc-access-flow-fix.md`.
+- **Origen documental:** `docs/fc-mvp/fc-mvp-integration.md` + `docs/ux/fc-access-flow-fix.md`.
 - **Fecha del registro original:** 2026-09-16.
 - **Evidencia en el código actual:** `useSessionManager.ts:69-146`, `public/fc/FC.html:3828` (según docs); sin fix posterior localizado.
 - **Pruebas realizadas:** evidencia documental.
@@ -1455,7 +1455,7 @@
 - **ID estable:** CP-INFRA-006 · **Área:** INFRA · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P2
 - **Descripción del problema:** el report E2E-80 lista 15 escenarios sin automatizar con motivo explícito; destacan 2 P0: E2E-INV-010 (recepción de mercancía → stock) y E2E-PO-005 (recepción contra OC → stock), «requieren fixtures multi-paso dedicados, estimación 2 días». También E2E-CAT-005/006/007 (alta/edición/baja de producto), E2E-POS-010 (descuento con token supervisor), E2E-RBAC-010 (sin usuario rol `costo`), etc.
 - **Comportamiento esperado:** 128/128 escenarios automatizados o justificados.
-- **Origen documental:** `E2E-COVERAGE-REPORT.md` §escenarios sin cobertura.
+- **Origen documental:** `docs/e2e/E2E-COVERAGE-REPORT.md` §escenarios sin cobertura.
 - **Fecha del registro original:** 2026-09-27.
 - **Evidencia en el código actual:** sin specs nuevas para esos IDs localizadas.
 - **Pruebas realizadas:** contraste documental.
@@ -1470,7 +1470,7 @@
 
 #### CP-INFRA-007 — Cementerio de scripts one-off (45 MB)
 - **ID estable:** CP-INFRA-007 · **Área:** INFRA · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P3
-- **Descripción del problema:** `scripts/` acumula ~60+ one-offs de misión (test_live_e2e_round2-5, apply/verify_migration_*, f2bug-*, rem-inv-6r-*, r2-exec-*, captura_*), ~50 PNG en `scripts/tmp-images/`, y `apply-rpc-fix.sh` con project-ref de Supabase y ruta absoluta hardcodeadas. Alto ruido operacional y riesgo de re-ejecución accidental.
+- **Descripción del problema:** `scripts/` acumula ~60+ one-offs de misión (test_live_e2e_round2-5, apply/verify_migration_*, f2bug-*, rem-inv-6r-*, r2-exec-*, captura_*), ~50 PNG en `audit-evidence/historico/tmp-images/`, y `apply-rpc-fix.sh` con project-ref de Supabase y ruta absoluta hardcodeadas. Alto ruido operacional y riesgo de re-ejecución accidental.
 - **Comportamiento esperado:** archivos vivos vs históricos separados; sin secretos/rutas hardcodeadas.
 - **Origen documental:** censo del agente CI + lectura de 10 scripts.
 - **Fecha del registro original:** 2026-10-16 (censo).
@@ -1574,7 +1574,7 @@
 - **ID estable:** CP-INFRA-013 · **Área:** INFRA · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P3
 - **Descripción del problema:** la IA del chatbot alucina nombres de tools (parsing de texto, no tool-calling nativo); la decisión documentada fue NO migrar a Vercel AI SDK y reevaluar en Q3 2026 si ocurren: 3+ bugs, 5+ tools nuevas, multi-step complejo, ai@5. Sin tracking del trigger.
 - **Comportamiento esperado:** revisión trimestral registrada o migración.
-- **Origen documental:** `docs/vercel-ai-sdk-migration-eval.md`.
+- **Origen documental:** `docs/evaluations/vercel-ai-sdk-migration-eval.md`.
 - **Fecha del registro original:** 2026-06-28.
 - **Evidencia en el código actual:** sin registro de reevaluación posterior.
 - **Pruebas realizadas:** evidencia documental.
@@ -1713,11 +1713,11 @@ Las fichas de esta sección son compactas por diseño: consolidan 1-N hallazgos 
 - **Resolución:** props requeridas añadidas (`confirmName="BULK"`, `warningText`) y undefined corregido (fix `107cb3ba`); spec E2E desincronizado re-alineado 8/8; Vercel READY; Vitest 2.721/0. Riesgo de proceso → CP-INFRA-009.
 
 #### CP-RES-014 — /api/inventory/adjust 500 (DEFECT-001) — RESUELTA
-- **Origen:** `E2E-COVERAGE-REPORT.md` DEFECT-001 (2026-09-27).
+- **Origen:** `docs/e2e/E2E-COVERAGE-REPORT.md` DEFECT-001 (2026-09-27).
 - **Resolución [VERIFICADO HOY]:** `src/app/api/inventory/adjust/route.ts:41-60` mapea `movementType` 'add'/'subtract'/'set' → delta + `p_movement_type: 'adjustment'` con comentario DEFECT-001 explícito.
 
 #### CP-RES-015 — Trazabilidad/Kardex (iteración 11) — RESUELTA
-- **Origen:** `docs/trazabilidad-kardex-auditoria.md`.
+- **Origen:** `docs/audits/trazabilidad-kardex-auditoria.md`.
 - **Resolución:** P1-P5 implementados (`StockHistoryView.tsx`, `movementPresentation.ts`, `kardexPeriod.ts`, `get_product_stock_ledger_paginated`, balance_after server-side); 2.700 tests 0 fallos; regresión 217/217. Residual: 12 warnings lint preexistentes en `atomic/index.tsx`.
 
 #### CP-RES-016 — Backup/Restore BR-2 — RESUELTA
@@ -1729,17 +1729,17 @@ Las fichas de esta sección son compactas por diseño: consolidan 1-N hallazgos 
 - **Resolución:** 357 passed / 25 skipped / 0 failed; fallos clasificados 100%; 2 fixes de producto legítimos (touch targets 44 px; RPC e2e_hard_delete_user); guardrail net-zero en 13 chunks. Nota: los jobs E2E de CI se desactivaron después (CP-INFRA-001) — la suite existe, la ejecución automática no.
 
 #### CP-RES-018 — Certificaciones UI/PDF/módulos — RESUELTA
-- **Origen:** `docs/evaluations/ArenaFC_Evaluation.md` (9.3/10), `docs/quality/evaluacion_pdf_export.md` (7 plantillas), `ipv_audit_report.md` (96/100), `audit_costo_roi.md` (94/100), `sidebar_ux_redesign.md` (7/7).
+- **Origen:** `docs/evaluations/ArenaFC_Evaluation.md` (9.3/10), `docs/quality/evaluacion_pdf_export.md` (7 plantillas), `ipv_audit_report.md` (96/100), `audit_costo_roi.md` (94/100), `docs/ux/sidebar_ux_redesign.md` (7/7).
 - **Resolución:** certificaciones con evidencia en cada doc; parametrización de tasas impositivas del cost-engine queda como mejora menor (hallazgo del propio certificado).
 
 ### 3.10 OBSOLETAS O REEMPLAZADAS
 
 #### CP-OBS-001 — Documentos con cifras obsoletas — OBSOLETA
-- **Incluye:** `SUPABASE_AUDIT.md` (103 tablas/165 RPCs → superado por baseline 127 tablas/353 policies v2.12.50), `docs/mapa_vistas.md` (pre-reorganización v9, 52 vistas en Advertencia, auto-generado), `E2E_TEST_PLAN.md` (superado por Playwright E2E-80; además contiene credencial demo en claro — considerar purgar).
+- **Incluye:** `docs/audits/SUPABASE_AUDIT.md` (103 tablas/165 RPCs → superado por baseline 127 tablas/353 policies v2.12.50), `docs/mapa_vistas.md` (pre-reorganización v9, 52 vistas en Advertencia, auto-generado), `docs/e2e/E2E_TEST_PLAN.md` (superado por Playwright E2E-80; además contiene credencial demo en claro — considerar purgar).
 - **Justificación:** los documentos fuentes originales NO se reescriben (regla de la misión); se conserva este registro para que nadie actúe sobre cifras desactualizadas.
 
 #### CP-OBS-002 — Pipeline de mantenimiento automatizado (ciclos 2/3) — OBSOLETA
-- **Incluye:** `PIPELINE_IMPROVEMENTS.md` (objetivos del Ciclo 2 sin verificación), `REORGANIZATION_CHECKPOINT_v9.md` (pendientes del Ciclo 3: embeddings RAG, Fase 6, manual how-to).
+- **Incluye:** `PIPELINE_IMPROVEMENTS.md` (objetivos del Ciclo 2 sin verificación), `docs/audits/REORGANIZATION_CHECKPOINT_v9.md` (pendientes del Ciclo 3: embeddings RAG, Fase 6, manual how-to).
 - **Justificación:** texto dirigido a agente externo sin evidencia de ejecución; el pipeline v9 sigue auto-generando vistas, pero estos objetivos específicos no tienen dueño ni vigencia confirmada. Requieren triage para descartarlos formalmente o reactivarlos.
 
 ---

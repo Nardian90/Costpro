@@ -3,7 +3,7 @@
 > **Misión**: convertir Ficha de Costo (`/fc/`) en una **superficie de producto de COSTPRO**,
 > eliminando su identidad visual y de autenticación duplicada (landing + login propios),
 > conservando intacto el funcionamiento offline y el motor normativo.
-> Complementa a `docs/fc-mvp-integration.md` (integración técnica MVP, commit `5f5fe2f5`).
+> Complementa a `docs/fc-mvp/fc-mvp-integration.md` (integración técnica MVP, commit `5f5fe2f5`).
 
 ---
 
@@ -103,12 +103,12 @@ Sin identidad COSTPRO previa + offline: no hay entrada (offline ≠ permisos nue
 | `src/components/auth/LoginForm.tsx` | Nav post-login a `returnToFromLocation()`; Google `redirectTo` preserva `returnTo` |
 | `src/components/auth/RegisterForm.tsx` | Google `redirectTo` preserva `returnTo` |
 | `src/proxy.ts` | Solo comentario (referencia al artefacto FC.html) |
-| `docs/fc-access-flow-fix.md` | Este documento |
-| `docs/fc-mvp-integration.md` | Nota de supersession de flujo de acceso |
+| `docs/ux/fc-access-flow-fix.md` | Este documento |
+| `docs/fc-mvp/fc-mvp-integration.md` | Nota de supersession de flujo de acceso |
 | `scripts/fc-identity-patch.py` | Generador determinista de FC.html (verifica unicidad de objetivos + motor byte-igual) |
 | `scripts/fc-syntax-check.cjs` | Validación sintáctica de los `<script>` del artefacto |
 | `scripts/fc-access-test-user.cjs` | Usuario E2E de prueba (create/cleanup) |
-| `docs/fc-access-fix-mobile-320.png`, `docs/fc-access-fix-desktop.png` | Evidencia visual |
+| `docs/ux/fc-access-fix-mobile-320.png`, `docs/ux/fc-access-fix-desktop.png` | Evidencia visual |
 
 ## 5. Archivos que NO se tocaron (F) — verificación
 

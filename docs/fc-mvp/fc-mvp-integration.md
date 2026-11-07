@@ -6,7 +6,7 @@
 > FC es ahora una **superficie de producto de COSTPRO** con UNA SOLA IDENTIDAD
 > (landing y login propios de FC eliminados/desactivados; artefacto servido:
 > `FC.html`, release canónico + 11 parches de identidad documentados).
-> Ver **`docs/fc-access-flow-fix.md`**. Lo no relacionado con identidad/entrada
+> Ver **`docs/ux/fc-access-flow-fix.md`**. Lo no relacionado con identidad/entrada
 > (offline, sync, RLS, motor) permanece vigente tal como se documenta aquí.
 
 **Fase:** REM-FC-MVP (Gate 0 read-only → Gate 1 ejecución con cambio mínimo)
@@ -39,7 +39,7 @@ B. OFFLINE PRESERVABLE
 
 - `src/proxy.ts` (+20 líneas)
 - `src/components/landing/HeroSection.tsx` (+23/−1)
-- NUEVOS: `public/fc/{FC.release.html, index.html, sw.js, manifest.webmanifest, release-manifest.json, icons/icon-{192,512,maskable-192,maskable-512}.png}`, `src/app/fc/route.ts`, `docs/fc-mvp-integration.md`, `docs/fc-mvp/landing-cta.png`, `docs/fc-mvp/fc-app.png`
+- NUEVOS: `public/fc/{FC.release.html, index.html, sw.js, manifest.webmanifest, release-manifest.json, icons/icon-{192,512,maskable-192,maskable-512}.png}`, `src/app/fc/route.ts`, `docs/fc-mvp/fc-mvp-integration.md`, `docs/fc-mvp/landing-cta.png`, `docs/fc-mvp/fc-app.png`
 
 ## 3. Archivos preservados
 

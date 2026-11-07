@@ -23,7 +23,7 @@ if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
 }
 
 const STORE_ID = '5e6fe821-5465-48b1-b3f1-3aa3182edc38'; // ENERVIDA-VITALLCONS
-const IMAGES_DIR = '/home/z/my-project/scripts/tmp-images';
+const IMAGES_DIR = '/home/z/my-project/audit-evidence/historico/tmp-images';
 
 async function uploadImage(filePath, fileName, folder) {
   const fileBuffer = fs.readFileSync(filePath);

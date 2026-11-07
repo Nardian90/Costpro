@@ -9,7 +9,7 @@
  * sobre que la Ficha de Costo ya sabe leer y redirige a FC.release.html
  * (artefacto canónico byte-exacto, sha256 en public/fc/release-manifest.json).
  * Todo /fc/* queda exento de CSP en src/proxy.ts (artefacto monolítico con
- * scripts inline). Ver docs/fc-mvp-integration.md.
+ * scripts inline). Ver docs/fc-mvp/fc-mvp-integration.md.
  */
 import type { NextRequest } from 'next/server';
 

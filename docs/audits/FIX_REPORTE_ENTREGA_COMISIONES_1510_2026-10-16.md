@@ -57,7 +57,7 @@ La cadena del reporte (RPC `get_cash_report` → `/api/cash-report` → `/api/ca
 | `src/components/views/terminal/views/cash/CashReportView.tsx` | Las 3 conversiones `new Date(day+'T00:00:00')` (generar + acordeón detalle) sustituidas por `businessDayWindow` — ventana determinista Habana |
 | `src/__tests__/lib/cash-report-period-attribution.test.ts` | **NUEVO** — 12 pruebas unitarias de la lógica de fechas |
 | `e2e/cash-report-commissions-period.spec.ts` | **NUEVO** — E2E/integración (días 15/16, rango, totales vs detalle) |
-| `tsconfig.mision-1510.json`, `scripts/fasea_*.mjs`, `scripts/captura_*.mjs` | Tooling de verificación y captura de la misión |
+| `docs/audits/configs-tsc-misiones/tsconfig.mision-1510.json`, `scripts/fasea_*.mjs`, `scripts/captura_*.mjs` | Tooling de verificación y captura de la misión |
 
 ## 5. Rectificación de datos
 
@@ -74,7 +74,7 @@ La cadena del reporte (RPC `get_cash_report` → `/api/cash-report` → `/api/ca
 | E2E «grupo del reporte y detalle comparten el mismo criterio» | ✓ |
 | E2E «regresión: suma(15)+suma(16)==suma(rango), sin ids duplicados» | ✓ (**5/5**) |
 | Regresión suites existentes del reporte (`cash-report-view`, `dedicated-view`, `icon-variant`) | **30/30 ✓** |
-| TypeScript (scoped `tsconfig.mision-1510.json`: módulo + rutas + tests) | 0 errores |
+| TypeScript (scoped `docs/audits/configs-tsc-misiones/tsconfig.mision-1510.json`: módulo + rutas + tests) | 0 errores |
 | ESLint (archivos de la misión) | 0 errores |
 
 **Bloqueo de entorno (no de la misión):** `tsc --noEmit` del repo completo se queda sin memoria en este host (exit 137, verificado con 4/6/8 GB heap); el gate completo debe confirmarlo CI. Lint y pruebas locales quedan en verde.
@@ -179,7 +179,7 @@ La regla del negocio se interpreta **por trabajador** («ningún pago puede ser 
 | E2E de UI `commissions-payment-date-picker.spec.ts` (login real → tab Pagos → picker → rechazo → pago confirmado) | **1/1 ✓** |
 | Regresión suites existentes (`commissions-payments` + `reports`) | **21 ✓ / 1 skip preexistente** |
 | Regresión unitarias relacionadas (`cash-report-summary`, `cash-report-view`, `commissions-manage-modal`, `workers-return-navigation`, `workers-commissions-transfers`, `cash-arqueo`, `confcomisiones`) | **102/102 ✓** |
-| TypeScript scoped (`tsconfig.mision-1510.json`) | 0 errores |
+| TypeScript scoped (`docs/audits/configs-tsc-misiones/tsconfig.mision-1510.json`) | 0 errores |
 | ESLint (archivos de la adenda) | 0 errores |
 
 ## A6. Capturas reales (adenda) — `audit-evidence/20261016-reporte-entrega-1510/adenda-postfix/`

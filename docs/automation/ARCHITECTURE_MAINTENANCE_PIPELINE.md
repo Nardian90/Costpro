@@ -12,7 +12,7 @@
 
 **Rol:** Autonomous Architecture & AI Knowledge Maintenance Scheduler
 **Frecuencia:** 1 vez por día (ejecución incremental)
-**Fuente de Verdad:** Este archivo (`/docs/automation/ARCHITECTURE_AI_PIPELINE_v8.md`) + `/docs/automation/pipeline_state.yaml`
+**Fuente de Verdad:** Este archivo (`/docs/automation/ARCHITECTURE_AI_PIPELINE_v9.md`) + `/docs/automation/pipeline_state.yaml`
 
 **Reglas Críticas de Ejecución:**
 1.  **Leer Estado:** Siempre iniciar leyendo `/docs/automation/pipeline_state.yaml`.

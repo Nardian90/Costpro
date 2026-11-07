@@ -3,8 +3,8 @@
 **Professional Architecture · AI Integrated · Enterprise Stabilized**
 
 [![CI](https://github.com/Nardian90/Costpro/actions/workflows/ci.yml/badge.svg)](https://github.com/Nardian90/Costpro/actions/workflows/ci.yml)
-[![Architecture Integrity](https://img.shields.io/badge/Architecture_Integrity-9.2/10-green.svg)](docs/audits/DOCUMENTATION_AUDIT_REPORT.md)
-[![Documentation Style](https://img.shields.io/badge/Documentation-Diátaxis-blue.svg)](knowledge/docs/)
+[![Architecture Integrity](https://img.shields.io/badge/Architecture_Integrity-9.2/10-green.svg)](docs/audits/)
+[![Documentation Style](https://img.shields.io/badge/Documentation-Di%C3%A1taxis-blue.svg)](knowledge/)
 
 CostPro is a next-generation Point of Sale (POS) and cost management application designed for seamless operational efficiency, with modules for inventory, cashiers, cost sheets (Res. 148/2023), multistore management, offers, and an AI-powered chatbot.
 
@@ -61,7 +61,7 @@ Edit `.env` with your real credentials. Required variables:
 | `ZAI_API_KEY` + `ZAI_BASE_URL` | z.ai (GLM) chatbot provider |
 | `GOOGLE_API_KEY` + `GEMINI_MODEL` | Google Gemini fallback provider |
 
-See [`VERCEL_ENV_SETUP.md`](VERCEL_ENV_SETUP.md) for production deployment details.
+Configure las variables en Vercel (Settings → Environment Variables) para producción; la referencia completa de variables vive en [`.env.example`](.env.example).
 
 ### 3. Launch development server
 
@@ -128,19 +128,18 @@ See [`Dockerfile`](Dockerfile) and [`docker-compose.yml`](docker-compose.yml) fo
 
 ## 🧠 Knowledge Base
 
-Structured following the **Diátaxis Framework**:
+Base de conocimiento interna del proyecto (consumida por los módulos de IA y
+ayuda de la aplicación):
 
-- **[Tutorials](knowledge/docs/tutorials/)** — Guided learning for new developers and users
-- **[How-to Guides](knowledge/docs/how-to/)** — Step-by-step instructions for specific tasks
-- **[Technical Reference](knowledge/docs/reference/)** — Detailed API, database schema, and component specs
-- **[Explanations](knowledge/docs/explanation/)** — High-level concepts and architectural decisions
+- **[Architecture](knowledge/architecture/)** — Grafos, métricas y manifiestos de arquitectura
+- **[Help](knowledge/help/)** — Sistema de ayuda in-app (estructura Diátaxis)
 
 ---
 
 ## 🏗️ Architecture & Governance
 
-- **[Pipeline Config](docs/automation/ARCHITECTURE_AI_PIPELINE_v8.md)** — Autonomous AI pipeline (v9.0) with RAG & AST analysis
-- **[Health Reports](docs/audits/)** — Architecture and security audits
+- **[Pipeline Config](docs/automation/ARCHITECTURE_AI_PIPELINE_v9.md)** — Autonomous AI pipeline (v9.0) with RAG & AST analysis
+- **[Health Reports](docs/audits/)** — Architecture and security audits (históricos por expediente)
 - **[Security Issues Status](docs/audits/SECURITY_ISSUES_STATUS.md)** — Tracked security issues and resolutions
 - **[System Knowledge](knowledge/)** — Internal knowledge base
 
@@ -148,7 +147,9 @@ Structured following the **Diátaxis Framework**:
 
 ## 🔌 CI/CD
 
-- **GitHub Actions** (`.github/workflows/ci.yml`): TypeCheck + Lint + Unit Tests + Coverage + Build + E2E (Playwright) + Security Audit
+- **CI** (`.github/workflows/ci.yml`): TypeCheck + Lint + Unit Tests + Build + gate SEC-TS, en cada push y PR
+- **E2E Aislado** (`.github/workflows/e2e-isolated.yml`): suite Playwright contra la base Supabase aislada (CostproE2E) en cada PR hacia `main` y bajo demanda
+- **Otros**: `test-coverage.yml` (cobertura), `security-gate.yml` + `sql-security-gate.yml` (gates de seguridad/SQL), `daily-audit.yml` (auditoría diaria), `exchange-rates-capture.yml` (tasas de cambio)
 - **Vercel**: auto-deploys on push to `main` (production) and on PRs (preview)
 
 ---
@@ -158,16 +159,21 @@ Structured following the **Diátaxis Framework**:
 ```
 .
 ├── src/                    # Application source (App Router, components, services)
-├── supabase/               # Supabase migrations and config
 ├── public/                 # Static assets
+├── supabase/               # Supabase migrations, config and SQL tests
 ├── e2e/                    # Playwright end-to-end tests
-├── tests/                  # Performance and integration tests
-├── docs/                   # Architecture docs and audit reports
-├── knowledge/              # Diátaxis knowledge base
-├── scripts/                # PM2 wrapper and utility scripts
+├── src/__tests__/          # Unit & integration tests (Vitest)
+├── tests/perf/             # Performance tests (k6)
+├── scripts/                # CI gates, E2E tooling, ops and mission scripts
+├── docs/                   # Documentation (vigente) + docs/audits/ (expedientes históricos)
+├── knowledge/              # Internal knowledge base (arquitectura, ayuda in-app)
+├── audit-evidence/         # Evidencias de auditorías y ejecuciones (inmutable)
+├── assets/                 # Recursos históricos y datos estáticos
+├── deploy/                 # Configs de despliegue alternativos (PM2, Render, Caddy)
+├── db/                     # Seed SQLite del entorno local (ver docs/OPERACION_ENTORNO_LOCAL.md)
+├── data/                   # Datos operativos versionados (incidents.json)
+├── .github/                # Workflows y políticas de GitHub
 ├── ecosystem.config.js     # PM2 configuration
-├── Dockerfile              # Docker build
-├── docker-compose.yml      # Docker Compose
 ├── vercel.json             # Vercel cron + serverless functions
 ├── next.config.ts          # Next.js config (Sentry, next-intl, bundle analyzer)
 └── .env                    # Local environment (never committed)

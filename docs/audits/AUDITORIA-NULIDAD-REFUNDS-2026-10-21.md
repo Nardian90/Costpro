@@ -1,6 +1,6 @@
 # AUDITORÍA INDEPENDIENTE — Nulidad compuesta y conciliación de refunds de devolución
 
-**Fecha:** 21/10/2026 · **Repositorio:** `Nardian90/Costpro` · **Rama:** `fix/nulidad-compuesta-refunds-caja` · **Misión:** seguimiento de `docs/CERTIFICACION-CAJA-2026-10-21.md` (estado CERTIFICADO CON LIMITACIONES, defectos R4-preexistente y P1) · **Base de datos de producción: NO MODIFICADA** (consultas de solo lectura autorizadas; todas las escrituras de prueba en PostgreSQL 18 aislado y desechable).
+**Fecha:** 21/10/2026 · **Repositorio:** `Nardian90/Costpro` · **Rama:** `fix/nulidad-compuesta-refunds-caja` · **Misión:** seguimiento de `docs/audits/CERTIFICACION-CAJA-2026-10-21.md` (estado CERTIFICADO CON LIMITACIONES, defectos R4-preexistente y P1) · **Base de datos de producción: NO MODIFICADA** (consultas de solo lectura autorizadas; todas las escrituras de prueba en PostgreSQL 18 aislado y desechable).
 
 ---
 
