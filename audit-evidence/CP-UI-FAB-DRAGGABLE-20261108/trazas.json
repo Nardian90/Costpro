@@ -1,0 +1,46 @@
+{
+ "v1_default": {
+  "x": 1360,
+  "y": 820,
+  "width": 56,
+  "height": 56
+ },
+ "v2_after_drag": {
+  "x": 16,
+  "y": 610,
+  "width": 56,
+  "height": 56
+ },
+ "v2_assert": {
+  "snappedLeft": true,
+  "moved": true,
+  "clickSuppressed": true
+ },
+ "v2b_click_opens": true,
+ "v3_after_reload": {
+  "x": 14.273111343383789,
+  "y": 606.3421630859375,
+  "width": 59.453779220581055,
+  "height": 59.45379638671875
+ },
+ "v3_assert": {
+  "persisted": true
+ },
+ "v4_click_opens": true,
+ "v5_corner_before_resize": {
+  "x": 16,
+  "y": 827,
+  "width": 56,
+  "height": 56
+ },
+ "v5_reclamp": {
+  "box": {
+   "x": 16,
+   "y": 628,
+   "width": 56,
+   "height": 56
+  },
+  "inBounds": true,
+  "reclampedY": true
+ }
+}

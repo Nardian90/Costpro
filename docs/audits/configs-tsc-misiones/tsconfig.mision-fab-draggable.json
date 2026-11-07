@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/lib/ui/floating-fab.ts",
+    "src/components/ui/ChatBot.tsx",
+    "src/__tests__/lib/floating-fab.test.ts"
+  ]
+}
