@@ -276,6 +276,68 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
       );
     }
 
+    // ── Step 4b: CP-CAT-MAESTRO-003 — safeguard de identidad compartida ─────
+    // Si la tienda destino está conectada al catálogo maestro de su
+    // organización y el SKU ya existe como maestro ACTIVO, la fila se estampa
+    // con master_product_id ANTES del upsert: reutiliza la identidad existente
+    // (jamás una bifurcación) y el trigger trg_products_master_identity_guard
+    // coerciona sku/name al maestro. Crear maestros NUEVOS desde importaciones
+    // queda en el mecanismo gobernado existente (create_master_product /
+    // incorporate_store_products_to_master) — fuera del alcance conservador de
+    // esta ruta. Best-effort: un fallo de estampado NO bloquea la importación
+    // (la reconciliación posterior puede recuperar esas filas: la RPC
+    // incorporate_store_products_to_master es idempotente).
+    try {
+      const importStoreIds = [...new Set(authorizedProducts.map(p => p.store_id))];
+      const { data: connectedLinks, error: linksErr } = await (client as any)
+        .from('catalog_store_links')
+        .select('store_id, tenant_id, status')
+        .in('store_id', importStoreIds)
+        .eq('status', 'connected');
+      if (linksErr) throw linksErr;
+      const connectedStoreIds = new Set<string>(((connectedLinks || []) as Array<{ store_id: string }>).map(l => l.store_id));
+
+      if (connectedStoreIds.size > 0) {
+        const skusByStore = new Map<string, Set<string>>();
+        for (const p of authorizedProducts) {
+          if (!connectedStoreIds.has(p.store_id)) continue;
+          const sku = String(p.sku || '').trim();
+          if (!sku) continue;
+          if (!skusByStore.has(p.store_id)) skusByStore.set(p.store_id, new Set());
+          skusByStore.get(p.store_id)!.add(sku);
+        }
+        const activeMasterIdByTenantSku = new Map<string, string>();
+        for (const [sid, skus] of skusByStore) {
+          const tid = storeTenantMap.get(sid);
+          if (!tid) continue;
+          const { data: masters, error: mastersErr } = await (client as any)
+            .from('master_products')
+            .select('id, sku, tenant_id, status')
+            .eq('tenant_id', tid)
+            .in('sku', [...skus]);
+          if (mastersErr) throw mastersErr;
+          for (const m of (masters || []) as Array<{ id: string; sku: string; tenant_id: string; status: string }>) {
+            if (m.status === 'active') activeMasterIdByTenantSku.set(`${m.tenant_id}|${m.sku}`, m.id);
+          }
+        }
+        let stamped = 0;
+        for (const p of authorizedProducts) {
+          const tid = storeTenantMap.get(p.store_id);
+          const sku = String(p.sku || '').trim();
+          const mid = tid && sku ? activeMasterIdByTenantSku.get(`${tid}|${sku}`) : undefined;
+          if (mid) {
+            (p as Record<string, unknown>).master_product_id = mid;
+            stamped++;
+          }
+        }
+        if (stamped > 0) {
+          logInfo(route, `bulk-import master-stamp: ${stamped} fila(s) reutilizan identidad compartida existente`, { stamped });
+        }
+      }
+    } catch (stampErr) {
+      logError(route, 'bulk-import master-stamp failed (best-effort, importación continúa)', stampErr);
+    }
+
     // Use explicit any cast for the array to avoid 'any[]' to 'never[]' assignment error
     let upsertResult = await (client
       .from('products') as any)

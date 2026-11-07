@@ -1066,6 +1066,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
         totalCost={s.successData.totalCost}
         receptionDate={s.successData.receptionDate}
         newProductsCount={s.successData.newProductsCount}
+        newProductsMasterLinkedCount={s.successData.newProductsMasterLinkedCount}
         priceUpdatedCount={s.successData.priceUpdatedCount}
       />
 

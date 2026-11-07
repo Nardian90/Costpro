@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
 import { receiptSchema, receiptItemSchema } from '@/validation/schemas';
 import { withTableLogging, getCleanStoreId } from './base';
+import { toast } from 'sonner';
 // F-21: validar tasa_cambio_recepcion antes de insertar receipt_items
 import { validateReceiptItemsTasa } from '@/lib/receipt-items-validation';
 // MISIÓN RECEPCIONES (2026-10-28): vista por productos
@@ -325,6 +326,10 @@ export function useVoidReception() {
 export interface PendingReceptionItem {
   product_id: string;
   sku?: string | null;
+  // CP-CAT-MAESTRO-003: nombre real del item. Antes se descartaba y el producto
+  // nuevo nacía con name=SKU (placeholder) — identidad compartida inservible si
+  // el flujo creaba el maestro. El nombre viaja ahora al producto local/maestro.
+  name?: string | null;
   quantity: number;
   unit_cost: number;
   unit_of_measure?: string | null;
@@ -415,22 +420,155 @@ export function useSavePendingReception() {
         }
         const verifiedTenantId: string = tenantStore.tenant_id;
 
-        const productsData = newItems.map(item => ({
+        // ═══════════════════════════════════════════════════════════════════
+        // CP-CAT-MAESTRO-003 (2026-11-07): sincronización del borrador con el
+        // Catálogo Maestro de la organización. Causa raíz: los productos nuevos
+        // del flujo de borrador nacían SOLO locales (name=SKU placeholder,
+        // master_product_id NULL). Reglas:
+        //   · Tienda conectada + maestro activo con ese SKU → la fila local se
+        //     INSERTA YA VINCULADA (master_product_id); el trigger
+        //     trg_products_master_identity_guard coerciona sku/name al maestro.
+        //     Jamás un segundo registro maestro.
+        //   · Tienda conectada + SKU nuevo → alta de identidad compartida vía
+        //     la RPC certificada create_master_product (maestro + fila local en
+        //     UNA transacción, con auditoría). Carrera ERR_MASTER_SKU_EXISTS →
+        //     se reutiliza el maestro ganador.
+        //   · Fallo de sincronización → NO bloquea el borrador (la recepción
+        //     jamás se pierde por un error secundario) pero se avisa al usuario
+        //     de forma visible; jamás éxito silencioso sin sincronía.
+        //   · Tienda NO conectada (o verificación no resolvida, fail-open) →
+        //     flujo local histórico exacto.
+        //   Los datos comerciales (costo/precio) siguen siendo de ESTA tienda.
+        // ═══════════════════════════════════════════════════════════════════
+        let storeConnected = false;
+        try {
+          const { data: linkRow, error: linkErr } = await supabase
+            .from('catalog_store_links')
+            .select('status')
+            .eq('store_id', params.storeId)
+            .eq('tenant_id', verifiedTenantId)
+            .maybeSingle();
+          if (linkErr) throw linkErr;
+          storeConnected = linkRow?.status === 'connected';
+        } catch (linkErr) {
+          console.warn('[useSavePendingReception] no se pudo verificar la conexión al Catálogo Maestro (fail-open, flujo local):', linkErr);
+        }
+
+        const masterBySku = new Map<string, { id: string; name: string; status: string }>();
+        if (storeConnected) {
+          const newSkus = Array.from(new Set(newItems.map(i => (i.sku || '').trim()).filter(Boolean)));
+          if (newSkus.length > 0) {
+            try {
+              const { data: masterRows, error: masterErr } = await supabase
+                .from('master_products')
+                .select('id, sku, name, status')
+                .eq('tenant_id', verifiedTenantId)
+                .in('sku', newSkus);
+              if (masterErr) throw masterErr;
+              for (const m of masterRows || []) masterBySku.set(m.sku, m);
+            } catch (masterErr) {
+              console.warn('[useSavePendingReception] no se pudo consultar el Catálogo Maestro (fail-open, flujo local):', masterErr);
+            }
+          }
+        }
+
+        const productsToInsert: Array<Record<string, unknown>> = [];
+        const syncWarnings: string[] = [];
+
+        const localRowFor = (item: PendingReceptionItem, sku: string, name: string, masterId?: string) => ({
           store_id: params.storeId,
           tenant_id: verifiedTenantId,
-          sku: item.sku || `SKU-${Date.now()}-${safeRandomShortId()}`,
-          name: item.sku || `Producto ${Date.now()}`, // Se usará temporalmente — el nombre real se setea al confirmar
+          ...(masterId ? { master_product_id: masterId } : {}),
+          sku,
+          name,
           cost_price: item.unit_cost,
           price: item.sale_price || 0,
           unit_of_measure: item.unit_of_measure || 'unidad',
           is_active: true,
           is_complete: false,
           stock_current: 0,
-        }));
+        });
+
+        for (const item of newItems) {
+          const sku = (item.sku || '').trim();
+          // CP-CAT-MAESTRO-003: nombre real del item (antes se descartaba y el
+          // producto nacía con name=SKU). Sin nombre: fallback histórico.
+          const localName = (item.name || '').trim() || sku || `Producto ${Date.now()}`;
+          const master = sku ? masterBySku.get(sku) : undefined;
+
+          if (master && master.status === 'active') {
+            // CASO A4: reutilizar identidad existente, fila local vinculada.
+            productsToInsert.push(localRowFor(item, sku, localName, master.id));
+            continue;
+          }
+
+          if (storeConnected && sku && !master) {
+            // CASO A5: alta de identidad compartida vía RPC certificada.
+            try {
+              const { data: rpcRes, error: rpcErr } = await supabase.rpc('create_master_product', {
+                p_store_id: params.storeId,
+                p_sku: sku,
+                p_name: localName,
+                p_description: null,
+                p_image_path: null,
+                p_barcode: null,
+                p_barcode_type: null,
+                p_unit_of_measure: item.unit_of_measure || 'unidad',
+                p_is_service: false,
+                p_local: {
+                  price: String(item.sale_price || 0),
+                  price_currency: item.price_currency || 'CUP',
+                  cost_price: String(item.unit_cost || 0),
+                  min_stock: '1',
+                  category: '',
+                  supplier: '',
+                },
+              });
+              if (rpcErr) throw rpcErr;
+              const res = rpcRes as { product_id: string };
+              if (sku) createdProductIds[sku] = res.product_id;
+              createdProductIdList.push(res.product_id);
+              continue;
+            } catch (cmErr) {
+              const msg = cmErr instanceof Error ? cmErr.message : String(cmErr ?? '');
+              if (msg.includes('ERR_MASTER_SKU_EXISTS')) {
+                // Carrera: otra tienda creó el maestro en paralelo → vincular.
+                try {
+                  const { data: winner } = await supabase
+                    .from('master_products')
+                    .select('id, status')
+                    .eq('tenant_id', verifiedTenantId)
+                    .eq('sku', sku)
+                    .maybeSingle();
+                  if (winner?.id && winner.status === 'active') {
+                    productsToInsert.push(localRowFor(item, sku, localName, winner.id));
+                    continue;
+                  }
+                } catch { /* cae al fallback local */ }
+              }
+              console.error('[useSavePendingReception] sincronización con el Catálogo Maestro falló para', sku, cmErr);
+              syncWarnings.push(
+                msg.includes('ERR_UNAUTHORIZED')
+                  ? `${sku} (requiere permisos de alta de productos)`
+                  : `${sku} (no quedó vinculado al Catálogo Maestro)`
+              );
+            }
+          } else if (master && master.status !== 'active') {
+            // CASO A6: maestro archivado → fila local sin vínculo + aviso.
+            syncWarnings.push(`${sku} (el producto está archivado en el Catálogo Maestro — sin vínculo)`);
+          }
+
+          // Fallback / caso B: alta local pura (comportamiento histórico).
+          productsToInsert.push(localRowFor(
+            item,
+            sku || `SKU-${Date.now()}-${safeRandomShortId()}`,
+            localName,
+          ));
+        }
 
         const { data: createdProducts, error: createErr } = await supabase
           .from('products')
-          .insert(productsData)
+          .insert(productsToInsert)
           .select('id, sku');
 
         if (createErr) {
@@ -450,6 +588,16 @@ export function useSavePendingReception() {
         for (const p of createdProducts || []) {
           if (p.sku) createdProductIds[p.sku] = p.id;
           createdProductIdList.push(p.id);
+        }
+
+        // CP-CAT-MAESTRO-003 (misión §4.3): si algún producto nuevo no pudo
+        // sincronizarse con el Catálogo Maestro, el usuario lo sabe AHORA —
+        // jamás éxito silencioso sin sincronía.
+        if (syncWarnings.length > 0) {
+          toast.warning(
+            'Productos guardados localmente sin vínculo al Catálogo Maestro: ' + syncWarnings.join(' · '),
+            { duration: 9000 }
+          );
         }
       }
 

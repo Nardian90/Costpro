@@ -1,0 +1,16 @@
+{
+  "status": "success",
+  "created": 0,
+  "dry_run": true,
+  "results": [],
+  "skipped": 0,
+  "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+  "conflicts": 0,
+  "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+  "exceptions": [],
+  "would_link": 0,
+  "audit_actor": "a1111111-1111-1111-1111-111111111111",
+  "would_create": 0,
+  "linked_existing": 0,
+  "total_candidates": 0
+}

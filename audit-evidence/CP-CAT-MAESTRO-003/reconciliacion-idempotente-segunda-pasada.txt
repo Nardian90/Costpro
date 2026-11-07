@@ -1,0 +1,5 @@
+CP-CAT-MAESTRO-003 — Reconciliación Enervida (exec) · 2026-11-07T17:03:48.595Z
+Tienda: ENERVIDA-VITALLCONS 5e6fe821-5465-48b1-b3f1-3aa3182edc38 · Gobernador actor: a1111111-1111-1111-1111-111111111111
+
+status: success · dry_run: false
+candidatos: 0 · creados: 0 · vinculados: 0 · conflictos: 0 · omitidos: 0

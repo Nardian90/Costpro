@@ -11648,6 +11648,13 @@ DECLARE
   v_new_tenant_id UUID;
   v_created_skus TEXT[] := '{}';
   v_new_products_count INTEGER := 0;
+  -- CP-CAT-MAESTRO-003: sincronización con el catálogo maestro
+  v_store_connected BOOLEAN := FALSE;
+  v_master_id UUID;
+  v_master_status TEXT;
+  v_master_name TEXT;
+  v_master_created_count INTEGER := 0;
+  v_master_linked_count INTEGER := 0;
 BEGIN
   PERFORM public.validate_operation_date(p_reception_date, p_store_id);
 
@@ -11737,18 +11744,204 @@ BEGIN
           RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: no se pudo resolver el tenant de la tienda %', p_store_id;
         END IF;
       END IF;
-      INSERT INTO public.products (
-        store_id, tenant_id, sku, name, cost_price, price,
-        unit_of_measure, is_active, is_complete, stock_current
-      ) VALUES (
-        p_store_id, v_new_tenant_id, v_new_sku, btrim(v_new_product->>'name'),
-        COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
-        COALESCE((v_new_product->>'price')::NUMERIC, 0),
-        COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
-        TRUE,
-        COALESCE((v_new_product->>'is_complete')::BOOLEAN, TRUE),
-        0
-      ) RETURNING id INTO v_product_id;
+
+      -- ═════════════════════════════════════════════════════════════════════
+      -- CP-CAT-MAESTRO-003 (2026-11-07): SINCRONIZACIÓN CON EL CATÁLOGO MAESTRO.
+      -- Causa raíz corregida: hasta ahora el producto nuevo creado desde una
+      -- Recepción se guardaba SOLO en el catálogo local; en una tienda conectada
+      -- al catálogo maestro quedaba fuera de la identidad compartida de la
+      -- organización (desfase detectado en Enervida: 10 productos, SKUs 187-196).
+      -- La operación (producto local + identidad compartida + vínculo) es UNA
+      -- transacción: si algo falla, la recepción completa se revierte — jamás
+      -- quedan huérfanos ni confirmación de éxito sin persistencia real.
+      -- Reglas (misión CP-CAT-MAESTRO-003 §4):
+      --   CASO B · Tienda NO conectada → alta local pura (comportamiento exacto
+      --            anterior; sin maestro, sin relaciones).
+      --   CASO A4 · Maestro ACTIVO con ese SKU → se VINCULA vía
+      --            products.master_product_id; el trigger
+      --            trg_products_master_identity_guard coerciona sku/name al
+      --            maestro. Jamás un segundo registro maestro. Precio, costo,
+      --            existencias y demás datos comerciales siguen siendo locales.
+      --   CASO A5 · Maestro inexistente → se CREA (SOLO identidad: sku, nombre,
+      --            unidad; imagen/código NULL; jamás precio/costo/existencias),
+      --            con auditoría en master_change_log + audit_logs. Carrera
+      --            entre tiendas: unique_violation → reutiliza el maestro
+      --            ganador (un solo maestro por organización).
+      --   CASO A6 · Maestro ARCHIVADO → fila local SIN vínculo + conflicto
+      --            auditado para revisión de gobernanza. La recepción JAMÁS se
+      --            bloquea por un error secundario de sincronización.
+      -- ═════════════════════════════════════════════════════════════════════
+      v_store_connected := public.is_catalog_store_connected(v_new_tenant_id, p_store_id);
+
+      IF v_store_connected THEN
+        v_master_id := NULL;
+        v_master_status := NULL;
+        v_master_name := NULL;
+        SELECT id, status, name INTO v_master_id, v_master_status, v_master_name
+          FROM public.master_products
+         WHERE tenant_id = v_new_tenant_id AND sku = v_new_sku
+         FOR UPDATE;
+
+        IF v_master_id IS NOT NULL AND v_master_status = 'active' AND EXISTS (
+          SELECT 1 FROM public.products
+           WHERE master_product_id = v_master_id AND store_id = p_store_id
+        ) THEN
+          -- CASO A7 · vínculo ya ocupado por otra fila local (inconsistencia
+          -- previa tras reetiquetado): NO se duplica el vínculo (índice único
+          -- parcial products_master_store_unique); fila local sin vínculo y
+          -- conflicto documentado para revisión.
+          INSERT INTO public.products (
+            store_id, tenant_id, sku, name, cost_price, price,
+            unit_of_measure, is_active, is_complete, stock_current
+          ) VALUES (
+            p_store_id, v_new_tenant_id, v_new_sku, btrim(v_new_product->>'name'),
+            COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
+            COALESCE((v_new_product->>'price')::NUMERIC, 0),
+            COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
+            TRUE,
+            COALESCE((v_new_product->>'is_complete')::BOOLEAN, TRUE),
+            0
+          ) RETURNING id INTO v_product_id;
+
+          INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+          VALUES ('RECEPTION_MASTER_CONFLICT', 'master_products', v_master_id, p_store_id, v_caller_uid,
+            jsonb_build_object(
+              'reason', 'ERR_MASTER_LINK_ALREADY_EXISTS',
+              'sku', v_new_sku,
+              'receipt_id', v_receipt_id,
+              'product_id', v_product_id,
+              'at', now()));
+        ELSIF v_master_id IS NOT NULL AND v_master_status = 'active' THEN
+          -- CASO A4 · maestro existente y activo: VINCULAR (reutilizar identidad).
+          INSERT INTO public.products (
+              store_id, tenant_id, master_product_id, sku, name, cost_price, price,
+              unit_of_measure, is_active, is_complete, stock_current
+            ) VALUES (
+              p_store_id, v_new_tenant_id, v_master_id, v_new_sku, btrim(v_new_product->>'name'),
+              COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
+              COALESCE((v_new_product->>'price')::NUMERIC, 0),
+              COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
+              TRUE,
+              COALESCE((v_new_product->>'is_complete')::BOOLEAN, TRUE),
+              0
+            ) RETURNING id INTO v_product_id;
+          v_master_linked_count := v_master_linked_count + 1;
+
+          INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+          VALUES ('RECEPTION_PRODUCT_LINKED_MASTER', 'master_products', v_master_id, p_store_id, v_caller_uid,
+            jsonb_build_object(
+              'sku', v_new_sku,
+              'master_product_id', v_master_id,
+              'master_name', v_master_name,
+              'local_name_requested', btrim(v_new_product->>'name'),
+              'receipt_id', v_receipt_id,
+              'product_id', v_product_id,
+              'at', now()));
+        ELSE
+          IF v_master_id IS NULL THEN
+            -- CASO A5 · alta de identidad compartida (SOLO identidad compartida).
+            BEGIN
+              INSERT INTO public.master_products
+                (tenant_id, sku, name, image_path, barcode, unit_of_measure, is_service, status, created_by)
+              VALUES
+                (v_new_tenant_id, v_new_sku, btrim(v_new_product->>'name'), NULL, NULL,
+                 COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
+                 FALSE, 'active', v_user_id)
+              RETURNING id INTO v_master_id;
+
+              v_master_created_count := v_master_created_count + 1;
+              -- Estado del maestro recién creado (RETURNING solo trae id):
+              -- sin esto, el chequeo posterior leería status NULL y la fila
+              -- local caería por error a la rama "archivado" (sin vínculo).
+              v_master_status := 'active';
+              v_master_name := btrim(v_new_product->>'name');
+
+              -- Auditoría de identidad (mismo registro que create_master_product)
+              INSERT INTO public.master_change_log
+                (master_product_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
+              VALUES
+                (v_master_id, v_new_tenant_id, 'sku', NULL, v_new_sku, v_user_id, p_store_id),
+                (v_master_id, v_new_tenant_id, 'name', NULL, btrim(v_new_product->>'name'), v_user_id, p_store_id);
+            EXCEPTION WHEN unique_violation THEN
+              -- Carrera: otra tienda creó el mismo SKU en paralelo. Se reutiliza
+              -- el maestro ganador (un solo maestro por organización, misión §4.1;
+              -- mismo patrón que create_master_product traduce 23505).
+              v_master_status := NULL;
+              v_master_name := NULL;
+              SELECT id, status, name INTO v_master_id, v_master_status, v_master_name
+                FROM public.master_products
+               WHERE tenant_id = v_new_tenant_id AND sku = v_new_sku
+               FOR UPDATE;
+            END;
+          END IF;
+
+          IF v_master_id IS NOT NULL AND v_master_status = 'active' THEN
+            INSERT INTO public.products (
+              store_id, tenant_id, master_product_id, sku, name, cost_price, price,
+              unit_of_measure, is_active, is_complete, stock_current
+            ) VALUES (
+              p_store_id, v_new_tenant_id, v_master_id, v_new_sku, btrim(v_new_product->>'name'),
+              COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
+              COALESCE((v_new_product->>'price')::NUMERIC, 0),
+              COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
+              TRUE,
+              COALESCE((v_new_product->>'is_complete')::BOOLEAN, TRUE),
+              0
+            ) RETURNING id INTO v_product_id;
+            v_master_linked_count := v_master_linked_count + 1;
+
+            INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+            VALUES ('RECEPTION_PRODUCT_LINKED_MASTER', 'master_products', v_master_id, p_store_id, v_caller_uid,
+              jsonb_build_object(
+                'sku', v_new_sku,
+                'master_product_id', v_master_id,
+                'master_name', v_master_name,
+                'local_name_requested', btrim(v_new_product->>'name'),
+                'receipt_id', v_receipt_id,
+                'product_id', v_product_id,
+                'at', now()));
+          ELSE
+            -- CASO A6 · maestro archivado: sin vínculo + conflicto documentado.
+            INSERT INTO public.products (
+            store_id, tenant_id, sku, name, cost_price, price,
+            unit_of_measure, is_active, is_complete, stock_current
+          ) VALUES (
+            p_store_id, v_new_tenant_id, v_new_sku, btrim(v_new_product->>'name'),
+            COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
+            COALESCE((v_new_product->>'price')::NUMERIC, 0),
+            COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
+            TRUE,
+            COALESCE((v_new_product->>'is_complete')::BOOLEAN, TRUE),
+            0
+          ) RETURNING id INTO v_product_id;
+
+            INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+            VALUES ('RECEPTION_MASTER_CONFLICT', 'master_products', v_master_id, p_store_id, v_caller_uid,
+              jsonb_build_object(
+                'reason', 'ERR_MASTER_ARCHIVED',
+                'sku', v_new_sku,
+                'receipt_id', v_receipt_id,
+                'product_id', v_product_id,
+                'at', now()));
+          END IF;
+        END IF;
+      ELSE
+        -- CASO B · tienda NO conectada: alta local pura, sin maestro ni
+        -- relaciones (funcionamiento de la tienda sin cambios, misión CASO B).
+        INSERT INTO public.products (
+            store_id, tenant_id, sku, name, cost_price, price,
+            unit_of_measure, is_active, is_complete, stock_current
+          ) VALUES (
+            p_store_id, v_new_tenant_id, v_new_sku, btrim(v_new_product->>'name'),
+            COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
+            COALESCE((v_new_product->>'price')::NUMERIC, 0),
+            COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
+            TRUE,
+            COALESCE((v_new_product->>'is_complete')::BOOLEAN, TRUE),
+            0
+          ) RETURNING id INTO v_product_id;
+      END IF;
+
       v_created_skus := array_append(v_created_skus, v_new_sku);
       v_new_products_count := v_new_products_count + 1;
     END IF;
@@ -11848,7 +12041,10 @@ BEGIN
       'total_cost', v_total_cost,
       'items_count', jsonb_array_length(p_items),
       'po_id', p_po_id,
-      'new_products_created', v_new_products_count
+      'new_products_created', v_new_products_count,
+      -- CP-CAT-MAESTRO-003: resultado de la sincronía con el catálogo maestro
+      'new_products_master_created', v_master_created_count,
+      'new_products_master_linked', v_master_linked_count
     ));
 
   RETURN v_receipt_id;

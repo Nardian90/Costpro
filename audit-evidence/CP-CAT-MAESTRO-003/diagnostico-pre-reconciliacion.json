@@ -1,0 +1,169 @@
+{
+  "ts": "2026-11-07T16:07:13.735Z",
+  "enervida_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+  "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+  "store": {
+    "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+    "name": "ENERVIDA-VITALLCONS",
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "is_active": true
+  },
+  "stores": [
+    {
+      "id": "8eb56fa3-7e22-408e-a44b-8f14cdd7f52f",
+      "name": "FERROCARRIL VITALLCONS",
+      "is_active": true,
+      "catalog_link": "connected"
+    },
+    {
+      "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "name": "COSTPRO (Prueba)",
+      "is_active": true,
+      "catalog_link": "disconnected"
+    },
+    {
+      "id": "bc94e3d0-32c3-4f2f-8e42-d46a341f9451",
+      "name": "SHADDAI",
+      "is_active": true,
+      "catalog_link": "connected"
+    },
+    {
+      "id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "name": "PUERTO PADRE",
+      "is_active": true,
+      "catalog_link": "connected"
+    },
+    {
+      "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "name": "ENERVIDA-VITALLCONS",
+      "is_active": true,
+      "catalog_link": "connected"
+    }
+  ],
+  "counts_enervida": {
+    "total": 198,
+    "linked": 188,
+    "unlinked": 10
+  },
+  "counts_master": {
+    "total": 189,
+    "active": 188,
+    "archived": 1
+  },
+  "counts_org": {
+    "linked_rows_all_stores": 243
+  },
+  "classification_unlinked": {
+    "would_create_master": 10,
+    "would_link_existing": 0,
+    "link_with_name_divergence": 0,
+    "conflicts_duplicate_sku": 0,
+    "invalid": 0
+  },
+  "linked_divergence": {
+    "total_checked": 188,
+    "divergent": 0,
+    "sample": []
+  },
+  "masters_without_enervida": {
+    "count": 1,
+    "sample": [
+      {
+        "id": "7b377a31-4e0f-45d9-b266-244c2e235ac5",
+        "sku": "QA-CM-20261030-01",
+        "name": "QA CM-004 Producto de prueba tecnica v2 (no comercial)",
+        "status": "archived"
+      }
+    ]
+  },
+  "masters_shared_with_other_stores": {
+    "count": 55
+  },
+  "duplicate_skus_enervida": [],
+  "duplicate_sku_masters": [],
+  "preview_would_create": [
+    {
+      "product_id": "a6261501-0ccc-4abe-9b3f-4a0a93ed3a98",
+      "sku": "187",
+      "name": "Candado S.P.C 80mm",
+      "image_url": null,
+      "is_service": false,
+      "is_active": true
+    },
+    {
+      "product_id": "61c6e226-c672-4fd4-9bf4-a6e0527398be",
+      "sku": "188",
+      "name": "Silicona para motor",
+      "image_url": null,
+      "is_service": false,
+      "is_active": true
+    },
+    {
+      "product_id": "847b68c5-7bf2-4c4f-878f-f669472406fd",
+      "sku": "189",
+      "name": "Interruptores Simples",
+      "image_url": null,
+      "is_service": false,
+      "is_active": true
+    },
+    {
+      "product_id": "8f024ac0-bdd0-4f44-a956-ad83cd9eaefb",
+      "sku": "190",
+      "name": "Silicona de Olor",
+      "image_url": null,
+      "is_service": false,
+      "is_active": true
+    },
+    {
+      "product_id": "ed6ad9c0-cdc0-4aae-976f-16766ce8621f",
+      "sku": "191",
+      "name": "Expansiones plásticas 8mm",
+      "image_url": null,
+      "is_service": false,
+      "is_active": true
+    },
+    {
+      "product_id": "5ba824a0-2e5f-40ef-8ae7-e145b333e53e",
+      "sku": "192",
+      "name": "Lampara cuadrada (Blanca)",
+      "image_url": null,
+      "is_service": false,
+      "is_active": true
+    },
+    {
+      "product_id": "052b9bbf-6c2c-456b-af64-c743d5d74ff7",
+      "sku": "193",
+      "name": "Convertidor de Oxido",
+      "image_url": null,
+      "is_service": false,
+      "is_active": true
+    },
+    {
+      "product_id": "88503d72-f53e-4815-a507-01e8dc5c50c9",
+      "sku": "194",
+      "name": "Brecker 100 A Trifásico",
+      "image_url": null,
+      "is_service": false,
+      "is_active": true
+    },
+    {
+      "product_id": "a60978fa-b57d-4ff5-8df4-fcbd92733486",
+      "sku": "195",
+      "name": "Manguera  1/2",
+      "image_url": null,
+      "is_service": false,
+      "is_active": true
+    },
+    {
+      "product_id": "737d155f-5e07-44a7-a913-936d4a0496b4",
+      "sku": "196",
+      "name": "Manguera 3/4",
+      "image_url": null,
+      "is_service": false,
+      "is_active": true
+    }
+  ],
+  "preview_would_link": [],
+  "preview_conflicts": [],
+  "preview_invalid": []
+}
