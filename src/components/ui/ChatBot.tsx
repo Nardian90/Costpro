@@ -1,7 +1,7 @@
 'use client';
 import { logger } from '@/lib/logger';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, type PointerEvent as ReactPointerEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, Send, X, Bot, Loader2, Sparkles, Settings, Key, Check, Trash2, Lightbulb, RefreshCw, ChevronDown, AlertTriangle, ImagePlus, Plus, Clock, MessageCircle, Copy, Download, Maximize2, Minimize2, PanelLeft } from 'lucide-react';
 import { useAuthStore, useUIStore, type ViewType } from '@/store';
@@ -11,6 +11,14 @@ import { toast } from 'sonner';
 import { normalizeLegacyView } from '@/config/navigation/navigation-definition';
 import ReactMarkdown from 'react-markdown';
 import { recordDarianAction, type DarianActionKind } from '@/lib/darian/recent-actions';
+import {
+  clampFabPos,
+  exceededDragThreshold,
+  loadFabPos,
+  saveFabPos,
+  snapFabX,
+  type FabPos,
+} from '@/lib/ui/floating-fab';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 interface Message {
@@ -136,6 +144,18 @@ export function ChatBot({ embedded = false, onConversationChange }: { embedded?:
   // FEATURE: maximize chat as a full view for better concentration
   const [isMaximized, setIsMaximized] = useState(false);
 
+  // ─── DRAGGABLE FAB (patrón chat-head / AssistiveTouch) ─────────────────
+  // El icono flotante puede tapar contenido: el propietario puede arrastrarlo
+  // y CostPro le hace imán al borde más cercano y recuerda la posición.
+  // Lógica geométrica pura en @/lib/ui/floating-fab (testeada).
+  const [fabPos, setFabPos] = useState<FabPos | null>(null);
+  const [fabDragging, setFabDragging] = useState(false);
+  const [fabSnapping, setFabSnapping] = useState(false);
+  const fabPosRef = useRef<FabPos | null>(null);
+  const fabSnapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fabDragRef = useRef<{ startX: number; startY: number; origX: number; origY: number; moved: boolean } | null>(null);
+  const fabSuppressClickRef = useRef(false);
+
   // Attached image state (F1-01)
   const [attachedImage, setAttachedImage] = useState<{ mimeType: string; data: string; preview: string } | null>(null);
 
@@ -260,6 +280,27 @@ export function ChatBot({ embedded = false, onConversationChange }: { embedded?:
       setTimeout(() => inputRef.current?.focus(), 300);
     }
   }, [isOpen, isSettingsOpen]);
+
+  // DRAGGABLE FAB: restaurar posición guardada + re-clamp en cada resize
+  // (nunca fuera de pantalla aunque cambie la resolución/orientación).
+  useEffect(() => {
+    if (embedded) return;
+    const reclamp = () => {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      setFabPos(prev => {
+        const base = prev ?? loadFabPos(window.localStorage, vw, vh);
+        return base ? clampFabPos(base, vw, vh) : null;
+      });
+    };
+    reclamp();
+    window.addEventListener('resize', reclamp);
+    return () => window.removeEventListener('resize', reclamp);
+  }, [embedded]);
+
+  useEffect(() => {
+    fabPosRef.current = fabPos;
+  }, [fabPos]);
 
   // Close model dropdown on outside click
   useEffect(() => {
@@ -812,6 +853,64 @@ export function ChatBot({ embedded = false, onConversationChange }: { embedded?:
     } catch { /* storage full */ }
   }
 
+  // ─── DRAGGABLE FAB — Pointer Events (mouse/touch/lápiz unificados) ─────
+  // setPointerCapture garantiza recibir move/up aunque el puntero salga del
+  // botón. Umbral DRAG_THRESHOLD_PX separa click de arrastre; el click se
+  // suprime SOLO si hubo arrastre real (WCAG 2.5.7 «Dragging Movements»:
+  // abrir el chat nunca exige arrastrar).
+  const onFabPointerDown = useCallback((e: ReactPointerEvent<HTMLButtonElement>) => {
+    if (embedded || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ }
+    const rect = e.currentTarget.getBoundingClientRect();
+    fabDragRef.current = { startX: e.clientX, startY: e.clientY, origX: rect.left, origY: rect.top, moved: false };
+  }, [embedded]);
+
+  const onFabPointerMove = useCallback((e: ReactPointerEvent<HTMLButtonElement>) => {
+    const drag = fabDragRef.current;
+    if (!drag) return;
+    const dx = e.clientX - drag.startX;
+    const dy = e.clientY - drag.startY;
+    if (!drag.moved && !exceededDragThreshold(dx, dy)) return;
+    drag.moved = true;
+    setFabDragging(true);
+    setFabPos(clampFabPos(
+      { x: drag.origX + dx, y: drag.origY + dy },
+      window.innerWidth,
+      window.innerHeight
+    ));
+  }, []);
+
+  const onFabPointerEnd = useCallback(() => {
+    const drag = fabDragRef.current;
+    if (!drag) return;
+    fabDragRef.current = null;
+    if (!drag.moved) return;
+    setFabDragging(false);
+    fabSuppressClickRef.current = true; // el click posterior NO abre el chat
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const current = fabPosRef.current ?? { x: drag.origX, y: drag.origY };
+    const final = clampFabPos(
+      { x: snapFabX(current.x, vw), y: current.y },
+      vw,
+      vh
+    );
+    saveFabPos(window.localStorage, final);
+    setFabPos(final);
+    // Glide de imán al borde: transición breve de left/top (chat-head estándar)
+    setFabSnapping(true);
+    if (fabSnapTimerRef.current) clearTimeout(fabSnapTimerRef.current);
+    fabSnapTimerRef.current = setTimeout(() => setFabSnapping(false), 220);
+  }, []);
+
+  const onFabClick = useCallback(() => {
+    if (fabSuppressClickRef.current) {
+      fabSuppressClickRef.current = false;
+      return;
+    }
+    setIsOpen(true);
+  }, [setIsOpen]);
+
   // ─── RENDER ──────────────────────────────────────────────────────────────
   // FEATURE-CHATBOT-VIEW: When embedded, render without the floating FAB
   // and without fixed positioning — the parent ChatBotView handles layout.
@@ -825,11 +924,25 @@ export function ChatBot({ embedded = false, onConversationChange }: { embedded?:
             initial={{ scale: 0, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0, opacity: 0, y: 20 }}
-            onClick={() => setIsOpen(true)}
+            onClick={onFabClick}
+            onPointerDown={onFabPointerDown}
+            onPointerMove={onFabPointerMove}
+            onPointerUp={onFabPointerEnd}
+            onPointerCancel={onFabPointerEnd}
             aria-label="Abrir chat con Darian"
             aria-expanded={isOpen}
-            className="w-14 h-14 rounded-full bg-primary/15 backdrop-blur-xl border-2 border-primary/30 text-primary shadow-lg shadow-primary/15 flex items-center justify-center hover:scale-110 hover:bg-primary/25 transition-all duration-300 group relative overflow-hidden"
-          >
+            title="Abrir chat con Darian — también puedes arrastrarlo a otro lado"
+            style={fabPos ? { position: 'fixed', left: fabPos.x, top: fabPos.y, right: 'auto', bottom: 'auto' } : undefined}
+            className={cn(
+              "w-14 h-14 rounded-full bg-primary/15 backdrop-blur-xl border-2 border-primary/30 text-primary shadow-lg shadow-primary/15 flex items-center justify-center hover:scale-110 hover:bg-primary/25 group relative overflow-hidden",
+              "touch-none select-none",
+              fabDragging
+                ? "transition-none cursor-grabbing scale-110 shadow-2xl"
+                : fabSnapping
+                  ? "transition-[left,top] duration-200 ease-out cursor-grab"
+                  : "transition-all duration-300 cursor-grab"
+            )
+          }>
             <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-full" />
             <MessageSquare className="w-6 h-6" />
           </motion.button>
