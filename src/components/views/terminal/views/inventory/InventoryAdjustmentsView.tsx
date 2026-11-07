@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { Plus, Search, Ban, Undo2, Copy, X, Loader2, Eye, FileDown, RefreshCcw, ChevronDown, ChevronUp, CheckCircle2, ClipboardCheck } from 'lucide-react';
+import { Plus, Search, Ban, Undo2, Copy, X, Loader2, Eye, FileDown, RefreshCcw, ChevronDown, ChevronUp, CheckCircle2, ClipboardCheck, LayoutList, List } from 'lucide-react';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -60,6 +60,13 @@ interface ProductSearchResult {
 const touch = 'min-h-[44px]';
 
 // ──────────────────────────────────────────────────────────────────────────
+// Modo de visualización (misión 2026-11-07): alternancia tarjetas/tabla con
+// el MISMO patrón del módulo hermano Vales de Salida (toggle + localStorage).
+// ──────────────────────────────────────────────────────────────────────────
+type AdjustmentsViewMode = 'cards' | 'table';
+const VIEW_MODE_KEY = 'ajustes_documentales_view_mode';
+
+// ──────────────────────────────────────────────────────────────────────────
 // Helper: mapear texto libre a enum de reason (T4)
 // ──────────────────────────────────────────────────────────────────────────
 function mapReasonToEnum(text: string): 'STOCKTAKE_SHRINKAGE' | 'STOCKTAKE_SURPLUS' | 'DAMAGED_GOODS' | 'OTHER' {
@@ -84,6 +91,15 @@ export default function InventoryAdjustmentsView() {
   const [voidTarget, setVoidTarget] = useState<AdjustmentDoc | null>(null);
   const [confirmTarget, setConfirmTarget] = useState<AdjustmentDoc | null>(null);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
+  // Toggle tabla/tarjetas (patrón de Vales de Salida; preferencia persistida).
+  const [viewMode, setViewMode] = useState<AdjustmentsViewMode>(() => {
+    if (typeof window === 'undefined') return 'cards';
+    const saved = window.localStorage.getItem(VIEW_MODE_KEY);
+    return saved === 'table' ? 'table' : 'cards';
+  });
+  useEffect(() => {
+    try { window.localStorage.setItem(VIEW_MODE_KEY, viewMode); } catch { /* SSR/privado */ }
+  }, [viewMode]);
 
   // T3: TanStack Query en vez de useState manual
   const { data: docs = [], isLoading, refetch } = useQuery({
@@ -220,9 +236,37 @@ export default function InventoryAdjustmentsView() {
         <button onClick={() => refetch()} className={cn('p-2 rounded-xl border border-border hover:bg-muted', touch)} aria-label="Recargar">
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCcw className="w-4 h-4" />}
         </button>
+
+        {/* MISIÓN 2026-11-07 — toggle tabla/tarjetas (mismo patrón que Vales de
+            Salida: preferencia persistida y filtros/búsqueda intactos). */}
+        <div className="flex items-center rounded-xl border border-border overflow-hidden" role="group" aria-label="Modo de visualización">
+          <button
+            type="button"
+            onClick={() => setViewMode('cards')}
+            aria-pressed={viewMode === 'cards'}
+            title="Ver como tarjetas"
+            aria-label="Modo tarjetas"
+            className={cn('px-3 py-2 inline-flex items-center gap-1.5 text-xs font-black uppercase transition-colors', viewMode === 'cards' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted')}
+          >
+            <LayoutList className="w-4 h-4" aria-hidden="true" />
+            <span className="hidden md:inline">Tarjetas</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('table')}
+            aria-pressed={viewMode === 'table'}
+            title="Ver como tabla"
+            aria-label="Modo tabla"
+            className={cn('px-3 py-2 inline-flex items-center gap-1.5 text-xs font-black uppercase transition-colors border-l border-border', viewMode === 'table' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted')}
+          >
+            <List className="w-4 h-4" aria-hidden="true" />
+            <span className="hidden md:inline">Tabla</span>
+          </button>
+        </div>
       </div>
 
-      {/* List */}
+      {/* List — tarjetas (patrón original) o tabla (misión 2026-11-07);
+          los filtros y la búsqueda se conservan en ambos modos. */}
       {isLoading ? (
         <div className="flex items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
       ) : filtered.length === 0 ? (
@@ -231,6 +275,26 @@ export default function InventoryAdjustmentsView() {
           <p className="text-sm font-bold text-muted-foreground">No hay ajustes documentales</p>
           <p className="text-xs text-muted-foreground mt-1">Crea un nuevo ajuste con el botón de arriba</p>
         </div>
+      ) : viewMode === 'table' ? (
+        <TablaAjustes
+          docs={filtered}
+          canReverseAdj={canReverseAdj}
+          isExportingSc216Id={isExportingSc216Id}
+          expandedDoc={expandedDoc}
+          onToggleExpand={(id) => setExpandedDoc(expandedDoc === id ? null : id)}
+          onExportSc216={handleExportSc216}
+          onVoid={(d) => setVoidTarget(d)}
+          onConfirm={(d) => setConfirmTarget(d)}
+          onReverse={(d) => setReverseTarget({
+            id: d.id,
+            label: `Ajuste ${d.id.slice(0, 8)} • ${d.notes || d.reason}`,
+          })}
+          onDuplicate={(d) => setDuplicateTarget({
+            id: d.id,
+            label: `Ajuste ${d.id.slice(0, 8)} • ${d.notes || d.reason}`,
+            itemCount: d.items?.length,
+          })}
+        />
       ) : (
         <div className="grid gap-2">
           {filtered.map(d => {
@@ -265,7 +329,12 @@ export default function InventoryAdjustmentsView() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm font-bold truncate">{d.notes || d.reason}</p>
+                  <p
+                    className="text-sm font-bold truncate max-w-full break-words"
+                    title={d.notes || d.reason}
+                  >
+                    {d.notes || d.reason}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     {formatDate(d.created_at)} • {d.creator?.full_name || '—'}
                     {d.source_physical_inventory && (
@@ -448,6 +517,166 @@ export default function InventoryAdjustmentsView() {
         docId={duplicateTarget?.id || ''}
         docInfo={{ docLabel: duplicateTarget?.label, itemCount: duplicateTarget?.itemCount }}
       />
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Tabla de ajustes (misión 2026-11-07 — modo «tabla» del toggle)
+// Mismos datos y acciones que las tarjetas; descripción truncada con
+// tooltip y columnas de ancho acotado (sin scroll horizontal en escritorio).
+// ═══════════════════════════════════════════════════════════════════════
+
+interface TablaAjustesProps {
+  docs: AdjustmentDoc[];
+  canReverseAdj: boolean;
+  isExportingSc216Id: string | null;
+  expandedDoc: string | null;
+  onToggleExpand: (id: string) => void;
+  onExportSc216: (doc: AdjustmentDoc) => void;
+  onVoid: (doc: AdjustmentDoc) => void;
+  onConfirm: (doc: AdjustmentDoc) => void;
+  onReverse: (doc: AdjustmentDoc) => void;
+  onDuplicate: (doc: AdjustmentDoc) => void;
+}
+
+function TablaAjustes({
+  docs, canReverseAdj, isExportingSc216Id, expandedDoc,
+  onToggleExpand, onExportSc216, onVoid, onConfirm, onReverse, onDuplicate,
+}: TablaAjustesProps) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-border bg-card">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-xs tracking-widest border-b border-border">
+            <th className="p-3 text-left">ID</th>
+            <th className="p-3 text-left">Fecha</th>
+            <th className="p-3 text-left">Estado</th>
+            <th className="p-3 text-left">Descripción / motivo</th>
+            <th className="p-3 text-right">Productos</th>
+            <th className="p-3 text-right">Diferencia</th>
+            <th className="p-3 text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {docs.map(d => {
+            const diff = d.items?.reduce((s, i) => s + (i.counted_quantity - i.expected_quantity), 0) ?? 0;
+            return (
+              <tr key={d.id} className="border-b border-border/50 hover:bg-muted/20 transition-colors align-top">
+                <td className="p-3 font-mono text-xs font-black text-primary whitespace-nowrap">{d.id.slice(0, 8)}</td>
+                <td className="p-3 text-xs whitespace-nowrap">
+                  <div className="font-bold">{formatDate(d.created_at)}</div>
+                  <div className="text-muted-foreground">{d.creator?.full_name || '—'}</div>
+                </td>
+                <td className="p-3">
+                  <DocumentStatusBadge type="adjustment" status={d.status} size="xs" />
+                </td>
+                <td className="p-3 max-w-[280px]">
+                  {/* Truncado con tooltip: una descripción extensa nunca ensancha la tabla. */}
+                  <span className="block text-xs font-bold truncate" title={d.notes || d.reason}>
+                    {d.notes || d.reason}
+                  </span>
+                  {d.source_physical_inventory && (
+                    <span className="text-[10px] font-black uppercase text-muted-foreground">
+                      Inventario Físico {d.source_physical_inventory.pi_number}
+                    </span>
+                  )}
+                </td>
+                <td className="p-3 text-right text-xs font-bold whitespace-nowrap">{d.items?.length || 0}</td>
+                <td className={cn('p-3 text-right text-xs font-black whitespace-nowrap', diff > 0 ? 'text-success' : diff < 0 ? 'text-destructive' : 'text-muted-foreground')}>
+                  {diff > 0 ? '+' : ''}{diff} uds
+                </td>
+                <td className="p-3">
+                  <div className="flex items-center justify-center gap-1 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => onExportSc216(d)}
+                      disabled={isExportingSc216Id === d.id}
+                      className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95 disabled:opacity-50"
+                      title="Exportar como modelo oficial SC-2-16 Ajuste de Inventario (PDF)"
+                      aria-label={`Exportar el ajuste ${d.id.slice(0, 8)} como modelo oficial SC-2-16 en PDF`}
+                    >
+                      {isExportingSc216Id === d.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                    </button>
+                    {d.items && d.items.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => onToggleExpand(d.id)}
+                        className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-border hover:bg-primary hover:text-foreground transition-all active:scale-95"
+                        title="Ver items"
+                        aria-label={`Ver items del ajuste ${d.id.slice(0, 8)}`}
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    )}
+                    {d.status === 'pending' && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => onVoid(d)}
+                          className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-destructive/40 bg-destructive/5 text-destructive hover:bg-destructive hover:text-white transition-all active:scale-95"
+                          title="Anular ajuste (sin efecto en stock)"
+                          aria-label="Anular ajuste"
+                        >
+                          <Ban className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onConfirm(d)}
+                          className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-success/40 bg-success/5 text-success hover:bg-success hover:text-white transition-all active:scale-95"
+                          title="Confirmar ajuste (aplica al inventario)"
+                          aria-label="Confirmar ajuste"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                    {canReverse('adjustment', d.status) && canReverseAdj && (
+                      <button
+                        type="button"
+                        onClick={() => onReverse(d)}
+                        className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400 hover:bg-purple-500 hover:text-white dark:hover:text-black transition-all active:scale-95"
+                        title="Revertir ajuste (invierte stock + kardex)"
+                        aria-label="Revertir ajuste"
+                      >
+                        <Undo2 className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => onDuplicate(d)}
+                      className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-blue-500/40 bg-blue-500/5 text-blue-500 hover:bg-blue-500 hover:text-white transition-all active:scale-95"
+                      title="Duplicar ajuste"
+                      aria-label="Duplicar ajuste"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  {/* Detalle expandible (equivalente al de tarjetas). */}
+                  {expandedDoc === d.id && d.items && (
+                    <div className="mt-2 space-y-1 text-left">
+                      {d.items.map(item => {
+                        const itemDiff = item.counted_quantity - item.expected_quantity;
+                        return (
+                          <div key={item.id} className="flex items-center justify-between text-xs gap-2">
+                            <span className="font-bold flex-1 truncate">{item.products?.name || '—'}</span>
+                            <span className="font-mono text-muted-foreground whitespace-nowrap">
+                              {item.expected_quantity} → {item.counted_quantity}
+                              <span className={cn('ml-2 font-black', itemDiff > 0 ? 'text-success' : itemDiff < 0 ? 'text-destructive' : 'text-muted-foreground')}>
+                                ({itemDiff > 0 ? '+' : ''}{itemDiff})
+                              </span>
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

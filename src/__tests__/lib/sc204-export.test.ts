@@ -40,6 +40,7 @@ const mkSource = (overrides: Partial<Sc204SourceData> = {}): Sc204SourceData => 
     reference_doc: 'FAC-101',
     supplier: 'Proveedor Central',
     reception_date: '2026-10-20T09:00:00Z',
+    status: 'active',
     store_id: 'store-a',
   },
   items: [mkItem()],
@@ -79,8 +80,9 @@ describe('SC-2-04 — modelo según Resolución 11/2007 MFP', () => {
     expect(model.lineas[0].cantidad).toBe('10');
     expect(model.lineas[0].precioUnitario).toBe('25.00 CUP');
     expect(model.lineas[0].importe).toBe('250.00 CUP');
-    // Saldo en existencia según almacén: COSTPRO no lo registra → en blanco
-    expect(model.lineas[0].saldoExistencia).toBe('');
+    // Saldo en existencia según almacén: sin datos de ledger en la fuente →
+    // «s/d» (jamás una cifra inventada; con saldosPorProducto muestra el saldo).
+    expect(model.lineas[0].saldoExistencia).toBe('s/d');
     // 8. Importe Total del modelo
     expect(model.importesTotales).toHaveLength(1);
     expect(model.importesTotales[0].label).toBe('Importe Total del modelo (CUP):');
@@ -99,6 +101,7 @@ describe('SC-2-04 — modelo según Resolución 11/2007 MFP', () => {
           reference_doc: null,
           supplier: null,
           reception_date: null,
+          status: 'active',
         },
         items: [mkItem({ products: { name: 'Producto sin SKU', sku: null, unit_of_measure: null } })],
       }),

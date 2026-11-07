@@ -300,7 +300,7 @@ describe('ValesSalidaView — VER muestra el DOCUMENTO REAL', () => {
     renderView();
     await waitFor(() => expect(screen.getByText('VS-000002-2026')).toBeTruthy());
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ver vale VS-000002-2026' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Visualizar vale VS-000002-2026' }));
     const dialog = await screen.findByRole('dialog');
     expect(dialog.textContent).toContain('Vale de Salida');
     expect(dialog.textContent).toContain('VS-000002-2026');
@@ -325,7 +325,7 @@ describe('ValesSalidaView — VER muestra el DOCUMENTO REAL', () => {
   it('8 · Ver funciona incluso con vale sin items (antes quedaba sin detalle)', async () => {
     renderView();
     await waitFor(() => expect(screen.getByText('VS-000003-2026')).toBeTruthy());
-    fireEvent.click(screen.getByRole('button', { name: 'Ver vale VS-000003-2026' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Visualizar vale VS-000003-2026' }));
     const dialog = await screen.findByRole('dialog');
     expect(dialog.textContent).toContain('VS-000003-2026');
     expect(screen.getByText(/no tiene líneas de producto/i)).toBeTruthy();
@@ -472,7 +472,7 @@ describe('ValesSalidaView — botón VER: contraste WCAG 2.2 AA + coherencia', (
     renderView();
     let verButtons: HTMLElement[] = [];
     await waitFor(() => {
-      verButtons = screen.getAllByRole('button', { name: /^Ver vale / });
+      verButtons = screen.getAllByRole('button', { name: /^Visualizar vale / });
       expect(verButtons.length).toBeGreaterThanOrEqual(1);
     });
     for (const btn of verButtons) {

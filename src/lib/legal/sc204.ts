@@ -20,9 +20,14 @@
  *  │ 5. Número y nombre doc. que ampara       │ receipts.reference_doc (Factura)   │ Número automático; NOMBRE/TIPO en blanco
  *  │ 6. Transportador (nombre, carné, chapa,  │ (no gestionado)                    │ En blanco
  *  │    casilla o guía aérea)                 │                                    │
- *  │ 7. Código, descripción, UM, cantidad,    │ receipt_items + products           │ Automático; SALDO EN EXISTENCIA en blanco
- *  │    precio unitario total, importe y      │ (sku, name, unit_of_measure,       │ (COSTPRO no registra el saldo posterior
- *  │    saldo en existencia según almacén     │  quantity, unit_cost, moneda)      │  de esa recepción por línea)
+ *  │ 7. Código, descripción, UM, cantidad,    │ receipt_items + products           │ Automático; SALDO EN EXISTENCIA =
+ *  │    precio unitario total, importe y      │ (sku, name, unit_of_measure,       │ saldo posterior histórico del
+ *  │    saldo en existencia según almacén     │  quantity, unit_cost, moneda)      │ almacén tras contabilizar la
+ *  │                                          │                                    │ recepción (lib/inventory/
+ *  │                                          │                                    │ saldo-posterior.ts; ledger real
+ *  │                                          │                                    │ stock_movements; proyección si la
+ *  │                                          │                                    │ recepción está pendiente; «s/d» +
+ *  │                                          │                                    │ nota si el historial es insuficiente)
  *  │ 8. Importe Total del modelo              │ Σ (quantity × unit_cost) por       │ Automático, agrupado por moneda
  *  │                                          │ moneda de línea                    │
  *  │ 9–12. Firmas (Jefe Almacén, Transporta-  │ (no gestionado)                    │ Espacios en blanco para firma
@@ -51,6 +56,13 @@ import type { Receipt } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { drawScLogo, resolveScLogoDataUrl } from './sc-logo';
+import {
+  calcularSaldoPosterior,
+  fetchMovimientosPorProducto,
+  movimientosDeRecepcion,
+  type SaldoPosteriorMovement,
+  type SaldoPosteriorResultado,
+} from '@/lib/inventory/saldo-posterior';
 import { logger } from '@/lib/logger';
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -59,6 +71,8 @@ import { logger } from '@/lib/logger';
 
 /** Línea de producto tal como se lee de la BD (join products incluido). */
 export interface Sc204SourceItem {
+  /** Producto de la línea (enlace con el ledger de inventario). */
+  product_id?: string | null;
   quantity: number;
   unit_cost: number;
   moneda_recepcion?: string | null;
@@ -76,11 +90,17 @@ export interface Sc204SourceData {
   /** logo_url de la tienda receptora (multitienda); null → default de la app. */
   logoUrl?: string | null;
   /** Recepción que se formaliza. */
-  receipt: Pick<Receipt, 'id' | 'reference_doc' | 'supplier' | 'reception_date'> & {
+  receipt: Pick<Receipt, 'id' | 'reference_doc' | 'supplier' | 'reception_date' | 'status'> & {
     store_id?: string | null;
   };
   /** Líneas de la recepción (receipt_items + products). */
   items: Sc204SourceItem[];
+  /**
+   * Saldo posterior histórico por producto (Σ líneas del mismo SKU agregadas),
+   * derivado del ledger real de stock_movements. Opcional: si falta, las
+   * líneas quedan con «s/d» (jamás una cifra inventada).
+   */
+  saldosPorProducto?: Record<string, SaldoPosteriorResultado>;
   /** Fecha de emisión del modelo (momento de generación). */
   emissionDate: Date;
 }
@@ -132,6 +152,11 @@ export interface Sc204ModelData {
   numeroConsecutivo: string;
   // Identificador COSTPRO de la recepción (nota al pie / nombre de archivo)
   identificadorRecepcion: string;
+  /**
+   * Nota al pie sobre el saldo en existencia ('' si todo se pudo derivar del
+   * ledger): documenta limitaciones de historial o la proyección aplicada.
+   */
+  saldoNota?: string;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -178,10 +203,21 @@ export function lineCurrency(item: Sc204SourceItem): string {
 // Constructor del modelo (función pura — testeable)
 // ────────────────────────────────────────────────────────────────────────────
 
+/** Celda «Saldo en existencia» del modelo: cifra del ledger o «s/d» (sin dato). */
+export function formatSc204Saldo(saldo: SaldoPosteriorResultado | undefined): string {
+  if (!saldo || !Number.isFinite(saldo.saldoPosterior)) return 's/d';
+  return formatSc204Quantity(saldo.saldoPosterior);
+}
+
 export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
   const lineas = (source.items || []).map((item) => {
     const importe = (item.quantity || 0) * (item.unit_cost || 0);
     const moneda = lineCurrency(item);
+    // Dato 7 (saldo en existencia según almacén): saldo posterior histórico
+    // tras contabilizar la recepción — derivado del ledger real
+    // stock_movements por (producto, almacén). Varias líneas del mismo SKU
+    // comparten el saldo del documento (Σ cantidades ya agregadas).
+    const saldo = item.product_id ? source.saldosPorProducto?.[item.product_id] : undefined;
     return {
       // Código del producto: SKU gestionado por COSTPRO (blanco si no existe)
       codigo: item.products?.sku || '',
@@ -190,11 +226,26 @@ export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
       cantidad: formatSc204Quantity(item.quantity),
       precioUnitario: `${formatSc204Money(item.unit_cost)} ${moneda}`.trim(),
       importe: `${formatSc204Money(importe)} ${moneda}`.trim(),
-      // Dato 7 (saldo en existencia según almacén): COSTPRO no registra el
-      // saldo posterior a esta recepción por línea → se deja en blanco.
-      saldoExistencia: '',
+      saldoExistencia: formatSc204Saldo(saldo),
     };
   });
+
+  // Nota al pie del saldo: explica la fuente y documenta limitaciones —
+  // jamás se inventa una cifra cuando el historial no alcanza.
+  const conLimitacion = (source.items || []).some(
+    (i) => i.product_id && source.saldosPorProducto?.[i.product_id]?.fuente === 'limitacion',
+  );
+  const conProyeccion = (source.items || []).some(
+    (i) => i.product_id && source.saldosPorProducto?.[i.product_id]?.fuente === 'proyeccion',
+  );
+  let saldoNota = '';
+  if (conLimitacion) {
+    saldoNota =
+      'Saldo en existencia: «s/d» — el historial de movimientos disponible no permite determinar el saldo de ese producto en el almacén (no se inventa cifra).';
+  } else if (conProyeccion) {
+    saldoNota =
+      'Saldo en existencia: proyección del saldo posterior (recepción pendiente de contabilizar = saldo actual del almacén + cantidad recibida).';
+  }
 
   // Dato 8: Importe Total del modelo — agrupado por moneda de línea.
   // Nunca se mezclan monedas en una misma suma.
@@ -241,6 +292,7 @@ export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
     // 13. Número consecutivo: no gestionado por COSTPRO
     numeroConsecutivo: '',
     identificadorRecepcion: source.receipt.id?.split('-')[0] || '',
+    saldoNota,
   };
 }
 
@@ -256,14 +308,16 @@ export function sc204FileName(receiptId: string): string {
 
 /**
  * Lee las líneas de la recepción (con código, descripción y unidad de medida
- * del producto) y el nombre de la tienda. Todas las lecturas usan el cliente
- * Supabase autenticado (RLS activa) — el usuario solo puede leer su tienda.
- * No modifica ningún registro.
+ * del producto), el nombre y logo de la tienda, y el SALDO POSTERIOR
+ * histórico por producto derivado del ledger real stock_movements (enlace
+ * documental notes=receipt_id; proyección si la recepción está pendiente).
+ * Todas las lecturas usan el cliente Supabase autenticado (RLS activa) — el
+ * usuario solo puede leer su tienda. No modifica ningún registro.
  */
 export async function fetchSc204SourceData(
   receipt: Sc204SourceData['receipt'],
   activeStoreId?: string | null,
-): Promise<Pick<Sc204SourceData, 'entidadNombre' | 'logoUrl' | 'items'>> {
+): Promise<Pick<Sc204SourceData, 'entidadNombre' | 'logoUrl' | 'items' | 'saldosPorProducto'>> {
   const storeId = receipt.store_id || activeStoreId || null;
   const { data: items, error } = await supabase
     .from('receipt_items')
@@ -273,6 +327,7 @@ export async function fetchSc204SourceData(
     .eq('receipt_id', receipt.id)
     .order('created_at', { ascending: true });
   if (error) throw error;
+  const sourceItems = (items as unknown as Sc204SourceItem[]) || [];
 
   let entidadNombre = '';
   let logoUrl: string | null = null;
@@ -291,10 +346,41 @@ export async function fetchSc204SourceData(
     }
   }
 
+  // ── Saldo posterior histórico por producto (Σ líneas del mismo SKU) ──
+  const saldosPorProducto: Record<string, SaldoPosteriorResultado> = {};
+  const productIds = Array.from(
+    new Set(sourceItems.map((i) => i.product_id).filter((id): id is string => !!id)),
+  );
+  if (storeId && productIds.length > 0) {
+    try {
+      const ledger = await fetchMovimientosPorProducto(supabase, productIds, storeId);
+      // Σ cantidades recibidas por producto (varias líneas del mismo SKU)
+      const deltaPorProducto: Record<string, number> = {};
+      for (const it of sourceItems) {
+        if (!it.product_id) continue;
+        deltaPorProducto[it.product_id] = (deltaPorProducto[it.product_id] || 0) + (it.quantity || 0);
+      }
+      const pendiente = receipt.status === 'pending';
+      for (const pid of productIds) {
+        const movs: SaldoPosteriorMovement[] = ledger[pid] || [];
+        saldosPorProducto[pid] = calcularSaldoPosterior({
+          movimientos: movs,
+          movimientosPropios: movimientosDeRecepcion(movs, receipt.id),
+          deltaDocumento: deltaPorProducto[pid] || 0,
+          pendienteContabilizar: pendiente,
+        });
+      }
+    } catch (e) {
+      // El saldo no bloquea el informe: las líneas quedan «s/d» y el pie lo documenta.
+      logger.warn('DATABASE', 'SC204_SALDO_POSTERIOR_READ_FAILED', { error: e });
+    }
+  }
+
   return {
     entidadNombre,
     logoUrl,
-    items: (items as unknown as Sc204SourceItem[]) || [],
+    items: sourceItems,
+    saldosPorProducto,
   };
 }
 
@@ -538,6 +624,10 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
     pageHeight - 8,
     { maxWidth: contentWidth },
   );
+  // Nota sobre el saldo en existencia (fuente/limitación) — solo cuando aplica.
+  if (model.saldoNota) {
+    doc.text(model.saldoNota, marginX, pageHeight - 5.5, { maxWidth: contentWidth });
+  }
 
   return doc;
 }
@@ -561,12 +651,13 @@ export async function exportSc204ForReceipt(
   receipt: Sc204SourceData['receipt'],
   activeStoreId?: string | null,
 ): Promise<void> {
-  const { entidadNombre, logoUrl, items } = await fetchSc204SourceData(receipt, activeStoreId);
+  const { entidadNombre, logoUrl, items, saldosPorProducto } = await fetchSc204SourceData(receipt, activeStoreId);
   const model = buildSc204ModelData({
     entidadNombre,
     logoUrl,
     receipt,
     items,
+    saldosPorProducto,
     emissionDate: new Date(),
   });
   try {

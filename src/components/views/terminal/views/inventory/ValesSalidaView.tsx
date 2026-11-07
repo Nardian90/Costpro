@@ -692,8 +692,8 @@ function TarjetaVale({
             variant="outline"
             onClick={() => onVer(d)}
             className="h-10 px-3.5 rounded-lg gap-1.5 text-xs font-bold"
-            title="Ver Vale de Salida"
-            aria-label={`Ver vale ${d.slip_number}`}
+            title="Visualizar vale"
+            aria-label={`Visualizar vale ${d.slip_number}`}
           >
             <Eye className="w-4 h-4" aria-hidden="true" />
             <span className="hidden sm:inline">Ver</span>
@@ -822,15 +822,23 @@ function TablaVales({
                       Devolver — antes icon-only outline de bajo contraste. */}
                   {/* E2E-AUDIT FIX (2026-10-09): outline (design system) en
                       lugar de secondary — coherente con la acción Devolver. */}
+                  {/* MISIÓN 2026-11-07 — botón «Visualizar vale»: el icon-only
+                      de 32px se percibía como botón vacío (misma familia del
+                      problema de contraste documentado arriba). Ahora usa el
+                      MISMO patrón que Confirmar/Devolver en tabla: icono Eye
+                      siempre visible + etiqueta en pantallas anchas + tooltip
+                      y aria-label. Icono Eye del paquete lucide-react (nombre
+                      válido verificado en la versión instalada). */}
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => onVer(d)}
-                    className="w-8 h-8 p-0 rounded-lg"
-                    title="Ver Vale de Salida"
-                    aria-label={`Ver vale ${d.slip_number}`}
+                    className="h-8 px-2.5 rounded-lg gap-1"
+                    title="Visualizar vale"
+                    aria-label={`Visualizar vale ${d.slip_number}`}
                   >
-                    <Eye className="w-3.5 h-3.5" />
+                    <Eye className="w-3.5 h-3.5" aria-hidden="true" />
+                    <span className="hidden lg:inline">Ver</span>
                   </Button>
                   {d.status === 'pending' && canActInStore && (
                     <>

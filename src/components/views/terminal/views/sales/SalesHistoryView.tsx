@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight, TrendingUp, Package, Receipt } from 'lucide-react';
+import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight, TrendingUp, Package, Receipt, FileText, Loader2 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -11,6 +11,8 @@ import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import PageHeader from '@/components/ui/PageHeader';
 import * as XLSX from '@e965/xlsx';
 import { useSalesHistoryView } from './useSalesHistoryView';
+import { exportSalesHistoryPdf } from '@/lib/export/sales-history-pdf';
+import { toast } from 'sonner';
 import { TransactionDetailsModal } from './TransactionDetailsModal';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
 import { canAdminReverseSaleInStore } from '@/lib/roles';
@@ -165,6 +167,7 @@ export default function SalesHistoryView() {
     hasActiveFilters, handleClearFilters,
     selectedTransaction,
     transactions, totalFilteredCount,
+    filteredTransactions,
     isLoading, stats,
     transactionsError, refetchTransactions,
     page, setPage, totalPages,
@@ -202,8 +205,7 @@ export default function SalesHistoryView() {
   }, []);
 
   // PR-4.4I: Export to Excel — tab-aware
-  const handleExportExcel = useCallback(() => {
-    const storeName = activeStoreId ? 'tienda' : 'todas';
+  const handleExportExcel = useCallback(() => {    const storeName = activeStoreId ? 'tienda' : 'todas';
     const dateStr = new Date().toISOString().slice(0, 10);
 
     if (activeTab === 'producto') {
@@ -275,6 +277,28 @@ export default function SalesHistoryView() {
     XLSX.writeFile(wb, `ventas_detalle_${storeName}_${dateStr}.xlsx`);
   }, [transactions, activeStoreId, activeTab]);
 
+  // MISIÓN 2026-11-07: Exportación PDF del historial — TODAS las filas
+  // filtradas (no solo la página visible), identidad de la tienda activa y
+  // totales separados por moneda. La exportación Excel existente no se toca.
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const handleExportPdf = useCallback(async () => {
+    if (!filteredTransactions || filteredTransactions.length === 0) return;
+    setIsExportingPdf(true);
+    try {
+      await exportSalesHistoryPdf({
+        transactions: filteredTransactions,
+        storeId: activeStoreId,
+        dateFrom,
+        dateTo,
+      });
+      toast.success('PDF del historial generado');
+    } catch {
+      toast.error('No se pudo generar el PDF del historial');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  }, [filteredTransactions, activeStoreId, dateFrom, dateTo]);
+
   const allIds = transactions.map(t => t.id);
   const isAllSelected = allIds.length > 0 && selectedIds.size === allIds.length;
 
@@ -304,6 +328,18 @@ export default function SalesHistoryView() {
               >
                 <Download className="w-4 h-4" />
                 {isMobile ? 'Excel' : 'Exportar Excel'}
+              </button>
+              {/* Export PDF (misión 2026-11-07): mismo nivel de funcionalidad y
+                  permisos que la exportación Excel — icono PDF reconocible. */}
+              <button type="button"
+                onClick={handleExportPdf}
+                disabled={isExportingPdf || !filteredTransactions || filteredTransactions.length === 0}
+                className="flex items-center gap-2 px-4 h-11 border border-border rounded-xl font-medium text-xs tracking-normal hover:bg-muted transition-all active:scale-95 disabled:opacity-50"
+                title="Exportar a PDF (todo el conjunto filtrado)"
+                aria-label="Exportar ventas a PDF"
+              >
+                {isExportingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                {isMobile ? 'PDF' : 'Exportar PDF'}
               </button>
               {selectedTransactions.length > 0 && (
                 <button type="button"
