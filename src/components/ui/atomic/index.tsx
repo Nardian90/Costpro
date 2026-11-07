@@ -131,7 +131,11 @@ export const IconButton: React.FC<{ icon: any; onClick: () => void; label?: stri
       aria-label={displayLabel}
       title={displayLabel}
       className={cn(
-        "p-2.5 rounded-lg transition-all active:scale-90",
+        // FIX ICONOS COLAPSADOS (2026-11-08): shrink-0 — un botón de icono en
+        // una fila flex apretada (columnas de acciones de tablas) nunca debe
+        // encogerse por debajo de su icono; si falta espacio, el contenedor
+        // hace scroll (estándar para icon buttons).
+        "p-2.5 rounded-lg transition-all active:scale-90 shrink-0",
         variant === 'ghost' && "hover:bg-muted text-muted-foreground hover:text-foreground",
         variant === 'outline' && "border border-border hover:bg-muted text-muted-foreground hover:text-foreground",
         variant === 'primary' && "bg-primary text-foreground shadow-lg shadow-primary/20",
