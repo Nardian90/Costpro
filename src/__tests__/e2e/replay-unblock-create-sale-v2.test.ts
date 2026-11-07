@@ -22,7 +22,7 @@
  *      bloqueo 42725 de RECONCILE-003 en la posición 75 original.
  *   6. Integridad de los archivos históricos 75/80: hashes idénticos a los
  *      auditados por RECONCILE-001/002/003 (manifiesto de 94 en main).
- *   7. Manifiesto: determinista (dos ejecuciones byte-idénticas), 96
+ *   7. Manifiesto: determinista (dos ejecuciones byte-idénticas)
  *      incluidas, posiciones esperadas, correspondencia total de hashes
  *      disco↔manifiesto y `--check` MATCH exit 0.
  */
@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 128 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 129 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -388,9 +388,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // FASE 5 reconciliación contract surface (2026-11-06): +1 ACL/GUARD (20261106100000_cp_contract_surface_reconcile) = 125
     // MISIÓN PENDIENTES T1 CP-SEC-005 (2026-11-06): +1 profiles_block_privileged_update literal de producción (20261020000000_sec005_profiles_block_privileged_update_prod_literal) = 126; +1 retiro de sobrecargas muertas del replay (20261106120000_sec005_drop_dead_overloads_close_cash_shift5_devolution_v11) = 127
     // MISIÓN PENDIENTES T2 (2026-11-06): +1 libro de migraciones de producción (20261106130000_production_migration_ledger) = 128
-    expect(m.total_incluidos).toBe(128);
+    // MISIÓN CP-CAT-MAESTRO-003 (2026-11-07): +1 sincronización maestro desde Recepciones (20261107120000_cp_catalogo_maestro_sync_register_reception) = 129
+    expect(m.total_incluidos).toBe(129);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(128);
+    expect(incluidos.length).toBe(129);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -437,6 +438,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261106100000_cp_contract_surface_reconcile.sql')).toBe(126);
     expect(pos('20261106120000_sec005_drop_dead_overloads_close_cash_shift5_devolution_v11.sql')).toBe(127);
     expect(pos('20261106130000_production_migration_ledger.sql')).toBe(128);
+    expect(pos('20261107120000_cp_catalogo_maestro_sync_register_reception.sql')).toBe(129);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

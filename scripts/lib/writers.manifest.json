@@ -4,6 +4,7 @@
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
+    "scripts/apply-migration.mjs",
     "scripts/apply-rpc-fix.sh",
     "scripts/apply-sql-migration.js",
     "scripts/apply_migration_20260824000002.mjs",
