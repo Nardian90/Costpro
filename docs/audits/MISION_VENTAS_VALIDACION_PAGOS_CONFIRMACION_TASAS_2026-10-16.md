@@ -38,7 +38,7 @@ Respecto a las tasas de cambio, la fuente de verdad ya era correcta (`store_exch
 | `src/lib/audit/eventPresentation.ts` | Títulos de negocio para los 4 eventos nuevos; `SALE_PAYMENT_INCIDENT` añadido a la whitelist documental («Ver venta»). | Visibilidad en Auditoría. |
 | `src/components/views/terminal/views/audit/AuditEventCard.tsx` | Tarjetas de negocio para los 4 eventos nuevos (diferencia, fuente, día). | Lectura humana del evento. |
 | `supabase/migrations/20261017000000_pos_payment_incidents_negative_guard.sql` **(nueva)** | Columnas `notes`/`payment_incidents`; relajación de `chk_mixed_payment_consistency` SOLO con incidencias; `CHECK (total_amount >= 0) NOT VALID`; redefinición quirúrgica de `create_sale_v2` (params `p_notes`/`p_payment_incidents` al final de la firma, guard `ERR_NEGATIVE_SALE`, guardrail `ERR_RATE_REQUIRED_FOR_INCIDENT`, nota automática, evento `SALE_PAYMENT_INCIDENT`, hash de idempotencia ampliado, auto-total Zelle desactivado con incidencias). | Capa de persistencia de toda la misión. |
-| `tsconfig.mision-1710.json` **(nuevo)** | Typecheck acotado (el `tsc --noEmit` global agota la memoria en el entorno local; CI usa `bunx tsc`). | Verificación local. |
+| `docs/audits/configs-tsc-misiones/tsconfig.mision-1710.json` **(nuevo)** | Typecheck acotado (el `tsc --noEmit` global agota la memoria en el entorno local; CI usa `bunx tsc`). | Verificación local. |
 | Tests (4 archivos nuevos, 36 tests) | Ver §8. | Matriz de pruebas de la misión. |
 | `src/__tests__/api/sec-ts-02-store-rates.test.ts` | Mock ampliado con `insert` (probes de auditoría) + aserciones del nuevo contrato: escritura autorizada audita `UPDATE_STORE_RATES`; un 403 no deja traza. | Contrato de seguridad ampliado con auditoría. |
 
@@ -161,7 +161,7 @@ Suite ejecutada con Vitest (entorno jsdom). Resultado final de la **suite comple
 3. **Importes recibidos en método simple**: con incidencias, el cliente envía lo realmente recibido (antes el servidor forzaba el total). Los cierres de caja reflejarán el faltante real — deseable, pero conviene comunicarlo a quien administra arqueos.
 4. **Pruebas 22/23/29 sin cobertura automatizada de render** (solo implementación + revisión); el resto de la matriz sí tiene tests ejecutados.
 5. **Sin Postgres local**: la migración se verifica estáticamente (13 aserciones) y su ejecución real corresponde al pipeline/procedimiento del proyecto.
-6. `tsc --noEmit` global agota memoria en el entorno local (preexistente); verificado con `tsconfig.mision-1710.json` (único error: `CameraBarcodeScanner.tsx:452`, **preexistente en main**).
+6. `tsc --noEmit` global agota memoria en el entorno local (preexistente); verificado con `docs/audits/configs-tsc-misiones/tsconfig.mision-1710.json` (único error: `CameraBarcodeScanner.tsx:452`, **preexistente en main**).
 
 ## 10. Confirmación explícita: ventas negativas siguen bloqueadas
 

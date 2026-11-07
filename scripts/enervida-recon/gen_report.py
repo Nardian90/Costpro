@@ -222,7 +222,7 @@ SKU 141 pendiente (+10, explicado) · 14 SKUs reservados sin producto · 0 produ
    (coincidencia literal de descripción); el **SKU 127** es «Transfer 220» — producto distinto.
 2. En COSTPRO **no existía** ninguna VS del 10/10 con 10 uds ni del SKU 127 ni del 137 (las VS «OT/Ferro»
    de ese día eran otras filas: f874→VS-000165 SKU 112, etc.).
-3. **Origen del error**: la misión anterior (10-12/10, `agent-ctx/informe-final-mision-multitienda.md` §C.2)
+3. **Origen del error**: la misión anterior (10-12/10, `docs/audits/agent-ctx/informe-final-mision-multitienda.md` §C.2)
    intentó registrar esta VS como SKU 127 y fue **rechazada por la BD** («Stock negativo no permitido» —
    Transfer 220 tiene stock 0). El usuario rectificó el Excel a 137, pero la operación **nunca llegó a
    registrarse** en COSTPRO.

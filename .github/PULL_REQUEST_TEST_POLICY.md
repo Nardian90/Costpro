@@ -118,7 +118,7 @@ evidencia (§12).
 | `e2e/SCENARIO-INVENTORY.md` | **Escenarios E2E** por riesgo P0–P3, denominador oficial (128 hoy, 113 automatizados) | Fuente del denominador FULL E2E (§7); esta política clasifica PRs, no escenarios — conceptos complementarios |
 | `security-gate.yml` | Selección automática de checks de seguridad **por rutas** | Ya implementa la automatización por paths para seguridad; no se crea otro |
 | `ci-gate-allowlist.json` | Excepciones de seguridad con `reason` / `added_by` / `expires` | Formato a imitar para excepciones (§13) |
-| `docs/E2E_TEST_PLAN.md`, `docs/REGRESSION_SMOKE_TEST_REPORT.md` | Plan y reportes E2E manuales | Referencia para regresión transversal manual |
+| `docs/e2e/E2E_TEST_PLAN.md`, `docs/audits/REGRESSION_SMOKE_TEST_REPORT.md` | Plan y reportes E2E manuales | Referencia para regresión transversal manual |
 | **No existen**: PR template, CODEOWNERS, labels automation, tooling de affected-tests, Playwright projects por módulo (solo `chromium`) | — | Esta política crea solo el PR template mínimo (§10/§16) y no construye el resto (§14) |
 
 ---

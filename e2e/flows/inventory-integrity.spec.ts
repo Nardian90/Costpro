@@ -162,7 +162,7 @@ test.describe('Inventario — ajustes e integridad de stock', () => {
   });
 
   test('E2E-INV-006 (P1) [DEFECT-001 REPARADO] ruta /api/inventory/adjust aplica el ajuste vía service-role', async ({ request }) => {
-    // DEFECT-001 (documentado en E2E-COVERAGE-REPORT.md) + ACL REM-INV-6:
+    // DEFECT-001 (documentado en docs/e2e/E2E-COVERAGE-REPORT.md) + ACL REM-INV-6:
     // la ruta estaba rota por (a) llamada con el client del usuario a una RPC
     // service_role-only (42501 permission denied → 500) y (b) movementType
     // 'add'|'subtract'|'set' sin mapear al enum movement_type. Reparada en

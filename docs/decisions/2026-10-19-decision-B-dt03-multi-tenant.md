@@ -21,7 +21,7 @@
    EVIDENCIA**, ninguno con permisos implícitos: T4.1–T4.6/T7.1 = 0.)
 2. El acceso operativo entre tiendas sigue gobernado por `user_store_memberships`
    (no-admin) o bypass admin global documentado (ver decisión B.1).
-3. El documento `docs/TENANT_ARCHITECTURE_DECISION.md` (2026-08-02, «Decisión
+3. El documento `docs/decisions/TENANT_ARCHITECTURE_DECISION.md` (2026-08-02, «Decisión
    pendiente», recomendación «status quo») ha quedado **sustituido** por esta
    decisión; requiere anotación de cierre para no inducir a futuras misiones a
    reabrir DT-03 (anotación pendiente de decisión del propietario sobre este

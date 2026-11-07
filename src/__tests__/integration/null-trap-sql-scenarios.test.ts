@@ -12,7 +12,7 @@
  *
  * La misma batería se ejecutó como evidencia de la auditoría (41/41) en
  * PostgreSQL 18 aislado (embedded-postgres) — ver el informe
- * docs/AUDITORIA-NULIDAD-REFUNDS-2026-10-21.md.
+ * docs/audits/AUDITORIA-NULIDAD-REFUNDS-2026-10-21.md.
  *
  * Metodología (idéntica a la evidencia):
  *   FASE LIVE : aplica las versiones VIVAS (contract-surface 2026-10-21 +

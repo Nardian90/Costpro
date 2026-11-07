@@ -57,7 +57,7 @@ test.describe('RBAC-008 — creación de usuario gestionado (entorno aislado)', 
       },
     });
 
-    // DEFECT-003 (documentado en E2E-COVERAGE-REPORT.md): la ruta crea el
+    // DEFECT-003 (documentado en docs/e2e/E2E-COVERAGE-REPORT.md): la ruta crea el
     // usuario de auth (paso 1) y luego el RPC managed_create_user_v2
     // rechaza con ERR_EMAIL_ALREADY_EXISTS porque detecta el usuario que la
     // propia ruta acaba de crear. El usuario queda CREADO Y FUNCIONAL (login

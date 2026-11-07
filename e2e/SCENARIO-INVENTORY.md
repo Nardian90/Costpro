@@ -265,4 +265,4 @@ los tests citados viven en `e2e/` (prefijo `flows/` = nuevos de esta fase).
 P2: 15/20 (75.0%) · P0+P1 combinados: 99/109 (90.8%).
 
 > Nota: los 15 pendientes y su justificación detallada están en
-> `E2E-COVERAGE-REPORT.md` (sección "Tests no automatizados").
+> `docs/e2e/E2E-COVERAGE-REPORT.md` (sección "Tests no automatizados").

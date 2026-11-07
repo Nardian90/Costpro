@@ -19,7 +19,7 @@ La certificación reproduce EXACTAMENTE la ruta del dato en producción:
 | Fórmula única | `summary.ts::computeDailySummary` v2.23.0 — fuente única de vista, PDF y Excel (paridad probada por `cash-report-view.test.tsx`, `cash-report-pdf-signatures.test.tsx`, `cash-report-excel.test.tsx`) | idem |
 | Documentos | PDF: spies jsPDF (tests existentes) · Excel: libro real inspeccionado con openpyxl | `audit-evidence/20261021-cert-reporte-entrega/` |
 
-La paridad UI/PDF/Excel/API es **estructural**: los cuatro consumen el MISMO `CashReport` (RPC) + el MISMO `computeDailySummary` — no existen segundas lógicas (auditoría 2026-10, docs/auditoria-reporte-entrega.md). Producción INTACTA: solo lecturas autorizadas; todas las escrituras de prueba en PG aislado.
+La paridad UI/PDF/Excel/API es **estructural**: los cuatro consumen el MISMO `CashReport` (RPC) + el MISMO `computeDailySummary` — no existen segundas lógicas (auditoría 2026-10, docs/audits/auditoria-reporte-entrega.md). Producción INTACTA: solo lecturas autorizadas; todas las escrituras de prueba en PG aislado.
 
 ## 2. Matriz de resultados (16 PASS · 0 FAIL · 4 NO EJECUTADOS)
 

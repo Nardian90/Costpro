@@ -15,7 +15,7 @@ Requisitos de la ventana de ejecución (checklist del doc):
 import json, sys, os
 
 def main():
-    rep = json.load(open('audit/migration-reconciliation.json'))
+    rep = json.load(open('audit-evidence/T2-LEDGER/migration-reconciliation.json'))
     print('── RESUMEN DE INVENTARIO ──')
     print('sin registrar:', sum(1 for m in rep['migrations'] if not m['in_history']))
     for k, v in sorted(rep['summary'].items()):

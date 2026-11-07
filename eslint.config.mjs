@@ -94,7 +94,7 @@ const eslintConfig = [
       "assets/**",
       "data/**",
       "deploy/**",
-      "agent-ctx/**",
+      "docs/audits/agent-ctx/**",
     ],
   },
 ];

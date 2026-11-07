@@ -2,7 +2,7 @@
 
 ## Estado real (inventario verificable)
 
-Fuente: `audit/migration-reconciliation.json` (generado por
+Fuente: `audit-evidence/T2-LEDGER/migration-reconciliation.json` (generado por
 `scripts/reconcile-inventory.py`, solo lectura vía Management API, 2026-10-24).
 
 | Conjunto | Cantidad |

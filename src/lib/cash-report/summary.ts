@@ -1,7 +1,7 @@
 /**
  * cash-report-summary.ts — FÓRMULAS ÚNICAS del Reporte de Entrega.
  *
- * AUDITORÍA 2026-10 (docs/auditoria-reporte-entrega.md): antes, el resumen
+ * AUDITORÍA 2026-10 (docs/audits/auditoria-reporte-entrega.md): antes, el resumen
  * se calculaba en 3 sitios con resultados distintos (items-summary usaba el
  * precio unitario sin ×cantidad → «Ventas Totales = 31.200»; la vista usaba
  * cash_balance_cup que excluía el tramo efectivo de ventas mixed; el PDF

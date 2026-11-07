@@ -330,7 +330,7 @@ Comandos y resultados reales (solo lectura salvo los flujos de registro):
 
 - **Cambios de código de aplicación: NINGUNO.** No se modificó lógica, esquema, RLS, APIs ni configuración de Supabase.
 - **Artefactos documentales** (rama `ops/registro-movimientos-2026-10-14-15`, PR #1410):
-  - `agent-ctx/mision-registro-14-15-oct.md` — plan operativo de la misión (commit inicial).
+  - `docs/audits/agent-ctx/mision-registro-14-15-oct.md` — plan operativo de la misión (commit inicial).
   - `docs/audits/REGISTRO_MOVIMIENTOS_2026-10-14_15_CONCILIACION_EXISTENCIAS.md` — este informe (commit de cierre).
 - **Despliegue:** no hubo despliegue de aplicación nueva. El servidor local pm2 (`costpro`, puerto 3000) sirvió como entorno de ejecución de los flujos oficiales contra el backend Supabase de producción; la app corrió en la versión `main` @ `b3ae40261` sin modificaciones.
 - **Operaciones de datos:** las 31 operaciones + 4 productos nuevos quedaron registradas en la base de datos de producción (Supabase proyecto `wthkddeleylijmonclxg`) con los IDs reales listados en B.

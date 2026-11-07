@@ -8,7 +8,7 @@ Clasificación por migración (efectos de firma verificables en catálogo):
   · CREATE TABLE / TYPE / VIEW / MATERIALIZED VIEW / FUNCTION (name/argc) /
     INDEX (tabla) / ADD COLUMN (tabla.columna) → presencia verificable.
   · Solo ACL/DROP/UPDATE/INSERT de datos → 'no-verificable-por-catalogo'.
-Salida: audit/migration-reconciliation.json + resumen MD.
+Salida: audit-evidence/T2-LEDGER/migration-reconciliation.json + resumen MD.
 """
 import json, re, os, urllib.request
 

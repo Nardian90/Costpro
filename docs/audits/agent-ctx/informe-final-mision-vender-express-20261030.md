@@ -38,7 +38,7 @@ Es decir: el carrito muestra resultados mientras se escribe (componente `POSAuto
 | `src/components/views/terminal/views/pos/POSExpressMode.tsx` | Reescritura de búsqueda y paridad funcional (ver §4) |
 | `src/components/views/terminal/views/pos/POSView.tsx` | Pasa a Express las rutas completas del carrito: `onAddToCart`, `handleAddItem`, `lastSale`, `handleClearLastSale`, `hideOutOfStock`/`setHideOutOfStock` |
 | `src/__tests__/components/pos-express-parity.test.tsx` | **Nuevo** — 24 tests (Casos A/B/C/E/G/H de la misión) |
-| `tsconfig.mision-express-parity.json` | **Nuevo** — verificación TypeScript acotada (convención `tsconfig.mision-*` del repo) |
+| `docs/audits/configs-tsc-misiones/tsconfig.mision-express-parity.json` | **Nuevo** — verificación TypeScript acotada (convención `tsconfig.mision-*` del repo) |
 
 **Sin cambios** (verificado con `git diff --name-only`): RPC/migraciones, rutas API, `store/cart.ts`, RLS, ni cualquier superficie del backend.
 
@@ -131,7 +131,7 @@ INEXISTENTE-XYZ                error                         error              
 
 | Control | Resultado |
 |---|---|
-| `tsc -p tsconfig.mision-express-parity.json` | ✅ 0 errores |
+| `tsc -p docs/audits/configs-tsc-misiones/tsconfig.mision-express-parity.json` | ✅ 0 errores |
 | `vitest run` (suite completa) | ✅ **337 archivos · 4.764 tests passed · 0 fallos** (66 skips preexistentes) |
 | Tests de regresión POS (carrito, checkout, térmico, autocomplete) | ✅ 126/126 |
 | `eslint` (3 archivos tocados) | ✅ 0 errores (28 avisos de estilo `<button>` crudo — convención vigente V2.12.25, preexistente) |

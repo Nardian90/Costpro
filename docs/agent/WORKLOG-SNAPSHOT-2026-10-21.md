@@ -305,4 +305,4 @@ Work Log:
 Stage Summary:
 - Migración APLICADA y verificada; módulo Ingresos/Egresos operativo en BD viva (vía REST/app). PR de seguimiento #1438 a la espera del propietario (alinea árbol↔BD).
 - Estado: CERTIFICADO CON LIMITACIONES (login-navegación real y concurrencia-parallel pendientes; defectos preexistentes documentados: 4 funciones con trampa de nulidad, refunds de devolución invisibles a fórmulas, W7 fuera de cadena).
-- Fixes al blueprint fusionado: R1-R5 documentados en la propia migración; informe completo en docs/CERTIFICACION-CAJA-2026-10-21.md.
+- Fixes al blueprint fusionado: R1-R5 documentados en la propia migración; informe completo en docs/audits/CERTIFICACION-CAJA-2026-10-21.md.
