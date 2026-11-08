@@ -312,7 +312,8 @@ describe('COSTPRO-SALES-DASHBOARD-REFINEMENT-002 · selector de dimensión y com
   it('una sola tienda accesible: el bloque muestra esa tienda sin opción de comparar', async () => {
     // El mock por defecto trae 2 tiendas; este caso fuerza la respuesta de 1.
     const { supabase } = await import('@/lib/supabaseClient');
-    vi.mocked(supabase.rpc).mockImplementation(async (name: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase.rpc as any).mockImplementation(async (name: string) => {
       if (name === 'get_sales_dashboard_analytics') {
         const r = mockResponse();
         r.stores = [r.stores[0]];
