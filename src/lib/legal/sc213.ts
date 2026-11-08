@@ -276,6 +276,7 @@ export async function renderSc213Pdf(model: Sc213ModelData) {
   const logo = await resolveScLogoDataUrl(model.logoUrl);
   const y = drawRes11Header(doc, {
     modelo: 'SC-2-13',
+    nombreInstitucional: model.entidadNombre,
     titulo: 'SUBMAYOR DE INVENTARIO',
     logoDataUrl: logo.dataUrl,
   });

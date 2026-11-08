@@ -628,6 +628,7 @@ export async function renderSc212Pdf(model: Sc212ModelData) {
   const logo = await resolveScLogoDataUrl(model.logoUrl);
   let y = drawRes11Header(doc, {
     modelo: 'SC-2-12',
+    nombreInstitucional: model.proveedorNombre, // la tienda emisora actúa como proveedor en la factura
     logoDataUrl: logo.dataUrl,
     titulo: 'FACTURA',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,

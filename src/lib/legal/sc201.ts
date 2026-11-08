@@ -237,6 +237,7 @@ export async function renderSc201Pdf(model: Sc201ModelData) {
   const logo = await resolveScLogoDataUrl(model.logoUrl);
   let y = drawRes11Header(doc, {
     modelo: 'SC-2-01',
+    nombreInstitucional: model.solicitanteNombre,
     logoDataUrl: logo.dataUrl,
     titulo: 'SOLICITUD DE COMPRA',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,

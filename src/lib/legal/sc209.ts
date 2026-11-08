@@ -287,6 +287,7 @@ export async function renderSc209Pdf(model: Sc209ModelData) {
   const logo = await resolveScLogoDataUrl(model.logoUrl);
   let y = drawRes11Header(doc, {
     modelo: 'SC-2-09',
+    nombreInstitucional: model.entidadNombre,
     logoDataUrl: logo.dataUrl,
     titulo: 'TRANSFERENCIA ENTRE ALMACENES',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
