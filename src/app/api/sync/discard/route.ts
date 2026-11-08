@@ -7,8 +7,8 @@ import { rateLimit } from '@/lib/rate-limit';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { createApiError } from '@/lib/api-errors';
-// CP-SEC-019: validadores UUID permisivos (resilientUuid) — prohibido
-// z.string().uuid() estricto en src/app/api (uuid-loose-central-contract).
+// CP-SEC-019: validadores UUID permisivos (resilientUuid) — prohibido el
+// uuid estricto de zod en src/app/api (uuid-loose-central-contract).
 import { optionalResilientUuid } from '@/validation/schemas';
 import { z } from 'zod';
 
