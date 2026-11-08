@@ -16,7 +16,15 @@ import { useTranslations } from 'next-intl';
 
 export type StoreFormMode = 'create' | 'create-quick' | 'edit' | 'delete' | 'reset' | null;
 
-export function useStoresView() {
+interface UseStoresViewOptions {
+    // CP-UX-ORG-STORES-001: contexto de organización opcional. Cuando se pasa,
+    // el listado queda scoped server-side a esa organización y las creaciones
+    // se registran dentro de ella (organization_id resuelto server-side).
+    organizationId?: string;
+}
+
+export function useStoresView(options?: UseStoresViewOptions) {
+    const organizationId = options?.organizationId;
     const t = useTranslations('stores');
     const { user } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState('');
@@ -47,7 +55,8 @@ export function useStoresView() {
         user?.id || '',
         isAdminLevel(user?.role),
         isEncargado || false,
-        isAdminLevel(user?.role) ? statusFilter : undefined // solo nivel admin ve inactivas
+        isAdminLevel(user?.role) ? statusFilter : undefined, // solo nivel admin ve inactivas
+        organizationId
     );
 
     const filteredStores = useMemo(() => {
@@ -109,6 +118,9 @@ export function useStoresView() {
                     name: data.name || '',
                     address: data.address || '',
                     slug: data.slug,
+                    // CP-UX-ORG-STORES-001: crear dentro de la organización
+                    // seleccionada (el server valida alcance y fija tenant_id).
+                    organization_id: organizationId ?? null,
                 });
                 toast.success(t('createSuccess'));
                 queryClient.invalidateQueries({ queryKey: ['stores'] });
@@ -146,7 +158,8 @@ export function useStoresView() {
                     latitude: data.latitude,
                     longitude: data.longitude,
                     slug: data.slug,
-                    plantilla: data.plantilla
+                    plantilla: data.plantilla,
+                    organization_id: organizationId ?? null,
                 });
 
                 // Guardar plantilla FC para la nueva tienda usando hook compartido

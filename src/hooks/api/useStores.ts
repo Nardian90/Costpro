@@ -64,16 +64,27 @@ function normalizeCostTemplate(raw: Record<string, unknown>): StoreCostTemplate 
   return result;
 }
 
-export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean, statusFilter?: 'active' | 'inactive' | 'all') {
+export function useStores(
+  userId: string,
+  isAdmin: boolean,
+  isEncargado: boolean,
+  statusFilter?: 'active' | 'inactive' | 'all',
+  // CP-UX-ORG-STORES-001: scoping opcional por organización. La autorización
+  // es server-side (GET /api/stores?organization_id); la key separa la caché
+  // por organización para que no queden datos residuales al cambiar de
+  // contexto (misma familia 'stores' → las invalidaciones globales aplican).
+  organizationId?: string
+) {
+  const scopedKey = organizationId ? `org:${organizationId}` : 'all';
   return useQuery({
-    queryKey: ['stores', userId, isAdmin, isEncargado, statusFilter ?? 'active'],
+    queryKey: ['stores', userId, isAdmin, isEncargado, statusFilter ?? 'active', scopedKey],
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
       if (!isAdmin && (!userId || userId.length < MIN_USER_ID_LENGTH)) return [];
 
       try {
           // Fetch stores through the API route (role-based filtering done server-side)
-          const storesData = await storeApiClient.fetchStores(statusFilter);
+          const storesData = await storeApiClient.fetchStores(statusFilter, organizationId);
 
           // FIX-RES-4: Log warnings for stores that fail Zod validation instead of silently dropping
           const validatedStores: Store[] = [];
@@ -95,14 +106,21 @@ export function useStores(userId: string, isAdmin: boolean, isEncargado: boolean
             }
           }
 
-          // Save to offline cache (already filtered per user by the API)
-          await offlineStorage.saveSnapshot(`all_stores_${userId}`, validatedStores);
+          // Save to offline cache (already filtered per user by the API).
+          // CP-UX-ORG-STORES-001: snapshot por organización — el cache offline
+          // de un contexto de organización nunca contamina otro.
+          await offlineStorage.saveSnapshot(
+            organizationId ? `org_stores_${organizationId}` : `all_stores_${userId}`,
+            validatedStores
+          );
 
           return validatedStores;
       } catch (err) {
           if (!navigator.onLine) {
               // Offline: return the pre-filtered cached stores directly
-              const offlineStores = await offlineStorage.getSnapshot<Store[]>(`all_stores_${userId}`) || [];
+              const offlineStores = await offlineStorage.getSnapshot<Store[]>(
+                organizationId ? `org_stores_${organizationId}` : `all_stores_${userId}`
+              ) || [];
               return offlineStores;
           }
           throw err;

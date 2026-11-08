@@ -668,7 +668,21 @@
       "removeConfirmNameLabel": "Nombre del usuario",
       "removeWarningPrefix": "Remover",
       "removeWarningBody": "de esta tienda no elimina al usuario"
-    }
+    },
+    "editingStore": "Estás editando",
+    "sectionIdentification": "Identificación",
+    "sectionContact": "Contacto y ubicación",
+    "sectionBanking": "Datos bancarios",
+    "sectionBranding": "Identidad visual",
+    "sectionOnline": "Presencia online",
+    "settingsUnavailableStore": "La tienda activa ya no está disponible",
+    "settingsUnavailableHint": "Puede haber sido archivada o desactivada. Actualiza o selecciona otra tienda con el selector del encabezado.",
+    "settingsReadOnly": "No tienes permisos para modificar esta tienda. Consulta con tu administrador.",
+    "settingsNoStore": "No hay una tienda activa seleccionada",
+    "settingsNoStoreHint": "Selecciona una tienda con el selector del encabezado para editar su configuración.",
+    "settingsNoStoreAdminCta": "Ir a Organizaciones para crear una tienda",
+    "settingsTitle": "Configuración de la tienda",
+    "settingsDesc": "Datos de la tienda activa: identificación, contacto, banca, identidad visual y facturación"
   },
   "dashboard": {
     "singleStore": {

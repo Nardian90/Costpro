@@ -208,14 +208,17 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
     });
   });
 
-  describe('ManagementHubView (IA-FIX: view switcher)', () => {
-    // IA-FIX (fix/store-management-view-switcher-a11y): "Tiendas" y "KPIs"
-    // eran dos representaciones del MISMO contenido → dejan de ser tabs
-    // independientes. Nuevo contrato:
-    //   - tabs semánticos: Tiendas | Vitrina (contenidos conceptualmente
-    //     distintos — KPIs ya NO es tab)
-    //   - content switcher (radiogroup) Completa | Resumen dentro del tab
-    //     Tiendas, con estado seleccionado programáticamente comunicable
+  describe('ManagementHubView (CP-UX-ORG-STORES-001: hub reorganizado)', () => {
+    // CP-UX-ORG-STORES-001: el listado de tiendas de cada organización pasó a
+    // SISTEMA → Organizaciones → tab Tiendas. El hub queda con la configuración
+    // de la TIENDA ACTIVA + resumen consolidado + vitrina + catálogo. El
+    // switcher «Completa | Resumen» desaparece: sin el listado en el hub,
+    // Resumen ya no es una representación alternativa sino un tab propio.
+    // Contrato nuevo:
+    //   - tabs: Configuración | Resumen | Vitrina | Catálogo
+    //   - default: Configuración (tienda activa)
+    //   - migración localStorage: 'kpis' → 'resumen'; 'stores'+modo 'summary'
+    //     → 'resumen'; 'stores'+modo 'full' → 'settings'
     const HUB_TAB_KEY = 'mgmt-hub-tab';
     const STORE_MODE_KEY = 'mgmt-stores-view-mode';
 
@@ -224,63 +227,73 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
       localStorage.removeItem(STORE_MODE_KEY);
     });
 
-    it('expone tabs semánticos Tiendas | Vitrina — KPIs ya no es tab', async () => {
+    const renderHub = async () => {
       const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
-      const { getByRole, queryByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
-      // Encabezado único del hub + tabs semánticos del dominio multi-tienda
+      const utils = render(<ManagementHubView />, { wrapper: Wrapper });
+      await waitFor(() => expect(utils.getByRole('tablist', { name: 'Secciones de Gestión' })).toBeTruthy());
+      return utils;
+    };
+
+    it('expone tabs Configuración | Resumen | Vitrina | Catálogo — sin tab de listado «Tiendas»', async () => {
+      const { getByRole, queryByRole } = await renderHub();
       expect(getByRole('heading', { name: 'Gestión de Tiendas' })).toBeTruthy();
-      expect(getByRole('tab', { name: 'Tiendas' })).toBeTruthy();
+      expect(getByRole('tab', { name: 'Configuración' })).toBeTruthy();
+      expect(getByRole('tab', { name: 'Resumen' })).toBeTruthy();
       expect(getByRole('tab', { name: 'Vitrina' })).toBeTruthy();
+      expect(getByRole('tab', { name: 'Catálogo' })).toBeTruthy();
+      // El listado organizativo ya no es tab del hub (vive en Organizaciones)
+      expect(queryByRole('tab', { name: 'Tiendas' })).toBeNull();
       expect(queryByRole('tab', { name: 'KPIs' })).toBeNull();
     });
 
-    it('expone el content switcher Completa | Resumen con estado programático', async () => {
-      const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
-      const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
-      // El switcher llega vía lazy-load de la sub-vista (toolbar slot) → esperar
-      const group = await waitFor(() => getByRole('radiogroup', { name: 'Vista de Tiendas' }));
-      expect(group).toBeTruthy();
-      const completa = getByRole('radio', { name: /Vista completa de tiendas/ });
-      const resumen = getByRole('radio', { name: /Vista resumen/ });
-      // Default: Completa (gestión = dominio propio del hub)
-      expect(completa).toHaveAttribute('aria-checked', 'true');
-      expect(resumen).toHaveAttribute('aria-checked', 'false');
-    });
-
-    it('cambia a Resumen con clic, persiste el modo y lo comunica programáticamente', async () => {
-      const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
-      const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
-      const resumen = await waitFor(() => getByRole('radio', { name: /Vista resumen/ }));
-      fireEvent.click(resumen);
-      // El radiogroup se remonta dentro de la sub-vista lazy del modo destino
-      // (Completa ↔ Resumen) → re-consultar en cada poll, no retener referencias.
+    it('el tab por defecto es Configuración (tienda activa) — persiste el cambio de tab', async () => {
+      const { getByRole } = await renderHub();
+      expect(getByRole('tab', { selected: true }).textContent).toBe('Configuración');
+      fireEvent.click(getByRole('tab', { name: 'Vitrina' }));
       await waitFor(() => {
-        expect(getByRole('radio', { name: /Vista resumen/ })).toHaveAttribute('aria-checked', 'true');
-        expect(getByRole('radio', { name: /Vista completa de tiendas/ })).toHaveAttribute('aria-checked', 'false');
-        expect(localStorage.getItem(STORE_MODE_KEY)).toBe('summary');
+        expect(getByRole('tab', { selected: true }).textContent).toBe('Vitrina');
+        expect(localStorage.getItem(HUB_TAB_KEY)).toBe('storefront');
       });
     });
 
-    it('migra el valor legacy mgmt-hub-tab="kpis" al modo Resumen sin pérdida', async () => {
+    it('migra el valor legacy mgmt-hub-tab="kpis" al tab Resumen (mismo contenido)', async () => {
       localStorage.setItem(HUB_TAB_KEY, 'kpis');
-      const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
-      const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
+      const { getByRole } = await renderHub();
       await waitFor(() => {
-        expect(getByRole('radio', { name: /Vista resumen/ })).toHaveAttribute('aria-checked', 'true');
+        expect(getByRole('tab', { selected: true }).textContent).toBe('Resumen');
       });
-      // El tab aterriza en Tiendas (único tab del dominio) y el legacy se reescribe
-      expect(localStorage.getItem(HUB_TAB_KEY)).toBe('stores');
+      // El legacy se reescribe con el destino canónico
+      expect(localStorage.getItem(HUB_TAB_KEY)).toBe('resumen');
     });
 
-    it('navega el switcher con flechas (radiogroup WAI-APG)', async () => {
-      const ManagementHubView = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
-      const { getByRole } = render(<ManagementHubView />, { wrapper: Wrapper });
-      const completa = await waitFor(() => getByRole('radio', { name: /Vista completa de tiendas/ }));
-      fireEvent.keyDown(completa, { key: 'ArrowRight' });
-      // Re-consultar: el radiogroup se remonta con la sub-vista del modo destino
-      await waitFor(() => expect(getByRole('radio', { name: /Vista resumen/ })).toHaveAttribute('aria-checked', 'true'));
-      fireEvent.keyDown(getByRole('radio', { name: /Vista resumen/ }), { key: 'ArrowLeft' });
-      await waitFor(() => expect(getByRole('radio', { name: /Vista completa de tiendas/ })).toHaveAttribute('aria-checked', 'true'));
+    it('migra mgmt-hub-tab="stores" según el modo persistido: Resumen → tab Resumen', async () => {
+      localStorage.setItem(HUB_TAB_KEY, 'stores');
+      localStorage.setItem(STORE_MODE_KEY, 'summary');
+      const { getByRole } = await renderHub();
+      await waitFor(() => {
+        expect(getByRole('tab', { selected: true }).textContent).toBe('Resumen');
+      });
+      expect(localStorage.getItem(HUB_TAB_KEY)).toBe('resumen');
+    });
+
+    it('migra mgmt-hub-tab="stores" según el modo persistido: Completa → tab Configuración', async () => {
+      localStorage.setItem(HUB_TAB_KEY, 'stores');
+      localStorage.setItem(STORE_MODE_KEY, 'full');
+      const { getByRole } = await renderHub();
+      await waitFor(() => {
+        expect(getByRole('tab', { selected: true }).textContent).toBe('Configuración');
+      });
+      expect(localStorage.getItem(HUB_TAB_KEY)).toBe('settings');
+    });
+
+    it('navega los tabs con flechas (WAI-APG tabs: roving tabindex)', async () => {
+      const { getByRole } = await renderHub();
+      const configTab = getByRole('tab', { name: 'Configuración' });
+      expect(configTab).toHaveAttribute('tabindex', '0');
+      fireEvent.keyDown(configTab, { key: 'ArrowRight' });
+      await waitFor(() => expect(getByRole('tab', { selected: true }).textContent).toBe('Resumen'));
+      fireEvent.keyDown(getByRole('tab', { name: 'Resumen' }), { key: 'ArrowLeft' });
+      await waitFor(() => expect(getByRole('tab', { selected: true }).textContent).toBe('Configuración'));
     });
   });
 

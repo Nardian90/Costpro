@@ -67,6 +67,14 @@ export default function OrganizationsView() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<{ id: string; name: string; is_active: boolean } | null>(null);
   const [detailOrgId, setDetailOrgId] = useState<string | null>(null);
+  // CP-UX-ORG-STORES-001: entrada directa al tab Tiendas del detalle — el
+  // acceso a la administración de tiendas de la organización debe ser evidente
+  // (1 clic desde la tabla, sin «buscar dónde se gestionan»).
+  const [detailTab, setDetailTab] = useState<'resumen' | 'tiendas' | null>(null);
+  const openDetail = (orgId: string, tab: 'resumen' | 'tiendas' = 'resumen') => {
+    setDetailTab(tab);
+    setDetailOrgId(orgId);
+  };
 
   const rows = data?.data || [];
   const summary = data?.summary;
@@ -281,7 +289,14 @@ export default function OrganizationsView() {
                       <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                         Opciones
                       </DropdownMenuLabel>
-                      <DropdownMenuItem onSelect={() => setDetailOrgId(org.id)} className="gap-2 text-xs font-bold">
+                      {/* CP-UX-ORG-STORES-001: acceso directo a las tiendas de
+                          esta organización (misma capacidad que siempre, ahora
+                          en su contexto estructural correcto). */}
+                      <DropdownMenuItem onSelect={() => openDetail(org.id, 'tiendas')} className="gap-2 text-xs font-bold">
+                        <Store className="w-3.5 h-3.5" />
+                        Tiendas
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => openDetail(org.id)} className="gap-2 text-xs font-bold">
                         <Eye className="w-3.5 h-3.5" />
                         Ver detalle
                       </DropdownMenuItem>
@@ -418,8 +433,9 @@ export default function OrganizationsView() {
       />
       <OrganizationDetailModal
         orgId={detailOrgId}
-        onOpenChange={(open) => { if (!open) setDetailOrgId(null); }}
-        onEdit={(org) => { setDetailOrgId(null); setEditingOrg(org); setFormOpen(true); }}
+        onOpenChange={(open) => { if (!open) { setDetailOrgId(null); setDetailTab(null); } }}
+        onEdit={(org) => { setDetailOrgId(null); setDetailTab(null); setEditingOrg(org); setFormOpen(true); }}
+        initialTab={detailTab}
       />
     </div>
   );

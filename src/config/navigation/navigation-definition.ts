@@ -506,14 +506,18 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         // Hub real (GATE 0.1 §3-D: nombre correcto, alcance = ciclo de vida completo).
         // FASE B (UX-005): el Tablón salió del hub (sección ANÁLISIS) — la
         // keyword 'tablón' se retira para no desviar la búsqueda hacia el hub.
+        // CP-UX-ORG-STORES-001: el LISTADO de tiendas de cada organización vive
+        // en SISTEMA → Organizaciones → tab Tiendas; el hub queda con la
+        // configuración de la TIENDA ACTIVA + resumen consolidado + vitrina +
+        // catálogo.
         id: 'management-hub',
         label: 'Gestión de Tiendas',
-        description: 'Centro unificado: Vitrina pública y ciclo de vida completo de tiendas (crear, configurar, backup/restore, KPIs por tienda).',
+        description: 'Configura la tienda activa (datos, identidad visual, facturación) y consulta el resumen consolidado, la vitrina y el catálogo.',
         icon: LayoutGrid,
         type: 'item',
         navClass: 'hub',
         roles: ['admin', 'manager', 'encargado'],
-        keywords: ['tiendas', 'gestión', 'sucursales', 'vitrina', 'backup', 'kpi tiendas'],
+        keywords: ['tiendas', 'gestión', 'sucursales', 'configuración tienda', 'vitrina', 'backup', 'kpi tiendas'],
       },
       {
         // MISIÓN CLASIFICADOR MAESTRO (FASE 3): registro maestro de terceros de
@@ -673,13 +677,15 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         // que agrupan tiendas. Se ubica ANTES de Usuarios: primero se
         // administra la estructura de empresas, después las personas que
         // pertenecen a ellas.
+        // CP-UX-ORG-STORES-001: desde aquí se administra TAMBIÉN el listado de
+        // tiendas de cada organización (detalle de la empresa → tab Tiendas).
         id: 'organizations',
         label: 'Organizaciones',
-        description: 'Gestiona las empresas (organizaciones) que agrupan tiendas y usuarios: creación, estado, tiendas y asignación de usuarios por empresa.',
+        description: 'Gestiona las empresas (organizaciones) que agrupan tiendas y usuarios: creación, estado y administración de las tiendas de cada empresa.',
         icon: Building2,
         type: 'item',
         navClass: 'admin',
-        keywords: ['organizaciones', 'empresas', 'tenants', 'grupos', 'compañías'],
+        keywords: ['organizaciones', 'empresas', 'tenants', 'grupos', 'compañías', 'tiendas de la organización'],
       },
       {
         id: 'users',

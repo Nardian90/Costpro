@@ -65,9 +65,15 @@ interface StoresManagementViewProps {
    * switcher ocupaba en el hub (espacio muerto en desktop) sin mover el
    * estado del modo fuera del hub. Patrón toolbar: InventoryView. */
   toolbar?: React.ReactNode;
+  /** CP-UX-ORG-STORES-001: contexto de organización opcional. Cuando se pasa,
+   * el listado queda scoped server-side a las tiendas de ESA organización
+   * (GET /api/stores?organization_id con autorización server-side) y se
+   * muestra un banner de contexto. Sin la prop, comportamiento legacy intacto
+   * (hub, vista técnica ?view=stores, switcher, dashboards). */
+  organization?: { id: string; name: string } | null;
 }
 
-export default function StoresManagementView({ onOpenDashboard, toolbar }: StoresManagementViewProps) {
+export default function StoresManagementView({ onOpenDashboard, toolbar, organization }: StoresManagementViewProps) {
   const t = useTranslations('stores');
   const tc = useTranslations('common');
   const { user } = useAuthStore();
@@ -101,7 +107,7 @@ export default function StoresManagementView({ onOpenDashboard, toolbar }: Store
     togglePending,            // F2.5-3
     handleCloseModal,
     handleStoreFormSubmit
-  } = useStoresView();
+  } = useStoresView(organization ? { organizationId: organization.id } : undefined);
   // F4-T05: health score holístico por tienda (config, fiscal, FC, productos, ventas).
   // FIX-F4-T05: debe ir DESPUÉS de desestructurar `stores` de useStoresView,
   // no antes (era ReferenceError: Cannot access 'stores' before initialization).
@@ -229,6 +235,17 @@ export default function StoresManagementView({ onOpenDashboard, toolbar }: Store
   return (
     <>
       <div className="space-y-6">
+        {/* CP-UX-ORG-STORES-001: banner de contexto de organización — deja
+            inequívoco que este listado opera DENTRO de la empresa seleccionada
+            (scoping server-side) y no sobre todas las tiendas del sistema. */}
+        {organization && (
+          <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-primary/30 bg-primary/5" role="note" aria-label={`Tiendas de la organización ${organization.name}`}>
+            <Building className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />
+            <p className="text-xs font-black uppercase tracking-widest text-foreground">
+              Tiendas de <span className="text-primary">{organization.name}</span>
+            </p>
+          </div>
+        )}
         {/* REMEDIACIÓN DENSIDAD (fix/ui-management-density-inventory-a11y):
             header compacto de una fila — el título interno "Gestión Tiendas"
             era redundante (el encabezado del hub ya comunica "Gestión de
@@ -375,8 +392,14 @@ export default function StoresManagementView({ onOpenDashboard, toolbar }: Store
           {!isError && !isLoading && stores.length === 0 && (
             <div className="col-span-full py-24 text-center border-2 border-dashed border-border rounded-xl bg-muted/10">
                <Building className="w-16 h-16 mx-auto mb-4 opacity-5" />
-               <p className="font-black uppercase tracking-widest text-sm text-muted-foreground mb-2">{t('noStores')}</p>
-               <p className="text-sm text-muted-foreground/70 font-bold uppercase tracking-wider">{t('noAccessOrNoRecords')}</p>
+               <p className="font-black uppercase tracking-widest text-sm text-muted-foreground mb-2">
+                 {organization ? `Esta organización no tiene tiendas` : t('noStores')}
+               </p>
+               <p className="text-sm text-muted-foreground/70 font-bold uppercase tracking-wider">
+                 {organization
+                   ? 'Crea la primera tienda con las acciones de arriba'
+                   : t('noAccessOrNoRecords')}
+               </p>
             </div>
           )}
         </div>
