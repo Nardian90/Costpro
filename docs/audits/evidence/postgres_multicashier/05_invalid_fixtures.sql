@@ -887,7 +887,9 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_n int;
 BEGIN
-  v_t := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T1');
+  -- T6 está 'entregada' con custodia abierta: la máquina de estados deja llegar
+  -- al check estructural de secuencia (D.23.2).
+  v_t := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T6');
   BEGIN
     INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
              previous_custodian_user_id, new_custodian_user_id, changed_by, reason)
@@ -904,22 +906,27 @@ BEGIN
     RAISE NOTICE 'OK N27 salto de secuencia rechazado (trigger continuidad): %', SQLERRM;
   END;
   SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
-  IF v_n <> 2 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N27: T1 tiene % eventos', v_n; END IF;
+  IF v_n <> 1 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N27: T6 tiene % eventos', v_n; END IF;
 END $$;
 
 \echo '══ N28: previous_event_id que NO es el último evento ⇒ ERR_CUSTODY_PREV_NOT_LAST'
+-- Setup: reasignación legítima sobre T6 (entregada) ⇒ custodia K→J (2 eventos);
+-- el INSERT directo de seq3 apunta al evento seq1 (no al último seq2).
 DO $$
 DECLARE v_t uuid; v_primero uuid; v_n int;
 BEGIN
-  v_t := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T1');
+  v_t := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T6');
   SELECT id INTO v_primero FROM cash_transfer_custody_events
    WHERE transfer_id=v_t AND event_seq=1;
+  PERFORM f_create_custody_event(v_t, '20000000-0000-0000-0000-000000000002'::uuid,
+           '20000000-0000-0000-0000-000000000005'::uuid,
+           '20000000-0000-0000-0000-000000000001'::uuid, NULL, 'reasignación de setup');
   BEGIN
     INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
              previous_custodian_user_id, new_custodian_user_id, changed_by, reason)
-    VALUES (v_t, 3, v_primero, '20000000-0000-0000-0000-000000000002',
-            '20000000-0000-0000-0000-000000000005',
-            '20000000-0000-0000-0000-000000000001', 'previo no es el último');
+    VALUES (v_t, 3, v_primero, '20000000-0000-0000-0000-000000000005'::uuid,
+            '20000000-0000-0000-0000-000000000004'::uuid,
+            '20000000-0000-0000-0000-000000000001'::uuid, 'previo no es el último');
     RAISE EXCEPTION 'NO_RECHAZADA N28';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
@@ -927,7 +934,748 @@ BEGIN
     RAISE NOTICE 'OK N28 previous_event_id ajeno al último rechazado: %', SQLERRM;
   END;
   SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
-  IF v_n <> 2 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N28: T1 tiene % eventos', v_n; END IF;
+  IF v_n <> 2 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N28: T6 tiene % eventos', v_n; END IF;
+END $$;
+
+
+-- ═══════════ MISIÓN 010 · P0-1: INMUTABILIDAD COMPLETA (N35-N40) ══════════════
+-- at (payment_date) es operando de model_scope y de la vigencia; exchange_rate
+-- es operando de amount_cup = amount * CASE WHEN currency='CUP' THEN 1 ELSE
+-- exchange_rate END (DERIVADO, no persistido: se protegen TODOS sus operandos);
+-- transaction_id y created_by son atribución/auditoría.
+
+\echo '══ N35: mover at de una pierna OUT antes de multicashier_enabled_at ⇒ ERR_LEG_IMMUTABLE'
+DO $$
+DECLARE v_leg uuid; v_at timestamptz; v_scope text;
+BEGIN
+  v_leg := (SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T7');
+  SELECT at INTO v_at FROM payment_transactions WHERE id=v_leg;
+  BEGIN
+    UPDATE payment_transactions
+       SET at = (SELECT multicashier_enabled_at FROM stores
+                  WHERE id='10000000-0000-0000-0000-000000000001') - interval '1 day'
+     WHERE id=v_leg;
+    RAISE EXCEPTION 'NO_RECHAZADA N35';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_LEG_IMMUTABLE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N35 manipulación temporal de pierna rechazada: %', SQLERRM;
+  END;
+  SELECT payment_date, model_scope INTO v_at, v_scope FROM v_cash_ledger_classification WHERE ledger_id=v_leg;
+  IF v_at < (SELECT multicashier_enabled_at FROM stores WHERE id='10000000-0000-0000-0000-000000000001')
+     OR v_scope <> 'multicaja' THEN
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N35: at=% scope=%', v_at, v_scope;
+  END IF;
+END $$;
+
+\echo '══ N36: cambiar exchange_rate de una pierna USD ⇒ ERR_LEG_IMMUTABLE'
+DO $$
+DECLARE v_leg uuid; v_antes numeric; v_despues numeric;
+BEGIN
+  v_leg := (SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T7b');
+  SELECT exchange_rate INTO v_antes FROM payment_transactions WHERE id=v_leg;
+  BEGIN
+    UPDATE payment_transactions SET exchange_rate = 999 WHERE id=v_leg;
+    RAISE EXCEPTION 'NO_RECHAZADA N36';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_LEG_IMMUTABLE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N36 manipulación del tipo de cambio rechazada: %', SQLERRM;
+  END;
+  SELECT exchange_rate INTO v_despues FROM payment_transactions WHERE id=v_leg;
+  IF v_despues IS DISTINCT FROM v_antes THEN
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N36: exchange_rate % → %', v_antes, v_despues;
+  END IF;
+END $$;
+
+\echo '══ N37: alterar transaction_id de una pierna registrada ⇒ ERR_LEG_IMMUTABLE'
+DO $$
+DECLARE v_leg uuid;
+BEGIN
+  v_leg := (SELECT leg_in_payment_id FROM cash_transfers WHERE idempotency_key='idem-T1');
+  BEGIN
+    UPDATE payment_transactions
+       SET transaction_id = '88888888-8888-8888-8888-888888888888' WHERE id=v_leg;
+    RAISE EXCEPTION 'NO_RECHAZADA N37';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_LEG_IMMUTABLE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N37 manipulación de transaction_id rechazada: %', SQLERRM;
+  END;
+  IF EXISTS (SELECT 1 FROM payment_transactions
+              WHERE id=v_leg AND transaction_id='88888888-8888-8888-8888-888888888888') THEN
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N37: transaction_id quedó alterado';
+  END IF;
+END $$;
+
+\echo '══ N38: alterar created_by de una pierna registrada (atribución auditable) ⇒ ERR_LEG_IMMUTABLE'
+DO $$
+DECLARE v_leg uuid;
+BEGIN
+  v_leg := (SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T1');
+  BEGIN
+    UPDATE payment_transactions
+       SET created_by = '20000000-0000-0000-0000-000000000006'  -- U_N: perfil ajeno existente
+     WHERE id=v_leg;
+    RAISE EXCEPTION 'NO_RECHAZADA N38';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_LEG_IMMUTABLE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N38 manipulación de la atribución rechazada: %', SQLERRM;
+  END;
+  IF EXISTS (SELECT 1 FROM payment_transactions
+              WHERE id=v_leg AND created_by='20000000-0000-0000-0000-000000000006') THEN
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N38: created_by quedó alterado';
+  END IF;
+END $$;
+
+\echo '══ N39: un UPDATE de at no puede modificar model_scope de la pierna'
+DO $$
+DECLARE v_leg uuid; v_scope_antes text; v_scope_despues text;
+BEGIN
+  v_leg := (SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T7');
+  SELECT class INTO v_scope_antes FROM v_cash_ledger_classification WHERE ledger_id=v_leg;
+  BEGIN
+    UPDATE payment_transactions SET at = now() - interval '2 years' WHERE id=v_leg;
+    RAISE EXCEPTION 'NO_RECHAZADA N39';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_LEG_IMMUTABLE%' THEN RAISE; END IF;
+  END;
+  SELECT class INTO v_scope_despues FROM v_cash_ledger_classification WHERE ledger_id=v_leg;
+  IF v_scope_antes IS DISTINCT FROM v_scope_despues THEN
+    RAISE EXCEPTION 'N39 FALLO: model_scope cambió % → %', v_scope_antes, v_scope_despues;
+  END IF;
+  RAISE NOTICE 'OK N39 model_scope invariante ante intento de UPDATE de at (%)', v_scope_despues;
+END $$;
+
+\echo '══ N40: el saldo de tesorería permanece íntegro tras todos los intentos'
+DO $$
+DECLARE v_cup_antes numeric(14,2); v_usd_antes numeric(14,2);
+        v_cup_desp numeric(14,2); v_usd_desp numeric(14,2);
+BEGIN
+  SELECT COALESCE(SUM(CASE WHEN v.direction='in' THEN v.amount ELSE -v.amount END),0) INTO v_cup_antes
+    FROM v_cash_ledger_classification v
+   WHERE v.holder_type='cuenta' AND v.holder_id='40000000-0000-0000-0000-000000000001'
+     AND v.currency='CUP' AND v.model_scope='multicaja'
+     AND v.class NOT IN ('electronico','historico_sin_titular');
+  SELECT COALESCE(SUM(CASE WHEN v.direction='in' THEN v.amount ELSE -v.amount END),0) INTO v_usd_antes
+    FROM v_cash_ledger_classification v
+   WHERE v.holder_type='cuenta' AND v.holder_id='40000000-0000-0000-0000-000000000001'
+     AND v.currency='USD' AND v.model_scope='multicaja'
+     AND v.class NOT IN ('electronico','historico_sin_titular');
+  BEGIN
+    UPDATE payment_transactions SET at='2020-01-01', exchange_rate=7, amount=1, currency='CUP',
+             direction='in', payment_method='zelle'
+     WHERE id=(SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T7');
+    RAISE EXCEPTION 'NO_RECHAZADA N40';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_LEG_IMMUTABLE%' THEN RAISE; END IF;
+  END;
+  SELECT COALESCE(SUM(CASE WHEN v.direction='in' THEN v.amount ELSE -v.amount END),0) INTO v_cup_desp
+    FROM v_cash_ledger_classification v
+   WHERE v.holder_type='cuenta' AND v.holder_id='40000000-0000-0000-0000-000000000001'
+     AND v.currency='CUP' AND v.model_scope='multicaja'
+     AND v.class NOT IN ('electronico','historico_sin_titular');
+  SELECT COALESCE(SUM(CASE WHEN v.direction='in' THEN v.amount ELSE -v.amount END),0) INTO v_usd_desp
+    FROM v_cash_ledger_classification v
+   WHERE v.holder_type='cuenta' AND v.holder_id='40000000-0000-0000-0000-000000000001'
+     AND v.currency='USD' AND v.model_scope='multicaja'
+     AND v.class NOT IN ('electronico','historico_sin_titular');
+  IF v_cup_antes <> v_cup_desp OR v_usd_antes <> v_usd_desp THEN
+    RAISE EXCEPTION 'N40 FALLO: saldo cambió CUP %→% USD %→%', v_cup_antes, v_cup_desp, v_usd_antes, v_usd_desp;
+  END IF;
+  PERFORM f_check_treasury_saldo('40000000-0000-0000-0000-000000000001',
+           '10000000-0000-0000-0000-000000000001', 'CUP', 0);
+  RAISE NOTICE 'OK N40 saldo íntegro tras N35-N39 (CUP=% USD=%) y ámbito conciliable', v_cup_desp, v_usd_desp;
+END $$;
+
+\echo '══ ORD: movimientos ORDINARIOS (no cash_transfer) conservan su ciclo legítimo'
+DO $$
+DECLARE v_id uuid; v_n int;
+BEGIN
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_account_id, created_by)
+  VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000001', 'in', 'cash',
+          100, 'CUP', 'sale', NULL, '40000000-0000-0000-0000-000000000001',
+          '20000000-0000-0000-0000-000000000001')
+  RETURNING id INTO v_id;                       -- alta legítima permitida
+  UPDATE payment_transactions SET at = at + interval '1 minute', created_by = '20000000-0000-0000-0000-000000000002'
+   WHERE id=v_id;                               -- correcciones ordinarias PERMITIDAS
+  DELETE FROM payment_transactions WHERE id=v_id;  -- borrado ordinario PERMITIDO (no append-only)
+  SELECT count(*) INTO v_n FROM payment_transactions WHERE id=v_id;
+  IF v_n <> 0 THEN RAISE EXCEPTION 'ORD FALLO: la fila ordinaria no se borró'; END IF;
+  RAISE NOTICE 'OK ORD: ciclo completo ordinario (alta/UPDATE at/created_by/borrado) sin bloqueo';
+END $$;
+
+-- ═══════════ MISIÓN 010 · P0-2: MÁQUINA DE ESTADOS DE CUSTODIA (N41-N50) ══════
+
+\echo '══ N41: evento inicial con transferencia SOLICITADA ⇒ ERR_CUSTODY_NOT_DELIVERED'
+DO $$
+DECLARE v_t uuid; v_n int;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-L41') INTO v_t;
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason)
+    VALUES (v_t, 1, NULL, NULL, '20000000-0000-0000-0000-000000000005'::uuid,
+            '20000000-0000-0000-0000-000000000001'::uuid, 'custodia sin entrega');
+    RAISE EXCEPTION 'NO_RECHAZADA N41';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_NOT_DELIVERED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N41 apertura de custodia en solicitada rechazada: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 0 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N41: % eventos', v_n; END IF;
+END $$;
+
+\echo '══ N42: primer custodio ≠ COALESCE(carrier, delivered_by) ⇒ ERR_CUSTODY_FIRST_HOLDER'
+DO $$
+DECLARE v_t uuid; v_leg uuid; v_n int;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-L42') INTO v_t;
+  v_leg := gen_random_uuid();
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_closure_id, created_by)
+  VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'out', 'cash', 2000, 'CUP',
+          'cash_transfer', v_t, '50000000-0000-0000-0000-000000000001',
+          '20000000-0000-0000-0000-000000000002');
+  UPDATE cash_transfers SET status='entregada', leg_out_payment_id=v_leg,
+           sent_from_session_id='50000000-0000-0000-0000-000000000001',
+           delivered_by='20000000-0000-0000-0000-000000000002', carrier_user_id=NULL
+   WHERE id=v_t;                                 -- entregada SIN custodia (poseedor=K)
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason)
+    VALUES (v_t, 1, NULL, NULL, '20000000-0000-0000-0000-000000000004'::uuid,
+            '20000000-0000-0000-0000-000000000002'::uuid, 'custodio falso');
+    RAISE EXCEPTION 'NO_RECHAZADA N42';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_FIRST_HOLDER%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N42 primer custodio ajeno al poseedor físico rechazado: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 0 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N42: % eventos', v_n; END IF;
+END $$;
+
+\echo '══ N43: apertura registrada por actor distinto de delivered_by ⇒ ERR_CUSTODY_REGISTRAR'
+DO $$
+DECLARE v_t uuid; v_leg uuid; v_n int;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-L43') INTO v_t;
+  v_leg := gen_random_uuid();
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_closure_id, created_by)
+  VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'out', 'cash', 2000, 'CUP',
+          'cash_transfer', v_t, '50000000-0000-0000-0000-000000000001',
+          '20000000-0000-0000-0000-000000000002');
+  UPDATE cash_transfers SET status='entregada', leg_out_payment_id=v_leg,
+           sent_from_session_id='50000000-0000-0000-0000-000000000001',
+           delivered_by='20000000-0000-0000-0000-000000000002', carrier_user_id=NULL
+   WHERE id=v_t;
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason)
+    VALUES (v_t, 1, NULL, NULL, '20000000-0000-0000-0000-000000000002'::uuid,
+            '20000000-0000-0000-0000-000000000004'::uuid, 'registro por actor ajeno');
+    RAISE EXCEPTION 'NO_RECHAZADA N43';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_REGISTRAR%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N43 apertura registrada por actor no operativo rechazada: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 0 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N43: % eventos', v_n; END IF;
+END $$;
+
+\echo '══ N44: evento de custodia tras una RECEPCIÓN confirmada ⇒ ERR_CUSTODY_ALREADY_CLOSED'
+DO $$
+DECLARE v_t uuid; v_last uuid; v_n int;
+BEGIN
+  v_t := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T4');
+  SELECT id INTO v_last FROM cash_transfer_custody_events
+   WHERE transfer_id=v_t ORDER BY event_seq DESC LIMIT 1;
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason)
+    VALUES (v_t, 4, v_last, '20000000-0000-0000-0000-000000000004'::uuid,
+            '20000000-0000-0000-0000-000000000005'::uuid,
+            '20000000-0000-0000-0000-000000000001'::uuid, 'reasignación post-recepción');
+    RAISE EXCEPTION 'NO_RECHAZADA N44';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_ALREADY_CLOSED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N44 evento posterior a la recepción rechazado: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 3 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N44: T4 tiene % eventos', v_n; END IF;
+END $$;
+
+\echo '══ N45: evento de custodia tras una DEVOLUCIÓN confirmada ⇒ ERR_CUSTODY_ALREADY_CLOSED'
+DO $$
+DECLARE v_t uuid; v_last uuid; v_n int;
+BEGIN
+  v_t := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T1');
+  SELECT id INTO v_last FROM cash_transfer_custody_events
+   WHERE transfer_id=v_t ORDER BY event_seq DESC LIMIT 1;
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason)
+    VALUES (v_t, 3, v_last, '20000000-0000-0000-0000-000000000002'::uuid,
+            '20000000-0000-0000-0000-000000000005'::uuid,
+            '20000000-0000-0000-0000-000000000001'::uuid, 'evento post-devolución');
+    RAISE EXCEPTION 'NO_RECHAZADA N45';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_ALREADY_CLOSED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N45 evento posterior a la devolución rechazado: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 2 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N45: T1 tiene % eventos', v_n; END IF;
+END $$;
+
+\echo '══ N46: segundo evento de CIERRE de custodia ⇒ ERR_CUSTODY_ALREADY_CLOSED'
+DO $$
+DECLARE v_t uuid; v_last uuid;
+BEGIN
+  v_t := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T2');
+  SELECT id INTO v_last FROM cash_transfer_custody_events
+   WHERE transfer_id=v_t ORDER BY event_seq DESC LIMIT 1;
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason,
+             close_event)
+    VALUES (v_t, 3, v_last, '20000000-0000-0000-0000-000000000004'::uuid,
+            '20000000-0000-0000-0000-000000000005'::uuid,
+            '20000000-0000-0000-0000-000000000001'::uuid, 'doble cierre', true);
+    RAISE EXCEPTION 'NO_RECHAZADA N46';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_ALREADY_CLOSED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N46 segundo cierre de custodia rechazado: %', SQLERRM;
+  END;
+END $$;
+
+\echo '══ N47: reasignación SIN custodia física en tránsito ⇒ ERR_CUSTODY_NOT_IN_TRANSIT'
+DO $$
+DECLARE v_t uuid; v_leg uuid; v_n int;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-L47') INTO v_t;
+  PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002',
+           '50000000-0000-0000-0000-000000000001', NULL);
+  SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;  -- el estado intermedio se valida al final
+  v_leg := gen_random_uuid();
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_closure_id, created_by)
+  VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'in', 'cash', 2000, 'CUP',
+          'cash_transfer', v_t, '50000000-0000-0000-0000-000000000002',
+          '20000000-0000-0000-0000-000000000004');
+  UPDATE cash_transfers SET status='recibida', leg_in_payment_id=v_leg,
+           received_in_session_id='50000000-0000-0000-0000-000000000002',
+           received_by='20000000-0000-0000-0000-000000000004'
+   WHERE id=v_t;                                 -- recibida SIN evento de cierre
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason)
+    VALUES (v_t, 2,
+            (SELECT id FROM cash_transfer_custody_events WHERE transfer_id=v_t
+              ORDER BY event_seq DESC LIMIT 1),
+            '20000000-0000-0000-0000-000000000002'::uuid,
+            '20000000-0000-0000-0000-000000000005'::uuid,
+            '20000000-0000-0000-0000-000000000001'::uuid, 'reasignación sin tránsito');
+    RAISE EXCEPTION 'NO_RECHAZADA N47';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_NOT_IN_TRANSIT%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N47 reasignación sin efectivo en tránsito rechazada: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 1 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N47: % eventos', v_n; END IF;
+END $$;
+
+\echo '══ N48: cierre con custodio final ≠ received_by ⇒ ERR_CUSTODY_CLOSE_HOLDER'
+DO $$
+DECLARE v_t uuid; v_leg uuid; v_n int;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-L48') INTO v_t;
+  PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002',
+           '50000000-0000-0000-0000-000000000001', NULL);
+  SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;  -- el estado intermedio se valida al final
+  v_leg := gen_random_uuid();
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_closure_id, created_by)
+  VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'in', 'cash', 2000, 'CUP',
+          'cash_transfer', v_t, '50000000-0000-0000-0000-000000000002',
+          '20000000-0000-0000-0000-000000000004');
+  UPDATE cash_transfers SET status='recibida', leg_in_payment_id=v_leg,
+           received_in_session_id='50000000-0000-0000-0000-000000000002',
+           received_by='20000000-0000-0000-0000-000000000004'
+   WHERE id=v_t;                                 -- recibida SIN cierre (receptor L)
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason,
+             close_event)
+    VALUES (v_t, 2,
+            (SELECT id FROM cash_transfer_custody_events WHERE transfer_id=v_t
+              ORDER BY event_seq DESC LIMIT 1),
+            '20000000-0000-0000-0000-000000000002'::uuid,
+            '20000000-0000-0000-0000-000000000002'::uuid,
+            '20000000-0000-0000-0000-000000000001'::uuid, 'cierre con custodio falso', true);
+    RAISE EXCEPTION 'NO_RECHAZADA N48';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_CLOSE_HOLDER%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N48 cierre con custodio distinto del receptor rechazado: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 1 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N48: % eventos', v_n; END IF;
+END $$;
+
+\echo '══ N49: cierre de DEVOLUCIÓN con custodio ≠ responsable de origen ⇒ ERR_CUSTODY_CLOSE_HOLDER'
+DO $$
+DECLARE v_t uuid; v_leg uuid; v_n int;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-L49') INTO v_t;
+  PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002',
+           '50000000-0000-0000-0000-000000000001', NULL);
+  SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;  -- el estado intermedio se valida al final
+  v_leg := gen_random_uuid();
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_closure_id, created_by)
+  VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'in', 'cash', 2000, 'CUP',
+          'cash_transfer', v_t, '50000000-0000-0000-0000-000000000001',
+          '20000000-0000-0000-0000-000000000002');
+  UPDATE cash_transfers SET status='devuelta', leg_in_payment_id=v_leg,
+           return_in_session_id='50000000-0000-0000-0000-000000000001',
+           received_by='20000000-0000-0000-0000-000000000002'
+   WHERE id=v_t;                                 -- devuelta SIN cierre (receptor en origen K)
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason,
+             close_event)
+    VALUES (v_t, 2,
+            (SELECT id FROM cash_transfer_custody_events WHERE transfer_id=v_t
+              ORDER BY event_seq DESC LIMIT 1),
+            '20000000-0000-0000-0000-000000000002'::uuid,
+            '20000000-0000-0000-0000-000000000004'::uuid,
+            '20000000-0000-0000-0000-000000000001'::uuid, 'cierre de retorno con custodio ajeno', true);
+    RAISE EXCEPTION 'NO_RECHAZADA N49';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_CLOSE_HOLDER%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N49 cierre de devolución con receptor de origen falso rechazado: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 1 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N49: % eventos', v_n; END IF;
+END $$;
+
+\echo '══ N50: transferencia CANCELADA con evento de custodia ⇒ ERR_CUSTODY_NOT_DELIVERED'
+DO $$
+DECLARE v_t uuid; v_n int;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-L50') INTO v_t;
+  PERFORM f_cancel_cash_transfer(v_t, '20000000-0000-0000-0000-000000000001', 'prueba N50');
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason)
+    VALUES (v_t, 1, NULL, NULL, '20000000-0000-0000-0000-000000000005'::uuid,
+            '20000000-0000-0000-0000-000000000001'::uuid, 'custodia sobre cancelada');
+    RAISE EXCEPTION 'NO_RECHAZADA N50';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_NOT_DELIVERED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N50 custodia sobre transferencia cancelada rechazada: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 0 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N50: % eventos', v_n; END IF;
+END $$;
+
+-- ═══════════ MISIÓN 010 · P0: AUTORIZACIÓN EFECTIVA DEL TRANSPORTISTA ═════════
+
+\echo '══ A-N3: cajero ajeno se AUTODECLARA transportista (autoasignación) ⇒ rechazo'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN3') INTO v_t;
+  BEGIN
+    PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000004'::uuid,
+             '20000000-0000-0000-0000-000000000004'::uuid);   -- L se asigna a sí misma
+    RAISE EXCEPTION 'NO_RECHAZADA AN3a';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_SELF_ASSIGNMENT%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N3a autoasignación de transportista rechazada: %', SQLERRM;
+  END;
+  BEGIN
+    PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000004'::uuid,
+             '20000000-0000-0000-0000-000000000001'::uuid);   -- L "autorizada" por M: es CAJERA
+    RAISE EXCEPTION 'NO_RECHAZADA AN3b';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_ROLE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N3b cajero ajeno con rol incorrecto rechazado: %', SQLERRM;
+  END;
+  IF EXISTS (SELECT 1 FROM cash_transfer_carriers WHERE transfer_id=v_t) THEN
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO AN3: quedó una asignación';
+  END IF;
+END $$;
+
+\echo '══ A-N4: usuario SIN rol de transportista se declara transportista ⇒ ERR_CARRIER_ROLE'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN4') INTO v_t;
+  BEGIN
+    PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000003'::uuid,
+             '20000000-0000-0000-0000-000000000001'::uuid);   -- X es cajero
+    RAISE EXCEPTION 'NO_RECHAZADA AN4';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_ROLE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N4 rol sin transportista rechazado: %', SQLERRM;
+  END;
+END $$;
+
+\echo '══ A-N5: transportista de OTRA tienda intenta intervenir ⇒ ERR_CARRIER_WRONG_STORE'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN5') INTO v_t;
+  BEGIN
+    PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000007'::uuid,
+             '20000000-0000-0000-0000-000000000001'::uuid);   -- U_T2 es de S2
+    RAISE EXCEPTION 'NO_RECHAZADA AN5';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_WRONG_STORE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N5 transportista de otra tienda rechazado: %', SQLERRM;
+  END;
+END $$;
+
+\echo '══ A-N6: transportista NO ASIGNADO intenta recoger el dinero ⇒ ERR_CARRIER_NOT_ASSIGNED'
+DO $$
+DECLARE v_t uuid; v_legs int;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN6') INTO v_t;
+  BEGIN
+    PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000005'::uuid,
+             '50000000-0000-0000-0000-000000000001'::uuid,
+             '20000000-0000-0000-0000-000000000005'::uuid);   -- J se declara a sí mismo: sin asignación
+    RAISE EXCEPTION 'NO_RECHAZADA AN6';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_NOT_ASSIGNED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N6 transportista no asignado rechazado: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_legs FROM payment_transactions
+   WHERE ref_type='cash_transfer' AND ref_id=v_t;
+  IF v_legs <> 0 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO AN6: quedó una pierna'; END IF;
+END $$;
+
+\echo '══ A-N7: actor no autenticado / identidad inexistente ⇒ rechazo específico'
+DO $$
+DECLARE v_t uuid; v_legs int;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN7') INTO v_t;
+  BEGIN
+    PERFORM f_deliver_cash_transfer(v_t, NULL,
+             '50000000-0000-0000-0000-000000000001'::uuid, NULL);
+    RAISE EXCEPTION 'NO_RECHAZADA AN7a';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_UNKNOWN_ACTOR%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N7a actor no autenticado (NULL) rechazado: %', SQLERRM;
+  END;
+  BEGIN
+    PERFORM f_deliver_cash_transfer(v_t, '99999999-9999-9999-9999-999999999999'::uuid,
+             '50000000-0000-0000-0000-000000000001'::uuid, NULL);
+    RAISE EXCEPTION 'NO_RECHAZADA AN7b';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_DELIVER_ACTOR_UNAUTHORIZED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N7b identidad inexistente rechazada: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_legs FROM payment_transactions
+   WHERE ref_type='cash_transfer' AND ref_id=v_t;
+  IF v_legs <> 0 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO AN7: quedó una pierna'; END IF;
+END $$;
+
+\echo '══ I-N7: misma clave con authorized_by DIFERENTE ⇒ ERR_IDEMPOTENCY_KEY_REUSE'
+DO $$
+BEGIN
+  PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           300, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-IN7');
+  BEGIN
+    PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+             '30000000-0000-0000-0000-000000000001', NULL,
+             '30000000-0000-0000-0000-000000000002', NULL,
+             300, 'CUP', '20000000-0000-0000-0000-000000000001',
+             '20000000-0000-0000-0000-000000000003'::uuid, 'idem-IN7');
+    RAISE EXCEPTION 'NO_RECHAZADA IN7';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_IDEMPOTENCY_KEY_REUSE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK I-N7 misma clave con otro autorizador rechazada: %', SQLERRM;
+  END;
+  IF (SELECT count(*) FROM cash_transfers WHERE idempotency_key='idem-IN7') <> 1 THEN
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO IN7: idem-IN7 duplicada';
+  END IF;
+END $$;
+
+\echo '══ I-N8: mismo solicitante, AUTORIZADOR EFECTIVO distinto ⇒ ERR_IDEMPOTENCY_KEY_REUSE'
+DO $$
+BEGIN
+  PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           300, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-IN8');
+  BEGIN
+    PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+             '30000000-0000-0000-0000-000000000001', NULL,
+             '30000000-0000-0000-0000-000000000002', NULL,
+             300, 'CUP', '20000000-0000-0000-0000-000000000001',
+             '20000000-0000-0000-0000-000000000002'::uuid, 'idem-IN8');
+    RAISE EXCEPTION 'NO_RECHAZADA IN8';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_IDEMPOTENCY_KEY_REUSE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK I-N8 autorizador efectivo distinto rechazado: %', SQLERRM;
+  END;
+END $$;
+
+\echo '══ I-N9: NULL y explícito EQUIVALENTE según política (efectivo = solicitante) ⇒ MISMO id'
+DO $$
+DECLARE v_id_null uuid; v_id_expl uuid;
+BEGIN
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           300, 'CUP', '20000000-0000-0000-0000-000000000001',
+           NULL, 'idem-IN9') INTO v_id_null;             -- efectivo = solicitante M
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           300, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001'::uuid, 'idem-IN9') INTO v_id_expl;
+  IF v_id_null IS NULL OR v_id_null <> v_id_expl THEN
+    RAISE EXCEPTION 'N9 FALLO: NULL y explícito equivalente dieron ids distintos (% / %)',
+      v_id_null, v_id_expl;
+  END IF;
+  RAISE NOTICE 'OK I-N9 política de autorizador efectivo: NULL ≡ solicitante ⇒ mismo id';
+END $$;
+
+\echo '══ I-N10: huella estructural sin ambigüedad — representaciones distintas ⇒ huellas distintas'
+DO $$
+DECLARE v_fp_a text; v_fp_b text; v_fp_a2 text;
+BEGIN
+  SELECT request_fingerprint INTO v_fp_a FROM cash_transfers WHERE idempotency_key='idem-IN7';
+  SELECT request_fingerprint INTO v_fp_b FROM cash_transfers WHERE idempotency_key='idem-IN9';
+  SELECT request_fingerprint INTO v_fp_a2 FROM cash_transfers WHERE idempotency_key='idem-T8';
+  IF v_fp_a IS NULL OR v_fp_b IS NULL OR v_fp_a2 IS NULL THEN
+    RAISE EXCEPTION 'N10 FALLO: huella ausente';
+  END IF;
+  -- IN7 e IN9 tienen PARÁMETROS IDÉNTICOS ⇒ misma huella (invariante de canonicidad);
+  -- T8 (750 CUP, otra operación) ⇒ huella distinta. La representación jsonb no
+  -- colisiona entre solicitudes de parámetros distintos.
+  IF v_fp_a <> v_fp_b THEN
+    RAISE EXCEPTION 'N10 FALLO: parámetros idénticos produjeron huellas distintas (canonicidad rota)';
+  END IF;
+  IF v_fp_a = v_fp_a2 THEN
+    RAISE EXCEPTION 'N10 FALLO: parámetros distintos produjeron la MISMA huella (ambigüedad)';
+  END IF;
+  RAISE NOTICE 'OK I-N10 huella canónica: parámetros iguales ⇒ misma huella; distintos ⇒ distinta';
+END $$;
+
+
+\echo '══ Limpieza de fixtures del ciclo de custodia (idem-L*): transferencias con estado real'
+-- Sus piernas son parte de setups VÁLIDOS (no residuo); el arnés deshabilita
+-- TEMPORALMENTE el trigger append-only SOLO para su limpieza controlada.
+DO $$
+DECLARE v_legs int; v_tr int;
+BEGIN
+  ALTER TABLE payment_transactions DISABLE TRIGGER pt_no_delete;
+  UPDATE cash_transfers SET
+           status = 'solicitada', leg_out_payment_id = NULL, leg_in_payment_id = NULL,
+           sent_from_session_id = NULL, received_in_session_id = NULL,
+           received_in_account_id = NULL, return_in_session_id = NULL,
+           return_in_account_id = NULL, delivered_by = NULL, received_by = NULL,
+           carrier_user_id = NULL
+   WHERE idempotency_key ~ '^idem-L';   -- neutraliza la fila (CHECK de estado) y anula FK inversa
+  DELETE FROM payment_transactions
+   WHERE ref_type='cash_transfer'
+     AND ref_id IN (SELECT id FROM cash_transfers WHERE idempotency_key ~ '^idem-L');
+  SET CONSTRAINTS ctr_legs_final, ctr_transfer_final IMMEDIATE;  -- drena eventos diferidos (ya sin piernas)
+  ALTER TABLE payment_transactions ENABLE TRIGGER pt_no_delete;
+  DELETE FROM cash_transfer_carriers
+   WHERE transfer_id IN (SELECT id FROM cash_transfers WHERE idempotency_key ~ '^idem-L');
+  ALTER TABLE cash_transfer_custody_events DISABLE TRIGGER ctr_custody_append_only;
+  DELETE FROM cash_transfer_custody_events
+   WHERE transfer_id IN (SELECT id FROM cash_transfers WHERE idempotency_key ~ '^idem-L');
+  ALTER TABLE cash_transfer_custody_events ENABLE TRIGGER ctr_custody_append_only;
+  DELETE FROM cash_transfers WHERE idempotency_key ~ '^idem-L';
+  SELECT count(*) INTO v_tr FROM cash_transfers WHERE idempotency_key ~ '^idem-L';
+  SELECT count(*) INTO v_legs FROM payment_transactions
+   WHERE ref_type='cash_transfer'
+     AND ref_id NOT IN (SELECT id FROM cash_transfers);
+  IF v_tr <> 0 OR v_legs <> 0 THEN
+    RAISE EXCEPTION 'LIMPIEZA L FALLO: transferencias=% piernas_huérfanas=%', v_tr, v_legs;
+  END IF;
+  RAISE NOTICE 'OK limpieza-L: fixtures de ciclo de vida eliminados, sin piernas huérfanas';
 END $$;
 
 \echo '══ VERIFICACIÓN DE ROLLBACK ÍNTEGRO: ningún intento negativo dejó piernas ni custodia'

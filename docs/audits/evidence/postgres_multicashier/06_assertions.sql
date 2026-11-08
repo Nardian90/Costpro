@@ -134,7 +134,7 @@ BEGIN
   RAISE NOTICE 'OK B5: reintentos idempotentes sin duplicados';
 END $$;
 
-\echo '══ B6: sin residuo (10 transferencias, 15 piernas, 16 eventos, 0 negativos) — HARD-FAIL'
+\echo '══ B6: sin residuo (10 transferencias, 15 piernas, 17 eventos, 0 negativos) — HARD-FAIL'
 DO $$
 DECLARE v_tr int; v_legs int; v_ev int; v_res int;
 BEGIN
@@ -142,11 +142,11 @@ BEGIN
   SELECT count(*) INTO v_legs FROM payment_transactions WHERE ref_type='cash_transfer';
   SELECT count(*) INTO v_ev FROM cash_transfer_custody_events;
   SELECT count(*) INTO v_res FROM cash_transfers WHERE idempotency_key ~ '^idem-(N|S|I|A)';
-  IF v_tr <> 10 OR v_legs <> 15 OR v_ev <> 16 OR v_res <> 0 THEN
+  IF v_tr <> 10 OR v_legs <> 15 OR v_ev <> 17 OR v_res <> 0 THEN
     RAISE EXCEPTION 'B6 FALLO: transferencias=% piernas=% eventos=% residuo=% (esperado 10/15/16/0)',
       v_tr, v_legs, v_ev, v_res;
   END IF;
-  RAISE NOTICE 'OK B6: 10 transferencias, 15 piernas, 16 eventos, sin residuo de negativos';
+  RAISE NOTICE 'OK B6: 10 transferencias, 15 piernas, 17 eventos (T6 con reasignación de setup N28), sin residuo de negativos';
 END $$;
 
 \echo '══ B7: todas las sesiones usadas pertenecen a la gaveta EXACTA del extremo — HARD-FAIL'
@@ -202,9 +202,9 @@ BEGIN
   SELECT bool_and(NOT inconsistente) INTO ok FROM v_cash_transfer_reconciliation;
   IF (SELECT count(*) FROM cash_transfers) = 10
      AND (SELECT count(*) FROM payment_transactions WHERE ref_type='cash_transfer') = 15
-     AND (SELECT count(*) FROM cash_transfer_custody_events) = 16
+     AND (SELECT count(*) FROM cash_transfer_custody_events) = 17
      AND ok THEN
-    RAISE NOTICE 'RESULTADO FINAL: ASSERTIONS 009 OK — PostgreSQL 17.11, 15 positivas + negativos verificables + COMMIT diferido + saldo/idempotencia/custodia certificados';
+    RAISE NOTICE 'RESULTADO FINAL: ASSERTIONS 010 OK — PostgreSQL 17.11, 15 positivas + negativos verificables + COMMIT diferido + saldo/idempotencia/custodia certificados';
   ELSE
     RAISE EXCEPTION 'ASSERTIONS FAILED';
   END IF;

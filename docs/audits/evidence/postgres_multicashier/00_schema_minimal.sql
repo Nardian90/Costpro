@@ -110,10 +110,28 @@ CREATE TABLE cash_transfer_custody_events (
   changed_by                uuid NOT NULL REFERENCES profiles(id),
   authorized_by             uuid REFERENCES profiles(id),
   reason                    text NOT NULL,
+  close_event               boolean NOT NULL DEFAULT false,  -- D.23.2: evento de CIERRE
   created_at                timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT uq_ctr_custody_id_per_transfer UNIQUE (transfer_id, id),
   CONSTRAINT uq_ctr_custody_seq             UNIQUE (transfer_id, event_seq),
   CONSTRAINT ctr_custody_chain CHECK (
     (event_seq = 1  AND previous_event_id IS NULL) OR
     (event_seq > 1  AND previous_event_id IS NOT NULL))
+);
+-- D.23.2: UN solo evento de cierre por transferencia (índice único parcial).
+CREATE UNIQUE INDEX uq_ctr_custody_close_once
+  ON cash_transfer_custody_events (transfer_id) WHERE close_event;
+
+-- D.23.3 (misión 010): ASIGNACIÓN AUTORIZADA de transportista por traspaso.
+-- La entrega por un actor distinto del titular exige una fila previa aquí,
+-- registrada por un autorizador distinto del transportista (anti-autoasignación).
+CREATE TABLE cash_transfer_carriers (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  transfer_id    uuid NOT NULL REFERENCES cash_transfers(id),
+  carrier_user_id uuid NOT NULL REFERENCES profiles(id),
+  assigned_by    uuid NOT NULL REFERENCES profiles(id),
+  authorized_by  uuid NOT NULL REFERENCES profiles(id),
+  assigned_at    timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT uq_carrier_per_transfer UNIQUE (transfer_id, carrier_user_id),
+  CONSTRAINT ctr_carrier_no_self CHECK (assigned_by <> carrier_user_id)
 );

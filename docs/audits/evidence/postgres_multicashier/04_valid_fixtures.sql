@@ -13,6 +13,7 @@
 \set U_L 20000000-0000-0000-0000-000000000004
 \set U_J 20000000-0000-0000-0000-000000000005
 \set U_N 20000000-0000-0000-0000-000000000006
+\set U_T2 20000000-0000-0000-0000-000000000007
 \set G1 30000000-0000-0000-0000-000000000001
 \set G2 30000000-0000-0000-0000-000000000002
 \set G3 30000000-0000-0000-0000-000000000003
@@ -37,7 +38,8 @@ INSERT INTO profiles(id, store_id, role) VALUES
   (:'U_X', :'S1', 'cajero'),
   (:'U_L', :'S1', 'cajera'),
   (:'U_J', :'S1', 'transportista'),
-  (:'U_N', :'S2', 'encargado');
+  (:'U_N', :'S2', 'encargado'),
+  (:'U_T2', :'S2', 'transportista');   -- D.23.3: transportista de OTRA tienda (A-N5)
 
 INSERT INTO cash_registers(id, store_id, code) VALUES
   (:'G1', :'S1', 'G1'), (:'G2', :'S1', 'G2'), (:'G3', :'S2', 'G3');
@@ -220,17 +222,36 @@ BEGIN
   RAISE NOTICE 'OK P12: CUP/USD mantienen ámbitos separados';
 END $$;
 
-\echo '══ P13 (misión 009, decisión B): ENTREGA por el transportista desde la sesión del cajero'
+\echo '══ P13/A-P1 (misión 010, D.23.3): ENTREGA por transportista ASIGNADO Y AUTORIZADO'
 -- El actor operativo (J) difiere del titular de la sesión emisora (K): permitido
--- porque J es el transportista registrado en custodia (auditoría conserva ambos).
+-- SOLO porque existe una asignación previa autorizada por M (no autoasignación),
+-- con rol transportista y de la tienda del traspaso (f_assign_carrier).
 SELECT f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
          750, 'CUP', :'U_M', :'U_M', 'idem-T8') AS t8;
+SELECT f_assign_carrier(
+         (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T8'),
+         :'U_J', :'U_M') AS asignacion_transportista;   -- A-P1: autorización previa
 SELECT f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T8'),
          :'U_J', :'SS_G1', :'U_J') AS leg_out_t8_actor_transportista;
 SELECT f_receive_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T8'),
-         :'U_X', :'SS_G2', NULL) AS leg_in_t8;           -- X es titular de SS_G2 ✓
+         :'U_X', :'SS_G2', NULL) AS leg_in_t8;           -- X es titular de SS_G2 ✓ (A-P2: titular entrega en P2)
+DO $$
+DECLARE v_t8 uuid;
+BEGIN
+  v_t8 := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T8');
+  IF (SELECT new_custodian_user_id FROM cash_transfer_custody_events
+       WHERE transfer_id=v_t8 AND event_seq=1)
+     <> '20000000-0000-0000-0000-000000000005'::uuid THEN
+    RAISE EXCEPTION 'A-P3 FALLO: el custodio inicial no es el transportista asignado J';
+  END IF;
+  IF (SELECT delivered_by FROM cash_transfers WHERE id=v_t8)
+     <> '20000000-0000-0000-0000-000000000005'::uuid THEN
+    RAISE EXCEPTION 'A-P3 FALLO: delivered_by no registra al actor operativo J';
+  END IF;
+  RAISE NOTICE 'OK A-P3: custodia inicial = poseedor físico real (J) y actor auditado separado';
+END $$;
 
 \echo '══ Estado tras las pruebas positivas:'
 SELECT status, count(*) FROM cash_transfers GROUP BY status ORDER BY status;
