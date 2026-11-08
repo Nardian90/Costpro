@@ -61,7 +61,7 @@
 | ID | Área | Tarea o incidencia | Estado verificado | Prioridad | Evidencia principal | Causa raíz conocida | Dependencias |
 | -- | ---- | ------------------ | ----------------- | --------- | ------------------- | ------------------- | ------------ |
 | CP-POS-001 | POS | Kardex de la era V2.1: sin reconciliación automática stock↔ledger | PARCIALMENTE RESUELTA | P2 | [BD] `20261005140000_drop_v1_sale_devolution.sql` + [CÓD] `create_sale_v2` endurecido | Caminos V2.1 parcheados fueron reemplazados por V2 endurecido; falta rutina programada | Ninguna |
-| CP-POS-002 | POS | Offline sync sin reserva de stock ni resolución de conflictos | PENDIENTE CONFIRMADA | P1 | [DOC] audit_v3_multi_store §9 + [CÓD] `sync-engine.ts`, `useSync.ts`, `sync/batch/route.ts` | Diseño offline idempotente parcial (solo 23505) | CP-POS-001 |
+| CP-POS-002 | POS | Offline sync sin reserva de stock ni resolución de conflictos | RESUELTA EN CÓDIGO — PENDIENTE DE VERIFICACIÓN EN DESPLIEGUE (2026-11-08, rama fix/cp-pos-002-offline-conflictos) | P1 | [DOC] audit_v3_multi_store §9 + [CÓD] `sync-engine.ts`, `useSync.ts`, `sync/batch/route.ts` | Diseño offline idempotente parcial (solo 23505) | CP-POS-001 |
 | CP-POS-003 | POS | «Venta por Conteo» rota: «0 de 0 productos» permanente | PENDIENTE DE VERIFICACIÓN (M2) | P1 | [CÓD] fix en `useInventoryCount.ts` + [TEST] 2/2 `useInventoryCount-storeId.test.tsx` | fetch sin `storeId`; `/api/inventory/products` exige storeId (400) | Ninguna |
 | CP-POS-004 | POS | Fallback de atribución de comisiones POS sobre-atribuye a todos los workers | PENDIENTE CONFIRMADA | P2 | [DOC] AUDITORIA_TRABAJADORES §14.2 | Regla de negocio sin definir (fallback 2026-07-17) | Decisión de negocio |
 | CP-POS-005 | POS | Firmas del Reporte Entrega globales en localStorage (no scoped por tienda) | PENDIENTE CONFIRMADA | P3 | [DOC] AUDITORIA_TRABAJADORES §14.3 | `LS_KEYS.deliveredBy/recipient` sin prefijo de tienda | Ninguna |
@@ -189,7 +189,7 @@
 - **Limitaciones de la auditoría:** no se verificó funcionalmente contra la BD de producción (solo lectura de migraciones).
 
 #### CP-POS-002 — Offline sync sin reserva de stock ni resolución de conflictos
-- **ID estable:** CP-POS-002 · **Área:** POS · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P1
+- **ID estable:** CP-POS-002 · **Área:** POS · **Estado verificado:** RESUELTA EN CÓDIGO — PENDIENTE DE VERIFICACIÓN EN DESPLIEGUE (2026-11-08) · **Prioridad:** P1
 - **Descripción del problema:** el motor offline no reserva stock al despachar en local; los conflictos solo se detectan para el código 23505; la idempotency-key se regenera en cada doble clic (riesgo de doble venta); el snapshot offline no tiene TTL. El informe lo calificó CRITICAL («el cliente se va con el producto y la venta falla»).
 - **Comportamiento esperado:** reserva/preflight de stock al confirmar en offline; conflicto resuelto con re-validación server-side; una única venta por intento del usuario.
 - **Origen documental:** `docs/audits/audit_v3_multi_store.md` §9 (Offline sync), con 5 recomendaciones concretas.
@@ -205,6 +205,8 @@
 - **Criterios de aceptación propuestos:** venta offline con stock insuficiente produce alerta en el momento del reintento, no después; doble clic no genera 2 ventas.
 - **Método recomendado para verificar la corrección:** prueba E2E offline→online con stock insuficiente y doble submit.
 - **Limitaciones de la auditoría:** no se ejecutó el flujo offline real (requiere navegador + red manipulada).
+
+- **RESOLUCIÓN 2026-11-08 (misión CP-POS-002, rama `fix/cp-pos-002-offline-conflictos`):** implementado en código — llave de idempotencia estable por confirmación de carrito con outbox persistente previo al envío (D1), reserva de stock derivada de la cola con validación atómica (D2), clasificación canónica de errores por operación con ~70 códigos ERR_ reales (D3), vista «Ventas por resolver» con reintento/ajuste/descarte auditado server-side (D4), aviso de snapshot >24 h sin bloqueo (D5), lease entre pestañas + backoff con jitter 1s→60s máx 8 (D6), UX en español con estados diferenciados (D7) y protección de recepciones/transferencias con regresión (D8). Idempotencia REAL del servidor verificada por llave (idempotency_registry UNIQUE + param_hash + índice backstop). PENDIENTE DE VERIFICACIÓN EN DESPLIEGUE: 3 ejecuciones verdes consecutivas del E2E offline por workflow_dispatch y checklist manual en dispositivo real (docs/audits/POS-002_DISENO_OFFLINE.md §15-16). No se modificó create_sale_v2 ni migraciones.
 
 #### CP-POS-003 — «Venta por Conteo» rota: «0 de 0 productos» permanente
 - **ID estable:** CP-POS-003 · **Área:** POS · **Estado verificado:** PENDIENTE DE VERIFICACIÓN (M2, 2026-10-17) · **Prioridad:** P1

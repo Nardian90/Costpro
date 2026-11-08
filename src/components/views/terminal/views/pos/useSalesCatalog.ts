@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { useHaptics } from '@/hooks/ui/useHaptics';
 import { USD_CUP_RATE } from '@/lib/utils';
+// CP-POS-002 (D1/D2): outbox estable + encolo con reserva derivada.
+import { saleOutbox, offlineStorage } from '@/lib/sync/offline-storage';
 
 // ── Re-exports for backward compatibility ────────────────────
 // Components that import these from './useSalesCatalog' keep working.
@@ -402,43 +404,85 @@ export function useSalesCatalog() {
       const opDate = operationDate || activeRows.find((r) => r.operationDate)?.operationDate || undefined;
       let saleId: string | undefined;
 
+      // CP-POS-002 (D1): llave ESTABLE por confirmación — una sola para
+      // todos los reintentos, persistida en el outbox ANTES del envío.
+      const idempotencyKey = `sale-${crypto.randomUUID()}`;
+      await saleOutbox.create({
+        storeId: user.activeStoreId,
+        idempotencyKey,
+        payload: { kind: 'sales-catalog-checkout', operationDate: opDate ?? null },
+      });
+
       if (!navigator.onLine) {
         // OFFLINE: preservar capacidad existente — enqueue (replay V2 vía sync/batch)
-        saleId = await createSale({
-          p_store_id: user.activeStoreId,
-          p_seller_id: user.id,
-          p_payment_method: derivedPaymentMethod,
-          // FIX CP-POS-007: las notas también viajan en el enqueue offline
-          // (p_notes → replay por sync/batch → create_sale_v2).
-          p_notes: notes?.trim() ? notes.trim().slice(0, 1000) : null,
-          p_total_amount: totals.subtotal,
-          p_subtotal: totals.subtotal,
-          p_discount_type: 'fixed',
-          p_discount_value: 0,
-          // PR-4.4D: pasar cash/transfer/zelle amounts al RPC
-          p_cash_amount: totals.cashTotal,
-          p_transfer_amount: totals.transferTotal,
-          p_zelle_amount: totals.zelleTotal,
-          // PR-4.4I: persist currency + exchange rate for Zelle component
-          p_sale_currency: totals.zelleTotal > 0 ? 'USD' : 'CUP',
-          p_sale_exchange_rate: totals.zelleTotal > 0
-            ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || USD_CUP_RATE)
-            : 1.0,
-          p_items: activeRows.map((r) => ({
-            product_id: r.product.id,
-            variant_id: r.selectedVariantId ?? null,
-            quantity: r.quantity,
-            // E-SEC (R-SEC-1): precio efectivamente cobrado (coherente con totals.subtotal)
-            price: effectiveUnitPrice(r.price, r.quantity, r.discountType, r.discountValue),
-            cost: r.cost,
-            cash_paid: r.cashPaid,
-            transfer_paid: r.transferPaid,
-            zelle_paid: r.zellePaid,
-          })),
-          p_idempotency_key: `sale-${crypto.randomUUID()}`,
-          // PR-4.4D: pasar operationDate (de la primera fila con fecha, o la del parámetro)
-          p_operation_date: opDate,
-        });
+        // La reserva (D2) se valida dentro del encolo atómico; la llave del
+        // payload viaja al RPC (p_idempotency_key) pero la identidad de la
+        // COLA es el UUID de la operación (queueIdempotencyKey del outbox).
+        const enqueued = await offlineStorage.enqueueSaleWithReservation(
+          {
+            entity: 'sale',
+            operationType: 'CREATE',
+            idempotencyKey: (await saleOutbox.getOpen(idempotencyKey))!.queueIdempotencyKey,
+            payload: {
+              p_store_id: user.activeStoreId,
+              p_seller_id: user.id,
+              p_payment_method: derivedPaymentMethod,
+              // FIX CP-POS-007: las notas también viajan en el enqueue offline
+              // (p_notes → replay por sync/batch → create_sale_v2).
+              p_notes: notes?.trim() ? notes.trim().slice(0, 1000) : null,
+              p_total_amount: totals.subtotal,
+              p_subtotal: totals.subtotal,
+              p_discount_type: 'fixed',
+              p_discount_value: 0,
+              p_cash_amount: totals.cashTotal,
+              p_transfer_amount: totals.transferTotal,
+              p_zelle_amount: totals.zelleTotal,
+              p_sale_currency: totals.zelleTotal > 0 ? 'USD' : 'CUP',
+              p_sale_exchange_rate: totals.zelleTotal > 0
+                ? (activeRows.find(r => r.usdExchangeRate > 0)?.usdExchangeRate || USD_CUP_RATE)
+                : 1.0,
+              p_items: activeRows.map((r) => ({
+                product_id: r.product.id,
+                variant_id: r.selectedVariantId ?? null,
+                quantity: r.quantity,
+                price: effectiveUnitPrice(r.price, r.quantity, r.discountType, r.discountValue),
+                cost: r.cost,
+                cash_paid: r.cashPaid,
+                transfer_paid: r.transferPaid,
+                zelle_paid: r.zellePaid,
+              })),
+              p_idempotency_key: idempotencyKey,
+              p_operation_date: opDate,
+            },
+          },
+          (storeId, productId) => {
+            // Snapshot de productos de ESTA tienda (D2): stock real de la
+            // última hidratación online; servicios exentos (is_service).
+            const snap = products.find(
+              (p) => p.id === productId && p.store_id === storeId,
+            );
+            if (!snap) return null;
+            if (snap.is_service === true) return Number.MAX_SAFE_INTEGER;
+            return snap.stock_current ?? 0;
+          },
+        );
+
+        if (!enqueued.ok) {
+          await saleOutbox.resolve(idempotencyKey);
+          const names = enqueued.rejects
+            .map((rj) => {
+              const prod = products.find((p) => p.id === rj.productId);
+              return rj.available < 0
+                ? `${prod?.name ?? rj.productId} (sin datos locales de stock)`
+                : `${prod?.name ?? rj.productId} (disponible: ${rj.available})`;
+            })
+            .slice(0, 3)
+            .join('; ');
+          throw new Error(
+            `ERR_INSUFFICIENT_STOCK_LOCAL: sin conexión no se puede vender más del stock local disponible — ${names}`,
+          );
+        }
+        saleId = enqueued.op.id ?? undefined;
       } else {
         // ONLINE: path V2 canónico (mismo contrato que usePOSCheckout v2)
         // E-SEC (R-SEC-1): se reenvía la autorización de supervisor capturada por
@@ -485,7 +529,8 @@ export function useSalesCatalog() {
             // E-SEC-FINAL (D2): motivo del descuento autorizado — el catálogo es
             // un SEGUNDO camino de checkout y debe viajar igual que en el POS.
             discount_reason: supervisorAuth?.reason || null,
-            idempotency_key: `sale-${crypto.randomUUID()}`,
+            // CP-POS-002 (D1): llave estable (misma del outbox).
+            idempotency_key: idempotencyKey,
             operation_date: opDate,
             items: activeRows.map((r) => ({
               product_id: r.product.id,
@@ -506,10 +551,12 @@ export function useSalesCatalog() {
 
         if (!response.ok) {
           const err = await response.json().catch(() => ({ error: response.statusText }));
+          await saleOutbox.resolve(idempotencyKey);
           throw new Error(err.error || `HTTP ${response.status}`);
         }
         const data = await response.json();
         saleId = data.transaction_id;
+        await saleOutbox.resolve(idempotencyKey);
         // E-SEC (R-SEC-1): una autorización de supervisor = una venta (igual que POS).
         clearSupervisorAuth();
       }

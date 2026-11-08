@@ -1070,11 +1070,31 @@ export const syncOperationSchema = z.object({
   createdAt: z.string(),
   clientClock: z.number(),
   status: z
-    .enum(["pending", "in-flight", "failed", "synced", "discarded"])
+    // CP-POS-002 (D3/D6): estados canónicos del ciclo de vida offline.
+    //   pending         — encolada, espera envío
+    //   in-flight       — enviada, sin respuesta definitiva (lease D6)
+    //   retry_wait      — error transitorio, espera nextRetryAt (backoff)
+    //   conflict        — error determinista de negocio/integridad (D4)
+    //   auth_required   — 401: pausada hasta reautenticación (no consume
+    //                     presupuesto de reintentos)
+    //   retry_exhausted — agotó los reintentos transitorios: conservada
+    //                     para reintento manual (nunca se convierte sola
+    //                     en conflicto de negocio)
+    //   failed          — LEGADO (attempts>=3 del motor viejo): equivalente
+    //                     funcional a retry_exhausted; conservado por las
+    //                     colas ya persistidas por builds anteriores
+    //   synced / discarded — terminal (discarded SOLO vía descarte auditado)
+    .enum(["pending", "in-flight", "failed", "synced", "discarded", "retry_wait", "conflict", "auth_required", "retry_exhausted"])
     .default("pending"),
   attempts: z.number().default(0),
   lastError: z.string().nullable().optional(),
   serverData: z.any().optional(),
+  // CP-POS-002 (D6/D3): próxma ejecución de reintento (epoch ms) y
+  // clasificación persistida — sobreviven recargas y alimentan la vista
+  // de conflictos sin reclasificar.
+  nextRetryAt: z.number().optional(),
+  conflictType: z.string().optional(),
+  errorCode: z.string().optional(),
 });
 
 export const syncBatchSchema = z.object({
@@ -1092,6 +1112,17 @@ export const syncResultItemSchema = z.object({
   serverVersion: z.number().optional(),
   serverData: z.any().optional(),
   error: z.string().optional(),
+  // CP-POS-002 (D3): campos adicionales emitidos por /api/sync/batch —
+  // compatibles (opcionales): el frontend desplegado que no los conoce
+  // los ignora; el motor nuevo los usa para decidir reintento/backoff.
+  message: z.string().optional(),
+  category: z.string().optional(),
+  conflictType: z.string().optional(),
+  errorCode: z.string().optional(),
+  retryable: z.boolean().optional(),
+  // 'executed' (primera ejecución) | 'idempotent' (repetición certificada
+  // por la RPC vía param_hash o sync_log 'ok' previo con la misma llave).
+  idempotencyOutcome: z.string().optional(),
 });
 
 export const syncBatchResponseSchema = z.object({

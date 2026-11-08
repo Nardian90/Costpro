@@ -27,6 +27,8 @@ import { useSalesCatalog } from '@/components/views/terminal/views/pos/useSalesC
 const h = vi.hoisted(() => ({
   fetchMock: vi.fn(),
   createSaleMock: vi.fn(),
+  // CP-POS-002: reemplazo del camino offline (enqueue con reserva).
+  enqueueSaleMock: vi.fn(),
   userHolder: { current: null as any },
   onlineHolder: { current: true },
 }));
@@ -62,6 +64,58 @@ vi.mock('@/hooks/api/useProducts', () => ({
 vi.mock('@/hooks/api/useTransactions', () => ({
   useCreateSale: () => ({ mutateAsync: h.createSaleMock, isPending: false }),
 }));
+
+// CP-POS-002 (D1/D2): el encolo offline migró de useCreateSale a
+// offlineStorage.enqueueSaleWithReservation (validación de reserva dentro
+// de la sección crítica). El contrato que este test protege (p_notes llega
+// al encolo) es el MISMO: el payload que viaja a la cola se inspecciona
+// ahora en el mock de enqueueSaleWithReservation. saleOutbox también se
+// mockea (el outbox real usa localforage, no disponible en jsdom).
+vi.mock('@/lib/sync/offline-storage', () => {
+  const enqueuedOp = (payload: unknown) => ({
+    id: 'queued-op-1',
+    idempotencyKey: '00000000-0000-4000-8000-000000000001',
+    entity: 'sale',
+    operationType: 'CREATE',
+    payload,
+    createdAt: new Date().toISOString(),
+    clientClock: Date.now(),
+    status: 'pending',
+    attempts: 0,
+  });
+  return {
+    offlineStorage: {
+      enqueueSaleWithReservation: h.enqueueSaleMock,
+      getPendingOperations: vi.fn().mockResolvedValue([]),
+      getFailedCount: vi.fn().mockResolvedValue(0),
+      removeSyncedOperations: vi.fn().mockResolvedValue(undefined),
+      updateOperationStatus: vi.fn().mockResolvedValue(undefined),
+      updateOperation: vi.fn().mockResolvedValue(undefined),
+    },
+    saleOutbox: {
+      create: vi.fn().mockImplementation(async ({ idempotencyKey }: { idempotencyKey: string }) => ({
+        idempotencyKey,
+        queueIdempotencyKey: '00000000-0000-4000-8000-000000000001',
+        storeId: '',
+        payload: null,
+        createdAt: new Date().toISOString(),
+        resolvedAt: null,
+        transport: 'queue' as const,
+      })),
+      getOpen: vi.fn().mockResolvedValue({
+        idempotencyKey: 'k',
+        queueIdempotencyKey: '00000000-0000-4000-8000-000000000001',
+        storeId: '',
+        payload: null,
+        createdAt: new Date().toISOString(),
+        resolvedAt: null,
+        transport: 'queue' as const,
+      }),
+      resolve: vi.fn().mockResolvedValue(undefined),
+    },
+    __testEnqueuedOp: enqueuedOp,
+  };
+});
 
 // Cart store: soporta selector (s => s.x) y getState() con addItem real.
 const cartAddItemMock = vi.fn();
@@ -206,19 +260,30 @@ describe('CP-POS-007 · notas de venta del Catálogo de Ventas', () => {
     expect(body.sale_notes).toHaveLength(1000);
   });
 
-  it('OFFLINE: el enqueue a createSale incluye p_notes', async () => {
+  it('OFFLINE: el enqueue a la cola incluye p_notes', async () => {
     h.onlineHolder.current = false;
+    // CP-POS-002: el camino offline ahora encola con validación de reserva
+    // (enqueueSaleWithReservation). El contrato p_notes se mantiene.
+    h.enqueueSaleMock.mockResolvedValue({
+      ok: true,
+      op: { id: 'queued-op-1', status: 'pending' },
+    });
     const result = await setupRow();
 
     await act(async () => {
       await result.current.confirmCheckout('Venta offline con nota');
     });
 
-    expect(h.createSaleMock).toHaveBeenCalledTimes(1);
-    const params = h.createSaleMock.mock.calls[0][0];
+    expect(h.enqueueSaleMock).toHaveBeenCalledTimes(1);
+    const enq = h.enqueueSaleMock.mock.calls[0][0];
     // Punto 2 del defecto: la nota también viaja encolada.
-    expect(params.p_notes).toBe('Venta offline con nota');
-    expect(params.p_store_id).toBe(STORE_ID);
+    expect(enq.payload.p_notes).toBe('Venta offline con nota');
+    expect(enq.payload.p_store_id).toBe(STORE_ID);
+    // CP-POS-002 (D1): la llave de idempotencia del payload es la ESTABLE
+    // (misma que el outbox registró), no una nueva por intento.
+    expect(enq.payload.p_idempotency_key).toMatch(/^sale-[0-9a-f-]{36}$/);
+    expect(enq.entity).toBe('sale');
+    expect(enq.operationType).toBe('CREATE');
   });
 
   it('SCHEMA: createSaleParamsSchema NO elimina p_notes (regla zod strip)', async () => {
