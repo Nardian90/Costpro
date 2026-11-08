@@ -394,9 +394,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // COSTPRO-FINAL-CYCLE-CLOSE-001 (2026-11-08): +1 endurecimiento permisos RPC diagnóstico (20261108140300) = 134
     // COSTPRO-SALES-DASHBOARD-001 (2026-11-08): +1 RPC agregado de analytics de ventas (20261108141000) = 135
     // CP-DOC-SC-DATA-MAPPING-006 (2026-11-08): +1 código consecutivo de tienda (20261108200000) = 136; +1 número documental de entrada (20261108201000) = 137
-    expect(m.total_incluidos).toBe(137);
+    // COSTPRO-SALES-DASHBOARD-REFINEMENT-002 (2026-11-08): +1 comparación entre tiendas (20261108220000) = 138
+    expect(m.total_incluidos).toBe(138);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(137);
+    expect(incluidos.length).toBe(138);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -452,6 +453,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261108141000_sales_dashboard_analytics.sql')).toBe(135);
     expect(pos('20261108200000_cp_doc_sc006_store_code.sql')).toBe(136);
     expect(pos('20261108201000_cp_doc_sc006_receipt_document_number.sql')).toBe(137);
+    expect(pos('20261108220000_sales_dashboard_stores_comparison.sql')).toBe(138);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }
