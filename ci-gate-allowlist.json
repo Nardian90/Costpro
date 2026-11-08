@@ -830,5 +830,15 @@
       "expires": "2026-12-31"
     }
   ],
-  "source_of_truth_baseline": []
+  "source_of_truth_baseline": [
+    {
+      "function": "next_document_number",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-DOC-SC-DATA-MAPPING-006 · la migración 20261108201000 añade el tipo documental 'entrada' (prefijo ENT) a next_document_number/3 vía CREATE OR REPLACE. La surface LIVE de producción aún conserva el cuerpo anterior (sin 'entrada'): la deriva se resuelve al desplegar la migración en producción — retirar esta excepción y regenerar contract-surface (scripts/export-contract-surface.cjs) tras el despliegue autorizado.",
+      "added_by": "CP-DOC-SC-DATA-MAPPING-006",
+      "expires": "2027-01-31"
+    }
+  ]
 }

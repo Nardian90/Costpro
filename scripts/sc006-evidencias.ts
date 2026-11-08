@@ -31,6 +31,7 @@ import {
   type Sc204SourceData,
   type Sc204SourceItem,
 } from '../src/lib/legal/sc204';
+import type { SaldoPosteriorResultado } from '../src/lib/inventory/saldo-posterior';
 import { buildSc208ModelData, renderSc208Pdf } from '../src/lib/legal/sc208';
 import { buildSc209ModelData, renderSc209Pdf } from '../src/lib/legal/sc209';
 import { buildSc216ModelData, renderSc216Pdf } from '../src/lib/legal/sc216';
@@ -86,7 +87,7 @@ const LOGO_TIENDA = pngMarca();
 
 // ── Recepción REAL (E2E) + saldos reales del ledger ──
 const real = JSON.parse(readFileSync('/home/z/my-project/sc006-recepcion-real.json', 'utf8'));
-const saldos: Record<string, { saldoPosterior: number; fuente: string }> = {};
+const saldos: Record<string, SaldoPosteriorResultado> = {};
 for (const item of real.items) {
   const { data: mov } = await sb
     .from('stock_movements')
@@ -95,10 +96,13 @@ for (const item of real.items) {
     .eq('product_id', item.product_id)
     .order('created_at', { ascending: false })
     .limit(1);
+  // Mismo contrato que fetchSc204SourceData: saldo del ledger tras la
+  // recepción (balance_after del último movimiento del producto en la tienda).
   saldos[item.product_id] = {
+    saldoAnterior: (mov?.[0]?.balance_after ?? 0) - Number(item.quantity),
     saldoPosterior: mov?.[0]?.balance_after ?? null,
-    fuente: mov?.[0] ? 'ledger' : 'sin-datos',
-  } as never;
+    fuente: mov?.[0] ? 'ledger' : 's/d',
+  } as SaldoPosteriorResultado;
 }
 
 const mkItem = (o: Partial<Sc204SourceItem> = {}): Sc204SourceItem => ({
