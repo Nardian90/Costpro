@@ -7,6 +7,9 @@ import { rateLimit } from '@/lib/rate-limit';
 import { validateOrigin } from '@/lib/csrf';
 import { withTracing } from '@/lib/observability';
 import { createApiError } from '@/lib/api-errors';
+// CP-SEC-019: validadores UUID permisivos (resilientUuid) — prohibido
+// z.string().uuid() estricto en src/app/api (uuid-loose-central-contract).
+import { optionalResilientUuid } from '@/validation/schemas';
 import { z } from 'zod';
 
 export const runtime = 'nodejs';
@@ -42,7 +45,7 @@ const discardSchema = z.object({
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
     'operationKey debe ser el UUID de la operación en cola',
   ),
-  storeId: z.string().uuid().nullable().optional(),
+  storeId: optionalResilientUuid,
   entity: z.enum(['sale', 'reception', 'adjustment', 'transfer']).default('sale'),
   /** Código canónico del conflicto (ERR_*, para la trazabilidad del evento). */
   errorCode: z.string().max(120).optional(),
