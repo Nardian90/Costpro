@@ -392,9 +392,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // MISIÓN 2026-11-08 (PR #1565, continuación): +1 reconciliación de datos compartidos con la tienda como referencia (20261108120000_cp_catalogo_reconciliacion_datos_compartidos) = 130
     // MISIÓN DATA-INTEGRITY-REMEDIATION-001 (2026-11-08): +3 integridad referencial soft-refs (20261108140000) = 131; reconciliación Storage bucket stores (20261108140100) = 132; prevención check_data_integrity (20261108140200) = 133
     // COSTPRO-FINAL-CYCLE-CLOSE-001 (2026-11-08): +1 endurecimiento permisos RPC diagnóstico (20261108140300) = 134
-    expect(m.total_incluidos).toBe(134);
+    // COSTPRO-SALES-DASHBOARD-001 (2026-11-08): +1 RPC agregado de analytics de ventas (20261108141000) = 135
+    expect(m.total_incluidos).toBe(135);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(134);
+    expect(incluidos.length).toBe(135);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -447,6 +448,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261108140100_data_integrity_remediation_001_storage_reconcile.sql')).toBe(132);
     expect(pos('20261108140200_data_integrity_remediation_001_prevention.sql')).toBe(133);
     expect(pos('20261108140300_data_integrity_remediation_001_rpc_permissions.sql')).toBe(134);
+    expect(pos('20261108141000_sales_dashboard_analytics.sql')).toBe(135);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }
