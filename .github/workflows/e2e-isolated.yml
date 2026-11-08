@@ -96,6 +96,12 @@ jobs:
       # paso "Resumen de pruebas" siempre decía "Sin reporte JSON". Con esta
       # variable el json reporter escribe el archivo (relativo al cwd).
       PLAYWRIGHT_JSON_OUTPUT_NAME: 'test-results/report.json'
+      # CP-POS-002 (T6 de COSTPRO-FINAL-CYCLE-CLOSE-001): opt-in del spec
+      # offline (e2e/pos-offline.spec.ts, @offline). Se mantiene FUERA del
+      # filtro por defecto; con spec_filter=pos-offline + esta variable la
+      # corrida manual ejecuta la batería offline (requisito: 3 verdes
+      # consecutivas antes de considerarla estable).
+      CP_POS_002_RUN_OFFLINE_E2E: '1'
       # Alias que usa la app y los fixtures (misma fuente de verdad)
       NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
