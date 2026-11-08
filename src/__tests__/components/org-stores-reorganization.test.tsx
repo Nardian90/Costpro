@@ -36,6 +36,13 @@ const h = vi.hoisted(() => {
     // false → stub ligero (tests de cableado en OrganizationDetailModal);
     // true → delega en el componente REAL (tests de scoping del listado).
     useRealStoresManagement: false,
+    setCurrentViewSpy: vi.fn(),
+    setOrganizationDetailStateSpy: vi.fn(),
+    orgRow: {
+      id: 'org-1', name: 'Constructora del Este', owner_id: null, owner_name: null,
+      plan: 'pro', is_active: true, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
+      stores_total: 2, stores_active: 2, users: 1,
+    },
   };
 });
 
@@ -46,7 +53,11 @@ vi.mock('next-intl', () => ({
 
 vi.mock('@/store', () => ({
   useAuthStore: (sel: any) => (sel ? sel({ user: h.testUser }) : { user: h.testUser }),
-  useUIStore: (sel: any) => (sel ? sel({ setCurrentView: vi.fn() }) : { setCurrentView: vi.fn() }),
+  useUIStore: (sel: any) => (sel ? sel({
+    setCurrentView: h.setCurrentViewSpy,
+    setOrganizationDetailState: h.setOrganizationDetailStateSpy,
+    organizationDetailState: { orgId: null, tab: 'tiendas' },
+  }) : { setCurrentView: h.setCurrentViewSpy, setOrganizationDetailState: h.setOrganizationDetailStateSpy }),
 }));
 
 vi.mock('@/hooks/ui/useMobile', () => ({ useIsMobile: () => false }));
@@ -156,6 +167,8 @@ const STORES_FIXTURE = [
 beforeEach(() => {
   vi.clearAllMocks();
   h.useRealStoresManagement = false;
+  h.setCurrentViewSpy.mockClear();
+  h.setOrganizationDetailStateSpy.mockClear();
   h.storesManagementProps.length = 0;
   h.storeEditFormProps.length = 0;
   h.useStoresSpy.mockClear();
@@ -214,18 +227,22 @@ describe('ManagementHubView — tabs reorganizados (CP-UX-ORG-STORES-001)', () =
   });
 });
 
-// ── 2 · Organizaciones → tab Tiendas ────────────────────────────────
+// ── 2 · Organizaciones → página dedicada (CP-UX-ORG-STORES-002) ────
 
-describe('OrganizationDetailModal — gestión de tiendas de la organización', () => {
+describe('Organizaciones — menú de tres puntos → página dedicada', () => {
   vi.mock('@/hooks/api/useOrganizations', () => ({
+    useOrganizations: () => ({
+      data: {
+        data: [h.orgRow],
+        pagination: { page: 1, limit: 50, total: 1, totalPages: 1 },
+        summary: { organizations: 1, active_organizations: 1, stores: 2, assigned_users: 1, unassigned_users: 0, scope: 'all' },
+      },
+      isLoading: false, isError: false, error: null, refetch: vi.fn(), isRefetching: false,
+    }),
     useOrganizationDetail: (orgId: string | null) => ({
       data: orgId
         ? {
-            organization: {
-              id: 'org-1', name: 'Constructora del Este', owner_id: null, owner_name: null,
-              plan: 'pro', is_active: true, created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
-              stores_total: 2, stores_active: 2, users: 1, subscription_status: 'active', custom_domain: null,
-            },
+            organization: { ...h.orgRow, subscription_status: 'active', custom_domain: null, owner_name: null },
             stores: [
               { id: 'store-1', name: 'Almacen Central', slug: 'almacen-central', is_active: true, is_archived: false, created_at: '2026-01-01T00:00:00Z' },
               { id: 'store-2', name: 'Tienda Este', slug: 'tienda-este', is_active: true, is_archived: false, created_at: '2026-01-02T00:00:00Z' },
@@ -233,40 +250,48 @@ describe('OrganizationDetailModal — gestión de tiendas de la organización', 
             users: [{ id: 'u1', full_name: 'Admin Uno', email: 'a@x.cu', role: 'admin', is_active: true }],
           }
         : undefined,
-      isLoading: false,
-      isError: false,
-      error: null,
-      refetch: vi.fn(),
+      isLoading: false, isError: false, error: null, refetch: vi.fn(),
     }),
+    useDeleteOrganization: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+    useCreateOrganization: () => ({ mutate: vi.fn(), mutateAsync: vi.fn(), isPending: false }),
+    useUpdateOrganization: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useAssignUserOrganization: () => ({ mutateAsync: vi.fn(), isPending: false }),
   }));
 
-  const renderDetail = async (initialTab?: 'resumen' | 'tiendas') => {
-    const { OrganizationDetailModal } = await import('@/components/views/terminal/views/organizations/OrganizationDetailModal');
-    render(
-      <OrganizationDetailModal
-        orgId="org-1"
-        onOpenChange={() => {}}
-        onEdit={() => {}}
-        initialTab={initialTab}
-      />,
-      { wrapper: Wrapper }
-    );
-    await waitFor(() => expect(screen.getByRole('tablist', { name: 'Secciones del detalle' })).toBeDefined());
+  const renderOrgList = async () => {
+    const OrganizationsView = (await import('@/components/views/terminal/views/organizations/OrganizationsView')).default;
+    render(<OrganizationsView />, { wrapper: Wrapper });
+    await waitFor(() => expect(screen.getByText('Constructora del Este')).toBeDefined());
   };
 
-  it('entrada directa initialTab="tiendas": monta StoresManagementView con el CONTEXTO de la organización', async () => {
-    await renderDetail('tiendas');
-    const stub = await waitFor(() => screen.getByTestId('stores-management-stub'));
-    expect(stub.getAttribute('data-org')).toBe('org-1');
-    // El contexto llegó como prop estructurada (no una segunda fuente de datos)
-    expect(h.storesManagementProps[0].organization).toEqual({ id: 'org-1', name: 'Constructora del Este' });
-    // El tab activo es Tiendas con el conteo del detalle
-    expect(screen.getByRole('tab', { selected: true }).textContent).toContain('Tiendas (2)');
+  it('acción «Tiendas» del menú NAVEGA a la página dedicada (no abre modal)', async () => {
+    await renderOrgList();
+    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Constructora del Este' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Tiendas' }));
+    // Contexto organizativo fijado + navegación a la vista dedicada
+    expect(h.setOrganizationDetailStateSpy).toHaveBeenCalledWith('org-1', 'tiendas');
+    expect(h.setCurrentViewSpy).toHaveBeenCalledWith('organization-detail');
+    // Nada de modal: sin contenido de gestión montado en superposición
+    expect(screen.queryByTestId('stores-management-stub')).toBeNull();
   });
 
-  it('por defecto abre Resumen (no cambia el comportamiento de entrada estándar)', async () => {
-    await renderDetail();
-    expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Resumen');
+  it('acción «Clientes y Proveedores» navega a la página con tab terceros', async () => {
+    await renderOrgList();
+    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Constructora del Este' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Clientes y Proveedores' }));
+    expect(h.setOrganizationDetailStateSpy).toHaveBeenCalledWith('org-1', 'terceros');
+    expect(h.setCurrentViewSpy).toHaveBeenCalledWith('organization-detail');
+  });
+
+  it('«Ver detalle» mantiene el modal de lectura SIN tab de gestión de tiendas', async () => {
+    await renderOrgList();
+    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Constructora del Este' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Ver detalle' }));
+    await waitFor(() => expect(screen.getByRole('tablist', { name: 'Secciones del detalle' })).toBeDefined());
+    const labels = screen.getAllByRole('tab').map(t => t.textContent);
+    expect(labels).toEqual(expect.arrayContaining(['Resumen', 'Catálogo', 'Usuarios (1)', 'Configuración']));
+    // La gestión de tiendas ya NO vive en el modal (vive en la página dedicada)
+    expect(labels).not.toContain('Tiendas (2)');
     expect(screen.queryByTestId('stores-management-stub')).toBeNull();
   });
 });

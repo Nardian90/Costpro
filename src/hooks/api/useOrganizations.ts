@@ -45,7 +45,14 @@ export interface OrganizationDetail {
     custom_domain: string | null;
     owner_name: string | null;
   };
-  stores: Array<{ id: string; name: string; slug: string | null; is_active: boolean; is_archived: boolean; created_at: string }>;
+  // CP-UX-ORG-STORES-002: party_store_links(status) (0 o 1 fila por tienda,
+  // UNIQUE(store_id)) — estado de conexión al Clasificador Maestro. La página
+  // dedicada ancla la pestaña Clientes y Proveedores en una tienda conectada
+  // para mostrar el catálogo DE LA ORGANIZACIÓN con autorización intacta.
+  stores: Array<{
+    id: string; name: string; slug: string | null; is_active: boolean; is_archived: boolean; created_at: string;
+    classifier_connected?: boolean;
+  }>;
   users: Array<{ id: string; full_name: string; email: string; role: string; is_active: boolean }>;
 }
 

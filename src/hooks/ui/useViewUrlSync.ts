@@ -34,12 +34,16 @@ import { normalizeLegacyView, HOME_VIEW } from '@/config/navigation/navigation-d
  * pushState/popstate nativos (HelpView ?doc= sigue funcionando).
  */
 
-function canonicalSearch(view: string, tab?: string): string {
+function canonicalSearch(view: string, tab?: string, org?: string | null): string {
   // Home limpia: '/' representa el dashboard (un solo concepto Inicio)
   if (view === HOME_VIEW && !tab) return '';
 
   const params = new URLSearchParams();
   params.set('view', view);
+  // CP-UX-ORG-STORES-002: la página dedicada de organización lleva el
+  // contexto en la URL (org + tab) — refresh, deep-link y Back/Forward
+  // restauran la organización y la pestaña activa.
+  if (view === 'organization-detail' && org) params.set('org', org);
   if (tab) params.set('tab', tab);
 
   // HelpView usa ?doc= (deep-link de ayuda contextual) — preservarlo
@@ -50,13 +54,15 @@ function canonicalSearch(view: string, tab?: string): string {
   return params.toString();
 }
 
-function parseViewFromUrl(): { view: string; tab?: string } | null {
+function parseViewFromUrl(): { view: string; tab?: string; org?: string } | null {
   if (typeof window === 'undefined') return null;
   const params = new URLSearchParams(window.location.search);
   const rawView = params.get('view');
   if (!rawView) return null;
+  // CP-UX-ORG-STORES-002: contexto organizativo de la página dedicada
+  const org = params.get('org') ?? undefined;
   // Alias legacy (occ, wrappers viejos, gen-quick…) → destino canónico
-  return normalizeLegacyView(rawView, params.get('tab') ?? undefined);
+  return { ...normalizeLegacyView(rawView, params.get('tab') ?? undefined), org };
 }
 
 function currentSearch(): string {
@@ -68,6 +74,8 @@ export function useViewUrlSync() {
   const currentView = useUIStore(s => s.currentView);
   const ipvActiveTab = useUIStore(s => s.ipvActiveTab);
   const activeCostSection = useUIStore(s => s.activeCostSection);
+  const organizationDetailState = useUIStore(s => s.organizationDetailState);
+  const setOrganizationDetailState = useUIStore(s => s.setOrganizationDetailState);
   const setCurrentView = useUIStore(s => s.setCurrentView);
   const setIpvActiveTab = useUIStore(s => s.setIpvActiveTab);
   const setActiveCostSection = useUIStore(s => s.setActiveCostSection);
@@ -100,6 +108,15 @@ export function useViewUrlSync() {
       setIpvActiveTab(fromUrl.tab);
     } else if (fromUrl.view === 'cost-sheets' && fromUrl.tab) {
       setActiveCostSection(fromUrl.tab);
+    } else if (fromUrl.view === 'organization-detail') {
+      // CP-UX-ORG-STORES-002: deep-link /?view=organization-detail&org=<uuid>
+      // Sin org en la URL la página no tiene contexto → redirigir al listado
+      // de organizaciones (misma estrategia que HelpView sin ?doc=).
+      if (fromUrl.org) {
+        setOrganizationDetailState(fromUrl.org, fromUrl.tab === 'terceros' ? 'terceros' : 'tiendas');
+      } else {
+        setCurrentView('organizations');
+      }
     }
   }, []);
 
@@ -116,16 +133,22 @@ export function useViewUrlSync() {
       ? ipvActiveTab
       : currentView === 'cost-sheets'
         ? activeCostSection
-        : undefined;
+        : currentView === 'organization-detail'
+          ? organizationDetailState.tab
+          : undefined;
 
-    const target = canonicalSearch(currentView, tab);
+    const target = canonicalSearch(
+      currentView,
+      tab,
+      currentView === 'organization-detail' ? organizationDetailState.orgId : undefined,
+    );
     if (target === currentSearch()) return;
     try {
       window.history.pushState(null, '', target ? `/?${target}` : '/');
     } catch {
       // Safari occasionally throws on rapid pushState — ignore
     }
-  }, [currentView, ipvActiveTab, activeCostSection]);
+  }, [currentView, ipvActiveTab, activeCostSection, organizationDetailState]);
 
   // 3) POPSTATE (Back/Forward): la URL manda de vuelta al store.
   useEffect(() => {
@@ -139,6 +162,14 @@ export function useViewUrlSync() {
         // GATE 1.4R.1: fallback coherente con el nuevo default del store —
         // sin tab en la URL el módulo abre su núcleo de trabajo (Experto).
         setActiveCostSection(fromUrl?.tab ?? 'main');
+      } else if (view === 'organization-detail') {
+        // CP-UX-ORG-STORES-002: Back/Forward restaura organización y pestaña;
+        // sin org → listado de organizaciones (mismo criterio del montaje).
+        if (fromUrl?.org) {
+          setOrganizationDetailState(fromUrl.org, fromUrl.tab === 'terceros' ? 'terceros' : 'tiendas');
+        } else {
+          setCurrentView('organizations');
+        }
       }
     };
     window.addEventListener('popstate', onPopState);

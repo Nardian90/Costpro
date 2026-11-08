@@ -45,9 +45,20 @@ const touch = 'min-h-[44px]';
 type KindFilter = 'all' | 'client' | 'supplier' | 'ambos';
 type StatusFilter = 'active' | 'archived' | 'all';
 
-export function ClientesProveedoresView() {
+/**
+ * CP-UX-ORG-STORES-002 — Prop opcional `storeId`: contexto operativo ancla.
+ *
+ * Sin la prop (TerminalShell, acceso OPERACIÓN): usa la tienda activa del
+ * usuario — comportamiento intacto. Con la prop (pestaña «Clientes y
+ * Proveedores» de la página dedicada de una organización): la vista opera
+ * sobre esa tienda ANCLA de la organización — misma fuente de datos
+ * (RPCs que derivan el tenant de la tienda), mismas reglas de negocio,
+ * mismas autorizaciones server-side (has_store_access_as + roles). No
+ * existe una segunda implementación del módulo.
+ */
+export function ClientesProveedoresView({ storeId: storeIdProp }: { storeId?: string | null } = {}) {
   const { user } = useAuthStore();
-  const storeId = user?.activeStoreId || null;
+  const storeId = (storeIdProp ?? user?.activeStoreId) || null;
   const isAdmin = isAdminLevel(user?.role);
 
   const [search, setSearch] = useState('');
@@ -227,7 +238,7 @@ export function ClientesProveedoresView() {
               </thead>
               <tbody>
                 {parties.map(p => (
-                  <PartyTableRow key={`${p.source}-${p.id}`} p={p} onDetail={() => setDetailParty(p)} onEdit={() => setEditParty(p)} onDelete={() => setDeleteParty(p)} />
+                  <PartyTableRow key={`${p.source}-${p.id}`} p={p} onDetail={() => setDetailParty(p)} onEdit={() => setEditParty(p)} onDelete={() => setDeleteParty(p)} storeId={storeId} />
                 ))}
               </tbody>
             </table>
@@ -235,7 +246,7 @@ export function ClientesProveedoresView() {
           {/* Móvil: cards */}
           <div className="grid grid-cols-1 gap-2 sm:hidden">
             {parties.map(p => (
-              <PartyCard key={`${p.source}-${p.id}`} p={p} onDetail={() => setDetailParty(p)} onEdit={() => setEditParty(p)} onDelete={() => setDeleteParty(p)} />
+              <PartyCard key={`${p.source}-${p.id}`} p={p} onDetail={() => setDetailParty(p)} onEdit={() => setEditParty(p)} onDelete={() => setDeleteParty(p)} storeId={storeId} />
             ))}
           </div>
           <p className="text-[11px] text-muted-foreground">
@@ -263,6 +274,7 @@ export function ClientesProveedoresView() {
           party={detailParty}
           onClose={() => setDetailParty(null)}
           onEdit={() => { setEditParty(detailParty); setDetailParty(null); }}
+          storeId={storeId}
         />
       )}
       {deleteParty && (
@@ -315,8 +327,8 @@ function SourceBadge({ source }: { source: string }) {
   );
 }
 
-function PartyActions({ p, onDetail, onEdit, onDelete }: {
-  p: MasterPartyRow; onDetail: () => void; onEdit: () => void; onDelete: () => void;
+function PartyActions({ p, onDetail, onEdit, onDelete, storeId }: {
+  p: MasterPartyRow; onDetail: () => void; onEdit: () => void; onDelete: () => void; storeId: string | null;
 }) {
   const isMaster = p.source === 'master';
   return (
@@ -329,7 +341,7 @@ function PartyActions({ p, onDetail, onEdit, onDelete }: {
           <button onClick={onEdit} className="p-2 rounded-lg hover:bg-muted" aria-label={`Editar ${p.name}`} title="Editar">
             <Pencil className="w-4 h-4" />
           </button>
-          <PartyToggle p={p} />
+          <PartyToggle p={p} storeId={storeId} />
           <button onClick={onDelete} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive" aria-label={`Eliminar ${p.name}`} title="Eliminar (solo sin historial)">
             <Trash2 className="w-4 h-4" />
           </button>
@@ -340,9 +352,7 @@ function PartyActions({ p, onDetail, onEdit, onDelete }: {
 }
 
 /** Activar/Desactivar (status active ⇄ archived) con trazabilidad. */
-function PartyToggle({ p }: { p: MasterPartyRow }) {
-  const { user } = useAuthStore();
-  const storeId = user?.activeStoreId || null;
+function PartyToggle({ p, storeId }: { p: MasterPartyRow; storeId: string | null }) {
   const mut = useUpdateMasterParty(storeId);
 
   const toggle = async () => {
@@ -368,8 +378,8 @@ function PartyToggle({ p }: { p: MasterPartyRow }) {
   );
 }
 
-function PartyTableRow({ p, onDetail, onEdit, onDelete }: {
-  p: MasterPartyRow; onDetail: () => void; onEdit: () => void; onDelete: () => void;
+function PartyTableRow({ p, onDetail, onEdit, onDelete, storeId }: {
+  p: MasterPartyRow; onDetail: () => void; onEdit: () => void; onDelete: () => void; storeId: string | null;
 }) {
   return (
     <tr className="border-t border-border hover:bg-muted/30">
@@ -390,13 +400,13 @@ function PartyTableRow({ p, onDetail, onEdit, onDelete }: {
       </td>
       <td className="px-3 py-2.5"><StatusBadge status={p.status} /></td>
       <td className="px-3 py-2.5"><SourceBadge source={p.source} /></td>
-      <td className="px-3 py-2.5"><PartyActions p={p} onDetail={onDetail} onEdit={onEdit} onDelete={onDelete} /></td>
+      <td className="px-3 py-2.5"><PartyActions p={p} onDetail={onDetail} onEdit={onEdit} onDelete={onDelete} storeId={storeId} /></td>
     </tr>
   );
 }
 
-function PartyCard({ p, onDetail, onEdit, onDelete }: {
-  p: MasterPartyRow; onDetail: () => void; onEdit: () => void; onDelete: () => void;
+function PartyCard({ p, onDetail, onEdit, onDelete, storeId }: {
+  p: MasterPartyRow; onDetail: () => void; onEdit: () => void; onDelete: () => void; storeId: string | null;
 }) {
   return (
     <div className="p-4 rounded-xl border border-border bg-card">
@@ -418,7 +428,7 @@ function PartyCard({ p, onDetail, onEdit, onDelete }: {
       </div>
       <div className="flex items-center justify-between">
         <StatusBadge status={p.status} />
-        <PartyActions p={p} onDetail={onDetail} onEdit={onEdit} onDelete={onDelete} />
+        <PartyActions p={p} onDetail={onDetail} onEdit={onEdit} onDelete={onDelete} storeId={storeId} />
       </div>
     </div>
   );
@@ -608,13 +618,12 @@ const FIELD_LABELS: Record<string, string> = {
   classification: 'Clasificación',
 };
 
-function PartyDetailModal({ party, onClose, onEdit }: {
+function PartyDetailModal({ party, onClose, onEdit, storeId }: {
   party: MasterPartyRow;
   onClose: () => void;
   onEdit: () => void;
+  storeId: string | null;
 }) {
-  const { user } = useAuthStore();
-  const storeId = user?.activeStoreId || null;
   const { data: log = [], isLoading: logLoading } = usePartyChangeLog(party.source === 'master' ? party.id : party.master_party_id);
   const activateMut = useActivateMasterParty(storeId);
   const isMaster = party.source === 'master';

@@ -303,6 +303,11 @@ const VIEW_TO_HUB_MAP: Record<string, { hubId: string; leafLabel: string }> = {
   lots: { hubId: 'inventory', leafLabel: 'Lotes' },
   // Contextuales de Gestión de Tiendas
   stores: { hubId: 'management-hub', leafLabel: 'Tiendas' },
+  // CP-UX-ORG-STORES-002: página dedicada de administración de una
+  // organización (Ingreso: SISTEMA > Organizaciones → acción «Tiendas» o
+  // «Clientes y Proveedores»). El breadcrumb se cuelga del ítem
+  // Organizaciones del árbol (findDefinitionPath resuelve cualquier ítem).
+  'organization-detail': { hubId: 'organizations', leafLabel: 'Administración de la organización' },
   // MISIÓN CLASIFICADOR MAESTRO (FASE 3): 'clientes-proveedores' NO necesita
   // entrada aquí — es hoja directa de OPERACIÓN y su breadcrumb se deriva del
   // árbol de la definición (fuente única), igual que 'pos' o 'cash_report'.

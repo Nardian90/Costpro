@@ -79,6 +79,13 @@ test.afterAll(async () => {
   }
 });
 
+/**
+ * CP-UX-ORG-STORES-002: la acción «Tiendas» del menú de tres puntos NAVEGA a
+ * la página dedicada de la organización (/?view=organization-detail&org=<id>
+ * &tab=tiendas) — nunca abre un modal. La página identifica la organización
+ * y abre inicialmente la pestaña Tiendas con el banner de contexto del
+ * listado scoped.
+ */
 async function openOrgStoresTab(page: import('@playwright/test').Page, orgName: string) {
   await page.goto('/?view=organizations');
   await expect(page.getByRole('heading', { name: 'Organizaciones' })).toBeVisible({ timeout: 30_000 });
@@ -86,7 +93,11 @@ async function openOrgStoresTab(page: import('@playwright/test').Page, orgName: 
   await expect(row).toBeVisible({ timeout: 20_000 });
   await row.getByRole('button', { name: `Opciones de ${orgName}` }).click();
   await page.getByRole('menuitem', { name: 'Tiendas' }).click();
-  // El detalle abre en el tab Tiendas con el banner de contexto
+  // La página dedicada toma el relevo (la URL refleja el contexto)
+  await page.waitForURL(/view=organization-detail&org=/, { timeout: 30_000 });
+  await expect(page.getByRole('heading', { name: orgName })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole('tab', { name: 'Tiendas', selected: true })).toBeVisible({ timeout: 20_000 });
+  // El listado scoped de la pestaña Tiendas está montado
   await expect(page.getByText('Tiendas de').first()).toBeVisible({ timeout: 30_000 });
 }
 
@@ -164,6 +175,30 @@ test.describe('CP-UX-ORG-STORES-001 · Organizaciones y Gestión de Tiendas', ()
     await expect(page.getByText(storeName).first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(pilotA.name)).toHaveCount(0);
     await expect(page.getByText(pilotB.name)).toHaveCount(0);
+  });
+
+  test('3b · Página dedicada: pestaña Clientes y Proveedores (ancla de la organización) + deep-link con refresco', async ({ page }) => {
+    test.skip(!pilotTenantId, 'Pilotos persistentes legacy sin organización: el flujo por organización se valida en run aislado');
+    const orgRows = await sb.select<{ name: string }>('tenants', `id=eq.${pilotTenantId}&select=name`);
+    const orgName = orgRows[0]?.name;
+    test.skip(!orgName, 'Organización de los pilotos no encontrada');
+
+    await injectSession(page, adminSession);
+    await openOrgStoresTab(page, orgName!);
+
+    // Cambio de pestaña dentro de la página (URL se actualiza, contexto intacto)
+    await page.getByRole('tab', { name: 'Clientes y Proveedores' }).click();
+    await page.waitForURL(/tab=terceros/, { timeout: 20_000 });
+    // El módulo de terceros (mismo que OPERACIÓN) queda montado en el contexto
+    // de la organización con la tienda ancla identificada
+    await expect(page.getByRole('heading', { name: 'Clientes y Proveedores' })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/contexto operativo:/).first()).toBeVisible({ timeout: 30_000 });
+
+    // Deep-link: refresco del navegador conserva organización y pestaña
+    await page.reload();
+    await expect(page.getByRole('heading', { name: orgName })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('tab', { name: 'Clientes y Proveedores', selected: true })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: 'Clientes y Proveedores' })).toBeVisible({ timeout: 30_000 });
   });
 
   test('4 · Pestaña Configuración: edita la TIENDA ACTIVA, persiste y se restaura', async ({ page }) => {
