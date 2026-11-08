@@ -1,0 +1,2321 @@
+{
+  "A_esquema_versiones": [
+    {
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "rule_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "version",
+      "data_type": "integer",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "snapshot",
+      "data_type": "jsonb",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "changed_by",
+      "data_type": "uuid",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "changed_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "change_reason",
+      "data_type": "text",
+      "is_nullable": "YES"
+    }
+  ],
+  "A_total_versiones": "73",
+  "A_huerfanas_rule_id": "72",
+  "A_rule_ids_huerfanos_distintos": "72",
+  "A_reglas_vivas": "1",
+  "A_versiones_huerfanas": [
+    {
+      "id": "34d2fd61-d72d-4ac6-95b6-d2e2467a1116",
+      "rule_id": "0394cc7c-a4f8-4f5d-beaf-c8ac30762553",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"c3794bc1-7f34-48fc-a8e8-de0a98fd4684\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"13f6df4d-54f6-43c1-b5af-a0c15cd06d24\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T04:59:13.934491+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "e3e6e606-5e55-4981-933e-163c3b3ee304",
+      "changed_at": "2026-10-04 04:59:13.934491+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "cf27b025-b783-4a1e-b635-8d3a49ab7750",
+      "rule_id": "03a140c6-66c6-465c-bacb-40a36571def3",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"786498bb-2a2a-4a78-aa1d-1448def1632a\", \"valid_from\": \"2026-10-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-01T03:08:09.010087+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-01 03:08:09.010087+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "8d4fae83-9e5e-4e8f-a0f9-4bcb194b3797",
+      "rule_id": "0468a80f-e16e-4ad8-a078-ddd9b0e96a25",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"d4ecd557-86bd-47ed-a594-0ed475816ff1\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T00:07:41.13393+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-04 00:07:41.13393+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "15c7a326-68f3-4946-b5da-afd752278a1b",
+      "rule_id": "046ae1a8-7ebd-4406-afe8-1825ac462050",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"56a3c360-be40-4ae1-8307-df767b0ef5f3\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T12:27:33.581141+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 12:27:33.581141+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "8ceb82a9-bdcf-49c9-9d77-acadc3dba18c",
+      "rule_id": "0506ab3b-48da-46a6-a2df-f5289fc26023",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"50b068d9-e2bb-4938-bc64-c4152ab27c2e\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T11:06:27.049257+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 11:06:27.049257+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "ae60b7f2-cf3d-4a41-867d-92c55872ecbb",
+      "rule_id": "0a4ba1ab-c62f-4be9-b1bd-91339cd55d49",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"fac0617d-348b-42a3-9fa6-c406c9bfcd4e\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"1282c823-d8c6-40c2-b032-d2facd19de75\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T20:18:48.146967+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "d41a9471-3ddf-4087-b748-f10c7224206e",
+      "changed_at": "2026-10-04 20:18:48.146967+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "e1aa5b47-721c-4e96-b4bc-da933340f62f",
+      "rule_id": "0b1c5543-cf04-4331-9522-2b6d21e70280",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"63a1152f-21c8-458f-a0bd-e74e6c37f5ce\", \"valid_from\": \"2026-10-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-01T01:39:53.593159+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-01 01:39:53.593159+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "db4cee81-603a-4f6d-bc85-5af58855489d",
+      "rule_id": "1728d35a-bf99-41a4-b6f5-94fed2c537f3",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"619c645e-e962-4f16-9144-53f6c308d2ed\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:16:04.848452+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:16:04.848452+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "0f22ff13-9b8a-4aa3-a8b7-24113d835d4a",
+      "rule_id": "190a23b0-6b7d-4864-899d-0aa7d8bdec2b",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"47d5d6e8-61ee-486b-bcdb-0cd770774262\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T13:15:59.892094+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-04 13:15:59.892094+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "8add6c9d-6640-4b6f-9e89-96d32bd715ef",
+      "rule_id": "194f8ef0-67d0-4b6b-892a-67a064718434",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"456ce345-ccd5-416c-9f9c-658f7cb440a8\", \"valid_from\": \"2026-10-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-01T00:20:13.812522+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-01 00:20:13.812522+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "8605a7ab-03dd-4ce3-b1e5-cb0860e67659",
+      "rule_id": "19d1b77f-5778-47d8-b93a-f9f7271e3f0c",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"8da0de67-fbe5-4fbb-8ec8-372fdc6852c0\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T03:05:22.723958+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 03:05:22.723958+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "b7db5d6d-9c58-40cb-9efe-69f820ef857f",
+      "rule_id": "1a061910-4f22-47a8-81cb-8008c0572854",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"cf66510c-e042-4df8-95cf-ebec17f54c48\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"df52ee39-3edd-446c-8664-dbc1f3060e89\", \"valid_from\": \"2026-10-05\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-05T02:23:35.702562+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "44ccf01f-571e-4876-81a1-2a16e77baf6f",
+      "changed_at": "2026-10-05 02:23:35.702562+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "84ac8a17-fafd-44a4-a3ee-a7163928fc16",
+      "rule_id": "1d152d08-b994-4cc3-a628-f2ae1e176f89",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"bc9fcd41-f5c5-4025-b4f0-76e306b3bd25\", \"valid_from\": \"2026-09-30\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-30T22:36:02.394937+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-30 22:36:02.394937+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "3e0d70e3-e34b-493a-9443-95f2b14d3f99",
+      "rule_id": "206ce782-e0c1-4552-b7e4-9d0836e412b2",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"f5150b2c-cd8c-4a28-bedb-7cd4b541c68e\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:08:45.902123+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:08:45.902123+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "1c47dfb6-1f6b-4a50-975c-e2306dec4745",
+      "rule_id": "23c906bf-8075-45f1-baeb-96ace733606a",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"f3f01abe-3a77-4253-bb62-e97de21d938d\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T02:20:18.297731+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-04 02:20:18.297731+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "1bba34b4-b103-43da-bc6b-1b72fba532be",
+      "rule_id": "28e5d951-d07c-4db1-b855-bc87d1b6e08c",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"f3dd7ff1-0b39-4ae2-8888-e69ca364eda4\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T11:34:11.235547+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 11:34:11.235547+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "4bfc72bd-9809-40bf-977b-b559e926ecf6",
+      "rule_id": "2cbf0070-255c-4367-801d-1cc9ae811fd4",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"8b82aeee-8465-41f3-abb2-612f0b05d34f\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"b47e0477-66f6-4d6b-8652-ca3dfa7a8c4c\", \"valid_from\": \"2026-10-05\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-05T02:17:58.223038+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "db2ca147-e8b1-4806-a0d9-b5e552dc2424",
+      "changed_at": "2026-10-05 02:17:58.223038+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "54bf9621-a5b1-4ed6-abaf-20c2b1d4ab44",
+      "rule_id": "2ee3c6e1-f951-4f73-9d1b-b3647bf63988",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"1330fadb-fa18-4b75-bd8a-750b542a479e\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"f69309c1-cd80-4406-82c5-f63a4c2b983c\", \"valid_from\": \"2026-10-05\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-05T04:25:23.336289+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "c3a76292-6f9b-43e4-b443-e37df96eda44",
+      "changed_at": "2026-10-05 04:25:23.336289+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "969f859d-9c70-4c83-8d57-a81d317874c4",
+      "rule_id": "33571b97-3809-4c61-b30b-3a77c0c02863",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"54f71baf-ae79-4bd9-9cfe-62a69ba048a9\", \"valid_from\": \"2026-09-30\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-30T23:33:24.64121+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-30 23:33:24.64121+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "6855e335-4d5f-42eb-8ee9-4626f5a9ef65",
+      "rule_id": "39cddb97-7cb1-4d2e-a593-3e3c2d030172",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"3e28774b-f50e-4766-9935-502d4f20fa75\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:16:37.854367+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:16:37.854367+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "0ff84c09-04a5-4dc1-8db8-058a27d10d6f",
+      "rule_id": "3c28319c-4eb5-4685-873e-f560e5b57155",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"33c6e494-99fb-49b3-8bc1-6d41952d3c6e\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:04:51.571362+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:04:51.571362+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "b25bd450-5166-4e24-9bbb-9829d23538f7",
+      "rule_id": "4c7f7148-241a-4b1b-ab89-63335c730efe",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"45336ab7-c193-4af1-95e5-d6683565e825\", \"valid_from\": \"2026-10-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-01T04:26:00.197835+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-01 04:26:00.197835+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "75484749-1f41-408f-ad41-dd162b553b95",
+      "rule_id": "55cefe0f-ccd7-457c-a0bc-924814a3b786",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"121455df-1f48-4348-82ad-798eabbebb36\", \"valid_from\": \"2026-10-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-01T00:16:09.19103+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-01 00:16:09.19103+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "ba9fb9d4-9612-41ee-bb8e-749a839aaa8e",
+      "rule_id": "56cbd74f-f7cc-4ef7-b846-3768936fa411",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"f7c891ec-a34d-4440-becb-7e4cfe5e8788\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T03:13:37.780553+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-04 03:13:37.780553+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "728d8c8f-7cd9-4610-8ce2-5f0bc2d36a2e",
+      "rule_id": "5bb83304-eb8d-442b-abc5-4590bc4843f4",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"85bdc63b-45d1-411c-a4e1-bc3c4192e968\", \"valid_from\": \"2026-09-30\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-30T23:29:12.006752+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-30 23:29:12.006752+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "98665906-7d02-48e1-a498-65b0d6266213",
+      "rule_id": "5cff8c84-de87-4856-bc3c-a3b4c751aaca",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"14d732a3-74ec-48ec-bf0c-fc4157c822e9\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T06:05:04.186233+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-04 06:05:04.186233+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "6f6d6442-4046-47c4-a489-acf99af32fce",
+      "rule_id": "5eda07a9-7ea3-4853-80c9-304925a2e074",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"f61ed89a-0e4c-4a43-976b-28de9313c205\", \"valid_from\": \"2026-01-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 10.00, \"snapshotted_at\": \"2026-09-10T22:46:49.709787+00:00\", \"base_calculation\": \"total_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+      "changed_at": "2026-09-10 22:46:49.709787+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "8059cb0d-542d-4985-a445-55a08fe571af",
+      "rule_id": "6fbc35fd-bd19-402f-91bc-ded3fe34e2e1",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"b7e7fd25-1299-4a5d-b735-5427a5ede8f2\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:12:30.014909+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:12:30.014909+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "4c208e0a-576a-488a-8aaf-8fb097f73e64",
+      "rule_id": "71fe6a37-5144-4825-a088-cb1b43ccecce",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"de46cb54-e68d-4132-809b-808e44caf5c7\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"8a8a0399-659e-43da-9473-609d86eec14d\", \"valid_from\": \"2026-10-05\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-05T03:54:16.069091+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "06c76bcb-0bc3-480b-bbfb-80aa86684350",
+      "changed_at": "2026-10-05 03:54:16.069091+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "6da10b90-8ed6-4713-8083-2e2423138899",
+      "rule_id": "779e33e9-826d-40a5-b8e5-2bfffcd80c44",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"e246bd03-ad8d-424f-a4c6-01311a023682\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T13:12:46.392296+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-04 13:12:46.392296+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "fe8da09d-5b4a-4ec4-96a2-83e4275983fd",
+      "rule_id": "7835ef64-498b-4eaf-a06e-789bc1d6ad1e",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"1cdbfeb8-515f-469c-90ad-8fa3e074226d\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"1a124c33-43c5-452e-9b6e-f3199fdb6c87\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T17:47:19.948971+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "ccacb0c1-f55b-431c-89a2-348553619c9a",
+      "changed_at": "2026-10-04 17:47:19.948971+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "8c8370f7-9f37-4d23-9bb5-65df1d432469",
+      "rule_id": "80c9b7f0-fa8f-4b5e-9c46-4ec4fa5e7c18",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"1c5868b3-7a1c-42cb-9c85-a3fad87ad659\", \"valid_from\": \"2026-09-30\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-30T22:40:43.001061+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-30 22:40:43.001061+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "8bcc9d31-95ff-4746-a54c-fa8167b7073a",
+      "rule_id": "80d1d804-e6ed-4e45-b8f3-6afa72bcaff0",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"4bdbd80f-58d2-4f76-8d36-788c85622939\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T06:02:14.771249+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-04 06:02:14.771249+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "2e5390ee-22b3-4b03-9277-afe788e3e52b",
+      "rule_id": "81d8c215-f5c7-4971-a48c-8ede7e3b720b",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"84f0ff86-e9e0-4297-a2f7-df6bb5d63ec3\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T13:12:00.902172+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 13:12:00.902172+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "be1f9a3b-aad2-4cb2-8a6a-8ad305f13fcc",
+      "rule_id": "85d74399-ae85-43c5-afc8-9694fbb7ff98",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"c57f4ccb-8deb-4663-a74c-977e83b99b56\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T13:48:55.493547+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 13:48:55.493547+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "ae174c04-dfd1-4eb5-a4f5-4c20bd7e2f37",
+      "rule_id": "884b369c-aefd-4ca5-83d2-d1bdb7b55e1e",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"67eabef0-406c-444f-bd8f-bc137577f65f\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"a9c7ad0f-83be-4488-9941-18b5078bfd93\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T00:54:18.32883+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "3152e7ef-501b-4902-a1dd-67389351d816",
+      "changed_at": "2026-10-04 00:54:18.32883+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "c9be3b68-c3c3-4a7e-b77b-34dc26c10edd",
+      "rule_id": "8b02f9d0-2cae-4746-847a-8a4d3d71248c",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"8cbbc689-95c1-46bb-890b-99e6f1c5911a\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"7795e10b-f5da-4772-b125-86745f9ac81b\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T21:06:41.615155+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "c5777b0a-3512-4431-83e9-e8386a53faa6",
+      "changed_at": "2026-10-04 21:06:41.615155+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "c5b72a95-fd3b-4312-b48c-1c75fd0a5faf",
+      "rule_id": "8b934240-c008-4564-972a-c99f83183249",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"5e125e29-600a-4e34-934d-ed8471ea7ca8\", \"valid_from\": \"2026-10-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-01T01:35:33.304765+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-01 01:35:33.304765+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "28ca1c7a-2a88-4d3d-a80a-1b14dc2bafdb",
+      "rule_id": "8c2efc5b-a175-4be4-9c40-01a09cec0ef4",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"fa7b3daf-f844-403a-9498-2a0395efcc5d\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"c06a3f42-5a34-4dd3-805d-2b743de9bde5\", \"valid_from\": \"2026-10-05\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-05T02:47:57.416135+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "06adaa24-e5f2-486f-92a3-945086e3c409",
+      "changed_at": "2026-10-05 02:47:57.416135+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "e5ecfe5d-f160-48a0-a8e3-7bdd13b5a0a8",
+      "rule_id": "8c86196a-5e53-4c42-ae7f-167240ab60b5",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"c998bc22-7f02-4d50-b234-a46f477cbd85\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T02:18:06.811825+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-04 02:18:06.811825+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "32ff62cc-2e26-4dde-bb01-99597d13c7ca",
+      "rule_id": "8dca57b7-a283-4b5a-ad92-65b211b7ae86",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"03914c87-6ff1-479f-bcb3-9777e6c65f6f\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T03:10:07.432571+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-04 03:10:07.432571+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "5160a252-19d7-4038-8742-be26c2585ee1",
+      "rule_id": "8e8b58c3-736e-4403-a712-0916fa840272",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": null, \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:10:50.458145+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:10:50.458145+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "df39675c-9c93-40f5-b17d-af644b3d0a3a",
+      "rule_id": "8fac1d86-f62d-4d46-89b9-82aab033a51f",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"5880d287-5ad8-4946-9b3d-468247df4197\", \"valid_from\": \"2026-09-30\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-30T01:08:49.731455+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-30 01:08:49.731455+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "3a497e52-3db2-4b60-8f18-14a2691d1ea7",
+      "rule_id": "9029da81-e584-49f4-95b1-a1980723033a",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"1eb7f23b-e92b-4bca-8317-f743a2f48fa2\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"7b10753f-7dc1-4d57-977e-836cb3776acc\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T14:41:01.446575+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "b9cd8d25-e53d-48ac-ada1-c7a36aba3cd1",
+      "changed_at": "2026-10-04 14:41:01.446575+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "64097c14-8d30-4979-9029-fd43ee688641",
+      "rule_id": "930e7a89-c151-4970-869b-d22a73ce4a1f",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"9185fda9-4661-4a3b-b701-4d333e1c4355\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:17:25.630132+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:17:25.630132+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "0bfda411-4c89-40f9-873d-a70a0439421d",
+      "rule_id": "95534b6b-961b-4224-97b8-4026654c4102",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"60779600-277d-41fc-82df-47235914c8a9\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:14:52.112241+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:14:52.112241+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "c935a838-8fd8-41ab-86b9-7bc913fa80a8",
+      "rule_id": "983cbda5-c310-428f-baa3-31264f50bce0",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"31342d30-ad1a-4e73-ad36-a6d150a9ce8f\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"848c5095-f8cf-4948-8209-1f5551d81817\", \"valid_from\": \"2026-10-05\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-05T02:19:07.527851+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "431ebdbb-9205-434b-ba1f-51c182d9ac5c",
+      "changed_at": "2026-10-05 02:19:07.527851+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "23686586-0063-4811-b345-5bd7c2b2d574",
+      "rule_id": "a0cd2460-a7ea-4099-9588-7cb105e53d5b",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"9e428a0f-ff7f-42c4-994d-c59d1c74ee38\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"77aaecd4-bfd2-42cd-abd4-1d89be5bf016\", \"valid_from\": \"2026-10-05\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-05T02:22:16.279464+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "7ceb3c67-4166-441c-978b-2123e6ef4355",
+      "changed_at": "2026-10-05 02:22:16.279464+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "e1bb61dd-b637-4db9-a922-40ed3d511ca5",
+      "rule_id": "a996cb38-26dc-415a-8509-cf8e8f6578c4",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"0c3db8a4-2c19-4553-a651-605e4ba92b20\", \"valid_from\": \"2026-10-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-01T01:36:45.279934+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-01 01:36:45.279934+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "485ab8fd-038b-40fb-9fff-a35ecb3a5dc6",
+      "rule_id": "ae57a809-b503-4236-ad52-d100e5f76a37",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"ad50baff-34fe-4707-9803-0716a435ed0d\", \"valid_from\": \"2026-09-30\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-30T01:11:35.862325+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-30 01:11:35.862325+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "8250c8d9-954d-46be-82ed-4a633ed0c761",
+      "rule_id": "affedfe1-4ac4-4b69-8b46-369520c4760b",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"21bf5888-24e9-4f53-a0d1-d34d5abc891b\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"2220a2cd-2421-4143-a1ca-82bd251a0c80\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T17:42:12.652105+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "6eed6072-4079-46f0-8c5f-fe752fff84ce",
+      "changed_at": "2026-10-04 17:42:12.652105+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "53bb0792-6498-48fc-9145-bc02d36ddc4f",
+      "rule_id": "b04ba8c7-cc63-436a-90e1-54f737668df1",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"deb88205-9602-4161-bb35-67f9c379bf19\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:11:13.926483+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:11:13.926483+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "35576074-e1a9-41e5-8dc5-1bfe2ed01272",
+      "rule_id": "b4b3d93a-2bfd-49f3-8104-d60367dfc67b",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"fbb229c5-829c-416e-8aa7-b08684b9c47e\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:11:54.644615+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:11:54.644615+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "2ce2f482-1442-4786-8b84-744a5e9720cf",
+      "rule_id": "b5d61ce9-1de1-42d9-9bcc-b1b886710e12",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"0fed91c9-8a15-44b6-877c-1c1e561715c4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": null, \"valid_from\": \"2026-01-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 10.00, \"snapshotted_at\": \"2026-08-06T23:42:27.794872+00:00\", \"base_calculation\": \"total_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "a1111111-1111-1111-1111-111111111111",
+      "changed_at": "2026-08-06 23:42:27.794872+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "a9a63c64-036f-461a-acb0-ef59ef5407fa",
+      "rule_id": "b6577abd-af60-4772-be79-4921ce27a73f",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"a361a2c6-8b2e-4811-8960-3f641a9dde49\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T00:10:50.684523+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-04 00:10:50.684523+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "65ecde37-149e-403d-8512-d951c1c2fb74",
+      "rule_id": "c7fcdb01-1735-4a95-93ed-d638d188264d",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"344052b4-05f4-4203-9c83-55b9b906dede\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"5ef42d1d-c7a5-47de-acdd-b3a6ef8d0444\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T20:23:41.227476+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "cfe903c3-344b-4b59-882c-95123185b1de",
+      "changed_at": "2026-10-04 20:23:41.227476+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "e7035858-c954-40b5-9f8d-51ad2302472e",
+      "rule_id": "c81e3925-431a-4244-a00e-103326290fc6",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"789d13d2-8e08-4341-85c8-e64f04ce7c80\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:14:16.570836+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:14:16.570836+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "e9746997-1595-4454-8c9c-2f2abf2e1400",
+      "rule_id": "cbd9b2fe-1d46-45f3-a316-347f2070979d",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"2e773e0a-55ef-43f3-9838-3cbeacea43b3\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T23:09:39.705323+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 23:09:39.705323+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "e5956162-de42-4ecc-b8f6-193ae66da105",
+      "rule_id": "d678e4d0-804d-4530-b89f-e2dca919f9a8",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"045e6cf3-f0c5-40d7-8c27-3d35cfd140bc\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T03:19:30.54656+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 03:19:30.54656+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "2c2b09e1-f5d3-44b2-928e-af23c6e65e58",
+      "rule_id": "d82c2af5-e32f-4220-a843-8cb5e32c9aac",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"d1c917c9-dcee-4503-b042-fbbbbe3dad7a\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"2e1394f8-74af-4880-b625-b27ed28dc12e\", \"valid_from\": \"2026-10-04\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-04T14:38:00.120736+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "1e001d59-3c0d-49f9-835d-759417449803",
+      "changed_at": "2026-10-04 14:38:00.120736+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "bb1d396e-c3fa-42ff-9fee-1d57b1528978",
+      "rule_id": "d91e75fe-6e69-417a-9f4e-b5447d8c9e7d",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"a066df9c-9ea8-4efa-9844-d3e81d34d0e7\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T12:15:30.254083+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 12:15:30.254083+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "de584a04-829e-47cc-8893-8a1396411d85",
+      "rule_id": "d9289335-2977-4b6e-935d-34150abecc34",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"54638e77-d027-4ff6-ac7f-6b5ff768468e\", \"valid_from\": \"2026-10-03\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-03T23:10:10.452911+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-03 23:10:10.452911+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "d2caa7fa-0594-43ac-8e2c-33cb3f292e5d",
+      "rule_id": "d9916c45-1e8a-4953-bc67-aa433bbbc4fc",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"cde2d136-74a0-4fb7-9228-e32805220067\", \"valid_from\": \"2026-10-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-01T03:12:31.631263+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-01 03:12:31.631263+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "0c22f130-4e1d-499c-a571-bf1653c82796",
+      "rule_id": "da29d1a8-0fd2-4e07-9c89-766379fbbb3a",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"8eb3921f-c81b-43eb-9651-579dca03c8eb\", \"valid_from\": \"2026-10-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-01T01:39:00.655213+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-01 01:39:00.655213+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "9d7cc24e-2362-45c2-8e2f-ef246153e0b2",
+      "rule_id": "db6f19bd-770c-47cd-adb6-c94b4b7c7134",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"b1868fd6-58b9-4ccd-99d0-fe8f2bd5f87b\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T23:14:40.864714+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 23:14:40.864714+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "58719571-2e1d-46e4-b8d4-8c48352bf92b",
+      "rule_id": "dc4791ec-889a-4cf8-9b13-6fab963464e7",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"f91b0e17-ac23-42ba-b08e-8159a6b57d83\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"97511fe6-b938-4d66-94c9-f232511372dc\", \"valid_from\": \"2026-09-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 3.00, \"snapshotted_at\": \"2026-09-07T03:45:00.126649+00:00\", \"base_calculation\": \"total_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "a1111111-1111-1111-1111-111111111111",
+      "changed_at": "2026-09-07 03:45:00.126649+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "da2a2b3b-73d5-4d66-a8d5-4c54261babce",
+      "rule_id": "dde8b225-b22f-47d3-9043-ca5df01c5bda",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"e1ede2fd-e7d3-4fc0-ba1f-476633c5591a\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"f61ed89a-0e4c-4a43-976b-28de9313c205\", \"valid_from\": \"2026-01-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 10.00, \"snapshotted_at\": \"2026-09-10T22:46:00.86529+00:00\", \"base_calculation\": \"total_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+      "changed_at": "2026-09-10 22:46:00.86529+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "8910b099-8831-4ff5-ae41-4652ef048118",
+      "rule_id": "e455da56-5940-4d13-94e2-8b1fdefb36c2",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"40ecf3ee-b93e-4ae9-a8d1-ffa446a51eae\", \"valid_from\": \"2026-10-03\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-03T23:06:59.041542+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-03 23:06:59.041542+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "2378f95d-269a-43d4-b12b-d670a4df31f2",
+      "rule_id": "eb6d119a-2732-4ae0-9030-351c7a163c6a",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"40f651f4-2993-4d46-8459-6e3bbbb17b55\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": null, \"valid_from\": \"2026-01-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 15.00, \"snapshotted_at\": \"2026-08-06T23:42:29.131514+00:00\", \"base_calculation\": \"total_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "a1111111-1111-1111-1111-111111111111",
+      "changed_at": "2026-08-06 23:42:29.131514+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "d45b8415-8f4a-4fa3-90c0-ec980fbd71dd",
+      "rule_id": "f07bff29-c748-4220-855d-d6cffb04e748",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"4ad2a981-dd22-4e4b-9791-29e3e208f104\", \"valid_from\": \"2026-10-01\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-10-01T04:21:29.240509+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-10-01 04:21:29.240509+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "1a0d364a-fd14-46c0-8f4e-a5fad373cd78",
+      "rule_id": "f75dc593-61af-4b72-96ff-a231ef61b42d",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"12bbd2a8-4046-4399-9588-f0564fe34f3a\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T03:07:59.457534+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 03:07:59.457534+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    },
+    {
+      "id": "2daf0470-c730-4363-825f-225c5b58d64a",
+      "rule_id": "f8a393e8-67d3-4fab-811d-f6c7a83b99ed",
+      "version": "1",
+      "snapshot": "{\"type\": \"percentage_sales\", \"priority\": 1, \"store_id\": \"6b5eff1a-0fc2-48fc-85af-098853e453f4\", \"valid_to\": null, \"max_price\": null, \"min_price\": null, \"worker_id\": \"703b3cd5-bbf1-4185-8267-bcdfa37fc68c\", \"valid_from\": \"2026-09-29\", \"fixed_value\": null, \"salary_amount\": null, \"value_percent\": 5.00, \"snapshotted_at\": \"2026-09-29T02:20:09.111439+00:00\", \"base_calculation\": \"net_sales\", \"product_commission_mode\": null, \"product_commission_amount\": null}",
+      "changed_by": "051c6157-600b-425e-b8c0-72388bacf541",
+      "changed_at": "2026-09-29 02:20:09.111439+00",
+      "change_reason": "",
+      "versiones_de_la_misma_regla": "1"
+    }
+  ],
+  "A_versiones_validas": [
+    {
+      "id": "81addf8a-8cb9-432e-90c1-7b0135a47242",
+      "rule_id": "79fc05ac-5243-4646-9693-b84b5c872e76",
+      "version": "1",
+      "changed_at": "2026-10-14 16:00:48.989023+00",
+      "change_reason": ""
+    }
+  ],
+  "A_pagos_por_regla_huerfana": [],
+  "A_total_pagos": "1",
+  "A_columnas_commission_receptions": [],
+  "A_recepciones_regla_huerfana": "tabla inexistente",
+  "A_audit_commission_rules": [],
+  "A_rango_creacion": [
+    [
+      "2026-08-06 23:42:27.794872+00",
+      "2026-10-05 04:25:23.336289+00",
+      "72"
+    ]
+  ],
+  "A_distribucion_por_regla": [
+    {
+      "rule_id": "8dca57b7-a283-4b5a-ad92-65b211b7ae86",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 03:10:07.432571+00",
+      "ultima": "2026-10-04 03:10:07.432571+00"
+    },
+    {
+      "rule_id": "5bb83304-eb8d-442b-abc5-4590bc4843f4",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-30 23:29:12.006752+00",
+      "ultima": "2026-09-30 23:29:12.006752+00"
+    },
+    {
+      "rule_id": "3c28319c-4eb5-4685-873e-f560e5b57155",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:04:51.571362+00",
+      "ultima": "2026-09-29 02:04:51.571362+00"
+    },
+    {
+      "rule_id": "8fac1d86-f62d-4d46-89b9-82aab033a51f",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-30 01:08:49.731455+00",
+      "ultima": "2026-09-30 01:08:49.731455+00"
+    },
+    {
+      "rule_id": "8b02f9d0-2cae-4746-847a-8a4d3d71248c",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 21:06:41.615155+00",
+      "ultima": "2026-10-04 21:06:41.615155+00"
+    },
+    {
+      "rule_id": "85d74399-ae85-43c5-afc8-9694fbb7ff98",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 13:48:55.493547+00",
+      "ultima": "2026-09-29 13:48:55.493547+00"
+    },
+    {
+      "rule_id": "eb6d119a-2732-4ae0-9030-351c7a163c6a",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-08-06 23:42:29.131514+00",
+      "ultima": "2026-08-06 23:42:29.131514+00"
+    },
+    {
+      "rule_id": "affedfe1-4ac4-4b69-8b46-369520c4760b",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 17:42:12.652105+00",
+      "ultima": "2026-10-04 17:42:12.652105+00"
+    },
+    {
+      "rule_id": "d82c2af5-e32f-4220-a843-8cb5e32c9aac",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 14:38:00.120736+00",
+      "ultima": "2026-10-04 14:38:00.120736+00"
+    },
+    {
+      "rule_id": "dc4791ec-889a-4cf8-9b13-6fab963464e7",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-07 03:45:00.126649+00",
+      "ultima": "2026-09-07 03:45:00.126649+00"
+    },
+    {
+      "rule_id": "2ee3c6e1-f951-4f73-9d1b-b3647bf63988",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-05 04:25:23.336289+00",
+      "ultima": "2026-10-05 04:25:23.336289+00"
+    },
+    {
+      "rule_id": "190a23b0-6b7d-4864-899d-0aa7d8bdec2b",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 13:15:59.892094+00",
+      "ultima": "2026-10-04 13:15:59.892094+00"
+    },
+    {
+      "rule_id": "0506ab3b-48da-46a6-a2df-f5289fc26023",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 11:06:27.049257+00",
+      "ultima": "2026-09-29 11:06:27.049257+00"
+    },
+    {
+      "rule_id": "884b369c-aefd-4ca5-83d2-d1bdb7b55e1e",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 00:54:18.32883+00",
+      "ultima": "2026-10-04 00:54:18.32883+00"
+    },
+    {
+      "rule_id": "0468a80f-e16e-4ad8-a078-ddd9b0e96a25",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 00:07:41.13393+00",
+      "ultima": "2026-10-04 00:07:41.13393+00"
+    },
+    {
+      "rule_id": "e455da56-5940-4d13-94e2-8b1fdefb36c2",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-03 23:06:59.041542+00",
+      "ultima": "2026-10-03 23:06:59.041542+00"
+    },
+    {
+      "rule_id": "d9916c45-1e8a-4953-bc67-aa433bbbc4fc",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-01 03:12:31.631263+00",
+      "ultima": "2026-10-01 03:12:31.631263+00"
+    },
+    {
+      "rule_id": "6fbc35fd-bd19-402f-91bc-ded3fe34e2e1",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:12:30.014909+00",
+      "ultima": "2026-09-29 02:12:30.014909+00"
+    },
+    {
+      "rule_id": "1a061910-4f22-47a8-81cb-8008c0572854",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-05 02:23:35.702562+00",
+      "ultima": "2026-10-05 02:23:35.702562+00"
+    },
+    {
+      "rule_id": "8c2efc5b-a175-4be4-9c40-01a09cec0ef4",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-05 02:47:57.416135+00",
+      "ultima": "2026-10-05 02:47:57.416135+00"
+    },
+    {
+      "rule_id": "194f8ef0-67d0-4b6b-892a-67a064718434",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-01 00:20:13.812522+00",
+      "ultima": "2026-10-01 00:20:13.812522+00"
+    },
+    {
+      "rule_id": "8e8b58c3-736e-4403-a712-0916fa840272",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:10:50.458145+00",
+      "ultima": "2026-09-29 02:10:50.458145+00"
+    },
+    {
+      "rule_id": "8c86196a-5e53-4c42-ae7f-167240ab60b5",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 02:18:06.811825+00",
+      "ultima": "2026-10-04 02:18:06.811825+00"
+    },
+    {
+      "rule_id": "0b1c5543-cf04-4331-9522-2b6d21e70280",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-01 01:39:53.593159+00",
+      "ultima": "2026-10-01 01:39:53.593159+00"
+    },
+    {
+      "rule_id": "56cbd74f-f7cc-4ef7-b846-3768936fa411",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 03:13:37.780553+00",
+      "ultima": "2026-10-04 03:13:37.780553+00"
+    },
+    {
+      "rule_id": "1d152d08-b994-4cc3-a628-f2ae1e176f89",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-30 22:36:02.394937+00",
+      "ultima": "2026-09-30 22:36:02.394937+00"
+    },
+    {
+      "rule_id": "c81e3925-431a-4244-a00e-103326290fc6",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:14:16.570836+00",
+      "ultima": "2026-09-29 02:14:16.570836+00"
+    },
+    {
+      "rule_id": "23c906bf-8075-45f1-baeb-96ace733606a",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 02:20:18.297731+00",
+      "ultima": "2026-10-04 02:20:18.297731+00"
+    },
+    {
+      "rule_id": "0394cc7c-a4f8-4f5d-beaf-c8ac30762553",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 04:59:13.934491+00",
+      "ultima": "2026-10-04 04:59:13.934491+00"
+    },
+    {
+      "rule_id": "b6577abd-af60-4772-be79-4921ce27a73f",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 00:10:50.684523+00",
+      "ultima": "2026-10-04 00:10:50.684523+00"
+    },
+    {
+      "rule_id": "da29d1a8-0fd2-4e07-9c89-766379fbbb3a",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-01 01:39:00.655213+00",
+      "ultima": "2026-10-01 01:39:00.655213+00"
+    },
+    {
+      "rule_id": "983cbda5-c310-428f-baa3-31264f50bce0",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-05 02:19:07.527851+00",
+      "ultima": "2026-10-05 02:19:07.527851+00"
+    },
+    {
+      "rule_id": "5cff8c84-de87-4856-bc3c-a3b4c751aaca",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 06:05:04.186233+00",
+      "ultima": "2026-10-04 06:05:04.186233+00"
+    },
+    {
+      "rule_id": "dde8b225-b22f-47d3-9043-ca5df01c5bda",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-10 22:46:00.86529+00",
+      "ultima": "2026-09-10 22:46:00.86529+00"
+    },
+    {
+      "rule_id": "d678e4d0-804d-4530-b89f-e2dca919f9a8",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 03:19:30.54656+00",
+      "ultima": "2026-09-29 03:19:30.54656+00"
+    },
+    {
+      "rule_id": "d9289335-2977-4b6e-935d-34150abecc34",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-03 23:10:10.452911+00",
+      "ultima": "2026-10-03 23:10:10.452911+00"
+    },
+    {
+      "rule_id": "81d8c215-f5c7-4971-a48c-8ede7e3b720b",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 13:12:00.902172+00",
+      "ultima": "2026-09-29 13:12:00.902172+00"
+    },
+    {
+      "rule_id": "a0cd2460-a7ea-4099-9588-7cb105e53d5b",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-05 02:22:16.279464+00",
+      "ultima": "2026-10-05 02:22:16.279464+00"
+    },
+    {
+      "rule_id": "cbd9b2fe-1d46-45f3-a316-347f2070979d",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 23:09:39.705323+00",
+      "ultima": "2026-09-29 23:09:39.705323+00"
+    },
+    {
+      "rule_id": "779e33e9-826d-40a5-b8e5-2bfffcd80c44",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 13:12:46.392296+00",
+      "ultima": "2026-10-04 13:12:46.392296+00"
+    },
+    {
+      "rule_id": "b5d61ce9-1de1-42d9-9bcc-b1b886710e12",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-08-06 23:42:27.794872+00",
+      "ultima": "2026-08-06 23:42:27.794872+00"
+    },
+    {
+      "rule_id": "28e5d951-d07c-4db1-b855-bc87d1b6e08c",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 11:34:11.235547+00",
+      "ultima": "2026-09-29 11:34:11.235547+00"
+    },
+    {
+      "rule_id": "9029da81-e584-49f4-95b1-a1980723033a",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 14:41:01.446575+00",
+      "ultima": "2026-10-04 14:41:01.446575+00"
+    },
+    {
+      "rule_id": "a996cb38-26dc-415a-8509-cf8e8f6578c4",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-01 01:36:45.279934+00",
+      "ultima": "2026-10-01 01:36:45.279934+00"
+    },
+    {
+      "rule_id": "80c9b7f0-fa8f-4b5e-9c46-4ec4fa5e7c18",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-30 22:40:43.001061+00",
+      "ultima": "2026-09-30 22:40:43.001061+00"
+    },
+    {
+      "rule_id": "f8a393e8-67d3-4fab-811d-f6c7a83b99ed",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:20:09.111439+00",
+      "ultima": "2026-09-29 02:20:09.111439+00"
+    },
+    {
+      "rule_id": "0a4ba1ab-c62f-4be9-b1bd-91339cd55d49",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 20:18:48.146967+00",
+      "ultima": "2026-10-04 20:18:48.146967+00"
+    },
+    {
+      "rule_id": "db6f19bd-770c-47cd-adb6-c94b4b7c7134",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 23:14:40.864714+00",
+      "ultima": "2026-09-29 23:14:40.864714+00"
+    },
+    {
+      "rule_id": "33571b97-3809-4c61-b30b-3a77c0c02863",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-30 23:33:24.64121+00",
+      "ultima": "2026-09-30 23:33:24.64121+00"
+    },
+    {
+      "rule_id": "1728d35a-bf99-41a4-b6f5-94fed2c537f3",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:16:04.848452+00",
+      "ultima": "2026-09-29 02:16:04.848452+00"
+    },
+    {
+      "rule_id": "95534b6b-961b-4224-97b8-4026654c4102",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:14:52.112241+00",
+      "ultima": "2026-09-29 02:14:52.112241+00"
+    },
+    {
+      "rule_id": "930e7a89-c151-4970-869b-d22a73ce4a1f",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:17:25.630132+00",
+      "ultima": "2026-09-29 02:17:25.630132+00"
+    },
+    {
+      "rule_id": "71fe6a37-5144-4825-a088-cb1b43ccecce",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-05 03:54:16.069091+00",
+      "ultima": "2026-10-05 03:54:16.069091+00"
+    },
+    {
+      "rule_id": "d91e75fe-6e69-417a-9f4e-b5447d8c9e7d",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 12:15:30.254083+00",
+      "ultima": "2026-09-29 12:15:30.254083+00"
+    },
+    {
+      "rule_id": "b4b3d93a-2bfd-49f3-8104-d60367dfc67b",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:11:54.644615+00",
+      "ultima": "2026-09-29 02:11:54.644615+00"
+    },
+    {
+      "rule_id": "7835ef64-498b-4eaf-a06e-789bc1d6ad1e",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 17:47:19.948971+00",
+      "ultima": "2026-10-04 17:47:19.948971+00"
+    },
+    {
+      "rule_id": "206ce782-e0c1-4552-b7e4-9d0836e412b2",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:08:45.902123+00",
+      "ultima": "2026-09-29 02:08:45.902123+00"
+    },
+    {
+      "rule_id": "5eda07a9-7ea3-4853-80c9-304925a2e074",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-10 22:46:49.709787+00",
+      "ultima": "2026-09-10 22:46:49.709787+00"
+    },
+    {
+      "rule_id": "c7fcdb01-1735-4a95-93ed-d638d188264d",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 20:23:41.227476+00",
+      "ultima": "2026-10-04 20:23:41.227476+00"
+    },
+    {
+      "rule_id": "19d1b77f-5778-47d8-b93a-f9f7271e3f0c",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 03:05:22.723958+00",
+      "ultima": "2026-09-29 03:05:22.723958+00"
+    },
+    {
+      "rule_id": "f75dc593-61af-4b72-96ff-a231ef61b42d",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 03:07:59.457534+00",
+      "ultima": "2026-09-29 03:07:59.457534+00"
+    },
+    {
+      "rule_id": "4c7f7148-241a-4b1b-ab89-63335c730efe",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-01 04:26:00.197835+00",
+      "ultima": "2026-10-01 04:26:00.197835+00"
+    },
+    {
+      "rule_id": "ae57a809-b503-4236-ad52-d100e5f76a37",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-30 01:11:35.862325+00",
+      "ultima": "2026-09-30 01:11:35.862325+00"
+    },
+    {
+      "rule_id": "80d1d804-e6ed-4e45-b8f3-6afa72bcaff0",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-04 06:02:14.771249+00",
+      "ultima": "2026-10-04 06:02:14.771249+00"
+    },
+    {
+      "rule_id": "8b934240-c008-4564-972a-c99f83183249",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-01 01:35:33.304765+00",
+      "ultima": "2026-10-01 01:35:33.304765+00"
+    },
+    {
+      "rule_id": "b04ba8c7-cc63-436a-90e1-54f737668df1",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:11:13.926483+00",
+      "ultima": "2026-09-29 02:11:13.926483+00"
+    },
+    {
+      "rule_id": "f07bff29-c748-4220-855d-d6cffb04e748",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-01 04:21:29.240509+00",
+      "ultima": "2026-10-01 04:21:29.240509+00"
+    },
+    {
+      "rule_id": "2cbf0070-255c-4367-801d-1cc9ae811fd4",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-05 02:17:58.223038+00",
+      "ultima": "2026-10-05 02:17:58.223038+00"
+    },
+    {
+      "rule_id": "046ae1a8-7ebd-4406-afe8-1825ac462050",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 12:27:33.581141+00",
+      "ultima": "2026-09-29 12:27:33.581141+00"
+    },
+    {
+      "rule_id": "03a140c6-66c6-465c-bacb-40a36571def3",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-01 03:08:09.010087+00",
+      "ultima": "2026-10-01 03:08:09.010087+00"
+    },
+    {
+      "rule_id": "55cefe0f-ccd7-457c-a0bc-924814a3b786",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-10-01 00:16:09.19103+00",
+      "ultima": "2026-10-01 00:16:09.19103+00"
+    },
+    {
+      "rule_id": "39cddb97-7cb1-4d2e-a593-3e3c2d030172",
+      "versiones": "1",
+      "v_min": "1",
+      "v_max": "1",
+      "primera": "2026-09-29 02:16:37.854367+00",
+      "ultima": "2026-09-29 02:16:37.854367+00"
+    }
+  ],
+  "A_esquema_reglas": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "store_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "worker_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "type",
+      "data_type": "text"
+    },
+    {
+      "column_name": "value_percent",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "fixed_value",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "salary_amount",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "base_calculation",
+      "data_type": "text"
+    },
+    {
+      "column_name": "priority",
+      "data_type": "integer"
+    },
+    {
+      "column_name": "valid_from",
+      "data_type": "date"
+    },
+    {
+      "column_name": "valid_to",
+      "data_type": "date"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "created_by",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "tenant_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "min_price",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "max_price",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "product_commission_amount",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "product_commission_mode",
+      "data_type": "text"
+    }
+  ],
+  "B_huerfanas_changed_by": "18",
+  "B_perfiles_huerfanos": [
+    {
+      "changed_by": "4c71ba55-d2a5-499e-a34e-ccf508b8df7f",
+      "versiones": "2",
+      "primera": "2026-09-10 22:46:00.86529+00",
+      "ultima": "2026-09-10 22:46:49.709787+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "06adaa24-e5f2-486f-92a3-945086e3c409",
+      "versiones": "1",
+      "primera": "2026-10-05 02:47:57.416135+00",
+      "ultima": "2026-10-05 02:47:57.416135+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "06c76bcb-0bc3-480b-bbfb-80aa86684350",
+      "versiones": "1",
+      "primera": "2026-10-05 03:54:16.069091+00",
+      "ultima": "2026-10-05 03:54:16.069091+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "1e001d59-3c0d-49f9-835d-759417449803",
+      "versiones": "1",
+      "primera": "2026-10-04 14:38:00.120736+00",
+      "ultima": "2026-10-04 14:38:00.120736+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "3152e7ef-501b-4902-a1dd-67389351d816",
+      "versiones": "1",
+      "primera": "2026-10-04 00:54:18.32883+00",
+      "ultima": "2026-10-04 00:54:18.32883+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "431ebdbb-9205-434b-ba1f-51c182d9ac5c",
+      "versiones": "1",
+      "primera": "2026-10-05 02:19:07.527851+00",
+      "ultima": "2026-10-05 02:19:07.527851+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "44ccf01f-571e-4876-81a1-2a16e77baf6f",
+      "versiones": "1",
+      "primera": "2026-10-05 02:23:35.702562+00",
+      "ultima": "2026-10-05 02:23:35.702562+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "6eed6072-4079-46f0-8c5f-fe752fff84ce",
+      "versiones": "1",
+      "primera": "2026-10-04 17:42:12.652105+00",
+      "ultima": "2026-10-04 17:42:12.652105+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "7ceb3c67-4166-441c-978b-2123e6ef4355",
+      "versiones": "1",
+      "primera": "2026-10-05 02:22:16.279464+00",
+      "ultima": "2026-10-05 02:22:16.279464+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "b9cd8d25-e53d-48ac-ada1-c7a36aba3cd1",
+      "versiones": "1",
+      "primera": "2026-10-04 14:41:01.446575+00",
+      "ultima": "2026-10-04 14:41:01.446575+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "c3a76292-6f9b-43e4-b443-e37df96eda44",
+      "versiones": "1",
+      "primera": "2026-10-05 04:25:23.336289+00",
+      "ultima": "2026-10-05 04:25:23.336289+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "c5777b0a-3512-4431-83e9-e8386a53faa6",
+      "versiones": "1",
+      "primera": "2026-10-04 21:06:41.615155+00",
+      "ultima": "2026-10-04 21:06:41.615155+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "ccacb0c1-f55b-431c-89a2-348553619c9a",
+      "versiones": "1",
+      "primera": "2026-10-04 17:47:19.948971+00",
+      "ultima": "2026-10-04 17:47:19.948971+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "cfe903c3-344b-4b59-882c-95123185b1de",
+      "versiones": "1",
+      "primera": "2026-10-04 20:23:41.227476+00",
+      "ultima": "2026-10-04 20:23:41.227476+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "d41a9471-3ddf-4087-b748-f10c7224206e",
+      "versiones": "1",
+      "primera": "2026-10-04 20:18:48.146967+00",
+      "ultima": "2026-10-04 20:18:48.146967+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "db2ca147-e8b1-4806-a0d9-b5e552dc2424",
+      "versiones": "1",
+      "primera": "2026-10-05 02:17:58.223038+00",
+      "ultima": "2026-10-05 02:17:58.223038+00",
+      "existe_en_auth_users": "0"
+    },
+    {
+      "changed_by": "e3e6e606-5e55-4981-933e-163c3b3ee304",
+      "versiones": "1",
+      "primera": "2026-10-04 04:59:13.934491+00",
+      "ultima": "2026-10-04 04:59:13.934491+00",
+      "existe_en_auth_users": "0"
+    }
+  ],
+  "B_user_audit_log_existe": "1",
+  "B_user_audit_log": [],
+  "B_audit_user_deletes": [],
+  "B_otras_tablas_con_huerfanos": [
+    {
+      "tabla": "bank_statements",
+      "conkey": "{11}",
+      "def": "FOREIGN KEY (reconciled_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "cash_closures",
+      "conkey": "{2}",
+      "def": "FOREIGN KEY (user_id) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "cash_flow_documents",
+      "conkey": "{27}",
+      "def": "FOREIGN KEY (annulled_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "cash_flow_documents",
+      "conkey": "{25}",
+      "def": "FOREIGN KEY (confirmed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "cash_flow_documents",
+      "conkey": "{23}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "cash_flow_documents",
+      "conkey": "{14}",
+      "def": "FOREIGN KEY (responsible_user_id) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "cash_register_sessions",
+      "conkey": "{3}",
+      "def": "FOREIGN KEY (cashier_id) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "catalog_governors",
+      "conkey": "{4}",
+      "def": "FOREIGN KEY (granted_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "catalog_governors",
+      "conkey": "{3}",
+      "def": "FOREIGN KEY (user_id) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "catalog_store_links",
+      "conkey": "{8}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "commission_payments",
+      "conkey": "{12}",
+      "def": "FOREIGN KEY (approved_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "commission_payments",
+      "conkey": "{18}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "commission_payments",
+      "conkey": "{14}",
+      "def": "FOREIGN KEY (paid_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "commission_rules",
+      "conkey": "{14}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "customers",
+      "conkey": "{15}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "devolutions",
+      "conkey": "{13}",
+      "def": "FOREIGN KEY (processed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "devolutions",
+      "conkey": "{21}",
+      "def": "FOREIGN KEY (reversed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "devolutions",
+      "conkey": "{16}",
+      "def": "FOREIGN KEY (voided_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "fiscal_closings",
+      "conkey": "{12}",
+      "def": "FOREIGN KEY (closed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "fiscal_closings",
+      "conkey": "{14}",
+      "def": "FOREIGN KEY (locked_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "audit_logs",
+      "conkey": "{3}",
+      "def": "FOREIGN KEY (user_id) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "inventory_adjustments",
+      "conkey": "{3}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "material_requests",
+      "conkey": "{17}",
+      "def": "FOREIGN KEY (authorized_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "material_requests",
+      "conkey": "{26}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "material_requests",
+      "conkey": "{19}",
+      "def": "FOREIGN KEY (received_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "material_requests",
+      "conkey": "{22}",
+      "def": "FOREIGN KEY (voided_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "inventory_adjustments",
+      "conkey": "{9}",
+      "def": "FOREIGN KEY (confirmed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "inventory_adjustments",
+      "conkey": "{11}",
+      "def": "FOREIGN KEY (reversed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "issue_slips",
+      "conkey": "{15}",
+      "def": "FOREIGN KEY (confirmed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "issue_slips",
+      "conkey": "{8}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "issue_slips",
+      "conkey": "{11}",
+      "def": "FOREIGN KEY (voided_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "kardex_entries",
+      "conkey": "{15}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "master_change_log",
+      "conkey": "{7}",
+      "def": "FOREIGN KEY (actor_id) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "master_change_proposals",
+      "conkey": "{4}",
+      "def": "FOREIGN KEY (proposed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "master_change_proposals",
+      "conkey": "{8}",
+      "def": "FOREIGN KEY (reviewed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "master_parties",
+      "conkey": "{14}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "master_products",
+      "conkey": "{12}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "orphaned_users_log",
+      "conkey": "{8}",
+      "def": "FOREIGN KEY (resolved_by) REFERENCES profiles(id) ON DELETE SET NULL"
+    },
+    {
+      "tabla": "party_change_log",
+      "conkey": "{7}",
+      "def": "FOREIGN KEY (actor_id) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "party_store_links",
+      "conkey": "{8}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_counts",
+      "conkey": "{10}",
+      "def": "FOREIGN KEY (applied_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_counts",
+      "conkey": "{9}",
+      "def": "FOREIGN KEY (completed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_counts",
+      "conkey": "{8}",
+      "def": "FOREIGN KEY (started_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventories",
+      "conkey": "{27}",
+      "def": "FOREIGN KEY (authorized_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventories",
+      "conkey": "{29}",
+      "def": "FOREIGN KEY (closed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventories",
+      "conkey": "{23}",
+      "def": "FOREIGN KEY (count_completed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventories",
+      "conkey": "{21}",
+      "def": "FOREIGN KEY (count_started_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventories",
+      "conkey": "{18}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventories",
+      "conkey": "{25}",
+      "def": "FOREIGN KEY (submitted_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventories",
+      "conkey": "{31}",
+      "def": "FOREIGN KEY (voided_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventory_adjustments",
+      "conkey": "{6}",
+      "def": "FOREIGN KEY (generated_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventory_count_log",
+      "conkey": "{9}",
+      "def": "FOREIGN KEY (user_id) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventory_items",
+      "conkey": "{14}",
+      "def": "FOREIGN KEY (counted_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventory_items",
+      "conkey": "{12}",
+      "def": "FOREIGN KEY (reviewed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventory_items",
+      "conkey": "{16}",
+      "def": "FOREIGN KEY (updated_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "physical_inventory_sheets",
+      "conkey": "{7}",
+      "def": "FOREIGN KEY (generated_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "product_lots",
+      "conkey": "{16}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "production_orders",
+      "conkey": "{25}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "production_orders",
+      "conkey": "{33}",
+      "def": "FOREIGN KEY (reversed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "profiles",
+      "conkey": "{22}",
+      "def": "FOREIGN KEY (deleted_by) REFERENCES profiles(id) ON DELETE SET NULL"
+    },
+    {
+      "tabla": "user_store_memberships",
+      "conkey": "{2}",
+      "def": "FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE"
+    },
+    {
+      "tabla": "quotations",
+      "conkey": "{14}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "receipts",
+      "conkey": "{20}",
+      "def": "FOREIGN KEY (confirmed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "receipts",
+      "conkey": "{22}",
+      "def": "FOREIGN KEY (reversed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "receipts",
+      "conkey": "{3}",
+      "def": "FOREIGN KEY (user_id) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "sales_transactions",
+      "conkey": "{11}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "tenants",
+      "conkey": "{5}",
+      "def": "FOREIGN KEY (owner_id) REFERENCES profiles(id) ON DELETE SET NULL"
+    },
+    {
+      "tabla": "transactions",
+      "conkey": "{27}",
+      "def": "FOREIGN KEY (reversed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "transactions",
+      "conkey": "{3}",
+      "def": "FOREIGN KEY (seller_id) REFERENCES profiles(id) ON DELETE CASCADE"
+    },
+    {
+      "tabla": "transfer_approval_rules",
+      "conkey": "{8}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "transfers",
+      "conkey": "{16}",
+      "def": "FOREIGN KEY (approved_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "transfers",
+      "conkey": "{11}",
+      "def": "FOREIGN KEY (confirmed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "transfers",
+      "conkey": "{4}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "transfers",
+      "conkey": "{13}",
+      "def": "FOREIGN KEY (reversed_by) REFERENCES profiles(id)"
+    },
+    {
+      "tabla": "user_invitations",
+      "conkey": "{5}",
+      "def": "FOREIGN KEY (invited_by) REFERENCES profiles(id) ON DELETE SET NULL"
+    },
+    {
+      "tabla": "user_progress",
+      "conkey": "{2}",
+      "def": "FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE"
+    },
+    {
+      "tabla": "user_store_memberships",
+      "conkey": "{2}",
+      "def": "FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE"
+    },
+    {
+      "tabla": "user_usage",
+      "conkey": "{2}",
+      "def": "FOREIGN KEY (user_id) REFERENCES profiles(id) ON DELETE CASCADE"
+    },
+    {
+      "tabla": "workers",
+      "conkey": "{17}",
+      "def": "FOREIGN KEY (created_by) REFERENCES profiles(id)"
+    }
+  ],
+  "B_barrido_huerfanos_profiles": [],
+  "C_esquema_items": [
+    {
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "po_id",
+      "data_type": "uuid",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "product_id",
+      "data_type": "uuid",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "product_name",
+      "data_type": "text",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "sku",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "quantity_ordered",
+      "data_type": "numeric",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "quantity_received",
+      "data_type": "numeric",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "unit_cost",
+      "data_type": "numeric",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "unit_of_measure",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES"
+    }
+  ],
+  "C_items_completos": [
+    {
+      "id": "06499585-47bb-4556-a2c6-e9836f6f0cfa",
+      "po_id": "7efdd887-84e1-4b5e-af5a-eb33a8de5bf0",
+      "product_id": "fec4d491-d0a0-4123-8d19-c7716f8172c8",
+      "product_name": "E2E2 Producto A1",
+      "sku": "",
+      "quantity_ordered": "2",
+      "quantity_received": "0",
+      "unit_cost": "80",
+      "unit_of_measure": "unidad",
+      "created_at": "2026-09-10 22:37:04.958164+00"
+    },
+    {
+      "id": "33c8bfb2-5c53-4a8c-b7cf-199c451df312",
+      "po_id": "cdc3a468-0419-4790-9362-7426aae2f9c3",
+      "product_id": "6f5cd125-7743-4f7a-b04e-f44358da3522",
+      "product_name": "E2E2 Producto A5",
+      "sku": "",
+      "quantity_ordered": "10",
+      "quantity_received": "0",
+      "unit_cost": "20",
+      "unit_of_measure": "unidad",
+      "created_at": "2026-09-10 22:35:25.510431+00"
+    },
+    {
+      "id": "622729ba-6b4b-4295-8187-6c655f1c3692",
+      "po_id": "3f425d7d-dc55-4e4f-8c24-fbfe16c2c32a",
+      "product_id": "1b52f2a9-720d-4f9d-8e72-33a4d4762ac8",
+      "product_name": "MAT REMPO1",
+      "sku": "",
+      "quantity_ordered": "10",
+      "quantity_received": "0",
+      "unit_cost": "50",
+      "unit_of_measure": "unidad",
+      "created_at": "2026-09-11 03:49:04.221676+00"
+    },
+    {
+      "id": "a4b07e58-c400-4b20-84de-1f38982a448a",
+      "po_id": "0fb8dcca-67bf-42d4-b897-03bfd3959f25",
+      "product_id": "fec4d491-d0a0-4123-8d19-c7716f8172c8",
+      "product_name": "E2E2 Producto A1",
+      "sku": "",
+      "quantity_ordered": "5",
+      "quantity_received": "5",
+      "unit_cost": "80",
+      "unit_of_measure": "unidad",
+      "created_at": "2026-09-10 22:36:27.408931+00"
+    },
+    {
+      "id": "a9d999d8-e679-4a9d-bcbb-1d6e331050a5",
+      "po_id": "0fb8dcca-67bf-42d4-b897-03bfd3959f25",
+      "product_id": "6f5cd125-7743-4f7a-b04e-f44358da3522",
+      "product_name": "E2E2 Producto A5",
+      "sku": "",
+      "quantity_ordered": "10",
+      "quantity_received": "10",
+      "unit_cost": "20",
+      "unit_of_measure": "unidad",
+      "created_at": "2026-09-10 22:36:27.408931+00"
+    },
+    {
+      "id": "acc59b6f-d3e1-49ae-a7e0-44f9c3b2296a",
+      "po_id": "cdc3a468-0419-4790-9362-7426aae2f9c3",
+      "product_id": "fec4d491-d0a0-4123-8d19-c7716f8172c8",
+      "product_name": "E2E2 Producto A1",
+      "sku": "",
+      "quantity_ordered": "5",
+      "quantity_received": "0",
+      "unit_cost": "80",
+      "unit_of_measure": "unidad",
+      "created_at": "2026-09-10 22:35:25.510431+00"
+    },
+    {
+      "id": "b1ee9cfd-1b89-4a71-bfc4-5172c70df4a9",
+      "po_id": "72a3da3c-aeda-4318-8f92-02e2767bb599",
+      "product_id": "fec4d491-d0a0-4123-8d19-c7716f8172c8",
+      "product_name": "E2E2 Producto A1",
+      "sku": "",
+      "quantity_ordered": "5",
+      "quantity_received": "5",
+      "unit_cost": "80",
+      "unit_of_measure": "unidad",
+      "created_at": "2026-09-10 22:35:36.482018+00"
+    },
+    {
+      "id": "b9000d53-9cc5-49e3-806c-b5df6038c337",
+      "po_id": "3bb675b5-725d-4a93-bd70-b662fd3fce8a",
+      "product_id": "061a36d1-11af-4671-a6c8-f78047282ae5",
+      "product_name": "PO Probe2",
+      "sku": "",
+      "quantity_ordered": "5",
+      "quantity_received": "0",
+      "unit_cost": "55",
+      "unit_of_measure": "unidad",
+      "created_at": "2026-09-27 05:58:30.506321+00"
+    },
+    {
+      "id": "cee35cb6-69ea-469b-afda-6ab1d0fd548d",
+      "po_id": "ba542c15-c6a6-49dd-8e84-43ffee9968fe",
+      "product_id": "fec4d491-d0a0-4123-8d19-c7716f8172c8",
+      "product_name": "E2E2 Producto A1",
+      "sku": "",
+      "quantity_ordered": "2",
+      "quantity_received": "0",
+      "unit_cost": "80",
+      "unit_of_measure": "unidad",
+      "created_at": "2026-09-10 22:36:11.995846+00"
+    },
+    {
+      "id": "fa8728da-676c-4482-a8cf-118946a3e7ae",
+      "po_id": "72a3da3c-aeda-4318-8f92-02e2767bb599",
+      "product_id": "6f5cd125-7743-4f7a-b04e-f44358da3522",
+      "product_name": "E2E2 Producto A5",
+      "sku": "",
+      "quantity_ordered": "10",
+      "quantity_received": "10",
+      "unit_cost": "20",
+      "unit_of_measure": "unidad",
+      "created_at": "2026-09-10 22:35:36.482018+00"
+    }
+  ],
+  "C_pedidos_vivos": "0",
+  "C_products_existentes": [
+    {
+      "product_id": "061a36d1-11af-4671-a6c8-f78047282ae5",
+      "existe": "0"
+    },
+    {
+      "product_id": "1b52f2a9-720d-4f9d-8e72-33a4d4762ac8",
+      "existe": "0"
+    },
+    {
+      "product_id": "fec4d491-d0a0-4123-8d19-c7716f8172c8",
+      "existe": "0"
+    },
+    {
+      "product_id": "6f5cd125-7743-4f7a-b04e-f44358da3522",
+      "existe": "0"
+    }
+  ],
+  "C_receipts_por_po": [],
+  "C_audit_purchase_orders": [
+    {
+      "id": "4b6bec3c-ca66-4e20-adaf-f85e830e5047",
+      "action": "po_received",
+      "table_name": "purchase_orders",
+      "record_id": "113263ab-05e1-4604-a979-d3659723a286",
+      "created_at": "2026-08-08 05:37:04.286101+00",
+      "old_data": ""
+    },
+    {
+      "id": "594f07f5-f633-4c58-8d76-fad63cb11f80",
+      "action": "PO_STATUS_CHANGED",
+      "table_name": "purchase_orders",
+      "record_id": "113263ab-05e1-4604-a979-d3659723a286",
+      "created_at": "2026-08-08 05:37:00.315192+00",
+      "old_data": ""
+    },
+    {
+      "id": "530cb30c-564d-4856-b0cd-1e3ae9204ee3",
+      "action": "po_created",
+      "table_name": "purchase_orders",
+      "record_id": "113263ab-05e1-4604-a979-d3659723a286",
+      "created_at": "2026-08-08 05:36:58.329596+00",
+      "old_data": ""
+    },
+    {
+      "id": "a9a7df0b-78a6-4d0b-9d50-8a95f8c3dcbb",
+      "action": "po_received",
+      "table_name": "purchase_orders",
+      "record_id": "a4312eb7-6429-41ef-b824-32879176722d",
+      "created_at": "2026-08-08 05:24:02.562152+00",
+      "old_data": ""
+    },
+    {
+      "id": "ade58843-95a2-4793-80a4-3ba23234bd35",
+      "action": "PO_STATUS_CHANGED",
+      "table_name": "purchase_orders",
+      "record_id": "a4312eb7-6429-41ef-b824-32879176722d",
+      "created_at": "2026-08-08 05:23:58.434159+00",
+      "old_data": ""
+    },
+    {
+      "id": "4d9a1a36-327c-4cdd-bd99-d825d43d8315",
+      "action": "po_created",
+      "table_name": "purchase_orders",
+      "record_id": "a4312eb7-6429-41ef-b824-32879176722d",
+      "created_at": "2026-08-08 05:23:56.419644+00",
+      "old_data": ""
+    },
+    {
+      "id": "3a59a9d3-6f81-4876-896a-a6bf0ceb145a",
+      "action": "PO_STATUS_CHANGED",
+      "table_name": "purchase_orders",
+      "record_id": "02aa53a0-8e5e-4f95-a812-c5f11fa82433",
+      "created_at": "2026-08-08 02:25:08.6034+00",
+      "old_data": ""
+    },
+    {
+      "id": "5018a171-6173-49a3-a82a-bfd09d461135",
+      "action": "po_created",
+      "table_name": "purchase_orders",
+      "record_id": "02aa53a0-8e5e-4f95-a812-c5f11fa82433",
+      "created_at": "2026-08-08 02:25:06.681918+00",
+      "old_data": ""
+    },
+    {
+      "id": "0bba63d9-d170-47b8-9371-c23514a4ec3e",
+      "action": "po_received",
+      "table_name": "purchase_orders",
+      "record_id": "26f14f44-87f7-4c36-ae62-0767bb8efaa1",
+      "created_at": "2026-08-08 02:24:52.819872+00",
+      "old_data": ""
+    },
+    {
+      "id": "da6485fb-777a-4e89-967b-afdebde27781",
+      "action": "po_created",
+      "table_name": "purchase_orders",
+      "record_id": "26f14f44-87f7-4c36-ae62-0767bb8efaa1",
+      "created_at": "2026-08-08 02:24:48.95973+00",
+      "old_data": ""
+    },
+    {
+      "id": "fa968ceb-4ce5-45f7-9104-4a468071571a",
+      "action": "po_created",
+      "table_name": "purchase_orders",
+      "record_id": "0069ae23-280e-427f-a9af-a9e3c6de6def",
+      "created_at": "2026-08-08 02:23:48.756765+00",
+      "old_data": ""
+    },
+    {
+      "id": "d701aa7f-b180-4004-9d28-51c6e4b5c20d",
+      "action": "PO_STATUS_CHANGED",
+      "table_name": "purchase_orders",
+      "record_id": "d4c6088e-b9ea-405d-af64-5ca7d8519d80",
+      "created_at": "2026-08-08 02:23:20.613793+00",
+      "old_data": ""
+    },
+    {
+      "id": "acc5776f-1c21-440d-86b6-6e946786cb90",
+      "action": "po_created",
+      "table_name": "purchase_orders",
+      "record_id": "d4c6088e-b9ea-405d-af64-5ca7d8519d80",
+      "created_at": "2026-08-08 02:23:18.719026+00",
+      "old_data": ""
+    },
+    {
+      "id": "adb690ad-28c0-405d-b12b-fd5085c865d5",
+      "action": "po_received",
+      "table_name": "purchase_orders",
+      "record_id": "ccfa9f3d-a646-489a-ab50-9c09ee161376",
+      "created_at": "2026-08-08 02:23:16.682628+00",
+      "old_data": ""
+    },
+    {
+      "id": "e3e501df-345d-4d04-8775-068a4429d797",
+      "action": "po_received",
+      "table_name": "purchase_orders",
+      "record_id": "ccfa9f3d-a646-489a-ab50-9c09ee161376",
+      "created_at": "2026-08-08 02:22:47.819382+00",
+      "old_data": ""
+    },
+    {
+      "id": "a3cacd31-ea4a-4b22-b655-3503f909e20e",
+      "action": "po_created",
+      "table_name": "purchase_orders",
+      "record_id": "ccfa9f3d-a646-489a-ab50-9c09ee161376",
+      "created_at": "2026-08-08 02:22:41.759169+00",
+      "old_data": ""
+    },
+    {
+      "id": "4c59a245-a033-4d4d-8b19-2e27c6311b73",
+      "action": "po_created",
+      "table_name": "purchase_orders",
+      "record_id": "0d067ce7-d233-48bf-883d-835cfa8a271b",
+      "created_at": "2026-08-08 01:50:15.484939+00",
+      "old_data": ""
+    },
+    {
+      "id": "d2ececb0-373e-49ee-ab2a-3f3c5efb5dcc",
+      "action": "PO_STATUS_CHANGED",
+      "table_name": "purchase_orders",
+      "record_id": "b0ec1879-5cf2-4d30-a8e8-371a9a9305c7",
+      "created_at": "2026-08-08 01:50:11.057423+00",
+      "old_data": ""
+    },
+    {
+      "id": "8c94fee8-1ce0-41e6-b7a6-179f051ea30c",
+      "action": "po_created",
+      "table_name": "purchase_orders",
+      "record_id": "b0ec1879-5cf2-4d30-a8e8-371a9a9305c7",
+      "created_at": "2026-08-08 01:50:09.081556+00",
+      "old_data": ""
+    },
+    {
+      "id": "c9db50e7-cd20-4f32-97f6-64df9ba6315f",
+      "action": "po_received",
+      "table_name": "purchase_orders",
+      "record_id": "3c7912f9-e3f9-44da-9ba1-8950e8bb050e",
+      "created_at": "2026-08-08 01:50:07.074552+00",
+      "old_data": ""
+    }
+  ]
+}

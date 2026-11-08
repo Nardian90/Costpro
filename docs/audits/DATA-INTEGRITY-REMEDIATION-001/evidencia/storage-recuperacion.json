@@ -1,0 +1,38 @@
+[
+  {
+    "ruta": "store-banners/enervida-banner-1783144848029.png",
+    "estado": "RECUPERADO",
+    "put": 200,
+    "get_publico": 200,
+    "bytes": 202313,
+    "sha256": "1cd048fe779a6e6cbcc947926bfbad55759e2886a1e8a52578b02d709aaf6749",
+    "copia_origen": "audit-evidence/historico/tmp-images/banner-enervida.png"
+  },
+  {
+    "ruta": "store-promo-images/enervida-promo1-v2-1783146667184.png",
+    "estado": "RECUPERADO",
+    "put": 200,
+    "get_publico": 200,
+    "bytes": 162581,
+    "sha256": "945b3456a43ab576bc0a0c497ac83167330dc46ccf4b7c64db911abf3f78ce26",
+    "copia_origen": "audit-evidence/historico/tmp-images/promo1-instalacion-v2.png"
+  },
+  {
+    "ruta": "store-promo-images/enervida-promo2-v2-1783146667184.png",
+    "estado": "RECUPERADO",
+    "put": 200,
+    "get_publico": 200,
+    "bytes": 101344,
+    "sha256": "5feba93627c27d03fa3c4024f508e145f7f445f55622e1784a1478b72a65ce8b",
+    "copia_origen": "audit-evidence/historico/tmp-images/promo2-mantenimiento-v2.png"
+  },
+  {
+    "ruta": "store-promo-images/enervida-promo3-1783144851443.png",
+    "estado": "RECUPERADO",
+    "put": 200,
+    "get_publico": 200,
+    "bytes": 140138,
+    "sha256": "589f686ef1467ba6a4464fa84acb34ad3065b1a7af97c7fca0f298241febc994",
+    "copia_origen": "audit-evidence/historico/tmp-images/promo3-piezas.png"
+  }
+]
