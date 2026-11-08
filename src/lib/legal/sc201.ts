@@ -72,6 +72,8 @@ export interface Sc201SourceData {
     id: string;
     po_number?: string | null;
     supplier_name: string;
+    /** FK real del proveedor (purchase_orders.supplier_id): permite resolver su NIT/CI. */
+    supplier_id?: string | null;
     status: string;
     total_amount: number;
     notes?: string | null;
@@ -82,21 +84,28 @@ export interface Sc201SourceData {
   items: Sc201SourceItem[];
   /** Nombre de la entidad solicitante (tienda activa bajo RLS). */
   entidadNombre: string;
+  /**
+   * CP-DOC-SC-DATA-MAPPING-006: código documental de la tienda solicitante
+   * (consecutivo persistente stores.store_code; nunca el uuid interno).
+   */
+  entidadCodigo?: string | null;
+  /** NIT/CI del proveedor (ficha suppliers) = «Código del proveedor». */
+  proveedorTaxId?: string | null;
   /** Nombre real del creador (si es legible bajo RLS). */
   creadorNombre?: string | null;
-  /** logo_url de la tienda solicitante (multitienda); null → default de la app. */
+  /** logo_url de la tienda solicitante (multitienda); null → identificador CP. */
   logoUrl?: string | null;
 }
 
 export interface Sc201ModelData {
-  /** Logo de la tienda solicitante o default de la app (dataURL en fetch). */
+  /** Logo de la tienda solicitante o identificador CP si no tiene logo propio. */
   logoUrl?: string | null;
   fechaEmision: string;
   proveedorNombre: string;
-  proveedorCodigo: string; // no gestionado → ''
+  proveedorCodigo: string; // NIT/CI de la ficha (blanco si no tiene)
   proveedorDireccion: string; // no gestionado → ''
   solicitanteNombre: string;
-  solicitanteCodigo: string; // no gestionado → ''
+  solicitanteCodigo: string; // store_code de la tienda solicitante
   solicitanteDireccion: string; // no gestionado → ''
   solicitanteCuentaBancaria: string; // no gestionado → ''
   solicitanteSucursalBancaria: string; // no gestionado → ''
@@ -146,10 +155,13 @@ export function buildSc201ModelData(source: Sc201SourceData): Sc201ModelData {
     logoUrl: source.logoUrl ?? null,
     fechaEmision: formatDateRes11(order.created_at),
     proveedorNombre: order.supplier_name || '',
-    proveedorCodigo: '',
+    // CP-DOC-SC-DATA-MAPPING-006: código del proveedor = NIT/CI de su ficha
+    // (resuelto en el fetch). Sin NIT/CI → línea en blanco: nunca el nombre
+    // ni el id interno como código.
+    proveedorCodigo: (source.proveedorTaxId || '').trim(),
     proveedorDireccion: '',
     solicitanteNombre: source.entidadNombre || '',
-    solicitanteCodigo: '',
+    solicitanteCodigo: (source.entidadCodigo || '').trim(),
     solicitanteDireccion: '',
     solicitanteCuentaBancaria: '',
     solicitanteSucursalBancaria: '',
@@ -190,22 +202,36 @@ export async function fetchSc201SourceData(
     order,
     items: [],
     entidadNombre: '',
+    entidadCodigo: '',
+    proveedorTaxId: '',
     creadorNombre: '',
     logoUrl: null,
   };
 
-  const [itemsRes, storeRes, creatorRes] = await Promise.all([
+  const [itemsRes, storeRes, creatorRes, supplierRes] = await Promise.all([
     supabase
       .from('purchase_order_items')
       .select('product_name, sku, quantity_ordered, unit_cost, unit_of_measure')
       .eq('po_id', order.id)
       .order('created_at', { ascending: true }),
     activeStoreId
-      ? supabase.from('stores').select('name, logo_url').eq('id', activeStoreId).maybeSingle()
+      ? supabase.from('stores').select('name, logo_url, store_code').eq('id', activeStoreId).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
     order.created_by
       ? supabase.from('profiles').select('full_name').eq('id', order.created_by).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    // NIT/CI del proveedor (CP-DOC-SC-DATA-MAPPING-006): 1º por FK real,
+    // 2º por nombre dentro de la tienda (solo si el match es inequívoco).
+    order.supplier_id
+      ? supabase.from('suppliers').select('tax_id').eq('id', order.supplier_id).maybeSingle()
+      : activeStoreId && (order.supplier_name || '').trim()
+        ? supabase
+            .from('suppliers')
+            .select('tax_id')
+            .eq('store_id', activeStoreId)
+            .ilike('name', order.supplier_name.trim().replace(/([%_\\])/g, '\\$1'))
+            .limit(2)
+        : Promise.resolve({ data: null, error: null }),
   ]);
 
   if (itemsRes.error) {
@@ -214,11 +240,18 @@ export async function fetchSc201SourceData(
     result.items = (itemsRes.data as unknown as Sc201SourceItem[]) || [];
   }
   if (!storeRes.error && storeRes.data) {
-    result.entidadNombre = (storeRes.data as { name?: string | null } | null)?.name || '';
-  result.logoUrl = (storeRes.data as { name?: string | null; logo_url?: string | null } | null)?.logo_url || null;
+    const fila = storeRes.data as { name?: string | null; logo_url?: string | null; store_code?: number | string | null } | null;
+    result.entidadNombre = fila?.name || '';
+    result.entidadCodigo = fila?.store_code === null || fila?.store_code === undefined ? '' : String(fila.store_code);
+    result.logoUrl = fila?.logo_url || null;
   }
   if (!creatorRes.error && creatorRes.data) {
     result.creadorNombre = (creatorRes.data as { full_name?: string | null } | null)?.full_name || '';
+  }
+  if (!supplierRes.error && Array.isArray(supplierRes.data) && supplierRes.data.length === 1) {
+    result.proveedorTaxId = (supplierRes.data[0] as { tax_id?: string | null }).tax_id || '';
+  } else if (!supplierRes.error && supplierRes.data && !Array.isArray(supplierRes.data)) {
+    result.proveedorTaxId = (supplierRes.data as { tax_id?: string | null }).tax_id || '';
   }
 
   return result;
@@ -239,6 +272,7 @@ export async function renderSc201Pdf(model: Sc201ModelData) {
     modelo: 'SC-2-01',
     nombreInstitucional: model.solicitanteNombre,
     logoDataUrl: logo.dataUrl,
+    logoSource: logo.source,
     titulo: 'SOLICITUD DE COMPRA',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
   });

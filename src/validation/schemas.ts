@@ -491,6 +491,11 @@ export const receiptSchema = z.object({
   notes: z.string().nullable().optional(),
   store_id: optionalResilientUuid,
   supplier: z.string().nullable().optional(),
+  // CP-DOC-SC-DATA-MAPPING-006: número documental de la ENTRADA y snapshot
+  // del NIT/CI del proveedor (fuente del «Código del proveedor» en los SC).
+  document_number: z.string().nullable().optional(),
+  supplier_code: z.string().nullable().optional(),
+  supplier_tax_id: z.string().nullable().optional(),
   reception_date: z.string().nullable().optional(),
   // FIX-PAYMENT-TRACKING (2026-07-12): campos de pago a proveedor
   payment_status: z.enum(["unpaid", "partial", "paid"]).catch("unpaid").default("unpaid").optional(),

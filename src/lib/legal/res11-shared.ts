@@ -83,8 +83,14 @@ export function blankRes11Field(label: string): string {
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface Res11HeaderOptions {
-  /** Logo de la tienda emisora (o default de la app) — dataURL rasterizado. Opcional: RES-11 sigue saliendo sin logo. */
+  /** Logo de la tienda emisora (dataURL rasterizado). Sin logo propio, drawScLogo dibuja el identificador CP; opcional: el modelo sigue saliendo sin marca. */
   logoDataUrl?: string | null;
+  /**
+   * CP-DOC-SC-DATA-MAPPING-006 §9: fuente de la marca resuelta por
+   * resolveScLogoDataUrl. Con 'cp' (la tienda no tiene logo propio) se
+   * dibuja el identificador monocromático CP — NUNCA el logo de la app.
+   */
+  logoSource?: 'store' | 'cp' | 'none';
   /** Código oficial del modelo, p. ej. «SC-2-08». */
   modelo: string;
   /** Nombre oficial del documento, p. ej. «VALE DE ENTREGA O DEVOLUCIÓN». */
@@ -194,7 +200,8 @@ export function drawRes11Header(doc: jsPDF, opts: Res11HeaderOptions): number {
   let headerH = Math.max(HEADER_BASE_H, docBlockH);
 
   // Nombre institucional: área central entre el logo y el bloque documental.
-  const leftZoneW = opts.logoDataUrl ? HEADER_LOGO_ZONE_W : 0;
+  const conMarca = Boolean(opts.logoDataUrl) || opts.logoSource === 'cp';
+  const leftZoneW = conMarca ? HEADER_LOGO_ZONE_W : 0;
   const centerX0 = HEADER_MARGIN_X + leftZoneW;
   const centerX1 = pageWidth - HEADER_MARGIN_X - blockW - 4;
   const centerW = centerX1 - centerX0;
@@ -240,13 +247,19 @@ export function drawRes11Header(doc: jsPDF, opts: Res11HeaderOptions): number {
   doc.rect(HEADER_MARGIN_X, HEADER_Y0, contentWidth, headerH, 'S');
 
   // ── Área izquierda: logo contain, centrado verticalmente en su zona ──
-  if (opts.logoDataUrl) {
-    drawScLogo(doc, { dataUrl: opts.logoDataUrl, source: 'store' }, {
-      x: HEADER_MARGIN_X + 3,
-      y: HEADER_Y0 + 3,
-      maxW: HEADER_LOGO_MAX_W,
-      maxH: headerH - 6,
-    });
+  // Sin logo propio de la tienda (logoSource 'cp') se dibuja el identificador
+  // monocromático CP — vectorial, blanco y negro, nunca el logo de la app.
+  if (opts.logoDataUrl || opts.logoSource === 'cp') {
+    drawScLogo(
+      doc,
+      { dataUrl: opts.logoDataUrl ?? null, source: opts.logoSource === 'cp' ? 'cp' : 'store' },
+      {
+        x: HEADER_MARGIN_X + 3,
+        y: HEADER_Y0 + 3,
+        maxW: HEADER_LOGO_MAX_W,
+        maxH: headerH - 6,
+      },
+    );
   }
 
   // ── Área central: nombre institucional centrado ──
@@ -487,6 +500,17 @@ export interface Res11SignatureRow {
 /** Alto vertical de un área de firma: línea + espacio de rúbrica + etiqueta. */
 const SIGNATURE_ROW_HEIGHT_MM = 26;
 
+/**
+ * CP-DOC-SC-DATA-MAPPING-006: código documental de tienda listo para el PDF.
+ * Fuente: stores.store_code (consecutivo persistente por tenant). Devuelve
+ * '' cuando la tienda aún no lo tiene — NUNCA el uuid interno ni otro dato.
+ */
+export function storeCodeToString(code: number | string | null | undefined): string {
+  if (code === null || code === undefined) return '';
+  const s = String(code).trim();
+  return s === '' ? '' : s;
+}
+
 /** Dibuja UNA fila de áreas de firma. Devuelve la Y tras la fila. */
 function drawSignatureRow(
   doc: jsPDF,
@@ -564,6 +588,145 @@ export function drawRes11Signatures(
     rows.push({ labels: labels.slice(i, i + columns) });
   }
   return drawRes11SignatureAreas(doc, rows, startY);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// Cuadrícula de BLOQUES de firma (CP-DOC-SC-DATA-MAPPING-006 §6/§7)
+// ────────────────────────────────────────────────────────────────────────────
+
+export interface Res11SignatureBlock {
+  /** Encabezado del área (p. ej. «Firma del transportador»). */
+  title: string;
+  /**
+   * Datos de identificación que acompañan a la firma dentro del MISMO
+   * bloque (p. ej. nombre, carné, chapa, casilla y guía aérea del
+   * transportador). Los vacíos conservan su línea de cumplimentación.
+   */
+  fields?: Array<{ label: string; value?: string }>;
+}
+
+const SIGNATURE_GRID_GAP_MM = 3;
+
+/** Alto de UN bloque: título + filas de datos + espacio de rúbrica + línea. */
+function signatureBlockHeight(
+  doc: jsPDF,
+  block: Res11SignatureBlock,
+  cellW: number,
+): number {
+  let h = 8; // zona del título
+  const fields = block.fields ?? [];
+  for (let i = 0; i < fields.length; i += 1) {
+    doc.setFont('helvetica', 'bold');
+    const labelLines = doc.splitTextToSize(fields[i].label, cellW / 2 - 3).length;
+    doc.setFont('helvetica', 'normal');
+    const valueLines = doc.splitTextToSize(fields[i].value || RES11_BLANK_LINE, cellW / 2 - 3.5).length;
+    h += Math.max(5, Math.max(labelLines, valueLines) * 3.3 + 1.7);
+  }
+  h += 10; // rúbrica mínima común (espacio suficiente para la firma)
+  h += 7; // línea de firma + etiqueta
+  return Math.max(h, 30);
+}
+
+/**
+ * Alto total de la cuadrícula (todas las áreas comparten la MISMA altura —
+ * alineación uniforme). Útil para el guard de salto de página del caller.
+ */
+export function measureRes11SignatureBlocksHeight(
+  doc: jsPDF,
+  blocks: Res11SignatureBlock[],
+  opts: { columns?: number } = {},
+): number {
+  const columns = opts.columns ?? 2;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const marginX = 12;
+  const cellW = (pageWidth - marginX * 2 - (columns - 1) * SIGNATURE_GRID_GAP_MM) / columns;
+  doc.setFont('helvetica', 'bold');
+  const cellH = Math.max(...blocks.map((b) => signatureBlockHeight(doc, b, cellW)));
+  const rowsCount = Math.ceil(blocks.length / columns);
+  return rowsCount * cellH + (rowsCount - 1) * 2;
+}
+
+/**
+ * Dibuja los bloques de responsabilidad en una cuadrícula uniforme
+ * (2 columnas × 2 filas por defecto): TODAS las áreas comparten alineación,
+ * jerarquía tipográfica, separación y espacio de rúbrica; el bloque del
+ * transportador lleva sus datos de identificación ENCIMA de su línea de
+ * firma — nunca separados de ella. Las cuatro áreas se mueven SIEMPRE
+ * juntas (si la cuadrícula no cabe, pasa completa a una página nueva).
+ * Cada bloque: marco fino, título en mayúsculas, filas etiqueta→valor
+ * (con línea de cumplimentación si el dato está vacío) y línea de firma
+ * centrada con su etiqueta. Devuelve la Y final.
+ */
+export function drawRes11SignatureBlocks(
+  doc: jsPDF,
+  blocks: Res11SignatureBlock[],
+  startY: number,
+  opts: { columns?: number } = {},
+): number {
+  const columns = opts.columns ?? 2;
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 12;
+  const contentWidth = pageWidth - marginX * 2;
+  const cellW = (contentWidth - (columns - 1) * SIGNATURE_GRID_GAP_MM) / columns;
+
+  doc.setFont('helvetica', 'bold');
+  const cellH = Math.max(...blocks.map((b) => signatureBlockHeight(doc, b, cellW)));
+  const rowsCount = Math.ceil(blocks.length / columns);
+  const gridH = rowsCount * cellH + (rowsCount - 1) * 2;
+
+  // Las firmas nunca se separan de su contenido ni entre sí: la cuadrícula
+  // completa pasa a una página nueva si no cabe entera.
+  let y = startY;
+  if (y + gridH + 8 > pageHeight - 14) {
+    doc.addPage();
+    y = 16;
+  }
+
+  doc.setDrawColor(...RES11_INK.marco);
+  doc.setLineWidth(0.25);
+  blocks.forEach((block, i) => {
+    const col = i % columns;
+    const row = Math.floor(i / columns);
+    const x = marginX + col * (cellW + SIGNATURE_GRID_GAP_MM);
+    const by = y + row * (cellH + 2);
+
+    doc.rect(x, by, cellW, cellH, 'S');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(6.8);
+    doc.setTextColor(...RES11_INK.gris);
+    doc.text(block.title.toUpperCase(), x + 2.5, by + 3.6, { maxWidth: cellW - 5 });
+
+    // Filas etiqueta → valor (mismo idioma visual que los bloques de datos).
+    let fy = by + 8;
+    for (const field of block.fields ?? []) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.6);
+      doc.setTextColor(...RES11_INK.texto);
+      doc.text(field.label, x + 2.5, fy, { maxWidth: cellW / 2 - 3 });
+      doc.setFont('helvetica', 'normal');
+      doc.text(field.value || RES11_BLANK_LINE, x + cellW / 2, fy, {
+        maxWidth: cellW / 2 - 3.5,
+      });
+      const labelLines = doc.splitTextToSize(field.label, cellW / 2 - 3).length;
+      const valueLines = doc.splitTextToSize(field.value || RES11_BLANK_LINE, cellW / 2 - 3.5).length;
+      fy += Math.max(5, Math.max(labelLines, valueLines) * 3.3 + 1.7);
+    }
+
+    // Línea de firma del bloque, siempre en la MISMA Y absoluta para toda la
+    // fila (alineación entre áreas) y con rúbrica suficiente encima.
+    const lineY = by + cellH - 6;
+    doc.setDrawColor(...RES11_INK.texto);
+    doc.setLineWidth(0.25);
+    doc.line(x + 6, lineY, x + cellW - 6, lineY);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...RES11_INK.gris);
+    doc.text('Firma', x + cellW / 2, lineY + 3.5, { align: 'center' });
+  });
+
+  return y + gridH;
 }
 
 // ────────────────────────────────────────────────────────────────────────────

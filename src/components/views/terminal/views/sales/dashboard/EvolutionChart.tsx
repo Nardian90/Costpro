@@ -1,9 +1,11 @@
 'use client';
 
 /**
- * COSTPRO-SALES-DASHBOARD-001 · Gráfico de evolución (recharts, ya usado
- * en el proyecto). Series: brutas, netas y descuentos (CUP); los buckets
- * vacíos se muestran explícitamente como 0.
+ * COSTPRO-SALES-DASHBOARD-001 · Gráfico de evolución (recharts).
+ * REFINEMENT-002 · Legibilidad light/dark: los atributos SVG no resuelven
+ * var(), así que los colores se resuelven vía useChartTheme() (tokens
+ * --chart-* de tokens.css, reactivos al cambio de tema). Series: brutas,
+ * netas y descuentos (CUP); los buckets vacíos se muestran como 0.
  */
 import React, { useState } from 'react';
 import {
@@ -11,6 +13,7 @@ import {
   CartesianGrid, Tooltip, Legend,
 } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
+import { useChartTheme, chartTooltipProps, chartAxisProps } from '@/lib/sales-dashboard/chart-theme';
 import type { DashboardSeriesPoint } from '@/lib/sales-dashboard/schema';
 
 interface EvolutionChartProps {
@@ -32,6 +35,10 @@ function bucketLabel(bucket: string, granularity: string): string {
 
 export function EvolutionChart({ series, granularity, currencyNote, onSelectBucket }: EvolutionChartProps) {
   const [hidden, setHidden] = useState<Record<string, boolean>>({});
+  const theme = useChartTheme();
+  const tooltipProps = chartTooltipProps(theme);
+  const axisProps = chartAxisProps(theme);
+  const [grossColor, netColor, discountsColor] = theme.series;
 
   const data = series.map(p => ({
     ...p,
@@ -48,41 +55,48 @@ export function EvolutionChart({ series, granularity, currencyNote, onSelectBuck
           const label = e?.activeLabel;
           if (label && onSelectBucket) onSelectBucket(String(label));
         }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.4} />
+          <CartesianGrid strokeDasharray="3 3" stroke={theme.grid} strokeOpacity={0.6} vertical={false} />
           <XAxis
             dataKey="label"
-            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
             interval="preserveStartEnd"
             minTickGap={12}
+            tick={axisProps.tick}
+            tickLine={axisProps.tickLine}
+            axisLine={axisProps.axisLine}
           />
           <YAxis
-            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-            tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
-            width={38}
+            tick={axisProps.tick}
+            tickLine={axisProps.tickLine}
+            axisLine={axisProps.axisLine}
+            tickFormatter={(v: number) => v >= 1000 || v <= -1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
+            width={42}
           />
           <Tooltip
             formatter={(value: number | string, name: string) => [formatCurrency(Number(value)), name]}
             labelFormatter={(l: string) => `${l} · ${currencyNote}`}
-            contentStyle={{
-              background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))',
-              borderRadius: 12, fontSize: 12, color: 'hsl(var(--foreground))',
-            }}
+            contentStyle={tooltipProps.contentStyle}
+            labelStyle={tooltipProps.labelStyle}
+            itemStyle={tooltipProps.itemStyle}
+            cursor={tooltipProps.cursor}
           />
           <Legend
             wrapperStyle={{ fontSize: 11 }}
+            formatter={(v: string) => (
+              <span style={{ color: theme.axis, cursor: 'pointer', fontSize: 11 }}>{v}</span>
+            )}
             onClick={e => setHidden(h => ({ ...h, [String(e.value)]: !h[String(e.value)] }))}
           />
           <Bar
-            dataKey="gross" name="Brutas (CUP)" fill="hsl(var(--primary))" fillOpacity={0.25}
+            dataKey="gross" name="Brutas (CUP)" fill={grossColor} fillOpacity={0.55}
             radius={[3, 3, 0, 0]} hide={hidden['Brutas (CUP)']} cursor={onSelectBucket ? 'pointer' : undefined}
           />
           <Bar
-            dataKey="discounts" name="Descuentos (CUP)" fill="hsl(var(--warning))" fillOpacity={0.5}
+            dataKey="discounts" name="Descuentos (CUP)" fill={discountsColor} fillOpacity={0.85}
             radius={[3, 3, 0, 0]} hide={hidden['Descuentos (CUP)']}
           />
           <Line
-            dataKey="net" name="Netas (CUP)" stroke="hsl(var(--primary))" strokeWidth={2}
-            dot={false} hide={hidden['Netas (CUP)']}
+            dataKey="net" name="Netas (CUP)" stroke={netColor} strokeWidth={2.5}
+            dot={false} activeDot={{ r: 4, strokeWidth: 2 }} hide={hidden['Netas (CUP)']}
           />
         </ComposedChart>
       </ResponsiveContainer>

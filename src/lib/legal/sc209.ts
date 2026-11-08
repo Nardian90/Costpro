@@ -63,6 +63,7 @@ import {
   RES11_BLANK_LINE,
   res11FileName,
   estadoDocumentoLabel,
+  storeCodeToString,
 } from './res11-shared';
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -92,8 +93,17 @@ export interface Sc209SourceData {
     confirmed_at?: string | null;
     reversed_at?: string | null;
     reversal_reason?: string | null;
-    origin_store?: { name?: string | null; logo_url?: string | null } | null;
-    destination_store?: { name?: string | null; logo_url?: string | null } | null;
+    origin_store?: {
+      name?: string | null;
+      logo_url?: string | null;
+      /** CP-DOC-SC-DATA-MAPPING-006: código documental consecutivo de la tienda. */
+      store_code?: number | string | null;
+    } | null;
+    destination_store?: {
+      name?: string | null;
+      logo_url?: string | null;
+      store_code?: number | string | null;
+    } | null;
     creator?: { full_name: string } | null;
     confirmer?: { full_name: string } | null;
     items?: Sc209SourceItem[];
@@ -101,7 +111,7 @@ export interface Sc209SourceData {
 }
 
 export interface Sc209ModelData {
-  /** Logo de la tienda de origen (emisora) o default de la app. */
+  /** Logo de la tienda de origen (emisora) o identificador CP si no tiene. */
   logoUrl?: string | null;
   fechaEmision: string;
   entidadNombre: string;
@@ -173,16 +183,21 @@ export function buildSc209ModelData(source: Sc209SourceData): Sc209ModelData {
     };
   });
 
+  // CP-DOC-SC-DATA-MAPPING-006: cada almacén se identifica con el código
+  // documental consecutivo de SU tienda (almacén que entrega = tienda de
+  // origen; almacén receptor = tienda de destino).
+  const codigoOrigen = storeCodeToString(transfer.origin_store?.store_code);
+  const codigoDestino = storeCodeToString(transfer.destination_store?.store_code);
   return {
     logoUrl: transfer.origin_store?.logo_url ?? null,
     fechaEmision: formatDateRes11(transfer.created_at),
     entidadNombre: transfer.origin_store?.name || '',
-    entidadCodigo: '',
+    entidadCodigo: codigoOrigen,
     almacenEntregaNombre: transfer.origin_store?.name || '',
-    almacenEntregaCodigo: '',
+    almacenEntregaCodigo: codigoOrigen,
     almacenEntregaDireccion: '',
     almacenReceptorNombre: transfer.destination_store?.name || '',
-    almacenReceptorCodigo: '',
+    almacenReceptorCodigo: codigoDestino,
     almacenReceptorDireccion: '',
     lineas,
     importeTotalEntrega: formatRes11Money(totalEntrega),
@@ -229,18 +244,18 @@ export async function fetchSc209SourceData(transfer: Sc209SourceData['transfer']
           .select('quantity, unit_cost, products(name, sku, unit_of_measure)')
           .eq('transfer_id', transfer.id)
           .order('created_at', { ascending: true }),
-    transfer.origin_store?.name
+    transfer.origin_store?.name && transfer.origin_store?.store_code != null
       ? Promise.resolve({ data: null, error: null })
       : supabase
           .from('stores')
-          .select('name, logo_url')
+          .select('name, logo_url, store_code')
           .eq('id', transfer.origin_store_id ?? '')
           .maybeSingle(),
-    transfer.destination_store?.name
+    transfer.destination_store?.name && transfer.destination_store?.store_code != null
       ? Promise.resolve({ data: null, error: null })
       : supabase
           .from('stores')
-          .select('name, logo_url')
+          .select('name, logo_url, store_code')
           .eq('id', transfer.destination_store_id ?? '')
           .maybeSingle(),
     supabase
@@ -256,12 +271,20 @@ export async function fetchSc209SourceData(transfer: Sc209SourceData['transfer']
     enriched.items = (itemsRes.data as unknown as Sc209SourceItem[]) || [];
   }
   if (!originRes.error && originRes.data) {
-    const row = originRes.data as { name?: string | null; logo_url?: string | null } | null;
-    enriched.origin_store = { name: row?.name || '', logo_url: row?.logo_url || null };
+    const row = originRes.data as { name?: string | null; logo_url?: string | null; store_code?: number | string | null } | null;
+    enriched.origin_store = {
+      name: row?.name || '',
+      logo_url: row?.logo_url || null,
+      store_code: row?.store_code ?? null,
+    };
   }
   if (!destRes.error && destRes.data) {
-    const row = destRes.data as { name?: string | null; logo_url?: string | null } | null;
-    enriched.destination_store = { name: row?.name || '', logo_url: row?.logo_url || null };
+    const row = destRes.data as { name?: string | null; logo_url?: string | null; store_code?: number | string | null } | null;
+    enriched.destination_store = {
+      name: row?.name || '',
+      logo_url: row?.logo_url || null,
+      store_code: row?.store_code ?? null,
+    };
   }
   if (!confirmerRes.error && confirmerRes.data) {
     enriched.confirmer = {
@@ -289,6 +312,7 @@ export async function renderSc209Pdf(model: Sc209ModelData) {
     modelo: 'SC-2-09',
     nombreInstitucional: model.entidadNombre,
     logoDataUrl: logo.dataUrl,
+    logoSource: logo.source,
     titulo: 'TRANSFERENCIA ENTRE ALMACENES',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
   });

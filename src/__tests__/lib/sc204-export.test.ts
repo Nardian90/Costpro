@@ -35,10 +35,13 @@ const mkItem = (overrides: Partial<Sc204SourceItem> = {}): Sc204SourceItem => ({
 
 const mkSource = (overrides: Partial<Sc204SourceData> = {}): Sc204SourceData => ({
   entidadNombre: 'Tienda QA',
+  entidadCodigo: '3',
   receipt: {
     id: 'aaaaaaaa-1111-4111-8111-111111111111',
     reference_doc: 'FAC-101',
+    document_number: 'ENT-000014-2026',
     supplier: 'Proveedor Central',
+    supplier_tax_id: 'J-31015873-2',
     reception_date: '2026-10-20T09:00:00Z',
     status: 'active',
     store_id: 'store-a',
@@ -52,21 +55,23 @@ describe('SC-2-04 — modelo según Resolución 11/2007 MFP', () => {
   it('cubre los 13 datos de uso obligatorio con la correspondencia COSTPRO correcta', () => {
     const model = buildSc204ModelData(mkSource());
 
-    // 1. Entidad receptora: nombre automático (tienda), código en blanco
+    // 1. Entidad receptora: nombre + código consecutivo persistente de la tienda
     expect(model.entidadNombre).toBe('Tienda QA');
-    expect(model.entidadCodigo).toBe('');
-    // 2. Almacén receptor: no gestionado → en blanco
-    expect(model.almacenNombre).toBe('');
-    expect(model.almacenCodigo).toBe('');
+    expect(model.entidadCodigo).toBe('3');
+    // 2. Almacén receptor: identificación de la entidad receptora (regla del modelo)
+    expect(model.almacenNombre).toBe('Tienda QA');
+    expect(model.almacenCodigo).toBe('3');
     // 3. Fecha de emisión del modelo (dd/mm/aaaa)
     expect(model.fechaEmision).toBe('29/10/2026');
-    // 4. Proveedor: nombre automático, código en blanco
+    // 4. Proveedor: nombre real + código = NIT/CI (snapshot congelado)
     expect(model.proveedorNombre).toBe('Proveedor Central');
-    expect(model.proveedorCodigo).toBe('');
-    // 5. Documento que ampara: número = referencia; tipo/nombre en blanco
-    expect(model.documentoNumero).toBe('FAC-101');
-    expect(model.documentoNombre).toBe('');
-    // 6. Transportador: no gestionado → en blanco
+    expect(model.proveedorCodigo).toBe('J-31015873-2');
+    // 5. Documento que ampara: tipo «Entrada» + número real de la entrada.
+    //    reference_doc (factura externa) NO es el número del documento que ampara.
+    expect(model.documentoNombre).toBe('Entrada');
+    expect(model.documentoNumero).toBe('ENT-000014-2026');
+    expect(model.documentoNumero).not.toBe('FAC-101');
+    // 6. Transportador: COSTPRO no lo gestiona → vacíos (bloque de firma)
     expect(model.transportadorNombre).toBe('');
     expect(model.transportadorCarne).toBe('');
     expect(model.transportadorChapa).toBe('');
@@ -90,6 +95,72 @@ describe('SC-2-04 — modelo según Resolución 11/2007 MFP', () => {
     // 9–12: firmas — espacios en blanco (se dibujan en el PDF, sin datos)
     // 13. Número consecutivo: no gestionado → en blanco
     expect(model.numeroConsecutivo).toBe('');
+  });
+
+  it('CP-DOC-SC-DATA-MAPPING-006 · caso de prueba de identificación documental', () => {
+    // Caso de la misión §12: cada valor aparece en su campo correcto y el
+    // nombre del proveedor JAMÁS se presenta como número documental.
+    const model = buildSc204ModelData(
+      mkSource({
+        entidadNombre: 'PUERTO PADRE',
+        entidadCodigo: '1',
+        // El defecto observado en producción: el nombre del proveedor capturado
+        // como reference_doc. Debe quedarse FUERA del número documental.
+        receipt: {
+          id: 'bbbbbbbb-3333-4333-8333-333333333333',
+          reference_doc: 'Almacen Lari',
+          document_number: 'ENT-000001-2026',
+          supplier: 'Almacen Lari',
+          supplier_tax_id: '02110651121',
+          reception_date: '2026-11-05T09:00:00Z',
+          status: 'active',
+          store_id: 'store-a',
+        },
+        transportador: {
+          nombre: 'Juan Pérez',
+          carne: '91020511234',
+          chapa: 'P-123456',
+          casilla: '45',
+          guiaAerea: 'GA-778812',
+        },
+      }),
+    );
+    expect(model.entidadNombre).toBe('PUERTO PADRE');
+    expect(model.entidadCodigo).toBe('1');
+    expect(model.almacenNombre).toBe('PUERTO PADRE');
+    expect(model.almacenCodigo).toBe('1');
+    expect(model.proveedorNombre).toBe('Almacen Lari');
+    expect(model.proveedorCodigo).toBe('02110651121');
+    expect(model.documentoNombre).toBe('Entrada');
+    expect(model.documentoNumero).toBe('ENT-000001-2026');
+    expect(model.documentoNumero).not.toContain('Almacen Lari');
+    expect(model.transportadorNombre).toBe('Juan Pérez');
+    expect(model.transportadorCarne).toBe('91020511234');
+    expect(model.transportadorChapa).toBe('P-123456');
+    expect(model.transportadorCasilla).toBe('45');
+    expect(model.transportadorGuiaAerea).toBe('GA-778812');
+  });
+
+  it('CP-DOC-SC-DATA-MAPPING-006 · sin NIT/CI y sin número de entrada → líneas en blanco', () => {
+    // Recepción histórica (sin document_number) y proveedor sin tax_id: los
+    // campos del SC conservan su línea de cumplimentación, sin inventos.
+    const model = buildSc204ModelData(
+      mkSource({
+        receipt: {
+          id: 'cccccccc-4444-4444-8444-444444444444',
+          reference_doc: 'Almacen Lari',
+          document_number: null,
+          supplier: 'Almacen Lari',
+          supplier_tax_id: null,
+          reception_date: '2026-01-10T09:00:00Z',
+          status: 'active',
+          store_id: 'store-a',
+        },
+      }),
+    );
+    expect(model.proveedorCodigo).toBe('');
+    expect(model.documentoNumero).toBe('');
+    expect(model.documentoNombre).toBe('Entrada');
   });
 
   it('no inventa valores cuando faltan datos opcionales (todo en blanco, sin N/A ni ceros)', () => {

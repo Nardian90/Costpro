@@ -6,11 +6,16 @@
  * cada bloque permite profundizar al detalle (misión §12).
  */
 import React, { useMemo, useState } from 'react';
-import { TrendingUp, TrendingDown, Package, AlertTriangle, Info, AlertOctagon, XCircle, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, Package, AlertTriangle, Info, AlertOctagon, XCircle, Users, Store } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
-import type { SalesDashboardResponse, DashboardSeller } from '@/lib/sales-dashboard/schema';
+import type { SalesDashboardResponse, DashboardSeller, DashboardStore, DashboardStoreSeriesPoint } from '@/lib/sales-dashboard/schema';
 import { paymentMethodLabel, docStatusLabel } from '@/lib/sales-dashboard/schema';
 import { percentChange } from '@/lib/sales-dashboard/periods';
+import { ComparisonChart, type ComparisonItem } from './ComparisonChart';
+import { useChartTheme, chartTooltipProps, chartAxisProps } from '@/lib/sales-dashboard/chart-theme';
+import {
+  ResponsiveContainer, ComposedChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+} from 'recharts';
 
 // ── Rendimiento por vendedor ────────────────────────────────────────────────
 type SellerSort = 'net' | 'ops' | 'ticket';
@@ -458,7 +463,11 @@ export function HeatmapBlock({ heatmap }: { heatmap: SalesDashboardResponse['hea
                       title={c ? `${label} ${h}:00 · ${c.ops} operaciones · ${formatCurrency(c.net_cup)} CUP` : `${label} ${h}:00 · sin ventas`}
                       className="aspect-square rounded-sm transition-transform hover:scale-110"
                       style={{
-                        background: intensity > 0 ? `hsl(var(--primary) / ${intensity})` : 'hsl(var(--muted) / 0.4)',
+                        // REFINEMENT-002: hsl(var(--primary) / x) era inválido con
+                        // tokens hex (celdas invisibles); color-mix resuelve var().
+                        background: intensity > 0
+                          ? `color-mix(in srgb, var(--chart-1) ${Math.round(intensity * 100)}%, transparent)`
+                          : 'color-mix(in srgb, var(--muted-foreground) 15%, transparent)',
                       }}
                       data-testid={`heatmap-cell-${di + 1}-${h}`}
                     />
@@ -471,7 +480,7 @@ export function HeatmapBlock({ heatmap }: { heatmap: SalesDashboardResponse['hea
             <span>Menos</span>
             <div className="flex gap-0.5 mx-2">
               {[0.15, 0.35, 0.6, 0.85, 1].map(o => (
-                <div key={o} className="w-4 h-2 rounded-sm" style={{ background: `hsl(var(--primary) / ${o})` }} />
+                <div key={o} className="w-4 h-2 rounded-sm" style={{ background: `color-mix(in srgb, var(--chart-1) ${Math.round(o * 100)}%, transparent)` }} />
               ))}
             </div>
             <span>Más ventas netas (CUP)</span>
@@ -515,6 +524,236 @@ export function PeriodComparison({ kpi }: { kpi: SalesDashboardResponse['kpi'] }
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ── Rendimiento por tienda (REFINEMENT-002 §3.2) ─────────────────────────────
+type StoreSort = 'net' | 'ops' | 'ticket' | 'units';
+
+export function StoresBlock({
+  stores, storesSeries, selectedStoreId, onDrillToStore,
+}: {
+  stores: DashboardStore[];
+  storesSeries: DashboardStoreSeriesPoint[];
+  /** Filtro global de tienda activo (resalta la fila). */
+  selectedStoreId: string | null;
+  /** Navega al historial filtrado por tienda (drill-down). */
+  onDrillToStore: (storeId: string | null) => void;
+}) {
+  const [sort, setSort] = useState<StoreSort>('net');
+  const [compareIds, setCompareIds] = useState<Set<string>>(new Set());
+
+  const sorted = useMemo(() => {
+    const arr = [...stores];
+    if (sort === 'net') arr.sort((a, b) => b.net_cup - a.net_cup);
+    if (sort === 'ops') arr.sort((a, b) => b.ops - a.ops);
+    if (sort === 'ticket') arr.sort((a, b) => b.avg_ticket_cup - a.avg_ticket_cup);
+    if (sort === 'units') arr.sort((a, b) => b.units_sold - a.units_sold);
+    return arr;
+  }, [stores, sort]);
+
+  const toggleCompare = (id: string) => {
+    setCompareIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  // Ítems del gráfico comparativo: todos o solo los seleccionados
+  const chartItems: ComparisonItem[] = useMemo(() => {
+    const base = compareIds.size > 0 ? stores.filter(s => compareIds.has(s.store_id)) : stores;
+    return base.map(s => ({
+      id: s.store_id, name: s.name,
+      net: s.net_cup - s.devolutions_cup,
+      ops: s.ops, ticket: s.avg_ticket_cup, units: s.units_sold,
+    }));
+  }, [stores, compareIds]);
+
+  // Evolución temporal de las tiendas del gráfico (netas por bucket)
+  const chartSeries = useMemo(
+    () => storesSeries.filter(p => chartItems.some(i => i.id === p.store_id)),
+    [storesSeries, chartItems],
+  );
+
+  if (stores.length === 0) {
+    return <EmptyBlock text="Sin ventas por tienda en el período con los filtros aplicados. Selecciona «Todas mis tiendas» en el filtro Tienda para comparar." testId="stores-empty" />;
+  }
+
+  return (
+    <div data-testid="stores-block">
+      <div className="overflow-x-auto rounded-xl border border-border bg-card">
+        <table className="w-full text-xs sm:text-sm" data-testid="stores-table">
+          <thead className="bg-muted/50">
+            <tr className="border-b border-border text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              <th className="p-3 text-left">Tienda</th>
+              <th className="p-3 text-right">Ventas</th>
+              <th className="p-3 text-right hidden sm:table-cell">Brutas</th>
+              <th className="p-3 text-right hidden md:table-cell">Descuentos</th>
+              <th className="p-3 text-right hidden md:table-cell">Devoluciones</th>
+              <th className="p-3 text-right">Netas</th>
+              <th className="p-3 text-right hidden sm:table-cell">Ticket</th>
+              <th className="p-3 text-right hidden lg:table-cell">Unidades</th>
+              <th className="p-3 text-right">%</th>
+              <th className="p-3 text-right hidden md:table-cell">Var. per. ant.</th>
+              <th className="p-3 text-center w-20 hidden sm:table-cell">Comparar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map(s => {
+              const netAfterDevo = s.net_cup - s.devolutions_cup;
+              return (
+                <tr
+                  key={s.store_id}
+                  className={cn(
+                    'border-b border-border/50 hover:bg-muted/20 transition-colors',
+                    selectedStoreId === s.store_id && 'bg-primary/5',
+                  )}
+                  data-testid={`store-row-${s.name.toLowerCase().replace(/\s+/g, '-')}`}
+                >
+                  <td className="p-3 font-bold text-foreground">{s.name}</td>
+                  <td className="p-3 text-right tabular-nums">{s.ops}</td>
+                  <td className="p-3 text-right tabular-nums hidden sm:table-cell">{formatCurrency(s.gross_cup)}</td>
+                  <td className="p-3 text-right tabular-nums text-warning hidden md:table-cell">−{formatCurrency(s.discounts_cup)}</td>
+                  <td className="p-3 text-right tabular-nums text-destructive hidden md:table-cell">−{formatCurrency(s.devolutions_cup)}</td>
+                  <td className="p-3 text-right tabular-nums font-black">{formatCurrency(netAfterDevo)}</td>
+                  <td className="p-3 text-right tabular-nums hidden sm:table-cell">{formatCurrency(s.avg_ticket_cup)}</td>
+                  <td className="p-3 text-right tabular-nums hidden lg:table-cell">{Math.round(s.units_sold * 10) / 10}</td>
+                  <td className="p-3 text-right">
+                    <div className="flex items-center justify-end gap-1.5">
+                      <div className="w-12 h-1.5 rounded-full bg-muted overflow-hidden hidden sm:block">
+                        <div className="h-full bg-primary rounded-full" style={{ width: `${Math.min(100, Math.max(0, s.participation_pct))}%` }} />
+                      </div>
+                      <span className="tabular-nums font-bold text-primary">{s.participation_pct}%</span>
+                    </div>
+                  </td>
+                  <td className="p-3 text-right hidden md:table-cell">
+                    {s.net_change_pct === null || s.net_change_pct === undefined ? (
+                      <span className="text-muted-foreground text-[11px]">— sin previos</span>
+                    ) : (
+                      <span className={cn('tabular-nums font-bold inline-flex items-center gap-0.5', s.net_change_pct > 0 ? 'text-success' : s.net_change_pct < 0 ? 'text-destructive' : 'text-muted-foreground')}>
+                        {s.net_change_pct > 0 ? <TrendingUp className="w-3 h-3 inline" /> : s.net_change_pct < 0 ? <TrendingDown className="w-3 h-3 inline" /> : null}
+                        {s.net_change_pct > 0 ? '+' : ''}{s.net_change_pct}%
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-3 text-center hidden sm:table-cell">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <input
+                        type="checkbox"
+                        checked={compareIds.has(s.store_id)}
+                        onChange={() => toggleCompare(s.store_id)}
+                        className="w-5 h-5 accent-primary cursor-pointer"
+                        aria-label={`Comparar tienda ${s.name}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => onDrillToStore(selectedStoreId === s.store_id ? null : s.store_id)}
+                        className="text-[10px] font-black uppercase text-primary hover:underline"
+                        aria-label={`Filtrar dashboard por tienda ${s.name}`}
+                      >
+                        {selectedStoreId === s.store_id ? 'Quitar filtro' : 'Ver histórico'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {compareIds.size > 0 && (
+        <button
+          type="button"
+          onClick={() => setCompareIds(new Set())}
+          className="mt-2 px-2.5 py-1.5 rounded-lg text-[11px] font-black uppercase border border-border text-muted-foreground hover:bg-muted min-h-[32px]"
+        >
+          Comparar todas
+        </button>
+      )}
+
+      {/* Gráfico comparativo (§4) + evolución de las tiendas seleccionadas */}
+      {stores.length > 1 && (
+        <div className="mt-4 rounded-xl border border-border bg-card p-3 sm:p-4" data-testid="stores-comparison-panel">
+          <h4 className="text-xs font-black uppercase tracking-widest mb-1 flex items-center gap-2">
+            <Store className="w-4 h-4 text-primary" /> Comparación entre tiendas
+          </h4>
+          <p className="text-[11px] text-muted-foreground mb-2">
+            Importes en CUP contable — las tiendas sin operaciones en el período muestran 0.
+          </p>
+          <ComparisonChart dimension="stores" items={chartItems} selectedIds={compareIds} onToggle={toggleCompare} />
+          {chartSeries.length > 0 && compareIds.size > 0 && (
+            <StoreEvolutionChart series={chartSeries} names={Object.fromEntries(stores.map(s => [s.store_id, s.name]))} />
+          )}
+        </div>
+      )}
+
+      <p className="text-[11px] text-muted-foreground mt-1.5">
+        Participación sobre las ventas netas del ámbito filtrado. La variación compara contra el período anterior equivalente;
+        «más facturación» no implica más rentabilidad (los costes no se incluyen aquí).
+      </p>
+    </div>
+  );
+}
+
+/** Evolución temporal (netas) de las tiendas comparadas — líneas por tienda. */
+function StoreEvolutionChart({ series, names }: { series: DashboardStoreSeriesPoint[]; names: Record<string, string> }) {
+  const t = useChartTheme();
+  const tooltipProps = chartTooltipProps(t);
+  const axisProps = chartAxisProps(t);
+
+  // Pivotar filas bucket×tienda → una fila por bucket con columna por tienda
+  const buckets = useMemo(() => {
+    const map = new Map<string, Record<string, number | string>>();
+    for (const p of series) {
+      if (!map.has(p.bucket)) map.set(p.bucket, { bucket: p.bucket });
+      const row = map.get(p.bucket)!;
+      row[p.store_id] = p.net_cup;
+    }
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([, v]) => v);
+  }, [series]);
+
+  const storeIds = useMemo(() => [...new Set(series.map(p => p.store_id))], [series]);
+
+  return (
+    <div className="mt-3" data-testid="stores-evolution-chart">
+      <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">
+        Evolución de las tiendas comparadas (netas, CUP)
+      </div>
+      <div className="w-full h-56">
+        <ResponsiveContainer width="100%" height="100%">
+          <ComposedChart data={buckets}>
+            <CartesianGrid strokeDasharray="3 3" stroke={t.grid} strokeOpacity={0.6} vertical={false} />
+            <XAxis dataKey="bucket" tick={axisProps.tick} tickLine={axisProps.tickLine} axisLine={axisProps.axisLine}
+              tickFormatter={(b: string) => b.slice(5, 10).replace('-', '/')} minTickGap={16} />
+            <YAxis tick={axisProps.tick} tickLine={axisProps.tickLine} axisLine={axisProps.axisLine}
+              tickFormatter={(v: number) => v >= 1000 || v <= -1000 ? `${(v / 1000).toFixed(0)}k` : String(v)} width={42} />
+            <Tooltip
+              formatter={(value: number | string, name: string) => [formatCurrency(Number(value)), name]}
+              labelFormatter={(l: string) => l}
+              contentStyle={tooltipProps.contentStyle}
+              labelStyle={tooltipProps.labelStyle}
+              itemStyle={tooltipProps.itemStyle}
+            />
+            <Legend wrapperStyle={{ fontSize: 11 }} formatter={(v: string) => (
+              <span style={{ color: t.axis, fontSize: 11 }}>{names[v] ?? v}</span>
+            )} />
+            {storeIds.map((sid, i) => (
+              <Line
+                key={sid}
+                dataKey={sid}
+                name={names[sid] ?? sid}
+                stroke={t.series[i % t.series.length]}
+                strokeWidth={2}
+                dot={false}
+                connectNulls
+              />
+            ))}
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

@@ -205,6 +205,14 @@ export interface Store {
   longitude?: number | null;
   is_active?: boolean;
   slug?: string | null;
+  /**
+   * CP-DOC-SC-DATA-MAPPING-006: código documental consecutivo de la tienda
+   * (ámbito tenant; asignado por trg_stores_assign_store_code al crear y
+   * estable durante la vida de la tienda). Es el que muestran los modelos
+   * SC-2-xx como «Código de la entidad receptora» / «Código del almacén».
+   * Nunca confundir con el id uuid (técnico) ni con el nit (fiscal propio).
+   */
+  store_code?: number | null;
   plantilla?: StoreTemplate | null;
   cost_template?: StoreCostTemplate | null;
   created_at?: string;
@@ -507,6 +515,19 @@ export interface Receipt {
   notes?: string | null;
   store_id?: string | null;
   supplier?: string | null;
+  /**
+   * CP-DOC-SC-DATA-MAPPING-006: número documental REAL de la ENTRADA
+   * (ENT-NNNNNN-AAAA por tienda/año vía document_sequences; asignado por
+   * trg_receipts_assign_document_number al activarse). NULL en recepciones
+   * históricas → línea en blanco en el SC-2-04 (sin retro-numeración).
+   */
+  document_number?: string | null;
+  // Snapshots congelados al recibir (cp_clasificador_fase4_snapshots):
+  // la fuente del «Código del proveedor» del SC es el NIT/CI (supplier_tax_id).
+  supplier_code?: string | null;
+  supplier_tax_id?: string | null;
+  supplier_address?: string | null;
+  supplier_phone?: string | null;
   reception_date?: string | null;
   // FIX-PAYMENT-TRACKING (2026-07-12): campos de pago a proveedor
   payment_status?: 'unpaid' | 'partial' | 'paid';

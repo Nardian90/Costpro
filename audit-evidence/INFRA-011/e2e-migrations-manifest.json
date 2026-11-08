@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 551,
-  "total_incluidos": 136,
+  "total_considerados": 554,
+  "total_incluidos": 139,
   "total_excluidos": 415,
-  "digest": "ab0de94f941b06741837bfd9ab3d80d0a9773f5cc4a5c425ac9576295719753a",
+  "digest": "23263ed89d7af514d77aa8d7ebea6bfe33f302bb06b195e93f8d757a41996bac",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5357,14 +5357,14 @@
     },
     {
       "nombre": "20261108141000_sales_dashboard_analytics.sql",
-      "bytes": 23834,
-      "sha256_original": "9a06d5273b51bcb18d20065a0be3ef5c62b0e879f73765a0047137f2cc86a42b",
+      "bytes": 24157,
+      "sha256_original": "9176348ee6248cc39e4be80f91d9bf20bbacaf810594bf756a92670caba9af5e",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261108",
       "observaciones": [],
       "posicion": 135,
-      "sha256_generado": "9a06d5273b51bcb18d20065a0be3ef5c62b0e879f73765a0047137f2cc86a42b"
+      "sha256_generado": "9176348ee6248cc39e4be80f91d9bf20bbacaf810594bf756a92670caba9af5e"
     },
     {
       "nombre": "20261108150000_cp_operational_classification.sql",
@@ -5376,6 +5376,39 @@
       "observaciones": [],
       "posicion": 136,
       "sha256_generado": "16a7cd677d54b1fdb404568db8810e98d9983d4474fa462d4f43c4d67addd8ca"
+    },
+    {
+      "nombre": "20261108200000_cp_doc_sc006_store_code.sql",
+      "bytes": 8138,
+      "sha256_original": "0ec5c7e14e9cae0cca6b01e4f37c2435d22400b9d7aefab5ff175aaa0025e2a8",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261108",
+      "observaciones": [],
+      "posicion": 137,
+      "sha256_generado": "0ec5c7e14e9cae0cca6b01e4f37c2435d22400b9d7aefab5ff175aaa0025e2a8"
+    },
+    {
+      "nombre": "20261108201000_cp_doc_sc006_receipt_document_number.sql",
+      "bytes": 8877,
+      "sha256_original": "07b481d6143f46fa5e3084c76a21ba15d95dd78674e3934289c8b6edca01734a",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261108",
+      "observaciones": [],
+      "posicion": 138,
+      "sha256_generado": "07b481d6143f46fa5e3084c76a21ba15d95dd78674e3934289c8b6edca01734a"
+    },
+    {
+      "nombre": "20261108220000_sales_dashboard_stores_comparison.sql",
+      "bytes": 29301,
+      "sha256_original": "a7be71ca11219574c809dd4243868d8b99a24052cdbb816f3718ae31661412fa",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261108",
+      "observaciones": [],
+      "posicion": 139,
+      "sha256_generado": "a7be71ca11219574c809dd4243868d8b99a24052cdbb816f3718ae31661412fa"
     },
     {
       "nombre": "AUDIT_FIXES.md",
