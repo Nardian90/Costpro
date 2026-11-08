@@ -13,6 +13,15 @@ import { validateReceiptItemsTasa } from '@/lib/receipt-items-validation';
 // MISIÓN POLÍTICA TEMPORAL (2026-10-18): revalidación server-side de las
 // fechas operativas encoladas offline (venta/recepción) — tope HOY Habana.
 import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
+// CP-POS-002 (D3): clasificación canónica de errores por operación. La
+// clasificación vive en el SERVIDOR porque en producción el texto crudo del
+// error se oculta al cliente (FIX-SEC-022) — el cliente solo recibe la
+// categoría + código + mensaje operativo en español.
+import {
+  classifySyncError,
+  classificationToBatchStatus,
+  type SyncErrorClassification,
+} from '@/lib/sync/error-classification';
 
 export const runtime = 'nodejs';
 
@@ -145,12 +154,20 @@ const handler = withAuth(async (req, session) => {
       if (op.entity === 'reception' && Array.isArray(op.payload?.p_items)) {
         const tasaValidation = validateReceiptItemsTasa(op.payload.p_items);
         if (!tasaValidation.valid) {
+          const f21 = classifySyncError({ message: 'ERR_F21_TASA_INVALIDA' });
           results.push({
             idempotencyKey: op.idempotencyKey,
             status: 'error',
             error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST)
               ? `F-21: ${tasaValidation.error} — ${tasaValidation.details}`
               : 'Tasa de cambio inválida',
+            // CP-POS-002 (D3): conflicto de NEGOCIO determinista — el motor
+            // NO debe reintentarlo (la tasa encolada no va a cambiar sola).
+            category: f21.category,
+            conflictType: f21.conflictType,
+            errorCode: 'ERR_F21_TASA_INVALIDA',
+            retryable: false,
+            message: f21.message,
           });
           // Registrar en sync_log para que el cliente pueda ver el rechazo (pipeline W4).
           queueUpsert({
@@ -179,6 +196,10 @@ const handler = withAuth(async (req, session) => {
             status: 'ok',
             serverId: existingLog.response_data?.id,
             serverData: existingLog.response_data,
+            // CP-POS-002 (D3, categoría A): replay certificado por sync_log
+            // 'ok' previo CON la misma llave — evidencia persistente de que
+            // el servidor ya registró esta operación.
+            idempotencyOutcome: 'idempotent',
           });
           continue;
         }
@@ -202,11 +223,17 @@ const handler = withAuth(async (req, session) => {
           if (opDate) {
             const dateCheck = checkNotFutureOperationDate(opDate);
             if (!dateCheck.ok) {
+              const future = classifySyncError({ message: 'ERR_FUTURE_OPERATION_DATE' });
               results.push({
                 idempotencyKey: op.idempotencyKey,
                 status: 'error',
                 error: 'ERR_FUTURE_OPERATION_DATE',
                 message: dateCheck.error,
+                // CP-POS-002 (D3): determinista — no se reintenta.
+                category: future.category,
+                conflictType: future.conflictType,
+                errorCode: 'ERR_FUTURE_OPERATION_DATE',
+                retryable: false,
               });
               queueUpsert({
                 idempotency_key: op.idempotencyKey,
@@ -316,6 +343,16 @@ const handler = withAuth(async (req, session) => {
 
         if (result.error) throw result.error;
 
+        // CP-POS-002 (D3, categoría A): la RPC devuelve {status:'idempotent'}
+        // cuando la llave ya estaba registrada con el MISMO param_hash (evidencia
+        // real de correspondencia llave↔contenido — registry + índice único).
+        // Esa repetición se reporta como 'ok' (la venta existe una sola vez);
+        // idempotencyOutcome distingue ejecución nueva de replay idempotente.
+        const rpcOutcome =
+          result.data && typeof result.data === 'object' && 'status' in (result.data as Record<string, unknown>)
+            ? (result.data as { status?: string }).status
+            : undefined;
+
         // 3. Record success in sync_log (pipeline W4)
         queueUpsert({
           idempotency_key: op.idempotencyKey,
@@ -331,14 +368,27 @@ const handler = withAuth(async (req, session) => {
           idempotencyKey: op.idempotencyKey,
           status: 'ok',
           serverId: result.data,
+          // CP-POS-002 (D3): campo adicional — 'executed' la primera vez,
+          // 'idempotent' cuando el servidor certifica repetición exacta.
+          idempotencyOutcome: rpcOutcome === 'idempotent' ? 'idempotent' : 'executed',
         });
       } catch (err: unknown) {
         const errMsg = err instanceof Error ? err.message : String(err);
+        const errCode = (err as { code?: string } | null)?.code ?? undefined;
         console.error(`Error processing sync operation ${op.idempotencyKey}:`, err);
 
-        // Check for conflicts (this is simplified, depends on error messages/codes)
-        const isConflict = errMsg.includes('Duplicate') || (err instanceof Error && (err as any).code === '23505');
-        const status = isConflict ? 'conflict' : 'error';
+        // CP-POS-002 (D3): clasificación canónica a partir de los códigos
+        // REALES de las RPC (ERR_*), la restricción única del 23505 y el
+        // status HTTP. El detector legado (includes('Duplicate') +
+        // code==='23505') colapsaba ERR_INVOICE_DUPLICATE / ERR_SKU_EXISTS
+        // (mayúsculas, P0001) a 'error' reintentable y cualquier 23505 a
+        // 'conflict' sin evidencia de correspondencia llave↔contenido.
+        const classification = classifySyncError({
+          message: errMsg,
+          code: errCode,
+        });
+        const status = classificationToBatchStatus(classification);
+        const isConflict = status === 'conflict';
 
         // Record failure/conflict in sync_log (pipeline W4)
         queueUpsert({
@@ -373,6 +423,15 @@ const handler = withAuth(async (req, session) => {
           // FIX-SEC-022: Hide internal error details in sync responses
           error: (process.env.NODE_ENV !== 'production' || !!process.env.VITEST) ? errMsg : 'Error de sincronización',
           serverData,
+          // CP-POS-002 (D3): campos ADICIONALES (contrato compatible — el
+          // frontend desplegado ignora lo que no conoce). El cliente usa
+          // esta señal para decidir reintento/backoff vs conflicto sin
+          // depender del texto del error (oculto en producción).
+          category: classification.category,
+          conflictType: classification.conflictType,
+          errorCode: classification.errorCode,
+          retryable: classification.retryable,
+          message: classification.message,
         });
       }
     }
