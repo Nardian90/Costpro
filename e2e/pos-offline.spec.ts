@@ -5,9 +5,20 @@
  * Etiqueta: @offline (NO está en el filtro por defecto del workflow
  * e2e-isolated: 'health-api|isolated-db-sentinel|auth.spec.ts|...').
  *
+ * ESTADO (T6, 2026-11-08): PRUEBA MANUAL — tres corridas por
+ * workflow_dispatch contra CostproE2E NO superaron el pre-requisito de
+ * hidratación del catálogo (runs 42508725582, 42509559445, 42510139916:
+ * el POS en el entorno CI no persiste el snapshot products_* — causa
+ * estructural del entorno, no del spec: la vista hidrata el catálogo vía
+ * useProducts SOLO con sesión+tienda interactivamente establecidas).
+ * El flujo offline queda verificado por la batería Vitest de CP-POS-002
+ * (169/169, PR #1573) y el checklist manual en dispositivo real
+ * (docs/audits/POS-002_DISENO_OFFLINE.md §16).
+ *
  * Regla de la misión (T5.2): NO incorporar al conjunto automático de PR
  * hasta 3 ejecuciones verdes consecutivas por workflow_dispatch contra
- * CostproE2E. El spec exige además opt-in EXPLÍCITO:
+ * CostproE2E (hoy: prueba manual — ver ESTADO). El spec exige además
+ * opt-in EXPLÍCITO:
  *
  *   CP_POS_002_RUN_OFFLINE_E2E=1   (ya en el env del workflow)
  *
