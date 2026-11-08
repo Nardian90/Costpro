@@ -4,17 +4,25 @@ import type { jsPDF } from 'jspdf';
  * Logo de tienda para los comprobantes oficiales de la familia SC-2-xx
  * (Resolución No. 11/2007, MFP — Anexo Único).
  *
- * Prioridad (modo multitienda): logo_url de la TIENDA del documento → logo
- * por defecto de la aplicación (/logo.png, rasterizado de public/logo.svg)
- * → nada (el comprobante se genera igual, sin logo). Una descarga fallida
- * nunca bloquea la emisión del modelo.
+ * Prioridad (CP-DOC-SC-DATA-MAPPING-006 §9):
+ *   1. logo_url de la TIENDA del documento (cuando existe y es rasterizable).
+ *   2. Identificador tipográfico monocromático «CP» (vectorial, blanco y
+ *      negro) cuando la tienda NO tiene logo propio.
+ *
+ * CAMBIO DE REGLA: el logo general de la aplicación (/logo.png) ya NO se usa
+ * como sustituto — rompía la identidad visual del documento de la tienda.
+ * Una descarga fallida nunca bloquea la emisión del modelo.
  */
 export interface ScLogoResolution {
   dataUrl: string | null;
-  source: 'store' | 'default' | 'none';
+  /**
+   * 'store' = logo propio de la tienda; 'cp' = identificador monocromático
+   * CP (recurso alternativo cuando la tienda carece de imagen — NO es un
+   * logo real de la tienda); 'none' = nada (comprobante sin marca).
+   */
+  source: 'store' | 'cp' | 'none';
 }
 
-const DEFAULT_LOGO_PATH = '/logo.png';
 const LOGO_TIMEOUT_MS = 8000;
 
 /**
@@ -28,6 +36,8 @@ export function setScLogoAppOrigin(origin: string | null): void {
 }
 
 async function toDataUrl(url: string): Promise<string> {
+  // dataURL explícito (evidencias/pruebas): sin red.
+  if (url.startsWith('data:')) return url;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), LOGO_TIMEOUT_MS);
   try {
@@ -49,27 +59,24 @@ async function toDataUrl(url: string): Promise<string> {
 }
 
 /**
- * Resuelve el dataURL del logo: primero el de la tienda emisora del
- * documento (storeLogoUrl), si no el default de la app bajo `appOrigin`
- * (por defecto window.location.origin en el cliente). Devuelve 'none' si
- * ninguna fuente está disponible — el comprobante sale sin logo.
+ * Resuelve la marca del documento: primero el logo de la tienda emisora
+ * (storeLogoUrl); si la tienda NO tiene logo (o la imagen no está
+ * disponible) el resultado indica el identificador monocromático CP
+ * (source='cp'), que drawScLogo dibuja como composición vectorial. Nunca
+ * usa el logo general de la aplicación como sustituto.
  */
 export async function resolveScLogoDataUrl(
   storeLogoUrl?: string | null,
-  appOrigin?: string,
+  _appOrigin?: string,
 ): Promise<ScLogoResolution> {
-  const origin = appOrigin ?? injectedAppOrigin ?? (typeof window !== 'undefined' ? window.location.origin : '');
-  const candidates: Array<{ url: string; source: 'store' | 'default' }> = [];
-  if (storeLogoUrl) candidates.push({ url: storeLogoUrl, source: 'store' });
-  if (origin) candidates.push({ url: `${origin}${DEFAULT_LOGO_PATH}`, source: 'default' });
-  for (const candidate of candidates) {
+  if (storeLogoUrl) {
     try {
-      return { dataUrl: await toDataUrl(candidate.url), source: candidate.source };
+      return { dataUrl: await toDataUrl(storeLogoUrl), source: 'store' };
     } catch {
-      // siguiente fuente
+      // Imagen no disponible → identificador CP (nunca el logo de la app).
     }
   }
-  return { dataUrl: null, source: 'none' };
+  return { dataUrl: null, source: 'cp' };
 }
 
 export interface ScLogoBox {
@@ -81,11 +88,41 @@ export interface ScLogoBox {
 }
 
 /**
- * Dibuja el logo alineado a la izquierda del recuadro y centrado
- * verticalmente. Silencioso por diseño: un logo roto no impide el comprobante.
+ * Identificador monocromático «CP» (recurso alternativo cuando la tienda
+ * carece de logo propio): composición VECTORIAL — marco fino negro y
+ * monograma en negrita, blanco y negro puro, sin gradientes, efectos ni
+ * color corporativo. Imprime con nitidez a cualquier resolución y ocupa un
+ * tamaño compacto proporcionado al espacio del logo real. No es un logo de
+ * la tienda: es la marca neutral de la familia documental SC.
+ */
+export function drawScMonogram(doc: jsPDF, box: ScLogoBox): void {
+  const frameW = Math.min(box.maxW, 16);
+  const frameH = Math.min(box.maxH, frameW * 0.72);
+  const x = box.x;
+  const y = box.y + (box.maxH - frameH) / 2;
+
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.3);
+  doc.setFillColor(255, 255, 255);
+  doc.rect(x, y, frameW, frameH, 'FD');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(0, 0, 0);
+  doc.text('CP', x + frameW / 2, y + frameH / 2 + 1.6, { align: 'center' });
+}
+
+/**
+ * Dibuja la marca del documento: el logo de la tienda (alineado a la
+ * izquierda del recuadro y centrado verticalmente, preservando el aspecto)
+ * o, en su defecto, el identificador CP. Silencioso por diseño: una marca
+ * rota no impide el comprobante.
  */
 export function drawScLogo(doc: jsPDF, logo: ScLogoResolution, box: ScLogoBox): void {
-  if (!logo.dataUrl) return;
+  if (!logo.dataUrl) {
+    if (logo.source === 'cp') drawScMonogram(doc, box);
+    return;
+  }
   try {
     const props = doc.getImageProperties(logo.dataUrl);
     const ratio = props.width / props.height || 1;
@@ -98,6 +135,6 @@ export function drawScLogo(doc: jsPDF, logo: ScLogoResolution, box: ScLogoBox): 
     const y = box.y + (box.maxH - h) / 2;
     doc.addImage(logo.dataUrl, props.fileType, box.x, y, w, h);
   } catch {
-    // sin logo
+    drawScMonogram(doc, box);
   }
 }

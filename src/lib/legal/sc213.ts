@@ -93,7 +93,12 @@ export interface Sc213SourceData {
   };
   /** Nombre de la entidad/almacén (tienda activa bajo RLS). */
   entidadNombre: string;
-  /** logo_url de la tienda (multitienda); null → default de la app. */
+  /**
+   * CP-DOC-SC-DATA-MAPPING-006: código documental de la tienda
+   * (consecutivo persistente stores.store_code; nunca el uuid interno).
+   */
+  entidadCodigo?: string | null;
+  /** logo_url de la tienda (multitienda); null → identificador CP. */
   logoUrl?: string | null;
   movimientos: Sc213SourceMovement[];
   /** true si la lectura alcanzó el tope de 10.000 movimientos. */
@@ -101,7 +106,7 @@ export interface Sc213SourceData {
 }
 
 export interface Sc213ModelData {
-  /** Logo de la tienda o default de la app (dataURL en fetch). */
+  /** Logo de la tienda o identificador CP si no tiene logo propio. */
   logoUrl?: string | null;
   entidadNombre: string;
   entidadCodigo: string; // no gestionado → ''
@@ -184,9 +189,11 @@ export function buildSc213ModelData(source: Sc213SourceData): Sc213ModelData {
   return {
     logoUrl: source.logoUrl ?? null,
     entidadNombre: source.entidadNombre || '',
-    entidadCodigo: '',
+    // CP-DOC-SC-DATA-MAPPING-006: entidad y almacén se identifican con el
+    // código documental de la tienda (el submayor es de SU almacén).
+    entidadCodigo: (source.entidadCodigo || '').trim(),
     almacenNombre: source.entidadNombre || '',
-    almacenCodigo: '',
+    almacenCodigo: (source.entidadCodigo || '').trim(),
     productoDescripcion: source.producto.name || '',
     productoCodigo: source.producto.sku || '',
     unidadMedida: source.producto.unit_of_measure || '',
@@ -229,7 +236,7 @@ export async function fetchSc213SourceData(
   activeStoreId?: string | null,
 ): Promise<Sc213SourceData> {
   if (!activeStoreId) {
-    return { producto, entidadNombre: '', logoUrl: null, movimientos: [], truncado: false };
+    return { producto, entidadNombre: '', entidadCodigo: '', logoUrl: null, movimientos: [], truncado: false };
   }
 
   const [{ data: movs, error }, { data: storeRow, error: storeError }] = await Promise.all([
@@ -241,7 +248,7 @@ export async function fetchSc213SourceData(
       .order('created_at', { ascending: true })
       .order('id', { ascending: true })
       .range(0, LIMITE_MOVIMIENTOS - 1),
-    supabase.from('stores').select('name, logo_url').eq('id', activeStoreId).maybeSingle(),
+    supabase.from('stores').select('name, logo_url, store_code').eq('id', activeStoreId).maybeSingle(),
   ]);
 
   if (error) {
@@ -252,10 +259,12 @@ export async function fetchSc213SourceData(
   }
 
   const lista = (movs as unknown as Sc213SourceMovement[]) || [];
+  const fila = storeRow as { name?: string | null; logo_url?: string | null; store_code?: number | string | null } | null;
   return {
     producto,
-    entidadNombre: (storeRow as { name?: string | null } | null)?.name || '',
-    logoUrl: (storeRow as { name?: string | null; logo_url?: string | null } | null)?.logo_url || null,
+    entidadNombre: fila?.name || '',
+    entidadCodigo: fila?.store_code === null || fila?.store_code === undefined ? '' : String(fila.store_code),
+    logoUrl: fila?.logo_url || null,
     movimientos: lista,
     truncado: lista.length >= LIMITE_MOVIMIENTOS,
   };
@@ -279,6 +288,7 @@ export async function renderSc213Pdf(model: Sc213ModelData) {
     nombreInstitucional: model.entidadNombre,
     titulo: 'SUBMAYOR DE INVENTARIO',
     logoDataUrl: logo.dataUrl,
+    logoSource: logo.source,
   });
 
   doc.setFont('helvetica', 'normal');

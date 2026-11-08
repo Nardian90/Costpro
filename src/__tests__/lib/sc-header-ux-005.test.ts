@@ -144,10 +144,12 @@ describe('CP-DOC-SC-HEADER-UX-005 · Encabezado institucional de los modelos SC'
     expect(text).toContain('IMPORTE TOTAL DEL MODELO');
   });
 
-  it('el CUERPO del documento conserva su estructura (bloques A–F, tabla, firmas)', async () => {
+  it('el CUERPO del documento conserva su estructura (bloques A–E, tabla, cuadrícula de firmas)', async () => {
     const doc = await renderSc204Pdf(mkModel());
     const text = decodePdf(doc.output('arraybuffer') as ArrayBuffer);
-    // Bloques de datos A–F (CP-DOC-PDF-UX-004, intactos)
+    // Bloques de datos A–E (CP-DOC-PDF-UX-004). El bloque F «DATOS DEL
+    // TRANSPORTADOR» ya no existe: sus datos acompañan a la firma (misión
+    // CP-DOC-SC-DATA-MAPPING-006 §6) — «Carné de identidad:» sigue presente.
     for (const etiqueta of [
       'Nombre de la entidad:',
       'Nombre del almacén:',
@@ -159,13 +161,16 @@ describe('CP-DOC-SC-HEADER-UX-005 · Encabezado institucional de los modelos SC'
     ]) {
       expect(text).toContain(etiqueta);
     }
-    // Tabla del dato 7 + dato 8 + firmas (denominaciones completas)
+    expect(text).not.toContain('DATOS DEL TRANSPORTADOR');
+    // Tabla del dato 7 + dato 8 + los CUATRO bloques de firma alineados
     expect(text).toContain('Saldo en existencia');
     expect(text).toContain('según almacén');
     expect(text).toContain('IMPORTE TOTAL DEL MODELO');
     expect(text).toContain('385.00 CUP');
-    expect(text).toContain('Firma del Jefe del Almacén');
-    expect(text).toContain('Firma del empleado que lo contabiliza y del que lo anota en el Control de Inventario');
+    expect(text).toContain('FIRMA DEL TRANSPORTADOR');
+    expect(text).toContain('FIRMA DEL EMPLEADO QUE RECEPCIONA');
+    expect(text).toContain('FIRMA DEL EMPLEADO QUE CONTABILIZA');
+    expect(text).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');
   });
 
   it('plantilla reutilizable: drawRes11Header adapta el ancho a la orientación (apaisado)', async () => {
@@ -181,15 +186,30 @@ describe('CP-DOC-SC-HEADER-UX-005 · Encabezado institucional de los modelos SC'
     expect(textL).toContain('SUBMAYOR DE INVENTARIO');
   });
 
-  it('el logo se resuelve de la TIENDA del documento (fuente real) — nada de logos fijos', async () => {
-    // resolveScLogoDataUrl es la única fuente del logo (tienda → default → nada);
-    // con una URL de tienda válida la fuente es 'store'.
+  it('la marca se resuelve de la TIENDA del documento; sin logo propio → identificador CP', async () => {
+    // resolveScLogoDataUrl: 1º logo de la tienda; 2º identificador CP
+    // monocromático (source='cp') — NUNCA el logo general de la aplicación
+    // (CP-DOC-SC-DATA-MAPPING-006 §9).
     const resuelto = await resolveScLogoDataUrl(LOGO_DATAURL, '');
     expect(resuelto.source).toBe('store');
     expect(resuelto.dataUrl).toBe(LOGO_DATAURL);
-    // Sin tienda ni origen de app → sin logo (el modelo sale igual).
-    const ninguno = await resolveScLogoDataUrl(null, '');
-    expect(ninguno.source).toBe('none');
-    expect(ninguno.dataUrl).toBeNull();
+    // Tienda sin logo → el identificador CP (dibujado vectorialmente en el
+    // render; la resolución solo indica la fuente).
+    const cp = await resolveScLogoDataUrl(null, '');
+    expect(cp.source).toBe('cp');
+    expect(cp.dataUrl).toBeNull();
+    // Logo de la tienda NO disponible (fetch roto) → también identificador CP.
+    const roto = await resolveScLogoDataUrl('http://localhost:1/no-existe.png', '');
+    expect(roto.source).toBe('cp');
+    expect(roto.dataUrl).toBeNull();
+  });
+
+  it('sin logo: el identificador CP se dibuja (monograma vectorial en el stream)', async () => {
+    const doc = await renderSc204Pdf(mkModel({ logoUrl: null }));
+    const text = decodePdf(doc.output('arraybuffer') as ArrayBuffer);
+    // El monograma CP es composición tipográfica vectorial (negrita helvetica)
+    expect(text).toContain('(CP)');
+    // y el documento sigue completo.
+    expect(text).toContain('MODELO SC-2-04');
   });
 });

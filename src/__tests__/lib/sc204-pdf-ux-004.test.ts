@@ -49,10 +49,13 @@ const mkItem = (overrides: Partial<Sc204SourceItem> = {}): Sc204SourceItem => ({
 
 const mkSource = (overrides: Partial<Sc204SourceData> = {}): Sc204SourceData => ({
   entidadNombre: 'PUERTO PADRE',
+  entidadCodigo: '1',
   receipt: {
     id: 'bbbbbbbb-3333-4333-8333-333333333333',
     reference_doc: 'FAC-2026-00871',
+    document_number: 'ENT-000007-2026',
     supplier: 'Almacen Lari',
+    supplier_tax_id: 'J-31015873-2',
     reception_date: '2026-10-09T09:00:00Z',
     status: 'active',
     store_id: 'store-a',
@@ -67,14 +70,14 @@ const mkSource = (overrides: Partial<Sc204SourceData> = {}): Sc204SourceData => 
 
 const mkModel = (overrides: Partial<Sc204ModelData> = {}): Sc204ModelData => ({
   entidadNombre: 'PUERTO PADRE',
-  entidadCodigo: 'ENT-77214',
-  almacenNombre: 'Almacén Central',
-  almacenCodigo: 'ALM-00431',
+  entidadCodigo: '1',
+  almacenNombre: 'PUERTO PADRE',
+  almacenCodigo: '1',
   fechaEmision: '09/10/2026',
   proveedorNombre: 'Almacen Lari',
-  proveedorCodigo: 'PRV-00903',
-  documentoNombre: 'Factura',
-  documentoNumero: 'FAC-2026-00871',
+  proveedorCodigo: 'J-31015873-2',
+  documentoNombre: 'Entrada',
+  documentoNumero: 'ENT-000007-2026',
   fechaRecepcion: '09/10/2026',
   transportadorNombre: '',
   transportadorCarne: '',
@@ -105,22 +108,25 @@ describe('CP-DOC-PDF-UX-004 · Escenario A — campos completos en su ubicación
         items: [mkItem()],
       }),
     );
-    // Entidad receptora ← nombre de la tienda; su código no se rellena aquí
+    // Entidad receptora ← nombre + código consecutivo persistente de la tienda
     expect(model.entidadNombre).toBe('PUERTO PADRE');
-    expect(model.entidadCodigo).toBe('');
-    // Almacén receptor ← no gestionado: NUNCA hereda códigos de otras entidades
-    expect(model.almacenNombre).toBe('');
-    expect(model.almacenCodigo).toBe('');
-    // Proveedor ← receipts.supplier (y SOLO supplier)
+    expect(model.entidadCodigo).toBe('1');
+    // Almacén receptor ← identificación de la entidad receptora (regla del modelo)
+    expect(model.almacenNombre).toBe('PUERTO PADRE');
+    expect(model.almacenCodigo).toBe('1');
+    // Proveedor ← receipts.supplier + supplier_tax_id (NIT/CI congelado)
     expect(model.proveedorNombre).toBe('Almacen Lari');
-    expect(model.proveedorCodigo).toBe('');
-    // Documento que ampara ← receipts.reference_doc (y SOLO reference_doc):
-    // el número documental real, no el nombre del proveedor.
-    expect(model.documentoNumero).toBe('FAC-2026-00871');
-    expect(model.documentoNombre).toBe('');
+    expect(model.proveedorCodigo).toBe('J-31015873-2');
+    // Documento que ampara ← tipo «Entrada» + número real de la entrada
+    // (document_number); la factura externa (reference_doc) NO es el número
+    // del documento que ampara, y el nombre del proveedor jamás lo es.
+    expect(model.documentoNombre).toBe('Entrada');
+    expect(model.documentoNumero).toBe('ENT-000007-2026');
+    expect(model.documentoNumero).not.toBe('FAC-2026-00871');
+    expect(model.documentoNumero).not.toBe(model.proveedorNombre);
   });
 
-  it('render: bloques A–F con etiquetas COMPLETAS e inequívocas en el PDF', async () => {
+  it('render: bloques A–E con etiquetas COMPLETAS e inequívicas en el PDF', async () => {
     const doc = await renderSc204Pdf(mkModel());
     const text = decodePdf(doc.output('arraybuffer'));
 
@@ -135,10 +141,12 @@ describe('CP-DOC-PDF-UX-004 · Escenario A — campos completos en su ubicación
     expect(text).toContain('Número del documento:');
     expect(text).toContain('Fecha de la recepción:');
     expect(text).toContain('Fecha de emisión del modelo:');
-    expect(text).toContain('DATOS DEL TRANSPORTADOR');
+    // CP-DOC-SC-DATA-MAPPING-006 §6: el bloque independiente «DATOS DEL
+    // TRANSPORTADOR» ya no existe — sus datos viven en su bloque de firma.
+    expect(text).not.toContain('DATOS DEL TRANSPORTADOR');
 
     // Bloque D independiente: el número del documento es el documental real
-    expect(text).toContain('FAC-2026-00871');
+    expect(text).toContain('ENT-000007-2026');
     // Tabla normalizada (§5) — el encabezado de la última columna se envuelve
     // en dos líneas dentro de su celda (30 mm), por eso se aserta por fragmentos
     expect(text).toContain('Precio unitario');
@@ -148,11 +156,16 @@ describe('CP-DOC-PDF-UX-004 · Escenario A — campos completos en su ubicación
     expect(text).toContain('IMPORTE TOTAL DEL MODELO');
     expect(text).toContain('IMPORTE TOTAL');
     expect(text).toContain('34.00 CUP');
-    // Firmas (§7): las cuatro responsabilidades del modelo
-    expect(text).toContain('Firma del Jefe del Almacén');
-    expect(text).toContain('Firma del Transportador');
-    expect(text).toContain('Firma del empleado que recepciona');
-    expect(text).toContain('Firma del empleado que lo contabiliza y del que lo anota en el Control de Inventario');
+    // Firmas (§7 de la misión): los CUATRO bloques de responsabilidad, con el
+    // transportador portando sus datos dentro de su propio bloque
+    expect(text).toContain('FIRMA DEL TRANSPORTADOR');
+    expect(text).toContain('Carné de identidad:');
+    expect(text).toContain('Chapa:');
+    expect(text).toContain('Casilla:');
+    expect(text).toContain('Guía aérea:');
+    expect(text).toContain('FIRMA DEL EMPLEADO QUE RECEPCIONA');
+    expect(text).toContain('FIRMA DEL EMPLEADO QUE CONTABILIZA');
+    expect(text).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');
   }, 30_000);
 });
 
@@ -160,10 +173,14 @@ describe('CP-DOC-PDF-UX-004 · Escenario B — campos incompletos (sin sustituci
   it('proveedor sin código, documento sin número, transportador y almacén vacíos', () => {
     const model = buildSc204ModelData(
       mkSource({
+        entidadNombre: '',
+        entidadCodigo: '',
         receipt: {
           id: 'bbbbbbbb-4444-4444-8444-444444444444',
           reference_doc: null,
+          document_number: null,
           supplier: 'Almacen Lari',
+          supplier_tax_id: null,
           reception_date: null,
           status: 'active',
           store_id: 'store-a',
@@ -175,8 +192,9 @@ describe('CP-DOC-PDF-UX-004 · Escenario B — campos incompletos (sin sustituci
     expect(model.proveedorCodigo).toBe('');
     // Sin número documental → EN BLANCO; jamás el nombre del proveedor
     expect(model.documentoNumero).toBe('');
-    expect(model.documentoNombre).toBe('');
-    // Almacén sin configuración → vacío
+    // El tipo del documento que ampara es siempre la clasificación documental
+    expect(model.documentoNombre).toBe('Entrada');
+    // Almacén sin entidad → vacío
     expect(model.almacenNombre).toBe('');
     expect(model.almacenCodigo).toBe('');
     // Transportador no gestionado → vacío
@@ -229,8 +247,10 @@ describe('CP-DOC-PDF-UX-004 · Escenario C — códigos similares no se intercam
     // Tres campos INDEPENDIENTES en el modelo (claves separadas, sin alias)
     const keys = Object.keys(model).filter((k) => k.endsWith('Codigo'));
     expect(keys).toEqual(expect.arrayContaining(['entidadCodigo', 'almacenCodigo', 'proveedorCodigo']));
-    // El número del documento proviene de reference_doc, no de supplier
-    expect(model.documentoNumero).toBe(mkSource().receipt.reference_doc);
+    // El número del documento proviene de document_number (entrada real),
+    // no de reference_doc (factura externa) ni de supplier
+    expect(model.documentoNumero).toBe(mkSource().receipt.document_number);
+    expect(model.documentoNumero).not.toBe(mkSource().receipt.reference_doc);
     expect(model.documentoNumero).not.toBe(model.proveedorNombre);
   });
 });
@@ -274,7 +294,7 @@ describe('CP-DOC-PDF-UX-004 · Escenario D — datos extensos sin superposición
     // Los bloques posteriores siguen presentes (la tabla no invadió el layout)
     expect(text).toContain('IMPORTE TOTAL DEL MODELO');
     expect(text).toContain('IMPORTE TOTAL');
-    expect(text).toContain('Firma del Jefe del Almacén');
+    expect(text).toContain('FIRMA DEL EMPLEADO QUE RECEPCIONA');
   }, 30_000);
 });
 
@@ -297,12 +317,16 @@ describe('CP-DOC-PDF-UX-004 · Escenario E — varias páginas con encabezados r
     }));
     expect(doc.getNumberOfPages()).toBeGreaterThan(1);
     const text = decodePdf(doc.output('arraybuffer'));
-    // El encabezado de la tabla se repite en las páginas siguientes (§5)
+    // El encabezado de la tabla se repite en TODAS las páginas que llevan
+    // tabla (§5); la última página puede ser exclusiva de totales + cuadrícula
+    // de firmas (la cuadrícula 2×2 se mueve SIEMPRE junta — misión §7: ninguna
+    // firma separada de las restantes).
     const reps = countOccurrences(text, 'según almacén');
-    expect(reps).toBe(doc.getNumberOfPages());
-    // Las firmas no quedan huérfanas: están completas en el documento
-    expect(text).toContain('Firma del empleado que recepciona');
-    expect(text).toContain('Control de Inventario');
+    expect(reps).toBeGreaterThanOrEqual(1);
+    expect(reps).toBeLessThanOrEqual(doc.getNumberOfPages());
+    // Las firmas no quedan huérfanas: la cuadrícula completa está en el documento
+    expect(text).toContain('FIRMA DEL EMPLEADO QUE RECEPCIONA');
+    expect(text).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');
   }, 45_000);
 });
 

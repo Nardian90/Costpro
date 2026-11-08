@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 129 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 137 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -393,9 +393,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // MISIÓN DATA-INTEGRITY-REMEDIATION-001 (2026-11-08): +3 integridad referencial soft-refs (20261108140000) = 131; reconciliación Storage bucket stores (20261108140100) = 132; prevención check_data_integrity (20261108140200) = 133
     // COSTPRO-FINAL-CYCLE-CLOSE-001 (2026-11-08): +1 endurecimiento permisos RPC diagnóstico (20261108140300) = 134
     // COSTPRO-SALES-DASHBOARD-001 (2026-11-08): +1 RPC agregado de analytics de ventas (20261108141000) = 135
-    expect(m.total_incluidos).toBe(135);
+    // CP-DOC-SC-DATA-MAPPING-006 (2026-11-08): +1 código consecutivo de tienda (20261108200000) = 136; +1 número documental de entrada (20261108201000) = 137
+    expect(m.total_incluidos).toBe(137);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(135);
+    expect(incluidos.length).toBe(137);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -449,6 +450,8 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261108140200_data_integrity_remediation_001_prevention.sql')).toBe(133);
     expect(pos('20261108140300_data_integrity_remediation_001_rpc_permissions.sql')).toBe(134);
     expect(pos('20261108141000_sales_dashboard_analytics.sql')).toBe(135);
+    expect(pos('20261108200000_cp_doc_sc006_store_code.sql')).toBe(136);
+    expect(pos('20261108201000_cp_doc_sc006_receipt_document_number.sql')).toBe(137);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

@@ -191,7 +191,7 @@ export interface Sc212SourceData {
 }
 
 export interface Sc212ModelData {
-  /** Logo de la tienda vendedora o default de la app (dataURL en fetch). */
+  /** Logo de la tienda vendedora o identificador CP si no tiene logo propio. */
   logoUrl?: string | null;
   fechaEmision: string;
   proveedorNombre: string;
@@ -630,6 +630,7 @@ export async function renderSc212Pdf(model: Sc212ModelData) {
     modelo: 'SC-2-12',
     nombreInstitucional: model.proveedorNombre, // la tienda emisora actúa como proveedor en la factura
     logoDataUrl: logo.dataUrl,
+    logoSource: logo.source,
     titulo: 'FACTURA',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
   });
@@ -791,13 +792,16 @@ export async function renderSc212Pdf(model: Sc212ModelData) {
   }
 
   y += 5;
-  // Dato 5: transportador (no gestionado → en blanco)
+  // Dato 5: transportador — CP-DOC-SC-DATA-MAPPING-006 §8: el render consume
+  // los campos del MODELO (antes dibujaba blancos hardcodeados ignorando
+  // transportador*); COSTPRO no gestiona transportador en ventas → la fuente
+  // del modelo es vacía y la banda conserva su línea de cumplimentación.
   doc.setFont('helvetica', 'bold');
   doc.text('DATOS DEL TRANSPORTISTA:', marginX + 4, y);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.text(
-    `Nombre: ${RES11_BLANK_LINE}   Carné de identidad: ${RES11_BLANK_LINE}   Chapa del vehículo: ${RES11_BLANK_LINE}   Carta de Porte No.: ${RES11_BLANK_LINE}`,
+    `Nombre: ${model.transportadorNombre || RES11_BLANK_LINE}   Carné de identidad: ${model.transportadorCarne || RES11_BLANK_LINE}   Chapa del vehículo: ${model.transportadorChapa || RES11_BLANK_LINE}   Carta de Porte No.: ${RES11_BLANK_LINE}`,
     marginX + 4,
     y + 4.5,
   );
