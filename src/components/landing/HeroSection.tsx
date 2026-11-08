@@ -7,7 +7,8 @@ import {
   Search, Shield, X,
   Calculator, LayoutGrid, PlayCircle,
 } from 'lucide-react';
-import { enterFichaDeCosto, hasCostproSession } from '@/lib/fcEntry';
+import { enterFichaDeCosto } from '@/lib/fcEntry';
+import { entrarACostpro } from '@/lib/auth-recovery';
 import { BrandWordmark } from './BrandWordmark';
 
 /* ── Typewriter Text Component ── */
@@ -491,7 +492,7 @@ export default function HeroSection({
                 aria-label="Ficha de Costo gratis, módulo de COSTPRO. Crea y calcula fichas conforme a la Resolución 148 de 2023, con tu cuenta de Google o como invitado."
                 onClick={(e) => {
                   e.preventDefault();
-                  enterFichaDeCosto(() => { if (setLoginDefaultTab) setLoginDefaultTab('login'); setShowLoginModal(true); });
+                  void enterFichaDeCosto(() => { if (setLoginDefaultTab) setLoginDefaultTab('login'); setShowLoginModal(true); });
                 }}
                 className="group relative flex flex-col rounded-2xl border border-[#2dd4bf]/30 bg-gradient-to-b from-[#004d40]/45 to-[#004d40]/15 p-5 transition-all duration-300 hover:border-[#2dd4bf]/60 hover:from-[#004d40]/60 hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4bf]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020617]"
               >
@@ -525,13 +526,23 @@ export default function HeroSection({
                 aria-label="Entrar a COSTPRO, la plataforma completa: tiendas, inventario, punto de venta y vitrina digital. Requiere cuenta."
                 onClick={(e) => {
                   e.preventDefault();
-                  // FIX-ENTRY: con sesión COSTPRO → directo a la app; sin sesión → login.
-                  if (hasCostproSession()) {
-                    window.location.assign('/');
-                  } else {
-                    if (setLoginDefaultTab) setLoginDefaultTab('login');
-                    setShowLoginModal(true);
-                  }
+                  // CP-AUTH-RESILIENCE-003 (2026-11-08): el CTA «Entrar a COSTPRO»
+                  // JAMÁS recarga ni navega con `window.location.assign('/')`.
+                  // Antes confiaba en la PRESENCIA de `sb-*-auth-token` (no prueba
+                  // de autenticación): con un token residual/vencido, la
+                  // verificación del shell expulsaba al landing de nuevo y el
+                  // usuario quedaba atrapado en recargas sin ver el modal.
+                  // Ahora: recuperación real vía Supabase Auth
+                  // (src/lib/auth-recovery.ts) — sesión válida → shell reactivo;
+                  // irrecuperable → limpieza controlada + modal; auth caída →
+                  // modal con reconexión. El modal queda SIEMPRE disponible.
+                  void entrarACostpro({
+                    openLogin: () => {
+                      if (setLoginDefaultTab) setLoginDefaultTab('login');
+                      setShowLoginModal(true);
+                    },
+                    setLoginDefaultTab,
+                  });
                 }}
                 className="group relative flex flex-col rounded-2xl border border-white/[0.10] bg-white/[0.04] p-5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.06] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020617]"
               >

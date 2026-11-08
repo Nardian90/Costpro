@@ -20,6 +20,9 @@
 
 const SB_TOKEN_SUFFIX = '-auth-token';
 
+// CP-AUTH-RESILIENCE-003: clasificación y recuperación reutilizables.
+import { classifySessionResidual, recoverSession, signOutLocalAuth, ENTRY_RECOVERY_DEADLINE_MS, type AuthRecoveryResult } from '@/lib/auth-recovery';
+
 /** Misma señal que el wrapper /fc/ index.html: token COSTPRO presente. */
 export function hasCostproSession(): boolean {
   if (typeof window === 'undefined') return false;
@@ -41,15 +44,53 @@ export function hasCostproSession(): boolean {
  * Acción del CTA «Crear Ficha de Costo — Gratis»:
  * devuelve true si abrió el login (el llamador NO debe navegar); false si la
  * navegación a /fc/ quedó a cargo de este helper.
+ *
+ * CP-AUTH-RESILIENCE-003 (2026-11-08): la presencia del token residual ya NO se
+ * acepta como autenticación. Con residuo se ejecuta la recuperación REAL vía
+ * Supabase Auth (recoverSession):
+ *   · válida   → navegación a /fc/ (módulo independiente: navegación completa
+ *                justificada, misión §8);
+ *   · irrecuperable → limpieza controlada con el SDK + modal (sin reload);
+ *   · auth caída    → modal con reconexión, returnTo conservado, SIN destruir
+ *                la sesión local.
+ * Sin residuo → modal inmediato (comportamiento previo, sin recarga).
  */
-export function enterFichaDeCosto(openLogin: () => void): boolean {
-  if (hasCostproSession()) {
-    // Autenticado: entrada directa al módulo (el wrapper sembrará el envelope).
+export async function enterFichaDeCosto(openLogin: () => void): Promise<boolean> {
+  const residual = classifySessionResidual();
+  if (residual.state === 'none') {
+    // No autenticado: modal de COSTPRO inmediato, sin recarga. returnTo queda
+    // en la URL (replaceState no navega) para que el post-auth caiga en /fc/.
+    setReturnToFc();
+    openLogin();
+    return true;
+  }
+  // Con residuo: recuperación real antes de decidir (nunca confiar en la clave).
+  const recovery = await Promise.race([
+    recoverSession(),
+    new Promise<AuthRecoveryResult>((resolve) =>
+      setTimeout(
+        () => resolve({ outcome: 'unavailable', residuo: residual.state === 'corrupt' ? 'corrupt' : 'present', detail: 'entry_deadline' }),
+        ENTRY_RECOVERY_DEADLINE_MS,
+      ),
+    ),
+  ]);
+  if (recovery.outcome === 'valid') {
+    // Autenticado (validado por el servidor): entrada directa al módulo.
     window.location.assign('/fc/');
     return false;
   }
-  // No autenticado: modal de COSTPRO inmediato, sin recarga. returnTo queda en
-  // la URL (replaceState no navega) para que el post-auth caiga en /fc/.
+  if (recovery.outcome === 'invalid') {
+    await signOutLocalAuth('fc_residual_invalid', true);
+  }
+  // invalid / unavailable / profile_unavailable → modal (el login siempre
+  // disponible); returnTo conservado para tras autenticarse.
+  setReturnToFc();
+  openLogin();
+  return true;
+}
+
+/** Fija returnTo=/fc/ en la URL sin recarga (history.replaceState). */
+function setReturnToFc(): void {
   try {
     const u = new URL(window.location.href);
     u.searchParams.set('returnTo', '/fc/');
@@ -57,6 +98,4 @@ export function enterFichaDeCosto(openLogin: () => void): boolean {
   } catch {
     /* sin URL manipulable: el modal se abre igual; el post-auth irá a '/' */
   }
-  openLogin();
-  return true;
 }
