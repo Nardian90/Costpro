@@ -38,11 +38,17 @@ export const storeApiClient = {
    *
    * Para uso normal (UI típica), fetchStores() es suficiente.
    */
-  async fetchStores(status?: 'active' | 'inactive' | 'all'): Promise<Store[]> {
+  // CP-UX-ORG-STORES-001: organizationId opcional — la autorización la hace
+  // el servidor (espejo de authorizeTarget); aquí solo se transporta.
+  async fetchStores(status?: 'active' | 'inactive' | 'all', organizationId?: string): Promise<Store[]> {
     const controller = timeoutController();
     // FIX: new URL('/api/stores') falla en el browser (base relativa).
     // Construir la URL manualmente.
-    const url = status ? `${API_BASE}?status=${status}` : API_BASE;
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (organizationId) params.set('organization_id', organizationId);
+    const qs = params.toString();
+    const url = qs ? `${API_BASE}?${qs}` : API_BASE;
     const res = await fetch(url, {
       method: 'GET',
       headers: authHeaders(),
@@ -103,7 +109,7 @@ export const storeApiClient = {
     return allStores;
   },
 
-  async createStore(data: Partial<Store> & { name: string; address: string }): Promise<Store> {
+  async createStore(data: Partial<Store> & { name: string; address: string; organization_id?: string | null }): Promise<Store> {
     const controller = timeoutController();
     const res = await fetch(API_BASE, {
       method: 'POST',

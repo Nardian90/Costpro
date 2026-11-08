@@ -249,6 +249,12 @@ export const ofertaPdfExportSchema = z.object({
 
 // ─── Stores ───────────────────────────────────────────────────────────────────
 export const createStoreSchema = z.object({
+  // CP-UX-ORG-STORES-001: organización destino OPCIONAL de la creación. El
+  // valor NUNCA se confía para autorizar: la API lo valida server-side
+  // (superadmin → org existente; admin → solo su propia empresa) y lo pasa
+  // como p_tenant_id al RPC (el path service_role lo respeta). Sin el campo,
+  // el comportamiento legacy (tenant del caller) no cambia.
+  organization_id: uuidLoose.optional().nullable(),
   // FIX-STORE-NO-NAME (2026-07-13): trim() + refine() para rechazar nombres
   // con solo espacios. Antes, "   " pasaba la validación min(1) y creaba
   // tiendas sin nombre real (mismo bug que workers).

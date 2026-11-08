@@ -668,7 +668,21 @@
       "removeConfirmNameLabel": "User name",
       "removeWarningPrefix": "Remove",
       "removeWarningBody": "from this store does not delete the user"
-    }
+    },
+    "editingStore": "You are editing",
+    "sectionIdentification": "Identification",
+    "sectionContact": "Contact & location",
+    "sectionBanking": "Banking details",
+    "sectionBranding": "Visual identity",
+    "sectionOnline": "Online presence",
+    "settingsUnavailableStore": "The active store is no longer available",
+    "settingsUnavailableHint": "It may have been archived or deactivated. Refresh or pick another store with the header selector.",
+    "settingsReadOnly": "You do not have permission to modify this store. Contact your administrator.",
+    "settingsNoStore": "No active store selected",
+    "settingsNoStoreHint": "Select a store with the header selector to edit its configuration.",
+    "settingsNoStoreAdminCta": "Go to Organizations to create a store",
+    "settingsTitle": "Store settings",
+    "settingsDesc": "Active store data: identification, contact, banking, visual identity and invoicing"
   },
   "dashboard": {
     "singleStore": {

@@ -49,6 +49,38 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const { searchParams } = new URL(req.url);
     const statusFilter = searchParams.get('status') || 'active';
 
+    // CP-UX-ORG-STORES-001: listado de tiendas de UNA organización.
+    // La autorización es server-side (espejo de authorizeTarget de
+    // /api/organizations/[id]) porque con app.use_tenant_rls OFF el RLS deja
+    // al admin ver tiendas de todas las empresas: filtrar en el cliente sería
+    // solo visual. superadmin → cualquier org (404 si no existe); admin →
+    // SOLO su empresa (404, sin revelar existencias ajenas); otros → 403.
+    // Sin el parámetro, el comportamiento legacy no cambia.
+    const organizationIdParam = searchParams.get('organization_id');
+    let organizationScope: string | null = null;
+    if (organizationIdParam) {
+      if (session.user.role !== 'admin' && session.user.role !== 'superadmin') {
+        return NextResponse.json(createApiError('STORE_ACCESS_DENIED'), { status: 403 });
+      }
+
+      const callerRes = await admin.from('profiles').select('tenant_id').eq('id', session.user.id).single();
+      const callerTenantId = (callerRes.data as { tenant_id: string | null } | null)?.tenant_id ?? null;
+
+      if (session.user.role !== 'superadmin') {
+        if (callerTenantId !== organizationIdParam) {
+          // Alcance del admin ordinario: su empresa. 404 para no revelar que
+          // la organización existe (mismo criterio que /api/organizations/[id]).
+          return NextResponse.json(createApiError('STORE_NOT_FOUND'), { status: 404 });
+        }
+      } else {
+        const orgRes = await admin.from('tenants').select('id').eq('id', organizationIdParam).single();
+        if (orgRes.error || !orgRes.data) {
+          return NextResponse.json(createApiError('STORE_NOT_FOUND'), { status: 404 });
+        }
+      }
+      organizationScope = organizationIdParam;
+    }
+
     // CP-ORG-001 ciclo 4: nivel administrativo (admin|superadmin) — igualdad
     // estricta dejaba al SuperAdmin sin tiendas.
     if (isAdminLevel(session.user.role)) {
@@ -66,6 +98,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         query = query.eq('is_active', true).eq('is_archived', false);
       } else if (statusFilter === 'inactive') {
         query = query.eq('is_active', false);
+      }
+      // CP-UX-ORG-STORES-001: filtro de organización resuelto en servidor
+      // (aplica a los tres modos de paginación; las tiendas huérfanas legacy
+      // con tenant_id NULL quedan excluidas del alcance de una org — correcto).
+      if (organizationScope) {
+        query = query.eq('tenant_id', organizationScope);
       }
 
       // Aplicar paginación solo si se especifica page o limit o cursor
@@ -214,14 +252,59 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
     const maxStores = PLAN_STORE_LIMITS[profile.plan] ?? 1;
 
+    // CP-UX-ORG-STORES-001: creación DENTRO de una organización.
+    // El tenant destino se resuelve SIEMPRE server-side (nunca se confía del
+    // cliente para autorizar): admin ordinario solo puede crear en SU empresa;
+    // el superadmin (sin tenant propio) crea en la org indicada y la cuota
+    // se calcula con el PLAN DE ESA ORGANIZACIÓN (el path service_role del
+    // RPC respeta p_tenant_id y aplica advisory lock + límite atómico).
+    const targetOrgId = validated.data.organization_id ?? null;
+    let effectiveTenantId: string | null = profile.tenant_id ?? null;
+    let effectiveMaxStores = maxStores;
+    if (targetOrgId) {
+      if (session.user.role !== 'superadmin') {
+        if (profile.tenant_id !== targetOrgId) {
+          return NextResponse.json(createApiError('STORE_ACCESS_DENIED'), { status: 403 });
+        }
+        // admin creando en su propia empresa: cuota legacy (tenant del caller).
+      } else {
+        const orgRes = await admin.from('tenants').select('id, plan').eq('id', targetOrgId).single();
+        if (orgRes.error || !orgRes.data) {
+          return NextResponse.json(createApiError('STORE_NOT_FOUND'), { status: 404 });
+        }
+        const orgPlan = (orgRes.data as { plan: string }).plan;
+        effectiveTenantId = targetOrgId;
+        effectiveMaxStores = PLAN_STORE_LIMITS[orgPlan] ?? 1;
+
+        // Pre-check de cuota scoped a la organización destino (semántica del
+        // checkStoreQuota legacy, pero contando SOLO las tiendas de la org).
+        // El límite real lo re-aplica el RPC de forma atómica.
+        const { count: orgStoreCount, error: orgCountError } = await admin
+          .from('stores')
+          .select('id', { count: 'exact', head: true })
+          .eq('tenant_id', targetOrgId)
+          .eq('is_active', true);
+        if (!orgCountError && orgStoreCount !== null && orgStoreCount >= effectiveMaxStores) {
+          return NextResponse.json(
+            { ...createApiError('STORE_LIMIT_REACHED'), message: `Límite de ${effectiveMaxStores} tiendas alcanzado (plan ${orgPlan})` },
+            { status: 403, headers: rateLimitHeaders({ allowed: false, remaining: 0, limit: effectiveMaxStores }) }
+          );
+        }
+      }
+    }
+
     // B1: Verificar cuota de tiendas usando tenant-limiter antes de crear.
     // Esto da una respuesta 403 clara con headers X-RateLimit-* antes de llamar al RPC.
-    const quotaResult = await checkStoreQuota(session.user.id, profile.plan as Plan);
-    if (!quotaResult.allowed) {
-      return NextResponse.json(
-        { ...createApiError('STORE_LIMIT_REACHED'), message: quotaResult.reason },
-        { status: 403, headers: rateLimitHeaders(quotaResult) }
-      );
+    // (Solo en el flujo legacy sin organización destino: con org destino la
+    // cuota ya se resolvió arriba con el plan de ESA organización.)
+    if (!targetOrgId) {
+      const quotaResult = await checkStoreQuota(session.user.id, profile.plan as Plan);
+      if (!quotaResult.allowed) {
+        return NextResponse.json(
+          { ...createApiError('STORE_LIMIT_REACHED'), message: quotaResult.reason },
+          { status: 403, headers: rateLimitHeaders(quotaResult) }
+        );
+      }
     }
 
     // P2-TRANSACTION: Atomic store creation with auto-membership via RPC.
@@ -239,7 +322,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         p_name: validated.data.name,
         p_address: validated.data.address ?? '',
         p_created_by: session.user.id,
-        p_max_stores: maxStores,
+        // CP-UX-ORG-STORES-001: límite del plan de la organización destino
+        // (superadmin) o del caller (legacy).
+        p_max_stores: effectiveMaxStores,
         p_logo_url: validated.data.logo_url ?? null,
         p_reeup: validated.data.reeup ?? null,
         p_nit: validated.data.nit ?? null,
@@ -252,7 +337,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         p_stamp_url: validated.data.stamp_url ?? null,
         p_latitude: validated.data.latitude ?? null,
         p_longitude: validated.data.longitude ?? null,
-        p_tenant_id: profile.tenant_id ?? null,
+        // CP-UX-ORG-STORES-001: tenant destino resuelto server-side
+        // (organization_id validada arriba o tenant del caller como legacy).
+        p_tenant_id: effectiveTenantId,
       });
 
     if (rpcError) {
