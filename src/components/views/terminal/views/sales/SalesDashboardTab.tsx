@@ -13,7 +13,7 @@
  *   (no crea un segundo historial — misión §12).
  */
 import React, { useCallback, useMemo, useState } from 'react';
-import { BarChart3, RefreshCw, Filter, X, Loader2, DollarSign } from 'lucide-react';
+import { BarChart3, RefreshCw, Filter, X, Loader2, DollarSign, Store, Users } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { isAdminLevel } from '@/lib/roles';
@@ -27,13 +27,16 @@ import { useSalesDashboard, useLocalSyncQueue, useProductDetail } from '@/hooks/
 import { KpiCards } from './dashboard/KpiCards';
 import { EvolutionChart } from './dashboard/EvolutionChart';
 import {
-  SellersBlock, ProductsBlock, PaymentMethodsBlock, AlertsBlock, HeatmapBlock, PeriodComparison,
+  SellersBlock, ProductsBlock, PaymentMethodsBlock, AlertsBlock, HeatmapBlock, PeriodComparison, StoresBlock,
 } from './dashboard/blocks';
 
 export interface DashboardDrill {
   status?: string;
   sellerName?: string;
 }
+
+/** Dimensión del análisis comparativo (REFINEMENT-002 §3). */
+type ComparisonDimension = 'sellers' | 'stores';
 
 interface SalesDashboardTabProps {
   /** Cambia al tab Detalle aplicando filtros (drill-down al historial). */
@@ -56,6 +59,8 @@ export function SalesDashboardTab({ onDrillToDetail, sellers }: SalesDashboardTa
   const [paymentMethod, setPaymentMethod] = useState<string>('');
   const [currencyView, setCurrencyView] = useState<'CUP' | 'USD'>('CUP');
   const [applied, setApplied] = useState(0); // contador de "Aplicar"
+  /** Dimensión del bloque de rendimiento (REFINEMENT-002 §3). */
+  const [dimension, setDimension] = useState<ComparisonDimension>('sellers');
 
   const window = useMemo(
     () => resolvePeriodWindow(period, customFrom, customTo),
@@ -78,10 +83,13 @@ export function SalesDashboardTab({ onDrillToDetail, sellers }: SalesDashboardTa
   const productDetail = useProductDetail(window, filters.storeId, productDetailTarget?.id ?? null);
 
   const stores = useMemo(() => {
-    // Tiendas accesibles para el usuario (misma fuente que el resto del sistema)
+    // REFINEMENT-002: fuente de verdad = accessible_stores del RPC (capa de
+    // datos; cubre admin/superadmin que no llevan membresías). Fallback al
+    // user.stores heredado solo si el RPC aún no devolvió datos.
+    if (data?.accessible_stores?.length) return data.accessible_stores.map(s => ({ id: s.id, name: s.name }));
     const list = (user as unknown as { stores?: { id: string; name: string }[] } | undefined)?.stores;
     return list ?? [];
-  }, [user]);
+  }, [data, user]);
 
   const hasActiveFilters =
     period !== 'this_month' || !!storeId || !!sellerId || status !== 'completed' || !!paymentMethod || currencyView === 'USD';
@@ -105,6 +113,11 @@ export function SalesDashboardTab({ onDrillToDetail, sellers }: SalesDashboardTa
 
   const drillToSeller = useCallback((id: string | null) => {
     setSellerId(id || '');
+    setApplied(a => a + 1);
+  }, []);
+
+  const drillToStore = useCallback((id: string | null) => {
+    setStoreId(id || '');
     setApplied(a => a + 1);
   }, []);
 
@@ -323,14 +336,61 @@ export function SalesDashboardTab({ onDrillToDetail, sellers }: SalesDashboardTa
               <PeriodComparison kpi={data.kpi} />
             </section>
 
-            {/* 3 · Vendedores */}
-            <section aria-label="Rendimiento por vendedor">
-              <SellersBlock
-                sellers={data.sellers}
-                selectedSellerId={filters.sellerId}
-                onSelectSeller={drillToSeller}
-                onClearSelection={() => drillToSeller(null)}
-              />
+            {/* 3 · Rendimiento comparativo: Vendedores | Tiendas (REFINEMENT-002 §3) */}
+            <section aria-label="Rendimiento comparativo" data-testid="performance-section">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h3 className="text-sm font-black uppercase tracking-widest flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" /> Rendimiento comparativo
+                </h3>
+                {/* Control segmentado Analizar por: [Vendedores][Tiendas] */}
+                <div
+                  className="flex rounded-lg border border-border overflow-hidden h-11"
+                  role="group"
+                  aria-label="Analizar por"
+                  data-testid="comparison-dimension-selector"
+                >
+                  {([['sellers', 'Vendedores'], ['stores', 'Tiendas']] as [ComparisonDimension, string][]).map(([k, label]) => (
+                    <button
+                      key={k}
+                      type="button"
+                      onClick={() => setDimension(k)}
+                      aria-pressed={dimension === k}
+                      data-testid={`dimension-${k}`}
+                      className={cn(
+                        'px-4 text-xs font-black uppercase tracking-wide transition-all min-h-[44px] flex items-center gap-1.5',
+                        dimension === k ? 'bg-primary text-primary-foreground' : 'bg-background text-muted-foreground hover:bg-muted',
+                      )}
+                    >
+                      {k === 'sellers' ? <Users className="w-3.5 h-3.5" /> : <Store className="w-3.5 h-3.5" />}
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {dimension === 'sellers' ? (
+                <SellersBlock
+                  sellers={data.sellers}
+                  selectedSellerId={filters.sellerId}
+                  onSelectSeller={drillToSeller}
+                  onClearSelection={() => drillToSeller(null)}
+                />
+              ) : (
+                <StoresBlock
+                  stores={data.stores ?? []}
+                  storesSeries={data.stores_series ?? []}
+                  selectedStoreId={filters.storeId}
+                  onDrillToStore={drillToStore}
+                />
+              )}
+
+              {/* Nota de coherencia filtro vs comparación (§5) */}
+              {dimension === 'stores' && filters.storeId && (
+                <p className="mt-2 text-[11px] text-warning font-bold" data-testid="store-filter-compare-note">
+                  El filtro «Tienda» está activo: la comparación muestra solo esa tienda.
+                  Para comparar varias, selecciona «Todas mis tiendas» y usa los checks de «Comparar».
+                </p>
+              )}
             </section>
 
             {/* 4 · Productos */}

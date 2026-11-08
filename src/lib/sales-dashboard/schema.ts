@@ -50,6 +50,36 @@ export const dashboardSellerSchema = z.object({
   participation_pct: z.number(),
 });
 
+/** REFINEMENT-002 §3.2: rendimiento por tienda (mismos indicadores que sellers + unidades + variación). */
+export const dashboardStoreSchema = z.object({
+  store_id: z.string(),
+  name: z.string(),
+  ops: z.number(),
+  gross_cup: z.number(),
+  discounts_cup: z.number(),
+  devolutions_cup: z.number(),
+  net_cup: z.number(),
+  avg_ticket_cup: z.number(),
+  units_sold: z.number(),
+  participation_pct: z.number(),
+  /** Variación % de netas vs período anterior; null = sin base previa. */
+  net_change_pct: z.number().nullable(),
+});
+
+/** REFINEMENT-002 §4: evolución por tienda (bucket × tienda). */
+export const dashboardStoreSeriesPointSchema = z.object({
+  bucket: z.string(),
+  store_id: z.string(),
+  ops: z.number(),
+  net_cup: z.number(),
+});
+
+/** REFINEMENT-002: tiendas accesibles al usuario (fuente: current_user_store_ids()). */
+export const accessibleStoreSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+});
+
 export const dashboardProductSchema = z.object({
   product_id: z.string().nullable(),
   name: z.string().nullable(),
@@ -71,6 +101,9 @@ export const dashboardResponseSchema = z.object({
   kpi: dashboardKpiSchema,
   series: z.array(dashboardSeriesPointSchema),
   sellers: z.array(dashboardSellerSchema),
+  stores: z.array(dashboardStoreSchema).optional().default([]),
+  stores_series: z.array(dashboardStoreSeriesPointSchema).optional().default([]),
+  accessible_stores: z.array(accessibleStoreSchema).optional().default([]),
   products: z.object({
     top_net: z.array(dashboardProductSchema),
     top_units: z.array(dashboardProductSchema),
@@ -106,6 +139,9 @@ export type SalesDashboardResponse = z.infer<typeof dashboardResponseSchema>;
 export type DashboardSeller = z.infer<typeof dashboardSellerSchema>;
 export type DashboardProduct = z.infer<typeof dashboardProductSchema>;
 export type DashboardSeriesPoint = z.infer<typeof dashboardSeriesPointSchema>;
+export type DashboardStore = z.infer<typeof dashboardStoreSchema>;
+export type DashboardStoreSeriesPoint = z.infer<typeof dashboardStoreSeriesPointSchema>;
+export type AccessibleStore = z.infer<typeof accessibleStoreSchema>;
 
 /** Detalle por producto (drill-down) */
 export const productDetailRowSchema = z.object({
