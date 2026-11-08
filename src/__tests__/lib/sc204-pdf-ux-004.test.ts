@@ -38,6 +38,16 @@ function countOccurrences(haystack: string, needle: string): number {
   return n;
 }
 
+
+/** Texto EFECTIVAMENTE dibujado: une los operandos de texto del stream
+ * (un título que envuelve a dos líneas sigue siendo un único rótulo). */
+function pdfDrawnText(bytes: ArrayBuffer): string {
+  const raw = decodePdf(bytes);
+  return (raw.match(/\(((?:\\.|[^\\()])*)\)\s*T[jJ]/g) ?? [])
+    .map((m) => m.slice(1, m.lastIndexOf(')')))
+    .join(' ');
+}
+
 const mkItem = (overrides: Partial<Sc204SourceItem> = {}): Sc204SourceItem => ({
   quantity: 34,
   unit_cost: 1,
@@ -165,7 +175,7 @@ describe('CP-DOC-PDF-UX-004 · Escenario A — campos completos en su ubicación
     expect(text).toContain('Guía aérea:');
     expect(text).toContain('FIRMA DEL EMPLEADO QUE RECEPCIONA');
     expect(text).toContain('FIRMA DEL EMPLEADO QUE CONTABILIZA');
-    expect(text).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');
+    expect(pdfDrawnText(doc.output('arraybuffer'))).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');
   }, 30_000);
 });
 
@@ -319,14 +329,14 @@ describe('CP-DOC-PDF-UX-004 · Escenario E — varias páginas con encabezados r
     const text = decodePdf(doc.output('arraybuffer'));
     // El encabezado de la tabla se repite en TODAS las páginas que llevan
     // tabla (§5); la última página puede ser exclusiva de totales + cuadrícula
-    // de firmas (la cuadrícula 2×2 se mueve SIEMPRE junta — misión §7: ninguna
+    // de firmas (el conjunto de firmas se mueve SIEMPRE junto — misión §7: ninguna
     // firma separada de las restantes).
     const reps = countOccurrences(text, 'según almacén');
     expect(reps).toBeGreaterThanOrEqual(1);
     expect(reps).toBeLessThanOrEqual(doc.getNumberOfPages());
     // Las firmas no quedan huérfanas: la cuadrícula completa está en el documento
     expect(text).toContain('FIRMA DEL EMPLEADO QUE RECEPCIONA');
-    expect(text).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');
+    expect(pdfDrawnText(doc.output('arraybuffer'))).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');
   }, 45_000);
 });
 

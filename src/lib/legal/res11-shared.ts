@@ -603,6 +603,18 @@ export interface Res11SignatureBlock {
    * transportador). Los vacíos conservan su línea de cumplimentación.
    */
   fields?: Array<{ label: string; value?: string }>;
+  /**
+   * Ocupa una FILA completa (todo el ancho útil) en lugar de una celda de la
+   * cuadrícula. Para bloques con muchos datos (transportador del SC-2-04):
+   * a lo ancho los campos se reparten en sub-columnas y el conjunto roba
+   * bastante menos alto que una celda estrecha con campos apilados.
+   */
+  spanAll?: boolean;
+  /**
+   * Sub-columnas de datos DENTRO del bloque (por defecto 1: etiqueta a la
+   * izquierda y valor a la derecha del par — el comportamiento histórico).
+   */
+  fieldsColumns?: number;
 }
 
 const SIGNATURE_GRID_GAP_MM = 3;
@@ -611,39 +623,115 @@ const SIGNATURE_GRID_GAP_MM = 3;
 function signatureBlockHeight(
   doc: jsPDF,
   block: Res11SignatureBlock,
-  cellW: number,
+  blockW: number,
+  fieldsColumns: number,
 ): number {
   let h = 8; // zona del título
   const fields = block.fields ?? [];
-  for (let i = 0; i < fields.length; i += 1) {
-    doc.setFont('helvetica', 'bold');
-    const labelLines = doc.splitTextToSize(fields[i].label, cellW / 2 - 3).length;
-    doc.setFont('helvetica', 'normal');
-    const valueLines = doc.splitTextToSize(fields[i].value || RES11_BLANK_LINE, cellW / 2 - 3.5).length;
-    h += Math.max(5, Math.max(labelLines, valueLines) * 3.3 + 1.7);
+  const cols = Math.max(1, fieldsColumns);
+  const pairW = blockW / cols;
+  // Los datos se reparten en líneas de hasta `cols` pares etiqueta→valor;
+  // el alto de cada línea lo fija el par más alto de esa línea.
+  for (let line = 0; line < Math.ceil(fields.length / cols); line += 1) {
+    const inLine = fields.slice(line * cols, (line + 1) * cols);
+    let lineH = 5;
+    for (const field of inLine) {
+      // Medir con el MISMO tamaño con el que se dibuja (7.6 pt): medir con
+      // el tamaño vigente sobrestimaba el alto y engordaba las filas.
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.6);
+      const labelLines = doc.splitTextToSize(field.label, pairW / 2 - 3).length;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.6);
+      const valueLines = doc.splitTextToSize(field.value || RES11_BLANK_LINE, pairW / 2 - 3.5).length;
+      lineH = Math.max(lineH, Math.max(5, Math.max(labelLines, valueLines) * 3.3 + 1.7));
+    }
+    h += lineH;
   }
   h += 10; // rúbrica mínima común (espacio suficiente para la firma)
   h += 7; // línea de firma + etiqueta
   return Math.max(h, 30);
 }
 
+/** Disposición por FILAS de la cuadrícula: celdas normales + bloques a lo ancho. */
+interface SignatureRowLayout {
+  items: Array<{
+    block: Res11SignatureBlock;
+    x: number;
+    w: number;
+    fieldsColumns: number;
+  }>;
+  height: number;
+}
+
+function layoutSignatureRows(
+  doc: jsPDF,
+  blocks: Res11SignatureBlock[],
+  columns: number,
+): SignatureRowLayout[] {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const marginX = 12;
+  const contentWidth = pageWidth - marginX * 2;
+  const cellW = (contentWidth - (columns - 1) * SIGNATURE_GRID_GAP_MM) / columns;
+  doc.setFont('helvetica', 'bold');
+
+  const rows: SignatureRowLayout[] = [];
+  let pending: Res11SignatureBlock[] = [];
+  const flush = () => {
+    if (pending.length === 0) return;
+    const items = pending.map((block, i) => ({
+      block,
+      x: marginX + i * (cellW + SIGNATURE_GRID_GAP_MM),
+      w: cellW,
+      fieldsColumns: block.fieldsColumns ?? 1,
+    }));
+    const height = Math.max(
+      ...items.map((it) => signatureBlockHeight(doc, it.block, it.w, it.fieldsColumns)),
+    );
+    rows.push({ items, height });
+    pending = [];
+  };
+  for (const block of blocks) {
+    if (block.spanAll) {
+      flush();
+      rows.push({
+        items: [
+          {
+            block,
+            x: marginX,
+            w: contentWidth,
+            fieldsColumns: block.fieldsColumns ?? 1,
+          },
+        ],
+        height: signatureBlockHeight(
+          doc,
+          block,
+          contentWidth,
+          block.fieldsColumns ?? 1,
+        ),
+      });
+    } else {
+      pending.push(block);
+      if (pending.length === columns) flush();
+    }
+  }
+  flush();
+  return rows;
+}
+
+const signatureGridHeight = (rows: SignatureRowLayout[]): number =>
+  rows.reduce((sum, row) => sum + row.height, 0) + (rows.length - 1) * 2;
+
 /**
- * Alto total de la cuadrícula (todas las áreas comparten la MISMA altura —
- * alineación uniforme). Útil para el guard de salto de página del caller.
+ * Alto total de la cuadrícula (misma disposición por filas que el dibujo).
+ * Útil para el guard de salto de página del caller.
  */
 export function measureRes11SignatureBlocksHeight(
   doc: jsPDF,
   blocks: Res11SignatureBlock[],
   opts: { columns?: number } = {},
 ): number {
-  const columns = opts.columns ?? 2;
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const marginX = 12;
-  const cellW = (pageWidth - marginX * 2 - (columns - 1) * SIGNATURE_GRID_GAP_MM) / columns;
-  doc.setFont('helvetica', 'bold');
-  const cellH = Math.max(...blocks.map((b) => signatureBlockHeight(doc, b, cellW)));
-  const rowsCount = Math.ceil(blocks.length / columns);
-  return rowsCount * cellH + (rowsCount - 1) * 2;
+  return signatureGridHeight(layoutSignatureRows(doc, blocks, opts.columns ?? 2));
 }
 
 /**
@@ -657,23 +745,30 @@ export function measureRes11SignatureBlocksHeight(
  * (con línea de cumplimentación si el dato está vacío) y línea de firma
  * centrada con su etiqueta. Devuelve la Y final.
  */
+/**
+ * Dibuja los bloques de responsabilidad en filas uniformes: TODAS las áreas
+ * comparten alineación, jerarquía tipográfica, separación y espacio de
+ * rúbrica. Los bloques sin `spanAll` se reparten por filas de `columns`
+ * celdas; un bloque con `spanAll` ocupa una fila completa (todo el ancho
+ * útil) y reparte sus datos en `fieldsColumns` sub-columnas — el bloque del
+ * transportador del SC-2-04 usa esta modalidad (fila de las tres firmas de
+ * empleados arriba, transportador a lo ancho abajo) para robar menos alto.
+ * El bloque lleva sus datos de identificación ENCIMA de su línea de firma —
+ * nunca separados de ella. TODAS las filas se mueven SIEMPRE juntas (si el
+ * conjunto no cabe, pasa completo a una página nueva).
+ * Cada bloque: marco fino, título en mayúsculas, pares etiqueta→valor
+ * (con línea de cumplimentación si el dato está vacío) y línea de firma
+ * centrada con su etiqueta. Devuelve la Y final.
+ */
 export function drawRes11SignatureBlocks(
   doc: jsPDF,
   blocks: Res11SignatureBlock[],
   startY: number,
   opts: { columns?: number } = {},
 ): number {
-  const columns = opts.columns ?? 2;
-  const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const marginX = 12;
-  const contentWidth = pageWidth - marginX * 2;
-  const cellW = (contentWidth - (columns - 1) * SIGNATURE_GRID_GAP_MM) / columns;
-
-  doc.setFont('helvetica', 'bold');
-  const cellH = Math.max(...blocks.map((b) => signatureBlockHeight(doc, b, cellW)));
-  const rowsCount = Math.ceil(blocks.length / columns);
-  const gridH = rowsCount * cellH + (rowsCount - 1) * 2;
+  const rows = layoutSignatureRows(doc, blocks, opts.columns ?? 2);
+  const gridH = signatureGridHeight(rows);
 
   // Las firmas nunca se separan de su contenido ni entre sí: la cuadrícula
   // completa pasa a una página nueva si no cabe entera.
@@ -685,48 +780,62 @@ export function drawRes11SignatureBlocks(
 
   doc.setDrawColor(...RES11_INK.marco);
   doc.setLineWidth(0.25);
-  blocks.forEach((block, i) => {
-    const col = i % columns;
-    const row = Math.floor(i / columns);
-    const x = marginX + col * (cellW + SIGNATURE_GRID_GAP_MM);
-    const by = y + row * (cellH + 2);
+  rows.forEach((row) => {
+    const rowH = row.height;
+    row.items.forEach(({ block, x, w, fieldsColumns }) => {
+      const by = y;
+      doc.rect(x, by, w, rowH, 'S');
 
-    doc.rect(x, by, cellW, cellH, 'S');
-
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
-    doc.setTextColor(...RES11_INK.gris);
-    doc.text(block.title.toUpperCase(), x + 2.5, by + 3.6, { maxWidth: cellW - 5 });
-
-    // Filas etiqueta → valor (mismo idioma visual que los bloques de datos).
-    let fy = by + 8;
-    for (const field of block.fields ?? []) {
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.6);
-      doc.setTextColor(...RES11_INK.texto);
-      doc.text(field.label, x + 2.5, fy, { maxWidth: cellW / 2 - 3 });
-      doc.setFont('helvetica', 'normal');
-      doc.text(field.value || RES11_BLANK_LINE, x + cellW / 2, fy, {
-        maxWidth: cellW / 2 - 3.5,
-      });
-      const labelLines = doc.splitTextToSize(field.label, cellW / 2 - 3).length;
-      const valueLines = doc.splitTextToSize(field.value || RES11_BLANK_LINE, cellW / 2 - 3.5).length;
-      fy += Math.max(5, Math.max(labelLines, valueLines) * 3.3 + 1.7);
-    }
+      doc.setFontSize(6.8);
+      doc.setTextColor(...RES11_INK.gris);
+      doc.text(block.title.toUpperCase(), x + 2.5, by + 3.6, { maxWidth: w - 5 });
 
-    // Línea de firma del bloque, siempre en la MISMA Y absoluta para toda la
-    // fila (alineación entre áreas) y con rúbrica suficiente encima.
-    const lineY = by + cellH - 6;
-    doc.setDrawColor(...RES11_INK.texto);
-    doc.setLineWidth(0.25);
-    doc.line(x + 6, lineY, x + cellW - 6, lineY);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(...RES11_INK.gris);
-    doc.text('Firma', x + cellW / 2, lineY + 3.5, { align: 'center' });
+      // Pares etiqueta→valor en `fieldsColumns` sub-columnas; el alto de
+      // cada línea lo fija el par más alto (mismo idioma que los bloques
+      // de datos).
+      const cols = Math.max(1, fieldsColumns);
+      const pairW = w / cols;
+      const fields = block.fields ?? [];
+      let fy = by + 8;
+      for (let line = 0; line < Math.ceil(fields.length / cols); line += 1) {
+        const inLine = fields.slice(line * cols, (line + 1) * cols);
+        const lineStart = fy;
+        let lineH = 5;
+        inLine.forEach((field, subCol) => {
+          const px = x + subCol * pairW;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(7.6);
+          doc.setTextColor(...RES11_INK.texto);
+          doc.text(field.label, px + 2.5, lineStart, { maxWidth: pairW / 2 - 3 });
+          doc.setFont('helvetica', 'normal');
+          doc.text(field.value || RES11_BLANK_LINE, px + pairW / 2, lineStart, {
+            maxWidth: pairW / 2 - 3.5,
+          });
+          const labelLines = doc.splitTextToSize(field.label, pairW / 2 - 3).length;
+          const valueLines = doc
+            .splitTextToSize(field.value || RES11_BLANK_LINE, pairW / 2 - 3.5)
+            .length;
+          lineH = Math.max(lineH, Math.max(5, Math.max(labelLines, valueLines) * 3.3 + 1.7));
+        });
+        fy += lineH;
+      }
+
+      // Línea de firma del bloque, siempre en la MISMA Y absoluta para toda
+      // la fila (alineación entre áreas) y con rúbrica suficiente encima.
+      const lineY = by + rowH - 6;
+      doc.setDrawColor(...RES11_INK.texto);
+      doc.setLineWidth(0.25);
+      doc.line(x + 6, lineY, x + w - 6, lineY);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.5);
+      doc.setTextColor(...RES11_INK.gris);
+      doc.text('Firma', x + w / 2, lineY + 3.5, { align: 'center' });
+    });
+    y += rowH + 2;
   });
 
-  return y + gridH;
+  return y - 2;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
