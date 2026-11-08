@@ -22,7 +22,6 @@
  * original (la guarda es ANTES del cierre — el payload del RPC no cambia).
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { offlineStorage } from '@/lib/sync/offline-storage';
 import { useAuthStore } from '@/store';
 import { isAdminLevel } from '@/lib/roles';
 import { toast } from 'sonner';
@@ -111,8 +110,13 @@ export function useCashPendingSales() {
   });
   const busyRef = useRef(false);
 
+  // Lectura Perezosa: la cola offline (indexedDB) NO se abre al montar la vista
+  // de caja — solo cuando el operador intenta cerrar/declarar el turno. Esto
+  // evita tocar indexedDB en montaje (tests jsdom y renders sin turno) y
+  // mantiene la frescura del dato en el momento de la decisión.
   const refresh = useCallback(async () => {
     try {
+      const { offlineStorage } = await import('@/lib/sync/offline-storage');
       const queue = await offlineStorage.getQueue();
       const { pending, conflict, reasons } = classifyPendingSales(queue);
       setSnapshot({
@@ -122,13 +126,16 @@ export function useCashPendingSales() {
         requiresSupervisor: conflict > 0,
       });
     } catch (err) {
+      // Fail-safe: sin cola legible no hay bloqueo — se registra y se sigue
+      // (el cierre avisa, no bloquea; no puede usarse para impedir cerrar).
       logger.warn('POS', 'PENDING_SALES_REFRESH_FAILED', { error: String(err) });
+      setSnapshot({ pending: 0, conflict: 0, reasons: [], requiresSupervisor: false });
     }
   }, []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  // Sin lectura al montar (ver refresh: lectura perezosa al cerrar turno).
+  // El snapshot inicial 0/0 no bloquea nada — handleProcessClosure siempre
+  // llama refresh() ANTES de decidir si mostrar el modal.
 
   const isSupervisorOrAdmin = isAdminLevel(user?.role);
 

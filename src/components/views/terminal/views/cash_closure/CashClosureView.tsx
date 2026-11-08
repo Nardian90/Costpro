@@ -605,7 +605,7 @@ export default function CashClosureView() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setShowOpenConfirm(true)}
+                    onClick={() => { console.log('DEBUG_ONCLICK_ABRIR', aperturaBloqueada); setShowOpenConfirm(true); }}
                     disabled={aperturaBloqueada}
                     title={aperturaBloqueada ? 'Documenta la causa de la diferencia contado vs libro (mínimo 10 caracteres) en el formulario de apertura.' : undefined}
                     data-testid="btn-abrir-turno-vacio"

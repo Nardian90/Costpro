@@ -25,18 +25,18 @@ const sale = (status: string, errorCode?: string) => ({
   status,
   attempts: 0,
   ...(errorCode ? { errorCode } : {}),
-}) as never;
+});
 
 describe('CP-CYCLE-CLOSE-001 · T4 clasificación de pendientes', () => {
   it('cero pendientes: cierre normal, sin modal', () => {
-    const r = classifyPendingSales([sale('synced'), { ...sale('synced'), entity: 'reception' }]);
+    const r = classifyPendingSales([sale('synced'), { ...sale('synced'), entity: 'reception' }] as never[]);
     expect(r).toEqual({ pending: 0, conflict: 0, reasons: [] });
   });
 
   it('pendientes normales (pending/in-flight/retry_wait/auth_required) cuentan como pendientes', () => {
     const r = classifyPendingSales([
       sale('pending'), sale('in-flight'), sale('retry_wait'), sale('auth_required'),
-    ]);
+    ] as never[]);
     expect(r.pending).toBe(4);
     expect(r.conflict).toBe(0);
   });
@@ -47,7 +47,7 @@ describe('CP-CYCLE-CLOSE-001 · T4 clasificación de pendientes', () => {
       sale('retry_exhausted'),
       sale('failed'),
       sale('pending'),
-    ]);
+    ] as never[]);
     expect(r.pending).toBe(1);
     expect(r.conflict).toBe(3);
     expect(r.reasons).toContain('ERR_INSUFFICIENT_STOCK');
@@ -58,7 +58,7 @@ describe('CP-CYCLE-CLOSE-001 · T4 clasificación de pendientes', () => {
       sale('conflict', 'A'), sale('conflict', 'A'), sale('conflict', 'B'),
       sale('conflict', 'C'), sale('conflict', 'D'),
       { ...sale('conflict', 'X'), entity: 'reception' },
-    ]);
+    ] as never[]);
     expect(r.reasons).toHaveLength(3);
     expect(r.conflict).toBe(5); // ventas solo
     expect(r.reasons).not.toContain('X');
