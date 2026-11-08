@@ -651,6 +651,7 @@ function LiveSalesNotifications({ products }: { products: StorefrontProduct[] })
 function PromoCarousel({ images }: { images: NonNullable<StorefrontStore['promo_images']> }) {
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [brokenUrls, setBrokenUrls] = useState<Set<string>>(new Set());
   const total = images.length;
 
   // Autoplay cada 5.5s, pausable al hover
@@ -664,6 +665,11 @@ function PromoCarousel({ images }: { images: NonNullable<StorefrontStore['promo_
 
   if (!images || images.length === 0) return null;
 
+  // DATA-INTEGRITY-REMEDIATION-001: una promo con imagen rota se excluye del
+  // carrusel (sin slide vacía); si todas fallan, el carrusel no se renderiza.
+  const healthyImages = images.filter((img) => !brokenUrls.has(img.url));
+  if (healthyImages.length === 0) return null;
+
   return (
     <section
       className="bg-stone-900"
@@ -674,7 +680,7 @@ function PromoCarousel({ images }: { images: NonNullable<StorefrontStore['promo_
       <div className="max-w-6xl mx-auto px-0 sm:px-6 sm:py-4">
         <div className="relative overflow-hidden sm:rounded-2xl aspect-[16/7] sm:aspect-[3/1] bg-stone-900">
           {/* Slides apiladas — crossfade suave */}
-          {images.map((img, i) => {
+          {healthyImages.map((img, i) => {
             const isActive = i === current;
             const content = (
               <>
@@ -687,6 +693,7 @@ function PromoCarousel({ images }: { images: NonNullable<StorefrontStore['promo_
                   )}
                   loading={i === 0 ? 'eager' : 'lazy'}
                   decoding="async"
+                  onError={() => setBrokenUrls((prev) => new Set(prev).add(img.url))}
                 />
                 {img.caption && (
                   <div className={cn(
@@ -1442,6 +1449,7 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [showBackTop, setShowBackTop] = useState(false);
   const [bannerLoaded, setBannerLoaded] = useState(false);
+  const [bannerFailed, setBannerFailed] = useState(false);
   const [showMobileCategories, setShowMobileCategories] = useState(false);
 
   useEffect(() => {
@@ -1476,13 +1484,19 @@ function ConstruccionTemplate({ store, products }: StorefrontPageProps) {
           <div className="absolute inset-0 bg-gradient-to-br from-amber-900 via-stone-800 to-stone-900" />
           {/* Actual image — usa banner_url si está configurado, sino el default */}
           <img
-            src={store.banner_url || "/storefront-construccion-banner.png"}
+            src={bannerFailed ? "/storefront-construccion-banner.png" : (store.banner_url || "/storefront-construccion-banner.png")}
             alt=""
             className={cn(
               'absolute inset-0 w-full h-full object-cover transition-opacity duration-700',
               bannerLoaded ? 'opacity-100' : 'opacity-0'
             )}
             onLoad={() => setBannerLoaded(true)}
+            onError={(e) => {
+              // DATA-INTEGRITY-REMEDIATION-001: URL rota → banner oficial del repo,
+              // nunca imagen partida; el gradiente de fondo ya es el estado previo.
+              if (!bannerFailed) { setBannerFailed(true); setBannerLoaded(false); }
+              else { e.currentTarget.src = '/storefront-construccion-banner.png'; }
+            }}
             loading="eager"
           />
           {/* Dark gradient overlay for text readability — FIX-MOBILE-LEGIBILITY:
@@ -2128,6 +2142,7 @@ function ConstruccionListItem({ product, image, onClick }: { product: Storefront
 
 function MinimalistaTemplate({ store, products }: StorefrontPageProps) {
   const t = useTranslations('stores.storefront');
+  const [logoFailed, setLogoFailed] = useState(false);
   const filter = useProductFilter(products);
   const [detailProduct, setDetailProduct] = useState<StorefrontProduct | null>(null);
 
@@ -2137,8 +2152,9 @@ function MinimalistaTemplate({ store, products }: StorefrontPageProps) {
         <div className="max-w-5xl mx-auto px-6 py-10">
           <div className="flex items-center gap-5">
             <div className="w-14 h-14 rounded-full border border-stone-100 flex items-center justify-center overflow-hidden shrink-0">
-              {store.logo_url ? (
-                <Image src={store.logo_url} alt={store.name} width={56} height={56} className="w-full h-full object-cover" unoptimized />
+              {store.logo_url && !logoFailed ? (
+                <Image src={store.logo_url} alt={store.name} width={56} height={56} className="w-full h-full object-cover" unoptimized
+                  onError={() => setLogoFailed(true)} />
               ) : (
                 <Package className="w-6 h-6 text-stone-300" />
               )}
@@ -2204,6 +2220,7 @@ function MinimalistaTemplate({ store, products }: StorefrontPageProps) {
 
 function ModernaTemplate({ store, products }: StorefrontPageProps) {
   const t = useTranslations('stores.storefront');
+  const [logoFailed, setLogoFailed] = useState(false);
   const filter = useProductFilter(products);
   const [detailProduct, setDetailProduct] = useState<StorefrontProduct | null>(null);
 
@@ -2214,8 +2231,9 @@ function ModernaTemplate({ store, products }: StorefrontPageProps) {
         <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center overflow-hidden shrink-0 border border-white/20">
-              {store.logo_url ? (
-                <Image src={store.logo_url} alt={store.name} width={80} height={80} className="w-full h-full object-cover" unoptimized />
+              {store.logo_url && !logoFailed ? (
+                <Image src={store.logo_url} alt={store.name} width={80} height={80} className="w-full h-full object-cover" unoptimized
+                  onError={() => setLogoFailed(true)} />
               ) : (
                 <Package className="w-8 h-8 sm:w-10 sm:h-10 text-white/60" />
               )}
@@ -2306,6 +2324,7 @@ function ModernaTemplate({ store, products }: StorefrontPageProps) {
 
 function ClasicaTemplate({ store, products }: StorefrontPageProps) {
   const t = useTranslations('stores.storefront');
+  const [logoFailed, setLogoFailed] = useState(false);
   const filter = useProductFilter(products);
   const [detailProduct, setDetailProduct] = useState<StorefrontProduct | null>(null);
 
@@ -2314,9 +2333,14 @@ function ClasicaTemplate({ store, products }: StorefrontPageProps) {
       <header className="bg-gradient-to-b from-amber-800 to-amber-900 text-amber-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
           <div className="text-center">
-            {store.logo_url && (
+            {store.logo_url && !logoFailed ? (
               <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-amber-500/30 bg-amber-900/50 flex items-center justify-center overflow-hidden">
-                <Image src={store.logo_url} alt={store.name} width={64} height={64} className="w-full h-full object-cover" unoptimized />
+                <Image src={store.logo_url} alt={store.name} width={64} height={64} className="w-full h-full object-cover" unoptimized
+                  onError={() => setLogoFailed(true)} />
+              </div>
+            ) : (
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full border-2 border-amber-500/30 bg-amber-900/50 flex items-center justify-center">
+                <Package className="w-7 h-7 text-amber-300/60" />
               </div>
             )}
             <h1 className="text-2xl sm:text-3xl font-bold tracking-wide uppercase">{store.name}</h1>

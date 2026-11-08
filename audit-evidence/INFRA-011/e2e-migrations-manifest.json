@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 545,
-  "total_incluidos": 130,
+  "total_considerados": 548,
+  "total_incluidos": 133,
   "total_excluidos": 415,
-  "digest": "b2ef3d08be85bb34e230b97a9e27a4a8dffb1168a587f74e60cdbe938904a76f",
+  "digest": "caef84d4da2c4c2a37d6bdbb8e2deef41972caa9b6552c3272eb85a7709e36d9",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5310,6 +5310,39 @@
       "observaciones": [],
       "posicion": 130,
       "sha256_generado": "33fd328d88e9f5e9e5caa00a21627b2fc1e8ff2d76abb40f3a3a58be99352fc7"
+    },
+    {
+      "nombre": "20261108140000_data_integrity_remediation_001_soft_refs.sql",
+      "bytes": 14912,
+      "sha256_original": "eeede162afbc281130bcdefd986d01a9d8b2514d785dcd994688b8b907a872ef",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261108",
+      "observaciones": [],
+      "posicion": 131,
+      "sha256_generado": "eeede162afbc281130bcdefd986d01a9d8b2514d785dcd994688b8b907a872ef"
+    },
+    {
+      "nombre": "20261108140100_data_integrity_remediation_001_storage_reconcile.sql",
+      "bytes": 7286,
+      "sha256_original": "41b848c147bb241df4d24c9a090cca66962528e1eaae21278c936b7abfa9abd1",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261108",
+      "observaciones": [],
+      "posicion": 132,
+      "sha256_generado": "41b848c147bb241df4d24c9a090cca66962528e1eaae21278c936b7abfa9abd1"
+    },
+    {
+      "nombre": "20261108140200_data_integrity_remediation_001_prevention.sql",
+      "bytes": 10607,
+      "sha256_original": "9db12859cd4b659dbcb64ffe63d562b46a0eeda73af6408eaefa94a58166b74b",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261108",
+      "observaciones": [],
+      "posicion": 133,
+      "sha256_generado": "9db12859cd4b659dbcb64ffe63d562b46a0eeda73af6408eaefa94a58166b74b"
     },
     {
       "nombre": "AUDIT_FIXES.md",

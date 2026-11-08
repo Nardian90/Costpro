@@ -1,0 +1,6 @@
+{
+  "reverificacion_rutas_completas_0220utc": "las 21 rutas R3 candidatas + 10 con referencia viva = los 31 objetos EXISTEN físicamente (GET autenticado 200, bytes exactos)",
+  "bug_descargador": "12-descargar-storage.py construía /object/{bucket}/{name} sin el prefijo de carpeta (name relativo al prefijo del list) → NoSuchKey → falso fantasma; además la recursión perdía el prefijo acumulado (reports 0 archivos)",
+  "respaldo_original_7z": "NO contiene los 153 objetos anidados (31 stores + 122 reports) — corregido con addendum costpro-respaldo-addendum-storage-20261108-0056.7z (307 archivos verificados)",
+  "put_r1": "4 PUT idempotentes (banner+3 promos ENERVIDA) con copias byte-exacta del repo a sus mismas rutas — objetos ya existentes, mismo contenido"
+}
