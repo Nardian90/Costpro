@@ -14,7 +14,7 @@ export { useSessionStore } from './session-store';
 // Ahora cada submenu (punto_venta, almacen_*, analitica) tiene su propia vista
 // "SectionHub" que muestra tarjetas con todos los hijos (patrón Odoo/Shopify).
 // El breadcrumb puede navegar a estos section hubs al hacer clic en un ancestro.
-export type ViewType = 'occ' | 'dashboard' | 'store-dashboard' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'physical_inventory' | 'vales_salida' | 'solicitud_materiales' | 'audit' | 'cash' | 'users' | 'organizations' | 'roles' | 'stores' | 'storefront-config' | 'settings' | 'help' | 'wiki' | 'news' | 'rss_management' | 'management-hub' | 'ipv' | 'legal' | 'health' | 'labels' | 'sales_catalog' | 'ofertas' | 'purchase-orders' | 'sales-hub' | 'exchange-intelligence' | 'received-services' | 'usage-monitoring' | 'workers' | 'chat' | 'costeo-dinamico' | 'estructura-costo' | 'whatsapp-config' | 'whatsapp-conversations' | 'whatsapp-invitations' | 'whatsapp-dashboard' | 'whatsapp-group' | 'whatsapp-hub' | 'telegram-config' | 'telegram-conversations' | 'telegram-invitations' | 'telegram-dashboard' | 'telegram-group' | 'telegram-hub' | 'accounts_payable' | 'accounts_receivable' | 'clientes-proveedores' | 'cash_report' | 'production-orders' | 'devolutions' | 'customers' | 'quotations' | 'fiscal-close' | 'lots' | 'warehouses' | 'abc-analysis' | 'work_dates' | 'caja' | 'ingresos_egresos'
+export type ViewType = 'occ' | 'dashboard' | 'store-dashboard' | 'pos' | 'inventory' | 'recepcion' | 'reception_list' | 'transferencias' | 'sales' | 'inventory_count' | 'cost-sheets' | 'reports' | 'catalog' | 'history' | 'inventory_adjustments' | 'physical_inventory' | 'vales_salida' | 'solicitud_materiales' | 'audit' | 'cash' | 'users' | 'organizations' | 'organization-detail' | 'roles' | 'stores' | 'storefront-config' | 'settings' | 'help' | 'wiki' | 'news' | 'rss_management' | 'management-hub' | 'ipv' | 'legal' | 'health' | 'labels' | 'sales_catalog' | 'ofertas' | 'purchase-orders' | 'sales-hub' | 'exchange-intelligence' | 'received-services' | 'usage-monitoring' | 'workers' | 'chat' | 'costeo-dinamico' | 'estructura-costo' | 'whatsapp-config' | 'whatsapp-conversations' | 'whatsapp-invitations' | 'whatsapp-dashboard' | 'whatsapp-group' | 'whatsapp-hub' | 'telegram-config' | 'telegram-conversations' | 'telegram-invitations' | 'telegram-dashboard' | 'telegram-group' | 'telegram-hub' | 'accounts_payable' | 'accounts_receivable' | 'clientes-proveedores' | 'cash_report' | 'production-orders' | 'devolutions' | 'customers' | 'quotations' | 'fiscal-close' | 'lots' | 'warehouses' | 'abc-analysis' | 'work_dates' | 'caja' | 'ingresos_egresos'
 // CP-INFRA-002 (2026-10-23): 'pick3-intelligence', 'wallet' y 'bank-reconciliation' retirados del union ViewType.
 // Reactivación: restaurarlos aquí junto con las vistas y entradas de navegación (git revert).
 // E-SectionHub: submenu wrapper IDs — renderizan SectionHubView
@@ -60,6 +60,19 @@ export interface CommissionNavContext {
   setAt: number;
 }
 
+// CP-UX-ORG-STORES-002 — Página dedicada de administración de una organización.
+// El contexto (org + pestaña) vive en el store de UI y se espeja en la URL
+// (/?view=organization-detail&org=<id>&tab=<tiendas|terceros>) vía
+// useViewUrlSync: refresh, deep-link y Back/Forward restauran el contexto.
+// La AUTORIZACIÓN no depende de este estado: cada API valida el alcance
+// server-side (superadmin/admin por tenant), el store solo es wayfinding.
+export type OrganizationDetailTab = 'tiendas' | 'terceros';
+
+export interface OrganizationDetailState {
+  orgId: string | null;
+  tab: OrganizationDetailTab;
+}
+
 interface UIState {
   currentView: ViewType;
   previousView: ViewType | null;
@@ -93,6 +106,10 @@ interface UIState {
   // NAV-2026-10: contexto Reporte Entrega ↔ Trabajadores y Comisiones (consumo único)
   commissionNavContext: CommissionNavContext | null;
   setCommissionNavContext: (ctx: CommissionNavContext | null) => void;
+  // CP-UX-ORG-STORES-002: contexto de la página dedicada de organización.
+  organizationDetailState: OrganizationDetailState;
+  setOrganizationDetailState: (orgId: string | null, tab?: OrganizationDetailTab) => void;
+  setOrganizationDetailTab: (tab: OrganizationDetailTab) => void;
   setCurrentView: (view: ViewType) => void;
   setSidebarState: (state: SidebarState) => void;
   toggleSidebar: () => void;
@@ -146,7 +163,14 @@ export const useUIStore = create<UIState>()(
       forceOpenCart: false,
       setForceOpenCart: (v: boolean) => set({ forceOpenCart: v }),
       commissionNavContext: null,
+      organizationDetailState: { orgId: null, tab: 'tiendas' as OrganizationDetailTab },
       setCommissionNavContext: (ctx: CommissionNavContext | null) => set({ commissionNavContext: ctx }),
+      // CP-UX-ORG-STORES-002: fija el contexto organizativo de la página
+      // dedicada (org + pestaña; default 'tiendas' — entrada principal).
+      setOrganizationDetailState: (orgId: string | null, tab: OrganizationDetailTab = 'tiendas') =>
+        set({ organizationDetailState: { orgId, tab } }),
+      setOrganizationDetailTab: (tab: OrganizationDetailTab) =>
+        set((state: UIState) => ({ organizationDetailState: { ...state.organizationDetailState, tab } })),
       setCurrentView: (view: ViewType) => set((state: UIState) => {
         // GATE 1: punto ÚNICO de normalización — cualquier emisor que pida un
         // viewId legacy (occ, wrappers viejos) aterriza en su destino canónico.

@@ -104,6 +104,9 @@ const POSView = dynamic(() => import('@/components/views/terminal/views/pos/POSV
 const SalesHistoryView = dynamic(() => import('@/components/views/terminal/views/sales/SalesHistoryView'), { ssr: false });
 const UsersManagementView = dynamic(() => import('@/components/views/terminal/views/users/UsersManagementView'), { ssr: false });
 const OrganizationsView = dynamic(() => import('@/components/views/terminal/views/organizations/OrganizationsView'), { ssr: false });
+// CP-UX-ORG-STORES-002: página DEDICADA de administración de una organización
+// (pestañas Tiendas | Clientes y Proveedores; contexto org+tab en la URL).
+const OrganizationAdminPage = dynamic(() => import('@/components/views/terminal/views/organizations/OrganizationAdminPage'), { ssr: false });
 const RolesManagementView = dynamic(() => import('@/components/views/terminal/views/users/RolesManagementView'), { ssr: false });
 const StoresManagementView = dynamic(() => import('@/components/views/terminal/views/stores/StoresManagementView'), { ssr: false });
 const StorefrontConfigView = dynamic(() => import('@/components/views/terminal/views/stores/StorefrontConfigView'), { ssr: false });
@@ -495,6 +498,9 @@ export default function TerminalShell() {
         case 'sales': return <ViewErrorBoundary viewName="Historial de Ventas"><SalesHistoryView /></ViewErrorBoundary>;
         case 'users': return <ViewErrorBoundary viewName="Usuarios"><UsersManagementView /></ViewErrorBoundary>;
         case 'organizations': return <ViewErrorBoundary viewName="Organizaciones"><OrganizationsView /></ViewErrorBoundary>;
+        // CP-UX-ORG-STORES-002: página dedicada de la organización seleccionada
+        // (contexto org+tab espejado en la URL por useViewUrlSync).
+        case 'organization-detail': return <ViewErrorBoundary viewName="Organización"><OrganizationAdminPage /></ViewErrorBoundary>;
         case 'roles': return <ViewErrorBoundary viewName="Roles"><RolesManagementView /></ViewErrorBoundary>;
         case 'stores': return <ViewErrorBoundary viewName="Tiendas"><StoresManagementView /></ViewErrorBoundary>;
         case 'storefront-config': return <ViewErrorBoundary viewName="Vitrina Pública"><StorefrontConfigView /></ViewErrorBoundary>;

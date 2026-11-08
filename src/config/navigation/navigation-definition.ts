@@ -1232,6 +1232,10 @@ export const TECHNICAL_VIEW_IDS: string[] = [
   // además destino contextual desde Caja/POS (el mismo destino, no otro).
   'stores', 'catalog', 'history', 'lots', 'warehouses',
   'customers', 'bank-reconciliation',
+  // CP-UX-ORG-STORES-002: página dedicada de administración de una
+  // organización — destino contextual (acción «Tiendas»/«Clientes y
+  // Proveedores» del menú de la organización), sin hoja de menú propia.
+  'organization-detail',
   'sales_catalog',
   'accounts_payable',
   'accounts_receivable', 'punto_venta', 'analitica',
@@ -1496,6 +1500,9 @@ export const VALID_VIEWS: Set<string> = new Set([
   'storefront-config', 'settings', 'help', 'wiki', 'news', 'rss_management',
   'management-hub', 'ipv', 'legal', 'health',
   'organizations',
+  // CP-UX-ORG-STORES-002: página dedicada de administración de una organización
+  // (tabs Tiendas | Clientes y Proveedores; contexto en la URL).
+  'organization-detail',
   // CP-INFRA-002 (2026-10-23): 'pick3-intelligence' y 'wallet' retirados del producto activo.
   // CP-INFRA-002b (2026-10-23): 'academy' retirado del producto activo junto con el módulo Academia.
   'labels', 'sales_catalog', 'ofertas', 'purchase-orders', 'sales-hub',

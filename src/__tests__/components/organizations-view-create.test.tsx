@@ -24,6 +24,12 @@ const authState = { user: null as { id: string; role: string } | null };
 
 vi.mock('@/store', () => ({
   useAuthStore: () => ({ user: authState.user }),
+  // CP-UX-ORG-STORES-002: OrganizationsView navega a la página dedicada de
+  // la organización (pestañas Tiendas | Clientes y Proveedores).
+  useUIStore: () => ({
+    setCurrentView: vi.fn(),
+    setOrganizationDetailState: vi.fn(),
+  }),
 }));
 
 const listState = {

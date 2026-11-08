@@ -121,7 +121,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
   const [storesRes, usersRes, ownerRes] = await Promise.all([
     admin.from('stores')
-      .select('id, name, slug, is_active, is_archived, created_at')
+      // CP-UX-ORG-STORES-002: classifier_connected (party_store_links.status
+      // de la tienda) permite a la página dedicada de la organización anclar
+      // la pestaña Clientes y Proveedores en una tienda conectada al catálogo
+      // maestro. Lectura service-role; la autorización ya se resolvió arriba.
+      .select('id, name, slug, is_active, is_archived, created_at, party_store_links(status)')
       .eq('tenant_id', orgId)
       .order('name'),
     admin.from('profiles')
@@ -139,7 +143,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       ...orgRes.data,
       owner_name: ownerRes.data?.full_name || null,
     },
-    stores: storesRes.data || [],
+    // CP-UX-ORG-STORES-002: embed crudo party_store_links(status) → boolean
+    // classifier_connected por tienda (0 o 1 fila por UNIQUE(store_id)).
+    stores: (storesRes.data || []).map((store: Record<string, unknown> & { party_store_links?: Array<{ status: string }> | null }) => {
+      const { party_store_links, ...rest } = store;
+      return { ...rest, classifier_connected: party_store_links?.[0]?.status === 'connected' };
+    }),
     users: usersRes.data || [],
   });
 }
