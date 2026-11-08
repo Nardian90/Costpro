@@ -18,8 +18,19 @@
  *
  * Uso: bun scripts/reconcile-storage.mjs   (read-only, sin --apply ya: la
  * eliminación R3 la ejecuta la migración 20261108140100 en la BD).
+ *
+ * GUARD (CP-INFRA-019): verificador READ-ONLY — el guard valida el destino
+ * REAL de las peticiciones en modo 'read': E2E/localhost pasa libre;
+ * producción exige ALLOW_PROD=read-only. Ningún método de escritura aquí
+ * (HEAD/GET + RPC STABLE de solo lectura vía POST).
  */
-const BASE = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+import { assertNotProduction } from './lib/assert-not-production.mjs';
+
+const BASE = assertNotProduction({
+  mode: 'read',
+  url: process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+  context: 'reconcile-storage',
+});
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 if (!BASE || !KEY) {
   console.error('Faltan SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY');
