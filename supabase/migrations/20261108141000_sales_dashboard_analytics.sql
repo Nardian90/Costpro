@@ -522,11 +522,21 @@ RETURNS TABLE(
   quantity numeric,
   line_net_cup numeric
 )
-LANGUAGE sql
+LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
 SET search_path = 'public', 'extensions'
 AS $function$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  -- Guard de sesión (mismo patrón que get_sales_dashboard_analytics;
+  -- exigido además por el gate CI secdef_no_auth)
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'ERR_PERMISSION_DENIED: sesión requerida' USING ERRCODE = '42501';
+  END IF;
+
+  RETURN QUERY
   SELECT ti.transaction_id,
          t.completed_at,
          COALESCE(p.full_name, 'Usuario') AS seller_name,
@@ -539,9 +549,11 @@ AS $function$
    WHERE ti.product_id = p_product_id
      AND t.status = 'completed'
      AND t.completed_at >= p_date_from AND t.completed_at <= p_date_to
-     AND (p_store_id IS NULL AND public.has_store_access(t.store_id) OR p_store_id IS NOT NULL AND t.store_id = p_store_id AND public.has_store_access(p_store_id))
+     AND (p_store_id IS NULL AND public.has_store_access(t.store_id)
+          OR p_store_id IS NOT NULL AND t.store_id = p_store_id AND public.has_store_access(p_store_id))
    ORDER BY t.completed_at DESC
    LIMIT 200;
+END;
 $function$;
 
 REVOKE EXECUTE ON FUNCTION public.get_sales_dashboard_product_detail(uuid, timestamptz, timestamptz, uuid) FROM PUBLIC, anon;
