@@ -393,9 +393,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // MISIÓN DATA-INTEGRITY-REMEDIATION-001 (2026-11-08): +3 integridad referencial soft-refs (20261108140000) = 131; reconciliación Storage bucket stores (20261108140100) = 132; prevención check_data_integrity (20261108140200) = 133
     // COSTPRO-FINAL-CYCLE-CLOSE-001 (2026-11-08): +1 endurecimiento permisos RPC diagnóstico (20261108140300) = 134
     // COSTPRO-SALES-DASHBOARD-001 (2026-11-08): +1 RPC agregado de analytics de ventas (20261108141000) = 135
-    expect(m.total_incluidos).toBe(135);
+    // CP-OPERATIONAL-CLASS-001 (2026-11-08): +1 clasificación operativa del catálogo (20261108150000) = 136
+    expect(m.total_incluidos).toBe(136);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(135);
+    expect(incluidos.length).toBe(136);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

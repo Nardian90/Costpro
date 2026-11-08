@@ -136,6 +136,8 @@ export default function CatalogView() {
     category: '',
     // MISIÓN TIPO-DE-ARTÍCULO: default = producto físico.
     is_service: false,
+    // CP-OPERATIONAL-CLASS-001: sin clasificación hasta que el usuario elija.
+    operational_class: null,
     price: 0,
     precio_empresa: 0,
     precio_empresa_currency: 'CUP',
@@ -805,6 +807,10 @@ export default function CatalogView() {
       // MISIÓN TIPO-DE-ARTÍCULO: hidratar la naturaleza real del artículo
       // (llega vía get_paginated_products_v2 tras 20261020000001).
       is_service: (product as any).is_service === true,
+      // CP-OPERATIONAL-CLASS-001: hidratar la clasificación operativa real
+      // (llega vía get_paginated_products_v2 tras 20261108150000). NULL =
+      // «Sin clasificar» — el selector muestra el estado real, no un default.
+      operational_class: (product as any).operational_class ?? null,
       price: product.price || 0,
       precio_empresa: product.precio_empresa || 0,
       precio_empresa_currency: (product as any).precio_empresa_currency || product.price_currency || 'CUP',
@@ -878,6 +884,10 @@ export default function CatalogView() {
         category: editForm.category || null,
         // MISIÓN TIPO-DE-ARTÍCULO: persistir la naturaleza del artículo.
         is_service: editForm.is_service === true,
+        // CP-OPERATIONAL-CLASS-001: persistir la clasificación operativa
+        // (NULL = Sin clasificar — el usuario puede des-clasificar dejándola
+        // sin selección; el histórico nunca cambia por sí solo).
+        operational_class: editForm.operational_class ?? null,
         price: editForm.price,
         precio_empresa: editForm.precio_empresa || null,
         precio_empresa_currency: editForm.precio_empresa > 0 ? (editForm.precio_empresa_currency || editForm.price_currency || 'CUP') : null,

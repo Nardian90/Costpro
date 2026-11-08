@@ -16,6 +16,8 @@
  */
 
 import { orderProductsBySku, type SkuFilter } from './sku-order';
+import { applyOperationalPriceFilter, NEUTRAL_OPERATIONAL_FILTER, isNeutralOperationalFilter, type OperationalPriceFilter } from './operational-filters';
+import type { ProductOperationalClass } from '@/types';
 import { formatLabeledCurrency } from '@/lib/utils';
 
 /** Fila de origen (campos del RPC get_products_for_pos que usa el listado). */
@@ -29,6 +31,8 @@ export interface PriceListSourceItem {
   stock_current: number | null | undefined;
   is_active?: boolean | null;
   is_service?: boolean | null;
+  /** CP-OPERATIONAL-CLASS-001: clasificación operativa real del catálogo. */
+  operational_class?: ProductOperationalClass | null;
 }
 
 /** Fila lista para dibujar (el SKU original se conserva intacto). */
@@ -61,11 +65,20 @@ export interface PriceListModel {
     rangeFrom: bigint | null;
     rangeTo: bigint | null;
     currencies: string[];       // monedas presentes (sin mezclar: cada fila lleva la suya)
+    // CP-OPERATIONAL-CLASS-001: filtro combinado aplicado y su subtotal
+    // (stock>0 tras clasificación/estado del precio, antes del rango de SKU).
+    operationalFilter: OperationalPriceFilter;
+    totalOperational: number;
   };
 }
 
 /** Moneda por defecto del sistema (products.price_currency NOT NULL DEFAULT 'CUP'). */
 const DEFAULT_CURRENCY = 'CUP';
+
+/** CP-OPERATIONAL-CLASS-001: ¿el filtro operativo aporta algo al modelo? */
+export function hasActiveOperationalFilter(f: OperationalPriceFilter): boolean {
+  return !isNeutralOperationalFilter(f);
+}
 
 /** Descripción comercial: nombre + descripción complementaria si existe. */
 function commercialDescription(item: PriceListSourceItem): string {
@@ -84,9 +97,12 @@ export function buildPriceListModel(opts: {
   range: SkuFilter;
   generatedAt: Date;
   measureLines?: (description: string) => number;
+  /** CP-OPERATIONAL-CLASS-001: clasificación operativa + estado del precio (combinables, §3-§5). */
+  operationalFilter?: OperationalPriceFilter;
 }): PriceListModel {
   const { items, store, range, generatedAt } = opts;
   const measureLines = opts.measureLines ?? (() => 1);
+  const operationalFilter = opts.operationalFilter ?? NEUTRAL_OPERATIONAL_FILTER;
 
   // Criterio de inclusión OBLIGATORIO (misión §3): stock estrictamente mayor
   // que cero y producto activo. Ni cero, ni negativo, ni otras tiendas (las
@@ -96,8 +112,14 @@ export function buildPriceListModel(opts: {
   );
   const totalRaw = available.length;
 
+  // CP-OPERATIONAL-CLASS-001 (§5): filtro combinado clasificación+precio
+  // aplicado al dataset COMPLETO de la tienda (no a una página). Se aplica
+  // ANTES del rango de SKU; el orden por SKU no cambia.
+  const matchingOps = applyOperationalPriceFilter(available, operationalFilter);
+  const totalOperational = matchingOps.length;
+
   // Reglas de SKU (§4.2): numéricos por valor, alfanuméricos después.
-  const ordered = orderProductsBySku(available, range);
+  const ordered = orderProductsBySku(matchingOps, range);
 
   const dateLabel = `${String(generatedAt.getDate()).padStart(2, '0')}/${String(generatedAt.getMonth() + 1).padStart(2, '0')}/${generatedAt.getFullYear()}`;
   const timeLabel = `${String(generatedAt.getHours()).padStart(2, '0')}:${String(generatedAt.getMinutes()).padStart(2, '0')}`;
@@ -123,6 +145,8 @@ export function buildPriceListModel(opts: {
       rangeFrom: range?.from ?? null,
       rangeTo: range?.to ?? null,
       currencies,
+      operationalFilter,
+      totalOperational,
     },
   };
 }

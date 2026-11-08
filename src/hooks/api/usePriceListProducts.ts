@@ -16,6 +16,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 import { supabase } from '@/lib/supabaseClient';
 import { uuidRegex as isUuidRegex } from '@/validation/schemas';
 import { validateRPCArrayResponse } from '@/lib/rpc-validator';
@@ -38,7 +39,16 @@ async function fetchPriceListPage(storeId: string, offset: number): Promise<Pric
       p_limit: PAGE_SIZE,
     }),
   );
-  const validated = await validateRPCArrayResponse(data, getProductsForPosResponseSchema, RPC_NAME);
+  // CP-OPERATIONAL-CLASS-001: el schema compartido convierte price NULL → 0
+  // (.default(0)) — correcto para el POS, pero destruiría la distinción
+  // «Sin precio (NULL) vs precio 0 legítimo» que exige la misión §4. SOLO en
+  // este hook re-declaramos price nullable SIN default (el resto del schema
+  // queda intacto).
+  const priceListRowSchema = getProductsForPosResponseSchema.extend({
+    price: z.number().min(0).nullable().optional(),
+    operational_class: z.enum(['venta', 'insumo', 'activo_fijo', 'util_herramienta']).nullable().optional(),
+  });
+  const validated = await validateRPCArrayResponse(data, priceListRowSchema, RPC_NAME);
   return (validated ?? []).map((item) => ({
     id: item.id,
     sku: item.sku ?? null,
@@ -49,6 +59,8 @@ async function fetchPriceListPage(storeId: string, offset: number): Promise<Pric
     stock_current: item.stock_current,
     is_active: item.is_active ?? null,
     is_service: item.is_service ?? null,
+    // CP-OPERATIONAL-CLASS-001: clasificación operativa real (NULL = Sin clasificar).
+    operational_class: item.operational_class ?? null,
   }));
 }
 

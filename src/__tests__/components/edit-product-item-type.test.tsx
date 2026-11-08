@@ -76,6 +76,7 @@ const fisico = {
 function baseForm(over: Partial<EditFormState>): EditFormState {
   return {
     name: '', sku: '', category: '', is_service: false,
+    operational_class: null, // CP-OPERATIONAL-CLASS-001
     price: 0, precio_empresa: 0, precio_empresa_currency: 'CUP',
     cost_price: 0, unit_of_measure: 'unidad', description: '',
     price_currency: 'CUP', barcode: '', barcode_type: 'EAN13',

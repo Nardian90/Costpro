@@ -314,6 +314,9 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
         // MISIÓN TIPO-DE-ARTÍCULO: persistir la naturaleza del artículo
         // («Servicio» en la columna Tipo de Artículo del Excel/CSV).
         is_service: row.is_service === true,
+        // CP-OPERATIONAL-CLASS-001: persistir la clasificación si vino en el
+        // archivo; NULL = Sin clasificar (la importación NO inventa valores).
+        operational_class: row.operational_class ?? null,
         unit_of_measure: row.unit_of_measure,
         description: row.description,
         is_active: true,

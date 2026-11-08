@@ -19,6 +19,7 @@ import type { jsPDF } from 'jspdf';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { resolveScLogoDataUrl, drawScLogo, type ScLogoResolution } from '@/lib/legal/sc-logo';
 import { planPriceListPages, type PriceListModel, type PriceListPlan, type PriceListGeometry } from './model';
+import { operationalFilterLabel } from './operational-filters';
 
 // ── Paleta sobria, coherente con los documentos COSTPRO ────────────────────
 const INK: [number, number, number] = [23, 23, 27];
@@ -155,10 +156,19 @@ function drawFooter(doc: jsPDF, plan: PriceListPlan, model: PriceListModel): voi
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(...MUTED);
+  // CP-OPERATIONAL-CLASS-001: coherencia pantalla↔documento — el pie deja
+  // constancia de los filtros operativos aplicados (clasificación y estado
+  // del precio). Nada que declarar cuando el filtro es neutro.
+  const filterNote = operationalFilterLabel(model.meta.operationalFilter);
   for (let p = 0; p < plan.totalPages; p += 1) {
     doc.setPage(p + 1);
     doc.text(`Precios vigentes al ${model.dateLabel} ${model.timeLabel}`, PAGE_W / 2, 290, { align: 'center' });
     doc.text(`Página ${p + 1} de ${plan.totalPages}`, PAGE_W / 2, 294, { align: 'center' });
+    if (filterNote) {
+      doc.setFont('helvetica', 'italic');
+      doc.text(`Filtros aplicados: ${filterNote}`, PAGE_W / 2, 286, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+    }
   }
 }
 

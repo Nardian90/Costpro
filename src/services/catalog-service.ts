@@ -3,6 +3,8 @@ import { Product } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { createWorkbook } from '@/lib/export/lazy-excel';
 import { generateEAN13FromSKU, needsBarcodeAutogeneration } from '@/lib/barcode-utils';
+import { parseOperationalClassCell, operationalClassLabel } from '@/lib/product-operational-class';
+import type { ProductOperationalClass } from '@/types';
 import Papa from 'papaparse'; // CM-3.7: CSV support
 
 // ============================================
@@ -16,6 +18,9 @@ interface CatalogExcelRow {
   // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): naturaleza del artículo en el
   // intercambio Excel (texto legible: 'Servicio' | 'Producto físico').
   'Tipo de Artículo': string;
+  // CP-OPERATIONAL-CLASS-001: clasificación operativa (texto legible:
+  // 'Venta' | 'Insumo' | 'Activo Fijo' | 'Útil/Herramienta' | 'Sin clasificar').
+  'Clasificación Operativa': string;
   'Unidad de Medida': string;
   'Costo': number;
   'Precio Venta': number;
@@ -45,6 +50,7 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
             Nombre: 'Ejemplo: Detergente Multiusos 1L',
             'Categoría': 'Limpieza',
             'Tipo de Artículo': 'Producto físico',
+            'Clasificación Operativa': 'Venta',
             'Unidad de Medida': 'unidad',
             'Costo': 85.50,
             'Precio Venta': 120.00,
@@ -58,6 +64,7 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
             Nombre: 'Ejemplo: Arroz Extra 5kg',
             'Categoría': 'Alimentos',
             'Tipo de Artículo': 'Producto físico',
+            'Clasificación Operativa': 'Venta',
             'Unidad de Medida': 'unidad',
             'Costo': 350.00,
             'Precio Venta': 480.00,
@@ -71,6 +78,7 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
             Nombre: 'Ejemplo: Mantenimiento de Aire Acondicionado',
             'Categoría': 'Servicios',
             'Tipo de Artículo': 'Servicio',
+            'Clasificación Operativa': 'Venta',
             'Unidad de Medida': 'unidad',
             'Costo': 0,
             'Precio Venta': 950.00,
@@ -85,6 +93,9 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
           Nombre: p.name || '',
           'Categoría': p.category || '',
           'Tipo de Artículo': p.is_service ? 'Servicio' : 'Producto físico',
+          // CP-OPERATIONAL-CLASS-001: exportar la clasificación real (Sin
+          // clasificar si aún no se asignó — nunca un valor inventado).
+          'Clasificación Operativa': operationalClassLabel(p.operational_class),
           'Unidad de Medida': p.unit_of_measure || 'unidad',
           'Costo': p.cost_price || 0,
           'Precio Venta': p.price || 0,
@@ -119,6 +130,7 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
         { 'Campo': 'Nombre', 'Descripción': 'Nombre comercial del producto (obligatorio)', 'Ejemplo': 'Detergente Multiusos 1L' },
         { 'Campo': 'Categoría', 'Descripción': 'Clasificación comercial del producto (opcional)', 'Ejemplo': 'Limpieza' },
         { 'Campo': 'Tipo de Artículo', 'Descripción': 'Naturaleza del artículo (opcional): «Servicio» = intangible sin existencias; cualquier otro valor o vacío = producto físico', 'Ejemplo': 'Servicio' },
+        { 'Campo': 'Clasificación Operativa', 'Descripción': 'Clasificación informativa (opcional): Venta, Insumo, Activo Fijo o Útil/Herramienta. Vacío = Sin clasificar. No cambia contabilidad ni reglas de venta', 'Ejemplo': 'Venta' },
         { 'Campo': 'Unidad de Medida', 'Descripción': 'UM base del producto (opcional, defecto: unidad)', 'Ejemplo': 'unidad, kg, litro, caja' },
         { 'Campo': 'Costo', 'Descripción': 'Precio de costo por unidad (obligatorio, numérico)', 'Ejemplo': '85.50' },
         { 'Campo': 'Precio Venta', 'Descripción': 'Precio de venta al público (obligatorio, numérico)', 'Ejemplo': '120.00' },
@@ -182,6 +194,8 @@ export async function importCatalogFromExcel(
           category: ['categoría', 'categoria', 'Categoría', 'Categoria', 'category', 'Category', 'Categoría (opcional)'],
           // MISIÓN TIPO-DE-ARTÍCULO: aliases para la naturaleza del artículo.
           is_service: ['tipo de artículo', 'tipo de articulo', 'Tipo de Artículo', 'tipo', 'Tipo', 'naturaleza', 'es servicio', 'servicio', 'Servicio', 'is_service', 'item type', 'type'],
+          // CP-OPERATIONAL-CLASS-001: columna opcional del intercambio.
+          operational_class: ['clasificación operativa', 'clasificacion operativa', 'Clasificación Operativa', 'clasificación operativa ', 'operational class', 'operational classification', 'operational_class'],
           unit_of_measure: ['unidad de medida', 'Unidad de Medida', 'UM', 'um', 'Unidad', 'unidad'],
           cost_price: ['costo', 'Costo', 'cost', 'Cost', 'Precio Costo'],
           price: ['precio venta', 'Precio Venta', 'precio', 'Precio', 'price', 'Price', 'Precio de Venta'],
@@ -250,12 +264,22 @@ export async function importCatalogFromExcel(
             ? generateEAN13FromSKU(sku)
             : rawBarcode;
 
+          // CP-OPERATIONAL-CLASS-001: celda opcional; vacía = Sin clasificar.
+          // Valor no reconocido → error de fila (fail-closed): nunca se
+          // adivina ni se inventa una clasificación.
+          const opClass = parseOperationalClassCell(normalized.operational_class);
+          if (opClass.error) {
+            errors.push({ row: rowNumber, message: opClass.error });
+            return;
+          }
+
           rows.push({
             sku,
             name,
             category: String(normalized.category || '').trim() || null,
             // MISIÓN TIPO-DE-ARTÍCULO: reconocer la naturaleza del artículo.
             is_service: parseItemTypeAsService(normalized.is_service),
+            operational_class: opClass.value,
             unit_of_measure: String(normalized.unit_of_measure || 'unidad').trim(),
             cost_price: costPrice,
             price: price,
@@ -283,6 +307,8 @@ export interface CatalogImportProduct {
   category: string | null;
   // MISIÓN TIPO-DE-ARTÍCULO: true = servicio intangible (sin existencias).
   is_service?: boolean;
+  // CP-OPERATIONAL-CLASS-001: null = Sin clasificar (columna ausente o vacía).
+  operational_class?: ProductOperationalClass | null;
   unit_of_measure: string;
   cost_price: number;
   price: number;
@@ -504,7 +530,7 @@ export const catalogService = {
 // ============================================
 
 const CSV_HEADERS = [
-  'SKU', 'Nombre', 'Categoría', 'Unidad de Medida', 'Costo',
+  'SKU', 'Nombre', 'Categoría', 'Clasificación Operativa', 'Unidad de Medida', 'Costo',
   'Precio Venta', 'Stock Mínimo', 'Código de Barras', 'Proveedor', 'Descripción',
 ];
 
@@ -518,14 +544,15 @@ export function exportCatalogToCSV(products: Product[], storeName?: string) {
     const rows = isEmpty
       ? [
           // Plantilla con 3 filas de ejemplo
-          { SKU: 'PROD-001', Nombre: 'Coca Cola 500ml', Categoría: 'Bebidas', 'Unidad de Medida': 'unidad', Costo: 0.80, 'Precio Venta': 1.50, 'Stock Mínimo': 10, 'Código de Barras': '', Proveedor: '', Descripción: 'Ejemplo de producto' },
-          { SKU: 'PROD-002', Nombre: 'Pan Francés', Categoría: 'Panadería', 'Unidad de Medida': 'unidad', Costo: 0.05, 'Precio Venta': 0.15, 'Stock Mínimo': 50, 'Código de Barras': '', Proveedor: '', Descripción: '' },
-          { SKU: 'PROD-003', Nombre: 'Leche 1L', Categoría: 'Lácteos', 'Unidad de Medida': 'litro', Costo: 0.90, 'Precio Venta': 1.20, 'Stock Mínimo': 5, 'Código de Barras': '', Proveedor: '', Descripción: '' },
+          { SKU: 'PROD-001', Nombre: 'Coca Cola 500ml', Categoría: 'Bebidas', 'Clasificación Operativa': 'Venta', 'Unidad de Medida': 'unidad', Costo: 0.80, 'Precio Venta': 1.50, 'Stock Mínimo': 10, 'Código de Barras': '', Proveedor: '', Descripción: 'Ejemplo de producto' },
+          { SKU: 'PROD-002', Nombre: 'Pan Francés', Categoría: 'Panadería', 'Clasificación Operativa': 'Venta', 'Unidad de Medida': 'unidad', Costo: 0.05, 'Precio Venta': 0.15, 'Stock Mínimo': 50, 'Código de Barras': '', Proveedor: '', Descripción: '' },
+          { SKU: 'PROD-003', Nombre: 'Leche 1L', Categoría: 'Lácteos', 'Clasificación Operativa': 'Venta', 'Unidad de Medida': 'litro', Costo: 0.90, 'Precio Venta': 1.20, 'Stock Mínimo': 5, 'Código de Barras': '', Proveedor: '', Descripción: '' },
         ]
       : products.map(p => ({
           SKU: p.sku || '',
           Nombre: p.name || '',
           Categoría: p.category || '',
+          'Clasificación Operativa': operationalClassLabel(p.operational_class),
           'Unidad de Medida': p.unit_of_measure || 'unidad',
           Costo: p.cost_price || 0,
           'Precio Venta': p.price || 0,
@@ -580,6 +607,8 @@ export async function importCatalogFromCSV(
             category: ['categoría', 'categoria', 'Categoría', 'Categoria', 'category', 'Category'],
             // MISIÓN TIPO-DE-ARTÍCULO: aliases de naturaleza del artículo.
             is_service: ['tipo de artículo', 'tipo de articulo', 'Tipo de Artículo', 'tipo', 'Tipo', 'naturaleza', 'es servicio', 'servicio', 'Servicio', 'is_service', 'item type', 'type'],
+            // CP-OPERATIONAL-CLASS-001: columna opcional del intercambio CSV.
+            operational_class: ['clasificación operativa', 'clasificacion operativa', 'Clasificación Operativa', 'operational class', 'operational classification', 'operational_class'],
             unit_of_measure: ['unidad de medida', 'Unidad de Medida', 'UM', 'um', 'Unidad', 'unidad'],
             cost_price: ['costo', 'Costo', 'cost', 'Cost', 'Precio Costo'],
             price: ['precio venta', 'Precio Venta', 'precio', 'Precio', 'price', 'Price'],
@@ -644,12 +673,21 @@ export async function importCatalogFromCSV(
               ? generateEAN13FromSKU(sku)
               : rawBarcode;
 
+            // CP-OPERATIONAL-CLASS-001: celda opcional; vacía = Sin clasificar;
+            // valor no reconocido → error de fila (fail-closed).
+            const opClass = parseOperationalClassCell(normalized.operational_class);
+            if (opClass.error) {
+              errors.push({ row: rowNumber, message: opClass.error });
+              return;
+            }
+
             rows.push({
               sku,
               name,
               category: String(normalized.category || '').trim() || null,
               // MISIÓN TIPO-DE-ARTÍCULO: reconocer la naturaleza del artículo.
               is_service: parseItemTypeAsService(normalized.is_service),
+              operational_class: opClass.value,
               unit_of_measure: String(normalized.unit_of_measure || 'unidad').trim(),
               cost_price: costPrice,
               price,
