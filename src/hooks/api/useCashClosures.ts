@@ -72,7 +72,7 @@ export function useCreateCashClosure() {
 export function useUpdateCashClosure() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, closure }: { id: string; closure: Partial<CashClosure> }) => {
+    mutationFn: async ({ id, closure, audit_pending_sales }: { id: string; closure: Partial<CashClosure>; audit_pending_sales?: unknown }) => {
       // Iteración 11.4: si status='cerrado', usar RPC close_cash_shift via API
       if (closure.status === 'cerrado') {
         const response = await fetch('/api/cash-closures/close', {
@@ -86,6 +86,9 @@ export function useUpdateCashClosure() {
             // RPC calcula difference_usd y la PERSISTE sin autoajuste.
             declared_cash_usd: closure.declared_cash_usd || 0,
             notes: closure.notes || null,
+            // COSTPRO-FINAL-CYCLE-CLOSE-001 (T4): evidencia de ventas
+            // pendientes (aditivo; el schema de la ruta lo valida).
+            ...(audit_pending_sales ? { audit_pending_sales } : {}),
           }),
         });
         if (!response.ok) {
