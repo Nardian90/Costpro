@@ -1,8 +1,8 @@
 # COSTPRO_MULTICASHIER_DESIGN_002 — Diseño técnico definitivo del sistema multicajero
 
-**Fecha:** 2026-11-07 (v1/v2) · **v3: 2026-11-08** · **v4: 2026-11-08 (misión 005)** · **v5: 2026-11-08 (misión 006)** · **v6: 2026-11-09 (misión 007)** · **v7: 2026-11-09 (misión 008)** · **Base:** `COSTPRO_MULTICASHIER_AUDIT_001.md` (PR #1563) · **Tipo:** diseño cerrado, sin implementación.
-**Repo:** Nardian90/Costpro · `origin/main` = `53e4af2b4` (verificado 2026-11-09 en la misión 008: sin avance desde la v6; los avances previos son de catálogo maestro/auth/UI, **sin cambios en el módulo Caja** [MEDIDO: las 2 migraciones upstream no mencionan tablas cash]) · rama del PR `audit/multicashier-001` (commits `3a9ebe931` · `f7c5ef690` · `d8cf1e925` · `d076c8d3a` cierre 004 · `534f08e0a` cierre 005 · `62195c253` cierre 006 · `43697c8c1` cierre 007, 5 checks todos success · cierre 008 = este commit).
-**Revisiones:** v1 (misión 002, §D.2-D.13 — **OBSOLETA en parte**, ver AVISO) → v2 (misión 003, §D.14-D.15 — **OBSOLETA en parte**) → v3 (misión 004, §D.16-D.17 — **VIGENTE salvo lo corregido inline**) → v4 (misión 005, §D.18 — **VIGENTE salvo lo corregido inline**) → v5 (misión 006, §D.19 — **VIGENTE salvo lo corregido inline**) → v6 (misión 007, §D.20 — **VIGENTE salvo lo corregido inline**) → **v7 (misión 008): §D.21 cierre de ejecución transaccional y validación PostgreSQL real — VIGENTE.**
+**Fecha:** 2026-11-07 (v1/v2) · **v3: 2026-11-08** · **v4: 2026-11-08 (misión 005)** · **v5: 2026-11-08 (misión 006)** · **v6: 2026-11-09 (misión 007)** · **v7: 2026-11-09 (misión 008)** · **v8: 2026-11-08 (misión 009)** · **Base:** `COSTPRO_MULTICASHIER_AUDIT_001.md` (PR #1563) · **Tipo:** diseño cerrado, sin implementación.
+**Repo:** Nardian90/Costpro · `origin/main` = `8f1c00492` (verificado 2026-11-08 en la misión 009: avance upstream CP-UX-ORG-STORES-001 PR #1570 y contract-surface — **sin trabajo multicajero ni cambios del módulo Caja** [MEDIDO: el diff upstream no altera tablas cash_transfers/custody; las menciones cash del diff eran archivos del propio PR]) · rama del PR `audit/multicashier-001` (commits `3a9ebe931` · `f7c5ef690` · `d8cf1e925` · `d076c8d3a` cierre 004 · `534f08e0a` cierre 005 · `62195c253` cierre 006 · `43697c8c1` cierre 007 · `32e6dd553`+`580d43d6c` cierre 008, checks success · cierre 009 = este commit).
+**Revisiones:** v1 (misión 002, §D.2-D.13 — **OBSOLETA en parte**, ver AVISO) → v2 (misión 003, §D.14-D.15 — **OBSOLETA en parte**) → v3 (misión 004, §D.16-D.17 — **VIGENTE salvo lo corregido inline**) → v4 (misión 005, §D.18 — **VIGENTE salvo lo corregido inline**) → v5 (misión 006, §D.19 — **VIGENTE salvo lo corregido inline**) → v6 (misión 007, §D.20 — **VIGENTE salvo lo corregido inline**) → v7 (misión 008, §D.21 — HISTÓRICO en lo sustituido por banners) → **v8 (misión 009): §D.22 integridad final del ledger, custodia, tesorería e idempotencia — VIGENTE.**
 **Decisión del propietario:** cada vendedor tiene **terminal + gaveta propios**: UNA TIENDA + UN ALMACÉN COMPARTIDO + N CAJAS FÍSICAS + N TERMINALES + N SESIONES FINANCIERAS INDEPENDIENTES.
 **Etiquetas:** [MEDIDO] catálogo vivo (prod agregado sin PII / E2E) · [EN CÓDIGO] archivo:línea · [DECISIÓN] decisión de diseño fundamentada · [SIM] simulación conceptual verificada con código versionado en `docs/audits/evidence/` · [SPEC E2E] prueba definida para la Fase F, NO ejecutada · [NO VERIFICADO] pendiente de censo/prueba.
 
@@ -10,7 +10,7 @@
 
 ## ⚠️ AVISO DE VIGENCIA — qué especificación es válida
 
-Este documento acumula siete revisiones. **La especificación VIGENTE es §D.16-D.17 (misión 004) con las capas correctivas de §D.18 (misión 005), §D.19 (misión 006), §D.20 (misión 007) y §D.21 (misión 008), que prevalecen donde corrigen.** Las secciones anteriores se conservan como antecedente y evidencia; donde quedaron sustituidas llevan el banner `OBSOLETO — NO IMPLEMENTAR`. Un implementador debe seguir §D.16-D.21 (D.18, D.19, D.20 y D.21 como capas correctivas) y, para los conceptos no redefinidos allí (seguridad D.7, históricos D.9, escenarios E2E D.11), las secciones v1 señaladas como vigentes en la tabla:
+Este documento acumula ocho revisiones. **La especificación VIGENTE es §D.16-D.17 (misión 004) con las capas correctivas de §D.18 (misión 005), §D.19 (misión 006), §D.20 (misión 007), §D.21 (misión 008) y §D.22 (misión 009), que prevalecen donde corrigen.** Las secciones anteriores se conservan como antecedente y evidencia; donde quedaron sustituidas llevan el banner `OBSOLETO — NO IMPLEMENTAR`. Un implementador debe seguir §D.16-D.22 (D.18, D.19, D.20, D.21 y D.22 como capas correctivas) y, para los conceptos no redefinidos allí (seguridad D.7, históricos D.9, escenarios E2E D.11), las secciones v1 señaladas como vigentes en la tabla:
 
 | Sección | Estado | Especificación vigente |
 |---|---|---|
@@ -50,6 +50,10 @@ Este documento acumula siete revisiones. **La especificación VIGENTE es §D.16-
 | D.20.2 (conciliación exacta y triggers) | **Parcialmente obsoleto** (triggers ordinarios no diferibles; titular sin gaveta exacta; V3 sin `legs_total`) | §D.21.1 + §D.21.2 + §D.21.3 |
 | D.20.6 (limitación de validación PostgreSQL) | **Superada** (validación real ejecutada en PG 17.11) | §D.21.4 |
 | D.20.7-D.20.8 (criterios 007 y veredicto v6) | Histórico (el criterio se mantiene; el veredicto queda sustituido) | §D.21.5 + §D.21.6 (v7) |
+| D.21.1 (dos capas y secuencias) | **Vigente en parte** (secuencias/SET CONSTRAINTS/rollback; piernas mutables y reconciliación solo-NEW corregidas) | §D.22.1 + §D.22.4 |
+| D.21.2 (gaveta física exacta) y D.21.3 (V3 legs_total) | **VIGENTE** | — |
+| D.21.4 (certificación PG y log 2026-11-09) | **Corregida** (fecha futura retirada; runner versionado; conteo ampliado) | §D.22.6 + §D.22.7 |
+| D.21.5 (criterios 008) y D.21.6 (veredicto v7) | Histórico (el criterio se mantiene; el veredicto queda sustituido) | §D.22.7 + §D.22.8 (v8) |
 
 ---
 
@@ -2163,6 +2167,8 @@ Los cinco defectos quedan corregidos con especificación coherente: ninguna pier
 
 ### D.21.1 — P0-1 · Validación en dos capas: inmediata y DIFERIDA AL COMMIT
 
+> **⚠️ PARCIALMENTE OBSOLETO (corregido por misión 009, §D.22.1).** `fn_ctr_legs_final` reconciliaba solo NEW y las piernas registradas admitían mutación/desvinculación: §D.22.1 añade la inmutabilidad de la pierna vinculada, el append-only del ledger y la reconciliación de AMBOS extremos. Las secuencias de escritura, la semántica de `SET CONSTRAINTS`, el rollback y la idempotencia básica de esta sección siguen VIGENTES (la idempotencia queda endurecida en §D.22.4).
+
 **Defecto [CONFIRMADO en D.20.2]:** los triggers `ctr_legs_consistency` y `ctr_transfer_reconcile` eran triggers ordinarios `AFTER`, que disparan inmediatamente tras cada INSERT/UPDATE — pero `cash_transfers` y `payment_transactions` se referencian mutuamente dentro de la MISMA transacción (pierna OUT + estado + `leg_out_payment_id` + custodia). Insertar la pierna antes del estado deja al trigger viendo una transferencia `solicitada` con pierna; actualizar el estado antes de la pierna, un estado `entregada` sin pierna. **Ningún orden de escrituras con triggers ordinarios es seguro.**
 
 **Corrección [DECISIÓN, validada PG]:** dos capas con responsabilidades separadas.
@@ -2243,7 +2249,9 @@ La consulta devuelve fila (inconsistente) cuando el estado no cumple su renglón
 
 ### D.21.4 — Validación REAL en PostgreSQL 17.11 (limitación de D.20.6 SUPERADA)
 
-**Entorno [PG]:** PostgreSQL **17.11** (Debian 17.11-0+deb13u1, x86_64) desechable — binarios oficiales extraídos sin root, clúster propio en socket UNIX local (puerto 5433), base `audit_mc` recreada en cada ejecución. Sin producción, sin CostproE2E, sin Supabase, sin credenciales, sin datos personales. Expediente versionado: `00_schema_minimal.sql` (8 tablas fieles al diseño), `01_constraints.sql`, `02_triggers.sql` (capas inmediata/diferida + funciones de especificación tipo RPC), `03_v3_reconciliation.sql`, `04_valid_fixtures.sql`, `05_invalid_fixtures.sql`, `06_assertions.sql`, `README.md`, `run_output_2026-11-09.log`. Reproducción: `bash scripts/run_postgres_validation.sh`.
+> **NOTA (misión 009):** el log citado aquí (`run_output_2026-11-09.log`) llevaba etiqueta de fecha FUTURA respecto a la ejecución real (2026-11-08) y fue RETIRADO — la evidencia vigente es `run_output_2026-11-08.log` (§D.22.6). El runner declarado en D.21.4 vivía fuera del repositorio con rutas del agente; §D.22.6 lo versiona y verifica desde checkout limpio. El conteo «22 negativos» de esta sección se renumeró y amplió a 46 verificables (§D.22.7).
+
+**Entorno [PG]:** PostgreSQL **17.11** (Debian 17.11-0+deb13u1, x86_64) desechable — binarios oficiales extraídos sin root, clúster propio en socket UNIX local (puerto 5433), base `audit_mc` recreada en cada ejecución. Sin producción, sin CostproE2E, sin Supabase, sin credenciales, sin datos personales. Expediente versionado: `00_schema_minimal.sql` (8 tablas fieles al diseño), `01_constraints.sql`, `02_triggers.sql` (capas inmediata/diferida + funciones de especificación tipo RPC), `03_v3_reconciliation.sql`, `04_valid_fixtures.sql`, `05_invalid_fixtures.sql`, `06_assertions.sql`, `README.md` — el log citado aquí fue sustituido por `run_output_2026-11-08.log` (ver nota supra) y la reproducción ahora usa el runner versionado del repo (§D.22.6).
 
 | Categoría exigida | Resultado |
 |---|---|
@@ -2268,8 +2276,106 @@ La consulta devuelve fila (inconsistente) cuando el estado no cumple su renglón
 | Reintentos sin duplicados; rollback verificado; expediente versionado | D.21.1/D.21.4 | [PG] P9/P9b, B5 |
 | Sin cambios funcionales ni en producción | Control del PR | git: solo docs + evidencia |
 
-### D.21.6 — Veredicto (misión 008 — VIGENTE)
+### D.21.6 — Veredicto (misión 008 — HISTÓRICO, sustituido por §D.22.8)
 
 Las operaciones completas (solicitud, entrega desde gaveta y desde tesorería, recepción en sesión y en cuenta, devolución al origen, cancelación, reintentos idempotentes, cadena de custodia con reasignación) **se ejecutaron correctamente en PostgreSQL 17.11 real**; los 22 casos negativos fueron **rechazados** (inmediatamente o al COMMIT, según la capa) con **reversión íntegra verificada**; las tres correcciones de ejecutabilidad (validación diferida al COMMIT con su semántica `SET CONSTRAINTS` documentada, titular contra la gaveta física exacta con vigencia temporal, y conciliación total de filas con `legs_total`/`invalid_legs`) están implementadas en la especificación y **validadas**, sin contradicciones entre D.16-D.21 (el AVISO DE VIGENCIA y los banners marcan lo sustituido).
 
 **DISEÑO APROBABLE PARA IMPLEMENTACIÓN** — con las precondiciones ya establecidas en misiones anteriores (gate de activación por tienda, certificación E2E de la Fase F contra datos reales, y la migración transaccional de Fase B precedida de la réplica del expediente en el entorno del implementador). Esta aprobación autoriza el DISEÑO, no el inicio del desarrollo: la decisión sigue siendo del propietario. CI verde y simulaciones siguen sin sustituir la validación aquí registrada.
+
+---
+
+## D.22. Integridad final del ledger, custodia, tesorería e idempotencia (misión COSTPRO-MULTICASHIER-DESIGN-009)
+
+**Capa correctiva VIGENTE sobre §D.21** (el AVISO DE VIGENCIA es el mapa). La revisión independiente de la misión 008 detectó seis defectos de integridad y de cobertura; esta sección los corrige y los certifica **sobre PostgreSQL 17.11 real**. Todo lo anterior de D.16-D.21 se conserva como historial. Evidencia: expediente `docs/audits/evidence/postgres_multicashier/` (actualizado) + `run_output_2026-11-08.log` (PASS; fecha real de ejecución — el log `2026-11-09` de la misión 008 llevaba una etiqueta de fecha futura y fue RETIRADO, corrección documentada en D.22.6).
+
+### D.22.1 — P0-1 · La desvinculación o mutación de una pierna no puede dejar huérfana a la transferencia
+
+**Defecto [CONFIRMADO en D.21.1]:** `fn_ctr_legs_final()` solo reconciliaba `NEW` — un UPDATE que cambiara `ref_type`/`ref_id` dejaba a la transferencia ANTERIOR sin revalidar.
+
+**Corrección [DECISIÓN, validada PG] — tres mecanismos superpuestos:**
+1. **Inmutabilidad de la pierna vinculada** (capa inmediata): `pt_immediate` rechaza con `ERR_LEG_IMMUTABLE` cualquier cambio de `ref_type, ref_id, direction, amount, currency, store_id, payment_method, cash_closure_id, cash_account_id` en una fila `ref_type='cash_transfer'` (el trigger cubre ahora TODAS esas columnas vía `UPDATE OF`). Los campos financieros de una pierna registrada son fijos.
+2. **Append-only del ledger** (D.22.1): `pt_no_delete` (BEFORE DELETE) rechaza `ERR_LEDGER_APPEND_ONLY` el borrado físico de piernas de traspaso — la anulación en producción es una fila nueva con `transaction_id` (D.13). Nota de semántica PostgreSQL capturada en la validación: un BEFORE trigger que devuelve **NULL cancela la fila en silencio** — por eso las filas ajenas a traspasos devuelven `OLD` para no bloquear borrados que no le atañen.
+3. **Reconciliación de AMBOS extremos** (capa diferida): `fn_ctr_legs_final` ahora reconcilia `NEW.ref_id` (si pertenece a un traspaso) **y también `OLD.ref_id`** cuando `ref_type`/`ref_id` cambian en un UPDATE o en un DELETE — cinturón y tirantes sobre la capa inmediata.
+
+**Casos [PG, todos rechazados con rollback íntegro verificado por aserción]:** N20 cambio de `ref_type` (inmediato), N21 reasignación A→B (inmediato), N22 cambio de la pierna conservada por `cash_transfers` (deferred V3), N23/N24 DELETE de pierna OUT/IN (inmediato append-only), N25 estado global íntegro tras COMMIT (0 inconsistentes, 15 piernas, 10 transferencias).
+
+### D.22.2 — P0/P1 · Continuidad de custodia FORZADA estructuralmente (no confiada al llamante)
+
+**Defectos [CONFIRMADOS en D.21.2]:** `f_create_custody_event` leía el último evento sin `FOR UPDATE` y no validaba el custodio previo declarado; la FK compuesta y los índices únicos impedían cruces y bifurcaciones pero NO la ruptura de secuencia (p. ej. `event_seq` con saltos por INSERT directo).
+
+**Corrección [DECISIÓN, validada PG] — dos capas:**
+- **Trigger estructural `ctr_custody_continuity`** (BEFORE INSERT, aplica a TODO insert incluso directo): bloquea la transferencia con `SELECT … FOR UPDATE` (serialización de reasignaciones concurrentes), y exige: primer evento = `seq 1` sin previo (o `ERR_CUSTODY_FIRST_INVALID`); `event_seq = último+1` (`ERR_CUSTODY_SEQ_GAP`); `previous_event_id` = último evento real (`ERR_CUSTODY_PREV_NOT_LAST`); `previous_custodian_user_id` = custodio vigente (`ERR_CUSTODY_PREV_MISMATCH`).
+- **Función de especificación endurecida**: `FOR UPDATE` antes de leer, validación del custodio previo declarado contra el vigente, custodio inicial = poseedor físico real (`COALESCE(carrier, delivered_by)` en la entrega), append-only intacto (N30 UPDATE / N31 DELETE rechazados).
+- **Concurrencia real (N29, DOS conexiones psql independientes):** dos reasignaciones simultáneas se serializan por el lock de la transferencia; el ganador crea `seq=2` y el perdedor —que leyó el mismo estado previo— es rechazado con `ERR_CUSTODY_PREV_MISMATCH` (prevención de reasignación obsoleta). Verificación: 2 eventos, 1 enlace continuo, sin bifurcación. Los casos N26 (custodio previo falso), N27 (salto de secuencia) y N28 (`previous_event_id` ajeno al último) quedan rechazados; N32/N33/N34 (segundo evento inicial, bifurcación, referencia cruzada) pasan a ser capturados por el trigger de continuidad (además de los índices/FK).
+
+### D.22.3 — P0 · Saldo de tesorería validado en SQL REAL (D.20.3 ejecutado por primera vez)
+
+**Cobertura ausente [CONFIRMADA en D.20.3/D.21.4]:** el arnés de la misión 008 no incluía `v_cash_ledger_classification` ni control de saldo — la entrega desde tesorería no demostraba disponibilidad.
+
+**Corrección [DECISIÓN, validada PG]:**
+1. **Vista de clasificación en el arnés** — réplica FIEL del CASE de D.18.2 con la prioridad fail-closed de D.19.2 (fila física sin titular PRIMERO). Adaptaciones documentadas del arnés (no cambian reglas): `pt.at` ↔ `payment_date` de producción; `model_scope` vía columna `multicashier_enabled_at` añadida; `exchange_rate` añadido; subconjunto de clases idéntico en orden y reglas.
+2. **`f_check_treasury_saldo(p_account, p_store, p_currency, p_amount)`** — los 9 pasos de D.20.3: (0) `FOR UPDATE` de la cuenta (serializa salidas concurrentes); (1) validación GLOBAL del ámbito tienda+moneda fail-closed — cualquier fila física `sin_titular` o `sin_clasificar` (incluidas huérfanas, que no tienen `holder_id`) levanta `ERR_LEDGER_UNCLASSIFIED`; (2) saldo = `SUM(sign*amount)` exclusivo de la cuenta y UNA moneda, sin `electronico` ni `historico_sin_titular`; (3) exigencia `saldo >= importe` (el importe EXACTO pasa).
+3. **Integración en `f_deliver_cash_transfer`** — si el origen es cuenta, el control corre en la MISMA transacción ANTES de escribir la pierna; el reintento idempotente no descuenta dos veces (P9b).
+
+**Casos [PG]:** saldo suficiente ✓ (P3, descuenta 5000 de 10000); saldo EXACTO permitido ✓ (P11: 5900 de 5900 → saldo 0); saldo inferior rechazado ✓ (S-N1, rollback íntegro); fila física SIN TITULAR bloquea el ámbito ✓ (S-N2 — la fila se inyecta relajando TEMPORALMENTE el CHECK `pt_holder_required_physical` dentro de la transacción de prueba para simular datos que burlan la RPC; el caso restaura el CHECK y verifica rollback; si el caso falla, la transacción entera revierte y el CHECK vuelve); fila SIN CLASIFICAR bloquea ✓ (S-N3); el ELECTRÓNICO no incrementa ni reduce el efectivo físico ✓ (S-N4: fila zelle con titular cuenta, saldo invariante y excluido del efectivo); CUP y USD separados ✓ (P12: USD opera y se agota aparte; el ámbito CUP no se mezcla); reintentos sin doble descuento ✓ (P9b/B5); **dos salidas CONCURRENTES reales** ✓ (fase de concurrencia del runner: exactamente una de dos entregas de 700 sobre saldo 1000 confirma; la otra revierte íntegra; saldo final 300 y 1 pierna).
+
+### D.22.4 — P1 · Idempotencia con identidad de operación y HUELLA de parámetros
+
+**Defectos [CONFIRMADOS en D.21.1]:** `f_request_cash_transfer` devolvía el id existente sin comparar parámetros (una clave reutilizada con otro importe/moneda/extremo devolvía una transferencia distinta), y el patrón SELECT-antes-de-INSERT no resolvía carreras concurrentes sin error espurio de UNIQUE.
+
+**Corrección [DECISIÓN, validada PG]:**
+- **Política:** la clave de idempotencia es OBLIGATORIA para la operación financiera (`ERR_IDEMPOTENCY_KEY_REQUIRED` si falta).
+- **Huella de parámetros** (`request_fingerprint`, columna añadida al arnés): md5 de tienda|extremos|importe|moneda|solicitante. Misma clave + misma huella ⇒ mismo id; misma clave + huella distinta ⇒ **`ERR_IDEMPOTENCY_KEY_REUSE`** (I-N1 importe, I-N2 moneda, I-N3 origen, I-N4 destino, I-N5 tienda).
+- **Concurrencia:** `INSERT … ON CONFLICT (idempotency_key) DO NOTHING RETURNING id`; si el insert no es el ganador, `SELECT … FOR UPDATE` sobre la fila del ganador (bloquea hasta que el ganador resuelva; si hizo ROLLBACK, reintenta el INSERT — bucle de 2 intentos). Sin error espurio de UNIQUE ni duplicados.
+- **Concurrentes reales (fase de concurrencia del runner):** misma clave + mismos parámetros ⇒ AMBOS clientes OK con el **MISMO id** (verificado comparando los ids de las dos conexiones); misma clave + importe distinto ⇒ exactamente un cliente OK y el otro con `ERR_IDEMPOTENCY_KEY_REUSE`; una sola transferencia persiste en ambos casos.
+
+### D.22.5 — P1 · Sesión financiera vs responsable operativo: DECISIÓN B (separados, con autorización)
+
+**Decisión [D.22.5 — B]:** el titular de la sesión (`cash_closures.user_id`) y el actor operativo (`delivered_by`/`received_by`) **se conservan por separado**; NO se exige igualdad, se exige AUTORIZACIÓN verificable:
+1. **Entrega física** (`deliver`): el actor debe ser el TITULAR de la sesión emisora **o** el TRANSPORTISTA en custodia (quien realmente lleva el dinero); otro actor ⇒ `ERR_DELIVER_ACTOR_UNAUTHORIZED`. El poseedor real queda en la custodia (`new_custodian = COALESCE(carrier, delivered_by)`) y el actor operativo en `delivered_by` — auditoría con ambos.
+2. **Recepción y retorno en gaveta** (`receive`/`return`): el actor DEBE ser el titular de la sesión receptora/de origen — el dinero entra a SU gaveta y otro receptor falsificaría la atribución ⇒ `ERR_ACTOR_NOT_SESSION_OWNER`. La vigencia actual (sesión abierta) y la histórica (V3) se mantienen de D.21.2.
+3. La recepción EN CUENTA no exige actor-titular (la cuenta no es de una persona; el receptor queda registrado y la conciliación no depende de él).
+
+**Casos [PG]:** positivos — entrega por el titular (P2) y entrega por el transportista desde la sesión del cajero (P13, custodia registra a J y `delivered_by`=J); negativos — entrega por un actor ajeno (A-N1) y recepción por no-titular (A-N2), ambos rechazados con rollback íntegro.
+
+### D.22.6 — P1 · Reproducibilidad real del expediente desde checkout limpio
+
+**Defectos [CONFIRMADOS]:** el runner vivía FUERA del repositorio con 4 rutas absolutas del agente; el README apuntaba a ellas; el log llevaba fecha futura (`2026-11-09` para una ejecución real del 2026-11-08); README/06 decían «19 negativos» habiendo 22.
+
+**Corrección [DECISIÓN, verificada]:**
+1. `scripts/run_postgres_validation.sh` AHORA FORMA PARTE DEL REPOSITORIO: rutas relativas a la raíz, detección de dependencias con error explícito y método sin root documentado (`PG_BIN_DIR`), clúster desechable en `mktemp -d` con **puerto libre y `trap` de limpieza que se ejecuta incluso si una prueba falla**, base creada desde cero, carga en orden de dependencias, fase de concurrencia con dos conexiones reales, conteo de casos negativos verificado contra constante (46) y veredicto PASS/FAIL identificable. `KEEP_WORK=1` conserva los artefactos para depuración.
+2. **Verificado desde checkout limpio**: `git clone` local de la rama → `bash scripts/run_postgres_validation.sh` con `PG_BIN_DIR` → PASS completo; sin PostgreSQL disponible ⇒ error explícito con instrucciones (exit 2). Sin rutas `/home/z/...` ni dependencias del agente.
+3. Log oficial con **fecha real**: `run_output_2026-11-08.log` (PASS); el archivo `run_output_2026-11-09.log` fue retirado del PR y su causa (etiqueta errónea de la misión 008) queda documentada aquí. Conteo reconciliado: **46 casos negativos verificables** en 05 (22 de la misión 008 renumerados al pliego 009 + 24 nuevos) + 3 escenarios concurrentes (N29, saldo, idempotencia ×2) con 8 conexiones psql reales.
+
+### D.22.7 — Matriz de verificación (misión 009)
+
+Todas las filas son **PASS: ejecutado y verificado** en PostgreSQL 17.11 real (log versionado; aserciones HARD-FAIL — ningún NOTICE como única prueba).
+
+| ID | Riesgo | Prueba | Resultado SQL | Rollback | Evidencia |
+|---|---|---|---|---|---|
+| N20-N24 | P0 | Mutación/desvinculación/DELETE de piernas | PASS (inmediato/deferido según capa) | Verificado por aserción por caso | 05 + log |
+| N25 | P0 | Estado global íntegro tras mutaciones | PASS (0/15/10) | n/a | 05 + log |
+| N26-N28 | P0 | Custodio previo falso, salto de seq, previo ajeno | PASS (ERR_CUSTODY_*) | Verificado | 05 + log |
+| N29 | P0 | Dos reasignaciones CONCURRENTES (2 conexiones reales) | PASS (1 OK + 1 ERR_CUSTODY_PREV_MISMATCH; cadena lineal) | Verificado | runner §5 + log |
+| N30-N31 | P1 | UPDATE/DELETE de eventos de custodia | PASS (append-only) | n/a | 05 + log |
+| N32-N34 | P1 | Segundo inicial, bifurcación, referencia cruzada | PASS (trigger continuidad + uq/FK) | n/a | 05 + log |
+| S-N1 | P0 | Saldo inferior al importe | PASS (ERR_SALDO_INSUFICIENTE) | Verificado | 05 + log |
+| S-N2/S-N3 | P0 | Fila física sin titular / sin clasificar en el ámbito | PASS (ERR_LEDGER_UNCLASSIFIED fail-closed) | Verificado (CHECK restaurado) | 05 + log |
+| S-N4 | P0 | Electrónico no mueve efectivo físico | PASS (invariante) | n/a | 05 + log |
+| P11/P12 | P0 | Saldo exacto permitido; CUP/USD separados | PASS | n/a | 04 + log |
+| Saldo concurrente | P0 | Dos entregas concurrentes (2 conexiones reales) | PASS (1 confirma; 1 ERR_SALDO_INSUFICIENTE; saldo 300; 1 pierna) | Verificado | runner §5 + log |
+| I-N1..I-N6 | P1 | Reutilización de clave con parámetros distintos; clave ausente | PASS (ERR_IDEMPOTENCY_KEY_REUSE/REQUIRED) | Verificado | 05 + log |
+| Idempotencia concurrente | P1 | Misma clave+params / misma clave+importe distinto (2 conexiones reales cada caso) | PASS (mismo id en ambos clientes; 1 OK + 1 REUSE) | Verificado | runner §5 + log |
+| A-N1/A-N2 | P1 | Actor ajeno en entrega; receptor no titular (decisión B) | PASS | Verificado | 05 + log |
+| P13 | P1 | Entrega por transportista (decisión B, positivo) | PASS | n/a | 04 + log |
+| N1-N15b, P1-P10 | P0/P1 | Regresión completa del expediente 008 | PASS | Verificado | 04/05/06 + log |
+| Checkout limpio | P1 | `bash scripts/run_postgres_validation.sh` desde `git clone` | PASS (completo) | — | D.22.6 |
+| Sin PostgreSQL | — | Detección de dependencias | PASS (error explícito, exit 2) | — | D.22.6 |
+
+**FAIL / NOT RUN / BLOCKED:** ninguno — no hay categorías no ejecutadas; las simulaciones conceptuales de D.19-D.21 (39 asertos) siguen siendo evidencia de especificación, NO sustituyen ninguna fila de esta matriz.
+
+### D.22.8 — Veredicto (misión 009 — VIGENTE)
+
+La modificación o desvinculación de una pierna no puede dejar inconsistente la transferencia anterior (inmutabilidad + reconciliación de ambos extremos, validada); la custodia valida continuidad, custodio previo y concurrencia con dos conexiones reales; el saldo de tesorería se valida en SQL real incluyendo concurrencia; la idempotencia soporta colisiones de parámetros y llamadas concurrentes; la relación sesión↔responsable está decidida (B) y probada; el expediente se reproduce desde un checkout limpio con runner versionado y log con fecha real; todas las pruebas críticas tienen evidencia verificable con aserciones que fallan de verdad.
+
+**DISEÑO APROBABLE PARA IMPLEMENTACIÓN** — bajo las mismas precondiciones de D.21.6 (gate por tienda, certificación E2E de Fase F, migración de Fase B precedida de la réplica del expediente). La aprobación autoriza el DISEÑO; el inicio del desarrollo sigue siendo decisión del propietario.

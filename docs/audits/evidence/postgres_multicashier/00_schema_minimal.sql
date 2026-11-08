@@ -6,7 +6,8 @@
 
 CREATE TABLE stores (
   id   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name text NOT NULL UNIQUE
+  name text NOT NULL UNIQUE,
+  multicashier_enabled_at timestamptz  -- alcance del modelo (D.18.2: model_scope)
 );
 
 CREATE TABLE profiles (
@@ -64,6 +65,7 @@ CREATE TABLE cash_transfers (
   carrier_user_id        uuid REFERENCES profiles(id),
   received_by            uuid REFERENCES profiles(id),
   idempotency_key        text UNIQUE,
+  request_fingerprint    text,  -- huella de parámetros de la solicitud (D.22, idempotencia)
   created_at             timestamptz NOT NULL DEFAULT now(),
   updated_at             timestamptz NOT NULL DEFAULT now(),
   -- Extremos XOR por lado (D.18.1):
@@ -78,7 +80,8 @@ CREATE TABLE payment_transactions (
   payment_method  text NOT NULL,
   amount          numeric(14,2) NOT NULL CHECK (amount > 0),
   currency        text NOT NULL,
-  at              timestamptz NOT NULL DEFAULT now(),
+  exchange_rate   numeric(20,8) NOT NULL DEFAULT 1,   -- D.18.2: conversión a CUP
+  at              timestamptz NOT NULL DEFAULT now(), -- corresponde a payment_date en producción
   ref_type        text NOT NULL,
   ref_id          uuid,
   transaction_id  uuid,

@@ -22,13 +22,14 @@
 \set SS_G2 50000000-0000-0000-0000-000000000002
 \set SS_G3 50000000-0000-0000-0000-000000000003
 \set SS_G2C 50000000-0000-0000-0000-000000000004
+\set SS_G2L 50000000-0000-0000-0000-000000000005
 -- Roles de los fixtures: U_M encargado (solicita/autoriza), U_K cajero entrega G1,
 -- U_X cajero en G2, U_L cajera recibe, U_J transportista, U_N encargado de S2.
 -- Sesiones: SS_G1/SS_G2/SS_G3 abiertas hace 2 h; SS_G2C cerrada hace 1 h (para N15).
 
-INSERT INTO stores(id, name) VALUES
-  (:'S1', 'Tienda Centro'),
-  (:'S2', 'Tienda Norte');
+INSERT INTO stores(id, name, multicashier_enabled_at) VALUES
+  (:'S1', 'Tienda Centro', now() - interval '1 year'),   -- ámbito multicaja activo
+  (:'S2', 'Tienda Norte',  now() - interval '1 year');
 
 INSERT INTO profiles(id, store_id, role) VALUES
   (:'U_M', :'S1', 'encargado'),
@@ -48,7 +49,20 @@ INSERT INTO cash_closures(id, cash_register_id, store_id, user_id, opened_at, cl
   (:'SS_G1',  :'G1', :'S1', :'U_K', now() - interval '2 hours', NULL),
   (:'SS_G2',  :'G2', :'S1', :'U_X', now() - interval '2 hours', NULL),
   (:'SS_G3',  :'G3', :'S2', :'U_N', now() - interval '2 hours', NULL),
-  (:'SS_G2C', :'G2', :'S1', :'U_X', now() - interval '5 hours', now() - interval '1 hour');
+  (:'SS_G2C', :'G2', :'S1', :'U_X', now() - interval '5 hours', now() - interval '1 hour'),
+  (:'SS_G2L', :'G2', :'S1', :'U_L', now() - interval '2 hours', NULL);
+
+-- Semilla del SALDO de tesorería (misión 009, D.22.3): movimientos 'cobro'
+-- reales del ledger (sale/in/cash con titular cuenta) que alimentan la vista de
+-- clasificación (D.18.2/D.19.2) y el control de saldo (D.20.3):
+-- C1 abre con 10000 CUP y 100 USD (exchange_rate 120) — monedas separadas.
+INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+         currency, exchange_rate, ref_type, ref_id, cash_account_id, created_by)
+VALUES
+  ('60000000-0000-0000-0000-000000000001', :'S1', 'in', 'cash', 10000, 'CUP', 1,
+   'sale', NULL, :'C1', :'U_M'),
+  ('60000000-0000-0000-0000-000000000002', :'S1', 'in', 'cash', 100, 'USD', 120,
+   'sale', NULL, :'C1', :'U_M');
 
 \echo '══ P1: solicitar transferencia gaveta→gaveta (2000 CUP, G1→G2, encargado M)'
 SELECT f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
@@ -69,7 +83,7 @@ SELECT f_deliver_cash_transfer(
 \echo '══ P4: recibir EN SESIÓN (cajera L en sesión SS_G2 de la gaveta destino G2; T2 venía de tesorería)'
 SELECT f_receive_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T2'),
-         :'U_L', :'SS_G2', NULL) AS leg_in;
+         :'U_L', :'SS_G2L', NULL) AS leg_in;
 
 \echo '══ P5: gaveta→tesorería y recibir EN CUENTA (cuenta receptora C1 exacta del destino)'
 SELECT f_request_cash_transfer(:'S1', :'G1', NULL, NULL, :'C1',
@@ -113,7 +127,7 @@ SELECT f_create_custody_event(
          :'U_J', :'U_M', :'U_M', :'U_M', 'reasignación de custodia (escenario D)') AS ev_reasignacion;
 SELECT f_receive_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T4'),
-         :'U_L', :'SS_G2', NULL) AS leg_in_t4;
+         :'U_L', :'SS_G2L', NULL) AS leg_in_t4;
 
 \echo '══ P+ (vigencia histórica): recibir y DESPUÉS cerrar la sesión receptora ⇒ sigue siendo válida'
 SELECT f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
@@ -123,8 +137,8 @@ SELECT f_deliver_cash_transfer(
          :'U_K', :'SS_G1', NULL) AS leg_t5;
 SELECT f_receive_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T5'),
-         :'U_L', :'SS_G2', NULL) AS leg_in_t5;
-UPDATE cash_closures SET closed_at = now() WHERE id = :'SS_G2';   -- se cierra DESPUÉS de recibir
+         :'U_L', :'SS_G2L', NULL) AS leg_in_t5;
+UPDATE cash_closures SET closed_at = now() WHERE id = :'SS_G2L';   -- se cierra DESPUÉS de recibir
 SELECT fn_reconcile_transfer_final(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T5')) AS vigencia_historica_ok;
 
@@ -167,6 +181,56 @@ SELECT f_deliver_cash_transfer(
 SELECT f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T6'),
          :'U_K', :'SS_G1', NULL) AS reintento_entrega_misma_pierna;
+
+\echo '══ P11 (misión 009): saldo de tesorería — consumo real y saldo EXACTO permitido'
+-- Tras P3 (−5000) y P5 (+900 en cuenta): saldo C1 CUP = 10000 − 5000 + 900 = 5900.
+-- Saldo suficiente: f_check sin excepción; y una transferencia del importe EXACTO pasa:
+SELECT f_check_treasury_saldo(:'C1', :'S1', 'CUP', 5900) AS saldo_5900_ok;
+SELECT f_request_cash_transfer(:'S1', NULL, :'C1', :'G2', NULL,
+         5900, 'CUP', :'U_M', :'U_M', 'idem-T7') AS t7;
+SELECT f_deliver_cash_transfer(
+         (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T7'),
+         :'U_K', NULL, NULL) AS leg_out_t7;              -- descuenta EXACTO: saldo queda 0
+DO $$
+BEGIN
+  PERFORM f_check_treasury_saldo('40000000-0000-0000-0000-000000000001',
+           '10000000-0000-0000-0000-000000000001', 'CUP', 0);   -- saldo 0: pasa (>=0)
+  RAISE NOTICE 'OK P11: saldo exacto consumido, C1 CUP queda en 0';
+END $$;
+
+\echo '══ P12 (misión 009): separación de monedas — USD opera aparte del CUP'
+SELECT f_request_cash_transfer(:'S1', NULL, :'C1', :'G2', NULL,
+         100, 'USD', :'U_M', :'U_M', 'idem-T7b') AS t7b;
+SELECT f_deliver_cash_transfer(
+         (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T7b'),
+         :'U_K', NULL, NULL) AS leg_out_t7b;             -- USD 100 disponible: OK
+DO $$
+BEGIN
+  BEGIN
+    PERFORM f_check_treasury_saldo('40000000-0000-0000-0000-000000000001',
+             '10000000-0000-0000-0000-000000000001', 'USD', 0.01);  -- USD agotado
+    RAISE EXCEPTION 'NO_RECHAZADA: USD debió estar en 0';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_SALDO_INSUFICIENTE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK P12: USD separado y agotado (%), CUP no afectado', SQLERRM;
+  END;
+  PERFORM f_check_treasury_saldo('40000000-0000-0000-0000-000000000001',
+           '10000000-0000-0000-0000-000000000001', 'CUP', 0);   -- CUP sigue en 0, no mezclado
+  RAISE NOTICE 'OK P12: CUP/USD mantienen ámbitos separados';
+END $$;
+
+\echo '══ P13 (misión 009, decisión B): ENTREGA por el transportista desde la sesión del cajero'
+-- El actor operativo (J) difiere del titular de la sesión emisora (K): permitido
+-- porque J es el transportista registrado en custodia (auditoría conserva ambos).
+SELECT f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
+         750, 'CUP', :'U_M', :'U_M', 'idem-T8') AS t8;
+SELECT f_deliver_cash_transfer(
+         (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T8'),
+         :'U_J', :'SS_G1', :'U_J') AS leg_out_t8_actor_transportista;
+SELECT f_receive_cash_transfer(
+         (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T8'),
+         :'U_X', :'SS_G2', NULL) AS leg_in_t8;           -- X es titular de SS_G2 ✓
 
 \echo '══ Estado tras las pruebas positivas:'
 SELECT status, count(*) FROM cash_transfers GROUP BY status ORDER BY status;

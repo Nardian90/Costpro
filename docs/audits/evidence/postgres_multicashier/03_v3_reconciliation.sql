@@ -108,3 +108,66 @@ SELECT transfer_id, status, legs_total, out_all, in_all, invalid_legs, out_exact
              AND out_exactas = 1 AND in_exactas = 1 AND invalid_legs = 0 )
        THEN false ELSE true END AS inconsistente
 FROM agg;
+
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- VISTA DE CLASIFICACIÓN (misión 009, D.22.3): réplica FIEL del CASE de D.18.2
+-- con la prioridad fail-closed de D.19.2 (la fila física sin titular se comprueba
+-- PRIMERO). Adaptaciones documentadas del arnés (no cambian reglas):
+--   · `pt.at` corresponde a `payment_date` de producción.
+--   · `model_scope` usa `st.multicashier_enabled_at` (columna añadida al arnés).
+--   · Subconjunto de clases: electronico, traspaso_*, cobro, devolucion_comercial,
+--     ingreso/gasto_documentado, ajuste, historico_sin_titular, sin_titular,
+--     sin_clasificar (las mismas reglas y el mismo orden de D.18.2/D.19.2).
+-- ═══════════════════════════════════════════════════════════════════════════════
+
+CREATE OR REPLACE VIEW v_cash_ledger_classification AS
+SELECT
+  pt.id                          AS ledger_id,
+  pt.store_id,
+  pt.currency,
+  pt.amount,
+  pt.exchange_rate,
+  pt.amount * CASE WHEN pt.currency='CUP' THEN 1 ELSE pt.exchange_rate END AS amount_cup,
+  pt.direction,
+  pt.payment_method,
+  pt.ref_type,
+  pt.ref_id,
+  pt.cash_closure_id,
+  pt.cash_account_id,
+  CASE WHEN pt.cash_closure_id IS NOT NULL THEN 'sesion'
+       WHEN pt.cash_account_id  IS NOT NULL THEN 'cuenta'
+       ELSE NULL END                 AS holder_type,
+  COALESCE(pt.cash_closure_id, pt.cash_account_id) AS holder_id,
+  CASE
+    WHEN pt.payment_method='cash' AND pt.cash_closure_id IS NULL AND pt.cash_account_id IS NULL
+         AND (st.multicashier_enabled_at IS NULL OR pt.at < st.multicashier_enabled_at)
+         THEN 'historico_sin_titular'                    -- pre-corte: fuera del arqueo
+    WHEN pt.payment_method='cash' AND pt.cash_closure_id IS NULL AND pt.cash_account_id IS NULL
+         THEN 'sin_titular'                              -- post-corte: BLOQUEA (D.19.2)
+    WHEN pt.payment_method IN ('transfer','zelle') THEN 'electronico'
+    WHEN pt.ref_type='cash_transfer' AND pt.direction='out' THEN 'traspaso_salida'
+    WHEN pt.ref_type='cash_transfer' AND pt.direction='in' THEN
+         CASE WHEN ct.status IN ('recibida','recibida_en_cuenta') THEN 'traspaso_entrada'
+              WHEN ct.status='devuelta'                          THEN 'traspaso_retorno'
+              ELSE 'sin_clasificar' END
+    WHEN pt.ref_type IN ('sale','receipt','service','production_order','work')
+         AND pt.direction='in' AND pt.payment_method='cash'          THEN 'cobro'
+    WHEN pt.ref_type='devolution' AND pt.direction='refund'
+         AND pt.payment_method='cash'                                THEN 'devolucion_comercial'
+    WHEN pt.ref_type='cash_flow' AND pt.direction='in'  AND pt.payment_method='cash' THEN 'ingreso_documentado'
+    WHEN pt.ref_type='cash_flow' AND pt.direction='out' AND pt.payment_method='cash' THEN 'gasto_documentado'
+    WHEN pt.ref_type='adjustment' AND pt.direction IN ('in','out')   THEN 'ajuste'
+    ELSE 'sin_clasificar'
+  END                            AS class,
+  CASE WHEN pt.direction='in' THEN 1 ELSE -1 END AS sign,
+  pt.at                          AS payment_date,
+  ct.id                          AS transfer_id,
+  ct.status                      AS transfer_status,
+  (pt.ref_type='cash_transfer' AND pt.direction='out'
+     AND ct.status IN ('entregada','en_devolucion')) AS in_transit,
+  CASE WHEN st.multicashier_enabled_at IS NOT NULL
+        AND pt.at >= st.multicashier_enabled_at THEN 'multicaja'
+       ELSE 'legacy' END             AS model_scope
+FROM payment_transactions pt
+LEFT JOIN cash_transfers ct ON pt.ref_type='cash_transfer' AND pt.ref_id=ct.id
+LEFT JOIN stores st         ON st.id = pt.store_id;
