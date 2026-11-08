@@ -58,7 +58,7 @@ import {
   Scale, HelpCircle, Book, FlaskConical, Layers, Landmark, Building2,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone, Printer,
   ClipboardCheck,
-  ReceiptText, Coins,
+  ReceiptText, Coins, Tags,
   Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson, CalendarClock, SlidersHorizontal,
   type LucideIcon,
 } from 'lucide-react';
@@ -175,6 +175,22 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             navClass: 'primary',
             roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
             keywords: ['vender', 'venta', 'pos', 'terminal', 'terminal de venta', 'cobrar', 'facturar', 'ticket', 'factura', 'vale de salida'],
+          },
+          {
+            // MISIÓN 2026-11-09 (CP-SALES-PRICE-LIST-001): consulta y PDF de
+            // precios de los productos con stock > 0 de la tienda activa,
+            // con filtro por rango de SKU. Solo lectura (no modifica
+            // productos, inventarios ni precios). Ubicación: inmediatamente
+            // después de Vender dentro del grupo Ventas. Permisos: los
+            // MISMOS del grupo Ventas / de Vender (herramienta de consulta
+            // para el trabajo diario de la tienda).
+            id: 'listado-precios',
+            label: 'Listado de precios',
+            description: 'Consulta los productos con existencias y genera listados de precios PDF por rango de SKU, con vista previa fiel.',
+            icon: Tags,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+            keywords: ['listado de precios', 'precios', 'lista de precios', 'tarifa', 'sku', 'rango', 'catalogo de precios', 'pdf precios'],
           },
           {
             // CAMBIO 2026-10: acceso directo a Reporte Entrega como hijo del
@@ -1514,6 +1530,8 @@ export const VALID_VIEWS: Set<string> = new Set([
   'accounts_payable', 'accounts_receivable', 'cash_report', 'production-orders',
   // MISIÓN 2026-10-16 (IPV): informe de ingresos por ventas con conciliación
   'ipv_ventas',
+  // MISIÓN 2026-11-09 (CP-SALES-PRICE-LIST-001): listado de precios por rango de SKU
+  'listado-precios',
   'devolutions', 'customers', 'quotations', 'fiscal-close', 'lots', 'warehouses',
   // MISIÓN CLASIFICADOR MAESTRO (FASE 3): vista única de terceros por organización
   'clientes-proveedores',

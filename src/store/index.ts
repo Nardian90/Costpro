@@ -40,6 +40,8 @@ export type ViewType = 'occ' | 'dashboard' | 'store-dashboard' | 'pos' | 'invent
 // MISIÓN 2026-10-16 (IPV): informe de ingresos por ventas con conciliación de
 // inventario. viewId distinto de 'ipv' (módulo experimental de Dexie).
 | 'ipv_ventas'
+// MISIÓN 2026-11-09 (CP-SALES-PRICE-LIST-001): listado de precios (consulta + PDF)
+| 'listado-precios'
 // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
 | 'production-orders';
 
