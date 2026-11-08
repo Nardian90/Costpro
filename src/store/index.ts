@@ -60,13 +60,22 @@ export interface CommissionNavContext {
   setAt: number;
 }
 
-// CP-UX-ORG-STORES-002 — Página dedicada de administración de una organización.
-// El contexto (org + pestaña) vive en el store de UI y se espeja en la URL
-// (/?view=organization-detail&org=<id>&tab=<tiendas|terceros>) vía
+// CP-UX-ORG-STORES-002/003 — Página dedicada de administración de una
+// organización. El contexto (org + pestaña) vive en el store de UI y se
+// espeja en la URL (/?view=organization-detail&org=<id>&tab=<pestaña>) vía
 // useViewUrlSync: refresh, deep-link y Back/Forward restauran el contexto.
 // La AUTORIZACIÓN no depende de este estado: cada API valida el alcance
 // server-side (superadmin/admin por tenant), el store solo es wayfinding.
-export type OrganizationDetailTab = 'tiendas' | 'terceros';
+// 003: la página ABSORBE las pestañas del antiguo modal «Ver detalle»
+// (Resumen, Catálogo Maestro, Usuarios, Configuración) — centro único de
+// administración de la organización.
+export type OrganizationDetailTab =
+  | 'tiendas'
+  | 'terceros'
+  | 'catalogo'
+  | 'resumen'
+  | 'usuarios'
+  | 'configuracion';
 
 export interface OrganizationDetailState {
   orgId: string | null;

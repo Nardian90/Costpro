@@ -35,7 +35,7 @@
  *   /?view=management-hub → tab "Tiendas" (default) → radio "Vista resumen"
  *   → MultiStoreDashboardView ("Tablero Consolidado")
  * Los selectores DEL tablero (heading, botón Activar, badge Activa, toast) NO
- * cambiaron — solo la ruta de acceso (helper openConsolidatedBoard).
+ * cambiaron — solo la ruta de acceso (retirada en CP-UX-ORG-STORES-003).
  * SEC-TS-08: los tests de switch operan SOBRE tiendas de prueba creadas por
  * este spec (A y B) con producto sembrado cada una — nunca sobre tiendas
  * operativas (TIENDA CENTRAL / Puerto Padre / Enervida) ni pilotos.
@@ -89,39 +89,28 @@ let productA: { id: string; name: string } | null = null;
 let productB: { id: string; name: string } | null = null;
 let adminToken = '';
 
-/** Espera a que el tablero multi-tienda termine de cargar (contrato actual) */
-async function waitForDashboardLoaded(page: import('@playwright/test').Page) {
-  // El tablero renderiza h2 "Tablero Consolidado" (i18n stores.dashboard.consolidatedBoard)
-  await expect(
-    page.getByRole('heading', { name: 'Tablero Consolidado' }),
-  ).toBeVisible({ timeout: 20_000 });
-}
-
 /**
- * E2E-REBASE-ALIGNMENT: abre el tablero consolidado multi-tienda por su flujo
- * real actual. /?view=dashboard ya NO lo renderiza (es Inicio desde #1344);
- * el tablero vive como modo "Resumen" del ContentSwitcher "Vista de Tiendas"
- * dentro del hub Gestión de Tiendas (radiogroup accesible, #1348). El click
- * en el radio es idempotente: si el modo ya persistió en localStorage
- * ('mgmt-stores-view-mode'), re-seleccionarlo no cambia el estado y el
- * tablero simplemente permanece montado.
+ * CP-UX-ORG-STORES-003: el tablero consolidado (MultiStoreDashboardView) salió
+ * de la navegación del hub (tab «Resumen» eliminado — su información es
+ * redundante con el tab «Tiendas» de Administración de la organización, que
+ * consume el mismo hook useMultiStoreDashboard y ofrece el dashboard avanzado
+ * por tienda a un clic). Los tests de ESTE spec que usaban el tablero o la
+ * vista /?view=stores (retiradas en las fases 1 y 3) quedan en test.fixme
+ * documentado: su intención se conserva para cuando exista un escenario
+ * equivalente; la cobertura VIVA de cambio de tienda activa está en
+ * store-create-autoswitch / stores-crud / los tests de API de este spec y en
+ * los tests unitarios de useStoreSwitcher/StoreCard. El componente del
+ * tablero conserva sus tests unitarios de contrato.
  */
-async function openConsolidatedBoard(page: import('@playwright/test').Page) {
-  await page.goto('/?view=management-hub');
-  const summaryModeRadio = page
-   .getByRole('radiogroup', { name: 'Vista de Tiendas' })
-   .getByRole('radio', { name: 'Vista resumen' });
-  await expect(summaryModeRadio).toBeVisible({ timeout: 20_000 });
-  await summaryModeRadio.click();
-  await waitForDashboardLoaded(page);
-}
 
-/** Botón "Activar {tienda} como tienda de trabajo" — aria-label único por KPI card */
+/** Botón "Activar {tienda} como tienda de trabajo" — aria-label único por KPI card
+ *  (escenario retirado de la navegación; solo lo usan tests en test.fixme). */
 function activateButtonFor(page: import('@playwright/test').Page, storeName: string) {
   return page.getByRole('button', { name: `Activar ${storeName} como tienda de trabajo` });
 }
 
-/** El badge "Activa" solo existe en la KPI card de la tienda activa */
+/** El badge "Activa" solo existe en la KPI card de la tienda activa
+ *  (escenario retirado de la navegación; solo lo usan tests en test.fixme). */
 function activeBadge(page: import('@playwright/test').Page) {
   return page.getByText('Activa', { exact: true });
 }
@@ -188,82 +177,13 @@ test.afterAll(async ({ request }) => {
   }
 });
 
-test.describe('Store Switching: Dashboard UI', () => {
-  test('admin sees multi-store dashboard with KPI cards', async ({ authedPage: page }) => {
-    test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
-    // Flujo actual (#1344-#1348): hub Gestión de Tiendas → modo "Resumen"
-    await openConsolidatedBoard(page);
-
-    // El tablero renderiza KPI cards: cada StoreKPICard expone el nombre de la
-    // tienda en un heading h3 y (si no está activa) el botón semántico "Activar"
-    const headingA = page.getByRole('heading', { name: storeA!.name, exact: true });
-    const headingB = page.getByRole('heading', { name: storeB!.name, exact: true });
-    await expect(headingA).toBeVisible({ timeout: 15_000 });
-    await expect(headingB).toBeVisible({ timeout: 15_000 });
-
-    // Exactly one store is active at any time — el badge "Activa" es único
-    await expect(activeBadge(page)).toHaveCount(1);
-  });
-
-  test('clicking activate on a store changes the active store indicator', async ({ authedPage: page }) => {
-    test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
-    await openConsolidatedBoard(page);
-    await expect(page.getByRole('heading', { name: storeB!.name, exact: true })).toBeVisible({ timeout: 15_000 });
-
-    // Elegir un destino cuyo botón "Activar" esté disponible (no es la activa)
-    const activateB = activateButtonFor(page, storeB!.name);
-    const activateA = activateButtonFor(page, storeA!.name);
-    const target = (await activateB.count()) > 0 ? storeB!.name : storeA!.name;
-    const targetButton = target === storeB!.name ? activateB : activateA;
-    const other = target === storeB!.name ? storeA!.name : storeB!.name;
-    await expect(targetButton).toBeVisible({ timeout: 10_000 });
-
-    // Click en "Activar {target} como tienda de trabajo"
-    await targetButton.click();
-
-    // Confirmación observable del switch (useStoreSwitcher → sonner)
-    await expect(page.getByText('Tienda cambiada exitosamente')).toBeVisible({ timeout: 15_000 });
-
-    // El indicador de tienda activa pasa al destino: badge único + botón
-    // "Activar" desaparece de la card destino y aparece en la otra
-    await expect(activateButtonFor(page, target)).toHaveCount(0, { timeout: 15_000 });
-    await expect(activateButtonFor(page, other).first()).toBeVisible({ timeout: 15_000 });
-    await expect(activeBadge(page)).toHaveCount(1);
-  });
-
-  test('switching stores invalidates dependent query data', async ({ authedPage: page }) => {
-    test.skip(!storeA || !storeB || !productB, 'setup de tiendas de prueba no disponible');
-    await openConsolidatedBoard(page);
-    await expect(page.getByRole('heading', { name: storeB!.name, exact: true })).toBeVisible({ timeout: 15_000 });
-
-    // Cambiar a la tienda B (o A si B ya está activa)
-    const activateB = activateButtonFor(page, storeB!.name);
-    let targetName = storeB!.name;
-    if ((await activateB.count()) === 0) {
-      targetName = storeA!.name;
-      await expect(activateButtonFor(page, storeA!.name)).toBeVisible({ timeout: 10_000 });
-      await activateButtonFor(page, storeA!.name).click();
-    } else {
-      await activateB.click();
-    }
-
-    // Switch completado sin errores de refresco (queries invalidadas → refetch limpio)
-    await expect(page.getByText('Tienda cambiada exitosamente')).toBeVisible({ timeout: 15_000 });
-    const errorToast = page.locator('[data-sonner-toast][data-type="error"]');
-    await expect(errorToast).toHaveCount(0, { timeout: 5_000 });
-
-    // La vista dependiente (inventario) sirve datos de la tienda recién activada:
-    // el producto sembrado de la tienda destino aparece tras el switch.
-    await page.goto('/?view=inventory');
-    const targetProduct = targetName === storeB!.name ? productB!.name : productA!.name;
-    await expect(page.locator(`td[aria-label="Producto: ${targetProduct}"]`)).toBeVisible({ timeout: 20_000 });
-  });
-});
-
 // ── 2. STORES MANAGEMENT VIEW ───────────────────────────────────────
 
 test.describe('Store Switching: Management View', () => {
   test('admin can switch active store from the stores list', async ({ authedPage: page }) => {
+    // Escenario retirado (fases 1 y 3): /?view=stores ya no es el listado (hub → Configuración; el listado vive en Administración de la organización).
+    test.fixme(true, 'Restaurar apuntando al listado de tiendas de la organización');
+
     await page.goto('/?view=stores');
     await waitForStoresView(page);
 
@@ -288,6 +208,9 @@ test.describe('Store Switching: Management View', () => {
   });
 
   test('switching stores shows warning when cart has items', async ({ authedPage: page }) => {
+    // Escenario retirado (fases 1 y 3): /?view=stores ya no es el listado (hub → Configuración; el listado vive en Administración de la organización).
+    test.fixme(true, 'Restaurar apuntando al listado de tiendas de la organización');
+
     await page.goto('/?view=stores');
     await waitForStoresView(page);
 
@@ -367,6 +290,9 @@ test.describe('Store Switching: API Access', () => {
 
 test.describe('Store Switching: Data Isolation', () => {
   test('switching store clears previous store context', async ({ authedPage: page }) => {
+    // Escenario retirado (CP-UX-ORG-STORES-003): el tablero consolidado ya no es alcanzable.
+    test.fixme(true, 'Restaurar cuando exista un escenario equivalente para el cambio de tienda activa');
+
     test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
     await openConsolidatedBoard(page);
     await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
@@ -397,6 +323,9 @@ test.describe('Store Switching: Data Isolation', () => {
   });
 
   test('deleted store is removed from active store options', async ({ authedPage: page }) => {
+    // Escenario retirado (fases 1 y 3): /?view=stores ya no es el listado (hub → Configuración; el listado vive en Administración de la organización).
+    test.fixme(true, 'Restaurar apuntando al listado de tiendas de la organización');
+
     await page.goto('/?view=stores');
     await waitForStoresView(page);
 
@@ -416,6 +345,9 @@ test.describe('Store Switching: Data Isolation', () => {
 
   // FIX-AUDIT-E2E-002: Verify store data changes after switching
   test('after switching store, inventory data belongs to the new store', async ({ authedPage: page }) => {
+    // Escenario retirado (CP-UX-ORG-STORES-003): el tablero consolidado ya no es alcanzable.
+    test.fixme(true, 'Restaurar cuando exista un escenario equivalente para el cambio de tienda activa');
+
     test.skip(!storeA || !storeB || !productA || !productB, 'setup de tiendas de prueba no disponible');
     await openConsolidatedBoard(page);
     await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
@@ -450,6 +382,9 @@ test.describe('Store Switching: Data Isolation', () => {
 
 test.describe('Store Switching: Concurrency Guard', () => {
   test('rapid consecutive clicks do not cause race conditions', async ({ authedPage: page }) => {
+    // Escenario retirado (CP-UX-ORG-STORES-003): el tablero consolidado ya no es alcanzable.
+    test.fixme(true, 'Restaurar cuando exista un escenario equivalente para el cambio de tienda activa');
+
     test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
     await openConsolidatedBoard(page);
     await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });
@@ -493,6 +428,9 @@ test.describe('Store Switching: Concurrency Guard', () => {
 
   // FIX-AUDIT-E2E-003: Verify store switch completes within reasonable time
   test('store switch completes within 5 seconds', async ({ authedPage: page }) => {
+    // Escenario retirado (CP-UX-ORG-STORES-003): el tablero consolidado ya no es alcanzable.
+    test.fixme(true, 'Restaurar cuando exista un escenario equivalente para el cambio de tienda activa');
+
     test.skip(!storeA || !storeB, 'setup de tiendas de prueba no disponible');
     await openConsolidatedBoard(page);
     await expect(page.getByRole('heading', { name: storeA!.name, exact: true })).toBeVisible({ timeout: 15_000 });

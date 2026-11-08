@@ -31,6 +31,8 @@ const h = vi.hoisted(() => {
     detailSpy: vi.fn(),
     storesManagementProps: [] as any[],
     partiesProps: [] as any[],
+    catalogProps: [] as any[],
+    formProps: [] as any[],
   };
 });
 
@@ -123,6 +125,21 @@ vi.mock('@/components/views/terminal/views/classifier/ClientesProveedoresView', 
   },
 }));
 
+// CP-UX-ORG-STORES-003: pestañas absorbidas del antiguo modal «Ver detalle»
+vi.mock('@/components/views/terminal/views/organizations/CatalogGovernanceSection', () => ({
+  CatalogGovernanceSection: (props: any) => {
+    h.catalogProps.push(props);
+    return <div data-testid="catalog-governance-stub" data-org={props.orgId ?? ''} />;
+  },
+}));
+
+vi.mock('@/components/views/terminal/views/organizations/OrganizationFormModal', () => ({
+  OrganizationFormModal: (props: any) => {
+    h.formProps.push(props);
+    return props.open ? <div data-testid="org-form-stub" data-org={props.organization?.id ?? ''} /> : null;
+  },
+}));
+
 function Wrapper({ children }: { children: React.ReactNode }) {
   const [qc] = React.useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
   return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
@@ -138,6 +155,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   h.storesManagementProps.length = 0;
   h.partiesProps.length = 0;
+  h.catalogProps.length = 0;
+  h.formProps.length = 0;
   h.uiState.currentView = 'organization-detail';
   h.uiState.organizationDetailState = { orgId: 'org-1', tab: 'tiendas' };
   h.testUser.role = 'admin';
@@ -150,6 +169,11 @@ describe('OrganizationAdminPage — página dedicada de la organización', () =>
     expect(screen.getByText('Activa')).toBeDefined();
     expect(screen.getByText('pro')).toBeDefined();
     expect(screen.getByText('3 tienda(s)')).toBeDefined();
+    // Tabs consolidados (CP-UX-ORG-STORES-003): 6 pestañas, las 4 del antiguo
+    // modal «Ver detalle» absorbidas — centro único de administración.
+    expect(screen.getAllByRole('tab').map(t => t.textContent)).toEqual([
+      'Tiendas', 'Clientes y Proveedores', 'Catálogo Maestro', 'Resumen', 'Usuarios', 'Configuración',
+    ]);
     // Tab inicial: Tiendas (entrada principal desde el menú de la organización)
     expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Tiendas');
     await waitFor(() => expect(screen.getByTestId('stores-management-stub')).toBeDefined());
@@ -206,6 +230,46 @@ describe('OrganizationAdminPage — página dedicada de la organización', () =>
     h.uiState.organizationDetailState = { orgId: 'org-9', tab: 'terceros' };
     render(<Page />, { wrapper: Wrapper });
     await waitFor(() => expect(h.detailSpy).toHaveBeenLastCalledWith('org-9'));
+  });
+
+  it('pestaña Catálogo Maestro: monta CatalogGovernanceSection con el orgId y las tiendas de la organización', async () => {
+    await renderPage();
+    await userEvent.click(screen.getByRole('tab', { name: 'Catálogo Maestro' }));
+    await waitFor(() => expect(screen.getByTestId('catalog-governance-stub')).toBeDefined());
+    expect(h.catalogProps[0].orgId).toBe('org-1');
+    // El mapping recorta a la forma que la sección espera (id/name/is_active/is_archived)
+    expect(h.catalogProps[0].stores).toEqual([
+      { id: 'store-1', name: 'Almacen Central', is_active: true, is_archived: false },
+      { id: 'store-2', name: 'Tienda Conectada', is_active: true, is_archived: false },
+      { id: 'store-3', name: 'Tienda Pausada', is_active: false, is_archived: false },
+    ]);
+  });
+
+  it('pestaña Resumen: identidad, estado, propietario y recuentos reales (absorbida del modal)', async () => {
+    await renderPage();
+    await userEvent.click(screen.getByRole('tab', { name: 'Resumen' }));
+    expect(screen.getByText('Propietario')).toBeDefined();
+    // Fixture sin owner_name → texto del fallback (mismo contenido del modal)
+    expect(screen.getByText('Sin propietario registrado')).toBeDefined();
+    expect(screen.getByText('Creación')).toBeDefined();
+    expect(screen.getByText('Usuarios asignados')).toBeDefined();
+  });
+
+  it('pestaña Usuarios: listado de perfiles asignados con estado', async () => {
+    await renderPage();
+    await userEvent.click(screen.getByRole('tab', { name: 'Usuarios' }));
+    expect(await screen.findByText('a@x.cu')).toBeDefined();
+    expect(screen.getByText('Admin Uno')).toBeDefined();
+    expect(screen.getByText('Activo')).toBeDefined();
+  });
+
+  it('pestaña Configuración: datos soportados + «Editar organización» abre el MISMO formulario del listado', async () => {
+    await renderPage();
+    await userEvent.click(screen.getByRole('tab', { name: 'Configuración' }));
+    expect(screen.getByText(/Opciones soportadas por el modelo actual/)).toBeDefined();
+    await userEvent.click(screen.getByRole('button', { name: /Editar organización/ }));
+    expect(screen.getByTestId('org-form-stub')).toBeDefined();
+    expect(h.formProps[0].organization).toEqual({ id: 'org-1', name: 'Constructora del Este', is_active: true });
   });
 
   it('cambio de pestaña: actualiza el contexto (que la URL sincroniza) sin re-consultar la organización', async () => {

@@ -7,28 +7,26 @@
  *
  * CP-UX-ORG-STORES-001 (2026-11-09) — REORGANIZACIÓN RESPONSABILIDADES:
  * la administración de la ESTRUCTURA (listar/crear/pausar/archivar tiendas de
- * cada organización) se traslada a SISTEMA → Organizaciones → detalle de la
- * organización → tab «Tiendas» (mismo componente StoresManagementView, ahora
- * scoped server-side a la organización seleccionada). El hub queda con la
- * configuración y operación de la TIENDA ACTIVA:
+ * cada organización) se traslada a SISTEMA → Organizaciones → «Administración
+ * de la organización» → tab «Tiendas» (mismo componente StoresManagementView,
+ * scoped server-side a la organización seleccionada).
+ *
+ * CP-UX-ORG-STORES-003 (2026-11-09) — CONSOLIDACIÓN: el tab «Resumen»
+ * (MultiStoreDashboardView, tablero consolidado) sale de la navegación: su
+ * información es redundante con el tab «Tiendas» de Administración de la
+ * organización (mismo hook useMultiStoreDashboard alimenta las KPI cards de
+ * cada tienda, y el dashboard avanzado por tienda queda a un clic). El hub
+ * queda con la configuración y operación de la TIENDA ACTIVA:
  *
  *   Gestión de Tiendas
  *   ├── Tab: Configuración (default) → StoreSettingsView (tienda activa)
- *   ├── Tab: Resumen                 → MultiStoreDashboardView (consolidado)
  *   ├── Tab: Vitrina                 → StorefrontConfigView (intacto)
  *   └── Tab: Catálogo                → StoreCatalogView (intacto)
  *
- * NOTA IA-FIX (reversión justificada): el switcher «Completa | Resumen» existía
- * porque eran DOS REPRESENTACIONES del mismo contenido (listado y tablero de
- * las mismas tiendas). Al salir el listado del hub, Resumen deja de ser una
- * representación alternativa y pasa a ser el único contenido cross-tienda del
- * hub → tab propio (el switcher no tiene ya nada que conmutar).
- *
  * Migración localStorage ('mgmt-hub-tab'):
- *   'kpis'   → 'resumen'   (ya aterrizaba en el tablero)
- *   'stores' → 'resumen' si su modo era 'summary'; si no → 'settings'
- *              (gestión de tiendas → configuración de la tienda: contenido
- *              equivalente dentro del nuevo hub)
+ *   'kpis' | 'stores' | 'resumen' → 'settings'
+ *     (el tablero consolidado ya no es contenido del hub; el usuario aterriza
+ *      en la responsabilidad propia de OPERACIÓN: configurar la tienda activa)
  *   'storefront' | 'catalog' → intactos.
  *
  * FASE B (UX-005): el Tablón de Noticias vive en ANÁLISIS (salida previa,
@@ -37,7 +35,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { Store, Settings, BarChart3, LayoutList, Loader2 } from 'lucide-react';
+import { Store, Settings, LayoutList, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { effectiveNavRole } from '@/config/navigation/sidebar.structure';
@@ -49,16 +47,9 @@ const StoreSettingsView = dynamic(() => import('@/components/views/terminal/view
 // Catálogo/Vitrina (fix/ux-inventario-vitrina): gestión de publicación de
 // productos (visible/precio/stock/promoción) sobre la única fuente de verdad.
 const StoreCatalogView = dynamic(() => import('@/components/views/terminal/views/stores/StoreCatalogView'), { ssr: false });
-// REMEDIACIÓN (fix/dashboard-active-store): tablero consolidado multi-tienda.
-// CP-UX-ORG-STORES-001: antes era el modo «Resumen» del tab Tiendas; con la
-// salida del listado hacia Organizaciones, se conserva aquí como tab propio
-// (sin regresión de funcionalidad).
-const MultiStoreDashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/MultiStoreDashboardView'), { ssr: false });
-
-type TabId = 'settings' | 'resumen' | 'storefront' | 'catalog';
+type TabId = 'settings' | 'storefront' | 'catalog';
 
 const LEGACY_HUB_TAB_KEY = 'mgmt-hub-tab';
-const STORE_VIEW_MODE_STORAGE_KEY = 'mgmt-stores-view-mode';
 
 interface TabDef {
   id: TabId;
@@ -76,13 +67,6 @@ const TABS: TabDef[] = [
     label: 'Configuración',
     icon: Settings,
     description: 'Configuración de la tienda activa: identificación, contacto, banca, identidad visual y facturación',
-    roles: ['admin', 'manager', 'encargado'],
-  },
-  {
-    id: 'resumen',
-    label: 'Resumen',
-    icon: BarChart3,
-    description: 'Tablero consolidado: ventas, transacciones y alertas de todas las tiendas',
     roles: ['admin', 'manager', 'encargado'],
   },
   {
@@ -111,14 +95,14 @@ export default function ManagementHubView() {
   // 'stores' con o sin modo Resumen). Ver cabecera para las reglas exactas.
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const savedMode = localStorage.getItem(STORE_VIEW_MODE_STORAGE_KEY);
     const legacyTab = localStorage.getItem(LEGACY_HUB_TAB_KEY);
 
+    // CP-UX-ORG-STORES-003: tabs retirados de la navegación ('kpis' legacy y
+    // 'stores'/'resumen' del hub anterior) aterrizan en la responsabilidad
+    // propia del hub: Configuración de la tienda activa.
     let migrated: TabId | null = null;
-    if (legacyTab === 'kpis') {
-      migrated = 'resumen';
-    } else if (legacyTab === 'stores') {
-      migrated = savedMode === 'summary' ? 'resumen' : 'settings';
+    if (legacyTab === 'kpis' || legacyTab === 'stores' || legacyTab === 'resumen') {
+      migrated = 'settings';
     }
     if (migrated) {
       setActiveTab(migrated);
@@ -206,7 +190,7 @@ export default function ManagementHubView() {
           </div>
         </div>
 
-        {/* Tabs — secciones conceptualmente distintas (Configuración | Resumen |
+        {/* Tabs — secciones conceptualmente distintas (Configuración |
             Vitrina | Catálogo). WAI-APG: roving tabindex + flechas. */}
         <div className="flex gap-1 -mb-px overflow-x-auto" role="tablist" aria-label="Secciones de Gestión">
           {visibleTabs.map((tab, index) => {
@@ -254,7 +238,6 @@ export default function ManagementHubView() {
             <StoreSettingsView />
           </React.Suspense>
         )}
-        {activeTab === 'resumen' && <MultiStoreDashboardView />}
         {activeTab === 'storefront' && <StorefrontConfigView />}
         {activeTab === 'catalog' && <StoreCatalogView />}
       </div>
