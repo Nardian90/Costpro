@@ -21,8 +21,10 @@
  * Mecánica del spec (hallazgo de la corrida 42508725582: los módulos de
  * src/ NO existen como rutas absolutas en el build de producción — el
  * import('/src/...') desde page.evaluate falla):
- *   · Sesión: patrón de e2e/fixtures.ts — localStorage `sb-<ref>-auth-token`
- *     con E2E_TEST_ADMIN_TOKEN vía addInitScript.
+ *   · Sesión/tienda: fixture `authedPage` de e2e/fixtures.ts (login real +
+ *     ensureValidActiveStore) — patrón canónico de la suite (corridas
+ *     42508725582 y 42509559445 enseñaron que /terminal/pos directo no
+ *     hidrata el catálogo y que los imports de src/ no existen en prod).
  *   · Almacenamiento local: localforage usa IndexedDB (BD 'CostPro',
  *     store 'offline_data') — se accede DIRECTAMENTE por API IndexedDB
  *     (misma persistencia que la app; cero módulos de la app).
@@ -30,7 +32,7 @@
  * Ejecución manual: Actions → "E2E Aislado (CostproE2E)" → Run workflow →
  * target=project, spec_filter=pos-offline.
  */
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 
 // SKIP-REASON: CP-POS-002 — E2E offline manual hasta completar tres ejecuciones verdes consecutivas (workflow_dispatch contra CostproE2E con CP_POS_002_RUN_OFFLINE_E2E=1); después se evalúa añadirlo al filtro del workflow e2e-isolated.
 const RUN_OFFLINE_E2E = process.env.CP_POS_002_RUN_OFFLINE_E2E === '1';
@@ -93,33 +95,12 @@ test.describe('POS offline — reserva local, persistencia y doble envío @offli
     await assertIsolatedDb();
   });
 
-  test('venta offline persiste localmente y bloquea exceder el stock local (reserva derivada)', async ({ browser }) => {
+  test('venta offline persiste localmente y bloquea exceder el stock local (reserva derivada)', async ({ authedPage: page, context }) => {
     test.setTimeout(240_000);
 
-    const token = process.env.E2E_TEST_ADMIN_TOKEN;
-    const supabaseUrl = process.env.E2E_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const userId = process.env.E2E_TEST_ADMIN_ID;
-    test.skip(!token || !supabaseUrl, 'E2E_TEST_ADMIN_TOKEN/E2E_SUPABASE_URL no configurados (global-setup del pipeline aislado).');
-
-    const projectRef = supabaseUrl.match(/https?:\/\/([a-z0-9]+)\.supabase\.co/)?.[1] || '';
-    const storageKey = `sb-${projectRef}-auth-token`;
-    const sessionData = JSON.stringify({
-      access_token: token,
-      token_type: 'bearer',
-      expires_in: 3600,
-      expires_at: Math.floor(Date.now() / 1000) + 3600,
-      refresh_token: 'mock-refresh',
-      user: { id: userId || 'e2e-admin', email: 'e2e-admin@costpro.test' },
-    });
-
-    const context = await browser.newContext();
-    await context.addInitScript(([key, val]) => {
-      window.localStorage.setItem(key, val);
-    }, [storageKey, sessionData]);
-    const page = await context.newPage();
-
-    // ── Online: hidratar el POS (el snapshot de productos se persiste) ──
-    await page.goto('/terminal/pos');
+    // ── Online: hidratar el POS por su flujo real (authedPage garantiza
+    //    sesión + tienda activa válida — ensureValidActiveStore) ──
+    await page.goto('/?view=pos');
     // Esperar a que exista ALGÚN snapshot products_* en IndexedDB (localforage).
     await page.waitForFunction(async () => {
       return new Promise<boolean>((resolve) => {
@@ -225,6 +206,5 @@ test.describe('POS offline — reserva local, persistencia y doble envío @offli
     expect(saleOps.length, 'una operación por llave de negocio (sin duplicados)').toBe(byBusinessKey.size);
 
     await context.setOffline(false);
-    await context.close();
   });
 });
