@@ -10,11 +10,13 @@
  */
 
 import { mkdirSync, writeFileSync } from 'fs';
+import { assertIsolatedDb } from '../e2e/fixtures/assert-isolated-db';
 import { buildPriceListModel, type PriceListSourceItem } from '../src/lib/price-list/model';
 import { renderPriceListPdf } from '../src/lib/price-list/pdf';
 
-const BASE = 'https://lguovmvrozxgssupkwpf.supabase.co';
-const SRK = (process.env.E2E_SRK ?? '').trim();
+const REF = 'lguovmvrozxgssupkwpf'; // proyecto E2E aislado CostproE2E (NUNCA producción)
+const BASE = (process.env.E2E_SUPABASE_URL ?? '').trim() || `https://${REF}.supabase.co`;
+const SRK = (process.env.E2E_SUPABASE_SERVICE_ROLE_KEY ?? process.env.E2E_SRK ?? '').trim();
 const STORE = '11111111-aaaa-4bbb-8ccc-00000000e2e1';
 const OUT = '/home/z/my-project/download/evidencias_price_list';
 
@@ -26,22 +28,36 @@ async function rest<T>(method: string, path: string, body?: unknown): Promise<T>
   });
   const text = await res.text();
   if (!res.ok) throw new Error(`${method} ${path}: ${res.status} ${text.slice(0, 200)}`);
-  return text ? JSON.parse(text) : [];
+  return (text ? JSON.parse(text) : []) as T;
 }
 
 /** El RPC get_products_for_pos usa auth.uid() bajo RLS: hace falta un JWT de usuario real (como la app). */
 let token = '';
+const DEMO_EMAIL = (process.env.E2E_DEMO_ADMIN_EMAIL ?? process.env.E2E_EMAIL ?? 'admin@demo.com').trim();
+const DEMO_PASS = (process.env.E2E_DEMO_ADMIN_PASS ?? process.env.E2E_PASSWORD ?? 'demo123').trim();
 async function login(): Promise<void> {
   const res = await fetch(`${BASE}/auth/v1/token?grant_type=password`, {
     method: 'POST',
     headers: { apikey: SRK, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: process.env.E2E_EMAIL, password: process.env.E2E_PASSWORD }),
+    body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASS }),
   });
   if (!res.ok) throw new Error(`login: ${res.status}`);
   token = (await res.json() as { access_token: string }).access_token;
 }
 
 async function main() {
+  // GUARD de aislamiento (CP-INFRA-011): fail-closed — rechaza producción sin
+  // conectar, exige igualdad exacta del ref permitido y el centinela
+  // public.e2e_is_isolated_db() === true antes de CUALQUIER acceso.
+  const decision = await assertIsolatedDb({
+    env: {
+      E2E_SUPABASE_URL: BASE,
+      E2E_SUPABASE_SERVICE_ROLE_KEY: SRK,
+      E2E_TARGET_KIND: (process.env.E2E_TARGET_KIND ?? 'project').trim(),
+      E2E_ALLOWED_REMOTE_REF: (process.env.E2E_ALLOWED_REMOTE_REF ?? REF).trim(),
+    },
+  });
+  console.log(`[guard] destino validado: kind=${decision.kind} ref=${decision.ref}`);
   await login();
   const [store] = await rest<{ id: string; name: string; logo_url: string | null; reeup: string | null }[]>(
     'GET', `/rest/v1/stores?select=id,name,logo_url,reeup&id=eq.${STORE}`,
