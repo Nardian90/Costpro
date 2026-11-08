@@ -377,7 +377,15 @@ export function WorkersView() {
     if (!storeId) return;
     try {
       const data = await apiFetch(`/api/commissions/rules?store_id=${storeId}&history=true`);
-      setRules(data.rules || []);
+      // CP-UI-001 ítem 4: la API agrupa las versiones por rule_id
+      // (data.versions) — se embeben en cada regla para el historial legible.
+      const versionsByRule = (data.versions || {}) as Record<string, unknown[]>;
+      setRules(
+        (data.rules || []).map((r: any) => ({
+          ...r,
+          versions: versionsByRule[r.id] || r.versions || [],
+        })),
+      );
     } catch (e: any) {
       toast.error('Error cargando reglas: ' + e.message);
     }
@@ -848,8 +856,109 @@ function WorkersTab({
         </button>
       </div>
 
-      {/* Tabla */}
-      <div className="bg-card rounded-2xl border-2 border-border overflow-hidden">
+      {/* CP-UI-001 ítem 5: en móvil (<sm) la tabla se sustituye por tarjetas
+          expandibles con TODA la información (las columnas ocultas de la
+          tabla quedan accesibles ahí — sin pérdida de datos). */}
+      {workers.length === 0 ? (
+        <div className="bg-card rounded-2xl border-2 border-border p-10 text-center">
+          {loading ? (
+            <>
+              <Loader2 className="w-10 h-10 mx-auto mb-3 animate-spin text-primary" />
+              <p className="text-sm font-bold text-muted-foreground">Cargando trabajadores…</p>
+            </>
+          ) : (
+            <>
+              <Users className="w-10 h-10 mx-auto mb-3 opacity-50" />
+              <p className="text-sm font-bold text-muted-foreground">Sin trabajadores en esta tienda</p>
+            </>
+          )}
+        </div>
+      ) : (
+      <>
+      {/* Tarjetas expandibles — SOLO móvil */}
+      <div className="sm:hidden space-y-3">
+        {workers.map((w: WorkerSummary) => (
+          <details key={w.worker_id} className={cn('bg-card rounded-2xl border-2 border-border overflow-hidden', w.status !== 'active' && 'opacity-70')}>
+            <summary className="p-4 flex items-center justify-between gap-2 cursor-pointer select-none min-h-[64px]">
+              <div className="min-w-0">
+                <p className="text-sm font-black text-foreground truncate">{w.first_name} {w.last_name}</p>
+                <p className="text-xs text-muted-foreground font-mono">{w.ci}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className={cn(
+                  'px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border',
+                  w.status === 'active' ? 'bg-success/15 text-success border-success/30' : 'bg-muted text-muted-foreground border-border'
+                )}>
+                  {w.status === 'active' ? 'Activo' : 'Inactivo'}
+                </span>
+                <span className="text-xs font-black tabular-nums text-foreground">{formatCurrency(w.sales_total)}</span>
+              </div>
+            </summary>
+            <div className="px-4 pb-4 space-y-2 border-t border-border/50">
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <div className="rounded-lg bg-muted/40 p-2">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground">Ventas Cash</p>
+                  <p className="text-sm font-black tabular-nums text-foreground">{formatCurrency(w.sales_cash)}</p>
+                </div>
+                <div className="rounded-lg bg-muted/40 p-2">
+                  <p className="text-[10px] font-black uppercase text-muted-foreground">Ventas Transfer</p>
+                  <p className="text-sm font-black tabular-nums text-foreground">{formatCurrency(w.sales_transfer)}</p>
+                </div>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-2">
+                <p className="text-[10px] font-black uppercase text-muted-foreground">Regla activa</p>
+                <p className="text-xs font-bold text-foreground">
+                  {w.active_rule_type ? `${RULE_TYPE_LABELS[w.active_rule_type] || w.active_rule_type}${w.active_rule_value !== null ? ` · ${w.active_rule_value}` : ''}` : '—'}
+                </p>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-2">
+                <p className="text-[10px] font-black uppercase text-muted-foreground">Último pago</p>
+                <p className="text-xs font-bold text-foreground">
+                  {w.last_payment_date ? `${formatDate(w.last_payment_date)} · ${formatCurrency(w.last_payment_amount || 0)}` : '—'}
+                </p>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={() => onPayCommission(w)}
+                  disabled={w.status !== 'active'}
+                  className="flex-1 px-3 py-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase tracking-wider hover:bg-primary/90 disabled:opacity-40 min-h-[44px] flex items-center justify-center gap-1"
+                >
+                  <DollarSign className="w-3.5 h-3.5" /> Pagar
+                </button>
+                <button
+                  onClick={() => onEditWorker(w)}
+                  className="px-3 py-2.5 rounded-lg bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  aria-label={`Editar ${w.first_name}`}
+                >
+                  <Edit3 className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleToggleStatus(w)}
+                  disabled={togglingId === w.worker_id}
+                  className={cn(
+                    'px-3 py-2.5 rounded-lg border min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50',
+                    w.status === 'active'
+                      ? 'bg-warning/10 text-warning border-warning/30 hover:bg-warning/20'
+                      : 'bg-success/10 text-success border-success/30 hover:bg-success/20'
+                  )}
+                  aria-label={w.status === 'active' ? `Inactivar ${w.first_name}` : `Activar ${w.first_name}`}
+                >
+                  {togglingId === w.worker_id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : w.status === 'active' ? (
+                    <UserX className="w-4 h-4" />
+                  ) : (
+                    <UserCheck className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          </details>
+        ))}
+      </div>
+
+      {/* Tabla — desde sm (escritorio/tablet) */}
+      <div className="hidden sm:block bg-card rounded-2xl border-2 border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/30">
@@ -866,15 +975,7 @@ function WorkersTab({
               </tr>
             </thead>
             <tbody>
-              {workers.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="py-12 text-center text-muted-foreground">
-                    <Users className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                    <p className="text-sm">Sin trabajadores en esta tienda</p>
-                  </td>
-                </tr>
-              ) : (
-                workers.map((w: WorkerSummary) => (
+              {workers.map((w: WorkerSummary) => (
                   <tr key={w.worker_id} className={cn('border-b border-border/50 hover:bg-muted/30', w.status !== 'active' && 'opacity-60')}>
                     <td className="py-2 px-2 sm:py-3 sm:px-4 font-bold text-foreground">{w.first_name} {w.last_name}</td>
                     <td className="py-2 px-2 sm:py-3 sm:px-4 font-mono text-muted-foreground hidden sm:table-cell">{w.ci}</td>
@@ -955,12 +1056,13 @@ function WorkersTab({
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
+                ))}
             </tbody>
           </table>
         </div>
       </div>
+      </>
+      )}
 
     </div>
   );
@@ -2720,7 +2822,67 @@ function PaymentsTab({ payments, onRefresh }: any) {
 // ════════════════════════════════════════════════════════════════════
 // TAB 4: Historial (versiones de reglas)
 // ════════════════════════════════════════════════════════════════════
+function describeRuleValue(r: any): string {
+  // CP-UI-001 ítem 4: descripción legible en español del valor de la regla
+  // según su tipo (los tipos son los 8 de RULE_TYPE_LABELS).
+  switch (r.type) {
+    case 'percentage_sales':
+      return `${r.value_percent ?? '—'}% sobre las ventas`;
+    case 'fixed_amount':
+      return `Monto fijo de ${r.fixed_value ?? '—'}`;
+    case 'salary_based':
+      return `Salario base ${r.salary_amount ?? '—'}`;
+    case 'hybrid':
+      return `Salario ${r.salary_amount ?? '—'} + ${r.value_percent ?? '—'}% de ventas`;
+    case 'product_specific':
+      return 'Comisión por producto específico';
+    case 'scale_percentage':
+      return 'Porcentaje por escala de ventas';
+    case 'manual':
+      return 'Cálculo manual';
+    default:
+      return 'Sin comisión';
+  }
+}
+
+function VersionRow({ v }: { v: any }) {
+  // Una versión del historial: fecha, autor y descripción legible del cambio.
+  const changedAt = v.changed_at || v.created_at;
+  const who = v.changed_by_name || v.changed_by || 'Sistema';
+  const prev = v.previous_snapshot || v.prev_value;
+  return (
+    <li className="rounded-lg bg-muted/40 border border-border/60 px-3 py-2">
+      <div className="flex flex-wrap items-center justify-between gap-1">
+        <span className="text-xs font-black text-foreground">
+          Versión {v.version ?? '—'}
+        </span>
+        <span className="text-[11px] text-muted-foreground">
+          {changedAt ? formatDate(changedAt) : 'fecha no registrada'}
+        </span>
+      </div>
+      <p className="text-[11px] text-muted-foreground mt-0.5">
+        {v.change_reason ? `${v.change_reason} — ` : ''}
+        modificación registrada por {typeof who === 'string' ? who : 'usuario'}.
+      </p>
+      <p className="text-xs text-foreground mt-1 font-bold">
+        {describeRuleValue(v)}
+      </p>
+      {prev && typeof prev === 'object' && (
+        <p className="text-[11px] text-muted-foreground mt-0.5">
+          Anterior: {describeRuleValue(prev)}
+        </p>
+      )}
+    </li>
+  );
+}
+
 function HistoryTab({ rules }: any) {
+  // CP-UI-001 ítem 4: detalle legible en español del historial de reglas.
+  // Los datos técnicos (snapshot JSON crudo) quedan en un bloque colapsado
+  // visible SOLO para administradores — nunca por defecto.
+  const { user } = useAuthStore();
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="rounded-xl bg-primary/10 border border-primary/30 p-4">
@@ -2734,30 +2896,62 @@ function HistoryTab({ rules }: any) {
       <h3 className="text-base font-black uppercase tracking-widest text-foreground">
         Reglas activas ({rules.length})
       </h3>
+
+      {rules.length === 0 ? (
+        <div className="rounded-xl border-2 border-dashed border-border p-8 text-center">
+          <p className="text-sm font-bold text-muted-foreground">
+            No hay reglas registradas para esta tienda.
+          </p>
+        </div>
+      ) : (
       <div className="space-y-3">
-        {rules.map((r: any) => (
+        {rules.map((r: any) => {
+          const versions: any[] = r.versions || [];
+          return (
           <div key={r.id} className="bg-card rounded-2xl border-2 border-border p-4">
             <div className="flex items-center justify-between mb-2">
               <div>
                 <p className="text-sm font-black text-foreground">
                   {RULE_TYPE_LABELS[r.type] || r.type}
-                  {r.worker_id ? ' (worker específico)' : ' (toda la tienda)'}
+                  {r.worker_id ? ' (trabajador específico)' : ' (toda la tienda)'}
                 </p>
-                <p className="text-xs text-muted-foreground">Vigencia: {formatDate(r.valid_from)} → {r.valid_to ? formatDate(r.valid_to) : '∞'}</p>
+                <p className="text-xs text-muted-foreground">
+                  Vigencia: {formatDate(r.valid_from)} → {r.valid_to ? formatDate(r.valid_to) : 'sin límite'}
+                </p>
+                <p className="text-xs font-bold text-primary mt-1">{describeRuleValue(r)}</p>
               </div>
-              {/* FIX-A3 (2026-07-14): removido link que navegaba fuera de la SPA.
-                  El conteo de versiones se muestra abajo como info sin acción. */}
+              {/* FIX-A3 (2026-07-14): removido link que navegaba fuera de la SPA. */}
             </div>
-            {r.versions && r.versions.length > 0 ? (
-              <div className="text-xs text-muted-foreground">
-                {r.versions.length} versión{r.versions.length !== 1 ? 'es' : ''} registrada{r.versions.length !== 1 ? 's' : ''}
-              </div>
+
+            {versions.length > 0 ? (
+              <>
+                <p className="text-[11px] font-black uppercase tracking-wide text-muted-foreground mb-2">
+                  {versions.length} versión{versions.length !== 1 ? 'es' : ''} registrada{versions.length !== 1 ? 's' : ''}
+                </p>
+                <ol className="space-y-2">
+                  {versions.map((v: any) => (
+                    <VersionRow key={v.id || v.version} v={v} />
+                  ))}
+                </ol>
+                {isAdmin && (
+                  <details className="mt-3">
+                    <summary className="text-[11px] font-black uppercase tracking-wide text-muted-foreground cursor-pointer select-none">
+                      Ver datos técnicos
+                    </summary>
+                    <pre className="mt-2 text-[10px] bg-black/10 dark:bg-black/30 p-3 rounded-lg overflow-x-auto max-h-64">
+                      {JSON.stringify(versions, null, 2)}
+                    </pre>
+                  </details>
+                )}
+              </>
             ) : (
-              <div className="text-xs text-muted-foreground">Cargando versiones...</div>
+              <div className="text-xs text-muted-foreground">Sin versiones registradas todavía.</div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
+      )}
     </div>
   );
 }
