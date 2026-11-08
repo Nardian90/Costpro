@@ -11,15 +11,27 @@
  * todos (1–13) y deja EN BLANCO para cumplimentación manual aquellos que
  * COSTPRO no gestiona — sin inventar valores, sin «N/A», sin ceros.
  *
- * Matriz de correspondencia (campos reales de COSTPRO):
+ * Matriz de correspondencia (campos reales de COSTPRO) — actualizada por
+ * CP-DOC-SC-DATA-MAPPING-006 (cada campo sale EXCLUSIVAMENTE de su fuente):
  *  ┌ Dato oficial (Res. 11/2007)              ┬ Fuente COSTPRO                     ┬ Tratamiento
- *  │ 1. Nombre y código entidad receptora     │ stores.name                        │ Nombre automático; CÓDIGO en blanco
- *  │ 2. Nombre y código almacén receptor      │ (no gestionado)                    │ En blanco
+ *  │ 1. Nombre y código entidad receptora     │ stores.name + stores.store_code    │ Automáticos (código = consecutivo
+ *  │                                          │                                    │ persistente por tenant del trigger
+ *  │                                          │                                    │ trg_stores_assign_store_code)
+ *  │ 2. Nombre y código almacén receptor      │ Misma entidad receptora            │ Regla funcional del modelo: el
+ *  │                                          │ (regla del modelo SC-2-04)         │ almacén receptor se identifica con
+ *  │                                          │                                    │ la entidad receptora (nombre+codigo)
  *  │ 3. Fecha de emisión del modelo           │ fecha de generación del PDF        │ Automática (dd/mm/aaaa)
- *  │ 4. Nombre y código del proveedor         │ receipts.supplier                  │ Nombre automático; CÓDIGO en blanco
- *  │ 5. Número y nombre doc. que ampara       │ receipts.reference_doc (Factura)   │ Número automático; NOMBRE/TIPO en blanco
- *  │ 6. Transportador (nombre, carné, chapa,  │ (no gestionado)                    │ En blanco
- *  │    casilla o guía aérea)                 │                                    │
+ *  │ 4. Nombre y código del proveedor         │ receipts.supplier + supplier_tax_id│ Código = NIT/CI congelado al recibir
+ *  │                                          │ (snapshot; fallback ficha          │ (snapshot cp_clasificador_fase4);
+ *  │                                          │ suppliers.tax_id)                  │ sin NIT/CI → línea en blanco
+ *  │ 5. Número y nombre doc. que ampara       │ Tipo: «Entrada» (clasificación     │ Número = receipts.document_number
+ *  │                                          │ documental de las recepciones)     │ (ENT-NNNNNN-AAAA, real del sistema);
+ *  │                                          │                                    │ recepciones históricas sin número →
+ *  │                                          │                                    │ línea en blanco. JAMÁS el nombre del
+ *  │                                          │                                    │ proveedor ni el uuid interno
+ *  │ 6. Transportador (nombre, carné, chapa,  │ receipts no lo gestiona (opcional  │ Dentro del bloque FIRMA DEL
+ *  │    casilla o guía aérea)                 │ source.transportador)              │ TRANSPORTADOR (§6 de la misión);
+ *  │                                          │                                    │ vacíos con línea de cumplimentación
  *  │ 7. Código, descripción, UM, cantidad,    │ receipt_items + products           │ Automático; SALDO EN EXISTENCIA =
  *  │    precio unitario total, importe y      │ (sku, name, unit_of_measure,       │ saldo posterior histórico del
  *  │    saldo en existencia según almacén     │  quantity, unit_cost, moneda)      │ almacén tras contabilizar la
@@ -67,7 +79,7 @@ import {
   RES11_BLANK_LINE,
   drawRes11DataBlock,
   drawRes11Header,
-  drawRes11SignatureAreas,
+  drawRes11SignatureBlocks,
   measureRes11DataBlockHeight,
 } from './res11-shared';
 import { logger } from '@/lib/logger';
@@ -94,12 +106,34 @@ export interface Sc204SourceItem {
 export interface Sc204SourceData {
   /** Nombre de la entidad receptora (tienda activa bajo RLS). */
   entidadNombre: string;
-  /** logo_url de la tienda receptora (multitienda); null → default de la app. */
+  /**
+   * CP-DOC-SC-DATA-MAPPING-006: código documental de la entidad receptora —
+   * consecutivo persistente stores.store_code (NUNCA el uuid interno).
+   */
+  entidadCodigo?: string | null;
+  /** logo_url de la tienda receptora (multitienda); null → identificador CP. */
   logoUrl?: string | null;
   /** Recepción que se formaliza. */
   receipt: Pick<Receipt, 'id' | 'reference_doc' | 'supplier' | 'reception_date' | 'status'> & {
     store_id?: string | null;
+    /** Número documental real de la ENTRADA (ENT-NNNNNN-AAAA); '' si histórica. */
+    document_number?: string | null;
+    /** NIT/CI del proveedor congelado al recibir = «Código del proveedor». */
+    supplier_tax_id?: string | null;
   };
+  /**
+   * Fallback del código de proveedor (NIT/CI de la ficha suppliers) cuando la
+   * recepción no trae el snapshot — resuelto en el fetch, nunca en el render.
+   */
+  proveedorTaxId?: string | null;
+  /** Datos del transportador (§6): se dibujan DENTRO de su bloque de firma. */
+  transportador?: {
+    nombre?: string | null;
+    carne?: string | null;
+    chapa?: string | null;
+    casilla?: string | null;
+    guiaAerea?: string | null;
+  } | null;
   /** Líneas de la recepción (receipt_items + products). */
   items: Sc204SourceItem[];
   /**
@@ -118,25 +152,26 @@ export interface Sc204SourceData {
  * a mano (nunca «N/A», ceros ni guiones).
  */
 export interface Sc204ModelData {
-  // Logo de la tienda receptora o default de la app (dataURL en fetch)
+  // Marca del documento: logo de la tienda receptora o identificador
+  // monocromático CP cuando no tiene logo propio (nunca el logo de la app)
   logoUrl?: string | null;
-  // 1. Entidad receptora
+  // 1. Entidad receptora (nombre + consecutivo persistente store_code)
   entidadNombre: string;
-  entidadCodigo: string; // no gestionado → ''
-  // 2. Almacén receptor
-  almacenNombre: string; // no gestionado → ''
-  almacenCodigo: string; // no gestionado → ''
+  entidadCodigo: string;
+  // 2. Almacén receptor: identificación de la entidad receptora (regla del modelo)
+  almacenNombre: string;
+  almacenCodigo: string;
   // 3. Fecha de emisión (dd/mm/aaaa)
   fechaEmision: string;
-  // 4. Proveedor
+  // 4. Proveedor (código = NIT/CI; blanco si la ficha no tiene)
   proveedorNombre: string;
-  proveedorCodigo: string; // no gestionado → ''
-  // 5. Documento que ampara
-  documentoNombre: string; // tipo (Factura/Conduce/…) no gestionado → ''
+  proveedorCodigo: string;
+  // 5. Documento que ampara: tipo «Entrada» + número real de la entrada
+  documentoNombre: string;
   documentoNumero: string;
   // Trazabilidad COSTPRO (dato real de la recepción; complementa el dato 3)
   fechaRecepcion: string;
-  // 6. Transportador — no gestionado
+  // 6. Transportador — datos integrados en su bloque de firma (misión §6)
   transportadorNombre: string;
   transportadorCarne: string;
   transportadorChapa: string;
@@ -210,6 +245,13 @@ export function lineCurrency(item: Sc204SourceItem): string {
 // Constructor del modelo (función pura — testeable)
 // ────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Clasificación documental del documento que ampara la recepción (misión
+ * CP-DOC-SC-DATA-MAPPING-006 §5): la entrada de almacén. Constante del
+ * dominio — jamás un texto comercial del proveedor.
+ */
+export const SC204_TIPO_DOC_AMPARA = 'Entrada';
+
 /** Celda «Saldo en existencia» del modelo: cifra del ledger o «s/d» (sin dato). */
 export function formatSc204Saldo(saldo: SaldoPosteriorResultado | undefined): string {
   if (!saldo || !Number.isFinite(saldo.saldoPosterior)) return 's/d';
@@ -270,30 +312,41 @@ export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
 
   return {
     logoUrl: source.logoUrl ?? null,
-    // 1. Entidad receptora: nombre de la tienda; código no gestionado
+    // 1. Entidad receptora: nombre + código consecutivo persistente de la
+    //    tienda (CP-DOC-SC-DATA-MAPPING-006 §3.1). Nunca el uuid interno.
     entidadNombre: source.entidadNombre || '',
-    entidadCodigo: '',
-    // 2. Almacén receptor: no gestionado por COSTPRO
-    almacenNombre: '',
-    almacenCodigo: '',
+    entidadCodigo: (source.entidadCodigo || '').trim(),
+    // 2. Almacén receptor (§3.2): ambos campos toman la identificación de la
+    //    entidad receptora — regla funcional del modelo SC-2-04. COSTPRO no
+    //    gestiona almacenes con identificación independiente en recepciones.
+    almacenNombre: source.entidadNombre || '',
+    almacenCodigo: (source.entidadCodigo || '').trim(),
     // 3. Fecha de emisión del modelo
     fechaEmision: formatSc204Date(source.emissionDate),
-    // 4. Proveedor
+    // 4. Proveedor: nombre real + código = NIT/CI (snapshot congelado al
+    //    recibir; fallback ficha suppliers resuelto en el fetch). Sin NIT/CI
+    //    → línea en blanco: no se usa el nombre ni el id interno como código.
     proveedorNombre: source.receipt.supplier || '',
-    proveedorCodigo: '',
-    // 5. Documento que ampara: número = referencia gestionada por COSTPRO
-    //    (etiquetada «Factura» en la UI); el nombre/tipo del documento se
-    //    deja en blanco para cumplimentación manual (no es inequívoco).
-    documentoNombre: '',
-    documentoNumero: source.receipt.reference_doc || '',
+    proveedorCodigo: (source.receipt.supplier_tax_id || source.proveedorTaxId || '').trim(),
+    // 5. Documento que ampara la recepción: la clasificación documental de
+    //    las recepciones de COSTPRO es la ENTRADA de almacén; el número es el
+    //    documental real de la entrada (ENT-NNNNNN-AAAA). Las recepciones
+    //    históricas sin número conservan la línea en blanco (misión §5.7).
+    //    PROHIBIDO usar el nombre del proveedor ni el uuid interno: el valor
+    //    «Almacen Lari» observado en producción era reference_doc mal
+    //    capturado (texto libre de factura externa), no un número documental.
+    documentoNombre: SC204_TIPO_DOC_AMPARA,
+    documentoNumero: (source.receipt.document_number || '').trim(),
     // Trazabilidad: fecha real de la recepción gestionada por COSTPRO
     fechaRecepcion: formatSc204Date(source.receipt.reception_date),
-    // 6. Transportador: no gestionado
-    transportadorNombre: '',
-    transportadorCarne: '',
-    transportadorChapa: '',
-    transportadorCasilla: '',
-    transportadorGuiaAerea: '',
+    // 6. Transportador (§6): sus datos viven en su BLOQUE DE FIRMA; la fuente
+    //    es la que entrega el caller (COSTPRO no gestiona transportadores en
+    //    recepciones → vacíos con línea de cumplimentación, sin inventar).
+    transportadorNombre: (source.transportador?.nombre || '').trim(),
+    transportadorCarne: (source.transportador?.carne || '').trim(),
+    transportadorChapa: (source.transportador?.chapa || '').trim(),
+    transportadorCasilla: (source.transportador?.casilla || '').trim(),
+    transportadorGuiaAerea: (source.transportador?.guiaAerea || '').trim(),
     lineas,
     importesTotales,
     // 13. Número consecutivo: no gestionado por COSTPRO
@@ -324,7 +377,7 @@ export function sc204FileName(receiptId: string): string {
 export async function fetchSc204SourceData(
   receipt: Sc204SourceData['receipt'],
   activeStoreId?: string | null,
-): Promise<Pick<Sc204SourceData, 'entidadNombre' | 'logoUrl' | 'items' | 'saldosPorProducto'>> {
+): Promise<Pick<Sc204SourceData, 'entidadNombre' | 'entidadCodigo' | 'logoUrl' | 'items' | 'saldosPorProducto' | 'proveedorTaxId'>> {
   const storeId = receipt.store_id || activeStoreId || null;
   const { data: items, error } = await supabase
     .from('receipt_items')
@@ -337,19 +390,48 @@ export async function fetchSc204SourceData(
   const sourceItems = (items as unknown as Sc204SourceItem[]) || [];
 
   let entidadNombre = '';
+  let entidadCodigo = '';
   let logoUrl: string | null = null;
   if (storeId) {
+    // CP-DOC-SC-DATA-MAPPING-006: store_code = código documental de la
+    // entidad receptora (consecutivo persistente por tenant del trigger).
     const { data: storeRow, error: storeError } = await supabase
       .from('stores')
-      .select('name, logo_url')
+      .select('name, logo_url, store_code')
       .eq('id', storeId)
       .maybeSingle();
     if (storeError) {
       // El nombre de la entidad no bloquea el informe: queda en blanco.
       logger.warn('DATABASE', 'SC204_STORE_NAME_READ_FAILED', { data: storeError });
     } else {
-      entidadNombre = (storeRow as { name?: string | null } | null)?.name || '';
-      logoUrl = (storeRow as { name?: string | null; logo_url?: string | null } | null)?.logo_url || null;
+      const row = storeRow as { name?: string | null; logo_url?: string | null; store_code?: number | string | null } | null;
+      entidadNombre = row?.name || '';
+      entidadCodigo = row?.store_code === null || row?.store_code === undefined ? '' : String(row.store_code);
+      logoUrl = row?.logo_url || null;
+    }
+  }
+
+  // ── Código del proveedor (NIT/CI) — fuente única: la ficha real ──
+  // 1º snapshot congelado al recibir (supplier_tax_id, fiel a la operación);
+  // 2º ficha suppliers de la tienda cuando la recepción histórica no trae el
+  // snapshot (match por nombre; solo si el match es inequívoco). Nunca el
+  // nombre del proveedor ni el id interno como código.
+  let proveedorTaxId = (receipt.supplier_tax_id || '').trim();
+  if (!proveedorTaxId && storeId && (receipt.supplier || '').trim()) {
+    try {
+      const escaped = receipt.supplier!.trim().replace(/([%_\\])/g, '\\$1');
+      const { data: supplierRows, error: supplierError } = await supabase
+        .from('suppliers')
+        .select('tax_id')
+        .eq('store_id', storeId)
+        .ilike('name', escaped)
+        .limit(2);
+      if (!supplierError && supplierRows && supplierRows.length === 1) {
+        proveedorTaxId = (supplierRows[0] as { tax_id?: string | null }).tax_id || '';
+      }
+    } catch (e) {
+      // El código del proveedor no bloquea el informe: línea en blanco.
+      logger.warn('DATABASE', 'SC204_SUPPLIER_TAX_ID_READ_FAILED', { error: e });
     }
   }
 
@@ -385,7 +467,9 @@ export async function fetchSc204SourceData(
 
   return {
     entidadNombre,
+    entidadCodigo,
     logoUrl,
+    proveedorTaxId,
     items: sourceItems,
     saldosPorProducto,
   };
@@ -398,12 +482,15 @@ export async function fetchSc204SourceData(
 /**
  * CP-DOC-PDF-UX-004 — ENCABEZADO DE DATOS EN BLOQUES INDEPENDIENTES (§3):
  * A entidad receptora · B almacén receptor · C proveedor · D documento que
- * ampara · E fechas · F transportador. Cada campo con su ETIQUETA COMPLETA
- * (nunca «Código:» genérico cuando conviven varios códigos) y su valor en la
- * misma celda — la asociación etiqueta→dato es inequívoca sin interpretación.
- * Campos vacíos conservan la línea de cumplimentación del modelo (sin N/A,
- * ceros ni valores inventados); cada código sale EXCLUSIVAMENTE de su campo
- * de origen (entidad/almacén/proveedor/documento).
+ * ampara · E fechas. Cada campo con su ETIQUETA COMPLETA (nunca «Código:»
+ * genérico cuando conviven varios códigos) y su valor en la misma celda — la
+ * asociación etiqueta→dato es inequívoca sin interpretación. Campos vacíos
+ * conservan la línea de cumplimentación del modelo (sin N/A, ceros ni valores
+ * inventados); cada código sale EXCLUSIVAMENTE de su campo de origen
+ * (entidad/almacén/proveedor/documento).
+ * CP-DOC-SC-DATA-MAPPING-006 §6: el bloque «Datos del transportador» ya NO
+ * se dibuja aquí — sus datos forman parte del bloque FIRMA DEL TRANSPORTADOR
+ * (drawRes11SignatureBlocks), evitando la duplicación del transportador.
  */
 function drawSc204HeaderBlocks(model: Sc204ModelData, doc: Awaited<ReturnType<typeof createPDFDocument>>, startY: number): number {
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -455,20 +542,9 @@ function drawSc204HeaderBlocks(model: Sc204ModelData, doc: Awaited<ReturnType<ty
   ];
   const hRow3 = measureRes11DataBlockHeight(doc, { w: contentWidth, fields: fieldsE, columns: 2 });
   drawRes11DataBlock(doc, { x: marginX, y, w: contentWidth, h: hRow3, title: 'Fechas', columns: 2, fields: fieldsE });
-  y += hRow3 + 2;
-
-  // Fila 4 — BLOQUE F: datos del transportador, en dos filas con etiquetas
-  // claramente asociadas; vacíos con línea para cumplimentar a mano.
-  const fieldsF = [
-    { label: 'Nombre:', value: model.transportadorNombre },
-    { label: 'Carné de identidad:', value: model.transportadorCarne },
-    { label: 'Chapa:', value: model.transportadorChapa },
-    { label: 'Casilla:', value: model.transportadorCasilla },
-    { label: 'Guía aérea:', value: model.transportadorGuiaAerea },
-  ];
-  const hRow4 = measureRes11DataBlockHeight(doc, { w: contentWidth, fields: fieldsF, columns: 2 });
-  drawRes11DataBlock(doc, { x: marginX, y, w: contentWidth, h: hRow4, title: 'Datos del transportador', columns: 2, fields: fieldsF });
-  return y + hRow4 + 4; // Y de arranque de la tabla de productos
+  // CP-DOC-SC-DATA-MAPPING-006 §6: sin bloque «Datos del transportador» —
+  // sus datos acompañan a la firma del transportador en la cuadrícula final.
+  return y + hRow3 + 4; // Y de arranque de la tabla de productos
 }
 
 /**
@@ -498,6 +574,7 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
     numeroConsecutivo: model.numeroConsecutivo,
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
     logoDataUrl: logo.dataUrl,
+    logoSource: logo.source,
   });
 
   // ── Bloques de datos generales (A–F) — CP-DOC-PDF-UX-004 ──
@@ -581,26 +658,28 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
     finalY += 5.5;
   }
 
-  // ── Datos 9–12: firmas (espacios en blanco para cumplimentación manual) ──
-  // CP-DOC-PDF-UX-004 (§7): cuatro áreas claramente diferenciadas — fila 1
-  // con las tres firmas de responsables individuales y fila 2 completa para
-  // el responsable que contabiliza y anota en el Control de Inventario (su
-  // denominación es extensa); líneas amplias, separación vertical y espacio
-  // de rúbrica suficientes. Nunca separadas del contenido por un salto.
-  drawRes11SignatureAreas(doc, [
+  // ── Datos 9–12: firmas — CP-DOC-SC-DATA-MAPPING-006 §6/§7 ──
+  // Cuadrícula uniforme 2×2 con los CUATRO bloques de responsabilidad. El
+  // transportador lleva sus datos de identificación (nombre, carné, chapa,
+  // casilla, guía aérea) DENTRO de su bloque de firma — dejan de ser una
+  // sección independiente. Alineación, jerarquía tipográfica y rúbrica
+  // idénticas en las cuatro áreas; la cuadrícula se mueve siempre junta
+  // (ninguna firma queda sola en otra página).
+  drawRes11SignatureBlocks(doc, [
     {
-      labels: [
-        'Firma del Jefe del Almacén',
-        'Firma del Transportador',
-        'Firma del empleado que recepciona',
+      title: 'Firma del Transportador',
+      fields: [
+        { label: 'Nombre:', value: model.transportadorNombre },
+        { label: 'Carné de identidad:', value: model.transportadorCarne },
+        { label: 'Chapa:', value: model.transportadorChapa },
+        { label: 'Casilla:', value: model.transportadorCasilla },
+        { label: 'Guía aérea:', value: model.transportadorGuiaAerea },
       ],
     },
-    {
-      labels: [
-        'Firma del empleado que lo contabiliza y del que lo anota en el Control de Inventario',
-      ],
-    },
-  ], finalY + 10);
+    { title: 'Firma del empleado que recepciona' },
+    { title: 'Firma del empleado que contabiliza' },
+    { title: 'Firma del empleado que anota en el Control de Inventario' },
+  ], finalY + 10, { columns: 2 });
 
   // ── Nota al pie sobria (identificación normativa y trazabilidad) ──
   doc.setFont('helvetica', 'italic');
@@ -644,10 +723,13 @@ export async function exportSc204ForReceipt(
   receipt: Sc204SourceData['receipt'],
   activeStoreId?: string | null,
 ): Promise<void> {
-  const { entidadNombre, logoUrl, items, saldosPorProducto } = await fetchSc204SourceData(receipt, activeStoreId);
+  const { entidadNombre, entidadCodigo, logoUrl, proveedorTaxId, items, saldosPorProducto } =
+    await fetchSc204SourceData(receipt, activeStoreId);
   const model = buildSc204ModelData({
     entidadNombre,
+    entidadCodigo,
     logoUrl,
+    proveedorTaxId,
     receipt,
     items,
     saldosPorProducto,

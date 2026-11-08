@@ -848,6 +848,9 @@ function DetailModal({ poId, onClose }: { poId: string; onClose: () => void }) {
           id: order.id,
           po_number: order.po_number,
           supplier_name: order.supplier_name,
+          // CP-DOC-SC-DATA-MAPPING-006: FK real del proveedor — permite
+          // resolver el NIT/CI que el SC-2-01 muestra como código.
+          supplier_id: order.supplier_id ?? null,
           status: order.status,
           total_amount: order.total_amount,
           notes: order.notes,
