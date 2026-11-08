@@ -165,7 +165,7 @@
   "total_considerados": 552,
   "total_incluidos": 137,
   "total_excluidos": 415,
-  "digest": "bba17cd05468503155eb492273d09a29fab5b6c8e732bdf4bd2fda4e4765a67e",
+  "digest": "71323d459b29db2451c556fee48be0eea404213b861b675d9059e8ae925a2172",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5357,14 +5357,14 @@
     },
     {
       "nombre": "20261108141000_sales_dashboard_analytics.sql",
-      "bytes": 23834,
-      "sha256_original": "9a06d5273b51bcb18d20065a0be3ef5c62b0e879f73765a0047137f2cc86a42b",
+      "bytes": 24157,
+      "sha256_original": "9176348ee6248cc39e4be80f91d9bf20bbacaf810594bf756a92670caba9af5e",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261108",
       "observaciones": [],
       "posicion": 135,
-      "sha256_generado": "9a06d5273b51bcb18d20065a0be3ef5c62b0e879f73765a0047137f2cc86a42b"
+      "sha256_generado": "9176348ee6248cc39e4be80f91d9bf20bbacaf810594bf756a92670caba9af5e"
     },
     {
       "nombre": "20261108200000_cp_doc_sc006_store_code.sql",
