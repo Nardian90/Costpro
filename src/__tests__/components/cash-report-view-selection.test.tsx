@@ -22,7 +22,7 @@
  *   NO sobrevive al cambio de período.
  */
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup, act, within } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, act, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -131,11 +131,18 @@ const REPORT = {
   sales_equiv_cash_other_cup: 9600,
   sales_equiv_voucher_other_cup: 0,
   sales_rows: [
-    { id: 'v-1', created_at: '2026-10-24T15:00:00Z', customer_name: 'Ana', reference: null, status: 'completed', source: 'reconstruction', buckets: [{ method: 'cash', currency: 'CUP', amount: 10000, amount_cup: 10000 }], items: [], payments: [] },
-    { id: 'v-2', created_at: '2026-10-24T16:00:00Z', customer_name: 'Bob', reference: null, status: 'completed', source: 'ledger', buckets: [{ method: 'cash', currency: 'USD', amount: 7, amount_cup: 5600 }], items: [], payments: [] },
-    { id: 'v-3', created_at: '2026-10-24T17:00:00Z', customer_name: null, reference: 'mixta', status: 'completed', source: 'ledger', buckets: [{ method: 'cash', currency: 'CUP', amount: 2000, amount_cup: 2000 }, { method: 'cash', currency: 'USD', amount: 5, amount_cup: 4000 }], items: [], payments: [] },
-    { id: 'v-4', created_at: '2026-10-24T18:00:00Z', customer_name: null, reference: null, status: 'completed', source: 'reconstruction', buckets: [{ method: 'transfer', currency: 'CUP', amount: 3000, amount_cup: 3000 }], items: [], payments: [] },
+    { id: 'v-1', created_at: '2026-10-24T15:00:00Z', customer_name: 'Ana', reference: null, status: 'completed', source: 'reconstruction', buckets: [{ method: 'cash', currency: 'CUP', amount: 10000, amount_cup: 10000 }], items: [], payments: [], seller_id: 'u-1' },
+    { id: 'v-2', created_at: '2026-10-24T16:00:00Z', customer_name: 'Bob', reference: null, status: 'completed', source: 'ledger', buckets: [{ method: 'cash', currency: 'USD', amount: 7, amount_cup: 5600 }], items: [], payments: [], seller_id: 'u-2' },
+    { id: 'v-3', created_at: '2026-10-24T17:00:00Z', customer_name: null, reference: 'mixta', status: 'completed', source: 'ledger', buckets: [{ method: 'cash', currency: 'CUP', amount: 2000, amount_cup: 2000 }, { method: 'cash', currency: 'USD', amount: 5, amount_cup: 4000 }], items: [], payments: [], seller_id: 'u-2' },
+    { id: 'v-4', created_at: '2026-10-24T18:00:00Z', customer_name: null, reference: null, status: 'completed', source: 'reconstruction', buckets: [{ method: 'transfer', currency: 'CUP', amount: 3000, amount_cup: 3000 }], items: [], payments: [], seller_id: 'u-1' },
   ],
+  // MISIÓN FILTRO MULTIUSUARIO: agregación del SERVIDOR (universo completo):
+  // u-1 = 13 000 (v-1+v-4) · u-2 = 11 600 (v-2+v-3). Σ = 24 600 = universo.
+  sales_by_user: [
+    { seller_id: 'u-1', seller_name: 'Juan Castro', transaction_count: 2, total_cup: 13000, native: [{ currency: 'CUP', total: 13000 }] },
+    { seller_id: 'u-2', seller_name: 'María López', transaction_count: 2, total_cup: 11600, native: [{ currency: 'CUP', total: 2000 }, { currency: 'USD', total: 12 }] },
+  ],
+  sales_by_user_total_cup: 24600,
   sales_rows_truncated: false,
   payments: [],
   commissions: [],
@@ -192,6 +199,15 @@ async function ensureGroupExpanded(user: ReturnType<typeof userEvent.setup>, gro
   }
 }
 
+/** MISIÓN PANELES DESPLEGABLES: el selector de conceptos es un ACORDEÓN
+ *  recogido por defecto; los tests lo despliegan antes de tocar conceptos. */
+async function abrirConceptos(user: ReturnType<typeof userEvent.setup>) {
+  const header = screen.getByTestId('conceptos-selector-header');
+  if (header.getAttribute('aria-expanded') !== 'true') {
+    await user.click(header);
+  }
+}
+
 beforeAll(() => {
   if (!(window.URL as unknown as Record<string, unknown>).createObjectURL) {
     (window.URL as unknown as Record<string, unknown>).createObjectURL = vi.fn(() => 'blob:stub');
@@ -214,6 +230,152 @@ afterEach(() => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// MISIÓN FILTRO MULTIUSUARIO (2026-11-08) · Aceptación §7 de la misión
+// ═══════════════════════════════════════════════════════════════════════════
+describe('FILTRO MULTIUSUARIO · tarjetas por usuario creador', () => {
+  it('§7.1/§7.2/§7.6 tarjetas visibles con importe y conteo; Todos por defecto; Σ tarjetas = universo', async () => {
+    await renderAndGenerate();
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('Todos los usuarios');
+    const c1 = screen.getByTestId('usuario-card-u-1');
+    expect(c1.getAttribute('aria-pressed')).toBe('true'); // default: todos
+    expect(c1.textContent).toContain('Juan Castro');
+    expect(c1.textContent).toContain('2 ventas generadas');
+    expect(screen.getByTestId('usuario-importe-u-1').textContent).toContain(fmtCup(13000).replace(/^\D+/, ''));
+    const c2 = screen.getByTestId('usuario-card-u-2');
+    expect(c2.textContent).toContain('María López');
+    // conciliación visible: el estado dice el total facturado del período
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain(fmtCup(24600).replace(/^\D+/, ''));
+  });
+
+  it('§7.3 un usuario: el reporte muestra SOLO sus ventas y el PDF documenta el filtro', async () => {
+    const user = userEvent.setup();
+    await renderAndGenerate();
+    await user.click(screen.getByTestId('usuario-card-u-2'));
+    // u-2: CUP cash 2 000 (v-3) + USD 12 (v-2+v-3). La hoja CUP del resumen refleja el recorte:
+    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(2000));
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('María López');
+    // PDF: MISMO conjunto (ctx capturado por el builder mock)
+    await act(async () => {
+      screen.getByRole('button', { name: /Exportar PDF/i }).click();
+    });
+    await waitFor(() => expect(buildPdfMock).toHaveBeenCalled());
+    const ctx = buildPdfMock.mock.calls.at(-1)![0] as { report: { sales_split: Record<string, { total: number }> }; selectionMeta?: { userLabel?: string; included?: number } };
+    expect(ctx.report.sales_split.CUP.total).toBe(2000);
+    expect(ctx.selectionMeta?.userLabel).toBe('María López');
+    expect(ctx.selectionMeta?.included).toBe(2);
+  });
+
+  it('§7.4 varios usuarios: unión sin duplicados (el v-3 mixto cuenta una sola vez)', async () => {
+    const user = userEvent.setup();
+    await renderAndGenerate();
+    await user.click(screen.getByTestId('usuario-card-u-1'));
+    await user.click(screen.getByTestId('usuario-card-u-2'));
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('2 de 2');
+    // u-1 + u-2 = TODO el universo: CUP 15 000 (10 000 + 2 000 + 3 000 — v-3 cuenta UNA vez)
+    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(15000));
+  });
+
+  it('§7.5 volver a Todos los usuarios restaura el reporte general', async () => {
+    const user = userEvent.setup();
+    await renderAndGenerate();
+    await user.click(screen.getByTestId('usuario-card-u-2'));
+    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(2000));
+    await user.click(screen.getByTestId('filtro-usuarios-todos'));
+    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(15000));
+    expect(screen.getByTestId('usuario-card-u-1').getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('usuario-card-u-2').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('§7.7 cambio de fecha recalcula las tarjetas y reinicia a Todos', async () => {
+    const user = userEvent.setup();
+    await renderAndGenerate();
+    await user.click(screen.getByTestId('usuario-card-u-2'));
+    // Nuevo período (universo distinto): la selección NO hereda (regla §6 de la misión)
+    const report2 = JSON.parse(JSON.stringify(REPORT));
+    report2.sales_by_user = [{ seller_id: 'u-1', seller_name: 'Juan Castro', transaction_count: 1, total_cup: 10000, native: [{ currency: 'CUP', total: 10000 }] }];
+    report2.sales_rows = report2.sales_rows.filter((r: { id: string }) => r.id === 'v-1');
+    report2.sales_split = { CUP: { cash: 10000, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 10000 }, USD: { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 } };
+    report2.sales = [{ payment_method: 'cash', currency: 'CUP', transaction_count: 1, total: 10000, total_cup: 10000 }];
+    apiFetchMock.mockImplementation((url: string) => {
+      if (String(url).includes('/api/stores')) return Promise.resolve({ data: [{ id: 'store-1', name: 'Tienda Central', logo_url: null, address: null, phone: null, email: null, reeup: null, nit: null }] });
+      if (String(url).includes('/api/cash-report?')) return Promise.resolve(report2);
+      return Promise.resolve({});
+    });
+    fireEvent.change(screen.getByLabelText(/Desde/i), { target: { value: '2026-11-01' } });
+    await user.click(screen.getByRole('button', { name: /Actualizar reporte/i }));
+    await waitFor(() => {
+      expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('Todos los usuarios');
+    });
+    expect(screen.getByTestId('usuario-importe-u-1').textContent).toContain(fmtCup(10000).replace(/^\D+/, ''));
+    expect(screen.queryByTestId('usuario-card-u-2')).toBeNull(); // sin ventas ⇒ sin tarjeta
+  });
+
+  it('§7.9 ventas sin creador identificable: tarjeta «Usuario no identificado»', async () => {
+    const report2 = JSON.parse(JSON.stringify(REPORT));
+    report2.sales_rows = [
+      ...report2.sales_rows,
+      { id: 'v-5', created_at: '2026-10-24T19:30:00Z', customer_name: 'Sin creador', reference: null, status: 'completed', source: 'reconstruction', buckets: [{ method: 'cash', currency: 'CUP', amount: 500, amount_cup: 500 }], items: [], payments: [], seller_id: null },
+    ];
+    report2.sales_by_user = [
+      ...report2.sales_by_user,
+      { seller_id: null, seller_name: null, transaction_count: 1, total_cup: 500, native: [{ currency: 'CUP', total: 500 }] },
+    ];
+    apiFetchMock.mockImplementation((url: string) => {
+      if (String(url).includes('/api/stores')) return Promise.resolve({ data: [{ id: 'store-1', name: 'Tienda Central', logo_url: null, address: null, phone: null, email: null, reeup: null, nit: null }] });
+      if (String(url).includes('/api/cash-report?')) return Promise.resolve(report2);
+      return Promise.resolve({});
+    });
+    await renderAndGenerate();
+    const na = screen.getByTestId('usuario-card-__sin_usuario__');
+    expect(na.textContent).toContain('Usuario no identificado');
+    expect(na.textContent).toContain('no se atribuyen a otro usuario');
+    // seleccionar SOLO el no identificado: su venta computa (conciliación §7.6)
+    const user = userEvent.setup();
+    await user.click(na);
+    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(500));
+  });
+
+  it('§7.11 paneles desplegables: conceptos RECOGIDO por defecto; abrir/cerrar conserva la selección y no recalcula', async () => {
+    const user = userEvent.setup();
+    await renderAndGenerate();
+    const header = screen.getByTestId('conceptos-selector-header');
+    expect(header.getAttribute('aria-expanded')).toBe('false');
+    await user.click(header);
+    expect(header.getAttribute('aria-expanded')).toBe('true');
+    await user.click(screen.getByTestId('concepto-egresosCaja'));
+    expect((screen.getByTestId('concepto-egresosCaja') as HTMLInputElement).checked).toBe(false);
+    await user.click(header); // recoger
+    await user.click(header); // volver a abrir
+    expect((screen.getByTestId('concepto-egresosCaja') as HTMLInputElement).checked).toBe(false); // conserva
+  });
+
+  it('§7.12 «Ajuste extraordinario» aparece MARCADO por defecto y puede desmarcarse', async () => {
+    const user = userEvent.setup();
+    await renderAndGenerate();
+    await user.click(screen.getByTestId('conceptos-selector-header'));
+    const ajustes = screen.getByTestId('concepto-ajustes') as HTMLInputElement;
+    expect(ajustes.checked).toBe(true);
+    await user.click(ajustes);
+    expect((screen.getByTestId('concepto-ajustes') as HTMLInputElement).checked).toBe(false);
+  });
+
+  it('§7.11b secciones de Configuración del reporte: acordeones independientes recogidos por defecto', async () => {
+    const user = userEvent.setup();
+    await renderAndGenerate();
+    await user.click(screen.getByTestId('cash-report-config-trigger'));
+    const tipo = screen.getByTestId('config-tipo-reporte-header');
+    const opciones = screen.getByTestId('config-opciones-documento-header');
+    expect(tipo.getAttribute('aria-expanded')).toBe('false');
+    expect(opciones.getAttribute('aria-expanded')).toBe('false');
+    await user.click(tipo);
+    expect(tipo.getAttribute('aria-expanded')).toBe('true');
+    expect(opciones.getAttribute('aria-expanded')).toBe('false'); // independientes
+    await user.click(tipo);
+    expect(tipo.getAttribute('aria-expanded')).toBe('false');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 describe('FUNCIÓN A · conceptos del Resumen del Día', () => {
   it('todos activados por defecto: reproduce el contenido actual (filas completas, sin aviso)', async () => {
     await renderAndGenerate();
@@ -231,6 +393,7 @@ describe('FUNCIÓN A · conceptos del Resumen del Día', () => {
     await renderAndGenerate();
     const esperadoAntes = screen.getByText('Efectivo esperado a entregar').closest('div')?.textContent ?? '';
     expect(summaryValue('Egresos de caja (fondo y otros)')).toBeTruthy();
+    await abrirConceptos(user);
     await user.click(screen.getByTestId('concepto-egresosCaja'));
     expect(summaryValue('Egresos de caja (fondo y otros)')).toBeUndefined();
     // MISIÓN CONCILIACIÓN: el cálculo personalizado se actualiza SIN el término
@@ -251,6 +414,7 @@ describe('FUNCIÓN A · conceptos del Resumen del Día', () => {
     const user = userEvent.setup();
     await renderAndGenerate();
     for (const key of ['resumenDia', 'ventasEfectivo', 'ventasTransferencia', 'equivalenciaCup'] as const) {
+      await abrirConceptos(user);
       await user.click(screen.getByTestId(`concepto-${key}`));
     }
     expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBeUndefined();
@@ -286,6 +450,7 @@ describe('FUNCIÓN A · conceptos del Resumen del Día', () => {
   it('la preferencia de conceptos persiste POR TIENDA (aislamiento entre tiendas)', async () => {
     const user = userEvent.setup();
     await renderAndGenerate();
+    await abrirConceptos(user);
     await user.click(screen.getByTestId('concepto-egresosCaja'));
     await waitFor(() => {
       expect(window.localStorage.getItem('costpro:cash-report:summary-concepts:v1:store:store-1')).toBeTruthy();
@@ -479,6 +644,7 @@ describe('Exportaciones · PDF/Excel/vista previa reflejan la MISMA selección',
     const grupoCashCup = screen.getByTestId('venta-grupo-cash|CUP');
     await user.click(within(grupoCashCup).getByRole('button', { name: /Efectivo \(CUP\)/ }));
     await user.click(within(screen.getByTestId('venta-fila-v-1')).getByRole('checkbox'));
+    await abrirConceptos(user);
     await user.click(screen.getByTestId('concepto-egresosCaja'));
 
     await user.click(screen.getByRole('button', { name: /Exportar PDF/i }));

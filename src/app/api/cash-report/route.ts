@@ -135,6 +135,11 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     let salesRows: Array<Record<string, unknown>> = [];
     let salesRowsTruncated = false;
     const SALES_ROWS_CAP = 1000;
+    // MISIÓN FILTRO MULTIUSUARIO: tarjetas por usuario creador (scope externo:
+    // se rellenan dentro del try de la reconstrucción y viajan en la respuesta
+    // aunque la reconstrucción falle — degradación limpia sin tarjetas).
+    let salesByUser: Array<{ seller_id: string | null; seller_name: string | null; transaction_count: number; total_cup: number; native: Array<{ currency: string; total: number }> }> = [];
+    let salesByUserTotalCup = 0;
     // MISIÓN CORRECTIVA 2026-10-25: cobros en BILLETES por moneda (vista
     // física del ledger — liquidación explícita cuando existe, buckets si
     // no). Misma regla que get_cash_currency_summary §1/§2: el neto de
@@ -147,9 +152,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       // 1) Transacciones del periodo (nivel cabecera — cubre ventas sin ítems).
       //    PERSONALIZACIÓN: created_at/customer_name/notes/sale_exchange_rate
       //    alimentan las filas individuales (solo lectura, sin migraciones).
+      // MISIÓN FILTRO MULTIUSUARIO (2026-11-08): seller_id es el usuario que
+      // CREÓ la venta (create_sale_v2 persiste p_seller_id = actor del checkout
+      // POS). NO es paid_by (quien cobró/registró el pago) ni el último
+      // modificador (updated_by no existe en la tabla): el filtro del reporte
+      // es exclusivamente por el CREADOR.
       let txQuery = supabase
         .from('transactions')
-        .select('id, created_at, customer_name, notes, sale_currency, sale_exchange_rate, cash_amount, transfer_amount, zelle_amount, cash_received_cup, change_given_cup, cash_received_usd, change_given_usd')
+        .select('id, created_at, customer_name, notes, seller_id, sale_currency, sale_exchange_rate, cash_amount, transfer_amount, zelle_amount, cash_received_cup, change_given_cup, cash_received_usd, change_given_usd')
         .eq('store_id', userData.active_store_id)
         .eq('status', 'completed');
       if (!includeAllDates) {
@@ -215,6 +225,8 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         customer_name: (tx.customer_name as string | null) ?? null,
         reference: (tx.notes as string | null) ?? null,
         status: 'completed',
+        // Creador de la venta (transactions.seller_id) — filtro multiusuario.
+        seller_id: (tx.seller_id as string | null) ?? null,
         source: result.source === 'ledger' ? 'ledger' : 'reconstruction',
         settlement,
         buckets: (result.buckets || []).map(b => ({ method: b.method, currency: normCur(b.currency), amount: Number(b.amount) || 0, amount_cup: Number(b.amountCup) || 0 })),
@@ -356,6 +368,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
             reference: (tx.notes as string | null) ?? null,
             status: 'completed',
             source: 'no-items',
+            seller_id: (tx.seller_id as string | null) ?? null,
             settlement: saleBillsOfTx(tx) ? {
               cash_received_cup: tx.cash_received_cup ?? null,
               change_given_cup: tx.change_given_cup ?? null,
@@ -401,6 +414,60 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
         else equivVoucherOtherCup += g.total_cup;
       }
       equivFields = { sales_equiv_cash_other_cup: equivCashOtherCup, sales_equiv_voucher_other_cup: equivVoucherOtherCup };
+
+      // ══ MISIÓN FILTRO MULTIUSUARIO (2026-11-08) · TARJETAS POR USUARIO ══
+      // Agregación EN SERVIDOR sobre el UNIVERSO COMPLETO (antes del tope de
+      // filas — el navegador nunca carga todas las ventas para las tarjetas).
+      // Importe = Σ amount_cup de los buckets de la MISMA reconstrucción que
+      // produce sales_split/groups (criterio idéntico al reporte: equivalente
+      // CUP canónico, tasa persistida de la operación). Las monedas NATIVAS se
+      // informan por separado (sin mezclar). Σ total_cup de todos los grupos
+      // (incl. el de seller_id NULL = «Usuario no identificado») reconciilia
+      // 1:1 con el total del universo de ventas consideradas.
+      try {
+        const agg = new Map<string | null, { seller_id: string | null; transaction_count: number; total_cup: number; native: Map<string, number> }>();
+        for (const row of salesRows) {
+          const key = (row.seller_id as string | null) || null;
+          let g = agg.get(key);
+          if (!g) { g = { seller_id: key, transaction_count: 0, total_cup: 0, native: new Map() }; agg.set(key, g); }
+          g.transaction_count += 1;
+          for (const b of (row.buckets as Array<{ currency: string; amount: number; amount_cup: number }>) || []) {
+            g.total_cup += Number(b.amount_cup) || 0;
+            const cur = String(b.currency || 'CUP');
+            g.native.set(cur, (g.native.get(cur) || 0) + (Number(b.amount) || 0));
+          }
+        }
+        // Resolución de nombres (UNA consulta, sin N+1; sesión autenticada —
+        // RLS vigente). Si no puede resolverse, degrada a null sin romper nada.
+        const sellerIds = [...agg.keys()].filter((k): k is string => !!k);
+        const names = new Map<string, string>();
+        if (sellerIds.length > 0) {
+          const { data: profRows } = await supabase
+            .from('profiles')
+            .select('id, first_name, last_name')
+            .in('id', sellerIds);
+          for (const pr of profRows || []) {
+            const nm = [pr.first_name, pr.last_name].filter(Boolean).join(' ').trim();
+            if (nm) names.set(String(pr.id), nm);
+          }
+        }
+        salesByUser = [...agg.values()]
+          .map(g => ({
+            seller_id: g.seller_id,
+            seller_name: g.seller_id ? (names.get(g.seller_id) || null) : null,
+            transaction_count: g.transaction_count,
+            total_cup: Math.round(g.total_cup * 100) / 100,
+            native: [...g.native.entries()]
+              .map(([currency, total]) => ({ currency, total: Math.round(total * 100) / 100 }))
+              .sort((a, b) => a.currency.localeCompare(b.currency)),
+          }))
+          .sort((a, b) => b.total_cup - a.total_cup || b.transaction_count - a.transaction_count);
+        salesByUserTotalCup = Math.round(salesByUser.reduce((sum, g) => sum + g.total_cup, 0) * 100) / 100;
+      } catch (byUserErr: unknown) {
+        // Degradación limpia: sin tarjetas el reporte sigue completo (fallback
+        // del cliente: agrega sobre las filas cargadas).
+        console.warn('[cash-report] sales_by_user no disponible:', (byUserErr as { message?: string })?.message);
+      }
 
       // PERSONALIZACIÓN: tope defensivo del payload de filas (el split y los
       // grupos ya se calcularon sobre el universo COMPLETO — el reporte no
@@ -597,6 +664,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       ...enrichedReport,
       cash_breakdown: breakdown,
       cash_balance_cup: cashBalanceCup,
+      // MISIÓN FILTRO MULTIUSUARIO: tarjetas por usuario creador (universo
+      // completo, agregado en servidor; null = Usuario no identificado).
+      sales_by_user: salesByUser,
+      sales_by_user_total_cup: salesByUserTotalCup,
       period: { start: startDate, end: endDate },
     });
   } catch (error: any) {
