@@ -269,6 +269,7 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
   const logo = await resolveScLogoDataUrl(model.logoUrl);
   let y = drawRes11Header(doc, {
     modelo: 'SC-2-08',
+    nombreInstitucional: model.entidadNombre,
     logoDataUrl: logo.dataUrl,
     titulo: 'VALE DE ENTREGA O DEVOLUCIÓN',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,

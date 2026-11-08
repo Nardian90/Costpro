@@ -253,6 +253,7 @@ export async function renderSc216Pdf(model: Sc216ModelData) {
   const logo = await resolveScLogoDataUrl(model.logoUrl);
   let y = drawRes11Header(doc, {
     modelo: 'SC-2-16',
+    nombreInstitucional: model.entidadNombre,
     logoDataUrl: logo.dataUrl,
     titulo: 'AJUSTE DE INVENTARIO',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,

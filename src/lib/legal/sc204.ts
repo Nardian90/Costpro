@@ -55,7 +55,7 @@ import { format } from 'date-fns';
 import type { Receipt } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
-import { drawScLogo, resolveScLogoDataUrl } from './sc-logo';
+import { resolveScLogoDataUrl } from './sc-logo';
 import {
   calcularSaldoPosterior,
   fetchMovimientosPorProducto,
@@ -66,6 +66,7 @@ import {
 import {
   RES11_BLANK_LINE,
   drawRes11DataBlock,
+  drawRes11Header,
   drawRes11SignatureAreas,
   measureRes11DataBlockHeight,
 } from './res11-shared';
@@ -404,12 +405,12 @@ export async function fetchSc204SourceData(
  * ceros ni valores inventados); cada código sale EXCLUSIVAMENTE de su campo
  * de origen (entidad/almacén/proveedor/documento).
  */
-function drawSc204HeaderBlocks(model: Sc204ModelData, doc: Awaited<ReturnType<typeof createPDFDocument>>): number {
+function drawSc204HeaderBlocks(model: Sc204ModelData, doc: Awaited<ReturnType<typeof createPDFDocument>>, startY: number): number {
   const pageWidth = doc.internal.pageSize.getWidth();
   const marginX = 12;
   const contentWidth = pageWidth - marginX * 2;
   const halfW = (contentWidth - 4) / 2;
-  let y = 48; // bajo el recuadro institucional (10..44)
+  let y = startY; // bajo el encabezado institucional compacto (CP-DOC-SC-HEADER-UX-005)
 
   // Fila 1 — BLOQUE A (izquierda) + BLOQUE B (derecha): ambos a la misma
   // altura (la mayor necesaria si un nombre largo envuelve a varias líneas).
@@ -482,39 +483,25 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
   const marginX = 12;
   const contentWidth = pageWidth - marginX * 2;
 
-  // ── Encabezado: identificación del modelo ──
-  doc.setDrawColor(0);
-  doc.setLineWidth(0.4);
-  doc.rect(marginX, 10, contentWidth, 34);
-
-  // Logo de la tienda receptora (o default de la app) en la zona libre
-  // central del encabezado, sin pisar los bloques normativos.
+  // ── Encabezado institucional (CP-DOC-SC-HEADER-UX-005) ──
+  // Misma plantilla reutilizable de la familia SC-2-xx: logo a la IZQUIERDA,
+  // nombre de la entidad receptora CENTRADO y la identificación documental a
+  // la DERECHA. La fecha sigue siendo dinámica (momento de generación) y el
+  // consecutivo conserva su comportamiento: valor cuando existe, línea de
+  // cumplimentación manual cuando no (COSTPRO no lo gestiona).
   const logo = await resolveScLogoDataUrl(model.logoUrl);
-  drawScLogo(doc, logo, { x: pageWidth - 88, y: 10.8, maxW: 28, maxH: 9.5 });
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text('MODELO SC-2-04', pageWidth - marginX - 4, 16, { align: 'right' });
-  doc.setFontSize(11);
-  doc.text('INFORME DE RECEPCIÓN', pageWidth - marginX - 4, 22, { align: 'right' });
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'italic');
-  doc.text('Uso obligatorio — Res. No. 11/2007 MFP', pageWidth - marginX - 4, 27, {
-    align: 'right',
+  const headerEndY = drawRes11Header(doc, {
+    modelo: 'SC-2-04',
+    titulo: 'INFORME DE RECEPCIÓN',
+    nombreInstitucional: model.entidadNombre,
+    notaLegal: 'Uso obligatorio — Res. No. 11/2007 MFP',
+    numeroConsecutivo: model.numeroConsecutivo,
+    lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
+    logoDataUrl: logo.dataUrl,
   });
-  doc.setFont('helvetica', 'normal');
-  doc.text('No. Consecutivo: ____________', pageWidth - marginX - 4, 32, {
-    align: 'right',
-  });
-  doc.text(
-    `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
-    pageWidth - marginX - 4,
-    36,
-    { align: 'right' },
-  );
 
   // ── Bloques de datos generales (A–F) — CP-DOC-PDF-UX-004 ──
-  const tableStartY = drawSc204HeaderBlocks(model, doc);
+  const tableStartY = drawSc204HeaderBlocks(model, doc, headerEndY + 4);
 
   // ── Dato 7: tabla de productos ──
   const { default: autoTable } = await import('jspdf-autotable');

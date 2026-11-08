@@ -89,75 +89,210 @@ export interface Res11HeaderOptions {
   modelo: string;
   /** Nombre oficial del documento, p. ej. «VALE DE ENTREGA O DEVOLUCIÓN». */
   titulo: string;
+  /**
+   * CP-DOC-SC-HEADER-UX-005 — Nombre institucional de la organización del
+   * documento (área CENTRAL del encabezado). Siempre el nombre REAL de la
+   * tienda/entidad que emite o recibe (stores.name); nunca un valor fijo.
+   * Opcional por compatibilidad: si no se pasa, el área central queda vacía
+   * (comportamiento anterior).
+   */
+  nombreInstitucional?: string;
+  /** Referencia normativa del modelo (área derecha, bajo el título). */
+  notaLegal?: string;
+  /**
+   * Número consecutivo del modelo (solo los modelos que lo llevan, p. ej.
+   * SC-2-04). Cuando se proporciona se dibuja la línea «No. Consecutivo:»
+   * con el valor o, si llega vacío, con la línea de cumplimentación manual
+   * (comportamiento actual). Los modelos que no lo pasan no la muestran.
+   */
+  numeroConsecutivo?: string;
   /** Línea derecha opcional bajo el título (fecha de emisión, etc.). */
   lineaDerecha?: string;
   /** Datos adicionales dibujados bajo el cuadro por el propio documento. */
   alturaExtra?: number;
 }
 
+// Geometría del encabezado institucional (mm). Composición horizontal de tres
+// áreas sobre el ANCHO ÚTIL completo (sin espacio muerto):
+//   izquierda ≈ logo (18-22 %) · centro ≈ nombre institucional (38-42 %) ·
+//   derecha ≈ identificación documental (38-42 %).
+const HEADER_MARGIN_X = 12;
+const HEADER_Y0 = 10;
+const HEADER_BASE_H = 25; // objetivo de la misión: 25-30 mm (antes 34 en SC-2-04)
+const HEADER_LOGO_ZONE_W = 28; // zona izquierda con logo presente
+const HEADER_LOGO_MAX_W = 20;
+const HEADER_DOC_BLOCK_MIN_W = 46;
+const HEADER_DOC_BLOCK_MAX_FRAC = 0.45;
+
 /**
- * Dibuja el recuadro de identificación del modelo (marco fino, fondo blanco,
- * texto negro): código del modelo a la derecha, título oficial y la nota
- * normativa de uso obligatorio. Devuelve la coordenada Y donde termina.
+ * CP-DOC-SC-HEADER-UX-005 — Encabezado institucional reutilizable de la
+ * familia SC-2-xx (Resolución No. 11/2007 MFP). Tres áreas horizontales:
+ *
+ *   ┌──────────┬───────────────────────────┬─────────────────────────────┐
+ *   │   LOGO   │   NOMBRE DE LA ORGANIZ.   │  MODELO SC-2-XX             │
+ *   │  (izq.)  │   (centrado, semibold)    │  Título oficial             │
+ *   │ contain  │   ajuste automático       │  Referencia normativa       │
+ *   └──────────┴───────────────────────────┴  No. Consecutivo / Fecha     │
+ *
+ *  - Altura compacta (≈25 mm; crece SOLO si el nombre o el título envuelven —
+ *    nunca recorta ni solapa).
+ *  - Sin logo el área izquierda se libera y el nombre se centra en el resto
+ *    del ancho: la composición no se rompe ni queda desproporcionada.
+ *  - Marco fino uniforme (0.25 pt) que separa discretamente del cuerpo.
+ *  - Cada modelo conserva sus datos: código, título, referencia normativa,
+ *    consecutivo y fecha propios (parámetros); nada de valores fijos de
+ *    SC-2-04.
+ *  - La autorización y las fuentes de datos no cambian: el nombre es el de
+ *    la tienda del documento (stores.name) que cada generador ya lee bajo
+ *    RLS.
+ *
+ * Devuelve la coordenada Y donde termina el encabezado (contrato anterior).
  */
 export function drawRes11Header(doc: jsPDF, opts: Res11HeaderOptions): number {
   const pageWidth = doc.internal.pageSize.getWidth();
-  const marginX = 12;
-  const contentWidth = pageWidth - marginX * 2;
-  const height = 18;
+  const contentWidth = pageWidth - HEADER_MARGIN_X * 2;
+  const rightX = pageWidth - HEADER_MARGIN_X - 3.5;
 
+  // ── Área derecha: medir el bloque documental para acotar su ancho ──
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  const codeLabel = `MODELO ${opts.modelo}`;
+  const codeW = doc.getTextWidth(codeLabel);
+  doc.setFontSize(9.5);
+  let titleSize = 9.5;
+  let titleW = doc.getTextWidth(opts.titulo);
+  const maxTitleW = Math.max(HEADER_DOC_BLOCK_MIN_W, contentWidth * HEADER_DOC_BLOCK_MAX_FRAC) - 6;
+  if (titleW > maxTitleW && doc.getTextWidth(opts.titulo) > 0) {
+    // Título extenso: reducir a 8.5 pt antes de permitir envoltura.
+    doc.setFontSize(8.5);
+    titleSize = 8.5;
+    titleW = doc.getTextWidth(opts.titulo);
+  }
+  const titleLines = doc.splitTextToSize(opts.titulo, maxTitleW) as string[];
+  if (titleLines.length > 1) titleW = maxTitleW;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(6.3);
+  const notaLegal = opts.notaLegal ?? 'Uso obligatorio — Resolución No. 11/2007, Ministerio de Finanzas y Precios (Anexo Único).';
+  const notaW = doc.getTextWidth(notaLegal);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  const consecutivoLine = opts.numeroConsecutivo === undefined
+    ? null
+    : `No. Consecutivo: ${opts.numeroConsecutivo || RES11_BLANK_LINE}`;
+  const consecW = consecutivoLine ? doc.getTextWidth(consecutivoLine) : 0;
+  const lineaW = opts.lineaDerecha ? doc.getTextWidth(opts.lineaDerecha) : 0;
+
+  const blockW = Math.min(
+    Math.max(codeW, titleW, notaW, consecW, lineaW) + 5,
+    Math.max(HEADER_DOC_BLOCK_MIN_W, contentWidth * HEADER_DOC_BLOCK_MAX_FRAC),
+  );
+
+  // ── Altura: la máxima entre la base, el bloque documental y el nombre ──
+  // Filas documentales (baseline relativo a HEADER_Y0): código 6.4, título
+  // +4.6 (o +3.4 por línea extra), nota +3.4, consecutivo +3.8, fecha +3.4.
+  const docBlockH = 6.4 + titleLines.length * 4.6 + 3.4 + (consecutivoLine ? 3.8 : 0) + (opts.lineaDerecha ? 3.4 : 0) + 3.2;
+  let headerH = Math.max(HEADER_BASE_H, docBlockH);
+
+  // Nombre institucional: área central entre el logo y el bloque documental.
+  const leftZoneW = opts.logoDataUrl ? HEADER_LOGO_ZONE_W : 0;
+  const centerX0 = HEADER_MARGIN_X + leftZoneW;
+  const centerX1 = pageWidth - HEADER_MARGIN_X - blockW - 4;
+  const centerW = centerX1 - centerX0;
+  const nombre = (opts.nombreInstitucional || '').trim();
+
+  let nameLines: string[] = [];
+  let nameSize = 12;
+  if (nombre && centerW > 24) {
+    // Ajuste automático: 12 → 10.5 → 9 → 8 pt; se prefiere UNA línea, se
+    // aceptan dos; si aun así no cabe, se usa la menor con las líneas
+    // necesarias y el encabezado crece (sin recortes ni solapamientos).
+    const candidateSizes = [12, 10.5, 9, 8];
+    let fallback: { lines: string[]; size: number } | null = null;
+    for (const size of candidateSizes) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(size);
+      const lines = doc.splitTextToSize(nombre, centerW - 2) as string[];
+      if (lines.length === 1) {
+        nameLines = lines;
+        nameSize = size;
+        fallback = null;
+        break;
+      }
+      if (!fallback && lines.length <= 2) fallback = { lines, size };
+    }
+    if (fallback) {
+      nameLines = fallback.lines;
+      nameSize = fallback.size;
+    } else if (nameLines.length === 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(candidateSizes[candidateSizes.length - 1]);
+      nameLines = doc.splitTextToSize(nombre, centerW - 2) as string[];
+      nameSize = candidateSizes[candidateSizes.length - 1];
+    }
+    const nameStep = nameSize * 0.42;
+    headerH = Math.max(headerH, nameLines.length * nameStep + 7);
+  }
+
+  // ── Marco fino (separación discreta del cuerpo) ──
   doc.setDrawColor(...RES11_INK.marco);
   doc.setFillColor(...RES11_INK.blanco);
-  doc.setLineWidth(0.35);
-  doc.rect(marginX, 10, contentWidth, height, 'S');
+  doc.setLineWidth(0.25);
+  doc.rect(HEADER_MARGIN_X, HEADER_Y0, contentWidth, headerH, 'S');
 
-  // Logo de la tienda emisora (o default de la app) — a la derecha del
-  // recuadro; el código del modelo se corre a la izquierda para no pisarlo.
-  // Los modelos RES-11 (que prohíben logotipos) no pasan logoDataUrl y quedan
-  // exactamente como antes.
-  let modeloRightX = pageWidth - marginX - 4;
+  // ── Área izquierda: logo contain, centrado verticalmente en su zona ──
   if (opts.logoDataUrl) {
-    const logoBoxW = 20;
-    modeloRightX -= logoBoxW + 4;
     drawScLogo(doc, { dataUrl: opts.logoDataUrl, source: 'store' }, {
-      x: pageWidth - marginX - 3 - logoBoxW,
-      y: 10.8,
-      maxW: logoBoxW,
-      maxH: height - 1.6,
+      x: HEADER_MARGIN_X + 3,
+      y: HEADER_Y0 + 3,
+      maxW: HEADER_LOGO_MAX_W,
+      maxH: headerH - 6,
     });
   }
 
-  // Código del modelo (derecha, negrita)
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...RES11_INK.texto);
-  doc.setFontSize(13);
-  doc.text(opts.modelo, modeloRightX, 16.5, { align: 'right' });
-
-  // Título oficial (izquierda, negrita)
-  doc.setFontSize(12);
-  doc.text(opts.titulo, marginX + 4, 16.5, { maxWidth: contentWidth - 55 });
-
-  // Nota normativa (gris muy oscuro, cursiva)
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(7);
-  doc.setTextColor(...RES11_INK.gris);
-  doc.text(
-    'Uso obligatorio — Resolución No. 11/2007, Ministerio de Finanzas y Precios (Anexo Único).',
-    marginX + 4,
-    22.5,
-    { maxWidth: contentWidth - 8 },
-  );
-
-  // Línea derecha opcional (fecha de emisión del modelo, etc.). Con logo
-  // presente se alinea a la izquierda del logo para no quedar debajo.
-  if (opts.lineaDerecha) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+  // ── Área central: nombre institucional centrado ──
+  if (nameLines.length > 0) {
+    const nameStep = nameSize * 0.42;
+    let ty = HEADER_Y0 + (headerH - nameLines.length * nameStep) / 2 + nameStep * 0.78;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(nameSize);
     doc.setTextColor(...RES11_INK.texto);
-    doc.text(opts.lineaDerecha, modeloRightX, 23.5, { align: 'right' });
+    for (const line of nameLines) {
+      doc.text(line, (centerX0 + centerX1) / 2, ty, { align: 'center', maxWidth: centerW - 2 });
+      ty += nameStep;
+    }
   }
 
-  return 10 + height;
+  // ── Área derecha: identificación documental (jerarquía: código > título >
+  //    referencia normativa > consecutivo y fecha compactos) ──
+  let ty = HEADER_Y0 + 6.4;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(...RES11_INK.texto);
+  doc.text(codeLabel, rightX, ty, { align: 'right' });
+  ty += titleLines.length * 4.6;
+  doc.setFontSize(titleSize);
+  doc.text(opts.titulo, rightX, ty, { align: 'right', maxWidth: blockW - 4 });
+  ty += 3.4;
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(6.3);
+  doc.setTextColor(...RES11_INK.gris);
+  doc.text(notaLegal, rightX, ty, { align: 'right', maxWidth: blockW - 4 });
+  if (consecutivoLine) {
+    ty += 3.8;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...RES11_INK.texto);
+    doc.text(consecutivoLine, rightX, ty, { align: 'right' });
+  }
+  if (opts.lineaDerecha) {
+    ty += 3.4;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...RES11_INK.texto);
+    doc.text(opts.lineaDerecha, rightX, ty, { align: 'right' });
+  }
+
+  return HEADER_Y0 + headerH;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
