@@ -15,6 +15,8 @@ import { motion } from 'framer-motion';
 
 import { useCashClosures, useCreateCashClosure, useUpdateCashClosure, useSalesSinceLastClosure, useCashShiftExpected, useOpenCashShift } from '@/hooks/api/useCashClosures';
 import { computeArqueo, type CashShiftBreakdown } from '@/lib/cash-arqueo';
+// COSTPRO-FINAL-CYCLE-CLOSE-001 (T4): guarda de cierre con ventas pendientes.
+import { useCashPendingSales } from '@/hooks/useCashPendingSales';
 import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
 import { CashClosure } from '@/types';
@@ -94,6 +96,12 @@ export default function CashClosureView() {
 
   // ── Confirmation modal ──
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  // COSTPRO-FINAL-CYCLE-CLOSE-001 (T4): modal de ventas pendientes de sync
+  // antes de confirmar el cierre (avisa, no bloquea por defecto).
+  const [showPendingSalesModal, setShowPendingSalesModal] = useState(false);
+  // True cuando el operador confirmó continuar con pendientes (la evidencia
+  // viaja al endpoint al ejecutar el cierre).
+  const pendingSalesConfirmedRef = useRef(false);
   const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
   const [showOpenConfirm, setShowOpenConfirm] = useState(false);
 
@@ -129,6 +137,10 @@ export default function CashClosureView() {
   const cashRefunds = Number((shiftExpected as { cash_refunds?: number } | null | undefined)?.cash_refunds) || 0;
   const voucherRefunds = Number((shiftExpected as { voucher_refunds?: number } | null | undefined)?.voucher_refunds) || 0;
   const systemVouchers = (Number(shiftExpected?.transfer_sales) || 0) + (Number(shiftExpected?.zelle_sales) || 0) - voucherRefunds;
+
+  // COSTPRO-FINAL-CYCLE-CLOSE-001 (T4): ventas pendientes de sincronización
+  // de la cola local (pendientes sin conflicto + conflictivas).
+  const pendingSales = useCashPendingSales();
 
   const arqueo = computeArqueo(
     (shiftExpected || {
@@ -288,6 +300,19 @@ export default function CashClosureView() {
     if (pendingClosure) {
       // FIX F3-01: Al cerrar, NO sobreescribir opening_balance. Solo actualizar declared_cash.
       const shouldFinalize = canClose;
+      // COSTPRO-FINAL-CYCLE-CLOSE-001 (T4): si el operador confirmó el modal
+      // de pendientes, la evidencia viaja al endpoint (auditoría server-side
+      // con rol verificado). El payload del RPC NO cambia — las ventas
+      // conservan su turno original.
+      const auditPayload = pendingSalesConfirmedRef.current
+        ? {
+            storeId: user.activeStoreId,
+            pending: pendingSales.snapshot.pending,
+            conflict: pendingSales.snapshot.conflict,
+            decidedBy: (pendingSales.isSupervisorOrAdmin ? 'supervisor' : 'operator') as 'supervisor' | 'operator',
+            outcome: 'cerrada_con_pendientes' as const,
+          }
+        : undefined;
       // MISIÓN POLÍTICA TEMPORAL (2026-10-18): se elimina `closed_at` calculado
       // en el cliente (UTC del navegador) del payload — era código muerto en el
       // camino real de cierre (useUpdateCashClosure solo envía closure_id +
@@ -307,7 +332,8 @@ export default function CashClosureView() {
           difference: difference,
           notes: notes
           // FIX F3-01: NO incluir opening_balance aquí — se preserva del INSERT inicial
-        }
+        },
+        ...(auditPayload ? { audit_pending_sales: auditPayload } : {}),
       });
     } else {
       // ═══ MISIÓN CP-CASH-OPENING-001: apertura por la VÍA AUTORITATIVA ═══
@@ -364,6 +390,17 @@ export default function CashClosureView() {
   };
 
   const handleProcessClosure = () => {
+    // COSTPRO-FINAL-CYCLE-CLOSE-001 (T4): ANTES de la confirmación de cierre,
+    // la guarda de ventas pendientes (avisa, no bloquea por defecto). Solo
+    // aplica al CIERRE (turno abierto), no a la apertura ni a la declaración
+    // de clerk (que no finaliza el turno).
+    if (pendingClosure && (canClose || !canClose)) {
+      const s = pendingSales.snapshot;
+      if (s.pending > 0 || s.conflict > 0) {
+        pendingSales.refresh().then(() => setShowPendingSalesModal(true));
+        return;
+      }
+    }
     // Show confirmation modal before proceeding
     if (!pendingClosure) {
       // Apertura de turno — regla espejo del RPC: sin causa documentada para
@@ -568,7 +605,7 @@ export default function CashClosureView() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setShowOpenConfirm(true)}
+                    onClick={() => { console.log('DEBUG_ONCLICK_ABRIR', aperturaBloqueada); setShowOpenConfirm(true); }}
                     disabled={aperturaBloqueada}
                     title={aperturaBloqueada ? 'Documenta la causa de la diferencia contado vs libro (mínimo 10 caracteres) en el formulario de apertura.' : undefined}
                     data-testid="btn-abrir-turno-vacio"
@@ -1093,6 +1130,96 @@ export default function CashClosureView() {
           )}
           <p className="text-xs text-muted-foreground text-center leading-relaxed">
             Tras abrir el turno podrás vender en el POS. Al final del día, vuelve aquí para cerrar y contar el efectivo.
+          </p>
+        </div>
+      </BaseModal>
+
+      {/* ── COSTPRO-FINAL-CYCLE-CLOSE-001 (T4): Ventas pendientes de sincronización ── */}
+      <BaseModal
+        open={showPendingSalesModal}
+        onOpenChange={(open) => { if (!open) setShowPendingSalesModal(false); }}
+        title={
+          <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+            <AlertTriangle className="w-6 h-6" />
+            <span>Ventas pendientes de sincronización</span>
+          </div>
+        }
+        footer={
+          <>
+            <SecondaryButton
+              label="No, Volver"
+              onClick={() => setShowPendingSalesModal(false)}
+              className="flex-1"
+            />
+            {pendingSales.snapshot.conflict > 0 ? (
+              pendingSales.isSupervisorOrAdmin ? (
+              <PrimaryButton
+                label="Autorizar y continuar"
+                onClick={async () => {
+                  const r = await pendingSales.confirmCloseWithPending('supervisor');
+                  if (r.ok) {
+                    pendingSalesConfirmedRef.current = true;
+                    setShowPendingSalesModal(false);
+                    if (canClose) setShowCloseConfirm(true);
+                    else setShowUpdateConfirm(true);
+                  }
+                }}
+                  className="flex-1 !bg-amber-500/15 !text-amber-600 dark:!text-amber-400 border !border-amber-500/30 hover:!bg-amber-500/25"
+                />
+              ) : (
+                <div className="flex-1 text-[11px] font-bold text-muted-foreground text-center leading-snug px-2">
+                  Requiere supervisor o administrador para continuar con ventas en conflicto.
+                </div>
+              )
+            ) : (
+              <PrimaryButton
+                label="Continuar de todos modos"
+                onClick={async () => {
+                  const r = await pendingSales.confirmCloseWithPending('operator');
+                  if (r.ok) {
+                    pendingSalesConfirmedRef.current = true;
+                    setShowPendingSalesModal(false);
+                    if (canClose) setShowCloseConfirm(true);
+                    else setShowUpdateConfirm(true);
+                  }
+                }}
+                className="flex-1 !bg-amber-500/15 !text-amber-600 dark:!text-amber-400 border !border-amber-500/30 hover:!bg-amber-500/25"
+              />
+            )}
+          </>
+        }
+      >
+        <div className="py-4 space-y-4">
+          <div className="rounded-xl border-2 border-amber-500/40 bg-amber-500/10 p-4 space-y-2">
+            <p className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wide">
+              Hay ventas que aún no están registradas en el servidor
+            </p>
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="rounded-lg bg-background/60 p-3 text-center">
+                <p className="text-2xl font-black tabular-nums text-foreground">{pendingSales.snapshot.pending}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase">Pendientes</p>
+              </div>
+              <div className="rounded-lg bg-background/60 p-3 text-center">
+                <p className="text-2xl font-black tabular-nums text-danger">{pendingSales.snapshot.conflict}</p>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase">En conflicto</p>
+              </div>
+            </div>
+            {pendingSales.snapshot.reasons.length > 0 && (
+              <p className="text-[11px] text-muted-foreground">
+                {`Motivos: ${pendingSales.snapshot.reasons.join(' · ')}`}
+              </p>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Si cierras el turno ahora, las ventas pendientes <span className="font-bold text-foreground">no desaparecen</span>:
+            conservan su turno original y seguirán intentando sincronizarse. El cierre quedará registrado como
+            <span className="font-bold text-foreground"> «cerrada con ventas pendientes de sincronización»</span> en Auditoría.
+            {pendingSales.snapshot.conflict > 0 && (
+              <>
+                {' '}Las ventas <span className="font-bold text-danger">en conflicto</span> exigen revisión:
+                continúa solo con autorización de supervisor o administrador.
+              </>
+            )}
           </p>
         </div>
       </BaseModal>
