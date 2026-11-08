@@ -73,6 +73,9 @@ const CashReportView = dynamic(() => import('@/components/views/terminal/views/c
 // MISIÓN 2026-10-16 (IPV): informe de ingresos por ventas con conciliación de
 // inventario — vista canónica única bajo OPERACIÓN → Ventas.
 const IpvVentasView = dynamic(() => import('@/components/views/terminal/views/ipv_ventas/IpvVentasView'), { ssr: false });
+// MISIÓN 2026-11-09 (CP-SALES-PRICE-LIST-001): listado de precios por rango de
+// SKU — consulta + PDF doble columna (vista canónica única bajo Ventas).
+const PriceListView = dynamic(() => import('@/components/views/terminal/views/price_list/PriceListView'), { ssr: false });
 
 const DashboardView = dynamic(() => import('@/components/views/terminal/views/dashboard/DashboardView'), { ssr: false });
 // AI COMMAND CENTER: la nueva Inicio (hero conversacional de Darian +
@@ -604,6 +607,8 @@ export default function TerminalShell() {
         case 'cash_report': return <ViewErrorBoundary viewName="Reporte de Entrega"><CashReportView /></ViewErrorBoundary>;
         // MISIÓN 2026-10-16 (IPV): ingresos por ventas con conciliación de inventario
         case 'ipv_ventas': return <ViewErrorBoundary viewName="IPV — Ingresos por Ventas"><IpvVentasView /></ViewErrorBoundary>;
+        // MISIÓN 2026-11-09 (CP-SALES-PRICE-LIST-001): listado de precios (solo lectura)
+        case 'listado-precios': return <ViewErrorBoundary viewName="Listado de precios"><PriceListView /></ViewErrorBoundary>;
         // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
         case 'production-orders': return <ViewErrorBoundary viewName="Órdenes de Producción"><ProductionOrdersView /></ViewErrorBoundary>;
         // V1.2: Devoluciones, Clientes CRM, Cotizaciones, Cierre Fiscal

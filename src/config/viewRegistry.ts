@@ -61,6 +61,12 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["process_sale", "scan_product"]
   },
   {
+    id: "listado-precios",
+    route: "/?view=listado-precios",
+    description: "Listado de precios: consulta los productos con stock > 0 de la tienda activa, filtra por rango de SKU y genera el PDF con vista previa fiel.",
+    actions: ["view_prices", "export_price_list_pdf"]
+  },
+  {
     id: "sales_catalog",
     route: "/?view=sales_catalog",
     description: "Catálogo de Ventas: tabla previsualizada de venta tipo Excel con precios, descuentos, formas de pago y selección de unidad de medida por producto.",
