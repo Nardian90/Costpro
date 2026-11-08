@@ -85,7 +85,7 @@ describe('SC-2-04 — modelo según Resolución 11/2007 MFP', () => {
     expect(model.lineas[0].saldoExistencia).toBe('s/d');
     // 8. Importe Total del modelo
     expect(model.importesTotales).toHaveLength(1);
-    expect(model.importesTotales[0].label).toBe('Importe Total del modelo (CUP):');
+    expect(model.importesTotales[0].label).toBe('IMPORTE TOTAL DEL MODELO (CUP):');
     expect(model.importesTotales[0].importe).toBe('250.00 CUP');
     // 9–12: firmas — espacios en blanco (se dibujan en el PDF, sin datos)
     // 13. Número consecutivo: no gestionado → en blanco

@@ -303,9 +303,10 @@ export async function renderSc209Pdf(model: Sc209ModelData) {
   doc.setFont('helvetica', 'normal');
   doc.text(model.entidadNombre || RES11_BLANK_LINE, marginX + 22, y, { maxWidth: 110 });
   doc.setFont('helvetica', 'bold');
-  doc.text('Código:', marginX + 140, y);
+  // CP-DOC-PDF-UX-004: etiqueta completa — nunca «Código:» genérico.
+  doc.text('Código de la entidad:', marginX + 140, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(model.entidadCodigo || RES11_BLANK_LINE, marginX + 156, y);
+  doc.text(model.entidadCodigo || RES11_BLANK_LINE, marginX + 175, y);
 
   y += 6;
   // Datos 3–4: almacenes

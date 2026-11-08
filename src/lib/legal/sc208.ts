@@ -296,9 +296,10 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
   doc.setFont('helvetica', 'normal');
   doc.text(model.almacenNombre || RES11_BLANK_LINE, marginX + 46, y, { maxWidth: 60 });
   doc.setFont('helvetica', 'bold');
-  doc.text('Código:', marginX + 110, y);
+  // CP-DOC-PDF-UX-004: etiqueta completa — nunca «Código:» genérico.
+  doc.text('Código del almacén que entrega:', marginX + 110, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(model.almacenCodigo || RES11_BLANK_LINE, marginX + 126, y);
+  doc.text(model.almacenCodigo || RES11_BLANK_LINE, marginX + 162, y);
 
   y += 6;
   // Dato 4: área / centro de costo / orden (concepto real + blancos)

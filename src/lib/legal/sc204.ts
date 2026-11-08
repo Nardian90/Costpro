@@ -63,6 +63,12 @@ import {
   type SaldoPosteriorMovement,
   type SaldoPosteriorResultado,
 } from '@/lib/inventory/saldo-posterior';
+import {
+  RES11_BLANK_LINE,
+  drawRes11DataBlock,
+  drawRes11SignatureAreas,
+  measureRes11DataBlockHeight,
+} from './res11-shared';
 import { logger } from '@/lib/logger';
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -257,7 +263,7 @@ export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
   }
   const currencies = Array.from(totalsByCurrency.keys());
   const importesTotales = currencies.map((moneda) => ({
-    label: `Importe Total del modelo (${moneda}):`,
+    label: `IMPORTE TOTAL DEL MODELO (${moneda}):`,
     importe: `${formatSc204Money(totalsByCurrency.get(moneda) || 0)} ${moneda}`.trim(),
   }));
 
@@ -388,10 +394,80 @@ export async function fetchSc204SourceData(
 // Generación del PDF (jsPDF + autoTable — mismas librerías del proyecto)
 // ────────────────────────────────────────────────────────────────────────────
 
-const BLANK_LINE = '_______________';
+/**
+ * CP-DOC-PDF-UX-004 — ENCABEZADO DE DATOS EN BLOQUES INDEPENDIENTES (§3):
+ * A entidad receptora · B almacén receptor · C proveedor · D documento que
+ * ampara · E fechas · F transportador. Cada campo con su ETIQUETA COMPLETA
+ * (nunca «Código:» genérico cuando conviven varios códigos) y su valor en la
+ * misma celda — la asociación etiqueta→dato es inequívoca sin interpretación.
+ * Campos vacíos conservan la línea de cumplimentación del modelo (sin N/A,
+ * ceros ni valores inventados); cada código sale EXCLUSIVAMENTE de su campo
+ * de origen (entidad/almacén/proveedor/documento).
+ */
+function drawSc204HeaderBlocks(model: Sc204ModelData, doc: Awaited<ReturnType<typeof createPDFDocument>>): number {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const marginX = 12;
+  const contentWidth = pageWidth - marginX * 2;
+  const halfW = (contentWidth - 4) / 2;
+  let y = 48; // bajo el recuadro institucional (10..44)
 
-function blankField(label: string): string {
-  return `${label}: ${BLANK_LINE}`;
+  // Fila 1 — BLOQUE A (izquierda) + BLOQUE B (derecha): ambos a la misma
+  // altura (la mayor necesaria si un nombre largo envuelve a varias líneas).
+  const fieldsA = [
+    { label: 'Nombre de la entidad:', value: model.entidadNombre },
+    { label: 'Código de la entidad receptora:', value: model.entidadCodigo },
+  ];
+  const fieldsB = [
+    { label: 'Nombre del almacén:', value: model.almacenNombre },
+    { label: 'Código del almacén receptor:', value: model.almacenCodigo },
+  ];
+  const hRow1 = Math.max(
+    measureRes11DataBlockHeight(doc, { w: halfW, fields: fieldsA }),
+    measureRes11DataBlockHeight(doc, { w: halfW, fields: fieldsB }),
+  );
+  drawRes11DataBlock(doc, { x: marginX, y, w: halfW, h: hRow1, title: 'Entidad receptora', fields: fieldsA });
+  drawRes11DataBlock(doc, { x: marginX + halfW + 4, y, w: halfW, h: hRow1, title: 'Almacén receptor', fields: fieldsB });
+  y += hRow1 + 2;
+
+  // Fila 2 — BLOQUE C (izquierda) + BLOQUE D (derecha, independiente)
+  const fieldsC = [
+    { label: 'Nombre o razón social:', value: model.proveedorNombre },
+    { label: 'Código del proveedor:', value: model.proveedorCodigo },
+  ];
+  const fieldsD = [
+    { label: 'Nombre o tipo de documento:', value: model.documentoNombre },
+    { label: 'Número del documento:', value: model.documentoNumero },
+  ];
+  const hRow2 = Math.max(
+    measureRes11DataBlockHeight(doc, { w: halfW, fields: fieldsC }),
+    measureRes11DataBlockHeight(doc, { w: halfW, fields: fieldsD }),
+  );
+  drawRes11DataBlock(doc, { x: marginX, y, w: halfW, h: hRow2, title: 'Proveedor', fields: fieldsC });
+  drawRes11DataBlock(doc, { x: marginX + halfW + 4, y, w: halfW, h: hRow2, title: 'Documento que ampara la recepción', fields: fieldsD });
+  y += hRow2 + 2;
+
+  // Fila 3 — BLOQUE E: fechas, cada una con su etiqueta completa (la fecha de
+  // recepción es el dato real del modelo; la de emisión es la de generación).
+  const fieldsE = [
+    { label: 'Fecha de la recepción:', value: model.fechaRecepcion },
+    { label: 'Fecha de emisión del modelo:', value: model.fechaEmision },
+  ];
+  const hRow3 = measureRes11DataBlockHeight(doc, { w: contentWidth, fields: fieldsE, columns: 2 });
+  drawRes11DataBlock(doc, { x: marginX, y, w: contentWidth, h: hRow3, title: 'Fechas', columns: 2, fields: fieldsE });
+  y += hRow3 + 2;
+
+  // Fila 4 — BLOQUE F: datos del transportador, en dos filas con etiquetas
+  // claramente asociadas; vacíos con línea para cumplimentar a mano.
+  const fieldsF = [
+    { label: 'Nombre:', value: model.transportadorNombre },
+    { label: 'Carné de identidad:', value: model.transportadorCarne },
+    { label: 'Chapa:', value: model.transportadorChapa },
+    { label: 'Casilla:', value: model.transportadorCasilla },
+    { label: 'Guía aérea:', value: model.transportadorGuiaAerea },
+  ];
+  const hRow4 = measureRes11DataBlockHeight(doc, { w: contentWidth, fields: fieldsF, columns: 2 });
+  drawRes11DataBlock(doc, { x: marginX, y, w: contentWidth, h: hRow4, title: 'Datos del transportador', columns: 2, fields: fieldsF });
+  return y + hRow4 + 4; // Y de arranque de la tabla de productos
 }
 
 /**
@@ -431,91 +507,26 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
     align: 'right',
   });
   doc.text(
-    `Fecha de emisión: ${model.fechaEmision || BLANK_LINE}`,
+    `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
     pageWidth - marginX - 4,
     36,
     { align: 'right' },
   );
 
-  // Dato 1: entidad receptora (nombre automático, código en blanco)
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.text('ENTIDAD RECEPTORA:', marginX + 4, 16);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.entidadNombre || BLANK_LINE, marginX + 42, 16, { maxWidth: 70 });
-  doc.setFont('helvetica', 'bold');
-  doc.text('Código:', marginX + 4, 21);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.entidadCodigo || BLANK_LINE, marginX + 20, 21);
-
-  // Dato 2: almacén receptor (no gestionado → en blanco)
-  doc.setFont('helvetica', 'bold');
-  doc.text('ALMACÉN RECEPTOR:', marginX + 4, 26);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.almacenNombre || BLANK_LINE, marginX + 42, 26);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Código:', marginX + 100, 26);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.almacenCodigo || BLANK_LINE, marginX + 116, 26);
-
-  // Dato 4: proveedor
-  doc.setFont('helvetica', 'bold');
-  doc.text('PROVEEDOR — Nombre:', marginX + 4, 31);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.proveedorNombre || BLANK_LINE, marginX + 48, 31, {
-    maxWidth: 80,
-  });
-  doc.setFont('helvetica', 'bold');
-  doc.text('Código:', marginX + 100, 31);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.proveedorCodigo || BLANK_LINE, marginX + 116, 31);
-
-  // Dato 5: documento que ampara los productos
-  doc.setFont('helvetica', 'bold');
-  doc.text('DOCUMENTO QUE AMPARA — Nombre (tipo):', marginX + 4, 36);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.documentoNombre || BLANK_LINE, marginX + 68, 36);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Número:', marginX + 110, 36);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.documentoNumero || BLANK_LINE, marginX + 126, 36, {
-    maxWidth: 60,
-  });
-
-  // Fecha de la recepción (dato real gestionado por COSTPRO — trazabilidad)
-  doc.setFont('helvetica', 'bold');
-  doc.text('FECHA DE LA RECEPCIÓN:', marginX + 4, 41);
-  doc.setFont('helvetica', 'normal');
-  doc.text(model.fechaRecepcion || BLANK_LINE, marginX + 50, 41);
-
-  // Dato 6: transportador (no gestionado → en blanco)
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.text('DATOS DEL TRANSPORTADOR:', marginX + 4, 47.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.text(
-    blankField('Nombre') +
-      '   ' +
-      blankField('Carné de identidad') +
-      '   ' +
-      blankField('Chapa'),
-    marginX + 4,
-    52,
-  );
-  doc.text(blankField('Casilla') + '   ' + blankField('Guía aérea'), marginX + 4, 57);
+  // ── Bloques de datos generales (A–F) — CP-DOC-PDF-UX-004 ──
+  const tableStartY = drawSc204HeaderBlocks(model, doc);
 
   // ── Dato 7: tabla de productos ──
   const { default: autoTable } = await import('jspdf-autotable');
   autoTable(doc, {
-    startY: 62,
+    startY: tableStartY,
     head: [
       [
         'Código',
         'Descripción',
         'U.M.',
         'Cantidad',
-        'Precio unitario total',
+        'Precio unitario',
         'Importe',
         'Saldo en existencia según almacén',
       ],
@@ -563,7 +574,7 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
       3: { cellWidth: 17, halign: 'right' },
       4: { cellWidth: 27, halign: 'right' },
       5: { cellWidth: 27, halign: 'right' },
-      6: { cellWidth: 30, halign: 'center' },
+      6: { cellWidth: 30, halign: 'right' },
     },
     margin: { left: marginX, right: marginX },
   });
@@ -572,7 +583,7 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
   // Etiqueta + valor como una sola línea alineada a la derecha (evita
   // superposición cuando la etiqueta es larga por el nombre de la moneda).
   const docAny = doc as unknown as { lastAutoTable?: { finalY: number } };
-  let finalY = docAny.lastAutoTable?.finalY || 62;
+  let finalY = docAny.lastAutoTable?.finalY || tableStartY;
   finalY += 6;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
@@ -584,30 +595,25 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
   }
 
   // ── Datos 9–12: firmas (espacios en blanco para cumplimentación manual) ──
-  if (finalY + 34 > pageHeight - 14) {
-    doc.addPage();
-    finalY = 16;
-  }
-  const sigY = finalY + 14;
-  doc.setLineWidth(0.2);
-  const colWidth = contentWidth / 4;
-  const signatures = [
-    'Firma del Jefe del Almacén',
-    'Firma del Transportador',
-    'Firma del empleado que recepciona',
-    'Firma del empleado que lo contabiliza y del que lo anota en el Control de Inventario',
-  ];
-  signatures.forEach((label, i) => {
-    const x0 = marginX + i * colWidth + 3;
-    const x1 = marginX + (i + 1) * colWidth - 3;
-    doc.line(x0, sigY, x1, sigY);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
-    doc.text(label, (x0 + x1) / 2, sigY + 3.5, {
-      align: 'center',
-      maxWidth: colWidth - 6,
-    });
-  });
+  // CP-DOC-PDF-UX-004 (§7): cuatro áreas claramente diferenciadas — fila 1
+  // con las tres firmas de responsables individuales y fila 2 completa para
+  // el responsable que contabiliza y anota en el Control de Inventario (su
+  // denominación es extensa); líneas amplias, separación vertical y espacio
+  // de rúbrica suficientes. Nunca separadas del contenido por un salto.
+  drawRes11SignatureAreas(doc, [
+    {
+      labels: [
+        'Firma del Jefe del Almacén',
+        'Firma del Transportador',
+        'Firma del empleado que recepciona',
+      ],
+    },
+    {
+      labels: [
+        'Firma del empleado que lo contabiliza y del que lo anota en el Control de Inventario',
+      ],
+    },
+  ], finalY + 10);
 
   // ── Nota al pie sobria (identificación normativa y trazabilidad) ──
   doc.setFont('helvetica', 'italic');

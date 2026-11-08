@@ -259,9 +259,10 @@ export async function renderSc201Pdf(model: Sc201ModelData) {
   doc.setFont('helvetica', 'normal');
   doc.text(model.proveedorNombre || RES11_BLANK_LINE, marginX + 46, y, { maxWidth: 75 });
   doc.setFont('helvetica', 'bold');
-  doc.text('Código:', marginX + 125, y);
+  // CP-DOC-PDF-UX-004: etiqueta completa — nunca «Código:» genérico.
+  doc.text('Código del proveedor:', marginX + 125, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(model.proveedorCodigo || RES11_BLANK_LINE, marginX + 141, y);
+  doc.text(model.proveedorCodigo || RES11_BLANK_LINE, marginX + 158, y);
 
   y += 5;
   doc.setFont('helvetica', 'bold');
@@ -276,9 +277,10 @@ export async function renderSc201Pdf(model: Sc201ModelData) {
   doc.setFont('helvetica', 'normal');
   doc.text(model.solicitanteNombre || RES11_BLANK_LINE, marginX + 46, y, { maxWidth: 75 });
   doc.setFont('helvetica', 'bold');
-  doc.text('Código:', marginX + 125, y);
+  // CP-DOC-PDF-UX-004: etiqueta completa — nunca «Código:» genérico.
+  doc.text('Código del solicitante:', marginX + 125, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(model.solicitanteCodigo || RES11_BLANK_LINE, marginX + 141, y);
+  doc.text(model.solicitanteCodigo || RES11_BLANK_LINE, marginX + 158, y);
 
   y += 5;
   doc.setFont('helvetica', 'bold');
