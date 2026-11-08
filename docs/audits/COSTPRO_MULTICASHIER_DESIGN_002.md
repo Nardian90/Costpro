@@ -1,8 +1,8 @@
 # COSTPRO_MULTICASHIER_DESIGN_002 — Diseño técnico definitivo del sistema multicajero
 
-**Fecha:** 2026-11-07 (v1/v2) · **v3: 2026-11-08** · **v4: 2026-11-08 (misión 005)** · **v5: 2026-11-08 (misión 006)** · **v6: 2026-11-09 (misión 007)** · **Base:** `COSTPRO_MULTICASHIER_AUDIT_001.md` (PR #1563) · **Tipo:** diseño cerrado, sin implementación.
-**Repo:** Nardian90/Costpro · `origin/main` = `53e4af2b4` (verificado 2026-11-09 en la misión 007: avanza con CP-DOC-PDF-UX-004 PR #1569 y catálogo maestro — **sus dos migraciones nuevas no mencionan ninguna tabla de Caja** [MEDIDO: grep 0 menciones]; sin cambios en el módulo Caja) · rama del PR `audit/multicashier-001` (commits `3a9ebe931` · `f7c5ef690` · `d8cf1e925` · `d076c8d3a` cierre 004 · `534f08e0a` cierre 005 · `62195c253` cierre 006, 5 checks todos success · cierre 007 = este commit).
-**Revisiones:** v1 (misión 002, §D.2-D.13 — **OBSOLETA en parte**, ver AVISO) → v2 (misión 003, §D.14-D.15 — **OBSOLETA en parte**) → v3 (misión 004, §D.16-D.17 — **VIGENTE salvo lo corregido inline**) → v4 (misión 005, §D.18 — **VIGENTE salvo lo corregido inline**) → v5 (misión 006, §D.19 — **VIGENTE salvo lo corregido inline**) → **v6 (misión 007): §D.20 integridad exacta de las piernas y custodia financiera — VIGENTE.**
+**Fecha:** 2026-11-07 (v1/v2) · **v3: 2026-11-08** · **v4: 2026-11-08 (misión 005)** · **v5: 2026-11-08 (misión 006)** · **v6: 2026-11-09 (misión 007)** · **v7: 2026-11-09 (misión 008)** · **Base:** `COSTPRO_MULTICASHIER_AUDIT_001.md` (PR #1563) · **Tipo:** diseño cerrado, sin implementación.
+**Repo:** Nardian90/Costpro · `origin/main` = `53e4af2b4` (verificado 2026-11-09 en la misión 008: sin avance desde la v6; los avances previos son de catálogo maestro/auth/UI, **sin cambios en el módulo Caja** [MEDIDO: las 2 migraciones upstream no mencionan tablas cash]) · rama del PR `audit/multicashier-001` (commits `3a9ebe931` · `f7c5ef690` · `d8cf1e925` · `d076c8d3a` cierre 004 · `534f08e0a` cierre 005 · `62195c253` cierre 006 · `43697c8c1` cierre 007, 5 checks todos success · cierre 008 = este commit).
+**Revisiones:** v1 (misión 002, §D.2-D.13 — **OBSOLETA en parte**, ver AVISO) → v2 (misión 003, §D.14-D.15 — **OBSOLETA en parte**) → v3 (misión 004, §D.16-D.17 — **VIGENTE salvo lo corregido inline**) → v4 (misión 005, §D.18 — **VIGENTE salvo lo corregido inline**) → v5 (misión 006, §D.19 — **VIGENTE salvo lo corregido inline**) → v6 (misión 007, §D.20 — **VIGENTE salvo lo corregido inline**) → **v7 (misión 008): §D.21 cierre de ejecución transaccional y validación PostgreSQL real — VIGENTE.**
 **Decisión del propietario:** cada vendedor tiene **terminal + gaveta propios**: UNA TIENDA + UN ALMACÉN COMPARTIDO + N CAJAS FÍSICAS + N TERMINALES + N SESIONES FINANCIERAS INDEPENDIENTES.
 **Etiquetas:** [MEDIDO] catálogo vivo (prod agregado sin PII / E2E) · [EN CÓDIGO] archivo:línea · [DECISIÓN] decisión de diseño fundamentada · [SIM] simulación conceptual verificada con código versionado en `docs/audits/evidence/` · [SPEC E2E] prueba definida para la Fase F, NO ejecutada · [NO VERIFICADO] pendiente de censo/prueba.
 
@@ -10,7 +10,7 @@
 
 ## ⚠️ AVISO DE VIGENCIA — qué especificación es válida
 
-Este documento acumula seis revisiones. **La especificación VIGENTE es §D.16-D.17 (misión 004) con las capas correctivas de §D.18 (misión 005), §D.19 (misión 006) y §D.20 (misión 007), que prevalecen donde corrigen.** Las secciones anteriores se conservan como antecedente y evidencia; donde quedaron sustituidas llevan el banner `OBSOLETO — NO IMPLEMENTAR`. Un implementador debe seguir §D.16-D.20 (D.18, D.19 y D.20 como capas correctivas) y, para los conceptos no redefinidos allí (seguridad D.7, históricos D.9, escenarios E2E D.11), las secciones v1 señaladas como vigentes en la tabla:
+Este documento acumula siete revisiones. **La especificación VIGENTE es §D.16-D.17 (misión 004) con las capas correctivas de §D.18 (misión 005), §D.19 (misión 006), §D.20 (misión 007) y §D.21 (misión 008), que prevalecen donde corrigen.** Las secciones anteriores se conservan como antecedente y evidencia; donde quedaron sustituidas llevan el banner `OBSOLETO — NO IMPLEMENTAR`. Un implementador debe seguir §D.16-D.21 (D.18, D.19, D.20 y D.21 como capas correctivas) y, para los conceptos no redefinidos allí (seguridad D.7, históricos D.9, escenarios E2E D.11), las secciones v1 señaladas como vigentes en la tabla:
 
 | Sección | Estado | Especificación vigente |
 |---|---|---|
@@ -46,6 +46,10 @@ Este documento acumula seis revisiones. **La especificación VIGENTE es §D.16-D
 | D.19.4 (cadena de custodia) | **Parcialmente obsoleto** (FK simple de `previous_event_id` admite referencias cruzadas entre transferencias; sin exclusión de bifurcaciones) | §D.20.4 |
 | D.19.5 (saldo de tesorería) | **Parcialmente obsoleto** (la validación filtra por `holder_id=p_from_account` y no ve filas sin titular, que no tienen cuenta) | §D.20.3 |
 | D.19.6-D.19.8 (evidencia 006 y veredicto v5) | Histórico (la evidencia sigue reproducible; el veredicto queda sustituido) | §D.20.6 + §D.20.8 (v6) |
+| D.20.1, D.20.3, D.20.4, D.20.5 (huérfanas, saldo por ámbito, cadena, roles) | **VIGENTE** | — |
+| D.20.2 (conciliación exacta y triggers) | **Parcialmente obsoleto** (triggers ordinarios no diferibles; titular sin gaveta exacta; V3 sin `legs_total`) | §D.21.1 + §D.21.2 + §D.21.3 |
+| D.20.6 (limitación de validación PostgreSQL) | **Superada** (validación real ejecutada en PG 17.11) | §D.21.4 |
+| D.20.7-D.20.8 (criterios 007 y veredicto v6) | Histórico (el criterio se mantiene; el veredicto queda sustituido) | §D.21.5 + §D.21.6 (v7) |
 
 ---
 
@@ -1915,6 +1919,8 @@ Cualquier resultado >0 bloquea la aprobación del arqueo (I-12) y la conciliaci�
 
 ### D.20.2 — P0-2 · Conciliación EXACTA de las piernas monetarias
 
+> **⚠️ PARCIALMENTE OBSOLETO (corregido por misión 008, §D.21).** Los triggers de esta sección eran ordinarios `AFTER` (no diferibles): con escrituras cruzadas en una misma transacción ningún orden es seguro — sustituidos por **constraint triggers `DEFERRABLE INITIALLY DEFERRED`** (coherencia final al COMMIT, §D.21.1). El titular exige ahora la **gaveta física EXACTA** y la vigencia temporal de la sesión (§D.21.2), y V3 añade `legs_total`/`invalid_legs` para conciliar TODAS las filas asociadas (§D.21.3). El SQL de esta sección conserva su valor como especificación de partida; la versión definitiva ejecutada en PostgreSQL vive en `03_v3_reconciliation.sql`.
+
 **Defecto [CONFIRMADO en D.19.3]:** la CTE verifica existencia, cantidad, dirección e identificadores, pero NO la igualdad financiera: una OUT de 2 000 CUP con una IN de 1 500 CUP (o en otra moneda, tienda o titular) pasaría como consistente. **Invariante obligatoria:** para cada transferencia, OUT e IN corresponden al MISMO importe, moneda y tienda que `cash_transfers`, con `payment_method='cash'`, `ref_type='cash_transfer'`, `ref_id=transfer.id`, `store_id=transfer.store_id`, `amount=transfer.amount`, `currency=transfer.currency`, y el titular físico según el extremo y el estado:
 
 | Pierna | Condición de titular físico |
@@ -2110,6 +2116,8 @@ Matriz de responsabilidades: `requested_by` (crea la solicitud, RPC `request_cas
 
 ### D.20.6 — Evidencia reproducible y LIMITACIÓN de validación PostgreSQL
 
+> **NOTA (misión 008): la limitación de esta sección quedó SUPERADA** — la semántica SQL (CTE/V3, CHECKs, FK compuesta, constraint triggers) fue ejecutada contra un PostgreSQL 17.11 real desechable con resultados PASS: §D.21.4. Esta sección se conserva como antecedente.
+
 **Evidencia EJECUTADA en esta misión:** `docs/audits/evidence/multicashier_design_007_checks.py` — **39 asertos, todos OK** (puro Python estándar, sin red, sin credenciales, sin conexión a base de datos, sin escrituras; su cabecera declara que es una SIMULACIÓN CONCEPTUAL). Cobertura: huérfanas (01-09), conciliación exacta con los 12 casos de fallo (10-21), saldo por ámbito y concurrencia (22-26), cadena de custodia (27-34), responsabilidades separadas (35-38) e identidad (39). Los scripts de las misiones anteriores siguen reproducibles (005: 26 asertos; batería: 10 casos; 006: 39 asertos). La evidencia [MEDIDO] de producción permanece en el expediente separado (`multicashier_prod_readonly_2026-11-08.md`); **esta misión no ejecutó consultas nuevas** (la de partida seguía vigente) y ninguna simulación se presenta como prueba de base de datos.
 
 **Limitación declarada [NO VERIFICADO]:** la semántica SQL de D.20.1-D.20.4 (CTE de conciliación, CHECKs de cadena, FK compuesta, índices únicos parciales) **no ha sido ejecutada contra ningún PostgreSQL real**: el sandbox de auditoría no dispone de binarios de servidor PostgreSQL, ni de docker, ni de permisos de instalación (verificado). Es la validación pendiente más relevante del diseño. Procedimiento de reproducción (a ejecutar en el entorno del implementador, ANTES de la migración de Fase B — nunca contra producción ni contra el proyecto CostproE2E):
@@ -2141,8 +2149,127 @@ Los diez casos de fallo de D.20.2 y los seis de D.20.4 deben reproducir las fila
 | Evidencia versionada y reproducible | D.20.6 | script ejecutado (39 OK) |
 | Sin escrituras, migraciones ni cambios funcionales | Control del PR | git: solo docs + evidencia |
 
-### D.20.8 — Veredicto (misión 007 — VIGENTE)
+### D.20.8 — Veredicto (misión 007 — HISTÓRICO, sustituido por §D.21.6)
 
 Los cinco defectos quedan corregidos con especificación coherente: ninguna pierna huérfana puede clasificarse como movimiento válido (`ct.id` obligatorio en el CASE + V1e/V1f bloqueantes); la conciliación V3 verifica cantidad, identidad, dirección, medio, importe, moneda, tienda, titular y su correspondencia con el estado, con el retorno atribuido al origen, apoyada en dos triggers que impiden nacer o mutar piernas incoherentes; el saldo de tesorería valida la integridad del ledger por ÁMBITO (tienda+moneda), por lo que las filas sin titular —que no tienen cuenta— sí bloquean, y la serialización por lock impide gastar dos veces el saldo; la cadena de custodia es estructuralmente lineal (FK compuesta, sucesor único, evento inicial único, append-only) y las cinco responsabilidades operativas tienen campos propios.
 
-**DISEÑO CON OBSERVACIONES** — la única observación relevante pendiente es la **validación de la semántica SQL (CTE V3, CHECKs, FK compuesta, índices parciales) contra un PostgreSQL local desechable**, imposible de ejecutar en el entorno de esta misión (sin servidor, sin docker, sin permisos) y documentada con su procedimiento en D.20.6; debe completarse en el entorno del implementador ANTES de la migración de Fase B. Todo lo demás está demostrado por simulación conceptual versionada (39 asertos OK), con las clases de evidencia separadas y sin escrituras ni migraciones. Este veredicto no autoriza el inicio del desarrollo ni equivale a integridad financiera certificada — eso exige la Fase F (E2E contra datos reales); el propietario conserva la decisión.
+**DISEÑO CON OBSERVACIONES** — la única observación relevante pendiente era la **validación de la semántica SQL (CTE V3, CHECKs, FK compuesta, índices parciales) contra un PostgreSQL local desechable**, imposible de ejecutar en el entorno de la misión 007 (sin servidor, sin docker, sin permisos) y documentada con su procedimiento en D.20.6. **SUPERADA por la misión 008: la validación real fue ejecutada y aprobada — §D.21.4/§D.21.6.**
+
+---
+
+## D.21. Cierre de ejecución transaccional y validación PostgreSQL (misión COSTPRO-MULTICASHIER-DESIGN-008)
+
+**Capa correctiva VIGENTE sobre §D.20** (el AVISO DE VIGENCIA es el mapa). La revisión independiente de la misión 007 detectó tres defectos de ejecutabilidad y exigió la validación SQL real; esta sección los corrige y certifica. La arquitectura, entidades, estados, custodia, titularidad y la fórmula `SUM(sign*amount)` NO cambian. Evidencia: **[PG]** ejecutado contra PostgreSQL 17.11 REAL (no embebido, no simulado) en un clúster desechable local — expediente versionado `docs/audits/evidence/postgres_multicashier/` con su log `run_output_2026-11-09.log` · **[SIM]** las simulaciones de la misión 007 siguen reproducibles (39 asertos OK).
+
+### D.21.1 — P0-1 · Validación en dos capas: inmediata y DIFERIDA AL COMMIT
+
+**Defecto [CONFIRMADO en D.20.2]:** los triggers `ctr_legs_consistency` y `ctr_transfer_reconcile` eran triggers ordinarios `AFTER`, que disparan inmediatamente tras cada INSERT/UPDATE — pero `cash_transfers` y `payment_transactions` se referencian mutuamente dentro de la MISMA transacción (pierna OUT + estado + `leg_out_payment_id` + custodia). Insertar la pierna antes del estado deja al trigger viendo una transferencia `solicitada` con pierna; actualizar el estado antes de la pierna, un estado `entregada` sin pierna. **Ningún orden de escrituras con triggers ordinarios es seguro.**
+
+**Corrección [DECISIÓN, validada PG]:** dos capas con responsabilidades separadas.
+
+| Capa | Mecanismo | Qué valida | Cuándo |
+|---|---|---|---|
+| Inmediata | CHECKs (importe>0, titular XOR, matriz por estado, extremo receptor/retorno exacto) + FKs (extremos, sesiones/cuentas de la misma tienda — compuestas) + trigger ordinario `pt_immediate` | Formato de datos, importe positivo, moneda válida, existencia inicial de la transferencia (`ref_id NOT NULL` y EXISTS), medio `cash`, dirección `in/out`, tienda de la pierna | En la sentencia que escribe |
+| Diferida | **`CREATE CONSTRAINT TRIGGER … DEFERRABLE INITIALLY DEFERRED`** (`ctr_legs_final` en `payment_transactions`; `ctr_transfer_final` en `cash_transfers`), ambos llamando a `fn_reconcile_transfer_final` (V3) | Coherencia FINAL: cantidad de piernas (`legs_total`), identidad registrada, importe/moneda/tienda, titular físico definitivo con gaveta EXACTA y vigencia temporal, estado final | **Al COMMIT** (o al `SET CONSTRAINTS … IMMEDIATE`) |
+
+```sql
+-- ═══ EJECUTADO Y VALIDADO EN POSTGRESQL 17.11 [PG] ═══
+CREATE CONSTRAINT TRIGGER ctr_legs_final
+AFTER INSERT OR UPDATE OR DELETE ON payment_transactions
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION fn_ctr_legs_final();       -- concilia ref_id (V3)
+
+CREATE CONSTRAINT TRIGGER ctr_transfer_final
+AFTER INSERT OR UPDATE OF status, leg_out_payment_id, leg_in_payment_id,
+                           sent_from_session_id, received_in_session_id,
+                           received_in_account_id, return_in_session_id,
+                           return_in_account_id
+ON cash_transfers
+DEFERRABLE INITIALLY DEFERRED
+FOR EACH ROW EXECUTE FUNCTION fn_ctr_transfer_final();   -- concilia NEW.id (V3)
+```
+
+**Secuencia de entrega (validada [PG], P2):** (1) UUID de la pierna previsto; (2) INSERT de `payment_transactions` con ese id, `ref_type='cash_transfer'`, `ref_id`, importe, moneda y titular — las validaciones inmediatas no ven incoherencia porque la transferencia EXISTE; (3) UPDATE de `cash_transfers` a `entregada` con `leg_out_payment_id`, `sent_from_session_id` y `delivered_by` EN LA MISMA sentencia (la matriz por estado hace imposible el estado intermedio «entregada sin pierna»); (4) INSERT del evento inicial de custodia (`COALESCE(carrier, delivered_by)`); (5) `SET CONSTRAINTS ctr_legs_final, ctr_transfer_final IMMEDIATE` para que el error (si lo hay) salga DENTRO de la RPC con rollback limpio, y no en el COMMIT del llamante; (6) COMMIT externo. Recepción y devolución siguen el mismo patrón (pierna IN → estado+referencias → custodia → IMMEDIATE). Cancelación: sin piernas.
+
+**Semántica de `SET CONSTRAINTS` descubierta y documentada [PG]:** el modo fijado por `SET CONSTRAINTS … IMMEDIATE` **persiste para el resto de la transacción**: un INSERT de pierna posterior en la misma transacción pasa a validarse al final de la sentencia, con estado transitorio. Por eso cada función que escribe piernas **restaura `SET CONSTRAINTS … DEFERRED` al comenzar** y solo fuerza `IMMEDIATE` al terminar (validado: N9b pasó de un falso rechazo por V3-transitoria al rechazo estructural correcto por `ctr_received_account_is_dest`). Sin esta restauración, las operaciones encadenadas en una misma transacción se bloquean — exactamente el defecto que el pliego temía, ahora resuelto y documentado.
+
+**Errores y rollback [PG, verificado]:** cualquier capa que falle (`ERR_LEG_*` inmediato, `ERR_RECONCILE_FINAL` diferido, CHECK/FK estructural) aborta la transacción y **revierte íntegramente** — verificado por conteo posterior (N13: transferencia sigue `solicitada` con 0 piernas; Parte A de 06: COMMIT fallido deja 1 pierna y estado `entregada` intactos). **Idempotencia [PG]:** rellamada de `deliver` con la transferencia ya `entregada` devuelve la MISMA pierna sin escribir; rellamada de `request` con la misma clave devuelve el MISMO id (P9/P9b: 2 piernas pese al reintento). **Sin bloqueo permanente [PG]:** el orden inverso (estado antes de pierna) se rechaza de inmediato por FK/CHECK, la transacción revierte y el orden correcto se completa a continuación (bloque P+ de 04). Un trigger ordinario `AFTER` **no es diferible** — de ahí la obligación de usar constraint triggers para la capa final.
+
+### D.21.2 — P0-2 · Titular = gaveta física EXACTA, no solo la misma tienda
+
+**Defecto [CONFIRMADO en D.20.2]:** `v.cash_closure_id = ct.sent_from_session_id` demuestra igualdad de identificadores, no correspondencia física: dos sesiones de gavetas distintas de la misma tienda comparten `store_id`.
+
+**Corrección [DECISIÓN, validada PG] — cuatro mecanismos superpuestos:**
+
+1. **FKs compuestas** `(from_register_id|to_register_id|…_session_id|…_account_id, store_id) → (id, store_id)` de `cash_registers`/`cash_accounts`/`cash_closures`: toda sesión/cuenta usada pertenece ESTRUCTURALMENTE a la misma tienda que la transferencia (rechazo inmediato de cuentas y sesiones de otra tienda).
+2. **CHECKs de extremo exacto:** `ctr_received_account_is_dest` (`received_in_account_id = to_account_id`) y `ctr_return_account_is_origin` (`return_in_account_id = from_account_id`) — el retorno jamás va al destino.
+3. **Trigger diferido / V3** — el titular exacto exige la pertenencia de la sesión a la GAVETA y su vigencia TEMPORAL histórica:
+
+```sql
+-- Pierna OUT desde gaveta [fragmento ejecutado PG; versión completa en 03_v3_reconciliation.sql]:
+l.cash_closure_id = ct.sent_from_session_id AND l.cash_account_id IS NULL
+AND EXISTS (SELECT 1 FROM cash_closures cc
+             WHERE cc.id = ct.sent_from_session_id
+               AND cc.cash_register_id = ct.from_register_id      -- gaveta física EXACTA
+               AND cc.store_id = ct.store_id
+               AND cc.opened_at <= pt.at                          -- abierta al entregar
+               AND (cc.closed_at IS NULL OR cc.closed_at >= pt.at)) -- o cerrada DESPUÉS
+-- Pierna IN por recepción: cc.cash_register_id = ct.to_register_id;
+-- Pierna IN por devolución: cc.cash_register_id = ct.from_register_id (ORIGEN, jamás destino).
+-- Vigencia ACTUAL (sesión abierta ahora): guard de la RPC al confirmar.
+```
+
+4. **RPC:** autorización del actor, sesión abierta EN EL INSTANTE de la operación (vigencia actual) — la V3 revalida la vigencia histórica al COMMIT.
+
+**Sesión ≠ gaveta ≠ cuenta ≠ tienda** quedan separados: la sesión se usa SOLO como titular histórico del ledger, la gaveta como extremo físico permanente, la cuenta como titular de tesorería y la tienda como ámbito. Los seis casos negativos del pliego quedan rechazados [PG]: sesión emisora de otra gaveta (N8, diferido V3), sesión receptora de otra gaveta (titular exacto), sesión de otra tienda (FK compuesta), cuenta de otra tienda (N9/N9b: CHECK + FK compuesta), retorno a gaveta que no es el origen (N8 análogo al retorno) y recepción en sesión cerrada ANTES (N15a guard RPC; N15b diferido V3 — mientras que cerrar la sesión DESPUÉS de recibir sigue siendo válido, P+ de 04).
+
+### D.21.3 — P0-3 · V3 concilia TODAS las filas asociadas (`legs_total` / `invalid_legs`)
+
+**Defecto [CONFIRMADO en D.20.2]:** V3 contaba `out_all`/`in_all` y podía ignorar filas adicionales con dirección distinta o medio electrónico (p. ej. `cash_transfer/refund/zelle` clasificada electrónica) — una fila monetaria asociada a la transferencia quedaba fuera de la conciliación.
+
+**Corrección [DECISIÓN, validada PG]:** V3 ahora define `legs_total = count(ledger_id)` sobre **TODAS** las filas con `ref_type='cash_transfer' AND ref_id = ct.id` y `invalid_legs = filas asociadas que no cumplen identidad+finanzas+titular`. Matriz definitiva:
+
+| Estado | legs_total | OUT | IN | Inválidas |
+|---|---:|---:|---:|---:|
+| `solicitada` | 0 | 0 | 0 | 0 |
+| `cancelada` | 0 | 0 | 0 | 0 |
+| `entregada` | 1 | 1 | 0 | 0 |
+| `en_devolucion` | 1 | 1 | 0 | 0 |
+| `recibida` | 2 | 1 | 1 | 0 |
+| `recibida_en_cuenta` | 2 | 1 | 1 | 0 |
+| `devuelta` | 2 | 1 | 1 | 0 |
+
+La consulta devuelve fila (inconsistente) cuando el estado no cumple su renglón — `legs_total` fuerza que NO exista ninguna fila adicional (dirección extra, electrónica, `refund` o tercera pierna) fuera del conteo. **Casos de fallo obligatorios detectados [PG]:** OUT+IN correctas + fila adicional refund (N11: `legs_total=3`), + fila Zelle (N11b: medio incorrecto), + dirección inválida (N10: inmediato), + tercera OUT (Parte A: error EN EL COMMIT), + tercera IN (N12: `out_all=2`), identificador de pierna registrado incorrecto (`invalid_legs=1`, `out_exactas=0`). El SQL ejecutable completo (vista `v_cash_transfer_reconciliation`) está versionado en `03_v3_reconciliation.sql`; la fórmula `SUM(sign*amount)` y el saldo por ámbito de D.20.3 NO cambian.
+
+### D.21.4 — Validación REAL en PostgreSQL 17.11 (limitación de D.20.6 SUPERADA)
+
+**Entorno [PG]:** PostgreSQL **17.11** (Debian 17.11-0+deb13u1, x86_64) desechable — binarios oficiales extraídos sin root, clúster propio en socket UNIX local (puerto 5433), base `audit_mc` recreada en cada ejecución. Sin producción, sin CostproE2E, sin Supabase, sin credenciales, sin datos personales. Expediente versionado: `00_schema_minimal.sql` (8 tablas fieles al diseño), `01_constraints.sql`, `02_triggers.sql` (capas inmediata/diferida + funciones de especificación tipo RPC), `03_v3_reconciliation.sql`, `04_valid_fixtures.sql`, `05_invalid_fixtures.sql`, `06_assertions.sql`, `README.md`, `run_output_2026-11-09.log`. Reproducción: `bash scripts/run_postgres_validation.sh`.
+
+| Categoría exigida | Resultado |
+|---|---|
+| SQL validado sintácticamente | **SÍ** — 7 archivos cargados con `ON_ERROR_STOP=1` |
+| CHECKs ejecutados | **SÍ** — matriz por estado, extremo receptor/retorno, titular XOR, `event_seq>=1`, cadena |
+| Triggers ejecutados | **SÍ** — inmediato `pt_immediate`; constraint triggers diferidos `ctr_legs_final`/`ctr_transfer_final` disparados tanto por `SET CONSTRAINTS … IMMEDIATE` como EN EL COMMIT (Parte A) |
+| Transacciones completas ejecutadas | **SÍ** — 13 bloques positivos: solicitar; entregar desde gaveta; desde tesorería; recibir en sesión; en cuenta; solicitar devolución; devolver al origen; cancelar; reintentos idempotentes (solicitud y entrega); eventos de custodia sucesivos J→M→L; vigencia histórica (cierre de sesión después de recibir); orden inverso sin bloqueo permanente |
+| Casos negativos rechazados | **SÍ** — 22 (los 15 del pliego + N9b cuenta cruzada vía RPC + N11b fila electrónica + N15a/b desdoblado + N16-N19 de cadena: referencia cruzada por FK compuesta, bifurcación por sucesor único, segundo evento inicial, append-only) |
+| Reversiones verificadas | **SÍ** — por caso (estado y conteo de piernas intactos tras cada rechazo) y tras el COMMIT fallido de la Parte A; sin residuo (7 transferencias, 11 piernas, 12 eventos de custodia al final) |
+
+**Hallazgos de ejecutabilidad que la validación real produjo y la simulación NO podía ver:** (1) el modo `IMMEDIATE` de `SET CONSTRAINTS` persiste en la transacción — obliga a restaurar `DEFERRED` al inicio de cada función (D.21.1); (2) la matriz por estado como CHECK convierte el orden inverso en rechazo inmediato — el orden correcto es el único ejecutable y siempre completa; (3) la FK compuesta y los CHECKs estructurales capturan cruces de tienda ANTES de la capa diferida, dejando a V3 como red final y auditoría.
+
+### D.21.5 — Mapa de criterios de aceptación (misión 008)
+
+| Criterio | Resuelto en | Verificación |
+|---|---|---|
+| Los triggers no bloquean transiciones válidas / coherencia final en COMMIT | D.21.1 | [PG] P1-P10 + Parte A |
+| request/deliver/receive/return en transacciones completas; rollback íntegro | D.21.1 | [PG] 04 + verificación por caso |
+| V3 comprueba TODAS las filas; sin direcciones fuera de in/out ni electrónicas | D.21.3 | [PG] N10, N11, N11b, N12 |
+| Sesiones ↔ gaveta física exacta; cuentas ↔ tienda/extremo exacto; retorno al origen | D.21.2 | [PG] N7-N9b, B2/B3/B7 |
+| Pruebas positivas y negativas ejecutadas en PostgreSQL | D.21.4 | [PG] log versionado |
+| Reintentos sin duplicados; rollback verificado; expediente versionado | D.21.1/D.21.4 | [PG] P9/P9b, B5 |
+| Sin cambios funcionales ni en producción | Control del PR | git: solo docs + evidencia |
+
+### D.21.6 — Veredicto (misión 008 — VIGENTE)
+
+Las operaciones completas (solicitud, entrega desde gaveta y desde tesorería, recepción en sesión y en cuenta, devolución al origen, cancelación, reintentos idempotentes, cadena de custodia con reasignación) **se ejecutaron correctamente en PostgreSQL 17.11 real**; los 22 casos negativos fueron **rechazados** (inmediatamente o al COMMIT, según la capa) con **reversión íntegra verificada**; las tres correcciones de ejecutabilidad (validación diferida al COMMIT con su semántica `SET CONSTRAINTS` documentada, titular contra la gaveta física exacta con vigencia temporal, y conciliación total de filas con `legs_total`/`invalid_legs`) están implementadas en la especificación y **validadas**, sin contradicciones entre D.16-D.21 (el AVISO DE VIGENCIA y los banners marcan lo sustituido).
+
+**DISEÑO APROBABLE PARA IMPLEMENTACIÓN** — con las precondiciones ya establecidas en misiones anteriores (gate de activación por tienda, certificación E2E de la Fase F contra datos reales, y la migración transaccional de Fase B precedida de la réplica del expediente en el entorno del implementador). Esta aprobación autoriza el DISEÑO, no el inicio del desarrollo: la decisión sigue siendo del propietario. CI verde y simulaciones siguen sin sustituir la validación aquí registrada.
