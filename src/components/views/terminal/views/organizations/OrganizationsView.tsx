@@ -21,7 +21,7 @@
  * La denominación visible única es «Organizaciones».
  */
 import React, { useMemo, useState } from 'react';
-import { Plus, RefreshCw, Building2, MoreVertical, Eye, Edit, Trash2, AlertTriangle, Users, Store, UserX } from 'lucide-react';
+import { Plus, RefreshCw, Building2, MoreVertical, LayoutDashboard, Edit, Trash2, AlertTriangle, Users, Store, UserX } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import ActionMenu from '@/components/ui/ActionMenu';
@@ -39,7 +39,6 @@ import {
 import { useAuthStore, useUIStore } from '@/store';
 import { useOrganizations, useDeleteOrganization } from '@/hooks/api/useOrganizations';
 import { OrganizationFormModal } from './OrganizationFormModal';
-import { OrganizationDetailModal } from './OrganizationDetailModal';
 
 type SortKey = 'name' | 'status' | 'stores' | 'users';
 
@@ -50,7 +49,7 @@ export default function OrganizationsView() {
   // (pestañas Tiendas | Clientes y Proveedores; contexto org+tab en la URL).
   const setCurrentView = useUIStore(s => s.setCurrentView);
   const setOrganizationDetailState = useUIStore(s => s.setOrganizationDetailState);
-  const openAdminPage = (orgId: string, tab: 'tiendas' | 'terceros') => {
+  const openAdminPage = (orgId: string, tab: 'tiendas' | 'terceros' | 'catalogo' | 'resumen' | 'usuarios' | 'configuracion') => {
     setOrganizationDetailState(orgId, tab);
     setCurrentView('organization-detail');
   };
@@ -74,12 +73,9 @@ export default function OrganizationsView() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<{ id: string; name: string; is_active: boolean } | null>(null);
-  const [detailOrgId, setDetailOrgId] = useState<string | null>(null);
-  // «Ver detalle» mantiene el modal de lectura (resumen/catálogo/usuarios/
-  // configuración); la GESTIÓN (tiendas, terceros) vive en la página dedicada.
-  const openDetail = (orgId: string) => {
-    setDetailOrgId(orgId);
-  };
+  // CP-UX-ORG-STORES-003: el modal «Ver detalle» desaparece del producto —
+  // «Administración de la organización» (página dedicada) absorbe la
+  // totalidad de sus pestañas. Un solo centro de administración por org.
 
   const rows = data?.data || [];
   const summary = data?.summary;
@@ -294,21 +290,24 @@ export default function OrganizationsView() {
                       <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                         Opciones
                       </DropdownMenuLabel>
-                      {/* CP-UX-ORG-STORES-002: «Tiendas» y «Clientes y
-                          Proveedores» navegan a la página DEDICADA de la
-                          organización (pestaña correspondiente) — nunca un
-                          modal que limite el espacio de trabajo. */}
-                      <DropdownMenuItem onSelect={() => openAdminPage(org.id, 'tiendas')} className="gap-2 text-xs font-bold">
+                      {/* CP-UX-ORG-STORES-003: UNA entrada principal a la
+                          administración de la organización (página dedicada
+                          con pestañas Tiendas | C&yP | Catálogo Maestro |
+                          Resumen | Usuarios | Configuración). Los accesos
+                          directos abren la MISMA página en su pestaña — no
+                          existe ninguna segunda implementación ni el modal
+                          «Ver detalle» (eliminado). */}
+                      <DropdownMenuItem onSelect={() => openAdminPage(org.id, 'tiendas')} className="gap-2 text-xs font-black">
+                        <LayoutDashboard className="w-3.5 h-3.5" />
+                        Administración de la organización
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => openAdminPage(org.id, 'tiendas')} className="gap-2 text-xs font-bold text-muted-foreground">
                         <Store className="w-3.5 h-3.5" />
                         Tiendas
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => openAdminPage(org.id, 'terceros')} className="gap-2 text-xs font-bold">
+                      <DropdownMenuItem onSelect={() => openAdminPage(org.id, 'terceros')} className="gap-2 text-xs font-bold text-muted-foreground">
                         <Users className="w-3.5 h-3.5" />
                         Clientes y Proveedores
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => openDetail(org.id)} className="gap-2 text-xs font-bold">
-                        <Eye className="w-3.5 h-3.5" />
-                        Ver detalle
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onSelect={() => { setEditingOrg({ id: org.id, name: org.name, is_active: org.is_active }); setFormOpen(true); }}
@@ -440,11 +439,6 @@ export default function OrganizationsView() {
         open={formOpen}
         onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingOrg(null); }}
         organization={editingOrg}
-      />
-      <OrganizationDetailModal
-        orgId={detailOrgId}
-        onOpenChange={(open) => { if (!open) setDetailOrgId(null); }}
-        onEdit={(org) => { setDetailOrgId(null); setEditingOrg(org); setFormOpen(true); }}
       />
     </div>
   );

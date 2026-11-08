@@ -14,7 +14,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -129,10 +129,15 @@ describe('CatalogGovernanceSection — operaciones de gobernanza', () => {
 });
 
 describe('Cableado estático — integración en la aplicación', () => {
-  it('OrganizationDetailModal incluye la pestaña Catálogo y monta la sección de gobernanza', () => {
-    const s = readFileSync(resolve(process.cwd(), 'src/components/views/terminal/views/organizations/OrganizationDetailModal.tsx'), 'utf8');
-    expect(s).toMatch(/id: 'catalogo', label: 'Catálogo'/);
-    expect(s).toMatch(/<CatalogGovernanceSection orgId=\{org\.id\}/);
+  it('OrganizationAdminPage (Administración de la organización) incluye la pestaña Catálogo Maestro y monta la sección de gobernanza', () => {
+    // CP-UX-ORG-STORES-003: el tab «Catálogo» del antiguo modal «Ver detalle»
+    // vive ahora como pestaña propia de la página dedicada (mismo componente,
+    // mismos hooks y autorización server-side).
+    const s = readFileSync(resolve(process.cwd(), 'src/components/views/terminal/views/organizations/OrganizationAdminPage.tsx'), 'utf8');
+    expect(s).toMatch(/id: 'catalogo', label: 'Catálogo Maestro'/);
+    expect(s).toMatch(/<CatalogGovernanceSection\s+orgId=\{org\.id\}/);
+    // El antiguo anfitrión (modal «Ver detalle») fue eliminado del producto
+    expect(existsSync(resolve(process.cwd(), 'src/components/views/terminal/views/organizations/OrganizationDetailModal.tsx'))).toBe(false);
   });
 
   it('CreateProductModal crea identidad compartida cuando la tienda está conectada', () => {

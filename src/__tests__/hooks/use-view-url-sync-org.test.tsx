@@ -84,6 +84,32 @@ describe('useViewUrlSync — contexto de organización en la URL', () => {
     cleanup();
   });
 
+  it('montaje con tab=catalogo (pestaña absorbida del modal) → restaura esa pestaña', async () => {
+    window.history.replaceState(null, '', `/?view=organization-detail&org=${ORG_A}&tab=catalogo`);
+    const { useViewUrlSync } = await import('@/hooks/ui/useViewUrlSync');
+    (globalThis as any).__urlSyncModule = { useViewUrlSync };
+    render(<Probe />);
+    await waitFor(() => {
+      const st = useUIStore.getState();
+      expect(st.currentView).toBe('organization-detail');
+      expect(st.organizationDetailState.tab).toBe('catalogo');
+    });
+    cleanup();
+  });
+
+  it('tab desconocido en la URL → aterriza en la entrada principal (tiendas)', async () => {
+    window.history.replaceState(null, '', `/?view=organization-detail&org=${ORG_A}&tab=hackeado`);
+    const { useViewUrlSync } = await import('@/hooks/ui/useViewUrlSync');
+    (globalThis as any).__urlSyncModule = { useViewUrlSync };
+    render(<Probe />);
+    await waitFor(() => {
+      const st = useUIStore.getState();
+      expect(st.currentView).toBe('organization-detail');
+      expect(st.organizationDetailState.tab).toBe('tiendas');
+    });
+    cleanup();
+  });
+
   it('popstate (Back/Forward) restaura organización y pestaña desde la URL', async () => {
     const { useViewUrlSync } = await import('@/hooks/ui/useViewUrlSync');
     (globalThis as any).__urlSyncModule = { useViewUrlSync };

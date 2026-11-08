@@ -234,13 +234,14 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
       return utils;
     };
 
-    it('expone tabs Configuración | Resumen | Vitrina | Catálogo — sin tab de listado «Tiendas»', async () => {
+    it('expone tabs Configuración | Vitrina | Catálogo — sin Resumen (003) ni tab de listado «Tiendas»', async () => {
       const { getByRole, queryByRole } = await renderHub();
       expect(getByRole('heading', { name: 'Gestión de Tiendas' })).toBeTruthy();
       expect(getByRole('tab', { name: 'Configuración' })).toBeTruthy();
-      expect(getByRole('tab', { name: 'Resumen' })).toBeTruthy();
       expect(getByRole('tab', { name: 'Vitrina' })).toBeTruthy();
       expect(getByRole('tab', { name: 'Catálogo' })).toBeTruthy();
+      // CP-UX-ORG-STORES-003: el tablero consolidado salió de la navegación
+      expect(queryByRole('tab', { name: 'Resumen' })).toBeNull();
       // El listado organizativo ya no es tab del hub (vive en Organizaciones)
       expect(queryByRole('tab', { name: 'Tiendas' })).toBeNull();
       expect(queryByRole('tab', { name: 'KPIs' })).toBeNull();
@@ -256,29 +257,28 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
       });
     });
 
-    it('migra el valor legacy mgmt-hub-tab="kpis" al tab Resumen (mismo contenido)', async () => {
+    it('migra el valor legacy mgmt-hub-tab="kpis" a Configuración (el tablero salió de la navegación, 003)', async () => {
       localStorage.setItem(HUB_TAB_KEY, 'kpis');
       const { getByRole } = await renderHub();
       await waitFor(() => {
-        expect(getByRole('tab', { selected: true }).textContent).toBe('Resumen');
+        expect(getByRole('tab', { selected: true }).textContent).toBe('Configuración');
       });
       // El legacy se reescribe con el destino canónico
-      expect(localStorage.getItem(HUB_TAB_KEY)).toBe('resumen');
+      expect(localStorage.getItem(HUB_TAB_KEY)).toBe('settings');
     });
 
-    it('migra mgmt-hub-tab="stores" según el modo persistido: Resumen → tab Resumen', async () => {
+    it('migra mgmt-hub-tab="stores" (con o sin modo persistido) a Configuración', async () => {
       localStorage.setItem(HUB_TAB_KEY, 'stores');
       localStorage.setItem(STORE_MODE_KEY, 'summary');
       const { getByRole } = await renderHub();
       await waitFor(() => {
-        expect(getByRole('tab', { selected: true }).textContent).toBe('Resumen');
+        expect(getByRole('tab', { selected: true }).textContent).toBe('Configuración');
       });
-      expect(localStorage.getItem(HUB_TAB_KEY)).toBe('resumen');
+      expect(localStorage.getItem(HUB_TAB_KEY)).toBe('settings');
     });
 
-    it('migra mgmt-hub-tab="stores" según el modo persistido: Completa → tab Configuración', async () => {
-      localStorage.setItem(HUB_TAB_KEY, 'stores');
-      localStorage.setItem(STORE_MODE_KEY, 'full');
+    it('migra mgmt-hub-tab="resumen" (hub fase 1) a Configuración', async () => {
+      localStorage.setItem(HUB_TAB_KEY, 'resumen');
       const { getByRole } = await renderHub();
       await waitFor(() => {
         expect(getByRole('tab', { selected: true }).textContent).toBe('Configuración');
@@ -291,8 +291,8 @@ describe('G1.1 — Tests de render componentes MULTI-TIENDA', () => {
       const configTab = getByRole('tab', { name: 'Configuración' });
       expect(configTab).toHaveAttribute('tabindex', '0');
       fireEvent.keyDown(configTab, { key: 'ArrowRight' });
-      await waitFor(() => expect(getByRole('tab', { selected: true }).textContent).toBe('Resumen'));
-      fireEvent.keyDown(getByRole('tab', { name: 'Resumen' }), { key: 'ArrowLeft' });
+      await waitFor(() => expect(getByRole('tab', { selected: true }).textContent).toBe('Vitrina'));
+      fireEvent.keyDown(getByRole('tab', { name: 'Vitrina' }), { key: 'ArrowLeft' });
       await waitFor(() => expect(getByRole('tab', { selected: true }).textContent).toBe('Configuración'));
     });
   });

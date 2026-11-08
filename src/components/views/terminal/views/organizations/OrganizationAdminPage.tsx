@@ -1,40 +1,42 @@
 'use client';
 
 /**
- * CP-UX-ORG-STORES-002 — OrganizationAdminPage: página DEDICADA de
- * administración de una organización (sustituye el acceso por modal).
+ * CP-UX-ORG-STORES-002/003 — OrganizationAdminPage: página DEDICADA de
+ * administración de una organización («Administración de la organización»).
  *
- * ENTRADA (misión §2.A): SISTEMA → Organizaciones → tres puntos de la
- * organización → «Tiendas» (o «Clientes y Proveedores») → navega a esta
- * página (nunca un modal/drawer superpuesto).
+ * 003 — CONSOLIDACIÓN: absorbe la TOTALIDAD de las pestañas del antiguo
+ * modal «Ver detalle» (Resumen, Catálogo Maestro, Usuarios, Configuración),
+ * que se elimina del producto. Centro ÚNICO de administración:
  *
- * CONTEXTO EN LA URL: /?view=organization-detail&org=<uuid>&tab=<tiendas|terceros>
- * (useViewUrlSync) — refresh, deep-link y Back/Forward restauran la
- * organización y la pestaña. La autorización NO depende de la URL: cada API
- * valida el alcance server-side (superadmin todas / admin su empresa / otros
- * 403-404); un orgId manipulado solo produce un error de carga o un 404.
+ *   Tiendas                 → StoresManagementView scoped (server-side por org)
+ *   Clientes y Proveedores  → ClientesProveedoresView con tienda ANCLA
+ *   Catálogo Maestro        → CatalogGovernanceSection (gobernanza del
+ *                             catálogo compartido de la organización)
+ *   Resumen                 → identidad/estado/propietario/recuentos
+ *   Usuarios                → listado de perfiles asignados (solo lectura;
+ *                             la asignación vive en su módulo de SISTEMA)
+ *   Configuración           → datos soportados + edición (OrganizationFormModal)
  *
- * PESTAÑAS (ambas reutilizan los módulos existentes — cero duplicación):
- *  · Tiendas          → StoresManagementView scoped a la organización
- *                       (misma vista del hub, autorización server-side por
- *                       organization_id — misión CP-UX-ORG-STORES-001).
- *  · Clientes y       → ClientesProveedoresView (Clasificador Maestro) con
- *    Proveedores        tienda ANCLA de la organización: la identidad del
- *                       tercero ya vive por organización (master_parties
- *                       .tenant_id) y las RPCs derivan el tenant de la
- *                       tienda pasada, por lo que la autorización y las
- *                       reglas de negocio son EXACTAMENTE las del módulo
- *                       de Operación (acceso OPERACIÓN intacto y sin props).
+ * ENTRADA: SISTEMA → Organizaciones → tres puntos → «Administración de la
+ * organización» (o los accesos directos «Tiendas»/«Clientes y Proveedores»,
+ * que abren ESTA MISMA página en la pestaña correspondiente — no existen
+ * segundas implementaciones). Nunca un modal/drawer superpuesto.
  *
- * SIN DATOS RESIDUALES: todo el contenido depende de useOrganizationDetail
- * (query key ['organization-detail', orgId]) — al cambiar de organización la
- * clave cambia y, mientras carga, se muestra skeleton (nunca datos de la org
- * anterior). Las caches hijas quedan separadas por org:<id> / storeId.
+ * CONTEXTO EN LA URL: /?view=organization-detail&org=<uuid>&tab=<pestaña>
+ * (useViewUrlSync; pestaña desconocida → 'tiendas'). La autorización NO
+ * depende de la URL: cada API/RPC valida server-side (403/404).
+ *
+ * SIN DATOS RESIDUALES: todo depende de useOrganizationDetail
+ * (['organization-detail', orgId]) — cambio de org → nueva clave →
+ * skeleton mientras carga (nunca datos de la org anterior).
  */
 
 import React, { useMemo, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { ArrowLeft, Building2, Store, Users, AlertTriangle, RefreshCw, Loader2, Store as StoreIcon } from 'lucide-react';
+import {
+  ArrowLeft, Building2, Store, Users, AlertTriangle, RefreshCw, Loader2,
+  Store as StoreIcon, Package, LayoutDashboard, Settings,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore, useUIStore } from '@/store';
 import { isAdminLevel } from '@/lib/roles';
@@ -46,6 +48,13 @@ import type { OrganizationDetailTab } from '@/store';
 // Sub-vistas (módulos existentes, no se reconstruyen). Lazy como en el hub.
 const StoresManagementView = dynamic(() => import('@/components/views/terminal/views/stores/StoresManagementView'), { ssr: false });
 const ClientesProveedoresView = dynamic(() => import('@/components/views/terminal/views/classifier/ClientesProveedoresView').then(m => ({ default: m.ClientesProveedoresView })), { ssr: false });
+// CP-UX-ORG-STORES-003: pestañas absorbidas del antiguo «Ver detalle».
+// CatalogGovernanceSection ya era el contenido del tab «Catálogo» del modal —
+// mismos hooks (useMasterCatalog) y misma autorización server-side (RPCs
+// SECURITY DEFINER + RLS SELECT). Cero duplicación de gobernanza.
+const CatalogGovernanceSection = dynamic(() => import('@/components/views/terminal/views/organizations/CatalogGovernanceSection').then(m => ({ default: m.CatalogGovernanceSection })), { ssr: false });
+// Edición de la organización (mismo formulario que usa el listado).
+const OrganizationFormModal = dynamic(() => import('@/components/views/terminal/views/organizations/OrganizationFormModal').then(m => ({ default: m.OrganizationFormModal })), { ssr: false });
 // Dashboard avanzado por tienda — overlay de la tarjeta «Ver Dashboard» del
 // tab Tiendas (position:fixed, anfitrión movido del modal a esta página).
 const StoreDashboardView = dynamic(
@@ -63,6 +72,10 @@ const StoreDashboardView = dynamic(
 const TABS: Array<{ id: OrganizationDetailTab; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { id: 'tiendas', label: 'Tiendas', icon: Store },
   { id: 'terceros', label: 'Clientes y Proveedores', icon: Users },
+  { id: 'catalogo', label: 'Catálogo Maestro', icon: Package },
+  { id: 'resumen', label: 'Resumen', icon: LayoutDashboard },
+  { id: 'usuarios', label: 'Usuarios', icon: Users },
+  { id: 'configuracion', label: 'Configuración', icon: Settings },
 ];
 
 export default function OrganizationAdminPage() {
@@ -72,6 +85,9 @@ export default function OrganizationAdminPage() {
   const setOrganizationDetailTab = useUIStore(s => s.setOrganizationDetailTab);
 
   const isAuthorizedViewer = isAdminLevel(user?.role);
+
+  // Edición de la organización (absorbida del modal: «Editar configuración»).
+  const [editOpen, setEditOpen] = useState(false);
 
   // Sin contexto (entrada directa sin org) → listado de organizaciones.
   // Sin permisos de administración → estado denegado (el listado de
@@ -175,7 +191,7 @@ export default function OrganizationAdminPage() {
             </h2>
             {org && (
               <p className="text-xs text-muted-foreground mt-1">
-                Administración de la organización — tiendas y terceros asociados
+                Administración de la organización — tiendas, terceros, catálogo y configuración
                 {isFetching ? ' · actualizando…' : ''}
               </p>
             )}
@@ -228,7 +244,8 @@ export default function OrganizationAdminPage() {
       {/* ── Contenido (solo con la org del contexto cargada — sin datos residuales) ── */}
       {!isLoading && !isError && org && (
         <>
-          {/* Pestañas WAI-APG (patrón del producto: tabs con roving tabindex) */}
+          {/* Pestañas WAI-APG (patrón del producto: tabs con roving tabindex;
+              desplazamiento horizontal controlado para 6 secciones). */}
           <div className="border-b border-border">
             <div className="flex gap-1 -mb-px overflow-x-auto" role="tablist" aria-label="Secciones de la organización">
               {TABS.map((t, index) => {
@@ -314,8 +331,107 @@ export default function OrganizationAdminPage() {
                 </div>
               )
             )}
+
+            {tab === 'catalogo' && (
+              <CatalogGovernanceSection
+                orgId={org.id}
+                stores={stores.map(s => ({ id: s.id, name: s.name, is_active: s.is_active, is_archived: s.is_archived }))}
+              />
+            )}
+
+            {tab === 'resumen' && (
+              /* Absorbida del modal «Ver detalle»: identidad, estado,
+                 propietario y recuentos reales (misma query del detalle). */
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                <div className="rounded-lg border border-border p-3">
+                  <dt className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombre</dt>
+                  <dd className="font-bold">{org.name}</dd>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <dt className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estado</dt>
+                  <dd>
+                    <span className={cn('px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest', org.is_active ? 'bg-success/15 text-success' : 'bg-muted text-muted-foreground')}>
+                      {org.is_active ? 'Activa' : 'Inactiva'}
+                    </span>
+                  </dd>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <dt className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Propietario</dt>
+                  <dd className="font-bold">{org.owner_name || 'Sin propietario registrado'}</dd>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <dt className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Creación</dt>
+                  <dd className="font-mono text-xs">{org.created_at ? new Date(org.created_at).toLocaleString() : '-'}</dd>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <dt className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tiendas</dt>
+                  <dd className="font-black text-lg">{stores.length}</dd>
+                </div>
+                <div className="rounded-lg border border-border p-3">
+                  <dt className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Usuarios asignados</dt>
+                  <dd className="font-black text-lg">{(data?.users || []).length}</dd>
+                </div>
+              </dl>
+            )}
+
+            {tab === 'usuarios' && (
+              /* Absorbida del modal: listado SOLO LECTURA de perfiles
+                 asignados. La asignación/cambio de rol vive en su módulo de
+                 SISTEMA (useAssignUserOrganization) — no se duplica aquí. */
+              (data?.users || []).length === 0 ? (
+                <p className="text-xs text-muted-foreground font-bold py-6 text-center uppercase tracking-widest">
+                  Esta organización no tiene usuarios asignados
+                </p>
+              ) : (
+                <ul className="divide-y divide-border/60 rounded-xl border border-border" aria-label="Usuarios de la organización">
+                  {(data?.users || []).map(u => (
+                    <li key={u.id} className="flex items-center justify-between py-2.5 px-3 gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold truncate">{u.full_name}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono truncate">{u.email}</p>
+                      </div>
+                      <span className={cn('px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest shrink-0', u.is_active ? 'bg-success/15 text-success' : 'bg-destructive/10 text-destructive')}>
+                        {u.is_active ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )
+            )}
+
+            {tab === 'configuracion' && (
+              /* Absorbida del modal: datos soportados por el modelo + edición
+                 con el MISMO formulario del listado (OrganizationFormModal;
+                 useUpdateOrganization invalida ['organization-detail']). */
+              <div className="space-y-3 text-sm max-w-2xl">
+                <p className="text-xs text-muted-foreground font-bold">
+                  Opciones soportadas por el modelo actual: nombre y estado. La edición de planes/facturación no forma parte del alcance de esta vista.
+                </p>
+                <div className="rounded-lg border border-border p-3 space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombre</p>
+                  <p className="font-bold">{org.name}</p>
+                </div>
+                <div className="rounded-lg border border-border p-3 space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Estado</p>
+                  <p className="font-bold">{org.is_active ? 'Activa' : 'Inactiva'}</p>
+                </div>
+                <Button size="sm" onClick={() => setEditOpen(true)} className="uppercase text-xs font-black tracking-widest gap-2">
+                  <Settings className="w-3.5 h-3.5" aria-hidden="true" />
+                  Editar organización
+                </Button>
+              </div>
+            )}
           </div>
         </>
+      )}
+
+      {/* Edición de la organización (mismo formulario del listado) */}
+      {org && (
+        <OrganizationFormModal
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          organization={{ id: org.id, name: org.name, is_active: org.is_active }}
+        />
       )}
 
       {/* Dashboard avanzado overlay — «Ver Dashboard» desde una tarjeta del tab Tiendas */}

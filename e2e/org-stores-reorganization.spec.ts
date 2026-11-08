@@ -5,11 +5,11 @@
  * Flujos de la misión (§6) contra la app REAL (Browser → API → DB; sin mocks):
  *
  *   1 · Navegación: SISTEMA → Organizaciones lista las organizaciones del
- *       alcance; el hub Gestión de Tiendas expone los nuevos tabs
- *       (Configuración | Resumen | Vitrina | Catálogo).
- *   2 · Acceso evidente: la acción «Tiendas» de la organización abre el
- *       detalle en el tab de gestión con el banner de contexto y las tiendas
- *       de ESA organización.
+ *       alcance; el hub Gestión de Tiendas expone los tabs consolidados
+ *       (Configuración | Vitrina | Catálogo — SIN Resumen, 003).
+ *   2 · Acceso consolidado: «Administración de la organización» abre la
+ *       página dedicada (6 pestañas; el modal «Ver detalle» ya no existe)
+ *       con el banner de contexto y las tiendas de ESA organización.
  *   3 · Separación de datos (run aislado + superadmin): una segunda
  *       organización creada vía API muestra SOLO su tienda — ni las piloto
  *       A/B ni nada ajeno. La creación con organization_id fija el tenant
@@ -92,7 +92,9 @@ async function openOrgStoresTab(page: import('@playwright/test').Page, orgName: 
   const row = page.locator('tr', { hasText: orgName }).first();
   await expect(row).toBeVisible({ timeout: 20_000 });
   await row.getByRole('button', { name: `Opciones de ${orgName}` }).click();
-  await page.getByRole('menuitem', { name: 'Tiendas' }).click();
+  // CP-UX-ORG-STORES-003: opción principal consolidada (el modal «Ver
+  // detalle» desapareció del producto)
+  await page.getByRole('menuitem', { name: 'Administración de la organización' }).click();
   // La página dedicada toma el relevo (la URL refleja el contexto)
   await page.waitForURL(/view=organization-detail&org=/, { timeout: 30_000 });
   await expect(page.getByRole('heading', { name: orgName })).toBeVisible({ timeout: 30_000 });
@@ -115,9 +117,10 @@ test.describe('CP-UX-ORG-STORES-001 · Organizaciones y Gestión de Tiendas', ()
     await expect(page.getByRole('heading', { name: 'Gestión de Tiendas' })).toBeVisible({ timeout: 30_000 });
     const tablist = page.getByRole('tablist', { name: 'Secciones de Gestión' });
     await expect(tablist.getByRole('tab', { name: 'Configuración' })).toBeVisible();
-    await expect(tablist.getByRole('tab', { name: 'Resumen' })).toBeVisible();
     await expect(tablist.getByRole('tab', { name: 'Vitrina' })).toBeVisible();
     await expect(tablist.getByRole('tab', { name: 'Catálogo' })).toBeVisible();
+    // CP-UX-ORG-STORES-003: el tablero consolidado salió de la navegación
+    await expect(tablist.getByRole('tab', { name: 'Resumen' })).toHaveCount(0);
     // El listado organizativo ya NO es tab del hub (vive en Organizaciones)
     await expect(tablist.getByRole('tab', { name: 'Tiendas' })).toHaveCount(0);
   });
@@ -199,6 +202,45 @@ test.describe('CP-UX-ORG-STORES-001 · Organizaciones y Gestión de Tiendas', ()
     await expect(page.getByRole('heading', { name: orgName })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole('tab', { name: 'Clientes y Proveedores', selected: true })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole('heading', { name: 'Clientes y Proveedores' })).toBeVisible({ timeout: 30_000 });
+  });
+
+  test('3c · Consolidación: 6 pestañas, Catálogo Maestro propio y «Ver detalle» eliminado', async ({ page }) => {
+    test.skip(!pilotTenantId, 'Pilotos persistentes legacy sin organización: el flujo por organización se valida en run aislado');
+    const orgRows = await sb.select<{ name: string }>('tenants', `id=eq.${pilotTenantId}&select=name`);
+    const orgName = orgRows[0]?.name;
+    test.skip(!orgName, 'Organización de los pilotos no encontrada');
+
+    await injectSession(page, adminSession);
+    await openOrgStoresTab(page, orgName!);
+
+    // Las 6 pestañas consolidadas (las 4 del antiguo «Ver detalle» absorbidas)
+    const tabs = page.getByRole('tablist', { name: 'Secciones de la organización' });
+    for (const label of ['Tiendas', 'Clientes y Proveedores', 'Catálogo Maestro', 'Resumen', 'Usuarios', 'Configuración']) {
+      await expect(tabs.getByRole('tab', { name: label })).toBeVisible();
+    }
+
+    // Catálogo Maestro como pestaña PROPIA: gobernanza del catálogo de la org
+    await page.getByRole('tab', { name: 'Catálogo Maestro' }).click();
+    await page.waitForURL(/tab=catalogo/, { timeout: 20_000 });
+    await expect(page.getByText(/Tiendas conectadas|Productos maestros|Propuestas pendientes|Catálogo Maestro/i).first())
+      .toBeVisible({ timeout: 30_000 });
+
+    // Resumen (absorbida): identidad de la organización
+    await page.getByRole('tab', { name: 'Resumen', exact: true }).click();
+    await expect(page.getByText('Propietario')).toBeVisible({ timeout: 20_000 });
+
+    // Usuarios (absorbida) y Configuración (absorbida, con edición)
+    await page.getByRole('tab', { name: 'Usuarios' }).click();
+    await expect(page.getByText(/Usuarios de la organización|no tiene usuarios asignados/i).first()).toBeVisible({ timeout: 20_000 });
+    await page.getByRole('tab', { name: 'Configuración' }).click();
+    await expect(page.getByRole('button', { name: /Editar organización/ })).toBeVisible({ timeout: 20_000 });
+
+    // El menú ya NO ofrece «Ver detalle» (consolidación)
+    await page.goto('/?view=organizations');
+    const row = page.locator('tr', { hasText: orgName! }).first();
+    await row.getByRole('button', { name: `Opciones de ${orgName}` }).click();
+    await expect(page.getByRole('menuitem', { name: 'Ver detalle' })).toHaveCount(0);
+    await page.keyboard.press('Escape');
   });
 
   test('4 · Pestaña Configuración: edita la TIENDA ACTIVA, persiste y se restaura', async ({ page }) => {

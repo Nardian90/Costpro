@@ -185,17 +185,18 @@ beforeEach(() => {
 
 // ── 1 · Hub Gestión de Tiendas ──────────────────────────────────────
 
-describe('ManagementHubView — tabs reorganizados (CP-UX-ORG-STORES-001)', () => {
+describe('ManagementHubView — tabs consolidados (CP-UX-ORG-STORES-003)', () => {
   const renderHub = async () => {
     const Hub = (await import('@/components/views/terminal/views/management_hub/ManagementHubView')).default;
     render(<Hub />, { wrapper: Wrapper });
     await waitFor(() => expect(screen.getByRole('tablist', { name: 'Secciones de Gestión' })).toBeDefined());
   };
 
-  it('muestra Configuración | Resumen | Vitrina | Catálogo y ya NO el tab de listado «Tiendas»', async () => {
+  it('muestra Configuración | Vitrina | Catálogo — SIN tab Resumen y sin listado «Tiendas»', async () => {
     await renderHub();
     const labels = screen.getAllByRole('tab').map(t => t.textContent);
-    expect(labels).toEqual(['Configuración', 'Resumen', 'Vitrina', 'Catálogo']);
+    expect(labels).toEqual(['Configuración', 'Vitrina', 'Catálogo']);
+    expect(labels).not.toContain('Resumen');
     expect(labels).not.toContain('Tiendas');
   });
 
@@ -205,31 +206,32 @@ describe('ManagementHubView — tabs reorganizados (CP-UX-ORG-STORES-001)', () =
     await waitFor(() => expect(screen.getByTestId('store-edit-form-save')).toBeDefined());
   });
 
-  it("migración legacy: 'kpis' aterriza en Resumen (mismo contenido que el antiguo modo Resumen)", async () => {
+  it("migración legacy: 'kpis' aterriza en Configuración (el tablero consolidado salió de la navegación)", async () => {
     localStorage.setItem('mgmt-hub-tab', 'kpis');
     await renderHub();
-    await waitFor(() => expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Resumen'));
-    await waitFor(() => expect(screen.getByTestId('multi-store-dashboard-stub')).toBeDefined());
+    await waitFor(() => expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Configuración'));
+    expect(localStorage.getItem('mgmt-hub-tab')).toBe('settings');
   });
 
-  it("migración legacy: 'stores' con modo Resumen → tab Resumen (sin pérdida de contexto)", async () => {
+  it("migración legacy: 'stores' aterriza en Configuración (contenido equivalente, con o sin modo persistido)", async () => {
     localStorage.setItem('mgmt-hub-tab', 'stores');
     localStorage.setItem('mgmt-stores-view-mode', 'summary');
     await renderHub();
-    await waitFor(() => expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Resumen'));
+    await waitFor(() => expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Configuración'));
+    expect(localStorage.getItem('mgmt-hub-tab')).toBe('settings');
   });
 
-  it("migración legacy: 'stores' con modo Completa → tab Configuración (gestión → configuración de la tienda)", async () => {
-    localStorage.setItem('mgmt-hub-tab', 'stores');
-    localStorage.setItem('mgmt-stores-view-mode', 'full');
+  it("migración legacy: 'resumen' (hub fase 1) aterriza en Configuración", async () => {
+    localStorage.setItem('mgmt-hub-tab', 'resumen');
     await renderHub();
     await waitFor(() => expect(screen.getByRole('tab', { selected: true }).textContent).toBe('Configuración'));
+    expect(localStorage.getItem('mgmt-hub-tab')).toBe('settings');
   });
 });
 
-// ── 2 · Organizaciones → página dedicada (CP-UX-ORG-STORES-002) ────
+// ── 2 · Organizaciones → Administración de la organización (CP-UX-ORG-STORES-003) ────
 
-describe('Organizaciones — menú de tres puntos → página dedicada', () => {
+describe('Organizaciones — menú de tres puntos → Administración de la organización (CP-UX-ORG-STORES-003)', () => {
   vi.mock('@/hooks/api/useOrganizations', () => ({
     useOrganizations: () => ({
       data: {
@@ -264,35 +266,32 @@ describe('Organizaciones — menú de tres puntos → página dedicada', () => {
     await waitFor(() => expect(screen.getByText('Constructora del Este')).toBeDefined());
   };
 
-  it('acción «Tiendas» del menú NAVEGA a la página dedicada (no abre modal)', async () => {
+  it('opción principal «Administración de la organización» navega a la página dedicada (tab tiendas)', async () => {
     await renderOrgList();
     await userEvent.click(screen.getByRole('button', { name: 'Opciones de Constructora del Este' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Tiendas' }));
-    // Contexto organizativo fijado + navegación a la vista dedicada
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Administración de la organización' }));
     expect(h.setOrganizationDetailStateSpy).toHaveBeenCalledWith('org-1', 'tiendas');
     expect(h.setCurrentViewSpy).toHaveBeenCalledWith('organization-detail');
-    // Nada de modal: sin contenido de gestión montado en superposición
     expect(screen.queryByTestId('stores-management-stub')).toBeNull();
   });
 
-  it('acción «Clientes y Proveedores» navega a la página con tab terceros', async () => {
+  it('accesos directos «Tiendas» y «Clientes y Proveedores» abren la MISMA página en su pestaña', async () => {
     await renderOrgList();
+    await userEvent.click(screen.getByRole('button', { name: 'Opciones de Constructora del Este' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Tiendas' }));
+    expect(h.setOrganizationDetailStateSpy).toHaveBeenCalledWith('org-1', 'tiendas');
     await userEvent.click(screen.getByRole('button', { name: 'Opciones de Constructora del Este' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Clientes y Proveedores' }));
     expect(h.setOrganizationDetailStateSpy).toHaveBeenCalledWith('org-1', 'terceros');
     expect(h.setCurrentViewSpy).toHaveBeenCalledWith('organization-detail');
   });
 
-  it('«Ver detalle» mantiene el modal de lectura SIN tab de gestión de tiendas', async () => {
+  it('la opción «Ver detalle» DESAPARECIÓ del menú (consolidación — sin segunda página administrativa)', async () => {
     await renderOrgList();
     await userEvent.click(screen.getByRole('button', { name: 'Opciones de Constructora del Este' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Ver detalle' }));
-    await waitFor(() => expect(screen.getByRole('tablist', { name: 'Secciones del detalle' })).toBeDefined());
-    const labels = screen.getAllByRole('tab').map(t => t.textContent);
-    expect(labels).toEqual(expect.arrayContaining(['Resumen', 'Catálogo', 'Usuarios (1)', 'Configuración']));
-    // La gestión de tiendas ya NO vive en el modal (vive en la página dedicada)
-    expect(labels).not.toContain('Tiendas (2)');
-    expect(screen.queryByTestId('stores-management-stub')).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'Ver detalle' })).toBeNull();
+    // Y no existe ninguna instancia del antiguo modal en el árbol renderizado
+    expect(screen.queryByRole('tablist', { name: 'Secciones del detalle' })).toBeNull();
   });
 });
 

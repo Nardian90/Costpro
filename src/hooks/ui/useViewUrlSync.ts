@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useUIStore, type ViewType } from '@/store';
+import type { OrganizationDetailTab } from '@/store';
 import { normalizeLegacyView, HOME_VIEW } from '@/config/navigation/navigation-definition';
 
 /**
@@ -33,6 +34,13 @@ import { normalizeLegacyView, HOME_VIEW } from '@/config/navigation/navigation-d
  * re-montar la página. Next.js ≥14.1 sincroniza useSearchParams con
  * pushState/popstate nativos (HelpView ?doc= sigue funcionando).
  */
+
+// CP-UX-ORG-STORES-003: pestañas válidas de la página dedicada (union del
+// tipo OrganizationDetailTab). Un tab desconocido en la URL aterriza en la
+// entrada principal ('tiendas') — nunca en un estado inválido.
+export const ORGANIZATION_DETAIL_TABS: ReadonlySet<string> = new Set([
+  'tiendas', 'terceros', 'catalogo', 'resumen', 'usuarios', 'configuracion',
+]);
 
 function canonicalSearch(view: string, tab?: string, org?: string | null): string {
   // Home limpia: '/' representa el dashboard (un solo concepto Inicio)
@@ -113,7 +121,7 @@ export function useViewUrlSync() {
       // Sin org en la URL la página no tiene contexto → redirigir al listado
       // de organizaciones (misma estrategia que HelpView sin ?doc=).
       if (fromUrl.org) {
-        setOrganizationDetailState(fromUrl.org, fromUrl.tab === 'terceros' ? 'terceros' : 'tiendas');
+        setOrganizationDetailState(fromUrl.org, ORGANIZATION_DETAIL_TABS.has(fromUrl.tab ?? '') ? (fromUrl.tab as OrganizationDetailTab) : 'tiendas');
       } else {
         setCurrentView('organizations');
       }
@@ -166,7 +174,7 @@ export function useViewUrlSync() {
         // CP-UX-ORG-STORES-002: Back/Forward restaura organización y pestaña;
         // sin org → listado de organizaciones (mismo criterio del montaje).
         if (fromUrl?.org) {
-          setOrganizationDetailState(fromUrl.org, fromUrl.tab === 'terceros' ? 'terceros' : 'tiendas');
+          setOrganizationDetailState(fromUrl.org, ORGANIZATION_DETAIL_TABS.has(fromUrl.tab ?? '') ? (fromUrl.tab as OrganizationDetailTab) : 'tiendas');
         } else {
           setCurrentView('organizations');
         }
