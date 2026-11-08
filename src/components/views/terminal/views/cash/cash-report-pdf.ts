@@ -179,6 +179,10 @@ export interface CashReportPdfContext {
     included: number;
     total: number;
     filterLabel?: string;
+    /** MISIÓN FILTRO MULTIUSUARIO (2026-11-08): conjunto por CREADOR incluido
+     *  («Todos los usuarios» | «Usuario X» | «N usuarios seleccionados») —
+     *  se imprime en el anexo de auditoría junto al filtro de composición. */
+    userLabel?: string;
   };
 }
 
@@ -861,7 +865,9 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     `Base: efectivo físico por moneda (hoja CUP y hoja USD) · equivalencias contables en línea propia`,
     `Generado: ${new Date().toLocaleString('es-CU')}`,
     estCfgConceptos,
-    `Ventas: ${estandarCounts.seleccionadas} incluidas de ${estandarCounts.validas} válidas del período` + (ctx.selectionMeta?.filterLabel ? ` · Filtro: ${ctx.selectionMeta.filterLabel}` : ''),
+    `Ventas: ${estandarCounts.seleccionadas} incluidas de ${estandarCounts.validas} válidas del período`
+      + (ctx.selectionMeta?.filterLabel ? ` · Filtro: ${ctx.selectionMeta.filterLabel}` : '')
+      + (ctx.selectionMeta?.userLabel && ctx.selectionMeta.userLabel !== 'Todos los usuarios' ? ` · Usuarios: ${ctx.selectionMeta.userLabel}` : ''),
     'Convención de signos: diferencia = personalizado − oficial (positivo: el personalizado excede al oficial)',
   ]) {
     doc.text(line, m, y); y += 3.4;

@@ -95,6 +95,12 @@ export interface SaleRow {
   customer_name?: string | null;
   reference?: string | null;
   status?: string;
+  /** MISIÓN FILTRO MULTIUSUARIO (2026-11-08): usuario que CREÓ la venta
+   *  (transactions.seller_id — p_seller_id del checkout POS). NO es paid_by
+   *  (quien cobró) ni el último modificador. null = no identificable. */
+  seller_id?: string | null;
+  /** Nombre resuelto en servidor (profiles.first_name + last_name) o null. */
+  seller_name?: string | null;
   /** 'ledger' = filas de pago autoritativas · 'reconstruction' = heurística
    *  histórica · 'no-items' = venta sin ítems reconstruida por pools. */
   source: 'ledger' | 'reconstruction' | 'no-items';
@@ -130,6 +136,111 @@ export function classifySaleByPayments(row: Pick<SaleRow, 'buckets'>): SaleCurre
   if (only === 'CUP') return 'CUP';
   if (only === 'USD') return 'USD';
   return 'OTRA';
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MISIÓN FILTRO MULTIUSUARIO (2026-11-08) · Tarjetas por usuario creador
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** Clave del grupo «Usuario no identificado» (ventas sin seller_id). */
+export const USER_UNASSIGNED_KEY = '__sin_usuario__';
+
+/** Clave de agrupación de una fila por su CREADOR (seller_id; null → grupo). */
+export function saleRowUserKey(row: Pick<SaleRow, 'seller_id'>): string {
+  return row.seller_id || USER_UNASSIGNED_KEY;
+}
+
+/** Tarjeta de usuario: agregación por CREADOR (mismo criterio del reporte). */
+export interface SalesByUserCard {
+  /** seller_id o null = Usuario no identificado. */
+  sellerId: string | null;
+  key: string;
+  /** Nombre resuelto (server) — null ⇒ la vista muestra el fallback. */
+  sellerName: string | null;
+  transactionCount: number;
+  /** Σ amount_cup de los buckets del usuario (equivalente CUP canónico). */
+  totalCup: number;
+  /** Importes NATIVOS por moneda del cobro (sin mezclar). */
+  native: Array<{ currency: string; total: number }>;
+}
+
+/**
+ * Agregación por usuario creador sobre filas de venta — MISMA reconstrucción
+ * que /api/cash-report (buckets por método × moneda). Es el FALLBACK del
+ * cliente cuando la respuesta no trae `sales_by_user` y la fuente de las
+ * pruebas unitarias del criterio. Σ totalCup de todas las tarjetas (incluido
+ * el grupo no identificado) reconciilia con el total del universo de filas.
+ */
+export function aggregateSalesByUser(rows: readonly SaleRow[] | null | undefined): SalesByUserCard[] {
+  const map = new Map<string, { sellerId: string | null; transactionCount: number; totalCup: number; native: Map<string, number> }>();
+  for (const row of rows || []) {
+    const key = saleRowUserKey(row);
+    let g = map.get(key);
+    if (!g) { g = { sellerId: row.seller_id || null, transactionCount: 0, totalCup: 0, native: new Map() }; map.set(key, g); }
+    g.transactionCount += 1;
+    for (const b of row.buckets || []) {
+      g.totalCup += num(b.amount_cup);
+      const cur = normCur(b.currency);
+      g.native.set(cur, (g.native.get(cur) || 0) + num(b.amount));
+    }
+  }
+  return [...map.values()]
+    .map(g => ({
+      sellerId: g.sellerId,
+      key: g.sellerId || USER_UNASSIGNED_KEY,
+      sellerName: null,
+      transactionCount: g.transactionCount,
+      totalCup: Math.round(g.totalCup * 100) / 100,
+      native: [...g.native.entries()]
+        .map(([currency, total]) => ({ currency, total: Math.round(total * 100) / 100 }))
+        .sort((a, b) => a.currency.localeCompare(b.currency)),
+    }))
+    .sort((a, b) => b.totalCup - a.totalCup || b.transactionCount - a.transactionCount);
+}
+
+/** Normaliza el agregado del servidor (sales_by_user) a tarjetas de la vista. */
+export function toUserCardsFromServer(
+  payload: unknown,
+): { cards: SalesByUserCard[]; totalCup: number } | null {
+  if (!Array.isArray(payload)) return null;
+  const cards: SalesByUserCard[] = [];
+  let total = 0;
+  for (const raw of payload) {
+    const g = raw as { seller_id?: string | null; seller_name?: string | null; transaction_count?: number; total_cup?: number; native?: Array<{ currency: string; total: number }> };
+    if (typeof g.total_cup !== 'number' && typeof g.transaction_count !== 'number') return null;
+    const key = g.seller_id || USER_UNASSIGNED_KEY;
+    cards.push({
+      sellerId: g.seller_id || null,
+      key,
+      sellerName: g.seller_name ?? null,
+      transactionCount: Number(g.transaction_count) || 0,
+      totalCup: Number(g.total_cup) || 0,
+      native: Array.isArray(g.native)
+        ? g.native.filter((n): n is { currency: string; total: number } => !!n && typeof n.currency === 'string')
+        : [],
+    });
+    total += Number(g.total_cup) || 0;
+  }
+  return { cards, totalCup: Math.round(total * 100) / 100 };
+}
+
+/**
+ * Ids de ventas EXCLUIDAS por la selección de usuarios: toda fila cuyo
+ * creador no pertenece al conjunto seleccionado. Con 'all' no excluye nada.
+ * El resultado se une a la exclusión MANUAL (excludedSales) en la vista, de
+ * modo que el filtro por usuario es un FILTRO REAL sobre el mismo pipeline
+ * que ya gobierna pantalla, vista previa, PDF, Excel y Word.
+ */
+export function userSelectionExcludedIds(
+  rows: readonly SaleRow[],
+  selection: 'all' | ReadonlySet<string>,
+): Set<string> {
+  if (selection === 'all') return new Set<string>();
+  const out = new Set<string>();
+  for (const row of rows) {
+    if (!selection.has(saleRowUserKey(row))) out.add(row.id);
+  }
+  return out;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

@@ -100,6 +100,13 @@ import {
   buildItemsSummaryForSales,
   computeSelectedSalesTotals,
   selectionMethodLabel,
+  // MISIÓN FILTRO MULTIUSUARIO (2026-11-08): tarjetas por usuario CREADOR.
+  USER_UNASSIGNED_KEY,
+  saleRowUserKey,
+  aggregateSalesByUser,
+  toUserCardsFromServer,
+  userSelectionExcludedIds,
+  type SalesByUserCard,
   type SaleRow,
   type SummaryConceptsSelection,
   type SummaryConceptKey,
@@ -200,6 +207,13 @@ export default function CashReportView() {
   const [excludedSales, setExcludedSales] = useState<ReadonlySet<string>>(() => new Set<string>());
   // Filtro por composición REAL de los pagos (CUP/USD/Mixta) — no conversión.
   const [saleClassFilter, setSaleClassFilter] = useState<'' | SaleCurrencyClass>('');
+
+  // ══ MISIÓN FILTRO MULTIUSUARIO (2026-11-08) · Selección de usuarios CREADORES ══
+  // 'all' = Todos los usuarios (default). Un Set de claves selecciona uno o
+  // varios (multi-selección; USER_UNASSIGNED_KEY = «Usuario no identificado»).
+  // NO se persiste: se reconstruye al cambiar período/tienda (misma regla que
+  // la selección de ventas — un reporte de otro período nunca hereda filtros).
+  const [selectedUsers, setSelectedUsers] = useState<'all' | Set<string>>('all');
   // Acordeón de grupos de ventas (solo con sales_rows) + carga incremental.
   const [expandedSaleGroups, setExpandedSaleGroups] = useState<Set<string>>(new Set());
   const [saleRowsLimit, setSaleRowsLimit] = useState<Record<string, number>>({});
@@ -339,6 +353,43 @@ export default function CashReportView() {
     () => ((applied?.report as { sales_rows?: SaleRow[] } | undefined)?.sales_rows) ?? [],
     [applied],
   );
+
+  // ══ MISIÓN FILTRO MULTIUSUARIO · tarjetas + exclusión derivada ══
+  // Tarjetas: agregación EN SERVIDOR (sales_by_user, universo completo — el
+  // navegador no carga todas las ventas para calcularlas). Fallback cliente:
+  // agrega sobre las filas cargadas. Usuarios SIN ventas no generan tarjeta
+  // (el agregado solo contiene usuarios con ventas del período/filtros).
+  const userCards = useMemo<SalesByUserCard[]>(() => {
+    const fromServer = toUserCardsFromServer(
+      (applied?.report as { sales_by_user?: unknown } | undefined)?.sales_by_user,
+    );
+    if (fromServer && fromServer.cards.length > 0) return fromServer.cards;
+    return aggregateSalesByUser(salesRows);
+  }, [applied, salesRows]);
+  const userCardsTotalCup = useMemo(
+    () => Math.round(userCards.reduce((sum, c) => sum + c.totalCup, 0) * 100) / 100,
+    [userCards],
+  );
+  const userSelectionActive = selectedUsers !== 'all';
+  // Ventas EXCLUIDAS por el filtro de usuarios (capa que se une a la manual).
+  const userExcludedIds = useMemo(
+    () => userSelectionExcludedIds(salesRows, selectedUsers),
+    [salesRows, selectedUsers],
+  );
+  // Universo VISIBLE (usuarios seleccionados) para la tabla por fila: los
+  // checkboxes de fila operan dentro del filtro y no hay contradicción visual.
+  const salesRowsForUsers = useMemo(
+    () => (userSelectionActive ? salesRows.filter(r => !userExcludedIds.has(r.id)) : salesRows),
+    [salesRows, userExcludedIds, userSelectionActive],
+  );
+  // Exclusión EFECTIVA = manual ∪ por usuarios: ÚNICA entrada del pipeline que
+  // gobierna pantalla, resumen, desgloses, vista previa, PDF, Excel y Word.
+  const effectiveExcluded = useMemo(() => {
+    if (userExcludedIds.size === 0) return excludedSales;
+    const next = new Set(excludedSales);
+    for (const id of userExcludedIds) next.add(id);
+    return next;
+  }, [excludedSales, userExcludedIds]);
   const selection = useMemo(() => {
     if (!applied?.report) {
       return {
@@ -348,8 +399,29 @@ export default function CashReportView() {
         rows: [] as readonly SaleRow[],
       };
     }
-    return buildSelectionAdjustedReport(applied.report, salesRows, excludedSales);
-  }, [applied, salesRows, excludedSales]);
+    return buildSelectionAdjustedReport(applied.report, salesRows, effectiveExcluded);
+  }, [applied, salesRows, effectiveExcluded]);
+  const toggleUserCard = useCallback((key: string) => {
+    setSelectedUsers(prev => {
+      if (prev === 'all') {
+        // Desde «Todos»: el primer clic SELECCIONA SOLO ese usuario (búsqueda
+        // de una persona); los siguientes clics añaden/quitan (multi).
+        return new Set([key]);
+      }
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      if (next.size === 0) return 'all'; // sin selección ⇒ universo completo
+      return next;
+    });
+  }, []);
+  const selectAllUsers = useCallback(() => setSelectedUsers('all'), []);
+  const selectedUsersCount = selectedUsers === 'all' ? userCards.length : selectedUsers.size;
+  const userFilterLabel = useMemo(() => {
+    if (!userSelectionActive) return 'Todos los usuarios';
+    const names = userCards.filter(c => selectedUsers.has(c.key))
+      .map(c => c.sellerName || (c.sellerId ? `Usuario ${(c.sellerId || '').slice(0, 8)}…` : 'Usuario no identificado'));
+    return names.length <= 2 ? names.join(' + ') : `${names.length} usuarios seleccionados`;
+  }, [userSelectionActive, selectedUsers, userCards]);
   // La selección se RECONSTRUYE al cambiar de tienda o período (misión §6:
   // nunca hereda registros de otro día/tienda). El cambio de filtro de
   // composición NO la borra (misión §3.2).
@@ -357,6 +429,7 @@ export default function CashReportView() {
     setExcludedSales(new Set<string>());
     setExpandedSaleGroups(new Set());
     setSaleRowsLimit({});
+    setSelectedUsers('all'); // MISIÓN FILTRO MULTIUSUARIO: nuevo universo ⇒ Todos
   }, [applied?.cfg.startDate, applied?.cfg.endDate, user?.activeStoreId]);
 
   // ── AUDITORÍA 2026-10: Resumen del Día con la fórmula centralizada (misma que PDF) ──
@@ -427,8 +500,8 @@ export default function CashReportView() {
   // de composición ACTIVO (cargadas o no — el conjunto vive en memoria y es
   // determinista; se comunica con toast para que no sorprenda).
   const salesRowsForFilter = useMemo(
-    () => (saleClassFilter ? salesRows.filter(r => classifySaleByPayments(r) === saleClassFilter) : salesRows),
-    [salesRows, saleClassFilter],
+    () => (saleClassFilter ? salesRowsForUsers.filter(r => classifySaleByPayments(r) === saleClassFilter) : salesRowsForUsers),
+    [salesRowsForUsers, saleClassFilter],
   );
   const toggleSaleExcluded = useCallback((id: string) => {
     setExcludedSales(prev => {
@@ -457,7 +530,9 @@ export default function CashReportView() {
     included: selection.totals.includedCount,
     total: selection.totals.totalCount,
     filterLabel: saleClassFilter ? (saleClassFilter === 'MIXTA' ? 'Mixta' : saleClassFilter === 'OTRA' ? 'Otra moneda' : saleClassFilter) : undefined,
-  }), [selection.totals, saleClassFilter]);
+    // MISIÓN FILTRO MULTIUSUARIO: el documento documenta el conjunto por creador.
+    userLabel: userFilterLabel,
+  }), [selection.totals, saleClassFilter, userFilterLabel]);
 
   // Denominaciones visibles: activadas ∪ personalizadas ∪ con conteo (nada contado se oculta)
   const cupDisplayDenoms = useMemo(() => {
@@ -688,9 +763,11 @@ export default function CashReportView() {
   }), [selection, applied, summaryConcepts, selectionMeta]);
   const applySelectionToSummaries = useCallback((summaries: CashReportSummaries | undefined): CashReportSummaries | undefined => {
     if (!summaries || !selection.selectionActive) return summaries;
-    const selectedRows = salesRows.filter(r => !excludedSales.has(r.id));
+    // MISIÓN FILTRO MULTIUSUARIO: la tabla por producto se recalcula sobre el
+    // universo visible (usuarios seleccionados) menos la exclusión MANUAL.
+    const selectedRows = salesRowsForUsers.filter(r => !excludedSales.has(r.id));
     return { ...summaries, itemsSummary: buildItemsSummaryForSales(selectedRows) };
-  }, [selection.selectionActive, salesRows, excludedSales]);
+  }, [selection.selectionActive, salesRowsForUsers, excludedSales]);
 
   const buildPreview = useCallback(async (force = false) => {
     if (!applied?.report) return;
@@ -904,6 +981,18 @@ export default function CashReportView() {
   // (flex) que cede espacio del reporte mediante redistribución controlada —
   // el reporte permanece VISIBLE y UTILIZABLE mientras el panel está abierto.
   const [configOpen, setConfigOpen] = useState(false);
+  // MISIÓN PANELES DESPLEGABLES (2026-11-08): cada apartado de configuración
+  // funciona como ACORDEÓN independiente, RECOGIDO POR DEFECTO al entrar.
+  // Abrir/cerrar no recalcula datos (solo visibilidad) y no pierde selecciones
+  // (el estado de cada opción vive en su propietario, no en el DOM plegado).
+  const [openConfigSections, setOpenConfigSections] = useState<Set<string>>(() => new Set());
+  const toggleConfigSection = useCallback((id: string) => {
+    setOpenConfigSections(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
   const configPanelRef = useRef<HTMLElement>(null);
   const configTriggerRef = useRef<HTMLButtonElement>(null);
 
@@ -1163,7 +1252,9 @@ export default function CashReportView() {
                 customResult={customResultsView?.CUP ?? null}
                 onToggleConcept={toggleSummaryConcept}
                 onSetAllConcepts={setAllSummaryConcepts}
-                salesRows={salesRows}
+                // MISIÓN FILTRO MULTIUSUARIO: el panel opera sobre el universo
+                // visible (usuarios seleccionados); la exclusión manual aplica encima.
+                salesRows={salesRowsForUsers}
                 salesRowsTruncated={!!(applied?.report as { sales_rows_truncated?: boolean } | undefined)?.sales_rows_truncated}
                 excludedSales={excludedSales}
                 onToggleSale={toggleSaleExcluded}
@@ -1174,6 +1265,13 @@ export default function CashReportView() {
                 setExpandedSaleGroups={setExpandedSaleGroups}
                 saleRowsLimit={saleRowsLimit}
                 setSaleRowsLimit={setSaleRowsLimit}
+                userCards={userCards}
+                selectedUsers={selectedUsers}
+                onToggleUserCard={toggleUserCard}
+                onSelectAllUsers={selectAllUsers}
+                selectedUsersCount={selectedUsersCount}
+                userCardsTotalCup={userCardsTotalCup}
+                userFilterLabel={userFilterLabel}
               />
             )}
 
@@ -1305,9 +1403,15 @@ export default function CashReportView() {
             </header>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-5">
-              {/* ── Tipo de reporte ── */}
-              <section aria-label="Tipo de reporte" className="space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Tipo de reporte</p>
+              {/* ── Tipo de reporte (acordeón recogido por defecto) ── */}
+              <AccordionSection
+                id="tipo-reporte"
+                title="Tipo de reporte"
+                hint="Plantilla del documento (Diario, Estándar…)"
+                open={openConfigSections.has('tipo-reporte')}
+                onToggle={() => toggleConfigSection('tipo-reporte')}
+                testId="config-tipo-reporte"
+              >
                 <div className="space-y-1.5" role="radiogroup" aria-label="Tipo de reporte">
                   {TEMPLATES.map(t => (
                     <button
@@ -1329,11 +1433,17 @@ export default function CashReportView() {
                   ))}
                 </div>
                 {/* §3: la selección persiste en localStorage al cambiar (setTemplatePersisted). */}
-              </section>
+              </AccordionSection>
 
-              {/* ── Orientación del documento ── */}
-              <section aria-label="Orientación del documento" className="border-t border-border/40 pt-4 space-y-2">
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Orientación del documento</p>
+              {/* ── Orientación del documento (acordeón) ── */}
+              <AccordionSection
+                id="orientacion"
+                title="Orientación del documento"
+                hint="Vertical u horizontal para el PDF"
+                open={openConfigSections.has('orientacion')}
+                onToggle={() => toggleConfigSection('orientacion')}
+                testId="config-orientacion"
+              >
                 <div className="space-y-1.5" role="radiogroup" aria-label="Orientación del documento">
                   {PDF_ORIENTATIONS.map(o => (
                     <button
@@ -1354,11 +1464,17 @@ export default function CashReportView() {
                     </button>
                   ))}
                 </div>
-              </section>
+              </AccordionSection>
 
-              {/* ── Opciones del documento ── */}
-              <section aria-label="Opciones del documento" className="border-t border-border/40 pt-4 space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Opciones del documento</p>
+              {/* ── Opciones del documento (acordeón) ── */}
+              <AccordionSection
+                id="opciones-documento"
+                title="Opciones del documento"
+                hint="Secciones incluidas en la vista previa, el PDF y el Excel"
+                open={openConfigSections.has('opciones-documento')}
+                onToggle={() => toggleConfigSection('opciones-documento')}
+                testId="config-opciones-documento"
+              >
                 <p className="text-[10px] text-muted-foreground leading-relaxed">
                   Se aplican a la vista previa, el PDF y el Excel de la plantilla <strong>{TEMPLATES.find(t => t.id === pdfTemplate)?.label}</strong>.
                   Las secciones Productos Vendidos y Comisiones se incluyen siempre.
@@ -1442,7 +1558,7 @@ export default function CashReportView() {
                     </p>
                   </div>
                 )}
-              </section>
+              </AccordionSection>
             </div>
 
             <footer className="px-4 py-3 border-t border-border/60 text-[10px] text-muted-foreground leading-relaxed shrink-0">
@@ -1530,23 +1646,193 @@ function SummaryRow({ label, value, strong, negative, note }: { label: string; v
   );
 }
 
+// ══ MISIÓN FILTRO MULTIUSUARIO (2026-11-08) ═══════════════════════════════
+// Tarjetas de resumen y filtro por usuario CREADOR de la venta
+// (transactions.seller_id — no paid_by, no el usuario de sesión, no el último
+// modificador). Cada tarjeta: nombre, importe facturado (equivalente CUP
+// canónico de la MISMA reconstrucción que el reporte + desglose nativo por
+// moneda sin mezclar) y cantidad de ventas. «Todos los usuarios» está
+// seleccionado por defecto; el clic alterna tarjetas (multi-selección) y la
+// acción explícita «Todos los usuarios» restaura el universo completo. La
+// selección es un FILTRO REAL: gobierna tabla, resumen, desgloses, vista
+// previa, PDF, Excel y Word vía el reporte ajustado. Los importes provienen
+// de la agregación del SERVIDOR sobre el universo completo del período y se
+// recalculan con los filtros vigentes (período/tienda/otros). Los usuarios
+// sin ventas del período no generan tarjeta; las ventas sin creador
+// identificable se agrupan como «Usuario no identificado» (nunca atribuidas
+// a otro usuario).
+function UsuarioFiltroCards(p: {
+  cards: SalesByUserCard[];
+  selected: 'all' | ReadonlySet<string>;
+  onToggle: (key: string) => void;
+  onSelectAll: () => void;
+  selectedCount: number;
+  totalCup: number;
+  label: string;
+}) {
+  const all = p.selected === 'all';
+  const cardKey = (c: SalesByUserCard) => c.key;
+  return (
+    <section aria-label="Filtro por usuario creador de la venta" data-testid="filtro-usuarios" className="rounded-2xl border border-border bg-card overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-border/40 bg-muted/20">
+        <div className="min-w-0">
+          <h3 className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+            <Users className="w-4 h-4 text-primary shrink-0" /> Usuarios que generaron las ventas
+          </h3>
+          <p className="text-[10px] text-muted-foreground leading-snug" aria-live="polite" data-testid="filtro-usuarios-estado">
+            {all
+              ? `Todos los usuarios (${p.cards.length}${p.cards.length === 1 ? ' usuario' : ' usuarios'}) · Total facturado ${formatCurrency(p.totalCup)} (equiv. CUP)`
+              : `${p.selectedCount} de ${p.cards.length} ${p.cards.length === 1 ? 'usuario' : 'usuarios'} · ${p.label}`}
+          </p>
+        </div>
+        <button
+          onClick={p.onSelectAll}
+          aria-pressed={all}
+          data-testid="filtro-usuarios-todos"
+          className={cn(
+            'px-3 rounded-xl border text-[10px] font-black uppercase flex items-center gap-1.5 min-h-[36px] transition-colors',
+            all ? 'border-primary bg-primary/10 text-primary' : 'border-border/40 text-muted-foreground hover:bg-muted',
+          )}
+          title="Restaura el reporte con las ventas de todos los usuarios"
+        >
+          {all ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+          Todos los usuarios
+        </button>
+      </div>
+      {p.cards.length === 0 ? (
+        <p className="px-4 py-6 text-center text-xs text-muted-foreground">
+          Sin ventas en el período: no hay usuarios que mostrar.
+        </p>
+      ) : (
+        <div className="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2">
+          {p.cards.map(c => {
+            const selected = all || (p.selected as ReadonlySet<string>).has(cardKey(c));
+            const foreign = (c.native || []).filter(n => n.currency !== 'CUP' && Math.abs(n.total) > 0.005);
+            return (
+              <button
+                key={c.key}
+                onClick={() => p.onToggle(cardKey(c))}
+                aria-pressed={selected}
+                data-testid={`usuario-card-${c.key}`}
+                title={selected ? 'Deseleccionar usuario (sus ventas dejan de computar)' : 'Seleccionar usuario (sus ventas computan en el reporte)'}
+                className={cn(
+                  'text-left rounded-xl border p-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary',
+                  selected
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary/40'
+                    : 'border-border/40 hover:bg-muted/30 opacity-80',
+                )}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <span className={cn('text-xs font-black leading-snug break-words', selected ? 'text-primary' : 'text-foreground')}>
+                    {c.sellerId ? (c.sellerName || `Usuario ${(c.sellerId || '').slice(0, 8)}…`) : 'Usuario no identificado'}
+                  </span>
+                  <span aria-hidden className="shrink-0">{selected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4 text-muted-foreground" />}</span>
+                </div>
+                <p className="mt-1.5 text-base font-mono font-black tabular-nums" data-testid={`usuario-importe-${c.key}`}>
+                  {formatCurrency(c.totalCup)}
+                </p>
+                <p className="text-[10px] text-muted-foreground leading-snug">
+                  {c.transactionCount} {c.transactionCount === 1 ? 'venta generada' : 'ventas generadas'} · equiv. CUP canónico
+                  {foreign.length > 0 && (
+                    <> · {foreign.map(n => n.currency === 'USD' ? `$${n.total.toFixed(2)} USD` : `${n.total.toLocaleString('es-CU', { maximumFractionDigits: 2 })} ${n.currency}`).join(' + ')}</>
+                  )}
+                </p>
+                {!c.sellerId && (
+                  <p className="mt-1 text-[9px] text-muted-foreground leading-snug">
+                    Ventas sin creador identificable en los datos existentes — no se atribuyen a otro usuario.
+                  </p>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <p className="px-4 py-2 text-[10px] text-muted-foreground border-t border-border/20">
+        La selección es un <strong className="text-foreground">filtro real</strong>: actualiza los resultados, los totales, el desglose y el PDF/Excel/Word exportados.
+        Clic en una tarjeta: selecciona/deselecciona (multi). «Todos los usuarios» restaura el reporte completo. La suma de las tarjetas reconciilia con el total facturado del período.
+      </p>
+    </section>
+  );
+}
+
+// ══ MISIÓN PANELES DESPLEGABLES (2026-11-08) · Acordeón reutilizable ═══════
+// Encabezado clicable con indicador de expansión/contracción. El estado vive
+// en el PADRE (o en el propio panel si es de presentación): abrir/cerrar NUNCA
+// recalcula el reporte ni pierde selecciones (el contenido conserva sus
+// valores; solo cambia la visibilidad). Recogido por defecto.
+function AccordionSection(p: {
+  id: string;
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+  hint?: string;
+  testId?: string;
+}) {
+  return (
+    <section aria-label={p.title} className="border-t border-border/40 first:border-t-0 pt-0">
+      <button
+        onClick={p.onToggle}
+        aria-expanded={p.open}
+        aria-controls={`acc-panel-${p.id}`}
+        data-testid={p.testId ? `${p.testId}-header` : `acc-header-${p.id}`}
+        className="w-full flex items-center justify-between gap-2 px-1 py-3 text-left group"
+      >
+        <span className="min-w-0">
+          <span className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors">{p.title}</span>
+          {p.hint && <span className="block text-[9px] text-muted-foreground/70 leading-snug">{p.hint}</span>}
+        </span>
+        {p.open
+          ? <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-foreground transition-transform" aria-hidden />
+          : <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-foreground transition-transform" aria-hidden />}
+      </button>
+      <div
+        id={`acc-panel-${p.id}`}
+        data-testid={p.testId ? `${p.testId}-panel` : `acc-panel-${p.id}`}
+        hidden={!p.open}
+        className="space-y-2 pb-3"
+      >
+        {p.children}
+      </div>
+    </section>
+  );
+}
+
 // ══ MISIÓN PERSONALIZACIÓN (2026-10-25) · FUNCIÓN A ════════════════════════
 // «Conceptos que se incluirán en el reporte»: checkbox independiente por
 // concepto del Resumen del Día. Todos activados por defecto (= contenido
 // actual). Desactivar un concepto lo omite de pantalla, vista previa, PDF e
 // Excel. Seleccionar todos / Desmarcar todos + conteo activo. Sin conceptos
 // activos: aviso claro y bloqueo de exportación (nada de reporte vacío).
+// MISIÓN PANELES DESPLEGABLES (2026-11-08): el apartado funciona como
+// ACORDEÓN RECOGIDO POR DEFECTO; abrir/cerrar no recalcula nada y las
+// selecciones viven en el padre (no se pierden al plegar).
 function ConceptosSelector({ concepts, onToggle, onSetAll }: {
   concepts: SummaryConceptsSelection;
   onToggle: (key: SummaryConceptKey) => void;
   onSetAll: (all: boolean) => void;
 }) {
+  const [open, setOpen] = useState(false); // recogido por defecto (misión §4)
   const activeCount = SUMMARY_CONCEPT_KEYS.filter(k => concepts[k]).length;
   const none = activeCount === 0;
   return (
     <section aria-label="Conceptos que se incluirán en el reporte" data-testid="conceptos-selector" className="rounded-2xl border border-border bg-card overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-border/40 bg-muted/20">
-        <h3 className="text-xs font-black uppercase tracking-wider">Conceptos que se incluirán en el reporte</h3>
+        <button
+          onClick={() => setOpen(o => !o)}
+          aria-expanded={open}
+          aria-controls="conceptos-selector-panel"
+          data-testid="conceptos-selector-header"
+          className="flex items-center gap-2 text-left min-w-0 group"
+        >
+          {open
+            ? <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-foreground transition-transform" aria-hidden />
+            : <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-foreground transition-transform" aria-hidden />}
+          <span className="min-w-0">
+            <span className="block text-xs font-black uppercase tracking-wider">Conceptos que se incluirán en el reporte</span>
+            <span className="block text-[9px] text-muted-foreground">{open ? 'Pulsa para recoger' : 'Pulsa para desplegar'}</span>
+          </span>
+        </button>
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground" aria-live="polite">
             {activeCount}/{SUMMARY_CONCEPT_KEYS.length} activos
@@ -1567,7 +1853,7 @@ function ConceptosSelector({ concepts, onToggle, onSetAll }: {
           </button>
         </div>
       </div>
-      <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+      <div id="conceptos-selector-panel" hidden={!open} className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5" data-testid="conceptos-selector-panel">
         {SUMMARY_CONCEPTS.map(c => (
           <label
             key={c.key}
@@ -1990,6 +2276,14 @@ interface ResultadosPanelProps {
   setExpandedSaleGroups: (v: Set<string>) => void;
   saleRowsLimit: Record<string, number>;
   setSaleRowsLimit: (v: Record<string, number>) => void;
+  // ══ MISIÓN FILTRO MULTIUSUARIO (2026-11-08) ══
+  userCards: SalesByUserCard[];
+  selectedUsers: 'all' | ReadonlySet<string>;
+  onToggleUserCard: (key: string) => void;
+  onSelectAllUsers: () => void;
+  selectedUsersCount: number;
+  userCardsTotalCup: number;
+  userFilterLabel: string;
 }
 
 function ResultadosPanel(p: ResultadosPanelProps) {
@@ -2128,6 +2422,17 @@ function ResultadosPanel(p: ResultadosPanelProps) {
 
   return (
     <div className="space-y-4">
+      {/* ══ MISIÓN FILTRO MULTIUSUARIO: tarjetas por usuario creador ══ */}
+      <UsuarioFiltroCards
+        cards={p.userCards}
+        selected={p.selectedUsers}
+        onToggle={p.onToggleUserCard}
+        onSelectAll={p.onSelectAllUsers}
+        selectedCount={p.selectedUsersCount}
+        totalCup={p.userCardsTotalCup}
+        label={p.userFilterLabel}
+      />
+
       {/* ══ MISIÓN PERSONALIZACIÓN · FUNCIÓN A: conceptos del Resumen ══ */}
       <ConceptosSelector
         concepts={p.concepts}

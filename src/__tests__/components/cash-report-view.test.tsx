@@ -172,6 +172,15 @@ async function openConfigPanel(user: ReturnType<typeof userEvent.setup>) {
     expect(panel().getAttribute('aria-hidden')).toBe('false'); // abierto = accesible
   });
 }
+/** MISIÓN PANELES DESPLEGABLES: cada sección del panel es un ACORDEÓN
+ *  recogido por defecto; este helper lo despliega de forma idempotente. */
+async function abrirSeccionConfig(user: ReturnType<typeof userEvent.setup>, id: string) {
+  const header = screen.getByTestId(`config-${id}-header`);
+  if (header.getAttribute('aria-expanded') !== 'true') {
+    await user.click(header);
+  }
+}
+
 async function closeConfigPanel(user: ReturnType<typeof userEvent.setup>) {
   await user.click(screen.getByTestId('cash-report-config-close'));
   // Cerrado: permanece montado (transición de anchura) pero OCULTO al árbol
@@ -213,6 +222,9 @@ describe('§1/§2 — Vista dedicada: render inicial y separación config/cálcu
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     await waitFor(() => expect(screen.getByRole('radio', { name: /Diario/ })).toBeTruthy());
     await user.click(screen.getByRole('radio', { name: /Diario/ }));
     expect(screen.getByRole('radio', { name: /Diario/ }).getAttribute('aria-checked')).toBe('true');
@@ -317,6 +329,9 @@ describe('§3 — Persistencia del tipo de reporte', () => {
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     await waitFor(() => expect(screen.getByRole('radio', { name: /Diario/ }).getAttribute('aria-checked')).toBe('true'));
   });
 
@@ -325,6 +340,9 @@ describe('§3 — Persistencia del tipo de reporte', () => {
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     // AUDITORÍA 2026-10 (§1): el default legítimo es Diario (Empresa).
     await waitFor(() => expect(screen.getByRole('radio', { name: /Diario/ }).getAttribute('aria-checked')).toBe('true'));
     expect(localStorage.getItem(LS_KEYS.pdfTemplate)).toBe('"antes-eliminado"'); // no se sobreescribe hasta que el usuario elige
@@ -453,6 +471,9 @@ describe('§4 — Vista previa del PDF', () => {
     await waitFor(() => expect(buildPdfMock).toHaveBeenCalled());
     // cambiar plantilla (default Diario → Estándar; la config vive en el panel lateral)
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     await user.click(screen.getByRole('radio', { name: /Estándar/ }));
     await closeConfigPanel(user);
     await waitFor(() => expect(screen.getByText(/La vista previa corresponde a la configuración anterior/)).toBeTruthy());
@@ -519,6 +540,9 @@ describe('NAV-2026-10 — «Gestionar comisiones» navega a Trabajadores y Comis
 describe('INC-2026-10-19 — Nombres del pie de firmas (UI)', () => {
   const openOptions = async (user: ReturnType<typeof userEvent.setup>) => {
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     await waitFor(() => expect(screen.getByText('Nombres del pie de firmas')).toBeTruthy());
   };
 
@@ -597,6 +621,9 @@ describe('MISIÓN 2026-10-22 · Parte A/B — persistencia de las opciones del d
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     for (const label of ['Desglose de efectivo', 'Desglose billetes', 'Cuadre USD', 'Líneas de firma', 'USD en hoja separada']) {
       const btn = screen.getByRole('button', { name: new RegExp(`^${label}`, 'i') });
       expect(btn.getAttribute('aria-pressed'), `${label} debe venir activada por defecto`).toBe('true');
@@ -607,6 +634,9 @@ describe('MISIÓN 2026-10-22 · Parte A/B — persistencia de las opciones del d
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     await user.click(screen.getByRole('button', { name: /^Desglose billetes/i }));
     expect(screen.getByRole('button', { name: /^Desglose billetes/i }).getAttribute('aria-pressed')).toBe('false');
     const stored = JSON.parse(localStorage.getItem(OPTIONS_KEY) || '{}');
@@ -615,6 +645,9 @@ describe('MISIÓN 2026-10-22 · Parte A/B — persistencia de las opciones del d
     cleanup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     expect(screen.getByRole('button', { name: /^Desglose billetes/i }).getAttribute('aria-pressed')).toBe('false');
     // reactivar y volver a comprobar (regla B-3)
     await user.click(screen.getByRole('button', { name: /^Desglose billetes/i }));
@@ -625,6 +658,9 @@ describe('MISIÓN 2026-10-22 · Parte A/B — persistencia de las opciones del d
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     await user.click(screen.getByRole('button', { name: /^USD en hoja separada/i }));
     expect(JSON.parse(localStorage.getItem(OPTIONS_KEY) || '{}').usdSeparatePage).toBe(false);
     // cambiar el tipo de reporte NO resetea preferencias (regla B-4)
@@ -633,6 +669,9 @@ describe('MISIÓN 2026-10-22 · Parte A/B — persistencia de las opciones del d
     cleanup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     expect(screen.getByRole('button', { name: /^USD en hoja separada/i }).getAttribute('aria-pressed')).toBe('false');
   });
 
@@ -641,6 +680,9 @@ describe('MISIÓN 2026-10-22 · Parte A/B — persistencia de las opciones del d
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     // corrupto → defaults legítimos (las 4 opciones activadas), sin errores
     expect(screen.getByRole('button', { name: /^Líneas de firma/i }).getAttribute('aria-pressed')).toBe('true');
     // valor no booleano en una clave → esa clave conserva el default, el resto se respeta
@@ -648,6 +690,9 @@ describe('MISIÓN 2026-10-22 · Parte A/B — persistencia de las opciones del d
     cleanup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     expect(screen.getByRole('button', { name: /^Líneas de firma/i }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: /^Cuadre USD/i }).getAttribute('aria-pressed')).toBe('false');
   });
@@ -742,12 +787,18 @@ describe('MISIÓN 2026-10-22 · Parte C — panel lateral desplegable de configu
     const desde = document.getElementById('cr-sd') as HTMLInputElement;
     await act(async () => { fireEvent.change(desde, { target: { value: '2026-09-15' } }); });
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     await user.click(screen.getByRole('radio', { name: /Estándar/ }));
     await closeConfigPanel(user);
     // el periodo (filtro esencial) NO se reinicia al cerrar
     expect((document.getElementById('cr-sd') as HTMLInputElement).value).toBe('2026-09-15');
     // reabrir: los valores seleccionados se conservan
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     expect(screen.getByRole('radio', { name: /Estándar/ }).getAttribute('aria-checked')).toBe('true');
   });
 
@@ -755,6 +806,9 @@ describe('MISIÓN 2026-10-22 · Parte C — panel lateral desplegable de configu
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     const trigger = screen.getByRole('button', { name: /Configuración del reporte/i });
     await user.keyboard('{Escape}');
     await waitFor(() => {
@@ -769,6 +823,9 @@ describe('MISIÓN 2026-10-22 · Parte C — panel lateral desplegable de configu
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     // jsdom corre a 1024px → viewport de escritorio: aria-modal ausente (panel
     // INTEGRADO no-modal — el reporte sigue siendo interactivo, a diferencia
     // del defecto original donde el overlay bloqueaba toda la vista).
@@ -793,8 +850,14 @@ describe('MISIÓN 2026-10-22 · Parte C — panel lateral desplegable de configu
     await user.click(screen.getByRole('tab', { name: /Vista previa/i }));
     await waitFor(() => expect(buildPdfMock).toHaveBeenCalledTimes(1));
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     await closeConfigPanel(user);
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     await closeConfigPanel(user);
     // sin cambios de configuración → el builder NO se vuelve a llamar
     expect(buildPdfMock).toHaveBeenCalledTimes(1);
@@ -826,6 +889,9 @@ describe('MISIÓN 2026-10-22 · Parte B (rediseño) — panel INTEGRADO, reporte
     const user = userEvent.setup();
     await renderView();
     await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
     // El foco inicial aterrizó en el panel (contexto de teclado al abrir).
     expect(document.activeElement === panel() || panel().contains(document.activeElement)).toBe(true);
     // El contenido del reporte permanece montado e interactivo: los filtros
@@ -848,6 +914,9 @@ describe('MISIÓN 2026-10-22 · Parte B (rediseño) — panel INTEGRADO, reporte
     await act(async () => { fireEvent.change(desde, { target: { value: '2026-09-01' } }); });
     for (let i = 0; i < 3; i += 1) {
       await openConfigPanel(user);
+    await abrirSeccionConfig(user, 'tipo-reporte');
+    await abrirSeccionConfig(user, 'orientacion');
+    await abrirSeccionConfig(user, 'opciones-documento');
       await closeConfigPanel(user);
     }
     // El periodo y los resultados SOBREVIVEN a los ciclos (mismo árbol React).
