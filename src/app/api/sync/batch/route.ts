@@ -373,7 +373,16 @@ const handler = withAuth(async (req, session) => {
           idempotencyOutcome: rpcOutcome === 'idempotent' ? 'idempotent' : 'executed',
         });
       } catch (err: unknown) {
-        const errMsg = err instanceof Error ? err.message : String(err);
+        // CP-POS-002 (D3): el error de PostgREST/Supabase llega como OBJETO
+        // {message, code} (throw result.error), no como Error — String(err)
+        // producía '[object Object]' y el clasificador no veía el código
+        // ERR_*. Se extraen message y code de forma segura para ambas formas.
+        const errMsg =
+          err instanceof Error
+            ? err.message
+            : typeof (err as { message?: unknown })?.message === 'string'
+              ? (err as { message: string }).message
+              : String(err);
         const errCode = (err as { code?: string } | null)?.code ?? undefined;
         console.error(`Error processing sync operation ${op.idempotencyKey}:`, err);
 
