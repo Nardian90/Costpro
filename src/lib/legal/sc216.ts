@@ -263,19 +263,21 @@ export async function renderSc216Pdf(model: Sc216ModelData) {
   doc.setFontSize(9);
   doc.setTextColor(0, 0, 0);
 
-  // Datos 1–2: entidad y almacén
+  // Datos 1–2: entidad y almacén — etiquetas completas por entidad
+  // (CP-DOC-PDF-UX-004): «Código de la entidad:» ya no compite con el
+  // código del almacén en la misma fila.
   doc.setFont('helvetica', 'bold');
   doc.text('ENTIDAD:', marginX + 4, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(model.entidadNombre || RES11_BLANK_LINE, marginX + 22, y, { maxWidth: 70 });
+  doc.text(model.entidadNombre || RES11_BLANK_LINE, marginX + 22, y, { maxWidth: 58 });
   doc.setFont('helvetica', 'bold');
-  doc.text('Código:', marginX + 100, y);
+  doc.text('Código de la entidad:', marginX + 84, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(model.entidadCodigo || RES11_BLANK_LINE, marginX + 116, y);
+  doc.text(model.entidadCodigo || RES11_BLANK_LINE, marginX + 120, y);
   doc.setFont('helvetica', 'bold');
   doc.text('ALMACÉN:', marginX + 140, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(model.almacenNombre || RES11_BLANK_LINE, marginX + 162, y, { maxWidth: 45 });
+  doc.text(model.almacenNombre || RES11_BLANK_LINE, marginX + 162, y, { maxWidth: 40 });
 
   y += 6;
   // Dato 4: concepto de ajuste

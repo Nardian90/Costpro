@@ -300,9 +300,10 @@ export async function renderSc213Pdf(model: Sc213ModelData) {
   doc.setFont('helvetica', 'normal');
   doc.text(model.productoDescripcion || '_______________', marginX + 26, y + 13, { maxWidth: 95 });
   doc.setFont('helvetica', 'bold');
-  doc.text('Código:', marginX + 125, y + 13);
+  // CP-DOC-PDF-UX-004: etiqueta completa — nunca «Código:» genérico.
+  doc.text('Código del producto:', marginX + 125, y + 13);
   doc.setFont('helvetica', 'normal');
-  doc.text(model.productoCodigo || '_______________', marginX + 141, y + 13);
+  doc.text(model.productoCodigo || '_______________', marginX + 158, y + 13);
   doc.setFont('helvetica', 'bold');
   doc.text('U.M. operativa:', marginX + 185, y + 13);
   doc.setFont('helvetica', 'normal');
