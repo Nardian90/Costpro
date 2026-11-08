@@ -1,16 +1,16 @@
 # COSTPRO_MULTICASHIER_DESIGN_002 — Diseño técnico definitivo del sistema multicajero
 
-**Fecha:** 2026-11-07 (v1/v2) · **v3: 2026-11-08** · **v4: 2026-11-08 (misión 005)** · **Base:** `COSTPRO_MULTICASHIER_AUDIT_001.md` (PR #1563) · **Tipo:** diseño cerrado, sin implementación.
-**Repo:** Nardian90/Costpro · `origin/main` = `fb4006184` (verificado 2026-11-08: avanza con catálogo-maestro/UI y fix de auth CP-AUTH-RESILIENCE-003 PR #1568, **sin cambios en el módulo Caja** [MEDIDO: diff name-only]) · rama del PR `audit/multicashier-001` (commits `3a9ebe931` · `f7c5ef690` · `d8cf1e925` · `d076c8d3a` cierre 004, checks todos success · cierre 005 = este commit).
-**Revisiones:** v1 (misión 002, §D.2-D.13 — **OBSOLETA en parte**, ver AVISO) → v2 (misión 003, §D.14-D.15 — **OBSOLETA en parte**) → v3 (misión 004, §D.16-D.17 — **VIGENTE salvo lo corregido inline**) → **v4 (misión 005): §D.18 correcciones de ejecutabilidad — VIGENTE.**
+**Fecha:** 2026-11-07 (v1/v2) · **v3: 2026-11-08** · **v4: 2026-11-08 (misión 005)** · **v5: 2026-11-08 (misión 006)** · **Base:** `COSTPRO_MULTICASHIER_AUDIT_001.md` (PR #1563) · **Tipo:** diseño cerrado, sin implementación.
+**Repo:** Nardian90/Costpro · `origin/main` = `fb4006184` (verificado 2026-11-08 en la misión 006: sin cambios desde la v4; los avances de main son del módulo auth PR #1568, **sin cambios en el módulo Caja** [MEDIDO]) · rama del PR `audit/multicashier-001` (commits `3a9ebe931` · `f7c5ef690` · `d8cf1e925` · `d076c8d3a` cierre 004 · `534f08e0a` cierre 005, 5 checks todos success · cierre 006 = este commit).
+**Revisiones:** v1 (misión 002, §D.2-D.13 — **OBSOLETA en parte**, ver AVISO) → v2 (misión 003, §D.14-D.15 — **OBSOLETA en parte**) → v3 (misión 004, §D.16-D.17 — **VIGENTE salvo lo corregido inline**) → v4 (misión 005, §D.18 — **VIGENTE salvo lo corregido inline**) → **v5 (misión 006): §D.19 cierre final de consistencia de estados y ledger — VIGENTE.**
 **Decisión del propietario:** cada vendedor tiene **terminal + gaveta propios**: UNA TIENDA + UN ALMACÉN COMPARTIDO + N CAJAS FÍSICAS + N TERMINALES + N SESIONES FINANCIERAS INDEPENDIENTES.
-**Etiquetas:** [MEDIDO] catálogo vivo (prod agregado sin PII / E2E) · [EN CÓDIGO] archivo:línea · [DECISIÓN] decisión de diseño fundamentada · [NO VERIFICADO] pendiente de censo/prueba.
+**Etiquetas:** [MEDIDO] catálogo vivo (prod agregado sin PII / E2E) · [EN CÓDIGO] archivo:línea · [DECISIÓN] decisión de diseño fundamentada · [SIM] simulación conceptual verificada con código versionado en `docs/audits/evidence/` · [SPEC E2E] prueba definida para la Fase F, NO ejecutada · [NO VERIFICADO] pendiente de censo/prueba.
 
 ---
 
 ## ⚠️ AVISO DE VIGENCIA — qué especificación es válida
 
-Este documento acumula cuatro revisiones. **La especificación VIGENTE es §D.16-D.17 (misión 004) con las correcciones de ejecutabilidad de §D.18 (misión 005), que prevalece donde las corrige.** Las secciones anteriores se conservan como antecedente y evidencia; donde quedaron sustituidas llevan el banner `OBSOLETO — NO IMPLEMENTAR`. Un implementador debe seguir §D.16-D.18 (con D.18 como capa correctiva) y, para los conceptos no redefinidos allí (seguridad D.7, históricos D.9, escenarios E2E D.11), las secciones v1 señaladas como vigentes en la tabla:
+Este documento acumula cinco revisiones. **La especificación VIGENTE es §D.16-D.17 (misión 004) con las capas correctivas de §D.18 (misión 005) y §D.19 (misión 006), que prevalecen donde corrigen.** Las secciones anteriores se conservan como antecedente y evidencia; donde quedaron sustituidas llevan el banner `OBSOLETO — NO IMPLEMENTAR`. Un implementador debe seguir §D.16-D.19 (D.18 y D.19 como capas correctivas) y, para los conceptos no redefinidos allí (seguridad D.7, históricos D.9, escenarios E2E D.11), las secciones v1 señaladas como vigentes en la tabla:
 
 | Sección | Estado | Especificación vigente |
 |---|---|---|
@@ -33,7 +33,12 @@ Este documento acumula cuatro revisiones. **La especificación VIGENTE es §D.16
 | D.16.1, D.16.2, D.16.5-D.16.11 (cierre v3) | **VIGENTE** | — |
 | D.16.3 (DDL `cash_transfers`) | **Parcialmente obsoleto** (origen cuenta imposible, `custodian_user_id`, coherencia destino) | §D.18.1 + §D.18.5 |
 | D.16.4 (vista + filtro devolution `IN ('refund','out')`) | **Parcialmente obsoleto** (proyección incompleta; filtro ampliado sin evidencia) | §D.18.2 + §D.18.3 |
-| D.17 (veredicto v3) | Histórico | §D.18.9 (v4) |
+| D.18.1 (CHECKs de extremos sin condición de estado; RPC firma/saldo/custodia inicial) | **Parcialmente obsoleto** (receptor/retorno anticipados, sesión emisora forzada; firma ilegal en PostgreSQL; saldo mal calculado) | §D.19.1 + §D.19.5 |
+| D.18.2 (orden del CASE de la vista; V1 y V2) | **Parcialmente obsoleto** (la clase conocida precedía a la ausencia de titular; V2 con agregaciones ilegales en WHERE) | §D.19.2 + §D.19.3 |
+| D.18.5 (custodio inicial `user_of(destino)`; orden por `created_at`) | **Parcialmente obsoleto** (custodio inicial ≠ poseedor real; timestamp no es orden lógico) | §D.19.4 |
+| D.18.3, D.18.4, D.18.6-D.18.8 | **VIGENTE** | — |
+| D.17 (veredicto v3) | Histórico | §D.19.8 (v5) |
+| D.18.9 (veredicto v4) | Histórico | §D.19.8 (v5) |
 
 ---
 
@@ -1153,11 +1158,13 @@ Las cuatro observaciones P0 y las dos P1 quedan resueltas con especificación SQ
 
 ## D.18. Correcciones de ejecutabilidad y cierre técnico (misión COSTPRO-MULTICASHIER-DESIGN-005)
 
-**Esta sección es la capa correctiva VIGENTE sobre §D.16-D.17** (el AVISO DE VIGENCIA es el mapa). No rediseña nada: corrige cinco defectos concretos detectados por la revisión independiente, con SQL conceptual ejecutable, restricciones coherentes entre sí y evidencia real de producción. Clases de evidencia usadas aquí: **[MEDIDO]** consulta readonly ejecutada contra producción (agregada, sin PII) · **[EN CÓDIGO]** verificado en migraciones/funciones · **[SIM]** simulación conceptual verificada con código (`scripts/pruebas_005.py`, 26 asertos OK) · **[SPEC E2E]** prueba definida para la Fase F, NO ejecutada.
+**Esta sección es la capa correctiva sobre §D.16-D.17** (el AVISO DE VIGENCIA es el mapa; corregida a su vez por §D.19 donde indica cada banner). No rediseña nada: corrige cinco defectos concretos detectados por la revisión independiente, con SQL conceptual ejecutable, restricciones coherentes entre sí y evidencia real de producción. Clases de evidencia usadas aquí: **[MEDIDO]** consulta readonly ejecutada contra producción (agregada, sin PII) · **[EN CÓDIGO]** verificado en migraciones/funciones · **[SIM]** simulación conceptual verificada con código — **versionado en el PR**: `docs/audits/evidence/multicashier_design_005_checks.py` (26 asertos OK) · **[SPEC E2E]** prueba definida para la Fase F, NO ejecutada.
 
 **Verificación de arranque [MEDIDO 2026-11-08]:** `origin/main` = `fb4006184` (avanzó desde `119fab841` con el fix de auth CP-AUTH-RESILIENCE-003, PR #1568 — **cero cambios en tablas, funciones, migraciones o restricciones de Caja**: `git diff --name-only` sin rutas de caja); rama `audit/multicashier-001` en `d076c8d3a` (5 checks del commit: **todos success** — E2E Aislado, Unit & Integration, Security Audit, TypeCheck+Build, Vercel); PR #1563 abierto. Lectura íntegra de D.16/D.17 realizada; observaciones de la revisión: P0-1 (apertura desde tesorería imposible), P0-2 (proyección incompleta de la vista), P1-1 (reasignación de custodio vs trigger), P1-2 (filtro devolution sin evidencia), P1-3 (integridad documento↔ledger).
 
 ### D.18.1 — P0-1 · Origen gaveta vs origen tesorería: XOR completo de extremos
+
+> **⚠️ PARCIALMENTE OBSOLETO (corregido por misión 006, §D.19.1 y §D.19.5).** Tres defectos de esta resolución: (1) `ctr_reception_target` y `ctr_return_target` exigen sesión/cuenta SIN condición de estado — impiden representar `solicitada`, `entregada` y `en_devolucion` (recepción y retorno anticipados) y `ctr_delivery_origin` fuerza `sent_from_session_id` desde la solicitud, falsificando una entrega que no ocurrió; (2) la firma de `send_cash_transfer` coloca parámetros con DEFAULT antes de obligatorios — inválida en PostgreSQL; (3) la consulta de saldo multiplica `amount` fuera de la agregación (`SUM(CASE …) * amount`) y el evento de custodia inicial atribuye el dinero a `user_of(p_to_register)`, que no posee el efectivo. **CHECKs definitivos y RPC corregida: §D.19.1 y §D.19.5** (el XOR de extremos, `ctr_lifecycle` v2 y la prohibición de origen cuenta sin sesión se mantienen).
 
 **Defecto [CONFIRMADO en el DDL de D.16.3]:** `ctr_lifecycle` exigía `sent_from_session_id IS NOT NULL` en `entregada`, pero el fondeo de apertura (D.16.5) es una entrega DESDE la cuenta de tesorería, que no tiene sesión — el diseño no podría ejecutar su propio paso 1. **Prohibida cualquier solución que desactive el CHECK temporalmente.**
 
@@ -1274,6 +1281,8 @@ La misma disciplina aplica a `receive_cash_transfer` (valida sesión abierta de 
 [SIM] Prueba A de `scripts/pruebas_005.py`: 9 asertos OK (los tres estados legales, XOR de recepción, identidad 30 000). Ninguna operación desactiva o salta restricciones.
 
 ### D.18.2 — P0-2 · Proyección completa y definitiva de `v_cash_ledger_classification`
+
+> **⚠️ PARCIALMENTE OBSOLETO (corregido por misión 006, §D.19.2 y §D.19.3).** El orden del CASE clasifica movimientos conocidos ANTES de comprobar la ausencia de titular: una `sale/in/cash` sin titular recibe `cobro` y escapa de V1 (es un fail-open). El CASE definitivo comprueba primero la ausencia de titular en filas físicas postactivación (§D.19.2). Además, V1 y V2 de esta sección quedan sustituidas: V1 reforzada con detección directa sin depender de etiquetas (§D.19.2) y V2 reescrita como CTE agregada porque aquí usa funciones agregadas dentro de WHERE (SQL inválido en PostgreSQL, §D.19.3). La proyección de columnas y el resto de clases se mantienen.
 
 **Defecto [CONFIRMADO]:** la vista de D.16.4 no proyectaba `payment_method`, `direction`, `ref_id`, `holder_type/holder_id` ni `sign` — V1-V5 y la fórmula no eran ejecutables tal cual. Proyección completa (sustituye a la de D.16.4):
 
@@ -1402,6 +1411,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_cash_flow_documents_annulment_txn
 
 ### D.18.5 — P1-1 · Custodia del tránsito por eventos (sin violar la máquina de estados)
 
+> **⚠️ PARCIALMENTE OBSOLETO (corregido por misión 006, §D.19.4).** Dos defectos: (1) el evento inicial atribuye la custodia a `COALESCE(user_of(p_to_register), auth.uid())` — el usuario configurado en la gaveta destino puede no poseer el efectivo; el poseedor real en tránsito es el emisor (o transportista registrado), y la custodia cambia al receptor SOLO con la recepción física; (2) la vista determina el custodio vigente por `ORDER BY created_at DESC, id DESC` — `now()` es el instante de INICIO de la transacción en PostgreSQL, así que una transacción que esperó un lock puede grabar un evento con timestamp anterior al de otra ya confirmada: el orden no es monotónico. **Corrección: custodia inicial del poseedor real + `event_seq` monotónico por traspaso con cadena `previous_event_id`, asignados bajo `FOR UPDATE` — §D.19.4.** La Alternativa B (eventos como fuente única) y la matriz de autorización se mantienen.
+
 **Defecto [CONFIRMADO]:** reasignar `custodian_user_id` en tránsito exige `UPDATE entregada→entregada`, que el trigger de D.16.3 rechaza por diseño correcto.
 
 **Decisión [DECISIÓN]: Alternativa B (entidad de eventos), en su forma PURA** — no "eventos + columna denormalizada", sino eventos como ÚNICA fuente de la custodia: la columna `custodian_user_id` se ELIMINA de `cash_transfers` y el custodio vigente se DERIVA del último evento. Razones: (i) el trigger de transiciones queda intacto — ninguna actualización mismo-estado; (ii) una sola fuente de verdad (la alternativa A con columna + eventos crea el riesgo exacto de actualización inconsistente que el pliego pide evitar); (iii) auditoría append-only inmutable. El costo (un JOIN para conocer el custodio) es asumible y la vista lo resuelve.
@@ -1469,6 +1480,8 @@ La vista `v_cash_transit_alerts` (D.16.1) y el gate de cierre leen el custodio d
 
 ### D.18.7 — Pruebas reproducibles (A-H) — clases de evidencia explícitas
 
+> **NOTA (misión 006, §D.19.6):** los scripts citados aquí como `scripts/pruebas_005.py` y la batería están **versionados en el PR** para hacer la evidencia reproducible: `docs/audits/evidence/multicashier_design_005_checks.py` (26 asertos, copia exacta del ejecutado), `docs/audits/evidence/multicashier_design_004_battery.py` (batería D.16.8) y `docs/audits/evidence/multicashier_design_006_checks.py` (asertos de las correcciones 006). La evidencia readonly de producción está en un expediente separado: `docs/audits/evidence/multicashier_prod_readonly_2026-11-08.md`.
+
 **Evidencia EJECUTADA en esta misión:** (i) consultas readonly agregadas contra producción (D.18.3/D.18.4: combos del ledger, vínculo documento↔fila, duplicados); (ii) simulación con código y asertos: `scripts/pruebas_005.py` — **26 asertos, todos OK** (batería D.16.8 conservada: 10 casos, 11 asertos OK). **NO ejecutadas:** los specs E2E (escrituras prohibidas por la misión; quedan definidas para la Fase F). Ningún resultado matemático se presenta como prueba contra base de datos.
 
 | Prueba | Preparación y datos | Operación | Esperado | Obtenido / limitación | Evidencia y clase |
@@ -1490,8 +1503,335 @@ La vista `v_cash_transit_alerts` (D.16.1) y el gate de cierre leen el custodio d
 4. **Specs E2E de los ciclos completos** (6 estados de traspaso, reasignación, anulación de documento): definidas, no ejecutables en esta misión — son la Fase F.
 5. **Integración bancaria, umbral de alerta 24 h, traspasos entre tiendas:** sin cambio respecto a D.16.11.3-5.
 
-### D.18.9 — Veredicto (misión 005 — VIGENTE)
+### D.18.9 — Veredicto (misión 005 — HISTÓRICO, sustituido por §D.19.8)
 
 Los cinco defectos de ejecutabilidad quedan corregidos con especificación SQL coherente entre sí: la tesorería fondea sin sesión ficticia (`ctr_delivery_origin`), las gavetas entregan y reciben solo con sesiones válidas o por la ruta de custodia, la vista proyecta todo lo que V1-V6 y la fórmula consumen, la custodia del tránsito se gobierna por eventos inmutables sin tocar la máquina de estados, el filtro de devoluciones comerciales está respaldado por código y por datos reales, y los documentos confirmados quedan atados 1:1 a su efecto monetario con reintentos idempotentes y anulación que preserva la historia. La batería D.16.8 (10 casos) y las pruebas A-H (26 asertos) concilian; las consultas readonly contra producción confirman que las reglas parten de datos reales, no de supuestos.
 
 **DISEÑO APROBABLE PARA IMPLEMENTACIÓN** — bajo las precondiciones exigibles ya establecidas (P1-02 corregido, gate de activación por tienda, certificación E2E de la Fase F con los 18 escenarios + la batería + las pruebas A-H) y las tareas de implementación de D.18.8.1-2. Sin contradicciones entre D.16, D.17 y D.18: D.18 es la capa correctiva y el AVISO DE VIGENCIA marca exactamente qué fragmentos de D.16.3/D.16.4 quedan sustituidos. No se eleva el veredicto por completar entregables: queda expresamente fuera de esta aprobación la ejecución de las migraciones (no realizadas), las pruebas E2E (no ejecutables por regla de misión) y toda interpretación de checks de CI como certificación contable — CI verde NO demuestra integridad financiera; la demuestran las restricciones, la clasificación única y la batería aquí especificadas, verificadas en Fase F contra datos reales.
+
+---
+
+## D.19. Cierre final de consistencia de estados y ledger (misión COSTPRO-MULTICASHIER-DESIGN-006)
+
+**Capa correctiva VIGENTE sobre §D.18** (el AVISO DE VIGENCIA es el mapa). La revisión independiente de la misión 005 detectó seis defectos; esta sección los corrige sin rediseñar la arquitectura. Clases de evidencia: **[MEDIDO]** consulta readonly ejecutada contra producción (expediente separado: `docs/audits/evidence/multicashier_prod_readonly_2026-11-08.md`) · **[EN CÓDIGO]** verificado en migraciones/funciones · **[SIM]** simulación conceptual con asertos, **versionada en el PR** (`docs/audits/evidence/multicashier_design_006_checks.py`: **39 asertos OK**; `multicashier_design_005_checks.py`: 26 asertos OK; `multicashier_design_004_battery.py`: batería 10 casos) · **[SPEC E2E]** definida, NO ejecutada.
+
+**Pre-flight [MEDIDO 2026-11-08]:** `origin/main` = `fb4006184` (sin cambios desde el cierre 005); rama en `534f08e0a` con los 5 checks **todos success**; PR #1563 abierto, mergeable. Los avances de main son del módulo auth (PR #1568) — cero cambios en Caja.
+
+### D.19.1 — P0-1 · CHECKs de recepción, retorno y sesión emisora condicionados al estado
+
+**Defecto [CONFIRMADO en D.18.1]:** `ctr_reception_target` y `ctr_return_target` exigían sesión/cuenta receptoras en TODOS los estados — una transferencia `solicitada` o `entregada` no podía existir sin anticipar quién la recibe; y `ctr_delivery_origin` forzaba `sent_from_session_id` desde la creación, falsificando una entrega que no ha ocurrido. El dinero físico no tiene todavía titular receptor: la atribución debe aparecer SOLO cuando ocurre.
+
+**Decisión sobre la sesión emisora [DECISIÓN]:** `sent_from_session_id` se fija **en el evento de entrega física** (cuando el dinero sale de la gaveta), no en la solicitud. `sent_by` (quien pide/entrega) sí se registra desde la solicitud. El RPC bifásico lo hace estructural: `request_cash_transfer` crea la fila `solicitada` sin sesión emisora; `deliver_cash_transfer` la fija al entregar.
+
+**Matriz estado/campos (autoritativa):**
+
+| Estado | `sent_from_session_id` (origen gaveta) | piernas OUT/IN | `received_in_session_id` / `received_in_account_id` | `return_in_session_id` / `return_in_account_id` |
+|---|---|---|---|---|
+| `solicitada` | NULL (se fija al entregar) | 0 / 0 | NULL / NULL | NULL / NULL |
+| `entregada` | **NOT NULL** (gaveta) | 1 / 0 | NULL / NULL | NULL / NULL |
+| `en_devolucion` | NOT NULL (gaveta) | 1 / 0 | NULL / NULL | NULL / NULL |
+| `recibida` | NOT NULL (gaveta) | 1 / 1 | **NOT NULL** / NULL (sesión de la gaveta destino, abierta) | NULL / NULL |
+| `recibida_en_cuenta` | NOT NULL (gaveta) o NULL (cuenta) | 1 / 1 | NULL / **NOT NULL** (ruta de custodia autorizada) | NULL / NULL |
+| `devuelta` | NOT NULL (gaveta) o NULL (cuenta) | 1 / 1 | NULL / NULL | exactamente UNO informado |
+| `cancelada` | NULL (jamás se entregó) | 0 / 0 | NULL / NULL | NULL / NULL |
+
+Origen cuenta (`from_account_id NOT NULL`): `sent_from_session_id` es NULL en TODOS los estados (D.18.1, se mantiene).
+
+```sql
+-- ═══ ESPECIFICACIÓN CONCEPTUAL (NO EJECUTADA) — sustituye a ctr_delivery_origin,
+--     ctr_reception_target y ctr_return_target de D.18.1. ctr_lifecycle v2 (piernas y
+--     sellos de tiempo por estado) y el XOR de extremos de D.16.3 se MANTIENEN. ═══
+
+-- SESIÓN EMISORA: se fija al ENTREGAR; la solicitud no falsifica entregas.
+ALTER TABLE public.cash_transfers ADD CONSTRAINT ctr_origin_session CHECK (
+  (from_account_id IS NOT NULL AND sent_from_session_id IS NULL)
+  OR (from_register_id IS NOT NULL AND (
+       (status IN ('solicitada','cancelada') AND sent_from_session_id IS NULL)
+       OR (status NOT IN ('solicitada','cancelada') AND sent_from_session_id IS NOT NULL))));
+
+-- RECEPCIÓN: solo el estado que la confirma lleva titular receptor.
+ALTER TABLE public.cash_transfers ADD CONSTRAINT ctr_reception_by_state CHECK (
+  (status IN ('solicitada','entregada','en_devolucion')
+     AND received_in_session_id IS NULL AND received_in_account_id IS NULL)
+  OR (status = 'recibida' AND received_in_session_id IS NOT NULL
+     AND received_in_account_id IS NULL AND to_register_id IS NOT NULL)
+  OR (status = 'recibida_en_cuenta' AND received_in_account_id IS NOT NULL
+     AND received_in_session_id IS NULL)
+  OR (status IN ('devuelta','cancelada')   -- jamás se recibió / jamás se entregó
+     AND received_in_session_id IS NULL AND received_in_account_id IS NULL));
+
+-- RETORNO: solo el estado que lo completa lleva destino de retorno.
+ALTER TABLE public.cash_transfers ADD CONSTRAINT ctr_return_by_state CHECK (
+  (status <> 'devuelta' AND return_in_session_id IS NULL AND return_in_account_id IS NULL)
+  OR (status = 'devuelta'
+     AND num_nonnulls(return_in_session_id, return_in_account_id) = 1));
+```
+
+Coherencia cross-tabla (sesión receptora pertenece a la gaveta destino y está ABIERTA al confirmar; cuenta válida para la tienda; ruta de custodia autorizada): no expresable en CHECK → la garantizan los RPC (sección siguiente) + trigger `ctr_same_store` + specs E2E.
+
+**RPC bifásica — pseudocódigo (ESPECIFICACIÓN, no SQL ejecutable):**
+
+```
+request_cash_transfer:                                   -- Fase 1: SOLICITUD (sin entrega)
+  valida extremos XOR, no-self, misma tienda (server-side);
+  origen gaveta: NO exige sesión aquí (se fija al entregar);
+  origen cuenta: actor con rol encargado/admin (no gasta saldo todavía);
+  INSERT cash_transfers(status='solicitada', sent_from_session_id NULL,
+                        sent_by=actor, idempotencia 'xfer-req-<k>').
+deliver_cash_transfer(p_transfer, p_carrier DEFAULT NULL):   -- Fase 2: ENTREGA FÍSICA
+  SELECT ... FOR UPDATE (exige status='solicitada');
+  origen gaveta: sesión ABIERTA del actor en ESA gaveta → UPDATE set sent_from_session_id;
+  origen cuenta: valida rol + saldo (D.19.5) bajo lock de la cuenta;
+  UPDATE status='entregada', sent_at=now(), leg_out (idempotencia 'xfer-out-'||id);
+  INSERT custodia inicial (D.19.4): new = COALESCE(p_carrier, actor) — poseedor REAL.
+receive_cash_transfer(p_transfer):                       -- el receptor toma posesión física
+  FOR UPDATE; exige 'entregada'; valida sesión ABIERTA de la gaveta destino (o ruta de cuenta, esc. C);
+  UPDATE status='recibida'|'recibida_en_cuenta', received_at, received_by,
+         received_in_session_id | received_in_account_id (según ruta);
+  INSERT custodia: previous=poseedor actual, new=receptor, authorized_by, reason='recepción física'.
+return_cash_transfer(p_transfer, destino):               -- tras 'en_devolucion'
+  FOR UPDATE; exige 'en_devolucion'; valida sesión abierta de origen o cuenta de custodia;
+  UPDATE status='devuelta', returned_at/by, return_in_session_id | return_in_account_id;
+  INSERT custodia de cierre del tránsito (previous, new, reason='retorno físico').
+reject/return_request/cancel/reassign: sin cambio (D.16.3/D.18.5), ya respetan la matriz.
+```
+
+**Escenarios válidos / rechazados:**
+
+| Escenario | Resultado | Garantía |
+|---|---|---|
+| `solicitada` gaveta→gaveta sin sesión emisora | **VÁLIDO** | `ctr_origin_session` ramo 2a |
+| `solicitada` con `sent_from_session_id` ya fijado | RECHAZADO | idem (no falsifica entrega) |
+| `entregada` sin sesión emisora (origen gaveta) | RECHAZADO | idem ramo 2b |
+| `entregada` que permanece en tránsito sin receptor | **VÁLIDO** | `ctr_reception_by_state` ramo 1 |
+| `entregada` con `received_in_session_id` anticipado | RECHAZADO | idem |
+| `en_devolucion` con destino de retorno anticipado | RECHAZADO | `ctr_return_by_state` ramo 1 |
+| `recibida` con sesión receptora de OTRA gaveta | RECHAZADO | RPC + `ctr_same_store` + [SPEC E2E] |
+| `recibida` con `received_in_account_id` | RECHAZADO | `ctr_reception_by_state` ramo 2 |
+| `recibida_en_cuenta` con `received_in_session_id` | RECHAZADO | idem ramo 3 |
+| `devuelta` con ambos/ningún destino de retorno | RECHAZADO | `ctr_return_by_state` ramo 2 |
+| `cancelada` con piernas o atribuciones | RECHAZADO | `ctr_lifecycle` + ambos CHECKs |
+
+**Demostración de los dos ciclos [SIM, asertos 12-14 de `multicashier_design_006_checks.py`]:** `solicitada → entregada → recibida` (cada fila intermedia satisface `ctr_lifecycle` v2 + `ctr_origin_session` + `ctr_reception_by_state`; la recepción llega con la sesión receptora) y `solicitada → entregada → en_devolucion → devuelta` (retorno con destino informado SOLO al completar) — **sin desactivar restricciones en ningún paso**. La transferencia puede permanecer indefinidamente en `entregada` (aserto 14) con custodia documentada.
+
+### D.19.2 — P0-2 · Clasificación fail-closed: la ausencia de titular tiene PRIORIDAD
+
+**Defecto [CONFIRMADO en el CASE de D.18.2]:** las clases conocidas (`cobro`, `devolucion_comercial`, `gasto_documentado`, `traspaso_salida`) se evaluaban ANTES de comprobar el titular — una `sale/in/cash` sin `cash_closure_id` ni `cash_account_id` recibía `cobro`, no sumaba a ningún arqueo y escapaba de V1 (fail-open).
+
+**Corrección [DECISIÓN]:** para filas FÍSICAS (`payment_method='cash'`) POSTERIORES a la activación, la ausencia de titular tiene prioridad absoluta sobre la naturaleza financiera. Orden definitivo del CASE (sustituye al de D.18.2; el resto de la vista se mantiene):
+
+```sql
+-- ═══ ESPECIFICACIÓN CONCEPTUAL — fragmento del CASE de v_cash_ledger_classification (orden autoritativo) ═══
+CASE
+  WHEN pt.payment_method IN ('transfer','zelle')   THEN 'electronico'        -- 1. electrónicos: fuera de la custodia física
+  WHEN pt.payment_method IS DISTINCT FROM 'cash'   THEN 'sin_clasificar'     -- 2. medio desconocido: fail-closed
+  WHEN (pt.cash_closure_id IS NULL AND pt.cash_account_id IS NULL)           -- 3. FÍSICO sin titular:
+       AND st.multicashier_enabled_at IS NOT NULL
+       AND pt.payment_date >= st.multicashier_enabled_at  THEN 'sin_titular' --    BLOQUEA antes de clasificar
+  WHEN (pt.cash_closure_id IS NULL AND pt.cash_account_id IS NULL)           -- 4. físico pre-corte: legacy
+       THEN 'historico_sin_titular'
+  WHEN pt.ref_type='cash_transfer' AND pt.direction='out' THEN 'traspaso_salida'
+  WHEN pt.ref_type='cash_transfer' AND pt.direction='in'  THEN
+       CASE WHEN ct.status IN ('recibida','recibida_en_cuenta') THEN 'traspaso_entrada'
+            WHEN ct.status='devuelta'                            THEN 'traspaso_retorno'
+            ELSE 'sin_clasificar' END
+  WHEN pt.ref_type IN ('sale','receipt','service','production_order','work')
+       AND pt.direction='in'                                     THEN 'cobro'
+  WHEN pt.ref_type='devolution' AND pt.direction='refund'        THEN 'devolucion_comercial'
+  WHEN pt.ref_type='cash_flow'  AND pt.direction='in'            THEN 'ingreso_documentado'
+  WHEN pt.ref_type='cash_flow'  AND pt.direction='out'           THEN 'gasto_documentado'
+  WHEN pt.ref_type='adjustment' AND pt.direction IN ('in','out') THEN 'ajuste'
+  ELSE 'sin_clasificar'
+END AS class
+```
+
+(Nota: las piernas `cash_transfer` también pasan por la comprobación 3 — una pierna sin titular termina `sin_titular`, jamás `traspaso_*`.) **Efecto de los ejemplos del pliego:**
+
+| Fila sin titular (postactivación) | Con el CASE de D.18.2 | Con este CASE (D.19.2) | Consecuencia |
+|---|---|---|---|
+| `sale/in/cash` | `cobro` (escapaba) | **`sin_titular`** | bloquea el arqueo |
+| `devolution/refund/cash` | `devolucion_comercial` | **`sin_titular`** | bloquea el arqueo |
+| `cash_flow/out/cash` | `gasto_documentado` | **`sin_titular`** | bloquea el arqueo |
+| `cash_transfer/out/cash` | `traspaso_salida` | **`sin_titular`** | bloquea el arqueo |
+| `sale/in/zelle` | `electronico` | `electronico` (sin cambio) | fuera del efectivo físico, trazabilidad electrónica conservada |
+
+[SIM, asertos 15-21] los cinco ejemplos + pre-corte (`historico_sin_titular`) + filas CON titular conservan su clase.
+
+**V1 reforzada — detecta directamente, sin depender de etiquetas (sustituye a la V1 de D.18.2; PostgreSQL válido):**
+
+```sql
+-- V1a: cero movimientos de EFECTIVO postactivación sin titular (directa, no usa class)
+SELECT count(*) FROM v_cash_ledger_classification
+ WHERE model_scope='multicaja' AND payment_method='cash' AND holder_id IS NULL;          -- esperado 0
+
+-- V1b: cero movimientos físicos postactivación con clasificación bloqueante
+SELECT count(*) FROM v_cash_ledger_classification
+ WHERE model_scope='multicaja' AND payment_method='cash'
+   AND class IN ('sin_titular','sin_clasificar');                                        -- esperado 0
+
+-- V1c: cero movimientos monetarios con titular INVÁLIDO (no existe o es de otra tienda)
+SELECT count(*) FROM v_cash_ledger_classification v
+ LEFT JOIN public.cash_closures cc ON cc.id = v.cash_closure_id
+ LEFT JOIN public.cash_accounts ca ON ca.id = v.cash_account_id
+ WHERE v.model_scope='multicaja' AND v.holder_id IS NOT NULL
+   AND ((v.holder_type='sesion' AND (cc.id IS NULL OR cc.store_id <> v.store_id))
+     OR (v.holder_type='cuenta' AND (ca.id IS NULL OR ca.store_id <> v.store_id)));      -- esperado 0
+
+-- V1d: cero filas postactivación EXCLUIDAS silenciosamente del arqueo
+-- (toda fila debe ser contable, o estar explicada: electrónico o histórico pre-corte)
+SELECT count(*) FROM v_cash_ledger_classification
+ WHERE model_scope='multicaja'
+   AND class NOT IN ('cobro','devolucion_comercial','ingreso_documentado','gasto_documentado',
+                     'ajuste','traspaso_salida','traspaso_entrada','traspaso_retorno',
+                     'electronico');                                                      -- esperado 0
+```
+
+Cualquier resultado >0 bloquea la aprobación de todo arqueo postactivación (I-12). V1c exige que `cash_closures` y `cash_accounts` expongan `store_id` (ambas tienen FK `store_id` en el modelo vigente — [EN CÓDIGO] contrato de tablas del módulo).
+
+### D.19.3 — P0-3 · V2 definitiva como SQL válido (CTE agregada, piernas por identificador)
+
+**Defecto [CONFIRMADO en D.18.2]:** V2 usaba `count(*) FILTER (...)` dentro de `WHERE` — inválido en PostgreSQL (agregados solo en HAVING/subconsulta con GROUP BY). Reescritura ejecutable:
+
+```sql
+-- ═══ ESPECIFICACIÓN CONCEPTUAL — PostgreSQL válido (sustituye a la V2 de D.18.2) ═══
+WITH legs AS (
+  SELECT ct.id AS transfer_id, ct.status,
+         ct.leg_out_payment_id, ct.leg_in_payment_id,
+         count(*) FILTER (WHERE v.direction='out')                                   AS out_all,
+         count(*) FILTER (WHERE v.direction='in')                                    AS in_all,
+         count(*) FILTER (WHERE v.direction='out' AND v.ledger_id = ct.leg_out_payment_id
+                            AND v.ref_type='cash_transfer' AND v.ref_id = ct.id)      AS out_ok,
+         count(*) FILTER (WHERE v.direction='in'  AND v.ledger_id = ct.leg_in_payment_id
+                            AND v.ref_type='cash_transfer' AND v.ref_id = ct.id)      AS in_ok
+  FROM public.cash_transfers ct
+  LEFT JOIN public.v_cash_ledger_classification v
+         ON v.ref_type='cash_transfer' AND v.ref_id = ct.id
+  GROUP BY ct.id, ct.status, ct.leg_out_payment_id, ct.leg_in_payment_id
+)
+SELECT transfer_id, status, out_all, in_all, out_ok, in_ok
+FROM legs
+WHERE NOT (
+       (status = 'solicitada'          AND out_all=0 AND in_all=0)
+    OR (status = 'cancelada'           AND out_all=0 AND in_all=0)
+    OR (status = 'entregada'           AND out_all=1 AND in_all=0 AND out_ok=1)
+    OR (status = 'en_devolucion'       AND out_all=1 AND in_all=0 AND out_ok=1)
+    OR (status = 'recibida'            AND out_all=1 AND in_all=1 AND out_ok=1 AND in_ok=1)
+    OR (status = 'recibida_en_cuenta'  AND out_all=1 AND in_all=1 AND out_ok=1 AND in_ok=1)
+    OR (status = 'devuelta'            AND out_all=1 AND in_all=1 AND out_ok=1 AND in_ok=1));
+-- Resultado esperado: CERO transferencias inconsistentes.
+```
+
+La CTE compara el conteo TOTAL de piernas por dirección (`out_all/in_all`) contra la matriz del estado, y exige además que la pierna encontrada SEA EXACTAMENTE la registrada (`ledger_id = leg_*_payment_id`, `ref_type='cash_transfer'`, `ref_id = ct.id`): contar movimientos que solo coinciden por dirección NO basta. **Ejemplos que demuestran la detección [SIM, asertos 22-28]:** (1) pierna OUT duplicada → `out_all=2` ⇒ fila inconsistente; (2) pierna IN duplicada ⇒ idem; (3) `recibida` sin OUT ⇒ `out_all=0` contra 1 exigido; (4) `cancelada` con piernas ⇒ `out_all>0` contra 0; (5) `entregada` con pierna IN anticipada ⇒ `in_all=1` contra 0; y adicionalmente (6) una fila con dirección correcta pero `ledger_id` distinto al registrado ⇒ `out_ok=0` — detectada pese a que el conteo por dirección daría "1".
+
+### D.19.4 — P1-1 · Custodia inicial verdadera y orden monotónico de eventos
+
+**Defectos [CONFIRMADOS en D.18.5]:** (1) el evento inicial atribuía la custodia a `COALESCE(user_of(p_to_register), auth.uid())` — el usuario configurado en la gaveta destino no posee el efectivo hasta que la recibe físicamente; (2) el custodio vigente se determinaba por `ORDER BY created_at DESC, id DESC` — en PostgreSQL `now()` es el instante de INICIO de la transacción, de modo que una transacción que esperó un bloqueo puede grabar un evento con timestamp ANTERIOR al de otra ya confirmada: el orden no es cronológico y puede nombrar al custodio equivocado.
+
+**Corrección [DECISIÓN]:**
+
+1. **Custodia inicial = poseedor real del efectivo.** En la entrega (`deliver_cash_transfer`), quien conserva físicamente el dinero es el EMISOR (`auth.uid()`); si hay transportista distinto, se pasa explícitamente (`p_carrier`) y queda identificado en el evento. El receptor NO recibe la custodia por estar configurado en la gaveta: la recibe cuando `receive_cash_transfer` confirma la toma de posesión física, con evento de cambio (anterior → receptor, `authorized_by`, `changed_by`, fecha, motivo `'recepción física'`).
+2. **Secuencia monotónica por traspaso.** Columna `event_seq int NOT NULL` asignada por la RPC bajo el `FOR UPDATE` de la fila `cash_transfers` (dos eventos del mismo traspaso jamás se graban en paralelo): `event_seq = COALESCE(MAX(event_seq),0)+1 WHERE transfer_id=…` dentro de la misma transacción que retiene el lock — la serialización garantiza un único orden lógico, independiente de `now()`. `created_at` queda como dato informativo, NUNCA como clave de orden. Se descarta `GENERATED ALWAYS AS IDENTITY` como ordenante porque su secuencia es GLOBAL a la tabla, no por traspaso; se descarta el UUID aleatorio porque no define orden.
+3. **Cadena verificable.** Columna `previous_event_id` enlaza cada evento con el inmediatamente anterior (NULL en el inicial): la cadena de custodia es auditable en ambos sentidos.
+
+```sql
+-- ═══ ESPECIFICACIÓN CONCEPTUAL (NO EJECUTADA) — modifica cash_transfer_custody_events de D.18.5 ═══
+ALTER TABLE public.cash_transfer_custody_events
+  ADD COLUMN event_seq int NOT NULL,
+  ADD COLUMN previous_event_id uuid REFERENCES public.cash_transfer_custody_events(id);
+ALTER TABLE public.cash_transfer_custody_events
+  ADD CONSTRAINT uq_ctr_custody_seq UNIQUE (transfer_id, event_seq);
+-- evento inicial: event_seq=1, previous_event_id NULL, previous_custodian_user_id NULL;
+-- siguientes: event_seq = MAX+1 y previous_event_id = id del último, ambos asignados
+-- por la RPC en la MISMA transacción que retiene el FOR UPDATE de cash_transfers.
+
+-- Custodio vigente: por SECUENCIA, jamás por timestamp (sustituye a la vista de D.18.5):
+CREATE OR REPLACE VIEW public.v_cash_transfer_current_custodian AS
+SELECT DISTINCT ON (transfer_id)
+       transfer_id, new_custodian_user_id AS current_custodian_user_id,
+       event_seq, previous_event_id, changed_by, authorized_by, reason, created_at
+FROM public.cash_transfer_custody_events
+ORDER BY transfer_id, event_seq DESC;
+```
+
+**Seguridad de la tabla de eventos (se mantiene y se completa):** `RLS` habilitado (lectura solo miembros de la tienda, vía join a la tienda del traspaso); `REVOKE INSERT, UPDATE, DELETE` para `anon, authenticated, PUBLIC` — **ninguna escritura directa**; escritura SOLO por las RPC `SECURITY DEFINER service_role` (`deliver_cash_transfer` crea el evento inicial; `receive_cash_transfer` el cambio por recepción; `reassign_cash_transfer_custodian` la reasignación); el actor no puede autoasignarse sin rol encargado/admin; el nuevo custodio debe ser perfil ACTIVO de la misma tienda; la cadena histórica se conserva (append-only: sin UPDATE/DELETE, `previous_event_id` + `event_seq` intactos). [SIM, asertos 29-33]: custodio inicial = emisor; orden por `event_seq` inmune a timestamps fuera de orden (evento con `created_at` anterior grabado después conserva el orden correcto); cadena verificable; autoasignación rechazada; auditoría completa (previo/nuevo/ejecutor/autorizador/motivo/secuencia).
+
+### D.19.5 — P1-2 · Firma del RPC compatible con PostgreSQL y saldo `SUM(sign*amount)`
+
+**Defectos [CONFIRMADOS en D.18.1]:** (1) la firma `send_cash_transfer(p_from_register uuid DEFAULT NULL, …, p_amount numeric, …)` coloca parámetros con DEFAULT antes de obligatorios — **PostgreSQL no lo permite** para parámetros de entrada; (2) la consulta de saldo contenía `SUM(CASE WHEN direction='in' THEN 1 ELSE -1 END) * amount` — `amount` fuera de la agregación (SQL inválido) y semántica de saldo equivocada; (3) el bloque, presentado con `CREATE FUNCTION`, era pseudocódigo sin etiquetar.
+
+**Corrección:** el flujo se divide en `request_cash_transfer` / `deliver_cash_transfer` (D.19.1); ambas firmas ponen los parámetros OBLIGATORIOS primero y los opcionales al final; el bloque se etiqueta como **PSEUDOCÓDIGO** (especificación transaccional, no SQL ejecutado):
+
+```sql
+-- ═══ PSEUDOCÓDIGO DE ESPECIFICACIÓN (NO EJECUTADO) — firma válida en PostgreSQL ═══
+request_cash_transfer(
+  p_amount numeric,                -- obligatorio
+  p_currency text,                 -- obligatorio (CHECK vigente: CUP|USD; la RPC valida)
+  p_idempotency_key text,          -- obligatorio
+  p_from_register uuid DEFAULT NULL,
+  p_from_account uuid DEFAULT NULL,
+  p_to_register uuid DEFAULT NULL,
+  p_to_account uuid DEFAULT NULL);
+deliver_cash_transfer(
+  p_transfer uuid,                 -- obligatorio
+  p_carrier uuid DEFAULT NULL);    -- transportista real, si lo hay (custodia inicial, D.19.4)
+```
+
+```sql
+-- ═══ PSEUDOCÓDIGO DE ESPECIFICACIÓN — cálculo de saldo disponible de la cuenta (D.19.5) ═══
+-- 0. Serialización de operaciones concurrentes sobre la cuenta:
+--    SELECT ... FROM cash_accounts WHERE id = p_from_account FOR UPDATE;  (en deliver_cash_transfer)
+-- 1. Fail-closed: si la cuenta tiene filas físicas sin titular o sin clasificar, NO se calcula saldo.
+IF EXISTS (SELECT 1 FROM v_cash_ledger_classification
+            WHERE holder_type='cuenta' AND holder_id = p_from_account
+              AND currency = p_currency
+              AND class IN ('sin_titular','sin_clasificar')) THEN
+  RAISE EXCEPTION 'ERR_LEDGER_UNCLASSIFIED';
+END IF;
+-- 2. Saldo = SUM(sign * amount) sobre la clasificación autoritativa del ledger,
+--    moneda explícita, electrónicos fuera, históricos pre-corte fuera:
+SELECT COALESCE(SUM(v.sign * v.amount), 0) INTO v_saldo
+  FROM v_cash_ledger_classification v
+ WHERE v.holder_type='cuenta' AND v.holder_id = p_from_account
+   AND v.currency = p_currency
+   AND v.model_scope = 'multicaja'
+   AND v.class NOT IN ('electronico','sin_titular','sin_clasificar');
+IF v_saldo < p_amount THEN RAISE EXCEPTION 'ERR_TREASURY_INSUFFICIENT'; END IF;
+```
+
+[SIM, asertos 34-38]: la firma corregida es válida y la de D.18.1 es rechazable por la regla de PostgreSQL; el saldo con `SUM(sign*amount)` reproduce 30 000 − 10 000 = 20 000 excluyendo electrónico (2 000) e histórico (999); una fila `sin_titular` o `sin_clasificar` en la cuenta **bloquea** el cálculo del saldo (fail-closed) en lugar de distorsionarlo. El `FOR UPDATE` de la fila `cash_accounts` antes de leer el saldo serializa dos entregas simultáneas: la segunda relee el saldo ya actualizado.
+
+### D.19.6 — P1-3 · Reproducibilidad: evidencia versionada en el PR
+
+La misión anterior reportó 26 asertos cuyo script no estaba en el repositorio. **Corregido:** la evidencia vive ahora en `docs/audits/evidence/` (sin tocar producto ni aplicación):
+
+| Archivo | Contenido | Instrucción de ejecución | Resultado real obtenido |
+|---|---|---|---|
+| `multicashier_design_005_checks.py` | **Copia exacta** del script de las pruebas A-H de la misión 005 (26 asertos, casos A-H con sus datos incluidos) | `python3 docs/audits/evidence/multicashier_design_005_checks.py` | `PRUEBAS 005 OK: 26 asertos pasados` — **re-ejecutado en esta misión: OK** |
+| `multicashier_design_004_battery.py` | Batería numérica D.16.8 (10 casos, identidad I-1 por moneda) | `python3 docs/audits/evidence/multicashier_design_004_battery.py` | `INVARIANTE I-1 verificada en los 10 casos` — **re-ejecutado: OK** |
+| `multicashier_design_006_checks.py` | Asertos de ESTA misión: matriz de estados (01-14), clasificación fail-closed (15-21), V2/CTE (22-28), custodia y secuencia (29-33), firma y saldo (34-38), identidad (39) | `python3 docs/audits/evidence/multicashier_design_006_checks.py` | `CHECKS 006 OK: 39 asertos pasados` |
+| `multicashier_prod_readonly_2026-11-08.md` | **Expediente separado** de las consultas readonly de producción [MEDIDO]: SQL, resultados y método (sin credenciales) | lectura; no ejecutable (requiere acceso del entorno del agente) | Q1-Q5 documentados (D.18.3/D.18.4) |
+
+Garantías de los scripts: **puro Python estándar**, sin red, sin credenciales, sin conexión a ninguna base de datos, sin escrituras — reproducen SIMULACIONES y dejan explícito en su cabecera que NO son pruebas contra la base de datos (las de producción, solo lectura, están en el expediente aparte). Resultado esperado de cada script documentado en la tabla; cualquier divergencia es un hallazgo de regresión del modelo.
+
+### D.19.7 — Verificación cruzada posterior a las correcciones
+
+| # | Comprobación del pliego | Resultado |
+|---|---|---|
+| 1 | No se anticipa una recepción | `ctr_reception_by_state`: NULL en `solicitada/entregada/en_devolucion` y también en `devuelta/cancelada` [SIM 05, 10] |
+| 2 | No se anticipa una devolución | `ctr_return_by_state`: NULL fuera de `devuelta` [SIM 06, 09] |
+| 3 | Una transferencia puede permanecer en tránsito | `entregada` legal sin receptor ni retorno [SIM 03, 14] |
+| 4 | Todo efectivo en tránsito tiene custodio verdadero | Evento inicial con poseedor real (emisor/carrier) + `event_seq`; V6 = 0 sin cambio de sentido |
+| 5 | Todo movimiento físico postactivación tiene titular | CASE con prioridad de ausencia de titular + V1a/V1b [SIM 15-18] |
+| 6 | El arqueo no excluye movimientos conocidos sin titular | `sin_titular` BLOQUEA en lugar de excluir; V1d = 0 exclusiones silenciosas |
+| 7 | V1 y V2 pueden ejecutarse | V1a-V1d SQL plano; V2 con CTE agregada — sin agregados en WHERE [SIM 22-28] |
+| 8 | Las verificaciones usan campos que existen | Todas las columnas de V1a-d y V2 están proyectadas por D.18.2/D.19.2 (`model_scope`, `payment_method`, `holder_id`, `class`, `ledger_id`, `ref_type`, `ref_id`, `direction`, `sign`, `amount`, `store_id` vía join) |
+| 9 | La secuencia de eventos no depende del timestamp | Orden por `event_seq` (asignado bajo lock); `created_at` solo informativo [SIM 30] |
+| 10 | La identidad de custodia se mantiene por moneda | Batería 10 casos + [SIM 39]: `gavetas+tesorería+tránsito = custodia total` por moneda tras el ciclo corregido |
+
+Adicional: `ctr_lifecycle` v2 y el XOR de extremos quedan sin contradicción con los tres CHECKs nuevos (responsabilidades separadas: ciclo de piernas/tiempos ↔ atribución de sesiones/cuentas); `cash_flow_documents` y `payment_transactions` sin cambios respecto a D.18.4 (V7-V11 siguen vigentes); `receive_cash_transfer`/`return_cash_transfer` ahora fijan también los eventos de custodia de cambio/cierre.
+
+### D.19.8 — Veredicto (misión 006 — VIGENTE)
+
+Los seis defectos detectados quedan corregidos y coherentes entre sí: los CHECKs de recepción, retorno y sesión emisora dependen ahora del estado (una transferencia existe en `solicitada`/`entregada`/`en_devolucion` sin atribuciones anticipadas, y los dos ciclos completos —con recepción y con devolución— se recorren sin desactivar restricciones); la clasificación es fail-closed (una fila física postactivación sin titular termina `sin_titular` y BLOQUEA, aunque su naturaleza sea `cobro` o `gasto_documentado`); V1 detecta directamente sin depender de etiquetas y V2 es SQL PostgreSQL válido por identificador y estado; la custodia inicial corresponde al poseedor real y la secuencia de eventos es monotónica por traspaso con cadena verificable; la firma del RPC es compatible y el saldo se calcula con `SUM(sign*amount)` bajo lock y con bloqueo fail-closed; la evidencia (26 + batería + 39 asertos y el expediente readonly de producción) está versionada y separada por clase.
+
+**DISEÑO APROBABLE PARA IMPLEMENTACIÓN** — con las precondiciones exigibles ya establecidas (P1-02 corregido antes de habilitar multi-sesión, gate de activación por tienda, certificación E2E de la Fase F con los 18 escenarios, la batería y los asertos A-H/006) y las tareas de implementación de D.18.8. El veredicto no certifica: migraciones no ejecutadas (regla de misión), E2E no ejecutadas, CI verde ≠ integridad contable, simulación ≠ prueba automatizada, y la aprobación del diseño no autoriza por sí misma el inicio del desarrollo — el propietario decide la fase de implementación.
