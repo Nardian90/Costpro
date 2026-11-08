@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '@/store';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, LogIn, Mail, Chrome, Info, Loader2, ArrowLeft, UserRound } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Mail, Chrome, Info, Loader2, ArrowLeft, UserRound, CloudOff, RefreshCcw } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 import RegisterForm from './RegisterForm';
 import { toast } from 'sonner';
@@ -15,6 +15,10 @@ import { logger } from '@/lib/logger';
 import { mapProfileToContract, UserFactory } from '@/contracts/user';
 import { safeNavigate, returnToFromLocation } from '@/lib/navigation';
 import { userService } from '@/services/user-service';
+// CP-AUTH-RESILIENCE-003: banner de reconexión (estado «auth_unavailable» de la
+// máquina de autenticación). Un backend de auth caído NO cierra el modal, NO
+// destruye la sesión local y NO se presenta como credenciales inválidas.
+import { useSessionStore } from '@/store/session-store';
 
 const isSupabaseConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
@@ -103,6 +107,15 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
 
   const login = useAuthStore((state) => state.login);
   const router = useRouter();
+
+  // CP-AUTH-RESILIENCE-003 (caso D): fase de la máquina de autenticación.
+  // Con «auth_unavailable» se muestra reconexión (sin cerrar el modal, sin
+  // confundir el outage con credenciales inválidas). Reintentar pide una
+  // verificación al GlobalSessionManager vía requestSessionCheck() — sin
+  // recargas ni navegación.
+  const authPhase = useSessionStore((s) => s.authPhase);
+  const requestSessionCheck = useSessionStore((s) => s.requestSessionCheck);
+  const showReconnectBanner = authPhase === 'auth_unavailable' || authPhase === 'profile_unavailable';
 
   // FC ACCESS FLOW (mandato PART 10): «Usar como invitado» existe SOLO dentro
   // del flujo Crear Ficha de Costo (returnTo=/fc/). Invitado NO es una cuenta:
@@ -297,6 +310,36 @@ export default function LoginForm({ onBack, defaultTab }: LoginFormProps) {
                 : 'Ingresa tus credenciales para acceder a COSTPRO'}
             </p>
           </motion.div>
+
+          {/* CP-AUTH-RESILIENCE-003 (caso D) — reconexión honesta: el servicio de
+              auth no responde, pero el formulario permanece usable y la sesión
+              local NO fue destruida. Nunca se auto-cierra el modal. */}
+          {showReconnectBanner && (
+            <div
+              role="status"
+              data-testid="auth-reconnect-banner"
+              className="flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-700 dark:text-amber-300"
+            >
+              <CloudOff className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+              <div className="flex-1 space-y-1.5">
+                <p className="font-bold">
+                  Servicio de autenticación temporalmente no disponible
+                </p>
+                <p className="leading-relaxed">
+                  No es un error de tus credenciales: tus datos están a salvo y puedes
+                  escribirlos ahora. Reintenta la conexión o espera unos segundos.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => requestSessionCheck()}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/50 px-2.5 py-1 font-bold hover:bg-amber-500/20 transition-colors"
+                >
+                  <RefreshCcw className="w-3 h-3" aria-hidden="true" />
+                  Reintentar conexión
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Form */}
           <motion.form ref={formRef} onSubmit={handleSubmit} className="space-y-4" variants={itemVariants}>

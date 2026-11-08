@@ -1,7 +1,7 @@
 import { logger } from '@/lib/logger';
 import { useEffect, useCallback, useRef } from 'react';
 import { useAuthStore } from '@/store';
-import { useSessionStore } from '@/store/session-store';
+import { useSessionStore, transitionAuthPhase } from '@/store/session-store';
 import { supabase } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
 import { mapProfileToContract } from '@/contracts/user';
@@ -9,6 +9,12 @@ import { userService } from '@/services/user-service';
 // INC-20261030: caída de GoTrue/Postgres NO debe expulsar al usuario con sesión
 // local válida — reintento escalado en vez de logout por error transitorio.
 import { isRetryableAuthOutage, AUTH_OUTAGE_RETRY_DELAYS_MS } from '@/lib/auth-outage';
+// CP-AUTH-RESILIENCE-003: limpieza CONTROLADA por el mecanismo oficial del SDK
+// (supabase.auth.signOut({scope:'local'}) + logout Zustand). Antes, el logout
+// por credenciales irrecuperables solo limpiaba Zustand: la clave residual
+// `sb-*-auth-token` sobrevivía y el CTA del landing re-navegaba a '/' con
+// recarga en bucle (el usuario nunca veía el modal).
+import { signOutLocalAuth } from '@/lib/auth-recovery';
 import { hasCostproSession } from '@/lib/fcEntry';
 import type { Session } from '@supabase/supabase-js';
 import type { Profile } from '@/types';
@@ -40,6 +46,7 @@ export function useSessionManager() {
         // Dev mode without Supabase: keep existing session
         if (!isSupabaseConfigured) {
             setAuthStatus('authenticated_valid');
+            transitionAuthPhase('authenticated', 'DEV_MODE');
             setLoading(false);
             return;
         }
@@ -47,6 +54,7 @@ export function useSessionManager() {
         // Clean up stale dev-bypass session from previous dev mode
         if (isMocked || currentToken === 'dev-token-bypass') {
             logout();
+            transitionAuthPhase('unauthenticated', 'DEV_STALE_CLEANUP');
             setLoading(false);
             return;
         }
@@ -58,6 +66,9 @@ export function useSessionManager() {
 
         checkingRef.current = true;
         setSessionStatus(true);
+        // CP-AUTH-RESILIENCE-003: fase «refreshing» — verificando/renovando
+        // sesión; esperar sin generar navegación.
+        transitionAuthPhase('refreshing', 'SESSION_CHECK_STARTED');
 
         // INC-20261030: declarada fuera del try para que el catch pueda
         // distinguir «sin sesión local» de «con sesión local + backend caído».
@@ -70,6 +81,7 @@ export function useSessionManager() {
 
             if (!session) {
                 setAuthStatus('unauthenticated');
+                transitionAuthPhase('unauthenticated', 'NO_LOCAL_SESSION');
                 setLoading(false);
                 return;
             }
@@ -91,12 +103,19 @@ export function useSessionManager() {
                 ) {
                     const delay = AUTH_OUTAGE_RETRY_DELAYS_MS[authOutageRetryRef.current];
                     authOutageRetryRef.current += 1;
-                    logger.warn('DATABASE', '[SESSIONMANAGER]_AUTH_OUTAGE_RETRY_SCHEDULED', { data: `attempt=${authOutageRetryRef.current} delayMs=${delay}` });
+                    logger.warn('AUTH', 'AUTH_BACKEND_UNAVAILABLE', { data: `attempt=${authOutageRetryRef.current} delayMs=${delay}` });
+                    transitionAuthPhase('refreshing', 'AUTH_OUTAGE_RETRY_SCHEDULED');
                     setTimeout(() => { void checkSession(true); }, delay);
                     return;
                 }
                 authOutageRetryRef.current = 0;
-                logout();
+                // CP-AUTH-RESILIENCE-003: credenciales irrecuperables → limpieza
+                // CONTROLADA (SDK signOut local + Zustand). Con solo logout() la
+                // clave residual `sb-*-auth-token` sobrevivía y el CTA del landing
+                // volvía a navegar a '/' con recarga en bucle (incidente reportado).
+                logger.warn('AUTH', 'AUTH_SESSION_INVALID', { data: { reason: userError ? 'server_rejected' : 'no_user' } });
+                transitionAuthPhase('session_expired', 'AUTH_SESSION_INVALID');
+                await signOutLocalAuth('session_invalid', true);
                 setLoading(false);
                 return;
             }
@@ -112,11 +131,13 @@ export function useSessionManager() {
                 // BUG-039: Fallback with stale marker and retry
                 if (currentUser) {
                     login(currentUser, session.access_token, 'authenticated_stale_profile' as any);
+                    transitionAuthPhase('profile_unavailable', 'AUTH_PROFILE_STALE');
                     setStatus('stable');
                     setTimeout(() => checkSession(true), 30000);
                     return;
                 }
                 setAuthStatus('authenticated_invalid_profile');
+                transitionAuthPhase('profile_unavailable', 'AUTH_PROFILE_INVALID');
                 setLoading(false);
                 return;
             }
@@ -131,14 +152,16 @@ export function useSessionManager() {
                     setAuthStatus('authenticated_valid');
                     setLoading(false);
                 }
+                transitionAuthPhase('authenticated', 'AUTH_SESSION_RESTORED');
                 setStatus('stable');
             } else {
                 await supabase.auth.signOut();
                 logout();
+                transitionAuthPhase('session_expired', 'AUTH_PROFILE_NOT_FOUND');
                 setLoading(false);
             }
         } catch (error: unknown) {
-            logger.warn('DATABASE', 'SESSION_CHECK_FAILED', { message: error instanceof Error ? error.message : String(error) });
+            logger.warn('AUTH', 'SESSION_CHECK_FAILED', { message: error instanceof Error ? error.message : String(error) });
             // INC-20261030: timeout del Promise.race («Session check timeout») o fallo
             // de red con sesión local → reintento escalado en vez de expulsar al
             // usuario. La sesión local (sb-*-auth-token) no fue revocada: el fallo
@@ -150,12 +173,20 @@ export function useSessionManager() {
             ) {
                 const delay = AUTH_OUTAGE_RETRY_DELAYS_MS[authOutageRetryRef.current];
                 authOutageRetryRef.current += 1;
-                logger.warn('DATABASE', '[SESSIONMANAGER]_AUTH_OUTAGE_RETRY_SCHEDULED', { data: `attempt=${authOutageRetryRef.current} delayMs=${delay}` });
+                logger.warn('AUTH', 'AUTH_BACKEND_UNAVAILABLE', { data: `attempt=${authOutageRetryRef.current} delayMs=${delay}` });
+                transitionAuthPhase('refreshing', 'AUTH_OUTAGE_RETRY_SCHEDULED');
                 setTimeout(() => { void checkSession(true); }, delay);
                 return; // `finally` libera checkingRef; loading se conserva para el splash
             }
             authOutageRetryRef.current = 0;
             setAuthStatus(useAuthStore.getState().user ? 'authenticated_valid' : 'unauthenticated');
+            // CP-AUTH-RESILIENCE-003: sin usuario y con escalera agotada, el estado
+            // honesto es «auth no disponible» (reconexión + reintento), NO
+            // «unauthenticated» — no se destruyó la sesión local por un fallo temporal.
+            transitionAuthPhase(
+                useAuthStore.getState().user ? 'authenticated' : 'auth_unavailable',
+                'SESSION_CHECK_EXHAUSTED',
+            );
             setLoading(false);
             setStatus('error');
         } finally {
@@ -195,6 +226,7 @@ export function useSessionManager() {
                 // y el logout disparado desde otro tab u origen externo aterriza en el
                 // Landing por la misma vía reactiva.
                 logout();
+                transitionAuthPhase('unauthenticated', 'SIGNED_OUT');
                 setLoading(false);
             } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
                 const { user: currentUser } = useAuthStore.getState();
@@ -209,6 +241,20 @@ export function useSessionManager() {
     }, [login, logout, checkSession, setLoading]);
 
     useEffect(() => { checkSession(true); }, [checkSession]);
+
+    // CP-AUTH-RESILIENCE-003: puente UI → gestor de sesión. El banner de
+    // reconexión del modal de login (y otros agentes) pide reintentos vía
+    // requestSessionCheck() sin recargar ni navegar.
+    useEffect(() => {
+        const unsub = useSessionStore.subscribe(
+            (state, prev) => {
+                if (state.checkRequests !== prev.checkRequests) {
+                    void checkSession(true);
+                }
+            },
+        );
+        return () => unsub();
+    }, [checkSession]);
 
     useEffect(() => {
         // INC-20261030: failsafe anti-loading-infinito. Sin sesión local → 5s
