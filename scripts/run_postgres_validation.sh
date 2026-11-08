@@ -88,13 +88,13 @@ for f in 00_schema_minimal.sql 01_constraints.sql 03_v3_reconciliation.sql \
   echo "── cargando $f"
   q "$DB" -v ON_ERROR_STOP=1 -q -f "$EVDIR/$f" > "$WORK/out_$f.log" 2>&1 \
     || { echo "── FALLO en $f:"; cat "$WORK/out_$f.log"; fail "carga de $f"; }
-  grep -E '══|OK |RESULTADO' "$WORK/out_$f.log" | head -70 || true
+  grep -E '══|OK |RESULTADO' "$WORK/out_$f.log" || true
 done
 
 # ── 4) Conteo de casos negativos: debe coincidir con lo documentado ───────────
-N_OK="$(grep -cE 'OK (N|S-N|I-N|A-N)' "$WORK/out_05_invalid_fixtures.sql.log" || true)"
-if [[ "$N_OK" -ne 73 ]]; then
-  fail "conteo de casos negativos OK en 05 = $N_OK, esperado 73 (46 aserciones de D.22 + 27 de D.23; A-N3 y A-N7 emiten dos)"
+N_OK="$(grep -cE 'OK (N|S-N|I-N|A-N|C-N)' "$WORK/out_05_invalid_fixtures.sql.log" || true)"
+if [[ "$N_OK" -ne 96 ]]; then
+  fail "conteo de aserciones negativas OK en 05 = $N_OK, esperado 96 (D.22 73 + D.23 19 + D.24 nuevo lote)"
 fi
 echo "── casos negativos verificados en 05: $N_OK"
 
@@ -103,37 +103,43 @@ echo "── casos negativos verificados en 05: $N_OK"
 # 700 C2→G3; transferencia entregada idem-CC0 con custodia seq1 (custodio K);
 # tabla de control conc_gate para la barrera coordinador↔runner.
 q "$DB" -v ON_ERROR_STOP=1 -q -f - > "$WORK/conc_prep.log" 2>&1 <<'SQL' || fail "fixtures de concurrencia"
-CREATE TABLE conc_gate(id int PRIMARY KEY, state text);
-INSERT INTO conc_gate VALUES (1,'init');
+INSERT INTO transactions(id, store_id, total_amount)
+VALUES ('75000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002', 99999);
 INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-         currency, ref_type, ref_id, cash_account_id, created_by)
+         currency, ref_type, ref_id, cash_account_id, paid_by, transaction_id)
 VALUES ('70000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002',
-        'in', 'cash', 1000, 'CUP', 'sale', NULL,
-        '40000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000006');
-SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000002',
+        'in', 'cash', 1000, 'CUP', 'sale', '75000000-0000-0000-0000-000000000001',
+        '40000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000006',
+        '75000000-0000-0000-0000-000000000001');
+SELECT set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000006', true) AS auth_uid,
+       f_request_cash_transfer('10000000-0000-0000-0000-000000000002',
          NULL, '40000000-0000-0000-0000-000000000002',
          '30000000-0000-0000-0000-000000000003', NULL,
          700, 'CUP', '20000000-0000-0000-0000-000000000006',
          '20000000-0000-0000-0000-000000000006', 'idem-CC1');
-SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000002',
+SELECT set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000006', true) AS auth_uid,
+       f_request_cash_transfer('10000000-0000-0000-0000-000000000002',
          NULL, '40000000-0000-0000-0000-000000000002',
          '30000000-0000-0000-0000-000000000003', NULL,
          700, 'CUP', '20000000-0000-0000-0000-000000000006',
          '20000000-0000-0000-0000-000000000006', 'idem-CC2');
-SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+SELECT set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true) AS auth_uid,
+       f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
          '30000000-0000-0000-0000-000000000001', NULL,
          '30000000-0000-0000-0000-000000000002', NULL,
          1200, 'CUP', '20000000-0000-0000-0000-000000000001',
          '20000000-0000-0000-0000-000000000001', 'idem-CC0');
-SELECT f_deliver_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key='idem-CC0'),
          '20000000-0000-0000-0000-000000000002',
          '50000000-0000-0000-0000-000000000001', NULL);
 SQL
 
-client() {  # client <nombre> <sql>
+client() {  # client <nombre> <sql>: conexión independiente con application_name único
   local name="$1" sql="$2" rc=0
   "$PSQL_BIN" -h "$SOCK" -p "$PORT" -U "$PGUSER" -d "$DB" -v ON_ERROR_STOP=1 \
+    -c "SET application_name='mc_client_$name';" \
     -c "$sql" > "$WORK/$name.out" 2>&1 || rc=$?
   echo "$rc" > "$WORK/$name.rc"
 }
@@ -150,6 +156,59 @@ advisory_waiters() {  # advisory_waiters <clave> ⇒ backends ESPERANDO esa clav
   q "$DB" -tAc "SELECT count(*) FROM pg_stat_activity
                  WHERE wait_event_type='Lock' AND wait_event='advisory'
                    AND query ILIKE '%pg_advisory_lock($1)%'"
+}
+pid_by_app() {  # pid_by_app <application_name>: PID real de esa conexión
+  q "$DB" -tAc "SELECT pid FROM pg_stat_activity WHERE application_name='$1'"
+}
+wait_pid_by_app() {  # wait_pid_by_app <app_name> <intentos>
+  local i
+  for i in $(seq 1 "$2"); do
+    [[ -n "$(pid_by_app "$1")" ]] && return 0
+    sleep 0.25
+  done
+  return 1
+}
+blocked_by_coord() {  # blocked_by_coord <client_pid> <coord_pid>: el bloqueador EXACTO
+  q "$DB" -tAc "SELECT count(*) FROM unnest(pg_blocking_pids($1)) b WHERE b = $2"
+}
+shared_tx_with_coord() {  # shared_tx_with_coord <client_pid> <coord_pid>: el bloqueo pendiente
+  q "$DB" -tAc "SELECT count(*) FROM pg_locks a, pg_locks b
+                 WHERE a.pid = $2 AND b.pid = $1
+                   AND a.locktype='transactionid' AND b.locktype='transactionid'
+                   AND a.transactionid = b.transactionid AND b.granted = false"
+}
+reaches_coord() {  # reaches_coord <pid> <coordpid>: la CADENA pg_blocking_pids
+  # desde este backend termina en el coordinador (los esperantes de la MISMA
+  # fila forman coord → primer cliente (transactionid) → resto (tuple lock)).
+  local pid="$1" coord="$2" depth blockers first
+  for depth in 1 2 3 4 5; do
+    blockers="$(q "$DB" -tAc "SELECT array_to_string(pg_blocking_pids($pid), ',')"
+)"
+    [[ -z "$blockers" ]] && return 1
+    if [[ ",$blockers," == *",$coord,"* ]]; then return 0; fi
+    first="${blockers%%,*}"
+    pid="$first"
+  done
+  return 1
+}
+wait_exact_blocking() {  # wait_exact_blocking <c1pid> <c2pid> <coordpid> <intentos>
+  # Verificación EXACTA y estable (D.24.6): (a) la cadena de pg_blocking_pids de
+  # CADA cliente termina en el coordinador; (b) al menos un cliente espera el
+  # transactionid del coordinador (el bloqueo objetivo real de la prueba).
+  local i r1 r2 d1 d2
+  for i in $(seq 1 "$4"); do
+    r1=0; r2=0; d1=0; d2=0
+    reaches_coord "$1" "$3" && r1=1
+    reaches_coord "$2" "$3" && r2=1
+    [[ "$(shared_tx_with_coord "$1" "$3")" == "1" ]] && d1=1
+    [[ "$(shared_tx_with_coord "$2" "$3")" == "1" ]] && d2=1
+    if [[ "$r1" == "1" && "$r2" == "1" && ( "$d1" == "1" || "$d2" == "1" ) ]]; then
+      return 0
+    fi
+    sleep 0.5
+  done
+  echo "cadena(c1)=$r1 cadena(c2)=$r2 transactionid_compartido(c1)=$d1 (c2)=$d2" >&2
+  return 1
 }
 holder() {  # holder <varpid> <clave>: retiene la clave (sesión viva) hasta que lo maten
   "$PSQL_BIN" -h "$SOCK" -p "$PORT" -U "$PGUSER" -d "$DB" \
@@ -191,23 +250,34 @@ ONE_OK_ONE_ERR() {
 holder HPID1 777
 wait_lock_held 777 40 || fail "portador de saldo no retuvo la clave advisory 777"
 "$PSQL_BIN" -h "$SOCK" -p "$PORT" -U "$PGUSER" -d "$DB" -q -f - > "$WORK/coord1.log" 2>&1 <<'SQL' &
+SET application_name='mc_coord_saldo';
 BEGIN;
 SELECT 1 FROM cash_accounts WHERE id='40000000-0000-0000-0000-000000000002' FOR UPDATE;
 SELECT pg_advisory_lock(777);
 ROLLBACK;
 SQL
 wait_coord_blocked 777 80 || fail "coordinador de saldo no tomó el bloqueo de la cuenta"
-client c1 "SELECT f_deliver_cash_transfer(
+wait_pid_by_app "mc_coord_saldo" 40 || fail "coordinador de saldo sin PID visible"
+COORD1_PID="$(pid_by_app mc_coord_saldo)"
+client c1 "SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000006',true) AS auth_uid,
+             f_deliver_cash_transfer(
              (SELECT id FROM cash_transfers WHERE idempotency_key='idem-CC1'),
              '20000000-0000-0000-0000-000000000006', NULL, NULL);" &
-client c2 "SELECT f_deliver_cash_transfer(
+client c2 "SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000006',true) AS auth_uid,
+             f_deliver_cash_transfer(
              (SELECT id FROM cash_transfers WHERE idempotency_key='idem-CC2'),
              '20000000-0000-0000-0000-000000000006', NULL, NULL);" &
 sleep 1
+wait_pid_by_app "mc_client_c1" 60 || fail "SALDO: cliente c1 sin PID"
+wait_pid_by_app "mc_client_c2" 10 || fail "SALDO: cliente c2 sin PID"
+C1_PID="$(pid_by_app mc_client_c1)"; C2_PID="$(pid_by_app mc_client_c2)"
 W1=0
 for i in $(seq 1 60); do W1="$(waiters '%f_deliver_cash_transfer(%')"; [[ "$W1" == "2" ]] && break; sleep 0.5; done
 if [[ "$W1" != "2" ]]; then fail "SALDO: contención no demostrada — waiters=$W1 (se exigían 2 backends en wait_event_type='Lock')"; fi
-echo "── espera real demostrada (saldo): 2 backends en wait_event_type='Lock' sobre el bloqueo de la cuenta"
+if ! wait_exact_blocking "$C1_PID" "$C2_PID" "$COORD1_PID" 40; then
+  fail "SALDO: no se identificó de forma estable al bloqueador exacto vía pg_blocking_pids() (ver b1/b2/shared arriba)"
+fi
+echo "── espera real demostrada (saldo): 2 backends en wait_event_type='Lock'; cadena pg_blocking_pids termina en el coordinador $COORD1_PID (fila de la cuenta C2 bloqueada por su transactionid)"
 release 777 HPID1
 wait
 echo "── saldo concurrente: c1.rc=$(cat "$WORK/c1.rc") c2.rc=$(cat "$WORK/c2.rc")"
@@ -239,27 +309,38 @@ SQL
 holder HPID2 778
 wait_lock_held 778 40 || fail "portador de custodia no retuvo la clave advisory 778"
 "$PSQL_BIN" -h "$SOCK" -p "$PORT" -U "$PGUSER" -d "$DB" -q -f - > "$WORK/coord2.log" 2>&1 <<'SQL' &
+SET application_name='mc_coord_custodia';
 BEGIN;
 SELECT 1 FROM cash_transfers WHERE id=(SELECT id FROM cash_transfers WHERE idempotency_key='idem-CC0') FOR UPDATE;
 SELECT pg_advisory_lock(778);
 ROLLBACK;
 SQL
 wait_coord_blocked 778 80 || fail "coordinador de custodia no tomó el bloqueo del traspaso"
-client c3 "SELECT f_create_custody_event(
+wait_pid_by_app "mc_coord_custodia" 40 || fail "coordinador de custodia sin PID visible"
+COORD2_PID="$(pid_by_app mc_coord_custodia)"
+client c3 "SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true) AS auth_uid,
+             f_create_custody_event(
              (SELECT id FROM cash_transfers WHERE idempotency_key='idem-CC0'),
              '20000000-0000-0000-0000-000000000002'::uuid,
              '20000000-0000-0000-0000-000000000005'::uuid,
              '20000000-0000-0000-0000-000000000001'::uuid, NULL, 'rea. A');" &
-client c4 "SELECT f_create_custody_event(
+client c4 "SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true) AS auth_uid,
+             f_create_custody_event(
              (SELECT id FROM cash_transfers WHERE idempotency_key='idem-CC0'),
              '20000000-0000-0000-0000-000000000002'::uuid,
              '20000000-0000-0000-0000-000000000004'::uuid,
              '20000000-0000-0000-0000-000000000001'::uuid, NULL, 'rea. B');" &
 sleep 1
+wait_pid_by_app "mc_client_c3" 60 || fail "CUSTODIA: cliente c3 sin PID"
+wait_pid_by_app "mc_client_c4" 10 || fail "CUSTODIA: cliente c4 sin PID"
+C3_PID="$(pid_by_app mc_client_c3)"; C4_PID="$(pid_by_app mc_client_c4)"
 W2=0
 for i in $(seq 1 60); do W2="$(waiters '%f_create_custody_event(%')"; [[ "$W2" == "2" ]] && break; sleep 0.5; done
 if [[ "$W2" != "2" ]]; then fail "CUSTODIA: contención no demostrada — waiters=$W2 (se exigían 2 backends en wait_event_type='Lock')"; fi
-echo "── espera real demostrada (custodia N29): 2 backends en wait_event_type='Lock' sobre el bloqueo del traspaso"
+if ! wait_exact_blocking "$C3_PID" "$C4_PID" "$COORD2_PID" 40; then
+  fail "CUSTODIA: no se identificó de forma estable al bloqueador exacto vía pg_blocking_pids() (ver b3/b4/shared arriba)"
+fi
+echo "── espera real demostrada (custodia N29): 2 backends en wait_event_type='Lock'; cadena pg_blocking_pids termina en el coordinador $COORD2_PID (fila del traspaso CC0 bloqueada por su transactionid)"
 release 778 HPID2
 wait
 echo "── N29 (custodia concurrente): c3.rc=$(cat "$WORK/c3.rc") c4.rc=$(cat "$WORK/c4.rc")"
@@ -287,6 +368,7 @@ SQL
 holder HPID3 779
 wait_lock_held 779 40 || fail "portador de idempotencia no retuvo la clave advisory 779"
 "$PSQL_BIN" -h "$SOCK" -p "$PORT" -U "$PGUSER" -d "$DB" -q -f - > "$WORK/coord3.log" 2>&1 <<'SQL' &
+SET application_name='mc_coord_idem';
 BEGIN;
 INSERT INTO cash_transfers(store_id, amount, currency, status,
          from_register_id, from_account_id, to_register_id, to_account_id,
@@ -300,41 +382,57 @@ SELECT pg_advisory_lock(779);
 ROLLBACK;   -- el INSERT se revierte: la clave queda libre para la carrera
 SQL
 wait_coord_blocked 779 80 || fail "coordinador de idempotencia no tomó la clave única idem-CC3"
-client c5 "SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+wait_pid_by_app "mc_coord_idem" 40 || fail "coordinador de idempotencia sin PID visible"
+COORD3_PID="$(pid_by_app mc_coord_idem)"
+client c5 "SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true) AS auth_uid,
+             f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000001', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
              480, 'CUP', '20000000-0000-0000-0000-000000000001',
              '20000000-0000-0000-0000-000000000001', 'idem-CC3');" &
-client c6 "SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+client c6 "SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true) AS auth_uid,
+             f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000001', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
              480, 'CUP', '20000000-0000-0000-0000-000000000001',
              '20000000-0000-0000-0000-000000000001', 'idem-CC3');" &
 sleep 1
+wait_pid_by_app "mc_client_c5" 60 || fail "IDEMPOTENCIA: cliente c5 sin PID"
+wait_pid_by_app "mc_client_c6" 10 || fail "IDEMPOTENCIA: cliente c6 sin PID"
+C5_PID="$(pid_by_app mc_client_c5)"; C6_PID="$(pid_by_app mc_client_c6)"
 W3=0
 for i in $(seq 1 60); do W3="$(waiters '%f_request_cash_transfer(%')"; [[ "$W3" == "2" ]] && break; sleep 0.5; done
 if [[ "$W3" != "2" ]]; then fail "IDEMPOTENCIA: contención no demostrada — waiters=$W3 (se exigían 2 backends en wait_event_type='Lock')"; fi
-echo "── espera real demostrada (idempotencia): 2 backends en wait_event_type='Lock' sobre la resolución de la clave"
+if ! wait_exact_blocking "$C5_PID" "$C6_PID" "$COORD3_PID" 40; then
+  fail "IDEMPOTENCIA: no se identificó de forma estable al bloqueador exacto vía pg_blocking_pids() (ver b5/b6/shared arriba)"
+fi
+echo "── espera real demostrada (idempotencia): 2 backends en wait_event_type='Lock'; cadena pg_blocking_pids termina en el coordinador $COORD3_PID (contención sobre la resolución de la clave única idem-CC3)"
 release 779 HPID3
 wait
 echo "── idempotencia concurrente: c5.rc=$(cat "$WORK/c5.rc") c6.rc=$(cat "$WORK/c6.rc")"
 if [[ "$(cat "$WORK/c5.rc")" != "0" || "$(cat "$WORK/c6.rc")" != "0" ]]; then
   fail "idempotencia concurrente: ambos clientes debían terminar OK con el mismo id"
 fi
-ID1="$(grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' "$WORK/c5.out" | head -1)"
-ID2="$(grep -oE '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' "$WORK/c6.out" | head -1)"
+ID1="$(awk -F'|' 'NF>=2 && $2 ~ /-/ {gsub(/ /,"",$2); print $2; exit}' "$WORK/c5.out")"
+ID2="$(awk -F'|' 'NF>=2 && $2 ~ /-/ {gsub(/ /,"",$2); print $2; exit}' "$WORK/c6.out")"
 if [[ -z "$ID1" || "$ID1" != "$ID2" ]]; then
   fail "concurrencia idem-CC3: ids distintos o ausentes entre clientes ($ID1 / $ID2)"
 fi
-echo "── idem-CC3: ambos clientes obtuvieron el MISMO id $ID1"
+DB_ID="$(q "$DB" -tAc "SELECT id FROM cash_transfers WHERE idempotency_key='idem-CC3'")"
+if [[ -z "$ID1" || "$ID1" != "$DB_ID" ]]; then
+  fail "concurrencia idem-CC3: el id retornado ($ID1) no coincide con la fila persistida ($DB_ID)"
+fi
+echo "── idem-CC3: ambos clientes obtuvieron el MISMO id $ID1 (coincide con la fila persistida)"
 
 # ═══ Escenario 4 · IDEMPOTENCIA con parámetros distintos (carrera por la clave única) ═══
-client c7 "SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+client c7 "SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true) AS auth_uid,
+             f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000001', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
              500, 'CUP', '20000000-0000-0000-0000-000000000001',
              '20000000-0000-0000-0000-000000000001', 'idem-CC4');" &
-client c8 "SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+client c8 "SELECT set_config('request.jwt.claim.sub','20000000-0000-0000-0000-000000000001',true) AS auth_uid,
+             f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000001', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
              900, 'CUP', '20000000-0000-0000-0000-000000000001',
@@ -361,7 +459,7 @@ SQL
 
 # ── 6) Veredicto final ─────────────────────────────────────────────────────────
 echo "════════════════════════════════════════════"
-if grep -q 'RESULTADO FINAL: ASSERTIONS 010 OK' "$WORK/out_06_assertions.sql.log"; then
+if grep -q 'RESULTADO FINAL: ASSERTIONS 011 OK' "$WORK/out_06_assertions.sql.log"; then
   echo "VALIDACIÓN POSTGRESQL 17: PASS — esquema+CHECKs+triggers+transacciones+concurrencia determinista ejecutados y verificados"
 else
   fail "falta el veredicto ASSERTIONS 010 OK"

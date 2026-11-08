@@ -1,109 +1,243 @@
 ── PostgreSQL detectado: psql (PostgreSQL) 17.11 (Debian 17.11-0+deb13u1)
-── Clúster desechable listo en puerto 15883 (se destruye al terminar)
+── Clúster desechable listo en puerto 15854 (se destruye al terminar)
 ── cargando 00_schema_minimal.sql
 ── cargando 01_constraints.sql
 ── cargando 03_v3_reconciliation.sql
 ── cargando 02_triggers.sql
 ── cargando 04_valid_fixtures.sql
-══ P1: solicitar transferencia gaveta→gaveta (2000 CUP, G1→G2, encargado M)
-══ P2: entregar DESDE GAVETA (cajero K por sesión SS_G1; transportista J lleva)
+══ P1: solicitar transferencia gaveta→gaveta (2000 CUP, G1→G2, encargado M autenticado)
+══ P2: entregar DESDE GAVETA (cajero K AUTENTICADO entrega; caso B: J es el transportista ASIGNADO)
 ══ P3: transferencia tesorería→gaveta y entrega DESDE TESORERÍA (sin sesión emisora)
-══ P4: recibir EN SESIÓN (cajera L en sesión SS_G2 de la gaveta destino G2; T2 venía de tesorería)
+══ P4: recibir EN SESIÓN (cajera L AUTENTICADA en sesión SS_G2 de la gaveta destino G2)
 ══ P5: gaveta→tesorería y recibir EN CUENTA (cuenta receptora C1 exacta del destino)
 ══ P6: solicitar devolución DESDE entregada (esc. E: rechazo antes de recibir; sin pierna nueva)
 ══ P7: devolver al ORIGEN (sesión SS_G1 de la gaveta de origen G1)
 ══ P8: cancelar antes de entregar (sin piernas)
 ══ P9: reintento idempotente de SOLICITUD (misma clave ⇒ mismo id, sin duplicar)
-══ P10: eventos de custodia sucesivos (entrega→reasignación esc.D→recepción)
+══ P10: eventos de custodia sucesivos (entrega J→reasignación M→recepción L)
 ══ P+ (vigencia histórica): recibir y DESPUÉS cerrar la sesión receptora ⇒ sigue siendo válida
 ══ P+ (orden de escrituras al revés dentro de UNA transacción): no hay bloqueo permanente
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:176: NOTICE:  OK orden inverso rechazado de inmediato: new row for relation "cash_transfers" violates check constraint "ctr_state_fields"
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:176: NOTICE:  OK rollback íntegro: T6 sigue solicitada con 0 piernas
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:215: NOTICE:  OK orden inverso rechazado de inmediato: new row for relation "cash_transfers" violates check constraint "ctr_state_fields"
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:215: NOTICE:  OK rollback íntegro: T6 sigue solicitada con 0 piernas
 ══ P9b: reintento idempotente de ENTREGA (ya entregada ⇒ misma pierna, sin duplicar)
 ══ P11 (misión 009): saldo de tesorería — consumo real y saldo EXACTO permitido
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:201: NOTICE:  OK P11: saldo exacto consumido, C1 CUP queda en 0
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:244: NOTICE:  OK P11: saldo exacto consumido, C1 CUP queda en 0
 ══ P12 (misión 009): separación de monedas — USD opera aparte del CUP
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:223: NOTICE:  OK P12: USD separado y agotado (ERR_SALDO_INSUFICIENTE: saldo=0.00 requerido=0.01), CUP no afectado
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:223: NOTICE:  OK P12: CUP/USD mantienen ámbitos separados
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:268: NOTICE:  OK P12: USD separado y agotado (ERR_SALDO_INSUFICIENTE: saldo=0.00 requerido=0.01), CUP no afectado
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:268: NOTICE:  OK P12: CUP/USD mantienen ámbitos separados
 ══ P13/A-P1 (misión 010, D.23.3): ENTREGA por transportista ASIGNADO Y AUTORIZADO
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:254: NOTICE:  OK A-P3: custodia inicial = poseedor físico real (J) y actor auditado separado
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:303: NOTICE:  OK A-P3: custodia inicial = poseedor físico real (J) y actor auditado separado
+══ A-P8: titular AUTENTICADO entrega a un transportista correctamente ASIGNADO (caso B)
+══ A-P9/A-P6: titular AUTENTICADO entrega y CONSERVA el efectivo (caso A, p_carrier NULL)
+══ A-P4/A-P5/A-P7/A-P11: auditoría de asignación y custodia en los tres casos
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:375: NOTICE:  OK A-P4: autorizador (encargado M) y transportista quedan registrados en las 3 asignaciones
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:375: NOTICE:  OK A-P5: el transportista asignado ejecutó la entrega (caso C) y quedó identificado
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:375: NOTICE:  OK A-P6: titular legítimo entregó sin transportista externo (carrier NULL)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:375: NOTICE:  OK A-P7: auditoría conserva actor, titular, autorizador y transportista
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/04_valid_fixtures.sql:375: NOTICE:  OK A-P11: la custodia inicial coincide con el poseedor físico real (casos A/B/C)
 ══ Estado tras las pruebas positivas:
 ── cargando 05_invalid_fixtures.sql
 ══ N1: pierna OUT sin transferencia (ref_id inexistente) ⇒ rechazo INMEDIATO
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:22: NOTICE:  OK N1 rechazo inmediato: ERR_LEG_NO_TRANSFER: transferencia 60e41afe-5fed-484c-80e3-e8f3f955daf0 inexistente
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:22: NOTICE:  OK N1 rechazo inmediato: ERR_LEG_NO_TRANSFER: transferencia 963ea98b-b79e-4469-80c4-48154da483ad inexistente
 ══ N2: pierna IN sin transferencia ⇒ rechazo INMEDIATO
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:38: NOTICE:  OK N2 rechazo inmediato: ERR_LEG_NO_TRANSFER: transferencia 7658790e-faf0-4d93-bb92-7332e38a15c3 inexistente
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:38: NOTICE:  OK N2 rechazo inmediato: ERR_LEG_NO_TRANSFER: transferencia cd435e46-57ac-45d0-b679-93563dcc3afb inexistente
 ══ N3: importe distinto (OUT 2000, pierna 1999) ⇒ rechazo DIFERIDO (V3)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:65: NOTICE:  OK N3 importe distinto rechazado (deferred): ERR_RECONCILE_FINAL: transferencia e2f3f851-73d2-4c39-9517-7a988a31532f inconsistente al final (estado=entregada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=1)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:66: NOTICE:  OK N3 importe distinto rechazado (deferred): ERR_RECONCILE_FINAL: transferencia c960dc97-e65d-493b-b445-f2d754b3121c inconsistente al final (estado=entregada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=1)
 ══ N4: moneda distinta (transferencia CUP, pierna USD) ⇒ rechazo DIFERIDO (V3)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:92: NOTICE:  OK N4 moneda distinta rechazada (deferred): ERR_RECONCILE_FINAL: transferencia 525b14ba-80b2-4bdc-8b64-6ad2c751b6b0 inconsistente al final (estado=entregada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=1)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:94: NOTICE:  OK N4 moneda distinta rechazada (deferred): ERR_PAYMENT_FOREIGN_RATE_MUST_EXCEED_1: currency=USD requires exchange_rate > 1, got 1.0
 ══ N5: pierna en OTRA tienda ⇒ rechazo INMEDIATO
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:114: NOTICE:  OK N5 tienda distinta rechazada (inmediato): ERR_LEG_STORE: pierna en tienda distinta a la transferencia
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:117: NOTICE:  OK N5 tienda distinta rechazada (inmediato): ERR_LEG_STORE: pierna en tienda distinta a la transferencia
 ══ N6: medio de pago incorrecto (Zelle como pierna) ⇒ rechazo INMEDIATO
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:135: NOTICE:  OK N6 medio incorrecto rechazado (inmediato): ERR_LEG_METHOD: pierna de traspaso exige efectivo, recibió zelle
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:139: NOTICE:  OK N6 medio incorrecto rechazado (inmediato): ERR_ZELLE_NOT_FOR_CUP: zelle requires foreign currency
 ══ N7: titular incorrecto (pierna en sesión ajena a la declarada) ⇒ DIFERIDO
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:162: NOTICE:  OK N7 titular incorrecto rechazado (deferred): ERR_RECONCILE_FINAL: transferencia 7e907be7-2a8f-4d6d-af87-3f3124c9aa3c inconsistente al final (estado=entregada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=1)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:167: NOTICE:  OK N7 titular incorrecto rechazado (deferred): ERR_RECONCILE_FINAL: transferencia 31bb16e3-9c6d-45a7-a27b-d7f8c16eeb78 inconsistente al final (estado=entregada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=1)
 ══ N8: sesión de OTRA gaveta (store correcto, register equivocado) ⇒ DIFERIDO (P0-2)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:189: NOTICE:  OK N8 gaveta emisora equivocada rechazada (deferred): ERR_RECONCILE_FINAL: transferencia 6dfe8d8a-4eb0-4254-a6d1-02009bcef0a9 inconsistente al final (estado=entregada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=1)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:195: NOTICE:  OK N8 gaveta emisora equivocada rechazada (deferred): ERR_RECONCILE_FINAL: transferencia cd4a38b9-d604-48d5-937b-c0daa76ab0bf inconsistente al final (estado=entregada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=1)
 ══ N9: cuenta de OTRA tienda ⇒ rechazo INMEDIATO (FK compuesta)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:203: NOTICE:  OK N9 cuenta de otra tienda rechazada (FK compuesta): new row for relation "cash_transfers" violates check constraint "ctr_state_fields"
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:209: NOTICE:  OK N9 cuenta de otra tienda rechazada (FK compuesta): new row for relation "cash_transfers" violates check constraint "ctr_state_fields"
 ══ N9b: recepción con cuenta de OTRA tienda vía función ⇒ rechazo INMEDIATO (FK compuesta fk_recv_acc)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:224: NOTICE:  OK N9b cuenta receptora de otra tienda rechazada (FK compuesta): new row for relation "cash_transfers" violates check constraint "ctr_received_account_is_dest"
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:233: NOTICE:  OK N9b cuenta receptora de otra tienda rechazada (FK compuesta): new row for relation "cash_transfers" violates check constraint "ctr_received_account_is_dest"
 ══ N10: dirección refund como pierna ⇒ rechazo INMEDIATO
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:245: NOTICE:  OK N10 dirección refund rechazada (inmediato): ERR_LEG_DIRECTION: dirección refund no válida para pierna
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:255: NOTICE:  OK N10 dirección refund rechazada (inmediato): ERR_LEG_DIRECTION: dirección refund no válida para pierna
 ══ N11: TERCERA pierna adicional (tras OUT+IN correctas) ⇒ DIFERIDO (legs_total)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:263: NOTICE:  OK N11 tercera pierna rechazada (deferred legs_total): ERR_RECONCILE_FINAL: transferencia 63e52137-994c-4c60-9420-08047fa5bc5b inconsistente al final (estado=devuelta, legs_total=3, out_all=2, in_all=1, out_exactas=1, in_exactas=1, invalid_legs=1)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:273: NOTICE:  OK N11 tercera pierna rechazada (deferred legs_total): ERR_RECONCILE_FINAL: transferencia db13d5d5-c253-4930-9a5b-4944041fb960 inconsistente al final (estado=devuelta, legs_total=3, out_all=2, in_all=1, out_exactas=1, in_exactas=1, invalid_legs=1)
 ══ N11b: fila adicional Zelle/refund sobre transferencia conciliada ⇒ DIFERIDO
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:281: NOTICE:  OK N11b fila electrónica adicional rechazada (deferred legs_total): ERR_LEG_METHOD: pierna de traspaso exige efectivo, recibió zelle
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:291: NOTICE:  OK N11b fila electrónica adicional rechazada (deferred legs_total): ERR_ZELLE_NOT_FOR_CUP: zelle requires foreign currency
 ══ N12: pierna duplicada (segunda OUT correcta) ⇒ DIFERIDO (out_all=2)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:299: NOTICE:  OK N12 pierna duplicada rechazada (deferred): ERR_RECONCILE_FINAL: transferencia 05b427e1-91b8-4c3a-93a1-2f16b00f228d inconsistente al final (estado=recibida, legs_total=3, out_all=2, in_all=1, out_exactas=1, in_exactas=1, invalid_legs=1)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:309: NOTICE:  OK N12 pierna duplicada rechazada (deferred): ERR_RECONCILE_FINAL: transferencia b4f8a570-8f11-4719-b78a-32649ea9d2c4 inconsistente al final (estado=recibida, legs_total=3, out_all=2, in_all=1, out_exactas=1, in_exactas=1, invalid_legs=1)
 ══ N13: estado sin pierna (entregada con leg_out NULL) ⇒ rechazo INMEDIATO (CHECK)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:318: NOTICE:  OK N13 estado sin pierna rechazado (CHECK inmediato): new row for relation "cash_transfers" violates check constraint "ctr_state_fields"
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:329: NOTICE:  OK N13 estado sin pierna rechazado (CHECK inmediato): new row for relation "cash_transfers" violates check constraint "ctr_state_fields"
 ══ N14: pierna insertada SIN transición final (solicitada con pierna) ⇒ DIFERIDO al COMMIT
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:340: NOTICE:  OK N14 pierna sin transición final rechazada (deferred): ERR_RECONCILE_FINAL: transferencia d2687c30-9b79-4936-ad17-3f7865ad26ea inconsistente al final (estado=solicitada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=1)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:352: NOTICE:  OK N14 pierna sin transición final rechazada (deferred): ERR_RECONCILE_FINAL: transferencia e74c32ca-290d-462e-a05a-1360cbf6793f inconsistente al final (estado=solicitada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=1)
 ══ N15a: recepción EN SESIÓN YA CERRADA vía RPC ⇒ guard inmediato
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:361: NOTICE:  OK N15a sesión receptora cerrada rechazada (RPC): ERR_SESSION_NOT_OPEN: sesión receptora no abierta en la gaveta destino
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:376: NOTICE:  OK N15a sesión receptora cerrada rechazada (RPC): ERR_SESSION_NOT_OPEN: sesión receptora no abierta en la gaveta destino
 ══ N15b: recepción en sesión cerrada ANTES (bypass RPC, escritura directa) ⇒ DIFERIDO
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:389: NOTICE:  OK N15b recepción en sesión cerrada antes rechazada (deferred V3): ERR_RECONCILE_FINAL: transferencia a2c2333c-5f2f-4c18-bdbe-b783d9a1c23f inconsistente al final (estado=entregada, legs_total=2, out_all=1, in_all=1, out_exactas=1, in_exactas=0, invalid_legs=1)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:406: NOTICE:  OK N15b recepción en sesión cerrada antes rechazada (deferred V3): column "at" of relation "payment_transactions" does not exist
 ══ Cadena de custodia: casos negativos estructurales
 ══ N34: evento de custodia que apunta a OTRA transferencia ⇒ FK compuesta
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:410: NOTICE:  OK N34 referencia cruzada entre transferencias rechazada (FK compuesta): ERR_CUSTODY_PREV_NOT_LAST: previous_event_id no es el último evento 45d810ef-2444-4e2f-96f2-b1b4a74fcb9b
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:427: NOTICE:  OK N34 referencia cruzada entre transferencias rechazada (FK compuesta): ERR_CUSTODY_PREV_NOT_LAST: previous_event_id no es el último evento e79088b8-09e9-45c2-b6ec-2c6b582cd381
 ══ N33: bifurcación (dos sucesores del mismo evento) ⇒ índice único de sucesor
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:429: NOTICE:  OK N33 bifurcación rechazada (único sucesor): ERR_CUSTODY_ALREADY_CLOSED: la custodia está cerrada (recepción o devolución confirmada); no se admiten nuevos eventos
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:446: NOTICE:  OK N33 bifurcación rechazada (único sucesor): ERR_CUSTODY_ALREADY_CLOSED: la custodia está cerrada (recepción o devolución confirmada); no se admiten nuevos eventos
 ══ N32: segundo evento inicial (seq=1 duplicado) ⇒ índice único parcial
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:446: NOTICE:  OK N32 segundo evento inicial rechazado: ERR_CUSTODY_SEQ_GAP: event_seq 1 debía ser 2
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:463: NOTICE:  OK N32 segundo evento inicial rechazado: ERR_CUSTODY_SEQ_GAP: event_seq 1 debía ser 2
 ══ N30: UPDATE de un evento de custodia ⇒ append-only (D.22.2)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:458: NOTICE:  OK N30 UPDATE de evento rechazado (append-only): ERR_CUSTODY_APPEND_ONLY: los eventos de custodia son inmutables
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:475: NOTICE:  OK N30 UPDATE de evento rechazado (append-only): ERR_CUSTODY_APPEND_ONLY: los eventos de custodia son inmutables
 ══ N31: DELETE de un evento de custodia ⇒ append-only (D.22.2)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:470: NOTICE:  OK N31 DELETE de evento rechazado (append-only): ERR_CUSTODY_APPEND_ONLY: los eventos de custodia son inmutables
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:487: NOTICE:  OK N31 DELETE de evento rechazado (append-only): ERR_CUSTODY_APPEND_ONLY: los eventos de custodia son inmutables
 ══ N20: cambiar ref_type de una pierna OUT válida ⇒ rechazo INMEDIATO (ERR_LEG_IMMUTABLE)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:492: NOTICE:  OK N20 cambio de ref_type rechazado (inmediato): ERR_LEG_IMMUTABLE: fila 019b6609-1bcb-4c44-8723-4e508552ea62 vinculada a un traspaso no admite cambios de ref_type/ref_id/direction/amount/currency/store_id/payment_method/titular/at/exchange_rate/transaction_id/created_by (D.23.1)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:509: NOTICE:  OK N20 cambio de ref_type rechazado (inmediato): ERR_LEG_IMMUTABLE: fila 1601c183-6cf8-4e19-a35c-6a702bba6cab vinculada a un traspaso no admite cambios de ref_type/ref_id/direction/amount/currency/store_id/payment_method/titular/payment_date/exchange_rate/transaction_id/paid_by/updated_at (D.24.1)
 ══ N21: reasignar una pierna de la transferencia A a la B ⇒ rechazo INMEDIATO
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:512: NOTICE:  OK N21 reasignación A→B rechazada (inmediato): ERR_LEG_IMMUTABLE: fila 019b6609-1bcb-4c44-8723-4e508552ea62 vinculada a un traspaso no admite cambios de ref_type/ref_id/direction/amount/currency/store_id/payment_method/titular/at/exchange_rate/transaction_id/created_by (D.23.1)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:529: NOTICE:  OK N21 reasignación A→B rechazada (inmediato): ERR_LEG_IMMUTABLE: fila 1601c183-6cf8-4e19-a35c-6a702bba6cab vinculada a un traspaso no admite cambios de ref_type/ref_id/direction/amount/currency/store_id/payment_method/titular/payment_date/exchange_rate/transaction_id/paid_by/updated_at (D.24.1)
 ══ N22: cambiar el identificador de la pierna conservada ⇒ rechazo DIFERIDO (V3)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:533: NOTICE:  OK N22 pierna conservada cambiada por otra ajena rechazada (deferred V3): ERR_RECONCILE_FINAL: transferencia 1b22c7e5-ae6e-421f-ac74-7ee210db6ec3 inconsistente al final (estado=entregada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=0)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:550: NOTICE:  OK N22 pierna conservada cambiada por otra ajena rechazada (deferred V3): ERR_RECONCILE_FINAL: transferencia d9531942-704e-44c5-acd0-aba6f27eb744 inconsistente al final (estado=entregada, legs_total=1, out_all=1, in_all=0, out_exactas=0, in_exactas=0, invalid_legs=0)
 ══ N23: eliminar una pierna OUT válida ⇒ rechazo INMEDIATO (ERR_LEDGER_APPEND_ONLY)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:550: NOTICE:  OK N23 DELETE de pierna OUT rechazado (inmediato): ERR_LEDGER_APPEND_ONLY: la pierna 019b6609-1bcb-4c44-8723-4e508552ea62 de un traspaso no se elimina (la anulación es una fila nueva con transaction_id)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:567: NOTICE:  OK N23 DELETE de pierna OUT rechazado (inmediato): ERR_LEDGER_APPEND_ONLY: la pierna 1601c183-6cf8-4e19-a35c-6a702bba6cab de un traspaso no se elimina (la anulación es una fila nueva con transaction_id)
 ══ N24: eliminar una pierna IN válida ⇒ rechazo INMEDIATO (ERR_LEDGER_APPEND_ONLY)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:567: NOTICE:  OK N24 DELETE de pierna IN rechazado (inmediato): ERR_LEDGER_APPEND_ONLY: la pierna c0f3b215-095f-490b-85f0-691707237623 de un traspaso no se elimina (la anulación es una fila nueva con transaction_id)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:584: NOTICE:  OK N24 DELETE de pierna IN rechazado (inmediato): ERR_LEDGER_APPEND_ONLY: la pierna f78c6be5-6c9e-4b94-b75f-cf7651fe0605 de un traspaso no se elimina (la anulación es una fila nueva con transaction_id)
 ══ N25: ningún cambio deja transferencias inconsistentes tras COMMIT (estado global)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:583: NOTICE:  OK N25 estado global íntegro tras N20-N24: 0 inconsistentes, 15 piernas, 10 transferencias
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:600: NOTICE:  OK N25 estado global íntegro tras N20-N24: 0 inconsistentes, 17 piernas, 12 transferencias
 ══ S-N1: salida con saldo inferior al importe ⇒ ERR_SALDO_INSUFICIENTE y rollback íntegro
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:612: NOTICE:  OK S-N1 saldo insuficiente rechazado: ERR_SALDO_INSUFICIENTE: saldo=0.00 requerido=10000.00
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:631: NOTICE:  OK S-N1 saldo insuficiente rechazado: ERR_SALDO_INSUFICIENTE: saldo=0.00 requerido=10000.00
 ══ S-N2: movimiento físico SIN TITULAR en el ámbito ⇒ ERR_LEDGER_UNCLASSIFIED (fail-closed)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:647: NOTICE:  OK S-N2 fila física sin titular bloquea el ámbito: ERR_LEDGER_UNCLASSIFIED: movimiento físico sin titular o sin clasificar en el ámbito tienda=10000000-0000-0000-0000-000000000001 moneda=CUP
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:647: NOTICE:  OK S-N2 rollback íntegro: CHECK restaurado y ámbito conciliable
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:666: NOTICE:  OK S-N2 fila física sin titular bloquea el ámbito: ERR_LEDGER_UNCLASSIFIED: movimiento físico sin titular o sin clasificar en el ámbito tienda=10000000-0000-0000-0000-000000000001 moneda=CUP
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:666: NOTICE:  OK S-N2 rollback íntegro: CHECK restaurado y ámbito conciliable
 ══ S-N3: movimiento SIN CLASIFICAR en el ámbito ⇒ ERR_LEDGER_UNCLASSIFIED (fail-closed)
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:672: NOTICE:  OK S-N3 fila sin clasificar bloquea el ámbito: ERR_LEDGER_UNCLASSIFIED: movimiento físico sin titular o sin clasificar en el ámbito tienda=10000000-0000-0000-0000-000000000001 moneda=CUP
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:672: NOTICE:  OK S-N3 rollback íntegro: ámbito conciliable de nuevo
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:699: NOTICE:  OK S-N3 fila sin clasificar bloquea el ámbito: ERR_LEDGER_UNCLASSIFIED: movimiento físico sin titular o sin clasificar en el ámbito tienda=10000000-0000-0000-0000-000000000001 moneda=CUP
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:699: NOTICE:  OK S-N3 rollback íntegro: ámbito conciliable de nuevo
 ══ S-N4: movimiento ELECTRÓNICO no incrementa ni reduce el efectivo físico
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:696: NOTICE:  OK S-N4 el electrónico no altera el efectivo físico (10000.00)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:723: NOTICE:  OK S-N4 el electrónico no altera el efectivo físico (0.00)
 ══ I-N1: misma clave, IMPORTE distinto ⇒ ERR_IDEMPOTENCY_KEY_REUSE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:746: NOTICE:  OK I-N1 clave reutilizada con importe distinto rechazada: ERR_IDEMPOTENCY_KEY_REUSE: clave idem-T1 ya usada con parámetros distintos
+══ I-N2: misma clave, MONEDA distinta ⇒ ERR_IDEMPOTENCY_KEY_REUSE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:764: NOTICE:  OK I-N2 clave reutilizada con moneda distinta rechazada: ERR_IDEMPOTENCY_KEY_REUSE: clave idem-T1 ya usada con parámetros distintos
+══ I-N3: misma clave, ORIGEN distinto ⇒ ERR_IDEMPOTENCY_KEY_REUSE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:782: NOTICE:  OK I-N3 clave reutilizada con origen distinto rechazada: ERR_IDEMPOTENCY_KEY_REUSE: clave idem-T1 ya usada con parámetros distintos
+══ I-N4: misma clave, DESTINO distinto ⇒ ERR_IDEMPOTENCY_KEY_REUSE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:800: NOTICE:  OK I-N4 clave reutilizada con destino distinto rechazada: ERR_IDEMPOTENCY_KEY_REUSE: clave idem-T1 ya usada con parámetros distintos
+══ I-N5: misma clave, TIENDA distinta ⇒ ERR_IDEMPOTENCY_KEY_REUSE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:818: NOTICE:  OK I-N5 clave reutilizada con tienda distinta rechazada: ERR_IDEMPOTENCY_KEY_REUSE: clave idem-T1 ya usada con parámetros distintos
+══ I-N6: sin clave de idempotencia ⇒ ERR_IDEMPOTENCY_KEY_REQUIRED (política: obligatoria)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:836: NOTICE:  OK I-N6 solicitud sin clave rechazada (política D.22.4): ERR_IDEMPOTENCY_KEY_REQUIRED: la clave de idempotencia es obligatoria
+══ A-N1: entrega desde sesión por actor ajeno (no titular, no transportista) ⇒ rechazo
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:863: NOTICE:  OK A-N1 entrega por actor ajeno (no titular, no asignado) rechazada (D.24.4 caso C): ERR_CARRIER_NOT_ASSIGNED: el actor 20000000-0000-0000-0000-000000000004 no es el titular de la sesión ni el transportista ASIGNADO para este traspaso
+══ A-N2: recepción en sesión por NO-titular ⇒ ERR_ACTOR_NOT_SESSION_OWNER
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:894: NOTICE:  OK A-N2 recepción por no-titular rechazada (decisión B): ERR_ACTOR_NOT_SESSION_OWNER: el receptor 20000000-0000-0000-0000-000000000004 no es el titular 20000000-0000-0000-0000-000000000003 de la sesión receptora
+══ N26: custodio previo incorrecto ⇒ ERR_CUSTODY_PREV_MISMATCH
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:923: NOTICE:  OK N26 custodio previo incorrecto rechazado: ERR_CUSTODY_PREV_MISMATCH: custodio previo declarado 20000000-0000-0000-0000-000000000005 no coincide con el vigente 20000000-0000-0000-0000-000000000002 del evento 5d9903f9-7301-4a6a-b1db-b7025c8f1b2e
+══ N27: secuencia con salto (INSERT directo event_seq=99) ⇒ ERR_CUSTODY_SEQ_GAP
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:949: NOTICE:  OK N27 salto de secuencia rechazado (trigger continuidad): ERR_CUSTODY_SEQ_GAP: event_seq 99 debía ser 2
+══ N28: previous_event_id que NO es el último evento ⇒ ERR_CUSTODY_PREV_NOT_LAST
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:978: NOTICE:  OK N28 previous_event_id ajeno al último rechazado: ERR_CUSTODY_PREV_NOT_LAST: previous_event_id no es el último evento 3b69b22c-08a5-40a0-ac39-0259b0aed98a
+══ N53 (ex N35): mover payment_date de una pierna OUT antes del corte ⇒ ERR_LEG_IMMUTABLE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1013: NOTICE:  OK N53 manipulación temporal de pierna rechazada: ERR_LEG_IMMUTABLE: fila 0f6e72e2-b11b-452d-8505-3b27b439efe6 vinculada a un traspaso no admite cambios de ref_type/ref_id/direction/amount/currency/store_id/payment_method/titular/payment_date/exchange_rate/transaction_id/paid_by/updated_at (D.24.1)
+══ N56 (ex N36): cambiar exchange_rate de una pierna USD ⇒ ERR_LEG_IMMUTABLE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1033: NOTICE:  OK N56 manipulación del tipo de cambio rechazada: ERR_LEG_IMMUTABLE: fila 43f76549-ce7b-404f-aeb9-0e419c49eaf6 vinculada a un traspaso no admite cambios de ref_type/ref_id/direction/amount/currency/store_id/payment_method/titular/payment_date/exchange_rate/transaction_id/paid_by/updated_at (D.24.1)
+══ N37: alterar transaction_id de una pierna registrada ⇒ ERR_LEG_IMMUTABLE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1055: NOTICE:  OK N37 manipulación de transaction_id rechazada: ERR_LEG_IMMUTABLE: fila f78c6be5-6c9e-4b94-b75f-cf7651fe0605 vinculada a un traspaso no admite cambios de ref_type/ref_id/direction/amount/currency/store_id/payment_method/titular/payment_date/exchange_rate/transaction_id/paid_by/updated_at (D.24.1)
+══ N51 (ex N38): alterar paid_by de una pierna registrada (atribución REAL) ⇒ ERR_LEG_IMMUTABLE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1076: NOTICE:  OK N51 manipulación de paid_by rechazada: ERR_LEG_IMMUTABLE: fila 1601c183-6cf8-4e19-a35c-6a702bba6cab vinculada a un traspaso no admite cambios de ref_type/ref_id/direction/amount/currency/store_id/payment_method/titular/payment_date/exchange_rate/transaction_id/paid_by/updated_at (D.24.1)
+══ N39: un UPDATE de payment_date no puede modificar model_scope de la pierna
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1096: NOTICE:  OK N39 model_scope invariante ante intento de UPDATE de payment_date (traspaso_salida)
+══ N40: el saldo de tesorería permanece íntegro tras todos los intentos
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1139: NOTICE:  OK N40 saldo íntegro tras N35-N39 (CUP=0.00 USD=0.00) y ámbito conciliable
+══ ORD: movimientos ORDINARIOS (no cash_transfer) respetan PT007 y se rectifican por contraasiento
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1176: NOTICE:  OK ORD (intento): DELETE prohibido por PT007: ERR_PAYMENT_DELETE_FORBIDDEN: payment_transactions rows cannot be deleted. Use reversal/void flow.
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1176: NOTICE:  OK ORD: alta/corrección ordinaria permitidas; rectificación por contraasiento; fila íntegra tras el rechazo
+══ N41: evento inicial con transferencia SOLICITADA ⇒ ERR_CUSTODY_NOT_DELIVERED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1203: NOTICE:  OK N41 apertura de custodia en solicitada rechazada: ERR_CUSTODY_NOT_DELIVERED: la custodia solo puede iniciarse en la entrega física (estado=entregada), estado=solicitada
+══ N42: primer custodio ≠ COALESCE(carrier, delivered_by) ⇒ ERR_CUSTODY_FIRST_HOLDER
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1238: NOTICE:  OK N42 primer custodio ajeno al poseedor físico rechazado: ERR_CUSTODY_FIRST_HOLDER: el primer custodio debe ser el poseedor físico real COALESCE(carrier, delivered_by)=20000000-0000-0000-0000-000000000002
+══ N43: apertura registrada por actor distinto de delivered_by ⇒ ERR_CUSTODY_REGISTRAR
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1273: NOTICE:  OK N43 apertura registrada por actor no operativo rechazada: ERR_CUSTODY_REGISTRAR: la apertura debe registrarla el actor operativo delivered_by=20000000-0000-0000-0000-000000000002, no 20000000-0000-0000-0000-000000000004
+══ N44: evento de custodia tras una RECEPCIÓN confirmada ⇒ ERR_CUSTODY_ALREADY_CLOSED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1296: NOTICE:  OK N44 evento posterior a la recepción rechazado: ERR_CUSTODY_ALREADY_CLOSED: la custodia está cerrada (recepción o devolución confirmada); no se admiten nuevos eventos
+══ N45: evento de custodia tras una DEVOLUCIÓN confirmada ⇒ ERR_CUSTODY_ALREADY_CLOSED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1319: NOTICE:  OK N45 evento posterior a la devolución rechazado: ERR_CUSTODY_ALREADY_CLOSED: la custodia está cerrada (recepción o devolución confirmada); no se admiten nuevos eventos
+══ N46: segundo evento de CIERRE de custodia ⇒ ERR_CUSTODY_ALREADY_CLOSED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1341: NOTICE:  OK N46 segundo cierre de custodia rechazado: ERR_CUSTODY_ALREADY_CLOSED: la custodia está cerrada (recepción o devolución confirmada); no se admiten nuevos eventos
+══ N47: reasignación SIN custodia física en tránsito ⇒ ERR_CUSTODY_NOT_IN_TRANSIT
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1384: NOTICE:  OK N47 reasignación sin efectivo en tránsito rechazada: ERR_CUSTODY_NOT_IN_TRANSIT: la reasignación solo procede con el efectivo en tránsito (entregada), estado=recibida
+══ N48: cierre con custodio final ≠ received_by ⇒ ERR_CUSTODY_CLOSE_HOLDER
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1428: NOTICE:  OK N48 cierre con custodio distinto del receptor rechazado: ERR_CUSTODY_CLOSE_HOLDER: el custodio final debe ser el receptor registrado received_by=20000000-0000-0000-0000-000000000004, no 20000000-0000-0000-0000-000000000002
+══ N49: cierre de DEVOLUCIÓN con custodio ≠ responsable de origen ⇒ ERR_CUSTODY_CLOSE_HOLDER
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1472: NOTICE:  OK N49 cierre de devolución con receptor de origen falso rechazado: ERR_CUSTODY_CLOSE_HOLDER: el custodio final debe ser el receptor registrado received_by=20000000-0000-0000-0000-000000000002, no 20000000-0000-0000-0000-000000000004
+══ N50: transferencia CANCELADA con evento de custodia ⇒ ERR_CUSTODY_NOT_DELIVERED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1499: NOTICE:  OK N50 custodia sobre transferencia cancelada rechazada: ERR_CUSTODY_NOT_DELIVERED: la custodia solo puede iniciarse en la entrega física (estado=entregada), estado=cancelada
+══ A-N3: cajero ajeno se AUTODECLARA transportista (autoasignación) ⇒ rechazo
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1536: NOTICE:  OK A-N3a autoasignación de transportista rechazada: ERR_CARRIER_SELF_ASSIGNMENT: un transportista no puede autorizarse a sí mismo
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1536: NOTICE:  OK A-N3b cajero ajeno con rol incorrecto rechazado: ERR_CARRIER_ROLE: el usuario 20000000-0000-0000-0000-000000000004 tiene rol "cajera", no transportista
+══ A-N4: usuario SIN rol de transportista se declara transportista ⇒ ERR_CARRIER_ROLE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1558: NOTICE:  OK A-N4 rol sin transportista rechazado: ERR_CARRIER_ROLE: el usuario 20000000-0000-0000-0000-000000000003 tiene rol "cajero", no transportista
+══ A-N5: transportista de OTRA tienda intenta intervenir ⇒ ERR_CARRIER_WRONG_STORE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1580: NOTICE:  OK A-N5 transportista de otra tienda rechazado: ERR_CARRIER_WRONG_STORE: el transportista pertenece a otra tienda
+══ A-N6: transportista NO ASIGNADO intenta recoger el dinero ⇒ ERR_CARRIER_NOT_ASSIGNED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1606: NOTICE:  OK A-N6 transportista no asignado rechazado: ERR_CARRIER_NOT_ASSIGNED: el actor 20000000-0000-0000-0000-000000000005 no es el titular de la sesión ni el transportista ASIGNADO para este traspaso
+══ A-N7: actor no autenticado / identidad inexistente ⇒ rechazo específico
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1640: NOTICE:  OK A-N7a actor sin identidad autenticada (NULL ≠ auth.uid) rechazado: ERR_AUTH_IDENTITY: delivered_by <NULL> no coincide con la identidad autenticada 20000000-0000-0000-0000-000000000001
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1640: NOTICE:  OK A-N7b identidad inexistente (sujeto JWT desconocido) rechazada: ERR_CARRIER_NOT_ASSIGNED: el actor 99999999-9999-9999-9999-999999999999 no es el titular de la sesión ni el transportista ASIGNADO para este traspaso
+══ I-N7: misma clave, OTRO autorizador-autenticado (X firma su propia sesión) ⇒ ERR_IDEMPOTENCY_KEY_REUSE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1670: NOTICE:  OK I-N7 misma clave bajo otra identidad autorizadora rechazada: ERR_IDEMPOTENCY_KEY_REUSE: clave idem-IN7 ya usada con parámetros distintos
+══ I-N8: misma clave con AUTORIZADOR EFECTIVO distinto (K firma la suya) ⇒ ERR_IDEMPOTENCY_KEY_REUSE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1694: NOTICE:  OK I-N8 autorizador efectivo distinto (K) rechazado: ERR_IDEMPOTENCY_KEY_REUSE: clave idem-IN8 ya usada con parámetros distintos
+══ I-N9: NULL y explícito EQUIVALENTE según política (efectivo = solicitante) ⇒ MISMO id
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1717: NOTICE:  OK I-N9 política de autorizador efectivo: NULL ≡ solicitante ⇒ mismo id
+══ I-N10: huella estructural sin ambigüedad — representaciones distintas ⇒ huellas distintas
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1739: NOTICE:  OK I-N10 huella canónica: parámetros iguales ⇒ misma huella; distintos ⇒ distinta
+══ N52: alterar paid_by de una pierna IN ⇒ ERR_LEG_IMMUTABLE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1764: NOTICE:  OK N52 manipulación de paid_by en pierna IN rechazada: ERR_LEG_IMMUTABLE: fila 4bde5096-6954-4a8d-b1f4-a676b941c795 vinculada a un traspaso no admite cambios de ref_type/ref_id/direction/amount/currency/store_id/payment_method/titular/payment_date/exchange_rate/transaction_id/paid_by/updated_at (D.24.1)
+══ N54: escribir amount_cup (columna GENERADA por PostgreSQL) ⇒ rechazo
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1779: NOTICE:  OK N54 amount_cup no escribible (GENERATED ALWAYS): column "amount_cup" can only be updated to DEFAULT
+══ N55: DELETE de una fila ORDINARIA de payment_transactions ⇒ PT007 (prohibición global)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1808: NOTICE:  OK N55 intento de DELETE: ERR_PAYMENT_DELETE_FORBIDDEN: payment_transactions rows cannot be deleted. Use reversal/void flow.
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1808: NOTICE:  OK N55 DELETE ordinario prohibido por PT007; fila íntegra y rectificada por contraasiento
+══ N57: amount_cup se RECALCULA con sus operandos y no puede diverger
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1840: NOTICE:  OK N57 amount_cup = f(amount, currency, exchange_rate) en TODAS las filas (sin divergencia posible)
+══ N58: atribución y saldo íntegros de TODAS las piernas de traspaso
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1867: NOTICE:  OK N58 atribución paid_by íntegra en todas las piernas y saldo C1 CUP/USD íntegro (0/0)
+══ A-N8: autenticado K (SET ROLE) declara p_delivered_by=J ⇒ ERR_AUTH_IDENTITY
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1895: NOTICE:  OK A-N8 identidad suplantada (claim K, delivered_by J) rechazada: ERR_AUTH_IDENTITY: delivered_by 20000000-0000-0000-0000-000000000005 no coincide con la identidad autenticada 20000000-0000-0000-0000-000000000002
+══ A-N9: cajero AUTENTICADO sin facultad intenta asignar transportista ⇒ ERR_CARRIER_AUTHORIZER_ROLE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1919: NOTICE:  OK A-N9 autorizador sin rol de encargado rechazado: ERR_CARRIER_AUTHORIZER_ROLE: el autorizador 20000000-0000-0000-0000-000000000003 tiene rol "cajero"; solo un encargado autoriza transportistas
+══ A-N10: encargado AUTENTICADO de OTRA tienda intenta asignar ⇒ ERR_CARRIER_AUTHORIZER_STORE
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1943: NOTICE:  OK A-N10 encargado de otra tienda rechazado: ERR_CARRIER_AUTHORIZER_STORE: el autorizador pertenece a otra tienda
+══ A-N11: INSERT directo en cash_transfer_carriers sin permiso ⇒ permission denied
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1963: NOTICE:  OK A-N11 falsificación directa de asignación bloqueada por GRANT/REVOKE: permission denied for table cash_transfer_carriers
+══ A-N12: UPDATE/DELETE directo de asignación sin autorización ⇒ permission denied
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1992: NOTICE:  OK A-N12a modificación directa de asignación bloqueada: permission denied for table cash_transfer_carriers
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:1992: NOTICE:  OK A-N12b revocación directa de asignación bloqueada (sin path público): permission denied for table cash_transfer_carriers
+══ A-N13: asignación con p_authorized_by ≠ auth.uid() ⇒ ERR_AUTH_IDENTITY
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2014: NOTICE:  OK A-N13 firma de autorización con identidad ajena rechazada: ERR_AUTH_IDENTITY: authorized_by 20000000-0000-0000-0000-000000000001 no coincide con la identidad autenticada 20000000-0000-0000-0000-000000000002
+══ A-N14: entrega con p_delivered_by ≠ auth.uid() (claim J, declara K) ⇒ ERR_AUTH_IDENTITY
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2036: NOTICE:  OK A-N14 identidad suplantada (claim J, delivered_by K) rechazada: ERR_AUTH_IDENTITY: delivered_by 20000000-0000-0000-0000-000000000002 no coincide con la identidad autenticada 20000000-0000-0000-0000-000000000005
+══ A-N15: titular intenta entregar a transportista NO asignado ⇒ ERR_CARRIER_NOT_ASSIGNED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2064: NOTICE:  OK A-N15 entrega del titular a transportista no asignado rechazada: ERR_CARRIER_NOT_ASSIGNED: el titular solo puede entregar el dinero al transportista ASIGNADO para este traspaso, no a 20000000-0000-0000-0000-000000000005
+══ A-N16: transportista asignado J registra a L como custodio efectivo ⇒ ERR_CARRIER_MISMATCH
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2089: NOTICE:  OK A-N16 custodio ficticio (L) rechazado: el ejecutor es el custodio real: ERR_CARRIER_MISMATCH: el transportista ejecutor no puede registrar a 20000000-0000-0000-0000-000000000004 como custodio; el custodio real es el propio actor
+══ A-N17: titular designa p_carrier=J (rol/tienda válidos) SIN asignación ⇒ ERR_CARRIER_NOT_ASSIGNED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2112: NOTICE:  OK A-N17 p_carrier sin asignación (aun con rol/tienda válidos) rechazado: ERR_CARRIER_NOT_ASSIGNED: el titular solo puede entregar el dinero al transportista ASIGNADO para este traspaso, no a 20000000-0000-0000-0000-000000000005
+══ A-N18: transportista de OTRA tienda usado como p_carrier ⇒ ERR_CARRIER_NOT_ASSIGNED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2135: NOTICE:  OK A-N18 transportista de otra tienda como p_carrier rechazado: ERR_CARRIER_NOT_ASSIGNED: el titular solo puede entregar el dinero al transportista ASIGNADO para este traspaso, no a 20000000-0000-0000-0000-000000000007
+══ A-N19: asignación DESPUÉS de la entrega ⇒ ERR_STATE (solo sustitución formal de custodio)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2163: NOTICE:  OK A-N19 asignación posterior a la entrega rechazada (la sustitución es f_create_custody_event): ERR_STATE: la asignación exige solicitada (previa a la entrega), estado=entregada
+══ C-N1: primera apertura de custodia en en_devolucion ⇒ ERR_CUSTODY_NOT_DELIVERED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2202: NOTICE:  OK C-N1 primera apertura en en_devolucion rechazada (debió existir evento inicial): ERR_CUSTODY_NOT_DELIVERED: la custodia solo puede iniciarse en la entrega física (estado=entregada), estado=en_devolucion
+══ C-P1: primera apertura en ENTREGADA válida (referencia positiva)
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2220: NOTICE:  OK C-P1 apertura de custodia en entregada válida (evento seq1 registrado)
+══ C-N2: cierre registrado por actor distinto del receptor autenticado ⇒ ERR_CUSTODY_CLOSE_REGISTRAR
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2264: NOTICE:  OK C-N2 cierre registrado por actor distinto del receptor rechazado: ERR_CUSTODY_CLOSE_REGISTRAR: el cierre debe registrarlo el receptor autenticado received_by=20000000-0000-0000-0000-000000000004, no 20000000-0000-0000-0000-000000000001
+══ C-N3: cierre duplicado por un actor distinto ⇒ ERR_CUSTODY_ALREADY_CLOSED
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2285: NOTICE:  OK C-N3 cierre duplicado (aunque sea otro actor) rechazado: ERR_CUSTODY_ALREADY_CLOSED: la custodia está cerrada (recepción o devolución confirmada); no se admiten nuevos eventos
+══ C-N4: evento directo falsea al custodio final ⇒ ERR_CUSTODY_CLOSE_HOLDER
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2329: NOTICE:  OK C-N4 custodio final falseado rechazado (debe ser received_by): ERR_CUSTODY_CLOSE_HOLDER: el custodio final debe ser el receptor registrado received_by=20000000-0000-0000-0000-000000000004, no 20000000-0000-0000-0000-000000000002
+══ Limpieza de fixtures del ciclo de custodia (idem-L*): transferencias con estado real
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/05_invalid_fixtures.sql:2368: NOTICE:  OK limpieza-L: fixtures de ciclo de vida eliminados, sin piernas huérfanas
+══ VERIFICACIÓN DE ROLLBACK ÍNTEGRO: ningún intento negativo dejó piernas ni custodia
+══ Limpieza del arnés de pruebas (solo transferencias solicitada/sin piernas del expediente desechable)
 ── cargando 06_assertions.sql
 ══ A: COMMIT diferido — tercera pierna válida se detecta EN EL COMMIT
 psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:32: NOTICE:  OK A: COMMIT diferido rechazó la tercera pierna y revirtió íntegro
-══ B1: TODA transferencia concilia (inconsistente=false en las 10) — HARD-FAIL
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:46: NOTICE:  OK B1: 10 transferencias, 0 inconsistentes
+══ B1: TODA transferencia concilia (inconsistente=false en las 12) — HARD-FAIL
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:46: NOTICE:  OK B1: 12 transferencias (10 de D.22 + T9/T10 de D.24), 0 inconsistentes
 ══ B2: ciclo T1 gaveta→gaveta→devolución (retorno al ORIGEN exacto) — HARD-FAIL
 psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:66: NOTICE:  OK B2: T1 devuelta con retorno en la sesión de origen exacta
 ══ B3: recepción en cuenta T2b (cuenta receptora = destino exacto) — HARD-FAIL
@@ -114,22 +248,22 @@ psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_as
 psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:118: NOTICE:  OK B4b: T4 custodia J→M→L con reasignación esc.D y recepción
 ══ B5: idempotencia — reintentos no duplican piernas ni transferencias — HARD-FAIL
 psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:135: NOTICE:  OK B5: reintentos idempotentes sin duplicados
-══ B6: sin residuo (10 transferencias, 15 piernas, 17 eventos, 0 negativos) — HARD-FAIL
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:150: NOTICE:  OK B6: 10 transferencias, 15 piernas, 17 eventos (T6 con reasignación de setup N28), sin residuo de negativos
+══ B6: sin residuo (12 transferencias, 17 piernas, 19 eventos, 0 negativos) — HARD-FAIL
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:150: NOTICE:  OK B6: 12 transferencias, 17 piernas, 19 eventos (T9/T10 casos A/B de D.24; T6 reasignación N28), sin residuo
 ══ B7: todas las sesiones usadas pertenecen a la gaveta EXACTA del extremo — HARD-FAIL
 psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:168: NOTICE:  OK B7: extremos físicos exactos en todas las transferencias
 ══ B8: saldo de tesorería y clasificación (D.22.3) — HARD-FAIL
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:196: NOTICE:  OK B8: saldos CUP/USD en 0 tras consumo exacto; 0 huérfanas; 0 electrónicos en cuenta; 2 cobros
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:201: NOTICE:  OK B8: saldos CUP/USD en 0 tras consumo exacto; 0 huérfanas; 0 electrónicos en cuenta; 2 cobros
 ══ VEREDICTO DE ASERCIONES:
-psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:211: NOTICE:  RESULTADO FINAL: ASSERTIONS 010 OK — PostgreSQL 17.11, 15 positivas + negativos verificables + COMMIT diferido + saldo/idempotencia/custodia certificados
-── casos negativos verificados en 05: 73
-── espera real demostrada (saldo): 2 backends en wait_event_type='Lock' sobre el bloqueo de la cuenta
-── saldo concurrente: c1.rc=0 c2.rc=1
-── espera real demostrada (custodia N29): 2 backends en wait_event_type='Lock' sobre el bloqueo del traspaso
-── N29 (custodia concurrente): c3.rc=0 c4.rc=1
-── espera real demostrada (idempotencia): 2 backends en wait_event_type='Lock' sobre la resolución de la clave
+psql:/home/z/my-project/Costpro/docs/audits/evidence/postgres_multicashier/06_assertions.sql:216: NOTICE:  RESULTADO FINAL: ASSERTIONS 011 OK — PostgreSQL 17.11, positivas + negativos verificables + identidad autenticada + COMMIT diferido + saldo/idempotencia/custodia certificados
+── casos negativos verificados en 05: 96
+── espera real demostrada (saldo): 2 backends en wait_event_type='Lock'; cadena pg_blocking_pids termina en el coordinador 9645 (fila de la cuenta C2 bloqueada por su transactionid)
+── saldo concurrente: c1.rc=1 c2.rc=0
+── espera real demostrada (custodia N29): 2 backends en wait_event_type='Lock'; cadena pg_blocking_pids termina en el coordinador 9702 (fila del traspaso CC0 bloqueada por su transactionid)
+── N29 (custodia concurrente): c3.rc=1 c4.rc=0
+── espera real demostrada (idempotencia): 2 backends en wait_event_type='Lock'; cadena pg_blocking_pids termina en el coordinador 9757 (contención sobre la resolución de la clave única idem-CC3)
 ── idempotencia concurrente: c5.rc=0 c6.rc=0
-── idem-CC3: ambos clientes obtuvieron el MISMO id 58ba38f0-d9dc-4279-a02a-cfc58df1e69b
+── idem-CC3: ambos clientes obtuvieron el MISMO id 094871b5-d727-4ae3-8d3a-f0b48162f73d (coincide con la fila persistida)
 ── idempotencia concurrente (reuse): c7.rc=0 c8.rc=1
 ════════════════════════════════════════════
 VALIDACIÓN POSTGRESQL 17: PASS — esquema+CHECKs+triggers+transacciones+concurrencia determinista ejecutados y verificados

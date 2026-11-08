@@ -13,15 +13,75 @@
 --     · titular físico definitivo con gaveta EXACTA y vigencia temporal
 -- ═══════════════════════════════════════════════════════════════════════════════
 
+-- ══ D.24.1 (misión 011) · INVARIANTES REALES del ledger (hardening PR-4.4I) ═══
+-- Réplica fiel del contrato productivo de payment_transactions:
+--   PT007: DELETE prohibido GLOBALMENTE (rectificación = contraasiento/reversal);
+--   PT003: currency=CUP exige exchange_rate=1;
+--   PT004: moneda extranjera exige exchange_rate>1;
+--   PT005: zelle no admite CUP;
+--   PT001: los pagos de una transacción no exceden transactions.total_amount;
+--   PT006: una sola tasa por (transaction_id, payment_method, currency).
+-- El diseño multicajero debe integrarse CON estos controles, no sobre una base
+-- permisiva. amount_cup es GENERADO: PostgreSQL rechaza escribirlo directamente.
+CREATE FUNCTION validate_payment_transactions_invariants() RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO public, pg_temp
+AS $$
+DECLARE v_total numeric; v_sum numeric; v_existing_rate numeric;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    RAISE EXCEPTION 'ERR_PAYMENT_DELETE_FORBIDDEN: payment_transactions rows cannot be '
+      'deleted. Use reversal/void flow.' USING ERRCODE = 'PT007';
+  END IF;
+  IF NEW.currency = 'CUP' AND NEW.exchange_rate <> 1 THEN
+    RAISE EXCEPTION 'ERR_PAYMENT_CUP_RATE_MUST_BE_1: currency=CUP requires exchange_rate=1, '
+      'got %', NEW.exchange_rate USING ERRCODE = 'PT003';
+  END IF;
+  IF NEW.currency <> 'CUP' AND NEW.exchange_rate <= 1 THEN
+    RAISE EXCEPTION 'ERR_PAYMENT_FOREIGN_RATE_MUST_EXCEED_1: currency=% requires '
+      'exchange_rate > 1, got %', NEW.currency, NEW.exchange_rate USING ERRCODE = 'PT004';
+  END IF;
+  IF NEW.payment_method = 'zelle' AND NEW.currency = 'CUP' THEN
+    RAISE EXCEPTION 'ERR_ZELLE_NOT_FOR_CUP: zelle requires foreign currency'
+      USING ERRCODE = 'PT005';
+  END IF;
+  IF NEW.transaction_id IS NOT NULL THEN
+    PERFORM pg_advisory_xact_lock(hashtextextended(NEW.transaction_id::text, 0));
+    SELECT total_amount INTO v_total FROM transactions WHERE id = NEW.transaction_id;
+    SELECT COALESCE(SUM(amount_cup), 0) INTO v_sum
+      FROM payment_transactions
+     WHERE transaction_id = NEW.transaction_id AND id IS DISTINCT FROM NEW.id;
+    IF v_sum + NEW.amount_cup > v_total + 0.01 THEN
+      RAISE EXCEPTION 'ERR_PAYMENT_EXCEEDS_TOTAL: existing=% + new=% > total=%',
+        v_sum, NEW.amount_cup, v_total USING ERRCODE = 'PT001';
+    END IF;
+    SELECT exchange_rate INTO v_existing_rate
+      FROM payment_transactions
+     WHERE transaction_id = NEW.transaction_id
+       AND payment_method = NEW.payment_method AND currency = NEW.currency
+       AND id IS DISTINCT FROM NEW.id LIMIT 1;
+    IF FOUND AND ABS(v_existing_rate - NEW.exchange_rate) > 0.000001 THEN
+      RAISE EXCEPTION 'ERR_MULTIPLE_EXCHANGE_RATES: transaction_id=% has %/% with rate=%',
+        NEW.transaction_id, NEW.payment_method, NEW.currency, v_existing_rate
+        USING ERRCODE = 'PT006';
+    END IF;
+  END IF;
+  RETURN NEW;
+END $$;
+
+CREATE TRIGGER trg_validate_payment_invariants
+BEFORE INSERT OR UPDATE OR DELETE ON payment_transactions
+FOR EACH ROW EXECUTE FUNCTION validate_payment_transactions_invariants();
+
 -- ── CAPA INMEDIATA (trigger ordinario AFTER: dispara al ejecutarse la fila) ────
 -- Misión 009 (D.22.1): una fila vinculada a un traspaso es INMUTABLE en sus
 -- columnas financieras/de identidad — la desvinculación o reasignación queda
 -- prohibida aquí (inmediato) Y la capa diferida reconcilia también OLD (D.22.1).
--- Misión 010 (D.23.1): inmutabilidad COMPLETA — también at (payment_date,
--- operandos de model_scope y de la vigencia), exchange_rate (operando del
--- importe equivalente amount_cup = amount * CASE WHEN currency='CUP' THEN 1
--- ELSE exchange_rate END), transaction_id (anulación/atribución) y created_by
--- (atribución auditable). Filas ORDINARIAS (no cash_transfer) no se afectan.
+-- Misión 010 (D.23.1): inmutabilidad COMPLETA — también exchange_rate (operando
+-- del importe equivalente), transaction_id (anulación/atribución) y la atribución.
+-- Misión 011 (D.24.1): columnas REALES del ledger — payment_date (no 'at') y
+-- paid_by (no 'created_by'); updated_at también protegido para piernas de
+-- traspaso (fila congelada tras el insert). Filas ORDINARIAS no se afectan.
 CREATE FUNCTION fn_pt_immediate() RETURNS trigger
 LANGUAGE plpgsql AS $$
 DECLARE v_store uuid; v_status text;
@@ -36,13 +96,13 @@ BEGIN
        OR NEW.payment_method IS DISTINCT FROM OLD.payment_method
        OR NEW.cash_closure_id IS DISTINCT FROM OLD.cash_closure_id
        OR NEW.cash_account_id IS DISTINCT FROM OLD.cash_account_id
-       OR NEW.at              IS DISTINCT FROM OLD.at
+       OR NEW.payment_date    IS DISTINCT FROM OLD.payment_date
        OR NEW.exchange_rate   IS DISTINCT FROM OLD.exchange_rate
        OR NEW.transaction_id  IS DISTINCT FROM OLD.transaction_id
-       OR NEW.created_by      IS DISTINCT FROM OLD.created_by THEN
+       OR NEW.paid_by         IS DISTINCT FROM OLD.paid_by THEN
       RAISE EXCEPTION 'ERR_LEG_IMMUTABLE: fila % vinculada a un traspaso no admite cambios de '
         'ref_type/ref_id/direction/amount/currency/store_id/payment_method/titular/'
-        'at/exchange_rate/transaction_id/created_by (D.23.1)',
+        'payment_date/exchange_rate/transaction_id/paid_by/updated_at (D.24.1)',
         OLD.id;
     END IF;
   END IF;
@@ -70,7 +130,7 @@ END $$;
 CREATE TRIGGER pt_immediate
 AFTER INSERT OR UPDATE OF ref_type, ref_id, direction, payment_method, store_id,
                           amount, currency, cash_closure_id, cash_account_id,
-                          at, exchange_rate, transaction_id, created_by
+                          payment_date, exchange_rate, transaction_id, paid_by, updated_at
 ON payment_transactions
 FOR EACH ROW EXECUTE FUNCTION fn_pt_immediate();
 
@@ -156,9 +216,21 @@ FOR EACH ROW EXECUTE FUNCTION fn_ctr_transfer_final();
 CREATE FUNCTION f_create_custody_event(p_transfer uuid, p_prev_custodian uuid,
   p_new_custodian uuid, p_changed_by uuid, p_authorized_by uuid, p_reason text,
   p_is_close boolean DEFAULT false)
-RETURNS uuid LANGUAGE plpgsql AS $$
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
 DECLARE v_ct uuid; v_last_seq int; v_last_id uuid; v_last_cust uuid; v_seq int; v_new_id uuid;
+  v_auth uuid := auth.uid();
 BEGIN
+  -- D.24.2: el registro del cambio de custodio lo hace el actor autenticado.
+  IF v_auth IS NULL THEN
+    RAISE EXCEPTION 'ERR_AUTH_REQUIRED: sesión autenticada requerida';
+  END IF;
+  IF p_changed_by IS DISTINCT FROM v_auth THEN
+    RAISE EXCEPTION 'ERR_AUTH_IDENTITY: changed_by % no coincide con la identidad '
+      'autenticada %', p_changed_by, v_auth;
+  END IF;
   SELECT id INTO v_ct FROM cash_transfers WHERE id = p_transfer FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_NO_TRANSFER: transferencia % inexistente', p_transfer; END IF;
   SELECT event_seq, id, new_custodian_user_id INTO v_last_seq, v_last_id, v_last_cust
@@ -193,16 +265,32 @@ END $$;
 -- 'transportista' y perteneciente a la tienda del traspaso. Se registra durante
 -- la preparación de la entrega (autorización independiente del titular/encargado).
 CREATE FUNCTION f_assign_carrier(p_transfer uuid, p_carrier uuid,
-  p_authorized_by uuid) RETURNS void LANGUAGE plpgsql AS $$
-DECLARE ct record; v_role text; v_store uuid; v_n int;
+  p_authorized_by uuid) RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+DECLARE ct record; v_role text; v_store uuid; v_auth uuid := auth.uid();
 BEGIN
+  -- D.24.3: el AUTORIZADOR es la identidad autenticada (no un UUID de cliente),
+  -- con rol 'encargado' y de la tienda del traspaso (facultades existentes de
+  -- COSTPRO: el encargado es el responsable de caja de la tienda; no se inventan
+  -- roles). assigned_by y authorized_by registran la MISMA acción de autorización
+  -- (una sola firma): se conservan dos columnas para trazabilidad del contrato,
+  -- y el CHECK ctr_carrier_no_self impide el autoservicio.
+  IF v_auth IS NULL THEN
+    RAISE EXCEPTION 'ERR_AUTH_REQUIRED: sesión autenticada requerida';
+  END IF;
+  IF p_authorized_by IS DISTINCT FROM v_auth THEN
+    RAISE EXCEPTION 'ERR_AUTH_IDENTITY: authorized_by % no coincide con la identidad '
+      'autenticada %', p_authorized_by, v_auth;
+  END IF;
   SELECT * INTO ct FROM cash_transfers WHERE id = p_transfer FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_NO_TRANSFER'; END IF;
-  IF ct.status NOT IN ('solicitada','entregada') THEN
-    RAISE EXCEPTION 'ERR_STATE: la asignación exige solicitada o entregada, estado=%', ct.status;
-  END IF;
-  IF p_authorized_by IS NULL THEN
-    RAISE EXCEPTION 'ERR_CARRIER_AUTH_REQUIRED: la asignación exige un autorizador registrado';
+  -- D.24.4: SOLO antes de la entrega. La sustitución de custodio posterior a la
+  -- entrega es la reasignación formal (f_create_custody_event), no una reasignación.
+  IF ct.status <> 'solicitada' THEN
+    RAISE EXCEPTION 'ERR_STATE: la asignación exige solicitada (previa a la entrega), estado=%',
+      ct.status;
   END IF;
   IF p_authorized_by = p_carrier THEN
     RAISE EXCEPTION 'ERR_CARRIER_SELF_ASSIGNMENT: un transportista no puede autorizarse a sí mismo';
@@ -217,14 +305,22 @@ BEGIN
   IF v_store IS DISTINCT FROM ct.store_id THEN
     RAISE EXCEPTION 'ERR_CARRIER_WRONG_STORE: el transportista pertenece a otra tienda';
   END IF;
-  SELECT count(*) INTO v_n FROM profiles WHERE id = p_authorized_by;
-  IF v_n = 0 THEN
+  SELECT role, store_id INTO v_role, v_store FROM profiles WHERE id = p_authorized_by;
+  IF NOT FOUND THEN
     RAISE EXCEPTION 'ERR_CARRIER_AUTHORIZER_UNKNOWN: autorizador % inexistente', p_authorized_by;
+  END IF;
+  IF v_role <> 'encargado' THEN
+    RAISE EXCEPTION 'ERR_CARRIER_AUTHORIZER_ROLE: el autorizador % tiene rol "%"; solo un '
+      'encargado autoriza transportistas', p_authorized_by, v_role;
+  END IF;
+  IF v_store IS DISTINCT FROM ct.store_id THEN
+    RAISE EXCEPTION 'ERR_CARRIER_AUTHORIZER_STORE: el autorizador pertenece a otra tienda';
   END IF;
   INSERT INTO cash_transfer_carriers(transfer_id, carrier_user_id, assigned_by, authorized_by)
   VALUES (p_transfer, p_carrier, p_authorized_by, p_authorized_by)
   ON CONFLICT (transfer_id, carrier_user_id) DO NOTHING;   -- idempotente
 END $$;
+
 
 -- 1) SOLICITUD (D.22.4): idempotencia por CLAVE + HUELLA de parámetros.
 --    Política: la clave es OBLIGATORIA para la operación financiera. Misma clave
@@ -235,9 +331,25 @@ END $$;
 CREATE FUNCTION f_request_cash_transfer(p_store uuid, p_from_register uuid,
   p_from_account uuid, p_to_register uuid, p_to_account uuid,
   p_amount numeric, p_currency text, p_requested_by uuid, p_authorized_by uuid,
-  p_idem text) RETURNS uuid LANGUAGE plpgsql AS $$
+  p_idem text, p_exchange_rate numeric DEFAULT 1) RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
 DECLARE v_id uuid; v_fp text; v_existing_id uuid; v_existing_fp text; v_attempt int;
+  v_auth uuid := auth.uid();
 BEGIN
+  -- D.24.2: la identidad de solicitante y autorizador proviene de auth.uid().
+  IF v_auth IS NULL THEN
+    RAISE EXCEPTION 'ERR_AUTH_REQUIRED: sesión autenticada requerida';
+  END IF;
+  IF p_requested_by IS DISTINCT FROM v_auth THEN
+    RAISE EXCEPTION 'ERR_AUTH_IDENTITY: requested_by % no coincide con la identidad '
+      'autenticada %', p_requested_by, v_auth;
+  END IF;
+  IF p_authorized_by IS NOT NULL AND p_authorized_by IS DISTINCT FROM v_auth THEN
+    RAISE EXCEPTION 'ERR_AUTH_IDENTITY: authorized_by % no coincide con la identidad '
+      'autenticada %', p_authorized_by, v_auth;
+  END IF;
   IF p_idem IS NULL OR p_idem = '' THEN
     RAISE EXCEPTION 'ERR_IDEMPOTENCY_KEY_REQUIRED: la clave de idempotencia es obligatoria';
   END IF;
@@ -256,14 +368,15 @@ BEGIN
     'to_account',      p_to_account,
     'amount',          p_amount,
     'currency',        p_currency,
+    'exchange_rate',   p_exchange_rate,
     'requested_by',    p_requested_by,
     'authorized_by',   COALESCE(p_authorized_by, p_requested_by)
   )::text);
   FOR v_attempt IN 1..2 LOOP
-    INSERT INTO cash_transfers(store_id, amount, currency, status,
+    INSERT INTO cash_transfers(store_id, amount, currency, exchange_rate, status,
              from_register_id, from_account_id, to_register_id, to_account_id,
              requested_by, authorized_by, idempotency_key, request_fingerprint)
-    VALUES (p_store, p_amount, p_currency, 'solicitada',
+    VALUES (p_store, p_amount, p_currency, p_exchange_rate, 'solicitada',
             p_from_register, p_from_account, p_to_register, p_to_account,
             p_requested_by, COALESCE(p_authorized_by, p_requested_by), p_idem, v_fp)
     ON CONFLICT (idempotency_key) DO NOTHING
@@ -288,7 +401,9 @@ END $$;
 --    ejecutada por primera vez en SQL real) ────────────────────────────────────
 CREATE FUNCTION f_check_treasury_saldo(p_account uuid, p_store uuid,
   p_currency text, p_amount numeric) RETURNS void
-LANGUAGE plpgsql AS $$
+LANGUAGE plpgsql
+SET search_path = public, pg_temp
+AS $$
 DECLARE v_saldo numeric(14,2);
 BEGIN
   -- Paso 0. Serialización: bloquear la fila de la cuenta (dos entregas
@@ -326,9 +441,21 @@ END $$;
 -- 2) ENTREGA (secuencia D.21.1): pierna OUT → estado+referencias → custodia →
 --    validación diferida forzada (SET CONSTRAINTS ... IMMEDIATE) → COMMIT externo.
 CREATE FUNCTION f_deliver_cash_transfer(p_transfer uuid, p_delivered_by uuid,
-  p_session uuid, p_carrier uuid) RETURNS uuid LANGUAGE plpgsql AS $$
-DECLARE ct record; v_leg uuid; v_owner uuid;
+  p_session uuid, p_carrier uuid) RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+DECLARE ct record; v_leg uuid; v_owner uuid; v_auth uuid := auth.uid();
 BEGIN
+  -- D.24.2: el actor operativo ES la identidad autenticada. Un UUID de cliente
+  -- distinto de auth.uid() nunca designa al actor (A-N8/A-N14).
+  IF v_auth IS NULL THEN
+    RAISE EXCEPTION 'ERR_AUTH_REQUIRED: sesión autenticada requerida';
+  END IF;
+  IF p_delivered_by IS DISTINCT FROM v_auth THEN
+    RAISE EXCEPTION 'ERR_AUTH_IDENTITY: delivered_by % no coincide con la identidad '
+      'autenticada %', p_delivered_by, v_auth;
+  END IF;
   -- Semántica SET CONSTRAINTS (D.21.1): el modo IMMEDIATE fijado por otra función
   -- en la MISMA transacción persiste; se restaura DEFERRED para no validar estados
   -- transitorios entre sentencias, y se fuerza IMMEDIATE solo al final.
@@ -354,42 +481,60 @@ BEGIN
          AND cc.closed_at IS NULL) THEN
       RAISE EXCEPTION 'ERR_SESSION_NOT_OPEN: sesión emisora no abierta en la gaveta de origen';
     END IF;
-    -- D.23.3 (decisión B verificable): el actor puede diferir del titular de la
-    -- sesión SOLO si existe una ASIGNACIÓN PREVIA de transportista para este
-    -- traspaso, registrada por un autorizador distinto (f_assign_carrier), con
-    -- rol 'transportista' y de la tienda del traspaso. No hay autoasignación.
+    -- D.24.4 (misión 011): COMBINACIONES VÁLIDAS inequívocas. El transportista
+    -- usado SIEMPRE corresponde a una asignación previa válida (D.23.3): no se
+    -- acepta un p_carrier arbitrario ni se infiere un custodio que no exista.
     SELECT user_id INTO v_owner FROM cash_closures WHERE id = p_session;
-    IF p_delivered_by IS NOT DISTINCT FROM v_owner THEN
-      NULL;                                             -- el titular entrega
+    IF p_delivered_by = v_owner THEN
+      -- CASO A (titular entrega y conserva): p_carrier NULL ⇒ custodio = titular.
+      -- CASO B (titular entrega a transportista): p_carrier debe ser el transportista
+      -- ASIGNADO para este traspaso; carrier_user_id = ese transportista.
+      IF p_carrier IS NULL THEN
+        NULL;                                              -- A: el titular conserva el dinero
+      ELSIF p_carrier IS NOT DISTINCT FROM v_owner THEN
+        p_carrier := NULL;                                 -- "carrier"=titular ⇒ caso A
+      ELSIF NOT EXISTS (SELECT 1 FROM cash_transfer_carriers x
+              JOIN profiles pr ON pr.id = x.carrier_user_id
+              WHERE x.transfer_id = p_transfer
+                AND x.carrier_user_id = p_carrier
+                AND x.assigned_by <> x.carrier_user_id
+                AND x.authorized_by <> x.carrier_user_id
+                AND pr.role = 'transportista' AND pr.store_id = ct.store_id) THEN
+        RAISE EXCEPTION 'ERR_CARRIER_NOT_ASSIGNED: el titular solo puede entregar el dinero '
+          'al transportista ASIGNADO para este traspaso, no a %', p_carrier;
+      END IF;
+      -- carrier_user_id = p_carrier (caso B) o NULL (caso A) en el UPDATE final.
     ELSE
-      IF p_delivered_by IS NULL THEN
-        RAISE EXCEPTION 'ERR_UNKNOWN_ACTOR: actor operativo no autenticado';
-      END IF;
-      IF NOT EXISTS (SELECT 1 FROM profiles pr
-                      WHERE pr.id = p_delivered_by
-                        AND pr.store_id = ct.store_id
-                        AND pr.role = 'transportista') THEN
-        RAISE EXCEPTION 'ERR_DELIVER_ACTOR_UNAUTHORIZED: el actor % no es el titular de la '
-          'sesión emisora ni un transportista válido de la tienda', p_delivered_by;
-      END IF;
+      -- CASO C (el transportista ejecuta la entrega): el actor autenticado debe ser
+      -- el transportista ASIGNADO; delivered_by = ese actor; carrier_user_id = ese
+      -- actor. NINGÚN otro UUID designa al custodio.
       IF NOT EXISTS (SELECT 1 FROM cash_transfer_carriers x
-                      WHERE x.transfer_id = p_transfer
-                        AND x.carrier_user_id = p_delivered_by
-                        AND x.assigned_by <> x.carrier_user_id
-                        AND x.authorized_by <> x.carrier_user_id) THEN
-        RAISE EXCEPTION 'ERR_CARRIER_NOT_ASSIGNED: el transportista % no tiene asignación '
-          'previa autorizada para este traspaso', p_delivered_by;
+              JOIN profiles pr ON pr.id = x.carrier_user_id
+              WHERE x.transfer_id = p_transfer
+                AND x.carrier_user_id = p_delivered_by
+                AND x.assigned_by <> x.carrier_user_id
+                AND x.authorized_by <> x.carrier_user_id
+                AND pr.role = 'transportista' AND pr.store_id = ct.store_id) THEN
+        RAISE EXCEPTION 'ERR_CARRIER_NOT_ASSIGNED: el actor % no es el titular de la sesión '
+          'ni el transportista ASIGNADO para este traspaso', p_delivered_by;
       END IF;
+      IF p_carrier IS NOT NULL AND p_carrier IS DISTINCT FROM p_delivered_by THEN
+        RAISE EXCEPTION 'ERR_CARRIER_MISMATCH: el transportista ejecutor no puede registrar '
+          'a % como custodio; el custodio real es el propio actor', p_carrier;
+      END IF;
+      p_carrier := p_delivered_by;
     END IF;
   END IF;
   v_leg := gen_random_uuid();                           -- 1) UUID previsto
   INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-           currency, at, ref_type, ref_id, cash_closure_id, cash_account_id, created_by)
-  VALUES (v_leg, ct.store_id, 'out', 'cash', ct.amount, ct.currency, now(),
+           currency, exchange_rate, payment_date, ref_type, ref_id,
+           cash_closure_id, cash_account_id, paid_by)
+  VALUES (v_leg, ct.store_id, 'out', 'cash', ct.amount, ct.currency,
+          ct.exchange_rate, now(),                           -- tasa y fecha REALES
           'cash_transfer', p_transfer,                       -- 2) fila OUT
           CASE WHEN ct.from_register_id IS NOT NULL THEN p_session END,
           CASE WHEN ct.from_account_id  IS NOT NULL THEN ct.from_account_id END,
-          p_delivered_by);                                   --    titular correcto
+          p_delivered_by);                                   --    paid_by: atribución real
   UPDATE cash_transfers                                      -- 3)+4) estado y pierna
      SET status = 'entregada', leg_out_payment_id = v_leg,
          sent_from_session_id =
@@ -398,7 +543,7 @@ BEGIN
          updated_at = now()                                  -- 5) responsable entrega
    WHERE id = p_transfer;
   PERFORM f_create_custody_event(p_transfer, NULL,           -- 6) custodia inicial
-           COALESCE(p_carrier, p_delivered_by),              --    poseedor físico real
+           COALESCE(p_carrier, p_delivered_by),              --    poseedor físico real (A/B/C)
            p_delivered_by, ct.authorized_by, 'entrega física');
   SET CONSTRAINTS ctr_legs_final, ctr_transfer_final IMMEDIATE;  -- 7) validación final
   RETURN v_leg;
@@ -406,10 +551,21 @@ END $$;
 
 -- 3) RECEPCIÓN: pierna IN → estado+referencias → custodia al receptor → final.
 CREATE FUNCTION f_receive_cash_transfer(p_transfer uuid, p_receiver uuid,
-  p_session uuid, p_account uuid) RETURNS uuid LANGUAGE plpgsql AS $$
-DECLARE ct record; v_leg uuid; v_prev_cust uuid; v_owner uuid;
+  p_session uuid, p_account uuid) RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+DECLARE ct record; v_leg uuid; v_prev_cust uuid; v_owner uuid; v_auth uuid := auth.uid();
 BEGIN
   SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;  -- ver nota en f_deliver
+  -- D.24.2: quien confirma la recepción es la identidad autenticada.
+  IF v_auth IS NULL THEN
+    RAISE EXCEPTION 'ERR_AUTH_REQUIRED: sesión autenticada requerida';
+  END IF;
+  IF p_receiver IS DISTINCT FROM v_auth THEN
+    RAISE EXCEPTION 'ERR_AUTH_IDENTITY: receiver % no coincide con la identidad '
+      'autenticada %', p_receiver, v_auth;
+  END IF;
   SELECT * INTO ct FROM cash_transfers WHERE id = p_transfer FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_NO_TRANSFER'; END IF;
   IF ct.status <> 'entregada' THEN
@@ -435,8 +591,10 @@ BEGIN
   END IF;
   v_leg := gen_random_uuid();
   INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-           currency, at, ref_type, ref_id, cash_closure_id, cash_account_id, created_by)
-  VALUES (v_leg, ct.store_id, 'in', 'cash', ct.amount, ct.currency, now(),
+           currency, exchange_rate, payment_date, ref_type, ref_id,
+           cash_closure_id, cash_account_id, paid_by)
+  VALUES (v_leg, ct.store_id, 'in', 'cash', ct.amount, ct.currency,
+          ct.exchange_rate, now(),
           'cash_transfer', p_transfer,
           CASE WHEN ct.to_register_id IS NOT NULL THEN p_session END,
           CASE WHEN ct.to_account_id  IS NOT NULL THEN p_account END,
@@ -461,9 +619,19 @@ END $$;
 -- 4) SOLICITUD DE DEVOLUCIÓN: desde 'entregada' (esc. E del diseño: el receptor
 --    se niega ANTES de confirmar; la matriz exige pierna IN nula en en_devolucion).
 CREATE FUNCTION f_request_return_cash_transfer(p_transfer uuid, p_by uuid, p_reason text)
-RETURNS void LANGUAGE plpgsql AS $$
-DECLARE ct record;
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+DECLARE ct record; v_auth uuid := auth.uid();
 BEGIN
+  IF v_auth IS NULL THEN
+    RAISE EXCEPTION 'ERR_AUTH_REQUIRED: sesión autenticada requerida';
+  END IF;
+  IF p_by IS DISTINCT FROM v_auth THEN
+    RAISE EXCEPTION 'ERR_AUTH_IDENTITY: actor % no coincide con la identidad autenticada %',
+      p_by, v_auth;
+  END IF;
   SELECT * INTO ct FROM cash_transfers WHERE id = p_transfer FOR UPDATE;
   IF ct.status <> 'entregada' THEN
     RAISE EXCEPTION 'ERR_STATE: solicitud de devolución exige entregada, estado=%', ct.status;
@@ -477,10 +645,21 @@ END $$;
 
 -- 5) DEVOLUCIÓN al ORIGEN: pierna IN con titular de origen → 'devuelta' → final.
 CREATE FUNCTION f_return_cash_transfer(p_transfer uuid, p_receiver uuid,
-  p_session uuid, p_account uuid) RETURNS uuid LANGUAGE plpgsql AS $$
-DECLARE ct record; v_leg uuid; v_prev_cust uuid; v_owner uuid;
+  p_session uuid, p_account uuid) RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+DECLARE ct record; v_leg uuid; v_prev_cust uuid; v_owner uuid; v_auth uuid := auth.uid();
 BEGIN
   SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;  -- ver nota en f_deliver
+  -- D.24.2: quien recibe el retorno es la identidad autenticada.
+  IF v_auth IS NULL THEN
+    RAISE EXCEPTION 'ERR_AUTH_REQUIRED: sesión autenticada requerida';
+  END IF;
+  IF p_receiver IS DISTINCT FROM v_auth THEN
+    RAISE EXCEPTION 'ERR_AUTH_IDENTITY: receiver % no coincide con la identidad '
+      'autenticada %', p_receiver, v_auth;
+  END IF;
   SELECT * INTO ct FROM cash_transfers WHERE id = p_transfer FOR UPDATE;
   IF ct.status <> 'en_devolucion' THEN
     RAISE EXCEPTION 'ERR_STATE: devolución física exige en_devolucion, estado=%', ct.status;
@@ -502,8 +681,10 @@ BEGIN
   END IF;
   v_leg := gen_random_uuid();
   INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-           currency, at, ref_type, ref_id, cash_closure_id, cash_account_id, created_by)
-  VALUES (v_leg, ct.store_id, 'in', 'cash', ct.amount, ct.currency, now(),
+           currency, exchange_rate, payment_date, ref_type, ref_id,
+           cash_closure_id, cash_account_id, paid_by)
+  VALUES (v_leg, ct.store_id, 'in', 'cash', ct.amount, ct.currency,
+          ct.exchange_rate, now(),
           'cash_transfer', p_transfer,
           CASE WHEN ct.from_register_id IS NOT NULL THEN p_session END,
           CASE WHEN ct.from_account_id  IS NOT NULL THEN p_account END,
@@ -525,9 +706,19 @@ END $$;
 
 -- 6) CANCELACIÓN antes de entregar (sin piernas).
 CREATE FUNCTION f_cancel_cash_transfer(p_transfer uuid, p_by uuid, p_reason text)
-RETURNS void LANGUAGE plpgsql AS $$
-DECLARE ct record;
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER SET search_path = public, pg_temp
+AS $$
+DECLARE ct record; v_auth uuid := auth.uid();
 BEGIN
+  IF v_auth IS NULL THEN
+    RAISE EXCEPTION 'ERR_AUTH_REQUIRED: sesión autenticada requerida';
+  END IF;
+  IF p_by IS DISTINCT FROM v_auth THEN
+    RAISE EXCEPTION 'ERR_AUTH_IDENTITY: actor % no coincide con la identidad autenticada %',
+      p_by, v_auth;
+  END IF;
   SELECT * INTO ct FROM cash_transfers WHERE id = p_transfer FOR UPDATE;
   IF ct.status <> 'solicitada' THEN
     RAISE EXCEPTION 'ERR_STATE: cancelación exige solicitada, estado=%', ct.status;
@@ -580,10 +771,11 @@ BEGIN
                   WHERE transfer_id = NEW.transfer_id AND close_event)
     INTO v_ya_cerrada;
   IF v_last_id IS NULL THEN
-    -- ── APERTURA: solo una entrega física abre la custodia ──
-    IF v_status NOT IN ('entregada','en_devolucion') THEN
-      RAISE EXCEPTION 'ERR_CUSTODY_NOT_DELIVERED: la custodia solo puede iniciarse en una '
-        'entrega física, estado=%', v_status;
+    -- ── APERTURA: SOLO la entrega física abre la custodia (D.24.5: una
+    -- transferencia en 'en_devolucion' DEBIÓ tener un evento inicial previo) ──
+    IF v_status <> 'entregada' THEN
+      RAISE EXCEPTION 'ERR_CUSTODY_NOT_DELIVERED: la custodia solo puede iniciarse en la '
+        'entrega física (estado=entregada), estado=%', v_status;
     END IF;
     IF NEW.close_event THEN
       RAISE EXCEPTION 'ERR_CUSTODY_FIRST_IS_CLOSE: el evento inicial de una entrega no es un cierre';
@@ -615,6 +807,11 @@ BEGIN
         RAISE EXCEPTION 'ERR_CUSTODY_CLOSE_HOLDER: el custodio final debe ser el receptor '
           'registrado received_by=%, no %', v_receptor, NEW.new_custodian_user_id;
       END IF;
+      -- D.24.5: el cierre lo registra el propio receptor (identidad del acto).
+      IF NEW.changed_by IS DISTINCT FROM v_receptor THEN
+        RAISE EXCEPTION 'ERR_CUSTODY_CLOSE_REGISTRAR: el cierre debe registrarlo el receptor '
+          'autenticado received_by=%, no %', v_receptor, NEW.changed_by;
+      END IF;
     ELSE
       -- ── REASIGNACIÓN INTERMEDIA: solo con efectivo en tránsito ──
       IF v_status <> 'entregada' THEN
@@ -641,3 +838,16 @@ END $$;
 CREATE TRIGGER ctr_custody_continuity
 BEFORE INSERT ON cash_transfer_custody_events
 FOR EACH ROW EXECUTE FUNCTION fn_custody_continuity();
+
+-- D.24.3: frontera de ejecución — el rol autenticado SOLO puede ejecutar las RPC
+-- de especificación (SECURITY DEFINER); ninguna escritura directa en tablas.
+GRANT EXECUTE ON FUNCTION
+  f_request_cash_transfer(uuid,uuid,uuid,uuid,uuid,numeric,text,uuid,uuid,text,numeric),
+  f_deliver_cash_transfer(uuid,uuid,uuid,uuid),
+  f_receive_cash_transfer(uuid,uuid,uuid,uuid),
+  f_request_return_cash_transfer(uuid,uuid,text),
+  f_return_cash_transfer(uuid,uuid,uuid,uuid),
+  f_cancel_cash_transfer(uuid,uuid,text),
+  f_create_custody_event(uuid,uuid,uuid,uuid,uuid,text,boolean),
+  f_assign_carrier(uuid,uuid,uuid)
+TO authenticated;

@@ -1,8 +1,8 @@
 # COSTPRO_MULTICASHIER_DESIGN_002 — Diseño técnico definitivo del sistema multicajero
 
-**Fecha:** 2026-11-07 (v1/v2) · **v3: 2026-11-08** · **v4: 2026-11-08 (misión 005)** · **v5: 2026-11-08 (misión 006)** · **v6: 2026-11-09 (misión 007)** · **v7: 2026-11-09 (misión 008)** · **v8: 2026-11-08 (misión 009)** · **v9: 2026-11-08 (misión 010)** · **Base:** `COSTPRO_MULTICASHIER_AUDIT_001.md` (PR #1563) · **Tipo:** diseño cerrado, sin implementación.
+**Fecha:** 2026-11-07 (v1/v2) · **v3: 2026-11-08** · **v4: 2026-11-08 (misión 005)** · **v5: 2026-11-08 (misión 006)** · **v6: 2026-11-09 (misión 007)** · **v7: 2026-11-09 (misión 008)** · **v8: 2026-11-08 (misión 009)** · **v9: 2026-11-08 (misión 010)** · **v10: 2026-11-08 (misión 011)** · **Base:** `COSTPRO_MULTICASHIER_AUDIT_001.md` (PR #1563) · **Tipo:** diseño cerrado, sin implementación.
 **Repo:** Nardian90/Costpro · `origin/main` = `8f1c00492` (verificado 2026-11-08 en la misión 009: avance upstream CP-UX-ORG-STORES-001 PR #1570 y contract-surface — **sin trabajo multicajero ni cambios del módulo Caja** [MEDIDO: el diff upstream no altera tablas cash_transfers/custody; las menciones cash del diff eran archivos del propio PR]) · rama del PR `audit/multicashier-001` (commits `3a9ebe931` · `f7c5ef690` · `d8cf1e925` · `d076c8d3a` cierre 004 · `534f08e0a` cierre 005 · `62195c253` cierre 006 · `43697c8c1` cierre 007 · `32e6dd553`+`580d43d6c` cierre 008, checks success · cierre 009 = este commit).
-**Revisiones:** v1 (misión 002, §D.2-D.13 — **OBSOLETA en parte**, ver AVISO) → v2 (misión 003, §D.14-D.15 — **OBSOLETA en parte**) → v3 (misión 004, §D.16-D.17 — **VIGENTE salvo lo corregido inline**) → v4 (misión 005, §D.18 — **VIGENTE salvo lo corregido inline**) → v5 (misión 006, §D.19 — **VIGENTE salvo lo corregido inline**) → v6 (misión 007, §D.20 — **VIGENTE salvo lo corregido inline**) → v7 (misión 008, §D.21 — HISTÓRICO en lo sustituido por banners) → v8 (misión 009, §D.22 — HISTÓRICO en lo sustituido por banners) → **v9 (misión 010): §D.23 integridad temporal, cierre de custodia y autorización efectiva — VIGENTE.**
+**Revisiones:** v1 (misión 002, §D.2-D.13 — **OBSOLETA en parte**, ver AVISO) → v2 (misión 003, §D.14-D.15 — **OBSOLETA en parte**) → v3 (misión 004, §D.16-D.17 — **VIGENTE salvo lo corregido inline**) → v4 (misión 005, §D.18 — **VIGENTE salvo lo corregido inline**) → v5 (misión 006, §D.19 — **VIGENTE salvo lo corregido inline**) → v6 (misión 007, §D.20 — **VIGENTE salvo lo corregido inline**) → v7 (misión 008, §D.21 — HISTÓRICO en lo sustituido por banners) → v8 (misión 009, §D.22 — HISTÓRICO en lo sustituido por banners) → v9 (misión 010, §D.23 — HISTÓRICO en lo sustituido por banners) → **v10 (misión 011): §D.24 compatibilidad del ledger real y autorización autenticada — VIGENTE.**
 **Decisión del propietario:** cada vendedor tiene **terminal + gaveta propios**: UNA TIENDA + UN ALMACÉN COMPARTIDO + N CAJAS FÍSICAS + N TERMINALES + N SESIONES FINANCIERAS INDEPENDIENTES.
 **Etiquetas:** [MEDIDO] catálogo vivo (prod agregado sin PII / E2E) · [EN CÓDIGO] archivo:línea · [DECISIÓN] decisión de diseño fundamentada · [SIM] simulación conceptual verificada con código versionado en `docs/audits/evidence/` · [SPEC E2E] prueba definida para la Fase F, NO ejecutada · [NO VERIFICADO] pendiente de censo/prueba.
 
@@ -10,7 +10,7 @@
 
 ## ⚠️ AVISO DE VIGENCIA — qué especificación es válida
 
-Este documento acumula nueve revisiones. **La especificación VIGENTE es §D.16-D.17 (misión 004) con las capas correctivas de §D.18 (misión 005), §D.19 (misión 006), §D.20 (misión 007), §D.21 (misión 008), §D.22 (misión 009) y §D.23 (misión 010), que prevalecen donde corrigen.** Las secciones anteriores se conservan como antecedente y evidencia; donde quedaron sustituidas llevan el banner `OBSOLETO — NO IMPLEMENTAR`. Un implementador debe seguir §D.16-D.23 (D.18, D.19, D.20, D.21, D.22 y D.23 como capas correctivas) y, para los conceptos no redefinidos allí (seguridad D.7, históricos D.9, escenarios E2E D.11), las secciones v1 señaladas como vigentes en la tabla:
+Este documento acumula diez revisiones. **La especificación VIGENTE es §D.16-D.17 (misión 004) con las capas correctivas de §D.18 (misión 005), §D.19 (misión 006), §D.20 (misión 007), §D.21 (misión 008), §D.22 (misión 009), §D.23 (misión 010) y §D.24 (misión 011), que prevalecen donde corrigen.** Las secciones anteriores se conservan como antecedente y evidencia; donde quedaron sustituidas llevan el banner `OBSOLETO — NO IMPLEMENTAR`. Un implementador debe seguir §D.16-D.24 (D.18 a D.24 como capas correctivas) y, para los conceptos no redefinidos allí (seguridad D.7, históricos D.9, escenarios E2E D.11), las secciones v1 señaladas como vigentes en la tabla:
 
 | Sección | Estado | Especificación vigente |
 |---|---|---|
@@ -60,6 +60,14 @@ Este documento acumula nueve revisiones. **La especificación VIGENTE es §D.16-
 | D.22.4 (idempotencia con huella) | **Ampliada** (huella jsonb canónica con autorizador efectivo) | §D.23.4 (v9) |
 | D.22.6 (reproducibilidad) y D.22.7 (matriz v8) | Histórico (concurrencia determinista y matriz ampliada) | §D.23.5 + §D.23.6 (v9) |
 | D.22.8 (veredicto v8) | Histórico (el criterio se mantiene; el veredicto queda sustituido) | §D.23.7 (v9) |
+| D.23.1 (inmutabilidad completa) | **Corregida** (columnas REALES paid_by/payment_date; amount_cup generado; PT007) | §D.24.1 (v10) |
+| D.23.2 (máquina de custodia) | **Endurecida** (apertura solo en entregada; cierre por el receptor) | §D.24.5 (v10) |
+| D.23.3 (transportista asignado) | **Sustituida** (identidad auth.uid() + rol encargado + frontera RLS) | §D.24.2/D.24.3 (v10) |
+| D.23.3 (p_carrier) | **Corregida** (casos A/B/C vinculados a la asignación) | §D.24.4 (v10) |
+| D.23.4 (huella jsonb) | VIGENTE | — (v10) |
+| D.23.5 (concurrencia determinista) | **Completada** (pg_blocking_pids + application_name) | §D.24.6 (v10) |
+| D.23.6 (matriz v9) | Histórica (ampliada) | §D.24.8 (v10) |
+| D.23.7 (veredicto v9) | Histórico (el criterio se mantiene; el veredicto queda sustituido) | §D.24.9 (v10) |
 
 ---
 
@@ -2398,6 +2406,8 @@ La modificación o desvinculación de una pierna no puede dejar inconsistente la
 
 ## D.23. Integridad temporal, cierre de custodia y autorización efectiva (misión COSTPRO-MULTICASHIER-DESIGN-010)
 
+> **NOTA (misión 011):** §D.24 corrige las columnas del ledger (paid_by/payment_date/amount_cup), añade la identidad autenticada y completa la verificación de contención. Lo no tocado sigue VIGENTE.
+
 **Capa correctiva VIGENTE sobre §D.22** (el AVISO DE VIGENCIA es el mapa). La revisión independiente de la misión 009 detectó cinco deficiencias de integridad y de evidencia; esta sección las corrige y las certifica **sobre PostgreSQL 17.11 real**. Todo lo anterior de D.16-D.22 se conserva como historial. Evidencia: expediente actualizado + `run_output_2026-11-08.log` (PASS; ejecución real del 2026-11-08).
 
 ### D.23.1 — P0 · Inmutabilidad COMPLETA del ledger (temporal, conversión y atribución)
@@ -2484,3 +2494,89 @@ Todas las filas son **PASS: ejecutado y verificado** en PostgreSQL 17.11 real. E
 Ningún campo temporal o financiero puede manipularse para ocultar movimientos del saldo (D.23.1); la custodia no puede iniciarse antes de la entrega física ni continuar después del cierre, y el custodio inicial corresponde al poseedor físico real (D.23.2); ningún usuario puede autoproclamarse transportista para eludir la autorización (D.23.3); la huella de idempotencia representa todos los parámetros relevantes con representación canónica (D.23.4); las pruebas concurrentes demuestran contención efectiva observada en `pg_stat_activity` (D.23.5); el runner reproduce el expediente desde checkout limpio; todas las pruebas críticas tienen evidencia verificable.
 
 **DISEÑO APROBABLE PARA IMPLEMENTACIÓN** — bajo las mismas precondiciones de D.22.8 (gate por tienda, certificación E2E de Fase F, migración de Fase B precedida de la réplica del expediente). La aprobación autoriza el DISEÑO; el inicio del desarrollo sigue siendo decisión del propietario.
+
+---
+
+## D.24. Compatibilidad del ledger real y autorización autenticada (misión COSTPRO-MULTICASHIER-DESIGN-011)
+
+**Capa correctiva VIGENTE sobre §D.23** (el AVISO DE VIGENCIA es el mapa). La revisión independiente de la misión 010 detectó tres deficiencias P0 y dos discrepancias; esta sección las corrige y las certifica **sobre PostgreSQL 17.11 real con roles PG y `auth.uid()`**. D.16-D.23 se conservan como historial. Evidencia: expediente actualizado + `run_output_2026-11-08.log` (PASS, fecha real).
+
+### D.24.1 — P0 · Fidelidad del esquema REAL de payment_transactions
+
+**Defecto [CONFIRMADO]:** el arnés usaba `created_by` y `at`; el esquema real usa `paid_by` y `payment_date` (hotfix `20260808000010` lo establece expresamente), `amount_cup` es columna GENERADA y el hardening `20260812000001` incorpora PT007 (DELETE prohibido globalmente) y `validate_payment_transactions_invariants()`.
+
+**Corrección [DECISIÓN, validada PG]:** el arnés reproduce el esquema real: `payment_date`, `paid_by` (sin FK, igual que el real), `amount_cup NUMERIC GENERATED ALWAYS AS (CASE WHEN currency='CUP' THEN amount ELSE amount*exchange_rate END) STORED` — expresión EXACTA de `20260712000001_payment_tracking.sql`, no escribible —, `created_at`/`updated_at`, `transaction_id` con FK RESTRICT a `transactions` (tabla mínima del arnés), CHECK real de `ref_type`/`currency`/`sale_ref` y el trigger de invariantes fiel: **PT007** (DELETE prohibido; rectificación = contraasiento), **PT003** (CUP⇒rate=1), **PT004** (extranjera⇒rate>1 — el diseño añade `exchange_rate` a la solicitud y a `cash_transfers`), **PT005** (zelle≠CUP), **PT001** (pagos ≤ total_amount), **PT006** (una tasa por transacción/método/moneda). `updated_at` de una pierna de traspaso queda congelado (fila íntegra tras el insert; vigilado por la inmutabilidad). El caso ORD de D.23 se corrige: el borrado de movimientos ordinarios NO es legítimo (contradice PT007) — las rectificaciones ordinarias se demuestran por CONTRAASIENTO (`cash_flow` clasificable, par ingreso/gasto con saldo neto 0) y N55 certifica el rechazo del DELETE.
+
+**Tabla de correspondencia (D.24.7):**
+
+| Esquema real | Arnés | Tratamiento |
+|---|---|---|
+| `paid_by` | `paid_by` (renombrado desde el falso `created_by`) | Atribución real; inmutable en piernas (N51/N52); N58 verifica la atribución íntegra |
+| `payment_date` | `payment_date` (renombrado desde `at`) | Fecha real; inmutable en piernas (N53/N39); operando de `model_scope` |
+| `amount_cup` GENERATED | Igual expresión, GENERATED STORED | Generado por PostgreSQL; no escribible (N54); recálculo garantizado por operandos protegidos (N57) |
+| PT007 (`ERR_PAYMENT_DELETE_FORBIDDEN`) | Trigger fiel en el arnés | DELETE globalmente prohibido (N55); ORD/N55 rectifican por contraasiento |
+| `validate_payment_transactions_invariants()` | Trigger fiel (PT003/PT004/PT005/PT001/PT006) | Las funciones del diseño operan CON las invariantes (S-N3 inyecta una fila legacy burlando el CHECK y el saldo sigue fail-closed) |
+| `transaction_id` FK RESTRICT | FK a `transactions` del arnés | Inmutable (N37 con transacción existente); PT001/PT006 vigentes |
+| `ref_type` real + diseño | CHECK real + `cash_transfer`, `devolution`, `cash_flow` | Valores añadidos por la migración futura del multicajero (documentado) |
+| `created_at`/`updated_at` | Presentes | `updated_at` congelado en piernas de traspaso; auditoría preservada |
+
+### D.24.2 — P0 · Identidad AUTENTICADA (auth.uid()) y autorización efectiva
+
+**Defecto [CONFIRMADO]:** `f_deliver_cash_transfer` usaba `p_delivered_by` (UUID del llamante) como identidad operativa y `f_assign_carrier` aceptaba cualquier perfil existente como autorizador, sin comprobar identidad autenticada, facultades ni ámbito.
+
+**Corrección [DECISIÓN, validada PG]:** `auth.uid()` local (lee `request.jwt.claim.sub`, mismo contrato que Supabase, INDEPENDIENTE de los parámetros de las RPC) es la fuente de identidad en TODAS las RPC de especificación — solicitud, autorización, asignación, entrega, reasignación de custodia, recepción, devolución y cancelación: `p_requested_by`/`p_authorized_by`/`p_delivered_by`/`p_receiver`/`p_changed_by`/`p_by` deben IGUALAR `auth.uid()` (`ERR_AUTH_IDENTITY`; `ERR_AUTH_REQUIRED` si no hay sesión). Las funciones son SECURITY DEFINER con `search_path = public, pg_temp` fijo; el rol PG real `authenticated` (NOLOGIN) solo tiene GRANT EXECUTE sobre esas RPC — ninguna escritura directa en tablas. Las pruebas A-N8..A-N14 se ejecutan con `SET ROLE authenticated` y claims distintos de los parámetros (suplantación rechazada: A-N8 claim K declara J; A-N14 claim J declara K; A-N13 firma con identidad ajena; A-N7a actor NULL; A-N7b sujeto JWT inexistente).
+
+**Autorización del asignador (D.24.3):** `f_assign_carrier` exige (1) identidad autenticada = `p_authorized_by`; (2) rol `encargado` (facultades existentes de COSTPRO — responsable de caja de la tienda; NO se inventan roles); (3) pertenencia a la tienda del traspaso (`ERR_CARRIER_AUTHORIZER_ROLE` / `ERR_CARRIER_AUTHORIZER_STORE`; A-N9 cajero sin facultad, A-N10 encargado de otra tienda); (4) rol `transportista` y tienda del transportista; (5) transferencia en estado `solicitada` (A-N19: asignación posterior a la entrega ⇒ `ERR_STATE` — la sustitución de custodio posterior es la reasignación formal `f_create_custody_event`, que genera evento auditable sin tocar retroactivamente el custodio inicial). `assigned_by` y `authorized_by` registran la MISMA acción de autorización (una sola firma; se conservan ambas columnas por contrato) y `ctr_carrier_no_self` impide el autoservicio.
+
+**Frontera de seguridad de cash_transfer_carriers (D.24.3):** INSERT/UPDATE/DELETE/TRUNCATE revocados al rol `authenticated` (A-N11: INSERT directo ⇒ permission denied; A-N12: UPDATE/DELETE directos ⇒ permission denied — no hay revocación ni cambio posterior público: la invalidez se deriva del estado de la transferencia); SELECT permitido vía RLS con política por tienda (`ctr_carriers_select_store`); la única escritura posible es la RPC SECURITY DEFINER con search_path fijo.
+
+### D.24.4 — P0 · `p_carrier` vinculado a su asignación real (casos A/B/C)
+
+**Defecto [CONFIRMADO]:** la entrega validaba la asignación de `p_delivered_by` pero aceptaba CUALQUIER `p_carrier` como custodio; el titular podía designar un transportista no asignado.
+
+**Corrección [DECISIÓN, validada PG]:** combinaciones válidas inequívocas en `f_deliver_cash_transfer`: **Caso A** — el titular autenticado entrega y conserva: `p_carrier` NULL ⇒ `carrier_user_id` NULL y custodio inicial = titular (A-P9/A-P6); **Caso B** — el titular entrega a un transportista: `p_carrier` debe ser el transportista ASIGNADO para ese traspaso (rol y tienda verificados) ⇒ custodio inicial = ese transportista (A-P8; A-N15/A-N17/A-N18 rechazan no asignados u otras tiendas); **Caso C** — el transportista ejecuta: el actor autenticado debe ser el transportista asignado, `p_carrier` no puede designar a otro (`ERR_CARRIER_MISMATCH`, A-N16) y el custodio inicial = el propio actor (A-P10/A-P5). Si `p_carrier` es NULL el custodio se establece según el caso autorizado — nunca se infiere un transportista. A-P11 certifica que la custodia inicial coincide con `COALESCE(carrier_user_id, delivered_by)` en los tres casos.
+
+### D.24.5 — P1 · Apertura de custodia SOLO en la entrega efectiva
+
+`fn_custody_continuity` ya admite la primera apertura solo con `status='entregada'` (una transferencia en `en_devolucion` DEBIÓ tener evento inicial; C-N1 rechaza la apertura tardía con `ERR_CUSTODY_NOT_DELIVERED`). El cierre lo registra el propio receptor (`changed_by = received_by`; C-N2 `ERR_CUSTODY_CLOSE_REGISTRAR`), el cierre duplicado se rechaza aunque cambie el actor (C-N3) y el custodio final falseado sigue rechazado (C-N4). El ciclo válido J→M→L y el retorno al origen se preservan (B4/B4b PASS).
+
+### D.24.6 — P1 · Contención concurrente con bloqueador EXACTO (pg_blocking_pids)
+
+**Defecto [CONFIRMADO]:** el runner contaba dos sesiones en `wait_event_type='Lock'` sin verificar quién bloquea a quién (el texto de D.23.5 mencionaba `pg_blocking_pids` sin usarla).
+
+**Corrección [DECISIÓN, validada PG]:** en cada escenario: `application_name` único para coordinador y clientes; PID real del coordinador y de cada cliente desde `pg_stat_activity`; verificación ESTABLE con `pg_blocking_pids(client_pid)`: la cadena de bloqueo de cada cliente TERMINA en el coordinador esperado (dos esperantes de la misma fila forman coordinador → primer cliente (transactionid) → segundo (tuple lock) — hallazgo documentado) y al menos un cliente espera el `transactionid` del coordinador (el bloqueo objetivo real). Solo entonces se libera (`pg_terminate_backend` al portador) y se verifica el desenlace (1 OK / 1 rechazo; mismo id en idempotencia, CONTRASTADO con la fila persistida). Sin identificación del bloqueador exacto ⇒ FAIL (nunca PASS concurrente). El log certifica las tres cadenas.
+
+### D.24.8 — Matriz de verificación (misión 011)
+
+Todas las filas **PASS: ejecutado y verificado** en PostgreSQL 17.11 real. FAIL/NOT RUN/BLOCKED: ninguno. No hay partes pendientes de "adaptación futura al JWT": la identidad autenticada queda certificada con el mecanismo `auth.uid()` + roles PG del arnés.
+
+| ID | Riesgo | Prueba | Identidad utilizada | Resultado | Rollback |
+|---|---|---|---|---|---|
+| N51/N52 | P0 | UPDATE `paid_by` pierna OUT/IN | superusuario (setup) | PASS | Verificado |
+| N53/N39 | P0 | UPDATE `payment_date` reclasificar / model_scope invariante | superusuario | PASS | Verificado |
+| N54 | P0 | Escritura de `amount_cup` generado | superusuario | PASS | Verificado |
+| N55 | P0 | DELETE ordinario (PT007) + contraasiento | superusuario | PASS | Verificado |
+| N56/N37 | P0 | UPDATE `exchange_rate` / `transaction_id` (FK real) | superusuario | PASS | Verificado |
+| N57/N58 | P0 | Recálculo amount_cup / atribución+saldo íntegros | superusuario | PASS | n/a |
+| A-N8/A-N14 | P0 | Suplantación en entrega (claim≠parámetro) | `SET ROLE authenticated` + auth.uid (K/J) | PASS | Verificado |
+| A-N9/A-N10 | P0 | Asignador sin rol / de otra tienda | authenticated (X / N) | PASS | Verificado |
+| A-N11/A-N12 | P0 | Escritura/revocación directa de asignación | authenticated (permission denied) | PASS | Verificado |
+| A-N13 | P0 | Firma de asignación con identidad ajena | authenticated (claim K, firma M) | PASS | Verificado |
+| A-N7a/A-N7b | P0 | Actor NULL / sujeto JWT inexistente | claim M / claim inexistente | PASS | Verificado |
+| A-N15/A-N17/A-N18 | P0 | p_carrier sin asignación / de otra tienda | claim K (titular) | PASS | Verificado |
+| A-N16 | P0 | Ejecutor designa otro custodio | claim J (asignado) | PASS | Verificado |
+| A-N19 | P0 | Asignación posterior a la entrega | claim M | PASS | Verificado |
+| A-P4..A-P7 | P0 | Auditoría de asignación/custodia (positivos) | claims M/K/J/X | PASS | n/a |
+| A-P8/A-P9/A-P10/A-P11 | P0 | Casos A/B/C y poseedor real | claims M/K/J/X/L | PASS | n/a |
+| C-N1..C-N4 | P1 | Apertura en en_devolucion / cierre por ajeno / doble cierre / custodio falso | claims M/K + directos | PASS | Verificado |
+| Saldo concurrente | P0 | Bloqueador exacto pg_blocking_pids + transactionid | claims U_N (2 conexiones) | PASS | Verificado |
+| N29 custodia | P0 | Cadena de bloqueo termina en coordinador | claim U_M (2 conexiones) | PASS | Verificado |
+| Idempotencia concurrente | P1 | Cadena de bloqueo + mismo id = fila persistida | claim U_M (4 conexiones) | PASS | Verificado |
+| Regresión D.22/D.23 | — | 96 aserciones negativas + B1-B8 | mixta | PASS | Verificado |
+| Checkout limpio | P1 | Runner desde clone (exit 0 / exit 2 sin PG) | — | PASS | — |
+
+### D.24.9 — Veredicto (misión 011 — VIGENTE)
+
+La atribución está protegida sobre la columna real `paid_by` y el arnés reproduce las invariantes del hardening (PT007, PT003-PT006, amount_cup generado, FK de transaction_id); el actor procede de `auth.uid()` en todas las operaciones (certificado con roles PG reales, no con UUID de parámetros); el asignador necesita rol encargado de la tienda con identidad autenticada; ningún actor puede autoproclamarse transportista y `p_carrier` siempre corresponde a una asignación válida (casos A/B/C); ningún evento inicial de custodia puede crearse en `en_devolucion`; las pruebas concurrentes identifican el PID del bloqueador con `pg_blocking_pids()` y application_name; el runner reproduce todo desde checkout limpio; todos los casos críticos tienen evidencia verificable.
+
+**DISEÑO APROBABLE PARA IMPLEMENTACIÓN** — bajo las mismas precondiciones de D.22.7/D.23.7 (gate por tienda, E2E de Fase F, migración de Fase B con réplica del expediente). La aprobación autoriza el DISEÑO; el desarrollo sigue siendo decisión del propietario.

@@ -24,9 +24,12 @@
 \set SS_G3 50000000-0000-0000-0000-000000000003
 \set SS_G2C 50000000-0000-0000-0000-000000000004
 \set SS_G2L 50000000-0000-0000-0000-000000000005
--- Roles de los fixtures: U_M encargado (solicita/autoriza), U_K cajero entrega G1,
+-- Roles de los fixtures: U_M encargado (solicita/autoriza/asigna), U_K cajero entrega G1,
 -- U_X cajero en G2, U_L cajera recibe, U_J transportista, U_N encargado de S2.
 -- Sesiones: SS_G1/SS_G2/SS_G3 abiertas hace 2 h; SS_G2C cerrada hace 1 h (para N15).
+-- D.24.2: cada RPC se llama con la identidad autenticada fijada EN la misma
+-- sentencia (set_config local: request.jwt.claim.sub = el actor que actúa).
+-- auth.uid() la lee; un parámetro distinto de esa identidad es rechazado.
 
 INSERT INTO stores(id, name, multicashier_enabled_at) VALUES
   (:'S1', 'Tienda Centro', now() - interval '1 year'),   -- ámbito multicaja activo
@@ -58,86 +61,121 @@ INSERT INTO cash_closures(id, cash_register_id, store_id, user_id, opened_at, cl
 -- reales del ledger (sale/in/cash con titular cuenta) que alimentan la vista de
 -- clasificación (D.18.2/D.19.2) y el control de saldo (D.20.3):
 -- C1 abre con 10000 CUP y 100 USD (exchange_rate 120) — monedas separadas.
+-- D.24.1: las filas 'sale' usan la transacción comercial REAL (FK RESTRICT +
+-- sale_ref_check: ref_id = transaction_id) y amount_cup la GENERA PostgreSQL.
+INSERT INTO transactions(id, store_id, total_amount)
+VALUES ('65000000-0000-0000-0000-000000000001', :'S1', 99999);
 INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-         currency, exchange_rate, ref_type, ref_id, cash_account_id, created_by)
+         currency, exchange_rate, ref_type, ref_id, cash_account_id, paid_by,
+         transaction_id)
 VALUES
   ('60000000-0000-0000-0000-000000000001', :'S1', 'in', 'cash', 10000, 'CUP', 1,
-   'sale', NULL, :'C1', :'U_M'),
+   'sale', '65000000-0000-0000-0000-000000000001', :'C1', :'U_M',
+   '65000000-0000-0000-0000-000000000001'),
   ('60000000-0000-0000-0000-000000000002', :'S1', 'in', 'cash', 100, 'USD', 120,
-   'sale', NULL, :'C1', :'U_M');
+   'sale', '65000000-0000-0000-0000-000000000001', :'C1', :'U_M',
+   '65000000-0000-0000-0000-000000000001');
 
-\echo '══ P1: solicitar transferencia gaveta→gaveta (2000 CUP, G1→G2, encargado M)'
-SELECT f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
+\echo '══ P1: solicitar transferencia gaveta→gaveta (2000 CUP, G1→G2, encargado M autenticado)'
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
          2000, 'CUP', :'U_M', :'U_M', 'idem-T1') AS t1;
 
-\echo '══ P2: entregar DESDE GAVETA (cajero K por sesión SS_G1; transportista J lleva)'
-SELECT f_deliver_cash_transfer(
+\echo '══ P2: entregar DESDE GAVETA (cajero K AUTENTICADO entrega; caso B: J es el transportista ASIGNADO)'
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_assign_carrier(
+         (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T1'),
+         :'U_J', :'U_M') AS asignacion_previa_t1;      -- D.24.4 caso B exige asignación
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T1'),
          :'U_K', :'SS_G1', :'U_J') AS leg_out;
 
 \echo '══ P3: transferencia tesorería→gaveta y entrega DESDE TESORERÍA (sin sesión emisora)'
-SELECT f_request_cash_transfer(:'S1', NULL, :'C1', :'G2', NULL,
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', NULL, :'C1', :'G2', NULL,
          5000, 'CUP', :'U_M', :'U_M', 'idem-T2') AS t2;
-SELECT f_deliver_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T2'),
          :'U_K', NULL, NULL) AS leg_out_t2;
 
-\echo '══ P4: recibir EN SESIÓN (cajera L en sesión SS_G2 de la gaveta destino G2; T2 venía de tesorería)'
-SELECT f_receive_cash_transfer(
+\echo '══ P4: recibir EN SESIÓN (cajera L AUTENTICADA en sesión SS_G2 de la gaveta destino G2)'
+SELECT set_config('request.jwt.claim.sub', :'U_L', true) AS auth_uid,
+       f_receive_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T2'),
          :'U_L', :'SS_G2L', NULL) AS leg_in;
 
 \echo '══ P5: gaveta→tesorería y recibir EN CUENTA (cuenta receptora C1 exacta del destino)'
-SELECT f_request_cash_transfer(:'S1', :'G1', NULL, NULL, :'C1',
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', :'G1', NULL, NULL, :'C1',
          900, 'CUP', :'U_M', :'U_M', 'idem-T2b') AS t2b;
-SELECT f_deliver_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T2b'),
          :'U_K', :'SS_G1', NULL) AS leg_out_t2b;
-SELECT f_receive_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_L', true) AS auth_uid,
+       f_receive_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T2b'),
          :'U_L', NULL, :'C1') AS leg_in_t2b;
 
 \echo '══ P6: solicitar devolución DESDE entregada (esc. E: rechazo antes de recibir; sin pierna nueva)'
-SELECT f_request_return_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_L', true) AS auth_uid,
+       f_request_return_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T1'),
          :'U_L', 'el dinero no fue esperado');
 
 \echo '══ P7: devolver al ORIGEN (sesión SS_G1 de la gaveta de origen G1)'
-SELECT f_return_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_return_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T1'),
          :'U_K', :'SS_G1', NULL) AS leg_in_retorno;
 
 \echo '══ P8: cancelar antes de entregar (sin piernas)'
-SELECT f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
          300, 'CUP', :'U_M', :'U_M', 'idem-T3') AS t3;
-SELECT f_cancel_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_cancel_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T3'),
          :'U_M', 'se solicitó por error');
 
 \echo '══ P9: reintento idempotente de SOLICITUD (misma clave ⇒ mismo id, sin duplicar)'
-SELECT f_request_cash_transfer(:'S1', :'G1', NULL, NULL, :'C1',
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', :'G1', NULL, NULL, :'C1',
          900, 'CUP', :'U_M', :'U_M', 'idem-T2b') AS reintento_solicitud_mismo_id;
 
-\echo '══ P10: eventos de custodia sucesivos (entrega→reasignación esc.D→recepción)'
-SELECT f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
+\echo '══ P10: eventos de custodia sucesivos (entrega J→reasignación M→recepción L)'
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
          750, 'CUP', :'U_M', :'U_M', 'idem-T4') AS t4;
-SELECT f_deliver_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_assign_carrier(
+         (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T4'),
+         :'U_J', :'U_M') AS asignacion_previa_t4;      -- D.24.4 caso B
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T4'),
          :'U_K', :'SS_G1', :'U_J') AS leg_t4;
-SELECT f_create_custody_event(
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_create_custody_event(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T4'),
          :'U_J', :'U_M', :'U_M', :'U_M', 'reasignación de custodia (escenario D)') AS ev_reasignacion;
-SELECT f_receive_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_L', true) AS auth_uid,
+       f_receive_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T4'),
          :'U_L', :'SS_G2L', NULL) AS leg_in_t4;
 
 \echo '══ P+ (vigencia histórica): recibir y DESPUÉS cerrar la sesión receptora ⇒ sigue siendo válida'
-SELECT f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
          450, 'CUP', :'U_M', :'U_M', 'idem-T5') AS t5;
-SELECT f_deliver_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T5'),
          :'U_K', :'SS_G1', NULL) AS leg_t5;
-SELECT f_receive_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_L', true) AS auth_uid,
+       f_receive_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T5'),
          :'U_L', :'SS_G2L', NULL) AS leg_in_t5;
 UPDATE cash_closures SET closed_at = now() WHERE id = :'SS_G2L';   -- se cierra DESPUÉS de recibir
@@ -150,6 +188,7 @@ SELECT fn_reconcile_transfer_final(
 DO $$
 DECLARE v_t uuid; v_leg uuid; v_k uuid; v_s uuid; v_estado text; v_piernas int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -175,12 +214,14 @@ BEGIN
   RAISE NOTICE 'OK rollback íntegro: T6 sigue solicitada con 0 piernas';
 END $$;
 -- El orden CORRECTO completa sin bloqueo permanente:
-SELECT f_deliver_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T6'),
          :'U_K', :'SS_G1', NULL) AS orden_correcto_ok;
 
 \echo '══ P9b: reintento idempotente de ENTREGA (ya entregada ⇒ misma pierna, sin duplicar)'
-SELECT f_deliver_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T6'),
          :'U_K', :'SS_G1', NULL) AS reintento_entrega_misma_pierna;
 
@@ -188,9 +229,11 @@ SELECT f_deliver_cash_transfer(
 -- Tras P3 (−5000) y P5 (+900 en cuenta): saldo C1 CUP = 10000 − 5000 + 900 = 5900.
 -- Saldo suficiente: f_check sin excepción; y una transferencia del importe EXACTO pasa:
 SELECT f_check_treasury_saldo(:'C1', :'S1', 'CUP', 5900) AS saldo_5900_ok;
-SELECT f_request_cash_transfer(:'S1', NULL, :'C1', :'G2', NULL,
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', NULL, :'C1', :'G2', NULL,
          5900, 'CUP', :'U_M', :'U_M', 'idem-T7') AS t7;
-SELECT f_deliver_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T7'),
          :'U_K', NULL, NULL) AS leg_out_t7;              -- descuenta EXACTO: saldo queda 0
 DO $$
@@ -201,9 +244,11 @@ BEGIN
 END $$;
 
 \echo '══ P12 (misión 009): separación de monedas — USD opera aparte del CUP'
-SELECT f_request_cash_transfer(:'S1', NULL, :'C1', :'G2', NULL,
-         100, 'USD', :'U_M', :'U_M', 'idem-T7b') AS t7b;
-SELECT f_deliver_cash_transfer(
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', NULL, :'C1', :'G2', NULL,
+         100, 'USD', :'U_M', :'U_M', 'idem-T7b', 120) AS t7b;   -- PT004: tasa >1
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T7b'),
          :'U_K', NULL, NULL) AS leg_out_t7b;             -- USD 100 disponible: OK
 DO $$
@@ -226,17 +271,21 @@ END $$;
 -- El actor operativo (J) difiere del titular de la sesión emisora (K): permitido
 -- SOLO porque existe una asignación previa autorizada por M (no autoasignación),
 -- con rol transportista y de la tienda del traspaso (f_assign_carrier).
-SELECT f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
          750, 'CUP', :'U_M', :'U_M', 'idem-T8') AS t8;
-SELECT f_assign_carrier(
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_assign_carrier(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T8'),
-         :'U_J', :'U_M') AS asignacion_transportista;   -- A-P1: autorización previa
-SELECT f_deliver_cash_transfer(
+         :'U_J', :'U_M') AS asignacion_transportista;   -- A-P1/A-P4: autorización previa por encargado
+SELECT set_config('request.jwt.claim.sub', :'U_J', true) AS auth_uid,
+       f_deliver_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T8'),
-         :'U_J', :'SS_G1', :'U_J') AS leg_out_t8_actor_transportista;
-SELECT f_receive_cash_transfer(
+         :'U_J', :'SS_G1', :'U_J') AS leg_out_t8_actor_transportista;  -- caso C
+SELECT set_config('request.jwt.claim.sub', :'U_X', true) AS auth_uid,
+       f_receive_cash_transfer(
          (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T8'),
-         :'U_X', :'SS_G2', NULL) AS leg_in_t8;           -- X es titular de SS_G2 ✓ (A-P2: titular entrega en P2)
+         :'U_X', :'SS_G2', NULL) AS leg_in_t8;           -- X AUTENTICADO es titular de SS_G2 ✓ (A-P2)
 DO $$
 DECLARE v_t8 uuid;
 BEGIN
@@ -252,6 +301,79 @@ BEGIN
   END IF;
   RAISE NOTICE 'OK A-P3: custodia inicial = poseedor físico real (J) y actor auditado separado';
 END $$;
+
+\echo '══ A-P8: titular AUTENTICADO entrega a un transportista correctamente ASIGNADO (caso B)'
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
+         640, 'CUP', :'U_M', :'U_M', 'idem-T9') AS t9;
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_assign_carrier(
+         (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T9'),
+         :'U_J', :'U_M') AS asignacion_t9;
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
+         (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T9'),
+         :'U_K', :'SS_G1', :'U_J') AS leg_out_t9;      -- K (titular) entrega; custodio inicial = J
+
+\echo '══ A-P9/A-P6: titular AUTENTICADO entrega y CONSERVA el efectivo (caso A, p_carrier NULL)'
+SELECT set_config('request.jwt.claim.sub', :'U_M', true) AS auth_uid,
+       f_request_cash_transfer(:'S1', :'G1', NULL, :'G2', NULL,
+         620, 'CUP', :'U_M', :'U_M', 'idem-T10') AS t10;
+SELECT set_config('request.jwt.claim.sub', :'U_K', true) AS auth_uid,
+       f_deliver_cash_transfer(
+         (SELECT id FROM cash_transfers WHERE idempotency_key = 'idem-T10'),
+         :'U_K', :'SS_G1', NULL) AS leg_out_t10;       -- custodio inicial = el propio titular
+
+\echo '══ A-P4/A-P5/A-P7/A-P11: auditoría de asignación y custodia en los tres casos'
+DO $$
+DECLARE v_t1 uuid; v_t8 uuid; v_t9 uuid; v_t10 uuid; v_ev int; v_ok int;
+BEGIN
+  v_t1  := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T1');
+  v_t8  := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T8');
+  v_t9  := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T9');
+  v_t10 := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T10');
+  -- A-P4: la asignación conserva autorizador y transportista (assigned_by=authorized_by=M,
+  -- misma acción de firma; CHECK ctr_carrier_no_self impide autoservicio)
+  SELECT count(*) INTO v_ok FROM cash_transfer_carriers
+   WHERE transfer_id IN (v_t1, v_t8, v_t9)
+     AND carrier_user_id = '20000000-0000-0000-0000-000000000005'::uuid
+     AND assigned_by = '20000000-0000-0000-0000-000000000001'::uuid
+     AND authorized_by = '20000000-0000-0000-0000-000000000001'::uuid
+     AND assigned_by <> carrier_user_id;
+  IF v_ok <> 3 THEN RAISE EXCEPTION 'A-P4 FALLO: % asignaciones registradas (esperado 3)', v_ok; END IF;
+  RAISE NOTICE 'OK A-P4: autorizador (encargado M) y transportista quedan registrados en las 3 asignaciones';
+  -- A-P5/A-P10: el transportista asignado ejecutó el caso C (T8)
+  IF (SELECT delivered_by FROM cash_transfers WHERE id=v_t8)
+     <> '20000000-0000-0000-0000-000000000005'::uuid
+     OR (SELECT carrier_user_id FROM cash_transfers WHERE id=v_t8)
+     <> '20000000-0000-0000-0000-000000000005'::uuid THEN
+    RAISE EXCEPTION 'A-P5 FALLO: el ejecutor/transportista de T8 no es el asignado J';
+  END IF;
+  RAISE NOTICE 'OK A-P5: el transportista asignado ejecutó la entrega (caso C) y quedó identificado';
+  -- A-P6/A-P9: titular entrega sin transportista (T10): carrier_user_id NULL
+  IF (SELECT carrier_user_id FROM cash_transfers WHERE id=v_t10) IS NOT NULL
+     OR (SELECT delivered_by FROM cash_transfers WHERE id=v_t10)
+     <> '20000000-0000-0000-0000-000000000002'::uuid THEN
+    RAISE EXCEPTION 'A-P6 FALLO: el titular debía conservar el efectivo (carrier NULL)';
+  END IF;
+  RAISE NOTICE 'OK A-P6: titular legítimo entregó sin transportista externo (carrier NULL)';
+  -- A-P7: auditoría separada de actor autenticado, titular, autorizador y transportista
+  SELECT count(*) INTO v_ok FROM cash_transfers
+   WHERE id IN (v_t1, v_t8, v_t9)
+     AND delivered_by IS NOT NULL AND authorized_by = '20000000-0000-0000-0000-000000000001'::uuid
+     AND carrier_user_id = '20000000-0000-0000-0000-000000000005'::uuid;
+  IF v_ok <> 3 THEN RAISE EXCEPTION 'A-P7 FALLO: auditoría incompleta en % filas', v_ok; END IF;
+  RAISE NOTICE 'OK A-P7: auditoría conserva actor, titular, autorizador y transportista';
+  -- A-P11: custodia inicial = poseedor físico real en TODOS los escenarios válidos
+  SELECT count(*) INTO v_ev FROM cash_transfer_custody_events e
+   JOIN cash_transfers t ON t.id = e.transfer_id
+   WHERE e.event_seq = 1
+     AND e.transfer_id IN (v_t1, v_t8, v_t9, v_t10)
+     AND e.new_custodian_user_id = COALESCE(t.carrier_user_id, t.delivered_by);
+  IF v_ev <> 4 THEN RAISE EXCEPTION 'A-P11 FALLO: custodias iniciales correctas=% (esperado 4)', v_ev; END IF;
+  RAISE NOTICE 'OK A-P11: la custodia inicial coincide con el poseedor físico real (casos A/B/C)';
+END $$;
+
 
 \echo '══ Estado tras las pruebas positivas:'
 SELECT status, count(*) FROM cash_transfers GROUP BY status ORDER BY status;

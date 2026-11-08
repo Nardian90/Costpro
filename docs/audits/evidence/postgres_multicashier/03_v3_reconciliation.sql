@@ -17,7 +17,7 @@ WITH legs AS (
          ct.return_in_session_id, ct.return_in_account_id,
          pt.id AS ledger_id, pt.direction, pt.payment_method,
          pt.amount AS pt_amount, pt.currency AS pt_currency, pt.store_id AS pt_store,
-         pt.cash_closure_id, pt.cash_account_id, pt.at AS pt_at
+         pt.cash_closure_id, pt.cash_account_id, pt.payment_date AS pt_at
   FROM cash_transfers ct
   LEFT JOIN payment_transactions pt
          ON pt.ref_type = 'cash_transfer' AND pt.ref_id = ct.id
@@ -113,7 +113,7 @@ FROM agg;
 -- VISTA DE CLASIFICACIÓN (misión 009, D.22.3): réplica FIEL del CASE de D.18.2
 -- con la prioridad fail-closed de D.19.2 (la fila física sin titular se comprueba
 -- PRIMERO). Adaptaciones documentadas del arnés (no cambian reglas):
---   · `pt.at` corresponde a `payment_date` de producción.
+--   · `pt.payment_date` es la fecha REAL de producción (misión 011: sin alias artificial).
 --   · `model_scope` usa `st.multicashier_enabled_at` (columna añadida al arnés).
 --   · Subconjunto de clases: electronico, traspaso_*, cobro, devolucion_comercial,
 --     ingreso/gasto_documentado, ajuste, historico_sin_titular, sin_titular,
@@ -140,7 +140,7 @@ SELECT
   COALESCE(pt.cash_closure_id, pt.cash_account_id) AS holder_id,
   CASE
     WHEN pt.payment_method='cash' AND pt.cash_closure_id IS NULL AND pt.cash_account_id IS NULL
-         AND (st.multicashier_enabled_at IS NULL OR pt.at < st.multicashier_enabled_at)
+         AND (st.multicashier_enabled_at IS NULL OR pt.payment_date < st.multicashier_enabled_at)
          THEN 'historico_sin_titular'                    -- pre-corte: fuera del arqueo
     WHEN pt.payment_method='cash' AND pt.cash_closure_id IS NULL AND pt.cash_account_id IS NULL
          THEN 'sin_titular'                              -- post-corte: BLOQUEA (D.19.2)
@@ -160,13 +160,13 @@ SELECT
     ELSE 'sin_clasificar'
   END                            AS class,
   CASE WHEN pt.direction='in' THEN 1 ELSE -1 END AS sign,
-  pt.at                          AS payment_date,
+  pt.payment_date,
   ct.id                          AS transfer_id,
   ct.status                      AS transfer_status,
   (pt.ref_type='cash_transfer' AND pt.direction='out'
      AND ct.status IN ('entregada','en_devolucion')) AS in_transit,
   CASE WHEN st.multicashier_enabled_at IS NOT NULL
-        AND pt.at >= st.multicashier_enabled_at THEN 'multicaja'
+        AND pt.payment_date >= st.multicashier_enabled_at THEN 'multicaja'
        ELSE 'legacy' END             AS model_scope
 FROM payment_transactions pt
 LEFT JOIN cash_transfers ct ON pt.ref_type='cash_transfer' AND pt.ref_id=ct.id

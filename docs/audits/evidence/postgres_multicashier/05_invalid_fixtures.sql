@@ -41,6 +41,7 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_leg uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -68,6 +69,7 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_leg uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -95,6 +97,7 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -117,6 +120,7 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -138,6 +142,7 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_leg uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -165,6 +170,7 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_leg uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -206,14 +212,17 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            NULL, '40000000-0000-0000-0000-000000000001',
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-N9b') INTO v_t;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);  -- D.24.2 identidad autenticada
     PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002',
              '50000000-0000-0000-0000-000000000001', NULL);
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000004', true);  -- D.24.2 identidad autenticada
     PERFORM f_receive_cash_transfer(v_t, '20000000-0000-0000-0000-000000000004',
              NULL, '40000000-0000-0000-0000-000000000002');   -- C2 de Tienda Norte
     RAISE EXCEPTION 'NO_RECHAZADA N9b';
@@ -227,6 +236,7 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -302,6 +312,7 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -321,6 +332,7 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -343,14 +355,17 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-N15') INTO v_t;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);  -- D.24.2 identidad autenticada
     PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002',
              '50000000-0000-0000-0000-000000000001', NULL);
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000004', true);  -- D.24.2 identidad autenticada
     PERFORM f_receive_cash_transfer(v_t, '20000000-0000-0000-0000-000000000004',
              '50000000-0000-0000-0000-000000000004', NULL);  -- SS_G2C cerrada hace 1 h
     RAISE EXCEPTION 'NO_RECHAZADA N15a';
@@ -364,12 +379,14 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_leg uuid; v_at timestamptz;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-N15b') INTO v_t;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);  -- D.24.2 identidad autenticada
     PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002',
              '50000000-0000-0000-0000-000000000001', NULL);
     v_leg := gen_random_uuid();
@@ -479,7 +496,7 @@ DECLARE v_leg uuid; v_count int;
 BEGIN
   v_leg := (SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T1');
   BEGIN
-    UPDATE payment_transactions SET ref_type='sale' WHERE id=v_leg;
+    UPDATE payment_transactions SET ref_type='service' WHERE id=v_leg;  -- valor válido en el CHECK real
     RAISE EXCEPTION 'NO_RECHAZADA N20';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
@@ -575,11 +592,11 @@ BEGIN
    WHERE ref_type='cash_transfer'
      AND ref_id IN (SELECT id FROM cash_transfers WHERE idempotency_key !~ '^idem-(N|S|I|A)');
   SELECT count(*) INTO v_tr FROM cash_transfers WHERE idempotency_key !~ '^idem-(N|S|I|A)';
-  IF v_incons <> 0 OR v_piernas <> 15 OR v_tr <> 10 THEN
-    RAISE EXCEPTION 'N25 FALLO: inconsistente=% piernas=% transferencias=% (esperado 0/15/10)',
+  IF v_incons <> 0 OR v_piernas <> 17 OR v_tr <> 12 THEN
+    RAISE EXCEPTION 'N25 FALLO: inconsistente=% piernas=% transferencias=% (esperado 0/17/12)',
       v_incons, v_piernas, v_tr;
   END IF;
-  RAISE NOTICE 'OK N25 estado global íntegro tras N20-N24: 0 inconsistentes, 15 piernas, 10 transferencias';
+  RAISE NOTICE 'OK N25 estado global íntegro tras N20-N24: 0 inconsistentes, 17 piernas, 12 transferencias';
 END $$;
 
 -- ═════════ MISIÓN 009 · SALDO DE TESORERÍA fail-closed (D.22.3) ═══════════════
@@ -590,12 +607,14 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_legs int; v_estado text;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            NULL, '40000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000002', NULL,
            10000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-SN1') INTO v_t;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);  -- D.24.2 identidad autenticada
     PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002', NULL, NULL);
     RAISE EXCEPTION 'NO_RECHAZADA SN1';
   EXCEPTION WHEN OTHERS THEN
@@ -622,7 +641,7 @@ BEGIN
     INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
              currency, ref_type, ref_id, cash_closure_id, cash_account_id)
     VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000001', 'in', 'cash',
-            500, 'CUP', 'sale', NULL, NULL, NULL);  -- física SIN titular (huérfana)
+            500, 'CUP', 'service', gen_random_uuid(), NULL, NULL);  -- física SIN titular (huérfana)
     PERFORM f_check_treasury_saldo('40000000-0000-0000-0000-000000000001',
              '10000000-0000-0000-0000-000000000001', 'CUP', 1);
     RAISE EXCEPTION 'NO_RECHAZADA SN2';
@@ -647,13 +666,18 @@ BEGIN
 END $$;
 
 \echo '══ S-N3: movimiento SIN CLASIFICAR en el ámbito ⇒ ERR_LEDGER_UNCLASSIFIED (fail-closed)'
+-- D.24.1: un ref_type ignoto NO pasa el CHECK real del ledger (protección nueva
+-- del hardening). El arnés lo inyecta DESHABILITANDO temporalmente ese CHECK
+-- (simula una carga legacy previa al hardening) y el control de saldo debe
+-- seguir fallando cerrado: la clasificación no depende de los CHECKs.
 DO $$
 BEGIN
+  ALTER TABLE payment_transactions DROP CONSTRAINT payment_transactions_ref_type_check;
   BEGIN
     INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
              currency, ref_type, ref_id, cash_account_id)
     VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000001', 'in', 'cash',
-            500, 'CUP', 'carga_masiva_desconocida', NULL,
+            500, 'CUP', 'carga_masiva_desconocida', gen_random_uuid(),
             '40000000-0000-0000-0000-000000000001');   -- titular válido, ref_type ignoto
     PERFORM f_check_treasury_saldo('40000000-0000-0000-0000-000000000001',
              '10000000-0000-0000-0000-000000000001', 'CUP', 1);
@@ -663,6 +687,9 @@ BEGIN
     IF SQLERRM NOT LIKE 'ERR_LEDGER_UNCLASSIFIED%' THEN RAISE; END IF;
     RAISE NOTICE 'OK S-N3 fila sin clasificar bloquea el ámbito: %', SQLERRM;
   END;
+  ALTER TABLE payment_transactions ADD CONSTRAINT payment_transactions_ref_type_check
+    CHECK (ref_type IN ('receipt', 'service', 'production_order', 'work', 'sale',
+                        'commission', 'cash_transfer', 'devolution', 'cash_flow'));
   IF EXISTS (SELECT 1 FROM payment_transactions WHERE ref_type='carga_masiva_desconocida') THEN
     RAISE EXCEPTION 'ROLLBACK_INCOMPLETO SN3: la fila sin clasificar persiste';
   END IF;
@@ -677,15 +704,15 @@ DECLARE v_antes numeric(14,2); v_despues numeric(14,2);
 BEGIN
   SELECT COALESCE(SUM(CASE WHEN direction='in' THEN amount ELSE -amount END),0)
     INTO v_antes FROM payment_transactions
-   WHERE cash_account_id='40000000-0000-0000-0000-000000000001' AND currency='CUP'
+   WHERE cash_account_id='40000000-0000-0000-0000-000000000002' AND currency='CUP'
      AND payment_method='cash' AND ref_type <> 'cash_transfer';
   INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
            currency, ref_type, ref_id, cash_account_id)
-  VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000001', 'in', 'zelle',
-          9999, 'CUP', 'sale', NULL, '40000000-0000-0000-0000-000000000001');  -- zelle CON titular
+  VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000002', 'in', 'transfer',
+          9999, 'CUP', 'service', gen_random_uuid(), '40000000-0000-0000-0000-000000000002');  -- electrónico CON titular (PT005: zelle no admite CUP)
   SELECT COALESCE(SUM(CASE WHEN direction='in' THEN amount ELSE -amount END),0)
     INTO v_despues FROM payment_transactions
-   WHERE cash_account_id='40000000-0000-0000-0000-000000000001' AND currency='CUP'
+   WHERE cash_account_id='40000000-0000-0000-0000-000000000002' AND currency='CUP'
      AND payment_method='cash' AND ref_type <> 'cash_transfer';
   IF v_antes <> v_despues THEN
     RAISE EXCEPTION 'S-N4 FALLO: el efectivo físico cambió % → %', v_antes, v_despues;
@@ -701,6 +728,7 @@ END $$;
 DO $$
 BEGIN
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
     PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000001', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
@@ -721,6 +749,7 @@ END $$;
 DO $$
 BEGIN
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
     PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000001', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
@@ -738,6 +767,7 @@ END $$;
 DO $$
 BEGIN
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
     PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000002', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
@@ -755,6 +785,7 @@ END $$;
 DO $$
 BEGIN
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
     PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000001', NULL,
              NULL, '40000000-0000-0000-0000-000000000001',
@@ -772,6 +803,7 @@ END $$;
 DO $$
 BEGIN
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000006', true);  -- D.24.2 identidad autenticada
     PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000002',
              '30000000-0000-0000-0000-000000000003', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
@@ -789,6 +821,7 @@ END $$;
 DO $$
 BEGIN
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
     PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000001', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
@@ -808,19 +841,21 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_legs int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-AN1') INTO v_t;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000004', true);  -- D.24.2 identidad autenticada
     PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000004',
              '50000000-0000-0000-0000-000000000001', NULL);   -- L no es titular de SS_G1 ni transportista
     RAISE EXCEPTION 'NO_RECHAZADA AN1';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
-    IF SQLERRM NOT LIKE 'ERR_DELIVER_ACTOR_UNAUTHORIZED%' THEN RAISE; END IF;
-    RAISE NOTICE 'OK A-N1 entrega por actor ajeno rechazada (decisión B): %', SQLERRM;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_NOT_ASSIGNED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N1 entrega por actor ajeno (no titular, no asignado) rechazada (D.24.4 caso C): %', SQLERRM;
   END;
   SELECT count(*) INTO v_legs FROM payment_transactions
    WHERE ref_type='cash_transfer' AND ref_id=v_t;
@@ -831,14 +866,17 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-AN2') INTO v_t;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);  -- D.24.2 identidad autenticada
     PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002',
              '50000000-0000-0000-0000-000000000001', NULL);
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000004', true);  -- D.24.2 identidad autenticada
     PERFORM f_receive_cash_transfer(v_t, '20000000-0000-0000-0000-000000000004',
              '50000000-0000-0000-0000-000000000002', NULL);   -- L recibe en SS_G2 (titular X)
     RAISE EXCEPTION 'NO_RECHAZADA AN2';
@@ -867,6 +905,7 @@ BEGIN
   SELECT new_custodian_user_id INTO v_ultimo_cust FROM cash_transfer_custody_events
    WHERE transfer_id=v_t ORDER BY event_seq DESC LIMIT 1;   -- custodio vigente real
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
     PERFORM f_create_custody_event(v_t,
              (CASE WHEN v_ultimo_cust = '20000000-0000-0000-0000-000000000005'::uuid
                    THEN '20000000-0000-0000-0000-000000000004'::uuid
@@ -918,6 +957,7 @@ BEGIN
   v_t := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T6');
   SELECT id INTO v_primero FROM cash_transfer_custody_events
    WHERE transfer_id=v_t AND event_seq=1;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   PERFORM f_create_custody_event(v_t, '20000000-0000-0000-0000-000000000002'::uuid,
            '20000000-0000-0000-0000-000000000005'::uuid,
            '20000000-0000-0000-0000-000000000001'::uuid, NULL, 'reasignación de setup');
@@ -938,37 +978,41 @@ BEGIN
 END $$;
 
 
+-- Semilla de transacción comercial para N37 (FK RESTRICT real de transaction_id)
+INSERT INTO transactions(id, store_id, total_amount)
+VALUES ('65000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', 1000000);
+
 -- ═══════════ MISIÓN 010 · P0-1: INMUTABILIDAD COMPLETA (N35-N40) ══════════════
 -- at (payment_date) es operando de model_scope y de la vigencia; exchange_rate
 -- es operando de amount_cup = amount * CASE WHEN currency='CUP' THEN 1 ELSE
 -- exchange_rate END (DERIVADO, no persistido: se protegen TODOS sus operandos);
--- transaction_id y created_by son atribución/auditoría.
+-- transaction_id y paid_by son atribución/auditoría (columnas REALES del ledger).
 
-\echo '══ N35: mover at de una pierna OUT antes de multicashier_enabled_at ⇒ ERR_LEG_IMMUTABLE'
+\echo '══ N53 (ex N35): mover payment_date de una pierna OUT antes del corte ⇒ ERR_LEG_IMMUTABLE'
 DO $$
 DECLARE v_leg uuid; v_at timestamptz; v_scope text;
 BEGIN
   v_leg := (SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T7');
-  SELECT at INTO v_at FROM payment_transactions WHERE id=v_leg;
+  SELECT payment_date INTO v_at FROM payment_transactions WHERE id=v_leg;
   BEGIN
     UPDATE payment_transactions
-       SET at = (SELECT multicashier_enabled_at FROM stores
+       SET payment_date = (SELECT multicashier_enabled_at FROM stores
                   WHERE id='10000000-0000-0000-0000-000000000001') - interval '1 day'
      WHERE id=v_leg;
-    RAISE EXCEPTION 'NO_RECHAZADA N35';
+    RAISE EXCEPTION 'NO_RECHAZADA N53';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
     IF SQLERRM NOT LIKE 'ERR_LEG_IMMUTABLE%' THEN RAISE; END IF;
-    RAISE NOTICE 'OK N35 manipulación temporal de pierna rechazada: %', SQLERRM;
+    RAISE NOTICE 'OK N53 manipulación temporal de pierna rechazada: %', SQLERRM;
   END;
   SELECT payment_date, model_scope INTO v_at, v_scope FROM v_cash_ledger_classification WHERE ledger_id=v_leg;
   IF v_at < (SELECT multicashier_enabled_at FROM stores WHERE id='10000000-0000-0000-0000-000000000001')
      OR v_scope <> 'multicaja' THEN
-    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N35: at=% scope=%', v_at, v_scope;
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N53: payment_date=% scope=%', v_at, v_scope;
   END IF;
 END $$;
 
-\echo '══ N36: cambiar exchange_rate de una pierna USD ⇒ ERR_LEG_IMMUTABLE'
+\echo '══ N56 (ex N36): cambiar exchange_rate de una pierna USD ⇒ ERR_LEG_IMMUTABLE'
 DO $$
 DECLARE v_leg uuid; v_antes numeric; v_despues numeric;
 BEGIN
@@ -976,15 +1020,15 @@ BEGIN
   SELECT exchange_rate INTO v_antes FROM payment_transactions WHERE id=v_leg;
   BEGIN
     UPDATE payment_transactions SET exchange_rate = 999 WHERE id=v_leg;
-    RAISE EXCEPTION 'NO_RECHAZADA N36';
+    RAISE EXCEPTION 'NO_RECHAZADA N56';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
     IF SQLERRM NOT LIKE 'ERR_LEG_IMMUTABLE%' THEN RAISE; END IF;
-    RAISE NOTICE 'OK N36 manipulación del tipo de cambio rechazada: %', SQLERRM;
+    RAISE NOTICE 'OK N56 manipulación del tipo de cambio rechazada: %', SQLERRM;
   END;
   SELECT exchange_rate INTO v_despues FROM payment_transactions WHERE id=v_leg;
   IF v_despues IS DISTINCT FROM v_antes THEN
-    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N36: exchange_rate % → %', v_antes, v_despues;
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N56: exchange_rate % → %', v_antes, v_despues;
   END IF;
 END $$;
 
@@ -994,8 +1038,10 @@ DECLARE v_leg uuid;
 BEGIN
   v_leg := (SELECT leg_in_payment_id FROM cash_transfers WHERE idempotency_key='idem-T1');
   BEGIN
+    -- D.24.1: la FK RESTRICT real exige una transacción EXISTENTE; el arnés usa
+    -- una semilla (la mutación sigue estando prohibida por la inmutabilidad).
     UPDATE payment_transactions
-       SET transaction_id = '88888888-8888-8888-8888-888888888888' WHERE id=v_leg;
+       SET transaction_id = '65000000-0000-0000-0000-000000000002'::uuid WHERE id=v_leg;
     RAISE EXCEPTION 'NO_RECHAZADA N37';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
@@ -1003,40 +1049,40 @@ BEGIN
     RAISE NOTICE 'OK N37 manipulación de transaction_id rechazada: %', SQLERRM;
   END;
   IF EXISTS (SELECT 1 FROM payment_transactions
-              WHERE id=v_leg AND transaction_id='88888888-8888-8888-8888-888888888888') THEN
+              WHERE id=v_leg AND transaction_id='65000000-0000-0000-0000-000000000002'::uuid) THEN
     RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N37: transaction_id quedó alterado';
   END IF;
 END $$;
 
-\echo '══ N38: alterar created_by de una pierna registrada (atribución auditable) ⇒ ERR_LEG_IMMUTABLE'
+\echo '══ N51 (ex N38): alterar paid_by de una pierna registrada (atribución REAL) ⇒ ERR_LEG_IMMUTABLE'
 DO $$
 DECLARE v_leg uuid;
 BEGIN
   v_leg := (SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T1');
   BEGIN
     UPDATE payment_transactions
-       SET created_by = '20000000-0000-0000-0000-000000000006'  -- U_N: perfil ajeno existente
+       SET paid_by = '20000000-0000-0000-0000-000000000006'  -- U_N: perfil ajeno existente
      WHERE id=v_leg;
     RAISE EXCEPTION 'NO_RECHAZADA N38';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
     IF SQLERRM NOT LIKE 'ERR_LEG_IMMUTABLE%' THEN RAISE; END IF;
-    RAISE NOTICE 'OK N38 manipulación de la atribución rechazada: %', SQLERRM;
+    RAISE NOTICE 'OK N51 manipulación de paid_by rechazada: %', SQLERRM;
   END;
   IF EXISTS (SELECT 1 FROM payment_transactions
-              WHERE id=v_leg AND created_by='20000000-0000-0000-0000-000000000006') THEN
-    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N38: created_by quedó alterado';
+              WHERE id=v_leg AND paid_by='20000000-0000-0000-0000-000000000006') THEN
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N51: paid_by quedó alterado';
   END IF;
 END $$;
 
-\echo '══ N39: un UPDATE de at no puede modificar model_scope de la pierna'
+\echo '══ N39: un UPDATE de payment_date no puede modificar model_scope de la pierna'
 DO $$
 DECLARE v_leg uuid; v_scope_antes text; v_scope_despues text;
 BEGIN
   v_leg := (SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T7');
   SELECT class INTO v_scope_antes FROM v_cash_ledger_classification WHERE ledger_id=v_leg;
   BEGIN
-    UPDATE payment_transactions SET at = now() - interval '2 years' WHERE id=v_leg;
+    UPDATE payment_transactions SET payment_date = now() - interval '2 years' WHERE id=v_leg;
     RAISE EXCEPTION 'NO_RECHAZADA N39';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
@@ -1046,7 +1092,7 @@ BEGIN
   IF v_scope_antes IS DISTINCT FROM v_scope_despues THEN
     RAISE EXCEPTION 'N39 FALLO: model_scope cambió % → %', v_scope_antes, v_scope_despues;
   END IF;
-  RAISE NOTICE 'OK N39 model_scope invariante ante intento de UPDATE de at (%)', v_scope_despues;
+  RAISE NOTICE 'OK N39 model_scope invariante ante intento de UPDATE de payment_date (%)', v_scope_despues;
 END $$;
 
 \echo '══ N40: el saldo de tesorería permanece íntegro tras todos los intentos'
@@ -1065,8 +1111,9 @@ BEGIN
      AND v.currency='USD' AND v.model_scope='multicaja'
      AND v.class NOT IN ('electronico','historico_sin_titular');
   BEGIN
-    UPDATE payment_transactions SET at='2020-01-01', exchange_rate=7, amount=1, currency='CUP',
-             direction='in', payment_method='zelle'
+    -- intento con valores invariantes-válidos (PT003/PT005 pasarían antes); la
+    -- inmutabilidad (AFTER) debe ser la barrera que rechace la mutación:
+    UPDATE payment_transactions SET payment_date='2020-01-01', amount=1, direction='in'
      WHERE id=(SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T7');
     RAISE EXCEPTION 'NO_RECHAZADA N40';
   EXCEPTION WHEN OTHERS THEN
@@ -1091,22 +1138,41 @@ BEGIN
   RAISE NOTICE 'OK N40 saldo íntegro tras N35-N39 (CUP=% USD=%) y ámbito conciliable', v_cup_desp, v_usd_desp;
 END $$;
 
-\echo '══ ORD: movimientos ORDINARIOS (no cash_transfer) conservan su ciclo legítimo'
+\echo '══ ORD: movimientos ORDINARIOS (no cash_transfer) respetan PT007 y se rectifican por contraasiento'
 DO $$
-DECLARE v_id uuid; v_n int;
+DECLARE v_id uuid; v_contra uuid; v_n int;
 BEGIN
+  -- en S2/C2: el arnés de rectificación NO ensucia el ámbito multicaja certificado
+  -- (S1/C1); ref_type='cash_flow' es CLASIFICABLE (ingreso/gasto_documentado)
   INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-           currency, ref_type, ref_id, cash_account_id, created_by)
-  VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000001', 'in', 'cash',
-          100, 'CUP', 'sale', NULL, '40000000-0000-0000-0000-000000000001',
-          '20000000-0000-0000-0000-000000000001')
+           currency, ref_type, ref_id, cash_account_id, paid_by)
+  VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000002', 'in', 'cash',
+          100, 'CUP', 'cash_flow', gen_random_uuid(), '40000000-0000-0000-0000-000000000002',
+          '20000000-0000-0000-0000-000000000006')
   RETURNING id INTO v_id;                       -- alta legítima permitida
-  UPDATE payment_transactions SET at = at + interval '1 minute', created_by = '20000000-0000-0000-0000-000000000002'
-   WHERE id=v_id;                               -- correcciones ordinarias PERMITIDAS
-  DELETE FROM payment_transactions WHERE id=v_id;  -- borrado ordinario PERMITIDO (no append-only)
-  SELECT count(*) INTO v_n FROM payment_transactions WHERE id=v_id;
-  IF v_n <> 0 THEN RAISE EXCEPTION 'ORD FALLO: la fila ordinaria no se borró'; END IF;
-  RAISE NOTICE 'OK ORD: ciclo completo ordinario (alta/UPDATE at/created_by/borrado) sin bloqueo';
+  UPDATE payment_transactions SET payment_date = payment_date + interval '1 minute',
+           paid_by = '20000000-0000-0000-0000-000000000002'
+   WHERE id=v_id;                               -- corrección ordinaria PERMITIDA (no es pierna)
+  -- Rectificación autorizada = CONTRAASIENTO (fila nueva inversa), NUNCA borrado (PT007):
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_account_id, paid_by)
+  VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000002', 'out', 'cash',
+          100, 'CUP', 'cash_flow', (SELECT ref_id FROM payment_transactions WHERE id=v_id),
+          '40000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000006')
+  RETURNING id INTO v_contra;
+  SELECT count(*) INTO v_n FROM payment_transactions WHERE id IN (v_id, v_contra);
+  IF v_n <> 2 THEN RAISE EXCEPTION 'ORD FALLO: contraasiento no registrado'; END IF;
+  BEGIN
+    DELETE FROM payment_transactions WHERE id=v_id;
+    RAISE EXCEPTION 'NO_RECHAZADA ORD';         -- el DELETE debe ser rechazado (PT007)
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_PAYMENT_DELETE_FORBIDDEN%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK ORD (intento): DELETE prohibido por PT007: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM payment_transactions WHERE id IN (v_id, v_contra);
+  IF v_n <> 2 THEN RAISE EXCEPTION 'ORD FALLO: filas residuales=% (esperado 2)', v_n; END IF;
+  RAISE NOTICE 'OK ORD: alta/corrección ordinaria permitidas; rectificación por contraasiento; fila íntegra tras el rechazo';
 END $$;
 
 -- ═══════════ MISIÓN 010 · P0-2: MÁQUINA DE ESTADOS DE CUSTODIA (N41-N50) ══════
@@ -1115,6 +1181,7 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_n int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -1139,6 +1206,7 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_leg uuid; v_n int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -1146,7 +1214,7 @@ BEGIN
            '20000000-0000-0000-0000-000000000001', 'idem-L42') INTO v_t;
   v_leg := gen_random_uuid();
   INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-           currency, ref_type, ref_id, cash_closure_id, created_by)
+           currency, ref_type, ref_id, cash_closure_id, paid_by)
   VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'out', 'cash', 2000, 'CUP',
           'cash_transfer', v_t, '50000000-0000-0000-0000-000000000001',
           '20000000-0000-0000-0000-000000000002');
@@ -1173,6 +1241,7 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_leg uuid; v_n int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -1180,7 +1249,7 @@ BEGIN
            '20000000-0000-0000-0000-000000000001', 'idem-L43') INTO v_t;
   v_leg := gen_random_uuid();
   INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-           currency, ref_type, ref_id, cash_closure_id, created_by)
+           currency, ref_type, ref_id, cash_closure_id, paid_by)
   VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'out', 'cash', 2000, 'CUP',
           'cash_transfer', v_t, '50000000-0000-0000-0000-000000000001',
           '20000000-0000-0000-0000-000000000002');
@@ -1275,17 +1344,19 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_leg uuid; v_n int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-L47') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);  -- D.24.2 identidad autenticada
   PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002',
            '50000000-0000-0000-0000-000000000001', NULL);
   SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;  -- el estado intermedio se valida al final
   v_leg := gen_random_uuid();
   INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-           currency, ref_type, ref_id, cash_closure_id, created_by)
+           currency, ref_type, ref_id, cash_closure_id, paid_by)
   VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'in', 'cash', 2000, 'CUP',
           'cash_transfer', v_t, '50000000-0000-0000-0000-000000000002',
           '20000000-0000-0000-0000-000000000004');
@@ -1316,17 +1387,19 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_leg uuid; v_n int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-L48') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);  -- D.24.2 identidad autenticada
   PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002',
            '50000000-0000-0000-0000-000000000001', NULL);
   SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;  -- el estado intermedio se valida al final
   v_leg := gen_random_uuid();
   INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-           currency, ref_type, ref_id, cash_closure_id, created_by)
+           currency, ref_type, ref_id, cash_closure_id, paid_by)
   VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'in', 'cash', 2000, 'CUP',
           'cash_transfer', v_t, '50000000-0000-0000-0000-000000000002',
           '20000000-0000-0000-0000-000000000004');
@@ -1358,17 +1431,19 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_leg uuid; v_n int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-L49') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);  -- D.24.2 identidad autenticada
   PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002',
            '50000000-0000-0000-0000-000000000001', NULL);
   SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;  -- el estado intermedio se valida al final
   v_leg := gen_random_uuid();
   INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
-           currency, ref_type, ref_id, cash_closure_id, created_by)
+           currency, ref_type, ref_id, cash_closure_id, paid_by)
   VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'in', 'cash', 2000, 'CUP',
           'cash_transfer', v_t, '50000000-0000-0000-0000-000000000001',
           '20000000-0000-0000-0000-000000000002');
@@ -1400,11 +1475,13 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_n int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-L50') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   PERFORM f_cancel_cash_transfer(v_t, '20000000-0000-0000-0000-000000000001', 'prueba N50');
   BEGIN
     INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
@@ -1427,12 +1504,14 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-AN3') INTO v_t;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000004', true);  -- D.24.2 identidad autenticada
     PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000004'::uuid,
              '20000000-0000-0000-0000-000000000004'::uuid);   -- L se asigna a sí misma
     RAISE EXCEPTION 'NO_RECHAZADA AN3a';
@@ -1442,6 +1521,7 @@ BEGIN
     RAISE NOTICE 'OK A-N3a autoasignación de transportista rechazada: %', SQLERRM;
   END;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
     PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000004'::uuid,
              '20000000-0000-0000-0000-000000000001'::uuid);   -- L "autorizada" por M: es CAJERA
     RAISE EXCEPTION 'NO_RECHAZADA AN3b';
@@ -1459,12 +1539,14 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-AN4') INTO v_t;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
     PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000003'::uuid,
              '20000000-0000-0000-0000-000000000001'::uuid);   -- X es cajero
     RAISE EXCEPTION 'NO_RECHAZADA AN4';
@@ -1479,12 +1561,14 @@ END $$;
 DO $$
 DECLARE v_t uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-AN5') INTO v_t;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
     PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000007'::uuid,
              '20000000-0000-0000-0000-000000000001'::uuid);   -- U_T2 es de S2
     RAISE EXCEPTION 'NO_RECHAZADA AN5';
@@ -1499,12 +1583,14 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_legs int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            2000, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-AN6') INTO v_t;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000005', true);  -- D.24.2 identidad autenticada
     PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000005'::uuid,
              '50000000-0000-0000-0000-000000000001'::uuid,
              '20000000-0000-0000-0000-000000000005'::uuid);   -- J se declara a sí mismo: sin asignación
@@ -1523,6 +1609,7 @@ END $$;
 DO $$
 DECLARE v_t uuid; v_legs int;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -1534,67 +1621,75 @@ BEGIN
     RAISE EXCEPTION 'NO_RECHAZADA AN7a';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
-    IF SQLERRM NOT LIKE 'ERR_UNKNOWN_ACTOR%' THEN RAISE; END IF;
-    RAISE NOTICE 'OK A-N7a actor no autenticado (NULL) rechazado: %', SQLERRM;
+    IF SQLERRM NOT LIKE 'ERR_AUTH_IDENTITY%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N7a actor sin identidad autenticada (NULL ≠ auth.uid) rechazado: %', SQLERRM;
   END;
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '99999999-9999-9999-9999-999999999999', true);  -- D.24.2 identidad autenticada
     PERFORM f_deliver_cash_transfer(v_t, '99999999-9999-9999-9999-999999999999'::uuid,
              '50000000-0000-0000-0000-000000000001'::uuid, NULL);
     RAISE EXCEPTION 'NO_RECHAZADA AN7b';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
-    IF SQLERRM NOT LIKE 'ERR_DELIVER_ACTOR_UNAUTHORIZED%' THEN RAISE; END IF;
-    RAISE NOTICE 'OK A-N7b identidad inexistente rechazada: %', SQLERRM;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_NOT_ASSIGNED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N7b identidad inexistente (sujeto JWT desconocido) rechazada: %', SQLERRM;
   END;
   SELECT count(*) INTO v_legs FROM payment_transactions
    WHERE ref_type='cash_transfer' AND ref_id=v_t;
   IF v_legs <> 0 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO AN7: quedó una pierna'; END IF;
 END $$;
 
-\echo '══ I-N7: misma clave con authorized_by DIFERENTE ⇒ ERR_IDEMPOTENCY_KEY_REUSE'
+\echo '══ I-N7: misma clave, OTRO autorizador-autenticado (X firma su propia sesión) ⇒ ERR_IDEMPOTENCY_KEY_REUSE'
+-- D.24.2: con identidad autenticada, un autorizador distinto solo puede actuar
+-- desde SU sesión (requested_by=authorized_by=claim); la huella jsonb capta el
+-- cambio de identidad de la operación y fuerza REUSE (nunca reutiliza la clave).
 DO $$
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            300, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-IN7');
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000003', true);  -- X autenticado
     PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000001', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
-             300, 'CUP', '20000000-0000-0000-0000-000000000001',
+             300, 'CUP', '20000000-0000-0000-0000-000000000003'::uuid,
              '20000000-0000-0000-0000-000000000003'::uuid, 'idem-IN7');
     RAISE EXCEPTION 'NO_RECHAZADA IN7';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
     IF SQLERRM NOT LIKE 'ERR_IDEMPOTENCY_KEY_REUSE%' THEN RAISE; END IF;
-    RAISE NOTICE 'OK I-N7 misma clave con otro autorizador rechazada: %', SQLERRM;
+    RAISE NOTICE 'OK I-N7 misma clave bajo otra identidad autorizadora rechazada: %', SQLERRM;
   END;
   IF (SELECT count(*) FROM cash_transfers WHERE idempotency_key='idem-IN7') <> 1 THEN
     RAISE EXCEPTION 'ROLLBACK_INCOMPLETO IN7: idem-IN7 duplicada';
   END IF;
 END $$;
 
-\echo '══ I-N8: mismo solicitante, AUTORIZADOR EFECTIVO distinto ⇒ ERR_IDEMPOTENCY_KEY_REUSE'
+\echo '══ I-N8: misma clave con AUTORIZADOR EFECTIVO distinto (K firma la suya) ⇒ ERR_IDEMPOTENCY_KEY_REUSE'
 DO $$
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            300, 'CUP', '20000000-0000-0000-0000-000000000001',
            '20000000-0000-0000-0000-000000000001', 'idem-IN8');
   BEGIN
+    PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);  -- K autenticado
     PERFORM f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
              '30000000-0000-0000-0000-000000000001', NULL,
              '30000000-0000-0000-0000-000000000002', NULL,
-             300, 'CUP', '20000000-0000-0000-0000-000000000001',
+             300, 'CUP', '20000000-0000-0000-0000-000000000002'::uuid,
              '20000000-0000-0000-0000-000000000002'::uuid, 'idem-IN8');
     RAISE EXCEPTION 'NO_RECHAZADA IN8';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
     IF SQLERRM NOT LIKE 'ERR_IDEMPOTENCY_KEY_REUSE%' THEN RAISE; END IF;
-    RAISE NOTICE 'OK I-N8 autorizador efectivo distinto rechazado: %', SQLERRM;
+    RAISE NOTICE 'OK I-N8 autorizador efectivo distinto (K) rechazado: %', SQLERRM;
   END;
 END $$;
 
@@ -1602,11 +1697,13 @@ END $$;
 DO $$
 DECLARE v_id_null uuid; v_id_expl uuid;
 BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
            300, 'CUP', '20000000-0000-0000-0000-000000000001',
            NULL, 'idem-IN9') INTO v_id_null;             -- efectivo = solicitante M
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);  -- D.24.2 identidad autenticada
   SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
            '30000000-0000-0000-0000-000000000001', NULL,
            '30000000-0000-0000-0000-000000000002', NULL,
@@ -1642,6 +1739,596 @@ BEGIN
 END $$;
 
 
+
+-- ═══════════ MISIÓN 011 · P0-1: ESQUEMA REAL DEL LEDGER (N51-N58) ════════════
+
+\echo '══ N52: alterar paid_by de una pierna IN ⇒ ERR_LEG_IMMUTABLE'
+DO $$
+DECLARE v_leg uuid;
+BEGIN
+  v_leg := (SELECT leg_in_payment_id FROM cash_transfers WHERE idempotency_key='idem-T2');
+  BEGIN
+    UPDATE payment_transactions
+       SET paid_by = '20000000-0000-0000-0000-000000000006'  -- U_N: perfil ajeno existente
+     WHERE id=v_leg;
+    RAISE EXCEPTION 'NO_RECHAZADA N52';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_LEG_IMMUTABLE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N52 manipulación de paid_by en pierna IN rechazada: %', SQLERRM;
+  END;
+  IF EXISTS (SELECT 1 FROM payment_transactions
+              WHERE id=v_leg AND paid_by='20000000-0000-0000-0000-000000000006') THEN
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N52: paid_by quedó alterado';
+  END IF;
+END $$;
+
+\echo '══ N54: escribir amount_cup (columna GENERADA por PostgreSQL) ⇒ rechazo'
+DO $$
+DECLARE v_leg uuid;
+BEGIN
+  v_leg := (SELECT leg_out_payment_id FROM cash_transfers WHERE idempotency_key='idem-T7b');
+  BEGIN
+    UPDATE payment_transactions SET amount_cup = 999 WHERE id=v_leg;
+    RAISE EXCEPTION 'NO_RECHAZADA N54';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE '%can only be updated to DEFAULT%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N54 amount_cup no escribible (GENERATED ALWAYS): %', SQLERRM;
+  END;
+END $$;
+
+\echo '══ N55: DELETE de una fila ORDINARIA de payment_transactions ⇒ PT007 (prohibición global)'
+DO $$
+DECLARE v_id uuid; v_n int;
+BEGIN
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_account_id, paid_by)
+  VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000002', 'in', 'cash',
+          50, 'CUP', 'cash_flow', gen_random_uuid(), '40000000-0000-0000-0000-000000000002',
+          '20000000-0000-0000-0000-000000000006')
+  RETURNING id INTO v_id;
+  BEGIN
+    DELETE FROM payment_transactions WHERE id=v_id;
+    RAISE EXCEPTION 'NO_RECHAZADA N55';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_PAYMENT_DELETE_FORBIDDEN%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK N55 intento de DELETE: %', SQLERRM;
+  END;
+  -- Rectificación autorizada: contraasiento inverso (el saldo neto queda en 0)
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_account_id, paid_by)
+  VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000002', 'out', 'cash',
+          50, 'CUP', 'cash_flow', (SELECT ref_id FROM payment_transactions WHERE id=v_id),
+          '40000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000006');
+  SELECT count(*) INTO v_n FROM payment_transactions WHERE id=v_id;
+  IF v_n <> 1 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO N55: la fila ordinaria no quedó íntegra'; END IF;
+  RAISE NOTICE 'OK N55 DELETE ordinario prohibido por PT007; fila íntegra y rectificada por contraasiento';
+END $$;
+
+\echo '══ N57: amount_cup se RECALCULA con sus operandos y no puede diverger'
+DO $$
+DECLARE v_sum int; v_bad int;
+BEGIN
+  BEGIN
+    -- fila de prueba (se revierte con la subtransacción: sin residuo ni saldo)
+    INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+             currency, exchange_rate, ref_type, ref_id, cash_account_id, paid_by)
+    VALUES (gen_random_uuid(), '10000000-0000-0000-0000-000000000001', 'in', 'cash',
+            10, 'USD', 150, 'service', gen_random_uuid(),
+            '40000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001');
+    IF (SELECT amount_cup FROM payment_transactions
+         WHERE currency='USD' AND amount=10 AND exchange_rate=150
+           AND store_id='10000000-0000-0000-0000-000000000001') <> 1500 THEN
+      RAISE EXCEPTION 'N57 FALLO: amount_cup no coincide con amount*exchange_rate';
+    END IF;
+    RAISE EXCEPTION 'NO_RECHAZADA N57';   -- desenlace previsto: revierte la fila de prueba
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    -- la subtransacción revierte el INSERT: sin residuo ni efecto en saldo
+  END;
+END $$;
+DO $$
+DECLARE v_bad int;
+BEGIN
+  SELECT count(*) INTO v_bad FROM payment_transactions
+   WHERE amount_cup IS DISTINCT FROM
+         CASE WHEN currency='CUP' THEN amount ELSE amount * exchange_rate END;
+  IF v_bad <> 0 THEN RAISE EXCEPTION 'N57 FALLO: % filas con amount_cup divergente', v_bad; END IF;
+  RAISE NOTICE 'OK N57 amount_cup = f(amount, currency, exchange_rate) en TODAS las filas (sin divergencia posible)';
+END $$;
+
+\echo '══ N58: atribución y saldo íntegros de TODAS las piernas de traspaso'
+DO $$
+DECLARE v_bad int; v_cup numeric(14,2); v_usd numeric(14,2);
+BEGIN
+  SELECT count(*) INTO v_bad
+    FROM payment_transactions pt
+    JOIN cash_transfers t ON pt.ref_type='cash_transfer' AND pt.ref_id=t.id
+   WHERE (pt.direction='out' AND pt.paid_by IS DISTINCT FROM t.delivered_by)
+      OR (pt.direction='in'  AND pt.paid_by IS DISTINCT FROM t.received_by)
+      OR pt.paid_by IS NULL;
+  IF v_bad <> 0 THEN RAISE EXCEPTION 'N58 FALLO: % piernas con atribución inconsistente', v_bad; END IF;
+  SELECT COALESCE(SUM(CASE WHEN v.direction='in' THEN v.amount ELSE -v.amount END),0) INTO v_cup
+    FROM v_cash_ledger_classification v
+   WHERE v.holder_type='cuenta' AND v.holder_id='40000000-0000-0000-0000-000000000001'
+     AND v.currency='CUP' AND v.model_scope='multicaja'
+     AND v.class NOT IN ('electronico','historico_sin_titular');
+  SELECT COALESCE(SUM(CASE WHEN v.direction='in' THEN v.amount ELSE -v.amount END),0) INTO v_usd
+    FROM v_cash_ledger_classification v
+   WHERE v.holder_type='cuenta' AND v.holder_id='40000000-0000-0000-0000-000000000001'
+     AND v.currency='USD' AND v.model_scope='multicaja'
+     AND v.class NOT IN ('electronico','historico_sin_titular');
+  IF v_cup <> 0 OR v_usd <> 0 THEN
+    RAISE EXCEPTION 'N58 FALLO: saldo C1 CUP=% USD=% (esperado 0/0)', v_cup, v_usd;
+  END IF;
+  RAISE NOTICE 'OK N58 atribución paid_by íntegra en todas las piernas y saldo C1 CUP/USD íntegro (0/0)';
+END $$;
+
+-- ═══════════ MISIÓN 011 · P0-2: IDENTIDAD AUTENTICADA (A-N8..A-N14) ══════════
+-- Las pruebas corren con el rol REAL 'authenticated' (SET ROLE) y la identidad
+-- viene de auth.uid() (request.jwt.claim.sub), NUNCA de los parámetros.
+
+\echo '══ A-N8: autenticado K (SET ROLE) declara p_delivered_by=J ⇒ ERR_AUTH_IDENTITY'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN8') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+  EXECUTE 'SET ROLE authenticated';                      -- sesión autenticada = K
+  BEGIN
+    PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000005'::uuid,
+             '50000000-0000-0000-0000-000000000001'::uuid, NULL);   -- declara J
+    RAISE EXCEPTION 'NO_RECHAZADA AN8';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_AUTH_IDENTITY%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N8 identidad suplantada (claim K, delivered_by J) rechazada: %', SQLERRM;
+  END;
+  EXECUTE 'RESET ROLE';
+END $$;
+
+\echo '══ A-N9: cajero AUTENTICADO sin facultad intenta asignar transportista ⇒ ERR_CARRIER_AUTHORIZER_ROLE'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN9') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000003', true);
+  EXECUTE 'SET ROLE authenticated';                      -- sesión autenticada = X (cajero)
+  BEGIN
+    PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000005'::uuid,
+             '20000000-0000-0000-0000-000000000003'::uuid);
+    RAISE EXCEPTION 'NO_RECHAZADA AN9';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_AUTHORIZER_ROLE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N9 autorizador sin rol de encargado rechazado: %', SQLERRM;
+  END;
+  EXECUTE 'RESET ROLE';
+END $$;
+
+\echo '══ A-N10: encargado AUTENTICADO de OTRA tienda intenta asignar ⇒ ERR_CARRIER_AUTHORIZER_STORE'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN10') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000006', true);
+  EXECUTE 'SET ROLE authenticated';                      -- sesión autenticada = N (encargado S2)
+  BEGIN
+    PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000005'::uuid,
+             '20000000-0000-0000-0000-000000000006'::uuid);
+    RAISE EXCEPTION 'NO_RECHAZADA AN10';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_AUTHORIZER_STORE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N10 encargado de otra tienda rechazado: %', SQLERRM;
+  END;
+  EXECUTE 'RESET ROLE';
+END $$;
+
+\echo '══ A-N11: INSERT directo en cash_transfer_carriers sin permiso ⇒ permission denied'
+DO $$
+BEGIN
+  EXECUTE 'SET ROLE authenticated';
+  BEGIN
+    INSERT INTO cash_transfer_carriers(id, transfer_id, carrier_user_id, assigned_by, authorized_by)
+    VALUES (gen_random_uuid(),
+            (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T1'),
+            '20000000-0000-0000-0000-000000000005'::uuid,
+            '20000000-0000-0000-0000-000000000002'::uuid,
+            '20000000-0000-0000-0000-000000000002'::uuid);   -- "asignación falsificada"
+    RAISE EXCEPTION 'NO_RECHAZADA AN11';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'permission denied%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N11 falsificación directa de asignación bloqueada por GRANT/REVOKE: %', SQLERRM;
+  END;
+  EXECUTE 'RESET ROLE';
+END $$;
+
+\echo '══ A-N12: UPDATE/DELETE directo de asignación sin autorización ⇒ permission denied'
+DO $$
+BEGIN
+  EXECUTE 'SET ROLE authenticated';
+  BEGIN
+    UPDATE cash_transfer_carriers SET authorized_by = '20000000-0000-0000-0000-000000000002'::uuid
+     WHERE transfer_id = (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T1');
+    RAISE EXCEPTION 'NO_RECHAZADA AN12a';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'permission denied%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N12a modificación directa de asignación bloqueada: %', SQLERRM;
+  END;
+  BEGIN
+    DELETE FROM cash_transfer_carriers
+     WHERE transfer_id = (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T1');
+    RAISE EXCEPTION 'NO_RECHAZADA AN12b';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'permission denied%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N12b revocación directa de asignación bloqueada (sin path público): %', SQLERRM;
+  END;
+  EXECUTE 'RESET ROLE';
+  IF (SELECT count(*) FROM cash_transfer_carriers
+       WHERE transfer_id=(SELECT id FROM cash_transfers WHERE idempotency_key='idem-T1')) <> 1 THEN
+    RAISE EXCEPTION 'ROLLBACK_INCOMPLETO AN12: la asignación de T1 no está íntegra';
+  END IF;
+END $$;
+
+\echo '══ A-N13: asignación con p_authorized_by ≠ auth.uid() ⇒ ERR_AUTH_IDENTITY'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN13') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+  BEGIN
+    PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000005'::uuid,
+             '20000000-0000-0000-0000-000000000001'::uuid);   -- firma M con claim K
+    RAISE EXCEPTION 'NO_RECHAZADA AN13';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_AUTH_IDENTITY%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N13 firma de autorización con identidad ajena rechazada: %', SQLERRM;
+  END;
+END $$;
+
+\echo '══ A-N14: entrega con p_delivered_by ≠ auth.uid() (claim J, declara K) ⇒ ERR_AUTH_IDENTITY'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN14') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000005', true);
+  BEGIN
+    PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002'::uuid,
+             '50000000-0000-0000-0000-000000000001'::uuid, NULL);   -- declara K
+    RAISE EXCEPTION 'NO_RECHAZADA AN14';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_AUTH_IDENTITY%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N14 identidad suplantada (claim J, delivered_by K) rechazada: %', SQLERRM;
+  END;
+END $$;
+
+-- ═══════════ MISIÓN 011 · P0-3: p_carrier VINCULADO A SU ASIGNACIÓN ══════════
+
+\echo '══ A-N15: titular intenta entregar a transportista NO asignado ⇒ ERR_CARRIER_NOT_ASSIGNED'
+DO $$
+DECLARE v_t uuid; v_legs int;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN15') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+  BEGIN
+    PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002'::uuid,
+             '50000000-0000-0000-0000-000000000001'::uuid,
+             '20000000-0000-0000-0000-000000000005'::uuid);   -- J sin asignación
+    RAISE EXCEPTION 'NO_RECHAZADA AN15';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_NOT_ASSIGNED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N15 entrega del titular a transportista no asignado rechazada: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_legs FROM payment_transactions
+   WHERE ref_type='cash_transfer' AND ref_id=v_t;
+  IF v_legs <> 0 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO AN15: quedó una pierna'; END IF;
+END $$;
+
+\echo '══ A-N16: transportista asignado J registra a L como custodio efectivo ⇒ ERR_CARRIER_MISMATCH'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN16') INTO v_t;
+  PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000005'::uuid,
+           '20000000-0000-0000-0000-000000000001'::uuid);     -- J asignado
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000005', true);
+  BEGIN
+    PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000005'::uuid,
+             '50000000-0000-0000-0000-000000000001'::uuid,
+             '20000000-0000-0000-0000-000000000004'::uuid);   -- declara a L
+    RAISE EXCEPTION 'NO_RECHAZADA AN16';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_MISMATCH%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N16 custodio ficticio (L) rechazado: el ejecutor es el custodio real: %', SQLERRM;
+  END;
+END $$;
+
+\echo '══ A-N17: titular designa p_carrier=J (rol/tienda válidos) SIN asignación ⇒ ERR_CARRIER_NOT_ASSIGNED'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN17') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+  BEGIN
+    PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002'::uuid,
+             '50000000-0000-0000-0000-000000000001'::uuid,
+             '20000000-0000-0000-0000-000000000005'::uuid);
+    RAISE EXCEPTION 'NO_RECHAZADA AN17';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_NOT_ASSIGNED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N17 p_carrier sin asignación (aun con rol/tienda válidos) rechazado: %', SQLERRM;
+  END;
+END $$;
+
+\echo '══ A-N18: transportista de OTRA tienda usado como p_carrier ⇒ ERR_CARRIER_NOT_ASSIGNED'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-AN18') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+  BEGIN
+    PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002'::uuid,
+             '50000000-0000-0000-0000-000000000001'::uuid,
+             '20000000-0000-0000-0000-000000000007'::uuid);   -- U_T2 de S2
+    RAISE EXCEPTION 'NO_RECHAZADA AN18';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CARRIER_NOT_ASSIGNED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N18 transportista de otra tienda como p_carrier rechazado: %', SQLERRM;
+  END;
+END $$;
+
+\echo '══ A-N19: asignación DESPUÉS de la entrega ⇒ ERR_STATE (solo sustitución formal de custodio)'
+DO $$
+DECLARE v_t uuid;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-L19') INTO v_t;
+  PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000005'::uuid,
+           '20000000-0000-0000-0000-000000000001'::uuid);
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+  PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002'::uuid,
+           '50000000-0000-0000-0000-000000000001'::uuid,
+           '20000000-0000-0000-0000-000000000005'::uuid);     -- entregada (custodio J)
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  BEGIN
+    PERFORM f_assign_carrier(v_t, '20000000-0000-0000-0000-000000000003'::uuid,
+             '20000000-0000-0000-0000-000000000001'::uuid);   -- post-entrega
+    RAISE EXCEPTION 'NO_RECHAZADA AN19';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_STATE%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK A-N19 asignación posterior a la entrega rechazada (la sustitución es f_create_custody_event): %', SQLERRM;
+  END;
+END $$;
+
+-- ═══════════ MISIÓN 011 · P1: APERTURA SOLO EN ENTREGA (C-N1..C-N4, C-P1) ════
+
+\echo '══ C-N1: primera apertura de custodia en en_devolucion ⇒ ERR_CUSTODY_NOT_DELIVERED'
+DO $$
+DECLARE v_t uuid; v_leg uuid; v_n int;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-LC1') INTO v_t;
+  SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;
+  v_leg := gen_random_uuid();
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_closure_id, paid_by)
+  VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'out', 'cash', 2000, 'CUP',
+          'cash_transfer', v_t, '50000000-0000-0000-0000-000000000001',
+          '20000000-0000-0000-0000-000000000002');
+  UPDATE cash_transfers SET status='entregada', leg_out_payment_id=v_leg,
+           sent_from_session_id='50000000-0000-0000-0000-000000000001',
+           delivered_by='20000000-0000-0000-0000-000000000002', carrier_user_id=NULL
+   WHERE id=v_t;                                 -- entregada SIN custodia (anomalía previa)
+  UPDATE cash_transfers SET status='en_devolucion' WHERE id=v_t;   -- D.24.5: sin evento inicial
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason)
+    VALUES (v_t, 1, NULL, NULL, '20000000-0000-0000-0000-000000000005'::uuid,
+            '20000000-0000-0000-0000-000000000002'::uuid, 'apertura tardía');
+    RAISE EXCEPTION 'NO_RECHAZADA CN1';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_NOT_DELIVERED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK C-N1 primera apertura en en_devolucion rechazada (debió existir evento inicial): %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 0 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO CN1: % eventos', v_n; END IF;
+END $$;
+
+\echo '══ C-P1: primera apertura en ENTREGADA válida (referencia positiva)'
+DO $$
+DECLARE v_t uuid; v_ev int;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-LCP1') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+  PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002'::uuid,
+           '50000000-0000-0000-0000-000000000001'::uuid, NULL);
+  SELECT count(*) INTO v_ev FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_ev <> 1 THEN RAISE EXCEPTION 'C-P1 FALLO: la entrega física debía abrir la custodia'; END IF;
+  RAISE NOTICE 'OK C-P1 apertura de custodia en entregada válida (evento seq1 registrado)';
+END $$;
+
+\echo '══ C-N2: cierre registrado por actor distinto del receptor autenticado ⇒ ERR_CUSTODY_CLOSE_REGISTRAR'
+DO $$
+DECLARE v_t uuid; v_leg uuid; v_n int;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-LC2') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+  PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002'::uuid,
+           '50000000-0000-0000-0000-000000000001'::uuid, NULL);
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;
+  v_leg := gen_random_uuid();
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_closure_id, paid_by)
+  VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'in', 'cash', 2000, 'CUP',
+          'cash_transfer', v_t, '50000000-0000-0000-0000-000000000002',
+          '20000000-0000-0000-0000-000000000004');
+  UPDATE cash_transfers SET status='recibida', leg_in_payment_id=v_leg,
+           received_in_session_id='50000000-0000-0000-0000-000000000002',
+           received_by='20000000-0000-0000-0000-000000000004'
+   WHERE id=v_t;                                 -- recibida SIN cierre (receptor L)
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason, close_event)
+    VALUES (v_t, 2,
+            (SELECT id FROM cash_transfer_custody_events WHERE transfer_id=v_t
+              ORDER BY event_seq DESC LIMIT 1),
+            '20000000-0000-0000-0000-000000000002'::uuid,
+            '20000000-0000-0000-0000-000000000004'::uuid,
+            '20000000-0000-0000-0000-000000000001'::uuid, 'cierre por actor ajeno', true);
+    RAISE EXCEPTION 'NO_RECHAZADA CN2';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_CLOSE_REGISTRAR%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK C-N2 cierre registrado por actor distinto del receptor rechazado: %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 1 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO CN2: % eventos', v_n; END IF;
+END $$;
+
+\echo '══ C-N3: cierre duplicado por un actor distinto ⇒ ERR_CUSTODY_ALREADY_CLOSED'
+DO $$
+DECLARE v_t uuid; v_last uuid;
+BEGIN
+  v_t := (SELECT id FROM cash_transfers WHERE idempotency_key='idem-T2');
+  SELECT id INTO v_last FROM cash_transfer_custody_events
+   WHERE transfer_id=v_t ORDER BY event_seq DESC LIMIT 1;
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason, close_event)
+    VALUES (v_t, 3, v_last, '20000000-0000-0000-0000-000000000004'::uuid,
+            '20000000-0000-0000-0000-000000000005'::uuid,
+            '20000000-0000-0000-0000-000000000003'::uuid, 'segundo cierre por otro actor', true);
+    RAISE EXCEPTION 'NO_RECHAZADA CN3';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_ALREADY_CLOSED%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK C-N3 cierre duplicado (aunque sea otro actor) rechazado: %', SQLERRM;
+  END;
+END $$;
+
+\echo '══ C-N4: evento directo falsea al custodio final ⇒ ERR_CUSTODY_CLOSE_HOLDER'
+DO $$
+DECLARE v_t uuid; v_leg uuid; v_n int;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SELECT f_request_cash_transfer('10000000-0000-0000-0000-000000000001',
+           '30000000-0000-0000-0000-000000000001', NULL,
+           '30000000-0000-0000-0000-000000000002', NULL,
+           2000, 'CUP', '20000000-0000-0000-0000-000000000001',
+           '20000000-0000-0000-0000-000000000001', 'idem-LC4') INTO v_t;
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000002', true);
+  PERFORM f_deliver_cash_transfer(v_t, '20000000-0000-0000-0000-000000000002'::uuid,
+           '50000000-0000-0000-0000-000000000001'::uuid, NULL);
+  PERFORM set_config('request.jwt.claim.sub', '20000000-0000-0000-0000-000000000001', true);
+  SET CONSTRAINTS ctr_legs_final, ctr_transfer_final DEFERRED;
+  v_leg := gen_random_uuid();
+  INSERT INTO payment_transactions(id, store_id, direction, payment_method, amount,
+           currency, ref_type, ref_id, cash_closure_id, paid_by)
+  VALUES (v_leg, '10000000-0000-0000-0000-000000000001', 'in', 'cash', 2000, 'CUP',
+          'cash_transfer', v_t, '50000000-0000-0000-0000-000000000002',
+          '20000000-0000-0000-0000-000000000004');
+  UPDATE cash_transfers SET status='recibida', leg_in_payment_id=v_leg,
+           received_in_session_id='50000000-0000-0000-0000-000000000002',
+           received_by='20000000-0000-0000-0000-000000000004'
+   WHERE id=v_t;                                 -- recibida SIN cierre (receptor L)
+  BEGIN
+    INSERT INTO cash_transfer_custody_events(transfer_id, event_seq, previous_event_id,
+             previous_custodian_user_id, new_custodian_user_id, changed_by, reason, close_event)
+    VALUES (v_t, 2,
+            (SELECT id FROM cash_transfer_custody_events WHERE transfer_id=v_t
+              ORDER BY event_seq DESC LIMIT 1),
+            '20000000-0000-0000-0000-000000000002'::uuid,
+            '20000000-0000-0000-0000-000000000002'::uuid,   -- custodio FALSO (K, no L)
+            '20000000-0000-0000-0000-000000000004'::uuid, 'cierre con custodio falso', true);
+    RAISE EXCEPTION 'NO_RECHAZADA CN4';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM LIKE 'NO_RECHAZADA%' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE 'ERR_CUSTODY_CLOSE_HOLDER%' THEN RAISE; END IF;
+    RAISE NOTICE 'OK C-N4 custodio final falseado rechazado (debe ser received_by): %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM cash_transfer_custody_events WHERE transfer_id=v_t;
+  IF v_n <> 1 THEN RAISE EXCEPTION 'ROLLBACK_INCOMPLETO CN4: % eventos', v_n; END IF;
+END $$;
+
+
 \echo '══ Limpieza de fixtures del ciclo de custodia (idem-L*): transferencias con estado real'
 -- Sus piernas son parte de setups VÁLIDOS (no residuo); el arnés deshabilita
 -- TEMPORALMENTE el trigger append-only SOLO para su limpieza controlada.
@@ -1649,6 +2336,7 @@ DO $$
 DECLARE v_legs int; v_tr int;
 BEGIN
   ALTER TABLE payment_transactions DISABLE TRIGGER pt_no_delete;
+  ALTER TABLE payment_transactions DISABLE TRIGGER trg_validate_payment_invariants;  -- PT007 (arnés)
   UPDATE cash_transfers SET
            status = 'solicitada', leg_out_payment_id = NULL, leg_in_payment_id = NULL,
            sent_from_session_id = NULL, received_in_session_id = NULL,
@@ -1660,6 +2348,7 @@ BEGIN
    WHERE ref_type='cash_transfer'
      AND ref_id IN (SELECT id FROM cash_transfers WHERE idempotency_key ~ '^idem-L');
   SET CONSTRAINTS ctr_legs_final, ctr_transfer_final IMMEDIATE;  -- drena eventos diferidos (ya sin piernas)
+  ALTER TABLE payment_transactions ENABLE TRIGGER trg_validate_payment_invariants;
   ALTER TABLE payment_transactions ENABLE TRIGGER pt_no_delete;
   DELETE FROM cash_transfer_carriers
    WHERE transfer_id IN (SELECT id FROM cash_transfers WHERE idempotency_key ~ '^idem-L');
@@ -1687,6 +2376,8 @@ SELECT bool_and(status = 'solicitada') AS negativos_en_estado_inicial
   FROM cash_transfers WHERE idempotency_key ~ '^idem-(N|S|I|A)';
 
 \echo '══ Limpieza del arnés de pruebas (solo transferencias solicitada/sin piernas del expediente desechable)'
+DELETE FROM cash_transfer_carriers
+ WHERE transfer_id IN (SELECT id FROM cash_transfers WHERE idempotency_key ~ '^idem-(N|S|I|A)');
 DELETE FROM cash_transfer_custody_events
  WHERE transfer_id IN (SELECT id FROM cash_transfers WHERE idempotency_key ~ '^idem-(N|S|I|A)');
 DELETE FROM cash_transfers WHERE idempotency_key ~ '^idem-(N|S|I|A)';

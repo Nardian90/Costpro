@@ -59,6 +59,7 @@ CREATE TABLE cash_transfers (
   return_in_account_id   uuid REFERENCES cash_accounts(id),
   leg_out_payment_id     uuid,
   leg_in_payment_id      uuid,
+  exchange_rate          numeric NOT NULL DEFAULT 1,  -- D.24: tasa de la solicitud (PT004 exige >1 en moneda extranjera)
   requested_by           uuid REFERENCES profiles(id),
   authorized_by          uuid REFERENCES profiles(id),
   delivered_by           uuid REFERENCES profiles(id),
@@ -73,27 +74,79 @@ CREATE TABLE cash_transfers (
   CONSTRAINT ctr_extremes_dest   CHECK (num_nonnulls(to_register_id, to_account_id) = 1)
 );
 
+-- Misión 011 (D.24.1): payment_transactions replica el ESQUEMA REAL:
+-- · nombres reales: payment_date (fecha), paid_by (responsable), created_at/updated_at;
+-- · amount_cup = columna GENERADA por PostgreSQL con la expresión EXACTA de
+--   20260712000001_payment_tracking.sql (amount_cup no es escribible);
+-- · ref_type real ('receipt','service','production_order','work','sale',
+--   'commission') + 'cash_transfer', valor que el DISEÑO multicajero añadiría
+--   en su migración (documentado en la tabla de correspondencia D.24);
+-- · currency real ('CUP','USD','EUR','MLC') y exchange_rate NOT NULL DEFAULT 1
+--   con las reglas PT003/PT004 (trigger de invariantes, 02);
+-- · transaction_id con FK RESTRICT a transactions (hardening PR-4.4I);
+-- · paid_by SIN FK (igual que el real: atribución de auditoría, no una FK);
+-- · direction y cash_closure_id/cash_account_id son del DISEÑO multicajero
+--   (columnas que su migración futura añadiría a la tabla real).
+CREATE TABLE transactions (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id     uuid NOT NULL REFERENCES stores(id),
+  total_amount numeric(14,2) NOT NULL CHECK (total_amount >= 0),
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+
 CREATE TABLE payment_transactions (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   store_id        uuid NOT NULL REFERENCES stores(id),
+  -- ref_type real + valores que el DISEÑO multicajero añadiría en su migración
+  -- ('cash_transfer', 'devolution', 'cash_flow' — documentado en D.24.7):
+  ref_type        text NOT NULL CHECK (ref_type IN ('receipt', 'service',
+                    'production_order', 'work', 'sale', 'commission',
+                    'cash_transfer', 'devolution', 'cash_flow')),
+  ref_id          uuid NOT NULL,
   direction       text NOT NULL CHECK (direction IN ('in','out','refund')),
-  payment_method  text NOT NULL,
+  payment_method  text NOT NULL CHECK (payment_method IN ('cash','transfer','zelle')),
   amount          numeric(14,2) NOT NULL CHECK (amount > 0),
-  currency        text NOT NULL,
-  exchange_rate   numeric(20,8) NOT NULL DEFAULT 1,   -- D.18.2: conversión a CUP
-  at              timestamptz NOT NULL DEFAULT now(), -- corresponde a payment_date en producción
-  ref_type        text NOT NULL,
-  ref_id          uuid,
-  transaction_id  uuid,
+  currency        text NOT NULL DEFAULT 'CUP' CHECK (currency IN ('CUP','USD','EUR','MLC')),
+  exchange_rate   numeric NOT NULL DEFAULT 1.0,
+  amount_cup      numeric GENERATED ALWAYS AS (
+                    CASE WHEN currency = 'CUP' THEN amount ELSE amount * exchange_rate END
+                  ) STORED,   -- EXACTA a 20260712000001; generada por PostgreSQL
+  payment_date    timestamptz NOT NULL DEFAULT now(),   -- fecha REAL de la operación
+  reference       text,
+  notes           text,
+  paid_by         uuid,                                 -- atribución REAL (no created_by)
+  transaction_id  uuid REFERENCES transactions(id) ON DELETE RESTRICT,
   cash_closure_id uuid REFERENCES cash_closures(id),
   cash_account_id uuid REFERENCES cash_accounts(id),
-  created_by      uuid REFERENCES profiles(id),
   created_at      timestamptz NOT NULL DEFAULT now(),
+  updated_at      timestamptz NOT NULL DEFAULT now(),
   -- Titular único: sesión XOR cuenta (D.16.7); filas físicas en efectivo EXIGEN titular:
   CONSTRAINT pt_holder_xor CHECK (num_nonnulls(cash_closure_id, cash_account_id) <= 1),
   CONSTRAINT pt_holder_required_physical
-    CHECK (payment_method <> 'cash' OR num_nonnulls(cash_closure_id, cash_account_id) = 1)
+    CHECK (payment_method <> 'cash' OR num_nonnulls(cash_closure_id, cash_account_id) = 1),
+  -- Regla real de ventas (hardening PR-4.4I):
+  CONSTRAINT payment_transactions_sale_ref_check
+    CHECK (ref_type <> 'sale' OR (transaction_id IS NOT NULL AND ref_id = transaction_id))
 );
+
+-- ══════ D.24.2 (misión 011) · IDENTIDAD AUTENTICADA — frontera del arnés ══════
+-- auth.uid() local: lee el sujeto de la sesión desde request.jwt.claim.sub
+-- (mismo contrato que Supabase). Es INDEPENDIENTE de los parámetros de las RPC.
+CREATE SCHEMA IF NOT EXISTS auth;
+CREATE FUNCTION auth.uid() RETURNS uuid
+LANGUAGE sql STABLE
+AS $$
+  SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid
+$$;
+
+-- Rol autenticado NOLOGIN (equivalente de Supabase 'authenticated'): opera SOLO
+-- vía RPC (GRANT EXECUTE en 02); sin permisos de escritura sobre las tablas.
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    CREATE ROLE authenticated NOLOGIN;
+  END IF;
+END $$;
 
 -- Las piernas registradas en la transferencia apuntan a filas reales del ledger:
 ALTER TABLE cash_transfers
@@ -122,9 +175,11 @@ CREATE TABLE cash_transfer_custody_events (
 CREATE UNIQUE INDEX uq_ctr_custody_close_once
   ON cash_transfer_custody_events (transfer_id) WHERE close_event;
 
--- D.23.3 (misión 010): ASIGNACIÓN AUTORIZADA de transportista por traspaso.
--- La entrega por un actor distinto del titular exige una fila previa aquí,
--- registrada por un autorizador distinto del transportista (anti-autoasignación).
+-- D.23.3/D.24.3 (misiones 010/011): ASIGNACIÓN AUTORIZADA de transportista.
+-- Frontera de seguridad (D.24.3): los roles autenticados NO pueden escribir aquí
+-- (solo la RPC f_assign_carrier, SECURITY DEFINER); pueden LEER asignaciones de
+-- su tienda vía RLS. Sin UPDATE/DELETE público: no hay revocación ni cambio
+-- posterior (la invalidez se deriva del estado de la transferencia).
 CREATE TABLE cash_transfer_carriers (
   id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   transfer_id    uuid NOT NULL REFERENCES cash_transfers(id),
@@ -135,3 +190,12 @@ CREATE TABLE cash_transfer_carriers (
   CONSTRAINT uq_carrier_per_transfer UNIQUE (transfer_id, carrier_user_id),
   CONSTRAINT ctr_carrier_no_self CHECK (assigned_by <> carrier_user_id)
 );
+ALTER TABLE cash_transfer_carriers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY ctr_carriers_select_store ON cash_transfer_carriers
+  FOR SELECT TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM cash_transfers t JOIN profiles p ON p.id = auth.uid()
+     WHERE t.id = cash_transfer_carriers.transfer_id AND t.store_id = p.store_id
+  ));
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON cash_transfer_carriers FROM authenticated;
+GRANT SELECT ON cash_transfer_carriers TO authenticated;
