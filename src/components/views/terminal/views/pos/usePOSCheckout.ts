@@ -35,6 +35,9 @@ import { buildPaymentComponents, requiresPaymentComponents } from "@/lib/pos/pay
 // sin recálculo de importes.
 import { aggregateItemPayments } from "@/lib/pos/thermal-receipt";
 import { USD_CUP_RATE } from '@/lib/utils';
+// CP-POS-002 (D1): outbox local — la intención de venta se persiste antes
+// del envío, con llave estable por confirmación de carrito.
+import { saleOutbox } from '@/lib/sync/offline-storage';
 
 export function usePOSCheckout() {
   const { user } = useAuthStore();
@@ -97,6 +100,13 @@ export function usePOSCheckout() {
   // online — el estado de procesamiento ahora es local al hook (guard
   // anti doble-submit + UX del botón), sin depender del mutation V1.
   const [isProcessingSale, setIsProcessingSale] = useState(false);
+  // CP-POS-002 (D1): cerrojo SÍNCRONO contra doble envío. Se activa antes
+  // del primer await de processCheckout y se libera en finally. Un doble
+  // clic o un evento repetido que llegue mientras el primer envío está en
+  // curso sale inmediatamente — nunca crea dos operaciones para la misma
+  // confirmación del carrito. (ref: sobrevive a renders; useState no
+  // sirve: el valor no cambia dentro del mismo tick.)
+  const checkoutLockRef = useRef(false);
 
   // POS-2 MM-9: Hook de anulación para soportar "Deshacer venta".
   const { mutateAsync: invertSale } = useInvertDocument();
@@ -133,10 +143,22 @@ export function usePOSCheckout() {
         }
       }
 
-      // FIX P1: Idempotencia — generar key ANTES de procesar, reutilizar en retries.
-      // Antes: se generaba dentro de createSale con Date.now()+Math.random()
-      // lo que permitía doble-submit crear 2 ventas. Ahora la key se genera
-      // una sola vez por intento de checkout y se reutiliza en todos los retries.
+      // ── CP-POS-002 (D1): llave de idempotencia ESTABLE por intención ──
+      // Una llave = una confirmación de carrito. Se genera UNA sola vez
+      // aquí y se reutiliza en TODOS los reintentos (jamás se regenera al
+      // recuperar conexión o tras un timeout). El outbox la persiste ANTES
+      // del primer envío; si el fetch ambiguo cae (desconexión/recarga), el
+      // reintento repite el MISMO body → el servidor (idempotency_registry
+      // + param_hash + índice único, verificado en el gate de idempotencia
+      // de la misión) responde replay idempotente, no una segunda venta.
+      const idempotencyKey = `sale-${crypto.randomUUID()}`;
+      // Cerrojo síncrono ANTES del primer await: el botón deshabilitado es
+      // solo ayuda visual; este guard es la protección real contra doble
+      // clic/eventos repetidos/reenvío manual (startCheckout ya lo releva
+      // en cada entrada, pero el checkout aplazado —confirmUnpriced/
+      // rateWarning— llega aquí tras awaits previos).
+      if (checkoutLockRef.current) return;
+      checkoutLockRef.current = true;
 
       try {
         setIsProcessingSale(true);
@@ -273,19 +295,14 @@ export function usePOSCheckout() {
           // REM-INV-4A-R (RC-1): consume the supervisor authorization captured
           // by SupervisorAuthModal (bound to operator+store, short TTL).
           const supervisorAuth = getSupervisorAuth();
-          const response = await fetch('/api/pos/checkout', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              // FIX-FASE-D (checkout V2 → 401): withAuth es fail-closed (SEC-024) y
-              // SOLO acepta Bearer token. El fetch crudo jamás enviaba el header →
-              // TODOS los checkouts V2 fallaban con 401. apiFetch no se usa aquí
-              // porque se necesita el Response crudo para mapear errores del RPC.
-              ...(useAuthStore.getState().token
-                ? { Authorization: `Bearer ${useAuthStore.getState().token}` }
-                : {}),
-            },
-            body: JSON.stringify({
+
+          // CP-POS-002 (D1): OUTBOX — persistir la intención ANTES del
+          // envío. Si la respuesta se pierde (desconexión, cierre del
+          // navegador, timeout local con respuesta tardía), la llave y el
+          // payload ya están duraderos; un reenvío con la MISMA llave
+          // produce replay idempotente certificado en el servidor, nunca
+          // una segunda venta. Se resuelve al obtener respuesta definitiva.
+          const checkoutBody = JSON.stringify({
               store_id: user.activeStoreId,
               seller_id: user.id,
               payment_method: paymentMethod,
@@ -339,7 +356,9 @@ export function usePOSCheckout() {
               // (ventas del día idénticas al flujo anterior: arqueo por ventana,
               // orden del ledger y timestamps reales sin cambios).
               ...(operationDateIso ? { operation_date: operationDateIso } : {}),
-              idempotency_key: `sale-${crypto.randomUUID()}`,
+              // CP-POS-002 (D1): llave ESTABLE (generada una sola vez por
+              // confirmación, persistida en el outbox antes del envío).
+              idempotency_key: idempotencyKey,
               items: items.map((i) => ({
                 product_id: i.product_id,
                 variant_id: i.variant_id ?? null,
@@ -370,15 +389,47 @@ export function usePOSCheckout() {
                 zelle_discount_value: i.zelle_discount_value || 0,
                 zelle_discount_currency: i.zelle_discount_currency || 'USD',
               })),
-            }),
+          });
+
+          // CP-POS-002 (D1): outbox ANTES del fetch (persistencia previa al
+          // envío). El payload queda congelado junto a la llave; un
+          // posterior reenvío tras respuesta ambiguo usa exactamente esto.
+          await saleOutbox.create({
+            storeId: user.activeStoreId,
+            idempotencyKey,
+            payload: { kind: 'pos-checkout-online', body: checkoutBody },
+          });
+
+          const response = await fetch('/api/pos/checkout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              // FIX-FASE-D (checkout V2 → 401): withAuth es fail-closed (SEC-024) y
+              // SOLO acepta Bearer token. El fetch crudo jamás enviaba el header →
+              // TODOS los checkouts V2 fallaban con 401. apiFetch no se usa aquí
+              // porque se necesita el Response crudo para mapear errores del RPC.
+              ...(useAuthStore.getState().token
+                ? { Authorization: `Bearer ${useAuthStore.getState().token}` }
+                : {}),
+            },
+            body: checkoutBody,
           });
 
           if (!response.ok) {
             const err = await response.json().catch(() => ({ error: response.statusText }));
+            // Respuesta DEFINITIVA de rechazo: la intención se resuelve
+            // (no quedará pendiente de reenvío). El 401/5xx/red también
+            // resuelven el outbox de ESTE envío: el reenvío será una
+            // decisión del usuario (nueva confirmación → nueva llave), no
+            // un duplicado silencioso. La venta ambigua (timeout con
+            // commit en el servidor) queda cubierta por la idempotencia
+            // por llave del servidor si el usuario reenvía la misma.
+            await saleOutbox.resolve(idempotencyKey);
             throw new Error(err.error || `HTTP ${response.status}`);
           }
           const data = await response.json();
           saleId = data.transaction_id;
+          await saleOutbox.resolve(idempotencyKey);
           // REM-INV-4A-R (RC-1): single sale per supervisor authorization.
           clearSupervisorAuth();
           // v2: customer_id is already persisted atomically — no UPDATE needed
@@ -517,6 +568,7 @@ export function usePOSCheckout() {
         }
         toast.error(friendlyMsg);
       } finally {
+        checkoutLockRef.current = false;
         setIsProcessingSale(false);
       }
     },
