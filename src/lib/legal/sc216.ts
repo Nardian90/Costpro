@@ -93,17 +93,22 @@ export interface Sc216SourceData {
   };
   /** Nombre de la entidad/almacén (tienda activa bajo RLS). */
   entidadNombre: string;
-  /** logo_url de la tienda (multitienda); null → default de la app. */
+  /**
+   * CP-DOC-SC-DATA-MAPPING-006: código documental de la tienda
+   * (consecutivo persistente stores.store_code; nunca el uuid interno).
+   */
+  entidadCodigo?: string | null;
+  /** logo_url de la tienda (multitienda); null → identificador CP. */
   logoUrl?: string | null;
 }
 
 export interface Sc216ModelData {
-  /** Logo de la tienda o default de la app (dataURL en fetch). */
+  /** Logo de la tienda o identificador CP si no tiene logo propio. */
   logoUrl?: string | null;
   entidadNombre: string;
-  entidadCodigo: string; // no gestionado → ''
+  entidadCodigo: string;
   almacenNombre: string;
-  almacenCodigo: string; // no gestionado → ''
+  almacenCodigo: string;
   fechaEmision: string;
   conceptoAjuste: string;
   notas: string;
@@ -167,9 +172,11 @@ export function buildSc216ModelData(source: Sc216SourceData): Sc216ModelData {
   return {
     logoUrl: source.logoUrl ?? null,
     entidadNombre: entidadNombre || '',
-    entidadCodigo: '',
+    // CP-DOC-SC-DATA-MAPPING-006: el ajuste pertenece al almacén de la tienda
+    // activa — entidad y almacén comparten su código documental.
+    entidadCodigo: (source.entidadCodigo || '').trim(),
     almacenNombre: entidadNombre || '',
-    almacenCodigo: '',
+    almacenCodigo: (source.entidadCodigo || '').trim(),
     fechaEmision: formatDateRes11(adjustment.created_at),
     conceptoAjuste: SC216_CONCEPTOS[adjustment.reason] || adjustment.reason || '',
     notas: adjustment.notes || '',
@@ -222,7 +229,7 @@ export async function fetchSc216SourceData(
           .eq('adjustment_id', adjustment.id)
           .order('created_at', { ascending: true }),
     activeStoreId
-      ? supabase.from('stores').select('name, logo_url').eq('id', activeStoreId).maybeSingle()
+      ? supabase.from('stores').select('name, logo_url, store_code').eq('id', activeStoreId).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -232,8 +239,9 @@ export async function fetchSc216SourceData(
     enriched.adjustment.items = (itemsRes.data as unknown as Sc216SourceItem[]) || [];
   }
   if (!storeRes.error && storeRes.data) {
-    const row = storeRes.data as { name?: string | null; logo_url?: string | null } | null;
+    const row = storeRes.data as { name?: string | null; logo_url?: string | null; store_code?: number | string | null } | null;
     enriched.entidadNombre = row?.name || '';
+    enriched.entidadCodigo = row?.store_code === null || row?.store_code === undefined ? '' : String(row.store_code);
     enriched.logoUrl = row?.logo_url || null;
   }
 
@@ -255,6 +263,7 @@ export async function renderSc216Pdf(model: Sc216ModelData) {
     modelo: 'SC-2-16',
     nombreInstitucional: model.entidadNombre,
     logoDataUrl: logo.dataUrl,
+    logoSource: logo.source,
     titulo: 'AJUSTE DE INVENTARIO',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
   });

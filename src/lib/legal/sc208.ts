@@ -102,7 +102,12 @@ export interface Sc208SourceData {
   };
   /** Nombre de la entidad/almacén (tienda activa bajo RLS). */
   entidadNombre: string;
-  /** logo_url de la tienda emisora (multitienda); null → default de la app. */
+  /**
+   * CP-DOC-SC-DATA-MAPPING-006: código documental de la tienda emisora
+   * (consecutivo persistente stores.store_code; nunca el uuid interno).
+   */
+  entidadCodigo?: string | null;
+  /** logo_url de la tienda emisora (multitienda); null → identificador CP. */
   logoUrl?: string | null;
 }
 
@@ -112,7 +117,7 @@ export interface Sc208SourceData {
  * a mano (nunca «N/A», ceros ni guiones).
  */
 export interface Sc208ModelData {
-  /** Logo de la tienda emisora o default de la app (dataURL en fetch). */
+  /** Logo de la tienda emisora o identificador CP si no tiene logo propio. */
   logoUrl?: string | null;
   fechaEmision: string;
   entidadNombre: string;
@@ -158,6 +163,11 @@ function formatDateRes11(value: string | null | undefined): string {
 
 export function buildSc208ModelData(source: Sc208SourceData): Sc208ModelData {
   const { vale, entidadNombre } = source;
+  // CP-DOC-SC-DATA-MAPPING-006: código documental de la tienda emisora.
+  // El almacén que entrega/recibe se identifica con la tienda emisora
+  // (misma regla que el nombre: el vale se emite desde el almacén de la
+  // tienda activa — COSTPRO no gestiona almacenes con código independiente).
+  const codigoTienda = (source.entidadCodigo || '').trim();
   const lineas = (vale.items || []).map((item) => ({
     codigo: item.products?.sku || '',
     descripcion: item.products?.name || '',
@@ -178,9 +188,9 @@ export function buildSc208ModelData(source: Sc208SourceData): Sc208ModelData {
     logoUrl: source.logoUrl ?? null,
     fechaEmision: formatDateRes11(vale.created_at),
     entidadNombre: entidadNombre || '',
-    entidadCodigo: '',
+    entidadCodigo: codigoTienda,
     almacenNombre: entidadNombre || '',
-    almacenCodigo: '',
+    almacenCodigo: codigoTienda,
     concepto: vale.notes || '',
     areaDestino: '',
     centroCosto: '',
@@ -236,23 +246,26 @@ export async function fetchSc208SourceData(
   }
 
   let entidadNombre = '';
+  let entidadCodigo = '';
   let logoUrl: string | null = null;
   const storeId = activeStoreId || null;
   if (storeId) {
     const { data: storeRow, error: storeError } = await supabase
       .from('stores')
-      .select('name, logo_url')
+      .select('name, logo_url, store_code')
       .eq('id', storeId)
       .maybeSingle();
     if (storeError) {
       logger.warn('DATABASE', 'SC208_STORE_NAME_READ_FAILED', { data: storeError });
     } else {
-      entidadNombre = (storeRow as { name?: string | null } | null)?.name || '';
-      logoUrl = (storeRow as { name?: string | null; logo_url?: string | null } | null)?.logo_url || null;
+      const row = storeRow as { name?: string | null; logo_url?: string | null; store_code?: number | string | null } | null;
+      entidadNombre = row?.name || '';
+      entidadCodigo = row?.store_code === null || row?.store_code === undefined ? '' : String(row.store_code);
+      logoUrl = row?.logo_url || null;
     }
   }
 
-  return { vale: { ...vale, items }, entidadNombre, logoUrl };
+  return { vale: { ...vale, items }, entidadNombre, entidadCodigo, logoUrl };
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -271,6 +284,7 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
     modelo: 'SC-2-08',
     nombreInstitucional: model.entidadNombre,
     logoDataUrl: logo.dataUrl,
+    logoSource: logo.source,
     titulo: 'VALE DE ENTREGA O DEVOLUCIÓN',
     lineaDerecha: `Fecha de emisión: ${model.fechaEmision || RES11_BLANK_LINE}`,
   });
