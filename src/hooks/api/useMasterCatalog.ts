@@ -13,6 +13,7 @@
  *  - propose_master_change / review_master_proposal
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ProductOperationalClass } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 
@@ -109,11 +110,20 @@ function invalidateCatalog(qc: ReturnType<typeof useQueryClient>) {
 export function useActivateMasterProduct(storeId?: string | null) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (masterId: string) => {
+    // CP-OPERATIONAL-CLASS-002 §6: el RPC acepta p_operational_class y lo
+    // persiste EN LA MISMA TRANSACCIÓN que crea (o corrige, caso
+    // already_active) la fila local. El formato string sigue aceptándose
+    // para los usos sin clasificación (MasterCatalogModal).
+    mutationFn: async (
+      input: string | { masterId: string; operationalClass?: ProductOperationalClass | null },
+    ) => {
+      const masterId = typeof input === 'string' ? input : input.masterId;
+      const operationalClass = typeof input === 'string' ? null : (input.operationalClass ?? null);
       if (!storeId) throw new Error('Sin tienda activa');
       const { data, error } = await supabase.rpc('activate_master_product', {
         p_master_id: masterId,
         p_store_id: storeId,
+        p_operational_class: operationalClass,
       });
       if (error) throw error;
       return data as { status: string; already_active: boolean; product_id: string };
@@ -331,6 +341,13 @@ export interface CreateMasterProductPayload {
   barcode_type?: string | null;
   unit_of_measure?: string;
   is_service?: boolean;
+  /**
+   * CP-OPERATIONAL-CLASS-002 §6: clasificación operativa que el RPC persiste
+   * EN LA MISMA TRANSACCIÓN que crea la fila local (p_operational_class,
+   * DEFAULT NULL). Sin escrituras secundarias: éxito del RPC ⇒ clasificación
+   * persistida; fallo ⇒ nada se crea (transacción atómica).
+   */
+  operational_class?: ProductOperationalClass | null;
   /** Valores comerciales POR DEFECTO de la tienda de origen (jamás se copian a otras tiendas). */
   local?: {
     price?: number;
@@ -361,6 +378,8 @@ export function useCreateMasterProduct(storeId?: string | null) {
         p_barcode_type: payload.barcode_type ?? null,
         p_unit_of_measure: payload.unit_of_measure || 'unidad',
         p_is_service: payload.is_service === true,
+        // CP-OPERATIONAL-CLASS-002 §6: misma transacción que el INSERT local.
+        p_operational_class: payload.operational_class ?? null,
         p_local: {
           price: payload.local?.price != null ? String(payload.local.price) : '',
           price_currency: payload.local?.price_currency || 'CUP',

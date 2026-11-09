@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 137 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 139 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -452,9 +452,12 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261108140200_data_integrity_remediation_001_prevention.sql')).toBe(133);
     expect(pos('20261108140300_data_integrity_remediation_001_rpc_permissions.sql')).toBe(134);
     expect(pos('20261108141000_sales_dashboard_analytics.sql')).toBe(135);
-    expect(pos('20261108200000_cp_doc_sc006_store_code.sql')).toBe(136);
-    expect(pos('20261108201000_cp_doc_sc006_receipt_document_number.sql')).toBe(137);
-    expect(pos('20261108220000_sales_dashboard_stores_comparison.sql')).toBe(138);
+    // CP-OPERATIONAL-CLASS-002 (2026-11-08): la clasificación operativa
+    // (20261108150000) se intercala por orden lexicográfico y desplaza +1.
+    expect(pos('20261108150000_cp_operational_classification.sql')).toBe(136);
+    expect(pos('20261108200000_cp_doc_sc006_store_code.sql')).toBe(137);
+    expect(pos('20261108201000_cp_doc_sc006_receipt_document_number.sql')).toBe(138);
+    expect(pos('20261108220000_sales_dashboard_stores_comparison.sql')).toBe(139);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

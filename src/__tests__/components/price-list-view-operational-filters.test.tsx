@@ -95,15 +95,16 @@ describe('CP-OPERATIONAL-CLASS-001 · filtros en el Listado de precios (UI)', ()
     expect(activeFilters()).toContain('Clasificación: Venta');
   });
 
-  it('§8.13/§4 · «Sin precio» cuenta el NULL, nunca el cero legítimo', async () => {
+  it('§8.13/§4 · criterio REAL verificado: Sin precio = NULL y 0 (price NOT NULL DEFAULT 0)', async () => {
     const user = userEvent.setup();
     render(<PriceListView />);
     await user.click(screen.getByTestId('price-status-without_price'));
-    // Sin precio (NULL): ids 2 y 4. El insumo a 0 (id 3) NO entra.
-    expect(liveCount()).toContain('2');
-    await user.click(screen.getByTestId('price-status-with_price'));
-    // Con precio: 1, 3 (cero legítimo) y 5.
+    // Sin precio: id 2 (NULL) e id 3 (cero — el esquema vigente lo representa
+    // así; HALLAZGO CP-OPERATIONAL-CLASS-002) e id 4 (NULL).
     expect(liveCount()).toContain('3');
+    await user.click(screen.getByTestId('price-status-with_price'));
+    // Con precio: 1 (150) y 5 (300).
+    expect(liveCount()).toContain('2');
   });
 
   it('§8.14 · combinación simultánea: Venta + Sin precio (Caso A de la misión)', async () => {
@@ -158,6 +159,55 @@ describe('CP-OPERATIONAL-CLASS-001 · filtros en el Listado de precios (UI)', ()
     // SKU 1-2 y Venta sin precio → id 2 (SKU "2").
     expect(liveCount()).toContain('1');
     expect(activeFilters()).toContain('Clasificación: Venta');
+  });
+
+  it('§7 · el contador EN VIVO incluye el rango de SKU (mismo pipeline que el modelo)', async () => {
+    const user = userEvent.setup();
+    render(<PriceListView />);
+    // Fixture completo = 5. Con rango SKU 1-2 → solo 2 filas (SKU 1 y 2).
+    await user.type(screen.getByLabelText('SKU desde'), '1');
+    await user.type(screen.getByLabelText('SKU hasta'), '2');
+    expect(liveCount()).toContain('2');
+    // Rango que no alcanza a ningún SKU del fixture → 0 y nota explicativa.
+    await user.clear(screen.getByLabelText('SKU desde'));
+    await user.clear(screen.getByLabelText('SKU hasta'));
+    await user.type(screen.getByLabelText('SKU desde'), '80');
+    await user.type(screen.getByLabelText('SKU hasta'), '90');
+    expect(liveCount()).toContain('0');
+    expect(screen.getByText(/Ningún producto cumple la combinación de filtros/i)).toBeTruthy();
+  });
+
+  it('§7 · el contador coincide EXACTAMENTE con las filas del modelo generado (una sola fuente)', async () => {
+    const user = userEvent.setup();
+    render(<PriceListView />);
+    await user.type(screen.getByLabelText('SKU desde'), '1');
+    await user.type(screen.getByLabelText('SKU hasta'), '3');
+    await user.click(screen.getByTestId('opclass-venta'));
+    await user.click(screen.getByTestId('price-status-without_price'));
+    const contador = Number((liveCount().match(/^(\d+)/) ?? [])[1]);
+    expect(contador).toBeGreaterThan(0);
+    await user.click(screen.getByRole('button', { name: /Generar vista previa/i }));
+    expect(pdfMock.renderPriceListPdf).toHaveBeenCalledTimes(1);
+    const model = (pdfMock.renderPriceListPdf.mock.calls as unknown[][])[0][0] as PriceListModel;
+    expect(model.meta.totalProducts).toBe(contador);
+    expect(model.rows).toHaveLength(contador);
+  });
+
+  it('§5/§10 · el modelo generado representa «Sin precio» para NULL y cero (esquema real)', async () => {
+    const user = userEvent.setup();
+    render(<PriceListView />);
+    // El fixture: id 2 (Venta, price NULL) e id 3 (Insumo, price 0) — ambos
+    // son «Sin precio» bajo el criterio REAL (price NOT NULL DEFAULT 0).
+    await user.click(screen.getByRole('button', { name: /Generar vista previa/i }));
+    const model = (pdfMock.renderPriceListPdf.mock.calls as unknown[][])[0][0] as PriceListModel;
+    const rowSinPrecio = model.rows.find((r) => r.id === '2');
+    const rowCero = model.rows.find((r) => r.id === '3');
+    expect(rowSinPrecio?.priceLabel).toBe('Sin precio');
+    expect(rowCero?.priceLabel).toBe('Sin precio');
+    // Y un precio positivo se numeriza con su moneda.
+    const rowPrecio = model.rows.find((r) => r.id === '1');
+    expect(rowPrecio?.priceLabel).toContain('CUP');
+    expect(rowPrecio?.priceLabel).not.toBe('Sin precio');
   });
 
   it('cambio de moneda por fila no afectado: el filtro no mezcla monedas (§8.18)', async () => {

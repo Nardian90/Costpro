@@ -53,11 +53,20 @@ export function isNeutralOperationalFilter(f: OperationalPriceFilter): boolean {
   return f.classes.length === 0 && f.priceStatus === 'all';
 }
 
-/** ¿El elemento tiene al menos un precio válido configurado en su contexto (misión §4)? */
+/** ¿El elemento tiene al menos un precio válido configurado en su contexto (misión §4)?
+ *
+ * HALLAZGO VERIFICADO EN POSTGRESQL REAL (CP-OPERATIONAL-CLASS-002, esquema
+ * vigente reproducible): `products.price` es `numeric NOT NULL DEFAULT 0`.
+ * El sistema NO representa el «precio no configurado» con NULL: lo representa
+ * con 0 (el propio RPC is_complete usa `price > 0` como «completo»). Por
+ * tanto el criterio honesto y FUNCIONAL es:
+ *   · Con precio  → price > 0 (precio configurado y efectivo).
+ *   · Sin precio  → price NULL o price ≤ 0 (pendiente de configuración).
+ * El null-check se conserva por futuro-proofing: si la columna llegara a ser
+ * nullable, NULL seguirá contando como Sin precio.
+ */
 export function hasConfiguredPrice(item: { price: number | null | undefined }): boolean {
-  // El precio EXISTE cuando la columna no es NULL/undefined. Un 0 es un
-  // precio legítimo configurado (misión §4: cero ≠ no configurado).
-  return item.price !== null && item.price !== undefined;
+  return item.price !== null && item.price !== undefined && Number(item.price) > 0;
 }
 
 /**

@@ -46,7 +46,7 @@ const DATASET: PriceListSourceItem[] = [
   item({ id: '1', name: 'Refresco', operational_class: 'venta', price: 150 }),
   item({ id: '2', name: 'Refresco sin precio', operational_class: 'venta', price: null }),
   item({ id: '3', name: 'Detergente operativo', operational_class: 'insumo', price: 80 }),
-  item({ id: '4', name: 'Detergente a cero', operational_class: 'insumo', price: 0 }), // cero legítimo
+  item({ id: '4', name: 'Detergente a cero', operational_class: 'insumo', price: 0 }), // HALLAZGO: 0 = Sin precio (price NOT NULL DEFAULT 0)
   item({ id: '5', name: 'Refrigerador', operational_class: 'activo_fijo', price: 42000 }),
   item({ id: '6', name: 'Destornillador', operational_class: 'util_herramienta', price: 250, price_currency: 'USD' }),
   item({ id: '7', name: 'Histórico sin clasificar', operational_class: null, price: 300 }),
@@ -55,18 +55,21 @@ const DATASET: PriceListSourceItem[] = [
 
 describe('CP-OPERATIONAL-CLASS-001 · criterio de precio REAL (§4)', () => {
 
-  it('§4/§8.12 · price NULL = Sin precio; price 0 = CON precio (cero legítimo)', () => {
+  it('§4/§8.12 · criterio REAL verificado en PostgreSQL: price NOT NULL DEFAULT 0 → 0 = Sin precio', () => {
     expect(hasConfiguredPrice({ price: null })).toBe(false);
     expect(hasConfiguredPrice({ price: undefined })).toBe(false);
-    expect(hasConfiguredPrice({ price: 0 })).toBe(true);   // ← cero configurado
+    expect(hasConfiguredPrice({ price: 0 })).toBe(false);  // ← sin configurar en el esquema vigente
+    expect(hasConfiguredPrice({ price: 0.0001 })).toBe(true);
     expect(hasConfiguredPrice({ price: 150 })).toBe(true);
   });
 
-  it('§8.13 · «Con precio» excluye los sin precio; «Sin precio» muestra solo los pendientes', () => {
+  it('§8.13 · «Con precio» excluye los sin precio; «Sin precio» muestra los pendientes (NULL y 0)', () => {
     const withP = applyOperationalPriceFilter(DATASET, { ...NEUTRAL_OPERATIONAL_FILTER, priceStatus: 'with_price' });
-    expect(withP.map((i) => i.id).sort()).toEqual(['1', '3', '4', '5', '6', '7']);
+    expect(withP.map((i) => i.id).sort()).toEqual(['1', '3', '5', '6', '7']);
     const withoutP = applyOperationalPriceFilter(DATASET, { ...NEUTRAL_OPERATIONAL_FILTER, priceStatus: 'without_price' });
-    expect(withoutP.map((i) => i.id).sort()).toEqual(['2', '8']);
+    // HALLAZGO CP-OPERATIONAL-CLASS-002: price es NOT NULL DEFAULT 0 — el
+    // sistema representa «sin configurar» con 0; NULL es futuro-proofing.
+    expect(withoutP.map((i) => i.id).sort()).toEqual(['2', '4', '8']);
   });
 
   it('§8.18 · el filtro no mezcla monedas: cada fila conserva la suya', () => {
@@ -122,8 +125,8 @@ describe('CP-OPERATIONAL-CLASS-001 · combinación de filtros (§5/§8.14) — C
 
   it('Caso B · Insumos CON precio', () => {
     const r = applyOperationalPriceFilter(DATASET, { classes: ['insumo'], priceStatus: 'with_price' });
-    // El cero legítimo (id 4) ES un precio configurado → incluido.
-    expect(r.map((i) => i.id)).toEqual(['3', '4']);
+    // Con el criterio real (price>0), el insumo a 0 queda SIN precio.
+    expect(r.map((i) => i.id)).toEqual(['3']);
   });
 
   it('Caso C · Activos Fijos independientemente del precio', () => {

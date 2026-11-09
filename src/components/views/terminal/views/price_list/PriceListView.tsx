@@ -33,9 +33,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePriceListProducts, fetchPriceListStoreInfo } from '@/hooks/api/usePriceListProducts';
 import { parseSkuRange } from '@/lib/price-list/sku-order';
-import { buildPriceListModel, type PriceListModel, type PriceListStoreInfo } from '@/lib/price-list/model';
+import { buildPriceListModel, selectPriceListRows, type PriceListModel, type PriceListStoreInfo } from '@/lib/price-list/model';
 import {
-  applyOperationalPriceFilter,
   isNeutralOperationalFilter,
   operationalFilterLabel,
   UNCLASSIFIED_FILTER,
@@ -93,17 +92,6 @@ export default function PriceListView() {
   }, []);
   const clearClassFilters = useCallback(() => setSelClasses([]), []);
 
-  // Contador EN VIVO (misión §5): dataset completo de la tienda con el
-  // criterio de inclusión vigente (stock>0, activo) + filtros operativos.
-  // Responde al instante, sin necesidad de generar la vista previa.
-  const liveCount = useMemo(
-    () => applyOperationalPriceFilter(
-      (productsQuery.data ?? []).filter((i) => i.is_active !== false && (i.stock_current ?? 0) > 0),
-      opFilter,
-    ).length,
-    [productsQuery.data, opFilter],
-  );
-
   // ── Estado de la vista previa ─────────────────────────────────────────────
   const [preview, setPreview] = useState<AppliedPreview | null>(null);
   const [loading, setLoading] = useState(false);
@@ -131,6 +119,17 @@ export default function PriceListView() {
   const rangeError = rangeInvalid ? rangeValidation.error : null;
   const range = rangeInvalid ? null : rangeValidation;
   const rangeActive = !!range && (range.from !== null || range.to !== null);
+
+  // Contador EN VIVO (CP-OPERATIONAL-CLASS-002 §7): usa el ÚNICO pipeline de
+  // selección del listado (selectPriceListRows) — stock/activo, filtros
+  // operativos Y rango SKU — garantizando que coincide EXACTAMENTE con las
+  // filas que produciría el modelo del documento para esta selección.
+  // Responde al instante, sin necesidad de generar la vista previa.
+  const liveCount = useMemo(
+    () => selectPriceListRows(productsQuery.data ?? [], range, opFilter).length,
+    [productsQuery.data, range, opFilter],
+  );
+
 
   // La vista previa queda DESACTUALIZADA si los filtros cambian tras generar
   // (incluye clasificación operativa y estado del precio).

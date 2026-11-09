@@ -1,10 +1,15 @@
 /**
- * create-product-operational-class.test.tsx — CP-OPERATIONAL-CLASS-001.
+ * create-product-operational-class.test.tsx — CP-OPERATIONAL-CLASS-001/002.
  *
- * Misión §2: los NUEVOS registros creados desde la interfaz requieren una
- * clasificación operativa antes de confirmar el guardado (y viajan en el
- * payload de creación). Las importaciones/procesos automáticos NO se
- * bloquean (quedan «Sin clasificar»).
+ * Misión §2 (obligatoria en el alta desde la interfaz) y §6/§10 de la
+ * remediación (CP-OPERATIONAL-CLASS-002): la clasificación se persiste en la
+ * MISMA TRANSACCIÓN que crea/activa la fila local — TRES caminos:
+ *   1. Alta local: insert directo (operational_class en el payload).
+ *   2. Alta con tienda conectada: create_master_product con p_operational_class.
+ *   3. Activación de maestro existente: activate_master_product con
+ *      p_operational_class (objeto { masterId, operationalClass }).
+ * Un fallo del RPC NO genera confirmación de éxito (sin toast.success) y no
+ * existen escrituras secundarias (ni console.error ocultos).
  */
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -34,8 +39,15 @@ beforeAll(() => {
 });
 
 const mocks = vi.hoisted(() => ({
-  createMutateAsync: vi.fn(async (..._args: unknown[]) => ({ id: 'p-new-1' })),
+  createLocalMutateAsync: vi.fn(async (..._args: unknown[]) => ({ id: 'p-local-1' })),
+  createMasterMutateAsync: vi.fn(async (..._args: unknown[]) => ({
+    status: 'success', master_product_id: 'm-1', product_id: 'p-master-1', sku: 'REF-01',
+  })),
+  activateMasterMutateAsync: vi.fn(async (..._args: unknown[]) => ({
+    status: 'success', already_active: false, product_id: 'p-act-1', master_product_id: 'm-1',
+  })),
   findMasterBySku: vi.fn(async () => null),
+  connected: false,
 }));
 
 vi.mock('@/store', () => ({
@@ -60,15 +72,16 @@ vi.mock('@/store', () => ({
 }));
 
 vi.mock('@/hooks/api/useProducts', () => ({
-  useCreateProduct: () => ({ mutateAsync: mocks.createMutateAsync, isPending: false }),
+  useCreateProduct: () => ({ mutateAsync: mocks.createLocalMutateAsync, isPending: false }),
   useAddVariant: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 
 vi.mock('@/hooks/api/useMasterCatalog', () => ({
   findMasterBySku: mocks.findMasterBySku,
-  useActivateMasterProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
-  useCatalogStoreLink: () => ({ data: { status: 'disconnected' }, isLoading: false }),
-  useCreateMasterProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useActivateMasterProduct: () => ({ mutateAsync: mocks.activateMasterMutateAsync, isPending: false }),
+  // `connected` controla el camino del alta (local vs maestro) por test.
+  useCatalogStoreLink: () => ({ data: { status: mocks.connected ? 'connected' : 'disconnected' }, isLoading: false }),
+  useCreateMasterProduct: () => ({ mutateAsync: mocks.createMasterMutateAsync, isPending: false }),
 }));
 
 const fromMock = vi.fn((_table: string) => {
@@ -107,9 +120,21 @@ async function fillRequiredFields(user: ReturnType<typeof userEvent.setup>) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.connected = false;
+  // clearAllMocks limpia el historial pero NO las implementaciones fijadas
+  // con mockResolvedValue en tests previos: se restablecen las base aquí
+  // para que cada test parta del estado neutro.
+  mocks.findMasterBySku.mockImplementation(async () => null);
+  mocks.createLocalMutateAsync.mockImplementation(async () => ({ id: 'p-local-1' }));
+  mocks.createMasterMutateAsync.mockImplementation(async () => ({
+    status: 'success', master_product_id: 'm-1', product_id: 'p-master-1', sku: 'REF-01',
+  }));
+  mocks.activateMasterMutateAsync.mockImplementation(async () => ({
+    status: 'success', already_active: false, product_id: 'p-act-1', master_product_id: 'm-1',
+  }));
 });
 
-describe('CP-OPERATIONAL-CLASS-001 · alta de producto con clasificación obligatoria', () => {
+describe('CP-OPERATIONAL-CLASS-001/002 · alta de producto con clasificación obligatoria', () => {
 
   it('el selector existe con las 4 opciones y arranca «Sin clasificar»', () => {
     render(<CreateProductModal />);
@@ -128,20 +153,82 @@ describe('CP-OPERATIONAL-CLASS-001 · alta de producto con clasificación obliga
     expect(toast.error).toHaveBeenCalledWith(
       'La clasificación operativa es obligatoria: elige Venta, Insumo, Activo Fijo o Útil/Herramienta.',
     );
-    expect(mocks.createMutateAsync).not.toHaveBeenCalled();
+    expect(mocks.createLocalMutateAsync).not.toHaveBeenCalled();
+    expect(mocks.createMasterMutateAsync).not.toHaveBeenCalled();
   });
 
-  it('§2 · CON clasificación el guardado procede y la clasificación viaja en el payload', async () => {
+  it('§6 · CAMINO 1 (alta local): la clasificación viaja en el INSERT (misma escritura)', async () => {
     const user = userEvent.setup();
     render(<CreateProductModal />);
     await fillRequiredFields(user);
     await user.click(screen.getByTestId('operational-class-venta'));
-    expect(screen.getByTestId('operational-class-current').textContent).toContain('Venta');
     await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
-    expect(mocks.createMutateAsync).toHaveBeenCalledTimes(1);
-    const payload = (mocks.createMutateAsync.mock.calls as unknown[][])[0][0] as Record<string, unknown>;
+    expect(mocks.createLocalMutateAsync).toHaveBeenCalledTimes(1);
+    const payload = (mocks.createLocalMutateAsync.mock.calls as unknown[][])[0][0] as Record<string, unknown>;
     expect(payload.operational_class).toBe('venta');
-    expect(payload.is_service).toBe(false);
+    expect(mocks.createMasterMutateAsync).not.toHaveBeenCalled();
+  });
+
+  it('§6 · CAMINO 2 (tienda conectada): create_master_product recibe p_operational_class — sin UPDATE secundario', async () => {
+    mocks.connected = true;
+    const user = userEvent.setup();
+    render(<CreateProductModal />);
+    await fillRequiredFields(user);
+    await user.click(screen.getByTestId('operational-class-insumo'));
+    await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
+    expect(mocks.createMasterMutateAsync).toHaveBeenCalledTimes(1);
+    const payload = (mocks.createMasterMutateAsync.mock.calls as unknown[][])[0][0] as Record<string, unknown>;
+    expect(payload.operational_class).toBe('insumo');
+    // La rama local NO se usa y no existe ninguna escritura secundaria.
+    expect(mocks.createLocalMutateAsync).not.toHaveBeenCalled();
+    const { toast } = await import('sonner');
+    expect(toast.warning).not.toHaveBeenCalled();
+    expect(toast.success).toHaveBeenCalled();
+  });
+
+  it('§6 · CAMINO 3 (activación de maestro): activate_master_product recibe { masterId, operationalClass }', async () => {
+    mocks.findMasterBySku.mockResolvedValue({ id: 'm-1', sku: 'REF-01', name: 'Equipo de refrigeración', activated: false } as unknown as null);
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const user = userEvent.setup();
+    render(<CreateProductModal />);
+    await fillRequiredFields(user);
+    await user.click(screen.getByTestId('operational-class-activo_fijo'));
+    await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
+    expect(mocks.activateMasterMutateAsync).toHaveBeenCalledTimes(1);
+    const input = (mocks.activateMasterMutateAsync.mock.calls as unknown[][])[0][0] as Record<string, unknown>;
+    expect(input.masterId).toBe('m-1');
+    expect(input.operationalClass).toBe('activo_fijo');
+    expect(mocks.createLocalMutateAsync).not.toHaveBeenCalled();
+    expect(confirmSpy).toHaveBeenCalled();
+  });
+
+  it('§10 · un FALLO del RPC no genera confirmación de éxito (sin éxito falso)', async () => {
+    mocks.createMasterMutateAsync.mockRejectedValueOnce(new Error('ERR_MASTER_SKU_EXISTS: m-0'));
+    mocks.connected = true;
+    const user = userEvent.setup();
+    render(<CreateProductModal />);
+    await fillRequiredFields(user);
+    await user.click(screen.getByTestId('operational-class-venta'));
+    await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
+    const { toast } = await import('sonner');
+    // El catch del modal corre en microtasks posteriores al click; se espera
+    // el ciclo antes de afirmar. Éxito jamás confirmado ante un fallo.
+    await new Promise((r) => setTimeout(r, 150));
+    expect(toast.error).toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('§10 · un FALLO del alta local tampoco confirma éxito', async () => {
+    mocks.createLocalMutateAsync.mockRejectedValueOnce(new Error('network down'));
+    const user = userEvent.setup();
+    render(<CreateProductModal />);
+    await fillRequiredFields(user);
+    await user.click(screen.getByTestId('operational-class-venta'));
+    await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
+    const { toast } = await import('sonner');
+    await new Promise((r) => setTimeout(r, 150));
+    expect(toast.error).toHaveBeenCalled();
+    expect(toast.success).not.toHaveBeenCalled();
   });
 
   it('cada opción del selector queda marcada al elegirla (Activo Fijo como ejemplo de no-venta)', async () => {

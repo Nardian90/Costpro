@@ -237,19 +237,14 @@ export const CreateProductModal = () => {
           'Cancelar: no se creará nada.'
         );
         if (!aceptar) return;
-        const activation = await activateMaster.mutateAsync(master.id);
-        // CP-OPERATIONAL-CLASS-001: la activación crea la fila local de esta
-        // tienda; la clasificación elegida en esta pantalla se aplica a ESA
-        // fila (decisión explícita del usuario, nunca automática).
-        if (activation?.product_id) {
-          const { error: classErr } = await supabase
-            .from('products')
-            .update({ operational_class: form.operational_class })
-            .eq('id', activation.product_id);
-          if (classErr) {
-            console.error('[CP-OPERATIONAL-CLASS] update tras activate_master_product:', classErr);
-          }
-        }
+        // CP-OPERATIONAL-CLASS-002 §6: la clasificación elegida viaja EN el
+        // RPC (p_operational_class): se persiste en la MISMA TRANSACCIÓN que
+        // crea la fila local (y corrige el caso already_active). Un fallo del
+        // RPC cancela TODO y llega al catch general — sin éxito falso.
+        await activateMaster.mutateAsync({
+          masterId: master.id,
+          operationalClass: form.operational_class,
+        });
         toast.success(`Producto del catálogo activado en esta tienda (existencia 0, sin movimientos).`);
         handleClose();
         return;
@@ -271,6 +266,13 @@ export const CreateProductModal = () => {
           barcode_type: form.barcode ? 'CODE128' : null,
           unit_of_measure: form.unit_of_measure || 'unidad',
           is_service: form.is_service === true,
+          // CP-OPERATIONAL-CLASS-002 §6: la clasificación se persiste EN LA
+          // MISMA TRANSACCIÓN del RPC (p_operational_class). Éxito del RPC ⇒
+          // fila local creada CON clasificación; fallo ⇒ nada se crea y el
+          // error llega al toast general (sin éxito falso ni warnings
+          // contradictorios). Recuperación siempre disponible desde
+          // «Información del producto».
+          operational_class: form.operational_class,
           local: {
             price: form.price || 0,
             price_currency: form.price_currency || 'CUP',
@@ -281,19 +283,6 @@ export const CreateProductModal = () => {
           },
         });
         productId = res.product_id;
-        // CP-OPERATIONAL-CLASS-001: la clasificación operativa es un dato por
-        // tienda (products.operational_class) y el RPC del maestro gestiona la
-        // identidad — se fija sobre la fila local recién creada con los
-        // permisos RLS del usuario (best-effort: si falla, el registro queda
-        // «Sin clasificar» y se corrige desde «Información del producto»).
-        const { error: classErr } = await supabase
-          .from('products')
-          .update({ operational_class: form.operational_class })
-          .eq('id', productId);
-        if (classErr) {
-          console.error('[CP-OPERATIONAL-CLASS] update tras create_master_product:', classErr);
-          toast.warning('Producto creado, pero no se pudo asignar la clasificación operativa. Fíjala desde «Información del producto».');
-        }
       } else {
         const result = await createProductMutation.mutateAsync({
           ...form,

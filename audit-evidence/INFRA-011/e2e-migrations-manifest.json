@@ -165,7 +165,7 @@
   "total_considerados": 554,
   "total_incluidos": 139,
   "total_excluidos": 415,
-  "digest": "23263ed89d7af514d77aa8d7ebea6bfe33f302bb06b195e93f8d757a41996bac",
+  "digest": "d954df318efdb53b70053376f52c52ffd0804723f6a5bcf56cd37acde58bcd3f",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5368,14 +5368,14 @@
     },
     {
       "nombre": "20261108150000_cp_operational_classification.sql",
-      "bytes": 17420,
-      "sha256_original": "16a7cd677d54b1fdb404568db8810e98d9983d4474fa462d4f43c4d67addd8ca",
+      "bytes": 40898,
+      "sha256_original": "d52e88d8a2dc952d44b93ccceb01a453990d449478e70c0f45bfd1dc96ebb368",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261108",
       "observaciones": [],
       "posicion": 136,
-      "sha256_generado": "16a7cd677d54b1fdb404568db8810e98d9983d4474fa462d4f43c4d67addd8ca"
+      "sha256_generado": "d52e88d8a2dc952d44b93ccceb01a453990d449478e70c0f45bfd1dc96ebb368"
     },
     {
       "nombre": "20261108200000_cp_doc_sc006_store_code.sql",

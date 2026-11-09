@@ -228,7 +228,7 @@ describe('CP-SALES-PRICE-LIST-001 · Inventario y precios en el modelo', () => {
     expect(model.meta.totalProducts).toBe(0);
   });
 
-  it('precios: CUP y USD etiquetados por fila SIN conversión; precio ausente → 0 con la moneda por defecto', () => {
+  it('precios: CUP y USD etiquetados por fila SIN conversión; precio ausente/cero → «Sin precio» (CP-OPERATIONAL-CLASS-002)', () => {
     const model = buildPriceListModel({
       items: [
         mkItem({ id: 'cup', sku: '1', price: 15300, price_currency: 'CUP' }),
@@ -245,7 +245,10 @@ describe('CP-SALES-PRICE-LIST-001 · Inventario y precios en el modelo', () => {
     expect(byId.usd).toBe(formatLabeledCurrency(22.5, 'USD'));
     // price_currency NOT NULL DEFAULT 'CUP' en el servidor — nunca etiqueta inventada.
     expect(byId.default).toBe(formatLabeledCurrency(38.5, 'CUP'));
-    expect(byId['sin-precio']).toBe(formatLabeledCurrency(0, 'CUP'));
+    // CP-OPERATIONAL-CLASS-002 (hallazgo PostgreSQL real: price NOT NULL
+    // DEFAULT 0): un listado jamás numeriza un artículo sin precio — jamás
+    // «$ 0.00» falso.
+    expect(byId['sin-precio']).toBe('Sin precio');
     expect(model.meta.currencies).toEqual(['CUP', 'USD']);
   });
 
