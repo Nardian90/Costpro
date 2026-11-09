@@ -22,6 +22,16 @@ import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { drawRes11Header } from '@/lib/legal/res11-shared';
 import { resolveScLogoDataUrl } from '@/lib/legal/sc-logo';
 
+
+/** Texto EFECTIVAMENTE dibujado: une los operandos de texto del stream
+ * (un título que envuelve a dos líneas sigue siendo un único rótulo). */
+function pdfDrawnText(bytes: ArrayBuffer): string {
+  const raw = decodePdf(bytes);
+  return (raw.match(/\(((?:\\.|[^\\()])*)\)\s*T[jJ]/g) ?? [])
+    .map((m) => m.slice(1, m.lastIndexOf(')')))
+    .join(' ');
+}
+
 function decodePdf(bytes: ArrayBuffer): string {
   return new TextDecoder('latin1').decode(bytes);
 }
@@ -170,7 +180,7 @@ describe('CP-DOC-SC-HEADER-UX-005 · Encabezado institucional de los modelos SC'
     expect(text).toContain('FIRMA DEL TRANSPORTADOR');
     expect(text).toContain('FIRMA DEL EMPLEADO QUE RECEPCIONA');
     expect(text).toContain('FIRMA DEL EMPLEADO QUE CONTABILIZA');
-    expect(text).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');
+    expect(pdfDrawnText(doc.output('arraybuffer') as ArrayBuffer)).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');
   });
 
   it('plantilla reutilizable: drawRes11Header adapta el ancho a la orientación (apaisado)', async () => {
