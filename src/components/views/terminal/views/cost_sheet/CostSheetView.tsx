@@ -33,6 +33,7 @@ import CostSheetSignatureEditor from './CostSheetSignatureEditor';
 import CostSheetAuditView from './CostSheetAuditView';
 import CostSheetSummary from './CostSheetSummary';
 import CostSheetTemplateExplorer from './CostSheetTemplateExplorer';
+import { CostSheetSaveAsTemplateDialog } from './CostSheetSaveAsTemplateDialog';
 import CostSheetMassiveGenerator from './CostSheetMassiveGenerator';
 import CostSheetQuickMode from './CostSheetQuickMode';
 import CostSheetPreview from './CostSheetPreview';
@@ -438,6 +439,9 @@ const CostSheetView = () => {
     handleSetActiveSection(previousSection || 'main');
   }, [previousSection, handleSetActiveSection]);
 
+  // CP-PLANTILLAS-FASE2 §4: diálogo «Guardar como Plantilla» del editor.
+  const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = React.useState(false);
+
   const { expandAllSections, toggleProblems } = expertState;
 
   useExpertModeKeyboard({
@@ -516,6 +520,9 @@ const CostSheetView = () => {
               onExportExcel: handleExportExcel,
               onExportPdf: () => setIsExportModalOpen(true),
               onExportJson: handleExportJSON,
+              // CP-PLANTILLAS-FASE2 §4: modelo reutilizable en el Explorador —
+              // tercera operación, distinta de Guardar Ficha y Exportar JSON.
+              onSaveAsTemplate: () => setIsSaveTemplateDialogOpen(true),
               isSaving: isSavingCloud,
             }}
           />
@@ -795,6 +802,13 @@ const CostSheetView = () => {
         onClose={() => setIsExportModalOpen(false)}
         onExport={handleExportPDF}
         annexes={(data?.annexes || []).map((a: CostSheetAnnex) => ({ id: a.id, title: a.title }))}
+      />
+      {/* CP-PLANTILLAS-FASE2 §4: Guardar como Plantilla (privada en COSTPRO o
+          pública para admins) — diálogo unificado con el Explorador. */}
+      <CostSheetSaveAsTemplateDialog
+        open={isSaveTemplateDialogOpen}
+        onOpenChange={setIsSaveTemplateDialogOpen}
+        defaultDestination="private"
       />
       <PdfExportOverlay isVisible={isPdfGenerating} />
       <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} action="exportar" />

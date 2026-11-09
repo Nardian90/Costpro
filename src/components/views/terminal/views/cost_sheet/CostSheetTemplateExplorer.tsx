@@ -2,7 +2,7 @@
 import { isAdminLevel } from '@/lib/roles';
 import { logger } from '@/lib/logger';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   Search,
@@ -21,7 +21,13 @@ import {
   HardDrive,
   Store as StoreIcon,
   Plus,
-  Info
+  Cloud,
+  Eye,
+  Pencil,
+  FilePlus2,
+  CloudUpload,
+  CloudOff,
+  LayoutTemplate,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CostSheetData } from '@/types/cost-sheet';
@@ -31,7 +37,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { useCostSheetStore, useAuthStore, useUIStore } from '@/store';
 import { useScenarioStore } from '@/store/scenario-store';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabaseClient';
+// CP-PLANTILLAS-FASE2: todo el acceso a cost_sheet_templates pasa por el servicio.
+import {
+  listPrivateTemplates,
+  listPublicTemplates,
+  createPublicTemplate,
+  updatePrivateTemplate,
+  deletePrivateTemplate,
+  publishTemplate,
+  unpublishTemplate,
+  updatePublicTemplate,
+  changePublicTemplateStore,
+  deletePublicTemplate,
+  duplicateTemplate,
+  type CostSheetTemplateRecord,
+} from '@/services/cost-sheet-template-service';
 // F3-T01: store-service.ts eliminado — usamos storeApiClient (cliente activo).
 import { storeApiClient } from '@/services/store-api-client';
 import { Store } from '@/types';
@@ -62,7 +82,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Import Templates
+// Import Templates (SISTEMA — 13 plantillas oficiales, NO modificar: orden FASE 2 §3A)
 import reinicioTemplate from '@/lib/data/costpro-reinicio';
 import exampleTemplate from '@/lib/data/costpro-ejemplo';
 import juiceTemplate from '@/lib/data/template-juice';
@@ -81,32 +101,59 @@ import { useTranslations } from 'next-intl';
 import { ConfirmDialog } from './ConfirmDialog';
 import { UnifiedTabs } from './UnifiedTabs';
 import { useDebounce } from '@/hooks/ui/useDebounce';
+import { CostSheetSaveAsTemplateDialog } from './CostSheetSaveAsTemplateDialog';
+
 type TemplateCategory = 'system' | 'private' | 'public';
+/** Origen de la plantilla dentro de la pestaña Privadas. */
+type TemplateOrigin = 'system' | 'server' | 'local';
 
 interface Template {
   id: string;
   name: string;
-  description?: string;
-  category?: string;
+  description?: string | null;
+  category?: string | null;
   type: TemplateCategory;
   data: CostSheetData;
-  updated_at?: string;
+  updated_at?: string | null;
   store_id?: string | null;
+  /** CP-PLANTILLAS-FASE2: server (Supabase) | local (archivo JSON) | system (código). */
+  origin?: TemplateOrigin;
+}
+
+/** Convierte un registro del servicio a la forma de UI del Explorador. */
+function recordToTemplate(t: CostSheetTemplateRecord): Template {
+  return {
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    category: t.category,
+    type: t.type,
+    data: t.data,
+    updated_at: t.updated_at ?? t.created_at,
+    store_id: t.store_id,
+    origin: 'server',
+  };
 }
 
 export const CostSheetTemplateExplorer: React.FC = () => {
   const prefersReducedMotion = useReducedMotion();
   const [activeCategory, setActiveCategory] = useState<TemplateCategory>('system');
   const [searchQuery, setSearchQuery] = useState('');
+  // CP-PLANTILLAS-FASE2 §3B.1: plantillas privadas del SERVIDOR (Supabase).
+  const [serverPrivateTemplates, setServerPrivateTemplates] = useState<Template[]>([]);
+  const [isLoadingPrivate, setIsLoadingPrivate] = useState(false);
+  const [privateError, setPrivateError] = useState<string | null>(null);
+  // §3C: plantillas públicas — sin filtro cliente de tienda (la RLS decide).
   const [publicTemplates, setPublicTemplates] = useState<Template[]>([]);
-  const [privateTemplates, setPrivateTemplates] = useState<Template[]>([]);
+  const [isLoadingPublic, setIsLoadingPublic] = useState(false);
+  const [publicError, setPublicError] = useState<string | null>(null);
+  // §3B.2: carpeta local (File System Access API) — modalidad secundaria conservada.
+  const [localTemplates, setLocalTemplates] = useState<Template[]>([]);
   const [localDirectory, setLocalDirectory] = useState<FileSystemDirectoryHandle | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [stores, setStores] = useState<Store[]>([]);
-  const [isPublishDialogOpen, setIsPublishDialogOpen] = useState(false);
-  // G2-fix: Reemplazar confirm() nativo con diálogo accesible.
-  // El confirm() nativo bloquea el hilo, no es estilizable, no atrapa foco,
-  // no respeta dark mode. Usamos state + BaseModal en su lugar.
+  // Operación en curso (id de plantilla o etiqueta) para deshabilitar duplicados (§7D).
+  const [pendingOpId, setPendingOpId] = useState<string | null>(null);
+  // G2-fix: confirm() nativo reemplazado por diálogo accesible.
   const [confirmDialog, setConfirmDialog] = useState<{
     title: string;
     message: string;
@@ -114,20 +161,43 @@ export const CostSheetTemplateExplorer: React.FC = () => {
     variant?: 'default' | 'destructive';
   } | null>(null);
 
-  // Naming state for new templates
-  const [publishName, setPublishName] = useState('');
-  const [publishDescription, setPublishDescription] = useState('');
-  const [selectedTemplateToPublish, setSelectedTemplateToPublish] = useState<Template | null>(null);
-  const [selectedStoreId, setSelectedStoreId] = useState<string>('all');
+  // Diálogo «Guardar como Plantilla» (desde la pestaña Privadas / Públicas).
+  const [isSaveTemplateOpen, setIsSaveTemplateOpen] = useState(false);
+  const [saveTemplateDefaultDestination, setSaveTemplateDefaultDestination] = useState<'private' | 'public'>('private');
+
+  // Diálogo Renombrar / Editar descripción (plantillas privadas de servidor).
+  const [renameDialog, setRenameDialog] = useState<{
+    template: Template;
+    name: string;
+    description: string;
+  } | null>(null);
+
+  // Diálogo Publicar plantilla privada existente (UPDATE del mismo registro).
+  const [publishExistingDialog, setPublishExistingDialog] = useState<{
+    template: Template;
+    storeId: string;
+  } | null>(null);
+
+  // Diálogo Publicar plantilla local como NUEVA pública (INSERT — no hay registro previo).
+  const [publishLocalDialog, setPublishLocalDialog] = useState<{
+    template: Template;
+    name: string;
+    description: string;
+    storeId: string;
+  } | null>(null);
+
+  // Vista previa.
+  const [previewTemplate, setPreviewTemplate] = useState<Template | null>(null);
 
   const { data: currentSheetData, setSheet } = useCostSheetStore();
+  const setActiveTemplateId = useCostSheetStore((s) => s.setActiveTemplateId);
   const { setActiveCostSection } = useUIStore();
   const user = useAuthStore(state => state.user);
   // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
   const isAdmin = isAdminLevel(user?.role);
 
-  // System Templates
-  const systemTemplates: Template[] = [
+  // System Templates (13 — inmutables, viven en el código: orden §3A)
+  const systemTemplates: Template[] = useMemo(() => [
     {
       id: 'sys-reinicio',
       name: 'Nueva Ficha',
@@ -232,50 +302,45 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       type: 'system',
       data: exampleTemplate
     }
-  ];
+  ], []);
 
-  const fetchPublicTemplates = useCallback(async () => {
-    setIsLoading(true);
+  // ── Carga: privadas del servidor (§3B.1) ────────────────────────────
+  const fetchServerPrivateTemplates = useCallback(async () => {
+    setIsLoadingPrivate(true);
+    setPrivateError(null);
     try {
-      let query = supabase
-        .from('cost_sheet_templates')
-        .select('*')
-        .eq('type', 'public');
-
-      // Filtrado según requerimiento: null (para todos) o la tienda activa del usuario
-      if (user?.activeStoreId) {
-        query = query.or(`store_id.is.null,store_id.eq.${user.activeStoreId}`);
-      } else {
-        query = query.is('store_id', null);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      if (data) {
-        setPublicTemplates(data.map((t: Record<string, unknown>) => ({
-          id: String(t.id),
-          name: String(t.name),
-          description: t.description ? String(t.description) : undefined,
-          category: t.category ? String(t.category) : undefined,
-          type: 'public',
-          data: t.data as CostSheetData,
-          updated_at: t.created_at ? String(t.created_at) : undefined,
-          store_id: t.store_id ? String(t.store_id) : null
-        })));
-      }
+      const records = await listPrivateTemplates();
+      setServerPrivateTemplates(records.map(recordToTemplate));
     } catch (error) {
-      console.error('Error fetching public templates:', error);
+      logger.warn('COST_SHEET', 'TEMPLATE_PRIVATE_LIST_FAILED', { error: String(error) });
+      setPrivateError(
+        error instanceof Error ? error.message : 'No se pudieron cargar tus plantillas privadas',
+      );
     } finally {
-      setIsLoading(false);
+      setIsLoadingPrivate(false);
     }
-  }, [user?.activeStoreId]);
+  }, []);
+
+  // ── Carga: públicas (§3D — sin filtro cliente; la RLS refleja la autorización) ──
+  const fetchPublicTemplates = useCallback(async () => {
+    setIsLoadingPublic(true);
+    setPublicError(null);
+    try {
+      const records = await listPublicTemplates();
+      setPublicTemplates(records.map(recordToTemplate));
+    } catch (error) {
+      logger.warn('COST_SHEET', 'TEMPLATE_PUBLIC_LIST_FAILED', { error: String(error) });
+      setPublicError(
+        error instanceof Error ? error.message : 'No se pudieron cargar las plantillas públicas',
+      );
+    } finally {
+      setIsLoadingPublic(false);
+    }
+  }, []);
 
   const fetchStores = useCallback(async () => {
     try {
       // F3-T01: usar storeApiClient.fetchStores() (mismo cliente que usa useStores).
-      // Antes usaba storeService.getStores() que estaba deprecado y devolvía
-      // solo tiendas activas sin respetar RLS del usuario autenticado.
       const data = await storeApiClient.fetchStores();
       setStores(data);
     } catch (error) {
@@ -284,14 +349,18 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (activeCategory === 'private') {
+      fetchServerPrivateTemplates();
+    }
     if (activeCategory === 'public') {
       fetchPublicTemplates();
     }
     if (isAdmin) {
       fetchStores();
     }
-  }, [activeCategory, fetchPublicTemplates, isAdmin, fetchStores]);
+  }, [activeCategory, fetchServerPrivateTemplates, fetchPublicTemplates, isAdmin, fetchStores]);
 
+  // ── Carpeta local (§3B.2 — conservado) ──────────────────────────────
   const handleSelectDirectory = async () => {
     try {
       const handle = await ((window as unknown) as Window & { showDirectoryPicker: () => Promise<FileSystemDirectoryHandle> }).showDirectoryPicker();
@@ -306,7 +375,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   };
 
   const loadPrivateTemplates = async (directoryHandle: FileSystemDirectoryHandle) => {
-    setIsLoading(true);
+    setIsLoadingPrivate(true);
     try {
       const templates: Template[] = [];
       for await (const entry of ((directoryHandle as unknown) as { values(): AsyncIterableIterator<FileSystemDirectoryHandle | FileSystemFileHandle> }).values()) {
@@ -317,10 +386,11 @@ export const CostSheetTemplateExplorer: React.FC = () => {
             const data = JSON.parse(text);
             if (data.sections && data.annexes) {
               templates.push({
-                id: entry.name,
+                id: `local:${entry.name}`,
                 name: data.name || entry.name.replace('.json', ''),
                 description: data.metadata?.description || 'Plantilla guardada localmente',
                 type: 'private',
+                origin: 'local',
                 data: data,
                 updated_at: new Date(file.lastModified).toISOString()
               });
@@ -330,234 +400,366 @@ export const CostSheetTemplateExplorer: React.FC = () => {
           }
         }
       }
-      setPrivateTemplates(templates);
+      setLocalTemplates(templates);
     } catch (error) {
       console.error('Error loading private templates:', error);
       toast.error('Error al leer las plantillas locales');
     } finally {
-      setIsLoading(false);
+      setIsLoadingPrivate(false);
     }
   };
 
-  const handleImport = (template: Template) => {
+  // ── Cargar plantilla en el editor ──────────────────────────────────
+  const handleImport = (template: Template, opts?: { navigateTo?: 'structure' | 'main' }) => {
     // Clear scenario store to prevent stale data from previous template
     try {
       const scenarioStore = useScenarioStore.getState();
 
     } catch {}
     setSheet(template.data);
-    setActiveCostSection("expert-content");
-    toast.success(`Plantilla "${template.name}" cargada correctamente`);
+    // CP-PLANTILLAS-FASE2: vincular la plantilla privada de servidor de origen
+    // para poder ofrecer «Actualizar plantilla existente» en el editor (§4).
+    setActiveTemplateId(template.origin === 'server' && template.type === 'private' ? template.id : null);
+    setActiveCostSection(opts?.navigateTo === 'main' ? 'main' : 'expert-content');
+    toast.success(
+      opts?.navigateTo === 'main'
+        ? `Nueva ficha creada a partir de "${template.name}"`
+        : `Plantilla "${template.name}" cargada correctamente`,
+    );
   };
 
-  const handleOpenPublishDialog = (template: Template | null) => {
-    if (template) {
-      setSelectedTemplateToPublish(template);
-      setPublishName(template.name);
-      setPublishDescription(template.description || '');
-    } else {
-      // New template from current sheet
-      if (!currentSheetData) {
-          toast.error("No hay ninguna ficha activa para guardar como plantilla.");
-          return;
-      }
-      setSelectedTemplateToPublish(null);
-      setPublishName(currentSheetData.name || '');
-      setPublishDescription('');
-    }
-    setIsPublishDialogOpen(true);
-  };
-
-  const handlePublish = async () => {
-    if (!isAdmin) {
-      toast.error('Solo los administradores pueden publicar plantillas en Supabase');
+  // ── Renombrar / editar descripción (privada de servidor) ───────────
+  const handleRenamePrivate = async () => {
+    if (!renameDialog) return;
+    const { template, name, description } = renameDialog;
+    if (!name.trim()) {
+      toast.error('El nombre de la plantilla es obligatorio.');
       return;
     }
-
-    if (!publishName.trim()) {
-        toast.error("El nombre de la plantilla es obligatorio.");
-        return;
-    }
-
-    setIsLoading(true);
+    if (pendingOpId) return;
+    setPendingOpId(template.id);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
-        toast.error('Debes iniciar sesión para publicar plantillas');
-        return;
-      }
-
-      const templateData = selectedTemplateToPublish ? selectedTemplateToPublish.data : currentSheetData;
-
-      const { error } = await supabase
-        .from('cost_sheet_templates')
-        .insert({
-          name: publishName,
-          description: publishDescription,
-          category: (selectedTemplateToPublish?.category || 'General'),
-          data: templateData,
-          type: 'public',
-          created_by: userData.user.id,
-          store_id: selectedStoreId === 'all' ? null : selectedStoreId
-        });
-
-      if (error) throw error;
-
-      toast.success('Plantilla publicada con éxito');
-      setIsPublishDialogOpen(false);
-      setSelectedTemplateToPublish(null);
-      if (activeCategory === 'public') fetchPublicTemplates();
+      await updatePrivateTemplate(template.id, { name: name.trim(), description });
+      toast.success('Plantilla renombrada correctamente');
+      setRenameDialog(null);
+      fetchServerPrivateTemplates();
     } catch (error) {
-      console.error('Error publishing template:', error);
-      // P5-1: Toast con recovery action — el usuario puede reintentar la publicación.
-      toast.error('Error al publicar la plantilla', {
-        description: 'No se pudo guardar en Supabase. Verifica tu conexión.',
-        action: { label: 'Reintentar', onClick: () => handlePublish() },
+      toast.error(error instanceof Error ? error.message : 'Error al renombrar la plantilla', {
+        description: 'No se pudo actualizar en COSTPRO. Verifica tu conexión.',
+        action: { label: 'Reintentar', onClick: () => handleRenamePrivate() },
       });
     } finally {
-      setIsLoading(false);
+      setPendingOpId(null);
     }
   };
 
-
-  const handleUpdateTemplate = async (template: Template) => {
-    if (!isAdmin) return;
+  // ── Actualizar contenido con la ficha activa (privada de servidor) ─
+  const handleUpdatePrivateContent = (template: Template) => {
     if (!currentSheetData) {
-      toast.error("No hay ninguna ficha activa para guardar.");
+      toast.error('No hay ninguna ficha activa para guardar.');
       return;
     }
-
-    // G2-fix: confirm() nativo reemplazado por diálogo accesible.
     setConfirmDialog({
-      title: 'Sobrescribir plantilla',
+      title: 'Actualizar plantilla',
       message: `¿Estás seguro de que deseas sobrescribir la plantilla "${template.name}" con los datos actuales del editor?`,
       variant: 'default',
       onConfirm: () => {
         setConfirmDialog(null);
-        void doUpdateTemplate(template);
+        void doUpdatePrivateContent(template);
       },
     });
   };
 
-  const doUpdateTemplate = async (template: Template) => {
-    setIsLoading(true);
+  const doUpdatePrivateContent = async (template: Template) => {
+    if (!currentSheetData || pendingOpId) return;
+    setPendingOpId(template.id);
     try {
-      const { error } = await supabase
-        .from("cost_sheet_templates")
-        .update({ data: currentSheetData })
-        .eq("id", template.id);
-
-      if (error) throw error;
-      toast.success("Plantilla actualizada correctamente");
-      fetchPublicTemplates();
+      await updatePrivateTemplate(template.id, { data: currentSheetData });
+      toast.success(`Plantilla "${template.name}" actualizada correctamente`);
+      fetchServerPrivateTemplates();
     } catch (error) {
-      console.error("Error updating template:", error);
-      toast.error("Error al actualizar la plantilla", {
-        description: 'No se pudo sobrescribir en Supabase. Verifica tu conexión.',
-        action: { label: 'Reintentar', onClick: () => doUpdateTemplate(template) },
+      toast.error(error instanceof Error ? error.message : 'Error al actualizar la plantilla', {
+        description: 'No se pudo sobrescribir en COSTPRO. Verifica tu conexión.',
+        action: { label: 'Reintentar', onClick: () => doUpdatePrivateContent(template) },
       });
     } finally {
-      setIsLoading(false);
+      setPendingOpId(null);
     }
   };
 
-  const handleDeleteTemplate = async (template: Template) => {
-    if (!isAdmin) return;
-    // G2-fix: confirm() nativo reemplazado por diálogo accesible (destructive).
+  // ── Eliminar privada de servidor (confirmación §3B.1) ───────────────
+  const handleDeletePrivate = (template: Template) => {
     setConfirmDialog({
       title: 'Eliminar plantilla',
       message: `¿Estás seguro de que deseas eliminar la plantilla "${template.name}"? Esta acción no se puede deshacer.`,
       variant: 'destructive',
       onConfirm: () => {
         setConfirmDialog(null);
-        void doDeleteTemplate(template);
+        void doDeletePrivate(template);
       },
     });
   };
 
-  const doDeleteTemplate = async (template: Template) => {
-    setIsLoading(true);
+  const doDeletePrivate = async (template: Template) => {
+    if (pendingOpId) return;
+    setPendingOpId(template.id);
     try {
-      const { error } = await supabase
-        .from("cost_sheet_templates")
-        .delete()
-        .eq("id", template.id);
-
-      if (error) throw error;
-      toast.success("Plantilla eliminada correctamente");
-      fetchPublicTemplates();
+      await deletePrivateTemplate(template.id);
+      toast.success(`Plantilla "${template.name}" eliminada correctamente`);
+      // Si la ficha activa provenía de esta plantilla, desvincular.
+      if (useCostSheetStore.getState().activeTemplateId === template.id) {
+        setActiveTemplateId(null);
+      }
+      fetchServerPrivateTemplates();
     } catch (error) {
-      console.error("Error deleting template:", error);
-      toast.error("Error al eliminar la plantilla", {
-        description: 'No se pudo eliminar de Supabase. Verifica tu conexión.',
-        action: { label: 'Reintentar', onClick: () => doDeleteTemplate(template) },
+      toast.error(error instanceof Error ? error.message : 'Error al eliminar la plantilla', {
+        description: 'No se pudo eliminar de COSTPRO. Verifica tu conexión.',
+        action: { label: 'Reintentar', onClick: () => doDeletePrivate(template) },
       });
     } finally {
-      setIsLoading(false);
+      setPendingOpId(null);
     }
   };
 
-  const handleDuplicateTemplate = async (template: Template) => {
-    if (!isAdmin) return;
-    setIsLoading(true);
+  // ── Publicar plantilla privada EXISTENTE (UPDATE mismo registro, §3C) ──
+  const handlePublishExisting = async () => {
+    if (!publishExistingDialog) return;
+    if (!isAdmin) {
+      toast.error('Solo los administradores pueden publicar plantillas');
+      return;
+    }
+    const { template, storeId } = publishExistingDialog;
+    if (pendingOpId) return;
+    setPendingOpId(template.id);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const { error } = await supabase
-        .from("cost_sheet_templates")
-        .insert({
-          name: `\"${template.name}\" (Copia)`,
-          description: template.description,
-          category: template.category,
-          data: template.data,
-          type: "public",
-          created_by: userData.user?.id,
-          store_id: template.store_id
-        });
+      await publishTemplate(template.id, storeId === 'all' ? null : storeId);
+      toast.success(
+        storeId === 'all'
+          ? 'Plantilla publicada (visible para todas las tiendas)'
+          : 'Plantilla publicada (visible para la tienda seleccionada)',
+      );
+      setPublishExistingDialog(null);
+      fetchServerPrivateTemplates();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al publicar la plantilla', {
+        description: 'Verifica tu conexión y tus permisos.',
+        action: { label: 'Reintentar', onClick: () => handlePublishExisting() },
+      });
+    } finally {
+      setPendingOpId(null);
+    }
+  };
 
-      if (error) throw error;
-      toast.success("Plantilla duplicada correctamente");
+  // ── Publicar plantilla LOCAL como nueva pública (INSERT) ────────────
+  const handlePublishLocal = async () => {
+    if (!publishLocalDialog) return;
+    if (!isAdmin) {
+      toast.error('Solo los administradores pueden publicar plantillas en Supabase');
+      return;
+    }
+    const { template, name, description, storeId } = publishLocalDialog;
+    if (!name.trim()) {
+      toast.error('El nombre de la plantilla es obligatorio.');
+      return;
+    }
+    if (pendingOpId) return;
+    setPendingOpId(template.id);
+    try {
+      await createPublicTemplate({
+        name: name.trim(),
+        description,
+        data: template.data,
+        storeId: storeId === 'all' ? null : storeId,
+      });
+      toast.success('Plantilla publicada con éxito');
+      setPublishLocalDialog(null);
       fetchPublicTemplates();
     } catch (error) {
-      console.error("Error duplicating template:", error);
-      toast.error("Error al duplicar la plantilla");
+      toast.error(error instanceof Error ? error.message : 'Error al publicar la plantilla', {
+        description: 'No se pudo guardar en Supabase. Verifica tu conexión.',
+        action: { label: 'Reintentar', onClick: () => handlePublishLocal() },
+      });
     } finally {
-      setIsLoading(false);
+      setPendingOpId(null);
+    }
+  };
+
+  // ── Gestión de públicas (admin) ─────────────────────────────────────
+  const handleOverwritePublic = (template: Template) => {
+    if (!isAdmin) return;
+    if (!currentSheetData) {
+      toast.error('No hay ninguna ficha activa para guardar.');
+      return;
+    }
+    setConfirmDialog({
+      title: 'Sobrescribir plantilla',
+      message: `¿Estás seguro de que deseas sobrescribir la plantilla "${template.name}" con los datos actuales del editor?`,
+      variant: 'default',
+      onConfirm: () => {
+        setConfirmDialog(null);
+        void doOverwritePublic(template);
+      },
+    });
+  };
+
+  const doOverwritePublic = async (template: Template) => {
+    if (!currentSheetData || pendingOpId) return;
+    setPendingOpId(template.id);
+    try {
+      await updatePublicTemplate(template.id, { data: currentSheetData });
+      toast.success('Plantilla actualizada correctamente');
+      fetchPublicTemplates();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al actualizar la plantilla', {
+        description: 'No se pudo sobrescribir en Supabase. Verifica tu conexión.',
+        action: { label: 'Reintentar', onClick: () => doOverwritePublic(template) },
+      });
+    } finally {
+      setPendingOpId(null);
+    }
+  };
+
+  const handleDeletePublic = (template: Template) => {
+    if (!isAdmin) return;
+    setConfirmDialog({
+      title: 'Eliminar plantilla pública',
+      message: `¿Estás seguro de que deseas eliminar la plantilla pública "${template.name}"? Esta acción no se puede deshacer.`,
+      variant: 'destructive',
+      onConfirm: () => {
+        setConfirmDialog(null);
+        void doDeletePublic(template);
+      },
+    });
+  };
+
+  const doDeletePublic = async (template: Template) => {
+    if (pendingOpId) return;
+    setPendingOpId(template.id);
+    try {
+      await deletePublicTemplate(template.id);
+      toast.success('Plantilla eliminada correctamente');
+      fetchPublicTemplates();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al eliminar la plantilla', {
+        description: 'No se pudo eliminar de Supabase. Verifica tu conexión.',
+        action: { label: 'Reintentar', onClick: () => doDeletePublic(template) },
+      });
+    } finally {
+      setPendingOpId(null);
+    }
+  };
+
+  // §7A: duplicar con nombre «Nombre (Copia)» — sin comillas escapadas.
+  const handleDuplicatePublic = async (template: Template) => {
+    if (!isAdmin) return;
+    if (pendingOpId) return;
+    setPendingOpId(template.id);
+    try {
+      await duplicateTemplate({
+        id: template.id,
+        name: template.name,
+        description: template.description ?? null,
+        category: template.category ?? null,
+        data: template.data,
+        type: template.type,
+        created_by: null,
+        store_id: template.store_id ?? null,
+        created_at: null,
+        updated_at: null,
+      });
+      toast.success('Plantilla duplicada correctamente');
+      fetchPublicTemplates();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al duplicar la plantilla');
+    } finally {
+      setPendingOpId(null);
     }
   };
 
   const handleChangeTemplateStore = async (template: Template, storeId: string | null) => {
     if (!isAdmin) return;
-    setIsLoading(true);
+    if (pendingOpId) return;
+    setPendingOpId(template.id);
     try {
-      const { error } = await supabase
-        .from("cost_sheet_templates")
-        .update({ store_id: storeId })
-        .eq("id", template.id);
-
-      if (error) throw error;
-      toast.success("Tienda de la plantilla actualizada");
+      await changePublicTemplateStore(template.id, storeId);
+      toast.success('Tienda de la plantilla actualizada');
       fetchPublicTemplates();
     } catch (error) {
-      console.error("Error updating template store:", error);
-      toast.error("Error al actualizar la tienda");
+      toast.error(error instanceof Error ? error.message : 'Error al actualizar la tienda');
     } finally {
-      setIsLoading(false);
+      setPendingOpId(null);
     }
   };
-  // P4-2: Debounce de 300ms en búsqueda para evitar re-filtrar en cada keystroke.
-  // Con catálogos grandes de plantillas, esto reduce significativamente el lag.
+
+  // §3C: retirar publicación — la plantilla vuelve a ser privada de su creador
+  // (mismo registro: conserva id, creador y contenido).
+  const handleUnpublish = (template: Template) => {
+    if (!isAdmin) return;
+    setConfirmDialog({
+      title: 'Retirar publicación',
+      message: `¿Retirar la publicación de "${template.name}"? Volverá a ser una plantilla privada de su creador, conservando su contenido.`,
+      variant: 'default',
+      onConfirm: () => {
+        setConfirmDialog(null);
+        void doUnpublish(template);
+      },
+    });
+  };
+
+  const doUnpublish = async (template: Template) => {
+    if (pendingOpId) return;
+    setPendingOpId(template.id);
+    try {
+      await unpublishTemplate(template.id);
+      toast.success('Publicación retirada: la plantilla volvió a ser privada');
+      fetchPublicTemplates();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al retirar la publicación', {
+        description: 'Verifica tu conexión y tus permisos.',
+        action: { label: 'Reintentar', onClick: () => doUnpublish(template) },
+      });
+    } finally {
+      setPendingOpId(null);
+    }
+  };
+
+  // ── Búsqueda (§7B: por nombre, descripción y nombre real de tienda) ─
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
-  const filteredTemplates = (
-    activeCategory === 'system' ? systemTemplates :
-    activeCategory === 'private' ? privateTemplates :
-    publicTemplates
-  ).filter(t =>
-    t.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-    t.description?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) || (t.store_id ? (stores || []).find(s => s.id === t.store_id)?.name?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) : "pública general".includes(debouncedSearchQuery.toLowerCase()))
+  const matchesSearch = useCallback((t: Template) => {
+    const q = debouncedSearchQuery.toLowerCase();
+    if (!q) return true;
+    if (t.name?.toLowerCase().includes(q)) return true;
+    if (t.description?.toLowerCase().includes(q)) return true;
+    // §7B: para públicas, buscar por el NOMBRE REAL de la tienda (antes:
+    // literal «pública general»); sin tienda → etiqueta visible «Pública (General)».
+    if (t.type === 'public') {
+      const storeLabel = t.store_id
+        ? (stores.find(s => s.id === t.store_id)?.name ?? '')
+        : 'Pública (General)';
+      if (storeLabel.toLowerCase().includes(q)) return true;
+    }
+    return false;
+  }, [debouncedSearchQuery, stores]);
+
+  const filteredSystem = useMemo(
+    () => systemTemplates.filter(matchesSearch),
+    [systemTemplates, matchesSearch],
+  );
+  const filteredServerPrivate = useMemo(
+    () => serverPrivateTemplates.filter(matchesSearch),
+    [serverPrivateTemplates, matchesSearch],
+  );
+  const filteredLocal = useMemo(
+    () => localTemplates.filter(matchesSearch),
+    [localTemplates, matchesSearch],
+  );
+  const filteredPublic = useMemo(
+    () => publicTemplates.filter(matchesSearch),
+    [publicTemplates, matchesSearch],
   );
 
   return (
-    <div className="w-full max-w-6xl mx-auto space-y-8 p-4" aria-busy={isLoading}>
+    <div className="w-full max-w-6xl mx-auto space-y-8 p-4" aria-busy={isLoadingPrivate || isLoadingPublic}>
       {/* Header & Search */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
@@ -580,141 +782,380 @@ export const CostSheetTemplateExplorer: React.FC = () => {
         </div>
       </div>
 
-      {/* P3-7: Categories Tabs — migrado de pills manuales a <UnifiedTabs variant="pills">.
-          Mismo state `activeCategory`, pero con role="tab" + aria-selected + touch targets ≥44px. */}
+      {/* P3-7: Categories Tabs — migrado de pills manuales a <UnifiedTabs variant="pills">. */}
       <div className="flex flex-col items-center gap-6">
-          <UnifiedTabs
-            tabs={[
-              { id: 'system', label: 'Sistema', icon: Settings },
-              { id: 'private', label: 'Privadas', icon: LockIcon },
-              { id: 'public', label: 'Públicas', icon: Globe },
-            ]}
-            activeTab={activeCategory}
-            onTabChange={(id) => setActiveCategory(id as TemplateCategory)}
-            variant="pills"
-            ariaLabel="Categorías de plantillas"
-          />
+        <UnifiedTabs
+          tabs={[
+            { id: 'system', label: 'Sistema', icon: Settings },
+            { id: 'private', label: 'Privadas', icon: LockIcon },
+            { id: 'public', label: 'Públicas', icon: Globe },
+          ]}
+          activeTab={activeCategory}
+          onTabChange={(id) => setActiveCategory(id as TemplateCategory)}
+          variant="pills"
+          ariaLabel="Categorías de plantillas"
+        />
 
-          {activeCategory === 'public' && isAdmin && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
-              >
-                  <Button
-                    onClick={() => handleOpenPublishDialog(null)}
-                    className="rounded-2xl h-14 px-8 bg-primary hover:opacity-90 text-primary-foreground font-black uppercase tracking-widest shadow-xl shadow-primary/20 group"
-                  >
-                    <Plus className="w-5 h-5 mr-3 group-hover:rotate-90 transition-transform" />
-                    Nueva Plantilla (Desde Editor)
-                  </Button>
-              </motion.div>
-          )}
-      </div>
-
-      {/* Main Content Area */}
-      <div className="min-h-[400px]">
-        {activeCategory === 'private' && !localDirectory ? (
+        {activeCategory === 'private' && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-            className="flex flex-col items-center justify-center h-[400px] border-2 border-dashed border-primary/20 rounded-[2.5rem] bg-primary/5"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
           >
-            <div className="p-6 rounded-full bg-primary/10 mb-6">
-              <HardDrive className="w-12 h-12 text-primary animate-pulse" />
-            </div>
-            <h3 className="text-xl font-black uppercase tracking-tighter italic mb-2">Vincular Carpeta Local</h3>
-            <p className="text-sm text-muted-foreground max-w-sm text-center font-medium mb-8">
-              Selecciona una carpeta en tu computadora donde guardas tus fichas de costo .json para sincronizarlas con el sistema.
-            </p>
             <Button
-              onClick={handleSelectDirectory}
-              className="rounded-2xl h-14 px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+              onClick={() => {
+                setSaveTemplateDefaultDestination('private');
+                setIsSaveTemplateOpen(true);
+              }}
+              className="rounded-2xl h-14 px-8 bg-primary hover:opacity-90 text-primary-foreground font-black uppercase tracking-widest shadow-xl shadow-primary/20 group"
             >
-              <FolderOpen className="w-5 h-5 mr-3" />
-              Seleccionar Directorio
+              <LayoutTemplate className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform" />
+              Guardar Ficha Actual como Plantilla
             </Button>
           </motion.div>
-        ) : (
+        )}
+
+        {activeCategory === 'public' && isAdmin && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+          >
+            <Button
+              onClick={() => {
+                setSaveTemplateDefaultDestination('public');
+                setIsSaveTemplateOpen(true);
+              }}
+              className="rounded-2xl h-14 px-8 bg-primary hover:opacity-90 text-primary-foreground font-black uppercase tracking-widest shadow-xl shadow-primary/20 group"
+            >
+              <Plus className="w-5 h-5 mr-3 group-hover:rotate-90 transition-transform" />
+              Nueva Plantilla (Desde Editor)
+            </Button>
+          </motion.div>
+        )}
+      </div>
+
+      {/* ═══════════════════ TAB SISTEMA (§3A — 13 plantillas intactas) ═══════════════════ */}
+      {activeCategory === 'system' && (
+        <div className="min-h-[400px]">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence mode="popLayout">
-              {filteredTemplates.map((template) => (
+              {filteredSystem.map((template) => (
                 <TemplateCard
                   key={template.id}
                   template={template}
-                  onImport={() => handleImport(template)}
-                  onPublish={activeCategory === "private" && isAdmin ? () => handleOpenPublishDialog(template) : undefined}
+                  onUse={() => handleImport(template)}
                   isAdmin={isAdmin}
-                  onUpdate={template.type === "public" ? () => handleUpdateTemplate(template) : undefined}
-                  onDelete={template.type === "public" ? () => handleDeleteTemplate(template) : undefined}
-                  onDuplicate={template.type === "public" ? () => handleDuplicateTemplate(template) : undefined}
-                  onChangeStore={template.type === "public" ? (storeId) => handleChangeTemplateStore(template, storeId) : undefined}
                   stores={stores}
                 />
               ))}
             </AnimatePresence>
-            {filteredTemplates.length === 0 && !isLoading && (
-              <div className="col-span-full flex flex-col items-center justify-center py-20 opacity-50">
-                <FileText className="w-16 h-16 mb-4 text-muted-foreground" />
-                <p className="font-black uppercase tracking-widest text-xs">No se encontraron plantillas</p>
-              </div>
-            )}
-            {isLoading && (
-              <div className="col-span-full flex justify-center py-20">
-                <RefreshCw className="w-8 h-8 text-primary animate-spin" />
-              </div>
+            {filteredSystem.length === 0 && (
+              <EmptyState label="No se encontraron plantillas del sistema" />
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Publish Dialog */}
-      <Dialog open={isPublishDialogOpen} onOpenChange={setIsPublishDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] rounded-[2rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
+      {/* ═══════════════════ TAB PRIVADAS (§3B) ═══════════════════ */}
+      {activeCategory === 'private' && (
+        <div className="min-h-[400px] space-y-10">
+          {/* B.1 — MIS PLANTILLAS GUARDADAS EN COSTPRO (principal) */}
+          <section aria-labelledby="private-server-heading">
+            <div className="flex items-center gap-3 mb-4">
+              <Cloud className="w-5 h-5 text-primary" aria-hidden="true" />
+              <h2 id="private-server-heading" className="text-lg font-black uppercase tracking-tighter italic text-primary">
+                Mis Plantillas Guardadas en COSTPRO
+              </h2>
+              <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black uppercase tracking-widest text-primary">
+                Servidor
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground font-medium mb-5 max-w-2xl">
+              Plantillas asociadas a tu cuenta de usuario. Persisten en el servidor: las
+              recuperas al iniciar sesión desde cualquier dispositivo, sin depender de este
+              equipo ni de carpetas locales.
+            </p>
+
+            {isLoadingPrivate ? (
+              <LoadingState label="Cargando tus plantillas privadas..." />
+            ) : privateError ? (
+              <ErrorState
+                message={privateError}
+                onRetry={fetchServerPrivateTemplates}
+              />
+            ) : serverPrivateTemplates.length === 0 ? (
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-primary/20 rounded-[2.5rem] bg-primary/5 py-12 px-6">
+                <div className="p-5 rounded-full bg-primary/10 mb-4">
+                  <Cloud className="w-10 h-10 text-primary" aria-hidden="true" />
+                </div>
+                <h3 className="text-lg font-black uppercase tracking-tighter italic mb-2 text-center">
+                  Todavía no tienes plantillas privadas guardadas en COSTPRO
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-md text-center font-medium mb-6">
+                  Guarda la ficha en la que trabajas como plantilla reutilizable y estará
+                  disponible en tu cuenta desde cualquier dispositivo.
+                </p>
+                <Button
+                  onClick={() => {
+                    setSaveTemplateDefaultDestination('private');
+                    setIsSaveTemplateOpen(true);
+                  }}
+                  className="rounded-2xl h-12 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+                >
+                  <LayoutTemplate className="w-4 h-4 mr-2" />
+                  Guardar Ficha Actual como Plantilla
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <AnimatePresence mode="popLayout">
+                  {filteredServerPrivate.map((template) => (
+                    <TemplateCard
+                      key={template.id}
+                      template={template}
+                      onUse={() => handleImport(template)}
+                      onNewSheet={() => handleImport(template, { navigateTo: 'main' })}
+                      onPreview={() => setPreviewTemplate(template)}
+                      onRename={() => setRenameDialog({
+                        template,
+                        name: template.name,
+                        description: template.description ?? '',
+                      })}
+                      onUpdateContent={() => handleUpdatePrivateContent(template)}
+                      onDelete={() => handleDeletePrivate(template)}
+                      onPublish={isAdmin ? () => setPublishExistingDialog({ template, storeId: 'all' }) : undefined}
+                      isBusy={pendingOpId === template.id}
+                      isAdmin={isAdmin}
+                      stores={stores}
+                    />
+                  ))}
+                </AnimatePresence>
+                {filteredServerPrivate.length === 0 && (
+                  <EmptyState label="Ninguna plantilla coincide con la búsqueda" />
+                )}
+              </div>
+            )}
+          </section>
+
+          {/* B.2 — MIS PLANTILLAS LOCALES (secundaria, conservada) */}
+          <section aria-labelledby="private-local-heading" className="pt-2 border-t border-sidebar-border/40">
+            <div className="flex items-center gap-3 mb-4 mt-6">
+              <HardDrive className="w-5 h-5 text-muted-foreground" aria-hidden="true" />
+              <h2 id="private-local-heading" className="text-lg font-black uppercase tracking-tighter italic text-muted-foreground">
+                Mis Plantillas Locales (Archivos JSON)
+              </h2>
+              <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                Este equipo
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground font-medium mb-5 max-w-2xl">
+              Plantillas en archivos .json de una carpeta de este equipo (File System Access API).
+              No se sincronizan con COSTPRO: para disponer de ellas en otros dispositivos,
+              guárdalas también en tu cuenta.
+            </p>
+
+            {!localDirectory ? (
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/20 rounded-[2.5rem] bg-muted/5 py-10 px-6">
+                <div className="p-4 rounded-full bg-muted/10 mb-4">
+                  <HardDrive className="w-8 h-8 text-muted-foreground animate-pulse" aria-hidden="true" />
+                </div>
+                <h3 className="text-base font-black uppercase tracking-tighter italic mb-2">Vincular Carpeta Local</h3>
+                <p className="text-sm text-muted-foreground max-w-sm text-center font-medium mb-5">
+                  Selecciona una carpeta en tu computadora donde guardas tus fichas de costo .json
+                  para sincronizarlas con el sistema.
+                </p>
+                <Button
+                  onClick={handleSelectDirectory}
+                  className="rounded-2xl h-12 px-6 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+                >
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  Seleccionar Directorio
+                </Button>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                    Carpeta vinculada: {localDirectory.name}
+                  </span>
+                  <Button
+                    variant="outline"
+                    onClick={() => localDirectory && loadPrivateTemplates(localDirectory)}
+                    className="rounded-xl h-9 text-xs font-black uppercase tracking-widest"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 mr-2" />
+                    Releer carpeta
+                  </Button>
+                </div>
+                {localTemplates.length === 0 && !isLoadingPrivate ? (
+                  <EmptyState label="No se encontraron archivos .json válidos en la carpeta" />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <AnimatePresence mode="popLayout">
+                      {filteredLocal.map((template) => (
+                        <TemplateCard
+                          key={template.id}
+                          template={template}
+                          onUse={() => handleImport(template)}
+                          onPreview={() => setPreviewTemplate(template)}
+                          onPublish={isAdmin
+                            ? () => setPublishLocalDialog({
+                                template,
+                                name: template.name,
+                                description: template.description ?? '',
+                                storeId: 'all',
+                              })
+                            : undefined}
+                          isAdmin={isAdmin}
+                          stores={stores}
+                        />
+                      ))}
+                    </AnimatePresence>
+                    {filteredLocal.length === 0 && (
+                      <EmptyState label="Ningún archivo coincide con la búsqueda" />
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+        </div>
+      )}
+
+      {/* ═══════════════════ TAB PÚBLICAS (§3C/§3D) ═══════════════════ */}
+      {activeCategory === 'public' && (
+        <div className="min-h-[400px]">
+          {isLoadingPublic ? (
+            <LoadingState label="Cargando plantillas públicas..." />
+          ) : publicError ? (
+            <ErrorState
+              message={publicError}
+              onRetry={fetchPublicTemplates}
+              hint="Comprueba tu conexión. Si el problema persiste, es posible que no tengas acceso en este momento."
+            />
+          ) : publicTemplates.length === 0 ? (
+            <EmptyState
+              label="No hay plantillas públicas disponibles"
+              hint={isAdmin
+                ? 'Publica una plantilla desde el editor o desde tus plantillas privadas para compartirla.'
+                : 'Las plantillas compartidas por los administradores aparecerán aquí.'}
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <AnimatePresence mode="popLayout">
+                {filteredPublic.map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    template={template}
+                    onUse={() => handleImport(template)}
+                    onPreview={() => setPreviewTemplate(template)}
+                    onUpdateContent={isAdmin ? () => handleOverwritePublic(template) : undefined}
+                    onDelete={isAdmin ? () => handleDeletePublic(template) : undefined}
+                    onDuplicate={isAdmin ? () => handleDuplicatePublic(template) : undefined}
+                    onChangeStore={isAdmin ? (storeId) => handleChangeTemplateStore(template, storeId) : undefined}
+                    onUnpublish={isAdmin ? () => handleUnpublish(template) : undefined}
+                    isBusy={pendingOpId === template.id}
+                    isAdmin={isAdmin}
+                    stores={stores}
+                  />
+                ))}
+              </AnimatePresence>
+              {filteredPublic.length === 0 && (
+                <EmptyState label="Ninguna plantilla coincide con la búsqueda" />
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Diálogo: Guardar como Plantilla (compartido con el editor) ── */}
+      <CostSheetSaveAsTemplateDialog
+        open={isSaveTemplateOpen}
+        onOpenChange={setIsSaveTemplateOpen}
+        defaultDestination={saveTemplateDefaultDestination}
+        onSaved={() => {
+          // Refrescar la pestaña activa correspondiente.
+          if (activeCategory === 'private') fetchServerPrivateTemplates();
+          if (activeCategory === 'public') fetchPublicTemplates();
+        }}
+      />
+
+      {/* ── Diálogo: Renombrar / Editar descripción (privada servidor) ── */}
+      <Dialog open={!!renameDialog} onOpenChange={(open) => !open && setRenameDialog(null)}>
+        <DialogContent className="sm:max-w-[460px] rounded-[2rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
+              <Pencil className="w-6 h-6" />
+              Renombrar Plantilla
+            </DialogTitle>
+            <DialogDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Modifica el nombre y la descripción de tu plantilla privada
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-5 py-4">
+            <div className="space-y-3">
+              <label htmlFor="rename-name" className="text-xs font-black uppercase tracking-widest text-primary ml-1">
+                Nombre
+              </label>
+              <Input
+                id="rename-name"
+                value={renameDialog?.name ?? ''}
+                onChange={(e) => setRenameDialog((d) => (d ? { ...d, name: e.target.value } : d))}
+                className="h-12 rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest"
+              />
+            </div>
+            <div className="space-y-3">
+              <label htmlFor="rename-description" className="text-xs font-black uppercase tracking-widest text-primary ml-1">
+                Descripción
+              </label>
+              <Textarea
+                id="rename-description"
+                value={renameDialog?.description ?? ''}
+                onChange={(e) => setRenameDialog((d) => (d ? { ...d, description: e.target.value } : d))}
+                className="min-h-[80px] rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest resize-none"
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => setRenameDialog(null)}
+              className="flex-1 rounded-2xl h-12 font-black uppercase tracking-widest text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleRenamePrivate}
+              disabled={!renameDialog?.name.trim() || pendingOpId !== null}
+              className="flex-1 rounded-2xl h-12 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Guardar Cambios
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Diálogo: Publicar plantilla privada EXISTENTE (UPDATE) ────── */}
+      <Dialog open={!!publishExistingDialog} onOpenChange={(open) => !open && setPublishExistingDialog(null)}>
+        <DialogContent className="sm:max-w-[460px] rounded-[2rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
               <Globe className="w-6 h-6" />
               Publicar Plantilla
             </DialogTitle>
             <DialogDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Configura los detalles y visibilidad de la plantilla en la nube
+              {publishExistingDialog?.template.name} — se publica esta misma plantilla (sin duplicados)
             </DialogDescription>
           </DialogHeader>
-
-          <div className="grid gap-6 py-4">
+          <div className="grid gap-5 py-4">
             <div className="space-y-3">
-                <label htmlFor="publish-name" className="text-xs font-black uppercase tracking-widest text-primary ml-1">
-                    Nombre de la Plantilla
-                </label>
-                <Input
-                    id="publish-name"
-                    value={publishName}
-                    onChange={(e) => setPublishName(e.target.value)}
-                    placeholder="Ej: Ficha Base de Carpintería"
-                    className="h-12 rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest"
-                />
-            </div>
-
-            <div className="space-y-3">
-                <label htmlFor="publish-description" className="text-xs font-black uppercase tracking-widest text-primary ml-1">
-                    Descripción (Opcional)
-                </label>
-                <Textarea
-                    id="publish-description"
-                    value={publishDescription}
-                    onChange={(e) => setPublishDescription(e.target.value)}
-                    placeholder="Describe para qué sirve este modelo..."
-                    className="min-h-[100px] rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest resize-none"
-                />
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-black uppercase tracking-widest text-primary ml-1">
-                    Destino de Publicación
-                  </span>
-                  <Info className="w-3 h-3 text-muted-foreground cursor-help" />
-              </div>
-              <Select value={selectedStoreId} onValueChange={setSelectedStoreId}>
+              <span className="text-xs font-black uppercase tracking-widest text-primary ml-1">
+                Ámbito de Publicación
+              </span>
+              <Select
+                value={publishExistingDialog?.storeId ?? 'all'}
+                onValueChange={(v) => setPublishExistingDialog((d) => (d ? { ...d, storeId: v } : d))}
+              >
                 <SelectTrigger className="h-12 rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest">
                   <SelectValue placeholder="Selecciona visibilidad" />
                 </SelectTrigger>
@@ -722,10 +1163,102 @@ export const CostSheetTemplateExplorer: React.FC = () => {
                   <SelectItem value="all" className="text-xs font-bold uppercase tracking-widest focus:bg-primary/10">
                     <div className="flex items-center gap-2">
                       <Globe className="w-4 h-4 text-primary" />
-                      Pública (Todas las tiendas)
+                      Todas las tiendas
                     </div>
                   </SelectItem>
-                  {stores.map(store => (
+                  {stores.map((store) => (
+                    <SelectItem key={store.id} value={store.id} className="text-xs font-bold uppercase tracking-widest focus:bg-primary/10">
+                      <div className="flex items-center gap-2">
+                        <StoreIcon className="w-4 h-4 text-primary" />
+                        Solo Tienda: {store.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="rounded-2xl bg-primary/5 border border-primary/10 px-4 py-3 text-xs font-medium text-muted-foreground flex items-start gap-2">
+              <CloudUpload className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
+              <span>
+                La plantilla se publicará conservando su identidad (mismo registro, sin duplicar).
+                Podrás retirar la publicación en cualquier momento y volverá a ser privada.
+              </span>
+            </div>
+          </div>
+          <DialogFooter className="flex gap-3">
+            <Button
+              variant="ghost"
+              onClick={() => setPublishExistingDialog(null)}
+              className="flex-1 rounded-2xl h-12 font-black uppercase tracking-widest text-xs"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handlePublishExisting}
+              disabled={pendingOpId !== null}
+              className="flex-1 rounded-2xl h-12 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Publicar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Diálogo: Publicar plantilla LOCAL como nueva pública (INSERT) ── */}
+      <Dialog open={!!publishLocalDialog} onOpenChange={(open) => !open && setPublishLocalDialog(null)}>
+        <DialogContent className="sm:max-w-[500px] rounded-[2rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
+              <Globe className="w-6 h-6" />
+              Publicar Plantilla Local
+            </DialogTitle>
+            <DialogDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Crea una plantilla pública a partir del archivo local
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-5 py-4">
+            <div className="space-y-3">
+              <label htmlFor="local-pub-name" className="text-xs font-black uppercase tracking-widest text-primary ml-1">
+                Nombre de la Plantilla
+              </label>
+              <Input
+                id="local-pub-name"
+                value={publishLocalDialog?.name ?? ''}
+                onChange={(e) => setPublishLocalDialog((d) => (d ? { ...d, name: e.target.value } : d))}
+                className="h-12 rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest"
+              />
+            </div>
+            <div className="space-y-3">
+              <label htmlFor="local-pub-desc" className="text-xs font-black uppercase tracking-widest text-primary ml-1">
+                Descripción (Opcional)
+              </label>
+              <Textarea
+                id="local-pub-desc"
+                value={publishLocalDialog?.description ?? ''}
+                onChange={(e) => setPublishLocalDialog((d) => (d ? { ...d, description: e.target.value } : d))}
+                className="min-h-[80px] rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest resize-none"
+              />
+            </div>
+            <div className="space-y-3">
+              <span className="text-xs font-black uppercase tracking-widest text-primary ml-1">
+                Ámbito de Publicación
+              </span>
+              <Select
+                value={publishLocalDialog?.storeId ?? 'all'}
+                onValueChange={(v) => setPublishLocalDialog((d) => (d ? { ...d, storeId: v } : d))}
+              >
+                <SelectTrigger className="h-12 rounded-2xl bg-primary/5 border-primary/10 font-bold text-xs uppercase tracking-widest">
+                  <SelectValue placeholder="Selecciona visibilidad" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
+                  <SelectItem value="all" className="text-xs font-bold uppercase tracking-widest focus:bg-primary/10">
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 text-primary" />
+                      Todas las tiendas
+                    </div>
+                  </SelectItem>
+                  {stores.map((store) => (
                     <SelectItem key={store.id} value={store.id} className="text-xs font-bold uppercase tracking-widest focus:bg-primary/10">
                       <div className="flex items-center gap-2">
                         <StoreIcon className="w-4 h-4 text-primary" />
@@ -737,29 +1270,93 @@ export const CostSheetTemplateExplorer: React.FC = () => {
               </Select>
             </div>
           </div>
-
           <DialogFooter className="flex gap-3">
             <Button
               variant="ghost"
-              onClick={() => setIsPublishDialogOpen(false)}
+              onClick={() => setPublishLocalDialog(null)}
               className="flex-1 rounded-2xl h-12 font-black uppercase tracking-widest text-xs"
             >
               Cancelar
             </Button>
             <Button
-              onClick={handlePublish}
-              disabled={isLoading || !publishName.trim()}
+              onClick={handlePublishLocal}
+              disabled={!publishLocalDialog?.name.trim() || pendingOpId !== null}
               className="flex-1 rounded-2xl h-12 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20"
             >
-              {isLoading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+              <Upload className="w-4 h-4 mr-2" />
               Guardar en Supabase
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* P3-4: Migrado de custom div-based dialog a <ConfirmDialog> unificado.
-          Mismo state `confirmDialog`, menos JSX manual y focus trap heredado de BaseModal. */}
+      {/* ── Diálogo: Vista previa ─────────────────────────────────────── */}
+      <Dialog open={!!previewTemplate} onOpenChange={(open) => !open && setPreviewTemplate(null)}>
+        <DialogContent className="sm:max-w-[520px] rounded-[2rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black uppercase tracking-tighter italic text-primary flex items-center gap-3">
+              <Eye className="w-6 h-6" />
+              Vista Previa
+            </DialogTitle>
+            <DialogDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              {previewTemplate?.name}
+            </DialogDescription>
+          </DialogHeader>
+          {previewTemplate && (
+            <div className="grid gap-4 py-2 text-xs">
+              <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4 space-y-2">
+                <PreviewRow label="Nombre" value={previewTemplate.name} />
+                {previewTemplate.description && (
+                  <PreviewRow label="Descripción" value={previewTemplate.description} />
+                )}
+                <PreviewRow label="Categoría" value={previewTemplate.category || 'General'} />
+                <PreviewRow label="Origen" value={
+                  previewTemplate.origin === 'server' ? 'COSTPRO (servidor)'
+                  : previewTemplate.origin === 'local' ? 'Archivo local'
+                  : 'Sistema'
+                } />
+                {previewTemplate.type === 'public' && (
+                  <PreviewRow
+                    label="Visibilidad"
+                    value={previewTemplate.store_id
+                      ? `Tienda: ${stores.find(s => s.id === previewTemplate.store_id)?.name || 'Específica'}`
+                      : 'Pública (General)'}
+                  />
+                )}
+                {previewTemplate.updated_at && (
+                  <PreviewRow label="Actualizada" value={new Date(previewTemplate.updated_at).toLocaleString()} />
+                )}
+              </div>
+              <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4 space-y-2">
+                <PreviewRow label="Encabezado" value={previewTemplate.data?.header?.name || '—'} />
+                <PreviewRow label="Secciones" value={String(previewTemplate.data?.sections?.length ?? 0)} />
+                <PreviewRow label="Anexos" value={String(previewTemplate.data?.annexes?.length ?? 0)} />
+              </div>
+              {(previewTemplate.data?.sections?.length ?? 0) > 0 && (
+                <div className="rounded-2xl border border-primary/10 bg-primary/5 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-2">Secciones</p>
+                  <ul className="space-y-1 max-h-40 overflow-y-auto">
+                    {previewTemplate.data.sections.map((s: { id: string; label?: string }) => (
+                      <li key={s.id} className="font-medium text-muted-foreground">• {s.label || s.id}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              onClick={() => previewTemplate && handleImport(previewTemplate)}
+              className="w-full rounded-2xl h-12 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Cargar en el Editor
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* P3-4: Migrado de custom div-based dialog a <ConfirmDialog> unificado. */}
       <ConfirmDialog
         open={!!confirmDialog}
         title={confirmDialog?.title || ''}
@@ -774,30 +1371,133 @@ export const CostSheetTemplateExplorer: React.FC = () => {
   );
 };
 
+// ── Subcomponentes de estado (§7C/§7D) ────────────────────────────────
+
+const LoadingState: React.FC<{ label: string }> = ({ label }) => (
+  <div className="col-span-full flex flex-col items-center justify-center py-16 gap-3">
+    <RefreshCw className="w-8 h-8 text-primary animate-spin" aria-hidden="true" />
+    <p className="font-black uppercase tracking-widest text-xs text-muted-foreground">{label}</p>
+  </div>
+);
+
+const EmptyState: React.FC<{ label: string; hint?: string }> = ({ label, hint }) => (
+  <div className="col-span-full flex flex-col items-center justify-center py-16 opacity-60 gap-2">
+    <FileText className="w-14 h-14 text-muted-foreground" aria-hidden="true" />
+    <p className="font-black uppercase tracking-widest text-xs">{label}</p>
+    {hint && <p className="text-xs text-muted-foreground font-medium max-w-md text-center">{hint}</p>}
+  </div>
+);
+
+const ErrorState: React.FC<{ message: string; onRetry: () => void; hint?: string }> = ({ message, onRetry, hint }) => (
+  <div className="col-span-full flex flex-col items-center justify-center py-16 gap-3 border-2 border-dashed border-destructive/30 rounded-[2.5rem] bg-destructive/5 px-6">
+    <CloudOff className="w-12 h-12 text-destructive" aria-hidden="true" />
+    <p className="font-black uppercase tracking-widest text-xs text-destructive">Error de conexión</p>
+    <p className="text-sm text-muted-foreground font-medium max-w-md text-center">{message}</p>
+    {hint && <p className="text-xs text-muted-foreground max-w-md text-center">{hint}</p>}
+    <Button
+      onClick={onRetry}
+      className="rounded-2xl h-11 px-6 bg-primary text-primary-foreground font-black uppercase tracking-widest text-xs shadow-xl shadow-primary/20"
+    >
+      <RefreshCw className="w-4 h-4 mr-2" />
+      Reintentar
+    </Button>
+  </div>
+);
+
+const PreviewRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div className="flex items-start justify-between gap-4">
+    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground shrink-0">{label}</span>
+    <span className="font-bold text-right">{value}</span>
+  </div>
+);
+
+// ── Tarjeta de plantilla ──────────────────────────────────────────────
+
 interface TemplateCardProps {
   template: Template;
-  onImport: () => void;
-  onPublish?: () => void;
-  isAdmin: boolean;
-  onUpdate?: () => void;
+  onUse: () => void;
+  onPreview?: () => void;
+  onNewSheet?: () => void;
+  onRename?: () => void;
+  onUpdateContent?: () => void;
   onDelete?: () => void;
+  onPublish?: () => void;
+  onUnpublish?: () => void;
   onDuplicate?: () => void;
   onChangeStore?: (storeId: string | null) => void;
+  isBusy?: boolean;
+  isAdmin: boolean;
   stores: Store[];
 }
 
 const TemplateCard: React.FC<TemplateCardProps> = ({
   template,
-  onImport,
-  onPublish,
-  isAdmin,
-  onUpdate,
+  onUse,
+  onPreview,
+  onNewSheet,
+  onRename,
+  onUpdateContent,
   onDelete,
+  onPublish,
+  onUnpublish,
   onDuplicate,
   onChangeStore,
+  isBusy,
+  isAdmin,
   stores
 }) => {
   const prefersReducedMotion = useReducedMotion();
+  const hasMenu = !!(
+    onPreview ||
+    onNewSheet ||
+    onRename ||
+    onUpdateContent ||
+    onDelete ||
+    onPublish ||
+    onUnpublish ||
+    onDuplicate ||
+    onChangeStore
+  );
+
+  const originBadge = () => {
+    if (template.id.startsWith('sys-')) {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border bg-warning/10 text-warning border-warning/20 shadow-lg shadow-warning/5">
+          Sistema
+        </span>
+      );
+    }
+    if (template.origin === 'server') {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border bg-primary/10 text-primary border-primary/20 shadow-lg shadow-primary/5">
+          COSTPRO
+        </span>
+      );
+    }
+    if (template.origin === 'local') {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border bg-muted text-muted-foreground border-border">
+          Archivo Local
+        </span>
+      );
+    }
+    if (template.type === 'public') {
+      return (
+        <span className={cn(
+          "px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border",
+          template.store_id
+            ? "bg-warning/10 text-warning border-warning/20 shadow-lg shadow-warning/5"
+            : "bg-primary/10 text-primary border-primary/20 shadow-lg shadow-primary/5"
+        )}>
+          {template.store_id
+            ? `Tienda: ${stores.find(s => s.id === template.store_id)?.name || "Específica"}`
+            : "Pública (General)"}
+        </span>
+      );
+    }
+    return null;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -805,26 +1505,19 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
       exit={prefersReducedMotion ? {} : { opacity: 0, scale: 0.95 }}
       whileHover={prefersReducedMotion ? {} : { y: -2, scale: 1.01 }}
       className="group relative bg-sidebar/40 backdrop-blur-xl border border-sidebar-border/50 rounded-[2rem] p-6 hover:border-primary/30 transition-all duration-300"
+      aria-busy={isBusy}
     >
       <div className="flex justify-between items-start mb-4">
         <div className={cn(
-          "p-3 rounded-2xl bg-primary/10 text-primary",
+          "p-3 rounded-2xl",
           template.id.startsWith('sys-') ? "bg-warning/10 text-warning" :
-          template.type === 'public' ? "bg-primary/10 text-primary" : ""
+          template.origin === 'local' ? "bg-muted text-muted-foreground" :
+          "bg-primary/10 text-primary"
         )}>
           <FileText className="w-6 h-6" />
         </div>
         <div className="flex flex-col items-end gap-1">
-          <span className={cn(
-            "px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest border",
-            template.store_id
-              ? "bg-warning/10 text-warning border-warning/20 shadow-lg shadow-warning/5"
-              : "bg-primary/10 text-primary border-primary/20 shadow-lg shadow-primary/5"
-          )}>
-            {template.store_id
-              ? `Tienda: ${stores.find(s => s.id === template.store_id)?.name || "Específica"}`
-              : "Pública (General)"}
-          </span>
+          {originBadge()}
           <span className="px-3 py-1 rounded-full bg-primary/5 text-xs font-black uppercase tracking-widest text-primary border border-primary/10">
             {template.category || "General"}
           </span>
@@ -838,8 +1531,9 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
       </p>
       <div className="flex items-center gap-2 pt-4 border-t border-sidebar-border/30">
         <Button
-          onClick={onImport}
-          className="flex-1 rounded-xl h-10 bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground font-black uppercase tracking-widest text-xs transition-all"
+          onClick={onUse}
+          disabled={isBusy}
+          className="flex-1 rounded-xl h-10 bg-primary/10 hover:bg-primary text-primary hover:text-primary-foreground font-black uppercase tracking-widest text-xs transition-all disabled:opacity-60"
         >
           <Download className="w-3.5 h-3.5 mr-2" />
           Cargar
@@ -848,83 +1542,132 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
           <Button
             onClick={onPublish}
             variant="outline"
-            className="rounded-xl h-10 border-sidebar-border hover:bg-primary/10 hover:text-primary hover:border-primary/30 font-black uppercase tracking-widest text-xs"
+            disabled={isBusy}
+            className="rounded-xl h-10 border-sidebar-border hover:bg-primary/10 hover:text-primary hover:border-primary/30 font-black uppercase tracking-widest text-xs disabled:opacity-60"
           >
             <Globe className="w-3.5 h-3.5 mr-2" />
             Publicar
           </Button>
         )}
-        {template.type === "public" && isAdmin ? (
+        {hasMenu ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:bg-primary/5"
+                disabled={isBusy}
+                className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:bg-primary/5 disabled:opacity-60"
+                aria-label={`Más acciones para ${template.name}`}
               >
                 <MoreVertical className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-[1.5rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl p-2 min-w-[200px]">
-              <DropdownMenuItem
-                onClick={onUpdate}
-                className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
-              >
-                <Save className="w-3.5 h-3.5 mr-2" />
-                Guardar Cambios (Sobrescribir)
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={onDuplicate}
-                className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
-              >
-                <Copy className="w-3.5 h-3.5 mr-2" />
-                Duplicar
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator className="bg-primary/5" />
-
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary">
-                  <StoreIcon className="w-3.5 h-3.5 mr-2" />
-                  Cambiar Tienda
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent className="rounded-[1.5rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl p-2 min-w-[200px]">
-                    <DropdownMenuItem
-                      onClick={() => onChangeStore?.(null)}
-                      className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
-                    >
-                      <Globe className="w-3.5 h-3.5 mr-2" />
-                      Pública (General)
-                    </DropdownMenuItem>
-                    {stores.map(store => (
-                      <DropdownMenuItem
-                        key={store.id}
-                        onClick={() => onChangeStore?.(store.id)}
-                        className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
-                      >
-                        <StoreIcon className="w-3.5 h-3.5 mr-2" />
-                        Solo: {store.name}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-
-              <DropdownMenuSeparator className="bg-primary/5" />
-
-              <DropdownMenuItem
-                onClick={onDelete}
-                className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-destructive/10 focus:text-destructive"
-              >
-                <Trash className="w-3.5 h-3.5 mr-2" />
-                Eliminar
-              </DropdownMenuItem>
+            <DropdownMenuContent align="end" className="rounded-[1.5rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl p-2 min-w-[220px]">
+              {onPreview && (
+                <DropdownMenuItem
+                  onClick={onPreview}
+                  className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
+                >
+                  <Eye className="w-3.5 h-3.5 mr-2" />
+                  Vista Previa
+                </DropdownMenuItem>
+              )}
+              {onNewSheet && (
+                <DropdownMenuItem
+                  onClick={onNewSheet}
+                  className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
+                >
+                  <FilePlus2 className="w-3.5 h-3.5 mr-2" />
+                  Nueva Ficha desde Plantilla
+                </DropdownMenuItem>
+              )}
+              {onRename && (
+                <DropdownMenuItem
+                  onClick={onRename}
+                  className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
+                >
+                  <Pencil className="w-3.5 h-3.5 mr-2" />
+                  Renombrar / Descripción
+                </DropdownMenuItem>
+              )}
+              {onUpdateContent && (
+                <DropdownMenuItem
+                  onClick={onUpdateContent}
+                  className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
+                >
+                  <Save className="w-3.5 h-3.5 mr-2" />
+                  {template.type === 'public' ? 'Guardar Cambios (Sobrescribir)' : 'Actualizar Contenido (Ficha Actual)'}
+                </DropdownMenuItem>
+              )}
+              {onUnpublish && (
+                <DropdownMenuItem
+                  onClick={onUnpublish}
+                  className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
+                >
+                  <CloudUpload className="w-3.5 h-3.5 mr-2 rotate-180" />
+                  Retirar Publicación
+                </DropdownMenuItem>
+              )}
+              {onDuplicate && (
+                <DropdownMenuItem
+                  onClick={onDuplicate}
+                  className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
+                >
+                  <Copy className="w-3.5 h-3.5 mr-2" />
+                  Duplicar
+                </DropdownMenuItem>
+              )}
+              {onChangeStore && (
+                <>
+                  <DropdownMenuSeparator className="bg-primary/5" />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary">
+                      <StoreIcon className="w-3.5 h-3.5 mr-2" />
+                      Cambiar Tienda
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent className="rounded-[1.5rem] border-primary/10 bg-sidebar/95 backdrop-blur-2xl p-2 min-w-[200px]">
+                        <DropdownMenuItem
+                          onClick={() => onChangeStore?.(null)}
+                          className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
+                        >
+                          <Globe className="w-3.5 h-3.5 mr-2" />
+                          Pública (General)
+                        </DropdownMenuItem>
+                        {stores.map(store => (
+                          <DropdownMenuItem
+                            key={store.id}
+                            onClick={() => onChangeStore?.(store.id)}
+                            className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-primary/10 focus:text-primary"
+                          >
+                            <StoreIcon className="w-3.5 h-3.5 mr-2" />
+                            Solo: {store.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+                </>
+              )}
+              {onDelete && (
+                <>
+                  <DropdownMenuSeparator className="bg-primary/5" />
+                  <DropdownMenuItem
+                    onClick={onDelete}
+                    className="rounded-xl font-bold uppercase tracking-widest text-xs focus:bg-destructive/10 focus:text-destructive"
+                  >
+                    <Trash className="w-3.5 h-3.5 mr-2" />
+                    Eliminar
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
           <Button
             variant="ghost"
-            className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:bg-primary/5 cursor-not-allowed opacity-50"
+            className="rounded-xl h-10 w-10 p-0 text-muted-foreground/40 cursor-default"
+            aria-hidden="true"
+            tabIndex={-1}
           >
             <MoreVertical className="w-4 h-4" />
           </Button>
@@ -934,7 +1677,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({
         <div className="absolute -bottom-4 left-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-20">
           <div className="bg-primary/95 text-primary-foreground px-4 py-2 rounded-xl shadow-xl shadow-primary/20 backdrop-blur-xl border border-primary/20 text-center">
             <p className="text-xs font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
-              <RefreshCw className="w-3 h-3 animate-spin" />
+              <RefreshCw className="w-3 h-3" />
               Actualizado: {new Date(template.updated_at).toLocaleDateString()}
             </p>
           </div>
