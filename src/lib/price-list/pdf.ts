@@ -10,9 +10,16 @@
  * Diseño (misión §6-§7): A4 vertical, encabezado horizontal compacto
  * (logo izq. · título + tienda centro · fecha/tienda der.) y DOS bloques
  * de tabla independientes por página (columna izquierda arriba→abajo,
- * luego la derecha), con tres columnas: SKU/Código · Descripción · Precio
- * de venta. Filas nunca partidas; «Página X de N» con el total real del
- * plan (una sola pasada).
+ * luego la derecha), con tres columnas: SKU/Código · Producto (y su
+ * descripción) · Precio de venta. Filas nunca partidas; «Página X de N»
+ * con el total real del plan (una sola pasada).
+ *
+ * CP-PRECIO-PDF-DESC-001 · «Mostrar descripción en PDF» (Sí/No):
+ *  · Sí — cada celda dibuja el nombre (presentación primaria) y DEBAJO su
+ *    descripción con tamaño/tono secundarios; ocupa varias líneas cuando
+ *    hace falta y la altura de la fila se adapta dinámicamente.
+ *  · No — solo el nombre: sin huecos vacíos, misma alineación y diseño.
+ * Son campos SEPARADOS: jamás se combinan ni se sustituye uno por otro.
  */
 
 import type { jsPDF } from 'jspdf';
@@ -41,6 +48,8 @@ const HEADER_ROW_MM = 6;
 const ROW_BASE_MM = 6;
 const ROW_EXTRA_LINE_MM = 3.6;
 const ROW_FONT = 7.6;
+/** CP-PRECIO-PDF-DESC-001: tamaño secundario de la descripción respecto al nombre. */
+const DESC_FONT = 6.7;
 
 export const PRICE_LIST_GEOMETRY: PriceListGeometry = {
   // Alto útil por columna de datos (contentTop..bottomLimit).
@@ -52,17 +61,25 @@ export const PRICE_LIST_GEOMETRY: PriceListGeometry = {
 };
 
 /**
- * Medidor real de líneas con jsPDF para el ancho de la columna descripción.
- * CRÍTICO: mide con la MISMA fuente y tamaño con la que se dibuja
- * (helvetica ROW_FONT) — si midiera con la fuente por defecto del doc,
- * el plan sobreestimaría las alturas y desperdiciaría página.
+ * Medidor real de líneas con jsPDF para el ancho de la columna producto.
+ * CP-PRECIO-PDF-DESC-001: el texto de celda llega compuesto
+ * («nombre\ndescripción» cuando la descripción se muestra). CRÍTICO:
+ * medir cada bloque con la MISMA fuente y tamaño con la que se dibuja —
+ * el nombre con ROW_FONT y la descripción con DESC_FONT (secundaria); si
+ * midiera con la fuente por defecto del doc, el plan sobreestimaría las
+ * alturas y desperdiciaría página.
  */
 function makeDocMeasure(doc: jsPDF, widthMm: number) {
-  return (description: string): number => {
+  return (text: string): number => {
+    const [namePart = '', ...descParts] = text.split('\n');
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(ROW_FONT);
-    const wrapped = doc.splitTextToSize(description, widthMm) as string[];
-    return Math.max(1, wrapped.length);
+    const nameLines = Math.max(1, (doc.splitTextToSize(namePart, widthMm) as string[]).length);
+    if (descParts.length === 0) return nameLines;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(DESC_FONT);
+    const descLines = Math.max(1, (doc.splitTextToSize(descParts.join('\n'), widthMm) as string[]).length);
+    return nameLines + descLines;
   };
 }
 
@@ -108,6 +125,8 @@ function drawBlock(
   let y = CONTENT_TOP;
 
   // Encabezado del bloque — visible en AMBAS columnas (misión §7).
+  // CP-PRECIO-PDF-DESC-001: denominación honesta de la columna según la opción.
+  const cellHeader = model.meta.includeDescription ? 'Producto y descripción' : 'Producto';
   doc.setFillColor(...HEAD_FILL);
   doc.setDrawColor(...LINE);
   doc.setLineWidth(0.2);
@@ -116,15 +135,23 @@ function drawBlock(
   doc.setTextColor(...INK);
   doc.rect(x0, y, COL_W, HEADER_ROW_MM, 'FD');
   doc.text('SKU / Código', x0 + 1.5, y + 4);
-  doc.text('Descripción del producto', x0 + SKU_W + 1.5, y + 4);
+  doc.text(cellHeader, x0 + SKU_W + 1.5, y + 4);
   doc.text('Precio de venta', x0 + COL_W - 1.5, y + 4, { align: 'right' });
   y += HEADER_ROW_MM;
 
-  // Filas — descripción con ajuste de línea (sin recortes), precio a la derecha.
+  // Filas — nombre con presentación primaria y descripción (cuando se
+  // muestra) debajo, en tamaño/tono secundarios, con ajuste de línea
+  // (sin recortes); precio a la derecha; altura de fila dinámica.
   doc.setFont('helvetica', 'normal');
   for (const rowIdx of column.rowIndices) {
     const row = model.rows[rowIdx];
-    const lines = Math.max(1, doc.splitTextToSize(row.description, DESC_W).length);
+    const descText = model.meta.includeDescription ? row.description.trim() : '';
+
+    doc.setFontSize(ROW_FONT);
+    const nameWrapped = doc.splitTextToSize(row.name, DESC_W) as string[];
+    doc.setFontSize(DESC_FONT);
+    const descWrapped = descText !== '' ? (doc.splitTextToSize(descText, DESC_W) as string[]) : [];
+    const lines = Math.max(1, nameWrapped.length) + descWrapped.length;
     const rowH = ROW_BASE_MM + Math.max(0, lines - 1) * ROW_EXTRA_LINE_MM;
 
     doc.setDrawColor(...LINE);
@@ -135,12 +162,23 @@ function drawBlock(
     doc.setFontSize(ROW_FONT);
     doc.text(row.skuLabel, x0 + 1.5, y + 4);
 
-    doc.setTextColor(...MUTED);
-    const wrapped = doc.splitTextToSize(row.description, DESC_W) as string[];
+    // Nombre del producto (primario) — campo propio, nunca sustituto de la
+    // descripción ni combinado con ella.
     let ty = y + 4;
-    for (const lineTxt of wrapped.slice(0, Math.max(1, lines))) {
+    doc.setTextColor(...INK);
+    doc.setFontSize(ROW_FONT);
+    for (const lineTxt of nameWrapped) {
       doc.text(lineTxt, x0 + SKU_W + 1.5, ty);
-      ty += 3.6;
+      ty += ROW_EXTRA_LINE_MM;
+    }
+    // Descripción del producto (secundaria: menor tamaño, tono atenuado).
+    if (descWrapped.length > 0) {
+      doc.setTextColor(...MUTED);
+      doc.setFontSize(DESC_FONT);
+      for (const lineTxt of descWrapped) {
+        doc.text(lineTxt, x0 + SKU_W + 1.5, ty);
+        ty += ROW_EXTRA_LINE_MM;
+      }
     }
 
     doc.setTextColor(...INK);

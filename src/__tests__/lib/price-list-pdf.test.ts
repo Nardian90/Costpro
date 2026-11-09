@@ -17,7 +17,7 @@
 
 import { describe, it, expect } from 'vitest';
 import type { jsPDF } from 'jspdf';
-import { buildPriceListModel, planPriceListPages, type PriceListSourceItem } from '@/lib/price-list/model';
+import { buildPriceListModel, planPriceListPages, priceListCellText, type PriceListSourceItem } from '@/lib/price-list/model';
 import { PRICE_LIST_GEOMETRY } from '@/lib/price-list/pdf';
 import { renderPriceListPdf } from '@/lib/price-list/pdf';
 
@@ -149,7 +149,7 @@ describe('CP-SALES-PRICE-LIST-001 · Render del PDF (stream decodificado)', () =
     const doc = await renderPriceListPdf(model, { dataUrl: null, source: 'none' });
     const text = decodePdf(doc.output('arraybuffer') as ArrayBuffer);
     expect(text).toContain('SKU / Código');
-    expect(text).toContain('Descripción del producto');
+    expect(text).toContain('Producto y descripción');
     expect(text).toContain('Precio de venta');
     expect(text).toContain('CUP');
     expect(text).toContain('USD');
@@ -227,5 +227,144 @@ describe('CP-SALES-PRICE-LIST-001 · Render del PDF (stream decodificado)', () =
   it('sin productos que cumplan los filtros: NO se genera un PDF vacío que parezca válido', async () => {
     const empty = build([]);
     await expect(renderPriceListPdf(empty, { dataUrl: null, source: 'none' })).rejects.toThrow(/No hay productos/);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════
+// CP-PRECIO-PDF-DESC-001 · «Mostrar descripción en PDF» (Sí/No)
+// Matriz §6 de la misión: nombre+descripción · descripción extensa
+// multilínea · nombre sin descripción · acentos y caracteres especiales.
+// ══════════════════════════════════════════════════════════════════════
+describe('CP-PRECIO-PDF-DESC-001 · Mostrar descripción en PDF (Sí/No)', () => {
+  // Ejemplo LITERAL de la misión §2: nombre y descripción son información
+  // DISTINTA y jamás se combinan ni se sustituyen entre sí.
+  const NOMBRE = 'Cemento Cola';
+  const DESC = 'Cemento cola para adherencia de cerámicos, baldosas y materiales de construcción.';
+
+  it('por defecto (Sí) el modelo mantiene AMBOS campos separados: la descripción no repite ni sustituye al nombre', () => {
+    const model = build([mkItem({ id: '1', sku: '1', name: NOMBRE, description: DESC })]);
+    expect(model.meta.includeDescription).toBe(true);
+    const row = model.rows[0];
+    expect(row.name).toBe(NOMBRE);
+    expect(row.description).toBe(DESC);
+    expect(row.description).not.toContain(NOMBRE); // campos separados, jamás fusionados
+    expect(priceListCellText(row, true)).toBe(`${NOMBRE}\n${DESC}`);
+    expect(priceListCellText(row, false)).toBe(NOMBRE);
+  });
+
+  it('modelo No: la celda efectiva es SOLO el nombre, sin huecos (misma que un producto sin descripción)', () => {
+    const model = buildPriceListModel({
+      items: [mkItem({ id: '1', sku: '1', name: NOMBRE, description: DESC })],
+      store, range: null, generatedAt: fixedDate, includeDescription: false,
+    });
+    expect(model.meta.includeDescription).toBe(false);
+    expect(priceListCellText(model.rows[0], false)).toBe(NOMBRE);
+    // Idéntico a un producto que NO tiene descripción almacenada.
+    const sinDesc = build([mkItem({ id: '2', sku: '2', name: NOMBRE })]);
+    expect(priceListCellText(sinDesc.rows[0], true)).toBe(priceListCellText(model.rows[0], false));
+  });
+
+  it('PDF Sí: incluye el nombre y DEBAJO su descripción (ejemplo de la misión §1)', async () => {
+    const model = build([mkItem({ id: '1', sku: '1', name: NOMBRE, description: DESC, price: 38.5 })]);
+    const doc = await renderPriceListPdf(model, { dataUrl: null, source: 'none' });
+    const text = decodePdf(doc.output('arraybuffer') as ArrayBuffer);
+    expect(text).toContain(NOMBRE);
+    for (const palabra of ['adherencia', 'cerámicos', 'baldosas', 'materiales', 'construcción']) {
+      expect(text).toContain(palabra);
+    }
+    expect(text).toContain('Producto y descripción');
+  });
+
+  it('PDF No: muestra únicamente el nombre — la descripción NO aparece en el documento', async () => {
+    const model = buildPriceListModel({
+      items: [mkItem({ id: '1', sku: '1', name: NOMBRE, description: DESC, price: 38.5 })],
+      store, range: null, generatedAt: fixedDate, includeDescription: false,
+    });
+    const doc = await renderPriceListPdf(model, { dataUrl: null, source: 'none' });
+    const text = decodePdf(doc.output('arraybuffer') as ArrayBuffer);
+    expect(text).toContain(NOMBRE);
+    expect(text).not.toContain('adherencia');
+    expect(text).not.toContain('cerámicos');
+    expect(text).toContain('Producto'); // encabezado honesto sin descripción
+    expect(text).not.toContain('Producto y descripción');
+  });
+
+  it('misma fuente de datos, Sí vs No: nombres, SKU y precios idénticos — la ÚNICA diferencia es la descripción', async () => {
+    const items = [
+      mkItem({ id: '1', sku: '1', name: NOMBRE, description: DESC, price: 38.5, price_currency: 'CUP' }),
+      mkItem({ id: '2', sku: '2', name: 'Pintura vinil blanca 4 L', description: 'Pintura interior-exterior lavable de secado rápido.', price: 2100, price_currency: 'CUP' }),
+    ];
+    const si = await renderPriceListPdf(build(items), { dataUrl: null, source: 'none' });
+    const no = await renderPriceListPdf(
+      buildPriceListModel({ items, store, range: null, generatedAt: fixedDate, includeDescription: false }),
+      { dataUrl: null, source: 'none' },
+    );
+    const tSi = decodePdf(si.output('arraybuffer') as ArrayBuffer);
+    const tNo = decodePdf(no.output('arraybuffer') as ArrayBuffer);
+    for (const común of [NOMBRE, 'Pintura vinil blanca 4 L', 'CUP', 'SKU / Código', 'LISTADO DE PRECIOS']) {
+      expect(tSi).toContain(común);
+      expect(tNo).toContain(común);
+    }
+    for (const soloDesc of ['adherencia', 'rápido']) {
+      expect(tSi).toContain(soloDesc);
+      expect(tNo).not.toContain(soloDesc);
+    }
+    expect(si.getNumberOfPages()).toBe(no.getNumberOfPages());
+  });
+
+  it('descripción extensa de varias líneas (Sí): ajuste dinámico, ninguna palabra recortada ni superpuesta', async () => {
+    const larga = 'Mezcla adhesiva cementicia de alta adherencia y baja retracción para asentamiento de cerámicos porcelánicos, baldosas y mosaicos en interiores y exteriores, aplicable con llana dentada sobre revoques finos en fachadas, cocinas, baños y zonas húmedas.';
+    const nombre = 'Adhesivo cerámico premium';
+    const model = build([mkItem({ id: 'x', sku: 'PEG-1', name: nombre, description: larga, price: 450.25 })]);
+    const doc = await renderPriceListPdf(model, { dataUrl: null, source: 'none' });
+    const text = decodePdf(doc.output('arraybuffer') as ArrayBuffer);
+    // splitTextToSize parte por palabras: cada palabra del nombre y de la
+    // descripción queda dibujada COMPLETA (nada cortado ni perdido).
+    for (const word of [...nombre.split(/\s+/), ...larga.split(/\s+/)]) {
+      expect(text).toContain(word);
+    }
+    // La fila creció: el plan reserva más alto que una fila de 1 línea.
+    const geom = { ...PRICE_LIST_GEOMETRY, measureLines: (t: string) => t.split('\n').reduce((n, seg) => n + Math.max(1, Math.ceil(seg.length / 45)), 0) };
+    const plan = planPriceListPages(model, geom);
+    expect(plan.pages[0].left.heightMm).toBeGreaterThan(PRICE_LIST_GEOMETRY.headerRowMm + PRICE_LIST_GEOMETRY.rowBaseMm);
+  });
+
+  it('producto sin descripción: la opción en Sí o No produce la MISMA altura de fila (sin espacios vacíos)', () => {
+    const item = [mkItem({ id: '1', sku: '1', name: NOMBRE })];
+    const modelSi = build(item);
+    const modelNo = buildPriceListModel({ items: item, store, range: null, generatedAt: fixedDate, includeDescription: false });
+    const geom = { ...PRICE_LIST_GEOMETRY, measureLines: (t: string) => (t.includes('\n') ? 3 : 1) };
+    const planSi = planPriceListPages(modelSi, geom);
+    const planNo = planPriceListPages(modelNo, geom);
+    expect(planSi.pages[0].left.heightMm).toBe(planNo.pages[0].left.heightMm);
+    expect(planSi.pages[0].left.heightMm).toBe(PRICE_LIST_GEOMETRY.headerRowMm + PRICE_LIST_GEOMETRY.rowBaseMm);
+  });
+
+  it('descripción con acentos y caracteres especiales: el texto sale completo y legible', async () => {
+    const especial = 'Adhesivo flexible ñoño para cerámicos de 90° y baldosas 30×30 — rendimiento ½ galón por m², área técnica';
+    const model = build([mkItem({ id: '1', sku: 'A-90', name: 'Cemento cola especial Ñ', description: especial, price: 99.9 })]);
+    const doc = await renderPriceListPdf(model, { dataUrl: null, source: 'none' });
+    const text = decodePdf(doc.output('arraybuffer') as ArrayBuffer);
+    for (const fragmento of ['Cemento cola especial Ñ', 'Adhesivo flexible', 'ñoño', 'cerámicos', 'baldosas', '90°', '30×30', 'galón', 'm²', 'área técnica']) {
+      expect(text).toContain(fragmento);
+    }
+  });
+
+  it('el plan nunca parte una fila con descripción multilínea entre columnas o páginas', () => {
+    const items = Array.from({ length: 40 }, (_, i) =>
+      mkItem({ id: `p${i}`, sku: String(i + 1), name: `Producto ${i + 1}`, description: `Descripción comercial extendida del producto número ${i + 1} con suficiente texto para ocupar varias líneas de la columna.` }),
+    );
+    const geom = { ...PRICE_LIST_GEOMETRY, measureLines: (t: string) => t.split('\n').reduce((n, seg) => n + Math.max(1, Math.ceil(seg.length / 45)), 0) };
+    const plan = planPriceListPages(build(items), geom);
+    const seen: number[] = [];
+    for (const page of plan.pages) {
+      for (const side of ['left', 'right'] as const) {
+        for (const idx of page[side].rowIndices) {
+          expect(seen).not.toContain(idx);
+          seen.push(idx);
+        }
+      }
+    }
+    expect(seen).toEqual(Array.from({ length: items.length }, (_, i) => i));
   });
 });

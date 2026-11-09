@@ -79,6 +79,10 @@ export default function PriceListView() {
   // precio. Se combinan entre sí y con el rango de SKU.
   const [selClasses, setSelClasses] = useState<PriceClassSelection[]>([]);
   const [priceStatus, setPriceStatus] = useState<PricePriceStatus>('all');
+  // CP-PRECIO-PDF-DESC-001: «Mostrar descripción en PDF» (Sí/No). Opción de
+  // PRESENTACIÓN del documento: no filtra filas ni modifica datos; por
+  // defecto Sí (conserva la riqueza informativa del listado).
+  const [showDescription, setShowDescription] = useState(true);
 
   const opFilter = useMemo<OperationalPriceFilter>(
     () => ({ classes: selClasses, priceStatus }),
@@ -132,8 +136,9 @@ export default function PriceListView() {
 
 
   // La vista previa queda DESACTUALIZADA si los filtros cambian tras generar
-  // (incluye clasificación operativa y estado del precio).
-  const previewSignature = `${activeStoreId}|${skuFrom.trim()}|${skuTo.trim()}|${selClasses.join(',')}|${priceStatus}`;
+  // (incluye clasificación operativa, estado del precio y la opción de
+  // mostrar/ocultar la descripción en el PDF).
+  const previewSignature = `${activeStoreId}|${skuFrom.trim()}|${skuTo.trim()}|${selClasses.join(',')}|${priceStatus}|${showDescription ? 'con-descripcion' : 'sin-descripcion'}`;
   const stale = !!preview && preview.signature !== previewSignature;
 
   const clearFilters = useCallback(() => {
@@ -157,6 +162,9 @@ export default function PriceListView() {
         // CP-OPERATIONAL-CLASS-001: el PDF previsualizado/exportado usa los
         // MISMOS filtros que la pantalla (un solo pipeline).
         operationalFilter: opFilter,
+        // CP-PRECIO-PDF-DESC-001: la opción controla REALMENTE la inclusión
+        // u omisión del campo descripción en el documento generado.
+        includeDescription: showDescription,
       });
       if (model.meta.totalProducts === 0) {
         toast.info('No hay productos que cumplan las condiciones (stock > 0 con los filtros de clasificación, precio y rango de SKU indicados).');
@@ -179,7 +187,7 @@ export default function PriceListView() {
       buildingRef.current = false;
       setLoading(false);
     }
-  }, [rangeInvalid, rangeActive, range, storeInfo, productsQuery.data, activeStoreId, skuFrom, skuTo, selClasses, priceStatus, previewSignature, opFilter, loading]);
+  }, [rangeInvalid, rangeActive, range, storeInfo, productsQuery.data, activeStoreId, skuFrom, skuTo, selClasses, priceStatus, showDescription, previewSignature, opFilter, loading]);
 
   const handleExportPdf = useCallback(async () => {
     if (!preview || exporting) return;
@@ -316,6 +324,38 @@ export default function PriceListView() {
                 Sin precio = sin precio configurado para la tienda (campo vacío). Un precio 0 configurado cuenta como Con precio.
               </p>
             </div>
+          </div>
+          {/* ── CP-PRECIO-PDF-DESC-001: Mostrar descripción en PDF ──────────
+              Opción de presentación del documento (Sí/No), independiente de
+              los filtros: decide si la descripción del producto aparece en
+              el PDF. No altera datos almacenados ni el resto de columnas. */}
+          <div className="space-y-1.5">
+            <span className="text-sm font-medium">Mostrar descripción en PDF</span>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Mostrar u ocultar la descripción de los productos en el PDF exportado">
+              {([
+                { value: true, label: 'Sí — Mostrar descripción', testid: 'descripcion-pdf-si' },
+                { value: false, label: 'No — Ocultar descripción', testid: 'descripcion-pdf-no' },
+              ]).map((opt) => (
+                <button
+                  key={String(opt.value)}
+                  type="button"
+                  aria-pressed={showDescription === opt.value}
+                  data-testid={opt.testid}
+                  onClick={() => setShowDescription(opt.value)}
+                  className={cn(
+                    'min-h-[36px] rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+                    showDescription === opt.value
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-card hover:border-primary/40'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground italic ml-1">
+              Al mostrarla, el nombre del producto va acompañado de su descripción debajo (varias líneas si hace falta). Afecta únicamente al PDF que se genera: no modifica los datos de los productos.
+            </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
