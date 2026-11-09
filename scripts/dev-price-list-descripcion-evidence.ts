@@ -110,8 +110,8 @@ async function main(): Promise<void> {
 
   const fileSi = join(OUT_DIR, 'listado-precios-con-descripcion.pdf');
   const fileNo = join(OUT_DIR, 'listado-precios-sin-descripcion.pdf');
-  writeFileSync(fileSi, docSi.output('arraybuffer'));
-  writeFileSync(fileNo, docNo.output('arraybuffer'));
+  writeFileSync(fileSi, Buffer.from(docSi.output('arraybuffer') as ArrayBuffer));
+  writeFileSync(fileNo, Buffer.from(docNo.output('arraybuffer') as ArrayBuffer));
 
   // ── Verificación sobre los BYTES reales de los dos PDFs ────────────────
   const tSi = decodePdf(docSi.output('arraybuffer') as ArrayBuffer);
