@@ -18,7 +18,8 @@ import { getIncompleteReasons } from '@/lib/product-completeness';
 import { generateEAN13FromSKU } from '@/lib/barcode-utils';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
-import type { Product, ProductVariant, ProductFCStatus } from '@/types';
+import type { Product, ProductVariant, ProductFCStatus, ProductOperationalClass } from '@/types';
+import { OPERATIONAL_CLASS_OPTIONS, operationalClassLabel, UNCLASSIFIED_LABEL } from '@/lib/product-operational-class';
 
 export interface EditFormState {
   name: string;
@@ -27,6 +28,9 @@ export interface EditFormState {
   // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): naturaleza del artículo
   // (products.is_service). Independiente de la categoría comercial.
   is_service: boolean;
+  // CP-OPERATIONAL-CLASS-001: clasificación operativa (enum de BD). null =
+  // «Sin clasificar» — estado visible en el selector; JAMÁS se inventa valor.
+  operational_class: ProductOperationalClass | null;
   price: number;
   precio_empresa: number;
   precio_empresa_currency: string;
@@ -433,6 +437,59 @@ export default function EditProductModal({
           </div>
           <p className="text-[10px] text-muted-foreground italic ml-1">
             La categoría comercial es independiente: una categoría «Servicios» NO convierte un producto físico en servicio.
+          </p>
+        </div>
+
+        {/* ── CP-OPERATIONAL-CLASS-001: Clasificación operativa (informativa) ──
+            Independiente del tipo físico/servicio y de la categoría comercial.
+            Persistida en products.operational_class (enum de BD). null =
+            «Sin clasificar» — se muestra como estado actual y se conserva. */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2 ml-1">
+            <label className="text-xs font-black uppercase tracking-widest">Clasificación operativa</label>
+            <span
+              aria-live="polite"
+              data-testid="operational-class-current"
+              className={cn(
+                'rounded-full border px-2 py-0.5 text-[10px] font-bold',
+                editForm.operational_class
+                  ? 'border-primary/40 bg-primary/10 text-primary'
+                  : 'border-border bg-muted/40 text-muted-foreground'
+              )}
+            >
+              Actual: {operationalClassLabel(editForm.operational_class)}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Clasificación operativa">
+            {OPERATIONAL_CLASS_OPTIONS.map((opt) => {
+              const selected = editForm.operational_class === opt.value;
+              const Icon = opt.icon;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  data-testid={`operational-class-${opt.value}`}
+                  onClick={() => onFormChange({ ...editForm, operational_class: opt.value })}
+                  className={cn(
+                    'flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all text-center',
+                    selected
+                      ? 'border-primary bg-primary/5 shadow-sm'
+                      : 'border-border bg-card hover:border-primary/40'
+                  )}
+                >
+                  <Icon className={cn('w-5 h-5 shrink-0', selected ? 'text-primary' : 'text-muted-foreground')} />
+                  <div className="min-w-0">
+                    <div className="text-xs font-black uppercase tracking-tight">{opt.label}</div>
+                    <div className="text-[10px] text-muted-foreground leading-tight">{opt.helper}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-muted-foreground italic ml-1">
+            Clasificación informativa: no cambia contabilidad, impuestos ni reglas de venta. {!editForm.operational_class && `Estado actual: ${UNCLASSIFIED_LABEL.toLowerCase()} — selecciónala para clasificar el elemento.`}
           </p>
         </div>
 

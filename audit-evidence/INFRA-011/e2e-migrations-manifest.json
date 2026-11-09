@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 553,
-  "total_incluidos": 138,
+  "total_considerados": 554,
+  "total_incluidos": 139,
   "total_excluidos": 415,
-  "digest": "f02bee25621ad40c57b7def34e1168a08e75f713ca8078e58dd2a6fdfb38b21c",
+  "digest": "d954df318efdb53b70053376f52c52ffd0804723f6a5bcf56cd37acde58bcd3f",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5367,6 +5367,17 @@
       "sha256_generado": "9176348ee6248cc39e4be80f91d9bf20bbacaf810594bf756a92670caba9af5e"
     },
     {
+      "nombre": "20261108150000_cp_operational_classification.sql",
+      "bytes": 40898,
+      "sha256_original": "d52e88d8a2dc952d44b93ccceb01a453990d449478e70c0f45bfd1dc96ebb368",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261108",
+      "observaciones": [],
+      "posicion": 136,
+      "sha256_generado": "d52e88d8a2dc952d44b93ccceb01a453990d449478e70c0f45bfd1dc96ebb368"
+    },
+    {
       "nombre": "20261108200000_cp_doc_sc006_store_code.sql",
       "bytes": 8138,
       "sha256_original": "0ec5c7e14e9cae0cca6b01e4f37c2435d22400b9d7aefab5ff175aaa0025e2a8",
@@ -5374,7 +5385,7 @@
       "razon": null,
       "timestamp": "20261108",
       "observaciones": [],
-      "posicion": 136,
+      "posicion": 137,
       "sha256_generado": "0ec5c7e14e9cae0cca6b01e4f37c2435d22400b9d7aefab5ff175aaa0025e2a8"
     },
     {
@@ -5385,7 +5396,7 @@
       "razon": null,
       "timestamp": "20261108",
       "observaciones": [],
-      "posicion": 137,
+      "posicion": 138,
       "sha256_generado": "07b481d6143f46fa5e3084c76a21ba15d95dd78674e3934289c8b6edca01734a"
     },
     {
@@ -5396,7 +5407,7 @@
       "razon": null,
       "timestamp": "20261108",
       "observaciones": [],
-      "posicion": 138,
+      "posicion": 139,
       "sha256_generado": "a7be71ca11219574c809dd4243868d8b99a24052cdbb816f3718ae31661412fa"
     },
     {

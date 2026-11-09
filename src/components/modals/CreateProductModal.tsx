@@ -12,6 +12,8 @@ import { compressImage, validateImageFile } from '@/lib/image-compress';
 import { generateEAN13FromSKU } from '@/lib/barcode-utils';
 import { findMasterBySku, useActivateMasterProduct, useCatalogStoreLink, useCreateMasterProduct } from '@/hooks/api/useMasterCatalog';
 import { supabase } from '@/lib/supabaseClient';
+import type { ProductOperationalClass } from '@/types';
+import { OPERATIONAL_CLASS_OPTIONS, operationalClassLabel } from '@/lib/product-operational-class';
 
 interface VariantForm {
   name: string;
@@ -40,6 +42,9 @@ export const CreateProductModal = () => {
     // false = producto físico (default de la BD: products.is_service BOOLEAN
     // NOT NULL DEFAULT FALSE); true = servicio intangible sin existencias.
     is_service: false,
+    // CP-OPERATIONAL-CLASS-001: OBLIGATORIA en el alta desde la interfaz
+    // (misión §2). Arranca vacía: null = Sin clasificar — nunca un default.
+    operational_class: null as ProductOperationalClass | null,
     price: 0,
     cost_price: 0,
     barcode: '',
@@ -196,6 +201,14 @@ export const CreateProductModal = () => {
       toast.error('No hay una tienda activa seleccionada');
       return;
     }
+    // CP-OPERATIONAL-CLASS-001 (misión §2): los NUEVOS registros creados desde
+    // la interfaz requieren clasificación operativa antes de confirmar el
+    // guardado. Las importaciones y procesos automáticos NO se bloquean: sus
+    // registros quedan «Sin clasificar» (NULL), jamás con un valor inventado.
+    if (!form.operational_class) {
+      toast.error('La clasificación operativa es obligatoria: elige Venta, Insumo, Activo Fijo o Útil/Herramienta.');
+      return;
+    }
 
     // Validate variants
     const validVariants = variants.filter(v => v.name && v.conversion_factor > 0);
@@ -224,7 +237,14 @@ export const CreateProductModal = () => {
           'Cancelar: no se creará nada.'
         );
         if (!aceptar) return;
-        await activateMaster.mutateAsync(master.id);
+        // CP-OPERATIONAL-CLASS-002 §6: la clasificación elegida viaja EN el
+        // RPC (p_operational_class): se persiste en la MISMA TRANSACCIÓN que
+        // crea la fila local (y corrige el caso already_active). Un fallo del
+        // RPC cancela TODO y llega al catch general — sin éxito falso.
+        await activateMaster.mutateAsync({
+          masterId: master.id,
+          operationalClass: form.operational_class,
+        });
         toast.success(`Producto del catálogo activado en esta tienda (existencia 0, sin movimientos).`);
         handleClose();
         return;
@@ -246,6 +266,13 @@ export const CreateProductModal = () => {
           barcode_type: form.barcode ? 'CODE128' : null,
           unit_of_measure: form.unit_of_measure || 'unidad',
           is_service: form.is_service === true,
+          // CP-OPERATIONAL-CLASS-002 §6: la clasificación se persiste EN LA
+          // MISMA TRANSACCIÓN del RPC (p_operational_class). Éxito del RPC ⇒
+          // fila local creada CON clasificación; fallo ⇒ nada se crea y el
+          // error llega al toast general (sin éxito falso ni warnings
+          // contradictorios). Recuperación siempre disponible desde
+          // «Información del producto».
+          operational_class: form.operational_class,
           local: {
             price: form.price || 0,
             price_currency: form.price_currency || 'CUP',
@@ -591,6 +618,56 @@ export const CreateProductModal = () => {
             </div>
             <p className="text-[10px] text-muted-foreground italic ml-1">
               La categoría comercial es independiente: una categoría «Servicios» NO convierte un producto físico en servicio.
+            </p>
+          </div>
+
+          {/* ── CP-OPERATIONAL-CLASS-001: Clasificación operativa (obligatoria
+              en el alta; informativa: no cambia contabilidad, impuestos ni
+              reglas de venta). Independiente del tipo físico/servicio. ── */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2 ml-1">
+              <label className="text-xs font-black uppercase tracking-widest ml-1">Clasificación operativa <span className="text-red-500">*</span></label>
+              <span
+                aria-live="polite"
+                data-testid="operational-class-current"
+                className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${
+                  form.operational_class
+                    ? 'border-primary/40 bg-primary/10 text-primary'
+                    : 'border-border bg-muted/40 text-muted-foreground'
+                }`}
+              >
+                {form.operational_class ? operationalClassLabel(form.operational_class) : 'Sin clasificar'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Clasificación operativa">
+              {OPERATIONAL_CLASS_OPTIONS.map((opt) => {
+                const selected = form.operational_class === opt.value;
+                const Icon = opt.icon;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    data-testid={`operational-class-${opt.value}`}
+                    onClick={() => setForm({ ...form, operational_class: opt.value })}
+                    className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 transition-all text-center ${
+                      selected
+                        ? 'border-primary bg-primary/5 shadow-sm'
+                        : 'border-border bg-card hover:border-primary/40'
+                    }`}
+                  >
+                    <Icon className={`w-5 h-5 shrink-0 ${selected ? 'text-primary' : 'text-muted-foreground'}`} />
+                    <div className="min-w-0">
+                      <div className="text-xs font-black uppercase tracking-tight">{opt.label}</div>
+                      <div className="text-[10px] text-muted-foreground leading-tight">{opt.helper}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[10px] text-muted-foreground italic ml-1">
+              Obligatoria para nuevos productos. Clasificación informativa: no cambia contabilidad, impuestos ni reglas de venta.
             </p>
           </div>
 

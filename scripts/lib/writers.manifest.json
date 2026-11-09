@@ -22,6 +22,7 @@
     "scripts/cleanup-e2e-offers-manual.mjs",
     "scripts/dev-price-list-e2e-evidence.ts",
     "scripts/e2e/reset-remote-e2e-db.mjs",
+    "scripts/e2e/verify-operational-classification-pg.mjs",
     "scripts/landing-demo-provision.cjs",
     "scripts/provision-e2e-offers-identity.mjs",
     "scripts/sc006-e2e-verification.mjs",

@@ -81,7 +81,9 @@ describe('useMasterCatalog — contrato de RPC (PR 4)', () => {
       const res = await result.current.mutateAsync(MASTER_ID);
       expect(res.product_id).toBe('p1');
     });
-    expect(rpcMock).toHaveBeenCalledWith('activate_master_product', { p_master_id: MASTER_ID, p_store_id: STORE });
+    // CP-OPERATIONAL-CLASS-002: el hook envía p_operational_class (null
+    // cuando no se pide clasificación — retrocompatible con el PR 4).
+    expect(rpcMock).toHaveBeenCalledWith('activate_master_product', { p_master_id: MASTER_ID, p_store_id: STORE, p_operational_class: null });
   });
 
   it('findMasterBySku: match exacto de SKU case-insensitive; fail-open sin tienda o con error de conexión', async () => {

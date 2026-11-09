@@ -196,6 +196,12 @@ export const profileSchema = z.object({
     .optional(),
 });
 
+// CP-OPERATIONAL-CLASS-001 (2026-11-08): clasificación operativa del catálogo
+// (enum PG product_operational_class, migración 20261108150000). SIN default:
+// NULL = «Sin clasificar» (registros históricos) y nunca se inventa un valor;
+// el alta desde la UI exige la clasificación explícita del usuario.
+export const productOperationalClassSchema = z.enum(['venta', 'insumo', 'activo_fijo', 'util_herramienta']);
+
 export const productSchema = z.object({
   id: resilientUuid.pipe(z.string().regex(uuidRegex)).catch(""),
   name: z.string().min(1, "El nombre es obligatorio"),
@@ -286,6 +292,9 @@ export const productSchema = z.object({
       return val;
     }, z.boolean().optional())
     .default(false),
+  // CP-OPERATIONAL-CLASS-001: clasificación operativa (enum de BD). Sin
+  // default: los históricos viajan como NULL = «Sin clasificar».
+  operational_class: productOperationalClassSchema.nullable().optional(),
 });
 
 export const productVariantSchema = z.object({

@@ -16,6 +16,8 @@
  */
 
 import { orderProductsBySku, type SkuFilter } from './sku-order';
+import { applyOperationalPriceFilter, hasConfiguredPrice, NEUTRAL_OPERATIONAL_FILTER, isNeutralOperationalFilter, type OperationalPriceFilter } from './operational-filters';
+import type { ProductOperationalClass } from '@/types';
 import { formatLabeledCurrency } from '@/lib/utils';
 
 /** Fila de origen (campos del RPC get_products_for_pos que usa el listado). */
@@ -29,6 +31,8 @@ export interface PriceListSourceItem {
   stock_current: number | null | undefined;
   is_active?: boolean | null;
   is_service?: boolean | null;
+  /** CP-OPERATIONAL-CLASS-001: clasificación operativa real del catálogo. */
+  operational_class?: ProductOperationalClass | null;
 }
 
 /** Fila lista para dibujar (el SKU original se conserva intacto). */
@@ -61,16 +65,48 @@ export interface PriceListModel {
     rangeFrom: bigint | null;
     rangeTo: bigint | null;
     currencies: string[];       // monedas presentes (sin mezclar: cada fila lleva la suya)
+    // CP-OPERATIONAL-CLASS-001: filtro combinado aplicado y su subtotal
+    // (stock>0 tras clasificación/estado del precio, antes del rango de SKU).
+    operationalFilter: OperationalPriceFilter;
+    totalOperational: number;
   };
 }
 
 /** Moneda por defecto del sistema (products.price_currency NOT NULL DEFAULT 'CUP'). */
 const DEFAULT_CURRENCY = 'CUP';
 
+/** CP-OPERATIONAL-CLASS-001: ¿el filtro operativo aporta algo al modelo? */
+export function hasActiveOperationalFilter(f: OperationalPriceFilter): boolean {
+  return !isNeutralOperationalFilter(f);
+}
+
 /** Descripción comercial: nombre + descripción complementaria si existe. */
 function commercialDescription(item: PriceListSourceItem): string {
   const extra = (item.description ?? '').trim();
   return extra !== '' ? `${item.name} — ${extra}` : item.name;
+}
+
+/**
+ * CP-OPERATIONAL-CLASS-002 §7 — ÚNICO pipeline de selección del listado:
+ *   1. Criterio de inclusión vigente (stock estrictamente > 0, producto
+ *      activo) — misión CP-SALES-PRICE-LIST-001 §3, NO se altera.
+ *   2. Filtro combinado clasificación operativa × estado del precio
+ *      (CP-OPERATIONAL-CLASS-001, aplicado al dataset COMPLETO de la tienda).
+ *   3. Rango de SKU (numéricos por valor; con algún límite activo quedan
+ *      fuera alfanuméricos y sin SKU) + orden por SKU.
+ * La comparte el documento (buildPriceListModel) y el contador EN VIVO de la
+ * vista, garantizando que «N que cumplen los filtros» == filas del modelo.
+ */
+export function selectPriceListRows(
+  items: readonly PriceListSourceItem[],
+  range: SkuFilter,
+  operationalFilter: OperationalPriceFilter = NEUTRAL_OPERATIONAL_FILTER,
+): PriceListSourceItem[] {
+  const available = items.filter(
+    (item) => item.is_active !== false && (item.stock_current ?? 0) > 0,
+  );
+  const matchingOps = applyOperationalPriceFilter(available, operationalFilter);
+  return orderProductsBySku(matchingOps, range);
 }
 
 /**
@@ -84,20 +120,28 @@ export function buildPriceListModel(opts: {
   range: SkuFilter;
   generatedAt: Date;
   measureLines?: (description: string) => number;
+  /** CP-OPERATIONAL-CLASS-001: clasificación operativa + estado del precio (combinables, §3-§5). */
+  operationalFilter?: OperationalPriceFilter;
 }): PriceListModel {
   const { items, store, range, generatedAt } = opts;
   const measureLines = opts.measureLines ?? (() => 1);
+  const operationalFilter = opts.operationalFilter ?? NEUTRAL_OPERATIONAL_FILTER;
 
-  // Criterio de inclusión OBLIGATORIO (misión §3): stock estrictamente mayor
-  // que cero y producto activo. Ni cero, ni negativo, ni otras tiendas (las
-  // filas ya llegan scoping por tienda desde el RPC bajo RLS).
-  const available = items.filter(
+  // ÚNICO pipeline de selección (CP-OPERATIONAL-CLASS-002 §7): la vista (chip
+  // «N que cumplen los filtros») y el documento usan la MISMA función, por lo
+  // que el contador siempre coincide con las filas del modelo generado.
+  const selected = selectPriceListRows(items, range, operationalFilter);
+  const totalRaw = items.filter(
     (item) => item.is_active !== false && (item.stock_current ?? 0) > 0,
-  );
-  const totalRaw = available.length;
+  ).length;
+  const totalOperational = selectPriceListRows(
+    items,
+    { from: null, to: null },
+    operationalFilter,
+  ).length;
 
   // Reglas de SKU (§4.2): numéricos por valor, alfanuméricos después.
-  const ordered = orderProductsBySku(available, range);
+  const ordered = selected;
 
   const dateLabel = `${String(generatedAt.getDate()).padStart(2, '0')}/${String(generatedAt.getMonth() + 1).padStart(2, '0')}/${generatedAt.getFullYear()}`;
   const timeLabel = `${String(generatedAt.getHours()).padStart(2, '0')}:${String(generatedAt.getMinutes()).padStart(2, '0')}`;
@@ -106,7 +150,17 @@ export function buildPriceListModel(opts: {
     id: item.id,
     skuLabel: (item.sku ?? '').trim() !== '' ? String(item.sku).trim() : '—',
     description: commercialDescription(item),
-    priceLabel: formatLabeledCurrency(item.price ?? 0, (item.price_currency ?? DEFAULT_CURRENCY) || DEFAULT_CURRENCY),
+    // CP-OPERATIONAL-CLASS-002 §5: representación HONESTA del precio.
+    // HALLAZGO VERIFICADO EN POSTGRESQL REAL: products.price es NOT NULL
+    // DEFAULT 0 — el sistema representa «sin precio configurado» con 0 (no
+    // con NULL; el RPC is_complete usa price > 0). Por tanto:
+    //  · price > 0 → formato monetario actual, sin conversión.
+    //  · price NULL o 0 → «Sin precio» (JAMÁS «$ 0.00» falso en un listado).
+    // Si el negocio llegara a necesitar ceros legítimos distinguibles,
+    // requeriría price nullable — el código ya está preparado (null-check).
+    priceLabel: hasConfiguredPrice(item)
+      ? formatLabeledCurrency(item.price as number, (item.price_currency ?? DEFAULT_CURRENCY) || DEFAULT_CURRENCY)
+      : 'Sin precio',
     lines: 1, // se recalcula con la geometría real en planPriceListPages
   })).map((row) => ({ ...row, lines: measureLines(row.description) }));
 
@@ -123,6 +177,8 @@ export function buildPriceListModel(opts: {
       rangeFrom: range?.from ?? null,
       rangeTo: range?.to ?? null,
       currencies,
+      operationalFilter,
+      totalOperational,
     },
   };
 }

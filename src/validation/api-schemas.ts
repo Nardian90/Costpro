@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { STORE_TEMPLATES } from '@/config/app';
+import { productOperationalClassSchema } from './schemas';
 
 /**
  * Lenient UUID validation: accepts any 8-4-4-4-12 hex pattern.
@@ -521,6 +522,9 @@ export const bulkImportProductSchema = z.object({
   image_url: z.string().max(500).nullable().optional(),
   category: z.string().max(100).nullable().optional(),
   is_service: z.boolean().optional(),
+  // CP-OPERATIONAL-CLASS-001: opcional/nullable — una importación SIN la
+  // columna deja el registro «Sin clasificar» (NULL); jamás se inventa valor.
+  operational_class: productOperationalClassSchema.nullable().optional(),
   unit_of_measure: z.string().max(30).nullable().optional(),
   description: z.string().max(2000).nullable().optional(),
   is_active: z.boolean().optional(),

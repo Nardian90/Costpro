@@ -33,7 +33,16 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePriceListProducts, fetchPriceListStoreInfo } from '@/hooks/api/usePriceListProducts';
 import { parseSkuRange } from '@/lib/price-list/sku-order';
-import { buildPriceListModel, type PriceListModel, type PriceListStoreInfo } from '@/lib/price-list/model';
+import { buildPriceListModel, selectPriceListRows, type PriceListModel, type PriceListStoreInfo } from '@/lib/price-list/model';
+import {
+  isNeutralOperationalFilter,
+  operationalFilterLabel,
+  UNCLASSIFIED_FILTER,
+  type OperationalPriceFilter,
+  type PriceClassSelection,
+  type PricePriceStatus,
+} from '@/lib/price-list/operational-filters';
+import { OPERATIONAL_CLASS_OPTIONS, UNCLASSIFIED_LABEL } from '@/lib/product-operational-class';
 import { renderPriceListPdf, priceListFileName } from '@/lib/price-list/pdf';
 import { cn } from '@/lib/utils';
 
@@ -64,6 +73,24 @@ export default function PriceListView() {
   // ── Configuración de filtros (no dispara cálculo) ────────────────────────
   const [skuFrom, setSkuFrom] = useState('');
   const [skuTo, setSkuTo] = useState('');
+  // CP-OPERATIONAL-CLASS-001 (§3-§5): filtro de Clasificación operativa
+  // (multi-select: sin selección = Todas; «Sin clasificar» es un valor más
+  // del conjunto — marcarlo SOLO muestra los pendientes) + Estado del
+  // precio. Se combinan entre sí y con el rango de SKU.
+  const [selClasses, setSelClasses] = useState<PriceClassSelection[]>([]);
+  const [priceStatus, setPriceStatus] = useState<PricePriceStatus>('all');
+
+  const opFilter = useMemo<OperationalPriceFilter>(
+    () => ({ classes: selClasses, priceStatus }),
+    [selClasses, priceStatus],
+  );
+  const opFilterActive = !isNeutralOperationalFilter(opFilter);
+  const opFilterText = operationalFilterLabel(opFilter);
+
+  const toggleClass = useCallback((value: PriceClassSelection) => {
+    setSelClasses((prev) => (prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value]));
+  }, []);
+  const clearClassFilters = useCallback(() => setSelClasses([]), []);
 
   // ── Estado de la vista previa ─────────────────────────────────────────────
   const [preview, setPreview] = useState<AppliedPreview | null>(null);
@@ -93,12 +120,27 @@ export default function PriceListView() {
   const range = rangeInvalid ? null : rangeValidation;
   const rangeActive = !!range && (range.from !== null || range.to !== null);
 
-  // La vista previa queda DESACTUALIZADA si los filtros cambian tras generar.
-  const stale = !!preview && preview.signature !== `${activeStoreId}|${skuFrom.trim()}|${skuTo.trim()}`;
+  // Contador EN VIVO (CP-OPERATIONAL-CLASS-002 §7): usa el ÚNICO pipeline de
+  // selección del listado (selectPriceListRows) — stock/activo, filtros
+  // operativos Y rango SKU — garantizando que coincide EXACTAMENTE con las
+  // filas que produciría el modelo del documento para esta selección.
+  // Responde al instante, sin necesidad de generar la vista previa.
+  const liveCount = useMemo(
+    () => selectPriceListRows(productsQuery.data ?? [], range, opFilter).length,
+    [productsQuery.data, range, opFilter],
+  );
+
+
+  // La vista previa queda DESACTUALIZADA si los filtros cambian tras generar
+  // (incluye clasificación operativa y estado del precio).
+  const previewSignature = `${activeStoreId}|${skuFrom.trim()}|${skuTo.trim()}|${selClasses.join(',')}|${priceStatus}`;
+  const stale = !!preview && preview.signature !== previewSignature;
 
   const clearFilters = useCallback(() => {
     setSkuFrom('');
     setSkuTo('');
+    setSelClasses([]);
+    setPriceStatus('all');
   }, []);
 
   const handleGeneratePreview = useCallback(async () => {
@@ -112,9 +154,12 @@ export default function PriceListView() {
         store: storeInfo,
         range: rangeActive ? range : null,
         generatedAt,
+        // CP-OPERATIONAL-CLASS-001: el PDF previsualizado/exportado usa los
+        // MISMOS filtros que la pantalla (un solo pipeline).
+        operationalFilter: opFilter,
       });
       if (model.meta.totalProducts === 0) {
-        toast.info('No hay productos que cumplan las condiciones (stock > 0 en el rango de SKU indicado).');
+        toast.info('No hay productos que cumplan las condiciones (stock > 0 con los filtros de clasificación, precio y rango de SKU indicados).');
         return;
       }
       const doc = await renderPriceListPdf(model);
@@ -122,7 +167,7 @@ export default function PriceListView() {
       const old = previewUrlRef.current;
       previewUrlRef.current = url;
       setPreview({
-        signature: `${activeStoreId}|${skuFrom.trim()}|${skuTo.trim()}`,
+        signature: previewSignature,
         url,
         model,
         generatedAt,
@@ -134,7 +179,7 @@ export default function PriceListView() {
       buildingRef.current = false;
       setLoading(false);
     }
-  }, [rangeInvalid, rangeActive, range, storeInfo, productsQuery.data, activeStoreId, skuFrom, skuTo, loading]);
+  }, [rangeInvalid, rangeActive, range, storeInfo, productsQuery.data, activeStoreId, skuFrom, skuTo, selClasses, priceStatus, previewSignature, opFilter, loading]);
 
   const handleExportPdf = useCallback(async () => {
     if (!preview || exporting) return;
@@ -179,9 +224,99 @@ export default function PriceListView() {
       {/* ── Filtros ─────────────────────────────────────────────────────── */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Filtro por rango de SKU</CardTitle>
+          <CardTitle className="text-base">Filtros del listado</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* ── CP-OPERATIONAL-CLASS-001 (§3): Clasificación operativa ─────
+              Multi-select combinable: sin selección = Todas; «Sin clasificar»
+              es marcador aparte. Estados visibles con aria-pressed. */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <span className="text-sm font-medium">Clasificación operativa</span>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por clasificación operativa">
+                <button
+                  type="button"
+                  aria-pressed={selClasses.length === 0}
+                  data-testid="opclass-all"
+                  onClick={clearClassFilters}
+                  className={cn(
+                    'min-h-[36px] rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+                    selClasses.length === 0
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-card hover:border-primary/40'
+                  )}
+                >
+                  Todas
+                </button>
+                {OPERATIONAL_CLASS_OPTIONS.map((opt) => {
+                  const active = selClasses.includes(opt.value);
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      aria-pressed={active}
+                      data-testid={`opclass-${opt.value}`}
+                      onClick={() => toggleClass(opt.value)}
+                      className={cn(
+                        'min-h-[36px] rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+                        active
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border bg-card hover:border-primary/40'
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  aria-pressed={selClasses.includes(UNCLASSIFIED_FILTER)}
+                  data-testid="opclass-unclassified"
+                  onClick={() => toggleClass(UNCLASSIFIED_FILTER)}
+                  className={cn(
+                    'min-h-[36px] rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+                    selClasses.includes(UNCLASSIFIED_FILTER)
+                      ? 'border-amber-500 bg-amber-500 text-white'
+                      : 'border-border bg-card hover:border-primary/40'
+                  )}
+                >
+                  {UNCLASSIFIED_LABEL}
+                </button>
+              </div>
+            </div>
+            {/* ── CP-OPERATIONAL-CLASS-001 (§4): Estado del precio ─────────
+                price NULL = Sin precio (no configurado); price = 0 = Con
+                precio (cero legítimo configurado). */}
+            <div className="space-y-1.5">
+              <span className="text-sm font-medium">Estado del precio</span>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado del precio">
+                {([
+                  { value: 'all' as PricePriceStatus, label: 'Todos' },
+                  { value: 'with_price' as PricePriceStatus, label: 'Con precio' },
+                  { value: 'without_price' as PricePriceStatus, label: 'Sin precio' },
+                ]).map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    aria-pressed={priceStatus === opt.value}
+                    data-testid={`price-status-${opt.value}`}
+                    onClick={() => setPriceStatus(opt.value)}
+                    className={cn(
+                      'min-h-[36px] rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+                      priceStatus === opt.value
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-card hover:border-primary/40'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground italic ml-1">
+                Sin precio = sin precio configurado para la tienda (campo vacío). Un precio 0 configurado cuenta como Con precio.
+              </p>
+            </div>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
               <label htmlFor="price-list-sku-from" className="text-sm font-medium">SKU desde</label>
@@ -228,6 +363,12 @@ export default function PriceListView() {
           </div>
 
           <div aria-live="polite" className="space-y-2">
+            {!rangeError && !productsQuery.isLoading && liveCount === 0 && (productsQuery.data?.length ?? 0) > 0 && (
+              <p className="flex items-center gap-2 text-xs font-medium text-amber-600 dark:text-amber-400">
+                <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                Ningún producto cumple la combinación de filtros actual (stock &gt; 0, clasificación operativa y estado del precio). Usa «Limpiar filtros» para recuperar el listado completo.
+              </p>
+            )}
             {rangeError ? (
               <p className="flex items-center gap-2 text-sm font-medium text-red-600" role="alert">
                 <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden />
@@ -245,11 +386,20 @@ export default function PriceListView() {
 
           {/* Resumen compacto de la selección */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 font-semibold">
+            <span
+              className="rounded-full border border-border bg-muted/40 px-2.5 py-1 font-semibold"
+              data-testid="price-list-live-count"
+              aria-live="polite"
+            >
               {productsQuery.isLoading
                 ? 'Cargando productos…'
-                : `${preview?.model.meta.totalProducts ?? productsQuery.data?.length ?? 0} producto(s) con stock > 0`}
+                : `${liveCount} producto(s) que cumplen los filtros (stock > 0)`}
             </span>
+            {opFilterActive && (
+              <span className="rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 font-semibold text-primary" data-testid="price-list-active-filters">
+                Filtros: {opFilterText}
+              </span>
+            )}
             {preview && (
               <>
                 <span className="rounded-full border border-border bg-muted/40 px-2.5 py-1 font-semibold">

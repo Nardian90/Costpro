@@ -243,6 +243,17 @@ export interface Store {
 
 export type BarcodeType = 'EAN13' | 'UPC' | 'CODE128' | 'SKU' | 'auto' | (string & {});
 
+/**
+ * Clasificación operativa del elemento del catálogo (CP-OPERATIONAL-CLASS-001,
+ * migración 20261108150000 — enum PG product_operational_class).
+ * Informativa: NO cambia contabilización, valoración, impuestos ni reglas de
+ * venta/costeo. Independiente de is_service (físico/servicio) y de la
+ * categoría comercial (category). null/undefined = «Sin clasificar»: los
+ * registros históricos quedan pendientes y JAMÁS se reclasifican
+ * automáticamente.
+ */
+export type ProductOperationalClass = 'venta' | 'insumo' | 'activo_fijo' | 'util_herramienta';
+
 export interface Product {
   /** CATALOG-MASTER-002: fuente de la fila en el catálogo de una tienda conectada. */
   source?: 'local' | 'master';
@@ -291,6 +302,12 @@ export interface Product {
    * Independiente de la categoría comercial (category).
    */
   is_service?: boolean;
+  /**
+   * Clasificación operativa (CP-OPERATIONAL-CLASS-001): venta | insumo |
+   * activo_fijo | util_herramienta. NULL/undefined = Sin clasificar.
+   * Solo informativa — véase ProductOperationalClass.
+   */
+  operational_class?: ProductOperationalClass | null;
   product_variants?: ProductVariant[] | null;
   cost_sheet_id?: string | null;
   fc_auto_enabled?: boolean;
