@@ -659,15 +659,23 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
   }
 
   // ── Datos 9–12: firmas — CP-DOC-SC-DATA-MAPPING-006 §6/§7 ──
-  // Cuadrícula uniforme 2×2 con los CUATRO bloques de responsabilidad. El
-  // transportador lleva sus datos de identificación (nombre, carné, chapa,
-  // casilla, guía aérea) DENTRO de su bloque de firma — dejan de ser una
-  // sección independiente. Alineación, jerarquía tipográfica y rúbrica
-  // idénticas en las cuatro áreas; la cuadrícula se mueve siempre junta
-  // (ninguna firma queda sola en otra página).
+  // Fila superior: las TRES firmas de empleados (recepciona, contabiliza,
+  // anota en el Control de Inventario) en columnas iguales — compactas.
+  // Fila inferior: FIRMA DEL TRANSPORTADOR a lo ancho del formulario, con
+  // sus datos de identificación (nombre, carné, chapa, casilla, guía aérea)
+  // en dos sub-columnas dentro del bloque — dejan de apilarse y de robar
+  // altura al resto (estética/densidad a petición del propietario).
+  // Alineación, jerarquía tipográfica y rúbrica idénticas en las cuatro
+  // áreas; todas las filas se mueven siempre juntas (ninguna firma queda
+  // sola en otra página).
   drawRes11SignatureBlocks(doc, [
+    { title: 'Firma del empleado que recepciona' },
+    { title: 'Firma del empleado que contabiliza' },
+    { title: 'Firma del empleado que anota en el Control de Inventario' },
     {
       title: 'Firma del Transportador',
+      spanAll: true,
+      fieldsColumns: 2,
       fields: [
         { label: 'Nombre:', value: model.transportadorNombre },
         { label: 'Carné de identidad:', value: model.transportadorCarne },
@@ -676,10 +684,7 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
         { label: 'Guía aérea:', value: model.transportadorGuiaAerea },
       ],
     },
-    { title: 'Firma del empleado que recepciona' },
-    { title: 'Firma del empleado que contabiliza' },
-    { title: 'Firma del empleado que anota en el Control de Inventario' },
-  ], finalY + 10, { columns: 2 });
+  ], finalY + 10, { columns: 3 });
 
   // ── Nota al pie sobria (identificación normativa y trazabilidad) ──
   doc.setFont('helvetica', 'italic');
