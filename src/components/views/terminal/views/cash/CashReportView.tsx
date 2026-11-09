@@ -431,7 +431,9 @@ export default function CashReportView() {
   const userSelectionEmpty = selectedUsers !== 'all' && selectedUsers.size === 0;
   const userFilterLabel = useMemo(() => {
     if (!userSelectionActive) return 'Todos los usuarios';
-    if (selectedUsers !== 'all' && selectedUsers.size === 0) return 'Ningún usuario seleccionado';
+    // userSelectionActive ya estrecha selectedUsers a Set (condición con alias):
+    // aquí solo puede ser un Set — el vacío es «Ningún usuario seleccionado».
+    if (selectedUsers.size === 0) return 'Ningún usuario seleccionado';
     const names = userCards.filter(c => selectedUsers.has(c.key))
       .map(c => (c.sellerId
         ? (c.sellerName || 'Usuario sin nombre registrado') // nunca el UUID en pantalla
