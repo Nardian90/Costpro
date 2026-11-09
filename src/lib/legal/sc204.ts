@@ -663,10 +663,12 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
   // anota en el Control de Inventario) — espacios ABIERTOS con la línea de
   // rúbrica arriba y el cargo centrado en MAYÚSCULAS debajo, sin marcos.
   // Sección inferior: TRANSPORTADOR con título y regla, y su cuadrícula de
-  // identificación en dos columnas (Nombre/Chapa · Carné/Casilla ·
-  // Firma/Guía aérea) — la firma manuscrita del transportador es un campo
-  // más del bloque, conforme a la referencia; sus datos dinámicos se escriben
-  // SOBRE su línea y los vacíos conservan la línea de cumplimentación.
+  // identificación en DOS filas × tres columnas — «Guía aérea» cierra la
+  // PRIMERA fila y «Firma» cierra la SEGUNDA (decisión estética del
+  // propietario 2026-11-09: ambos campos abandonan la antigua tercera fila).
+  // La firma manuscrita del transportador es un campo más del bloque; sus
+  // datos dinámicos se escriben SOBRE su línea y los vacíos conservan la
+  // línea de cumplimentación.
   // Todas las áreas se mueven SIEMPRE juntas (ninguna firma queda sola en
   // otra página).
   drawRes11SignatureFooter(
@@ -680,14 +682,14 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
       columns: 3,
       fieldsSection: {
         title: 'Transportador',
-        columns: 2,
+        columns: 3,
         fields: [
           { label: 'Nombre:', value: model.transportadorNombre },
           { label: 'Chapa:', value: model.transportadorChapa },
+          { label: 'Guía aérea:', value: model.transportadorGuiaAerea },
           { label: 'Carné de identidad:', value: model.transportadorCarne },
           { label: 'Casilla:', value: model.transportadorCasilla },
           { label: 'Firma:', value: '' },
-          { label: 'Guía aérea:', value: model.transportadorGuiaAerea },
         ],
       },
     },

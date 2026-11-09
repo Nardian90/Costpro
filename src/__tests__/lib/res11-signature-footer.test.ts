@@ -54,18 +54,20 @@ const tresEmpleados: Res11SignatureFooterSpec = {
   columns: 3,
 };
 
+// Espejo del spec del SC-2-04 (2026-11-09): cuadrícula del transportador en
+// DOS filas × tres columnas — «Guía aérea» cierra la fila 1 y «Firma» la 2.
 const specSc204Completo: Res11SignatureFooterSpec = {
   ...tresEmpleados,
   fieldsSection: {
     title: 'Transportador',
-    columns: 2,
+    columns: 3,
     fields: [
       { label: 'Nombre:', value: 'Juan Pérez' },
       { label: 'Chapa:', value: 'P 123 456' },
+      { label: 'Guía aérea:', value: '' },
       { label: 'Carné de identidad:', value: '91080512345' },
       { label: 'Casilla:', value: '' },
       { label: 'Firma:', value: '' },
-      { label: 'Guía aérea:', value: '' },
     ],
   },
 };
@@ -144,6 +146,35 @@ describe('Pie de firma unificado SC (línea arriba, cargo en MAYÚSCULAS debajo)
     const firmaYs = lines.slice(0, 3).map((l) => l.y1);
     expect(Math.max(...firmaYs)).toBeLessThan(regla!.y1);
     expect(endYConsistente(doc, specSc204Completo, startY)).toBe(true);
+  });
+
+  it('cuadrícula en DOS filas × 3 columnas: «Guía aérea» cierra la fila 1 y «Firma» la fila 2', () => {
+    const { doc, lines } = instrument();
+    const startY = 120;
+    drawRes11SignatureFooter(doc, specSc204Completo, startY);
+
+    // Tras las 3 líneas de firmas y la regla del título, las 6 líneas de
+    // campos quedan en orden de dibujo: fila 1 (Nombre, Chapa, Guía aérea)
+    // y fila 2 (Carné, Casilla, Firma).
+    const campo = lines.slice(4);
+    expect(campo).toHaveLength(6);
+
+    // DOS alturas exactas: cada fila de tres comparte la MISMA Y.
+    expect(new Set(campo.slice(0, 3).map((l) => l.y1)).size).toBe(1);
+    expect(new Set(campo.slice(3).map((l) => l.y1)).size).toBe(1);
+    expect(new Set(campo.map((l) => l.y1)).size).toBe(2);
+    expect(campo[0].y1).toBeLessThan(campo[3].y1);
+
+    // La celda de cada línea delata la columna (el extremo derecho termina
+    // en px + cellW - 3): «Guía aérea» y «Firma» ocupan la TERCERA columna.
+    const cellW = CONTENT_W / 3;
+    const finCol = (c: number) => MARGIN_X + (c + 1) * cellW - 3;
+    expect(campo[0].x2).toBeCloseTo(finCol(0), 1); // Nombre
+    expect(campo[1].x2).toBeCloseTo(finCol(1), 1); // Chapa
+    expect(campo[2].x2).toBeCloseTo(finCol(2), 1); // Guía aérea (fila 1)
+    expect(campo[3].x2).toBeCloseTo(finCol(0), 1); // Carné de identidad
+    expect(campo[4].x2).toBeCloseTo(finCol(1), 1); // Casilla
+    expect(campo[5].x2).toBeCloseTo(finCol(2), 1); // Firma (fila 2)
   });
 
   it('el conjunto completo (firmas + transportador) salta JUNTO a una página nueva', () => {
