@@ -839,6 +839,24 @@
       "reason": "CP-DOC-SC-DATA-MAPPING-006 · la migración 20261108201000 añade el tipo documental 'entrada' (prefijo ENT) a next_document_number/3 vía CREATE OR REPLACE. La surface LIVE de producción aún conserva el cuerpo anterior (sin 'entrada'): la deriva se resuelve al desplegar la migración en producción — retirar esta excepción y regenerar contract-surface (scripts/export-contract-surface.cjs) tras el despliegue autorizado.",
       "added_by": "CP-DOC-SC-DATA-MAPPING-006",
       "expires": "2027-01-31"
+    },
+    {
+      "function": "create_master_product/11",
+      "rules": [
+        "LIVE_FUNCTION_NOT_REPRESENTED"
+      ],
+      "reason": "CP-OPERATIONAL-CLASS-002 · la migración 20261108150000 reemplaza la firma /11 por /12 (añade p_operational_class AL FINAL, DEFAULT NULL, retrocompatible) vía DROP de la firma exacta (SIN CASCADE, con verificación previa de dependencias) + CREATE. La surface LIVE de producción aún certifica la firma /11 (la migración NO está aplicada en producción; se desplegará por el canal habitual cuando el propietario lo autorice): la divergencia se resuelve al aplicar la migración — retirar esta excepción y regenerar contract-surface (scripts/export-contract-surface.cjs) tras el despliegue autorizado.",
+      "added_by": "CP-OPERATIONAL-CLASS-002",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "activate_master_product/3",
+      "rules": [
+        "LIVE_FUNCTION_NOT_REPRESENTED"
+      ],
+      "reason": "CP-OPERATIONAL-CLASS-002 · la migración 20261108150000 reemplaza la firma /3 por /4 (añade p_operational_class AL FINAL, DEFAULT NULL, retrocompatible) vía DROP de la firma exacta (SIN CASCADE, con verificación previa de dependencias) + CREATE. La surface LIVE de producción aún certifica la firma /3 (la migración NO está aplicada en producción; se desplegará por el canal habitual cuando el propietario lo autorice): la divergencia se resuelve al aplicar la migración — retirar esta excepción y regenerar contract-surface (scripts/export-contract-surface.cjs) tras el despliegue autorizado.",
+      "added_by": "CP-OPERATIONAL-CLASS-002",
+      "expires": "2027-01-31"
     }
   ]
 }

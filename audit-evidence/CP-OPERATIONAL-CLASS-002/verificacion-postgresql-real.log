@@ -1,0 +1,42 @@
+(node:1752) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/z/my-project/Costpro/e2e/fixtures/assert-isolated-db.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/z/my-project/Costpro/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ 0.1 sin vistas/reglas dependientes de las RPCs (DROP sin CASCADE seguro) — dependientes=0
+✓ 1.1 migración 20261108150000 aplicada SIN errores en PostgreSQL real
+✓ 1.2 la migración no añadió/eliminó filas del catálogo (sin backfill) — 30 → 30
+✓ 1.3 la migración NO modifica NINGUNA tabla de datos (histórico/financiero íntegros) — todas idénticas
+✓ 2.x get_paginated_products_v2: existe con firma EXACTA preservada — p_limit integer, p_offset integer, p_store_id uuid, p_search_term text, p_category text, p_sort_key text, p_sort_dir text, p_stock_filter text, p_active_filter text
+✓ 2.x get_paginated_products_v2: retorno incluye operational_class AL FINAL — ource text, master_product_id uuid, operational_class product_operational_class)
+✓ 2.x get_paginated_products_v2: OWNER restaurado (postgres) — postgres
+✓ 2.x get_paginated_products_v2: SECURITY DEFINER + search_path intactos — security_definer=true
+✓ 2.x get_paginated_products_v2: permisos restaurados (anon ✗, authenticated ✓, service_role ✓) — anon=false auth=true svc=true
+✓ 2.x get_products_for_pos: existe con firma EXACTA preservada — p_store_id uuid, p_search_term text, p_category text, p_limit integer, p_offset integer
+✓ 2.x get_products_for_pos: retorno incluye operational_class AL FINAL — motion boolean, is_service boolean, operational_class product_operational_class)
+✓ 2.x get_products_for_pos: OWNER restaurado (postgres) — postgres
+✓ 2.x get_products_for_pos: SECURITY DEFINER + search_path intactos — security_definer=true
+✓ 2.x get_products_for_pos: permisos restaurados (anon ✗, authenticated ✓, service_role ✓) — anon=false auth=true svc=true
+✓ 3.x fixture determinista creado (2 tiendas conectadas + maestros + filas locales + usuario con membresías) — tenant=cc0000a1…
+✓ 4.1 v2: filas source=master y source=local presentes (catálogo maestro íntegro) — master=true localVinculado=true localPuro=true
+✓ 4.2 v2: master_product_id preservado en filas vinculadas
+✓ 4.3 v2: exclusivamente maestro → operational_class NULL (no se inventa ni se comparte)
+✓ 4.4 v2: fila local clasificada → venta
+✓ 4.5 v2: local puro histórico → NULL (Sin clasificar)
+✓ 4.6 v2: clasificación POR TIENDA (S1=venta vs S2=insumo para el mismo maestro) — S1=venta S2=insumo
+✓ 4.7 pos: operational_class presente al final y con el valor de la tienda — columnas=on_promotion,is_service,operational_class
+✓ 4.8 pos: las filas llegan scoping por tienda (solo S1) — filas=2
+✓ 5.1 create_master_product: fila local creada CON la clasificación en la misma transacción — product=3ec8dcb9-5bac-4d7a-9e64-b31dc62a14ef
+✓ 5.2 create_master_product: master_change_log/auditoría intactos
+✓ 5.3 activate_master_product: fila local creada CON la clasificación (misma transacción)
+✓ 5.4 activate_master_product already_active: corrige la clasificación sin duplicar fila
+✓ 5.5 retrocompatibilidad: sin p_operational_class la fila nace Sin clasificar (NULL)
+✓ 6.1 tienda AJENA rechazada por has_store_access (fail-closed) — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  4
+✓ 6.2 v2: tienda ajena también rechazada — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  4
+✓ 6.3 el ENUM impide valores inventados (fail-closed por tipo) — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  2
+✓ 7.1 sin cambios en datos históricos/financieros (salvo fixture y auditoría de los RPCs probados) — deltas: inventory(1),master_change_log(4),audit_logs(5); change_log externo=0
+✓ 7.2 la única auditoría nueva pertenece al fixture/RPCs probados (nada externo) — filas externas=0
+✓ 7.3 inventario final de clasificación coherente (sin backfill masivo) — clasificadas=4, sin clasificar=26
+
+════════ RESUMEN CP-OPERATIONAL-CLASS-002 (PostgreSQL real, BD desechable E2E) ════════
+Total: 34 · OK: 34 · FALLOS: 0
+TODAS las verificaciones PostgreSQL pasaron.

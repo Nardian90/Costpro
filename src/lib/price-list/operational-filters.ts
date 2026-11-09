@@ -14,13 +14,15 @@
  *
  * Criterio de precio REAL de COSTPRO (misión §4):
  *  · El precio de venta vive en la propia fila del catálogo:
- *    `products.price` (numeric NULL) + `products.price_currency` (NOT NULL
+ *    `products.price` (numeric) + `products.price_currency` (NOT NULL
  *    DEFAULT 'CUP'). NO existen tablas de listas de precios: el contexto de
  *    tienda lo fija el scoping del RPC (p.store_id + RLS) y la moneda es por
  *    fila — nunca se mezclan monedas ni tiendas.
- *  · **price NULL = Sin precio** (elemento sin precio configurado).
- *  · **price = 0 = Con precio** (cero legítimo configurado — la misión
- *    prohíbe tratar 0 como «no configurado»).
+ *  · HALLAZGO VERIFICADO EN POSTGRESQL REAL (CP-OPERATIONAL-CLASS-002):
+ *    `products.price` es `numeric NOT NULL DEFAULT 0` — el sistema representa
+ *    «sin precio configurado» con 0, no con NULL. Criterio funcional:
+ *    **Con precio → price > 0 · Sin precio → price NULL o ≤ 0** (ver
+ *    hasConfiguredPrice; jamás se muestra un «$0.00» falso).
  *  · La ausencia de precio no se confunde con un producto inactivo: el
  *    criterio de inclusión del listado (is_active !== false && stock > 0) es
  *    el vigente de la misión CP-SALES-PRICE-LIST-001 y NO se altera.
