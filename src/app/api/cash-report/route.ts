@@ -438,17 +438,29 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           }
         }
         // Resolución de nombres (UNA consulta, sin N+1; sesión autenticada —
-        // RLS vigente). Si no puede resolverse, degrada a null sin romper nada.
+        // RLS vigente). MISIÓN REE-2026-11-09: el perfil vive en profiles
+        // (full_name; email como alternativa legible) — NO tiene columnas
+        // first_name/last_name (esas pertenecen a `workers`): la consulta
+        // anterior pedía columnas inexistentes, PostgREST respondía 400 y el
+        // error silenciado dejaba seller_name null ⇒ la vista mostraba el
+        // identificador técnico «usuario84ef82…». Ahora se piden las columnas
+        // reales, se PROPAGA el error (warn) y se degrada a null solo si el
+        // perfil no aporta ni nombre ni correo.
         const sellerIds = [...agg.keys()].filter((k): k is string => !!k);
         const names = new Map<string, string>();
         if (sellerIds.length > 0) {
-          const { data: profRows } = await supabase
+          const { data: profRows, error: profErr } = await supabase
             .from('profiles')
-            .select('id, first_name, last_name')
+            .select('id, full_name, email')
             .in('id', sellerIds);
+          if (profErr) {
+            console.warn('[cash-report] perfiles de vendedores no disponibles:', profErr.message);
+          }
           for (const pr of profRows || []) {
-            const nm = [pr.first_name, pr.last_name].filter(Boolean).join(' ').trim();
+            const nm = String(pr.full_name || '').trim();
+            const mail = String(pr.email || '').trim();
             if (nm) names.set(String(pr.id), nm);
+            else if (mail) names.set(String(pr.id), mail); // alternativo legible autorizado
           }
         }
         salesByUser = [...agg.values()]

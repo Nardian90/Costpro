@@ -247,10 +247,14 @@ describe('FILTRO MULTIUSUARIO · tarjetas por usuario creador', () => {
     expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain(fmtCup(24600).replace(/^\D+/, ''));
   });
 
-  it('§7.3 un usuario: el reporte muestra SOLO sus ventas y el PDF documenta el filtro', async () => {
+  it('§7.3 (REE-2026-11-09) desmarcar un usuario deja SOLO las ventas de los demás; PDF documenta el filtro', async () => {
     const user = userEvent.setup();
     await renderAndGenerate();
-    await user.click(screen.getByTestId('usuario-card-u-2'));
+    // Desde «Todos» (todas marcadas), el clic alterna SOLO la tarjeta tocada:
+    // desmarcar u-1 deja seleccionado u-2 y las demás tarjetas conservan su estado.
+    await user.click(screen.getByTestId('usuario-card-u-1'));
+    expect(screen.getByTestId('usuario-card-u-1').getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByTestId('usuario-card-u-2').getAttribute('aria-pressed')).toBe('true'); // María CONSERVA su estado
     // u-2: CUP cash 2 000 (v-3) + USD 12 (v-2+v-3). La hoja CUP del resumen refleja el recorte:
     expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(2000));
     expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('María López');
@@ -268,6 +272,11 @@ describe('FILTRO MULTIUSUARIO · tarjetas por usuario creador', () => {
   it('§7.4 varios usuarios: unión sin duplicados (el v-3 mixto cuenta una sola vez)', async () => {
     const user = userEvent.setup();
     await renderAndGenerate();
+    // REE-2026-11-09: desde «Todos», cada clic alterna SOLO su tarjeta.
+    // Desmarcar ambas (2 clics) y «marcar ambas» (2 clics más) ⇒ ambas seleccionadas.
+    await user.click(screen.getByTestId('usuario-card-u-1'));
+    await user.click(screen.getByTestId('usuario-card-u-2'));
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('Ningún usuario seleccionado');
     await user.click(screen.getByTestId('usuario-card-u-1'));
     await user.click(screen.getByTestId('usuario-card-u-2'));
     expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('2 de 2');
@@ -278,12 +287,57 @@ describe('FILTRO MULTIUSUARIO · tarjetas por usuario creador', () => {
   it('§7.5 volver a Todos los usuarios restaura el reporte general', async () => {
     const user = userEvent.setup();
     await renderAndGenerate();
+    // Desde «Todos», desmarcar u-2 deja SOLO u-1 (13 000 = v-1 + v-4):
     await user.click(screen.getByTestId('usuario-card-u-2'));
-    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(2000));
+    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(13000));
     await user.click(screen.getByTestId('filtro-usuarios-todos'));
     expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(15000));
     expect(screen.getByTestId('usuario-card-u-1').getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByTestId('usuario-card-u-2').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  // ══ MISIÓN REE-2026-11-09 · INDEPENDENCIA DE TARJETAS (tabla de aceptación) ══
+  it('REE §3: cada tarjeta alterna SOLO su estado — la otra nunca cambia (marcar/desmarcar ambas, vacío explícito)', async () => {
+    const user = userEvent.setup();
+    await renderAndGenerate();
+    const c1 = () => screen.getByTestId('usuario-card-u-1');
+    const c2 = () => screen.getByTestId('usuario-card-u-2');
+    // Estado inicial «Todos»: ambas marcadas.
+    expect(c1().getAttribute('aria-pressed')).toBe('true');
+    expect(c2().getAttribute('aria-pressed')).toBe('true');
+    // «Marcar tarjeta 1» desde Todos ⇒ clic alterna SOLO u-1: queda desmarcada; María CONSERVA su estado.
+    await user.click(c1());
+    expect(c1().getAttribute('aria-pressed')).toBe('false');
+    expect(c2().getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('1 de 2');
+    // «Desmarcar tarjeta 2» ⇒ ambas desmarcadas: «Ningún usuario seleccionado» (estado EXPLÍCITO, ya no revierte a Todos).
+    await user.click(c2());
+    expect(c1().getAttribute('aria-pressed')).toBe('false');
+    expect(c2().getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('Ningún usuario seleccionado');
+    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(0));
+    // «Marcar tarjeta 2» ⇒ María seleccionada; Juan CONSERVA su estado (desmarcado).
+    await user.click(c2());
+    expect(c1().getAttribute('aria-pressed')).toBe('false');
+    expect(c2().getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('María López');
+    // «Marcar ambas» ⇒ las dos seleccionadas (Juan conserva, María añade).
+    await user.click(c1());
+    expect(c1().getAttribute('aria-pressed')).toBe('true');
+    expect(c2().getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('2 de 2');
+    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(15000));
+    // «Desmarcar ambas» ⇒ ninguna seleccionada, SIN volver a Todos.
+    await user.click(c1());
+    await user.click(c2());
+    expect(c1().getAttribute('aria-pressed')).toBe('false');
+    expect(c2().getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('Ningún usuario seleccionado');
+    // «Todos los usuarios» restaura el universo completo.
+    await user.click(screen.getByTestId('filtro-usuarios-todos'));
+    expect(c1().getAttribute('aria-pressed')).toBe('true');
+    expect(c2().getAttribute('aria-pressed')).toBe('true');
+    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(15000));
   });
 
   it('§7.7 cambio de fecha recalcula las tarjetas y reinicia a Todos', async () => {
@@ -310,6 +364,31 @@ describe('FILTRO MULTIUSUARIO · tarjetas por usuario creador', () => {
     expect(screen.queryByTestId('usuario-card-u-2')).toBeNull(); // sin ventas ⇒ sin tarjeta
   });
 
+  // ══ MISIÓN REE-2026-11-09 · IDENTIFICACIÓN LEGIBLE (nunca UUID en pantalla) ══
+  it('REE §2: sin nombre resuelto la tarjeta muestra «Usuario sin nombre registrado», JAMÁS el identificador técnico', async () => {
+    const report2 = JSON.parse(JSON.stringify(REPORT));
+    // Vendedor SIN nombre en el perfil (seller_name null del servidor):
+    report2.sales_by_user = [
+      { seller_id: '84ef824e-8066-4efa-afc7-102918c6c982', seller_name: null, transaction_count: 2, total_cup: 13000, native: [{ currency: 'CUP', total: 13000 }] },
+      { seller_id: 'u-2', seller_name: 'María López', transaction_count: 2, total_cup: 11600, native: [{ currency: 'CUP', total: 2000 }, { currency: 'USD', total: 12 }] },
+    ];
+    apiFetchMock.mockImplementation((url: string) => {
+      if (String(url).includes('/api/stores')) return Promise.resolve({ data: [{ id: 'store-1', name: 'Tienda Central', logo_url: null, address: null, phone: null, email: null, reeup: null, nit: null }] });
+      if (String(url).includes('/api/cash-report?')) return Promise.resolve(report2);
+      return Promise.resolve({});
+    });
+    await renderAndGenerate();
+    const card = screen.getByTestId('usuario-card-84ef824e-8066-4efa-afc7-102918c6c982');
+    expect(card.textContent).toContain('Usuario sin nombre registrado');
+    expect(card.textContent).not.toContain('84ef824e'); // ningún identificador técnico visible
+    expect(card.textContent).not.toContain('usuario84');
+    // La etiqueta del filtro también es legible (PDF/vista previa la consumen):
+    // desde «Todos», desmarcar María deja SOLO al usuario sin nombre seleccionado.
+    await userEvent.setup().click(screen.getByTestId('usuario-card-u-2'));
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('Usuario sin nombre registrado');
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).not.toContain('84ef824e');
+  });
+
   it('§7.9 ventas sin creador identificable: tarjeta «Usuario no identificado»', async () => {
     const report2 = JSON.parse(JSON.stringify(REPORT));
     report2.sales_rows = [
@@ -329,8 +408,16 @@ describe('FILTRO MULTIUSUARIO · tarjetas por usuario creador', () => {
     const na = screen.getByTestId('usuario-card-__sin_usuario__');
     expect(na.textContent).toContain('Usuario no identificado');
     expect(na.textContent).toContain('no se atribuyen a otro usuario');
-    // seleccionar SOLO el no identificado: su venta computa (conciliación §7.6)
+    // REE-2026-11-09: desde «Todos», desmarcar u-1 y u-2 (cada clic alterna SOLO
+    // su tarjeta) deja SOLO el no identificado seleccionado; su venta computa.
     const user = userEvent.setup();
+    await user.click(screen.getByTestId('usuario-card-u-1'));
+    await user.click(screen.getByTestId('usuario-card-u-2'));
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('1 de 3');
+    expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(500));
+    // Alternar de nuevo SOLO esa tarjeta: vacío explícito, y re-marcarla restaura su venta.
+    await user.click(na);
+    expect(screen.getByTestId('filtro-usuarios-estado').textContent).toContain('Ningún usuario seleccionado');
     await user.click(na);
     expect(summaryValue('Ventas totales (efectivo + transferencia)')).toBe(fmtCup(500));
   });

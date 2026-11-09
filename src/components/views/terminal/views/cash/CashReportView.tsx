@@ -401,25 +401,43 @@ export default function CashReportView() {
     }
     return buildSelectionAdjustedReport(applied.report, salesRows, effectiveExcluded);
   }, [applied, salesRows, effectiveExcluded]);
+  // MISIÓN REE-2026-11-09 · Selección INDEPENDIENTE por tarjeta (checkbox).
+  // Cada tarjeta alterna EXCLUSIVAMENTE su propio estado; el resto conserva el
+  // suyo SIEMPRE. Causa raíz corregida: antes, desde «Todos» el primer clic
+  // colapsaba a {solo ese usuario} (desmarcando a los demás de golpe) y un Set
+  // vacío revertía a 'all' (re-marcando a todos) — eso producía el
+  // «intercambio» de selección entre tarjetas. Ahora:
+  //   · Desde 'all' (todas marcadas): el clic DESmarca solo la tarjeta tocada
+  //     (queda el universo menos esa) — las demás conservan su estado visible.
+  //   · Set vacío = «Ningún usuario seleccionado» (estado EXPLÍCITO, permitido:
+  //     el reporte no incluye ventas de usuarios) — ya no revierte a 'all'.
+  //   · «Todos los usuarios» (selectAllUsers) restaura el universo completo.
+  // La clave interna sigue siendo el seller_id UUID (estable; usuarios con el
+  // mismo nombre no colisionan).
   const toggleUserCard = useCallback((key: string) => {
     setSelectedUsers(prev => {
       if (prev === 'all') {
-        // Desde «Todos»: el primer clic SELECCIONA SOLO ese usuario (búsqueda
-        // de una persona); los siguientes clics añaden/quitan (multi).
-        return new Set([key]);
+        // «Todos» = todas las tarjetas marcadas. Alternar la tocada ⇒ desmarcar
+        // SOLO esa; las demás (el universo visible) quedan marcadas.
+        return new Set(userCards.map(c => c.key).filter(k => k !== key));
       }
       const next = new Set(prev);
       if (next.has(key)) next.delete(key); else next.add(key);
-      if (next.size === 0) return 'all'; // sin selección ⇒ universo completo
-      return next;
+      return next; // vacío permitido: «Ningún usuario seleccionado»
     });
-  }, []);
+  }, [userCards]);
   const selectAllUsers = useCallback(() => setSelectedUsers('all'), []);
   const selectedUsersCount = selectedUsers === 'all' ? userCards.length : selectedUsers.size;
+  const userSelectionEmpty = selectedUsers !== 'all' && selectedUsers.size === 0;
   const userFilterLabel = useMemo(() => {
     if (!userSelectionActive) return 'Todos los usuarios';
+    // userSelectionActive ya estrecha selectedUsers a Set (condición con alias):
+    // aquí solo puede ser un Set — el vacío es «Ningún usuario seleccionado».
+    if (selectedUsers.size === 0) return 'Ningún usuario seleccionado';
     const names = userCards.filter(c => selectedUsers.has(c.key))
-      .map(c => c.sellerName || (c.sellerId ? `Usuario ${(c.sellerId || '').slice(0, 8)}…` : 'Usuario no identificado'));
+      .map(c => (c.sellerId
+        ? (c.sellerName || 'Usuario sin nombre registrado') // nunca el UUID en pantalla
+        : 'Usuario no identificado'));
     return names.length <= 2 ? names.join(' + ') : `${names.length} usuarios seleccionados`;
   }, [userSelectionActive, selectedUsers, userCards]);
   // La selección se RECONSTRUYE al cambiar de tienda o período (misión §6:
@@ -1272,6 +1290,7 @@ export default function CashReportView() {
                 selectedUsersCount={selectedUsersCount}
                 userCardsTotalCup={userCardsTotalCup}
                 userFilterLabel={userFilterLabel}
+                userSelectionEmpty={userSelectionEmpty}
               />
             )}
 
@@ -1669,6 +1688,8 @@ function UsuarioFiltroCards(p: {
   selectedCount: number;
   totalCup: number;
   label: string;
+  /** REE-2026-11-09: Set vacío EXPLÍCITO — ningún usuario seleccionado. */
+  emptySelection: boolean;
 }) {
   const all = p.selected === 'all';
   const cardKey = (c: SalesByUserCard) => c.key;
@@ -1680,9 +1701,11 @@ function UsuarioFiltroCards(p: {
             <Users className="w-4 h-4 text-primary shrink-0" /> Usuarios que generaron las ventas
           </h3>
           <p className="text-[10px] text-muted-foreground leading-snug" aria-live="polite" data-testid="filtro-usuarios-estado">
-            {all
-              ? `Todos los usuarios (${p.cards.length}${p.cards.length === 1 ? ' usuario' : ' usuarios'}) · Total facturado ${formatCurrency(p.totalCup)} (equiv. CUP)`
-              : `${p.selectedCount} de ${p.cards.length} ${p.cards.length === 1 ? 'usuario' : 'usuarios'} · ${p.label}`}
+            {p.emptySelection
+              ? 'Ningún usuario seleccionado — el reporte no incluye ventas de usuarios. «Todos los usuarios» restaura el reporte completo.'
+              : all
+                ? `Todos los usuarios (${p.cards.length}${p.cards.length === 1 ? ' usuario' : ' usuarios'}) · Total facturado ${formatCurrency(p.totalCup)} (equiv. CUP)`
+                : `${p.selectedCount} de ${p.cards.length} ${p.cards.length === 1 ? 'usuario' : 'usuarios'} · ${p.label}`}
           </p>
         </div>
         <button
@@ -1724,7 +1747,10 @@ function UsuarioFiltroCards(p: {
               >
                 <div className="flex items-start justify-between gap-2">
                   <span className={cn('text-xs font-black leading-snug break-words', selected ? 'text-primary' : 'text-foreground')}>
-                    {c.sellerId ? (c.sellerName || `Usuario ${(c.sellerId || '').slice(0, 8)}…`) : 'Usuario no identificado'}
+                    {/* REE-2026-11-09: NUNCA el UUID en pantalla — nombre real del
+                        perfil (servidor) o etiqueta legible; la clave interna de
+                        selección sigue siendo el seller_id (estable y único). */}
+                    {c.sellerId ? (c.sellerName || 'Usuario sin nombre registrado') : 'Usuario no identificado'}
                   </span>
                   <span aria-hidden className="shrink-0">{selected ? <CheckSquare className="w-4 h-4 text-primary" /> : <Square className="w-4 h-4 text-muted-foreground" />}</span>
                 </div>
@@ -1749,7 +1775,7 @@ function UsuarioFiltroCards(p: {
       )}
       <p className="px-4 py-2 text-[10px] text-muted-foreground border-t border-border/20">
         La selección es un <strong className="text-foreground">filtro real</strong>: actualiza los resultados, los totales, el desglose y el PDF/Excel/Word exportados.
-        Clic en una tarjeta: selecciona/deselecciona (multi). «Todos los usuarios» restaura el reporte completo. La suma de las tarjetas reconciilia con el total facturado del período.
+        Cada tarjeta alterna solo su propio estado (checkbox independiente): las demás tarjetas nunca cambian. «Todos los usuarios» restaura el reporte completo. La suma de las tarjetas reconciilia con el total facturado del período.
       </p>
     </section>
   );
@@ -2284,6 +2310,8 @@ interface ResultadosPanelProps {
   selectedUsersCount: number;
   userCardsTotalCup: number;
   userFilterLabel: string;
+  /** REE-2026-11-09: Set vacío explícito = ningún usuario seleccionado. */
+  userSelectionEmpty: boolean;
 }
 
 function ResultadosPanel(p: ResultadosPanelProps) {
@@ -2431,6 +2459,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
         selectedCount={p.selectedUsersCount}
         totalCup={p.userCardsTotalCup}
         label={p.userFilterLabel}
+        emptySelection={p.userSelectionEmpty}
       />
 
       {/* ══ MISIÓN PERSONALIZACIÓN · FUNCIÓN A: conceptos del Resumen ══ */}

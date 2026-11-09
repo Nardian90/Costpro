@@ -1,0 +1,107 @@
+{
+  "generated_at": "2026-11-09T16:48:05.121Z",
+  "db": "aislada (lguovmvrozxgssupkwpf)",
+  "tests": {
+    "T1a": {
+      "ok": true,
+      "detail": "tarjeta QA muestra «QA Correcciones» → [QA Correcciones]"
+    },
+    "T1b": {
+      "ok": true,
+      "detail": "tarjeta Admin muestra «Admin Demo» → [Admin Demo]"
+    },
+    "T1c": {
+      "ok": true,
+      "detail": "ningún identificador técnico (UUID/hex) visible en la sección"
+    },
+    "T1d": {
+      "ok": true,
+      "detail": "API sales_by_user trae seller_name resuelto: [{\"id\":\"18a4b522\",\"nombre\":\"QA Correcciones\"},{\"id\":\"0c13aa78\",\"nombre\":\"Admin Demo\"}]"
+    },
+    "T2.0": {
+      "ok": true,
+      "detail": "inicial «Todos»: ambas tarjetas marcadas"
+    },
+    "T2.1": {
+      "ok": true,
+      "detail": "clic tarjeta Admin → SOLO Admin desmarcada; QA CONSERVA su estado"
+    },
+    "T3.1": {
+      "ok": true,
+      "detail": "ventas = solo QA ($330,000.00) → $330,000.00"
+    },
+    "T2.2": {
+      "ok": true,
+      "detail": "desmarcar QA → ninguna seleccionada (estado explícito, NO revierte a Todos)"
+    },
+    "T3.2": {
+      "ok": true,
+      "detail": "ventas = 0 con ninguno seleccionado → $0.00"
+    },
+    "T2.3": {
+      "ok": true,
+      "detail": "marcar QA → QA seleccionada; Admin CONSERVA su estado (desmarcada)"
+    },
+    "T3.3": {
+      "ok": true,
+      "detail": "ventas = solo QA ($330,000.00) → $330,000.00"
+    },
+    "T2.4": {
+      "ok": true,
+      "detail": "marcar Admin → ambas seleccionadas («2 de 2»)"
+    },
+    "T3.4": {
+      "ok": true,
+      "detail": "ventas = todo el universo ($350,000.00) → $350,000.00"
+    },
+    "T2.5": {
+      "ok": true,
+      "detail": "desmarcar QA → solo Admin seleccionada"
+    },
+    "T3.5": {
+      "ok": true,
+      "detail": "ventas = solo Admin ($20,000.00) → $20,000.00"
+    },
+    "T2.6": {
+      "ok": true,
+      "detail": "desmarcar Admin → ninguna seleccionada"
+    },
+    "T2.7": {
+      "ok": true,
+      "detail": "«Todos los usuarios» restaura ambas marcadas"
+    },
+    "T3.6": {
+      "ok": true,
+      "detail": "ventas restauradas ($350,000.00) → $350,000.00"
+    },
+    "T4.0": {
+      "ok": true,
+      "detail": "precondición: clic QA desde «Todos» deja SOLO Admin marcada"
+    },
+    "T4.0b": {
+      "ok": true,
+      "detail": "importes = solo Admin ($20,000.00) → $20,000.00"
+    },
+    "T4.1": {
+      "ok": true,
+      "detail": "abrir/cerrar acordeón de conceptos NO altera la selección de tarjetas"
+    },
+    "T4.2": {
+      "ok": true,
+      "detail": "importes intactos tras re-render → $20,000.00"
+    },
+    "T5.1": {
+      "ok": true,
+      "detail": "PDF exportado con filtro activo (59224 bytes): reporte_diario_Tienda_QA_Correcciones_2026-09-01.pdf"
+    },
+    "T5.2": {
+      "ok": true,
+      "detail": "el cuerpo del reporte no expone UUIDs"
+    },
+    "T5.3": {
+      "ok": true,
+      "detail": "el filtro activo documenta el nombre humano («1 de 2 · QA Correcciones»)"
+    }
+  },
+  "failures": []
+}
