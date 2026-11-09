@@ -174,6 +174,11 @@ describe('CP-DOC-PDF-UX-004 · Escenario A — campos completos en su ubicación
     expect(text).toContain('Chapa:');
     expect(text).toContain('Casilla:');
     expect(text).toContain('Guía aérea:');
+    // Cuadrícula 2×3 (2026-11-09): «Guía aérea» se dibuja en la PRIMERA fila
+    // — antes que «Carné de identidad:» — y «Firma» cierra la SEGUNDA fila.
+    expect(text.indexOf('Guía aérea:')).toBeGreaterThan(text.indexOf('Chapa:'));
+    expect(text.indexOf('Guía aérea:')).toBeLessThan(text.indexOf('Carné de identidad:'));
+    expect(text.indexOf('Firma:')).toBeGreaterThan(text.indexOf('Casilla:'));
     expect(text).toContain('FIRMA DEL EMPLEADO QUE RECEPCIONA');
     expect(text).toContain('FIRMA DEL EMPLEADO QUE CONTABILIZA');
     expect(pdfDrawnText(doc.output('arraybuffer'))).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');
