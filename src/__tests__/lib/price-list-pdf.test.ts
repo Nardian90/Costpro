@@ -148,7 +148,7 @@ describe('CP-SALES-PRICE-LIST-001 · Render del PDF (stream decodificado)', () =
     ]);
     const doc = await renderPriceListPdf(model, { dataUrl: null, source: 'none' });
     const text = decodePdf(doc.output('arraybuffer') as ArrayBuffer);
-    expect(text).toContain('SKU / Código');
+    expect(text).toContain('SKU');
     expect(text).toContain('Producto y descripción');
     expect(text).toContain('Precio de venta');
     expect(text).toContain('CUP');
@@ -168,7 +168,7 @@ describe('CP-SALES-PRICE-LIST-001 · Render del PDF (stream decodificado)', () =
     expect(text).toContain('Página 2 de 2');
     // Encabezado de tabla en cada bloque dibujado (pág. 1: 2 columnas;
     // pág. 2: solo la izquierda tiene filas → 3 encabezados).
-    expect(text.split('SKU / Código').length - 1).toBe(3);
+    expect(text.split('SKU').length - 1).toBeGreaterThanOrEqual(3); // encabezado en cada bloque + rótulos de fila
     // Orden preservado: primeros numéricos y el último SKU está en el documento.
     expect(text).toContain('Producto 1');
     expect(text).toContain('Producto 100');
@@ -301,7 +301,7 @@ describe('CP-PRECIO-PDF-DESC-001 · Mostrar descripción en PDF (Sí/No)', () =>
     );
     const tSi = decodePdf(si.output('arraybuffer') as ArrayBuffer);
     const tNo = decodePdf(no.output('arraybuffer') as ArrayBuffer);
-    for (const común of [NOMBRE, 'Pintura vinil blanca 4 L', 'CUP', 'SKU / Código', 'LISTADO DE PRECIOS']) {
+    for (const común of [NOMBRE, 'Pintura vinil blanca 4 L', 'CUP', 'SKU', 'LISTADO DE PRECIOS']) {
       expect(tSi).toContain(común);
       expect(tNo).toContain(común);
     }

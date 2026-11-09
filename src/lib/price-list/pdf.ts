@@ -134,7 +134,10 @@ function drawBlock(
   doc.setFontSize(ROW_FONT);
   doc.setTextColor(...INK);
   doc.rect(x0, y, COL_W, HEADER_ROW_MM, 'FD');
-  doc.text('SKU / Código', x0 + 1.5, y + 4);
+  // 'SKU' (y no «SKU / Código»): el rótulo completo invadía la columna
+  // contigua en el encabezado (defecto preexistente, visible ahora con el
+  // rótulo de producto); la vista ya nombra «SKU desde/hasta» a este campo.
+  doc.text('SKU', x0 + 1.5, y + 4);
   doc.text(cellHeader, x0 + SKU_W + 1.5, y + 4);
   doc.text('Precio de venta', x0 + COL_W - 1.5, y + 4, { align: 'right' });
   y += HEADER_ROW_MM;
