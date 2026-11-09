@@ -35,13 +35,18 @@ export interface PriceListSourceItem {
   operational_class?: ProductOperationalClass | null;
 }
 
-/** Fila lista para dibujar (el SKU original se conserva intacto). */
+/**
+ * Fila lista para dibujar (el SKU original se conserva intacto).
+ * CP-PRECIO-PDF-DESC-001: nombre y descripción son CAMPOS SEPARADOS —
+ * jamás se combinan en una sola cadena ni se sustituye uno por otro.
+ */
 export interface PriceListRow {
   id: string;
   skuLabel: string;            // SKU original o «—» (nunca la clave auxiliar)
-  description: string;         // descripción comercial (name + description)
+  name: string;                // nombre del producto (identificación)
+  description: string;         // descripción del producto ('' si no tiene)
   priceLabel: string;          // «$ 38,50 CUP» — moneda explícita, sin conversión
-  lines: number;               // líneas que ocupará la descripción (layout)
+  lines: number;               // líneas que ocupará la celda nombre+descripción (layout)
 }
 
 export interface PriceListStoreInfo {
@@ -69,6 +74,9 @@ export interface PriceListModel {
     // (stock>0 tras clasificación/estado del precio, antes del rango de SKU).
     operationalFilter: OperationalPriceFilter;
     totalOperational: number;
+    // CP-PRECIO-PDF-DESC-001: «Mostrar descripción en PDF» (Sí/No) con la que
+    // el documento fue construido — el plan y el render la comparten.
+    includeDescription: boolean;
   };
 }
 
@@ -80,10 +88,20 @@ export function hasActiveOperationalFilter(f: OperationalPriceFilter): boolean {
   return !isNeutralOperationalFilter(f);
 }
 
-/** Descripción comercial: nombre + descripción complementaria si existe. */
-function commercialDescription(item: PriceListSourceItem): string {
-  const extra = (item.description ?? '').trim();
-  return extra !== '' ? `${item.name} — ${extra}` : item.name;
+/**
+ * CP-PRECIO-PDF-DESC-001 · Texto efectivo de la celda según la opción
+ * «Mostrar descripción en PDF».
+ *  · Sí (includeDescription): nombre y DEBAJO su descripción, separados por
+ *    un salto de línea — dos campos distintos, nunca fusionados en una sola
+ *    frase (el render dibuja la descripción con presentación secundaria).
+ *  · No: únicamente el nombre, sin huecos vacíos ni cambio de alineación.
+ */
+export function priceListCellText(
+  row: Pick<PriceListRow, 'name' | 'description'>,
+  includeDescription: boolean,
+): string {
+  const desc = includeDescription ? row.description.trim() : '';
+  return desc !== '' ? `${row.name}\n${desc}` : row.name;
 }
 
 /**
@@ -122,10 +140,17 @@ export function buildPriceListModel(opts: {
   measureLines?: (description: string) => number;
   /** CP-OPERATIONAL-CLASS-001: clasificación operativa + estado del precio (combinables, §3-§5). */
   operationalFilter?: OperationalPriceFilter;
+  /**
+   * CP-PRECIO-PDF-DESC-001: «Mostrar descripción en PDF» (Sí/No). Por defecto
+   * SÍ (conserva la riqueza informativa del documento). Afecta SOLO al PDF
+   * generado: no modifica productos ni datos almacenados.
+   */
+  includeDescription?: boolean;
 }): PriceListModel {
   const { items, store, range, generatedAt } = opts;
   const measureLines = opts.measureLines ?? (() => 1);
   const operationalFilter = opts.operationalFilter ?? NEUTRAL_OPERATIONAL_FILTER;
+  const includeDescription = opts.includeDescription ?? true;
 
   // ÚNICO pipeline de selección (CP-OPERATIONAL-CLASS-002 §7): la vista (chip
   // «N que cumplen los filtros») y el documento usan la MISMA función, por lo
@@ -149,7 +174,8 @@ export function buildPriceListModel(opts: {
   const rows: PriceListRow[] = ordered.map((item) => ({
     id: item.id,
     skuLabel: (item.sku ?? '').trim() !== '' ? String(item.sku).trim() : '—',
-    description: commercialDescription(item),
+    name: item.name,
+    description: (item.description ?? '').trim(),
     // CP-OPERATIONAL-CLASS-002 §5: representación HONESTA del precio.
     // HALLAZGO VERIFICADO EN POSTGRESQL REAL: products.price es NOT NULL
     // DEFAULT 0 — el sistema representa «sin precio configurado» con 0 (no
@@ -162,7 +188,8 @@ export function buildPriceListModel(opts: {
       ? formatLabeledCurrency(item.price as number, (item.price_currency ?? DEFAULT_CURRENCY) || DEFAULT_CURRENCY)
       : 'Sin precio',
     lines: 1, // se recalcula con la geometría real en planPriceListPages
-  })).map((row) => ({ ...row, lines: measureLines(row.description) }));
+  }))
+    .map((row) => ({ ...row, lines: measureLines(priceListCellText(row, includeDescription)) }));
 
   const currencies = [...new Set(ordered.map((i) => ((i.price_currency ?? DEFAULT_CURRENCY) || DEFAULT_CURRENCY).toUpperCase()))];
 
@@ -179,6 +206,7 @@ export function buildPriceListModel(opts: {
       currencies,
       operationalFilter,
       totalOperational,
+      includeDescription,
     },
   };
 }
@@ -258,7 +286,7 @@ export function planPriceListPages(model: PriceListModel, geom: PriceListGeometr
   };
 
   for (let i = 0; i < model.rows.length; i += 1) {
-    const lines = geom.measureLines(model.rows[i].description);
+    const lines = geom.measureLines(priceListCellText(model.rows[i], model.meta.includeDescription));
     const height = rowHeightMm(lines, geom);
     if (!currentColumn) openColumn();
     // La fila entra completa o pasa a la siguiente columna/página (no se parte).

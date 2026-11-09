@@ -219,3 +219,57 @@ describe('CP-OPERATIONAL-CLASS-001 · filtros en el Listado de precios (UI)', ()
     expect(liveCount()).toContain('0');
   });
 });
+
+// ══════════════════════════════════════════════════════════════════════
+// CP-PRECIO-PDF-DESC-001 · «Mostrar descripción en PDF» (Sí/No) en la UI
+// La opción controla REALMENTE la inclusión/omisión de la descripción en
+// el documento (no es solo un selector visual) y no filtra filas.
+// ══════════════════════════════════════════════════════════════════════
+describe('CP-PRECIO-PDF-DESC-001 · «Mostrar descripción en PDF» (Sí/No) en la UI', () => {
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('la opción existe con Sí/No, «Sí» parte activa y NO altera el contador en vivo', () => {
+    render(<PriceListView />);
+    expect(screen.getByText('Mostrar descripción en PDF')).toBeTruthy();
+    expect(screen.getByTestId('descripcion-pdf-si').getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('descripcion-pdf-no').getAttribute('aria-pressed')).toBe('false');
+    // Opción de PRESENTACIÓN del documento: no filtra filas.
+    expect(liveCount()).toContain('5');
+    expect(activeFilters()).toBeNull();
+  });
+
+  it('por defecto (Sí) el modelo se construye con includeDescription=true', async () => {
+    const user = userEvent.setup();
+    render(<PriceListView />);
+    await user.click(screen.getByRole('button', { name: /Generar vista previa/i }));
+    expect(pdfMock.renderPriceListPdf).toHaveBeenCalledTimes(1);
+    const model = (pdfMock.renderPriceListPdf.mock.calls as unknown[][])[0][0] as PriceListModel;
+    expect(model.meta.includeDescription).toBe(true);
+    expect(model.rows).toHaveLength(5);
+  });
+
+  it('«No — Ocultar descripción» construye el modelo con includeDescription=false (mismas filas)', async () => {
+    const user = userEvent.setup();
+    render(<PriceListView />);
+    await user.click(screen.getByTestId('descripcion-pdf-no'));
+    expect(screen.getByTestId('descripcion-pdf-no').getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('descripcion-pdf-si').getAttribute('aria-pressed')).toBe('false');
+    await user.click(screen.getByRole('button', { name: /Generar vista previa/i }));
+    expect(pdfMock.renderPriceListPdf).toHaveBeenCalledTimes(1);
+    const model = (pdfMock.renderPriceListPdf.mock.calls as unknown[][])[0][0] as PriceListModel;
+    expect(model.meta.includeDescription).toBe(false);
+    expect(model.rows).toHaveLength(5); // mismos datos, solo cambia el PDF
+  });
+
+  it('cambiar la opción tras generar marca la vista previa DESACTUALIZADA', async () => {
+    const user = userEvent.setup();
+    render(<PriceListView />);
+    await user.click(screen.getByRole('button', { name: /Generar vista previa/i }));
+    expect(screen.queryByText(/Vista previa desactualizada/i)).toBeNull();
+    await user.click(screen.getByTestId('descripcion-pdf-no'));
+    expect(screen.getByText(/Vista previa desactualizada/i)).toBeTruthy();
+  });
+});
