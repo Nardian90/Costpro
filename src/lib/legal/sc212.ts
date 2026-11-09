@@ -101,7 +101,7 @@ import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
   drawRes11Table,
-  drawRes11Signatures,
+  drawRes11SignatureFooter,
   drawRes11Footer,
   formatRes11Money,
   formatRes11Quantity,
@@ -863,20 +863,22 @@ export async function renderSc212Pdf(model: Sc212ModelData) {
     doc.setFontSize(9.5);
   }
 
-  // ── Datos 8–11: firmas ──
-  finalY += 6;
-  drawRes11Signatures(
+  // ── Datos 8–11: firmas — pie unificado (referencia de diseño 2026-11-09) ──
+  // Cargos centrados en MAYÚSCULAS debajo de la línea, sin marcos y con
+  // rúbrica suficiente sobre cada línea (leyendas GENÉRICAS intactas,
+  // CP-SALES-024 §5).
+  drawRes11SignatureFooter(
     doc,
-    [
-      // CP-SALES-024 §5: leyenda GENÉRICA constante — sin nombre del
-      // vendedor ni del usuario (antes: «Entrega los productos — <nombre>»).
-      'Entrega los productos (nombre y firma)',
-      'Recibe los productos (nombre y firma)',
-      'Transportador (nombre y firma)',
-      'Contabiliza y anota en el control de Inventario',
-    ],
+    {
+      signatures: [
+        { role: 'Entrega los productos (nombre y firma)' },
+        { role: 'Recibe los productos (nombre y firma)' },
+        { role: 'Transportador (nombre y firma)' },
+        { role: 'Contabiliza y anota en el control de Inventario' },
+      ],
+      columns: 4,
+    },
     finalY,
-    4,
   );
 
   // ── Pie normativo ──

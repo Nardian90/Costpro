@@ -79,7 +79,7 @@ import {
   RES11_BLANK_LINE,
   drawRes11DataBlock,
   drawRes11Header,
-  drawRes11SignatureBlocks,
+  drawRes11SignatureFooter,
   measureRes11DataBlockHeight,
 } from './res11-shared';
 import { logger } from '@/lib/logger';
@@ -658,33 +658,41 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
     finalY += 5.5;
   }
 
-  // ── Datos 9–12: firmas — CP-DOC-SC-DATA-MAPPING-006 §6/§7 ──
+  // ── Datos 9–12: firmas — PIE UNIFICADO (referencia de diseño 2026-11-09) ──
   // Fila superior: las TRES firmas de empleados (recepciona, contabiliza,
-  // anota en el Control de Inventario) en columnas iguales — compactas.
-  // Fila inferior: FIRMA DEL TRANSPORTADOR a lo ancho del formulario, con
-  // sus datos de identificación (nombre, carné, chapa, casilla, guía aérea)
-  // en dos sub-columnas dentro del bloque — dejan de apilarse y de robar
-  // altura al resto (estética/densidad a petición del propietario).
-  // Alineación, jerarquía tipográfica y rúbrica idénticas en las cuatro
-  // áreas; todas las filas se mueven siempre juntas (ninguna firma queda
-  // sola en otra página).
-  drawRes11SignatureBlocks(doc, [
-    { title: 'Firma del empleado que recepciona' },
-    { title: 'Firma del empleado que contabiliza' },
-    { title: 'Firma del empleado que anota en el Control de Inventario' },
+  // anota en el Control de Inventario) — espacios ABIERTOS con la línea de
+  // rúbrica arriba y el cargo centrado en MAYÚSCULAS debajo, sin marcos.
+  // Sección inferior: TRANSPORTADOR con título y regla, y su cuadrícula de
+  // identificación en dos columnas (Nombre/Chapa · Carné/Casilla ·
+  // Firma/Guía aérea) — la firma manuscrita del transportador es un campo
+  // más del bloque, conforme a la referencia; sus datos dinámicos se escriben
+  // SOBRE su línea y los vacíos conservan la línea de cumplimentación.
+  // Todas las áreas se mueven SIEMPRE juntas (ninguna firma queda sola en
+  // otra página).
+  drawRes11SignatureFooter(
+    doc,
     {
-      title: 'Firma del Transportador',
-      spanAll: true,
-      fieldsColumns: 2,
-      fields: [
-        { label: 'Nombre:', value: model.transportadorNombre },
-        { label: 'Carné de identidad:', value: model.transportadorCarne },
-        { label: 'Chapa:', value: model.transportadorChapa },
-        { label: 'Casilla:', value: model.transportadorCasilla },
-        { label: 'Guía aérea:', value: model.transportadorGuiaAerea },
+      signatures: [
+        { role: 'Firma del empleado que recepciona' },
+        { role: 'Firma del empleado que contabiliza' },
+        { role: 'Firma del empleado que anota en el Control de Inventario' },
       ],
+      columns: 3,
+      fieldsSection: {
+        title: 'Transportador',
+        columns: 2,
+        fields: [
+          { label: 'Nombre:', value: model.transportadorNombre },
+          { label: 'Chapa:', value: model.transportadorChapa },
+          { label: 'Carné de identidad:', value: model.transportadorCarne },
+          { label: 'Casilla:', value: model.transportadorCasilla },
+          { label: 'Firma:', value: '' },
+          { label: 'Guía aérea:', value: model.transportadorGuiaAerea },
+        ],
+      },
     },
-  ], finalY + 10, { columns: 3 });
+    finalY + 10,
+  );
 
   // ── Nota al pie sobria (identificación normativa y trazabilidad) ──
   doc.setFont('helvetica', 'italic');

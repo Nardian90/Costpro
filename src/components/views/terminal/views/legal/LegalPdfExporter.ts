@@ -110,16 +110,25 @@ export async function generateLegalPdf(model: any, data: any, options: { skipCop
     const textWidth = pageWidth - 30;
     docInstance.text(String(receiptData.cantidad_letras || 'CERO').toUpperCase(), 15, finalY + 26, { maxWidth: textWidth });
 
-    // Signature section
+    // Signature section — pie unificado (referencia de diseño 2026-11-09):
+    // línea de rúbrica con el cargo centrado DEBAJO, en MAYÚSCULAS, la misma
+    // jerarquía tipográfica del resto de los modelos SC (sin cajas).
     const sigY = finalY + 45;
-    docInstance.setLineWidth(0.2);
+    docInstance.setLineWidth(0.25);
+    docInstance.setDrawColor(0);
     docInstance.line(20, sigY, 80, sigY);
     docInstance.setFontSize(7);
-    docInstance.setFont('helvetica', 'bold');
-    docInstance.text('FIRMA CAJERO', 35, sigY + 5);
+    docInstance.setFont('helvetica', 'normal');
+    docInstance.setTextColor(55, 55, 55);
+    docInstance.text('FIRMA CAJERO', 50, sigY + 5, { align: 'center' });
 
     docInstance.line(pageWidth - 85, sigY, pageWidth - 15, sigY);
-    docInstance.text('FIRMA DE LA PERSONA QUE ENTREGA EL EFECTIVO', pageWidth - 85, sigY + 5, { maxWidth: 70, align: 'center' });
+    docInstance.text(
+      'FIRMA DE LA PERSONA QUE ENTREGA EL EFECTIVO',
+      pageWidth - 50,
+      sigY + 5,
+      { maxWidth: 66, align: 'center' },
+    );
   };
 
   if (model.code === 'SC-3-01') {

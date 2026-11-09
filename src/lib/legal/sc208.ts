@@ -61,7 +61,7 @@ import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
   drawRes11Table,
-  drawRes11Signatures,
+  drawRes11SignatureFooter,
   drawRes11Footer,
   formatRes11Money,
   formatRes11Quantity,
@@ -413,20 +413,24 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
     }
   }
 
-  // ── Datos 7–10: firmas ──
-  finalY += 8;
-  drawRes11Signatures(
+  // ── Datos 7–10: firmas — pie unificado (referencia de diseño 2026-11-09) ──
+  // Cargos centrados en MAYÚSCULAS debajo de la línea; el nombre dinámico
+  // de quien entrega se consigna ENCIMA de su línea. Sin marcos.
+  drawRes11SignatureFooter(
     doc,
-    [
-      model.entregadoPor
-        ? `Entrega por el almacén — ${model.entregadoPor}`
-        : 'Entrega por el almacén (nombre y firma)',
-      'Recibe (nombre y firma)',
-      'Anota en el Control de Inventario',
-      'Contabiliza',
-    ],
+    {
+      signatures: [
+        {
+          role: 'Entrega por el almacén (nombre y firma)',
+          name: model.entregadoPor || undefined,
+        },
+        { role: 'Recibe (nombre y firma)' },
+        { role: 'Anota en el Control de Inventario' },
+        { role: 'Contabiliza' },
+      ],
+      columns: 4,
+    },
     finalY,
-    4,
   );
 
   // ── Pie normativo ──
