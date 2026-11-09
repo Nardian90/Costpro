@@ -107,6 +107,14 @@ describe('filtro de usuarios como exclusión REAL sobre el pipeline', () => {
     expect(userSelectionExcludedIds(UNIVERSE, 'all').size).toBe(0);
   });
 
+  it('REE-2026-11-09: Set VACÍO = ningún usuario seleccionado ⇒ excluye TODAS las ventas (estado explícito, ya no revierte a all)', () => {
+    const excl = userSelectionExcludedIds(UNIVERSE, new Set<string>());
+    expect(excl.size).toBe(UNIVERSE.length);
+    const totals = computeSelectedSalesTotals(UNIVERSE, excl);
+    expect(totals.includedCount).toBe(0);
+    expect(totals.groups.reduce((s, g) => s + g.total_cup, 0)).toBe(0);
+  });
+
   it('un usuario: excluye SOLO las ventas de los demás', () => {
     const excl = userSelectionExcludedIds(UNIVERSE, new Set(['u-1']));
     expect([...excl].sort()).toEqual(['v-2', 'v-3', 'v-5']);
