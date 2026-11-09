@@ -172,12 +172,14 @@ describe('CP-DOC-SC-HEADER-UX-005 · Encabezado institucional de los modelos SC'
       expect(text).toContain(etiqueta);
     }
     expect(text).not.toContain('DATOS DEL TRANSPORTADOR');
-    // Tabla del dato 7 + dato 8 + los CUATRO bloques de firma alineados
+    // Tabla del dato 7 + dato 8 + el PIE DE FIRMA UNIFICADO (referencia de
+    // diseño 2026-11-09): fila de tres firmas de empleados + sección
+    // «TRANSPORTADOR:» con su cuadrícula de identificación.
     expect(text).toContain('Saldo en existencia');
     expect(text).toContain('según almacén');
     expect(text).toContain('IMPORTE TOTAL DEL MODELO');
     expect(text).toContain('385.00 CUP');
-    expect(text).toContain('FIRMA DEL TRANSPORTADOR');
+    expect(text).toContain('TRANSPORTADOR:');
     expect(text).toContain('FIRMA DEL EMPLEADO QUE RECEPCIONA');
     expect(text).toContain('FIRMA DEL EMPLEADO QUE CONTABILIZA');
     expect(pdfDrawnText(doc.output('arraybuffer') as ArrayBuffer)).toContain('FIRMA DEL EMPLEADO QUE ANOTA EN EL CONTROL DE INVENTARIO');

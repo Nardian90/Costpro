@@ -166,9 +166,10 @@ describe('CP-DOC-PDF-UX-004 · Escenario A — campos completos en su ubicación
     expect(text).toContain('IMPORTE TOTAL DEL MODELO');
     expect(text).toContain('IMPORTE TOTAL');
     expect(text).toContain('34.00 CUP');
-    // Firmas (§7 de la misión): los CUATRO bloques de responsabilidad, con el
-    // transportador portando sus datos dentro de su propio bloque
-    expect(text).toContain('FIRMA DEL TRANSPORTADOR');
+    // Firmas (§7 de la misión): PIE UNIFICADO (referencia de diseño
+    // 2026-11-09) — fila de tres firmas de empleados + sección
+    // «TRANSPORTADOR:» con sus datos de identificación dentro del bloque.
+    expect(text).toContain('TRANSPORTADOR:');
     expect(text).toContain('Carné de identidad:');
     expect(text).toContain('Chapa:');
     expect(text).toContain('Casilla:');
