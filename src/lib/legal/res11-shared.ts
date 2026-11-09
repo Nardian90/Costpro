@@ -484,21 +484,26 @@ export function drawRes11DataBlock(doc: jsPDF, opts: Res11DataBlockOptions): num
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Bloque de firmas (espacios en blanco para cumplimentación manual)
+// Pie de firma unificado — referencia de diseño del propietario (2026-11-09)
 // ────────────────────────────────────────────────────────────────────────────
-
-export interface Res11SignatureRow {
-  /** Denominaciones de los responsables de la fila. */
-  labels: string[];
-  /**
-   * Pesos relativos de anchura por firma de la fila (opcional). Permite
-   * dar más espacio a denominaciones largas sin comprimir las demás.
-   */
-  weights?: number[];
-}
-
-/** Alto vertical de un área de firma: línea + espacio de rúbrica + etiqueta. */
-const SIGNATURE_ROW_HEIGHT_MM = 26;
+// Lógica de la referencia aplicada a TODOS los modelos SC de la familia:
+//  · Cada área de firma es un espacio ABIERTO (sin marcos ni cajas):
+//    LÍNEA de firma manuscrita con la denominación del cargo centrada
+//    DEBAJO de la línea, en MAYÚSCULAS, y espacio de rúbrica suficiente
+//    encima de la línea.
+//  · El nombre dinámico (cuando COSTPRO lo conoce) se consigna ENCIMA de la
+//    línea, centrado — la ubicación de nombres y apellidos de la referencia.
+//  · Los bloques con datos de cumplimentación (p. ej. el transportador del
+//    SC-2-04) llevan un TÍTULO en mayúsculas con regla inferior y una
+//    cuadrícula de campos «Etiqueta: valor» con línea de cumplimentación —
+//    la firma manuscrita puede ser un campo más de esa cuadrícula.
+//  · Campos con valor dinámico: el valor se escribe SOBRE su línea; los
+//    vacíos conservan la línea para cumplimentación manual (sin N/A, ceros
+//    ni valores inventados).
+//  · Todas las áreas comparten alineación y tipografía; el conjunto completo
+//    (firmas + secciones de datos) se mueve SIEMPRE junto a una página nueva
+//    si no cabe — ninguna firma separada de su contenido.
+// ────────────────────────────────────────────────────────────────────────────
 
 /**
  * CP-DOC-SC-DATA-MAPPING-006: código documental de tienda listo para el PDF.
@@ -511,71 +516,303 @@ export function storeCodeToString(code: number | string | null | undefined): str
   return s === '' ? '' : s;
 }
 
-/** Dibuja UNA fila de áreas de firma. Devuelve la Y tras la fila. */
-function drawSignatureRow(
-  doc: jsPDF,
-  labels: string[],
-  weights: number[] | undefined,
-  y: number,
-): number {
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const marginX = 12;
-  const contentWidth = pageWidth - marginX * 2;
+/** Área de firma del pie unificado. */
+export interface Res11FooterSignature {
+  /** Cargo / responsabilidad — se dibuja centrado, EN MAYÚSCULAS, bajo la línea. */
+  role: string;
+  /**
+   * Nombre dinámico conocido (COSTPRO) — se dibuja centrado ENCIMA de la
+   * línea. La línea sigue siendo el espacio de la firma manuscrita.
+   */
+  name?: string;
+}
 
-  const n = labels.length;
-  const w = weights && weights.length === n
-    ? weights.map((v) => v / weights.reduce((a, b) => a + b, 0))
-    : Array.from({ length: n }, () => 1 / n);
+/** Campo de cumplimentación del pie («Etiqueta: valor/línea»). */
+export interface Res11FooterField {
+  /** Etiqueta literal del campo (p. ej. «Chapa:»). */
+  label: string;
+  /** Valor dinámico; vacío → solo la línea de cumplimentación manual. */
+  value?: string;
+}
 
-  doc.setDrawColor(...RES11_INK.texto);
-  doc.setLineWidth(0.25);
-  let cx = marginX;
-  labels.forEach((label, i) => {
-    const colW = contentWidth * w[i];
-    const x0 = cx + 4;
-    const x1 = cx + colW - 4;
-    doc.line(x0, y, x1, y);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(...RES11_INK.gris);
-    doc.text(label, (x0 + x1) / 2, y + 4, {
-      align: 'center',
-      maxWidth: colW - 8,
-    });
-    cx += colW;
-  });
-  return y + SIGNATURE_ROW_HEIGHT_MM;
+/** Sección de datos con título y regla (p. ej. «TRANSPORTADOR:» del SC-2-04). */
+export interface Res11FooterFieldsSection {
+  /** Título en mayúsculas con regla inferior (se dibuja con dos puntos). */
+  title?: string;
+  /** Campos en cuadrícula, en orden de lectura por filas. */
+  fields: Res11FooterField[];
+  /** Sub-columnas de la cuadrícula (por defecto 2, como la referencia). */
+  columns?: number;
+}
+
+// Geometría del pie unificado (mm) — espacio de rúbrica real para firmar.
+const FOOTER_RUBRIC_MM = 13;
+const FOOTER_ROLE_GAP_MM = 3.4;
+const FOOTER_ROLE_LEADING_MM = 3.1;
+const FOOTER_ROLE_FONT_PT = 7;
+const FOOTER_ROW_GAP_MM = 4;
+const FOOTER_FIELD_ROW_MM = 7;
+const FOOTER_SECTION_GAP_MM = 3.5;
+const FOOTER_SECTION_TITLE_MM = 9;
+
+const FOOTER_MARGIN_X = 12;
+
+/** N.º de líneas que ocupa el cargo en mayúsculas dentro de su columna. */
+function footerRoleLineCount(doc: jsPDF, role: string, colW: number): number {
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(FOOTER_ROLE_FONT_PT);
+  return doc.splitTextToSize(role.toUpperCase(), Math.max(12, colW - 6)).length;
+}
+
+/** Alto de una fila de firmas: rúbrica + línea + cargo (el más alto manda). */
+function footerRowHeight(doc: jsPDF, cells: Res11FooterSignature[], colWidths: number[]): number {
+  const lines = cells.length
+    ? Math.max(...cells.map((c, i) => footerRoleLineCount(doc, c.role, colWidths[i] ?? 40)))
+    : 1;
+  return FOOTER_RUBRIC_MM + FOOTER_ROLE_GAP_MM + lines * FOOTER_ROLE_LEADING_MM + 1.8;
 }
 
 /**
- * Dibuja áreas de firma claramente diferenciadas, en varias filas si se
- * indica (CP-DOC-PDF-UX-004: líneas suficientes, denominación completa y
- * separación vertical entre áreas; la fila con denominaciones extensas puede
- * llevar pesos de anchura propios). Devuelve la Y final.
- * Las firmas son SIEMPRE espacios en blanco: COSTPRO no sustituye firmas.
+ * Dibuja UNA fila de áreas de firma compartiendo la MISMA Y de línea
+ * (alineación horizontal de la referencia). Devuelve la Y tras la fila.
  */
-export function drawRes11SignatureAreas(
+function paintFooterSignatureRow(
   doc: jsPDF,
-  rows: Res11SignatureRow[],
+  cells: Res11FooterSignature[],
+  y: number,
+  weights?: number[],
+): number {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const contentWidth = pageWidth - FOOTER_MARGIN_X * 2;
+  const n = Math.max(1, cells.length);
+  const colWidths =
+    weights && weights.length === n
+      ? weights.map((v) => (v / weights.reduce((a, b) => a + b, 0)) * contentWidth)
+      : Array.from({ length: n }, () => contentWidth / n);
+
+  const lineY = y + FOOTER_RUBRIC_MM;
+  let cx = FOOTER_MARGIN_X;
+  cells.forEach((cell, i) => {
+    const colW = colWidths[i];
+    const x0 = cx + 3;
+    const x1 = cx + colW - 3;
+    const midX = (x0 + x1) / 2;
+
+    // Línea de firma manuscrita (referencia: línea arriba, cargo abajo).
+    doc.setDrawColor(...RES11_INK.texto);
+    doc.setLineWidth(0.25);
+    doc.line(x0, lineY, x1, lineY);
+
+    // Nombre dinámico ENCIMA de la línea (centrado, sin desplazar la rúbrica).
+    if (cell.name) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(7.2);
+      doc.setTextColor(...RES11_INK.texto);
+      doc.text(cell.name, midX, lineY - 2, { align: 'center', maxWidth: colW - 8 });
+    }
+
+    // Denominación del cargo DEBAJO de la línea: centrada, en MAYÚSCULAS.
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(FOOTER_ROLE_FONT_PT);
+    doc.setTextColor(...RES11_INK.gris);
+    const roleLines = doc.splitTextToSize(cell.role.toUpperCase(), Math.max(12, colW - 6)) as string[];
+    roleLines.forEach((ln, li) => {
+      doc.text(ln, midX, lineY + FOOTER_ROLE_GAP_MM + li * FOOTER_ROLE_LEADING_MM, {
+        align: 'center',
+      });
+    });
+
+    cx += colW;
+  });
+  return y + footerRowHeight(doc, cells, colWidths);
+}
+
+/**
+ * Dibuja la cuadrícula de campos «Etiqueta: valor/línea» de la referencia:
+ * etiqueta en negrita, línea de cumplimentación SIEMPRE presente y el valor
+ * dinámico escrito SOBRE su línea. Devuelve la Y tras la cuadrícula.
+ */
+function paintFooterFields(
+  doc: jsPDF,
+  fields: Res11FooterField[],
+  y: number,
+  opts: { x?: number; w?: number; columns?: number } = {},
+): number {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const x = opts.x ?? FOOTER_MARGIN_X;
+  const w = opts.w ?? pageWidth - FOOTER_MARGIN_X * 2;
+  const cols = Math.max(1, opts.columns ?? 2);
+  const cellW = w / cols;
+  const rows = Math.ceil(fields.length / cols);
+
+  for (let r = 0; r < rows; r += 1) {
+    const inRow = fields.slice(r * cols, (r + 1) * cols);
+    const baseline = y + r * FOOTER_FIELD_ROW_MM + 4.6;
+    inRow.forEach((field, c) => {
+      const px = x + c * cellW;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.6);
+      doc.setTextColor(...RES11_INK.texto);
+      doc.text(field.label, px + 1.5, baseline);
+      const lineX0 = px + 1.5 + doc.getTextWidth(field.label) + 1.8;
+      const lineX1 = px + cellW - 3;
+      if (lineX1 - lineX0 > 8) {
+        doc.setDrawColor(...RES11_INK.texto);
+        doc.setLineWidth(0.22);
+        doc.line(lineX0, baseline + 0.9, lineX1, baseline + 0.9);
+      }
+      if (field.value) {
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(...RES11_INK.texto);
+        doc.text(field.value, lineX0 + 0.8, baseline, {
+          maxWidth: Math.max(8, lineX1 - lineX0 - 1.6),
+        });
+      }
+    });
+  }
+  return y + rows * FOOTER_FIELD_ROW_MM;
+}
+
+/** Alto de la cuadrícula de campos (misma métrica que paintFooterFields). */
+function footerFieldsHeight(fields: Res11FooterField[], columns?: number): number {
+  const cols = Math.max(1, columns ?? 2);
+  return Math.ceil(Math.max(0, fields.length) / cols) * FOOTER_FIELD_ROW_MM;
+}
+
+/** Título de sección en mayúsculas con regla inferior (p. ej. «TRANSPORTADOR:»). */
+function paintFooterSectionTitle(doc: jsPDF, title: string, y: number, w: number): number {
+  const x = (doc.internal.pageSize.getWidth() - w) / 2;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...RES11_INK.texto);
+  const titulo = title.trim().endsWith(':') ? title.trim().toUpperCase() : `${title.trim().toUpperCase()}:`;
+  doc.text(titulo, x + 1.5, y + 3.6);
+  doc.setDrawColor(...RES11_INK.texto);
+  doc.setLineWidth(0.35);
+  doc.line(x + 1.5, y + 5.1, x + w - 1.5, y + 5.1);
+  return y + FOOTER_SECTION_TITLE_MM;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// API pública del pie unificado (sustituye a la antigua cuadrícula con marcos
+// de CP-DOC-SC-DATA-MAPPING-006 §6/§7, cuya geometría pasa a la referencia de
+// diseño del propietario: sin cajas, línea arriba y cargo en mayúsculas abajo)
+// ────────────────────────────────────────────────────────────────────────────
+
+/** Especificación completa del pie de firma de un modelo SC. */
+export interface Res11SignatureFooterSpec {
+  /** Áreas de firma (se reparten en filas de `columns`). */
+  signatures: Res11FooterSignature[];
+  /** Columnas por fila de firmas (por defecto 3). */
+  columns?: number;
+  /** Sección de datos con título y regla (p. ej. transportador del SC-2-04). */
+  fieldsSection?: Res11FooterFieldsSection;
+  /** Campos sueltos SIN título tras las firmas (p. ej. «No. Consecutivo» del SC-2-09). */
+  trailingFields?: Res11FooterField[];
+  /** Sub-columnas de los campos sueltos (por defecto 2). */
+  trailingColumns?: number;
+}
+
+/** Disposición por filas de las áreas de firma (misma partición que el dibujo). */
+function footerSignatureRows(
+  signatures: Res11FooterSignature[],
+  columns: number,
+): Res11FooterSignature[][] {
+  const rows: Res11FooterSignature[][] = [];
+  for (let i = 0; i < signatures.length; i += columns) {
+    rows.push(signatures.slice(i, i + columns));
+  }
+  return rows.length ? rows : [[]];
+}
+
+/**
+ * Alto total del pie unificado (misma disposición que el dibujo). Útil para
+ * el guard de salto de página del caller y para las pruebas de geometría.
+ */
+export function measureRes11SignatureFooterHeight(
+  doc: jsPDF,
+  spec: Res11SignatureFooterSpec,
+): number {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const contentWidth = pageWidth - FOOTER_MARGIN_X * 2;
+  const cols = Math.max(1, spec.columns ?? 3);
+  const rows = footerSignatureRows(spec.signatures, cols);
+  let h = 0;
+  rows.forEach((row, ri) => {
+    if (ri > 0) h += FOOTER_ROW_GAP_MM;
+    const colWidths = Array.from({ length: Math.max(1, row.length) }, () => contentWidth / Math.max(1, row.length));
+    h += footerRowHeight(doc, row, colWidths);
+  });
+  if (spec.fieldsSection) {
+    h += FOOTER_SECTION_GAP_MM;
+    if (spec.fieldsSection.title) h += FOOTER_SECTION_TITLE_MM;
+    h += footerFieldsHeight(spec.fieldsSection.fields, spec.fieldsSection.columns);
+  }
+  if (spec.trailingFields?.length) {
+    h += FOOTER_SECTION_GAP_MM - 1.5;
+    h += footerFieldsHeight(spec.trailingFields, spec.trailingColumns);
+  }
+  return h;
+}
+
+/**
+ * Dibuja el PIE DE FIRMA UNIFICADO de un modelo SC conforme a la referencia
+ * de diseño del propietario (2026-11-09): áreas de firma abiertas (línea de
+ * rúbrica arriba, cargo centrado en MAYÚSCULAS debajo), nombre dinámico
+ * encima de la línea cuando existe, y las secciones de datos con título,
+ * regla y cuadrícula de campos «Etiqueta: valor/línea». TODAS las filas y
+ * secciones se mueven SIEMPRE juntas — si el conjunto no cabe en la página
+ * pasa completo a una nueva (ninguna firma separada de su contenido).
+ * Devuelve la Y final.
+ */
+export function drawRes11SignatureFooter(
+  doc: jsPDF,
+  spec: Res11SignatureFooterSpec,
   startY: number,
 ): number {
   const pageHeight = doc.internal.pageSize.getHeight();
+  const totalH = measureRes11SignatureFooterHeight(doc, spec);
+
   let y = startY;
-  // Las firmas nunca se separan de su contenido ni quedan aisladas: si la
-  // primera fila no cabe completa, todas pasan a una página nueva.
-  if (y + rows.length * SIGNATURE_ROW_HEIGHT_MM + 8 > pageHeight - 14) {
+  if (y + totalH + 6 > pageHeight - 14) {
     doc.addPage();
     y = 16;
   }
-  for (const row of rows) {
-    y = drawSignatureRow(doc, row.labels, row.weights, y);
+
+  const cols = Math.max(1, spec.columns ?? 3);
+  const rows = footerSignatureRows(spec.signatures, cols);
+  rows.forEach((row, ri) => {
+    if (ri > 0) y += FOOTER_ROW_GAP_MM;
+    y = paintFooterSignatureRow(doc, row, y);
+  });
+
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const contentWidth = pageWidth - FOOTER_MARGIN_X * 2;
+  if (spec.fieldsSection) {
+    y += FOOTER_SECTION_GAP_MM;
+    if (spec.fieldsSection.title) {
+      y = paintFooterSectionTitle(doc, spec.fieldsSection.title, y, contentWidth);
+    }
+    y = paintFooterFields(doc, spec.fieldsSection.fields, y, {
+      columns: spec.fieldsSection.columns,
+    });
   }
+
+  if (spec.trailingFields?.length) {
+    y += FOOTER_SECTION_GAP_MM - 1.5;
+    y = paintFooterFields(doc, spec.trailingFields, y, {
+      columns: spec.trailingColumns ?? 2,
+    });
+  }
+
   return y;
 }
 
 /**
- * Dibuja una fila de líneas para firmas con su etiqueta (API histórica,
- * ahora delega en drawRes11SignatureAreas). Devuelve la Y final.
+ * API histórica (deprecada): delega en el pie unificado convirtiendo cada
+ * etiqueta en un área de firma ({ role }). Los modelos migran a la
+ * especificación completa (Res11SignatureFooterSpec) con nombres dinámicos
+ * encima de la línea y secciones de datos.
  */
 export function drawRes11Signatures(
   doc: jsPDF,
@@ -583,259 +820,11 @@ export function drawRes11Signatures(
   startY: number,
   columns = 4,
 ): number {
-  const rows: Res11SignatureRow[] = [];
-  for (let i = 0; i < labels.length; i += columns) {
-    rows.push({ labels: labels.slice(i, i + columns) });
-  }
-  return drawRes11SignatureAreas(doc, rows, startY);
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// Cuadrícula de BLOQUES de firma (CP-DOC-SC-DATA-MAPPING-006 §6/§7)
-// ────────────────────────────────────────────────────────────────────────────
-
-export interface Res11SignatureBlock {
-  /** Encabezado del área (p. ej. «Firma del transportador»). */
-  title: string;
-  /**
-   * Datos de identificación que acompañan a la firma dentro del MISMO
-   * bloque (p. ej. nombre, carné, chapa, casilla y guía aérea del
-   * transportador). Los vacíos conservan su línea de cumplimentación.
-   */
-  fields?: Array<{ label: string; value?: string }>;
-  /**
-   * Ocupa una FILA completa (todo el ancho útil) en lugar de una celda de la
-   * cuadrícula. Para bloques con muchos datos (transportador del SC-2-04):
-   * a lo ancho los campos se reparten en sub-columnas y el conjunto roba
-   * bastante menos alto que una celda estrecha con campos apilados.
-   */
-  spanAll?: boolean;
-  /**
-   * Sub-columnas de datos DENTRO del bloque (por defecto 1: etiqueta a la
-   * izquierda y valor a la derecha del par — el comportamiento histórico).
-   */
-  fieldsColumns?: number;
-}
-
-const SIGNATURE_GRID_GAP_MM = 3;
-
-/** Alto de UN bloque: título + filas de datos + espacio de rúbrica + línea. */
-function signatureBlockHeight(
-  doc: jsPDF,
-  block: Res11SignatureBlock,
-  blockW: number,
-  fieldsColumns: number,
-): number {
-  let h = 8; // zona del título
-  const fields = block.fields ?? [];
-  const cols = Math.max(1, fieldsColumns);
-  const pairW = blockW / cols;
-  // Los datos se reparten en líneas de hasta `cols` pares etiqueta→valor;
-  // el alto de cada línea lo fija el par más alto de esa línea.
-  for (let line = 0; line < Math.ceil(fields.length / cols); line += 1) {
-    const inLine = fields.slice(line * cols, (line + 1) * cols);
-    let lineH = 5;
-    for (const field of inLine) {
-      // Medir con el MISMO tamaño con el que se dibuja (7.6 pt): medir con
-      // el tamaño vigente sobrestimaba el alto y engordaba las filas.
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.6);
-      const labelLines = doc.splitTextToSize(field.label, pairW / 2 - 3).length;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.6);
-      const valueLines = doc.splitTextToSize(field.value || RES11_BLANK_LINE, pairW / 2 - 3.5).length;
-      lineH = Math.max(lineH, Math.max(5, Math.max(labelLines, valueLines) * 3.3 + 1.7));
-    }
-    h += lineH;
-  }
-  h += 10; // rúbrica mínima común (espacio suficiente para la firma)
-  h += 7; // línea de firma + etiqueta
-  return Math.max(h, 30);
-}
-
-/** Disposición por FILAS de la cuadrícula: celdas normales + bloques a lo ancho. */
-interface SignatureRowLayout {
-  items: Array<{
-    block: Res11SignatureBlock;
-    x: number;
-    w: number;
-    fieldsColumns: number;
-  }>;
-  height: number;
-}
-
-function layoutSignatureRows(
-  doc: jsPDF,
-  blocks: Res11SignatureBlock[],
-  columns: number,
-): SignatureRowLayout[] {
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const marginX = 12;
-  const contentWidth = pageWidth - marginX * 2;
-  const cellW = (contentWidth - (columns - 1) * SIGNATURE_GRID_GAP_MM) / columns;
-  doc.setFont('helvetica', 'bold');
-
-  const rows: SignatureRowLayout[] = [];
-  let pending: Res11SignatureBlock[] = [];
-  const flush = () => {
-    if (pending.length === 0) return;
-    const items = pending.map((block, i) => ({
-      block,
-      x: marginX + i * (cellW + SIGNATURE_GRID_GAP_MM),
-      w: cellW,
-      fieldsColumns: block.fieldsColumns ?? 1,
-    }));
-    const height = Math.max(
-      ...items.map((it) => signatureBlockHeight(doc, it.block, it.w, it.fieldsColumns)),
-    );
-    rows.push({ items, height });
-    pending = [];
-  };
-  for (const block of blocks) {
-    if (block.spanAll) {
-      flush();
-      rows.push({
-        items: [
-          {
-            block,
-            x: marginX,
-            w: contentWidth,
-            fieldsColumns: block.fieldsColumns ?? 1,
-          },
-        ],
-        height: signatureBlockHeight(
-          doc,
-          block,
-          contentWidth,
-          block.fieldsColumns ?? 1,
-        ),
-      });
-    } else {
-      pending.push(block);
-      if (pending.length === columns) flush();
-    }
-  }
-  flush();
-  return rows;
-}
-
-const signatureGridHeight = (rows: SignatureRowLayout[]): number =>
-  rows.reduce((sum, row) => sum + row.height, 0) + (rows.length - 1) * 2;
-
-/**
- * Alto total de la cuadrícula (misma disposición por filas que el dibujo).
- * Útil para el guard de salto de página del caller.
- */
-export function measureRes11SignatureBlocksHeight(
-  doc: jsPDF,
-  blocks: Res11SignatureBlock[],
-  opts: { columns?: number } = {},
-): number {
-  return signatureGridHeight(layoutSignatureRows(doc, blocks, opts.columns ?? 2));
-}
-
-/**
- * Dibuja los bloques de responsabilidad en una cuadrícula uniforme
- * (2 columnas × 2 filas por defecto): TODAS las áreas comparten alineación,
- * jerarquía tipográfica, separación y espacio de rúbrica; el bloque del
- * transportador lleva sus datos de identificación ENCIMA de su línea de
- * firma — nunca separados de ella. Las cuatro áreas se mueven SIEMPRE
- * juntas (si la cuadrícula no cabe, pasa completa a una página nueva).
- * Cada bloque: marco fino, título en mayúsculas, filas etiqueta→valor
- * (con línea de cumplimentación si el dato está vacío) y línea de firma
- * centrada con su etiqueta. Devuelve la Y final.
- */
-/**
- * Dibuja los bloques de responsabilidad en filas uniformes: TODAS las áreas
- * comparten alineación, jerarquía tipográfica, separación y espacio de
- * rúbrica. Los bloques sin `spanAll` se reparten por filas de `columns`
- * celdas; un bloque con `spanAll` ocupa una fila completa (todo el ancho
- * útil) y reparte sus datos en `fieldsColumns` sub-columnas — el bloque del
- * transportador del SC-2-04 usa esta modalidad (fila de las tres firmas de
- * empleados arriba, transportador a lo ancho abajo) para robar menos alto.
- * El bloque lleva sus datos de identificación ENCIMA de su línea de firma —
- * nunca separados de ella. TODAS las filas se mueven SIEMPRE juntas (si el
- * conjunto no cabe, pasa completo a una página nueva).
- * Cada bloque: marco fino, título en mayúsculas, pares etiqueta→valor
- * (con línea de cumplimentación si el dato está vacío) y línea de firma
- * centrada con su etiqueta. Devuelve la Y final.
- */
-export function drawRes11SignatureBlocks(
-  doc: jsPDF,
-  blocks: Res11SignatureBlock[],
-  startY: number,
-  opts: { columns?: number } = {},
-): number {
-  const pageHeight = doc.internal.pageSize.getHeight();
-  const rows = layoutSignatureRows(doc, blocks, opts.columns ?? 2);
-  const gridH = signatureGridHeight(rows);
-
-  // Las firmas nunca se separan de su contenido ni entre sí: la cuadrícula
-  // completa pasa a una página nueva si no cabe entera.
-  let y = startY;
-  if (y + gridH + 8 > pageHeight - 14) {
-    doc.addPage();
-    y = 16;
-  }
-
-  doc.setDrawColor(...RES11_INK.marco);
-  doc.setLineWidth(0.25);
-  rows.forEach((row) => {
-    const rowH = row.height;
-    row.items.forEach(({ block, x, w, fieldsColumns }) => {
-      const by = y;
-      doc.rect(x, by, w, rowH, 'S');
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6.8);
-      doc.setTextColor(...RES11_INK.gris);
-      doc.text(block.title.toUpperCase(), x + 2.5, by + 3.6, { maxWidth: w - 5 });
-
-      // Pares etiqueta→valor en `fieldsColumns` sub-columnas; el alto de
-      // cada línea lo fija el par más alto (mismo idioma que los bloques
-      // de datos).
-      const cols = Math.max(1, fieldsColumns);
-      const pairW = w / cols;
-      const fields = block.fields ?? [];
-      let fy = by + 8;
-      for (let line = 0; line < Math.ceil(fields.length / cols); line += 1) {
-        const inLine = fields.slice(line * cols, (line + 1) * cols);
-        const lineStart = fy;
-        let lineH = 5;
-        inLine.forEach((field, subCol) => {
-          const px = x + subCol * pairW;
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(7.6);
-          doc.setTextColor(...RES11_INK.texto);
-          doc.text(field.label, px + 2.5, lineStart, { maxWidth: pairW / 2 - 3 });
-          doc.setFont('helvetica', 'normal');
-          doc.text(field.value || RES11_BLANK_LINE, px + pairW / 2, lineStart, {
-            maxWidth: pairW / 2 - 3.5,
-          });
-          const labelLines = doc.splitTextToSize(field.label, pairW / 2 - 3).length;
-          const valueLines = doc
-            .splitTextToSize(field.value || RES11_BLANK_LINE, pairW / 2 - 3.5)
-            .length;
-          lineH = Math.max(lineH, Math.max(5, Math.max(labelLines, valueLines) * 3.3 + 1.7));
-        });
-        fy += lineH;
-      }
-
-      // Línea de firma del bloque, siempre en la MISMA Y absoluta para toda
-      // la fila (alineación entre áreas) y con rúbrica suficiente encima.
-      const lineY = by + rowH - 6;
-      doc.setDrawColor(...RES11_INK.texto);
-      doc.setLineWidth(0.25);
-      doc.line(x + 6, lineY, x + w - 6, lineY);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(7.5);
-      doc.setTextColor(...RES11_INK.gris);
-      doc.text('Firma', x + w / 2, lineY + 3.5, { align: 'center' });
-    });
-    y += rowH + 2;
-  });
-
-  return y - 2;
+  return drawRes11SignatureFooter(
+    doc,
+    { signatures: labels.map((label) => ({ role: label })), columns },
+    startY,
+  );
 }
 
 // ────────────────────────────────────────────────────────────────────────────

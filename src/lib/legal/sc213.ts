@@ -61,7 +61,7 @@ import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
   drawRes11Table,
-  drawRes11Signatures,
+  drawRes11SignatureFooter,
   drawRes11Footer,
   formatRes11Money,
   formatRes11Quantity,
@@ -421,9 +421,14 @@ export async function renderSc213Pdf(model: Sc213ModelData) {
     );
   }
 
-  // ── Dato 13: firma del dependiente del almacén ──
-  finalY += 8;
-  drawRes11Signatures(doc, ['Firma del dependiente del almacén'], finalY, 3);
+  // ── Dato 13: firma del dependiente del almacén — pie unificado
+  // (referencia de diseño 2026-11-09): línea de rúbrica a lo ancho con el
+  // cargo centrado en MAYÚSCULAS debajo.
+  drawRes11SignatureFooter(
+    doc,
+    { signatures: [{ role: 'Firma del dependiente del almacén' }], columns: 1 },
+    finalY,
+  );
 
   // ── Pie normativo ──
   drawRes11Footer(

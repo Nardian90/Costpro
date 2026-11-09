@@ -46,7 +46,7 @@ import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
   drawRes11Table,
-  drawRes11Signatures,
+  drawRes11SignatureFooter,
   drawRes11Footer,
   formatRes11Money,
   formatRes11Quantity,
@@ -391,18 +391,23 @@ export async function renderSc201Pdf(model: Sc201ModelData) {
     doc.text(`ESTADO DE LA ORDEN EN COSTPRO: ${model.estado}`, pageWidth - marginX, finalY, { align: 'right' });
   }
 
-  // ── Datos 7–8: firmas ──
-  finalY += 10;
-  drawRes11Signatures(
+  // ── Datos 7–8: firmas — pie unificado (referencia de diseño 2026-11-09) ──
+  // Cargo centrado en MAYÚSCULAS debajo de la línea; el nombre dinámico del
+  // emisor (COSTPRO) se consigna ENCIMA de la línea — ubicación de nombres
+  // de la referencia. Sin marcos; rúbrica suficiente sobre cada línea.
+  drawRes11SignatureFooter(
     doc,
-    [
-      model.emisorNombre
-        ? `Funcionario autorizado a emitir — ${model.emisorNombre}`
-        : 'Funcionario autorizado a emitir la Solicitud (nombre y firma)',
-      'Autoriza la venta por el proveedor (nombre y firma)',
-    ],
+    {
+      signatures: [
+        {
+          role: 'Funcionario autorizado a emitir la Solicitud (nombre y firma)',
+          name: model.emisorNombre || undefined,
+        },
+        { role: 'Autoriza la venta por el proveedor (nombre y firma)' },
+      ],
+      columns: 2,
+    },
     finalY,
-    2,
   );
 
   // ── Pie normativo ──

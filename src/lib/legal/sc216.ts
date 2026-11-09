@@ -56,7 +56,7 @@ import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
   drawRes11Table,
-  drawRes11Signatures,
+  drawRes11SignatureFooter,
   drawRes11Footer,
   formatRes11Quantity,
   RES11_BLANK_LINE,
@@ -380,20 +380,24 @@ export async function renderSc216Pdf(model: Sc216ModelData) {
     );
   }
 
-  // ── Datos 7–10: firmas ──
-  finalY += 10;
-  drawRes11Signatures(
+  // ── Datos 7–10: firmas — pie unificado (referencia de diseño 2026-11-09) ──
+  // Cargos centrados en MAYÚSCULAS debajo de la línea; el nombre dinámico
+  // de quien realiza el inventario se consigna ENCIMA de su línea. Sin marcos.
+  drawRes11SignatureFooter(
     doc,
-    [
-      'Jefe del Almacén (nombre y firma)',
-      model.realizaInventarioNombre
-        ? `Realiza el inventario — ${model.realizaInventarioNombre}`
-        : 'Realiza el inventario (nombre y firma)',
-      'Contabiliza el ajuste',
-      'Anota en el control de Inventario',
-    ],
+    {
+      signatures: [
+        { role: 'Jefe del Almacén (nombre y firma)' },
+        {
+          role: 'Realiza el inventario (nombre y firma)',
+          name: model.realizaInventarioNombre || undefined,
+        },
+        { role: 'Contabiliza el ajuste' },
+        { role: 'Anota en el control de Inventario' },
+      ],
+      columns: 4,
+    },
     finalY,
-    4,
   );
 
   // ── Pie normativo ──

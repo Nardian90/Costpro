@@ -56,7 +56,7 @@ import { logger } from '@/lib/logger';
 import {
   drawRes11Header,
   drawRes11Table,
-  drawRes11Signatures,
+  drawRes11SignatureFooter,
   drawRes11Footer,
   formatRes11Money,
   formatRes11Quantity,
@@ -435,22 +435,34 @@ export async function renderSc209Pdf(model: Sc209ModelData) {
     doc.text(`Fecha del traslado: ${model.entregaFecha || RES11_BLANK_LINE}`, marginX, finalY);
   }
 
-  // ── Datos 6–10: firmas ──
-  finalY += 10;
-  finalY = drawRes11Signatures(
+  // ── Datos 6–10: firmas — pie unificado (referencia de diseño 2026-11-09) ──
+  // Cargos centrados en MAYÚSCULAS debajo de la línea; los nombres dinámicos
+  // de entrega/recepción se consignan ENCIMA de sus líneas. El «No. Consecu-
+  // tivo del modelo» deja de ocupar un área de firma: pasa a campo de
+  // cumplimentación del propio pie (con su línea de relleno).
+  drawRes11SignatureFooter(
     doc,
-    [
-      model.entregaNombre ? `Entrega los productos — ${model.entregaNombre}` : 'Entrega los productos (nombre y firma)',
-      model.recepcionNombre ? `Recibe los productos — ${model.recepcionNombre}` : 'Recibe los productos (nombre y firma)',
-      'Autoriza la Transferencia',
-      'Actualiza el control de Inventario (almacén que entrega)',
-      'Actualiza el control de Inventario (almacén que recibe)',
-      'Contabiliza (almacén que entrega)',
-      'Contabiliza (almacén que recibe)',
-      'No. Consecutivo del modelo: ____________',
-    ],
+    {
+      signatures: [
+        {
+          role: 'Entrega los productos (nombre y firma)',
+          name: model.entregaNombre || undefined,
+        },
+        {
+          role: 'Recibe los productos (nombre y firma)',
+          name: model.recepcionNombre || undefined,
+        },
+        { role: 'Autoriza la Transferencia' },
+        { role: 'Actualiza el control de Inventario (almacén que entrega)' },
+        { role: 'Actualiza el control de Inventario (almacén que recibe)' },
+        { role: 'Contabiliza (almacén que entrega)' },
+        { role: 'Contabiliza (almacén que recibe)' },
+      ],
+      columns: 4,
+      trailingFields: [{ label: 'No. Consecutivo del modelo:' }],
+      trailingColumns: 2,
+    },
     finalY,
-    4,
   );
 
   // ── Pie normativo ──

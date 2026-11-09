@@ -308,7 +308,11 @@ describe('CP-SALES-024 · C — Leyenda sin nombres personales', () => {
   it('el PDF renderizado contiene la leyenda genérica y NO contiene «— David»', async () => {
     const model = buildSc212ModelData(sourceEnervida);
     const text = decodePdf((await renderSc212Pdf(model)).output('arraybuffer'));
-    expect(text).toContain('Entrega los productos (nombre y firma)');
+    // Pie de firma unificado (referencia de diseño 2026-11-09): los cargos se
+    // dibujan centrados EN MAYÚSCULAS bajo la línea — la leyenda sigue siendo
+    // la GENÉRICA constante (los paréntesis llegan escapados en el stream).
+    expect(text).toContain('ENTREGA LOS PRODUCTOS');
+    expect(text).toContain('NOMBRE Y FIRMA');
     expect(text).not.toContain('David');
     expect(text).not.toContain('— David');
   }, 30_000);
