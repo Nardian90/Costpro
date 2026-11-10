@@ -134,3 +134,47 @@ Flujos de generación: `auto-generate` (route) y `recalculate-on-price-change` u
 - **CI 100% verde en 45edeae01**: CI (TypeCheck + Lint + Unit Tests + **Build de producción**) ✓ · Test Coverage ✓ · Security CI Gate ✓ · E2E Aislado (CostproE2E) ✓.
 - Nota de proceso: la primera pasada de CI detectó 17 errores de tipo (unión no discriminada + fixtures sin tipar) que los `tsc` locales habían enmascarado por OOM silencioso del sandbox; corregidos y verificados con `tsc --noEmit` EXIT 0 real y con la segunda pasada de CI (que incluye el build completo en runners de GitHub).
 - Sin migraciones → nada que aplicar a producción.
+
+---
+
+## F. Validación E2E pre-merge (recorrido completo de 11 pasos)
+
+**Fecha:** 2026-11-10 (segunda fase) · **Encargo:** validación E2E adicional del PR #1598 antes del merge, exclusivamente contra la BD aislada CostproE2E (guard CP-INFRA-011 — producción prohibida).
+
+### F.1 Nuevo spec E2E: `e2e/fc-template-picker.spec.ts`
+
+Recorrido completo pedido por el propietario, en modo aislado (identidad dedicada por ejecución — usuarios, tenant y pilotos A/B propios; plantillas sembradas con created_by del admin/cajero del run y limpieza NET-ZERO en afterAll):
+
+| Test | Pasos de la misión |
+|---|---|
+| 1-6 · conexión + persistencia | Inventario → producto sin FC → selector → plantillas del servidor (RLS navegador) → búsqueda/filtrado → seleccionar + confirmar → banner de éxito → verificación directa en BD (product_cost_sheets.template_id = UUID + products.cost_sheet_id) |
+| 7 · reapertura tras recarga | Recarga completa → icono vigente («Ver Ficha de Costo (PDF)») → modal con chip legible de la plantilla correcta (sin IDs técnicos) |
+| 10 · autorización | Cajero (clerk): conectar → 403 (incluso con plantilla privada propia); desconectar → 403. Admin con producto de otra tienda → 403 (FC_PRODUCT_STORE_MISMATCH). Encargado (membresía activa) con plantilla privada ajena → 404 (no revela existencia) |
+| 8 · cambio de asociación | «Cambiar Ficha» → aviso de reemplazo → plantilla actual marcada «Actual» y deshabilitada → confirmar → UNA sola FC activa con el nuevo template_id (upsert sin duplicados) |
+| 9 · desconexión | Confirmación explícita → Cancelar no desconecta → Desconectar → soft-delete (deleted_at) + products.cost_sheet_id = NULL → recarga vuelve a «Sin plantilla FC» |
+| 404 · ajustes/explorador | «Ajustes de la tienda» → vista management-hub real (URL + encabezado «Gestión de Tiendas», sin /settings/) · «Ir a Plantillas de Fichas» → cost-sheets → pestaña «Privadas» → «Mis Plantillas Guardadas en COSTPRO» con las plantillas sembradas |
+| 11 · integridad | Plantillas intactas (nombre + data + updated_at bit a bit) · producto/tienda B intactos · sin FC activas residuales · RLS: cajero solo ve plantillas de SU propiedad (airtight por created_by) · anon vetado |
+
+**Resultado: 7/7 PASS** + `data-hygiene-guard` AFTER **PASS (net delta = 0)** + `fc-e2e-clean-orphans` 0 residuos.
+
+### F.2 Dos defectos REALES detectados por el E2E y corregidos en el PR
+
+1. **`FCTemplatePicker` — botón Confirmar inaccesible en viewports ajustados (≤720px).** La lista tenía `min-h-[200px]` fijo: en el modal sin_fc (banner + selector + botones de respaldo, max-h 60vh) la altura forzada rompía el shrink del flex y empujaba el botón de confirmación fuera del contenedor, quedando CUBIERTO por «Ir a Plantillas de Fichas»/«Ajustes de la tienda» (reproducido: click interceptado de forma permanente en Desktop Chrome 1280×720). Corrección: la lista cede espacio (`min-h-0`) y hace scroll propio; modalidad y confirmación quedan siempre visibles y clicables (mobile-first).
+2. **`FCPreviewModal` — carrusel de cierre obsoleto: «Cargando vista previa…» eterno tras cambiar ficha de una FC ya vigente.** (a) El efecto del PDF no incluía `pdfBlobUrl` en deps (violación de exhaustive-deps): `resetPdfBlob()` tras un cambio no re-disparaba el fetch. (b) Race más profundo: `handleConfirm` (picker) await-ea `mutateAsync`; si el fetch del PDF resuelve DURANTE ese await, el cierre que corre tras el await es del render anterior y `resetPdfBlob` leía `pdfBlobUrl` obsoleto (null) → nunca null-eaba el estado real → el efecto (`!pdfBlobUrl`) no volvía a dispararse → loading perpetuo (evidencia: instrumentación con épocas y captura de red; afectaba también «Eliminar y Regenerar»). Corrección: updater FUNCIONAL de `setPdfBlobUrl` + identidad estable (inmune a cierres obsoletos) + «época» del PDF que descarta respuestas obsoletas y fuerza el refetch (estado en deps del efecto).
+
+### F.3 Aclaraciones de diseño confirmadas por el E2E (no son defectos)
+
+- **El admin (role admin) ve TODAS las plantillas, incluidas las privadas de otras cuentas.** Es la política SELECT vigente de la migración 20261110120000 (`is_admin() → todo`), replicada exactamente por el espejo manual de la API. La privacidad entre cuentas se exige y verifica para usuarios regulares (cajero/encargado): el cajero SOLO ve plantillas con `created_by = su id` (verificado airtight); el encargado recibe 404 al intentar usar una plantilla privada ajena.
+- El picker del navegador filtra además por `created_by = usuario` para privadas (más estricto que la RLS para admins): el admin no VE las privadas ajenas en el selector aunque la API le permita conectarlas por ID (consistente: ninguna sobreexposición).
+
+### F.4 Entorno y residuos
+
+- **Servidor de pruebas:** `next dev` bajo runtime Node (PM2). Motivo: con el custom server (`bun server.ts`) y caché Turbopack fresco, TODAS las rutas que importan `fc-pdf-cache` (→ `ioredis`) fallan en module evaluation con alias externo hasheado no resoluble (`ioredis-23a6225d3f8c0bff`) — reproducido en rutas PREEXISTENTES (auto-generate, quick-pdf), no introducido por este PR; bajo Node o en el build de producción de CI no ocurre. Se deja documentado como nota de entorno.
+- **`scripts/e2e/fc-e2e-clean-orphans.mjs` (nuevo):** limpieza de profiles huérfanos de runs E2E abortados (identidad Auth eliminada pero profile vivo — el RPC `e2e_hard_delete_user` hace early-return `false` sin tocar el profile, y el trigger `prevent_hard_delete_profile` bloquea el DELETE por REST). Usa el MISMO mecanismo del RPC oficial (toggle del trigger en transacción), guard canónico `assert-isolated-db`, solo patrones E2E del guard de higiene, solo huérfanos reales (NOT EXISTS auth.users), idempotente, con `--dry-run`. Declarado en `scripts/lib/writers.manifest.json` (isolationProtected). Conexión vía pooler IPv4 (el host db.* de CostproE2E solo publica AAAA y el sandbox carece de ruta IPv6).
+- **CI:** el filtro del workflow `e2e-isolated.yml` incorpora `fc-template-picker` para regresión permanente.
+
+### F.5 Resultados de la validación local completa
+
+- Playwright smoke (filtro CI ampliado con el spec nuevo): **52/52 PASS** · guardrail **net delta = 0**.
+- vitest completo: 5769 pass / 3 fail → 2 eran del check-writers por el script nuevo sin declarar (corregidos: script con guard canónico + manifiesto) y 1 es **preexistente en main puro** (db-integration, superadmin memberships, drift de datos de producción — documentado en §D.2).
+- `tsc --noEmit`: **0 errores** · eslint (archivos tocados): **0 errores** (warnings de estilo preexistentes).
