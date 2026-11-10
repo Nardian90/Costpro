@@ -1352,6 +1352,13 @@ export default function CashReportView() {
                 onBuild={() => void buildPreview(true)}
                 onExport={handleExport}
                 templateLabel={TEMPLATES.find(t => t.id === pdfTemplate)?.label ?? ''}
+                // MISIÓN DESCUBRIBILIDAD DESGLOSE SERVICIOS (2026-11-11): el desglose
+                // por concepto solo aplica a la plantilla Diario («Resumen del Día»);
+                // el toggle duplica la casilla de «Opciones del documento» con el
+                // MISMO estado (pdfOptions.breakdownServicesByConcept) y persistencia.
+                showBreakdownServicesToggle={pdfTemplate === 'diario'}
+                breakdownServicesEnabled={pdfOptions.breakdownServicesByConcept === true}
+                onToggleBreakdownServices={() => togglePdfOption('breakdownServicesByConcept')}
               />
             )}
           </div>
@@ -3134,6 +3141,13 @@ interface PreviewPanelProps {
   onBuild: () => void;
   onExport: () => void;
   templateLabel: string;
+  // MISIÓN DESCUBRIBILIDAD DESGLOSE SERVICIOS (2026-11-11): acceso directo en la
+  // barra de la Vista previa al MISMO control que vive en «Configuración del
+  // reporte → Opciones del documento» (mismo estado pdfOptions y misma
+  // persistencia — sin lógica duplicada, solo un segundo punto de contacto).
+  showBreakdownServicesToggle: boolean;
+  breakdownServicesEnabled: boolean;
+  onToggleBreakdownServices: () => void;
 }
 
 function PreviewPanel(p: PreviewPanelProps) {
@@ -3166,9 +3180,32 @@ function PreviewPanel(p: PreviewPanelProps) {
         <span>
           Documento <strong className="text-foreground">{p.templateLabel}</strong> · periodo {p.applied.cfg.startDate} → {p.applied.cfg.endDate}
         </span>
-        <button onClick={p.onExport} className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-muted flex items-center gap-1.5 min-h-[36px]">
-          <Download className="w-3.5 h-3.5" /> Descargar PDF
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* MISIÓN DESCUBRIBILIDAD DESGLOSE SERVICIOS (2026-11-11): toggle visible
+              justo donde el usuario mira el documento. Solo en plantilla Diario
+              (es la única con el «Resumen del Día» donde aplica el desglose);
+              duplica la casilla de «Opciones del documento» (mismo estado). */}
+          {p.showBreakdownServicesToggle && (
+            <button
+              onClick={p.onToggleBreakdownServices}
+              aria-pressed={!!p.breakdownServicesEnabled}
+              data-testid="cr-preview-desglose-servicios"
+              title="Sub-filas ↳ por concepto bajo «Servicios recibidos pagados en efectivo» en el Resumen del Día. Mismo control que «Configuración del reporte → Opciones del documento»; al cambiar, regenera la vista previa."
+              className={cn(
+                'rounded-lg border px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5 min-h-[36px] transition-colors',
+                p.breakdownServicesEnabled
+                  ? 'border-primary/50 bg-primary/10 text-primary hover:bg-primary/20'
+                  : 'border-border/40 text-muted-foreground hover:bg-muted',
+              )}
+            >
+              {p.breakdownServicesEnabled ? <CheckSquare className="w-3.5 h-3.5" /> : <Square className="w-3.5 h-3.5" />}
+              Desglosar servicios por concepto: {p.breakdownServicesEnabled ? 'Sí' : 'No'}
+            </button>
+          )}
+          <button onClick={p.onExport} className="rounded-lg border border-border/40 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-muted flex items-center gap-1.5 min-h-[36px]">
+            <Download className="w-3.5 h-3.5" /> Descargar PDF
+          </button>
+        </div>
       </div>
 
       {p.previewLoading ? (
