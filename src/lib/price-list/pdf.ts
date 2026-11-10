@@ -124,6 +124,15 @@ function drawBlock(
   const x0 = side === 'left' ? MARGIN_X : MARGIN_X + COL_W + COL_GAP;
   let y = CONTENT_TOP;
 
+  // CP-PRODUCT-COMMISSION-001 TAREA 2: con la columna «Comisión» visible el
+  // bloque pasa de 3 a 4 columnas (SKU | Producto | Precio | Comisión) con
+  // anchos redistibuídos; sin ella el layout histórico queda EXACTO.
+  const withComm = model.meta.showCommission === true;
+  const skuW = withComm ? 13 : SKU_W;
+  const priceW = withComm ? 19 : PRICE_W;
+  const commW = withComm ? 18 : 0;
+  const descW = COL_W - skuW - priceW - commW;
+
   // Encabezado del bloque — visible en AMBAS columnas (misión §7).
   // CP-PRECIO-PDF-DESC-001: denominación honesta de la columna según la opción.
   const cellHeader = model.meta.includeDescription ? 'Producto y descripción' : 'Producto';
@@ -138,8 +147,13 @@ function drawBlock(
   // contigua en el encabezado (defecto preexistente, visible ahora con el
   // rótulo de producto); la vista ya nombra «SKU desde/hasta» a este campo.
   doc.text('SKU', x0 + 1.5, y + 4);
-  doc.text(cellHeader, x0 + SKU_W + 1.5, y + 4);
-  doc.text('Precio de venta', x0 + COL_W - 1.5, y + 4, { align: 'right' });
+  doc.text(cellHeader, x0 + skuW + 1.5, y + 4);
+  if (withComm) {
+    doc.text('Precio de venta', x0 + skuW + descW + priceW - 1.5, y + 4, { align: 'right' });
+    doc.text('Comisión', x0 + COL_W - 1.5, y + 4, { align: 'right' });
+  } else {
+    doc.text('Precio de venta', x0 + COL_W - 1.5, y + 4, { align: 'right' });
+  }
   y += HEADER_ROW_MM;
 
   // Filas — nombre con presentación primaria y descripción (cuando se
@@ -151,9 +165,9 @@ function drawBlock(
     const descText = model.meta.includeDescription ? row.description.trim() : '';
 
     doc.setFontSize(ROW_FONT);
-    const nameWrapped = doc.splitTextToSize(row.name, DESC_W) as string[];
+    const nameWrapped = doc.splitTextToSize(row.name, descW) as string[];
     doc.setFontSize(DESC_FONT);
-    const descWrapped = descText !== '' ? (doc.splitTextToSize(descText, DESC_W) as string[]) : [];
+    const descWrapped = descText !== '' ? (doc.splitTextToSize(descText, descW) as string[]) : [];
     const lines = Math.max(1, nameWrapped.length) + descWrapped.length;
     const rowH = ROW_BASE_MM + Math.max(0, lines - 1) * ROW_EXTRA_LINE_MM;
 
@@ -171,7 +185,7 @@ function drawBlock(
     doc.setTextColor(...INK);
     doc.setFontSize(ROW_FONT);
     for (const lineTxt of nameWrapped) {
-      doc.text(lineTxt, x0 + SKU_W + 1.5, ty);
+      doc.text(lineTxt, x0 + skuW + 1.5, ty);
       ty += ROW_EXTRA_LINE_MM;
     }
     // Descripción del producto (secundaria: menor tamaño, tono atenuado).
@@ -179,15 +193,23 @@ function drawBlock(
       doc.setTextColor(...MUTED);
       doc.setFontSize(DESC_FONT);
       for (const lineTxt of descWrapped) {
-        doc.text(lineTxt, x0 + SKU_W + 1.5, ty);
+        doc.text(lineTxt, x0 + skuW + 1.5, ty);
         ty += ROW_EXTRA_LINE_MM;
       }
     }
 
     doc.setTextColor(...INK);
     doc.setFont('helvetica', 'bold');
-    doc.text(row.priceLabel, x0 + COL_W - 1.5, y + 4, { align: 'right' });
+    doc.text(row.priceLabel, (withComm ? x0 + skuW + descW + priceW : x0 + COL_W) - 1.5, y + 4, { align: 'right' });
     doc.setFont('helvetica', 'normal');
+    // TAREA 2: celda «Comisión» — etiqueta inequívoca resuelta por el motor
+    // real de comisiones (resolveProductCommission); tamaño compacto para el
+    // texto «{n} CUP/venta» / «{n} CUP/unidad» / «5%» / «Según trabajador».
+    if (withComm && row.commissionLabel) {
+      doc.setFontSize(6.4);
+      doc.text(row.commissionLabel, x0 + COL_W - 1.5, y + 4, { align: 'right' });
+      doc.setFontSize(ROW_FONT);
+    }
     y += rowH;
   }
 }
@@ -226,9 +248,10 @@ export async function renderPriceListPdf(
 
   // Plan con el MEDIDOR REAL (alturas exactas) — una sola pasada: el plan
   // ya contiene el total de páginas para «Página X de N».
+  const withCommForPlan = model.meta.showCommission === true;
   const geometry: PriceListGeometry = {
     ...PRICE_LIST_GEOMETRY,
-    measureLines: makeDocMeasure(doc, DESC_W),
+    measureLines: makeDocMeasure(doc, withCommForPlan ? COL_W - 13 - 19 - 18 : DESC_W),
   };
   const plan = planPriceListPages(model, geometry);
   if (plan.totalPages === 0) {

@@ -120,11 +120,15 @@ export function useActivateMasterProduct(storeId?: string | null) {
       const masterId = typeof input === 'string' ? input : input.masterId;
       const operationalClass = typeof input === 'string' ? null : (input.operationalClass ?? null);
       if (!storeId) throw new Error('Sin tienda activa');
-      const { data, error } = await supabase.rpc('activate_master_product', {
+      // CP-PRODUCT-COMMISSION-001 TAREA 1: sin clasificación explícita se
+      // OMITE la clave — la RPC aplica su DEFAULT 'venta' (enviar null
+      // explícito lo anularía y violaría el NOT NULL de 20261110090000).
+      const rpcArgs: Record<string, unknown> = {
         p_master_id: masterId,
         p_store_id: storeId,
-        p_operational_class: operationalClass,
-      });
+      };
+      if (operationalClass !== null) rpcArgs.p_operational_class = operationalClass;
+      const { data, error } = await supabase.rpc('activate_master_product', rpcArgs as any);
       if (error) throw error;
       return data as { status: string; already_active: boolean; product_id: string };
     },
@@ -378,8 +382,10 @@ export function useCreateMasterProduct(storeId?: string | null) {
         p_barcode_type: payload.barcode_type ?? null,
         p_unit_of_measure: payload.unit_of_measure || 'unidad',
         p_is_service: payload.is_service === true,
-        // CP-OPERATIONAL-CLASS-002 §6: misma transacción que el INSERT local.
-        p_operational_class: payload.operational_class ?? null,
+        // CP-OPERATIONAL-CLASS-002 §6 (misma transacción) + TAREA 1
+        // (CP-PRODUCT-COMMISSION-001): sin clasificación explícita se omite
+        // la clave — la RPC aplica su DEFAULT 'venta'.
+        ...(payload.operational_class ? { p_operational_class: payload.operational_class } : {}),
         p_local: {
           price: payload.local?.price != null ? String(payload.local.price) : '',
           price_currency: payload.local?.price_currency || 'CUP',

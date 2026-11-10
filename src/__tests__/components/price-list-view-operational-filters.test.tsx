@@ -59,6 +59,13 @@ const pdfMock = vi.hoisted(() => ({
 }));
 vi.mock('@/lib/price-list/pdf', () => pdfMock);
 
+// CP-PRODUCT-COMMISSION-001 TAREA 2: el hook de reglas de comisión es carga
+// diferida de la API real — en estos tests se mockea (reglas vacías ⇒ la
+// columna visible presenta «Sin regla», jamás valores inventados).
+vi.mock('@/hooks/api/useCommissionRules', () => ({
+  useCommissionRules: () => ({ data: undefined, isLoading: false }),
+}));
+
 vi.mock('sonner', () => ({
   toast: { info: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn() },
 }));
@@ -208,6 +215,30 @@ describe('CP-OPERATIONAL-CLASS-001 · filtros en el Listado de precios (UI)', ()
     const rowPrecio = model.rows.find((r) => r.id === '1');
     expect(rowPrecio?.priceLabel).toContain('CUP');
     expect(rowPrecio?.priceLabel).not.toBe('Sin precio');
+  });
+
+  it('TAREA 2 · la columna «Comisión» está OCULTA por defecto (modelo sin showCommission)', async () => {
+    render(<PriceListView />);
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: /Generar vista previa/i }));
+    const model = (pdfMock.renderPriceListPdf.mock.calls as unknown[][])[0][0] as PriceListModel;
+    expect(model.meta.showCommission).toBe(false);
+    expect(model.rows.every((r) => r.commissionLabel === undefined)).toBe(true);
+  });
+
+  it('TAREA 2 · al mostrar la columna, el modelo lleva las etiquetas del motor real', async () => {
+    render(<PriceListView />);
+    const user = userEvent.setup();
+    await user.click(screen.getByTestId('comision-col-toggle'));
+    expect(screen.getByTestId('comision-col-toggle').getAttribute('aria-pressed')).toBe('true');
+    await user.click(screen.getByRole('button', { name: /Generar vista previa/i }));
+    const model = (pdfMock.renderPriceListPdf.mock.calls as unknown[][])[0][0] as PriceListModel;
+    expect(model.meta.showCommission).toBe(true);
+    // Sin reglas cargadas (mock vacío del hook) → «Sin regla», jamás inventado.
+    expect(model.rows.every((r) => r.commissionLabel === 'Sin regla')).toBe(true);
+    // Ocultar de nuevo restaura el layout histórico.
+    await user.click(screen.getByTestId('comision-col-toggle'));
+    expect(screen.getByTestId('comision-col-toggle').getAttribute('aria-pressed')).toBe('false');
   });
 
   it('cambio de moneda por fila no afectado: el filtro no mezcla monedas (§8.18)', async () => {
