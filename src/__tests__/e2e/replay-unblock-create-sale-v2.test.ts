@@ -396,9 +396,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // CP-DOC-SC-DATA-MAPPING-006 (2026-11-08): +1 código consecutivo de tienda (20261108200000) = 136; +1 número documental de entrada (20261108201000) = 137
     // COSTPRO-SALES-DASHBOARD-REFINEMENT-002 (2026-11-08): +1 comparación entre tiendas (20261108220000) = 138
     // CP-OPERATIONAL-CLASS-002 (2026-11-08): +1 clasificación operativa del catálogo (20261108150000, remediación RPCs) = 139
-    expect(m.total_incluidos).toBe(139);
+    // CP-INFRA-020 (2026-11-10): +1 freno de TRUNCATE (20261110120000) = 140
+    expect(m.total_incluidos).toBe(140);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(139);
+    expect(incluidos.length).toBe(140);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -458,6 +459,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261108200000_cp_doc_sc006_store_code.sql')).toBe(137);
     expect(pos('20261108201000_cp_doc_sc006_receipt_document_number.sql')).toBe(138);
     expect(pos('20261108220000_sales_dashboard_stores_comparison.sql')).toBe(139);
+    expect(pos('20261110120000_cp_infra_020_truncate_breaker.sql')).toBe(140);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }
