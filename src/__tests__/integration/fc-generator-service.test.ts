@@ -292,3 +292,207 @@ describe('FC Generation Pipeline (integration)', () => {
     }
   });
 });
+
+// ============================================
+// FC-USR-TEMPLATE: generación desde plantilla de usuario (BD)
+// ============================================
+
+describe('generateFCFromTemplateData (plantillas de cost_sheet_templates)', () => {
+  const userProduct: ProductDataForFC = {
+    name: 'Servicio de Consultoría',
+    sku: 'SRV-001',
+    cost_price: 120,
+    price: 400,
+    unit_of_measure: 'u',
+    quantity: 1,
+  };
+
+  it('genera FC desde CostSheetData completa (simulando plantilla guardada)', async () => {
+    const { generateFCFromTemplateData, getTemplateData } = await import('@/lib/integration/fc-generator-service');
+
+    // Simula una plantilla privada guardada por el usuario en el servidor:
+    // estructura idéntica a cost_sheet_templates.data
+    const savedTemplate = await getTemplateData('costpro-reinicio');
+    if (!savedTemplate) throw new Error('Fixture template not loaded');
+
+    const result = await generateFCFromTemplateData(
+      userProduct,
+      savedTemplate,
+      '11111111-2222-4333-8444-555555555555',
+      'servicios',
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.template_id).toBe('11111111-2222-4333-8444-555555555555');
+      expect(result.modalidad).toBe('servicios');
+      expect(result.cost_price).toBeTypeOf('number');
+      expect(result.cost_price).toBeGreaterThanOrEqual(0);
+      expect(result.calculated_data).toBeDefined();
+      // El producto quedó inyectado en el resultado (no en la plantilla original)
+      const header = (result.calculated_data as { header: Record<string, unknown> }).header;
+      expect(header.name).toBe('Servicio de Consultoría');
+    }
+  });
+
+  it('NO consulta TEMPLATE_REGISTRY — funciona con ID arbitrario (UUID)', async () => {
+    const { generateFCFromTemplateData, getTemplateData } = await import('@/lib/integration/fc-generator-service');
+
+    // Nota: template-consultancy tiene una referencia interna inválida (bug de
+    // datos preexistente, ver nota similar en template-pizza); usamos la
+    // plantilla base para aislar lo que este test verifica: que el ID NO se
+    // resuelve contra TEMPLATE_REGISTRY (generateFC clásico fallaría con
+    // TEMPLATE_LOAD_FAILED para un UUID).
+    const savedTemplate = await getTemplateData('costpro-reinicio');
+    if (!savedTemplate) throw new Error('Fixture template not loaded');
+
+    const result = await generateFCFromTemplateData(
+      userProduct,
+      savedTemplate,
+      'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
+      'comercializacion',
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.template_id).toBe('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee');
+    }
+  });
+
+  it('rechaza plantillas sin estructura válida (sin sections)', async () => {
+    const { generateFCFromTemplateData } = await import('@/lib/integration/fc-generator-service');
+
+    const result = await generateFCFromTemplateData(
+      userProduct,
+      { header: {}, sections: 'no-array', annexes: [] } as unknown as Parameters<typeof generateFCFromTemplateData>[1],
+      '11111111-2222-4333-8444-555555555555',
+      'produccion',
+    );
+
+    expect(result.success).toBe(false);
+    if (!result.success && 'code' in result) {
+      expect(result.code).toBe('TEMPLATE_LOAD_FAILED');
+    }
+  });
+
+  it('no muta la plantilla guardada original', async () => {
+    const { generateFCFromTemplateData, getTemplateData } = await import('@/lib/integration/fc-generator-service');
+
+    const savedTemplate = await getTemplateData('costpro-reinicio');
+    if (!savedTemplate) throw new Error('Fixture template not loaded');
+
+    const headerNameBefore = savedTemplate.header.name;
+    const anexoRowsBefore = savedTemplate.annexes[0]?.data?.length ?? 0;
+
+    await generateFCFromTemplateData(
+      userProduct,
+      savedTemplate,
+      '11111111-2222-4333-8444-555555555555',
+      'produccion',
+    );
+
+    // La plantilla del usuario queda INTACTA (misión §6: una plantilla guardada
+    // no debe modificarse al utilizarla)
+    expect(savedTemplate.header.name).toBe(headerNameBefore);
+    expect(savedTemplate.annexes[0]?.data?.length ?? 0).toBe(anexoRowsBefore);
+  });
+});
+
+describe('autoGenerateFC con directTemplate (preservación de asociación)', () => {
+  it('usa la plantilla directa del producto en lugar de la de tienda', async () => {
+    const { autoGenerateFC, getTemplateData } = await import('@/lib/integration/fc-generator-service');
+
+    const userTemplate = await getTemplateData('costpro-reinicio');
+    if (!userTemplate) throw new Error('Fixture template not loaded');
+
+    const result = await autoGenerateFC({
+      product: { name: 'Producto Asociado', cost_price: 80, price: 200 },
+      product_id: 'prod-1',
+      store_id: 'store-1',
+      // Plantilla de tienda con datos distintos (pizza)
+      storeTemplate: {
+        template_id: 'template-pizza',
+        template_data: null,
+        modalidad: 'produccion',
+        pdf_format: 'res148',
+        is_active: true,
+      },
+      existingCostSheet: null,
+      // Asociación explícita del producto (UUID → plantilla del usuario)
+      directTemplate: {
+        template_id: '99999999-8888-4777-8666-555555555555',
+        template_data: userTemplate,
+        modalidad: 'servicios',
+      },
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      // Regeneró con la plantilla del PRODUCTO, no con la de la tienda
+      expect(result.template_id).toBe('99999999-8888-4777-8666-555555555555');
+      expect(result.modalidad).toBe('servicios');
+    }
+  });
+
+  it('mantiene el atajo idempotente: FC existente válida no se recalcula', async () => {
+    const { autoGenerateFC } = await import('@/lib/integration/fc-generator-service');
+
+    const result = await autoGenerateFC({
+      product: { name: 'P', cost_price: 10, price: 20 },
+      product_id: 'prod-2',
+      store_id: 'store-1',
+      storeTemplate: {
+        template_id: 'costpro-reinicio',
+        template_data: null,
+        modalidad: 'produccion',
+        pdf_format: 'res148',
+        is_active: true,
+      },
+      existingCostSheet: {
+        id: 'cs-1',
+        product_id: 'prod-2',
+        store_id: 'store-1',
+        template_id: '11111111-2222-4333-8444-555555555555',
+        modalidad: 'servicios',
+        calculated_data: { existing: true },
+        cost_price: 77,
+        cost_price_updated_at: new Date().toISOString(),
+        sync_status: 'synced',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+      },
+      fc_auto_enabled: true,
+      directTemplate: null,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.cost_price).toBe(77);
+      expect(result.template_id).toBe('11111111-2222-4333-8444-555555555555');
+    }
+  });
+
+  it('sin directTemplate usa la plantilla de tienda (comportamiento histórico)', async () => {
+    const { autoGenerateFC } = await import('@/lib/integration/fc-generator-service');
+
+    const result = await autoGenerateFC({
+      product: { name: 'P', cost_price: 10, price: 20 },
+      product_id: 'prod-3',
+      store_id: 'store-1',
+      storeTemplate: {
+        template_id: 'costpro-reinicio',
+        template_data: null,
+        modalidad: 'produccion',
+        pdf_format: 'res148',
+        is_active: true,
+      },
+      existingCostSheet: null,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.template_id).toBe('costpro-reinicio');
+    }
+  });
+});

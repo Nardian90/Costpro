@@ -1185,7 +1185,9 @@ export default function InventoryView() {
                 />
             )}
 
-            {/* FC Preview Modal */}
+            {/* FC Preview Modal — FC-USR-TEMPLATE: también pasa costSheetId y
+                template_id de la FC activa (para Cambiar/Desconectar y marcar
+                la plantilla «Actual» en el selector) */}
             {selectedFCProduct && (
                 <FCPreviewModal
                     open={!!selectedFCProduct}
@@ -1194,6 +1196,16 @@ export default function InventoryView() {
                     productName={selectedFCProduct.name}
                     storeId={selectedFCProduct.store_id ?? user?.activeStoreId ?? ''}
                     fcStatus={getFCStatus(selectedFCProduct.id)}
+                    costSheetId={(() => {
+                        const info = fcInfoMap.get(selectedFCProduct.id);
+                        if (info?.resolution.status === 'existing') return info.resolution.costSheet.id;
+                        return null;
+                    })()}
+                    currentTemplateId={(() => {
+                        const info = fcInfoMap.get(selectedFCProduct.id);
+                        if (info?.resolution.status === 'existing') return info.resolution.costSheet.template_id;
+                        return null;
+                    })()}
                 />
             )}
 
