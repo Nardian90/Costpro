@@ -21,6 +21,7 @@
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
     "scripts/dev-price-list-e2e-evidence.ts",
+    "scripts/e2e/fc-e2e-clean-orphans.mjs",
     "scripts/e2e/reset-remote-e2e-db.mjs",
     "scripts/e2e/verify-operational-classification-pg.mjs",
     "scripts/e2e/verify-product-commission-pg.mjs",
