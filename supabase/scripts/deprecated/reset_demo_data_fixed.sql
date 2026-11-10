@@ -1,0 +1,232 @@
+-- ============================================================================
+-- ⚠️ ESTE SCRIPT BORRA TODOS LOS DATOS. SOLO PARA UNA BD DESECHABLE. ⚠️
+-- ⚠️ NUNCA EN PRODUCCIÓN. NUNCA EN CostproBD NI EN CostproE2E.           ⚠️
+-- ============================================================================
+-- OBSOLETO — NO EJECUTAR.
+-- reset_demo_data_fixed.sql fue retirado de servicio por CP-INFRA-020.
+-- Motivo: variante antigua sin control de versión; superseded por reset_demo_data_pro.sql
+-- Se conserva solo como referencia histórica. El script mantenido es
+-- supabase/scripts/reset_demo_data_pro.sql.
+-- El guard de abajo bloquea su ejecución fuera de una BD desechable.
+-- ============================================================================
+-- COSTPRO-GUARD-DESTRUCTIVO v1
+BEGIN;
+
+DO $guard$
+DECLARE
+    v_centinela regprocedure;
+    v_ledger regclass;
+    v_es_aislada boolean;
+BEGIN
+    -- Fail-closed: ante cualquier duda se aborta. Comprueba, en orden:
+    -- (a) existe la centinela; (b) devuelve true; (c) NO existe el libro de
+    -- migraciones de producción.
+    BEGIN
+        v_centinela := to_regprocedure('public.e2e_is_isolated_db()');
+    EXCEPTION WHEN OTHERS THEN
+        v_centinela := NULL;
+    END;
+
+    IF v_centinela IS NULL THEN
+        RAISE EXCEPTION 'GUARD_DESTRUCTIVO: esta BD no está marcada como desechable (no existe public.e2e_is_isolated_db). ESTE SCRIPT BORRA TODOS LOS DATOS: ejectútalo solo en una BD desechable. Cómo prepararla: supabase/scripts/README.md (sección centinela de supabase/e2e-bootstrap.sql). Producción (CostproBD) y CostproE2E quedan bloqueadas por diseño.'
+            USING HINT = 'Verificar con: select to_regprocedure(''public.e2e_is_isolated_db()''); — debe devolver una función, no NULL.';
+    END IF;
+
+    BEGIN
+        EXECUTE 'SELECT public.e2e_is_isolated_db()' INTO v_es_aislada;
+    EXCEPTION WHEN OTHERS THEN
+        v_es_aislada := NULL;
+    END;
+
+    IF v_es_aislada IS DISTINCT FROM TRUE THEN
+        RAISE EXCEPTION 'GUARD_DESTRUCTIVO: la centinela public.e2e_is_isolated_db() no devolvió true (devolvió %). Solo una BD desechable puede ejecutar este script. Ver supabase/scripts/README.md.', v_es_aislada;
+    END IF;
+
+    BEGIN
+        v_ledger := to_regclass('public.production_migration_ledger');
+    EXCEPTION WHEN OTHERS THEN
+        v_ledger := NULL;
+    END;
+
+    IF v_ledger IS NOT NULL THEN
+        RAISE EXCEPTION 'GUARD_DESTRUCTIVO: existe public.production_migration_ledger — esta BD es PRODUCCIÓN. Abortado sin tocar una sola fila. Si crees que es un error, revisa la identidad del proyecto antes de cualquier otra cosa.'
+            USING HINT = 'Producción NO es banco de pruebas: docs/OPERATIONS/REGLA_PRODUCCION_NO_ES_BANCO_DE_PRUEBAS.md';
+    END IF;
+END
+$guard$;
+
+-- ══════════════ CONTENIDO ORIGINAL (OBSOLETO, REFERENCIA HISTÓRICA) ════════
+BEGIN;
+    -- 1. CLEAN EVERYTHING DYNAMICALLY
+    -- This script truncates all known operational tables only if they exist.
+    DO $$
+    DECLARE
+        tab_name text;
+        -- List of all potential tables to clean
+        tables_to_truncate text[] := ARRAY[
+            'audit_logs',
+            'business_events',
+            'cash_closures',
+            'cash_movements',
+            'cash_register_sessions',
+            'idempotency_keys',
+            'inventory',
+            'inventory_batches',
+            'inventory_movements',
+            'inventory_snapshots',
+            'product_variants',
+            'products',
+            'purchase_items',
+            'purchase_orders',
+            'receipt_items',
+            'receipts',
+            'sale_items',
+            'sales',
+            'stock_movements',
+            'transaction_items',
+            'transactions',
+            'inventory_adjustments',
+            'inventory_adjustment_items',
+            'suppliers',
+            'profiles',
+            'stores'
+        ];
+    BEGIN
+        FOREACH tab_name IN ARRAY tables_to_truncate
+        LOOP
+            -- Only attempt to truncate if the table exists in the public schema
+            IF EXISTS (
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = tab_name
+            ) THEN
+                EXECUTE 'TRUNCATE TABLE public.' || quote_ident(tab_name) || ' CASCADE';
+            END IF;
+        END LOOP;
+    END $$;
+
+    -- Delete all users from auth.users
+    DELETE FROM auth.users;
+
+    -- 2. CREATE DEMO STORE
+    -- Create a variable to hold the store_id
+    DO $$
+    DECLARE
+        demo_store_id uuid;
+    BEGIN
+        -- Create the demo store and get its ID
+        INSERT INTO public.stores (name, address, is_active)
+        VALUES ('TIENDA DEMO', 'Calle Principal #123', true)
+        RETURNING id INTO demo_store_id;
+
+        -- 3. CREATE DEMO USERS (Password: demo123)
+        -- Enable pgcrypto if not already enabled
+        CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+        -- ADMIN: admin@demo.com
+        INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+        VALUES (
+            'a1111111-1111-1111-1111-111111111111',
+            '00000000-0000-0000-0000-000000000000',
+            'authenticated',
+            'authenticated',
+            'admin@demo.com',
+            extensions.crypt('demo123', extensions.gen_salt('bf')),
+            now(),
+            '{"provider": "email", "providers": ["email"]}',
+            '{"full_name": "Administrador Demo"}',
+            now(),
+            now(),
+            '', '', '', ''
+        );
+
+        INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
+        VALUES (
+            'a1111111-1111-1111-1111-111111111111',
+            'admin@demo.com',
+            'Administrador Demo',
+            'admin',
+            demo_store_id,
+            demo_store_id,
+            true
+        );
+
+        INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
+        VALUES ('a1111111-1111-1111-1111-111111111111', demo_store_id, 'admin', 'active');
+
+
+        -- ENCARGADO: encargado@demo.com
+        INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+        VALUES (
+            'e2222222-2222-2222-2222-222222222222',
+            '00000000-0000-0000-0000-000000000000',
+            'authenticated',
+            'authenticated',
+            'encargado@demo.com',
+            extensions.crypt('demo123', extensions.gen_salt('bf')),
+            now(),
+            '{"provider": "email", "providers": ["email"]}',
+            '{"full_name": "Encargado Demo"}',
+            now(),
+            now(),
+            '', '', '', ''
+        );
+
+        INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
+        VALUES (
+            'e2222222-2222-2222-2222-222222222222',
+            'encargado@demo.com',
+            'Encargado Demo',
+            'encargado',
+            demo_store_id,
+            demo_store_id,
+            true
+        );
+
+        INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
+        VALUES ('e2222222-2222-2222-2222-222222222222', demo_store_id, 'encargado', 'active');
+
+
+        -- CAJERO: cajero@demo.com
+        INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
+        VALUES (
+            'c3333333-3333-3333-3333-333333333333',
+            '00000000-0000-0000-0000-000000000000',
+            'authenticated',
+            'authenticated',
+            'cajero@demo.com',
+            extensions.crypt('demo123', extensions.gen_salt('bf')),
+            now(),
+            '{"provider": "email", "providers": ["email"]}',
+            '{"full_name": "Cajero Demo"}',
+            now(),
+            now(),
+            '', '', '', ''
+        );
+
+        INSERT INTO public.profiles (id, email, full_name, role, store_id, active_store_id, is_active)
+        VALUES (
+            'c3333333-3333-3333-3333-333333333333',
+            'cajero@demo.com',
+            'Cajero Demo',
+            'clerk',
+            demo_store_id,
+            demo_store_id,
+            true
+        );
+
+        INSERT INTO public.user_store_memberships (user_id, store_id, role, status)
+        VALUES ('c3333333-3333-3333-3333-333333333333', demo_store_id, 'clerk', 'active');
+
+        -- 4. CREATE DEMO PRODUCTS
+        INSERT INTO public.products (store_id, sku, name, category, price, cost_price, stock_current, is_active)
+        VALUES
+            (demo_store_id, 'PROD-001', 'ARROZ EXTRA 1KG', 'ABARROTES', 1200, 800, 100, true),
+            (demo_store_id, 'PROD-002', 'ACEITE VEGETAL 1L', 'ABARROTES', 2500, 1800, 50, true),
+            (demo_store_id, 'PROD-003', 'LECHE ENTERA 1L', 'LÁCTEOS', 1500, 1100, 80, true),
+            (demo_store_id, 'PROD-004', 'DETERGENTE LÍQUIDO', 'LIMPIEZA', 3200, 2400, 30, true),
+            (demo_store_id, 'PROD-005', 'CAFÉ MOLIDO 250G', 'INFUSIONES', 4500, 3100, 45, true);
+    END $$;
+COMMIT;
+-- ══════════════ FIN DEL CONTENIDO ORIGINAL ═════════════════════════════════
+
+COMMIT;
