@@ -167,8 +167,14 @@ export function FCTemplatePicker({
         />
       </div>
 
-      {/* Lista de plantillas */}
-      <div className="flex-1 min-h-[200px] overflow-y-auto -mx-1 px-1">
+      {/* Lista de plantillas
+          FC-E2E-PR1598: min-h-0 (antes min-h-[200px]) — la altura forzada rompía
+          el shrink del flex en viewports ajustados (≤720px) y empujaba el botón
+          de Confirmar fuera del contenedor, solapándolo con los botones de
+          respaldo («Ir a Plantillas de Fichas»/«Ajustes de la tienda») — botón
+          inaccesible. La lista ahora cede espacio y hace scroll propio;
+          modalidad y confirmación quedan siempre visibles y clicables. */}
+      <div className="flex-1 min-h-0 overflow-y-auto -mx-1 px-1">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
             <Loader2 className="size-8 animate-spin text-primary" />
