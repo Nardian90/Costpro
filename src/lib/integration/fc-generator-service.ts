@@ -194,6 +194,95 @@ export interface FCGenerationError {
 // ============================================
 
 /**
+ * Pipeline interno común: inject → build → validate → calculate.
+ * Compartido por generateFC (plantillas de sistema/registro) y
+ * generateFCFromTemplateData (plantillas de usuario de cost_sheet_templates).
+ */
+async function runGenerationPipeline(
+  templateData: CostSheetData,
+  product: ProductDataForFC,
+  modalidad: FCModalidad,
+  templateId: string,
+): Promise<FCGenerationResult | FCGenerationError> {
+  // 1. Inject product data into template
+  const enrichedTemplate = injectProductIntoTemplate(templateData, product, modalidad);
+
+  // 2. Build engine-ready FichaJSON
+  let ficha: FichaJSON;
+  try {
+    ficha = buildEngineFicha(enrichedTemplate);
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Error construyendo FichaJSON';
+    return {
+      success: false,
+      error: msg,
+      code: 'CALCULATION_FAILED',
+      details: 'buildEngineFicha failed',
+    };
+  }
+
+  // 3. Pre-validate
+  const validation = validateFicha(ficha);
+  if (!validation.valid && validation.validationErrors.some(e => e.type === 'CRITICAL')) {
+    return {
+      success: false,
+      error: 'Validación crítica fallida',
+      code: 'VALIDATION_FAILED',
+      details: validation.validationErrors
+        .filter(e => e.type === 'CRITICAL')
+        .map(e => e.message)
+        .join('; '),
+    };
+  }
+
+  // 4. Calculate
+  let result: CalculationResult;
+  try {
+    result = calculateFicha(ficha, { actor: 'fc-automation' });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Error en el cálculo';
+    return {
+      success: false,
+      error: msg,
+      code: 'CALCULATION_FAILED',
+    };
+  }
+
+  // 5. Extract and return results
+  const { summary } = result;
+  const calculatedData = {
+    header: enrichedTemplate.header,
+    sections: enrichedTemplate.sections,
+    annexes: enrichedTemplate.annexes,
+    calculatedRows: result.rows.map(r => ({
+      id: r.id,
+      classification: r.classification,
+      label: r.label,
+      total: r.total,
+      calculatedVH: r.calculatedVH,
+      type: r.type,
+    })),
+    summary: result.summary,
+    audits: result.audits.slice(0, 50), // Limit audit entries
+  };
+
+  return {
+    success: true,
+    cost_price: summary.totalCost,
+    sale_price: summary.grandTotal,
+    total_cost: summary.totalCost,
+    total_margin: summary.totalMargin,
+    total_tax: summary.totalTax,
+    grand_total: summary.grandTotal,
+    calculated_data: calculatedData,
+    validation_errors: result.validationErrors || [],
+    elapsed_ms: result.elapsedMs,
+    template_id: templateId,
+    modalidad,
+  };
+}
+
+/**
  * Genera la Ficha de Costo para un producto usando la plantilla
  * de la tienda. Pipeline completo:
  *
@@ -238,82 +327,38 @@ export async function generateFC(
     }
   }
 
-  // 3. Inject product data into template
-  const enrichedTemplate = injectProductIntoTemplate(templateData, product, modalidad);
+  return runGenerationPipeline(templateData, product, modalidad, templateId);
+}
 
-  // 4. Build engine-ready FichaJSON
-  let ficha: FichaJSON;
-  try {
-    ficha = buildEngineFicha(enrichedTemplate);
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Error construyendo FichaJSON';
+/**
+ * FC-USR-TEMPLATE: Genera la FC para un producto a partir de una plantilla
+ * de usuario (cost_sheet_templates.data) — CostSheetData completa en BD.
+ *
+ * Diferencias con generateFC():
+ * - NO consulta TEMPLATE_REGISTRY: los datos vienen íntegros de la BD
+ *   (plantilla privada/pública guardada por el usuario en el servidor).
+ * - templateId se usa solo como etiqueta de trazabilidad en el resultado
+ *   (el UUID de cost_sheet_templates se persiste en product_cost_sheets.template_id).
+ *
+ * La plantilla original NO se modifica: la inyección del producto y el cálculo
+ * operan sobre una copia (injectProductIntoTemplate clona internamente), y el
+ * resultado vive en product_cost_sheets.calculated_data.
+ */
+export async function generateFCFromTemplateData(
+  product: ProductDataForFC,
+  templateData: CostSheetData,
+  templateId: string,
+  modalidad: FCModalidad,
+): Promise<FCGenerationResult | FCGenerationError> {
+  if (!templateData || typeof templateData !== 'object' || !Array.isArray(templateData.sections)) {
     return {
       success: false,
-      error: msg,
-      code: 'CALCULATION_FAILED',
-      details: 'buildEngineFicha failed',
+      error: 'La plantilla guardada no tiene estructura válida (faltan secciones)',
+      code: 'TEMPLATE_LOAD_FAILED',
     };
   }
 
-  // 5. Pre-validate
-  const validation = validateFicha(ficha);
-  if (!validation.valid && validation.validationErrors.some(e => e.type === 'CRITICAL')) {
-    return {
-      success: false,
-      error: 'Validación crítica fallida',
-      code: 'VALIDATION_FAILED',
-      details: validation.validationErrors
-        .filter(e => e.type === 'CRITICAL')
-        .map(e => e.message)
-        .join('; '),
-    };
-  }
-
-  // 6. Calculate
-  let result: CalculationResult;
-  try {
-    result = calculateFicha(ficha, { actor: 'fc-automation' });
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : 'Error en el cálculo';
-    return {
-      success: false,
-      error: msg,
-      code: 'CALCULATION_FAILED',
-    };
-  }
-
-  // 7. Extract and return results
-  const { summary } = result;
-  const calculatedData = {
-    header: enrichedTemplate.header,
-    sections: enrichedTemplate.sections,
-    annexes: enrichedTemplate.annexes,
-    calculatedRows: result.rows.map(r => ({
-      id: r.id,
-      classification: r.classification,
-      label: r.label,
-      total: r.total,
-      calculatedVH: r.calculatedVH,
-      type: r.type,
-    })),
-    summary: result.summary,
-    audits: result.audits.slice(0, 50), // Limit audit entries
-  };
-
-  return {
-    success: true,
-    cost_price: summary.totalCost,
-    sale_price: summary.grandTotal,
-    total_cost: summary.totalCost,
-    total_margin: summary.totalMargin,
-    total_tax: summary.totalTax,
-    grand_total: summary.grandTotal,
-    calculated_data: calculatedData,
-    validation_errors: result.validationErrors || [],
-    elapsed_ms: result.elapsedMs,
-    template_id: templateId,
-    modalidad,
-  };
+  return runGenerationPipeline(templateData, product, modalidad, templateId);
 }
 
 // ============================================
@@ -327,6 +372,18 @@ export interface AutoGenerateParams {
   storeTemplate: FCStoreTemplateInput;
   existingCostSheet?: FCExistingCostSheetInput | null;
   fc_auto_enabled?: boolean;
+  /**
+   * FC-USR-TEMPLATE: plantilla DIRECTA (cost_sheet_templates) asociada al
+   * producto. Cuando está presente, la (re)generación usa ESTA plantilla en
+   * lugar de la predeterminada de la tienda — preserva la asociación explícita
+   * producto↔plantilla de usuario en «Eliminar y Regenerar» y recálculos.
+   * La plantilla de tienda queda como fallback histórico.
+   */
+  directTemplate?: {
+    template_id: string;
+    template_data: CostSheetData | Record<string, unknown> | null;
+    modalidad: FCModalidad;
+  } | null;
 }
 
 /**
@@ -339,7 +396,7 @@ export interface AutoGenerateParams {
 export async function autoGenerateFC(
   params: AutoGenerateParams,
 ): Promise<FCGenerationResult | FCGenerationError> {
-  const { product, product_id, store_id, storeTemplate, existingCostSheet, fc_auto_enabled } = params;
+  const { product, product_id, store_id, storeTemplate, existingCostSheet, fc_auto_enabled, directTemplate } = params;
 
   // Check if FC is disabled for this product
   if (fc_auto_enabled === false) {
@@ -372,6 +429,17 @@ export async function autoGenerateFC(
         modalidad: existingCostSheet.modalidad,
       };
     }
+  }
+
+  // FC-USR-TEMPLATE: si el producto tiene asociación directa con una plantilla
+  // de usuario, regenerar con ESA plantilla (no con la de tienda).
+  if (directTemplate && directTemplate.template_data) {
+    return generateFCFromTemplateData(
+      product,
+      directTemplate.template_data as CostSheetData,
+      directTemplate.template_id,
+      directTemplate.modalidad,
+    );
   }
 
   // Generate new FC using store template

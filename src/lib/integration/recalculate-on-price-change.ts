@@ -17,6 +17,7 @@
 
 import { getAdminClient } from '@/lib/supabase-admin';
 import { autoGenerateFC } from './fc-generator-service';
+import { resolveEffectiveTemplate } from './fc-template-resolution';
 import {
   shouldInvalidateFC,
   createInvalidationEvent,
@@ -109,15 +110,27 @@ export async function recalculateOnPriceChange(
       };
     }
 
-    // Fetch store template
-    const { data: template } = await admin
-      .from('store_cost_templates')
+    // Fetch existing ACTIVE cost sheet if any (la activa es la que porta la
+    // asociación producto↔plantilla — índice único parcial la hace única)
+    const { data: existingSheet } = await admin
+      .from('product_cost_sheets')
       .select('*')
+      .eq('product_id', change.productId)
       .eq('store_id', change.storeId)
-      .eq('is_active', true)
+      .is('deleted_at', null)
       .maybeSingle();
 
-    if (!template) {
+    // FC-USR-TEMPLATE: resolver la plantilla EFECTIVA — si el producto está
+    // asociado a una plantilla de usuario (UUID en cost_sheet_templates), el
+    // recálculo usa ESA plantilla y no la de tienda (preserva la asociación).
+    // resolveEffectiveTemplate encapsula ambas fuentes: asociación de producto
+    // > plantilla predeterminada activa de la tienda.
+    const effective = await resolveEffectiveTemplate(admin, {
+      storeId: change.storeId,
+      existingTemplateId: existingSheet?.template_id ?? null,
+    });
+
+    if (!effective) {
       return {
         productId: change.productId,
         recalculationNeeded: true,
@@ -127,22 +140,25 @@ export async function recalculateOnPriceChange(
       };
     }
 
-    // Fetch existing cost sheet if any
-    const { data: existingSheet } = await admin
-      .from('product_cost_sheets')
-      .select('*')
-      .eq('product_id', change.productId)
-      .eq('store_id', change.storeId)
-      .maybeSingle();
-
     // Generate FC
     const result = await autoGenerateFC({
       product,
       product_id: change.productId,
       store_id: change.storeId,
-      storeTemplate: template,
+      storeTemplate: {
+        template_id: effective.template_id,
+        template_data: effective.template_data as Record<string, unknown> | null,
+        modalidad: effective.modalidad,
+        pdf_format: 'res148',
+        is_active: true,
+      } as Parameters<typeof autoGenerateFC>[0]['storeTemplate'],
       existingCostSheet: existingSheet ?? null,
       fc_auto_enabled: product.fc_auto_enabled,
+      directTemplate: effective.source === 'product' ? {
+        template_id: effective.template_id,
+        template_data: effective.template_data,
+        modalidad: effective.modalidad,
+      } : null,
     });
 
     if (!result.success || 'error' in result) {

@@ -394,6 +394,26 @@ export const quickPdfSchema = z.object({
   ]).optional().default('res148'),
 });
 
+// ─── FC Generate from user template (misión producto↔FC 2026-11-10) ────────
+/**
+ * FC-USR-TEMPLATE: genera/asocia la FC de un producto a partir de una
+ * plantilla guardada por el usuario (cost_sheet_templates, UUID).
+ * `modalidad` es opcional: si no viene, se infiere del header de la plantilla
+ * (destination) y como último recurso 'produccion'.
+ */
+export const generateFromTemplateSchema = z.object({
+  product_id: uuidLoose,
+  store_id: uuidLoose.optional(),
+  template_id: uuidLoose,
+  modalidad: z.enum(['produccion', 'servicios', 'comercializacion'], {
+    message: 'Modalidad inválida',
+  }).optional(),
+  pdf_format: z.enum([
+    'standard', 'pro', 'res148', 'ejecutivo', 'contabilidad',
+    'auditoria', 'simplificado', 'bilingue', 'comparativo', 'exportacion',
+  ]).optional().default('res148'),
+});
+
 // ─── FC Recalculate ──────────────────────────────────────────────────────────
 const priceChangeRecordSchema = z.object({
   productId: uuidLoose,
