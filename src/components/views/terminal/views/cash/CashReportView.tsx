@@ -1513,6 +1513,12 @@ export default function CashReportView() {
                       ['includeOtReport', 'Reporte de Órdenes de Trabajo'],
                       // §8.2: columna Comisión conmutable (el cálculo del resumen se conserva).
                       ['includeCommissionColumn', 'Columna Comisión'],
+                      // MISIÓN DESGLOSE SERVICIOS (2026-11-11): sub-filas por
+                      // concepto bajo «Servicios recibidos pagados en efectivo»
+                      // en el Resumen del Día (plantilla Diario; misma fuente que
+                      // el total global — presentación pura, el esperado no cambia).
+                      // Default desmarcada: formato actual intacto (§3 del brief).
+                      ['breakdownServicesByConcept', 'Desglosar Servicios Recibidos por concepto en el PDF'],
                       ['detailPayments', 'Detalle pagos'],
                       ['detailProduction', 'Detalle producción'],
                     ] as Array<[keyof CashReportPdfOptions, string]>

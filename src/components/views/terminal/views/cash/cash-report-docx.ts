@@ -331,10 +331,15 @@ function diarioIncomeBlock(
     // su signo contable negativo; los totales, el importe tal cual.
     const signed = r.isTotal ? (r.amount ?? 0) : ((r.amount ?? 0) < 0 ? (r.amount ?? 0) : (r.note === 'expense' ? -(r.amount ?? 0) : (r.amount ?? 0)));
     const amt = (r.isTotal || !r.note) ? fmtCup(r.amount ?? 0) : fmtCup(signed);
-    const bold = r.isTotal === true || r.isSubtotal === true;
-    const color = r.isSubtotal === true ? C_MUTED : C_DARK;
+    const bold = (r.isTotal === true || r.isSubtotal === true) && r.isSubRow !== true;
+    // MISIÓN DESGLOSE SERVICIOS (2026-11-11): sub-fila jerárquica — prefijo
+    // «›» + tono secundario (misma convención del PDF). El desglose EXPLICA
+    // la deducción de su fila padre; no es una nueva deducción.
+    const isSub = r.isSubRow === true;
+    const color = isSub ? C_MUTED : (r.isSubtotal === true ? C_MUTED : C_DARK);
+    const label = isSub ? `\u203A ${r.label}` : r.label;
     return row([
-      cell(r.label, { width: labelW, bold, color, size: 16 }),
+      cell(label, { width: labelW, bold, color, size: 16 }),
       cell([run(amt, { bold, color, size: 16 })], { width: amountW, align: 'right' }),
     ]);
   });
@@ -570,7 +575,15 @@ function diarioCurrencyReport(
   // ══ SECCIÓN 1 — RESUMEN Y ENTREGA DE EFECTIVO ══
   out.push(...diarioHeader(d, title, ctx));
   const esperadoPersonalizado = curResult.efectivoEsperadoPersonalizado;
-  const incomeRows = buildDiarioIncomeRows(currency, curSummary, curResult, ctx.concepts);
+  // MISIÓN DESGLOSE SERVICIOS (2026-11-11): paridad por construcción con el
+  // PDF — la misma opción gobierna el mismo ensamblador; datos del MISMO
+  // reporte que alimenta curSummary.serviciosRecibidosCash (ctx.report).
+  const incomeRows = buildDiarioIncomeRows(
+    currency, curSummary, curResult, ctx.concepts,
+    d.options.breakdownServicesByConcept === true
+      ? ctx.report?.servicios_recibidos_por_concepto?.[currency] ?? null
+      : null,
+  );
   const esperadoLabel = currency === 'CUP'
     ? (d.idLabel ? 'Efectivo esperado (personalizado)' : 'Efectivo esperado a entregar')
     : (d.idLabel ? 'Efectivo esperado (personalizado, USD)' : 'Efectivo esperado a entregar (USD)');
