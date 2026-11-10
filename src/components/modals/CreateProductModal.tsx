@@ -43,8 +43,11 @@ export const CreateProductModal = () => {
     // NOT NULL DEFAULT FALSE); true = servicio intangible sin existencias.
     is_service: false,
     // CP-OPERATIONAL-CLASS-001: OBLIGATORIA en el alta desde la interfaz
-    // (misión §2). Arranca vacía: null = Sin clasificar — nunca un default.
-    operational_class: null as ProductOperationalClass | null,
+    // CP-PRODUCT-COMMISSION-001 TAREA 1.1: Venta PRESELECCIONADA desde la
+    // primera apertura (obligatoria); el usuario puede cambiarla antes de
+    // guardar y lo elegido se persiste exacto. La BD además protege con
+    // NOT NULL + DEFAULT 'venta' (migración 20261110090000).
+    operational_class: 'venta' as ProductOperationalClass,
     price: 0,
     cost_price: 0,
     barcode: '',

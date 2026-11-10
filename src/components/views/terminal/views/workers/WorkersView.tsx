@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { cn } from '@/lib/utils';
+import { matchesCommissionFilter, type CommissionValueFilter } from '@/lib/price-list/commission-column';
 import { UnifiedTabs } from '@/components/views/terminal/views/cost_sheet/UnifiedTabs';
 import {
   AlertDialog,
@@ -1942,12 +1943,16 @@ interface ProductRuleConfig {
   rule_id?: string;
 }
 
-function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onRefresh: () => void }) {
+export function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onRefresh: () => void }) {
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  // CP-PRODUCT-COMMISSION-001 TAREA 3: filtro por valor de comisión efectiva
+  // configurada. 'unset' identifica los productos SIN regla de comisión
+  // configurada (§3.2: NULL ≠ cero — se distinguen, no se convierten).
+  const [commissionFilter, setCommissionFilter] = useState<CommissionValueFilter>('all');
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({ USD: 1, EUR: 1, MLC: 1 });
   const [productConfigs, setProductConfigs] = useState<Record<string, ProductRuleConfig>>({});
   const [saving, setSaving] = useState(false);
@@ -2008,18 +2013,39 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
     loadCatalog();
   }, [loadCatalog]);
 
-  // Filtrar productos por búsqueda y categoría
+  // CP-PRODUCT-COMMISSION-001 TAREA 3: valor de comisión efectiva configurada
+  // para un producto (la MISMA fuente que edita/guarda el catálogo y que el
+  // motor consume: commission_rule_products.product_configs con fallback al
+  // product_commission_amount de la regla product_specific de la tienda).
+  const effectiveCommissionOf = (id: string): number | null => {
+    const cfg = productConfigs[id];
+    return cfg && cfg.amount != null ? cfg.amount : null;
+  };
+  // Filtro por búsqueda, categoría y valor de comisión. Se aplica sobre el
+  // conjunto COMPLETO (el catálogo carga todos los productos de la tienda),
+  // combinable con los demás filtros sin resetearlos, recalcula en vivo y
+  // alimenta el contador del encabezado.
   const filteredProducts = React.useMemo(() => {
-    if (!searchTerm.trim() && !categoryFilter) return products;
     const term = searchTerm.toLowerCase().trim();
     return products.filter(p => {
       const matchSearch = !term
         || p.name.toLowerCase().includes(term)
         || (p.sku || '').toLowerCase().includes(term);
       const matchCategory = !categoryFilter || p.category === categoryFilter;
-      return matchSearch && matchCategory;
+      // TAREA 3: criterio PURO compartido con las pruebas (misma semántica
+      // Todos / >0 / =0 / Sin configurar).
+      const matchCommission = matchesCommissionFilter(effectiveCommissionOf(p.id), commissionFilter);
+      return matchSearch && matchCategory && matchCommission;
     });
-  }, [products, searchTerm, categoryFilter]);
+  }, [products, searchTerm, categoryFilter, commissionFilter, productConfigs]);
+
+  // §3.3: limpiar filtros y recuperar el listado general.
+  const clearFilters = () => {
+    setSearchTerm('');
+    setCategoryFilter('');
+    setCommissionFilter('all');
+  };
+  const filtersActive = searchTerm.trim() !== '' || categoryFilter !== '' || commissionFilter !== 'all';
 
   const categories = React.useMemo(() => {
     const set = new Set<string>();
@@ -2247,7 +2273,28 @@ function ProductCommissionCatalog({ storeId, onRefresh }: { storeId: string; onR
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         )}
-        <span className="text-xs text-muted-foreground">
+        {/* TAREA 3: filtro por valor de comisión efectiva configurada */}
+        <select
+          value={commissionFilter}
+          onChange={(e) => setCommissionFilter(e.target.value as 'all' | 'gt0' | 'eq0' | 'unset')}
+          aria-label="Filtro por comisión"
+          className="h-11 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground"
+        >
+          <option value="all">Comisión: Todas</option>
+          <option value="gt0">Comisión &gt; 0</option>
+          <option value="eq0">Comisión = 0</option>
+          <option value="unset">Sin comisión configurada</option>
+        </select>
+        {filtersActive && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="h-11 px-3 rounded-xl border-2 border-border bg-background text-sm font-bold min-h-[44px] text-foreground hover:border-primary/40"
+          >
+            Limpiar filtros
+          </button>
+        )}
+        <span className="text-xs text-muted-foreground" aria-live="polite">
           {filteredProducts.length} producto(s)
         </span>
       </div>

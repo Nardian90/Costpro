@@ -197,9 +197,11 @@ export const profileSchema = z.object({
 });
 
 // CP-OPERATIONAL-CLASS-001 (2026-11-08): clasificación operativa del catálogo
-// (enum PG product_operational_class, migración 20261108150000). SIN default:
-// NULL = «Sin clasificar» (registros históricos) y nunca se inventa un valor;
-// el alta desde la UI exige la clasificación explícita del usuario.
+// (enum PG product_operational_class, migración 20261108150000).
+// CP-PRODUCT-COMMISSION-001 (2026-11-10, migración 20261110090000): OBLIGATORIA
+// — NOT NULL con DEFAULT 'venta' en la base; las filas exclusivamente maestras
+// (sin fila local) siguen llegando como NULL desde la RPC multitienda, por eso
+// el schema de LECTURA acepta null y el de CREACIÓN preselecciona 'venta'.
 export const productOperationalClassSchema = z.enum(['venta', 'insumo', 'activo_fijo', 'util_herramienta']);
 
 export const productSchema = z.object({

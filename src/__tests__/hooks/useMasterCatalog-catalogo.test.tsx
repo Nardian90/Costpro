@@ -81,9 +81,10 @@ describe('useMasterCatalog — contrato de RPC (PR 4)', () => {
       const res = await result.current.mutateAsync(MASTER_ID);
       expect(res.product_id).toBe('p1');
     });
-    // CP-OPERATIONAL-CLASS-002: el hook envía p_operational_class (null
-    // cuando no se pide clasificación — retrocompatible con el PR 4).
-    expect(rpcMock).toHaveBeenCalledWith('activate_master_product', { p_master_id: MASTER_ID, p_store_id: STORE, p_operational_class: null });
+    // CP-PRODUCT-COMMISSION-001 TAREA 1: sin clasificación explícita el hook
+    // OMITE la clave — la RPC aplica su DEFAULT 'venta' (enviar null
+    // explícito lo anularía y violaría el NOT NULL de 20261110090000).
+    expect(rpcMock).toHaveBeenCalledWith('activate_master_product', { p_master_id: MASTER_ID, p_store_id: STORE });
   });
 
   it('findMasterBySku: match exacto de SKU case-insensitive; fail-open sin tienda o con error de conexión', async () => {
