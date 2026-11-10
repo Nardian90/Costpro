@@ -71,6 +71,10 @@ export interface ServicePaymentRow {
   ref_id?: string | null;
   amount?: number | string | null;
   currency?: string | null;
+  /** Defensa en profundidad (§5.B): la consulta ya filtra cash; si la fila
+   *  trae el método, se re-verifica aquí — el tramo transfer/zelle de un pago
+   *  mixto JAMÁS entra al desglose (no se contabiliza dos veces). */
+  payment_method?: string | null;
 }
 
 const n = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : Number(v) || 0);
@@ -96,6 +100,11 @@ export function groupServiceCashByConcept(
 ): ServiceConceptTotal[] {
   const acc = new Map<string, { total: number; count: number }>();
   for (const row of rows || []) {
+    // Defensa en profundidad (§5.B): solo el componente EN EFECTIVO. La
+    // consulta ya llega filtrada por método; si la fila trae el método,
+    // re-verificarlo garantiza que un pago dividido (cash+transfer) aporte
+    // ÚNICAMENTE su componente cash — sin doble contabilización.
+    if (row.payment_method !== undefined && row.payment_method !== null && row.payment_method !== 'cash') continue;
     // Moneda NATIVA de la fila — la misma clasificación de la hoja del RPC
     // (computeDailySummary: isCur(p) con p.currency). Sin conversión: los
     // importes del desglose son los mismos billetes del total global.
@@ -192,7 +201,7 @@ export async function fetchServiceConceptBreakdown(
   try {
     let query = client
       .from('payment_transactions')
-      .select('ref_id, amount, currency')
+      .select('ref_id, amount, currency, payment_method')
       .eq('store_id', params.storeId)
       .eq('ref_type', 'service')
       .eq('payment_method', 'cash');
