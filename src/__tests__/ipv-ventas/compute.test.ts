@@ -223,32 +223,53 @@ describe('Escenario G — Período histórico', () => {
 });
 
 describe('Escenario H — Ventas en monedas diferentes', () => {
-  it('CUP y USD NO se suman entre sí: USD nativo queda en su columna informativa', () => {
+  // CORRECCIÓN IPV 2026-11-11: la columna Ventas USD refleja el importe
+  // EFECTIVAMENTE COBRADO en USD (registro de pagos), no la moneda del precio
+  // del ítem. Las líneas sin evidencia de cobro en USD aportan 0 USD.
+  it('CUP y USD NO se suman entre sí: el cobro en USD queda en su columna', () => {
     const r = computeIpv(base({
       movements: [
         mov(P1, 'sale', -2, '2026-10-12T15:00:00Z'),
         mov(P1, 'sale', -3, '2026-10-12T16:00:00Z'),
       ],
       salesLines: [
-        sale(P1, 2, 500, 'CUP'),                                      // 1000 CUP
-        sale(P1, 3, 15, 'USD', 15),                                   // 45 USD nativo
+        sale(P1, 2, 500, 'CUP'),                                      // cobrada en CUP
+        { ...sale(P1, 3, 15, 'USD', 15), transaction_id: 'tx-zelle', zelle_paid: 45, zelle_currency: 'USD' }, // cobrada 45 USD por Zelle
       ],
       inventory: [{ product_id: P1, quantity: 0 }],
     }));
     const row = rowOf(r, P1);
     expect(row?.cantidadesVendidas).toBe(5);
+    expect(row?.ventasImporteCup).toBe(1045); // 1000 CUP + 45 USD × 1 (tasa de la línea)
     expect(row?.ventasImporteUsd).toBe(45);
   });
 
-  it('la línea USD usa su price_at_sale_cup (tasa histórica) en la columna CUP', () => {
+  it('la línea cobrada en USD usa su price_at_sale_cup (tasa histórica) en la columna CUP', () => {
     const line: IpvSalesLineRow = {
       product_id: P1, quantity: 3, price_at_sale: 15, price_at_sale_cup: 6000,
       price_currency: 'USD', exchange_rate: 400, sale_exchange_rate: 400,
+      transaction_id: 'tx-usd', cash_paid: 45, cash_currency: 'USD',
+      cash_amount: 18000, sale_currency: 'USD',
     };
     const r = computeIpv(base({ salesLines: [line] }));
     const row = rowOf(r, P1);
     expect(row?.ventasImporteCup).toBe(18000); // 6000×3 — tasa histórica, no la actual
     expect(row?.ventasImporteUsd).toBe(45);
+  });
+
+  it('precio de referencia USD del catálogo SIN cobro en USD → columna USD en 0 (CORRECCIÓN 2026-11-11)', () => {
+    // Caso ENERVIDA 2026-11-10 (SKU 88): ítem con moneda de precio USD pero
+    // cobrado íntegramente en CUP — antes mostraba USD ficticios (precio×qty).
+    const line: IpvSalesLineRow = {
+      product_id: P1, quantity: 7, price_at_sale: 4.5, price_at_sale_cup: 4185,
+      price_currency: 'CUP', currency: 'USD', exchange_rate: 930, sale_exchange_rate: 1,
+      transaction_id: 'tx-cup', cash_paid: 29295, cash_currency: 'CUP',
+      cash_amount: 29295, sale_currency: 'CUP',
+    };
+    const r = computeIpv(base({ salesLines: [line] }));
+    const row = rowOf(r, P1);
+    expect(row?.ventasImporteCup).toBe(29295); // 4185 × 7
+    expect(row?.ventasImporteUsd).toBe(0);      // sin USD cobrados — sin 31,50 ficticios
   });
 });
 

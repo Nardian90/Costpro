@@ -170,8 +170,8 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
     ['Fórmula de conciliación:', 'Existencia final = Existencia inicial + Entradas + Devoluciones − Cantidades vendidas − Vales de salida ± Ajustes ± Transferencias'],
     ['Existencia inicial:', 'Saldo reconstruido del ledger de movimientos (stock_movements.quantity_change) anterior a la fecha inicial del período. N/D = no reconstruible (carga inicial previa al ledger).'],
     ['Fuente de cantidades:', 'stock_movements (ledger canónico; fecha operativa movement_date). Nunca se mezclan kardex_entries ni tablas de venta para cantidades.'],
-    ['Fuente de importes:', 'transaction_items de ventas con estado "completed" del período (precio capturado al vender, convertido a CUP con la tasa histórica de cada venta). Devoluciones completadas se restan por producto.'],
-    ['Monedas:', 'La columna Ventas (CUP) es la moneda contable del sistema. La columna Ventas USD es informativa (importe nativo de líneas vendidas en USD); NO se suman entre sí.'],
+    ['Fuente de importes:', 'transaction_items de ventas con estado "completed" del período (precio capturado al vender, convertido a CUP con la tasa histórica de cada venta). Ventas USD: importe cobrado en USD según el registro real de pagos de la venta (payment_transactions + desglose por ítem). Devoluciones completadas se restan por producto.'],
+    ['Monedas:', 'La columna Ventas (CUP) es la moneda contable del sistema. La columna Ventas USD refleja EXCLUSIVAMENTE el importe efectivamente cobrado en USD (registro de pagos de la venta; un precio de referencia en USD del catálogo NO genera ingreso USD); NO se suman entre sí.'],
     ['Regla de inclusión:', 'Se incluye un producto con existencia inicial ≠ 0, o movimientos en el período, o existencia final ≠ 0, o importe vendido, o incidencia de conciliación.'],
     ['Descuentos:', 'El importe usa la línea bruta cobrada: en COSTPRO, transactions.total_amount = suma de líneas brutas (item_discount_value es informativo, verificado en BD).'],
   ];

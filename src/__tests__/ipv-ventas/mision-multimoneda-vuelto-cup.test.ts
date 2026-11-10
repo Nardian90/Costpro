@@ -13,11 +13,12 @@
  * Contrato verificado del IPV:
  *   · ventasImporteCup = 5.600 (canónico, tasa de la operación) — el vuelto
  *     no es ingreso y el billete de 10 USD no infla el ingreso.
- *   · ventasImporteUsd = 7 — columna informativa de MONEDA DE ORIGEN, ahora
- *     clasificada por transaction_items.currency (create_sale_v2 estampa
- *     price_currency = moneda de la VENTA = 'CUP' sin zelle, lo que dejaba
- *     vacía la columna USD).
- *   · Fallback histórico: filas V1 sin currency conservan price_currency.
+ *   · ventasImporteUsd = 7 — CORRECCIÓN IPV 2026-11-11: USD EFECTIVAMENTE
+ *     COBRADOS (el ítem registró cash_paid=7 con cash_currency='USD' — cobro
+ *     en efectivo USD). Ya NO se clasifica por la moneda del precio del ítem
+ *     (catálogo): es el registro real de pagos el que decide la moneda.
+ *   · Fallback histórico: filas V1 sin currency usan price_currency SOLO como
+ *     entrada de la reconstrucción legada (pool exacto → USD cash legado).
  */
 import { describe, it, expect } from 'vitest';
 import {
@@ -36,7 +37,8 @@ function mov(product_id: string, movement_type: string, quantity_change: number,
   return { product_id, movement_type, quantity_change: String(quantity_change), movement_date };
 }
 
-/** Línea EXACTA que create_sale_v2 persistió para la venta de la misión (verificada en BD). */
+/** Línea EXACTA que create_sale_v2 persistió para la venta de la misión (verificada en BD):
+ *  incluye el desglose del cobro por ítem (cash_paid=7 USD nativo). */
 function lineaMision(overrides: Partial<IpvSalesLineRow> = {}): IpvSalesLineRow {
   return {
     product_id: P22,
@@ -47,6 +49,10 @@ function lineaMision(overrides: Partial<IpvSalesLineRow> = {}): IpvSalesLineRow 
     currency: 'USD',                // ← moneda NATIVA del ítem (columna currency)
     exchange_rate: '800',
     sale_exchange_rate: '1.0000',
+    transaction_id: '0caf222e-mision-multimoneda',
+    cash_paid: '7.00',              // ← cobro REAL: 7 USD en efectivo
+    cash_currency: 'USD',
+    cash_amount: '5600.00',         // pool canónico CUP de la venta
     ...overrides,
   };
 }
@@ -59,7 +65,7 @@ const ledger: IpvMovementRow[] = [
 ];
 
 describe('IPV — MISIÓN MULTIMONEDA 23/10/2026 (SKU 22, 7 USD, vuelto 2.400 CUP)', () => {
-  it('ingreso canónico 5.600 CUP; el vuelto y el billete NO son ingreso; importe de origen 7 USD', () => {
+  it('ingreso canónico 5.600 CUP; el vuelto y el billete NO son ingreso; USD cobrados 7', () => {
     const res = computeIpv({
       window: { fromISO: FROM, toISO: TO },
       movements: ledger,
@@ -75,7 +81,7 @@ describe('IPV — MISIÓN MULTIMONEDA 23/10/2026 (SKU 22, 7 USD, vuelto 2.400 CU
     expect(row!.ventasImporteCup).toBe(5600);
     // NO es 8.000 (billete recibido) ni 8.000−2.400 mal calculado: la venta es 7 USD
     expect(row!.cantidadesVendidas).toBe(1);
-    // Moneda de ORIGEN visible: 7 USD (columna informativa VENTAS USD)
+    // USD efectivamente COBRADOS: 7 (efectivo USD registrado en el ítem)
     expect(row!.ventasImporteUsd).toBe(7);
     // Ledger: 0 + 10 entradas − 1 venta = 9
     expect(row!.existenciaInicial).toBe(0);
@@ -85,19 +91,21 @@ describe('IPV — MISIÓN MULTIMONEDA 23/10/2026 (SKU 22, 7 USD, vuelto 2.400 CU
     expect(res.totals.ventasImporteCup).toBe(5600);
   });
 
-  it('fallback histórico: filas V1 sin currency conservan price_currency', () => {
+  it('fallback histórico V1: sin filas de pago por ítem, el pool exacto USD marca el cobro legado en USD', () => {
     const res = computeIpv({
       window: { fromISO: FROM, toISO: TO },
       movements: ledger,
       inventory,
       salesLines: [
-        lineaMision({ currency: undefined, price_currency: 'USD' }) as IpvSalesLineRow,
+        lineaMision({ currency: undefined, cash_paid: null, cash_currency: null, price_currency: 'USD' }) as IpvSalesLineRow,
       ],
       devolutionLines: [],
       products,
     });
     const row = res.rows.find((r) => r.productId === P22);
-    expect(row!.ventasImporteUsd).toBe(7);   // clasificado por price_currency (fallback)
+    // Reconstrucción legada (misma fuente única del Reporte de Entrega):
+    // líneas USD originales + pool exacto = conversión exacta del RPC → USD.
+    expect(row!.ventasImporteUsd).toBe(7);
     expect(row!.ventasImporteCup).toBe(5600);
   });
 
@@ -107,7 +115,8 @@ describe('IPV — MISIÓN MULTIMONEDA 23/10/2026 (SKU 22, 7 USD, vuelto 2.400 CU
       movements: ledger,
       inventory,
       salesLines: [
-        lineaMision({ price_at_sale: '5600', price_at_sale_cup: '5600', currency: 'CUP', exchange_rate: null }),
+        lineaMision({ price_at_sale: '5600', price_at_sale_cup: '5600', currency: 'CUP', exchange_rate: null,
+                      cash_paid: '5600', cash_currency: 'CUP' }),
       ],
       devolutionLines: [],
       products,

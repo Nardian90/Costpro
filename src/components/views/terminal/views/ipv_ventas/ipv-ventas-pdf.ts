@@ -124,7 +124,7 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
     doc.text(`Período: ${dateLabel(payload.startDateLabel)} — ${dateLabel(payload.endDateLabel)}`, PAGE.margin, y0 + (compact ? 33 : 42));
     doc.text(`Generado: ${dateTimeLabel(payload.generatedAt)}`, PAGE.margin, y0 + (compact ? 44 : 54));
 
-    doc.text('Moneda de los importes: CUP (contable, tasa histórica por venta); USD nativo informativo', pageW - PAGE.margin, y0 + (compact ? 22 : 30), { align: 'right' });
+    doc.text('Moneda de los importes: CUP (contable, tasa histórica por venta); USD efectivamente cobrado', pageW - PAGE.margin, y0 + (compact ? 22 : 30), { align: 'right' });
     doc.text(`Productos incluidos: ${payload.rows.length}`, pageW - PAGE.margin, y0 + (compact ? 33 : 42), { align: 'right' });
 
     doc.setDrawColor(180);

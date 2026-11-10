@@ -26,9 +26,34 @@
  *   · item_discount_value es INFORMATIVO en COSTPRO: transactions.total_amount
  *     = Σ(líneas brutas) verificado en BD → el importe usa la línea bruta
  *     cobrada para conciliar con el total contable.
+ *
+ * CORRECCIÓN IPV — VENTAS USD SOLO CON COBRO REAL EN USD (2026-11-11):
+ *   La columna "Ventas USD" se clasificaba por la moneda NATIVA del precio del
+ *   ítem (transaction_items.currency, heredada del catálogo) y sumaba
+ *   price_at_sale × qty — un precio de REFERENCIA en USD NO es dinero recibido
+ *   en USD. Incidente real (ENERVIDA-VITALLCONS, 2026-11-10, SKU 88 "Cable Solar
+ *   Rojo 4mm"): venta cobrada 100 % en CUP (cash|CUP|29295, ítem
+ *   cash_paid=29295 cash_currency='CUP') mostraba 29.295,00 CUP **y** 31,50 USD
+ *   ficticios (4.50 × 7 por moneda de catálogo).
+ *   Desde esta corrección la fuente de verdad de la moneda de cada importe es
+ *   el registro REAL de la venta y sus pagos: se reutiliza
+ *   src/lib/cash-report/collection-currency.ts (reconstructTxCollections —
+ *   fuente única del Reporte de Entrega): ledger payment_transactions por
+ *   componente (moneda real + tasa de la operación), desglose del cobro por
+ *   ítem (cash_paid/cash_currency…) y reconstrucción legada documentada
+ *   (zelle→USD; exact-match→USD cash legado; resto CUP). Sin evidencia de
+ *   pago en USD → 0 (nunca se inventa ingreso en dólares).
+ *   La columna contable Ventas (CUP) NO cambia (tasa histórica por venta).
  */
 
 // ── Tipos de entrada (crudos de Supabase, numéricos como string) ──────────
+
+import {
+  reconstructTxCollections,
+  type CollectionItem,
+  type CollectionTx,
+  type LedgerPayment,
+} from '@/lib/cash-report/collection-currency';
 
 export interface IpvMovementRow {
   product_id: string;
@@ -52,13 +77,39 @@ export interface IpvSalesLineRow {
    * MISIÓN MULTIMONEDA (2026-10-23): moneda NATIVA del ítem (transaction_items.currency).
    * create_sale_v2 estampa price_currency = p_sale_currency (moneda de la VENTA,
    * 'CUP' en ventas sin zelle) — para un ítem USD cobrado en efectivo USD el
-   * price_at_sale nativo (7) queda etiquetado 'CUP'. La columna informativa
-   * VENTAS USD se clasifica por la moneda nativa del ítem con fallback a
-   * price_currency (histórico V1 sin currency).
+   * price_at_sale nativo (7) queda etiquetado 'CUP'.
+   *
+   * CORRECCIÓN IPV 2026-11-11: la moneda nativa del ítem es el PRECIO del
+   * catálogo, NO el dinero recibido — ya NO alimenta la columna Ventas USD
+   * (ver cabecera del módulo). Solo se usa como entrada de la reconstrucción
+   * legada de collection-currency.ts (líneas USD originales).
    */
   currency?: string | null;
   exchange_rate: string | number | null;
   sale_exchange_rate: string | number | null;
+  /** Venta a la que pertenece la línea (FK transaction_items.transaction_id). */
+  transaction_id?: string | null;
+  /** Desglose del cobro por método a nivel ítem — verdad del pago (V2). */
+  cash_paid?: string | number | null;
+  cash_currency?: string | null;
+  transfer_paid?: string | number | null;
+  transfer_currency?: string | null;
+  zelle_paid?: string | number | null;
+  zelle_currency?: string | null;
+  /** Pools de la transacción en CUP canónico (reconstrucción legada). */
+  cash_amount?: string | number | null;
+  transfer_amount?: string | number | null;
+  zelle_amount?: string | number | null;
+  sale_currency?: string | null;
+}
+
+/** Fila de payment_transactions (ref_type='sale') de una venta del período. */
+export interface IpvSalePaymentRow {
+  transaction_id: string;
+  payment_method: string;
+  currency: string | null;
+  amount: string | number | null;
+  exchange_rate: string | number | null;
 }
 
 export interface IpvDevolutionLineRow {
@@ -115,7 +166,9 @@ export interface IpvRow {
   existenciaFinal: number | null;
   /** Ventas en importe — CUP, moneda contable (tasa histórica de cada venta). */
   ventasImporteCup: number;
-  /** Informativo: importe nativo USD de líneas price_currency='USD'. */
+  /** USD efectivamente COBRADOS en la venta (payment_transactions/desglose por
+   * ítem/reconstrucción legada) — un precio de referencia USD del catálogo NO
+   * genera importe aquí (CORRECCIÓN IPV 2026-11-11). */
   ventasImporteUsd: number;
   hasPeriodMovements: boolean;
   incidenceTypes: IpvIncidenceType[];
@@ -248,6 +301,10 @@ export interface IpvComputeInput {
   salesLines: IpvSalesLineRow[];
   devolutionLines: IpvDevolutionLineRow[];
   products: IpvProductRow[];
+  /** Filas de payment_transactions (ref_type='sale') de las ventas del período —
+   * moneda REAL de cada componente del cobro. Opcional: sin ellas la
+   * reconstrucción cae al desglose por ítem / heurística legada. */
+  salesPayments?: IpvSalePaymentRow[];
 }
 
 /**
@@ -276,7 +333,7 @@ export function totalsFromRows(rows: IpvRow[]): IpvTotals {
  * Calcula el IPV completo. PURA — sin I/O — para pruebas A–L con datos sintéticos.
  */
 export function computeIpv(input: IpvComputeInput): IpvResult {
-  const { window, movements, inventory, salesLines, devolutionLines, products } = input;
+  const { window, movements, inventory, salesLines, devolutionLines, products, salesPayments } = input;
   const from = new Date(window.fromISO).getTime();
   const to = new Date(window.toISO).getTime();
 
@@ -334,6 +391,16 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
   for (const inv of inventory) currentQty.set(inv.product_id, num(inv.quantity));
 
   // ── 3. Importes de venta (dominio dinero, separado del ledger) ───────────
+  // CUP contable: SIN CAMBIO (tasa histórica de cada venta — computeLineTotalCup).
+  //
+  // USD efectivamente cobrados (CORRECCIÓN IPV 2026-11-11): la moneda de cada
+  // importe se determina por el registro REAL de la venta y sus pagos, con la
+  // MISMA fuente única del Reporte de Entrega (collection-currency.ts):
+  //   · ledger payment_transactions por componente (ventas con payment_components);
+  //   · desglose del cobro por ítem (cash_paid/cash_currency…);
+  //   · reconstrucción legada documentada (zelle→USD; exact-match→USD cash
+  //     legado; resto CUP canónico).
+  // La moneda del PRECIO del ítem (catálogo) ya NO genera importe USD.
   const salesCup = new Map<string, number>();
   const salesUsd = new Map<string, number>();
   for (const line of salesLines) {
@@ -341,14 +408,69 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
     const { total, anomaly } = computeLineTotalCup(line);
     salesCup.set(pid, (salesCup.get(pid) ?? 0) + total);
     if (anomaly) priceAnomalyProducts.add(pid);
-    if (((line.currency ?? line.price_currency) ?? '').toUpperCase() === 'USD') {
-      // MISIÓN MULTIMONEDA: moneda nativa del ítem (fallback price_currency para
-      // filas V1). El canónico CUP NO cambia (sigue viniendo de
-      // price_at_sale_cup con la tasa de cada venta).
-      const qty = num(line.quantity);
-      const price = num(line.price_at_sale);
-      salesUsd.set(pid, (salesUsd.get(pid) ?? 0) + round2(price * qty));
-    }
+  }
+
+  // 3b. Reconstrucción por venta → USD cobrado atribuible a cada línea.
+  const paymentsByTx = new Map<string, LedgerPayment[]>();
+  for (const p of salesPayments ?? []) {
+    if (!p.transaction_id) continue;
+    const lp: LedgerPayment = {
+      payment_method: String(p.payment_method ?? ''),
+      currency: String(p.currency ?? 'CUP'),
+      amount: num(p.amount),
+      exchange_rate: num(p.exchange_rate),
+    };
+    const list = paymentsByTx.get(p.transaction_id);
+    if (list) list.push(lp);
+    else paymentsByTx.set(p.transaction_id, [lp]);
+  }
+
+  // Agrupar líneas por venta (líneas sin transaction_id agrupan solas: su
+  // evidencia de pago, si existe, es el desglose por ítem de la propia línea).
+  const linesByTx = new Map<string, IpvSalesLineRow[]>();
+  salesLines.forEach((line, idx) => {
+    const key = line.transaction_id || `line:${idx}`;
+    const group = linesByTx.get(key);
+    if (group) group.push(line);
+    else linesByTx.set(key, [line]);
+  });
+
+  for (const [txKey, lines] of linesByTx) {
+    const first = lines[0];
+    const tx: CollectionTx = {
+      id: txKey.startsWith('line:') ? undefined : txKey,
+      cash_amount: first.cash_amount,
+      transfer_amount: first.transfer_amount,
+      zelle_amount: first.zelle_amount,
+      sale_currency: first.sale_currency,
+      sale_exchange_rate: first.sale_exchange_rate,
+    };
+    const items: CollectionItem[] = lines.map((l) => ({
+      transaction_id: tx.id ?? undefined,
+      product_id: l.product_id,
+      quantity: l.quantity,
+      price_at_sale: l.price_at_sale,
+      price_at_sale_cup: l.price_at_sale_cup,
+      // Moneda ORIGINAL de la línea; fallback legado price_currency → sale_currency
+      // (mismo encadenamiento que usa el Reporte de Entrega en items-summary).
+      currency: (l.currency ?? l.price_currency) ?? l.sale_currency ?? 'CUP',
+      exchange_rate: l.exchange_rate,
+      cash_paid: l.cash_paid,
+      cash_currency: l.cash_currency,
+      transfer_paid: l.transfer_paid,
+      transfer_currency: l.transfer_currency,
+      zelle_paid: l.zelle_paid,
+      zelle_currency: l.zelle_currency,
+    }));
+    const payments = tx.id ? paymentsByTx.get(tx.id) : undefined;
+    const reconstruction = reconstructTxCollections(tx, items, payments);
+    lines.forEach((l, i) => {
+      const col = reconstruction.perItem[i];
+      if (!col) return;
+      const usd = col.usd.cash + col.usd.transfer + col.usd.zelle;
+      if (usd === 0) return;
+      salesUsd.set(l.product_id, (salesUsd.get(l.product_id) ?? 0) + usd);
+    });
   }
 
   // ── 4. Devoluciones (dinero neto a restar; cantidades vienen del ledger) ─
