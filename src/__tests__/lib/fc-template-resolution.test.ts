@@ -5,7 +5,13 @@ import {
   isTemplateVisibleToUser,
   hasStoreMembership,
 } from '@/lib/integration/fc-template-resolution';
-import type { UserStoreMembership } from '@/types';
+import type { UserStoreMembership, UserRole } from '@/types';
+
+type SessionLike = { id: string; role: UserRole; memberships: UserStoreMembership[] };
+
+function sessionOf(role: UserRole, memberships: UserStoreMembership[] = []): SessionLike {
+  return { id: 'user-session', role, memberships };
+}
 
 // ============================================
 // isUuidTemplateId
@@ -123,36 +129,36 @@ describe('hasStoreMembership', () => {
 
 describe('isTemplateVisibleToUser', () => {
   it('admin global ve todo', () => {
-    const session = { id: 'user-2', role: 'admin', memberships: [] };
+    const session = sessionOf('admin');
     expect(isTemplateVisibleToUser({ type: 'private', created_by: 'user-1', store_id: null }, session)).toBe(true);
     expect(isTemplateVisibleToUser({ type: 'public', created_by: null, store_id: STORE_B }, session)).toBe(true);
   });
 
   it('plantilla privada SOLO visible para su propietario', () => {
-    const owner = { id: 'user-1', role: 'usuario', memberships: [] };
-    const other = { id: 'user-2', role: 'usuario', memberships: [] };
+    const owner = sessionOf('usuario');
+    const other = { ...sessionOf('usuario'), id: 'user-2' };
 
-    expect(isTemplateVisibleToUser({ type: 'private', created_by: 'user-1', store_id: null }, owner)).toBe(true);
+    expect(isTemplateVisibleToUser({ type: 'private', created_by: 'user-1', store_id: null }, { ...owner, id: 'user-1' })).toBe(true);
     // Exposición de plantillas de otra cuenta — bloqueada
     expect(isTemplateVisibleToUser({ type: 'private', created_by: 'user-1', store_id: null }, other)).toBe(false);
     expect(isTemplateVisibleToUser({ type: 'private', created_by: null, store_id: null }, other)).toBe(false);
   });
 
   it('plantilla pública global visible para cualquier autenticado', () => {
-    const session = { id: 'user-2', role: 'usuario', memberships: [] };
+    const session = sessionOf('usuario');
     expect(isTemplateVisibleToUser({ type: 'public', created_by: 'user-1', store_id: null }, session)).toBe(true);
   });
 
   it('plantilla pública de tienda X visible solo con membresía en X', () => {
-    const member = { id: 'user-2', role: 'usuario', memberships: membershipsOf([STORE_A, 'clerk', 'active']) };
-    const outsider = { id: 'user-3', role: 'usuario', memberships: membershipsOf([STORE_B, 'admin', 'active']) };
+    const member = sessionOf('usuario', membershipsOf([STORE_A, 'clerk', 'active']));
+    const outsider = sessionOf('usuario', membershipsOf([STORE_B, 'admin', 'active']));
 
     expect(isTemplateVisibleToUser({ type: 'public', created_by: 'user-1', store_id: STORE_A }, member)).toBe(true);
     expect(isTemplateVisibleToUser({ type: 'public', created_by: 'user-1', store_id: STORE_A }, outsider)).toBe(false);
   });
 
   it('plantillas de sistema visibles para todos', () => {
-    const session = { id: 'user-2', role: 'usuario', memberships: [] };
+    const session = sessionOf('usuario');
     expect(isTemplateVisibleToUser({ type: 'system', created_by: null, store_id: null }, session)).toBe(true);
   });
 });

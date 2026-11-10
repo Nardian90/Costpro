@@ -85,10 +85,13 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     // ── 4. Plantilla visible para el usuario ──
     const templateResult = await getVisibleUserTemplate(admin, template_id, session.user);
-    if (templateResult.error === 'not_found' || templateResult.error === 'not_visible') {
+    if (templateResult.error) {
+      // not_found (no existe) o not_visible (privada ajena / pública de tienda
+      // sin acceso) — misma respuesta para no revelar existencia de plantillas
+      // de otras cuentas.
       return NextResponse.json(createApiError('FC_TEMPLATE_NOT_FOUND'), { status: 404 });
     }
-    const template = templateResult.template;
+    const { template } = templateResult;
 
     if (!template.data || typeof template.data !== 'object') {
       return NextResponse.json(createApiError('FC_TEMPLATE_INVALID'), { status: 422 });

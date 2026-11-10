@@ -72,10 +72,10 @@ export function isUuidTemplateId(templateId: string | null | undefined): boolean
 
 /** Infiere la modalidad de una plantilla de usuario (header.destination), con default. */
 export function inferModalidadFromTemplate(
-  templateData: { header?: { destination?: unknown } } | null | undefined,
+  templateData: unknown,
   fallback: FCModalidad = 'produccion',
 ): FCModalidad {
-  const dest = templateData?.header?.destination;
+  const dest = (templateData as { header?: { destination?: unknown } } | null | undefined)?.header?.destination;
   return VALID_MODALIDADES.includes(dest as FCModalidad) ? (dest as FCModalidad) : fallback;
 }
 
@@ -122,13 +122,14 @@ export function isTemplateVisibleToUser(
 
 /**
  * Carga una plantilla de usuario y valida su visibilidad.
- * Retorna { template } | { error: 'not_found' | 'not_visible' }.
+ * Unión discriminada estricta (error/template requeridos en cada variante)
+ * para que el narrowing funcione sin `possibly undefined`.
  */
 export async function getVisibleUserTemplate(
   admin: SupabaseClient,
   templateId: string,
   session: Pick<AuthenticatedSession['user'], 'id' | 'role' | 'memberships'>,
-): Promise<{ template: UserTemplateRow; error?: undefined } | { template?: undefined; error: TemplateVisibilityError }> {
+): Promise<{ template: UserTemplateRow; error: undefined } | { template: undefined; error: TemplateVisibilityError }> {
   const { data, error } = await admin
     .from('cost_sheet_templates')
     .select('id, name, description, category, data, type, created_by, store_id')
@@ -136,15 +137,15 @@ export async function getVisibleUserTemplate(
     .maybeSingle();
 
   if (error || !data) {
-    return { error: 'not_found' };
+    return { template: undefined, error: 'not_found' };
   }
 
   const template = data as UserTemplateRow;
   if (!isTemplateVisibleToUser(template, session)) {
-    return { error: 'not_visible' };
+    return { template: undefined, error: 'not_visible' };
   }
 
-  return { template };
+  return { template, error: undefined };
 }
 
 // ── Resolución de plantilla efectiva ─────────────────────────────────────
