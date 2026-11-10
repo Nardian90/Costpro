@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 139 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 140 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -396,9 +396,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // CP-DOC-SC-DATA-MAPPING-006 (2026-11-08): +1 código consecutivo de tienda (20261108200000) = 136; +1 número documental de entrada (20261108201000) = 137
     // COSTPRO-SALES-DASHBOARD-REFINEMENT-002 (2026-11-08): +1 comparación entre tiendas (20261108220000) = 138
     // CP-OPERATIONAL-CLASS-002 (2026-11-08): +1 clasificación operativa del catálogo (20261108150000, remediación RPCs) = 139
-    expect(m.total_incluidos).toBe(139);
+    // CP-PLANTILLAS-FASE2 (2026-11-10): +1 plantillas privadas por propietario (20261110120000_cp_plantillas_privadas_propietario) = 140
+    expect(m.total_incluidos).toBe(140);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(139);
+    expect(incluidos.length).toBe(140);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

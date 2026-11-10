@@ -4,7 +4,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import {
   Zap, PenTool, Layers, Swords,
-  Save, Upload, FileSpreadsheet, FileText, FileJson,
+  Save, Upload, FileSpreadsheet, FileText, FileJson, LayoutTemplate,
 } from 'lucide-react';
 
 import { CostSheetModeDropdown, CostSheetViewMode } from './CostSheetModeDropdown';
@@ -96,6 +96,9 @@ interface CostSheetModuleNavProps {
     onExportPdf: () => void;
     /** C2-C: descarga la ficha como archivo JSON (independiente de Guardar). */
     onExportJson?: () => void;
+    /** CP-PLANTILLAS-FASE2 §4: abre el diálogo «Guardar como Plantilla»
+     *  (modelo reutilizable en el Explorador — distinto de GUARDAR FICHA). */
+    onSaveAsTemplate?: () => void;
     /** Estado de la PERSISTENCIA real (no del autosave local). */
     isSaving?: boolean;
   };
@@ -160,7 +163,10 @@ export function CostSheetModuleNav({
 
           <div className="w-px h-6 bg-border/60 shrink-0" aria-hidden="true" />
 
-          {/* ZONA DE ACCIONES — C2-C: Guardar ≠ Exportar JSON (mandato §15-§18) */}
+          {/* ZONA DE ACCIONES — C2-C: Guardar ≠ Exportar JSON (mandato §15-§18).
+              CP-PLANTILLAS-FASE2 §4: tres procesos inequívocos —
+              GUARDAR FICHA (cost_sheets) · GUARDAR COMO PLANTILLA
+              (Explorador de Plantillas) · EXPORTAR JSON (archivo local). */}
           <button
             type="button"
             onClick={fichaContext.onSave}
@@ -171,6 +177,18 @@ export function CostSheetModuleNav({
             <Save className="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>{fichaContext.isSaving ? 'Guardando…' : 'Guardar Ficha'}</span>
           </button>
+
+          {fichaContext.onSaveAsTemplate && (
+            <button
+              type="button"
+              onClick={fichaContext.onSaveAsTemplate}
+              className="flex items-center gap-1.5 px-3 h-11 min-h-[44px] rounded-xl shrink-0 active:scale-[0.98] transition-all text-xs font-black uppercase tracking-widest bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20"
+              aria-label="Guardar como Plantilla: guarda la ficha actual como modelo reutilizable en el Explorador de Plantillas"
+            >
+              <LayoutTemplate className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>Guardar como Plantilla</span>
+            </button>
+          )}
 
           <button
             type="button"
