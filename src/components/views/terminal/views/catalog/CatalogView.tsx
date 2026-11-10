@@ -1314,6 +1314,11 @@ export default function CatalogView() {
             if (info?.resolution.status === 'existing') return info.resolution.costSheet.id;
             return null;
           })()}
+          currentTemplateId={(() => {
+            const info = fcInfoMap.get(fcPreviewProduct.id);
+            if (info?.resolution.status === 'existing') return info.resolution.costSheet.template_id;
+            return null;
+          })()}
         />
       )}
     </div>

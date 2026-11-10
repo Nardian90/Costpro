@@ -4,11 +4,17 @@
  * @file React Query hooks for Product Cost Sheet (FC) data fetching and mutations.
  * @description Provides typed data-fetching and mutation hooks for a single
  * product's FC using the project's API routes.
+ *
+ * FC-USR-TEMPLATE (2026-11-10): useGenerateFCFromTemplate conecta un producto
+ * con una Ficha de Costo generada desde una plantilla guardada por el usuario
+ * (cost_sheet_templates — «Mis Plantillas Guardadas en COSTPRO»).
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store';
+import { supabase } from '@/lib/supabaseClient';
 import type { ProductCostSheetContract, ProductFCStatus } from '@/contracts/product-cost-sheet';
+import type { CostSheetTemplateRecord } from '@/services/cost-sheet-template-service';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -42,6 +48,40 @@ export interface AutoGenerateFCPayload {
   product_id: string;
   store_id: string;
   pdf_format?: string;
+}
+
+// ─── FC-USR-TEMPLATE: generación desde plantilla guardada del usuario ─────────
+
+/** Payload for POST /api/product-cost-sheets/generate-from-template */
+export interface GenerateFCFromTemplatePayload {
+  product_id: string;
+  store_id: string;
+  /** UUID de cost_sheet_templates */
+  template_id: string;
+  modalidad?: 'produccion' | 'servicios' | 'comercializacion';
+  pdf_format?: string;
+}
+
+/** Shape returned by POST /api/product-cost-sheets/generate-from-template */
+interface GenerateFCFromTemplateResponse {
+  data: Record<string, unknown> & {
+    fc_status?: ProductFCStatus;
+    generated?: boolean;
+    template_id?: string;
+    template_name?: string;
+    template_source?: 'user' | 'store';
+    modalidad?: string;
+    cost_price?: number;
+    total_cost?: number;
+    total_margin?: number;
+    total_tax?: number;
+    grand_total?: number;
+    elapsed_ms?: number;
+    validation_errors?: string[];
+    generation_error?: string;
+    error_code?: string;
+    message?: string;
+  };
 }
 
 /** Shape returned by POST /api/product-cost-sheets/auto-generate */
@@ -238,6 +278,112 @@ export function useDeleteProductCostSheet() {
       }),
     onSuccess: () => {
       // Invalidate all FC-related queries
+      queryClient.invalidateQueries({
+        queryKey: ['product-cost-sheets'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['product-cost-sheets-batch'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['products'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['inventory'],
+      });
+    },
+  });
+}
+
+// ─── FC-USR-TEMPLATE: plantillas guardadas del usuario ─────────────────────
+
+/**
+ * useFCTemplateOptions — Plantillas de Ficha de Costo disponibles para el
+ * usuario actual en el servidor (cost_sheet_templates):
+ *
+ *   - Privadas: propiedad de la cuenta (created_by = usuario, RLS).
+ *   - Públicas: globales o de tiendas a las que el usuario tiene acceso (RLS).
+ *
+ * Se consultan con el cliente Supabase del navegador → la RLS de
+ * cost_sheet_templates (migración 20261110120000) es la fuente de verdad:
+ * nunca se exponen plantillas privadas de otras cuentas. Multi-dispositivo:
+ * viven en el servidor, no en localStorage.
+ */
+export function useFCTemplateOptions() {
+  return useQuery<CostSheetTemplateRecord[], Error>({
+    queryKey: ['fc-template-options'],
+    queryFn: async (): Promise<CostSheetTemplateRecord[]> => {
+      const { data: session } = await supabase.auth.getUser();
+      if (!session.user?.id) return [];
+
+      // Privadas del usuario + públicas visibles (la RLS filtra por cuenta).
+      const [privRes, pubRes] = await Promise.all([
+        supabase
+          .from('cost_sheet_templates')
+          .select('id, name, description, category, data, type, created_by, store_id, created_at, updated_at')
+          .eq('type', 'private')
+          .eq('created_by', session.user.id)
+          .order('updated_at', { ascending: false, nullsFirst: false }),
+        supabase
+          .from('cost_sheet_templates')
+          .select('id, name, description, category, data, type, created_by, store_id, created_at, updated_at')
+          .eq('type', 'public')
+          .order('updated_at', { ascending: false, nullsFirst: false }),
+      ]);
+
+      const rows: CostSheetTemplateRecord[] = [];
+      for (const res of [privRes, pubRes]) {
+        for (const row of (res.data ?? []) as Record<string, unknown>[]) {
+          rows.push({
+            id: String(row.id),
+            name: String(row.name ?? ''),
+            description: row.description != null ? String(row.description) : null,
+            category: row.category != null ? String(row.category) : null,
+            data: row.data as CostSheetTemplateRecord['data'],
+            type: (row.type as CostSheetTemplateRecord['type']) ?? 'private',
+            created_by: row.created_by != null ? String(row.created_by) : null,
+            store_id: row.store_id != null ? String(row.store_id) : null,
+            created_at: row.created_at != null ? String(row.created_at) : null,
+            updated_at: row.updated_at != null ? String(row.updated_at) : null,
+          });
+        }
+      }
+
+      // Estables y sin duplicados por id (públicas de tienda + globales)
+      const seen = new Set<string>();
+      return rows.filter(r => (seen.has(r.id) ? false : (seen.add(r.id), true)));
+    },
+    staleTime: 60_000,
+    retry: 1,
+  });
+}
+
+/**
+ * useGenerateFCFromTemplate — Mutation que conecta un producto con una Ficha
+ * de Costo generada desde una plantilla guardada del usuario.
+ *
+ * POST /api/product-cost-sheets/generate-from-template.
+ * La asociación persiste en product_cost_sheets + products.cost_sheet_id
+ * (servidor): sobrevive recargas, cierres de sesión y cambios de dispositivo.
+ */
+export function useGenerateFCFromTemplate() {
+  const queryClient = useQueryClient();
+
+  return useMutation<GenerateFCFromTemplateResponse, Error, GenerateFCFromTemplatePayload>({
+    mutationFn: (payload) =>
+      apiFetch<GenerateFCFromTemplateResponse>(
+        '/api/product-cost-sheets/generate-from-template',
+        {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        },
+      ),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: productCostSheetKeys.detail(
+          variables.product_id,
+          variables.store_id,
+        ),
+      });
       queryClient.invalidateQueries({
         queryKey: ['product-cost-sheets'],
       });

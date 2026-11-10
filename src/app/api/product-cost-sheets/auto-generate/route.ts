@@ -9,6 +9,8 @@ import { quickPdfSchema } from '@/validation/api-schemas';
 import { autoGenerateFC, type FCGenerationResult, type FCGenerationError } from '@/lib/integration/fc-generator-service';
 import { getAdminClient } from '@/lib/supabase-admin';
 import { auditService } from '@/services/audit-service';
+import { invalidateCache } from '@/lib/fc-pdf-cache';
+import { resolveEffectiveTemplate, type EffectiveTemplate } from '@/lib/integration/fc-template-resolution';
 import type { FCStoreTemplateInput, FCExistingCostSheetInput } from '@/lib/integration/fc-automation';
 
 export const runtime = 'nodejs';
@@ -84,68 +86,53 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       });
     }
 
-    // 5. Get store template
-    const { data: storeTemplate, error: templateError } = await admin
-      .from('store_cost_templates')
+    // 5. FC activa existente del producto (fuente de verdad — índice único parcial)
+    const { data: activeSheet } = await admin
+      .from('product_cost_sheets')
       .select('*')
-      .eq('store_id', resolvedStoreId)
-      .eq('is_active', true)
+      .eq('product_id', product_id)
+      .is('deleted_at', null)
       .maybeSingle();
 
-    if (templateError) {
-      console.error('[FC Auto-Generate] Template fetch error:', templateError.message);
-      return NextResponse.json(createApiError('STORE_COST_TEMPLATE_FETCH_FAILED'), { status: 500 });
-    }
+    // 5b. Plantilla efectiva: asociación del producto (UUID de cost_sheet_templates)
+    // > plantilla predeterminada de la tienda (comportamiento histórico).
+    const effectiveTemplate: EffectiveTemplate | null = await resolveEffectiveTemplate(admin, {
+      storeId: resolvedStoreId,
+      existingTemplateId: activeSheet?.template_id ?? null,
+    });
 
-    if (!storeTemplate) {
+    if (!effectiveTemplate) {
       return NextResponse.json({
         data: {
           product_id,
           store_id: resolvedStoreId,
           fc_status: 'sin_fc',
           needs_template: true,
-          message: 'Esta tienda no tiene plantilla de FC asignada. Configure una plantilla predeterminada primero.',
+          message: 'Esta tienda no tiene plantilla de FC asignada. Configure una plantilla predeterminada o conecte el producto con una plantilla guardada.',
         },
       });
     }
 
-    // 6. If product already has a valid FC, fetch it
+    // 6. Si ya existe una FC válida, usarla como entrada (atajo idempotente)
     let existingCostSheet: FCExistingCostSheetInput | null = null;
-    if (product.cost_sheet_id) {
-      const { data: csData } = await admin
-        .from('product_cost_sheets')
-        .select('*')
-        .eq('id', product.cost_sheet_id)
-        .is('deleted_at', null)
-        .single();
-
-      if (csData) {
-        existingCostSheet = {
-          id: csData.id as string,
-          product_id: csData.product_id as string,
-          store_id: (csData.store_id as string) || resolvedStoreId,
-          template_id: (csData.template_id as string) || '',
-          modalidad: (csData.modalidad as 'produccion' | 'servicios' | 'comercializacion') || 'produccion',
-          calculated_data: (csData.calculated_data as Record<string, unknown>) || {},
-          cost_price: typeof csData.cost_price === 'string' ? parseFloat(csData.cost_price) : ((csData.cost_price as number) ?? 0),
-          cost_price_updated_at: (csData.cost_price_updated_at as string) ?? new Date().toISOString(),
-          sync_status: (csData.sync_status as 'pending' | 'synced' | 'conflict') ?? 'synced',
-          created_at: (csData.created_at as string) ?? new Date().toISOString(),
-          updated_at: (csData.updated_at as string) ?? new Date().toISOString(),
-          deleted_at: (csData.deleted_at as string | null) ?? null,
-        };
-      }
+    if (activeSheet) {
+      existingCostSheet = {
+        id: activeSheet.id as string,
+        product_id: activeSheet.product_id as string,
+        store_id: (activeSheet.store_id as string) || resolvedStoreId,
+        template_id: (activeSheet.template_id as string) || '',
+        modalidad: (activeSheet.modalidad as 'produccion' | 'servicios' | 'comercializacion') || 'produccion',
+        calculated_data: (activeSheet.calculated_data as Record<string, unknown>) || {},
+        cost_price: typeof activeSheet.cost_price === 'string' ? parseFloat(activeSheet.cost_price) : ((activeSheet.cost_price as number) ?? 0),
+        cost_price_updated_at: (activeSheet.cost_price_updated_at as string) ?? new Date().toISOString(),
+        sync_status: (activeSheet.sync_status as 'pending' | 'synced' | 'conflict') ?? 'synced',
+        created_at: (activeSheet.created_at as string) ?? new Date().toISOString(),
+        updated_at: (activeSheet.updated_at as string) ?? new Date().toISOString(),
+        deleted_at: (activeSheet.deleted_at as string | null) ?? null,
+      };
     }
 
-    // 7. Generate FC
-    const storeTemplateInput: FCStoreTemplateInput = {
-      template_id: storeTemplate.template_id,
-      template_data: storeTemplate.template_data,
-      modalidad: storeTemplate.modalidad,
-      pdf_format: storeTemplate.pdf_format,
-      is_active: storeTemplate.is_active,
-    };
-
+    // 7. Generate FC — con la plantilla EFECTIVA (producto > tienda)
     const genResult = await autoGenerateFC({
       product: {
         name: product.name,
@@ -157,9 +144,20 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       },
       product_id,
       store_id: resolvedStoreId,
-      storeTemplate: storeTemplateInput,
+      storeTemplate: {
+        template_id: effectiveTemplate.template_id,
+        template_data: effectiveTemplate.template_data as Record<string, unknown> | null,
+        modalidad: effectiveTemplate.modalidad,
+        pdf_format: 'res148',
+        is_active: true,
+      } as FCStoreTemplateInput,
       existingCostSheet,
       fc_auto_enabled: product.fc_auto_enabled,
+      directTemplate: effectiveTemplate.source === 'product' ? {
+        template_id: effectiveTemplate.template_id,
+        template_data: effectiveTemplate.template_data,
+        modalidad: effectiveTemplate.modalidad,
+      } : null,
     });
 
     if (!genResult.success) {
@@ -253,6 +251,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       .update({ cost_sheet_id: csData!.id })
       .eq('id', product_id);
 
+    // FC regenerada → invalidar PDF cacheado para no servir una versión vieja
+    await invalidateCache(resolvedStoreId, product_id);
+
     const saveData = csData;
 
     // 9. Audit log
@@ -272,6 +273,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         ...saveData,
         fc_status: 'vigente',
         generated: true,
+        template_source: effectiveTemplate.source,
         cost_price: result.cost_price,
         total_cost: result.total_cost,
         total_margin: result.total_margin,
@@ -279,7 +281,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         grand_total: result.grand_total,
         elapsed_ms: result.elapsed_ms,
         validation_errors: result.validation_errors,
-        pdf_format: pdf_format || storeTemplate.pdf_format,
+        pdf_format: pdf_format || 'res148',
       },
     }, { status: 201 });
   } catch (error: unknown) {

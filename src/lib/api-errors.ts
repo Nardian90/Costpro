@@ -52,6 +52,9 @@ export const API_ERRORS = {
   PRODUCT_COST_SHEET_SAVE_FAILED: { key: 'apiErrors.productCostSheetSaveFailed', status: 500, defaultMessage: 'Error al guardar ficha de costo del producto' },
   FC_INVALIDATE_FAILED: { key: 'apiErrors.fcInvalidateFailed', status: 500, defaultMessage: 'Error al invalidar fichas de costo' },
   PDF_EXPORT_FAILED: { key: 'apiErrors.pdfExportFailed', status: 500, defaultMessage: 'Error al exportar PDF' },
+  FC_TEMPLATE_NOT_FOUND: { key: 'apiErrors.fcTemplateNotFound', status: 404, defaultMessage: 'Plantilla de ficha no encontrada o sin acceso' },
+  FC_TEMPLATE_INVALID: { key: 'apiErrors.fcTemplateInvalid', status: 422, defaultMessage: 'La plantilla guardada no es válida para generar la ficha de costo' },
+  FC_PRODUCT_STORE_MISMATCH: { key: 'apiErrors.fcProductStoreMismatch', status: 403, defaultMessage: 'El producto no pertenece a la tienda indicada' },
 
   // AI / Bot
   AI_UNAVAILABLE: { key: 'apiErrors.aiUnavailable', status: 503, defaultMessage: 'El servicio AI no está disponible' },

@@ -11,10 +11,13 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
-import { useAutoGenerateFC, useDeleteProductCostSheet } from '@/hooks/api/useProductCostSheet';
+import { FCTemplatePicker } from '@/components/ui/FCTemplatePicker';
+import { useAutoGenerateFC, useDeleteProductCostSheet, useFCTemplateOptions } from '@/hooks/api/useProductCostSheet';
 import type { ProductFCStatus } from '@/contracts/product-cost-sheet';
 import type { FCPdfFormat } from '@/contracts/store-cost-template';
-import { FileText, Download, Loader2, AlertCircle, Trash2, RefreshCw } from 'lucide-react';
+import { FC_TEMPLATE_OPTIONS } from '@/components/ui/StoreTemplateSelector';
+import { useUIStore } from '@/store';
+import { FileText, Download, Loader2, AlertCircle, Trash2, RefreshCw, Unlink, LayoutTemplate, Store as StoreIcon } from 'lucide-react';
 import { authHeaders } from '@/services/store-api-client';
 
 // ============================================
@@ -29,15 +32,27 @@ interface FCPreviewModalProps {
   storeId: string;
   fcStatus: ProductFCStatus;
   pdfFormat?: FCPdfFormat;
-  /** ID del cost sheet existente (para poder eliminarlo) */
+  /** ID del cost sheet existente (para poder eliminarlo/regenerarlo) */
   costSheetId?: string | null;
+  /** template_id de la FC activa (UUID de cost_sheet_templates o clave de sistema) */
+  currentTemplateId?: string | null;
 }
 
 // ============================================
 // Internal states
 // ============================================
 
-type ModalViewMode = 'loading' | 'preview' | 'generate' | 'regenerating' | 'no_template' | 'error';
+type ModalViewMode =
+  | 'loading'
+  | 'preview'
+  | 'generate'
+  | 'regenerating'
+  | 'no_template'
+  | 'select_template'
+  | 'confirm_disconnect'
+  | 'error';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ============================================
 // Component
@@ -52,6 +67,7 @@ export function FCPreviewModal({
   fcStatus,
   pdfFormat = 'res148',
   costSheetId,
+  currentTemplateId,
 }: FCPreviewModalProps) {
   // Track the effective status — can change from pendiente → vigente after generation
   const [effectiveStatus, setEffectiveStatus] = useState<ProductFCStatus>(fcStatus);
@@ -61,19 +77,41 @@ export function FCPreviewModal({
   // FIX-FC-AUTH: Store PDF as blob URL so iframe can display it with auth
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
+  // FC-USR-TEMPLATE: vistas internas del modal
+  // pickerMode: null | 'connect' | 'change' — selector de plantillas guardadas
+  const [pickerMode, setPickerMode] = useState<'connect' | 'change' | null>(null);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+  // Nombre legible de la plantilla recién conectada (feedback visual)
+  const [connectedTemplateName, setConnectedTemplateName] = useState<string | null>(null);
+
   // FIX-FC-RATE-LIMIT: Track in-flight fetch to prevent duplicate requests
   const fetchInProgressRef = useRef(false);
+
+  // Navegación real de la terminal (SPA de vistas Zustand — corrige el 404
+  // del antiguo <a href="/settings/stores/{storeId}">)
+  const setCurrentView = useUIStore(s => s.setCurrentView);
+  const setActiveCostSection = useUIStore(s => s.setActiveCostSection);
+
+  const autoGenerateMutation = useAutoGenerateFC();
+  const deleteMutation = useDeleteProductCostSheet();
+  const { data: userTemplates = [] } = useFCTemplateOptions();
 
   // Sync external fcStatus changes via queueMicrotask to satisfy react-hooks/set-state-in-effect
   useEffect(() => {
     queueMicrotask(() => {
       setEffectiveStatus(fcStatus);
       setPdfLoadError(false);
+      setPickerMode(null);
+      setConfirmDisconnect(false);
     });
   }, [fcStatus]);
 
-  const autoGenerateMutation = useAutoGenerateFC();
-  const deleteMutation = useDeleteProductCostSheet();
+  // Reset feedback de conexión al cerrar
+  useEffect(() => {
+    if (!open) {
+      queueMicrotask(() => setConnectedTemplateName(null));
+    }
+  }, [open]);
 
   // Build the PDF URL
   const pdfUrl = useMemo(
@@ -82,15 +120,32 @@ export function FCPreviewModal({
     [productId, storeId, pdfFormat],
   );
 
+  // Nombre legible de la plantilla asociada (nunca IDs técnicos como etiqueta principal)
+  const currentTemplateName = useMemo(() => {
+    if (!currentTemplateId) return null;
+    if (UUID_RE.test(currentTemplateId)) {
+      const found = userTemplates.find(t => t.id === currentTemplateId);
+      return found?.name ?? 'Plantilla guardada';
+    }
+    const sys = FC_TEMPLATE_OPTIONS.find(o => o.id === currentTemplateId);
+    return sys?.label ?? null;
+  }, [currentTemplateId, userTemplates]);
+
   // Determine the current view mode
+  // NOTA de precedencia: las vistas internas del selector/desconexión tienen
+  // prioridad sobre pdfLoadError — si el usuario abrió el selector o la
+  // confirmación, no se le expulsa a la vista de error por un fallo previo
+  // de carga del PDF (puede reintentar al volver a la vista previa).
   const viewMode: ModalViewMode = useMemo(() => {
+    if (confirmDisconnect) return 'confirm_disconnect';
+    if (pickerMode) return 'select_template';
     if (pdfLoadError) return 'error';
     if (isRegenerating) return 'regenerating';
     if (autoGenerateMutation.isPending || deleteMutation.isPending) return 'loading';
     if (effectiveStatus === 'vigente') return pdfLoading ? 'loading' : 'preview';
     if (effectiveStatus === 'pendiente') return 'generate';
     return 'no_template';
-  }, [effectiveStatus, pdfLoadError, autoGenerateMutation.isPending, deleteMutation.isPending, pdfLoading, isRegenerating]);
+  }, [effectiveStatus, pdfLoadError, autoGenerateMutation.isPending, deleteMutation.isPending, pdfLoading, isRegenerating, pickerMode, confirmDisconnect]);
 
   // FIX-FC-AUTH: Fetch PDF with auth header when in preview mode
   // FIX-FC-RATE-LIMIT: Only fetch once per open+preview cycle, not on every viewMode change
@@ -125,7 +180,7 @@ export function FCPreviewModal({
       setPdfBlobUrl(null);
       fetchInProgressRef.current = false;
     }
-  }, [open, effectiveStatus, pdfUrl]);  
+  }, [open, effectiveStatus, pdfUrl]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -134,7 +189,7 @@ export function FCPreviewModal({
         URL.revokeObjectURL(pdfBlobUrl);
       }
     };
-  }, []);  
+  }, []);
 
   // Helper: revoke and reset PDF blob
   const resetPdfBlob = useCallback(() => {
@@ -164,6 +219,8 @@ export function FCPreviewModal({
   }, [autoGenerateMutation, productId, storeId]);
 
   // Delete + Regenerate: soft-delete the existing FC, then auto-generate a new one
+  // (la regeneración usa la plantilla EFECTIVA: la asociada al producto si la
+  // tiene, o la predeterminada de la tienda)
   const handleDeleteAndRegenerate = useCallback(async () => {
     if (!costSheetId) return;
     setIsRegenerating(true);
@@ -197,6 +254,38 @@ export function FCPreviewModal({
       setIsRegenerating(false);
     }
   }, [costSheetId, deleteMutation, autoGenerateMutation, productId, storeId, resetPdfBlob]);
+
+  // FC-USR-TEMPLATE: desconectar la ficha del producto (soft-delete + unlink)
+  const handleDisconnect = useCallback(async () => {
+    if (!costSheetId) return;
+    try {
+      await deleteMutation.mutateAsync({ cost_sheet_id: costSheetId });
+      resetPdfBlob();
+      setConfirmDisconnect(false);
+      // Sin FC → volver al estado de primera conexión (selector de plantillas)
+      setEffectiveStatus('sin_fc');
+      setPickerMode('connect');
+    } catch {
+      // Error toast handled by the mutation hook
+      setConfirmDisconnect(false);
+    }
+  }, [costSheetId, deleteMutation, resetPdfBlob]);
+
+  // FC-USR-TEMPLATE: conexión exitosa desde el selector
+  const handleTemplateConnected = useCallback((result: {
+    template_id: string;
+    template_name?: string | null;
+    cost_price?: number;
+  }) => {
+    setPickerMode(null);
+    setEffectiveStatus('vigente');
+    setPdfLoadError(false);
+    setPdfLoading(true);
+    setConnectedTemplateName(result.template_name ?? null);
+    // pdfBlobUrl es null tras resetPdfBlob → el useEffect reintenta el fetch
+    resetPdfBlob();
+    setPdfLoading(true);
+  }, [resetPdfBlob]);
 
   const handleRetry = useCallback(() => {
     resetPdfBlob();
@@ -244,8 +333,26 @@ export function FCPreviewModal({
     setPdfLoadError(false);
     setPdfLoading(false);
     setIsRegenerating(false);
+    setPickerMode(null);
+    setConfirmDisconnect(false);
     onClose();
   }, [onClose]);
+
+  // Corrección del 404: navegación REAL dentro de la terminal (SPA de vistas).
+  // El antiguo <a href="/settings/stores/{id}"> apuntaba a una ruta Next.js
+  // inexistente — los ajustes de la tienda viven en el hub Gestión de Tiendas
+  // (view 'management-hub', pestaña Configuración por defecto → StoreSettingsView
+  // → StoreEditForm con los campos de plantilla FC de la tienda).
+  const goToStoreSettings = useCallback(() => {
+    handleClose();
+    setCurrentView('management-hub');
+  }, [handleClose, setCurrentView]);
+
+  const goToTemplateExplorer = useCallback(() => {
+    handleClose();
+    setCurrentView('cost-sheets');
+    setActiveCostSection('templates');
+  }, [handleClose, setCurrentView, setActiveCostSection]);
 
   const isBusy = autoGenerateMutation.isPending || deleteMutation.isPending || isRegenerating;
 
@@ -264,15 +371,20 @@ export function FCPreviewModal({
       >
         {/* ── Header ── */}
         <DialogHeader className="px-6 pt-6 pb-2 shrink-0 border-b border-border">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <DialogTitle id="fc-preview-title" className="flex items-center gap-2 text-base">
               <FileText className="size-5 text-primary shrink-0" />
               <span className="truncate">Ficha de Costo — {productName}</span>
             </DialogTitle>
             <FCStatusBadge status={effectiveStatus} variant="pill" />
+            {currentTemplateName && effectiveStatus === 'vigente' && !pickerMode && (
+              <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded bg-muted text-muted-foreground truncate max-w-[220px]" title={currentTemplateName}>
+                {currentTemplateName}
+              </span>
+            )}
           </div>
           <DialogDescription className="sr-only">
-            Vista previa y opciones de exportación de la Ficha de Costo para {productName}
+            Vista previa, conexión con plantillas guardadas y opciones de exportación de la Ficha de Costo para {productName}
           </DialogDescription>
         </DialogHeader>
 
@@ -297,6 +409,14 @@ export function FCPreviewModal({
           {/* PDF Preview (vigente) */}
           {viewMode === 'preview' && (
             <div className="relative w-full h-full min-h-[300px]">
+              {connectedTemplateName && (
+                <div className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 flex items-center gap-2" role="status">
+                  <AlertCircle className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                    Ficha conectada con «{connectedTemplateName}». La asociación quedó guardada en el servidor.
+                  </p>
+                </div>
+              )}
               {pdfLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
                   <Loader2 className="size-8 animate-spin text-primary" />
@@ -327,46 +447,122 @@ export function FCPreviewModal({
                   la Ficha de Costo. Pulse el botón para generarla automáticamente.
                 </p>
               </div>
-              <Button onClick={handleGenerate} disabled={autoGenerateMutation.isPending}>
-                {autoGenerateMutation.isPending ? (
-                  <>
-                    <Loader2 className="size-4 animate-spin" />
-                    Generando…
-                  </>
-                ) : (
-                  <>
-                    <FileText className="size-4" />
-                    Generar FC
-                  </>
-                )}
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button onClick={handleGenerate} disabled={autoGenerateMutation.isPending}>
+                  {autoGenerateMutation.isPending ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Generando…
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="size-4" />
+                      Generar FC
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setPickerMode('connect')}
+                  disabled={autoGenerateMutation.isPending}
+                >
+                  <LayoutTemplate className="size-4" />
+                  Conectar plantilla guardada
+                </Button>
+              </div>
             </div>
           )}
 
-          {/* No template (sin_fc) */}
-          {viewMode === 'no_template' && (
+          {/* FC-USR-TEMPLATE: selector de plantillas guardadas (sin_fc o cambio) */}
+          {viewMode === 'select_template' && (
+            <div className="flex flex-col h-full min-h-[300px] max-h-[60vh]">
+              <FCTemplatePicker
+                productId={productId}
+                productName={productName}
+                storeId={storeId}
+                currentTemplateId={currentTemplateId}
+                mode={pickerMode === 'change' ? 'change' : 'connect'}
+                onConnected={handleTemplateConnected}
+                className="flex-1 min-h-0"
+              />
+              {pickerMode === 'change' && (
+                <div className="pt-3 shrink-0">
+                  <Button variant="ghost" size="sm" onClick={() => setPickerMode(null)} disabled={deleteMutation.isPending}>
+                    Volver a la Ficha actual
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* FC-USR-TEMPLATE: desconexión con confirmación */}
+          {viewMode === 'confirm_disconnect' && (
             <div className="flex flex-col items-center justify-center h-full min-h-[300px] gap-4 text-center">
-              <div className="rounded-full bg-muted/50 p-4">
-                <AlertCircle className="size-10 text-muted-foreground" />
+              <div className="rounded-full bg-destructive/10 p-4">
+                <Unlink className="size-10 text-destructive" />
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-semibold text-foreground">
-                  Sin plantilla configurada para esta tienda
+                  ¿Desconectar la Ficha de Costo?
                 </p>
                 <p className="text-xs text-muted-foreground max-w-sm">
-                  No se ha configurado una plantilla de Ficha de Costo para esta tienda.
-                  Configure una en los ajustes de la tienda para habilitar la generación automática.
+                  «{productName}» quedará sin Ficha de Costo asociada. La ficha actual se
+                  marcará como eliminada (se conserva su historial) y podrás conectar una
+                  nueva plantilla cuando lo necesites.
                 </p>
               </div>
-              <Button
-                variant="outline"
-                asChild
-              >
-                <a href={`/settings/stores/${storeId}`}>
-                  <FileText className="size-4" />
-                  Ir a ajustes de tienda
-                </a>
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setConfirmDisconnect(false)} disabled={deleteMutation.isPending}>
+                  Cancelar
+                </Button>
+                <Button variant="destructive" onClick={handleDisconnect} disabled={deleteMutation.isPending}>
+                  {deleteMutation.isPending ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" />
+                      Desconectando…
+                    </>
+                  ) : (
+                    <>
+                      <Unlink className="size-4" />
+                      Desconectar
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* No template (sin_fc) — antes dead-end; ahora selector de plantillas */}
+          {viewMode === 'no_template' && (
+            <div className="flex flex-col h-full min-h-[300px] max-h-[60vh] gap-3">
+              <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 shrink-0">
+                <LayoutTemplate className="size-4 text-primary shrink-0 mt-0.5" />
+                <p className="text-xs text-foreground/90 font-medium">
+                  Este producto no tiene Ficha de Costo. Selecciona una de tus plantillas
+                  guardadas en COSTPRO para conectarla — no necesitas una plantilla
+                  predeterminada de tienda.
+                </p>
+              </div>
+              <FCTemplatePicker
+                productId={productId}
+                productName={productName}
+                storeId={storeId}
+                currentTemplateId={currentTemplateId}
+                mode="connect"
+                onConnected={handleTemplateConnected}
+                className="flex-1 min-h-0"
+              />
+              {/* Accesos de respaldo: crear plantillas / plantilla de tienda */}
+              <div className="flex flex-col sm:flex-row gap-2 shrink-0 pt-1">
+                <Button variant="outline" size="sm" onClick={goToTemplateExplorer} className="flex-1 min-h-[44px]">
+                  <LayoutTemplate className="size-4" />
+                  Ir a Plantillas de Fichas
+                </Button>
+                <Button variant="outline" size="sm" onClick={goToStoreSettings} className="flex-1 min-h-[44px]">
+                  <StoreIcon className="size-4" />
+                  Ajustes de la tienda
+                </Button>
+              </div>
             </div>
           )}
 
@@ -399,12 +595,20 @@ export function FCPreviewModal({
         </div>
 
         {/* ── Footer ── */}
-        <DialogFooter className="px-6 py-4 shrink-0 border-t border-border gap-2">
-          {effectiveStatus === 'vigente' && !pdfLoadError && (
+        <DialogFooter className="px-6 py-4 shrink-0 border-t border-border gap-2 flex-wrap">
+          {effectiveStatus === 'vigente' && !pdfLoadError && !pickerMode && !confirmDisconnect && (
             <>
               <Button variant="outline" onClick={handleExportPdf}>
                 <Download className="size-4" />
                 Exportar PDF
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setPickerMode('change')}
+                disabled={isBusy}
+              >
+                <LayoutTemplate className="size-4" />
+                Cambiar Ficha
               </Button>
               <Button
                 variant="outline"
@@ -415,11 +619,27 @@ export function FCPreviewModal({
                 <RefreshCw className="size-4" />
                 Eliminar y Regenerar
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => setConfirmDisconnect(true)}
+                disabled={isBusy || !costSheetId}
+                className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Unlink className="size-4" />
+                Desconectar
+              </Button>
             </>
           )}
-          <Button variant="ghost" onClick={handleClose}>
-            Cerrar
-          </Button>
+          {viewMode === 'select_template' && pickerMode === 'connect' && (
+            <Button variant="ghost" onClick={handleClose}>
+              Cerrar
+            </Button>
+          )}
+          {viewMode !== 'select_template' && viewMode !== 'confirm_disconnect' && (
+            <Button variant="ghost" onClick={handleClose}>
+              Cerrar
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
