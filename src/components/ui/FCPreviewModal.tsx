@@ -77,6 +77,13 @@ export function FCPreviewModal({
   // FIX-FC-AUTH: Store PDF as blob URL so iframe can display it with auth
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
+  // FC-E2E-PR1598 (race de cierres obsoletos): «época» del PDF. Cada
+  // invalidación (resetPdfBlob) la incrementa; los fetch en vuelo con época
+  // anterior se descartan al resolver, y el estado (en deps del efecto)
+  // fuerza el refetch aunque pdfBlobUrl no cambie (fetch aún en vuelo).
+  const [pdfEpoch, setPdfEpoch] = useState(0);
+  const pdfEpochRef = useRef(0);
+
   // FC-USR-TEMPLATE: vistas internas del modal
   // pickerMode: null | 'connect' | 'change' — selector de plantillas guardadas
   const [pickerMode, setPickerMode] = useState<'connect' | 'change' | null>(null);
@@ -155,6 +162,7 @@ export function FCPreviewModal({
       fetchInProgressRef.current = true;
       setPdfLoading(true);
       setPdfLoadError(false);
+      const myEpoch = pdfEpochRef.current;
 
       fetch(pdfUrl, { method: 'GET', headers: authHeaders() })
         .then(res => {
@@ -162,12 +170,17 @@ export function FCPreviewModal({
           return res.blob();
         })
         .then(blob => {
+          // FC-E2E-PR1598: respuesta obsoleta (hubo un reset posterior —
+          // cambio de ficha/regeneración) → descartar sin tocar el estado:
+          // el fetch relanzado por el reset es el dueño del ciclo.
+          if (pdfEpochRef.current !== myEpoch) return;
           const url = URL.createObjectURL(blob);
           setPdfBlobUrl(url);
           setPdfLoading(false);
           fetchInProgressRef.current = false;
         })
         .catch(() => {
+          if (pdfEpochRef.current !== myEpoch) return;
           setPdfLoadError(true);
           setPdfLoading(false);
           fetchInProgressRef.current = false;
@@ -180,7 +193,13 @@ export function FCPreviewModal({
       setPdfBlobUrl(null);
       fetchInProgressRef.current = false;
     }
-  }, [open, effectiveStatus, pdfUrl]);
+    // FC-E2E-PR1598: pdfBlobUrl DEBE estar en las dependencias. La condición
+    // del efecto lee `!pdfBlobUrl`, pero resetPdfBlob() (cambio de ficha /
+    // regeneración sobre una FC ya vigente) lo pone a null SIN cambiar
+    // effectiveStatus/pdfUrl → el efecto no se re-ejecutaba y el modal quedaba
+    // atascado en «Cargando vista previa…» para siempre (violación de
+    // exhaustive-deps detectada por el E2E del recorrido completo).
+  }, [open, effectiveStatus, pdfUrl, pdfBlobUrl, pdfEpoch]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -191,14 +210,25 @@ export function FCPreviewModal({
     };
   }, []);
 
-  // Helper: revoke and reset PDF blob
+  // Helper: revoke and reset PDF blob.
+  // FC-E2E-PR1598: updater FUNCIONAL + identidad estable (deps []). Motivo:
+  // handleConfirm (FCTemplatePicker) await-ea mutateAsync; si el fetch del PDF
+  // resuelve durante ese await, el cierre que corre tras el await es el del
+  // render ANTERIOR — con pdfBlobUrl obsoleto (null) — y el reset clásico
+  // leía pdfBlobUrl del cierre → NO null-eaba el estado real → el efecto
+  // (`!pdfBlobUrl`) no volvía a dispararse → «Cargando vista previa…»
+  // eterno tras cambiar ficha de una FC ya vigente. Con updater funcional el
+  // reset se aplica al estado VIGENTE sea cual sea el cierre que lo invoque;
+  // el bump de época descarta fetches obsoletos y fuerza el refetch.
   const resetPdfBlob = useCallback(() => {
-    if (pdfBlobUrl) {
-      URL.revokeObjectURL(pdfBlobUrl);
-      setPdfBlobUrl(null);
-    }
+    setPdfBlobUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
+    pdfEpochRef.current += 1;
+    setPdfEpoch(pdfEpochRef.current);
     fetchInProgressRef.current = false;
-  }, [pdfBlobUrl]);
+  }, []);
 
   // Handlers
   const handleGenerate = useCallback(async () => {
