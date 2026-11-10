@@ -19,10 +19,10 @@ Ruta del usuario: Inicio → OPERACIÓN → Almacén → Inventario (`view: inve
 
 ### A.2 Causa del error 404 de «Ir a ajustes de tienda»
 
-- `FCPreviewModal.tsx` (línea ~365) renderiza `<a href={`/settings/stores/${storeId}`}>`.
+- `FCPreviewModal.tsx` (línea ~365) renderizaba `<a href={`/settings/stores/${storeId}`}>`.
 - La aplicación es una SPA de terminal (HomePageClient → TerminalShell) donde las vistas son estado de Zustand (`useUIStore.setCurrentView`); NO existen rutas Next.js de ajustes por tienda (`src/app/settings/` no existe).
 - La configuración real y funcional de la plantilla predeterminada de la tienda existe: vista `management-hub` (OPERACIÓN → Gestión de Tiendas) → pestaña «Configuración» (por defecto) → `StoreSettingsView` → `StoreEditForm` (campos FC) → `useStoreEdit.editStoreWithFC` → `PUT /api/store-cost-templates` (implementado y operativo).
-- Conclusión: **el apartado existe; solo el enlace apunta a una ruta inexistente**.
+- Conclusión: **el apartado existe; solo el enlace apuntaba a una ruta inexistente**.
 
 ### A.3 Arquitectura encontrada
 
@@ -33,47 +33,102 @@ Ruta del usuario: Inicio → OPERACIÓN → Almacén → Inventario (`view: inve
 | FC por producto | `product_cost_sheets` (uq activa por producto: índice parcial `WHERE deleted_at IS NULL`; template_id TEXT; calculated_data; cost_price; sync_status) + `products.cost_sheet_id` | Tienda (RLS por membresía) | Servidor |
 | Plantillas de sistema | 13 plantillas en código (`TEMPLATE_REGISTRY`, `src/lib/data/*`) | Aplicación | Código |
 
-Flujos de generación: `auto-generate` (route) y `recalculate-on-price-change` usan **siempre** la plantilla de tienda; `generateFC()` solo resuelve plantillas del registro frontend (13 claves).
+Flujos de generación: `auto-generate` (route) y `recalculate-on-price-change` usaban **siempre** la plantilla de tienda; `generateFC()` solo resolvía plantillas del registro frontend (13 claves).
 
 ### A.4 Problemas de diseño identificados
 
 - **P1** Dead-end UX: tienda sin plantilla predeterminada → imposible conectar producto con FC pese a tener plantillas de usuario en servidor.
 - **P2** Enlace roto 404: ruta URL inexistente en SPA de vistas.
-- **P3** Dos ecosistemas de plantillas sin puente: `cost_sheet_templates` (usuario) no participa en la generación de FC de productos.
+- **P3** Dos ecosistemas de plantillas sin puente: `cost_sheet_templates` (usuario) no participaba en la generación de FC de productos.
 - **P4** Regeneración/recálculo siempre con plantilla de tienda → sobrescribiría cualquier asociación explícita producto↔plantilla.
-- **P5** `InventoryView` no pasa `costSheetId` a `FCPreviewModal` → «Eliminar y Regenerar» permanentemente deshabilitado.
+- **P5** `InventoryView` no pasaba `costSheetId` a `FCPreviewModal` → «Eliminar y Regenerar» permanentemente deshabilitado.
+- **P6 (detectado durante la implementación)** El `PATCH /api/product-cost-sheets` (desconexión) borraba por ID con service role sin validar la tienda del cost sheet: un encargado de la tienda A podía desconectar FCs de la tienda B conociendo el ID.
 
-## B. Solución (decisiones)
+## B. Solución implementada
 
-**Reutilizar `product_cost_sheets` como estructura de asociación producto↔FC (sin tablas nuevas).**
+**`product_cost_sheets` como estructura de asociación (sin tablas nuevas, sin migraciones).**
 
-1. Conectar producto con plantilla guardada = generar FC desde `cost_sheet_templates.data` y persistirla en `product_cost_sheets` con `template_id = UUID de la plantilla`; `products.cost_sheet_id` enlaza (FK existente). Modalidad: opcional en la petición, inferida de `data.header.destination`, default `produccion`.
-2. Nueva capacidad de generación: `generateFCFromTemplateData()` (mismo pipeline inject→build→validate→calculate).
-3. Nueva API `POST /api/product-cost-sheets/generate-from-template` con autorización manual espejo de RLS (service-role):
-   - producto existe y pertenece a la tienda indicada;
-   - caller con membresía activa admin/manager/encargado/costo en esa tienda (o admin global);
-   - plantilla visible para el usuario: private → `created_by = usuario`; public → `store_id IS NULL` o acceso a esa tienda;
-   - upsert check-then-insert/update + link + audit + invalidación de caché PDF.
-4. Preservación de asociación (P4): resolución de «plantilla efectiva» — si la FC existente tiene `template_id` UUID presente en `cost_sheet_templates`, regenerar con esa; si no, plantilla de tienda (comportamiento actual intacto). Aplicado a `auto-generate` y `recalculate-on-price-change`.
-5. Selector en `FCPreviewModal`: estados `no_template` (selector de plantillas del usuario + CTA a Plantillas de Fichas si no hay ninguna + acceso a ajustes de tienda corregido) y `vigente` (consultar PDF, cambiar plantilla con confirmación, desconectar con confirmación).
-6. Corrección 404: navegación real a `setCurrentView('management-hub')` (hub Gestión de Tiendas, tab Configuración por defecto) conservando el contexto de tienda activa.
+### B.1 Archivos modificados/creados
 
-## C. Seguridad (verificación previa)
+| Archivo | Cambio |
+|---|---|
+| `src/lib/integration/fc-generator-service.ts` | + `generateFCFromTemplateData()` (pipeline inject→build→validate→calculate con CostSheetData arbitraria); refactor del pipeline común a `runGenerationPipeline()`; `autoGenerateFC` acepta `directTemplate` (preserva asociación) |
+| `src/lib/integration/fc-template-resolution.ts` | **NUEVO** — `resolveEffectiveTemplate()` (cadena producto>tienda), `isUuidTemplateId()`, `inferModalidadFromTemplate()`, `hasStoreMembership()`, `isTemplateVisibleToUser()`, `getVisibleUserTemplate()` (espejo manual de la RLS) |
+| `src/app/api/product-cost-sheets/generate-from-template/route.ts` | **NUEVO** — POST: valida payload/CSRF/rate-limit, producto y pertenencia a tienda, membresía admin/manager/encargado/costo, visibilidad de plantilla; genera; upsert check-then-insert/update; link `products.cost_sheet_id`; invalida caché PDF; auditoría |
+| `src/app/api/product-cost-sheets/auto-generate/route.ts` | Usa `resolveEffectiveTemplate`; preserva asociación explícita; invalida caché PDF tras regeneración |
+| `src/lib/integration/recalculate-on-price-change.ts` | Usa `resolveEffectiveTemplate`; el recálculo ya no exige plantilla de tienda si el producto tiene asociación de usuario |
+| `src/app/api/product-cost-sheets/route.ts` | PATCH endurecido: valida tienda del cost sheet + membresía antes de soft-delete (P6); idempotente |
+| `src/validation/api-schemas.ts` | + `generateFromTemplateSchema` |
+| `src/lib/api-errors.ts` | + `FC_TEMPLATE_NOT_FOUND`, `FC_TEMPLATE_INVALID`, `FC_PRODUCT_STORE_MISMATCH` |
+| `src/hooks/api/useProductCostSheet.ts` | + `useFCTemplateOptions` (consulta RLS desde navegador), `useGenerateFCFromTemplate` |
+| `src/components/ui/FCTemplatePicker.tsx` | **NUEVO** — panel selector con búsqueda, selección única, modalidad opcional, marca «Actual», estados de carga/error/vacío |
+| `src/components/ui/FCPreviewModal.tsx` | sin_fc → selector embebido + CTAs (Plantillas de Fichas / Ajustes de tienda corregido); vigente → Cambiar Ficha + Desconectar (confirmación) + chip de nombre legible; pendiente → Generar FC o conectar plantilla; precedencia de vistas internas sobre error de PDF |
+| `src/components/views/terminal/views/inventory/InventoryView.tsx` | pasa `costSheetId` + `currentTemplateId` al modal (P5) |
+| `src/components/views/terminal/views/catalog/CatalogView.tsx` | pasa `currentTemplateId` |
+| `scripts/verify-fc-user-template-flow.mjs` | **NUEVO** — verificación read-only repetible de esquema/RLS |
+| tests (5 archivos) | 79 pruebas nuevas |
 
-- RLS vigente en `cost_sheet_templates` (6 políticas, propietario), `store_cost_templates` (7), `product_cost_sheets` (6) — sin cambios.
-- Las API de FC usan service-role con autorización manual en ruta (patrón existente FIX-FC-PERSIST-V3); la nueva ruta replica y amplía las validaciones (pertenencia de producto a tienda, visibilidad de plantilla).
-- Aislamiento multitienda: FC y productos por tienda; plantilla de usuario compartible entre tiendas autorizadas **sin** compartir datos operativos (la plantilla solo se lee; las adaptaciones viven en `calculated_data` de cada FC).
+### B.2 Funcionamiento de la conexión producto↔ficha
 
-## D. Pruebas (plan)
+1. Inventario → botón FC del producto → `FCPreviewModal`.
+2. Sin FC → selector de plantillas guardadas (privadas del usuario + públicas visibles; RLS del navegador como fuente de verdad). Búsqueda/filtrado; selección; confirmación.
+3. Confirmación → `POST /api/product-cost-sheets/generate-from-template` → FC calculada con el cost-engine → fila en `product_cost_sheets` con `template_id = UUID` de la plantilla + `products.cost_sheet_id` enlazado (FK existente).
+4. El modal pasa a vigente: vista previa PDF (quick-pdf funciona desde `calculated_data`), exportación, cambio de ficha (con aviso de reemplazo) y desconexión (confirmación + soft-delete).
+5. La asociación persiste en el servidor: sobrevive recargas, sesiones y dispositivos. No se usa localStorage/sessionStorage para la relación.
 
-- Unit: `generateFCFromTemplateData` (pipeline puro con plantilla de fixture).
-- Integración API: validación de permisos, pertenencia de producto, visibilidad de plantilla (private ajena → 404/403), upsert idempotente.
-- Componente: `FCPreviewModal` estados del selector.
-- Regresión: `resolveProductFC` intacto; auto-generate con plantilla de tienda intacto.
-- Suite: `bun run test` (vitest), `bun run lint`, `bunx tsc --noEmit`, `bun run build`.
+### B.3 Funcionamiento de la plantilla predeterminada de tienda (intacta)
+
+- `resolveEffectiveTemplate`: asociación del producto (UUID existente en `cost_sheet_templates`) > plantilla activa de `store_cost_templates`.
+- Tiendas sin asociaciones de producto conservan el comportamiento histórico (auto-generate/recalculate con la plantilla de tienda).
+- Si la plantilla de usuario asociada se elimina, la regeneración cae a la plantilla de tienda sin romperse.
+
+## C. Seguridad
+
+- **Sin cambios de RLS ni migraciones** — las políticas vigentes se respetan:
+  - `cost_sheet_templates` (6 políticas, propietario — migración 20261110120000): el selector consulta con el cliente autenticado del navegador (RLS real); la API service-role replica la visibilidad manualmente (`getVisibleUserTemplate`): private → `created_by = usuario`; public → global o tienda con membresía activa; system → visible; admin/superadmin → todo. Test: plantilla privada ajena → 404.
+  - `product_cost_sheets` (RLS por membresía de tienda): la nueva API escribe con service role tras validar manualmente producto/pertenencia/membresía (patrón FIX-FC-PERSIST-V3 del proyecto).
+- **Aislamiento multitienda**: `FC_PRODUCT_STORE_MISMATCH` si el producto no pertenece a la tienda objetivo; FCs y productos por tienda; PATCH endurecido (P6) valida la tienda del cost sheet antes de desconectar (test: encargado de tienda B no puede desconectar FC de tienda A → 403).
+- **Autorizaciones**: `withRole('encargado')` (membresías activas cuentan vía `hasRole`) + validación explícita de rol admin/manager/encargado/costo en la tienda. Clerk sin privilegio de costo → 403 (test). Membresías revocadas → 403 (test).
+- **Plantillas intactas**: `generateFCFromTemplateData` opera sobre un clon; nunca escribe en `cost_sheet_templates` (test «no muta la plantilla guardada original»). Las adaptaciones por contexto (modalidad) viven en la FC, no en la plantilla.
+- **Verificación de BD aislada** (read-only, repetible): `node scripts/verify-fc-user-template-flow.mjs` → PASS 5/5 (columnas de las 3 tablas + enlace products.cost_sheet_id + anon bloqueado).
+- **RLS real verificado**: suite `fc-rls-database.test.ts` (57 tests) pasa contra la BD del entorno.
+
+## D. Pruebas
+
+### D.1 Escenarios (misión §9) y su cobertura
+
+| # | Escenario | Evidencia |
+|---|---|---|
+| 1 | Usuario con plantilla conecta producto | API test «crea product_cost_sheets con template_id = UUID…» (201, insert con UUID, link) |
+| 2 | Varias plantillas, selecciona una específica | Componente: selector lista 2 plantillas; unit: inferModalidad/picker filtrado |
+| 3 | Sin plantillas → instrucciones | Componente: estado vacío del picker + botón «Ir a Plantillas de Fichas» (navegación verificada) |
+| 4 | Producto con ficha asociada la consulta | Componente: vigente → vista previa + nombre legible de plantilla; quick-pdf usa calculated_data |
+| 5 | Cambia la ficha vinculada | Componente: «Cambiar Ficha» abre selector con aviso de reemplazo; API: upsert update-path (no duplica) |
+| 6 | Desconecta con permiso | PATCH endurecido: 200 con membresía; confirmación en UI |
+| 7-8 | Persistencia tras recarga/relogin | Asociación en BD (`product_cost_sheets` + `products.cost_sheet_id`); sin localStorage (inspección de código: hooks invalidan y reconsultan desde el servidor) |
+| 9 | Plantilla de usuario en otra tienda autorizada | API test «admin global…» + diseño: plantilla privada consultable en cualquier tienda con permiso de FC |
+| 10 | Sin permisos no modifica | API tests 403 (sin membresía / rol clerk) |
+| 11 | No asocia productos de otra tienda | API test FC_PRODUCT_STORE_MISMATCH 403 |
+| 12 | Ajustes de Tienda sin 404 | Componente: sin `<a href="/settings/stores">`; navega a `management-hub` (spy verificado) |
+| 13 | Plantilla predeterminada sigue funcionando | Unit: «sin directTemplate usa la plantilla de tienda» + «atajo idempotente»; auto-generate reescrito con fallback |
+| 14 | Plantilla no se modifica al usarla | Unit: «no muta la plantilla guardada original» |
+
+### D.2 Resultados
+
+- **vitest (suite completa):** 5764 pass / 1 fail — el fallo (`db-integration.test.ts`, superadmin memberships) es **preexistente en main puro** (verificado con worktree en 5c43fcd6b: mismo fallo; drift de datos de producción, fuera de alcance).
+- **Nuevos tests:** 79 (fc-generator-service 27, fc-template-resolution 17, fc-generate-from-template API 18, fc-disconnect-hardening 7, fc-preview-modal componente 10).
+- **TypeScript:** `tsc --noEmit` → 0 errores.
+- **Lint:** 0 errores (1509 warnings preexistentes del proyecto; 2 avisos nuevos de estilo `<Button>` en listbox-option/mock).
+- **Build de producción:** compilación selectiva de las rutas afectadas (página principal + rutas API FC) ✓ «Compiled successfully» (51s). El build completo no cabe en el sandbox (4.1GB RAM → OOM; limitación documentada por el propio repo en docs/audits/COSTPRO-PERFORMANCE-AUDIT.md §4.2); el type-check embebido del build muere por OOM silencioso (reproducido con heap reducido; con heap 6GB pasa). **CI de GitHub ejecutará el build real en el PR.**
+- **Smoke en vivo (dev server):** `POST /api/product-cost-sheets/generate-from-template` sin sesión → 401; `GET /` → 200.
 
 ## E. Integración
 
-- Rama: `fix/fc-producto-plantilla-20261110` desde `main` (SHA base: 5c43fcd6b).
-- Commits por fase (diagnóstico → backend → frontend → pruebas → informe).
-- PR objetivo: Nardian90/Costpro, título y cuerpo en español con evidencia.
+- Rama: `fix/fc-producto-plantilla-20261110` (desde main 5c43fcd6b), commits por fase:
+  1. `c76522c5a` docs: expediente de auditoría.
+  2. `7532d2a3c` feat: API generate-from-template + preservación de asociación.
+  3. `10983f600` feat: selector de Fichas de Costo en Inventario + corrección 404.
+  4. (este commit) fix: endurecimiento del PATCH de desconexión + script verificación + tests.
+- PR: se abre vía API con este expediente como base del cuerpo.
+- CI: checks automáticos del repo (TypeScript/lint/test/build en runners de GitHub). El workflow «E2E Aislado (CostproE2E)» es manual (workflow_dispatch), sin cambios.
+- Sin migraciones → nada que aplicar a producción.

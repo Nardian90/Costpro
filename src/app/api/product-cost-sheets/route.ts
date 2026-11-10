@@ -282,7 +282,12 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 /**
  * PATCH /api/product-cost-sheets
  * Soft-deletes a cost sheet (sets deleted_at) and clears cost_sheet_id on products.
- * Admin-only.
+ *
+ * FC-USR-TEMPLATE (seguridad, misión §6): antes de borrar se valida que la FC
+ * pertenezca a una tienda donde el caller tenga membresía activa con rol
+ * admin/manager/encargado/costo (o sea admin global). Antes el service role
+ * borraba por ID sin verificar la tienda — un encargado de la tienda A podía
+ * desconectar FCs de la tienda B con solo conocer el ID.
  */
 async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
@@ -306,6 +311,30 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     const supKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     if (!supUrl || !supKey) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
     const admin = createClient(supUrl, supKey, { auth: { autoRefreshToken: false, persistSession: false } });
+
+    // ── Autorización por tienda (service role bypassa RLS → validación manual) ──
+    const { data: targetSheet, error: fetchError } = await admin
+      .from('product_cost_sheets')
+      .select('id, store_id, deleted_at')
+      .eq('id', cost_sheet_id)
+      .maybeSingle();
+
+    if (fetchError || !targetSheet) {
+      return NextResponse.json(createApiError('PRODUCT_NOT_FOUND'), { status: 404 });
+    }
+
+    // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
+    const isAdmin = isAdminLevel(session.user.role);
+    const memberships = session.user.memberships || [];
+    const hasStoreAccess = isAdmin || memberships.some(
+      m => m.store_id === targetSheet.store_id && m.status === 'active' && ['admin', 'manager', 'encargado', 'costo'].includes(m.role)
+    );
+    if (!hasStoreAccess) return NextResponse.json(createApiError('STORE_ACCESS_DENIED'), { status: 403 });
+
+    // Idempotente: ya estaba desconectada
+    if (targetSheet.deleted_at) {
+      return NextResponse.json({ data: { soft_deleted: true, cost_sheet_id } }, { status: 200 });
+    }
 
     // Soft-delete: set deleted_at on the cost sheet
     const { error: updateError } = await admin
