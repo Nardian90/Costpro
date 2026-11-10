@@ -509,7 +509,7 @@ export default function IpvVentasView() {
             <span className="font-bold text-foreground">{applied.storeName}</span>
             <span>{applied.cfg.startDate} → {applied.cfg.endDate}</span>
             <span>Generado: {new Date(applied.generatedAt).toLocaleString('es')}</span>
-            <span>Monedas: CUP contable · USD informativo</span>
+            <span>Monedas: CUP contable · USD efectivamente cobrado</span>
             <span>{filteredRows.length} de {applied.rows.length} productos</span>
             {ipvAnyFilterActive(resultFilters) && (
               <span data-testid="ipv-filtros-activos" className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 font-bold text-primary">
