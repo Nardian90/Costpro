@@ -171,7 +171,7 @@ jobs:
         run: |
           FILTER="${{ github.event.inputs.spec_filter }}"
           if [ -z "$FILTER" ]; then
-            FILTER='health-api|isolated-db-sentinel|auth.spec.ts|data-hygiene-probe|isolation-proof|inventory.spec.ts|pos-checkout|inventory-integrity'
+            FILTER='health-api|isolated-db-sentinel|auth.spec.ts|data-hygiene-probe|isolation-proof|inventory.spec.ts|pos-checkout|inventory-integrity|fc-template-picker'
           fi
           echo "Filtro: $FILTER"
           bunx playwright test --project=core --reporter=line,json --retries=0 "$FILTER"
