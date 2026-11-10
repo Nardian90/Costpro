@@ -1,5 +1,9 @@
 -- =====================================================================
 -- 20261110120000_cp_infra_020_truncate_breaker.sql — CP-INFRA-020 T4 (D4.1)
+-- DESTRUCTIVE-OK: CP-INFRA-020 (la única 'sentencia' destructiva posible es
+-- el DROP TRIGGER IF EXISTS idempotente de la propia reinstalación; el
+-- archivo NO ejecuta TRUNCATE/DROP de datos: los PREVIENE. Mencionar
+-- session_replication_role en comentarios no es una sentencia.)
 -- Freno de TRUNCATE: un TRUNCATE accidental sobre tablas críticas FALLA
 -- incluso con session_replication_role='replica' (trigger ENABLE ALWAYS).
 --
