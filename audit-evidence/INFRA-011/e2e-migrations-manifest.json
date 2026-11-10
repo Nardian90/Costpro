@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 556,
-  "total_incluidos": 141,
+  "total_considerados": 557,
+  "total_incluidos": 142,
   "total_excluidos": 415,
-  "digest": "83ea6cdca66ac5ac0ebdec9a8cbb3b1efb7c4f275ad890733d97d18a1b1156ca",
+  "digest": "277e9fa4ac338069690289f3e84d196e8c717e406cb3fd6b71b7b2564767f71b",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5422,6 +5422,17 @@
       "sha256_generado": "a4e514c1732fd8c9d993576f6b982ffd83a7350c2cd51e2742857f0dec86375e"
     },
     {
+      "nombre": "20261110120000_cp_infra_020_truncate_breaker.sql",
+      "bytes": 6661,
+      "sha256_original": "e1d388ad1020b69f5bb1ef20365cf60711b96a194d73c0b17b016ac23d8b5447",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261110",
+      "observaciones": [],
+      "posicion": 141,
+      "sha256_generado": "e1d388ad1020b69f5bb1ef20365cf60711b96a194d73c0b17b016ac23d8b5447"
+    },
+    {
       "nombre": "20261110120000_cp_plantillas_privadas_propietario.sql",
       "bytes": 14640,
       "sha256_original": "fbe9a0f17c43eeb534f8e51749524d9c13ba117a8c0b2fa72af7504d36d8e434",
@@ -5429,7 +5440,7 @@
       "razon": null,
       "timestamp": "20261110",
       "observaciones": [],
-      "posicion": 141,
+      "posicion": 142,
       "sha256_generado": "fbe9a0f17c43eeb534f8e51749524d9c13ba117a8c0b2fa72af7504d36d8e434"
     },
     {

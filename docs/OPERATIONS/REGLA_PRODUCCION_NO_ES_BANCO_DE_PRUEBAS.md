@@ -74,3 +74,36 @@ Tests del contrato: `src/__tests__/scripts/assert-not-production.test.ts` (24 ca
 
 - El tráfico de la aplicación Next.js en sí (usuarios reales) — su optimización se trata en `PRESUPUESTO_LIMITES_SUPABASE_FREE.md` §origen.
 - La BD local de desarrollo (`DATABASE_URL=file:./db/custom.db`) — no pasa por Supabase.
+
+## 7. Scripts destructivos y freno de TRUNCATE (CP-INFRA-020, 2026-11-10)
+
+El guard del §4 NO cubría los scripts SQL pensados para pegarse en el SQL
+Editor de Supabase (no pasan por `assert-not-production`): el borrado masivo
+de producción de sep–oct-2026 encaja con ese patrón (informe
+DATA-INTEGRITY-REMEDIATION-001, riesgos R5/R6). CP-INFRA-020 cierra ese hueco:
+
+- **Guard DENTRO del SQL**: todo script destructivo de `supabase/scripts/`
+  (el mantenido `reset_demo_data_pro.sql` y los seis de `deprecated/`) abre
+  una transacción cuyo primer bloque `DO $guard$` aborta si la BD no es
+  desechable: exige la centinela `public.e2e_is_isolated_db()` → true Y la
+  ausencia de `public.production_migration_ledger` (esa tabla solo existe en
+  producción). CostproE2E tiene ambas → queda bloqueada (no es BD de demos).
+  Cómo preparar una BD desechable: `supabase/scripts/README.md`.
+- **Lint de CI**: `scripts/ci/check-destructive-guard.cjs` (job `quality` de
+  `ci.yml`) falla el build ante cualquier archivo versionado destructivo sin
+  guard; las migraciones NUEVAS con TRUNCATE/DROP SCHEMA/DISABLE TRIGGER
+  exigen `-- DESTRUCTIVE-OK: CP-xxx`. Excepciones solo con justificación y
+  vencimiento ≤90 días (`scripts/ci/destructive-allowlist.json`).
+- **Freno de TRUNCATE (PREPARADO, pendiente de compuerta)**: la migración
+  `20261110120000_cp_infra_020_truncate_breaker.sql` instala un trigger
+  `BEFORE TRUNCATE` con `ENABLE ALWAYS` en 33 tablas críticas: un TRUNCATE
+  falla incluso con `session_replication_role='replica'`, salvo bypass
+  documentado (`docs/OPERATIONS/BYPASS_FRENO_TRUNCATE.md`). Solo se aplica a
+  producción con la frase literal `AUTORIZO BREAKER PROD`.
+- **Censo de filas**: `scripts/ops/row-census.cjs` (solo lectura, con guard)
+  guarda conteos por tabla y compara contra el censo anterior — correrlo con
+  cada respaldo semanal para detectar caídas grandes (>20% y >50 filas) sin
+  mirar datos. Ejemplo de uso en `audit-evidence/CP-INFRA-020/`.
+
+Inventario completo de la superficie destructiva (con permisos medidos):
+`docs/OPERATIONS/SUPERFICIE_DESTRUCTIVA.md`.

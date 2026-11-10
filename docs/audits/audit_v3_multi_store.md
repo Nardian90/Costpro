@@ -36,6 +36,7 @@ Detailed findings below with file:line evidence.
   Categories are derived dynamically from the product list (which is already store-filtered by `get_products_for_pos`).
 - `src/components/ui/atomic/index.tsx:166-219` — `CategoryChips` is a pure display component that just renders whatever string array it receives.
 - A `categories` table exists only in `DEMO_RESET_SCRIPT_V2.sql:63` (manual demo reset) — NOT in any production migration.
+  - *(Actualización CP-INFRA-020, 2026-11-10: `DEMO_RESET_SCRIPT_V2.sql` fue movido a `supabase/scripts/deprecated/` y ahora exige guard de BD desechable; la cita original se conserva como referencia histórica.)*
 
 ### Current Behavior
 - Categories are NOT a separate table; they are a free-text column on `products`.

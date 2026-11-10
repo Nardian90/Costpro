@@ -26,7 +26,11 @@
 Cualquier escritura en producción exige la frase literal correspondiente de
 `docs/audits/CIERRE_PENDIENTES_SEC-005_LEDGER_UI-001_2026-11-06.md`:
 `AUTORIZO LEDGER PROD` (siembra del libro), `AUTORIZO MIGRACIONES ATRASADAS PROD: <lista>`,
-`AUTORIZO UI-001 LIMPIEZA PROD`. Sin frase exacta: preparar, probar en CostproE2E y documentar.
+`AUTORIZO UI-001 LIMPIEZA PROD`, y desde CP-INFRA-020 (2026-11-10):
+`AUTORIZO BREAKER PROD` (aplicar el freno de TRUNCATE
+`20261110120000_cp_infra_020_truncate_breaker.sql`; procedimiento completo en
+`docs/OPERATIONS/BYPASS_FRENO_TRUNCATE.md`). Sin frase exacta: preparar,
+probar en CostproE2E y documentar.
 
 ## Estado de partida (T0, 2026-11-06) [MEDIDO]
 
@@ -42,3 +46,19 @@ Cualquier escritura en producción exige la frase literal correspondiente de
   comparaciones ni migraciones hasta que el propietario lo indique.
 - Las funciones de infraestructura del sandbox E2E (`e2e_hard_delete_*`) no son objeto de
   producción.
+
+## Censo de filas con cada respaldo semanal (CP-INFRA-020 T5)
+
+Tras cada respaldo cifrado semanal, correr el censo de filas (solo conteos,
+sin datos ni PII; guard de lectura incluido):
+
+```bash
+export ALLOW_PROD=read-only
+export DATABASE_URL='<cadena de conexión de solo lectura>'   # sin credenciales en el comando
+node scripts/ops/row-census.cjs --against scripts/ops/censos/censo-anterior.json
+```
+
+Una caída grande (>20% relativo y >50 filas) devuelve exit 1 y un mensaje que
+prohíbe restaurar a ciegas: primero revisar el respaldo más reciente y el
+acta de la operación. El JSON del censo queda en `scripts/ops/censos/`
+(gitignored si se prefiere local; nunca contiene datos de fila).

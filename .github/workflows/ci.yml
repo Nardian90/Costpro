@@ -59,6 +59,16 @@ jobs:
       - name: SEC-TS gate (endpoints sin Zod/auth)
         run: node scripts/ci-gate-ts-checks.js
 
+      # CP-INFRA-020 (T2, 2026-11-10): ningún archivo versionado con sentencias
+      # destructivas (TRUNCATE, DELETE FROM auth.users, DROP SCHEMA, DISABLE
+      # TRIGGER, session_replication_role='replica', ...) sin guard verificado
+      # — marcador + bloque DO $guard$ PREVIO a la primera sentencia (SQL) o
+      # assert-not-production (scripts). Las migraciones NUEVAS del PR exigen
+      # '-- DESTRUCTIVE-OK: CP-xxx'. Excepciones con vencimiento en
+      # scripts/ci/destructive-allowlist.json. Sin credenciales (estático).
+      - name: Destructive guard gate (CP-INFRA-020)
+        run: node scripts/ci/check-destructive-guard.cjs
+
       - name: Build
         run: NODE_OPTIONS="--max-old-space-size=4096" bun run build
 

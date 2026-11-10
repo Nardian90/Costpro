@@ -144,3 +144,6 @@ scripts-tmp/
 
 # Core dumps (crashes locales de tsc/node por OOM — nunca versionar)
 /core
+
+# CP-INFRA-020: censos locales de row-census.cjs (contienen nombre de BD, no datos)
+scripts/ops/censos/

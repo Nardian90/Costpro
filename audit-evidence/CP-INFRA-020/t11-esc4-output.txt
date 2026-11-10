@@ -1,0 +1,7 @@
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:61: ERROR:  GUARD_DESTRUCTIVO: esta BD no está marcada como desechable (no existe public.e2e_is_isolated_db). ESTE SCRIPT BORRA TODOS LOS DATOS: ejectútalo solo en una BD desechable. Cómo prepararla: supabase/scripts/README.md (sección centinela de supabase/e2e-bootstrap.sql). Producción (CostproBD) y CostproE2E quedan bloqueadas por diseño.
+HINT:  Verificar con: select to_regprocedure('public.e2e_is_isolated_db()'); — debe devolver una función, no NULL.
+CONTEXT:  PL/pgSQL function inline_code_block line 17 at RAISE
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:64: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:255: ERROR:  current transaction is aborted, commands ignored until end of transaction block
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:257: ERROR:  current transaction is aborted, commands ignored until end of transaction block

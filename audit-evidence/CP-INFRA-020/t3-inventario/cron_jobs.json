@@ -1,0 +1,1 @@
+{"message":"Failed to run sql query: ERROR:  42P01: relation \"cron.jobs\" does not exist\nLINE 1: select jobid, schedule, command from cron.jobs limit 20;\n                                             ^\n"}

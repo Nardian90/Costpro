@@ -1,0 +1,30 @@
+{
+  "_doc": "CP-INFRA-020 T2 — Excepciones al lint de destructivos. Cada entrada: expires (YYYY-MM-DD, máx 90 días desde su creación) + justification (mín. 20 caracteres, caso por caso). Un script destructivo NO puede entrar aquí para 'que pase el CI': la excepción es para archivos históricos de solo-lectura o fixtures que el lint no pueda clasificar. Vencida la fecha, el hallazgo vuelve a fallar (fail-closed).",
+  "_updated": "2026-11-10",
+  "exceptions": {
+    "docs/audits/caja-ingresos-egresos-20261024/scripts/setup_cajamision.mjs": {
+      "expires": "2027-02-08",
+      "justification": "Evidencia HISTÓRICA de la auditoría caja-ingresos-egresos-20261024 (one-shot ya ejecutado en 2026-10). Su DROP DATABASE apunta a una BD local desechable hardcodeada (127.0.0.1:5435/cajamision), nunca a Supabase: no hay URL ni credencial de producción. No se modifica para no reescribir la evidencia; re-evaluar al vencer.",
+      "added": "2026-11-10",
+      "case": "CP-INFRA-020-T2"
+    },
+    "docs/audits/evidence/20261020-sec-definer-hardening/sql/20261020000002_rollback.sql": {
+      "expires": "2027-02-08",
+      "justification": "Rollback TRANSACCIONAL documentado de CP-SEC-027 F7, guardado como evidencia de la auditoría (snapshot de definiciones previas). Fue ejecutado una vez contra CostproE2E en 2026-10 por el flujo auditado; no es un script operativo y no se ejecuta en CI. Re-evaluar al vencer.",
+      "added": "2026-11-10",
+      "case": "CP-INFRA-020-T2"
+    },
+    "scripts/security-contract-test.cjs": {
+      "expires": "2027-02-08",
+      "justification": "El 'DELETE FROM' que matchea es una CADENA de consulta de solo lectura dentro de un detector de patrones del security contract (LEE el catálogo, no ejecuta destructivos). Solo se conecta con SUPABASE_ACCESS_TOKEN explícito y JAMÁS en CI. Re-evaluar al vencer.",
+      "added": "2026-11-10",
+      "case": "CP-INFRA-020-T2"
+    },
+    "supabase/security-contract/contract-surface.sql": {
+      "expires": "2027-02-08",
+      "justification": "ARCHIVO GENERADO (scripts/export-contract-surface.cjs): snapshot de solo lectura de las 185 funciones SECURITY DEFINER de producción (cuerpos con DELETE/TABLE donde los hay). Es un documento de referencia, no un script ejecutable; editarlo a mano rompería el flujo del contract test. Re-evaluar al vencer.",
+      "added": "2026-11-10",
+      "case": "CP-INFRA-020-T2"
+    }
+  }
+}

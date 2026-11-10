@@ -1,12 +1,67 @@
--- ==========================================
--- CostPro Professional Demo Reset Script (v5.7.13)
--- Targets: Supabase SQL Editor
+-- ============================================================================
+-- ⚠️ ESTE SCRIPT BORRA TODOS LOS DATOS. SOLO PARA UNA BD DESECHABLE. ⚠️
+-- ⚠️ NUNCA EN PRODUCCIÓN. NUNCA EN CostproBD NI EN CostproE2E.           ⚠️
+-- ============================================================================
+-- CostPro Professional Demo Reset Script (v5.7.13-guard.1 — CP-INFRA-020)
+-- Targets: Supabase SQL Editor de una BD DESECHABLE (ver supabase/scripts/README.md)
 -- Features: Dynamic Cleanup, Schema Enforcement, Trigger Safety, Ultra-Resilience
 -- Includes: 4 Demo Users (Password: demo123), Enriched Catalog, Sales, Transfers & Adjustments
--- ==========================================
+--
+-- GUARD (CP-INFRA-020): el bloque DO de abajo aborta la transacción completa si
+-- la BD no está marcada como desechable. Una BD de demos debe TENER la función
+-- centinela public.e2e_is_isolated_db() (devuelve true) y NO TENER la tabla
+-- public.production_migration_ledger (esa tabla solo existe en producción).
+-- CostproE2E tiene AMBAS: el guard la bloquea (no es una BD de demos).
+-- Cómo preparar una BD desechable: ver supabase/scripts/README.md.
+-- ============================================================================
+-- COSTPRO-GUARD-DESTRUCTIVO v1
+BEGIN;
 
--- 0. INITIAL SETUP & SECURITY
-SET session_replication_role = 'replica';
+DO $guard$
+DECLARE
+    v_centinela regprocedure;
+    v_ledger regclass;
+    v_es_aislada boolean;
+BEGIN
+    -- Fail-closed: ante cualquier duda se aborta. Comprueba, en orden:
+    -- (a) existe la centinela; (b) devuelve true; (c) NO existe el libro de
+    -- migraciones de producción.
+    BEGIN
+        v_centinela := to_regprocedure('public.e2e_is_isolated_db()');
+    EXCEPTION WHEN OTHERS THEN
+        v_centinela := NULL;
+    END;
+
+    IF v_centinela IS NULL THEN
+        RAISE EXCEPTION 'GUARD_DESTRUCTIVO: esta BD no está marcada como desechable (no existe public.e2e_is_isolated_db). ESTE SCRIPT BORRA TODOS LOS DATOS: ejectútalo solo en una BD desechable. Cómo prepararla: supabase/scripts/README.md (sección centinela de supabase/e2e-bootstrap.sql). Producción (CostproBD) y CostproE2E quedan bloqueadas por diseño.'
+            USING HINT = 'Verificar con: select to_regprocedure(''public.e2e_is_isolated_db()''); — debe devolver una función, no NULL.';
+    END IF;
+
+    BEGIN
+        EXECUTE 'SELECT public.e2e_is_isolated_db()' INTO v_es_aislada;
+    EXCEPTION WHEN OTHERS THEN
+        v_es_aislada := NULL;
+    END;
+
+    IF v_es_aislada IS DISTINCT FROM TRUE THEN
+        RAISE EXCEPTION 'GUARD_DESTRUCTIVO: la centinela public.e2e_is_isolated_db() no devolvió true (devolvió %). Solo una BD desechable puede ejecutar este script. Ver supabase/scripts/README.md.', v_es_aislada;
+    END IF;
+
+    BEGIN
+        v_ledger := to_regclass('public.production_migration_ledger');
+    EXCEPTION WHEN OTHERS THEN
+        v_ledger := NULL;
+    END;
+
+    IF v_ledger IS NOT NULL THEN
+        RAISE EXCEPTION 'GUARD_DESTRUCTIVO: existe public.production_migration_ledger — esta BD es PRODUCCIÓN. Abortado sin tocar una sola fila. Si crees que es un error, revisa la identidad del proyecto antes de cualquier otra cosa.'
+            USING HINT = 'Producción NO es banco de pruebas: docs/OPERATIONS/REGLA_PRODUCCION_NO_ES_BANCO_DE_PRUEBAS.md';
+    END IF;
+END
+$guard$;
+
+-- 0. INITIAL SETUP & SECURITY (dentro de la transacción abierta por el guard)
+SET LOCAL session_replication_role = 'replica';
 
 DO $$
 BEGIN
@@ -36,11 +91,17 @@ BEGIN
     DELETE FROM auth.users;
 
     -- 2. SCHEMA ALIGNMENT
+    -- Nota CP-INFRA-020: 'ALTER TYPE ... ADD VALUE' y el USO inmediato del
+    -- nuevo valor no pueden ocurrir en la misma transacción (Postgres lo
+    -- rechaza). Como TODO el script corre en UNA transacción (requisito del
+    -- guard), el tipo se crea COMPLETO si no existe; si ya existe con valores
+    -- de menos, el INSERT que usa el valor nuevo fallará y hará ROLLBACK
+    -- (fail-closed): re-ejecutar el script una segunda vez lo completa.
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
         CREATE TYPE user_role AS ENUM ('admin', 'manager', 'clerk', 'warehouse', 'encargado', 'usuario');
     ELSE
-        BEGIN ALTER TYPE user_role ADD VALUE 'encargado'; EXCEPTION WHEN duplicate_object THEN NULL; END;
-        BEGIN ALTER TYPE user_role ADD VALUE 'usuario'; EXCEPTION WHEN duplicate_object THEN NULL; END;
+        BEGIN ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'encargado'; EXCEPTION WHEN duplicate_object THEN NULL; END;
+        BEGIN ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'usuario'; EXCEPTION WHEN duplicate_object THEN NULL; END;
     END IF;
 
     CREATE TABLE IF NOT EXISTS public.categories (
@@ -193,5 +254,6 @@ BEGIN
 
 END $$;
 
-SET session_replication_role = 'origin';
--- End of indestructible enriched reset script
+SET LOCAL session_replication_role = 'origin';
+COMMIT;
+-- End of indestructible enriched reset script (guard CP-INFRA-020: solo BD desechable)

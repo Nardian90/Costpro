@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 140 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 142 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -397,10 +397,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // COSTPRO-SALES-DASHBOARD-REFINEMENT-002 (2026-11-08): +1 comparación entre tiendas (20261108220000) = 138
     // CP-OPERATIONAL-CLASS-002 (2026-11-08): +1 clasificación operativa del catálogo (20261108150000, remediación RPCs) = 139
     // CP-PRODUCT-COMMISSION-001 (2026-11-10): +1 clasificación OBLIGATORIA con DEFAULT venta (20261110090000) = 140
-    // CP-PLANTILLAS-FASE2 (2026-11-10): +1 plantillas privadas por propietario (20261110120000) = 141
-    expect(m.total_incluidos).toBe(141);
+    // CP-INFRA-020 (2026-11-10): +1 freno de TRUNCATE (20261110120000_cp_infra_020_truncate_breaker) = 141
+    // CP-PLANTILLAS-FASE2 (2026-11-10): +1 plantillas privadas por propietario (20261110120000_cp_plantillas_privadas_propietario) = 142
+    expect(m.total_incluidos).toBe(142);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(141);
+    expect(incluidos.length).toBe(142);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -462,8 +463,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261108220000_sales_dashboard_stores_comparison.sql')).toBe(139);
     // CP-PRODUCT-COMMISSION-001 (2026-11-10): clasificación obligatoria DEFAULT venta (140)
     expect(pos('20261110090000_cp_operational_class_default_venta.sql')).toBe(140);
-    // CP-PLANTILLAS-FASE2 (2026-11-10): desplazada a 141 por la inserción anterior
-    expect(pos('20261110120000_cp_plantillas_privadas_propietario.sql')).toBe(141);
+    // CP-INFRA-020 (2026-11-10): freno de TRUNCATE — mismo timestamp que
+    // plantillas (20261110120000); orden lexicográfico: cp_infra_020 < cp_plantillas.
+    expect(pos('20261110120000_cp_infra_020_truncate_breaker.sql')).toBe(141);
+    // CP-PLANTILLAS-FASE2 (2026-11-10): desplazada a 142 por las dos inserciones anteriores
+    expect(pos('20261110120000_cp_plantillas_privadas_propietario.sql')).toBe(142);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

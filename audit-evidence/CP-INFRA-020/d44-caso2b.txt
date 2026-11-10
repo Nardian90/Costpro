@@ -1,0 +1,4 @@
+NOTICE:  truncate cascades to table "products"
+NOTICE:  truncate cascades to table "transactions"
+ERROR:  ERR_TRUNCATE_BLOQUEADO: TRUNCATE sobre stores está bloqueado por CP-INFRA-020 (freno anti-borrado-masivo). Si es mantenimiento consciente: BEGIN; SET LOCAL costpro.allow_truncate = 'on'; TRUNCATE ...; COMMIT; y registra el acto en production_migration_ledger o en un acta.
+CONTEXT:  PL/pgSQL function block_truncate() line 6 at RAISE
