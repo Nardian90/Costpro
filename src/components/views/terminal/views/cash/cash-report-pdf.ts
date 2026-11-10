@@ -84,6 +84,16 @@ export interface CashReportPdfOptions {
    *  omite el bloque completo. Valor inicial true = coherente con el
    *  comportamiento pre-existente (Diario renderizaba el bloque incondicionalmente). */
   includeCashBreakdown: boolean;
+  /** MISIÓN DESGLOSE SERVICIOS (2026-11-11): «Desglosar Servicios Recibidos
+   *  por concepto en el PDF» — sub-filas del Resumen del Día bajo «Servicios
+   *  recibidos pagados en efectivo» con el importe de cada concepto (solo el
+   *  componente EN EFECTIVO del período; datos de servicios_recibidos_por_
+   *  concepto de /api/cash-report, mismos criterios que el total global).
+   *  PRESENTACIÓN PURA: el total global y el efectivo esperado NO cambian
+   *  (el desglose explica la deducción, jamás la vuelve a restar). Default
+   *  FALSE = comportamiento actual intacto y compatibilidad con los reportes
+   *  existentes (§3 del brief). */
+  breakdownServicesByConcept: boolean;
 }
 
 export const DEFAULT_PDF_OPTIONS: CashReportPdfOptions = {
@@ -96,6 +106,9 @@ export const DEFAULT_PDF_OPTIONS: CashReportPdfOptions = {
   includeCommissionColumn: true,
   usdSeparatePage: true,
   includeCashBreakdown: true,
+  // MISIÓN DESGLOSE SERVICIOS (2026-11-11): por defecto DESMARCADA — conserva
+  // el formato actual y la compatibilidad con los reportes existentes (§3).
+  breakdownServicesByConcept: false,
 };
 
 // ── Persistencia de las opciones del documento (MISIÓN 2026-10-22 · Parte A) ─
@@ -266,6 +279,10 @@ export interface ConceptTaggedRow {
   amount: number;
   isTotal?: boolean;
   isSubtotal?: boolean;
+  /** MISIÓN DESGLOSE SERVICIOS (2026-11-11): sub-fila jerárquica (concepto del
+   *  desglose) — se presenta INDENTADA y en tono secundario, subordinada a su
+   *  fila padre; NO reintroduce importes (presentación pura). */
+  isSubRow?: boolean;
   note?: string;
   concept?: SummaryConceptKey;
 }
@@ -327,6 +344,12 @@ export function buildDiarioIncomeRows(
   s: DailySummary,
   curResult: CustomCurrencyResult,
   concepts?: SummaryConceptsSelection | null,
+  /** MISIÓN DESGLOSE SERVICIOS (2026-11-11): desglose por concepto de los
+   *  Servicios Recibidos pagados en efectivo DE ESTA MONEDA (la misma hoja que
+   *  produce s.serviciosRecibidosCash — misma tienda, período y criterios).
+   *  Ausente/vacío ⇒ sin sub-filas (formato actual intacto). El llamador
+   *  activa con options.breakdownServicesByConcept. */
+  servicesBreakdown?: Array<{ concept: string; total: number; count: number }> | null,
 ): ConceptTaggedRow[] {
   const incomeRows: ConceptTaggedRow[] = filterIncomeRowsByConcepts(([
     { label: 'Saldo inicial / fondo de caja', amount: s.saldoInicial, concept: 'saldoInicial' },
@@ -361,7 +384,21 @@ export function buildDiarioIncomeRows(
     if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense', concept: 'otrosEgresos' });
     if (s.comisionesTransfer > 0) incomeRows.push({ label: 'Comisiones pagadas por transferencia', amount: s.comisionesTransfer, note: 'info', concept: 'otrosEgresos' });
     // Servicios recibidos: línea INDEPENDIENTE (§6) — ya no fusionados en proveedores.
-    if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense', concept: 'otrosEgresos' });
+    // MISIÓN DESGLOSE SERVICIOS (2026-11-11): con la opción activada, debajo
+    // de la línea global van las sub-filas por concepto (§4/§5 del brief):
+    // dinámicas (todos los conceptos con movimientos), importes EN EFECTIVO
+    // reales del período, «Sin concepto» garantiza la conciliación y la suma
+    // algebraica coincide con el total global (el desglose EXPLICA los
+    // importes; no es una nueva deducción — el esperado no cambia §6).
+    if (s.serviciosRecibidosCash > 0) {
+      incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense', concept: 'otrosEgresos' });
+      if (servicesBreakdown && servicesBreakdown.length > 0) {
+        for (const t of servicesBreakdown) {
+          if (!t || t.total === 0) continue; // §5.D: sin conceptos sin importes
+          incomeRows.push({ label: t.concept, amount: t.total, note: 'expense', concept: 'otrosEgresos', isSubRow: true });
+        }
+      }
+    }
     if (s.recibosProveedoresCash > 0) incomeRows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, note: 'expense', concept: 'otrosEgresos' });
     if (s.ajustesPositivos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos, concept: 'ajustes' });
     if (s.ajustesNegativos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (-)', amount: s.ajustesNegativos, note: 'expense', concept: 'ajustes' });
@@ -376,7 +413,17 @@ export function buildDiarioIncomeRows(
     if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, note: 'info', concept: 'reembolsos' });
   } else {
     if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense', concept: 'otrosEgresos' });
-    if (s.serviciosRecibidosCash > 0) incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense', concept: 'otrosEgresos' });
+    // MISIÓN DESGLOSE SERVICIOS: la hoja USD recibe el MISMO desglose (sus
+    // conceptos, su moneda nativa) — dinámico, sin conceptos fijos (§5.A).
+    if (s.serviciosRecibidosCash > 0) {
+      incomeRows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, note: 'expense', concept: 'otrosEgresos' });
+      if (servicesBreakdown && servicesBreakdown.length > 0) {
+        for (const t of servicesBreakdown) {
+          if (!t || t.total === 0) continue;
+          incomeRows.push({ label: t.concept, amount: t.total, note: 'expense', concept: 'otrosEgresos', isSubRow: true });
+        }
+      }
+    }
   }
   // MISIÓN CORRECTIVA 2026-10-25: liquidación de billetes (vuelto cruzado de
   // cobros con liquidación explícita) — partida CONTABLE de la conciliación
@@ -1255,7 +1302,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
   // ── Fila 1 · bloque izquierdo: Resumen del Día (§4 — orden lógico) ──
   const renderIncomeBlock = (
     title: string,
-    rows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; note?: string }>,
+    rows: Array<{ label: string; amount: number; isTotal?: boolean; isSubtotal?: boolean; isSubRow?: boolean; note?: string }>,
     aEntregar: number,
     aEntregarLabel = 'Efectivo esperado a entregar',
   ) => {
@@ -1269,14 +1316,20 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     for (const r of rows) {
       if (r.isTotal) { doc.setFont('helvetica', 'bold'); setText(C_DARK); }
       else if (r.isSubtotal) { doc.setFont('helvetica', 'bold'); setText(C_MUTED); }
+      // MISIÓN DESGLOSE SERVICIOS (2026-11-11): sub-fila jerárquica — tono
+      // secundario + prefijo WinAnsi-safe «›» + indentación visual. MISMA
+      // regla de signos (note 'expense' ⇒ negativo): el desglose EXPLICA la
+      // deducción de su fila padre, jamás la duplica (§6.3 del brief).
+      else if (r.isSubRow) { doc.setFont('helvetica', 'normal'); setText(C_MUTED); }
       else { doc.setFont('helvetica', 'normal'); setText(C_DARK); }
+      const subIndent = r.isSubRow ? 3.4 : 0;
       const maxLabel = blockW - 32;
-      let lbl = r.label;
+      let lbl = r.isSubRow ? `\u203A ${r.label}` : r.label;
       if (doc.getTextWidth(lbl) > maxLabel) {
         while (lbl.length > 0 && doc.getTextWidth(lbl + '…') > maxLabel) lbl = lbl.slice(0, -1);
         lbl += '…';
       }
-      doc.text(lbl, x, by);
+      doc.text(lbl, x + subIndent, by);
       // Signo explícito para egresos/ajustes: −1.234,56 (auditable a simple vista).
       const signed = r.isTotal ? r.amount : (r.amount < 0 ? r.amount : (r.note === 'expense' ? -r.amount : r.amount));
       // MISIÓN CORRECTIVA 2026-10-25: el CERO monetario se presenta como tal
@@ -1826,7 +1879,15 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     // buildDiarioIncomeRows (misma fuente que la exportación .docx).
     const curResult = currency === 'CUP' ? customResults.CUP : customResults.USD;
     const esperadoPersonalizado = curResult.efectivoEsperadoPersonalizado;
-    const incomeRows: ConceptTaggedRow[] = buildDiarioIncomeRows(currency, s, curResult, ctx.concepts);
+    const incomeRows: ConceptTaggedRow[] = buildDiarioIncomeRows(
+      currency, s, curResult, ctx.concepts,
+      // MISIÓN DESGLOSE SERVICIOS (2026-11-11): la opción gobierna la APARIENCIA;
+      // los datos provienen del MISMO reporte que alimenta s.serviciosRecibidosCash
+      // (ctx.report — conciliación 1:1 con la línea global de esta hoja).
+      options.breakdownServicesByConcept === true
+        ? report.servicios_recibidos_por_concepto?.[currency] ?? null
+        : null,
+    );
     const esperadoLabel = currency === 'CUP'
       ? (idLabel ? 'Efectivo esperado (personalizado)' : 'Efectivo esperado a entregar')
       : (idLabel ? 'Efectivo esperado (personalizado, USD)' : 'Efectivo esperado a entregar (USD)');

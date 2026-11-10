@@ -595,6 +595,43 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       console.warn('[cash-report] reembolsos de devoluciones no disponibles:', (rfErr as { message?: string })?.message);
     }
 
+    // ── MISIÓN DESGLOSE SERVICIOS (2026-11-11) · Servicios Recibidos en
+    //    efectivo por CONCEPTO (presentación del PDF Reporte Entrega) ──
+    //    EXACTAMENTE los mismos criterios que el grupo `payments` del RPC
+    //    get_cash_report (tienda + ref_type='service' + ventana payment_date)
+    //    más el filtro cash/moneda de computeDailySummary — conciliación 1:1
+    //    con serviciosRecibidosCash POR CONSTRUCCIÓN (§7 del brief: jamás una
+    //    consulta paralela). Degradación limpia: fallo → null + warn, el
+    //    reporte continúa sin desglose (una respuesta sin el campo NO es un
+    //    error del reporte). Los importes son informativos: NUNCA mutan el
+    //    cálculo ni los registros (solo lectura).
+    let serviciosPorConcepto: import('@/lib/cash-report/service-concept-breakdown').ServicesConceptBreakdown | null = null;
+    try {
+      const { fetchServiceConceptBreakdown } = await import('@/lib/cash-report/service-concept-breakdown');
+      serviciosPorConcepto = await fetchServiceConceptBreakdown(
+        supabase as unknown as import('@/lib/cash-report/service-concept-breakdown').SupabaseLikeClient,
+        {
+          storeId: userData.active_store_id,
+          includeAllDates,
+          ...(includeAllDates ? {} : { dateFrom: dateFilter.gte as string, dateTo: dateFilter.lte as string }),
+        },
+      );
+      // Defensa de conciliación (§6): Σ conceptos CUP debe coincidir con el
+      // grupo global (cash+CUP+service) del RPC. Por construcción coincide;
+      // si un día divergiera, se registra la causa SIN alterar el reporte.
+      if (serviciosPorConcepto) {
+        const rpcGlobal = (reportData?.payments || [])
+          .filter((p: { payment_method?: string | null; currency?: string | null; ref_type?: string | null }) => p.payment_method === 'cash' && p.currency === 'CUP' && p.ref_type === 'service')
+          .reduce((s: number, p: { total?: number | string | null }) => s + Number(p.total || 0), 0);
+        const sumConceptos = (serviciosPorConcepto.CUP || []).reduce((s, t) => s + t.total, 0);
+        if (Math.abs(sumConceptos - rpcGlobal) > 0.01) {
+          console.warn(`[cash-report] desglose de servicios NO concilia: conceptos=${sumConceptos} vs grupo RPC=${rpcGlobal}`);
+        }
+      }
+    } catch (svcConceptErr: unknown) {
+      console.warn('[cash-report] desglose de servicios por concepto no disponible:', (svcConceptErr as { message?: string })?.message);
+    }
+
     // ── FIX-RE-1510 v2 (ADENDA del negocio 2026-10-16): criterio canónico = FECHA DEL PAGO ──
     // El negocio define: el reporte SIEMPRE atribuye cada comisión al día de negocio en que
     // se CONFIRMÓ el pago (paid_at) — «aunque la comisión corresponda al 15/10, si no se
@@ -636,7 +673,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // EXCLUIA el tramo efectivo de ventas mixed (p. ej. EnerVida 02/10: 2.600
     // en vez de 12.600). La fórmula única vive en src/lib/cash-report/summary.ts
     // y la consumen idénticamente vista, previsualización y PDF.
-    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds, sales_rows: salesRows, sales_rows_truncated: salesRowsTruncated, ...equivFields, opening_balance: openingBalance, sales_bills_split: salesBillsSplit };
+    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds, sales_rows: salesRows, sales_rows_truncated: salesRowsTruncated, ...equivFields, opening_balance: openingBalance, sales_bills_split: salesBillsSplit, ...(serviciosPorConcepto ? { servicios_recibidos_por_concepto: serviciosPorConcepto } : {}) };
     // INCIDENTE 2026-10-16: grupos `sales` por MONEDA DE COBRO (antes por
     // sale_currency — los cobros USD aparecían como CUP). La vista (acordeón),
     // el fallback de computeDailySummary y la plantilla Estándar heredan la

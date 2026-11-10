@@ -693,6 +693,14 @@ export interface CashReport {
   // CONSUMEN vía computeDailySummary — jamás los recalculan.
   opening_balance?: Record<string, number>;
   sales_bills_split?: Partial<Record<string, number>>;
+  // MISIÓN DESGLOSE SERVICIOS (2026-11-11): desglose por CONCEPTO de los pagos
+  // de Servicios Recibidos EN EFECTIVO (payment_transactions ref_type='service',
+  // payment_method='cash') con LOS MISMOS criterios del grupo `payments` del
+  // RPC get_cash_report (tienda + ventana payment_date + moneda nativa) —
+  // Σ conceptos == serviciosRecibidosCash de la hoja (conciliación por
+  // construcción; ver src/lib/cash-report/service-concept-breakdown.ts).
+  // Ausente (fallo de la consulta auxiliar) = sin desglose, NO es un error.
+  servicios_recibidos_por_concepto?: Partial<Record<string, Array<{ concept: string; total: number; count: number }>>>;
 }
 
 // ============================================
