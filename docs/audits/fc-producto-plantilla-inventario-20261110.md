@@ -128,7 +128,9 @@ Flujos de generación: `auto-generate` (route) y `recalculate-on-price-change` u
   1. `c76522c5a` docs: expediente de auditoría.
   2. `7532d2a3c` feat: API generate-from-template + preservación de asociación.
   3. `10983f600` feat: selector de Fichas de Costo en Inventario + corrección 404.
-  4. (este commit) fix: endurecimiento del PATCH de desconexión + script verificación + tests.
-- PR: se abre vía API con este expediente como base del cuerpo.
-- CI: checks automáticos del repo (TypeScript/lint/test/build en runners de GitHub). El workflow «E2E Aislado (CostproE2E)» es manual (workflow_dispatch), sin cambios.
+  4. `6a7f1a8a9` fix: endurecimiento del PATCH de desconexión + verificación de BD.
+  5. `45edeae01` fix: errores de tipo detectados por CI + script solo-GET (check-writers).
+- **PR #1598**: https://github.com/Nardian90/Costpro/pull/1598
+- **CI 100% verde en 45edeae01**: CI (TypeCheck + Lint + Unit Tests + **Build de producción**) ✓ · Test Coverage ✓ · Security CI Gate ✓ · E2E Aislado (CostproE2E) ✓.
+- Nota de proceso: la primera pasada de CI detectó 17 errores de tipo (unión no discriminada + fixtures sin tipar) que los `tsc` locales habían enmascarado por OOM silencioso del sandbox; corregidos y verificados con `tsc --noEmit` EXIT 0 real y con la segunda pasada de CI (que incluye el build completo en runners de GitHub).
 - Sin migraciones → nada que aplicar a producción.
