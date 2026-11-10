@@ -38,6 +38,18 @@ interface CostSheetState {
   persistedDocId: string | null;
   setPersistedDocId: (id: string | null) => void;
 
+  // ── CP-PLANTILLAS-FASE2: vinculación con la plantilla de origen ──
+  /**
+   * Id de la plantilla privada en `cost_sheet_templates` desde la que se
+   * cargó el documento actual (o null). Permite ofrecer «Actualizar plantilla
+   * existente» en el diálogo Guardar como Plantilla (orden FASE 2 §4).
+   * Se limpia en cada carga de documento distinto (setSheet/loadExample/reset)
+   * — igual que persistedDocId — y se establece al cargar una plantilla
+   * (Explorador → Cargar / Nueva ficha desde plantilla).
+   */
+  activeTemplateId: string | null;
+  setActiveTemplateId: (id: string | null) => void;
+
   // ── Generic path-based mutation ──
   updateValue: (path: StorePath, value: StoreValue) => void;
   updateValues: (updates: UpdateValuePayload[]) => void;
@@ -115,7 +127,14 @@ function validatedSet(
     // riesgo de sobrescribir una ficha existente por accidente, mandato §8).
     // El vínculo se restablece explícitamente con setPersistedDocId(id)
     // cuando el origen lo confirma (guardado exitoso / apertura de biblioteca).
-    set({ data: result.data as CostSheetData, persistedDocId: null });
+    // CP-PLANTILLAS-FASE2: también se limpia el vínculo con la plantilla de
+    // origen — el llamador que carga UNA PLANTILLA lo restablece con
+    // setActiveTemplateId(template.id) justo después de setSheet().
+    set({
+      data: result.data as CostSheetData,
+      persistedDocId: null,
+      activeTemplateId: null,
+    });
   } else {
     console.error(`[Zod Validation Error] ${sourceLabel}:`, result.error.format());
     toast.error(errorMessage);
@@ -145,8 +164,10 @@ export const useCostSheetStore = create<CostSheetState>()(
       data: reinicioTemplate as CostSheetData,
       _hasHydrated: false,
       persistedDocId: null,
+      activeTemplateId: null,
 
       setPersistedDocId: (id) => set({ persistedDocId: id }),
+      setActiveTemplateId: (id) => set({ activeTemplateId: id }),
 
       // ── Generic path-based mutation ────────────────────────────────
 
