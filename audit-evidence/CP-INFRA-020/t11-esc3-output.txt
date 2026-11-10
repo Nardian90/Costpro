@@ -1,0 +1,3 @@
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:61: ERROR:  GUARD_DESTRUCTIVO: existe public.production_migration_ledger — esta BD es PRODUCCIÓN. Abortado sin tocar una sola fila. Si crees que es un error, revisa la identidad del proyecto antes de cualquier otra cosa.
+HINT:  Producción NO es banco de pruebas: docs/OPERATIONS/REGLA_PRODUCCION_NO_ES_BANCO_DE_PRUEBAS.md
+CONTEXT:  PL/pgSQL function inline_code_block line 38 at RAISE

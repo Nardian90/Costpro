@@ -1,0 +1,5 @@
+escenario 1 exit=3 conteos_iguales=si
+escenario 2 exit=0 perfiles_demo=4
+escenario 3 exit=3 conteos_iguales=si
+escenario 4 exit=0 conteos_iguales=si
+escenario 5 exit=1 conteos_iguales=si

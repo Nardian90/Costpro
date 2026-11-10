@@ -91,11 +91,17 @@ BEGIN
     DELETE FROM auth.users;
 
     -- 2. SCHEMA ALIGNMENT
+    -- Nota CP-INFRA-020: 'ALTER TYPE ... ADD VALUE' y el USO inmediato del
+    -- nuevo valor no pueden ocurrir en la misma transacción (Postgres lo
+    -- rechaza). Como TODO el script corre en UNA transacción (requisito del
+    -- guard), el tipo se crea COMPLETO si no existe; si ya existe con valores
+    -- de menos, el INSERT que usa el valor nuevo fallará y hará ROLLBACK
+    -- (fail-closed): re-ejecutar el script una segunda vez lo completa.
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
         CREATE TYPE user_role AS ENUM ('admin', 'manager', 'clerk', 'warehouse', 'encargado', 'usuario');
     ELSE
-        BEGIN ALTER TYPE user_role ADD VALUE 'encargado'; EXCEPTION WHEN duplicate_object THEN NULL; END;
-        BEGIN ALTER TYPE user_role ADD VALUE 'usuario'; EXCEPTION WHEN duplicate_object THEN NULL; END;
+        BEGIN ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'encargado'; EXCEPTION WHEN duplicate_object THEN NULL; END;
+        BEGIN ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'usuario'; EXCEPTION WHEN duplicate_object THEN NULL; END;
     END IF;
 
     CREATE TABLE IF NOT EXISTS public.categories (

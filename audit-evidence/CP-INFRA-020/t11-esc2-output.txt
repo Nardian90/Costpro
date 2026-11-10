@@ -1,0 +1,18 @@
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "inventory_adjustment_items"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "transaction_items"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "transaction_items"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "transfer_items"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "profiles"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "user_store_memberships"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "products"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "transactions"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "inventory_adjustments"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "transfers"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "transaction_items"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "inventory_adjustment_items"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "transfer_items"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "products"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  truncate cascades to table "transaction_items"
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  enum label "encargado" already exists, skipping
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  enum label "usuario" already exists, skipping
+psql:/home/z/my-project/Costpro/supabase/scripts/reset_demo_data_pro.sql:114: NOTICE:  relation "categories" already exists, skipping
