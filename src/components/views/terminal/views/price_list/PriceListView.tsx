@@ -33,6 +33,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePriceListProducts, fetchPriceListStoreInfo } from '@/hooks/api/usePriceListProducts';
 import { parseSkuRange } from '@/lib/price-list/sku-order';
+import { useCommissionRules } from '@/hooks/api/useCommissionRules';
+import { resolveProductCommission } from '@/lib/price-list/commission-column';
 import { buildPriceListModel, selectPriceListRows, type PriceListModel, type PriceListStoreInfo } from '@/lib/price-list/model';
 import {
   isNeutralOperationalFilter,
@@ -83,6 +85,29 @@ export default function PriceListView() {
   // PRESENTACIÓN del documento: no filtra filas ni modifica datos; por
   // defecto Sí (conserva la riqueza informativa del listado).
   const [showDescription, setShowDescription] = useState(true);
+
+  // CP-PRODUCT-COMMISSION-001 TAREA 2: columna opcional «Comisión» en el
+  // selector de columnas. OCULTA por defecto (no altera la presentación
+  // habitual) y persistida con el patrón de preferencias del repo
+  // (localStorage 'costpro:<vista>:...', cf. SalesProductTab).
+  const COMMISSION_COLUMN_KEY = 'costpro:price-list:columns';
+  const [showCommission, setShowCommission] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const raw = window.localStorage.getItem(COMMISSION_COLUMN_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return parsed === true || (parsed && typeof parsed === 'object' && parsed.commission === true);
+    } catch { return false; }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COMMISSION_COLUMN_KEY, JSON.stringify({ commission: showCommission }));
+    } catch { /* noop */ }
+  }, [showCommission]);
+
+  // Fuente REAL de las reglas de comisión (misma API del módulo Trabajadores
+  // y Comisiones). Carga diferida: solo cuando la columna está visible.
+  const rulesQuery = useCommissionRules(activeStoreId, showCommission);
 
   const opFilter = useMemo<OperationalPriceFilter>(
     () => ({ classes: selClasses, priceStatus }),
@@ -165,6 +190,22 @@ export default function PriceListView() {
         // CP-PRECIO-PDF-DESC-001: la opción controla REALMENTE la inclusión
         // u omisión del campo descripción en el documento generado.
         includeDescription: showDescription,
+        // CP-PRODUCT-COMMISSION-001 TAREA 2: columna «Comisión» con el MOTOR
+        // REAL de comisiones (reglas vigentes de la tienda; resolución
+        // worker-null = regla de tienda + prioridad del engine).
+        showCommission,
+        commissionResolver: showCommission
+          ? (item) => {
+              const rules = rulesQuery.data ?? [];
+              if (rules.length === 0) return 'Sin regla';
+              return resolveProductCommission(
+                rules as never[],
+                item.id,
+                Number(item.price) || 0,
+                new Date().toISOString().slice(0, 10),
+              ).label;
+            }
+          : undefined,
       });
       if (model.meta.totalProducts === 0) {
         toast.info('No hay productos que cumplan las condiciones (stock > 0 con los filtros de clasificación, precio y rango de SKU indicados).');
@@ -187,7 +228,7 @@ export default function PriceListView() {
       buildingRef.current = false;
       setLoading(false);
     }
-  }, [rangeInvalid, rangeActive, range, storeInfo, productsQuery.data, activeStoreId, skuFrom, skuTo, selClasses, priceStatus, showDescription, previewSignature, opFilter, loading]);
+  }, [rangeInvalid, rangeActive, range, storeInfo, productsQuery.data, activeStoreId, skuFrom, skuTo, selClasses, priceStatus, showDescription, previewSignature, opFilter, loading, showCommission, rulesQuery.data]);
 
   const handleExportPdf = useCallback(async () => {
     if (!preview || exporting) return;
@@ -352,6 +393,26 @@ export default function PriceListView() {
                   {opt.label}
                 </button>
               ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Columna Comisión</span>
+              <button
+                type="button"
+                aria-pressed={showCommission}
+                data-testid="comision-col-toggle"
+                onClick={() => setShowCommission((v) => !v)}
+                className={cn(
+                  'min-h-[36px] rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+                  showCommission
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'border-border bg-card hover:border-primary/40'
+                )}
+              >
+                {showCommission ? 'Sí — Mostrar comisión' : 'No — Ocultar comisión'}
+              </button>
+              <span className="text-[10px] text-muted-foreground italic">
+                Reglas reales de Trabajadores y Comisiones (base tienda)
+              </span>
             </div>
             <p className="text-[10px] text-muted-foreground italic ml-1">
               Al mostrarla, el nombre del producto va acompañado de su descripción debajo (varias líneas si hace falta). Afecta únicamente al PDF que se genera: no modifica los datos de los productos.

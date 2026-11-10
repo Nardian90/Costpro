@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 555,
-  "total_incluidos": 140,
+  "total_considerados": 557,
+  "total_incluidos": 142,
   "total_excluidos": 415,
-  "digest": "5c780801a221ffb4cc33e108f01d3a9fa552b300183e6c0b320753c3b0980b15",
+  "digest": "277e9fa4ac338069690289f3e84d196e8c717e406cb3fd6b71b7b2564767f71b",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5411,6 +5411,17 @@
       "sha256_generado": "a7be71ca11219574c809dd4243868d8b99a24052cdbb816f3718ae31661412fa"
     },
     {
+      "nombre": "20261110090000_cp_operational_class_default_venta.sql",
+      "bytes": 18294,
+      "sha256_original": "a4e514c1732fd8c9d993576f6b982ffd83a7350c2cd51e2742857f0dec86375e",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261110",
+      "observaciones": [],
+      "posicion": 140,
+      "sha256_generado": "a4e514c1732fd8c9d993576f6b982ffd83a7350c2cd51e2742857f0dec86375e"
+    },
+    {
       "nombre": "20261110120000_cp_infra_020_truncate_breaker.sql",
       "bytes": 6661,
       "sha256_original": "e1d388ad1020b69f5bb1ef20365cf60711b96a194d73c0b17b016ac23d8b5447",
@@ -5418,8 +5429,19 @@
       "razon": null,
       "timestamp": "20261110",
       "observaciones": [],
-      "posicion": 140,
+      "posicion": 141,
       "sha256_generado": "e1d388ad1020b69f5bb1ef20365cf60711b96a194d73c0b17b016ac23d8b5447"
+    },
+    {
+      "nombre": "20261110120000_cp_plantillas_privadas_propietario.sql",
+      "bytes": 14640,
+      "sha256_original": "fbe9a0f17c43eeb534f8e51749524d9c13ba117a8c0b2fa72af7504d36d8e434",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261110",
+      "observaciones": [],
+      "posicion": 142,
+      "sha256_generado": "fbe9a0f17c43eeb534f8e51749524d9c13ba117a8c0b2fa72af7504d36d8e434"
     },
     {
       "nombre": "AUDIT_FIXES.md",

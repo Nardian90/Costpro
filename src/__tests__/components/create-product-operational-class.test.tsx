@@ -136,25 +136,28 @@ beforeEach(() => {
 
 describe('CP-OPERATIONAL-CLASS-001/002 · alta de producto con clasificación obligatoria', () => {
 
-  it('el selector existe con las 4 opciones y arranca «Sin clasificar»', () => {
+  it('TAREA 1.1 · Venta PRESELECCIONADA desde la primera apertura (4 opciones, nunca vacío)', () => {
     render(<CreateProductModal />);
     expect(screen.getByText('Clasificación operativa')).toBeTruthy();
-    expect(screen.getByTestId('operational-class-current').textContent).toContain('Sin clasificar');
+    expect(screen.getByTestId('operational-class-current').textContent).toContain('Venta');
     const group = screen.getByRole('radiogroup', { name: 'Clasificación operativa' });
     expect(group.querySelectorAll('[role="radio"]')).toHaveLength(4);
+    expect(screen.getByTestId('operational-class-venta').getAttribute('aria-checked')).toBe('true');
   });
 
-  it('§2 · SIN clasificación el guardado se BLOQUEA con mensaje explícito (no se crea nada)', async () => {
+  it('TAREA 1.1 · el alta SIEMPRE envía la clasificación seleccionada (invariante de guardado)', async () => {
+    // Con Venta preseleccionada el guardado no puede salir vacío: la
+    // selección viaja en el payload tal cual el usuario la dejó.
     const user = userEvent.setup();
     render(<CreateProductModal />);
     await fillRequiredFields(user);
     await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
+    const payload = (mocks.createLocalMutateAsync.mock.calls as unknown[][])[0][0] as Record<string, unknown>;
+    expect(payload.operational_class).toBe('venta');
     const { toast } = await import('sonner');
-    expect(toast.error).toHaveBeenCalledWith(
+    expect(toast.error).not.toHaveBeenCalledWith(
       'La clasificación operativa es obligatoria: elige Venta, Insumo, Activo Fijo o Útil/Herramienta.',
     );
-    expect(mocks.createLocalMutateAsync).not.toHaveBeenCalled();
-    expect(mocks.createMasterMutateAsync).not.toHaveBeenCalled();
   });
 
   it('§6 · CAMINO 1 (alta local): la clasificación viaja en el INSERT (misma escritura)', async () => {

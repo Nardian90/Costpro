@@ -41,6 +41,10 @@ export interface PriceListSourceItem {
  * jamás se combinan en una sola cadena ni se sustituye uno por otro.
  */
 export interface PriceListRow {
+  /** CP-PRODUCT-COMMISSION-001 TAREA 2: etiqueta inequívoca de la comisión
+   *  (motor real de Trabajadores y Comisiones) — solo cuando la columna está
+   *  visible. Ausente/undefined = columna oculta; '—' = sin resolución. */
+  commissionLabel?: string;
   id: string;
   skuLabel: string;            // SKU original o «—» (nunca la clave auxiliar)
   name: string;                // nombre del producto (identificación)
@@ -77,6 +81,9 @@ export interface PriceListModel {
     // CP-PRECIO-PDF-DESC-001: «Mostrar descripción en PDF» (Sí/No) con la que
     // el documento fue construido — el plan y el render la comparten.
     includeDescription: boolean;
+    // CP-PRODUCT-COMMISSION-001 TAREA 2: columna «Comisión» visible — el PDF
+    // ajusta su layout cuando lo está.
+    showCommission?: boolean;
   };
 }
 
@@ -146,6 +153,11 @@ export function buildPriceListModel(opts: {
    * generado: no modifica productos ni datos almacenados.
    */
   includeDescription?: boolean;
+  /** CP-PRODUCT-COMMISSION-001 TAREA 2: mostrar la columna «Comisión».
+   *  El valor lo resuelve commissionResolver con el MOTOR REAL — jamás una
+   *  fórmula propia (misión §2.2). */
+  showCommission?: boolean;
+  commissionResolver?: (item: PriceListSourceItem) => string | null;
 }): PriceListModel {
   const { items, store, range, generatedAt } = opts;
   const measureLines = opts.measureLines ?? (() => 1);
@@ -187,6 +199,12 @@ export function buildPriceListModel(opts: {
     priceLabel: hasConfiguredPrice(item)
       ? formatLabeledCurrency(item.price as number, (item.price_currency ?? DEFAULT_CURRENCY) || DEFAULT_CURRENCY)
       : 'Sin precio',
+    // CP-PRODUCT-COMMISSION-001 TAREA 2: etiqueta de comisión SOLO cuando la
+    // columna está visible; la resuelve el motor real
+    // (resolveProductCommission). '—' = sin resolución.
+    ...(opts.showCommission
+      ? { commissionLabel: opts.commissionResolver?.(item) ?? '—' }
+      : {}),
     lines: 1, // se recalcula con la geometría real en planPriceListPages
   }))
     .map((row) => ({ ...row, lines: measureLines(priceListCellText(row, includeDescription)) }));
@@ -207,6 +225,8 @@ export function buildPriceListModel(opts: {
       operationalFilter,
       totalOperational,
       includeDescription,
+      /** TAREA 2: el PDF ajusta su layout cuando la columna está visible. */
+      showCommission: opts.showCommission === true,
     },
   };
 }
