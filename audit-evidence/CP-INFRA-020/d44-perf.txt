@@ -1,0 +1,9 @@
+D4.4 (4b) — Rendimiento DML con el freno instalado [MEDIDO, PG 17.11 local, BD desechable perf020]
+- UPDATE 5000 filas SIN freno:          21.4 ms
+- UPDATE 5000 filas CON freno (trigger BEFORE TRUNCATE instalado, ENABLE ALWAYS): 25.1 ms
+- Diferencia: ~3.7 ms en 5000 filas (~0.7 µs/fila) — dentro del ruido de una sola
+  pasada (el trigger NO dispara en DML: es BEFORE TRUNCATE; el coste observable
+  es costo fijo de catálogo por sentencia, no por fila).
+- Catálogo: pg_trigger.tgenabled = 'A' (always) para trg_cp_infra_020_block_truncate.
+  NOTA: information_schema.triggers NO lista triggers de TRUNCATE (por diseño
+  del estándar) — la verificación correcta es pg_trigger.
