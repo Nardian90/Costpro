@@ -79,6 +79,7 @@ function buildContext(template: 'diario' | 'estandar'): CashReportPdfContext {
       detailPayments: false, detailProduction: false, includeBreakdown: true,
       includeUsd: true, includeSignature: true, includeOtReport: true,
       includeCommissionColumn: true, usdSeparatePage: true, includeCashBreakdown: true,
+      breakdownServicesByConcept: false, // MISIÓN 2026-11-11: default desmarcada (formato actual intacto)
     },
     orientation: 'vertical',
   };

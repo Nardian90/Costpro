@@ -146,3 +146,29 @@ describe('loadWorkingBreakdown / saveWorkingBreakdown — desglose laboral (Part
     void CUP_DEFAULT_DENOMS; void USD_DEFAULT_DENOMS;
   });
 });
+
+describe('MISIÓN 2026-11-11 · breakdownServicesByConcept — «Desglosar Servicios Recibidos por concepto en el PDF»', () => {
+  it('default DESMARCADA (§3 del brief: conserva el comportamiento actual y la compatibilidad)', () => {
+    expect(DEFAULT_PDF_OPTIONS.breakdownServicesByConcept).toBe(false);
+    expect(loadPdfOptions().breakdownServicesByConcept).toBe(false); // sin preferencia → default
+  });
+
+  it('la preferencia del usuario persiste (marcada sobrevive recarga) y vuelve al default ante JSON corrupto', () => {
+    savePdfOptions({ ...DEFAULT_PDF_OPTIONS, breakdownServicesByConcept: true });
+    expect(loadPdfOptions().breakdownServicesByConcept).toBe(true);
+    // Reactivación/desactivación persistente:
+    savePdfOptions({ ...DEFAULT_PDF_OPTIONS, breakdownServicesByConcept: false });
+    expect(loadPdfOptions().breakdownServicesByConcept).toBe(false);
+    // JSON corrupto → recuperación segura con defaults (F-7):
+    localStorage.setItem(OPTIONS_KEY, '{json roto');
+    expect(loadPdfOptions().breakdownServicesByConcept).toBe(false);
+  });
+
+  it('preferencia ANTIGUA sin la clave nueva → default false sin bloquear las demás opciones', () => {
+    localStorage.setItem(OPTIONS_KEY, JSON.stringify({ includeBreakdown: false, includeUsd: false }));
+    const opts = loadPdfOptions();
+    expect(opts.breakdownServicesByConcept).toBe(false); // nueva clave → default
+    expect(opts.includeBreakdown).toBe(false);           // claves previas intactas
+    expect(opts.includeUsd).toBe(false);
+  });
+});
