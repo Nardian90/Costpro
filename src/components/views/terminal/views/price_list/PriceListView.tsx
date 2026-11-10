@@ -96,7 +96,16 @@ export default function PriceListView() {
     try {
       const raw = window.localStorage.getItem(COMMISSION_COLUMN_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
-      return parsed === true || (parsed && typeof parsed === 'object' && parsed.commission === true);
+      // FIX «Error al cargar Listado de precios» (2026-11-10): el inicializador
+      // anterior devolvía la expresión tal cual — con localStorage vacío
+      // (parsed = null) JS evalúa `false || (null && …)` como **null** (y `""`
+      // o `0` con valores heredados), un valor FALSY NO booleano que el hook
+      // propagaba a react-query (`enabled: null && !!storeId` → null) y que
+      // react-query 5.101.4 rechaza lanzando «Expected enabled to be a boolean
+      // or a callback that returns a boolean» → ErrorBoundary de la vista.
+      // La comparación estricta GARANTIZA un booleano para cualquier valor
+      // almacenado (ausente, legacy booleano, objeto de preferencias).
+      return parsed === true || (typeof parsed === 'object' && parsed !== null && parsed.commission === true);
     } catch { return false; }
   });
   useEffect(() => {

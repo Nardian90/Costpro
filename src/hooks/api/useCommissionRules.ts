@@ -46,7 +46,14 @@ export function useCommissionRules(storeId: string | null | undefined, enabled: 
       // filtra por store; el guard evita mezclas si el backend cambia).
       return rules.filter((r) => r.store_id === storeId);
     },
-    enabled: enabled && !!storeId,
+    // FIX «Error al cargar Listado de precios» (2026-11-10): contrato
+    // defensivo — `enabled` llega del llamador y debe permanecer BOOLEANO
+    // sin importar el valor recibido. Con un falsy no-booleano (null/''
+    // heredado de un inicializador defectuoso), `enabled && !!storeId`
+    // devolvía ese mismo valor y react-query 5.101.4 lanzaba
+    // «Expected enabled to be a boolean…» → crash de la vista. La igualdad
+    // estricta garantiza booleano siempre.
+    enabled: enabled === true && !!storeId,
     staleTime: 60_000,
   });
 }
