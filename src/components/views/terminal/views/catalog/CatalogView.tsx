@@ -8,6 +8,8 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuthStore, useUIStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { ChevronDown, AlertCircle, RefreshCw, Building2 } from 'lucide-react';
+// GESTIÓN-MAESTRO (2026-11-11): activación en esta tienda + identidad compartida.
+import { useActivateMasterProduct, useCatalogStoreLink, useIsCatalogGovernor } from '@/hooks/api/useMasterCatalog';
 import { SecondaryButton } from '@/components/ui/atomic';
 import { Button } from '@/components/ui/button';
 import { TablePagination } from '@/components/views/terminal/views/catalog/TablePagination';
@@ -27,6 +29,8 @@ import EditProductModal from '@/components/views/terminal/views/catalog/EditProd
 import type { EditFormState, EditVariant } from '@/components/views/terminal/views/catalog/EditProductModal';
 import { ProductImageViewerModal } from '@/components/views/terminal/views/catalog/ProductImageViewerModal';
 import DeleteProductDialog from '@/components/views/terminal/views/catalog/DeleteProductDialog';
+// GESTIÓN-MAESTRO (2026-11-11): edición de identidad compartida (imagen + descripción).
+import { MasterIdentityEditModal, resolveMasterId } from '@/components/views/terminal/views/catalog/MasterIdentityEditModal';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -178,6 +182,23 @@ export default function CatalogView() {
 
   // Import dialog state
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+
+  // ── GESTIÓN-MAESTRO (2026-11-11): estado de la nueva gestión ─────────────
+  // Fila cuya identidad compartida se está editando (imagen + descripción).
+  const [identityProduct, setIdentityProduct] = useState<Product | null>(null);
+  // Id de la fila solo-maestro con activación en curso (feedback por fila).
+  const [activatingMasterId, setActivatingMasterId] = useState<string | null>(null);
+
+  // Enlace tienda↔catálogo (fuente del tenant para el check de gobernador; solo
+  // tiendas conectadas tienen filas maestras en el listado).
+  const catalogLink = useCatalogStoreLink(user?.activeStoreId ?? null);
+  const catalogTenantId = catalogLink.data?.status === 'connected' ? catalogLink.data.tenant_id : null;
+  const isGovernorQuery = useIsCatalogGovernor(catalogTenantId, user?.id ?? null);
+  const isCatalogGovernor = isGovernorQuery.data === true;
+
+  // Activación de un maestro en ESTA tienda (RPC activate_master_product:
+  // idempotente, permisos servidor, fila local con defaults de alta manual).
+  const activateMasterProduct = useActivateMasterProduct(user?.activeStoreId ?? null);
 
   // FIX (2026-10-08, INVENTORY-CATALOG-REGRESSION-1379): ya NO se persiste
   // catalog_searchTerm — ver comentario en el estado inicial de searchTerm.
@@ -505,14 +526,58 @@ export default function CatalogView() {
   // CATALOG-MASTER-002: las filas 'master' NO tienen fila local en esta
   // tienda — las operaciones LOCALES (clonar, editar, activar/desactivar,
   // borrar, selección masiva) no les aplican. La identidad global se gestiona
-  // por las RPC gobernadas (gobernador del catálogo) y la incorporación al
-  // inventario con activate_master_product («Activar en esta tienda»).
+  // con el modal de identidad compartida (nueva acción en la propia fila) y la
+  // incorporación al inventario con «Activar en esta tienda» (acción en la
+  // propia fila; RPC activate_master_product).
   const bloquearOperacionLocal = (product: Product | null | undefined): boolean => {
     if (product?.source !== 'master') return false;
     toast.info(
-      'Producto del catálogo maestro (sin fila local en esta tienda): incorpóralo al inventario con «Activar en esta tienda» o gestiona la identidad global desde el Catálogo de la organización (gobernador).',
+      'Producto del catálogo maestro (sin fila local en esta tienda): actívalo con «Activar en esta tienda» o edita su identidad compartida desde la misma fila.',
     );
     return true;
+  };
+
+  // ── GESTIÓN-MAESTRO (2026-11-11): activar en ESTA tienda desde la fila ──
+  // RPC activate_master_product — crea la fila local vinculada (defaults de
+  // alta manual: precio 0/CUP, min_stock 1, existencia 0, sin movimientos,
+  // sin copiar datos de otras tiendas). Idempotente. El estado de la fila se
+  // refresca vía la invalidación del propio hook (products + catalog-v2).
+  const handleActivateMaster = async (product: Product) => {
+    const masterId = resolveMasterId(product);
+    if (!masterId || !user?.activeStoreId) {
+      toast.error('No se pudo resolver el producto maestro o la tienda activa');
+      return;
+    }
+    setActivatingMasterId(product.id);
+    try {
+      const res = await activateMasterProduct.mutateAsync(masterId);
+      if (res.already_active) {
+        toast.info(`El producto ${product.sku} ya está activado en esta tienda`);
+      } else {
+        toast.success(`Producto ${product.sku} activado en esta tienda (existencia 0, sin movimientos)`);
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error al activar';
+      if (msg.includes('ERR_MASTER_ARCHIVED')) toast.error('El producto maestro está archivado');
+      else if (msg.includes('ERR_STORE_NOT_CONNECTED')) toast.error('Esta tienda no está conectada al catálogo de la organización');
+      else if (msg.includes('ERR_STORE_MISMATCH')) toast.error('El producto maestro pertenece a otra organización');
+      else if (msg.includes('ERR_UNAUTHORIZED')) toast.error('Sin permiso de alta de productos en esta tienda');
+      else toast.error(getErrorMsg(e));
+    } finally {
+      setActivatingMasterId(null);
+    }
+  };
+
+  // ── GESTIÓN-MAESTRO (2026-11-11): editar identidad compartida ───────────
+  // Abre el modal de identidad (imagen + descripción del registro maestro).
+  // El propio modal distingue gobernador (aplicación inmediata) de no
+  // gobernador (propuesta pendiente) y muestra el alcance global antes de guardar.
+  const handleEditIdentity = (product: Product) => {
+    if (!resolveMasterId(product)) {
+      toast.info('Este producto no está vinculado al catálogo maestro de la organización.');
+      return;
+    }
+    setIdentityProduct(product);
   };
 
   // --- Clone Product ---
@@ -858,6 +923,14 @@ export default function CatalogView() {
       toast.error('El SKU no debe superar los 50 caracteres');
       return;
     }
+    // GESTIÓN-MAESTRO (2026-11-11), brief §4: el SKU de un producto con
+    // movimientos históricos no se modifica (trazabilidad contable). El
+    // servidor lo bloquea fail-closed (trg_products_sku_movement_guard);
+    // este guard de UI evita el viaje inútil y explica la causa.
+    if (editingProduct?.has_movements && editForm.sku.trim() !== (editingProduct.sku || '').trim()) {
+      toast.error('El SKU no puede modificarse: el producto tiene movimientos históricos asociados (trazabilidad contable).');
+      return;
+    }
     if (editForm.price < 0) {
       toast.error('El precio minorista no puede ser negativo');
       return;
@@ -1157,7 +1230,16 @@ export default function CatalogView() {
         onEdit={handleOpenEdit}
         onToggleActive={handleToggleActive}
         onDelete={handleOpenDelete}
-        onImageClick={setViewerProduct}
+        onImageClick={(p) => {
+          // GESTIÓN-MAESTRO (2026-11-11): filas solo-maestro → edición de
+          // identidad compartida (el visor local requiriría una fila local y
+          // dejaría archivos huérfanos; el id listado ES el del maestro).
+          if (p.source === 'master') { handleEditIdentity(p); return; }
+          setViewerProduct(p);
+        }}
+        onActivate={handleActivateMaster}
+        activatingMasterId={activatingMasterId}
+        onEditIdentity={handleEditIdentity}
         fcStatusMap={fcStatusMap}
         fcResolutionMap={fcResolutionMap}
         onViewFC={handleViewFC}
@@ -1253,6 +1335,17 @@ export default function CatalogView() {
         open={!!viewerProduct}
         onClose={() => setViewerProduct(null)}
         onImageChanged={invalidateAndRefetch}
+      />
+
+      {/* GESTIÓN-MAESTRO (2026-11-11): edición de identidad compartida
+          (imagen + descripción del registro maestro) — desde la propia
+          pestaña «Catálogo» y desde el modal «Catálogo de la organización». */}
+      <MasterIdentityEditModal
+        product={identityProduct}
+        open={!!identityProduct}
+        onClose={() => setIdentityProduct(null)}
+        storeId={user?.activeStoreId ?? null}
+        isGovernor={isCatalogGovernor}
       />
 
       {/* Delete Confirmation Dialog */}

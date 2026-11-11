@@ -21,6 +21,25 @@ import { useUIStore } from '@/store';
 const ROUTE = '/';
 const tick = () => new Promise(r => setTimeout(r, 10));
 
+// ORDEN DE CIERRE (2026-11-11) §4 — gate1-url-sync: el test del popstate
+// («Back del navegador restaura la vista anterior») esperaba el evento
+// asíncrono de jsdom dentro de una ventana fija de 10ms (tick). Bajo carga
+// de CI/sandbox (workers paralelos, OOM cercano) esa ventana puede perderse
+// y el test falla de forma NO determinista — el defecto real era la
+// fragilidad de sincronización, no la sincronía misma. waitForUntil mantiene
+// LA MISMA aserción (estado restaurado + URL limpia) con espera acotada por
+// condición (polling 10ms hasta 2s) — determinista bajo cualquier carga.
+// Sin cambios de aserciones ni de cobertura: mismo contrato probado.
+async function waitForUntil(cond: () => boolean, ms = 2000, label = 'condición') {
+  const start = Date.now();
+  while (!cond()) {
+    if (Date.now() - start > ms) {
+      throw new Error(`waitForUntil timeout (${ms}ms): ${label}`);
+    }
+    await new Promise(r => setTimeout(r, 10));
+  }
+}
+
 function setUrl(search: string) {
   const clean = search.replace(/^\?/, ''); // tolera llamadas con o sin '?'
   window.history.replaceState(null, '', clean ? `${ROUTE}?${clean}` : ROUTE);
@@ -76,7 +95,9 @@ describe('useViewUrlSync', () => {
 
     await act(async () => {
       window.history.back();
-      await tick();
+      // Espera por condición (no ventana fija): el popstate de jsdom es
+      // asíncrono y bajo carga puede exceder un tick de 10ms.
+      await waitForUntil(() => useUIStore.getState().currentView === 'dashboard', 2000, 'popstate → currentView=dashboard');
     });
 
     expect(useUIStore.getState().currentView).toBe('dashboard');

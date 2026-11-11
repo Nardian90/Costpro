@@ -11,7 +11,7 @@
  * la activación no copia nada de otras tiendas.
  */
 import { useMemo, useState } from 'react';
-import { Loader2, RefreshCw, Search, Store } from 'lucide-react';
+import { Loader2, RefreshCw, Search, Store, Pencil } from 'lucide-react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,15 +19,24 @@ import { getSupabaseUrl } from '@/lib/utils';
 import {
   useActivateMasterProduct,
   useCatalogStoreLink,
+  useIsCatalogGovernor,
   useSearchMasterProducts,
 } from '@/hooks/api/useMasterCatalog';
 import { useUIStore, useAuthStore } from '@/store';
 import { toast } from 'sonner';
+// GESTIÓN-MAESTRO (2026-11-11): edición de identidad compartida desde este
+// modal (interfaz alternativa del brief §3: además de consultar y activar,
+// editar imagen y descripción del registro maestro).
+import { MasterIdentityEditModal } from '@/components/views/terminal/views/catalog/MasterIdentityEditModal';
+import type { Product } from '@/types';
 
 export const MasterCatalogModal = () => {
   const { isMasterCatalogModalOpen, setIsMasterCatalogModalOpen } = useUIStore();
   const activeStoreId = useAuthStore(s => s.user?.activeStoreId) || null;
+  const userId = useAuthStore(s => s.user?.id) || null;
   const [search, setSearch] = useState('');
+  // GESTIÓN-MAESTRO (2026-11-11): fila cuya identidad compartida se edita.
+  const [editingMaster, setEditingMaster] = useState<Product | null>(null);
 
   const link = useCatalogStoreLink(isMasterCatalogModalOpen ? activeStoreId : null);
   const masters = useSearchMasterProducts(
@@ -35,6 +44,13 @@ export const MasterCatalogModal = () => {
     search
   );
   const activate = useActivateMasterProduct(activeStoreId);
+  // Gobernador del catálogo de la organización (RPC fail-closed; solo informativo
+  // para la UI — la autorización real vive en el servidor).
+  const isGovernorQuery = useIsCatalogGovernor(
+    link.data?.status === 'connected' ? link.data.tenant_id : null,
+    userId
+  );
+  const isGovernor = isGovernorQuery.data === true;
 
   const connected = link.data?.status === 'connected';
   const rows = useMemo(() => masters.data ?? [], [masters.data]);
@@ -127,17 +143,39 @@ export const MasterCatalogModal = () => {
                         </p>
                       </div>
                     </div>
-                    {!m.activated && m.status === 'active' && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleActivate(m.id, m.sku)}
-                        disabled={activate.isPending}
-                        aria-label={`Activar ${m.sku} en esta tienda`}
-                      >
-                        {activate.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4 mr-1" />}
-                        Activar
-                      </Button>
-                    )}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {/* GESTIÓN-MAESTRO (2026-11-11): editar la identidad compartida
+                          (imagen + descripción) del maestro desde este modal. */}
+                      {m.status === 'active' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingMaster({
+                            id: m.id,
+                            sku: m.sku,
+                            name: m.name,
+                            source: 'master',
+                            master_product_id: null,
+                          } as Product)}
+                          aria-label={`Editar identidad de ${m.sku}`}
+                          title="Editar la imagen y la descripción compartidas del catálogo"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Editar
+                        </Button>
+                      )}
+                      {!m.activated && m.status === 'active' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handleActivate(m.id, m.sku)}
+                          disabled={activate.isPending}
+                          aria-label={`Activar ${m.sku} en esta tienda`}
+                        >
+                          {activate.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4 mr-1" />}
+                          Activar
+                        </Button>
+                      )}
+                    </div>
                   </li>
                   );
                 })}
@@ -146,6 +184,16 @@ export const MasterCatalogModal = () => {
           </>
         )}
       </div>
+
+      {/* GESTIÓN-MAESTRO (2026-11-11): edición de identidad compartida
+          (imagen + descripción del registro maestro) desde este modal. */}
+      <MasterIdentityEditModal
+        product={editingMaster}
+        open={!!editingMaster}
+        onClose={() => setEditingMaster(null)}
+        storeId={activeStoreId}
+        isGovernor={isGovernor}
+      />
     </BaseModal>
   );
 };

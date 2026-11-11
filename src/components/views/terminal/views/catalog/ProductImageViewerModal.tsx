@@ -496,6 +496,37 @@ export function ProductImageViewerModal({
   }, []);
 
   // === Render ===
+  // GESTIÓN-MAESTRO (2026-11-11): filas solo-maestro (source='master') no tienen
+  // fila local en esta tienda — el id listado ES el del maestro y el guardado
+  // aquí subiría archivos huérfanos (UPDATE de products sin fila). El visor de
+  // edición local NO aplica: la imagen de un producto del catálogo maestro se
+  // gestiona desde la edición de identidad compartida (CatalogView enruta el
+  // clic a ese modal; este guard evita usos directos).
+  if (product?.source === 'master') {
+    return (
+      <BaseModal
+        open={open}
+        onOpenChange={(o) => { if (!o) onClose(); }}
+        title={product ? `Imagen — ${product.name}` : 'Imagen del producto'}
+        description="Producto del catálogo maestro de la organización"
+        maxWidth="sm:max-w-lg"
+        footer={
+          <Button className="w-full" onClick={onClose}>Entendido</Button>
+        }
+      >
+        <div className="space-y-3 text-sm">
+          <p>
+            Este producto pertenece al <strong>catálogo maestro</strong> de la organización y aún no está
+            activado en esta tienda (no tiene fila local), por lo que su imagen no se gestiona localmente.
+          </p>
+          <p className="text-muted-foreground">
+            Actívalo con «Activar en esta tienda» o edita su <strong>imagen y descripción compartidas</strong> desde
+            la acción «Identidad compartida» de la misma fila del catálogo.
+          </p>
+        </div>
+      </BaseModal>
+    );
+  }
   return (
     <BaseModal
       open={open}

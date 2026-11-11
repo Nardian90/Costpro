@@ -25,6 +25,8 @@ import {
   AlertTriangle,
   Info,
   ZoomIn,
+  Building2,
+  Store,
 } from 'lucide-react';
 import { cn, formatCurrency, getProductImageUrl, resolveProductImage as utilsResolveProductImage } from '@/lib/utils';
 import { isProductIncomplete, getIncompleteSummary } from '@/lib/product-completeness';
@@ -255,7 +257,7 @@ export const CategoryChips: React.FC<{
 
 export const ProductCard: React.FC<any> = ({
   product, onEdit, onViewPrices, onDelete, onToggleActive, onPrintLabel, onClick, className, variant = 'catalog',
-  fcStatus, onViewFC, onClone, onImageClick, onAdjust
+  fcStatus, onViewFC, onClone, onImageClick, onAdjust, onActivate, activating, onEditIdentity
 }) => {
   // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): un servicio (is_service) nunca está
   // "agotado" — no tiene existencias propias y siempre es vendible. El badge
@@ -422,9 +424,20 @@ export const ProductCard: React.FC<any> = ({
         {product.source === 'master' && (
           <div
             className="bg-primary/15 text-primary border border-primary/30 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm pointer-events-none backdrop-blur-sm"
-            title="Producto del catálogo maestro de la organización: sin fila local en esta tienda."
+            title="Producto del catálogo maestro de la organización: sin fila local en esta tienda. Actívalo para operarlo localmente."
           >
-            <span>Maestro</span>
+            <span>Maestro · pendiente de activación</span>
+          </div>
+        )}
+        {/* GESTIÓN-MAESTRO (2026-11-11): estado diferenciado — fila local
+            vinculada al catálogo maestro (identidad compartida, datos
+            comerciales locales). */}
+        {product.source !== 'master' && product.master_product_id && (
+          <div
+            className="bg-primary/15 text-primary border border-primary/30 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm pointer-events-none backdrop-blur-sm"
+            title="Producto local vinculado al catálogo maestro: identidad compartida (SKU, nombre, imagen); precios y existencias propios de esta tienda."
+          >
+            <span>Vinculado al catálogo</span>
           </div>
         )}
         {/* ── 3. Incompleto (missing data — LOW priority, just informational) ──
@@ -547,15 +560,38 @@ export const ProductCard: React.FC<any> = ({
              </>
           ) : (
             <>
-              {onEdit && (
+              {/* GESTIÓN-MAESTRO (2026-11-11): fila solo-maestro — la acción
+                  principal es ACTIVARLA en esta tienda (sin fila local no hay
+                  nada que editar localmente). */}
+              {product.source === 'master' && onActivate ? (
+                <PrimaryButton
+                  label={activating ? 'Activando…' : 'Activar en esta tienda'}
+                  icon={Store}
+                  onClick={() => onActivate(product)}
+                  disabled={activating}
+                  aria-label={`Activar ${product.sku} en esta tienda`}
+                />
+              ) : onEdit && (
                 <PrimaryButton
                   label="Info / Editar"
                   icon={Edit}
                   onClick={() => onEdit(product)}
                 />
               )}
+              {/* GESTIÓN-MAESTRO (2026-11-11): edición de identidad compartida
+                  (imagen + descripción del registro maestro) para filas
+                  maestras y locales vinculadas. */}
+              {onEditIdentity && (product.source === 'master' || product.master_product_id) && (
+                <SecondaryButton
+                  label="Identidad compartida"
+                  icon={Building2}
+                  onClick={() => onEditIdentity(product)}
+                  className="w-full"
+                  aria-label={`Editar identidad compartida de ${product.sku}`}
+                />
+              )}
               {/* CM-2.10: Botón Clonar en Grid (antes solo en tabla) */}
-              {onClone && variant === 'catalog' && (
+              {onClone && variant === 'catalog' && product.source !== 'master' && (
                 <SecondaryButton
                   label="Duplicar"
                   icon={Copy}
@@ -563,8 +599,9 @@ export const ProductCard: React.FC<any> = ({
                   className="w-full"
                 />
               )}
-              {/* Fila: Generar FC + Desactivar juntos */}
-              {variant === 'catalog' && (
+              {/* Fila: Generar FC + Desactivar juntos — no aplica a filas
+                  solo-maestro (no hay fila local que desactivar ni FC local). */}
+              {variant === 'catalog' && product.source !== 'master' && (
                 <div className="grid grid-cols-2 gap-2">
                   {fcStatus && onViewFC && (
                     <SecondaryButton
@@ -598,8 +635,9 @@ export const ProductCard: React.FC<any> = ({
                   )}
                 </div>
               )}
-              {/* Fila: Precios + Etiqueta (si aplica) */}
-              {variant === 'catalog' && (onViewPrices || onPrintLabel) && (
+              {/* Fila: Precios + Etiqueta (si aplica) — sin sentido local
+                  para filas solo-maestro. */}
+              {variant === 'catalog' && product.source !== 'master' && (onViewPrices || onPrintLabel) && (
                 <div className="grid grid-cols-2 gap-2">
                   {onViewPrices && (
                     <SecondaryButton

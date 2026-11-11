@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 142 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 144 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -399,9 +399,12 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // CP-PRODUCT-COMMISSION-001 (2026-11-10): +1 clasificación OBLIGATORIA con DEFAULT venta (20261110090000) = 140
     // CP-INFRA-020 (2026-11-10): +1 freno de TRUNCATE (20261110120000_cp_infra_020_truncate_breaker) = 141
     // CP-PLANTILLAS-FASE2 (2026-11-10): +1 plantillas privadas por propietario (20261110120000_cp_plantillas_privadas_propietario) = 142
-    expect(m.total_incluidos).toBe(142);
+    // GESTIÓN-MAESTRO (2026-11-11): +1 guardas de integridad de SKU ante movimientos (20261111120000_cp_catalogo_master_gestion_tienda) = 143
+    // ORDEN DE CIERRE (2026-11-11) §2: +1 normalización de ACL de los helpers
+    // de trigger de DATA-INTEGRITY-REMEDIATION-001 (20261111130000_cp_data_integrity_trigger_acl_normalization) = 144
+    expect(m.total_incluidos).toBe(144);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(142);
+    expect(incluidos.length).toBe(144);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -468,6 +471,8 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261110120000_cp_infra_020_truncate_breaker.sql')).toBe(141);
     // CP-PLANTILLAS-FASE2 (2026-11-10): desplazada a 142 por las dos inserciones anteriores
     expect(pos('20261110120000_cp_plantillas_privadas_propietario.sql')).toBe(142);
+    // GESTIÓN-MAESTRO (2026-11-11): última del tramo — guardas de SKU ante movimientos
+    expect(pos('20261111120000_cp_catalogo_master_gestion_tienda.sql')).toBe(143);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

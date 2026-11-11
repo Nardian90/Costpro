@@ -127,6 +127,16 @@ export default function EditProductModal({
     };
   }, [productId]);
 
+  // GESTIÓN-MAESTRO (2026-11-11), brief §4: el SKU de un producto con
+  // movimientos históricos NO se edita (trazabilidad contable). Criterio =
+  // existencia REAL de movimientos (has_movements de la fila), no antigüedad
+  // ni estado de activación. El servidor lo bloquea fail-closed
+  // (trg_products_sku_movement_guard); esta UI lo refleja y explica la causa.
+  // Para filas VINCULADAS al maestro, identityLocked ya cubre el bloqueo (el
+  // SKU lo gobierna el catálogo y sus RPC).
+  const skuLockedByMovements = !identityLocked && product?.has_movements === true;
+  const skuInputDisabled = identityLocked || skuLockedByMovements;
+
   // FC auto-enabled state (local toggle)
   const fcAutoEnabled = product?.fc_auto_enabled ?? true;
 
@@ -221,6 +231,16 @@ export default function EditProductModal({
         {/* ── Image Section ────────────────────────────────────────── */}
         <div>
           <label className="text-xs font-black uppercase tracking-widest ml-1">Imagen del Producto</label>
+          {/* GESTIÓN-MAESTRO (2026-11-11): aviso de alcance ANTES de guardar —
+              la imagen de un producto vinculado es compartida (master-first en
+              todas las lecturas): el cambio se aplica al registro maestro y
+              afecta a todas las tiendas vinculadas (gobernador del catálogo). */}
+          {identityLocked && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1" role="note">
+              Imagen compartida del catálogo: el cambio se guarda en el registro maestro y afecta a
+              todas las tiendas de la organización vinculadas a este producto (requiere gobernador del catálogo).
+            </p>
+          )}
           <div className="mt-2 flex items-center gap-3">
             {editImagePreview ? (
               <div className="relative group">
@@ -332,11 +352,16 @@ export default function EditProductModal({
               onChange={(e) => onFormChange({ ...editForm, sku: e.target.value })}
               className="neu-input w-full"
               placeholder="SKU-001"
-              disabled={identityLocked}
+              disabled={skuInputDisabled}
             />
             {identityLocked && (
               <p className="text-[11px] text-amber-600 dark:text-amber-400">
                 Vinculado al catálogo de la organización: el SKU y el nombre los administra el catálogo maestro. Para proponer un cambio, use el panel de gobernanza del catálogo.
+              </p>
+            )}
+            {skuLockedByMovements && (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400" role="note">
+                El SKU no puede editarse: este producto tiene movimientos históricos asociados (trazabilidad contable).
               </p>
             )}
           </div>
