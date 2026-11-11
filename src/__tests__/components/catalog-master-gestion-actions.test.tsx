@@ -199,8 +199,9 @@ describe('Pestaña «Catálogo» — edición de identidad compartida desde la f
 });
 
 describe('EditProductModal — SKU bloqueado por movimientos históricos', () => {
-  const baseForm = (sku: string): EditFormState => ({
-    name: 'Producto X', sku, category: 'General', is_service: false, operational_class: null,
+  // Product.sku es `string | null | undefined` en el contrato de tipos.
+  const baseForm = (sku: string | null | undefined): EditFormState => ({
+    name: 'Producto X', sku: sku ?? '', category: 'General', is_service: false, operational_class: null,
     price: 10, precio_empresa: 0, precio_empresa_currency: 'CUP', cost_price: 5,
     unit_of_measure: 'unidad', description: '', price_currency: 'CUP',
     barcode: '', barcode_type: 'EAN13', visible_en_tienda: false,
