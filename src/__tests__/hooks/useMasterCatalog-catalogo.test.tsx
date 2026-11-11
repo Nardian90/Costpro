@@ -118,6 +118,38 @@ describe('MasterCatalogModal + CreateProductModal — contrato de cableado (lect
     expect(src).toContain('activate_master_product');
   });
 
+  it('CORRECCIÓN FUNCIONAL (2026-11-12) §4: MasterCatalogModal incorpora «+ Crear producto» con el MISMO servicio de creación que Inventario (useCreateMasterProduct)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const src = readFileSync(resolve(process.cwd(), 'src/components/modals/MasterCatalogModal.tsx'), 'utf8');
+    // Botón visible de creación en el propio diálogo.
+    expect(src).toContain('master-catalog-create-product');
+    expect(src).toContain('Crear producto');
+    expect(src).toContain('CreateMasterProductModal');
+  });
+
+  it('CORRECCIÓN FUNCIONAL (2026-11-12) §4: CreateMasterProductModal reusa el MISMO servicio de creación de la pestaña Catálogo (create_master_product) con dedup previo', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const src = readFileSync(resolve(process.cwd(), 'src/components/views/terminal/views/catalog/CreateMasterProductModal.tsx'), 'utf8');
+    expect(src).toContain('useCreateMasterProduct');
+    // Dedup ANTES de insertar (misma verificación que la pestaña Catálogo).
+    const idxCheck = src.indexOf('findMasterBySku(storeId');
+    const idxCreate = src.indexOf('createMaster.mutateAsync');
+    expect(idxCheck).toBeGreaterThan(-1);
+    expect(idxCreate).toBeGreaterThan(idxCheck);
+    // Imagen compartida vía RPC gobernada (gobernador aplica / no gobernador propone).
+    expect(src).toContain('useUpdateMasterProduct');
+    expect(src).toContain('useProposeMasterChange');
+    // Sin esquema paralelo: subida al mismo bucket con prefijo master-…
+    expect(src).toContain("from('product-images')");
+    expect(src).toMatch(/master-\$\{masterId\}/);
+    // Campos del formulario de creación: SKU + Nombre + Imagen + Descripción.
+    expect(src).toContain('create-master-sku-input');
+    expect(src).toContain('create-master-name-input');
+    expect(src).toContain('create-master-description-input');
+  });
+
   it('CreateProductModal: dedup ANTES de insertar (findMasterBySku) y activación en lugar de duplicar', async () => {
     const { readFileSync } = await import('node:fs');
     const { resolve } = await import('node:path');
@@ -130,20 +162,51 @@ describe('MasterCatalogModal + CreateProductModal — contrato de cableado (lect
     expect(src).toContain('useActivateMasterProduct');
   });
 
-  it('EditProductModal: identidad bloqueada (disabled) para productos vinculados al maestro', async () => {
+  it('CORRECCIÓN FUNCIONAL (2026-11-12) §3.A/§2: EditProductModal edita el NOMBRE compartido de vinculados y muestra el SKU INMUTABLE', async () => {
     const { readFileSync } = await import('node:fs');
     const { resolve } = await import('node:path');
     const src = readFileSync(resolve(process.cwd(), 'src/components/views/terminal/views/catalog/EditProductModal.tsx'), 'utf8');
     expect(src).toContain('master_product_id');
     expect(src).toContain('identityLocked');
-    // Ambos campos de identidad compartida quedan de solo lectura.
-    // GESTIÓN-MAESTRO (2026-11-11): el SKU evoluciona a skuInputDisabled
-    // (= identityLocked || skuLockedByMovements) — el bloqueo por vínculo al
-    // maestro se CONSERVA y se añade el bloqueo por movimientos históricos
-    // (brief §4). El nombre sigue con identityLocked puro.
-    expect((src.match(/disabled=\{identityLocked\}/g) || []).length).toBe(1);
+    // El NOMBRE ya NO queda deshabilitado para vinculados: es identidad
+    // compartida editable (se enruta al maestro desde CatalogView) — el input
+    // de nombre NO lleva disabled.
+    expect((src.match(/disabled=\{identityLocked\}/g) || []).length).toBe(0);
+    // El aviso de nombre compartido explica el alcance global y el flujo
+    // gobernador/no-gobernador.
+    expect(src).toContain('Nombre compartido del catálogo');
+    expect(src).toContain('isGovernorForIdentity');
+    // El SKU es INMUTABLE tras la creación en TODA interfaz: read-only
+    // permanente (brief §2/§8.7) con trigger trg_products_sku_immutable_guard.
     expect((src.match(/disabled=\{skuInputDisabled\}/g) || []).length).toBe(1);
-    expect(src).toContain('skuLockedByMovements = !identityLocked && product?.has_movements === true');
-    expect(src).toContain('trg_products_sku_movement_guard');
+    expect(src).toContain('skuInputDisabled = true');
+    expect(src).toContain('trg_products_sku_immutable_guard');
+    expect(src).toContain('inmutable: no puede modificarse después de la creación del producto');
+  });
+
+  it('CORRECCIÓN FUNCIONAL (2026-11-12) §3.A: CatalogView enruta el nombre de vinculados al maestro (gobernador aplica / no gobernador propone)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const src = readFileSync(resolve(process.cwd(), 'src/components/views/terminal/views/catalog/CatalogView.tsx'), 'utf8');
+    expect(src).toContain('useUpdateMasterProduct');
+    expect(src).toContain('useProposeMasterChange');
+    expect(src).toContain('updateMasterIdentity');
+    expect(src).toContain('proposeMasterIdentity');
+    // El payload local de vinculados EXCLUYE nombre (identidad ya guardada en
+    // el maestro) y el SKU NUNCA viaja (inmutable tras la creación).
+    expect(src).toContain('...(isLinkedProduct ? {} : { name: editForm.name })');
+    // Validación inmutable del SKU en el guard de UI.
+    expect(src).toContain('El SKU es inmutable: no puede modificarse después de la creación del producto.');
+    // El modal recibe el estado de gobernador para sus avisos.
+    expect(src).toContain('isGovernorForIdentity={isCatalogGovernor}');
+  });
+
+  it('CORRECCIÓN FUNCIONAL (2026-11-12) §2: MasterChanges excluye sku por tipo (inmutable tras la creación)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const src = readFileSync(resolve(process.cwd(), 'src/hooks/api/useMasterCatalog.ts'), 'utf8');
+    // El contrato de identidad compartida editable ya no incluye 'sku'.
+    const iface = src.slice(src.indexOf('export interface MasterChanges'), src.indexOf('}', src.indexOf('is_service?: boolean;')) + 1);
+    expect(iface).not.toContain('sku');
   });
 });

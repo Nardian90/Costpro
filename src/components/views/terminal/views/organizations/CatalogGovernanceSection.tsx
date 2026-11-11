@@ -10,9 +10,12 @@
  *     desconectada) con acciones Conectar/Desconectar (solo gobernador). La
  *     desconexión NO elimina productos, precios, existencias ni historial.
  *  2. Identidad compartida — inventario de master_products con búsqueda y
- *     editor de identidad (nombre/SKU/barcode/unidad/descripción/imagen)
- *     reservado al gobernador. La edición propaga SKU/nombre/imagen a las
+ *     editor de identidad (nombre/barcode/unidad/descripción/imagen)
+ *     reservado al gobernador. La edición propaga nombre/imagen a las
  *     filas locales vinculadas y deja registro por campo en master_change_log.
+ *     CORRECCIÓN FUNCIONAL (2026-11-12): el SKU es compartido e INMUTABLE
+ *     tras la creación — se muestra como campo protegido, no editable
+ *     (ERR_SKU_IMMUTABLE en el punto único de escritura del servidor).
  *  3. Propuestas pendientes — cola de cambios propuestos por tiendas con
  *     Aprobar/Rechazar (gobernador).
  *
@@ -22,7 +25,7 @@
  */
 import React, { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Link2, Link2Off, Loader2, Pencil, RefreshCw, Search, ShieldCheck, Check, X } from 'lucide-react';
+import { Link2, Link2Off, Loader2, Lock, Pencil, RefreshCw, Search, ShieldCheck, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -54,6 +57,8 @@ export function translateCatalogError(msg: string): string {
   if (msg.includes('ERR_STORE_NOT_CONNECTED')) return 'La tienda no está conectada al catálogo.';
   if (msg.includes('ERR_STORE_NOT_FOUND')) return 'Tienda no encontrada.';
   if (msg.includes('ERR_MASTER_SKU_EXISTS')) return 'Ya existe otro producto maestro con ese SKU en la organización.';
+  if (msg.includes('ERR_SKU_IMMUTABLE')) return 'El SKU es compartido e inmutable: no puede modificarse después de la creación del producto.';
+  if (msg.includes('ERR_SKU_LOCKED_BY_MOVEMENTS')) return 'El SKU está bloqueado: el producto tiene movimientos históricos.';
   if (msg.includes('ERR_BARCODE_EXISTS')) return 'Ya existe otro producto con ese código de barras.';
   if (msg.includes('ERR_MASTER_ARCHIVED')) return 'El producto maestro está archivado.';
   if (msg.includes('ERR_INVALID_CHANGES')) return 'Cambios inválidos (revisa los campos).';
@@ -319,7 +324,9 @@ function EditMasterIdentityDialog({
   onClose: () => void;
   onSave: (changes: Record<string, string>) => Promise<void>;
 }) {
-  const [sku, setSku] = useState(master.sku);
+  // CATÁLOGO-IDENTIDAD (2026-11-12): el SKU ya no es editable aquí — es
+  // compartido e INMUTABLE tras la creación (ERR_SKU_IMMUTABLE en el
+  // servidor). Se muestra como campo protegido de solo lectura.
   const [name, setName] = useState(master.name);
   const [barcode, setBarcode] = useState(master.barcode ?? '');
   const [unit, setUnit] = useState(master.unit_of_measure ?? 'unidad');
@@ -369,8 +376,9 @@ function EditMasterIdentityDialog({
   };
 
   const submit = async () => {
+    // CATÁLOGO-IDENTIDAD (2026-11-12): sin 'sku' — el SKU del maestro es
+    // inmutable tras la creación; solo viajan los campos editables.
     const changes: Record<string, string> = {};
-    if (sku.trim() && sku.trim() !== master.sku) changes.sku = sku.trim();
     if (name.trim() && name.trim() !== master.name) changes.name = name.trim();
     if (barcode.trim() !== (master.barcode ?? '')) changes.barcode = barcode.trim() || '';
     if (unit.trim() && unit.trim() !== (master.unit_of_measure ?? 'unidad')) changes.unit_of_measure = unit.trim();
@@ -389,8 +397,19 @@ function EditMasterIdentityDialog({
         <h3 className="text-sm font-black uppercase tracking-widest">Editar identidad compartida</h3>
         <p className="text-xs text-muted-foreground">
           Los cambios se propagan a todas las tiendas conectadas y quedan auditados por campo. Los precios,
-          costos y existencias de cada tienda NUNCA se modifican desde aquí.
+          costos y existencias de cada tienda NUNCA se modifican desde aquí. El SKU es compartido e
+          inmutable tras la creación del producto (no editable).
         </p>
+
+        {/* CATÁLOGO-IDENTIDAD (2026-11-12) §2/§7: SKU protegido, no editable. */}
+        <div className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2">
+          <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">SKU</span>
+          <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-muted" data-testid="master-edit-sku-value">
+            {master.sku}
+          </span>
+          <span className="text-[10px] text-muted-foreground">inmutable tras la creación</span>
+        </div>
 
         <div className="space-y-3">
           <div className="flex items-center gap-3">
@@ -437,10 +456,6 @@ function EditMasterIdentityDialog({
             </span>
           </label>
 
-          <div>
-            <label className="text-xs font-bold" htmlFor="master-edit-sku">SKU</label>
-            <Input id="master-edit-sku" value={sku} onChange={e => setSku(e.target.value)} className="h-9 mt-1" />
-          </div>
           <div>
             <label className="text-xs font-bold" htmlFor="master-edit-name">Nombre</label>
             <Input id="master-edit-name" value={name} onChange={e => setName(e.target.value)} className="h-9 mt-1" />

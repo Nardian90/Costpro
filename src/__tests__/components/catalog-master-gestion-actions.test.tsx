@@ -1,8 +1,9 @@
 /**
- * MISIÓN GESTIÓN DE PRODUCTOS VINCULADOS AL CATÁLOGO MAESTRO (2026-11-11) —
- * acciones de fila en la pestaña «Catálogo» y bloqueo de SKU.
+ * MISIÓN GESTIÓN DE PRODUCTOS VINCULADOS AL CATÁLOGO MAESTRO (2026-11-11) ·
+ * CORRECCIÓN FUNCIONAL (2026-11-12) — acciones de fila en la pestaña
+ * «Catálogo», bloqueo total de SKU y nombre compartido editable.
  *
- * Cobertura (criterios de aceptación §7.1/§7.2/§7.6/§7.7):
+ * Cobertura (criterios de aceptación §7.1/§7.2/§7.6/§7.7 + 2026-11-12 §2/§3):
  *  · Una tienda conectada puede ACTIVAR un producto desde la pestaña
  *    «Catálogo»: la acción «Activar en esta tienda» existe en filas
  *    solo-maestro (source='master') en modo tabla y modo tarjetas, y NO
@@ -10,9 +11,12 @@
  *  · La acción de identidad compartida está disponible en filas maestras y
  *    vinculadas; no en filas locales sin vínculo.
  *  · Estados diferenciados: badges «pendiente de activación» vs «Vinculado».
- *  · El SKU queda BLOQUEADO en EditProductModal cuando el producto tiene
- *    movimientos históricos (has_movements) — con mensaje explicativo — y
- *    editable cuando no los tiene.
+ *  · El SKU es INMUTABLE tras la creación en TODA interfaz (brief 2026-11-12
+ *    §2/§8.7): input read-only permanente CON o SIN movimientos, con mensaje
+ *    explicativo de inmutabilidad.
+ *  · El NOMBRE de vinculados es editable desde la ficha habitual (identidad
+ *    compartida: se enruta al maestro) con aviso de alcance global; sin
+ *    disabled para vinculados ni para locales.
  *  · El visor de imagen local rechaza filas solo-maestro (evita uploads
  *    huérfanos con el id del maestro).
  */
@@ -39,20 +43,27 @@ vi.mock('@/lib/utils', () => ({
   isPerformanceTheme: () => false,
 }));
 
-vi.mock('@/lib/supabaseClient', () => ({
-  supabase: {
-    // EditProductModal consulta master_product_id para bloquear identidad.
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          maybeSingle: () => Promise.resolve({ data: null }),
+vi.mock('@/lib/supabaseClient', () => {
+  // CORRECCIÓN FUNCIONAL (2026-11-12): EditProductModal consulta
+  // master_product_id para el aviso de identidad compartida del NOMBRE. El
+  // resultado es mutable por test (vi.hoisted) para cubrir vinculados y no
+  // vinculados sin reconstruir el mock.
+  return {
+    supabase: {
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: () => Promise.resolve(identityQueryResult),
+          }),
         }),
       }),
-    }),
-    rpc: vi.fn(),
-    storage: { from: vi.fn() },
-  },
-}));
+      rpc: vi.fn(),
+      storage: { from: vi.fn() },
+    },
+  };
+});
+
+const { identityQueryResult } = vi.hoisted(() => ({ identityQueryResult: { data: null as { master_product_id: string | null } | null } }));
 
 vi.mock('@/services/catalog-service', () => ({
   catalogService: { uploadProductImage: vi.fn() },
@@ -146,6 +157,8 @@ beforeEach(() => {
   onActivate.mockReset();
   onEditIdentity.mockReset();
   onEdit.mockReset();
+  // Estado neutro: sin vínculo al maestro (cada test lo ajusta si procede).
+  identityQueryResult.data = null;
 });
 
 describe('Pestaña «Catálogo» — activación de productos maestros desde la propia fila', () => {
@@ -198,7 +211,7 @@ describe('Pestaña «Catálogo» — edición de identidad compartida desde la f
   });
 });
 
-describe('EditProductModal — SKU bloqueado por movimientos históricos', () => {
+describe('EditProductModal — SKU inmutable tras la creación (2026-11-12)', () => {
   // Product.sku es `string | null | undefined` en el contrato de tipos.
   const baseForm = (sku: string | null | undefined): EditFormState => ({
     name: 'Producto X', sku: sku ?? '', category: 'General', is_service: false, operational_class: null,
@@ -234,19 +247,41 @@ describe('EditProductModal — SKU bloqueado por movimientos históricos', () =>
     );
   }
 
-  it('producto CON movimientos: SKU deshabilitado con mensaje explicativo', () => {
+  it('producto CON movimientos: SKU deshabilitado (regla anterior subsumida por la inmutabilidad)', () => {
     const p = { ...PLAIN_LOCAL_ROW, has_movements: true } as Product;
     renderEditModal(p, baseForm(p.sku));
     const input = screen.getByLabelText('SKU del producto') as HTMLInputElement;
     expect(input).toBeDisabled();
-    expect(screen.getByText(/tiene movimientos históricos asociados/i)).toBeInTheDocument();
+    expect(screen.getByText(/inmutable: no puede modificarse después de la creación del producto/i)).toBeInTheDocument();
   });
 
-  it('producto SIN movimientos: SKU editable (arquitectura lo permite con unicidad BD)', () => {
+  it('CORRECCIÓN FUNCIONAL (2026-11-12) §2: producto SIN movimientos — el SKU TAMBIÉN queda deshabilitado (inmutable tras la creación)', () => {
     renderEditModal(PLAIN_LOCAL_ROW, baseForm(PLAIN_LOCAL_ROW.sku));
     const input = screen.getByLabelText('SKU del producto') as HTMLInputElement;
-    expect(input).toBeEnabled();
+    expect(input).toBeDisabled();
+    expect(screen.getByText(/inmutable: no puede modificarse después de la creación del producto/i)).toBeInTheDocument();
     expect(screen.queryByText(/tiene movimientos históricos asociados/i)).toBeNull();
+  });
+
+  it('CORRECCIÓN FUNCIONAL (2026-11-12) §3.A: producto VINCULADO — NOMBRE editable con aviso de identidad compartida', async () => {
+    identityQueryResult.data = { master_product_id: LINKED_LOCAL_ROW.master_product_id };
+    renderEditModal(LINKED_LOCAL_ROW, baseForm(LINKED_LOCAL_ROW.sku));
+    // El nombre YA NO queda deshabilitado para vinculados: identidad
+    // compartida editable (enrutada al maestro desde CatalogView).
+    const nameInput = await screen.findByLabelText('Nombre del producto');
+    expect(nameInput).toBeEnabled();
+    expect(screen.getByText(/Nombre compartido del catálogo/i)).toBeInTheDocument();
+    // El SKU sigue protegido: gobernado por el catálogo maestro.
+    const skuInput = screen.getByLabelText('SKU del producto') as HTMLInputElement;
+    expect(skuInput).toBeDisabled();
+    expect(screen.getByText(/el SKU lo administra el catálogo maestro \(compartido e inmutable tras la creación\)/i)).toBeInTheDocument();
+  });
+
+  it('producto local sin vínculo: NOMBRE editable normal (sin aviso de catálogo)', async () => {
+    renderEditModal(PLAIN_LOCAL_ROW, baseForm(PLAIN_LOCAL_ROW.sku));
+    const nameInput = await screen.findByLabelText('Nombre del producto');
+    expect(nameInput).toBeEnabled();
+    expect(screen.queryByText(/Nombre compartido del catálogo/i)).toBeNull();
   });
 });
 

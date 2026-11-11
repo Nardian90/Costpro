@@ -1,12 +1,17 @@
 /**
- * MISIÓN GESTIÓN DE PRODUCTOS VINCULADOS AL CATÁLOGO MAESTRO (2026-11-11) —
- * MasterIdentityEditModal: edición de imagen + descripción compartidas.
+ * MISIÓN GESTIÓN DE PRODUCTOS VINCULADOS AL CATÁLOGO MAESTRO (2026-11-11) ·
+ * CORRECCIÓN FUNCIONAL (2026-11-12) — MasterIdentityEditModal: edición de
+ * nombre + imagen + descripción compartidas; SKU protegido (inmutable).
  *
- * Cobertura (criterios de aceptación §7.3/§7.5):
+ * Cobertura (criterios de aceptación §3/§7/§8.4/§8.7):
  *  · Gobernador: guarda vía update_master_product (aplicación inmediata) con
- *    el payload de identidad (imagen + descripción del registro maestro).
+ *    el payload de identidad (nombre/imagen/descripción del registro maestro).
  *  · No gobernador: propone vía propose_master_change (pendiente de
  *    aprobación) — JAMÁS escribe el maestro directamente.
+ *  · El NOMBRE compartido se edita y viaja en el payload (propagación a las
+ *    tiendas vinculadas); vacío → error de validación SIN cerrar el diálogo.
+ *  · El SKU se muestra como campo PROTEGIDO (inmutable tras la creación):
+ *    no existe input editable de SKU en esta interfaz.
  *  · El ALCANCE GLOBAL del cambio queda claro ANTES de guardar (aviso visible).
  *  · resolveMasterId: filas solo-maestro (source='master' → id del maestro) y
  *    filas locales vinculadas (master_product_id explícito).
@@ -120,6 +125,62 @@ describe('MasterIdentityEditModal — gobernador (aplicación inmediata)', () =>
     expect(screen.getByRole('button', { name: /Guardar cambios compartidos/i })).toBeInTheDocument();
   });
 
+  it('muestra el SKU como campo protegido (inmutable, sin input editable)', () => {
+    renderModal(baseRow({}), true);
+    // CORRECCIÓN FUNCIONAL (2026-11-12) §7: el SKU identificado claramente
+    // como campo protegido, no editable.
+    expect(screen.getByTestId('master-identity-sku-value')).toHaveTextContent(MASTER.sku);
+    expect(screen.getByText(/inmutable: no puede modificarse después de la creación del producto/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/SKU del producto/i)).toBeNull();
+  });
+
+  it('CORRECCIÓN FUNCIONAL (2026-11-12) §3.B: hidrata el NOMBRE compartido y lo guarda vía update_master_product', async () => {
+    renderModal(baseRow({}), true);
+    const nameInput = screen.getByLabelText('Nombre compartido del producto');
+    expect(nameInput).toHaveValue(MASTER.name);
+
+    fireEvent.change(nameInput, { target: { value: 'Nombre nuevo compartido' } });
+    fireEvent.click(screen.getByRole('button', { name: /Guardar cambios compartidos/i }));
+
+    await waitFor(() => {
+      expect(updateMutate).toHaveBeenCalledTimes(1);
+    });
+    expect(updateMutate).toHaveBeenCalledWith({
+      masterId: MASTER.id,
+      changes: { name: 'Nombre nuevo compartido' },
+    });
+    expect(proposeMutate).not.toHaveBeenCalled();
+  });
+
+  it('combina nombre + descripción en un único payload de identidad compartida', async () => {
+    renderModal(baseRow({}), true);
+    fireEvent.change(screen.getByLabelText('Nombre compartido del producto'), { target: { value: 'Nombre combinado' } });
+    fireEvent.change(screen.getByLabelText('Descripción compartida del producto'), { target: { value: 'Descripción combinada' } });
+    fireEvent.click(screen.getByRole('button', { name: /Guardar cambios compartidos/i }));
+
+    await waitFor(() => {
+      expect(updateMutate).toHaveBeenCalledTimes(1);
+    });
+    expect(updateMutate).toHaveBeenCalledWith({
+      masterId: MASTER.id,
+      changes: { name: 'Nombre combinado', description: 'Descripción combinada' },
+    });
+  });
+
+  it('nombre vacío → error de validación SIN cerrar el diálogo ni llamar mutaciones', async () => {
+    renderModal(baseRow({}), true);
+    fireEvent.change(screen.getByLabelText('Nombre compartido del producto'), { target: { value: '   ' } });
+    fireEvent.click(screen.getByRole('button', { name: /Guardar cambios compartidos/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('El nombre compartido es obligatorio');
+    });
+    expect(updateMutate).not.toHaveBeenCalled();
+    expect(proposeMutate).not.toHaveBeenCalled();
+    // El diálogo sigue abierto con el error visible.
+    expect(screen.getByLabelText('Nombre compartido del producto')).toBeInTheDocument();
+  });
+
   it('hidrata la descripción vigente del maestro y guarda vía update_master_product', async () => {
     renderModal(baseRow({}), true);
     const textarea = screen.getByLabelText('Descripción compartida del producto');
@@ -167,6 +228,20 @@ describe('MasterIdentityEditModal — no gobernador (propuesta pendiente)', () =
     expect(updateMutate).not.toHaveBeenCalled();
     // El aviso explica el flujo pendiente de aprobación.
     expect(screen.getByText(/pendiente de aprobación/i)).toBeInTheDocument();
+  });
+
+  it('el cambio de NOMBRE también viaja como propuesta (no gobernador)', async () => {
+    renderModal(baseRow({}), false);
+    fireEvent.change(screen.getByLabelText('Nombre compartido del producto'), { target: { value: 'Nombre propuesto por tienda' } });
+    fireEvent.click(screen.getByRole('button', { name: /Proponer cambio/i }));
+
+    await waitFor(() => {
+      expect(proposeMutate).toHaveBeenCalledTimes(1);
+    });
+    expect(proposeMutate).toHaveBeenCalledWith({
+      masterId: MASTER.id,
+      changes: { name: 'Nombre propuesto por tienda' },
+    });
   });
 });
 
