@@ -1,0 +1,40 @@
+✓ 1.1 migración 20261112120000 aplicada SIN errores en PostgreSQL real
+✓ 1.2 aplicar la migración NO cambia ninguna tabla (solo DDL de funciones/trigger/políticas)
+✓ 2.1 fn_master_apply_identity_changes: SECURITY DEFINER + search_path fijado
+✓ 2.2 ERR_SKU_IMMUTABLE presente en la guardra del punto único
+✓ 2.3 la lógica de cambio de SKU del maestro DESAPARECIÓ (ni movimientos ni colisión)
+✓ 2.4 propagación de imagen y nombre compartidos conservada
+✓ 2.5 propose_master_change rechaza la clave sku al ENCOLAR (ERR_SKU_IMMUTABLE)
+✓ 2.6 trigger trg_products_sku_immutable_guard presente (SECURITY DEFINER) y el anterior RETIRADO
+✓ 2.7 las 3 políticas de product-images incluyen la rama master- (imagen compartida) — rama master- en 3/3
+✓ 3.1 fixture determinista creado (2 tiendas conectadas, gobernador + encargado, maestros, filas vinculadas/puras, movimientos reales)
+✓ 4.1 maestro CON movimientos en filas vinculadas → ERR_SKU_IMMUTABLE — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_SKU_IMMUTABLE: el SKU del producto (dd0100d1-0000-
+✓ 4.2 maestro SIN movimientos (sin filas locales) → ERR_SKU_IMMUTABLE (regla MÁS ESTRICTA que 20261111120000) — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_SKU_IMMUTABLE: el SKU del producto (dd0100d2-0000-
+✓ 4.3 el SKU del maestro SIN movimientos PERMANECE inalterado (nada se persistió) — CI-M002
+✓ 4.4 reenvío del SKU idéntico (no-cambio) → ERR_SKU_IMMUTABLE (la clave ya no es parte del contrato editable) — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_SKU_IMMUTABLE: el SKU del producto (dd0100d2-0000-
+✓ 4.5 propuesta con clave sku → ERR_SKU_IMMUTABLE al ENCOLAR (nada entra a la cola) — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_SKU_IMMUTABLE: el SKU del producto (dd0100d1-0000-
+✓ 4.6 la cola de propuestas NO contiene la propuesta de sku — propuestas: 0
+✓ 4.7 UPDATE local de products.sku SIN maestro y SIN movimientos → ERR_SKU_IMMUTABLE (trigger) — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_SKU_IMMUTABLE: el SKU del producto (CI-LOC-SIN) es
+✓ 4.8 UPDATE local de products.sku SIN maestro y CON movimientos → ERR_SKU_IMMUTABLE (subsumido por la regla general) — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_SKU_IMMUTABLE: el SKU del producto (CI-LOC-CON) es
+✓ 4.9 UPDATE local de fila VINCULADA → coerción al maestro (SKU y nombre canónicos, sin error) — CI-M001/Cable Solar 6mm
+✓ 5.1 update_master_product con nombre+descripción+imagen → success — {"status":"success","changes_applied":[{"new":"Cable Solar 6mm Premium","old":"Cable Solar 6mm","fie
+✓ 5.2 el NOMBRE se PROPAGA a TODAS las tiendas vinculadas (S1 y S2) — Cable Solar 6mm Premium | Cable Solar 6mm Premium
+✓ 5.3 la IMAGEN compartida se propaga por referencia (image_url = image_path del maestro)
+✓ 5.4 el SKU de las filas vinculadas PERMANECE (inmutable y coherente)
+✓ 5.5 precios/costos/existencias de cada tienda INTACTOS tras el cambio de identidad — S1 p=100/50 · S2 p=120/60
+✓ 5.6 auditoría por campo del nombre en master_change_log — registros name: 1
+✓ 5.7 nombre vacío → ERR_INVALID_CHANGES (validación conservada) — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_INVALID_CHANGES: el nombre no puede quedar vacío\n
+✓ 5.8 encargado (no gobernador) propone cambio de NOMBRE → propuesta encolada
+✓ 5.9 el gobernador APRUEBA la propuesta → aplicada al maestro — {"status":"success","changes_applied":[{"new":"Regleta premium USB-C","old":"Regleta premium","field
+✓ 5.10 el nombre propuesto quedó persistido en el maestro — Regleta premium USB-C
+✓ 6.1 encargado de tienda conectada crea maestro + fila local (transacción atómica) — {"sku":"CI-CREADO-1","status":"success","tenant_id":"dd0100a1-0000-4000-8000-00000000000a","product_id":"c21f0c4b-bb22-4a04-afab-32891d06032
+✓ 6.2 la fila local nace con defaults de alta manual: precio 0/CUP, min_stock 1, existencia 0 — price=0/CUP cost=0 min=1.0000 stock=0.0000
+✓ 6.3 el vínculo maestro-local queda establecido y la identidad compartida coincide
+✓ 6.4 SKU repetido → ERR_MASTER_SKU_EXISTS (sin identidades duplicadas) — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_MASTER_SKU_EXISTS: ffdeecd8-175d-4560-868d-c42ee02
+✓ 6.5 existe EXACTAMENTE un maestro con ese SKU (sin duplicados ni huérfanos) — maestros: 1
+✓ 7.1 conteos de tablas históricas/financieras IDÉNTICOS a los iniciales (cero residuos) — todas iguales
+✓ 7.2 fixture completamente retirado (productos y maestros de verificación) — productos: 0 · maestros: 0
+
+════════ RESUMEN CATÁLOGO-IDENTIDAD SKU INMUTABLE + NOMBRE COMPARTIDO (PostgreSQL real, BD E2E aislada) ════════
+Total: 36 · OK: 36 · FALLOS: 0
+TODAS las verificaciones PostgreSQL pasaron.
