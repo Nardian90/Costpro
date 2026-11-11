@@ -165,6 +165,42 @@ export function useDisconnectStoreCatalog() {
   });
 }
 
+/**
+ * GESTIÓN-MAESTRO (2026-11-11): identidad del maestro para la edición desde la
+ * pestaña «Catálogo» de Inventario (imagen + descripción compartidas). Lectura
+ * directa de master_products — permitida por RLS a los miembros de tiendas
+ * conectadas (can_read_master_catalog); la escritura sigue siendo exclusiva de
+ * las RPC gobernadas (update_master_product / propose_master_change).
+ */
+export interface MasterIdentityData {
+  id: string;
+  sku: string;
+  name: string;
+  description: string | null;
+  image_path: string | null;
+}
+
+export function useMasterProductIdentity(masterId?: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ['master-product-identity', masterId],
+    queryFn: async (): Promise<MasterIdentityData | null> => {
+      if (!masterId) return null;
+      const { data, error } = await supabase
+        .from('master_products')
+        .select('id, sku, name, description, image_path')
+        .eq('id', masterId)
+        .maybeSingle();
+      if (error) {
+        logger.error('DATABASE', 'useMasterProductIdentity: fallo de lectura', { error: error.message });
+        throw error;
+      }
+      return (data as MasterIdentityData) ?? null;
+    },
+    enabled: !!masterId && enabled,
+    staleTime: 15_000,
+  });
+}
+
 export interface MasterChanges {
   name?: string;
   description?: string | null;

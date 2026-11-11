@@ -2,7 +2,7 @@
 
 import React from 'react';
 import {
-  Edit, Trash2, Copy, Power, RotateCcw, CheckSquare, Square, Package, FileText, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown,
+  Edit, Trash2, Copy, Power, RotateCcw, CheckSquare, Square, Package, FileText, AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, Building2, Store,
 } from 'lucide-react';
 import {
   ProductCard, IconButton,
@@ -36,6 +36,14 @@ interface CatalogProductGridProps {
   onDelete: (product: Product) => void;
   /** Abre el visor/editor de imagen del producto (clic directo en la imagen). */
   onImageClick?: (product: Product) => void;
+  /** GESTIÓN-MAESTRO (2026-11-11): activa en ESTA tienda un producto solo-maestro
+   *  (source='master', sin fila local) vía activate_master_product. */
+  onActivate?: (product: Product) => void;
+  /** ¿Activación en curso? (deshabilita el botón de la fila afectada). */
+  activatingMasterId?: string | null;
+  /** GESTIÓN-MAESTRO (2026-11-11): abre la edición de identidad compartida
+   *  (imagen + descripción del registro maestro) para filas maestras/vinculadas. */
+  onEditIdentity?: (product: Product) => void;
   /** FC status map: productId → FCStatus */
   fcStatusMap?: Map<string, ProductFCStatus>;
   /** FC resolution map: productId → FCResolutionResult */
@@ -67,6 +75,9 @@ export default function CatalogProductGrid({
   onToggleActive,
   onDelete,
   onImageClick,
+  onActivate,
+  activatingMasterId,
+  onEditIdentity,
   fcStatusMap,
   fcResolutionMap,
   onViewFC,
@@ -150,6 +161,9 @@ export default function CatalogProductGrid({
                 onDelete={onDelete}
                 onToggleActive={onToggleActive}
                 onImageClick={onImageClick}
+                onActivate={onActivate}
+                activating={activatingMasterId === product.id}
+                onEditIdentity={onEditIdentity}
                 fcStatus={fcStatusMap?.get(product.id)}
                 onViewFC={fcResolutionMap?.get(product.id) && onViewFC ? () => {
                   const resolution = fcResolutionMap!.get(product.id)!;
@@ -255,9 +269,19 @@ export default function CatalogProductGrid({
                           {product.source === 'master' && (
                             <span
                               className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 shrink-0"
-                              title="Producto del catálogo maestro de la organización: sin fila local en esta tienda. Incorpóralo al inventario para operarlo localmente."
+                              title="Producto del catálogo maestro de la organización: sin fila local en esta tienda. Actívalo para operarlo localmente."
                             >
-                              Maestro
+                              Maestro · pendiente de activación
+                            </span>
+                          )}
+                          {/* GESTIÓN-MAESTRO (2026-11-11): estado diferenciado para
+                              filas locales VINCULADAS al catálogo maestro. */}
+                          {product.source !== 'master' && product.master_product_id && (
+                            <span
+                              className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 shrink-0"
+                              title="Producto local vinculado al catálogo maestro de la organización: identidad compartida (SKU, nombre, imagen); precios y existencias de esta tienda."
+                            >
+                              Vinculado al catálogo
                             </span>
                           )}
                           {/* CM-1.3: Badge margen negativo en tabla (antes solo en grid) */}
@@ -328,9 +352,48 @@ export default function CatalogProductGrid({
                         </div>
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <div className="flex justify-end gap-1">
-                          <IconButton icon={Copy} label="Clonar producto" title="Crear una copia duplicada con nuevo SKU" onClick={() => onClone(product)} tooltipSide="bottom" />
-                          <IconButton icon={Edit} label="Editar producto" title="Modificar nombre, precios, imagen y datos" onClick={() => onEdit(product)} tooltipSide="bottom" />
+                        {product.source === 'master' ? (
+                          /* GESTIÓN-MAESTRO (2026-11-11): fila solo-maestro — la única
+                             operación de fila es ACTIVARLA en esta tienda (RPC
+                             activate_master_product) + editar su identidad
+                             compartida. Nada local aplica (no hay fila local). */
+                          <div className="flex justify-end gap-1 items-center">
+                            {onEditIdentity && (
+                              <IconButton
+                                icon={Building2}
+                                label="Editar identidad compartida"
+                                title="Modificar la imagen y la descripción compartidas del catálogo (organización)"
+                                onClick={() => onEditIdentity(product)}
+                                tooltipSide="bottom"
+                              />
+                            )}
+                            {onActivate && (
+                              <button
+                                type="button"
+                                onClick={() => onActivate(product)}
+                                disabled={activatingMasterId === product.id}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[32px] rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest border border-primary shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
+                                aria-label={`Activar ${product.sku} en esta tienda`}
+                                title="Crear la fila local de esta tienda vinculada al producto maestro (existencia 0, sin movimientos, sin copiar datos de otras tiendas)"
+                              >
+                                <Store className="h-3.5 w-3.5" />
+                                {activatingMasterId === product.id ? 'Activando…' : 'Activar en esta tienda'}
+                              </button>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex justify-end gap-1">
+                            {onEditIdentity && product.master_product_id && (
+                              <IconButton
+                                icon={Building2}
+                                label="Editar identidad compartida"
+                                title="Modificar la imagen y la descripción compartidas del catálogo (organización)"
+                                onClick={() => onEditIdentity(product)}
+                                tooltipSide="bottom"
+                              />
+                            )}
+                            <IconButton icon={Copy} label="Clonar producto" title="Crear una copia duplicada con nuevo SKU" onClick={() => onClone(product)} tooltipSide="bottom" />
+                            <IconButton icon={Edit} label="Editar producto" title="Modificar nombre, precios, imagen y datos" onClick={() => onEdit(product)} tooltipSide="bottom" />
                           {fcStatus && fcStatus !== 'sin_fc' && fcResolution && onViewFC && (
                             <IconButton
                               icon={FileText}
@@ -356,6 +419,7 @@ export default function CatalogProductGrid({
                             <IconButton icon={Trash2} label="Eliminar producto" title="Borrar permanentemente del catálogo" onClick={() => onDelete(product)} className="text-destructive" tooltipSide="bottom" />
                           )}
                         </div>
+                        )}
                       </td>
                     </tr>
                   );
