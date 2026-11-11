@@ -196,7 +196,26 @@ describe.skipIf(!shouldRun)('DB Integration — Real Supabase queries', () => {
       expect(data!.role).toBe('superadmin');
     });
 
-    it('superadmin platform account has NO store memberships by design', async () => {
+    it('superadmin platform account memberships are optional, consistent and audited (access is role-based)', async () => {
+      // DERIVA CORREGIDA (2026-11-11, ORDEN DE CIERRE §3): el test afirmaba
+      // `memberships.length === 0` como si fuera el invariante de diseño de
+      // 20260826120000 §6. Ese diseño trata del MODELO DE ACCESO (el acceso
+      // de la cuenta de plataforma proviene del ROL — is_superadmin/is_admin
+      // en RLS + isAdminLevel en la app + validate_active_store ciclo 5 —,
+      // no de membresías; ver REGRESIÓN DEL INCIDENTE abajo), NO de una
+      // prohibición de membresías. La producción evolucionó legítimamente:
+      // el propietario otorgó membresías admin a la cuenta de plataforma
+      // (2026-11-05 COSTPRO (Prueba) vía SQL directo y 2026-11-07 SHADDAI vía
+      // service_role — eventos membership_grant con actor_kind
+      // sql_directo/service_role en audit_logs, captados por el trigger
+      // CP-SEC-026 de 20261103000001). El snapshot congelado count=0 era la
+      // deriva; el invariante real es la NO-DEPENDENCIA del acceso.
+      //
+      // Se mantiene la protección de la regresión del incidente (la cuenta
+      // no NECESITA membresías: setActiveStore valida por rol — probado en
+      // superadmin-store-access-live-db.test.ts [S2-S4]) y se eleva la
+      // aserción a integridad de datos real por fila (consistencia con el
+      // esquema vigente, no con un snapshot puntual).
       // Use the FK-hinted query (same pattern as bot/chat route)
       const { data, error } = await admin
         .from('profiles')
@@ -207,14 +226,67 @@ describe.skipIf(!shouldRun)('DB Integration — Real Supabase queries', () => {
       expect(error).toBeNull();
       expect(data).toBeDefined();
       expect(data!.role).toBe('superadmin');
-      // §6 migración 20260826120000: la cuenta de plataforma NO lleva
-      // membresías de tienda. Su acceso a tiendas proviene del ROL
-      // (is_superadmin/is_admin en RLS + isAdminLevel en la app), no de
-      // membresías. REGRESIÓN DEL INCIDENTE: exigir membresía a esta cuenta
-      // la dejó sin tiendas; setActiveStore debe validar por rol.
+      // §6 migración 20260826120000 + CP-ORG-001 ciclo 5: el acceso de la
+      // cuenta de plataforma NO depende de membresías. Su presencia es
+      // opcional (metadatos otorgados por el propietario, auditados); el
+      // invariante es que cualquier membresía existente sea consistente:
       const memberships = (data as any).memberships || [];
-      expect(memberships.length).toBe(0);
-      expect(memberships.filter((m: any) => m.status === 'active').length).toBe(0);
+      for (const m of memberships) {
+        // status dentro del dominio vigente (CHECK de user_store_memberships)
+        expect(['active', 'revoked']).toContain(m.status);
+        // rol dentro del dominio vigente (user_role: 20260120 + tenant_admin
+        // añadido en 20261001; espejo de src/types UserRole)
+        expect(['admin', 'superadmin', 'encargado', 'usuario', 'manager', 'clerk', 'warehouse', 'costo', 'tenant_admin']).toContain(m.role);
+      }
+      // REGRESIÓN DEL INCIDENTE (se conserva íntegra): ninguna membresía
+      // revocada pendiente de limpieza ni estado inesperado; y el modelo
+      // sigue siendo ROL: la cuenta es superadmin con tiendas activas
+      // seleccionables con o sin membresías (siguiente test).
+      expect(memberships.filter((m: any) => m.status !== 'active' && m.status !== 'revoked').length).toBe(0);
+    });
+
+    it('every platform-account membership references a real active store with an audit trail (CP-SEC-026)', async () => {
+      // Integridad por fila (más fuerte que el count congelado): cada
+      // membresía de la cuenta de plataforma debe referenciar una tienda
+      // real/existente y el otorgamiento debe tener registro en audit_logs
+      // (trigger CP-SEC-026 desde 20261103000001). Nada de filas huérfanas
+      // ni otorgamientos sin trazabilidad.
+      const { data: profile } = await admin
+        .from('profiles')
+        .select('id, memberships:user_store_memberships!profiles_memberships_fkey(id, store_id, role, status)')
+        .eq('id', 'a1111111-1111-1111-1111-111111111111')
+        .single();
+      const memberships = ((profile as any)?.memberships || []) as { id: string; store_id: string; role: string; status: string }[];
+      if (memberships.length === 0) {
+        // Sin membresías también es un estado válido del diseño (acceso por rol).
+        return;
+      }
+      const storeIds = memberships.map(m => m.store_id);
+      const { data: stores, error: storesError } = await admin
+        .from('stores')
+        .select('id, is_active, is_archived')
+        .in('id', storeIds);
+      expect(storesError).toBeNull();
+      expect(stores!.length).toBe(storeIds.length); // ninguna huérfana
+      // La membresía de una cuenta administrativa debe referenciar tiendas
+      // vivas (activas y no archivadas) — coherente con el selector de
+      // tiendas que la app ofrece al SuperAdmin.
+      for (const s of stores!) {
+        expect(s.is_active).toBe(true);
+        expect(s.is_archived).toBe(false);
+      }
+      // Trazabilidad CP-SEC-026: cada otorgamiento con su evento en audit_logs.
+      const { data: grants, error: grantsError } = await admin
+        .from('audit_logs')
+        .select('record_id')
+        .eq('table_name', 'user_store_memberships')
+        .eq('action', 'membership_grant')
+        .in('record_id', memberships.map(m => m.id));
+      expect(grantsError).toBeNull();
+      const grantedIds = new Set((grants || []).map((g: any) => g.record_id));
+      for (const m of memberships) {
+        expect(grantedIds.has(m.id)).toBe(true);
+      }
     });
 
     it('there are active stores for the platform account to select (regresión incidente)', async () => {

@@ -14,6 +14,8 @@
     "scripts/m003-aplicar-migracion.mjs",
     "scripts/m004-aplicar-migracion-20261030130000.mjs",
     "scripts/m004-aplicar-migracion-20261030143000.mjs",
+    "scripts/m010-aplicar-migracion-20261111120000.mjs",
+    "scripts/m011-aplicar-migracion-20261111130000.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
     "scripts/seed-pick3-history.js"
