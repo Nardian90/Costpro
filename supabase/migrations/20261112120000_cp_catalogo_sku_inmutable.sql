@@ -286,6 +286,8 @@ $function$;
 
 DROP TRIGGER IF EXISTS trg_products_sku_movement_guard ON public.products;
 DROP FUNCTION IF EXISTS public.fn_products_sku_movement_guard();
+-- Re-ejecutabilidad del trigger NUEVO (CREATE TRIGGER sin IF NOT EXISTS en PG).
+DROP TRIGGER IF EXISTS trg_products_sku_immutable_guard ON public.products;
 CREATE TRIGGER trg_products_sku_immutable_guard
   BEFORE UPDATE OF sku ON public.products
   FOR EACH ROW EXECUTE FUNCTION public.fn_products_sku_immutable_guard();

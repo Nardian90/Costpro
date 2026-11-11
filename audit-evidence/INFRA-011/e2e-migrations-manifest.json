@@ -165,7 +165,7 @@
   "total_considerados": 560,
   "total_incluidos": 145,
   "total_excluidos": 415,
-  "digest": "a5344bce7f37a5bec65eb89dfbb7fab5f42bf49fb9c3059d95d8776d0e268ef7",
+  "digest": "7a2fc65d5507a1660b55a790b3fde9c304c93af8cd5e2729db727da969421aa2",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5467,14 +5467,14 @@
     },
     {
       "nombre": "20261112120000_cp_catalogo_sku_inmutable.sql",
-      "bytes": 24111,
-      "sha256_original": "c6f3de6ba6ae8291b9e00f35440d80338d5bdc769133866bf95301032d2db6be",
+      "bytes": 24268,
+      "sha256_original": "43d1faee9578f07fd547f8f616bb9c5da2baf64d76edc686ef89442bca6af1f1",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261112",
       "observaciones": [],
       "posicion": 145,
-      "sha256_generado": "c6f3de6ba6ae8291b9e00f35440d80338d5bdc769133866bf95301032d2db6be"
+      "sha256_generado": "43d1faee9578f07fd547f8f616bb9c5da2baf64d76edc686ef89442bca6af1f1"
     },
     {
       "nombre": "AUDIT_FIXES.md",

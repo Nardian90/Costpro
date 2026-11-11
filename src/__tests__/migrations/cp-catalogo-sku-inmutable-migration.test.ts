@@ -79,6 +79,8 @@ describe('20261112120000 — SKU inmutable + identidad completa del Catálogo Ma
     expect(s).toMatch(/CREATE OR REPLACE FUNCTION public\.fn_products_sku_immutable_guard\(\)/);
     expect(s).toMatch(/DROP TRIGGER IF EXISTS trg_products_sku_movement_guard ON public\.products;/);
     expect(s).toMatch(/DROP FUNCTION IF EXISTS public\.fn_products_sku_movement_guard\(\);/);
+    // Re-ejecutabilidad del trigger NUEVO (CREATE TRIGGER sin IF NOT EXISTS en PG).
+    expect(s).toMatch(/DROP TRIGGER IF EXISTS trg_products_sku_immutable_guard ON public\.products;/);
     expect(s).toMatch(/CREATE TRIGGER trg_products_sku_immutable_guard\s+BEFORE UPDATE OF sku ON public\.products\s+FOR EACH ROW EXECUTE FUNCTION public\.fn_products_sku_immutable_guard\(\);/);
     // Filas vinculadas: gobernadas por el maestro (sin bloqueo aquí — coerción del identity guard).
     expect(s).toMatch(/IF NEW\.master_product_id IS NOT NULL THEN\s+RETURN NEW;/);
