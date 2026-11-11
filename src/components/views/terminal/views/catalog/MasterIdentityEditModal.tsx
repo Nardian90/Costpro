@@ -140,9 +140,6 @@ export const MasterIdentityEditModal: React.FC<MasterIdentityEditModalProps> = (
 
   const handleSave = useCallback(async () => {
     if (!masterId) return;
-    if (imageFile && !identity.data?.image_path) {
-      // Sin imagen previa y sin nueva selección: nada raro — permitido.
-    }
     setIsSaving(true);
     let uploadedFileName: string | null = null;
     try {

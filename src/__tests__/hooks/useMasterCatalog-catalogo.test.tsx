@@ -136,7 +136,14 @@ describe('MasterCatalogModal + CreateProductModal — contrato de cableado (lect
     const src = readFileSync(resolve(process.cwd(), 'src/components/views/terminal/views/catalog/EditProductModal.tsx'), 'utf8');
     expect(src).toContain('master_product_id');
     expect(src).toContain('identityLocked');
-    // Ambos campos de identidad compartida quedan de solo lectura
-    expect((src.match(/disabled=\{identityLocked\}/g) || []).length).toBe(2);
+    // Ambos campos de identidad compartida quedan de solo lectura.
+    // GESTIÓN-MAESTRO (2026-11-11): el SKU evoluciona a skuInputDisabled
+    // (= identityLocked || skuLockedByMovements) — el bloqueo por vínculo al
+    // maestro se CONSERVA y se añade el bloqueo por movimientos históricos
+    // (brief §4). El nombre sigue con identityLocked puro.
+    expect((src.match(/disabled=\{identityLocked\}/g) || []).length).toBe(1);
+    expect((src.match(/disabled=\{skuInputDisabled\}/g) || []).length).toBe(1);
+    expect(src).toContain('skuLockedByMovements = !identityLocked && product?.has_movements === true');
+    expect(src).toContain('trg_products_sku_movement_guard');
   });
 });

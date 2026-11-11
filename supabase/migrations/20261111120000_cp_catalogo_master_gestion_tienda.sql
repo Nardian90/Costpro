@@ -265,7 +265,7 @@ BEGIN
     RAISE EXCEPTION 'CP-MASTER-GESTION-GUARD: la RPC no debe tocar datos comerciales (precio/costo/existencias)';
   END IF;
 
-  SELECT count(*), COALESCE(max(p.prosecdef), false) INTO v_trg, v_trg_secdef
+  SELECT count(*), COALESCE(bool_or(p.prosecdef), false) INTO v_trg, v_trg_secdef
     FROM pg_trigger t
     JOIN pg_proc p ON p.oid = t.tgfoid
     JOIN pg_namespace n ON n.oid = p.pronamespace
