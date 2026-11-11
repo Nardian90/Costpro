@@ -63,7 +63,7 @@ vi.mock('@/lib/supabaseClient', () => {
   };
 });
 
-const { identityQueryResult } = vi.hoisted(() => ({ identityQueryResult: { data: null as { master_product_id: string | null } | null } }));
+const { identityQueryResult } = vi.hoisted(() => ({ identityQueryResult: { data: null as { master_product_id?: string | null } | null } }));
 
 vi.mock('@/services/catalog-service', () => ({
   catalogService: { uploadProductImage: vi.fn() },

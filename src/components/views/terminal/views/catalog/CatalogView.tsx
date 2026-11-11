@@ -943,7 +943,7 @@ export default function CatalogView() {
     // la creación — en cualquier interfaz y vía cualquier operación autorizada
     // del backend (guard fail-closed en el servidor). Guard defensivo de UI
     // (el input es read-only; evita el viaje inútil si el valor mutara).
-    if (editForm.sku.trim() !== (editingProduct.sku || '').trim()) {
+    if (editForm.sku.trim() !== ((editingProduct?.sku) || '').trim()) {
       toast.error('El SKU es inmutable: no puede modificarse después de la creación del producto.');
       return;
     }
