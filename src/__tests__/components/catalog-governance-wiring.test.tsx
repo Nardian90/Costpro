@@ -156,6 +156,18 @@ describe('Cableado estático — integración en la aplicación', () => {
     expect(s).toMatch(/getSupabaseUrl\('product-images', m\.image_path\)/);
   });
 
+  it('CORRECCIÓN FUNCIONAL (2026-11-12) §2/§8.7: gobernanza — SKU protegido no editable (inmutable tras la creación)', () => {
+    const s = readFileSync(resolve(process.cwd(), 'src/components/views/terminal/views/organizations/CatalogGovernanceSection.tsx'), 'utf8');
+    // SKU mostrado como campo protegido (read-only), sin input editable.
+    expect(s).toMatch(/master-edit-sku-value/);
+    expect(s).toMatch(/inmutable tras la creación/);
+    expect(s).not.toMatch(/id="master-edit-sku"/);
+    // El submit ya no construye changes con la clave sku.
+    expect(s).not.toMatch(/changes\.sku\s*=/);
+    // El nombre compartido sigue editable (identidad compartida).
+    expect(s).toMatch(/id="master-edit-name"/);
+  });
+
   it('catalog-service no elimina archivos aún referenciados (GC compartido)', () => {
     const s = readFileSync(resolve(process.cwd(), 'src/services/catalog-service.ts'), 'utf8');
     expect(s).toMatch(/master_products'\)\.select\('id', \{ count: 'exact', head: true \}\)\.eq\('image_path', previousFileName\)/);

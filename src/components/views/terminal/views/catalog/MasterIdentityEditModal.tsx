@@ -2,17 +2,20 @@
 
 /**
  * MasterIdentityEditModal — MISIÓN GESTIÓN DE PRODUCTOS VINCULADOS AL
- * CATÁLOGO MAESTRO (2026-11-11).
+ * CATÁLOGO MAESTRO (2026-11-11) · CORRECCIÓN FUNCIONAL (2026-11-12).
  *
- * Edición de la IDENTIDAD COMPARTIDA (imagen y descripción) de un producto
- * del Catálogo Maestro, accesible directamente desde la pestaña «Catálogo»
- * de Inventario (filas solo-maestro y filas locales vinculadas) y desde el
- * modal «Catálogo de la organización» (interfaz alternativa del brief §3).
+ * Edición de la IDENTIDAD COMPARTIDA (nombre, imagen y descripción) de un
+ * producto del Catálogo Maestro, accesible directamente desde la pestaña
+ * «Catálogo» de Inventario (filas solo-maestro y filas locales vinculadas)
+ * y desde el modal «Catálogo de la organización» (interfaz alternativa).
  *
  * Reglas de arquitectura respetadas (verificadas en auditoría previa):
- *  · La imagen y la descripción del maestro son atributos COMPARTIDOS por
- *    todas las tiendas de la organización vinculadas a ese producto: la
- *    edición se realiza en el registro maestro, nunca en copias locales.
+ *  · El NOMBRE, la imagen y la descripción del maestro son atributos
+ *    COMPARTIDOS por todas las tiendas de la organización vinculadas a ese
+ *    producto: la edición se realiza en el registro maestro, nunca en copias
+ *    locales (fn_master_apply_identity_changes propaga nombre e imagen a
+ *    las filas vinculadas; la descripción compartida es la base de las
+ *    tiendas que no personalizan la suya).
  *  · Escritura EXCLUSIVA vía RPC certificadas (el cliente jamás escribe
  *    master_products): gobernador → update_master_product (aplicación
  *    inmediata con auditoría por campo); no gobernador → propose_master_
@@ -20,17 +23,14 @@
  *  · El alcance GLOBAL del cambio queda claro para el usuario ANTES de
  *    guardar (brief §3: «Cuando una modificación tenga alcance global… ese
  *    alcance debe quedar claro para el usuario antes de guardar»).
- *  · La descripción compartida se usa como base en las tiendas que no hayan
- *    personalizado la suya (override local vigente en el listado).
  *  · Sin campos duplicados ni relaciones paralelas: mismos buckets/tablas/RPCs.
  *
- * El SKU NO se edita aquí: con movimientos históricos queda bloqueado por
- * diseño (brief §4) y sin movimientos se gestiona en el panel de gobernanza
- * del catálogo (Sistema → Organizaciones → Catálogo), donde vive el flujo
- * completo de identidad con sus validaciones de unicidad.
+ * El SKU NO se edita aquí NI EN NINGUNA INTERFAZ: compartido e INMUTABLE
+ * después de la creación (brief 2026-11-12 §2; ERR_SKU_IMMUTABLE en el
+ * punto único de escritura del servidor). Se muestra como campo protegido.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AlertTriangle, Building2, Camera, ImagePlus, Loader2, X } from 'lucide-react';
+import { AlertTriangle, Building2, Camera, ImagePlus, Loader2, Lock, X } from 'lucide-react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
@@ -55,6 +55,7 @@ export interface MasterIdentityEditModalProps {
 function translateMasterError(msg: string): string {
   if (msg.includes('ERR_MASTER_NOT_FOUND')) return 'El producto maestro ya no existe en la organización.';
   if (msg.includes('ERR_UNAUTHORIZED')) return 'Sin permiso para esta operación (gobernador del catálogo).';
+  if (msg.includes('ERR_SKU_IMMUTABLE')) return 'El SKU es compartido e inmutable: no puede modificarse después de la creación del producto.';
   if (msg.includes('ERR_SKU_LOCKED_BY_MOVEMENTS')) return 'El SKU está bloqueado: el producto tiene movimientos históricos.';
   if (msg.includes('ERR_STORE_NOT_CONNECTED')) return 'Esta tienda no está conectada al catálogo de la organización.';
   return msg;
@@ -83,6 +84,9 @@ export const MasterIdentityEditModal: React.FC<MasterIdentityEditModalProps> = (
   const updateMaster = useUpdateMasterProduct(storeId);
   const proposeMaster = useProposeMasterChange(storeId);
 
+  // CORRECCIÓN FUNCIONAL (2026-11-12) §3.B: el NOMBRE forma parte de la
+  // identidad compartida editable del catálogo (junto a imagen y descripción).
+  const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -93,6 +97,7 @@ export const MasterIdentityEditModal: React.FC<MasterIdentityEditModalProps> = (
   // Hidratar el formulario con la identidad vigente del maestro.
   useEffect(() => {
     if (!open) return;
+    setName(identity.data?.name ?? '');
     setDescription(identity.data?.description ?? '');
     setImageFile(null);
     const persisted = identity.data?.image_path
@@ -140,10 +145,25 @@ export const MasterIdentityEditModal: React.FC<MasterIdentityEditModalProps> = (
 
   const handleSave = useCallback(async () => {
     if (!masterId) return;
+    // Validación ANTES de cualquier escritura: el diálogo NO se cierra si
+    // hay error de validación (brief §7: «Evitar cerrar el diálogo cuando
+    // exista un error de validación»).
+    const nextName = name.trim();
+    if (!nextName) {
+      toast.error('El nombre compartido es obligatorio');
+      return;
+    }
+    if (nextName.length > 150) {
+      toast.error('El nombre no debe superar los 150 caracteres');
+      return;
+    }
     setIsSaving(true);
     let uploadedFileName: string | null = null;
     try {
       const changes: MasterChanges = {};
+      if (nextName !== (identity.data?.name ?? '')) {
+        changes.name = nextName;
+      }
       const nextDescription = description.trim();
       if (nextDescription !== (identity.data?.description ?? '')) {
         changes.description = nextDescription || null;
@@ -160,7 +180,7 @@ export const MasterIdentityEditModal: React.FC<MasterIdentityEditModalProps> = (
 
       if (isGovernor) {
         await updateMaster.mutateAsync({ masterId, changes });
-        toast.success('Identidad compartida actualizada (se refleja en las tiendas vinculadas)');
+        toast.success('Identidad compartida actualizada (nombre, imagen o descripción; se refleja en las tiendas vinculadas)');
       } else {
         if (!storeId) throw new Error('Sin tienda activa');
         await proposeMaster.mutateAsync({ masterId, changes });
@@ -177,7 +197,7 @@ export const MasterIdentityEditModal: React.FC<MasterIdentityEditModalProps> = (
     } finally {
       setIsSaving(false);
     }
-  }, [masterId, description, imageFile, identity.data, isGovernor, storeId, updateMaster, proposeMaster, uploadMasterImage, onClose]);
+  }, [masterId, name, description, imageFile, identity.data, isGovernor, storeId, updateMaster, proposeMaster, uploadMasterImage, onClose]);
 
   const productName = product?.name ?? identity.data?.name ?? '';
   const productSku = product?.sku ?? identity.data?.sku ?? '';
@@ -187,7 +207,7 @@ export const MasterIdentityEditModal: React.FC<MasterIdentityEditModalProps> = (
       open={open}
       onOpenChange={(o) => { if (!o) onClose(); }}
       title="Identidad compartida del catálogo"
-      description={`${productSku ? `SKU ${productSku} · ` : ''}${productName}. Imagen y descripción compartidas por las tiendas de la organización vinculadas a este producto.`}
+      description={`${productSku ? `SKU ${productSku} · ` : ''}${productName}. Nombre, imagen y descripción compartidos por las tiendas de la organización vinculadas a este producto.`}
       maxWidth="sm:max-w-xl"
       footer={
         <>
@@ -216,6 +236,23 @@ export const MasterIdentityEditModal: React.FC<MasterIdentityEditModalProps> = (
           </div>
         </div>
 
+        {/* SKU PROTEGIDO — compartido e inmutable tras la creación (brief
+            2026-11-12 §2/§7: identificado claramente como campo no editable). */}
+        <div className="rounded-lg border border-border bg-muted/30 p-3">
+          <label className="text-xs font-black uppercase tracking-widest ml-1" htmlFor="master-identity-sku">
+            SKU (protegido)
+          </label>
+          <div className="mt-1.5 flex items-center gap-2" id="master-identity-sku">
+            <Lock className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+            <span className="font-mono text-sm font-bold px-2 py-1 rounded bg-muted" data-testid="master-identity-sku-value">
+              {productSku || '—'}
+            </span>
+            <span className="text-[11px] text-muted-foreground">
+              Compartido e inmutable: no puede modificarse después de la creación del producto.
+            </span>
+          </div>
+        </div>
+
         {identity.isLoading ? (
           <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground" role="status">
             <Loader2 className="h-4 w-4 animate-spin" /> Cargando identidad del catálogo…
@@ -227,6 +264,31 @@ export const MasterIdentityEditModal: React.FC<MasterIdentityEditModalProps> = (
           </div>
         ) : (
           <>
+            {/* Nombre compartido — CORRECCIÓN FUNCIONAL (2026-11-12) §3.B:
+                el nombre forma parte de la identidad compartida del catálogo
+                y se edita en el registro maestro (propagación a todas las
+                tiendas vinculadas vía fn_master_apply_identity_changes). */}
+            <div>
+              <label htmlFor="master-identity-name" className="text-xs font-black uppercase tracking-widest ml-1">
+                Nombre compartido
+              </label>
+              <input
+                id="master-identity-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={150}
+                disabled={isSaving}
+                aria-label="Nombre compartido del producto"
+                className="neu-input w-full font-bold"
+                placeholder="Nombre visible en todas las tiendas vinculadas"
+                data-testid="master-identity-name-input"
+              />
+              <p className="text-[10px] text-muted-foreground italic ml-1 mt-1">
+                Se guarda en el registro maestro y se refleja automáticamente en todas las tiendas vinculadas.
+              </p>
+            </div>
+
             {/* Imagen compartida */}
             <div>
               <label className="text-xs font-black uppercase tracking-widest ml-1" htmlFor="master-identity-image">
@@ -317,12 +379,8 @@ export const MasterIdentityEditModal: React.FC<MasterIdentityEditModalProps> = (
               </p>
             </div>
 
-            {/* El SKU NO es editable aquí: gestión de trazabilidad contable. */}
-            <div className="rounded-lg border border-border bg-muted/30 p-3 text-[11px] leading-relaxed">
-              <strong className="font-black uppercase tracking-wide">SKU protegido:</strong> el SKU de un
-              producto con movimientos históricos queda bloqueado (trazabilidad contable). Su gestión,
-              cuando procede, vive en el panel de gobernanza del catálogo (Sistema → Organizaciones → Catálogo).
-            </div>
+            {/* El SKU ya se muestra arriba como campo protegido: compartido
+                e inmutable tras la creación (brief 2026-11-12 §2). */}
           </>
         )}
       </div>

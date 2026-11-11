@@ -1,5 +1,6 @@
 /**
- * MasterCatalogModal — MISIÓN CATÁLOGO MAESTRO (PR 4).
+ * MasterCatalogModal — MISIÓN CATÁLOGO MAESTRO (PR 4) · CORRECCIÓN FUNCIONAL
+ * (2026-11-12): administración completa de la identidad compartida.
  *
  * Vista del catálogo de la organización para la tienda activa:
  *  · Estado del enlace (conectada / no conectada).
@@ -7,11 +8,18 @@
  *    «Activar en esta tienda» (RPC activate_master_product: fila local con
  *    defaults de alta manual, existencia 0, sin movimientos).
  *  · Productos ya activados (muestra el vínculo local).
+ *  · Edición de identidad compartida (nombre, imagen, descripción) vía
+ *    MasterIdentityEditModal.
+ *  · «+ Crear producto» (brief §4): creación directa de un nuevo producto
+ *    maestro desde este diálogo con CreateMasterProductModal — MISMO
+ *    servicio de creación que la pestaña «Catálogo» de Inventario
+ *    (useCreateMasterProduct → RPC create_master_product), sin cerrar la
+ *    ventana ni recargar la aplicación.
  * Los datos comerciales (precio/costo/existencias) SIEMPRE de la fila local:
  * la activación no copia nada de otras tiendas.
  */
 import { useMemo, useState } from 'react';
-import { Loader2, RefreshCw, Search, Store, Pencil } from 'lucide-react';
+import { Loader2, Plus, RefreshCw, Search, Store, Pencil } from 'lucide-react';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +36,10 @@ import { toast } from 'sonner';
 // modal (interfaz alternativa del brief §3: además de consultar y activar,
 // editar imagen y descripción del registro maestro).
 import { MasterIdentityEditModal } from '@/components/views/terminal/views/catalog/MasterIdentityEditModal';
+// CORRECCIÓN FUNCIONAL (2026-11-12) §4: creación de productos maestros desde
+// este diálogo — mismo servicio de creación que la pestaña «Catálogo» de
+// Inventario (useCreateMasterProduct → RPC create_master_product).
+import { CreateMasterProductModal } from '@/components/views/terminal/views/catalog/CreateMasterProductModal';
 import type { Product } from '@/types';
 
 export const MasterCatalogModal = () => {
@@ -37,6 +49,9 @@ export const MasterCatalogModal = () => {
   const [search, setSearch] = useState('');
   // GESTIÓN-MAESTRO (2026-11-11): fila cuya identidad compartida se edita.
   const [editingMaster, setEditingMaster] = useState<Product | null>(null);
+  // CORRECCIÓN FUNCIONAL (2026-11-12) §4: formulario de creación de productos
+  // maestros desde este mismo diálogo.
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const link = useCatalogStoreLink(isMasterCatalogModalOpen ? activeStoreId : null);
   const masters = useSearchMasterProducts(
@@ -76,7 +91,7 @@ export const MasterCatalogModal = () => {
       open={isMasterCatalogModalOpen}
       onOpenChange={setIsMasterCatalogModalOpen}
       title="Catálogo de la organización"
-      description="Identidad compartida (SKU, nombre, imagen). Los precios, costos y existencias de esta tienda nunca se comparten."
+      description="Identidad compartida (SKU inmutable tras la creación; nombre, imagen y descripción editables). Los precios, costos y existencias de esta tienda nunca se comparten."
     >
       <div className="space-y-4">
         {link.isLoading ? (
@@ -87,8 +102,8 @@ export const MasterCatalogModal = () => {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-2">
-              <div className="relative flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative flex-1 min-w-[12rem]">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={search}
@@ -98,7 +113,20 @@ export const MasterCatalogModal = () => {
                   aria-label="Buscar en el catálogo de la organización"
                 />
               </div>
-              <Button variant="outline" size="icon" onClick={() => masters.refetch()} aria-label="Actualizar">
+              {/* CORRECCIÓN FUNCIONAL (2026-11-12) §4: botón visible «+ Crear
+                  producto» — creación directa de identidad maestra desde
+                  este diálogo, mismo servicio que Inventario → Catálogo. */}
+              <Button
+                onClick={() => setIsCreateOpen(true)}
+                aria-label="Crear producto del catálogo maestro"
+                title="Crear un nuevo producto del Catálogo Maestro y vincularlo a esta tienda"
+                data-testid="master-catalog-create-product"
+                className="shrink-0"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Crear producto
+              </Button>
+              <Button variant="outline" size="icon" onClick={() => masters.refetch()} aria-label="Actualizar" className="shrink-0">
                 <RefreshCw className={`h-4 w-4 ${masters.isFetching ? 'animate-spin' : ''}`} />
               </Button>
             </div>
@@ -158,7 +186,7 @@ export const MasterCatalogModal = () => {
                             master_product_id: null,
                           } as Product)}
                           aria-label={`Editar identidad de ${m.sku}`}
-                          title="Editar la imagen y la descripción compartidas del catálogo"
+                          title="Editar el nombre, la imagen y la descripción compartidos del catálogo"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                           Editar
@@ -186,11 +214,22 @@ export const MasterCatalogModal = () => {
       </div>
 
       {/* GESTIÓN-MAESTRO (2026-11-11): edición de identidad compartida
-          (imagen + descripción del registro maestro) desde este modal. */}
+          (nombre, imagen y descripción del registro maestro) desde este modal. */}
       <MasterIdentityEditModal
         product={editingMaster}
         open={!!editingMaster}
         onClose={() => setEditingMaster(null)}
+        storeId={activeStoreId}
+        isGovernor={isGovernor}
+      />
+
+      {/* CORRECCIÓN FUNCIONAL (2026-11-12) §4: creación de productos
+          maestros desde este diálogo (mismo servicio que Inventario →
+          Catálogo). La lista se refresca por la invalidación del propio
+          hook (useCreateMasterProduct onSuccess) — sin recarga manual. */}
+      <CreateMasterProductModal
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
         storeId={activeStoreId}
         isGovernor={isGovernor}
       />

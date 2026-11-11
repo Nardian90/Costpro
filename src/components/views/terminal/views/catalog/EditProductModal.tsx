@@ -75,6 +75,11 @@ interface EditProductModalProps {
   storeId?: string;
   /** Callback para ver/generar FC */
   onViewFC?: () => void;
+  /** CORRECCIÓN FUNCIONAL (2026-11-12) §3.A: ¿el usuario es gobernador del
+   *  catálogo de la organización? Solo informativo para los avisos de la
+   *  identidad compartida (nombre/imagen) — la autorización real vive en el
+   *  servidor (update_master_product / propose_master_change). */
+  isGovernorForIdentity?: boolean;
 }
 
 export default function EditProductModal({
@@ -100,14 +105,19 @@ export default function EditProductModal({
   fcStatus,
   storeId,
   onViewFC,
+  isGovernorForIdentity = false,
 }: EditProductModalProps) {
   const editCameraRef = useRef<HTMLInputElement>(null);
   const editGalleryRef = useRef<HTMLInputElement>(null);
 
-  // CP-CATÁLOGO MAESTRO (PR 4): identidad compartida de solo lectura en la
+  // CP-CATÁLOGO MAESTRO (PR 4) · CORRECCIÓN FUNCIONAL (2026-11-12): la
   // ficha local de un producto vinculado al catálogo de la organización
-  // (misión §5). El servidor además coacciona SKU/nombre al maestro (trigger
-  // trg_products_master_identity_guard), esta UI solo refleja el contrato.
+  // gestiona su identidad COMPARTIDA desde aquí: el NOMBRE se edita y se
+  // guarda en el registro maestro (propagación a todas las tiendas
+  // vinculadas; gobernador aplica / no gobernador propone — lo enruta
+  // CatalogView.handleSaveEdit vía update_master_product / propose_master_
+  // change). El servidor coacciona SKU/nombre al maestro (trigger
+  // trg_products_master_identity_guard); esta UI refleja el contrato.
   const [identityLocked, setIdentityLocked] = useState(false);
   const productId = product?.id ?? null;
   useEffect(() => {
@@ -127,15 +137,14 @@ export default function EditProductModal({
     };
   }, [productId]);
 
-  // GESTIÓN-MAESTRO (2026-11-11), brief §4: el SKU de un producto con
-  // movimientos históricos NO se edita (trazabilidad contable). Criterio =
-  // existencia REAL de movimientos (has_movements de la fila), no antigüedad
-  // ni estado de activación. El servidor lo bloquea fail-closed
-  // (trg_products_sku_movement_guard); esta UI lo refleja y explica la causa.
-  // Para filas VINCULADAS al maestro, identityLocked ya cubre el bloqueo (el
-  // SKU lo gobierna el catálogo y sus RPC).
-  const skuLockedByMovements = !identityLocked && product?.has_movements === true;
-  const skuInputDisabled = identityLocked || skuLockedByMovements;
+  // CORRECCIÓN FUNCIONAL (2026-11-12) §2: el SKU es INMUTABLE después de la
+  // creación del producto — en CUALQUIER interfaz (brief §8.7: «no existe esa
+  // posibilidad en ninguna interfaz ni mediante las operaciones autorizadas
+  // del backend»). El servidor lo bloquea fail-closed
+  // (trg_products_sku_immutable_guard para filas sin maestro;
+  // ERR_SKU_IMMUTABLE en fn_master_apply_identity_changes para el maestro);
+  // esta UI lo refleja y explica la causa.
+  const skuInputDisabled = true;
 
   // FC auto-enabled state (local toggle)
   const fcAutoEnabled = product?.fc_auto_enabled ?? true;
@@ -326,7 +335,7 @@ export default function EditProductModal({
           />
         </div>
 
-        {/* ── Basic Fields ─────────────────────────────────────────── */}
+        {/* ── Basic Fields ────────────────────────────────────────── */}
         <div className="space-y-1.5">
           <label htmlFor="edit-product-name" className="text-xs font-black uppercase tracking-widest ml-1">Nombre</label>
           <input
@@ -337,8 +346,15 @@ export default function EditProductModal({
             aria-label="Nombre del producto"
             className="neu-input w-full font-bold"
             placeholder="Ej: Camiseta Algodón"
-            disabled={identityLocked}
           />
+          {identityLocked && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400" role="note">
+              Nombre compartido del catálogo: el cambio se guarda en el registro maestro y se refleja
+              automáticamente en todas las tiendas vinculadas. {isGovernorForIdentity
+                ? 'Como gobernador del catálogo, se aplica de inmediato.'
+                : 'Como no eres gobernador, quedará pendiente de aprobación.'}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -350,18 +366,18 @@ export default function EditProductModal({
               aria-label="SKU del producto"
               value={editForm.sku}
               onChange={(e) => onFormChange({ ...editForm, sku: e.target.value })}
-              className="neu-input w-full"
+              className="neu-input w-full font-mono"
               placeholder="SKU-001"
               disabled={skuInputDisabled}
+              readOnly
             />
-            {identityLocked && (
+            {identityLocked ? (
               <p className="text-[11px] text-amber-600 dark:text-amber-400">
-                Vinculado al catálogo de la organización: el SKU y el nombre los administra el catálogo maestro. Para proponer un cambio, use el panel de gobernanza del catálogo.
+                Vinculado al catálogo de la organización: el SKU lo administra el catálogo maestro (compartido e inmutable tras la creación).
               </p>
-            )}
-            {skuLockedByMovements && (
-              <p className="text-[11px] text-amber-600 dark:text-amber-400" role="note">
-                El SKU no puede editarse: este producto tiene movimientos históricos asociados (trazabilidad contable).
+            ) : (
+              <p className="text-[11px] text-muted-foreground" role="note">
+                El SKU es inmutable: no puede modificarse después de la creación del producto (identidad y trazabilidad).
               </p>
             )}
           </div>

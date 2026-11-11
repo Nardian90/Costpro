@@ -9,7 +9,7 @@ import { useAuthStore, useUIStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { ChevronDown, AlertCircle, RefreshCw, Building2 } from 'lucide-react';
 // GESTIÓN-MAESTRO (2026-11-11): activación en esta tienda + identidad compartida.
-import { useActivateMasterProduct, useCatalogStoreLink, useIsCatalogGovernor } from '@/hooks/api/useMasterCatalog';
+import { useActivateMasterProduct, useCatalogStoreLink, useIsCatalogGovernor, useProposeMasterChange, useUpdateMasterProduct } from '@/hooks/api/useMasterCatalog';
 import { SecondaryButton } from '@/components/ui/atomic';
 import { Button } from '@/components/ui/button';
 import { TablePagination } from '@/components/views/terminal/views/catalog/TablePagination';
@@ -49,6 +49,16 @@ import type { ProductFCStatus } from '@/contracts/product-cost-sheet';
 function getErrorMsg(err: unknown): string {
   // HARDENING-LOGGING: extract useful message from any error shape.
   // PostgREST errors have { message, code, details, hint, status }.
+  if (!err) return 'Error desconocido';
+  const raw = err instanceof Error ? err.message : '';
+  // CATÁLOGO-IDENTIDAD (2026-11-12): el SKU es inmutable tras la creación —
+  // traducción amigable del error controlado del servidor.
+  if (raw.includes('ERR_SKU_IMMUTABLE')) {
+    return 'El SKU es compartido e inmutable: no puede modificarse después de la creación del producto.';
+  }
+  if (raw.includes('ERR_SKU_LOCKED_BY_MOVEMENTS')) {
+    return 'El SKU no puede modificarse: el producto tiene movimientos históricos asociados (trazabilidad contable).';
+  }
   if (!err) return 'Error desconocido';
   if (err instanceof Error) return err.message;
   const obj = err as Record<string, unknown>;
@@ -199,6 +209,12 @@ export default function CatalogView() {
   // Activación de un maestro en ESTA tienda (RPC activate_master_product:
   // idempotente, permisos servidor, fila local con defaults de alta manual).
   const activateMasterProduct = useActivateMasterProduct(user?.activeStoreId ?? null);
+  // CORRECCIÓN FUNCIONAL (2026-11-12) §3.A: el NOMBRE de un producto
+  // vinculado es identidad COMPARTIDA — su edición desde la ficha habitual de
+  // Inventario se enruta al registro maestro (gobernador aplica / no gobernador
+  // propone), y se propaga automáticamente a todas las tiendas vinculadas.
+  const updateMasterIdentity = useUpdateMasterProduct(user?.activeStoreId ?? null);
+  const proposeMasterIdentity = useProposeMasterChange(user?.activeStoreId ?? null);
 
   // FIX (2026-10-08, INVENTORY-CATALOG-REGRESSION-1379): ya NO se persiste
   // catalog_searchTerm — ver comentario en el estado inicial de searchTerm.
@@ -923,12 +939,12 @@ export default function CatalogView() {
       toast.error('El SKU no debe superar los 50 caracteres');
       return;
     }
-    // GESTIÓN-MAESTRO (2026-11-11), brief §4: el SKU de un producto con
-    // movimientos históricos no se modifica (trazabilidad contable). El
-    // servidor lo bloquea fail-closed (trg_products_sku_movement_guard);
-    // este guard de UI evita el viaje inútil y explica la causa.
-    if (editingProduct?.has_movements && editForm.sku.trim() !== (editingProduct.sku || '').trim()) {
-      toast.error('El SKU no puede modificarse: el producto tiene movimientos históricos asociados (trazabilidad contable).');
+    // CATÁLOGO-IDENTIDAD (2026-11-12) §2/§8.7: el SKU es INMUTABLE después de
+    // la creación — en cualquier interfaz y vía cualquier operación autorizada
+    // del backend (guard fail-closed en el servidor). Guard defensivo de UI
+    // (el input es read-only; evita el viaje inútil si el valor mutara).
+    if (editForm.sku.trim() !== ((editingProduct?.sku) || '').trim()) {
+      toast.error('El SKU es inmutable: no puede modificarse después de la creación del producto.');
       return;
     }
     if (editForm.price < 0) {
@@ -947,13 +963,65 @@ export default function CatalogView() {
       toast.error('No hay producto seleccionado para editar');
       return;
     }
+    // CATÁLOGO-IDENTIDAD (2026-11-12) §3.A: el NOMBRE de un producto
+    // VINCULADO al catálogo maestro es identidad compartida — se guarda en
+    // el registro maestro ANTES de la actualización local (gobernador aplica
+    // con propagación inmediata a todas las tiendas vinculadas; no gobernador
+    // deja propuesta pendiente). El trigger de identidad re-coacciona la fila
+    // local al valor canónico del maestro en cualquier orden de escritura.
+    // Si la escritura de identidad falla, NO se continúa con la ficha local
+    // (sin estado inconsistente) y el modal permanece abierto con el error.
+    const masterIdOfEditing = editingProduct.master_product_id ?? null;
+    const isLinkedProduct = !!masterIdOfEditing || editingProduct.source === 'master';
+    if (isLinkedProduct) {
+      const nextName = editForm.name.trim();
+      const currentName = (editingProduct.name || '').trim();
+      if (nextName !== currentName) {
+        const identityChanges: { name: string } = { name: nextName };
+        try {
+          if (isCatalogGovernor) {
+            await updateMasterIdentity.mutateAsync({
+              masterId: masterIdOfEditing ?? editingProduct.id,
+              changes: identityChanges,
+            });
+            toast.success('Nombre compartido actualizado en el catálogo maestro (se refleja en todas las tiendas vinculadas)');
+          } else {
+            if (!user?.activeStoreId) {
+              toast.error('Sin tienda activa para proponer el cambio de nombre compartido');
+              return;
+            }
+            await proposeMasterIdentity.mutateAsync({
+              masterId: masterIdOfEditing ?? editingProduct.id,
+              changes: identityChanges,
+            });
+            toast.info('Cambio de nombre compartido propuesto: quedará pendiente de aprobación del gobernador del catálogo');
+          }
+        } catch (identityErr) {
+          const idMsg = identityErr instanceof Error ? identityErr.message : 'Error al actualizar la identidad compartida';
+          const friendly = idMsg.includes('ERR_MASTER_NOT_FOUND')
+            ? 'El producto maestro ya no existe en la organización.'
+            : idMsg.includes('ERR_UNAUTHORIZED')
+              ? 'Sin permiso para editar la identidad compartida (gobernador del catálogo).'
+              : idMsg.includes('ERR_SKU_IMMUTABLE')
+                ? 'El SKU es compartido e inmutable: no puede modificarse después de la creación del producto.'
+                : getErrorMsg(identityErr);
+          toast.error(friendly);
+          return;
+        }
+      }
+    }
+
     try {
       // build payload — include barcode/barcode_type explicitly so they persist
       // (HARDENING-CATALOG-EDIT: before these fields were not editable from the modal).
+      // CATÁLOGO-IDENTIDAD (2026-11-12): el SKU NUNCA viaja en la actualización
+      // local (inmutable tras la creación — el servidor lo bloquea fail-closed)
+      // y el NOMBRE tampoco cuando el producto está VINCULADO al catálogo (la
+      // identidad compartida del nombre ya se guardó arriba en el maestro; el
+      // trigger de identidad coerciona la fila local al valor canónico).
       const editPayload = {
         id: editingProduct.id,
-        name: editForm.name,
-        sku: editForm.sku,
+        ...(isLinkedProduct ? {} : { name: editForm.name }),
         category: editForm.category || null,
         // MISIÓN TIPO-DE-ARTÍCULO: persistir la naturaleza del artículo.
         is_service: editForm.is_service === true,
@@ -1323,6 +1391,7 @@ export default function CatalogView() {
         onUpdateVariant={updateEditVariant}
         fcStatus={editingProduct ? getFCStatus(editingProduct.id) : undefined}
         storeId={user?.activeStoreId}
+        isGovernorForIdentity={isCatalogGovernor}
         onViewFC={editingProduct ? () => {
           const info = fcInfoMap.get(editingProduct.id);
           if (info) handleViewFC(editingProduct, info.resolution);

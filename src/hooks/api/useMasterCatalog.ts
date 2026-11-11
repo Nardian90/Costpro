@@ -201,6 +201,13 @@ export function useMasterProductIdentity(masterId?: string | null, enabled = tru
   });
 }
 
+/**
+ * CAMPOS DE IDENTIDAD COMPARTIDA EDITABLES (brief 2026-11-12 §2):
+ * nombre, imagen y descripción. El SKU quedó EXCLUIDO por tipo — es
+ * compartido e INMUTABLE tras la creación (ERR_SKU_IMMUTABLE en el servidor,
+ * fn_master_apply_identity_changes / propose_master_change); el compilador
+ * impide ahora construir un payload de identidad con 'sku'.
+ */
 export interface MasterChanges {
   name?: string;
   description?: string | null;
@@ -209,10 +216,9 @@ export interface MasterChanges {
   barcode_type?: string | null;
   unit_of_measure?: string;
   is_service?: boolean;
-  sku?: string;
 }
 
-/** Editar identidad compartida (gobernador) — propaga SKU/nombre y audita por campo. */
+/** Editar identidad compartida (gobernador) — propaga nombre/imagen y audita por campo. */
 export function useUpdateMasterProduct(originStoreId?: string | null) {
   const qc = useQueryClient();
   return useMutation({
