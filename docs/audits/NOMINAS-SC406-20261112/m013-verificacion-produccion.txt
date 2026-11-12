@@ -1,0 +1,30 @@
+[m013-aplicar-migracion-20261112180000.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+Migración: supabase/migrations/20261112180000_cp_payrolls_sc406.sql
+SHA-256: 4255a3ad3b8cbde3c32b14f54c92ad3e82f0037046b092e4bbec6e3f12795096
+Destino: PRODUCCIÓN (wthkddeleylijmonclxg)
+
+PRE tablas nómina (payrolls/items/concepts/rates): {"t_payrolls":1,"t_items":1,"t_concepts":1,"t_rates":1} → YA APLICADA
+PRE dependencias: {"f_access":1,"t_seq":1,"t_audit":1,"t_idem":1,"t_workers":1,"c_seq_type":1}
+PRE next_document_number: payroll branch = true · doc_types conocidos: 9
+PRE conteos: {"workers":54,"stores":7,"tenants":3,"user_store_memberships":19,"document_sequences":8,"audit_logs":11214,"idempotency_registry":1552}
+
+── VERIFICACIÓN POST ──
+✓ 4 tablas nuevas presentes
+✓ perfil laboral en workers (4 columnas)
+✓ RLS FORCED en las 4 tablas — payroll_item_concepts:forced payroll_items:forced payrolls:forced worker_salary_rates:forced
+✓ 4 políticas de aislamiento por tienda — n=4
+✓ 7 RPCs SECURITY DEFINER — account_payroll,confirm_payroll,create_payroll,mark_payroll_paid,set_worker_salary_rate,update_payroll,void_payroll
+✓ numeración NOM (payroll)
+✓ ACL create_payroll: authenticated+service_role (autorización DENTRO vía has_store_access_as), SIN anon/public — "{authenticated,postgres,service_role}"
+
+── PRUEBAS NEGATIVAS (excepciones ANTES de escribir; sin datos propios) ──
+✓ create_payroll canal postgres sin usuario real → ERR_UNAUTHORIZED (anti-spoofing) — HTTP 400
+✓ confirm_payroll id inexistente → ERR_PAYROLL_NOT_FOUND — HTTP 400
+✓ void_payroll id inexistente → ERR_PAYROLL_NOT_FOUND — HTTP 400
+✓ set_worker_salary_rate trabajador inexistente → ERR_WORKER_NOT_FOUND — HTTP 400
+
+── INTEGRIDAD (delta 0 en tablas preexistentes) ──
+delta: {"workers":0,"stores":0,"tenants":0,"user_store_memberships":0,"document_sequences":0,"audit_logs":0,"idempotency_registry":0}
+
+══════════ M013 OK: migración VERIFICADA (ya aplicada) en producción wthkddeleylijmonclxg
+SHA-256 aplicado: 4255a3ad3b8cbde3c32b14f54c92ad3e82f0037046b092e4bbec6e3f12795096

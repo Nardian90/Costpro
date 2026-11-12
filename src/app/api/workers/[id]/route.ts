@@ -79,6 +79,14 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     waist_size: z.string().optional(),
     status: z.string().optional(),
     ci: z.string().optional(),
+    // PERFIL LABORAL SC-4-06 (Res. 13/2007 — Nóminas): expediente laboral,
+    // categoría ocupacional, cargo y área. Texto libre de la entidad;
+    // el número de expediente es ÚNICO por tienda cuando se informa
+    // (workers_store_expediente_unique — migración 20261112180000).
+    expediente_laboral: z.string().trim().max(50).nullable().optional(),
+    categoria_ocupacional: z.string().trim().max(120).nullable().optional(),
+    cargo: z.string().trim().max(120).nullable().optional(),
+    area_trabajo: z.string().trim().max(120).nullable().optional(),
   }).passthrough();
   const parsedBody = WorkerPatchSchema.safeParse(body);
   if (!parsedBody.success) {
@@ -113,11 +121,17 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   const updateData: Record<string, unknown> = {};
 
   // Campos editables
-  const editableFields = ['first_name', 'last_name', 'gender', 'address', 'province', 'municipality', 'shirt_size', 'shoe_size', 'waist_size', 'status'];
+  const editableFields = ['first_name', 'last_name', 'gender', 'address', 'province', 'municipality', 'shirt_size', 'shoe_size', 'waist_size', 'status', 'expediente_laboral', 'categoria_ocupacional', 'cargo', 'area_trabajo'];
   for (const field of editableFields) {
     if (body[field] !== undefined) {
       updateData[field] = body[field];
     }
+  }
+
+  // PERFIL LABORAL: '' → NULL (el índice único parcial workers_store_
+  // expediente_unique no debe ver cadenas vacías como valores reales).
+  for (const f of ['expediente_laboral', 'categoria_ocupacional', 'cargo', 'area_trabajo']) {
+    if (updateData[f] === '') updateData[f] = null;
   }
 
   // CI: si se cambia, re-validar y re-derivar birth_date

@@ -1,15 +1,57 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-12T12:52:57.980Z
+-- Captured  : 2026-11-12T16:07:04.507Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 190 (SECURITY DEFINER write functions, public schema)
+-- Functions : 197 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
 -- snapshot as Layer A of the security contract. Re-run the generator to
 -- re-certify after authorized production changes.
 -- =====================================================================
+-- @contract-function name=account_payroll args="p_payroll_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.account_payroll(p_payroll_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_pay public.payrolls%ROWTYPE;
+BEGIN
+  SELECT * INTO v_pay FROM public.payrolls WHERE id = p_payroll_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_PAYROLL_NOT_FOUND';
+  END IF;
+  IF v_pay.status <> 'confirmed' THEN
+    RAISE EXCEPTION 'ERR_NOT_CONFIRMED: solo se contabilizan nóminas confirmadas (estado actual: %)', v_pay.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_pay.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF v_pay.accounted_by IS NOT NULL THEN
+    RAISE EXCEPTION 'ERR_ALREADY_ACCOUNTED';
+  END IF;
+
+  UPDATE public.payrolls
+     SET accounted_by = v_caller_uid, accounted_at = now(), updated_at = now()
+   WHERE id = p_payroll_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('ACCOUNT_PAYROLL', 'payrolls', p_payroll_id, v_pay.store_id, v_caller_uid,
+    jsonb_build_object('payroll_number', v_pay.payroll_number, 'firma', 'contabiliza (SC-4-06)'));
+
+  RETURN jsonb_build_object('status', 'success', 'payroll_id', p_payroll_id,
+    'accounted_by', v_caller_uid);
+END;
+$function$
+
+
 -- @contract-function name=activate_master_party args="p_party_id uuid, p_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.activate_master_party(p_party_id uuid, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -2706,6 +2748,68 @@ END;
 $function$
 
 
+-- @contract-function name=confirm_payroll args="p_payroll_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.confirm_payroll(p_payroll_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_pay public.payrolls%ROWTYPE;
+  v_items_count integer;
+  v_gross numeric := 0;
+  v_ded numeric := 0;
+  v_net numeric := 0;
+BEGIN
+  SELECT * INTO v_pay FROM public.payrolls WHERE id = p_payroll_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_PAYROLL_NOT_FOUND';
+  END IF;
+  IF v_pay.status <> 'draft' THEN
+    RAISE EXCEPTION 'ERR_NOT_DRAFT: solo se pueden confirmar nóminas en borrador (estado actual: %)', v_pay.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_pay.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  SELECT count(*), COALESCE(sum(total_gross), 0), COALESCE(sum(total_deductions), 0),
+         COALESCE(sum(total_net), 0)
+    INTO v_items_count, v_gross, v_ded, v_net
+    FROM public.payroll_items WHERE payroll_id = p_payroll_id;
+  IF v_items_count = 0 THEN
+    RAISE EXCEPTION 'ERR_EMPTY_ITEMS';
+  END IF;
+  -- Consistencia de los totales almacenados (fuente de verdad: filas)
+  IF round(v_gross, 2) <> round(v_pay.total_gross, 2)
+     OR round(v_ded, 2) <> round(v_pay.total_deductions, 2)
+     OR round(v_net, 2) <> round(v_pay.total_net, 2) THEN
+    RAISE EXCEPTION 'ERR_INCONSISTENT_TOTALS: el documento no coincide con sus líneas (recalcule y guarde antes de confirmar)';
+  END IF;
+
+  UPDATE public.payrolls
+     SET status = 'confirmed',
+         reviewed_by = v_caller_uid,
+         reviewed_at = now(),
+         updated_at = now()
+   WHERE id = p_payroll_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CONFIRM_PAYROLL', 'payrolls', p_payroll_id, v_pay.store_id, v_caller_uid,
+    jsonb_build_object('payroll_number', v_pay.payroll_number, 'from', 'draft', 'to', 'confirmed',
+      'total_net', v_net, 'firma', 'revisa y aprueba (SC-4-06)'));
+
+  RETURN jsonb_build_object('status', 'success', 'payroll_id', p_payroll_id,
+    'payroll_number', v_pay.payroll_number, 'to', 'confirmed',
+    'reviewed_by', v_caller_uid);
+END;
+$function$
+
+
 -- @contract-function name=confirm_pending_reception args="p_receipt_id uuid, p_user_id uuid, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.confirm_pending_reception(p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS void
@@ -4510,6 +4614,167 @@ BEGIN
 
   RETURN jsonb_build_object('status', 'success', 'request_id', v_request_id,
     'request_number', v_request_number, 'items_count', v_items_count);
+END;
+$function$
+
+
+-- @contract-function name=create_payroll args="p_store_id uuid, p_tipo_nomina text, p_period_start date, p_period_end date, p_payment_method text, p_cheque_number text, p_cheque_date date, p_reintegro_number text, p_reintegro_date date, p_notes text, p_items jsonb, p_idempotency_key text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_payroll(p_store_id uuid, p_tipo_nomina text, p_period_start date, p_period_end date, p_payment_method text DEFAULT 'efectivo'::text, p_cheque_number text DEFAULT NULL::text, p_cheque_date date DEFAULT NULL::date, p_reintegro_number text DEFAULT NULL::text, p_reintegro_date date DEFAULT NULL::date, p_notes text DEFAULT NULL::text, p_items jsonb DEFAULT NULL::jsonb, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_payroll_id uuid := gen_random_uuid();
+  v_payroll_number text;
+  v_currency text;
+  v_entidad_nombre text;
+  v_entidad_codigo text;
+  v_reeup text;
+  v_nit text;
+  v_tenant uuid;
+  v_validated jsonb;
+  v_row jsonb;
+  v_item_id uuid;
+  v_concept jsonb;
+  v_param_hash text;
+  v_existing jsonb;
+BEGIN
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF p_tipo_nomina NOT IN ('sueldos', 'jornales', 'vacaciones', 'licencias', 'subsidios', 'movilizados', 'otros') THEN
+    RAISE EXCEPTION 'ERR_INVALID_TIPO_NOMINA: %', p_tipo_nomina;
+  END IF;
+  IF p_period_start IS NULL OR p_period_end IS NULL OR p_period_start > p_period_end THEN
+    RAISE EXCEPTION 'ERR_INVALID_PERIOD: la fecha inicial no puede ser posterior a la final';
+  END IF;
+  IF p_period_end > CURRENT_DATE THEN
+    RAISE EXCEPTION 'ERR_FUTURE_DATED_DOCUMENT';
+  END IF;
+  IF p_period_start < (CURRENT_DATE - INTERVAL '6 months')::date THEN
+    RAISE EXCEPTION 'ERR_BACKDATED_DOCUMENT';
+  END IF;
+  IF p_payment_method NOT IN ('efectivo', 'tarjeta') THEN
+    RAISE EXCEPTION 'ERR_INVALID_PAYMENT_METHOD';
+  END IF;
+
+  -- Entidad: nombre y código resueltos SIEMPRE servidor (datos 1 del modelo)
+  SELECT s.name, s.reeup, s.nit, s.tenant_id
+    INTO v_entidad_nombre, v_reeup, v_nit, v_tenant
+    FROM public.stores s WHERE s.id = p_store_id;
+  IF v_entidad_nombre IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND';
+  END IF;
+  v_entidad_codigo := COALESCE(NULLIF(btrim(COALESCE(v_reeup, '')), ''),
+                               NULLIF(btrim(COALESCE(v_nit, '')), ''));
+
+  -- Validar y calcular (motor interno; período como parámetros explícitos)
+  IF p_items IS NULL OR jsonb_typeof(p_items) <> 'array' OR jsonb_array_length(p_items) = 0 THEN
+    RAISE EXCEPTION 'ERR_EMPTY_ITEMS';
+  END IF;
+  v_validated := public.fn_payroll_validate_items(p_store_id, p_period_start, p_period_end, p_items);
+  v_currency := ((v_validated->'items'->0)->>'rate_currency');
+
+  -- Idempotencia (misma infraestructura que create_vale_salida)
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    v_param_hash := md5(p_store_id::text || '|' || p_tipo_nomina || '|' ||
+      p_period_start::text || '|' || p_period_end::text || '|' ||
+      COALESCE(p_payment_method, '') || '|' || COALESCE(p_cheque_number, '') || '|' ||
+      COALESCE(p_items::text, ''));
+    v_existing := public.check_idempotency(p_idempotency_key, 'payroll', v_payroll_id, v_param_hash);
+    IF v_existing IS NOT NULL THEN RETURN v_existing; END IF;
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+  v_payroll_number := public.next_document_number(p_store_id, 'payroll', v_caller_uid);
+
+  INSERT INTO public.payrolls (
+    id, store_id, tenant_id, payroll_number, status, tipo_nomina,
+    period_start, period_end, currency,
+    entidad_nombre, entidad_codigo,
+    payment_method, cheque_number, cheque_date, reintegro_number, reintegro_date,
+    notes,
+    total_workers, total_regular_hours, total_overtime_hours, total_accrued_days,
+    total_base_salary, total_overtime, total_complementos, total_other_earnings,
+    total_social_security, total_gross, total_deductions, total_net,
+    total_vacation_days, total_vacation_amount,
+    created_by
+  ) VALUES (
+    v_payroll_id, p_store_id, v_tenant, v_payroll_number, 'draft', p_tipo_nomina,
+    p_period_start, p_period_end, COALESCE(v_currency, 'CUP'),
+    v_entidad_nombre, v_entidad_codigo,
+    p_payment_method, NULLIF(btrim(COALESCE(p_cheque_number, '')), ''), p_cheque_date,
+    NULLIF(btrim(COALESCE(p_reintegro_number, '')), ''), p_reintegro_date,
+    COALESCE(btrim(p_notes), ''),
+    (v_validated->'totals'->>'total_workers')::int,
+    (v_validated->'totals'->>'total_regular_hours')::numeric,
+    (v_validated->'totals'->>'total_overtime_hours')::numeric,
+    (v_validated->'totals'->>'total_accrued_days')::numeric,
+    (v_validated->'totals'->>'total_base_salary')::numeric,
+    (v_validated->'totals'->>'total_overtime')::numeric,
+    (v_validated->'totals'->>'total_complementos')::numeric,
+    (v_validated->'totals'->>'total_other_earnings')::numeric,
+    (v_validated->'totals'->>'total_social_security')::numeric,
+    (v_validated->'totals'->>'total_gross')::numeric,
+    (v_validated->'totals'->>'total_deductions')::numeric,
+    (v_validated->'totals'->>'total_net')::numeric,
+    (v_validated->'totals'->>'total_vacation_days')::numeric,
+    (v_validated->'totals'->>'total_vacation_amount')::numeric,
+    v_caller_uid
+  );
+
+  FOR v_row IN SELECT * FROM jsonb_array_elements(v_validated->'items') LOOP
+    v_item_id := gen_random_uuid();
+    INSERT INTO public.payroll_items (
+      id, payroll_id, worker_id,
+      expediente_laboral, worker_names, categoria_ocupacional, cargo, area_trabajo,
+      rate_type, rate_amount, rate_currency,
+      regular_hours, accrued_days, overtime_hours, overtime_amount,
+      vacation_days, vacation_amount,
+      base_salary, total_complementos, total_other_earnings, total_social_security,
+      total_gross, total_deductions, total_net
+    ) VALUES (
+      v_item_id, v_payroll_id, (v_row->>'worker_id')::uuid,
+      v_row->>'expediente_laboral', v_row->>'worker_names', v_row->>'categoria_ocupacional',
+      v_row->>'cargo', v_row->>'area_trabajo',
+      v_row->>'rate_type', (v_row->>'rate_amount')::numeric, v_row->>'rate_currency',
+      (v_row->>'regular_hours')::numeric, (v_row->>'accrued_days')::numeric,
+      (v_row->>'overtime_hours')::numeric, (v_row->>'overtime_amount')::numeric,
+      (v_row->>'vacation_days')::numeric, (v_row->>'vacation_amount')::numeric,
+      (v_row->>'base_salary')::numeric, (v_row->>'total_complementos')::numeric,
+      (v_row->>'total_other_earnings')::numeric, (v_row->>'total_social_security')::numeric,
+      (v_row->>'total_gross')::numeric, (v_row->>'total_deductions')::numeric,
+      (v_row->>'total_net')::numeric
+    );
+    FOR v_concept IN SELECT * FROM jsonb_array_elements(COALESCE(v_row->'concepts', '[]'::jsonb)) LOOP
+      INSERT INTO public.payroll_item_concepts (item_id, kind, sigla, description, amount)
+      VALUES (v_item_id, v_concept->>'kind', btrim(v_concept->>'sigla'),
+              COALESCE(btrim(v_concept->>'description'), ''),
+              round(COALESCE((v_concept->>'amount')::numeric, 0), 2));
+    END LOOP;
+  END LOOP;
+
+  IF p_idempotency_key IS NOT NULL AND btrim(p_idempotency_key) <> '' THEN
+    PERFORM public.register_idempotency(p_idempotency_key, 'payroll', v_payroll_id, v_param_hash,
+      jsonb_build_object('status', 'success', 'payroll_id', v_payroll_id,
+        'payroll_number', v_payroll_number));
+  END IF;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CREATE_PAYROLL', 'payrolls', v_payroll_id, p_store_id, v_caller_uid,
+    jsonb_build_object('payroll_number', v_payroll_number, 'status', 'draft',
+      'tipo_nomina', p_tipo_nomina, 'period_start', p_period_start, 'period_end', p_period_end,
+      'payment_method', p_payment_method, 'total_net', (v_validated->'totals'->>'total_net')::numeric,
+      'normativa', 'Res. 13/2007 MFP — Modelo SC-4-06 Nómina'));
+
+  RETURN jsonb_build_object('status', 'success', 'payroll_id', v_payroll_id,
+    'payroll_number', v_payroll_number, 'totals', v_validated->'totals');
 END;
 $function$
 
@@ -9980,6 +10245,45 @@ END;
 $function$
 
 
+-- @contract-function name=mark_payroll_paid args="p_payroll_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.mark_payroll_paid(p_payroll_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_pay public.payrolls%ROWTYPE;
+BEGIN
+  SELECT * INTO v_pay FROM public.payrolls WHERE id = p_payroll_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_PAYROLL_NOT_FOUND';
+  END IF;
+  IF v_pay.status <> 'confirmed' THEN
+    RAISE EXCEPTION 'ERR_NOT_CONFIRMED: solo se marcan pagadas las nóminas confirmadas (estado actual: %)', v_pay.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_pay.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.payrolls
+     SET status = 'paid', paid_by = v_caller_uid, paid_at = now(), updated_at = now()
+   WHERE id = p_payroll_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('MARK_PAYROLL_PAID', 'payrolls', p_payroll_id, v_pay.store_id, v_caller_uid,
+    jsonb_build_object('payroll_number', v_pay.payroll_number, 'from', 'confirmed', 'to', 'paid'));
+
+  RETURN jsonb_build_object('status', 'success', 'payroll_id', p_payroll_id,
+    'payroll_number', v_pay.payroll_number, 'to', 'paid');
+END;
+$function$
+
+
 -- @contract-function name=mark_po_items_on_po_delete args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.mark_po_items_on_po_delete()
  RETURNS trigger
@@ -10064,26 +10368,21 @@ DECLARE
   v_prefix text;
   v_result text;
 BEGIN
-  IF p_document_type NOT IN ('invoice', 'credit_note', 'quotation', 'z_report', 'vale_salida', 'cash_flow', 'material_request', 'entrada') THEN
+  IF p_document_type NOT IN ('invoice', 'credit_note', 'quotation', 'z_report', 'vale_salida', 'cash_flow', 'material_request', 'entrada', 'payroll') THEN
     RAISE EXCEPTION 'ERR_INVALID_DOCUMENT_TYPE: %', p_document_type;
   END IF;
 
-  -- SELECT FOR UPDATE para atomicidad (dos usuarios concurrentes jamás
-  -- obtienen el mismo número: la serialización ocurre dentro de la transacción
-  -- del RPC creador, que además toma advisory lock por tienda).
   SELECT last_number INTO v_last
     FROM public.document_sequences
     WHERE store_id = p_store_id AND document_type = p_document_type AND year = v_year
     FOR UPDATE;
 
   IF v_last IS NULL THEN
-    -- Primera vez: INSERT
     INSERT INTO public.document_sequences (store_id, document_type, year, last_number)
     VALUES (p_store_id, p_document_type, v_year, 1)
     ON CONFLICT (store_id, document_type, year) DO NOTHING
     RETURNING last_number INTO v_next;
 
-    -- Si ON CONFLICT disparó (race condition), re-select
     IF v_next IS NULL THEN
       SELECT last_number INTO v_last
         FROM public.document_sequences
@@ -10094,7 +10393,6 @@ BEGIN
         WHERE store_id = p_store_id AND document_type = p_document_type AND year = v_year;
     END IF;
   ELSE
-    -- Ya existe: incrementar
     v_next := v_last + 1;
     UPDATE public.document_sequences SET last_number = v_next, updated_at = now()
       WHERE store_id = p_store_id AND document_type = p_document_type AND year = v_year;
@@ -10109,6 +10407,7 @@ BEGIN
     WHEN 'cash_flow' THEN 'IE'
     WHEN 'material_request' THEN 'SM'
     WHEN 'entrada' THEN 'ENT'
+    WHEN 'payroll' THEN 'NOM'
   END;
 
   v_result := v_prefix || '-' || LPAD(v_next::text, 6, '0') || '-' || v_year::text;
@@ -12792,81 +13091,6 @@ END;
 $function$
 
 
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
-$function$
-
-
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -13090,6 +13314,81 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
+$function$
+
+
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
 $function$
 
 
@@ -15181,6 +15480,78 @@ END;
 $function$
 
 
+-- @contract-function name=set_worker_salary_rate args="p_worker_id uuid, p_rate_type text, p_rate_amount numeric, p_currency text, p_valid_from date, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.set_worker_salary_rate(p_worker_id uuid, p_rate_type text, p_rate_amount numeric, p_currency text DEFAULT 'CUP'::text, p_valid_from date DEFAULT NULL::date, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_worker public.workers%ROWTYPE;
+  v_rate_id uuid := gen_random_uuid();
+  v_valid_from date := COALESCE(p_valid_from, CURRENT_DATE);
+  v_open public.worker_salary_rates%ROWTYPE;
+BEGIN
+  SELECT * INTO v_worker FROM public.workers WHERE id = p_worker_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_WORKER_NOT_FOUND: %', p_worker_id;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_worker.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF p_rate_type NOT IN ('hourly', 'daily') THEN
+    RAISE EXCEPTION 'ERR_INVALID_RATE_TYPE';
+  END IF;
+  IF p_rate_amount IS NULL OR p_rate_amount <= 0 THEN
+    RAISE EXCEPTION 'ERR_INVALID_RATE_AMOUNT';
+  END IF;
+  IF p_currency NOT IN ('CUP', 'USD', 'EUR', 'MLC') THEN
+    RAISE EXCEPTION 'ERR_INVALID_CURRENCY';
+  END IF;
+  -- NOTA: la vigencia de una tarifa PUEDE programarse a futuro (aumento
+  -- anunciado); la regla de no-futuro del repo aplica a los DOCUMENTOS
+  -- (nóminas/ajustes), no a la vigencia de tarifas.
+
+  -- Cerrar la vigencia abierta actual (sin solapes): la tarifa anterior
+  -- vige hasta v_valid_from - 1. Si la nueva fecha no avanza sobre la
+  -- abierta → solape → error controlado.
+  SELECT * INTO v_open FROM public.worker_salary_rates
+   WHERE worker_id = p_worker_id AND valid_to IS NULL
+   ORDER BY valid_from DESC LIMIT 1 FOR UPDATE;
+  IF v_open.id IS NOT NULL THEN
+    IF v_valid_from <= v_open.valid_from THEN
+      RAISE EXCEPTION 'ERR_RATE_OVERLAP: existe una tarifa vigente desde % (use una fecha posterior)', v_open.valid_from;
+    END IF;
+    UPDATE public.worker_salary_rates
+       SET valid_to = (v_valid_from - 1), updated_at = now()
+     WHERE id = v_open.id;
+  END IF;
+
+  INSERT INTO public.worker_salary_rates
+    (id, worker_id, store_id, tenant_id, rate_type, rate_amount, currency, valid_from, created_by)
+  VALUES
+    (v_rate_id, p_worker_id, v_worker.store_id, v_worker.tenant_id,
+     p_rate_type, round(p_rate_amount, 2), p_currency, v_valid_from, v_caller_uid);
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('SET_WORKER_SALARY_RATE', 'worker_salary_rates', v_rate_id, v_worker.store_id, v_caller_uid,
+    jsonb_build_object('worker_id', p_worker_id, 'rate_type', p_rate_type,
+      'rate_amount', round(p_rate_amount, 2), 'currency', p_currency,
+      'valid_from', v_valid_from, 'replaced_rate_id', v_open.id));
+
+  RETURN jsonb_build_object('status', 'success', 'rate_id', v_rate_id,
+    'worker_id', p_worker_id, 'rate_type', p_rate_type,
+    'rate_amount', round(p_rate_amount, 2), 'currency', p_currency,
+    'valid_from', v_valid_from);
+END;
+$function$
+
+
 -- @contract-function name=snapshot_commission_rule args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.snapshot_commission_rule()
  RETURNS trigger
@@ -15802,6 +16173,129 @@ BEGIN
 
   RETURN jsonb_build_object('status', 'success', 'request_id', p_request_id,
     'request_number', v_req.request_number, 'items_count', v_items_count);
+END;
+$function$
+
+
+-- @contract-function name=update_payroll args="p_payroll_id uuid, p_tipo_nomina text, p_period_start date, p_period_end date, p_payment_method text, p_cheque_number text, p_cheque_date date, p_reintegro_number text, p_reintegro_date date, p_notes text, p_items jsonb, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.update_payroll(p_payroll_id uuid, p_tipo_nomina text, p_period_start date, p_period_end date, p_payment_method text DEFAULT 'efectivo'::text, p_cheque_number text DEFAULT NULL::text, p_cheque_date date DEFAULT NULL::date, p_reintegro_number text DEFAULT NULL::text, p_reintegro_date date DEFAULT NULL::date, p_notes text DEFAULT NULL::text, p_items jsonb DEFAULT NULL::jsonb, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_pay public.payrolls%ROWTYPE;
+  v_validated jsonb;
+  v_row jsonb;
+  v_item_id uuid;
+  v_concept jsonb;
+  v_currency text;
+BEGIN
+  SELECT * INTO v_pay FROM public.payrolls WHERE id = p_payroll_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_PAYROLL_NOT_FOUND';
+  END IF;
+  IF v_pay.status <> 'draft' THEN
+    RAISE EXCEPTION 'ERR_NOT_DRAFT: solo se pueden editar nóminas en borrador (estado actual: %)', v_pay.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_pay.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF p_tipo_nomina NOT IN ('sueldos', 'jornales', 'vacaciones', 'licencias', 'subsidios', 'movilizados', 'otros') THEN
+    RAISE EXCEPTION 'ERR_INVALID_TIPO_NOMINA: %', p_tipo_nomina;
+  END IF;
+  IF p_period_start IS NULL OR p_period_end IS NULL OR p_period_start > p_period_end THEN
+    RAISE EXCEPTION 'ERR_INVALID_PERIOD';
+  END IF;
+  IF p_period_end > CURRENT_DATE THEN
+    RAISE EXCEPTION 'ERR_FUTURE_DATED_DOCUMENT';
+  END IF;
+  IF p_period_start < (CURRENT_DATE - INTERVAL '6 months')::date THEN
+    RAISE EXCEPTION 'ERR_BACKDATED_DOCUMENT';
+  END IF;
+  IF p_payment_method NOT IN ('efectivo', 'tarjeta') THEN
+    RAISE EXCEPTION 'ERR_INVALID_PAYMENT_METHOD';
+  END IF;
+  IF p_items IS NULL OR jsonb_typeof(p_items) <> 'array' OR jsonb_array_length(p_items) = 0 THEN
+    RAISE EXCEPTION 'ERR_EMPTY_ITEMS';
+  END IF;
+
+  v_validated := public.fn_payroll_validate_items(v_pay.store_id, p_period_start, p_period_end, p_items);
+  v_currency := ((v_validated->'items'->0)->>'rate_currency');
+
+  UPDATE public.payrolls SET
+    tipo_nomina = p_tipo_nomina,
+    period_start = p_period_start,
+    period_end = p_period_end,
+    currency = COALESCE(v_currency, 'CUP'),
+    payment_method = p_payment_method,
+    cheque_number = NULLIF(btrim(COALESCE(p_cheque_number, '')), ''),
+    cheque_date = p_cheque_date,
+    reintegro_number = NULLIF(btrim(COALESCE(p_reintegro_number, '')), ''),
+    reintegro_date = p_reintegro_date,
+    notes = COALESCE(btrim(p_notes), ''),
+    total_workers = (v_validated->'totals'->>'total_workers')::int,
+    total_regular_hours = (v_validated->'totals'->>'total_regular_hours')::numeric,
+    total_overtime_hours = (v_validated->'totals'->>'total_overtime_hours')::numeric,
+    total_accrued_days = (v_validated->'totals'->>'total_accrued_days')::numeric,
+    total_base_salary = (v_validated->'totals'->>'total_base_salary')::numeric,
+    total_overtime = (v_validated->'totals'->>'total_overtime')::numeric,
+    total_complementos = (v_validated->'totals'->>'total_complementos')::numeric,
+    total_other_earnings = (v_validated->'totals'->>'total_other_earnings')::numeric,
+    total_social_security = (v_validated->'totals'->>'total_social_security')::numeric,
+    total_gross = (v_validated->'totals'->>'total_gross')::numeric,
+    total_deductions = (v_validated->'totals'->>'total_deductions')::numeric,
+    total_net = (v_validated->'totals'->>'total_net')::numeric,
+    total_vacation_days = (v_validated->'totals'->>'total_vacation_days')::numeric,
+    total_vacation_amount = (v_validated->'totals'->>'total_vacation_amount')::numeric,
+    updated_at = now()
+  WHERE id = p_payroll_id;
+
+  -- Reemplazo transaccional de líneas
+  DELETE FROM public.payroll_items WHERE payroll_id = p_payroll_id;
+  FOR v_row IN SELECT * FROM jsonb_array_elements(v_validated->'items') LOOP
+    v_item_id := gen_random_uuid();
+    INSERT INTO public.payroll_items (
+      id, payroll_id, worker_id,
+      expediente_laboral, worker_names, categoria_ocupacional, cargo, area_trabajo,
+      rate_type, rate_amount, rate_currency,
+      regular_hours, accrued_days, overtime_hours, overtime_amount,
+      vacation_days, vacation_amount,
+      base_salary, total_complementos, total_other_earnings, total_social_security,
+      total_gross, total_deductions, total_net
+    ) VALUES (
+      v_item_id, p_payroll_id, (v_row->>'worker_id')::uuid,
+      v_row->>'expediente_laboral', v_row->>'worker_names', v_row->>'categoria_ocupacional',
+      v_row->>'cargo', v_row->>'area_trabajo',
+      v_row->>'rate_type', (v_row->>'rate_amount')::numeric, v_row->>'rate_currency',
+      (v_row->>'regular_hours')::numeric, (v_row->>'accrued_days')::numeric,
+      (v_row->>'overtime_hours')::numeric, (v_row->>'overtime_amount')::numeric,
+      (v_row->>'vacation_days')::numeric, (v_row->>'vacation_amount')::numeric,
+      (v_row->>'base_salary')::numeric, (v_row->>'total_complementos')::numeric,
+      (v_row->>'total_other_earnings')::numeric, (v_row->>'total_social_security')::numeric,
+      (v_row->>'total_gross')::numeric, (v_row->>'total_deductions')::numeric,
+      (v_row->>'total_net')::numeric
+    );
+    FOR v_concept IN SELECT * FROM jsonb_array_elements(COALESCE(v_row->'concepts', '[]'::jsonb)) LOOP
+      INSERT INTO public.payroll_item_concepts (item_id, kind, sigla, description, amount)
+      VALUES (v_item_id, v_concept->>'kind', btrim(v_concept->>'sigla'),
+              COALESCE(btrim(v_concept->>'description'), ''),
+              round(COALESCE((v_concept->>'amount')::numeric, 0), 2));
+    END LOOP;
+  END LOOP;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('UPDATE_PAYROLL', 'payrolls', p_payroll_id, v_pay.store_id, v_caller_uid,
+    jsonb_build_object('payroll_number', v_pay.payroll_number, 'status', 'draft',
+      'total_net', (v_validated->'totals'->>'total_net')::numeric));
+
+  RETURN jsonb_build_object('status', 'success', 'payroll_id', p_payroll_id,
+    'payroll_number', v_pay.payroll_number, 'totals', v_validated->'totals');
 END;
 $function$
 
@@ -16654,6 +17148,57 @@ BEGIN
 
   RETURN jsonb_build_object('status', 'success', 'request_id', p_request_id,
     'request_number', v_req.request_number, 'to', 'voided');
+END;
+$function$
+
+
+-- @contract-function name=void_payroll args="p_payroll_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.void_payroll(p_payroll_id uuid, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_pay public.payrolls%ROWTYPE;
+  v_items_count integer;
+BEGIN
+  SELECT * INTO v_pay FROM public.payrolls WHERE id = p_payroll_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_PAYROLL_NOT_FOUND';
+  END IF;
+  IF v_pay.status NOT IN ('draft', 'confirmed') THEN
+    RAISE EXCEPTION 'ERR_NOT_VOIDABLE: solo se pueden anular nóminas en borrador o confirmadas (estado actual: %)', v_pay.status;
+  END IF;
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_pay.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF p_reason IS NULL OR btrim(p_reason) = '' THEN
+    RAISE EXCEPTION 'ERR_REASON_REQUIRED';
+  END IF;
+  IF length(btrim(p_reason)) > 500 THEN
+    RAISE EXCEPTION 'ERR_REASON_TOO_LONG';
+  END IF;
+
+  SELECT count(*) INTO v_items_count FROM public.payroll_items WHERE payroll_id = p_payroll_id;
+
+  UPDATE public.payrolls
+     SET status = 'voided',
+         voided_at = now(), voided_by = v_caller_uid, void_reason = btrim(p_reason),
+         updated_at = now()
+   WHERE id = p_payroll_id;
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('VOID_PAYROLL', 'payrolls', p_payroll_id, v_pay.store_id, v_caller_uid,
+    jsonb_build_object('payroll_number', v_pay.payroll_number, 'from', v_pay.status, 'to', 'voided',
+      'reason', btrim(p_reason), 'items_count', v_items_count));
+
+  RETURN jsonb_build_object('status', 'success', 'payroll_id', p_payroll_id,
+    'payroll_number', v_pay.payroll_number, 'to', 'voided');
 END;
 $function$
 

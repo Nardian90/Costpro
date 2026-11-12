@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 145 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 146 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -404,9 +404,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // de trigger de DATA-INTEGRITY-REMEDIATION-001 (20261111130000_cp_data_integrity_trigger_acl_normalization) = 144
     // CATÁLOGO-IDENTIDAD (2026-11-12): +1 SKU inmutable + políticas de storage
     // de imagen compartida (20261112120000_cp_catalogo_sku_inmutable) = 145
-    expect(m.total_incluidos).toBe(145);
+    // NÓMINAS SC-4-06 (2026-11-12): +1 migración de nóminas de salario
+    // (20261112180000_cp_payrolls_sc406) = 146
+    expect(m.total_incluidos).toBe(146);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(145);
+    expect(incluidos.length).toBe(146);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

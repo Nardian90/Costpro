@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-11",
+  "_updated": "2026-11-12",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -19,21 +19,24 @@
     "scripts/m012-aplicar-migracion-20261112120000.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
-    "scripts/seed-pick3-history.js"
+    "scripts/seed-pick3-history.js",
+    "scripts/m013-aplicar-migracion-20261112180000.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
     "scripts/dev-price-list-e2e-evidence.ts",
     "scripts/e2e/fc-e2e-clean-orphans.mjs",
     "scripts/e2e/reset-remote-e2e-db.mjs",
+    "scripts/e2e/verify-catalogo-identidad-pg.mjs",
+    "scripts/e2e/verify-master-gestion-pg.mjs",
+    "scripts/e2e/verify-nominas-pg.mjs",
     "scripts/e2e/verify-operational-classification-pg.mjs",
     "scripts/e2e/verify-product-commission-pg.mjs",
     "scripts/landing-demo-provision.cjs",
     "scripts/provision-e2e-offers-identity.mjs",
     "scripts/sc006-e2e-verification.mjs",
     "scripts/sc006-real-reception-evidence.mjs",
-    "scripts/e2e/verify-master-gestion-pg.mjs",
-    "scripts/e2e/verify-catalogo-identidad-pg.mjs"
+    "scripts/e2e/verify-nominas-api.mjs"
   ],
   "exceptions": {
     "scripts/audit_kardex_live.cjs": "Herramienta histórica de una misión puntual ya ejecutada (one-shot, evidenciada en docs/audits/): señales de escritura en SQL/strings/fetch pero sin flujo productivo recurrente. No se cablea el guard en este PR (alcance limitado a los defectos demostrados); re-ejecutarla contra producción exige hoy revisión manual explícita.",

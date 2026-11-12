@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Users,
+  FileText,
+  Coins,
   Calculator,
   Settings,
   Plus,
@@ -57,6 +59,11 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { CUBAN_PROVINCES, validateCubanCI, getMunicipalitiesForProvince } from './worker-helpers';
 import { ExchangeRatesModal } from './ExchangeRatesModal';
+// NÓMINAS SC-4-06 (Res. 13/2007 MFP): pestaña de nóminas de salario del módulo
+// Trabajadores y Comisiones (Inicio → OPERACIÓN). Confección ↔ vista previa
+// con el MISMO builder PDF del servidor de verdad; ciclo Borrador → Confirmada
+// → Pagada (+ Contabilizada) · Anulada con motivo.
+import { NominasTab, SalaryRateModal } from './nominas/NominasTab';
 
 /**
  * WorkersView — Gestión de Trabajadores y Comisiones.
@@ -175,6 +182,7 @@ interface CommissionRule {
 
 const TABS = [
   { id: 'workers', label: 'Trabajadores', icon: Users },
+  { id: 'nominas', label: 'Nóminas', icon: FileText },
   { id: 'rules', label: 'Reglas Comisión', icon: Settings },
   { id: 'payments', label: 'Pagos', icon: DollarSign },
   { id: 'history', label: 'Historial', icon: History },
@@ -260,6 +268,10 @@ export function WorkersView() {
 
   // v2 (2026-07-15): Modal de edición de trabajador
   const [editModalWorker, setEditModalWorker] = useState<WorkerSummary | null>(null);
+
+  // NÓMINAS SC-4-06: modal de tarifa salarial (vive con las nóminas — no es
+  // una comisión; alimenta el cálculo de las nóminas con historial de vigencias)
+  const [rateModalWorker, setRateModalWorker] = useState<WorkerSummary | null>(null);
 
   // v2: Toggle de status (activo/inactivo)
   const handleToggleWorkerStatus = async (worker: WorkerSummary) => {
@@ -516,8 +528,12 @@ export function WorkersView() {
             onRefresh={fetchWorkers}
             onPayCommission={(w: any) => setPayModalWorker(w)}
             onEditWorker={(w: WorkerSummary) => setEditModalWorker(w)}
+            onSetRate={(w: WorkerSummary) => setRateModalWorker(w)}
             onToggleStatus={handleToggleWorkerStatus}
           />
+        )}
+        {activeTab === 'nominas' && (
+          <NominasTab storeId={storeId || ''} />
         )}
         {activeTab === 'rules' && (
           <RulesTab
@@ -798,6 +814,19 @@ export function WorkersView() {
           }}
         />
       )}
+
+      {/* NÓMINAS SC-4-06: tarifa salarial con historial de vigencias */}
+      {rateModalWorker && (
+        <SalaryRateModal
+          worker={{
+            worker_id: rateModalWorker.worker_id,
+            first_name: rateModalWorker.first_name,
+            last_name: rateModalWorker.last_name,
+          }}
+          onClose={() => setRateModalWorker(null)}
+          onSaved={() => {}}
+        />
+      )}
     </div>
   );
 }
@@ -806,7 +835,7 @@ export function WorkersView() {
 // TAB 1: Trabajadores
 // ════════════════════════════════════════════════════════════════════
 function WorkersTab({
-  workers, loading, error, dateFrom, dateTo, onDateFromChange, onDateToChange, onRefresh, onPayCommission, onEditWorker, onToggleStatus,
+  workers, loading, error, dateFrom, dateTo, onDateFromChange, onDateToChange, onRefresh, onPayCommission, onEditWorker, onToggleStatus, onSetRate,
 }: any) {
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -927,6 +956,15 @@ function WorkersTab({
                   <DollarSign className="w-3.5 h-3.5" /> Pagar
                 </button>
                 <button
+                  onClick={() => onSetRate(w)}
+                  disabled={w.status !== 'active'}
+                  className="px-3 py-2.5 rounded-lg bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 disabled:opacity-40 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  title="Tarifa salarial (nóminas SC-4-06)"
+                  aria-label={`Tarifa salarial de ${w.first_name}`}
+                >
+                  <Coins className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => onEditWorker(w)}
                   className="px-3 py-2.5 rounded-lg bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border min-h-[44px] min-w-[44px] flex items-center justify-center"
                   aria-label={`Editar ${w.first_name}`}
@@ -1023,6 +1061,16 @@ function WorkersTab({
                         >
                           <DollarSign className="w-3 h-3" />
                           <span className="hidden sm:inline">Pagar</span>
+                        </button>
+                        {/* Tarifa salarial (Nóminas SC-4-06) */}
+                        <button
+                          onClick={() => onSetRate(w)}
+                          disabled={w.status !== 'active'}
+                          className="p-2 rounded-lg bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          title="Tarifa salarial (nóminas SC-4-06)"
+                          aria-label={`Tarifa salarial de ${w.first_name}`}
+                        >
+                          <Coins className="w-3.5 h-3.5" />
                         </button>
                         {/* Editar */}
                         <button
@@ -3588,6 +3636,13 @@ function EditWorkerModal({
     shoe_size: '',
     waist_size: '',
     status: worker.status || 'active',
+    // PERFIL LABORAL SC-4-06 (Nóminas — Res. 13/2007 MFP): expediente
+    // laboral (único por tienda cuando se informa), categoría ocupacional,
+    // cargo y área de trabajo.
+    expediente_laboral: '',
+    categoria_ocupacional: '',
+    cargo: '',
+    area_trabajo: '',
   });
   const [saving, setSaving] = useState(false);
   const [ciError, setCiError] = useState('');
@@ -3611,6 +3666,10 @@ function EditWorkerModal({
             shoe_size: w.shoe_size?.toString() || '',
             waist_size: w.waist_size?.toString() || '',
             status: w.status || 'active',
+            expediente_laboral: w.expediente_laboral || '',
+            categoria_ocupacional: w.categoria_ocupacional || '',
+            cargo: w.cargo || '',
+            area_trabajo: w.area_trabajo || '',
           });
         }
       } catch (e) {
@@ -3649,6 +3708,12 @@ function EditWorkerModal({
       if (form.shirt_size) payload.shirt_size = form.shirt_size;
       if (form.shoe_size) payload.shoe_size = parseInt(form.shoe_size) || null;
       if (form.waist_size) payload.waist_size = parseInt(form.waist_size) || null;
+      // PERFIL LABORAL SC-4-06: se envían SIEMPRE (vacío → null en la API —
+      // así se limpian deliberadamente y el índice único no ve '').
+      payload.expediente_laboral = form.expediente_laboral.trim() || null;
+      payload.categoria_ocupacional = form.categoria_ocupacional.trim() || null;
+      payload.cargo = form.cargo.trim() || null;
+      payload.area_trabajo = form.area_trabajo.trim() || null;
 
       await apiFetch(`/api/workers/${worker.worker_id}`, {
         method: 'PATCH',
@@ -3826,6 +3891,70 @@ function EditWorkerModal({
                   onChange={(e) => updateForm('waist_size', e.target.value)}
                   className="h-11 min-h-[44px] mt-1 font-mono"
                   placeholder="32"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* PERFIL LABORAL SC-4-06 (Nóminas — Res. 13/2007 MFP): alimenta el
+              documento de nómina con expediente, categoría ocupacional, cargo y
+              área. La tarifa salarial (con historial) se fija aparte — botón
+              «Tarifa» de la tabla o pestaña Nóminas. */}
+          <div className="space-y-3">
+            <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              Perfil laboral (Nóminas SC-4-06)
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest" htmlFor="worker-expediente">
+                  Expediente laboral
+                </Label>
+                <Input
+                  id="worker-expediente"
+                  value={form.expediente_laboral}
+                  maxLength={50}
+                  onChange={(e) => updateForm('expediente_laboral', e.target.value)}
+                  className="h-11 min-h-[44px] mt-1 font-mono"
+                  placeholder="EXP-001"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest" htmlFor="worker-categoria">
+                  Categoría ocupacional
+                </Label>
+                <Input
+                  id="worker-categoria"
+                  value={form.categoria_ocupacional}
+                  maxLength={120}
+                  onChange={(e) => updateForm('categoria_ocupacional', e.target.value)}
+                  className="h-11 min-h-[44px] mt-1"
+                  placeholder="Técnico Medio"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest" htmlFor="worker-cargo">
+                  Cargo
+                </Label>
+                <Input
+                  id="worker-cargo"
+                  value={form.cargo}
+                  maxLength={120}
+                  onChange={(e) => updateForm('cargo', e.target.value)}
+                  className="h-11 min-h-[44px] mt-1"
+                  placeholder="Dependiente"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-widest" htmlFor="worker-area">
+                  Área de trabajo
+                </Label>
+                <Input
+                  id="worker-area"
+                  value={form.area_trabajo}
+                  maxLength={120}
+                  onChange={(e) => updateForm('area_trabajo', e.target.value)}
+                  className="h-11 min-h-[44px] mt-1"
+                  placeholder="Salón"
                 />
               </div>
             </div>

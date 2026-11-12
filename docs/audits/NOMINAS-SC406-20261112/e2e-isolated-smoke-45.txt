@@ -1,0 +1,91 @@
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+◇ injected env (0) from .env // tip: ⌘ suppress logs { quiet: true }
+[global-setup] destino validado por el guard de aislamiento (CP-INFRA-011)
+[run-env] Run aislado provisionado — runId=E2E-20261112-122F0E tenant=990f03c8… admin=e2e-e2e20261112122f0e-adm@costpro.test (id 2a92a968…) pilotA=ba9163b8… pilotB=514c2f1b…
+
+Running 45 tests using 1 worker
+
+(node:32183) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+
+◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+[1/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › GET /api/inventory/products returns 401 without Authorization header
+[2/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/inventory/adjust returns 401 without Authorization header
+[3/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/cost-sheets/save returns 401 without Authorization header
+[4/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/cost-sheets/calculate returns 401 without Authorization header
+[5/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/reports/generate returns 401 without Authorization header
+[6/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/sync/batch returns 401 without Authorization header
+[7/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/cost-sheets/import-json returns 401 without Authorization header
+[8/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/cost-sheets/import-anexo returns 401 without Authorization header
+[9/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/cost-sheets/ai/chat returns 401 without Authorization header
+[10/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/bot/chat returns 401 without Authorization header
+[11/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/users/managed-create returns 401 without Authorization header
+[12/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/users/toggle-status returns 401 without Authorization header
+[13/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/users/delete returns 401 without Authorization header
+[14/45] [core] › e2e/auth.spec.ts:27:9 › Authentication and Authorization › POST /api/legal/retention returns 401 without Authorization header
+[15/45] [core] › e2e/auth.spec.ts:37:7 › Authentication and Authorization › [BUG-017 REGRESSION] POST /api/legal/incidents must require authentication
+[16/45] [core] › e2e/auth.spec.ts:54:7 › Authentication and Authorization › endpoints return 401 with malformed token
+[17/45] [core] › e2e/auth.spec.ts:61:7 › Authentication and Authorization › admin endpoints return 403 with regular user token
+◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+
+[18/45] [core] › e2e/flows/inventory-integrity.spec.ts:86:7 › Inventario — ajustes e integridad de stock › E2E-INV-001 (P0) ajuste de entrada +5 incrementa stock y registra movimiento
+[core] › e2e/flows/inventory-integrity.spec.ts:86:7 › Inventario — ajustes e integridad de stock › E2E-INV-001 (P0) ajuste de entrada +5 incrementa stock y registra movimiento
+[fixture:reuse] createTestStore(INV) → E2E PILOT A CostPro E2E-20261112-122F0E (ba9163b8-393e-4374-ad3c-34e29bb20b37) — NO se crea ninguna tienda (suite ordinaria, net-zero)
+
+[19/45] [core] › e2e/flows/inventory-integrity.spec.ts:105:7 › Inventario — ajustes e integridad de stock › E2E-INV-002 (P0) ajuste de salida −3 reduce stock y registra movimiento negativo
+[20/45] [core] › e2e/flows/inventory-integrity.spec.ts:119:7 › Inventario — ajustes e integridad de stock › E2E-INV-003 (P0) invariante: stock final = inicial + Σ movimientos
+[21/45] [core] › e2e/flows/inventory-integrity.spec.ts:140:7 › Inventario — ajustes e integridad de stock › E2E-INV-004 (P1) reducción mayor que el stock documenta comportamiento sin inconsistencia
+[core] › e2e/flows/inventory-integrity.spec.ts:140:7 › Inventario — ajustes e integridad de stock › E2E-INV-004 (P1) reducción mayor que el stock documenta comportamiento sin inconsistencia
+INV-004: rpc ok=false err=Stock negativo no permitido | product_id=3ea24728-92f3-4590-b4c4-6f29791dd5ef | store_id=ba9163b8-393e-4374-ad3c-34e29bb20b37 → inventory=58 products=58
+
+[22/45] [core] › e2e/flows/inventory-integrity.spec.ts:154:7 › Inventario — ajustes e integridad de stock › E2E-INV-005 (P1) kardex: el historial del producto lista los movimientos
+[23/45] [core] › e2e/flows/inventory-integrity.spec.ts:164:7 › Inventario — ajustes e integridad de stock › E2E-INV-006 (P1) [DEFECT-001 REPARADO] ruta /api/inventory/adjust aplica el ajuste vía service-role
+[24/45] [core] › e2e/flows/inventory-integrity.spec.ts:205:7 › Inventario — ajustes e integridad de stock › E2E-INV-007 (P0) clerk sin membership no puede ajustar en tienda ajena → 403
+[25/45] [core] › e2e/flows/inventory-integrity.spec.ts:230:7 › Inventario — flujo UI › E2E-INV-008 (P1) vista inventario muestra stock y el modal de ajuste lo actualiza
+[core] › e2e/flows/inventory-integrity.spec.ts:230:7 › Inventario — flujo UI › E2E-INV-008 (P1) vista inventario muestra stock y el modal de ajuste lo actualiza
+[fixture:reuse] createTestStore(INV-UI) → E2E PILOT B CostPro E2E-20261112-122F0E (514c2f1b-38d3-402f-b4f0-62b851587b57) — NO se crea ninguna tienda (suite ordinaria, net-zero)
+
+[fixture:reuse] deleteTestStore(514c2f1b-38d3-402f-b4f0-62b851587b57) → no-op (tienda piloto persistente, gobernanza protegida)
+
+[fixture:reuse] deleteTestStore(514c2f1b-38d3-402f-b4f0-62b851587b57) → no-op (tienda piloto persistente, gobernanza protegida)
+
+[26/45] [core] › e2e/flows/pos-checkout.spec.ts:93:7 › POS Checkout V2 — API + integridad de datos › E2E-POS-001 (P0) venta cash exitosa registra transacción, items y descuenta stock
+[core] › e2e/flows/pos-checkout.spec.ts:93:7 › POS Checkout V2 — API + integridad de datos › E2E-POS-001 (P0) venta cash exitosa registra transacción, items y descuenta stock
+[fixture:reuse] createTestStore(POS) → E2E PILOT A CostPro E2E-20261112-122F0E (ba9163b8-393e-4374-ad3c-34e29bb20b37) — NO se crea ninguna tienda (suite ordinaria, net-zero)
+
+[27/45] [core] › e2e/flows/pos-checkout.spec.ts:138:7 › POS Checkout V2 — API + integridad de datos › E2E-POS-002 (P0) idempotencia: misma key devuelve la misma venta sin duplicar stock
+[28/45] [core] › e2e/flows/pos-checkout.spec.ts:164:7 › POS Checkout V2 — API + integridad de datos › E2E-POS-003 (P0) stock insuficiente → 409 y sin cambios en DB
+[29/45] [core] › e2e/flows/pos-checkout.spec.ts:185:7 › POS Checkout V2 — API + integridad de datos › E2E-POS-004 (P0) descuadre de totales → 422 y sin cambios en DB
+[30/45] [core] › e2e/flows/pos-checkout.spec.ts:198:7 › POS Checkout V2 — API + integridad de datos › E2E-POS-005 (P0) checkout sin sesión → 401
+[31/45] [core] › e2e/flows/pos-checkout.spec.ts:206:7 › POS Checkout V2 — API + integridad de datos › E2E-POS-006 (P0) usuario sin membership en la tienda no puede vender → 403
+[32/45] [core] › e2e/flows/pos-checkout.spec.ts:229:7 › POS Checkout V2 — API + integridad de datos › E2E-POS-007 (P1) producto de otra tienda → rechazo y sin efecto en stock
+[33/45] [core] › e2e/flows/pos-checkout.spec.ts:269:7 › POS Checkout V2 — API + integridad de datos › E2E-POS-008 (P1) venta con pago mixto persiste el desglose de pagos
+[34/45] [core] › e2e/flows/pos-checkout.spec.ts:301:7 › POS Checkout V2 — flujo UI de usuario real › E2E-POS-009 (P0) flujo completo: agregar al carrito → Cobrar → Venta Completada
+[core] › e2e/flows/pos-checkout.spec.ts:301:7 › POS Checkout V2 — flujo UI de usuario real › E2E-POS-009 (P0) flujo completo: agregar al carrito → Cobrar → Venta Completada
+[POS-009] 3.b dialog de tasas NO apareció en 15s (o ya confirmado)
+
+[POS-009] 6.a dialog de tasas presente antes de Cobrar — descartando
+
+[fixture:reuse] deleteTestStore(ba9163b8-393e-4374-ad3c-34e29bb20b37) → no-op (tienda piloto persistente, gobernanza protegida)
+
+[35/45] [core] › e2e/health-api.spec.ts:4:7 › Health API › should return 200 from health endpoint
+[36/45] [core] › e2e/health-api.spec.ts:9:7 › Health API › should include status in response
+[37/45] [core] › e2e/inventory.spec.ts:26:7 › Inventory Adjustments — Strict Assertions › rejects adjustment without session → 401
+[38/45] [core] › e2e/inventory.spec.ts:33:7 › Inventory Adjustments — Strict Assertions › rejects invalid payload (non-uuid productId, text quantity, invalid movement) → 400
+[39/45] [core] › e2e/inventory.spec.ts:48:7 › Inventory Adjustments — Strict Assertions › rejects quantity out of range → 400
+[40/45] [core] › e2e/inventory.spec.ts:60:7 › Inventory Adjustments — Strict Assertions › rejects version <= 0 → 400
+[41/45] [core] › e2e/inventory.spec.ts:72:7 › Inventory Adjustments — Strict Assertions › rejects version = 0 → 400
+[42/45] [core] › e2e/inventory.spec.ts:84:7 › Inventory Adjustments — Strict Assertions › rejects missing required field (productId) → 400
+[43/45] [core] › e2e/inventory.spec.ts:98:7 › Inventory Adjustments — Strict Assertions › rejects missing required field (movementType) → 400
+[44/45] [core] › e2e/inventory.spec.ts:112:7 › Inventory Adjustments — Strict Assertions › rate limit: 6+ rapid requests → 429 eventually
+[45/45] [core] › e2e/isolated-db-sentinel.spec.ts:11:5 › el centinela de aislamiento responde true vía REST (CP-INFRA-011)
+◇ injected env (0) from .env // tip: ⌘ enable debugging { debug: true }
+[run-env] Teardown del run E2E-20261112-122F0E completado — stores del run HARD-deleted, usuarios del run eliminados de Auth (net zero).
+[global-teardown] Guardrail PASS — net delta = 0
+  45 passed (3.9m)
