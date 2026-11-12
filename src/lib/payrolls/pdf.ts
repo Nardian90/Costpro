@@ -81,7 +81,7 @@ export interface PayrollPdfPayload {
  * (bloburl) y descarga (save).
  */
 export async function buildPayrollPdf(payload: PayrollPdfPayload): Promise<jsPDF> {
-  const { payroll } = payload;
+  const { payroll, elaboraNombre } = payload;
   const items = payroll.items ?? [];
   const doc = await createPDFDocument('l', 'pt', 'a4');
   const pageW = doc.internal.pageSize.getWidth();
@@ -352,10 +352,10 @@ export async function buildPayrollPdf(payload: PayrollPdfPayload): Promise<jsPDF
     doc.setDrawColor(120);
     doc.line(x, sigY, x + colW - 24, sigY);
     doc.text(pdfWinAnsi(label), x, sigY + 11);
-    if (payroll.elaboraNombre && i === 0) {
+    if (elaboraNombre && i === 0) {
       doc.setFontSize(6.5);
       doc.setTextColor(120, 120, 120);
-      doc.text(pdfWinAnsi(payroll.elaboraNombre), x, sigY + 20);
+      doc.text(pdfWinAnsi(elaboraNombre), x, sigY + 20);
       doc.setFontSize(7.5);
       doc.setTextColor(40, 40, 40);
     }
