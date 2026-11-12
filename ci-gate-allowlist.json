@@ -830,24 +830,5 @@
       "expires": "2026-12-31"
     }
   ],
-  "source_of_truth_baseline": [
-    {
-      "function": "fn_master_apply_identity_changes",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "CATALOGO-IDENTIDAD (2026-11-12) · la migración 20261112120000 reescribe fn_master_apply_identity_changes/5 vía CREATE OR REPLACE: SKU compartido e INMUTABLE tras la creación (ERR_SKU_IMMUTABLE ante cualquier clave 'sku' en p_changes — punto único que comparten update_master_product y las propuestas aprobadas), retiro de la lógica muerta de cambio de SKU (unicidad/movimientos/colisión — ERR_SKU_LOCKED_BY_MOVEMENTS y ERR_MASTER_SKU_CONFLICT eliminados del cuerpo) y conservación íntegra de nombre/imagen compartidos, auditoría por campo y propagación a filas locales. Sin cambios de firma, SECURITY DEFINER, search_path, ACL ni datos comerciales. La surface LIVE de producción aún conserva el cuerpo anterior (20261111120000, con guardas por movimientos): la deriva se resuelve al desplegar la migración en producción — retirar esta excepción y regenerar contract-surface (scripts/export-contract-surface.cjs) tras el despliegue autorizado.",
-      "added_by": "CATALOGO-IDENTIDAD-20261112",
-      "expires": "2027-01-31"
-    },
-    {
-      "function": "propose_master_change",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "CATALOGO-IDENTIDAD (2026-11-12) · la migración 20261112120000 reescribe propose_master_change/4 vía CREATE OR REPLACE: 'sku' deja de ser campo proponible (ERR_SKU_IMMUTABLE al ENCOLAR — no se admiten propuestas que la aprobación rechazaría igualmente en fn_master_apply_identity_changes); resto del flujo intacto (autorización por tienda de origen, auditoría, cola master_change_proposals). Sin cambios de firma, SECURITY DEFINER, search_path ni ACL. La surface LIVE de producción aún conserva el cuerpo anterior (20261028112100, con 'sku' proponible): la deriva se resuelve al desplegar la migración en producción — retirar esta excepción y regenerar contract-surface (scripts/export-contract-surface.cjs) tras el despliegue autorizado.",
-      "added_by": "CATALOGO-IDENTIDAD-20261112",
-      "expires": "2027-01-31"
-    }
-  ]
+  "source_of_truth_baseline": []
 }
