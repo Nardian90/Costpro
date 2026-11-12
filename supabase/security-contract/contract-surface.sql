@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-11T15:09:36.062Z
+-- Captured  : 2026-11-12T12:52:57.980Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 190 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -1700,43 +1700,6 @@ BEGIN
 END $function$
 
 
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
-END;
-$function$
-
-
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1773,6 +1736,43 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
+END;
+$function$
+
+
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
 END;
 $function$
 
@@ -7419,16 +7419,25 @@ CREATE OR REPLACE FUNCTION public.fn_master_apply_identity_changes(p_master_id u
 AS $function$
 DECLARE
   v_master record;
-  v_allowed text[] := ARRAY['sku','name','description','image_path','barcode','barcode_type','unit_of_measure','is_service'];
+  v_allowed text[] := ARRAY['name','description','image_path','barcode','barcode_type','unit_of_measure','is_service'];
   v_key text;
   v_old text;
   v_new text;
-  v_new_sku text;
   v_new_barcode text;
   v_changes_applied jsonb := '[]'::jsonb;
 BEGIN
   IF p_changes IS NULL OR jsonb_typeof(p_changes) <> 'object' OR p_changes = '{}'::jsonb THEN
     RAISE EXCEPTION 'ERR_INVALID_CHANGES: se requiere un objeto de cambios no vacío';
+  END IF;
+
+  -- CATÁLOGO-IDENTIDAD (2026-11-12) §2: el SKU es compartido e INMUTABLE
+  -- tras la creación del producto. Cualquier intento (directo, propuesta
+  -- aprobada u otra vía) se rechaza en este punto único de escritura con
+  -- un error controlado específico — incluido un reenvío del SKU vigente
+  -- (no-cambio): el contrato de identidad editable ya no contempla la
+  -- clave 'sku' en absoluto.
+  IF p_changes ? 'sku' THEN
+    RAISE EXCEPTION 'ERR_SKU_IMMUTABLE: el SKU del producto (%) es compartido e inmutable; no puede modificarse después de su creación', p_master_id;
   END IF;
 
   SELECT * INTO v_master FROM public.master_products WHERE id = p_master_id FOR UPDATE;
@@ -7443,14 +7452,6 @@ BEGIN
   END LOOP;
 
   -- Validaciones de unicidad sobre los valores NUEVOS
-  v_new_sku := NULLIF(btrim(COALESCE(p_changes->>'sku', '')), '');
-  IF v_new_sku IS NOT NULL THEN
-    IF EXISTS (SELECT 1 FROM public.master_products
-                WHERE tenant_id = v_master.tenant_id AND sku = v_new_sku AND id <> p_master_id) THEN
-      RAISE EXCEPTION 'ERR_MASTER_SKU_EXISTS: %', v_new_sku;
-    END IF;
-  END IF;
-
   v_new_barcode := NULLIF(btrim(COALESCE(p_changes->>'barcode', '')), '');
   IF v_new_barcode IS NOT NULL THEN
     IF EXISTS (SELECT 1 FROM public.master_products
@@ -7461,43 +7462,6 @@ BEGIN
 
   IF p_changes->>'name' IS NOT NULL AND btrim(p_changes->>'name') = '' THEN
     RAISE EXCEPTION 'ERR_INVALID_CHANGES: el nombre no puede quedar vacío';
-  END IF;
-
-  -- GESTIÓN-MAESTRO (2026-11-11, brief §4): el SKU de un producto con
-  -- movimientos históricos NO se modifica. El SKU del maestro se propaga a
-  -- TODAS las filas locales vinculadas, por lo que la regla se evalúa sobre
-  -- la existencia REAL de movimientos en cualquiera de esas filas (columna
-  -- materializada has_movements + comprobación directa de las tres tablas
-  -- de movimientos — defensa en profundidad contra desincronización de la
-  -- columna). Un cambio idéntico al SKU vigente (no-cambio) no se bloquea.
-  IF v_new_sku IS NOT NULL AND v_new_sku <> v_master.sku THEN
-    IF EXISTS (
-      SELECT 1
-        FROM public.products pr
-       WHERE pr.master_product_id = p_master_id
-         AND (
-           COALESCE(pr.has_movements, false)
-           OR EXISTS (SELECT 1 FROM public.transaction_items ti WHERE ti.product_id = pr.id)
-           OR EXISTS (SELECT 1 FROM public.stock_movements sm WHERE sm.product_id = pr.id)
-           OR EXISTS (SELECT 1 FROM public.receipt_items ri WHERE ri.product_id = pr.id)
-         )
-    ) THEN
-      RAISE EXCEPTION 'ERR_SKU_LOCKED_BY_MOVEMENTS: el producto maestro % tiene movimientos históricos en al menos una tienda vinculada; el SKU no puede modificarse', v_master.sku;
-    END IF;
-
-    -- La propagación reescribiría el SKU de las filas vinculadas: un SKU
-    -- local no-vinculado en alguna de esas tiendas colisionaría con
-    -- products_store_sku_unique. Se detecta ANTES para devolver un error
-    -- controlado (la transacción ya era atómica; esto solo traduce el 23505).
-    IF EXISTS (
-      SELECT 1
-        FROM public.products pr2
-       WHERE pr2.master_product_id IS NULL
-         AND pr2.sku = v_new_sku
-         AND pr2.store_id IN (SELECT store_id FROM public.products WHERE master_product_id = p_master_id)
-    ) THEN
-      RAISE EXCEPTION 'ERR_MASTER_SKU_CONFLICT: el SKU % ya existe como producto local sin vínculo en una tienda afectada', v_new_sku;
-    END IF;
   END IF;
 
   -- Aplicar campo a campo con registro de auditoría por campo.
@@ -7519,10 +7483,13 @@ BEGIN
     v_changes_applied := v_changes_applied || jsonb_build_object('field', v_key, 'old', v_old, 'new', v_new);
   END LOOP;
 
-  -- Propagación de coherencia de identidad (SKU y nombre) a las filas locales
-  -- vinculadas de TODAS las tiendas conectadas. El trigger de identidad
-  -- re-coerciona contra el maestro; datos comerciales intactos.
-  IF v_new_sku IS NOT NULL OR p_changes->>'name' IS NOT NULL THEN
+  -- Propagación de coherencia de identidad a las filas locales vinculadas
+  -- de TODAS las tiendas conectadas. El SKU del maestro es inmutable, por lo
+  -- que la asignación de SKU es idéntica al valor local (re-coerción
+  -- defensiva frente a derivas; el trigger de identidad re-coerciona
+  -- igualmente) y el NOMBRE nuevo es el cambio que se propaga. El trigger de
+  -- identidad garantiza SKU/nombre = maestro; datos comerciales intactos.
+  IF p_changes->>'name' IS NOT NULL THEN
     UPDATE public.products pr
        SET sku = m.sku,
            name = m.name,
@@ -7536,7 +7503,7 @@ BEGIN
   -- cambio de identidad incluye image_path, las filas locales vinculadas
   -- adoptan la referencia vigente del maestro (compartición por referencia;
   -- el objeto del bucket es el mismo y no se duplica). Solo se toca
-  -- image_url/updated_at: precio, costo y existencias locales intactos.
+  -- image_url/updated_at: los datos comerciales locales quedan intactos.
   IF p_changes->>'image_path' IS NOT NULL THEN
     UPDATE public.products pr
        SET image_url = m.image_path,
@@ -10792,7 +10759,7 @@ DECLARE
     THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
   v_tenant uuid;
   v_proposal_id uuid;
-  v_allowed text[] := ARRAY['sku','name','description','image_path','barcode','barcode_type','unit_of_measure','is_service'];
+  v_allowed text[] := ARRAY['name','description','image_path','barcode','barcode_type','unit_of_measure','is_service'];
   v_key text;
 BEGIN
   IF v_caller_uid IS NULL OR p_origin_store_id IS NULL THEN
@@ -10801,6 +10768,14 @@ BEGIN
   IF p_changes IS NULL OR jsonb_typeof(p_changes) <> 'object' OR p_changes = '{}'::jsonb THEN
     RAISE EXCEPTION 'ERR_INVALID_CHANGES: se requiere un objeto de cambios no vacío';
   END IF;
+
+  -- CATÁLOGO-IDENTIDAD (2026-11-12) §2: el SKU es inmutable tras la creación;
+  -- las propuestas que lo incluyan se rechazan al ENCOLAR (la aprobación las
+  -- rechazaría igualmente en fn_master_apply_identity_changes).
+  IF p_changes ? 'sku' THEN
+    RAISE EXCEPTION 'ERR_SKU_IMMUTABLE: el SKU del producto (%) es compartido e inmutable; no puede proponerse su modificación', p_master_id;
+  END IF;
+
   FOR v_key IN SELECT jsonb_object_keys(p_changes) LOOP
     IF NOT (v_key = ANY (v_allowed)) THEN
       RAISE EXCEPTION 'ERR_INVALID_CHANGES: campo % no es identidad compartida proponible', v_key;

@@ -79,9 +79,16 @@
 | 9 | Producto nuevo vinculado + datos comerciales después | Script 6.2/6.3 (defaults alta manual + vínculo) |
 | 10 | Permisos, RLS, duplicados, aislamiento | RPCs SECURITY DEFINER con revalidación en servidor (sin cambios de ACL); script 6.4/6.5 (duplicados) + fixture 2 tiendas aisladas + políticas por tenant |
 
-## 5. Notas de despliegue (pendiente tras el merge)
+## 5. Despliegue (COMPLETADO — 2026-11-12)
 
-1. **Aplicar `20261112120000` a producción** (canal Management API + NOTIFY pgrst, patrón CP-INFRA-019, verificación con este mismo script apuntando al proyecto aislado ya hecha).
-2. **Regenerar `contract-surface.sql`** (`scripts/export-contract-surface.cjs`) — las 2 funciones reescritas entrarán al surface.
-3. **Retirar las 2 excepciones `source_of_truth_baseline`** de `ci-gate-allowlist.json` (razón documentada: migración ya desplegada).
-4. El `worklog.md` del sandbox registra la cronología completa de la sesión.
+1. **`20261112120000` APLICADA a producción** (canal Management API + NOTIFY pgrst, patrón CP-INFRA-019, doble
+   flag, lote único): verificación POST 19/19, pruebas negativas sin escrituras, sonda de propagación multi-tienda
+   con rollback forzado, simulación de la política de imagen para no-admin y delta 0. Expediente de aplicación:
+   `docs/audits/APLICACION_MIGRACION_20261112120000_PRODUCCION.md` · evidencia: `m012-aplicacion-produccion.txt`
+   (script versionado `scripts/m012-aplicar-migracion-20261112120000.mjs`).
+2. **`contract-surface.sql` REGENERADO** (`scripts/export-contract-surface.cjs`): 190 funciones, sha256
+   `f81ee44da087341825cb62655a1705c903f9fba6f88b53ddd5ba60fe0c8dc015` — contrato estático OK.
+3. **2 excepciones `source_of_truth_baseline` RETIRADAS** de `ci-gate-allowlist.json` (migración desplegada y
+   surface certificado; la entrada permanente de seguridad del helper permanece).
+4. PR #1605 fusionado en `main` (merge `52904a2c78753a433fb8cde3488f7960cc2769bd`); el worklog del sandbox y el
+   expediente de la ORDEN registran la cronología completa.

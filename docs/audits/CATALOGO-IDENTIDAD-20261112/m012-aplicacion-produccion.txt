@@ -1,0 +1,67 @@
+[m012-aplicar-migracion-20261112120000.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+Migración: supabase/migrations/20261112120000_cp_catalogo_sku_inmutable.sql
+SHA-256: 43d1faee9578f07fd547f8f616bb9c5da2baf64d76edc686ef89442bca6af1f1
+Destino: PRODUCCIÓN (wthkddeleylijmonclxg)
+
+PRE fn_master_apply_identity_changes/5: secdef= true · ERR_SKU_IMMUTABLE= true · ERR_SKU_LOCKED_BY_MOVEMENTS= false · ERR_MASTER_SKU_CONFLICT= false
+PRE propose_master_change/4: ERR_SKU_IMMUTABLE= true
+PRE triggers: movement_guard= 0 · immutable_guard= 1
+PRE políticas product-images con rama master-: 3
+PRE dependencias: {"t_master":1,"t_log":1,"t_prop":1,"t_links":1,"t_products":1,"f_access":1}
+PRE conteos: {"products":295,"master_products":200,"stock_movements":1765,"transaction_items":1076,"receipt_items":308,"master_change_log":405,"transactions":1006,"master_change_proposals":0,"stores":7,"tenants":3,"user_store_memberships":19}
+PRE fixture maestro (movimientos): {"id":"3bf620a7-1dd1-46ed-ae0f-7a0a7b09f7eb","sku":"112","tenant_id":"5364ccf8-e6cd-4c38-aea8-b167b3b5576f"}
+PRE fixture maestro (sin filas con movimientos, sin filas puras): {"id":"7b377a31-4e0f-45d9-b266-244c2e235ac5","sku":"QA-CM-20261030-01"}
+PRE fixture local (sin maestro ni movimientos): {"id":"a556c498-2837-47b3-8c67-dce442fe9715","sku":"PROD-033","store_id":"43a4dabc-b8b4-4b66-82b3-0c75335ca5d1"}
+PRE fixture propagación (multi-tienda): {"id":"3bf620a7-1dd1-46ed-ae0f-7a0a7b09f7eb","sku":"112","name":"Grapas metálicas 3/4 con tornillo roscante","tenant_id":"5364ccf8-e6cd-4c38-aea8-b167b3b5576f","linked_rows":2,"linked_stores":2,"owner_id":"a1111111-1111-1111-1111-111111111111"}
+
+Migración YA aplicada (ERR_SKU_IMMUTABLE + trigger nuevo): modo verificación.
+
+── VERIFICACIÓN POST ──
+  ✓ fn_master_apply existe y SECURITY DEFINER
+  ✓ guardra ERR_SKU_IMMUTABLE (clave sku en p_changes)
+  ✓ lógica de cambio de SKU retirada (sin LOCKED_BY_MOVEMENTS/CONFLICT)
+  ✓ propagación de nombre compartido (name = m.name)
+  ✓ propagación de imagen compartida (image_url = m.image_path)
+  ✓ sin datos comerciales (price/costo/stock)
+  ✓ propose_master_change rechaza sku al encolar
+  ✓ trigger trg_products_sku_immutable_guard presente (fn SECURITY DEFINER)
+  ✓ trigger anterior trg_products_sku_movement_guard retirado (+función)
+  ✓ ACL helper: EXECUTE solo service_role (+postgres owner)
+  ✓ 3 políticas product-images con rama master- (imagen compartida)
+  ✓ RLS activo en catalog_store_links (1 políticas)
+  ✓ RLS activo en master_change_log (1 políticas)
+  ✓ RLS activo en master_change_proposals (1 políticas)
+  ✓ RLS activo en master_products (1 políticas)
+  ✓ RLS activo en products (6 políticas)
+  ✓ RLS activo en stores (7 políticas)
+  ✓ RLS activo en tenants (5 políticas)
+  ✓ RLS activo en user_store_memberships (4 políticas)
+
+── PRUEBAS FUNCIONALES NEGATIVAS (fail-closed, sin escrituras) ──
+  ✓ (a) maestro con movimientos → ERR_SKU_IMMUTABLE (transacción abortada, cero escrituras)
+  ✓ (b) reenvío idéntico de SKU (sin movimientos) → ERR_SKU_IMMUTABLE (regla más estricta que 20261111120000)
+  ✓ (c) propuesta con sku → rechazada sin escritura (ERR_UNAUTHENTICATED — canal Management API sin JWT: la guardra al encolar está verificada por cuerpo en fase 3 y por la BD aislada 36/36)
+  ✓ (d) UPDATE directo local SIN movimientos → ERR_SKU_IMMUTABLE (trigger, regla más estricta)
+  ✓ SKUs de las filas objetivo intactos tras los abortos (rollback confirmado)
+
+── SONDA DE PROPAGACIÓN DE NOMBRE (rollback forzado, cero huella) ──
+  fixture: maestro 112 · filas vinculadas=2 · tiendas=2
+  ✓ PROBE_OK: nombre aplicado y propagado a 2/2 filas en 2 tiendas; datos comerciales intactos — ROLLBACK FORZADO (cero huella)
+  ✓ cero huella confirmada: nombre maestro intacto, 0 filas con el nombre de la sonda
+
+── POLÍTICA DE IMAGEN master- (USUARIO NO ADMIN, read-only) ──
+  roles de perfiles: [{"role":"tenant_admin","n":10},{"role":"encargado","n":8},{"role":"admin","n":4},{"role":"usuario","n":4},{"role":"costo","n":4},{"role":"clerk","n":1},{"role":"warehouse","n":1},{"role":"superadmin","n":1}]
+  candidato no-admin: perfil=encargado, membresía=encargado, tienda=899d2503-d000-41d2-89f0-0827f4ac37ab, tenant=5364ccf8-e6cd-4c38-aea8-b167b3b5576f
+  simulación del predicado de la política master-: {"store_access":true,"policy_master_branch_admits":true}
+  ✓ la política master- ADMITIRÍA la subida de imagen compartida para el usuario autorizado no-admin
+  aislamiento: masters de otros tenants alcanzables por este usuario = 0
+  ✓ aislamiento por tenant intacto en la rama master- de la política
+  ✓ bucket product-images presente (public=true)
+
+── INTEGRIDAD DE DATOS ──
+DESPUÉS: {"products":295,"master_products":200,"stock_movements":1765,"transaction_items":1076,"receipt_items":308,"master_change_log":405,"transactions":1006,"master_change_proposals":0,"stores":7,"tenants":3,"user_store_memberships":19}
+DELTAS : {"products":0,"master_products":0,"stock_movements":0,"transaction_items":0,"receipt_items":0,"master_change_log":0,"transactions":0,"master_change_proposals":0,"stores":0,"tenants":0,"user_store_memberships":0}
+  ✓ delta = 0 en todas las tablas (datos, tiendas, productos, precios vía conteos, existencias)
+
+OK: migración VERIFICADA (ya aplicada) y funcionando en producción (wthkddeleylijmonclxg).
+SHA-256 de la migración aplicada: 43d1faee9578f07fd547f8f616bb9c5da2baf64d76edc686ef89442bca6af1f1
