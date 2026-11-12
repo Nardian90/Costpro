@@ -15,9 +15,13 @@ import { FCTemplatePicker } from '@/components/ui/FCTemplatePicker';
 import { useAutoGenerateFC, useDeleteProductCostSheet, useFCTemplateOptions } from '@/hooks/api/useProductCostSheet';
 import type { ProductFCStatus } from '@/contracts/product-cost-sheet';
 import type { FCPdfFormat } from '@/contracts/store-cost-template';
-import { FC_TEMPLATE_OPTIONS } from '@/components/ui/StoreTemplateSelector';
+// FC-PDF-UNIFY (2026-11-13): selector de formato compartido — mismas 10
+// alternativas que CostSheetExportModal (sección Fichas de Costo). El PDF del
+// inventario se genera con el MISMO motor (quick-pdf → generateCostSheetPDF).
+import { PDF_FORMATS_META, type PDFFormat } from '@/lib/export/pdf-export-types';
+import { getSystemTemplateMeta } from '@/lib/integration/fc-system-templates';
 import { useUIStore } from '@/store';
-import { FileText, Download, Loader2, AlertCircle, Trash2, RefreshCw, Unlink, LayoutTemplate, Store as StoreIcon } from 'lucide-react';
+import { FileText, Download, Loader2, AlertCircle, Trash2, RefreshCw, Unlink, LayoutTemplate, Store as StoreIcon, FileStack } from 'lucide-react';
 import { authHeaders } from '@/services/store-api-client';
 
 // ============================================
@@ -31,6 +35,8 @@ interface FCPreviewModalProps {
   productName: string;
   storeId: string;
   fcStatus: ProductFCStatus;
+  /** Formato inicial del PDF (resolución de plantilla de tienda si viene);
+   *  el usuario puede cambiarlo desde el selector del modal. */
   pdfFormat?: FCPdfFormat;
   /** ID del cost sheet existente (para poder eliminarlo/regenerarlo) */
   costSheetId?: string | null;
@@ -65,10 +71,16 @@ export function FCPreviewModal({
   productName,
   storeId,
   fcStatus,
-  pdfFormat = 'res148',
+  pdfFormat,
   costSheetId,
   currentTemplateId,
 }: FCPreviewModalProps) {
+  // FC-PDF-UNIFY: formato de generación SELECCIONABLE por el usuario desde el
+  // inventario (misión §3). Inicializa con el formato resuelto (prop) o
+  // 'standard' — el diseño «esperado» reportado por el propietario — y el
+  // selector ofrece las 10 alternativas del motor compartido. El formato solo
+  // afecta la PRESENTACIÓN del PDF: no altera cálculos ni la ficha (§3.1).
+  const [selectedPdfFormat, setSelectedPdfFormat] = useState<PDFFormat>(pdfFormat ?? 'standard');
   // Track the effective status — can change from pendiente → vigente after generation
   const [effectiveStatus, setEffectiveStatus] = useState<ProductFCStatus>(fcStatus);
   const [pdfLoadError, setPdfLoadError] = useState(false);
@@ -120,11 +132,12 @@ export function FCPreviewModal({
     }
   }, [open]);
 
-  // Build the PDF URL
+  // Build the PDF URL — FC-PDF-UNIFY: usa el formato SELECCIONADO; el endpoint
+  // genera con el mismo motor de 10 formatos que la sección Fichas de Costo.
   const pdfUrl = useMemo(
     () =>
-      `/api/product-cost-sheets/quick-pdf?product_id=${encodeURIComponent(productId)}&store_id=${encodeURIComponent(storeId)}&pdf_format=${encodeURIComponent(pdfFormat)}`,
-    [productId, storeId, pdfFormat],
+      `/api/product-cost-sheets/quick-pdf?product_id=${encodeURIComponent(productId)}&store_id=${encodeURIComponent(storeId)}&pdf_format=${encodeURIComponent(selectedPdfFormat)}`,
+    [productId, storeId, selectedPdfFormat],
   );
 
   // Nombre legible de la plantilla asociada (nunca IDs técnicos como etiqueta principal)
@@ -134,8 +147,7 @@ export function FCPreviewModal({
       const found = userTemplates.find(t => t.id === currentTemplateId);
       return found?.name ?? 'Plantilla guardada';
     }
-    const sys = FC_TEMPLATE_OPTIONS.find(o => o.id === currentTemplateId);
-    return sys?.label ?? null;
+    return getSystemTemplateMeta(currentTemplateId)?.name ?? null;
   }, [currentTemplateId, userTemplates]);
 
   // Determine the current view mode
@@ -229,6 +241,14 @@ export function FCPreviewModal({
     setPdfEpoch(pdfEpochRef.current);
     fetchInProgressRef.current = false;
   }, []);
+
+  // FC-PDF-UNIFY: cambiar de formato → invalidar el blob actual y refetch (el
+  // efecto de carga detecta pdfBlobUrl null + vigente y relanza con la nueva
+  // URL, que incluye el pdf_format seleccionado).
+  const handleFormatChange = useCallback((format: PDFFormat) => {
+    setSelectedPdfFormat(prev => (prev === format ? prev : format));
+    resetPdfBlob();
+  }, [resetPdfBlob]);
 
   // Handlers
   const handleGenerate = useCallback(async () => {
@@ -439,6 +459,30 @@ export function FCPreviewModal({
           {/* PDF Preview (vigente) */}
           {viewMode === 'preview' && (
             <div className="relative w-full h-full min-h-[300px]">
+              {/* FC-PDF-UNIFY: selector de formato de generación — mismas 10
+                  alternativas que la sección Fichas de Costo. El formato define
+                  la PRESENTACIÓN del PDF; no altera cálculos ni la ficha. */}
+              <div className="mb-3 flex flex-col sm:flex-row sm:items-center gap-2 shrink-0">
+                <label
+                  htmlFor="fc-preview-pdf-format"
+                  className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-muted-foreground shrink-0"
+                >
+                  <FileStack className="size-3.5" aria-hidden="true" />
+                  Formato del PDF
+                </label>
+                <select
+                  id="fc-preview-pdf-format"
+                  data-testid="fc-pdf-format-select"
+                  value={selectedPdfFormat}
+                  onChange={(e) => handleFormatChange(e.target.value as PDFFormat)}
+                  disabled={pdfLoading}
+                  className="h-10 w-full sm:max-w-[280px] bg-muted/20 border border-primary/10 focus:border-primary/30 transition-all font-bold rounded-lg px-3 text-sm"
+                >
+                  {PDF_FORMATS_META.map(f => (
+                    <option key={f.id} value={f.id}>{f.label} — {f.description}</option>
+                  ))}
+                </select>
+              </div>
               {connectedTemplateName && (
                 <div className="mb-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 flex items-center gap-2" role="status">
                   <AlertCircle className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -568,9 +612,11 @@ export function FCPreviewModal({
               <div className="flex items-start gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 shrink-0">
                 <LayoutTemplate className="size-4 text-primary shrink-0 mt-0.5" />
                 <p className="text-xs text-foreground/90 font-medium">
-                  Este producto no tiene Ficha de Costo. Selecciona una de tus plantillas
-                  guardadas en COSTPRO para conectarla — no necesitas una plantilla
-                  predeterminada de tienda.
+                  Este producto no tiene Ficha de Costo. Selecciona una plantilla
+                  para conectarla: las <strong className="font-bold">Sistema</strong> (catálogo
+                  oficial de COSTPRO) están siempre disponibles, las <strong className="font-bold">Privadas</strong> son
+                  tus plantillas guardadas y las <strong className="font-bold">Públicas</strong> las compartidas
+                  según permisos. No necesitas una plantilla predeterminada de tienda.
                 </p>
               </div>
               <FCTemplatePicker

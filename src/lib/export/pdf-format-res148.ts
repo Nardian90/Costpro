@@ -8,7 +8,7 @@ import {
   calcUtilidadPercent,
   getConversionCtx, convertValue, convertUM, getConversionDisclosureNote,
 } from './pdf-shared';
-import { AnnexLayout } from '@/components/views/terminal/views/cost_sheet/CostSheetExportModal';
+import { AnnexLayout } from '@/lib/export/pdf-export-types';
 
 // ── Helpers for Res 148/2023 ──
 

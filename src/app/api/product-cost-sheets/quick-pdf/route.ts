@@ -9,7 +9,13 @@ import { getAdminClient } from '@/lib/supabase-admin';
 import { mapProductCostSheetToContract } from '@/contracts/product-cost-sheet';
 import { auditService } from '@/services/audit-service';
 import { getCachedPdf, setCachedPdf, buildCacheKey } from '@/lib/fc-pdf-cache';
-import { generateFCPdf } from '@/lib/export/generate-fc-pdf';
+// FC-PDF-UNIFY (2026-11-13): motor compartido de 10 formatos (el mismo que la
+// sección Fichas de Costo vía CostSheetExportModal) + builder puro del body
+// (fix array-vs-Record del calculatedRows). El layout genérico paralelo
+// (generate-fc-pdf.ts) queda para consumidores legacy de export-pdf POST.
+import { generateCostSheetPDF } from '@/lib/export/pdf-generator';
+import { buildQuickPdfBody } from '@/lib/export/fc-quick-pdf-body';
+import type { PDFFormat } from '@/lib/export/pdf-export-types';
 
 export const runtime = 'nodejs';
 
@@ -17,13 +23,20 @@ export const runtime = 'nodejs';
  * GET /api/product-cost-sheets/quick-pdf?product_id=xxx&store_id=xxx&pdf_format=res148
  *
  * Genera y descarga el PDF de la FC de un producto en un solo paso.
- * Si el producto tiene FC vigente, la usa. Si no, genera primero.
+ * Si el producto tiene FC vigente, la usa. Si no, indica cómo generarla.
  * Retorna el binario PDF directamente.
  *
  * FIX-FC-PDF-DIRECT: Uses generateFCPdf() directly instead of internal HTTP fetch.
  * The previous implementation fetched /api/cost-sheets/export-pdf internally,
  * which required passing through withAuth — but service role keys aren't valid
  * NextAuth JWTs, causing 401 errors.
+ *
+ * FC-PDF-UNIFY (2026-11-13): el PDF se genera con `generateCostSheetPDF` —
+ * EL MISMO MOTOR de la sección Fichas de Costo (mismos 10 formatos y mismos
+ * diseños; «Estándar» = renderStandard intacto). Antes usaba un layout
+ * genérico propio que ignoraba pdf_format y producía un documento distinto al
+ * que el usuario obtenía desde Fichas de Costo. El body se construye con
+ * buildQuickPdfBody (corrige el paso de calculatedRows como Record).
  */
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
@@ -119,20 +132,15 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     // 4. Generate PDF directly (FIX-FC-PDF-DIRECT: no internal HTTP fetch)
+    // FC-PDF-UNIFY: motor compartido con la sección Fichas de Costo — el
+    // pdf_format del selector cambia el diseño (Estándar, Res 148/2023, …);
+    // nunca altera los cálculos ni la ficha persistida.
     const contract = mapProductCostSheetToContract(costSheetData as unknown as import('@/contracts/product-cost-sheet').ProductCostSheetRaw);
     const calculatedData = contract.calculated_data as Record<string, unknown>;
 
-    const pdfUint8Array = await generateFCPdf({
-      data: calculatedData,
-      options: {
-        pdfFormat: pdf_format,
-        includeAudit: false,
-        includeFC: true,
-      },
-      calculatedValues: (calculatedData as Record<string, unknown>)?.calculatedRows || [],
-      calculatedHeader: (calculatedData as Record<string, unknown>)?.header || {},
-      exportMode: 'single',
-    });
+    const pdfBody = buildQuickPdfBody(calculatedData, (pdf_format || 'res148') as PDFFormat);
+    const doc = await generateCostSheetPDF(pdfBody);
+    const pdfUint8Array = new Uint8Array(doc.output('arraybuffer'));
 
     // 5. Audit log
     await auditService.logFCPdfExported({

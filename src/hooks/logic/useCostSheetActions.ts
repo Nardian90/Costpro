@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 import { useAuthStore, useUIStore, ViewType } from '@/store';
 import { CostSheetData, CalculatedRowValue } from '@/types/cost-sheet';
-import { ExportOptions } from '@/components/views/terminal/views/cost_sheet/CostSheetExportModal';
+import { ExportOptions } from '@/lib/export/pdf-export-types';
 import {
   ArrowLeft,
   Eye,

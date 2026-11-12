@@ -60,6 +60,22 @@ describe('inferModalidadFromTemplate', () => {
     expect(inferModalidadFromTemplate({ header: {} }, 'servicios')).toBe('servicios');
     expect(inferModalidadFromTemplate(null, 'comercializacion')).toBe('comercializacion');
   });
+
+  // FC-MODALIDAD-FIX (misión 2026-11-13): fichas guardadas desde el editor
+  // llevaban 'producción'/'comercialización' CON tilde (opciones históricas del
+  // HeaderEditor) — la inferencia anterior nunca matcheaba y caía SIEMPRE al
+  // default. La comparación es ahora normalizada (tildes + caja).
+  it('normaliza tildes y mayúsculas de destination (variantes históricas del editor)', () => {
+    expect(inferModalidadFromTemplate({ header: { destination: 'producción' } })).toBe('produccion');
+    expect(inferModalidadFromTemplate({ header: { destination: 'Comercialización' } })).toBe('comercializacion');
+    expect(inferModalidadFromTemplate({ header: { destination: 'SERVICIOS' } })).toBe('servicios');
+    expect(inferModalidadFromTemplate({ header: { destination: ' Producción ' } })).toBe('produccion');
+  });
+
+  it('sigue cayendo al default ante valores realmente desconocidos', () => {
+    expect(inferModalidadFromTemplate({ header: { destination: 'producción industrial' } })).toBe('produccion');
+    expect(inferModalidadFromTemplate({ header: { destination: 42 } })).toBe('produccion');
+  });
 });
 
 // ============================================

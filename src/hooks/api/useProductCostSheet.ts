@@ -15,6 +15,7 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import type { ProductCostSheetContract, ProductFCStatus } from '@/contracts/product-cost-sheet';
 import type { CostSheetTemplateRecord } from '@/services/cost-sheet-template-service';
+import { mergeFCTemplateOptions } from '@/lib/integration/fc-system-templates';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -298,12 +299,16 @@ export function useDeleteProductCostSheet() {
 
 /**
  * useFCTemplateOptions — Plantillas de Ficha de Costo disponibles para el
- * usuario actual en el servidor (cost_sheet_templates):
+ * usuario actual, con las TRES procedencias legítimas (FC-SYS-TEMPLATES
+ * 2026-11-13, misión «Fichas de Costo: auditoría integral»):
  *
+ *   - Sistema: catálogo incorporado por COSTPRO (13 plantillas en código —
+ *     resueltas server-side por TEMPLATE_REGISTRY; no viven en BD, la
+ *     persistencia no aplica: son parte del producto).
  *   - Privadas: propiedad de la cuenta (created_by = usuario, RLS).
  *   - Públicas: globales o de tiendas a las que el usuario tiene acceso (RLS).
  *
- * Se consultan con el cliente Supabase del navegador → la RLS de
+ * Las de BD se consultan con el cliente Supabase del navegador → la RLS de
  * cost_sheet_templates (migración 20261110120000) es la fuente de verdad:
  * nunca se exponen plantillas privadas de otras cuentas. Multi-dispositivo:
  * viven en el servidor, no en localStorage.
@@ -348,14 +353,15 @@ export function useFCTemplateOptions() {
         }
       }
 
-      // Estables y sin duplicados por id (públicas de tienda + globales)
-      const seen = new Set<string>();
-      return rows.filter(r => (seen.has(r.id) ? false : (seen.add(r.id), true)));
+      return mergeFCTemplateOptions(rows) as CostSheetTemplateRecord[];
     },
     staleTime: 60_000,
     retry: 1,
   });
 }
+
+// mergeFCTemplateOptions vive en src/lib/integration/fc-system-templates.ts
+// (módulo puro, testeable) — fusión de las tres procedencias.
 
 /**
  * useGenerateFCFromTemplate — Mutation que conecta un producto con una Ficha

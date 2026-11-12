@@ -10,6 +10,10 @@ import {
   batchRecalculateOnPriceChange,
   type PriceChangeRecord,
 } from '@/lib/integration/recalculate-on-price-change';
+// FC-SEC-RECALC (misión 2026-11-13): cierre del único gap de autorización
+// multitienda del módulo FC — esta ruta NO validaba membresía en la tienda del
+// payload, y recalculateOnPriceChange opera con service-role (bypass RLS).
+import { hasStoreMembership } from '@/lib/integration/fc-template-resolution';
 
 export const runtime = 'nodejs';
 
@@ -19,7 +23,12 @@ export const runtime = 'nodejs';
  * Evaluates whether price changes require FC recalculation and triggers
  * them if needed. Supports both single and batch operations.
  *
- * Security: validateOrigin (CSRF), recalculateSchema (Zod), withRole('encargado')
+ * Security: validateOrigin (CSRF), recalculateSchema (Zod), withRole('encargado'),
+ * FC-SEC-RECALC (2026-11-13): además, membresía activa por tienda del payload
+ * (mismo criterio que auto-generate/generate-from-template: admin|manager|
+ * encargado|costo) — antes un encargado de la tienda A podía regenerar FC de
+ * productos de la tienda B (service-role reescribe product_cost_sheets de la
+ * otra tienda).
  *
  * Body:
  *   Single: { mode: 'single', productId, storeId, oldCostPrice, newCostPrice, changedBy?, forceRecalculation? }
@@ -51,6 +60,19 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json(zodError(parsed.error), { status: 400 });
     }
     const body = parsed.data;
+
+    // ── FC-SEC-RECALC: membresía por tienda (payload → tiendas) ──
+    // El recálculo reescribe product_cost_sheets/products con service-role
+    // (bypass RLS) → la autorización se replica aquí, igual que en el resto de
+    // rutas FC. Roles con permiso de (re)generar: admin|manager|encargado|costo.
+    const targetStoreIds = body.mode === 'batch'
+      ? [...new Set(body.changes.map(c => c.storeId))]
+      : [body.storeId];
+    for (const storeId of targetStoreIds) {
+      if (!hasStoreMembership(session.user, storeId, ['admin', 'manager', 'encargado', 'costo'])) {
+        return NextResponse.json(createApiError('STORE_ACCESS_DENIED'), { status: 403 });
+      }
+    }
 
     // ── Execute recalculation ──
     if (body.mode === 'batch') {
