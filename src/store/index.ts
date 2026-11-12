@@ -32,7 +32,9 @@ export type ViewType = 'occ' | 'dashboard' | 'store-dashboard' | 'pos' | 'invent
 | 'costos' | 'tienda' | 'ipv_module' | 'otros' | 'administracion' | 'recursos'
 // GATE 1: secciones/hubs de la arquitectura aprobada (operacion/analisis/
 // sistema/ayuda/desarrollo + submenús costo/redes)
-| 'operacion' | 'analisis' | 'sistema' | 'ayuda' | 'desarrollo' | 'costo' | 'redes'
+// MISIÓN 2026-11-13: sección «RECURSOS HUMANOS» (GroupHubView) — alberga el
+// módulo Trabajadores y Comisiones trasladado desde OPERACIÓN.
+| 'operacion' | 'recursos-humanos' | 'analisis' | 'sistema' | 'ayuda' | 'desarrollo' | 'costo' | 'redes'
 // FIX-CALC-VIEW (2026-07-10): vista integrada de calculadora (modo embedded)
 | 'calculator'
 // FIX-PAYMENT-TRACKING (2026-07-12): dashboard de cuentas por pagar

@@ -60,7 +60,8 @@ import { Button } from '@/components/ui/button';
 import { CUBAN_PROVINCES, validateCubanCI, getMunicipalitiesForProvince } from './worker-helpers';
 import { ExchangeRatesModal } from './ExchangeRatesModal';
 // NÓMINAS SC-4-06 (Res. 13/2007 MFP): pestaña de nóminas de salario del módulo
-// Trabajadores y Comisiones (Inicio → OPERACIÓN). Confección ↔ vista previa
+// Trabajadores y Comisiones (Inicio → RECURSOS HUMANOS desde 2026-11-13; antes
+// OPERACIÓN). Confección ↔ vista previa
 // con el MISMO builder PDF del servidor de verdad; ciclo Borrador → Confirmada
 // → Pagada (+ Contabilizada) · Anulada con motivo.
 import { NominasTab, SalaryRateModal } from './nominas/NominasTab';

@@ -7,8 +7,9 @@
  *
  *   INICIO (destino fijo: dashboard — NO es sección)
  *   OPERACIÓN   → Dashboard (tienda activa) · Ventas (Vender · Opciones) ·
- *                 Almacén · Logística · Costo · Trabajadores y Comisiones ·
- *                 Gestión de Tiendas · Redes
+ *                 Almacén · Logística · Costo · Gestión de Tiendas · Redes
+ *   RECURSOS HUMANOS → Trabajadores y Comisiones (trabajadores · reglas de
+ *                 comisión · pagos · nóminas de salario SC-4-06)
  *   ANÁLISIS    → Análisis de datos · Inteligencia Cambiaria · Tablón de
  *                 Noticias · Reportes · Análisis ABC
  *   SISTEMA     → Ajustes · Usuarios · Roles · Salud · Monitoreo · Auditoría ·
@@ -60,6 +61,7 @@ import {
   ClipboardCheck,
   ReceiptText, Coins, Tags,
   Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson, CalendarClock, SlidersHorizontal,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -510,15 +512,6 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         ],
       },
       {
-        id: 'workers',
-        label: 'Trabajadores y Comisiones',
-        description: 'CRUD de trabajadores por tienda, reglas de comisión versionables, cálculo por periodo y pagos con auditoría.',
-        icon: UserCog,
-        type: 'item',
-        roles: ['admin', 'manager', 'encargado'],
-        keywords: ['trabajadores', 'empleados', 'comisiones', 'pagos', 'nómina'],
-      },
-      {
         // Hub real (GATE 0.1 §3-D: nombre correcto, alcance = ciclo de vida completo).
         // FASE B (UX-005): el Tablón salió del hub (sección ANÁLISIS) — la
         // keyword 'tablón' se retira para no desviar la búsqueda hacia el hub.
@@ -526,6 +519,9 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         // en SISTEMA → Organizaciones → tab Tiendas; el hub queda con la
         // configuración de la TIENDA ACTIVA + resumen consolidado + vitrina +
         // catálogo.
+        // MISIÓN 2026-11-13: «Trabajadores y Comisiones» vivía aquí (hoja plana
+        // entre Costo y este hub) — se MUDÓ a la nueva sección RECURSOS
+        // HUMANOS (ver abajo).
         id: 'management-hub',
         label: 'Gestión de Tiendas',
         description: 'Configura la tienda activa (datos, identidad visual, facturación) y consulta el resumen consolidado, la vitrina y el catálogo.',
@@ -592,6 +588,41 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             keywords: ['telegram', 'bot', 'mensajes', 'conversaciones', 'grupo'],
           },
         ],
+      },
+    ],
+  },
+
+  // ═══════════════════════ RECURSOS HUMANOS ═══════════════════════
+  // MISIÓN 2026-11-13 (encargo del propietario, tras la misión NÓMINAS
+  // SC-4-06 / PR #1607): el módulo «Trabajadores y Comisiones» deja de ser
+  // hoja plana de OPERACIÓN y se MUEVE (no se duplica: mismo ViewType
+  // 'workers', mismos deep-links, mismos roles) a su propia sección de
+  // dominio. Razón: tras PR #1607 el módulo es RRHH completo (trabajadores +
+  // reglas de comisión + pagos + nóminas de salario Res. 13/2007 MFP) y ya
+  // no encaja en el alcance declarado de OPERACIÓN («vender, mover stock,
+  // recibir mercancía y gestionar el ciclo comercial»). Precedente de
+  // sección con un único ítem: AYUDA → Centro de Ayuda. El legacy 'recursos'
+  // (MÁS RECURSOS, disuelto en GATE 0.1 → AYUDA) NO es recursos humanos:
+  // ids distintos ('recursos-humanos' ≠ alias 'recursos'), sin colisión.
+  {
+    id: 'recursos-humanos',
+    label: 'RECURSOS HUMANOS',
+    type: 'group',
+    icon: UsersRound,
+    description: 'Gestión del personal de la tienda: trabajadores, reglas de comisión, pagos y nóminas de salario.',
+    roles: ['admin', 'manager', 'encargado'],
+    children: [
+      {
+        // MOVIDA desde OPERACIÓN (2026-11-13) — misión RRHH tras Nóminas
+        // SC-4-06. El roles explícito PRESERVA la visibilidad efectiva
+        // EXACTA previa (mismo patrón que el traslado de Auditoría).
+        id: 'workers',
+        label: 'Trabajadores y Comisiones',
+        description: 'CRUD de trabajadores por tienda, reglas de comisión versionables, cálculo por periodo, pagos con auditoría y nóminas de salario (Modelo SC-4-06, Res. 13/2007 MFP).',
+        icon: UserCog,
+        type: 'item',
+        roles: ['admin', 'manager', 'encargado'],
+        keywords: ['trabajadores', 'empleados', 'comisiones', 'pagos', 'nómina', 'nóminas', 'salario', 'salarios', 'payroll', 'recursos humanos', 'rrhh', 'personal', 'sc-4-06'],
       },
     ],
   },
@@ -1551,7 +1582,7 @@ export const VALID_VIEWS: Set<string> = new Set([
   // MISIÓN INGRESOS/EGRESOS 2026-10-20: submenú «Caja» de OPERACIÓN (hub
   // SectionHubView) + vista canónica del documento Ingreso/Egreso.
   'caja', 'ingresos_egresos',
-  'operacion', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
+  'operacion', 'recursos-humanos', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
 ]);
 
 /**

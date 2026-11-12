@@ -83,10 +83,17 @@ El trabajo diario de la tienda:
 | Almacén → Etiquetas y Códigos | Etiquetas con código de barras y QR para imprimir |
 | Logística | Recepciones, Órdenes de Compra y Transferencia Stock |
 | Costo | Fichas de Costo, Estructura de Costo, Costeo Dinámico y Órdenes de Producción y Trabajo |
-| Trabajadores y Comisiones | Equipo, reglas de comisión y pagos con auditoría |
 | Gestión de Tiendas | Centro unificado: crear y configurar tiendas, backups y KPIs por tienda |
 | Auditoría | Qué ocurrió, cuándo y quién: actividad en lenguaje claro |
 | Redes | Bots de WhatsApp y Telegram por tienda |
+
+### Recursos Humanos
+
+La gestión del personal de la tienda:
+
+| Módulo | Descripción |
+|--------|-------------|
+| Trabajadores y Comisiones | Equipo, reglas de comisión, pagos con auditoría y nóminas de salario (SC-4-06) |
 
 ### Análisis
 
