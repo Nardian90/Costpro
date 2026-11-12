@@ -31,7 +31,7 @@ import type { ExportOptions } from '@/lib/export/pdf-export-types';
 // Metadata de los 10 formatos desde el módulo compartido (FC-PDF-UNIFY):
 // id/label/description son fuente única; aquí solo se asocian los íconos y
 // los estilos de selección (puramente visuales, propios del componente).
-const PDF_FORMATS: Array<{
+interface PDFFormatOption {
   id: PDFFormat;
   label: string;
   description: string;
@@ -40,33 +40,39 @@ const PDF_FORMATS: Array<{
   selectedBorder: string;
   selectedIconBg: string;
   selectedIconText: string;
-}> = PDF_FORMATS_META.map(meta => {
-  const iconByFormat: Record<PDFFormat, React.ElementType> = {
-    standard: FileText,
-    pro: ImagePlus,
-    res148: Scale,
-    ejecutivo: BarChart3,
-    contabilidad: Calculator,
-    auditoria: ShieldCheck,
-    simplificado: Minimize2,
-    bilingue: Globe,
-    comparativo: Columns,
-    exportacion: Ship,
-  };
-  const styleByFormat: Record<PDFFormat, Omit<PDF_FORMATS[number], 'id' | 'label' | 'description' | 'icon'>> = {
-    standard: { selectedBg: 'bg-primary/5', selectedBorder: 'border-primary', selectedIconBg: 'bg-primary', selectedIconText: 'text-primary-foreground' },
-    pro: { selectedBg: 'bg-warning/5', selectedBorder: 'border-warning', selectedIconBg: 'bg-warning', selectedIconText: 'text-white' },
-    res148: { selectedBg: 'bg-primary/5', selectedBorder: 'border-primary', selectedIconBg: 'bg-primary', selectedIconText: 'text-white' },
-    ejecutivo: { selectedBg: 'bg-purple-500/5', selectedBorder: 'border-purple-500', selectedIconBg: 'bg-purple-600', selectedIconText: 'text-white' },
-    contabilidad: { selectedBg: 'bg-teal-500/5', selectedBorder: 'border-teal-500', selectedIconBg: 'bg-teal-600', selectedIconText: 'text-white' },
-    auditoria: { selectedBg: 'bg-warning/5', selectedBorder: 'border-warning', selectedIconBg: 'bg-warning', selectedIconText: 'text-white' },
-    simplificado: { selectedBg: 'bg-muted/40', selectedBorder: 'border-muted-foreground/50', selectedIconBg: 'bg-muted-foreground', selectedIconText: 'text-background' },
-    bilingue: { selectedBg: 'bg-indigo-500/5', selectedBorder: 'border-indigo-500', selectedIconBg: 'bg-indigo-600', selectedIconText: 'text-white' },
-    comparativo: { selectedBg: 'bg-cyan-500/5', selectedBorder: 'border-cyan-500', selectedIconBg: 'bg-cyan-600', selectedIconText: 'text-white' },
-    exportacion: { selectedBg: 'bg-success/5', selectedBorder: 'border-success', selectedIconBg: 'bg-success', selectedIconText: 'text-white' },
-  };
-  return { ...meta, icon: iconByFormat[meta.id], ...styleByFormat[meta.id] };
-});
+}
+
+const ICON_BY_FORMAT: Record<PDFFormat, React.ElementType> = {
+  standard: FileText,
+  pro: ImagePlus,
+  res148: Scale,
+  ejecutivo: BarChart3,
+  contabilidad: Calculator,
+  auditoria: ShieldCheck,
+  simplificado: Minimize2,
+  bilingue: Globe,
+  comparativo: Columns,
+  exportacion: Ship,
+};
+
+const STYLE_BY_FORMAT: Record<PDFFormat, Omit<PDFFormatOption, 'id' | 'label' | 'description' | 'icon'>> = {
+  standard: { selectedBg: 'bg-primary/5', selectedBorder: 'border-primary', selectedIconBg: 'bg-primary', selectedIconText: 'text-primary-foreground' },
+  pro: { selectedBg: 'bg-warning/5', selectedBorder: 'border-warning', selectedIconBg: 'bg-warning', selectedIconText: 'text-white' },
+  res148: { selectedBg: 'bg-primary/5', selectedBorder: 'border-primary', selectedIconBg: 'bg-primary', selectedIconText: 'text-white' },
+  ejecutivo: { selectedBg: 'bg-purple-500/5', selectedBorder: 'border-purple-500', selectedIconBg: 'bg-purple-600', selectedIconText: 'text-white' },
+  contabilidad: { selectedBg: 'bg-teal-500/5', selectedBorder: 'border-teal-500', selectedIconBg: 'bg-teal-600', selectedIconText: 'text-white' },
+  auditoria: { selectedBg: 'bg-warning/5', selectedBorder: 'border-warning', selectedIconBg: 'bg-warning', selectedIconText: 'text-white' },
+  simplificado: { selectedBg: 'bg-muted/40', selectedBorder: 'border-muted-foreground/50', selectedIconBg: 'bg-muted-foreground', selectedIconText: 'text-background' },
+  bilingue: { selectedBg: 'bg-indigo-500/5', selectedBorder: 'border-indigo-500', selectedIconBg: 'bg-indigo-600', selectedIconText: 'text-white' },
+  comparativo: { selectedBg: 'bg-cyan-500/5', selectedBorder: 'border-cyan-500', selectedIconBg: 'bg-cyan-600', selectedIconText: 'text-white' },
+  exportacion: { selectedBg: 'bg-success/5', selectedBorder: 'border-success', selectedIconBg: 'bg-success', selectedIconText: 'text-white' },
+};
+
+const PDF_FORMATS: PDFFormatOption[] = PDF_FORMATS_META.map(meta => ({
+  ...meta,
+  icon: ICON_BY_FORMAT[meta.id],
+  ...STYLE_BY_FORMAT[meta.id],
+}));
 
 interface CostSheetExportModalProps {
   isOpen: boolean;
