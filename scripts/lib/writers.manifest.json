@@ -19,7 +19,8 @@
     "scripts/m012-aplicar-migracion-20261112120000.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
-    "scripts/seed-pick3-history.js"
+    "scripts/seed-pick3-history.js",
+    "scripts/m013-aplicar-migracion-20261112180000.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
@@ -34,7 +35,8 @@
     "scripts/landing-demo-provision.cjs",
     "scripts/provision-e2e-offers-identity.mjs",
     "scripts/sc006-e2e-verification.mjs",
-    "scripts/sc006-real-reception-evidence.mjs"
+    "scripts/sc006-real-reception-evidence.mjs",
+    "scripts/e2e/verify-nominas-api.mjs"
   ],
   "exceptions": {
     "scripts/audit_kardex_live.cjs": "Herramienta histórica de una misión puntual ya ejecutada (one-shot, evidenciada en docs/audits/): señales de escritura en SQL/strings/fetch pero sin flujo productivo recurrente. No se cablea el guard en este PR (alcance limitado a los defectos demostrados); re-ejecutarla contra producción exige hoy revisión manual explícita.",

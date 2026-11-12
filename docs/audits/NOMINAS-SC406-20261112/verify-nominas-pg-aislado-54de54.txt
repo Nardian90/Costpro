@@ -1,0 +1,77 @@
+(node:13185) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/z/my-project/Costpro/e2e/fixtures/assert-isolated-db.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/z/my-project/Costpro/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+══ FASE 0 · PRE-CHECKS ══
+conteos ANTES: {"transactions":3,"transaction_items":2,"stock_movements":4,"receipts":1,"receipt_items":2,"products":30,"master_products":22,"audit_logs":1371}
+
+══ FASE 1 · APLICAR MIGRACIÓN ══
+✓ migración re-aplicable (idempotente) sin errores
+
+══ FASE 2 · ESTRUCTURA ══
+✓ RLS FORCED activo en las 4 tablas nuevas — n=4
+✓ 4 políticas de aislamiento por tienda — n=4
+✓ perfil laboral extendido en workers (4 columnas) — n=4
+✓ numeración: next_document_number con 'payroll'→'NOM'
+✓ ACL helper interno: solo service_role (+postgres) — "{postgres,service_role}"
+
+══ FASE 3 · FIXTURE (idempotente — patrón verify-catalogo) ══
+✓ fixture creado (tenant, 2 tiendas, 4 usuarios, 5 trabajadores)
+
+══ FASE 4 · TARIFA SALARIAL ══
+✓ set_worker_salary_rate horaria 250 CUP (user1 store1) — {"status":"success","rate_id":"2b700cb4-a78f-482c-90dc-c3a7c4b3bbfc","currency":"CUP","rate_type":"hourly","worker_id":"dd0200d1-0000-4000-8000-00000000000a","valid_from":"2026-11-12","rate_amount":250}
+✓ set_worker_salary_rate diaria 5000 CUP
+✓ set_worker_salary_rate horaria 10 USD (moneda distinta)
+✓ ERR_RATE_OVERLAP: tarifa nueva con fecha no posterior — SQL HTTP 400: {"message":"Failed to run sql query: ERROR:  P0001: ERR_RATE_OVERL
+✓ ERR_UNAUTHORIZED: usuario ajeno no fija tarifas
+✓ ERR_UNAUTHORIZED: usuario sin membresía no fija tarifas
+✓ tarifa posterior aceptada (mañana: no es el documento el que es futuro) — {"status":"success","rate_id":"e6713066-3601-447d-952e-4907091e48e8","currency":"CUP","rate_type":"hourly","worker_id":"dd0200d1-0000-4000-8000-00000000000a","valid_from":"2026-11-13","rate_amount":300}
+✓ historial de vigencia: anterior cerrada y nueva abierta — [{"vf":"2026-11-12","vt":"2026-11-12","amt":"250.00"},{"vf":"2026-11-13","vt":null,"amt":"300.00"}]
+
+══ FASE 5 · CREACIÓN Y CÁLCULOS EXACTOS ══
+✓ create_payroll → success + numeración NOM — {"status":"success","totals":{"total_net":162600,"total_gross":163100,"total_workers":2,"total_overtime":3750,"total_deductions":500,"total_base_salary":157500,"total_accrued_days":22,"total_complementos":1000,"total_regular_hours":190,"total_vacation_days":2,"total_other_earnings":0,"total_overtime_hours":10,"total_social_security":850,"total_vacation_amount":10000},"payroll_id":"819ba0b2-00ba-4aaa-a9c7-af410df0d7c1","payroll_number":"NOM-000001-2026"}
+✓ fila Ana: base 190×250=47.500,00 (tarifa ANTERIOR vigente al período, snapshot) — base=47500.00 rate=250.00
+✓ fila Ana: extras 3.750, complementos 1.000, seguros 850, brutto 53.100, ded 500, neto 52.600 — {"g":"53100.00","d":"500.00","n":"52600.00"}
+✓ fila Ana: snapshot identidad (nombres, expediente, categoría)
+✓ fila Luis: jornal 22×5.000=110.000, brutto=neto=110.000
+✓ vacaciones informativas (fuera del devengado): Ana 2 días / 10.000
+✓ cabecera: 2 trabajadores, horas 190, extras 10h, días 22
+✓ cabecera: base 157.500, extras 3.750, complementos 1.000, seguros 850, brutto 163.100, ded 500, neto 162.600 — {"base":"157500.00","gross":"163100.00","net":"162600.00"}
+✓ cabecera: vacaciones totales 2 días / 10.000 (informativas)
+✓ cabecera: entidad snapshot de la tienda + moneda CUP + borrador
+✓ conceptos por fila: 4 clases persistidas (PRIMA/SEGS/INAS/AJU)
+✓ idempotencia: reenvío con misma clave devuelve el MISMO documento
+✓ sin duplicados de nómina tras idempotencia — n=1
+✓ ERR_WORKER_WITHOUT_RATE: trabajador sin tarifa
+✓ ERR_DUPLICATE_WORKER: trabajador duplicado
+✓ ERR_INVALID_TIME: tarifa diaria con horas
+✓ ERR_OVERTIME_WITHOUT_HOURS: importe de extras sin horas
+✓ ERR_NEGATIVE_NET: deducciones > devengado
+✓ ERR_CURRENCY_MISMATCH: tarifas de monedas distintas
+✓ ERR_WORKER_NOT_ELIGIBLE: trabajador de otra tienda
+✓ ERR_UNAUTHORIZED: confección por usuario ajeno a la tienda
+✓ ERR_INVALID_PERIOD: inicio posterior al fin
+✓ RLS: usuario de otra tienda NO ve nóminas ajenas — n=0
+✓ segunda nómina → número consecutivo (NOM-000002) — NOM-000002-2026
+
+══ FASE 6 · CICLO DOCUMENTAL ══
+✓ confirm_payroll: draft→confirmed, firma revisa y aprueba
+✓ reviewed_by/at registrados (identidad histórica)
+✓ ERR_NOT_DRAFT: edición bloqueada tras confirmar
+✓ grants: authenticated solo SELECT (payrolls + items); anon nada — {"upd":false,"sel":true,"upd_items":false,"sel_anon":false}
+✓ account_payroll: firma contabiliza (sin cambio de estado)
+✓ ERR_ALREADY_ACCOUNTED: contabilización idempotente bloqueada
+✓ mark_payroll_paid: confirmed→paid
+✓ ERR_NOT_VOIDABLE: nómina pagada no anulable
+✓ ERR_REASON_REQUIRED: motivo vacío rechazado
+✓ void_payroll: draft→voided con motivo
+✓ documento anulado CONSERVADO (numeración + motivo + trazabilidad)
+✓ ERR_INCONSISTENT_TOTALS: totales manipulados no pasan la confirmación
+✓ audit_logs: CREATE → CONFIRM → ACCOUNT → MARK_PAID registrados — CREATE_PAYROLL,CONFIRM_PAYROLL,ACCOUNT_PAYROLL,MARK_PAYROLL_PAID
+✓ snapshot inmutable: cambio posterior del trabajador NO altera la nómina histórica
+
+══ FASE 7 · INTEGRIDAD + CLEANUP ══
+✓ integridad: delta 0 en tablas sensibles tras el cleanup — {"transactions":0,"transaction_items":0,"stock_movements":0,"receipts":0,"receipt_items":0,"products":0,"master_products":0,"audit_logs":0}
+
+══════════════ RESULTADO: 54/54 ═══════════════
+VERIFY-NOMINAS-PG: todos los checks OK.

@@ -1,0 +1,60 @@
+(node:21625) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/z/my-project/Costpro/e2e/fixtures/assert-isolated-db.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /home/z/my-project/Costpro/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+══ FASE 0 · PRE-CHECKS + FIXTURE ══
+✓ health del servidor local (con .env aislado activo) — HTTP 200
+conteos ANTES: {"transactions":3,"transaction_items":2,"stock_movements":4,"receipts":1,"receipt_items":2,"products":30,"master_products":22,"audit_logs":1377}
+✓ fixture (4 usuarios con active_store_id, 2 tiendas, 5 trabajadores)
+✓ tarifa horaria 250 CUP (w1)
+✓ tarifa diaria 5000 CUP (w2)
+✓ contraseñas reales fijadas vía admin API (user1, user3)
+
+══ FASE 1 · SIGN-IN HTTP ══
+✓ sign-in user1 (manager store1) → Bearer JWT
+✓ sign-in user3 (encargado store2) → Bearer JWT
+
+══ FASE 2 · TRABAJADORES CON TARIFA (GET /api/workers) ══
+✓ GET workers store1 (user1) → 200 con 4 trabajadores — HTTP 200 n=4
+✓ tarifa vigente mergeada en workers (Ana hourly 250 / Luis daily 5000) — ana=hourly/250 luis=daily/5000
+✓ RLS: encargado de store2 NO ve trabajadores de store1 — HTTP 200 n=0
+
+══ FASE 3 · CONFECCIÓN (POST /api/payrolls) ══
+✓ POST create → 201 success + numeración NOM — HTTP 201 NOM-000001-2026
+✓ totales EXACTOS del servidor (base 157500, brutto 163100, neto 162600) — {"total_net":162600,"total_gross":163100,"total_workers":2,"total_overtime":3750,"total_deductions":500,"total_base_salary":157500,"total_accrued_days":22,"total_complementos":1000,"total_regular_hours":190,"total_vacation_days":2,"total_other_earnings":0,"total_overtime_hours":10,"total_social_security":850,"total_vacation_amount":10000}
+✓ trust boundary: totales espurios del body IGNORADOS (neto ≠ 1)
+✓ idempotencia: re-POST misma clave → MISMO payroll_id — HTTP 201 id=2d6a8e26…
+✓ sin duplicados tras idempotencia — n=1
+
+══ FASE 4 · DETALLE + EDICIÓN + ERRORES MAPEADOS ══
+✓ GET detalle → 200 con items anidados y conceptos — HTTP 200 items=2 conceptos(w1)=4
+✓ fila Ana snapshot+cálculo (base 47500, brutto 53100, neto 52600) — base=47500 g=53100 n=52600
+✓ PUT borrador → recálculo del servidor (brutto 163350, neto 162850) — HTTP 200 g=163350 n=162850
+✓ 400 zod: falta idempotency_key — HTTP 400
+✓ 422 ERR_INVALID_PERIOD: inicio posterior al fin — HTTP 422 ERR_INVALID_PERIOD
+✓ 422 ERR_WORKER_WITHOUT_RATE: trabajador sin tarifa — HTTP 422 ERR_WORKER_WITHOUT_RATE: dd0200d3-0000-4000-8000-00000000000a (sin tarifa salarial vigente en el período)
+✓ 422 ERR_WORKER_NOT_ELIGIBLE: trabajador de otra tienda — HTTP 422 ERR_WORKER_NOT_ELIGIBLE: dd0200d4-0000-4000-8000-00000000000a (debe pertenecer a la tienda y estar activo)
+✓ 401 sin sesión (sin Bearer) — HTTP 401
+
+══ FASE 5 · CICLO DOCUMENTAL HTTP ══
+✓ confirm → confirmed (firma revisa y aprueba) — HTTP 200 {"to":"confirmed","status":"success","payroll_id":"2d6a8e26-ee54-4085-98bd-7f0691171c07","reviewed_b
+✓ detalle tras confirmar: estado confirmed + reviewed_at (identidad histórica) — status=confirmed reviewed=2026-11-12T15:59:18.646469+00:00
+✓ ERR_NOT_DRAFT: edición bloqueada tras confirmar — HTTP 422 ERR_NOT_DRAFT: solo se pueden editar nóminas en borrador (estado actual: confirmed)
+✓ account → contabilizada — HTTP 200 accounted_by=dd0200c1…
+✓ ERR_ALREADY_ACCOUNTED: re-contabilización bloqueada — HTTP 409 ERR_ALREADY_ACCOUNTED
+✓ pay → pagada — HTTP 200
+✓ detalle tras pago: estado paid + paid_at — status=paid paid_at=2026-11-12T15:59:24.296103+00:00
+✓ ERR_NOT_VOIDABLE: nómina pagada no anulable — HTTP 422 ERR_NOT_VOIDABLE: solo se pueden anular nóminas en borrador o confirmadas (estado actual: paid)
+✓ 400: motivo vacío rechazado — HTTP 400
+✓ segunda nómina (jornales 5 días = 25000) → numeración consecutiva — HTTP 201 NOM-000002-2026 neto=25000
+✓ void borrador → voided (motivo persistido) — HTTP 200
+✓ detalle tras anular: estado voided + motivo CONSERVADO + numeración intacta — status=voided motivo=anulación de verificación api
+✓ RLS HTTP: encargado store2 NO lista nóminas de store1 — HTTP 200 n=0
+✓ RLS HTTP: usuario ajeno NO anula nómina de store1 — HTTP 422 ERR_NOT_VOIDABLE: solo se pueden anular nóminas en borrador o confirmadas (estado actual: paid)
+✓ audit_logs: ciclo documental registrado (CREATE→CONFIRM→ACCOUNT→MARK_PAID) — ACCOUNT_PAYROLL,CONFIRM_PAYROLL,CREATE_PAYROLL,MARK_PAYROLL_PAID,UPDATE_PAYROLL
+
+══ FASE 6 · CLEANUP + DELTA 0 ══
+✓ integridad: delta 0 en tablas sensibles tras el cleanup — {"transactions":0,"transaction_items":0,"stock_movements":0,"receipts":0,"receipt_items":0,"products":0,"master_products":0,"audit_logs":0}
+
+══════════════ RESULTADO: 39/39 ═══════════════
+VERIFY-NOMINAS-API: todos los checks OK.
