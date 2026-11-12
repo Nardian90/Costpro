@@ -1,9 +1,14 @@
 'use client';
 
 /**
- * FCTemplatePicker — Panel selector de plantillas de Ficha de Costo guardadas
- * por el usuario en el servidor (cost_sheet_templates — «Mis Plantillas Guardadas
- * en COSTPRO»).
+ * FCTemplatePicker — Panel selector de plantillas de Ficha de Costo
+ * DISPONIBLES para el usuario, con las tres procedencias (FC-SYS-TEMPLATES
+ * 2026-11-13 — misión «Fichas de Costo: auditoría integral»):
+ *
+ *   - Privadas: guardadas por el usuario en el servidor (cost_sheet_templates,
+ *     RLS owner — «Mis Plantillas Guardadas en COSTPRO»).
+ *   - Públicas: compartidas y visibles según RLS (globales o de tiendas con acceso).
+ *   - Sistema: catálogo incorporado por COSTPRO (13 plantillas oficiales).
  *
  * FC-USR-TEMPLATE (misión 2026-11-10): reemplaza el dead-end «Sin plantilla
  * configurada para esta tienda» del Inventario por un selector funcional.
@@ -13,11 +18,13 @@
  * la ficha de un producto con FC vigente.
  *
  * Comportamiento:
- *  - Lista las plantillas disponibles (privadas del usuario + públicas visibles;
+ *  - Lista las plantillas disponibles (privadas + públicas + sistema;
  *    la RLS del navegador filtra por cuenta — nunca plantillas ajenas).
+ *  - Cada opción muestra su categoría de procedencia con etiqueta visible.
  *  - Búsqueda/filtrado por nombre, descripción y categoría.
  *  - Selección única + confirmación explícita (botón Conectar/Cambiar).
- *  - Modalidad opcional (adaptación de CONTEXTO; la plantilla original no se toca).
+ *  - Modalidad opcional (adaptación de CONTEXTO — ver ayuda en línea; la
+ *    plantilla original no se toca y NO altera cálculos ni estructura).
  *  - Marca la plantilla ya conectada al producto para evitar duplicados.
  *  - Estados de carga y error comprensibles; mobile-first (targets ≥44px).
  *
@@ -25,12 +32,13 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { Loader2, Search, FileText, AlertCircle, Check, Circle } from 'lucide-react';
+import { Loader2, Search, FileText, AlertCircle, Check, Circle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useFCTemplateOptions, useGenerateFCFromTemplate } from '@/hooks/api/useProductCostSheet';
 import type { CostSheetTemplateRecord } from '@/services/cost-sheet-template-service';
+import { FC_MODALIDAD_LABELS, FC_MODALIDADES, type FCModalidad } from '@/contracts/store-cost-template';
 
 // ============================================
 // Props
@@ -77,6 +85,20 @@ function typeLabel(t: CostSheetTemplateRecord['type']): string {
   }
 }
 
+/** Colores de la etiqueta de procedencia — distinguibles por color Y texto. */
+const TYPE_CHIP_CLASS: Record<CostSheetTemplateRecord['type'], string> = {
+  private: 'bg-primary/10 text-primary',
+  public: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+  system: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+};
+
+/** Descripción corta de cada procedencia (tooltip title). */
+const TYPE_CHIP_TITLE: Record<CostSheetTemplateRecord['type'], string> = {
+  private: 'Plantilla guardada por ti — solo visible para tu cuenta',
+  public: 'Plantilla compartida — disponible según permisos',
+  system: 'Plantilla incorporada por COSTPRO — catálogo oficial',
+};
+
 // ============================================
 // Component
 // ============================================
@@ -92,7 +114,7 @@ export function FCTemplatePicker({
 }: FCTemplatePickerProps) {
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [modalidad, setModalidad] = useState<'' | 'produccion' | 'servicios' | 'comercializacion'>('');
+  const [modalidad, setModalidad] = useState<'' | FCModalidad>('');
 
   const { data: templates = [], isLoading, isError, refetch } = useFCTemplateOptions();
   const generateMutation = useGenerateFCFromTemplate();
@@ -178,7 +200,7 @@ export function FCTemplatePicker({
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3 text-muted-foreground">
             <Loader2 className="size-8 animate-spin text-primary" />
-            <p className="text-sm font-medium">Cargando tus plantillas guardadas…</p>
+            <p className="text-sm font-medium">Cargando plantillas disponibles…</p>
           </div>
         ) : isError ? (
           <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
@@ -195,11 +217,11 @@ export function FCTemplatePicker({
           <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
             <FileText className="size-8 text-muted-foreground/50" />
             <p className="text-sm font-semibold text-foreground">
-              {templates.length === 0 ? 'Sin plantillas guardadas' : 'Sin resultados'}
+              {templates.length === 0 ? 'Sin plantillas disponibles' : 'Sin resultados'}
             </p>
             <p className="text-xs text-muted-foreground max-w-sm">
               {templates.length === 0
-                ? 'Aún no has guardado plantillas de Fichas de Costo en COSTPRO. Crea o guarda una para conectarla con este producto.'
+                ? 'No hay plantillas disponibles para tu cuenta en este momento.'
                 : 'Ninguna plantilla coincide con la búsqueda. Prueba otros términos.'}
             </p>
           </div>
@@ -236,8 +258,9 @@ export function FCTemplatePicker({
                         <span
                           className={cn(
                             'text-[10px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded',
-                            t.type === 'private' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+                            TYPE_CHIP_CLASS[t.type] ?? 'bg-muted text-muted-foreground',
                           )}
+                          title={TYPE_CHIP_TITLE[t.type] ?? undefined}
                         >
                           {typeLabel(t.type)}
                         </span>
@@ -263,7 +286,13 @@ export function FCTemplatePicker({
         )}
       </div>
 
-      {/* Modalidad (opcional — adaptación por contexto, no modifica la plantilla) */}
+      {/* Modalidad (opcional — adaptación por contexto, no modifica la plantilla)
+          FC-MODALIDAD-HELP (misión 2026-11-13): la «Modalidad» clasifica la
+          ficha según la Res. 148/2023 (A: Producción, B: Servicios, C:
+          Comercialización). Se registra en el ENCABEZADO de la ficha resultante
+          (product_cost_sheets.modalidad) para trazabilidad — NO altera los
+          cálculos, la estructura ni los componentes de la ficha. Vacía = se usa
+          la modalidad definida en la plantilla (o Producción por defecto). */}
       {filtered.length > 0 && (
         <div className="shrink-0 pt-1">
           <label htmlFor={`fc-picker-modalidad-${productId}`} className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">
@@ -277,10 +306,19 @@ export function FCTemplatePicker({
             className="h-11 w-full bg-muted/20 border border-primary/10 focus:border-primary/30 transition-all font-bold rounded-lg px-3 text-sm"
           >
             <option value="">Automática (según la plantilla)</option>
-            <option value="produccion">Producción</option>
-            <option value="servicios">Servicios</option>
-            <option value="comercializacion">Comercialización</option>
+            {FC_MODALIDADES.map(m => (
+              <option key={m} value={m}>{FC_MODALIDAD_LABELS[m]}</option>
+            ))}
           </select>
+          <p className="mt-1.5 flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground" data-testid="fc-modalidad-help">
+            <Info className="size-3.5 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>
+              Clasifica la ficha según la Res. 148/2023 (destino de producción).
+              Se registra en el encabezado del documento para trazabilidad —
+              <strong className="font-bold"> no cambia los cálculos ni la estructura</strong>.
+              Si la dejas sin seleccionar, se usa la modalidad de la plantilla.
+            </span>
+          </p>
         </div>
       )}
 

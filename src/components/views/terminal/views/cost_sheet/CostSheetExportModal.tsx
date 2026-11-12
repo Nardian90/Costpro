@@ -20,43 +20,18 @@ import { cn } from '@/lib/utils';
 import { useCostSheetStore } from '@/store/cost-sheet-store';
 
 import { useTranslations } from 'next-intl';
-export type PDFFormat =
-  | 'standard'
-  | 'pro'
-  | 'res148'
-  | 'ejecutivo'
-  | 'contabilidad'
-  | 'auditoria'
-  | 'simplificado'
-  | 'bilingue'
-  | 'comparativo'
-  | 'exportacion';
-export type AnnexLayout = 'together' | 'separate';
-
-export interface ExportOptions {
-  // Documents
-  includeFC: boolean;
-  includeAudit: boolean;
-  includeAnnexes: string[];
-
-  // Format
-  pdfFormat: PDFFormat;
-  logo?: string;
-
-  // Advanced
-  consolidated: boolean;
-  skipZeros: boolean;
-  includeFinancialSummary: boolean;
-  includeUtilityNote: boolean;
-  showDateTime: boolean;
-  alwaysZip: boolean;
-  annexLayout: AnnexLayout;
-
-  // Comparison
-  includeComparison?: boolean;
-  scenarioId?: string;
-}
-const PDF_FORMATS: Array<{
+// FC-PDF-UNIFY (2026-11-13): los tipos PDFFormat/ExportOptions/AnnexLayout y la
+// metadata de los 10 formatos viven AHORA en src/lib/export/pdf-export-types.ts
+// (módulo puro, consumible por el generador isomorfo y las rutas de API).
+// Este componente los re-exporta por compatibilidad con importers existentes.
+import type { PDFFormat, AnnexLayout } from '@/lib/export/pdf-export-types';
+import { PDF_FORMATS_META } from '@/lib/export/pdf-export-types';
+export type { PDFFormat, AnnexLayout, ExportOptions } from '@/lib/export/pdf-export-types';
+import type { ExportOptions } from '@/lib/export/pdf-export-types';
+// Metadata de los 10 formatos desde el módulo compartido (FC-PDF-UNIFY):
+// id/label/description son fuente única; aquí solo se asocian los íconos y
+// los estilos de selección (puramente visuales, propios del componente).
+interface PDFFormatOption {
   id: PDFFormat;
   label: string;
   description: string;
@@ -65,108 +40,39 @@ const PDF_FORMATS: Array<{
   selectedBorder: string;
   selectedIconBg: string;
   selectedIconText: string;
-}> = [
-  {
-    id: 'standard',
-    label: 'Estándar',
-    description: 'Limpio y universal',
-    icon: FileText,
-    selectedBg: 'bg-primary/5',
-    selectedBorder: 'border-primary',
-    selectedIconBg: 'bg-primary',
-    selectedIconText: 'text-primary-foreground',
-  },
-  {
-    id: 'pro',
-    label: 'Pro Corporativo',
-    description: 'Con logo e identidad visual',
-    icon: ImagePlus,
-    selectedBg: 'bg-warning/5',
-    selectedBorder: 'border-warning',
-    selectedIconBg: 'bg-warning',
-    selectedIconText: 'text-white',
-  },
-  {
-    id: 'res148',
-    label: 'Res 148/2023',
-    description: 'Formato oficial MINCIN',
-    icon: Scale,
-    selectedBg: 'bg-primary/5',
-    selectedBorder: 'border-primary',
-    selectedIconBg: 'bg-primary',
-    selectedIconText: 'text-white',
-  },
-  {
-    id: 'ejecutivo',
-    label: 'Ejecutivo',
-    description: 'KPIs para dirección',
-    icon: BarChart3,
-    selectedBg: 'bg-purple-500/5',
-    selectedBorder: 'border-purple-500',
-    selectedIconBg: 'bg-purple-600',
-    selectedIconText: 'text-white',
-  },
-  {
-    id: 'contabilidad',
-    label: 'Contabilidad',
-    description: 'Cuentas y precisión 4 decimales',
-    icon: Calculator,
-    selectedBg: 'bg-teal-500/5',
-    selectedBorder: 'border-teal-500',
-    selectedIconBg: 'bg-teal-600',
-    selectedIconText: 'text-white',
-  },
-  {
-    id: 'auditoria',
-    label: 'Auditoría',
-    description: 'Trazabilidad y firmas',
-    icon: ShieldCheck,
-    selectedBg: 'bg-warning/5',
-    selectedBorder: 'border-warning',
-    selectedIconBg: 'bg-warning',
-    selectedIconText: 'text-white',
-  },
-  {
-    id: 'simplificado',
-    label: 'Simplificado',
-    description: 'Una sola página, totales',
-    icon: Minimize2,
-    selectedBg: 'bg-muted/40',
-    selectedBorder: 'border-muted-foreground/50',
-    selectedIconBg: 'bg-muted-foreground',
-    selectedIconText: 'text-background',
-  },
-  {
-    id: 'bilingue',
-    label: 'Bilingüe ES/EN',
-    description: 'Columnas español e inglés',
-    icon: Globe,
-    selectedBg: 'bg-indigo-500/5',
-    selectedBorder: 'border-indigo-500',
-    selectedIconBg: 'bg-indigo-600',
-    selectedIconText: 'text-white',
-  },
-  {
-    id: 'comparativo',
-    label: 'Escenarios',
-    description: 'Base vs variaciones ±10%',
-    icon: Columns,
-    selectedBg: 'bg-cyan-500/5',
-    selectedBorder: 'border-cyan-500',
-    selectedIconBg: 'bg-cyan-600',
-    selectedIconText: 'text-white',
-  },
-  {
-    id: 'exportacion',
-    label: 'Exportación',
-    description: 'CUP + USD, campos int\'l',
-    icon: Ship,
-    selectedBg: 'bg-success/5',
-    selectedBorder: 'border-success',
-    selectedIconBg: 'bg-success',
-    selectedIconText: 'text-white',
-  },
-];
+}
+
+const ICON_BY_FORMAT: Record<PDFFormat, React.ElementType> = {
+  standard: FileText,
+  pro: ImagePlus,
+  res148: Scale,
+  ejecutivo: BarChart3,
+  contabilidad: Calculator,
+  auditoria: ShieldCheck,
+  simplificado: Minimize2,
+  bilingue: Globe,
+  comparativo: Columns,
+  exportacion: Ship,
+};
+
+const STYLE_BY_FORMAT: Record<PDFFormat, Omit<PDFFormatOption, 'id' | 'label' | 'description' | 'icon'>> = {
+  standard: { selectedBg: 'bg-primary/5', selectedBorder: 'border-primary', selectedIconBg: 'bg-primary', selectedIconText: 'text-primary-foreground' },
+  pro: { selectedBg: 'bg-warning/5', selectedBorder: 'border-warning', selectedIconBg: 'bg-warning', selectedIconText: 'text-white' },
+  res148: { selectedBg: 'bg-primary/5', selectedBorder: 'border-primary', selectedIconBg: 'bg-primary', selectedIconText: 'text-white' },
+  ejecutivo: { selectedBg: 'bg-purple-500/5', selectedBorder: 'border-purple-500', selectedIconBg: 'bg-purple-600', selectedIconText: 'text-white' },
+  contabilidad: { selectedBg: 'bg-teal-500/5', selectedBorder: 'border-teal-500', selectedIconBg: 'bg-teal-600', selectedIconText: 'text-white' },
+  auditoria: { selectedBg: 'bg-warning/5', selectedBorder: 'border-warning', selectedIconBg: 'bg-warning', selectedIconText: 'text-white' },
+  simplificado: { selectedBg: 'bg-muted/40', selectedBorder: 'border-muted-foreground/50', selectedIconBg: 'bg-muted-foreground', selectedIconText: 'text-background' },
+  bilingue: { selectedBg: 'bg-indigo-500/5', selectedBorder: 'border-indigo-500', selectedIconBg: 'bg-indigo-600', selectedIconText: 'text-white' },
+  comparativo: { selectedBg: 'bg-cyan-500/5', selectedBorder: 'border-cyan-500', selectedIconBg: 'bg-cyan-600', selectedIconText: 'text-white' },
+  exportacion: { selectedBg: 'bg-success/5', selectedBorder: 'border-success', selectedIconBg: 'bg-success', selectedIconText: 'text-white' },
+};
+
+const PDF_FORMATS: PDFFormatOption[] = PDF_FORMATS_META.map(meta => ({
+  ...meta,
+  icon: ICON_BY_FORMAT[meta.id],
+  ...STYLE_BY_FORMAT[meta.id],
+}));
 
 interface CostSheetExportModalProps {
   isOpen: boolean;

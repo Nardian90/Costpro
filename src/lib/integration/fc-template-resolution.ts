@@ -70,13 +70,32 @@ export function isUuidTemplateId(templateId: string | null | undefined): boolean
   return !!templateId && UUID_RE.test(templateId);
 }
 
+/**
+ * Normaliza un valor de destino quitando tildes y en minúsculas.
+ * FC-MODALIDAD-FIX (misión 2026-11-13): fichas guardadas desde el editor podían
+ * llevar 'producción'/'comercialización' (CON tilde — opciones históricas del
+ * HeaderEditor), que NO pertenecen a la unión FCModalidad y hacían que la
+ * inferencia cayera SIEMPRE al default. La normalización es tolerante con
+ * variantes preexistentes sin cambiar el contrato (los valores canónicos siguen
+ * siendo 'produccion'|'servicios'|'comercializacion').
+ */
+function normalizeModalidadValue(dest: unknown): string {
+  return String(dest ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // diacríticos Latin-1 Supplement
+}
+
 /** Infiere la modalidad de una plantilla de usuario (header.destination), con default. */
 export function inferModalidadFromTemplate(
   templateData: unknown,
   fallback: FCModalidad = 'produccion',
 ): FCModalidad {
   const dest = (templateData as { header?: { destination?: unknown } } | null | undefined)?.header?.destination;
-  return VALID_MODALIDADES.includes(dest as FCModalidad) ? (dest as FCModalidad) : fallback;
+  // FC-MODALIDAD-FIX: comparación normalizada (tildes) — 'producción' → 'produccion'.
+  const normalized = normalizeModalidadValue(dest);
+  return VALID_MODALIDADES.includes(normalized as FCModalidad) ? (normalized as FCModalidad) : fallback;
 }
 
 /** ¿Tiene el caller membresía activa con uno de los roles indicados en la tienda? */

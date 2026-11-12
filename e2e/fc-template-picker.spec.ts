@@ -487,14 +487,19 @@ test.describe('FC-USR-TEMPLATE — Conexión Producto ↔ Ficha de Costo (Invent
     const dlg = modal(page);
     await expect(dlg).toBeVisible({ timeout: 15_000 });
     await expect(picker(page)).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText(/no necesitas una plantilla predeterminada de tienda/)).toBeVisible();
+    // FC-SYS-TEMPLATES (2026-11-13): la guía del estado sin FC ahora explica
+    // las TRES procedencias (Sistema/Privadas/Públicas) y conserva la nota de
+    // que no hace falta plantilla predeterminada de tienda.
+    await expect(page.getByText(/no necesitas una plantilla predeterminada de tienda/i)).toBeVisible();
 
     // «Ajustes de la tienda»: antes <a href="/settings/stores/{id}"> → 404.
     // Ahora navega por estado a la vista real (management-hub).
     await page.getByRole('button', { name: 'Ajustes de la tienda' }).click();
     await expect(dlg).toHaveCount(0, { timeout: 10_000 });
     await expect(page).toHaveURL(/view=management-hub/, { timeout: 15_000 });
-    await expect(page.getByRole('heading', { name: 'Gestión de Tiendas' })).toBeVisible({ timeout: 20_000 });
+    // Nota: la vista emite dos encabezados homónimos (h1 del shell + h2 de la
+    // vista) — desambiguar por nivel para evitar strict-mode violation.
+    await expect(page.getByRole('heading', { name: 'Gestión de Tiendas', level: 2 })).toBeVisible({ timeout: 20_000 });
     expect(page.url()).not.toContain('/settings/');
 
     // «Ir a Plantillas de Fichas» → explorador de plantillas del servidor

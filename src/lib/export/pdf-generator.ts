@@ -2,7 +2,10 @@ import { jsPDF } from 'jspdf';
 import { createPDFDocument } from './lazy-pdf';
 import autoTable from 'jspdf-autotable';
 import { sanitizeAnnexTitle } from "./pdf-generator-utils";
-import { ExportOptions, PDFFormat, AnnexLayout } from '@/components/views/terminal/views/cost_sheet/CostSheetExportModal';
+// FC-PDF-UNIFY (2026-11-13): tipos desde el módulo compartido (antes desde el
+// componente 'use client' CostSheetExportModal — eso impedía usar este motor
+// desde rutas de API server-side).
+import { ExportOptions, PDFFormat, AnnexLayout } from '@/lib/export/pdf-export-types';
 import {
   FormatContext,
   PG, LBL,

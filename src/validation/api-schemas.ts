@@ -397,14 +397,19 @@ export const quickPdfSchema = z.object({
 // ─── FC Generate from user template (misión producto↔FC 2026-11-10) ────────
 /**
  * FC-USR-TEMPLATE: genera/asocia la FC de un producto a partir de una
- * plantilla guardada por el usuario (cost_sheet_templates, UUID).
+ * plantilla disponible para el usuario. FC-SYS-TEMPLATES (2026-11-13):
+ * `template_id` acepta DOS procedencias legítimas:
+ *   - UUID de `cost_sheet_templates` (plantilla privada/pública de BD), o
+ *   - clave de plantilla de SISTEMA ('costpro-reinicio', 'template-pizza'…).
+ * La ruta valida existencia/visibilidad server-side (fail-closed): una clave
+ * desconocida → FC_TEMPLATE_NOT_FOUND.
  * `modalidad` es opcional: si no viene, se infiere del header de la plantilla
  * (destination) y como último recurso 'produccion'.
  */
 export const generateFromTemplateSchema = z.object({
   product_id: uuidLoose,
   store_id: uuidLoose.optional(),
-  template_id: uuidLoose,
+  template_id: z.string().min(1, 'ID de plantilla requerido').max(100),
   modalidad: z.enum(['produccion', 'servicios', 'comercializacion'], {
     message: 'Modalidad inválida',
   }).optional(),

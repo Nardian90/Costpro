@@ -5,12 +5,14 @@ import { validateOrigin } from '@/lib/csrf';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
 import { generateFromTemplateSchema } from '@/validation/api-schemas';
-import { generateFCFromTemplateData, type FCGenerationResult, type FCGenerationError } from '@/lib/integration/fc-generator-service';
+import { generateFCFromTemplateData, getTemplateData, type FCGenerationResult, type FCGenerationError } from '@/lib/integration/fc-generator-service';
 import {
   getVisibleUserTemplate,
   hasStoreMembership,
   inferModalidadFromTemplate,
+  isUuidTemplateId,
 } from '@/lib/integration/fc-template-resolution';
+import { isSystemTemplateId, getSystemTemplateMeta } from '@/lib/integration/fc-system-templates';
 import { getAdminClient } from '@/lib/supabase-admin';
 import { auditService } from '@/services/audit-service';
 import { invalidateCache } from '@/lib/fc-pdf-cache';
@@ -20,18 +22,28 @@ export const runtime = 'nodejs';
 /**
  * POST /api/product-cost-sheets/generate-from-template
  * FC-USR-TEMPLATE (misión 2026-11-10: conexión Producto ↔ Ficha de Costo).
+ * FC-SYS-TEMPLATES (2026-11-13): también acepta plantillas de SISTEMA.
  *
  * Conecta un producto del inventario con una Ficha de Costo construida a partir
- * de una PLANTILLA GUARDADA POR EL USUARIO (cost_sheet_templates — «Mis Plantillas
- * Guardadas en COSTPRO»). No exige plantilla predeterminada de tienda.
+ * de una plantilla DISPONIBLE para el usuario — DOS procedencias legítimas:
+ *
+ *   A) Plantilla guardada (cost_sheet_templates, template_id = UUID):
+ *      «Mis Plantillas Guardadas en COSTPRO» — privadas del usuario o públicas
+ *      visibles. No exige plantilla predeterminada de tienda.
+ *   B) Plantilla de sistema (template_id = clave del catálogo incorporado,
+ *      p.ej. 'costpro-reinicio', 'template-pizza'): resuelta server-side por
+ *      TEMPLATE_REGISTRY (fc-generator-service). Visible para cualquier
+ *      usuario autenticado (espejo de la rama `type='system'` de la RLS).
  *
  * Pipeline:
  *   1. Validar payload (Zod) + CSRF + rate limit
  *   2. Cargar producto y validar pertenencia a la tienda (aislamiento multitienda)
  *   3. Validar autorización del caller en la tienda (admin|manager|encargado|costo)
- *   4. Cargar plantilla y validar visibilidad (espejo manual de la RLS de
- *      cost_sheet_templates: private→propietario; public→global o tienda con acceso)
- *   5. Generar FC con generateFCFromTemplateData (pipeline cost-engine)
+ *   4. Resolver plantilla según procedencia:
+ *      - UUID → cargar y validar visibilidad (espejo manual de la RLS de
+ *        cost_sheet_templates: private→propietario; public→global o tienda con acceso)
+ *      - Clave de sistema → TEMPLATE_REGISTRY (fail-closed: clave desconocida → 404)
+ *   5. Generar FC con generateFCFromTemplateData (pipeline cost-engine compartido)
  *   6. Upsert en product_cost_sheets (patrón check-then-insert/update — índice
  *      único parcial) y enlazar products.cost_sheet_id
  *   7. Invalidar caché de PDF + auditoría
@@ -83,23 +95,48 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     const hasAccess = hasStoreMembership(session.user, resolvedStoreId, ['admin', 'manager', 'encargado', 'costo']);
     if (!hasAccess) return NextResponse.json(createApiError('STORE_ACCESS_DENIED'), { status: 403 });
 
-    // ── 4. Plantilla visible para el usuario ──
-    const templateResult = await getVisibleUserTemplate(admin, template_id, session.user);
-    if (templateResult.error) {
-      // not_found (no existe) o not_visible (privada ajena / pública de tienda
-      // sin acceso) — misma respuesta para no revelar existencia de plantillas
-      // de otras cuentas.
-      return NextResponse.json(createApiError('FC_TEMPLATE_NOT_FOUND'), { status: 404 });
-    }
-    const { template } = templateResult;
+    // ── 4. Plantilla según procedencia (UUID de BD vs clave de sistema) ──
+    // FC-SYS-TEMPLATES: un mismo endpoint para las plantillas guardadas del
+    // usuario Y el catálogo incorporado por COSTPRO — sin duplicar rutas.
+    let templateName: string;
+    let templateData: Record<string, unknown> | null;
+    let templateSource: 'user' | 'system';
 
-    if (!template.data || typeof template.data !== 'object') {
-      return NextResponse.json(createApiError('FC_TEMPLATE_INVALID'), { status: 422 });
+    if (isUuidTemplateId(template_id)) {
+      // A) Plantilla guardada en cost_sheet_templates (UUID)
+      const templateResult = await getVisibleUserTemplate(admin, template_id, session.user);
+      if (templateResult.error) {
+        // not_found (no existe) o not_visible (privada ajena / pública de tienda
+        // sin acceso) — misma respuesta para no revelar existencia de plantillas
+        // de otras cuentas.
+        return NextResponse.json(createApiError('FC_TEMPLATE_NOT_FOUND'), { status: 404 });
+      }
+      const { template } = templateResult;
+      if (!template.data || typeof template.data !== 'object') {
+        return NextResponse.json(createApiError('FC_TEMPLATE_INVALID'), { status: 422 });
+      }
+      templateName = template.name;
+      templateData = template.data as Record<string, unknown>;
+      templateSource = 'user';
+    } else {
+      // B) Plantilla de sistema (clave del catálogo incorporado)
+      // Fail-closed: solo claves del registro — una clave arbitraria (o un UUID
+      // malformado) NO se interpreta como ruta de archivo ni nada similar.
+      if (!isSystemTemplateId(template_id)) {
+        return NextResponse.json(createApiError('FC_TEMPLATE_NOT_FOUND'), { status: 404 });
+      }
+      const sysData = await getTemplateData(template_id);
+      if (!sysData || !Array.isArray((sysData as Record<string, unknown>).sections)) {
+        return NextResponse.json(createApiError('FC_TEMPLATE_NOT_FOUND'), { status: 404 });
+      }
+      templateName = getSystemTemplateMeta(template_id)?.name ?? template_id;
+      templateData = sysData as unknown as Record<string, unknown>;
+      templateSource = 'system';
     }
 
     // Modalidad: explícita > inferida del header de la plantilla > produccion.
     // (La modalidad queda en el CONTEXTO de la FC — la plantilla original no se toca.)
-    const effectiveModalidad = modalidad ?? inferModalidadFromTemplate(template.data);
+    const effectiveModalidad = modalidad ?? inferModalidadFromTemplate(templateData);
 
     // ── 5. Generar FC ──
     const genResult = await generateFCFromTemplateData(
@@ -111,8 +148,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         unit_of_measure: product.unit_of_measure,
         category: product.category,
       },
-      template.data,
-      template.id,
+      templateData as import('@/types/cost-sheet').CostSheetData,
+      template_id,
       effectiveModalidad,
     );
 
@@ -210,11 +247,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       data: {
         ...csData,
         template_id: result.template_id,
-        template_name: template.name,
+        template_name: templateName,
         modalidad: result.modalidad,
         fc_status: 'vigente',
         generated: true,
-        template_source: 'user',
+        template_source: templateSource,
         cost_price: result.cost_price,
         total_cost: result.total_cost,
         total_margin: result.total_margin,

@@ -118,7 +118,14 @@ const FIELD_GROUPS: FieldGroup[] = [
       { id: 'company', label: 'Empresa', helpText: 'Nombre de la entidad productiva o prestadora del servicio', helpExample: 'Empresa de Alimentos "La Ideal" EIG' },
       { id: 'organism', label: 'Organismo', helpText: 'Organismo superior al que pertenece la empresa', helpExample: 'MINAL, MINSAP, GECMIN' },
       { id: 'union', label: 'Unión', helpText: 'Organización sindical o(base) de la empresa', helpExample: 'CTC, SNTF' },
-      { id: 'destination', label: 'Destino de Producción', type: 'select', options: ['producción', 'servicios'], helpText: 'Indica si el costo se destina a la producción de bienes o a la prestación de servicios', helpExample: 'producción, servicios' },
+      // FC-MODALIDAD-FIX (misión 2026-11-13): los valores de `destination` DEBEN
+      // pertenecer a la unión FCModalidad ('produccion'|'servicios'|'comercializacion'
+      // — Res. 148/2023 Modalidades A/B/C). Antes las opciones llevaban tilde
+      // ('producción'), por lo que inferModalidadFromTemplate nunca matcheaba y
+      // toda ficha creada desde el editor caía al default. Se añade la
+      // Comercialización (Modalidad C), que faltaba. Se mantiene coherente con
+      // el selector de Modalidad del Inventario (FC_MODALIDAD_LABELS).
+      { id: 'destination', label: 'Destino de Producción (Modalidad)', type: 'select', options: ['produccion', 'servicios', 'comercializacion'], helpText: 'Clasificación de la ficha según Res. 148/2023: Producción (A), Servicios (B) o Comercialización (C). Se registra en el encabezado del documento — no altera los cálculos.', helpExample: 'produccion, servicios, comercializacion' },
     ],
   },
   {

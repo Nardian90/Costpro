@@ -4,8 +4,6 @@ import React, { useState, useMemo, useEffect, Suspense, useCallback } from 'reac
 import {
     Zap as ZapIcon,
     ArrowLeft,
-    Edit,
-    Eye,
     FileText,
     Save,
     ChevronRight,
@@ -36,7 +34,7 @@ import CostSheetTemplateExplorer from './CostSheetTemplateExplorer';
 import { CostSheetSaveAsTemplateDialog } from './CostSheetSaveAsTemplateDialog';
 import CostSheetMassiveGenerator from './CostSheetMassiveGenerator';
 import CostSheetQuickMode from './CostSheetQuickMode';
-import CostSheetPreview from './CostSheetPreview';
+import CostSheetPdfPreview from './CostSheetPdfPreview';
 import CostSheetWizard from './CostSheetWizard';
 import CostSheetFlatTable from './CostSheetFlatTable';
 import { SteelStructureCalculator } from './SteelStructureCalculator';
@@ -370,7 +368,6 @@ const CostSheetView = () => {
   const {
     viewMode,
     isEditing,
-    setIsEditing,
     layoutMode,
     setLayoutMode,
     effectiveLayoutMode,
@@ -764,37 +761,39 @@ const CostSheetView = () => {
           {viewMode === 'quick' && ( isQuickModeGenerating ? ( <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto"> <div className="mb-4 flex justify-start"> <Button variant="ghost" size="sm" onClick={() => setIsQuickModeGenerating(false)} className="rounded-xl font-bold uppercase tracking-widest text-xs text-muted-foreground hover:text-primary"> <ArrowLeft className="w-3.5 h-3.5 mr-2" /> Volver a Lista </Button> </div> <CostSheetMassiveGenerator isSection={true} initialProducts={quickModeProducts || undefined} initialMapping={quickModeMapping} onClose={() => setIsQuickModeGenerating(false)} autoStart={true} isQuickAction={true} /> </div> ) : (
               <CostSheetQuickMode onGenerate={handleQuickGenerate} mapping={quickModeMapping} onMappingChange={setQuickModeMapping} /> )
           )}
+
+          {/* FC-VISTAZO (misión 2026-11-13): «Vistazo» ahora renderiza una vista
+              previa REAL del documento exportable — genera el PDF con el MISMO
+              motor que «Exportar PDF» (generateCostSheetPDF) y lo presenta en
+              iframe. Antes: viewMode 'preview' sin rama de render (dead-end) y
+              CostSheetPreview HTML inalcanzable (isEditing nunca era false). */}
+          {viewMode === 'preview' && (
+            <CostSheetPdfPreview
+              data={data}
+              calculatedValues={calculatedValues}
+              calculatedHeader={calculatedHeader}
+              calculatedAnnexes={calculatedAnnexes}
+              calculationResult={calculationResult}
+              onOpenExportModal={() => setIsExportModalOpen(true)}
+              onBackToEditor={() => handleSetViewMode('expert')}
+            />
+          )}
         </div>
       ) : (
-        <div className="animate-in zoom-in-95 duration-500">
-            <div className="max-w-5xl mx-auto mb-6 flex flex-col sm:flex-row justify-between items-center bg-muted/30 p-3 rounded-2xl gap-3">
-                <div className="flex items-center gap-3 px-2">
-                    <Eye className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Vista de Previsualización</span>
-                </div>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    onClick={() => { setIsEditing(true); setViewMode('expert'); handleSetViewMode('expert'); }}
-                    aria-label="Ir al Editor de ficha en Modo Experto"
-                    className="w-full sm:w-auto text-primary hover:bg-primary/10 font-bold uppercase tracking-widest text-xs h-11 px-4 rounded-xl"
-                >
-                    <Edit className="w-3.5 h-3.5 mr-2" aria-hidden="true" />
-                    Ir al Editor (Modo Todo)
-                </Button>
-            </div>
-            <div className="w-full flex justify-center">
-                <div className="w-full max-w-6xl">
-                    <CostSheetPreview
-                        data={data}
-                        calculatedValues={calculatedValues}
-                        calculatedAnnexes={calculatedAnnexes}
-                        calculatedHeader={calculatedHeader}
-                    />
-                </div>
-            </div>
-        </div>
+        // FC-VISTAZO: la antigua rama `!isEditing` era código muerto
+        // inalcanzable (isEditing nunca pasaba a false — su único setter vivía
+        // dentro de esta propia rama). Se reemplaza por el mismo panel de
+        // Vistazo del motor PDF: si alguna fuente externa pusiera isEditing a
+        // false, «Vistazo» sigue funcionando (defensa en profundidad).
+        <CostSheetPdfPreview
+          data={data}
+          calculatedValues={calculatedValues}
+          calculatedHeader={calculatedHeader}
+          calculatedAnnexes={calculatedAnnexes}
+          calculationResult={calculationResult}
+          onOpenExportModal={() => setIsExportModalOpen(true)}
+          onBackToEditor={() => handleSetViewMode('expert')}
+        />
       )}
 
       <CostSheetExportModal

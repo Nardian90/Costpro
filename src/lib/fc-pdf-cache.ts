@@ -9,7 +9,15 @@
  * Also fixes the wildcard invalidation bug (uses startsWith instead of exact match).
  */
 
-import { Redis } from 'ioredis';
+// FIX-FC-IORedis-EVAL (misión 2026-11-13): el import top-level de ioredis
+// rompía la EVALUACIÓN del módulo en Turbopack dev ("Failed to load external
+// module ioredis-<hash>") y con ello TODAS las rutas FC que importan la caché
+// (quick-pdf, generate-from-template…), incluso sin Redis configurado. Ahora:
+//   - `import type` (borrado en runtime) para el tipado.
+//   - require dinámico SOLO dentro de getRedis() cuando REDIS_URL/KV_REST_API_URL
+//     existe. Sin Redis configurado (dev/E2E) el paquete ni se carga → fallback
+//     LRU in-memory — comportamiento dual-mode SIN cambios.
+import type { Redis } from 'ioredis';
 
 // ── Configuration ──────────────────────────────────────────────────────────
 
@@ -33,12 +41,18 @@ async function getRedis(): Promise<Redis | null> {
   }
 
   try {
+    // FIX-FC-IORedis-EVAL: carga diferida — solo aquí, con Redis realmente
+    // configurado. CJS require vía createRequire (compatible bun/node).
+    const { createRequire } = await import('node:module');
+    const require_ = createRequire(import.meta.url);
+    const { Redis: RedisCtor } = require_('ioredis') as typeof import('ioredis');
+
     // Use REST API URL format (Upstash) or direct Redis URL
     const connectionUrl = redisUrl.includes('.upstash.io')
       ? redisUrl.replace(/^https?:\/\//, 'rediss://')
       : redisUrl;
 
-    redis = new Redis(connectionUrl, {
+    redis = new RedisCtor(connectionUrl, {
       maxRetriesPerRequest: 2,
       connectTimeout: 2000,
       lazyConnect: true,

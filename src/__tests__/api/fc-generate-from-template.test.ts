@@ -136,11 +136,25 @@ describe('POST /api/product-cost-sheets/generate-from-template (FC-USR-TEMPLATE)
 
   // ── Validación de payload ──
 
-  it('rechaza template_id que no es UUID (400)', async () => {
+  it('rechaza template_id desconocido (no UUID ni clave de sistema) → 404', async () => {
+    // FC-SYS-TEMPLATES (2026-11-13): el schema acepta UUID o clave de sistema;
+    // una clave arbitraria desconocida pasa Zod pero la ruta la rechaza
+    // fail-closed (FC_TEMPLATE_NOT_FOUND — sin revelar qué existe).
     const res = await POST(makeRequest({
       product_id: PRODUCT_ID,
       store_id: STORE_A,
-      template_id: 'costpro-reinicio',
+      template_id: 'plantilla-inexistente-xyz',
+    }) as any);
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toBe('FC_TEMPLATE_NOT_FOUND');
+  });
+
+  it('rechaza template_id vacío (400)', async () => {
+    const res = await POST(makeRequest({
+      product_id: PRODUCT_ID,
+      store_id: STORE_A,
+      template_id: '',
     }) as any);
     expect(res.status).toBe(400);
   });
@@ -206,6 +220,70 @@ describe('POST /api/product-cost-sheets/generate-from-template (FC-USR-TEMPLATE)
       template_id: TEMPLATE_ID,
     }) as any);
     expect(res.status).toBe(403);
+  });
+
+  // ── FC-SYS-TEMPLATES: plantillas de SISTEMA desde el mismo endpoint ──
+
+  it('conecta con una plantilla de SISTEMA por su clave (201, template_source=system)', async () => {
+    // No consulta cost_sheet_templates: resuelve server-side TEMPLATE_REGISTRY.
+    setTable('cost_sheet_templates', { data: null, error: null });
+    const res = await POST(makeRequest({
+      product_id: PRODUCT_ID,
+      store_id: STORE_A,
+      template_id: 'costpro-reinicio',
+    }) as any);
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.data.generated).toBe(true);
+    expect(body.data.fc_status).toBe('vigente');
+    expect(body.data.template_source).toBe('system');
+    expect(body.data.template_name).toBe('CostPro — Reinicio (General)');
+    expect(body.data.template_id).toBe('costpro-reinicio');
+  });
+
+  it('persiste la clave de sistema en product_cost_sheets.template_id', async () => {
+    setTable('cost_sheet_templates', { data: null, error: null });
+    await POST(makeRequest({
+      product_id: PRODUCT_ID,
+      store_id: STORE_A,
+      template_id: 'costpro-ejemplo',
+    }) as any);
+
+    const pcs = tableChains['product_cost_sheets'];
+    expect(pcs.insert).toHaveBeenCalled();
+    const inserted = pcs.insert.mock.calls[0][0];
+    expect(inserted.template_id).toBe('costpro-ejemplo');
+    expect(inserted.store_id).toBe(STORE_A);
+    expect(inserted.sync_status).toBe('synced');
+  });
+
+  it('aplica la modalidad explícita también con plantilla de sistema', async () => {
+    setTable('cost_sheet_templates', { data: null, error: null });
+    const res = await POST(makeRequest({
+      product_id: PRODUCT_ID,
+      store_id: STORE_A,
+      template_id: 'costpro-reinicio',
+      modalidad: 'comercializacion',
+    }) as any);
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.data.modalidad).toBe('comercializacion');
+  });
+
+  it('alias sys-* del explorador NO se acepta (fail-closed: solo claves de registro)', async () => {
+    setTable('cost_sheet_templates', { data: null, error: null });
+    // TEMPLATE_ALIAS resuelve 'sys-pizza' → 'template-pizza' en getTemplateData,
+    // pero la puerta fail-closed del endpoint SOLO admite las claves de registro
+    // del catálogo (las que envía el picker). Un alias histórico del explorador
+    // no es una procedencia del picker → 404 sin revelar qué existe.
+    const res = await POST(makeRequest({
+      product_id: PRODUCT_ID,
+      store_id: STORE_A,
+      template_id: 'sys-pizza',
+    }) as any);
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toBe('FC_TEMPLATE_NOT_FOUND');
   });
 
   // ── Visibilidad de plantillas (espejo manual de RLS) ──
