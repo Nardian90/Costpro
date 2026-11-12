@@ -558,6 +558,9 @@ export default function TerminalShell() {
         // a una vista overview con tarjetas de todos los submenus/items del grupo.
         // GATE 1: ids nuevos de la arquitectura + legacy por compatibilidad.
         case 'operacion':
+        // MISIÓN 2026-11-13: sección «RECURSOS HUMANOS» (Trabajadores y
+        // Comisiones trasladado desde OPERACIÓN — mismo ViewType 'workers').
+        case 'recursos-humanos':
         case 'analisis':
         case 'sistema':
         case 'ayuda':

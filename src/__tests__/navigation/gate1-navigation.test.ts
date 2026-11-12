@@ -65,8 +65,10 @@ describe('Fuente única — integridad', () => {
   });
 
   it('las secciones son exactamente las aprobadas en el baseline', () => {
+    // MISIÓN 2026-11-13: «RECURSOS HUMANOS» añadida entre OPERACIÓN y ANÁLISIS
+    // (Trabajadores y Comisiones trasladado — misma vista, mismos roles).
     expect(NAVIGATION_SECTIONS.map(s => s.id)).toEqual([
-      'operacion', 'analisis', 'sistema', 'ayuda', 'desarrollo',
+      'operacion', 'recursos-humanos', 'analisis', 'sistema', 'ayuda', 'desarrollo',
     ]);
   });
 });
@@ -805,7 +807,7 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
       // Los wrappers legacy, secciones y submenús no son vistas terminales.
       if (LEGACY_VIEW_ALIASES[view]) continue;
       const isSectionOrHub = [
-        'operacion', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
+        'operacion', 'recursos-humanos', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
         'ventas', 'costo', 'almacen_gestion', 'almacen_operaciones',
         'punto_venta', 'analitica', 'ipv_reporting', 'ipv_operaciones',
         'ipv_datos', 'ipv_procesamiento', 'ipv_avanzado', 'cost_views',

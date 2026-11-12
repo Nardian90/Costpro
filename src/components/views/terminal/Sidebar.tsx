@@ -149,6 +149,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   // GATE 1: secciones de la arquitectura aprobada (OPERACIÓN→pos, etc.).
   const MODULE_DEFAULT_VIEW: Record<string, ViewType> = {
     'operacion': 'pos',
+    // MISIÓN 2026-11-13: sección «RECURSOS HUMANOS» — su única hoja hoy es
+    // «Trabajadores y Comisiones» (mismo patrón que AYUDA → help).
+    'recursos-humanos': 'workers',
     'analisis': 'dashboard',
     'sistema': 'settings',
     'ayuda': 'help',

@@ -8,8 +8,8 @@ El módulo **Trabajadores y Comisiones** define **reglas de comisión** por trab
 
 ## ¿Dónde encontrarlo?
 
-- **Escritorio**: Inicio → **OPERACIÓN** → **Trabajadores y Comisiones** (entrada de primer nivel, debajo del hub Costo).
-- **Búsqueda global**: `Ctrl/Cmd + K` y escriba «comisiones» o «trabajadores».
+- **Escritorio**: Inicio → **RECURSOS HUMANOS** → **Trabajadores y Comisiones** (sección propia del menú lateral; antes formaba parte de OPERACIÓN).
+- **Búsqueda global**: `Ctrl/Cmd + K` y escriba «comisiones», «trabajadores» o «nóminas».
 
 ## Antes de comenzar
 
