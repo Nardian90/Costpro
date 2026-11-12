@@ -75,6 +75,15 @@ test.describe('FC-PDF-UNIFY · Vistazo y selección de formato desde ambos acces
 
   let adminApiToken = '';
 
+  /** Captura de evidencia para el expediente (docs/audits). */
+  async function snap(page: import('@playwright/test').Page, name: string) {
+    try {
+      await page.screenshot({ path: `audit-evidence/20261113-fichas-costo/${name}.png`, fullPage: false });
+    } catch (err) {
+      console.warn(`[fc-vistazo-pdf] captura ${name} falló:`, err);
+    }
+  }
+
   test.beforeAll(async () => {
     test.setTimeout(240_000);
     if (!ADMIN_ID || !STORE_A || !PRODUCT_A) {
@@ -152,6 +161,7 @@ test.describe('FC-PDF-UNIFY · Vistazo y selección de formato desde ambos acces
     await expect(page.locator('[data-testid="fc-modalidad-help"]')).toBeVisible();
     await expect(page.locator('[data-testid="fc-modalidad-help"]')).toContainText('no cambia los cálculos');
     await expect(page.locator('[data-testid="fc-modalidad-help"]')).toContainText('Res. 148/2023');
+    await snap(page, 'R3-picker-sistema-privadas-modalidad-help');
 
     // Conectar con la plantilla de SISTEMA (clave de registro — no UUID)
     await sysOption.click();
@@ -185,17 +195,21 @@ test.describe('FC-PDF-UNIFY · Vistazo y selección de formato desde ambos acces
     await expect(dlg).toBeVisible({ timeout: 15_000 });
 
     // Selector de formato presente con las 10 alternativas del motor compartido
+    // (los <option> de un <select> nunca son "visibles" para Playwright —
+    // se validan por conteo y por value, no por visibilidad).
     const formatSelect = page.locator('[data-testid="fc-pdf-format-select"]');
     await expect(formatSelect).toBeVisible({ timeout: 30_000 });
     const options = formatSelect.locator('option');
     await expect(options).toHaveCount(10, { timeout: 10_000 });
-    await expect(formatSelect.locator('option', { hasText: 'Estándar' })).toBeVisible();
+    await expect(formatSelect.locator('option[value="standard"]')).toHaveCount(1);
+    await expect(formatSelect.locator('option[value="res148"]')).toHaveCount(1);
 
     // Default: Estándar (diseño esperado por el propietario)
     await expect(formatSelect).toHaveValue('standard');
 
     // La vista previa (iframe) del documento cargó
     await expect(dlg.locator('iframe')).toBeVisible({ timeout: 60_000 });
+    await snap(page, 'R1-modal-fc-selector-formato-estandar');
 
     // Cambiar de formato → la petición quick-pdf lleva el pdf_format elegido
     const formatChangeReq = page.waitForRequest(
@@ -249,19 +263,22 @@ test.describe('FC-PDF-UNIFY · Vistazo y selección de formato desde ambos acces
   test('R4 · «Vistazo» renderiza vista previa real del documento (mismo motor) — no dead-end', async ({ authedPage: page }) => {
     test.setTimeout(180_000);
 
-    // Sección Fichas de Costo
+    // Sección Fichas de Costo — esperar a que la vista cargue de verdad
+    // (el selector del modo de visualización solo existe con la vista montada).
     await page.goto('/?view=cost-sheets');
-    await page.waitForSelector('[data-testid="cost-sheet-view"], .cost-sheet-view, main, body', { timeout: 30_000 });
+    const modeTrigger = page.locator('button[aria-label="Seleccionar modo de visualización de la ficha"]');
+    await expect(modeTrigger).toBeVisible({ timeout: 60_000 });
 
-    // «Vistazo» desde el menú de modos (dropdown) — antes era dead-end: el
-    // área quedaba en blanco. Botón o entrada de menú con texto «Vistazo».
-    const vistazoTrigger = page.getByRole('button', { name: /Vistazo/i }).first();
-    await expect(vistazoTrigger).toBeVisible({ timeout: 30_000 });
-    await vistazoTrigger.click();
+    // «Vistazo» desde el menú de modos — antes era dead-end: el área quedaba
+    // en blanco (sin rama de render para viewMode 'preview').
+    await modeTrigger.click();
+    const vistazoItem = page.getByRole('menuitemradio', { name: /Vistazo/i });
+    await expect(vistazoItem).toBeVisible({ timeout: 15_000 });
+    await vistazoItem.click();
 
     // El panel de vista previa aparece (mismo motor → blob PDF en iframe)
     const previewPanel = page.locator('[data-testid="cost-sheet-pdf-preview"]');
-    await expect(previewPanel).toBeVisible({ timeout: 30_000 });
+    await expect(previewPanel).toBeVisible({ timeout: 60_000 });
     await expect(previewPanel).toContainText('Vistazo');
 
     // Selector de formato del Vistazo (mismas 10 alternativas)
@@ -271,8 +288,9 @@ test.describe('FC-PDF-UNIFY · Vistazo y selección de formato desde ambos acces
 
     // El iframe del documento se renderiza (blob URL del mismo generador)
     const iframe = page.locator('[data-testid="cost-sheet-preview-iframe"]');
-    await expect(iframe).toBeVisible({ timeout: 30_000 });
-    await expect(iframe).toHaveAttribute('src', /^blob:/, { timeout: 30_000 });
+    await expect(iframe).toBeVisible({ timeout: 60_000 });
+    await expect(iframe).toHaveAttribute('src', /^blob:/, { timeout: 60_000 });
+    await snap(page, 'R4-vistazo-preview-mismo-motor');
 
     // Botón de exportación con el MISMO mecanismo (abre CostSheetExportModal)
     const exportBtn = previewPanel.getByRole('button', { name: /Exportar PDF/i });
@@ -280,6 +298,7 @@ test.describe('FC-PDF-UNIFY · Vistazo y selección de formato desde ambos acces
     await exportBtn.click();
     await expect(page.getByRole('dialog', { name: /Exportar Documentos/i })).toBeVisible({ timeout: 15_000 });
     // El modal de exportación ofrece Estándar (diseño conservado)
-    await expect(page.getByText('Estándar', { exact: false }).first()).toBeVisible();
+    await expect(page.locator('[role="dialog"] button, [role="dialog"] [data-format]')
+      .filter({ hasText: 'Estándar' }).first()).toBeVisible({ timeout: 10_000 });
   });
 });
