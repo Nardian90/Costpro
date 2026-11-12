@@ -103,7 +103,7 @@ export async function buildPayrollPdf(payload: PayrollPdfPayload): Promise<jsPDF
     doc.setTextColor(60, 60, 60);
     doc.text(pdfWinAnsi(`Entidad: ${payroll.entidad_nombre}${payroll.entidad_codigo ? ` (${payroll.entidad_codigo})` : ''}`), MARGIN, y0 + (compact ? 19 : 26));
     doc.text(pdfWinAnsi(`Número: ${payroll.payroll_number}`), MARGIN, y0 + (compact ? 29 : 38));
-    doc.text(pdfWinAnsi(`Período: ${dateLabel(payroll.period_start)} → ${dateLabel(payroll.period_end)}`), MARGIN, y0 + (compact ? 39 : 50));
+    doc.text(pdfWinAnsi(`Período: ${dateLabel(payroll.period_start)} – ${dateLabel(payroll.period_end)}`), MARGIN, y0 + (compact ? 39 : 50));
 
     doc.text(`Moneda: ${payroll.currency}`, pageW - MARGIN, y0 + (compact ? 19 : 26), { align: 'right' });
     doc.text(pdfWinAnsi(`Modalidad de pago: ${payroll.payment_method === 'tarjeta' ? 'Tarjeta' : 'Efectivo'}`), pageW - MARGIN, y0 + (compact ? 29 : 38), { align: 'right' });
