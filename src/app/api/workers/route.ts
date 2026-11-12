@@ -16,6 +16,9 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const { searchParams } = new URL(req.url);
   const storeId = searchParams.get('store_id');
   const status = searchParams.get('status');
+  // NÓMINAS SC-4-06: incluye la tarifa salarial VIGENTE por trabajador
+  // (merge en JS — RLS de worker_salary_rates filtra por tienda del usuario).
+  const includeRate = searchParams.get('include_rate') === '1';
 
   if (!storeId) {
     return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
@@ -38,7 +41,36 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ workers: data || [], count: data?.length || 0 });
+  let out = data || [];
+
+  if (includeRate && out.length) {
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: rates } = await supabase
+      .from('worker_salary_rates')
+      .select('worker_id, rate_type, rate_amount, currency, valid_from, valid_to')
+      .eq('store_id', storeId)
+      .order('valid_from', { ascending: false });
+    // Vigente: valid_from <= hoy AND (valid_to IS NULL OR hoy <= valid_to)
+    const byWorker = new Map<string, { rate_type: string; rate_amount: number; currency: string }>();
+    for (const r of rates ?? []) {
+      if (r.valid_from > today) continue;
+      if (r.valid_to !== null && r.valid_to < today) continue;
+      if (!byWorker.has(r.worker_id)) {
+        byWorker.set(r.worker_id, { rate_type: r.rate_type, rate_amount: Number(r.rate_amount), currency: r.currency });
+      }
+    }
+    out = out.map((w: Record<string, unknown>) => {
+      const rate = byWorker.get(String(w.id));
+      return {
+        ...w,
+        rate_type: rate?.rate_type ?? null,
+        rate_amount: rate?.rate_amount ?? null,
+        rate_currency: rate?.currency ?? null,
+      };
+    });
+  }
+
+  return NextResponse.json({ workers: out, count: out.length });
 }
 
 /**
