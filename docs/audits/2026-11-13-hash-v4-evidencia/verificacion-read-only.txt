@@ -1,0 +1,26 @@
+════ M6 · Verificación del hash v4 (informe ≡ JSON ≡ SQL independiente) ════
+Hora UTC: 2026-11-13T22:46:12.928Z
+  PASS · PASADA 1: SHA-256 íntegro (64 hex) — d3dae0d9ba98d779202fe7a7dba4096b75d03495fa43d0319198986ee55b49dc
+  PASS · PASADA 2: SHA-256 íntegro (64 hex) — d3dae0d9ba98d779202fe7a7dba4096b75d03495fa43d0319198986ee55b49dc
+  PASS · Pasadas idénticas (hash v4 + conteos) — 1358 asientos / 4694 movimientos en ambas
+  PASS · Conteos por pasada: reconocimiento 1342+4662 · pagos 16+32
+  PASS · Sensibilidad escenario CORRECTO: hash v4 íntegro — b710bda659b986bff3dbad49156df2e5167fd5ea17564c077a903da3412d3a19
+  PASS · Sensibilidad escenario DEFECTO (PAS_CXP_PROV): hash v4 íntegro — 880090288b417c7a27adea55471c6e1b4279dbef2337aaf9908df3a5b90d9933
+  PASS · v4 DETECTA el cambio de categoría (hashes distintos)
+  PASS · v3 NO detecta (hashes de totales idénticos)
+  PASS · Reglas activas cubren los tipos del hash (9 tipos, versión por tipo) — AJUSTE_INVENTARIO:v1 · COMISION:v1 · DEVOLUCION_VENTA:v1 · FLUJO_CAJA:v1 · NOMINA:v1 · RECEPCION:v1 · SERVICIO_RECIBIDO:v1 · VALE_SALIDA:v1 · VENTA:v1
+  PASS · Versión de regla serializada en el hash (campo regla): todas v1 — v1
+  PASS · Categorías cubiertas por la serialización v4 (por plantilla activa): 19 categorías — ACT_BANCOS, ACT_EFECTIVO_CUP, ACT_EFECTIVO_USD, ACT_INVENTARIO, GAS_COMISIONES, GAS_COSTO_VENTAS, GAS_NOMINAS, GAS_OTROS_OPER, GAS_PERDIDA_INV, GAS_SERVICIOS, GAS_VALES, ING_DEVOLUCIONES, ING_OTROS_OPER, ING_VENTAS, PAS_ANTICIPOS_CLI, PAS_CXP_PROV, PAS_NOMINA_PEND, PAS_RETENCIONES, PAS_SERV_PEND
+  PASS · Sentidos cubiertos: débito y crédito — credito,debito
+  PASS · Movimientos serializados en CUP (importe_cup) con currency_origin de divisa preservado (USD en 131 docs) — docs USD=131
+  PASS · Informes separan monedas (sin mezclas CUP/USD)
+  PASS · SQL independiente ≡ JSON · VENTA: 989 docs · suma importes documentales 7611954299.61 CUP
+  PASS · SQL independiente ≡ JSON · DEVOLUCION_VENTA: 2 docs · suma importes documentales 239405 CUP
+  PASS · SQL independiente ≡ JSON · RECEPCION: 96 docs · suma importes documentales 207255149.27 CUP
+  PASS · SQL independiente ≡ JSON · SERVICIO_RECIBIDO: 16 docs · suma importes documentales 33215 CUP
+  PASS · SQL independiente ≡ JSON · VALE_SALIDA: 235 docs · suma importes documentales 878552.87 CUP
+  PASS · Informe ≡ JSON ≡ SQL independiente (docs y sumas por tipo) — 5/5 tipos
+
+  ⚠ ROTULACIÓN: la agregación económica global 15.658.180.405,46 CUP es la SUMA DE IMPORTES DOCUMENTALES (volumen bruto de operaciones) — NO es ingreso, activo, patrimonio, utilidad ni saldo financiero neto (contiene ventas devueltas, gastos y consumos internos; no netea nada).
+
+════ RESULTADO M6: PASS TOTAL ════
