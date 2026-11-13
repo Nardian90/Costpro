@@ -12682,13 +12682,11 @@ DECLARE
   v_amount_cup numeric;
   v_balance numeric;
   v_doc_store_id uuid;
+  v_doc_currency text;
+  v_doc_rate numeric;
+  v_amount_in_doc_currency numeric;
   v_eff_payment_date timestamptz := COALESCE(p_payment_date, now());
-  v_phys_available numeric := 0;
 BEGIN
-  -- MISIÓN INTEGRAL (Fase A): protocolo común del cajón — advisory por tienda
-  -- ANTES de cualquier lectura que autorice una salida de efectivo.
-  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
-
   -- Idempotencia
   IF p_idempotency_key IS NOT NULL THEN
     SELECT id INTO v_existing_id
@@ -12702,13 +12700,16 @@ BEGIN
 
   -- Validar documento y store ownership
   IF p_ref_type = 'receipt' THEN
-    SELECT store_id, total_cost INTO v_doc_store_id, v_total
+    SELECT store_id, total_cost, 'CUP', 1
+      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
     FROM public.receipts WHERE id = p_ref_id;
   ELSIF p_ref_type = 'service' THEN
-    SELECT store_id, total_amount INTO v_doc_store_id, v_total
+    SELECT store_id, total_amount, currency, COALESCE(exchange_rate, 1)
+      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
     FROM public.received_services WHERE id = p_ref_id;
   ELSIF p_ref_type IN ('production_order', 'work') THEN
-    SELECT store_id, budget_total INTO v_doc_store_id, v_total
+    SELECT store_id, budget_total, 'CUP', 1
+      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
     FROM public.production_orders WHERE id = p_ref_id;
   ELSE
     RAISE EXCEPTION 'ref_type no soportado: %', p_ref_type;
@@ -12728,36 +12729,36 @@ BEGIN
   -- v_eff_payment_date = COALESCE(p_payment_date, now()) → NOW() siempre pasa.
   PERFORM public.validate_operation_date(v_eff_payment_date, p_store_id);
 
-  -- Calcular monto en CUP
+  -- Calcular monto en CUP (para payment_transactions.amount_cup — invariante)
   v_amount_cup := CASE
     WHEN p_currency = 'CUP' THEN p_amount
     ELSE p_amount * p_exchange_rate
   END;
 
-  -- R3: Validar overpay
-  SELECT COALESCE(SUM(amount_cup), 0) INTO v_paid
-  FROM public.payment_transactions
-  WHERE ref_type = p_ref_type AND ref_id = p_ref_id;
+  -- R3: Validar overpay — FIX §17.1: todo en la MONEDA DEL DOCUMENTO.
+  --   · pagado acumulado: pagos en la misma moneda suman nominal; pagos en
+  --     otra moneda aportan amount_cup / tasa_del_documento (inverso exacto
+  --     de la normalización CP-FIN; ninguna tasa nueva).
+  --   · este pago: p_amount si es la misma moneda; si no, su CUP-equivalente
+  --     reconvertido con la tasa del doc. El pago se inserta SIEMPRE en su
+  --     moneda original (amount/amount_cup sin tocar).
+  SELECT COALESCE(SUM(
+         CASE WHEN pt.currency = v_doc_currency THEN pt.amount
+              ELSE pt.amount_cup / v_doc_rate
+         END), 0) INTO v_paid
+  FROM public.payment_transactions pt
+  WHERE pt.ref_type = p_ref_type AND pt.ref_id = p_ref_id;
+
+  v_amount_in_doc_currency := CASE
+    WHEN p_currency = v_doc_currency THEN p_amount
+    ELSE v_amount_cup / v_doc_rate
+  END;
 
   v_balance := v_total - v_paid;
-  IF v_amount_cup > v_balance THEN
+  IF v_amount_in_doc_currency > v_balance THEN
     RAISE EXCEPTION
       'El pago (%) excede el saldo pendiente (%). Overpay no permitido.',
-      v_amount_cup, v_balance;
-  END IF;
-
-  -- MISIÓN INTEGRAL (Fase A): un pago en EFECTIVO entrega BILLETES de la moneda
-  -- del pago. Misma regla que los egresos (2222): sin conversión implícita,
-  -- saldo físico por moneda, fail-closed. Lectura post-lock con upper bound
-  -- 'infinity' (todo lo confirmado ES un hecho físico ya — coherente con el
-  -- orden de adquisición del advisory).
-  IF lower(trim(p_payment_method)) = 'cash' THEN
-    v_phys_available := COALESCE((public.get_cash_currency_summary(
-      p_store_id, NULL, 'infinity'::timestamptz) -> 'net' ->> upper(trim(p_currency)))::numeric, 0);
-    IF p_amount > v_phys_available + 0.005 THEN
-      RAISE EXCEPTION 'ERR_INSUFFICIENT_CURRENCY: saldo físico % disponible=%, pago=%',
-        upper(trim(p_currency)), round(v_phys_available, 2), round(p_amount, 2);
-    END IF;
+      v_amount_in_doc_currency, v_balance;
   END IF;
 
   -- Insertar pago con payment_date personalizada (o now() por defecto)

@@ -416,9 +416,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // whitelist audit_logs para reglas globales (20261113120600) = 153
     // CP-FIN ACL FUNCIONES (2026-11-13, gate SQL DB Security): +1 revocación
     // PUBLIC/anon en las 11 RPCs públicas y 10 triggers (20261113120700) = 154
-    expect(m.total_incluidos).toBe(154);
+    // FIX §17.1 SERVICIOS USD (2026-11-13, PR #1612): +1 moneda del documento
+    // en servicios recibidos (20261113120800_fix_servicios_recibidos_moneda_documento) = 155
+    expect(m.total_incluidos).toBe(155);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(154);
+    expect(incluidos.length).toBe(155);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

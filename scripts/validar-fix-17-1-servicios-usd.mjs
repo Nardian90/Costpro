@@ -32,9 +32,16 @@
  * Uso: node scripts/validar-fix-17-1-servicios-usd.mjs [--skip-apply]
  */
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+// GUARD CANÓNICO (CP-INFRA-019): el destino es la BD E2E aislada y debe
+// verificarse ANTES de cualquier operación. Con projectRef el guard valida
+// EXACTAMENTE el ref que usan las llamadas a la Management API de abajo.
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 
 const REPO = '/home/z/my-project/Costpro';
-const REF = 'lguovmvrozxgssupkwpf'; // BD E2E aislada — guard por construcción
+const REF = 'lguovmvrozxgssupkwpf'; // BD E2E aislada — verificado por el guard
+assertNotProduction({ mode: 'write', projectRef: REF, context: 'validar-fix-17-1-servicios-usd.mjs' });
 const MIGRATION = REPO + '/supabase/migrations/20261113120800_fix_servicios_recibidos_moneda_documento.sql';
 
 const E = process.env;
