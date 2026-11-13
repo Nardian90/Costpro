@@ -416,9 +416,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // whitelist audit_logs para reglas globales (20261113120600) = 153
     // CP-FIN ACL FUNCIONES (2026-11-13, gate SQL DB Security): +1 revocación
     // PUBLIC/anon en las 11 RPCs públicas y 10 triggers (20261113120700) = 154
-    expect(m.total_incluidos).toBe(154);
+    // MISIÓN SKU 197 (2026-11-13): +3 — fix 23514 de auditoría de borrado/
+    // desactivación de productos (20261113140000_cp_products_audit_store_id),
+    // RPC del importador masivo integrada al Catálogo Maestro
+    // (20261113140100_cp_catalogo_importador_maestro) y reconciliación ACL
+    // Capa C de las 9 RPCs fin_* (20261113140200_cp_fin_acl_reconcile) = 157
+    expect(m.total_incluidos).toBe(157);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(154);
+    expect(incluidos.length).toBe(157);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

@@ -261,7 +261,7 @@ describe('POST /api/catalog/bulk-import — validación por fila (CP-CAT-005)', 
     expect(json.count).toBe(1);
     expect(rpcCalls.length).toBe(1);
     expect(rpcCalls[0].fn).toBe('managed_bulk_import_products');
-    const sent = rpcCalls[0].args.p_rows[0] as Record<string, unknown>;
+    const sent = (rpcCalls[0].args.p_rows as Array<Record<string, unknown>>)[0];
     expect(Object.keys(sent).sort()).toEqual(
       ['barcode', 'barcode_type', 'category', 'cost_price', 'description', 'image_url',
        'is_active', 'is_service', 'min_stock', 'name', 'price', 'sku', 'store_id',

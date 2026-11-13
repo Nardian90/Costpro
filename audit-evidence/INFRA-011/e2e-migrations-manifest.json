@@ -165,7 +165,7 @@
   "total_considerados": 572,
   "total_incluidos": 157,
   "total_excluidos": 415,
-  "digest": "13a146d7fb61c061fed80ccabecfd588f6cdc924b200fe7f6b62ad873757cd19",
+  "digest": "c6d19a0210320b171b1e42c951be5e41fc843aeea6f48082f5cc2c46254c8eb7",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5577,14 +5577,14 @@
     },
     {
       "nombre": "20261113140000_cp_products_audit_store_id.sql",
-      "bytes": 10361,
-      "sha256_original": "350f6e6ccf0fbb3aa1e2693a98fbbbd8535d8e977d2dc8e155c8acaafa3afbc7",
+      "bytes": 10664,
+      "sha256_original": "1306a30848f2413a49fb5ae07d4d6fe81aa0a42dabf2312216d55b0aa3f7823f",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261113",
       "observaciones": [],
       "posicion": 155,
-      "sha256_generado": "350f6e6ccf0fbb3aa1e2693a98fbbbd8535d8e977d2dc8e155c8acaafa3afbc7"
+      "sha256_generado": "1306a30848f2413a49fb5ae07d4d6fe81aa0a42dabf2312216d55b0aa3f7823f"
     },
     {
       "nombre": "20261113140100_cp_catalogo_importador_maestro.sql",
