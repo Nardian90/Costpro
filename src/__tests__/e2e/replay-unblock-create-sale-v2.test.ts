@@ -424,9 +424,13 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // CP-FIN SEMÁNTICA VENTA DIVISA (2026-11-14, PR #1615): +1 total_cup :=
     // total_amount en fin_compute_metrics VENTA — total_amount YA es CUP-equivalente
     // (20261114120000_cp_fin_semantica_total_amount_cup) = 158
-    expect(m.total_incluidos).toBe(158);
+    // CP-FIN CICLO DEVOLUCIÓN DIVISA (2026-11-13, PR #1616): +1 coherencia de la
+    // devolución en divisa — total canónico en DEVOLUCION_VENTA (sin ×tasa) y
+    // tasa efectiva exacta en las filas de reembolso (amount_cup = total canónico)
+    // (20261114140000_cp_fin_ciclo_devolucion_divisa) = 159
+    expect(m.total_incluidos).toBe(159);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(158);
+    expect(incluidos.length).toBe(159);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
