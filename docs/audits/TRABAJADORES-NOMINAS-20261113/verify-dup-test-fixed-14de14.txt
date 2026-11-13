@@ -1,0 +1,19 @@
+══ VERIFICACIÓN CASO DUP TEST (fix aplicado) ══
+
+PASS · GET /api/workers?q=DUP → solo Dup Test (7 duplicados reales) — 7 resultados
+PASS · Dup Test CON tarifa identificable en los resultados — tarifa 1000 CUP/daily
+PASS · has_any_rate distingue sin-tarifa de no-vigente — 1 con tarifa histórica, 6 sin ninguna
+PASS · GET /api/workers?q=99010192524 (por CI) → exactamente 1 — CI 99010192524
+PASS · Búsqueda insensible a mayúsculas/acentos (DUP TEST ≡ Dúp Tést) — 7 ≡ 7 resultados
+PASS · Nómina de verificación previa reutilizada (re-ejecutable) — e9d54b7e-b1a5-4877-b03e-79950fe97ab0
+PASS · GET /api/payrolls/[id] → 200 con líneas — NOM-000001-2026
+PASS · Alias worker_id presente en GET /api/workers (fix causa raíz nº2) — worker_id ≡ id
+PASS · Snapshot de identidad del trabajador — Dup Test
+PASS · Snapshot de tarifa vigente al período (1000 CUP/día) — 1000 CUP/daily
+PASS · Cálculo del servidor: 5 días × 1000 = base 5000 — base_salary=5000
+PASS · Cálculo del servidor: total_net 5000 (sin conceptos) — total_net=5000
+PASS · Numeración NOM-AAAA aplicada — NOM-000001-2026
+PASS · Nómina de verificación ya anulada (estado terminal, auditable) — voided
+
+══ RESULTADO: 14 PASS / 0 FAIL ══
+Nómina de verificación: e9d54b7e-b1a5-4877-b03e-79950fe97ab0 (voided)
