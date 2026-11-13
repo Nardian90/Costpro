@@ -1,0 +1,1266 @@
+{
+  "generado": "2026-11-13T17:09:41.097Z",
+  "ref": "wthkddeleylijmonclxg",
+  "modo": "DRY-RUN read-only",
+  "conteos_antes": {
+    "fin_entries": 0,
+    "fin_movements": 0,
+    "fin_posting_errors": 0,
+    "transactions": 1008,
+    "devolutions": 2,
+    "receipts": 97,
+    "received_services": 41,
+    "issue_slips": 241,
+    "inventory_adjustments": 1,
+    "commission_payments": 1,
+    "payrolls": 1,
+    "cash_flow_documents": 2,
+    "payment_transactions": 942
+  },
+  "conteos_despues": {
+    "fin_entries": 0,
+    "fin_movements": 0,
+    "fin_posting_errors": 0,
+    "transactions": 1008,
+    "devolutions": 2,
+    "receipts": 97,
+    "received_services": 41,
+    "issue_slips": 241,
+    "inventory_adjustments": 1,
+    "commission_payments": 1,
+    "payrolls": 1,
+    "cash_flow_documents": 2,
+    "payment_transactions": 942
+  },
+  "bd_intacta": true,
+  "tiendas": [
+    {
+      "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "name": "COSTPRO (Prueba)"
+    },
+    {
+      "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "name": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "id": "8eb56fa3-7e22-408e-a44b-8f14cdd7f52f",
+      "name": "FERROCARRIL VITALLCONS"
+    },
+    {
+      "id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "name": "PUERTO PADRE"
+    },
+    {
+      "id": "bc94e3d0-32c3-4f2f-8e42-d46a341f9451",
+      "name": "SHADDAI"
+    },
+    {
+      "id": "6691b866-a7cd-409b-b1e5-dd9bc2ad9d7a",
+      "name": "QA UI Icons Store"
+    },
+    {
+      "id": "30c3a373-2012-4728-8f51-d8d8ad73eb17",
+      "name": "QA-Release-1593-Plantillas"
+    }
+  ],
+  "elegibles": {
+    "por_grupo": [
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-10",
+        "tipo": "VENTA",
+        "docs": 125,
+        "importe_origen": 3962675,
+        "importe_cup": 404953545
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-08",
+        "tipo": "VENTA",
+        "docs": 262,
+        "importe_origen": 9039044.999400001,
+        "importe_cup": 2012085650
+      },
+      {
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "periodo": "2026-05",
+        "tipo": "VENTA",
+        "docs": 102,
+        "importe_origen": 2986735,
+        "importe_cup": 2986735
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-11",
+        "tipo": "VENTA",
+        "docs": 20,
+        "importe_origen": 642435,
+        "importe_cup": 117278385
+      },
+      {
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "periodo": "2026-06",
+        "tipo": "VENTA",
+        "docs": 74,
+        "importe_origen": 3215310,
+        "importe_cup": 3215310
+      },
+      {
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "periodo": "2026-07",
+        "tipo": "VENTA",
+        "docs": 36,
+        "importe_origen": 978440,
+        "importe_cup": 978440
+      },
+      {
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "periodo": "2026-11",
+        "tipo": "VENTA",
+        "docs": 1,
+        "importe_origen": 1600,
+        "importe_cup": 1600
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-07",
+        "tipo": "VENTA",
+        "docs": 135,
+        "importe_origen": 14456549.999,
+        "importe_cup": 1055635150
+      },
+      {
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "periodo": "2026-10",
+        "tipo": "VENTA",
+        "docs": 53,
+        "importe_origen": 1882070,
+        "importe_cup": 1882070
+      },
+      {
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "periodo": "2026-11",
+        "tipo": "VENTA",
+        "docs": 16,
+        "importe_origen": 227300,
+        "importe_cup": 227300
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-09",
+        "tipo": "VENTA",
+        "docs": 165,
+        "importe_origen": 7791594.98,
+        "importe_cup": 4012710114.61
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-10",
+        "tipo": "DEVOLUCION_VENTA",
+        "docs": 2,
+        "importe_origen": 239405,
+        "importe_cup": 239405
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-10",
+        "tipo": "RECEPCION",
+        "docs": 40,
+        "importe_origen": 913525.2,
+        "importe_cup": 913525.2
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-08",
+        "tipo": "RECEPCION",
+        "docs": 3,
+        "importe_origen": 1966260,
+        "importe_cup": 1966260
+      },
+      {
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "periodo": "2026-10",
+        "tipo": "RECEPCION",
+        "docs": 5,
+        "importe_origen": 1616.5,
+        "importe_cup": 1616.5
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-11",
+        "tipo": "RECEPCION",
+        "docs": 5,
+        "importe_origen": 52942.9,
+        "importe_cup": 52942.9
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-07",
+        "tipo": "RECEPCION",
+        "docs": 1,
+        "importe_origen": 192039436,
+        "importe_cup": 192039436
+      },
+      {
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "periodo": "2026-05",
+        "tipo": "RECEPCION",
+        "docs": 1,
+        "importe_origen": 5044463.67,
+        "importe_cup": 5044463.67
+      },
+      {
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "periodo": "2026-06",
+        "tipo": "RECEPCION",
+        "docs": 1,
+        "importe_origen": 7213500,
+        "importe_cup": 7213500
+      },
+      {
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "periodo": "2026-11",
+        "tipo": "RECEPCION",
+        "docs": 1,
+        "importe_origen": 200,
+        "importe_cup": 200
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-09",
+        "tipo": "RECEPCION",
+        "docs": 39,
+        "importe_origen": 23205,
+        "importe_cup": 23205
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-11",
+        "tipo": "SERVICIO_RECIBIDO",
+        "docs": 11,
+        "importe_origen": 22655,
+        "importe_cup": 22655
+      },
+      {
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "periodo": "2026-11",
+        "tipo": "SERVICIO_RECIBIDO",
+        "docs": 2,
+        "importe_origen": 6900,
+        "importe_cup": 6900
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-10",
+        "tipo": "SERVICIO_RECIBIDO",
+        "docs": 3,
+        "importe_origen": 3660,
+        "importe_cup": 3660
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-08",
+        "tipo": "VALE_SALIDA",
+        "docs": 10,
+        "importe_origen": 146.62,
+        "importe_cup": 146.62
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-09",
+        "tipo": "VALE_SALIDA",
+        "docs": 118,
+        "importe_origen": 113676.76999999997,
+        "importe_cup": 113676.76999999997
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-10",
+        "tipo": "VALE_SALIDA",
+        "docs": 86,
+        "importe_origen": 538791.1200000002,
+        "importe_cup": 538791.1200000002
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-11",
+        "tipo": "VALE_SALIDA",
+        "docs": 18,
+        "importe_origen": 156248.6,
+        "importe_cup": 156248.6
+      },
+      {
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "periodo": "2026-10",
+        "tipo": "VALE_SALIDA",
+        "docs": 1,
+        "importe_origen": 60000,
+        "importe_cup": 60000
+      },
+      {
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "periodo": "2026-11",
+        "tipo": "VALE_SALIDA",
+        "docs": 1,
+        "importe_origen": 9644.76,
+        "importe_cup": 9644.76
+      },
+      {
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "periodo": "2026-11",
+        "tipo": "VALE_SALIDA",
+        "docs": 1,
+        "importe_origen": 45,
+        "importe_cup": 45
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-10",
+        "tipo": "AJUSTE_INVENTARIO",
+        "docs": 1,
+        "importe_origen": 1,
+        "importe_cup": 1
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-10",
+        "tipo": "COMISION",
+        "docs": 1,
+        "importe_origen": 300,
+        "importe_cup": 300
+      },
+      {
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "periodo": "2026-10",
+        "tipo": "FLUJO_CAJA",
+        "docs": 2,
+        "importe_origen": 8436046.98,
+        "importe_cup": 8729279.98
+      }
+    ],
+    "total_docs": 1342
+  },
+  "excluidos": {
+    "por_motivo": [
+      {
+        "tipo": "VENTA",
+        "motivo": "ESTADO_NO_POSTABLE",
+        "n": 38
+      },
+      {
+        "tipo": "RECEPCION",
+        "motivo": "ESTADO_NO_POSTABLE",
+        "n": 2
+      },
+      {
+        "tipo": "SERVICIO_RECIBIDO",
+        "motivo": "ESTADO_NO_POSTABLE",
+        "n": 50
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "motivo": "ESTADO_NO_POSTABLE",
+        "n": 12
+      },
+      {
+        "tipo": "NOMINA",
+        "motivo": "ESTADO_NO_POSTABLE",
+        "n": 2
+      }
+    ],
+    "total": 104
+  },
+  "asientos": {
+    "por_tipo": [
+      {
+        "tipo": "VENTA",
+        "asientos": 989,
+        "movimientos": 3956,
+        "desbalanceados": 0
+      },
+      {
+        "tipo": "DEVOLUCION_VENTA",
+        "asientos": 2,
+        "movimientos": 4,
+        "desbalanceados": 0
+      },
+      {
+        "tipo": "RECEPCION",
+        "asientos": 96,
+        "movimientos": 192,
+        "desbalanceados": 0
+      },
+      {
+        "tipo": "SERVICIO_RECIBIDO",
+        "asientos": 16,
+        "movimientos": 32,
+        "desbalanceados": 0
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "asientos": 235,
+        "movimientos": 470,
+        "desbalanceados": 0
+      },
+      {
+        "tipo": "AJUSTE_INVENTARIO",
+        "asientos": 1,
+        "movimientos": 2,
+        "desbalanceados": 0
+      },
+      {
+        "tipo": "COMISION",
+        "asientos": 1,
+        "movimientos": 2,
+        "desbalanceados": 0
+      },
+      {
+        "tipo": "NOMINA",
+        "asientos": 0,
+        "movimientos": 0,
+        "desbalanceados": 0
+      },
+      {
+        "tipo": "FLUJO_CAJA",
+        "asientos": 2,
+        "movimientos": 4,
+        "desbalanceados": 0
+      }
+    ],
+    "total": 1342,
+    "movimientos": 4662,
+    "balanceados": 1342,
+    "desbalanceados_docs": [],
+    "detalle_muestra": [
+      {
+        "tipo": "VENTA",
+        "document_id": "f7e2b240-d183-431e-a5e5-0518b8d1638f",
+        "docnum": null,
+        "fecha": "2026-10-26",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 500,
+        "total_cup": 500,
+        "movimientos": [
+          {
+            "categoria": "ING_VENTAS",
+            "sentido": "credito",
+            "importe_cup": 500
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "debito",
+            "importe_cup": 500
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=VENTA, document_id=f7e2b240-d183-431e-a5e5-0518b8d1638f, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "VENTA",
+        "document_id": "0839f30c-84f6-481c-b6c0-9e9dfa930a99",
+        "docnum": "FAC-004252-2026",
+        "fecha": "2026-08-01",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 9520,
+        "total_cup": 9520,
+        "movimientos": [
+          {
+            "categoria": "ING_VENTAS",
+            "sentido": "credito",
+            "importe_cup": 9520
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "debito",
+            "importe_cup": 9520
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=VENTA, document_id=0839f30c-84f6-481c-b6c0-9e9dfa930a99, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "VENTA",
+        "document_id": "a8d3037d-de08-4d8c-ae29-e72303abce13",
+        "docnum": "FAC-004255-2026",
+        "fecha": "2026-08-01",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 6000,
+        "total_cup": 6000,
+        "movimientos": [
+          {
+            "categoria": "ING_VENTAS",
+            "sentido": "credito",
+            "importe_cup": 6000
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "debito",
+            "importe_cup": 6000
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=VENTA, document_id=a8d3037d-de08-4d8c-ae29-e72303abce13, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "VENTA",
+        "document_id": "eb0cb0a1-26ca-46a1-9044-3bc3e87a9cc9",
+        "docnum": "FAC-004258-2026",
+        "fecha": "2026-08-01",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 27540,
+        "total_cup": 27540,
+        "movimientos": [
+          {
+            "categoria": "ING_VENTAS",
+            "sentido": "credito",
+            "importe_cup": 27540
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "debito",
+            "importe_cup": 27540
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=VENTA, document_id=eb0cb0a1-26ca-46a1-9044-3bc3e87a9cc9, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "VENTA",
+        "document_id": "23ccd04f-db81-4537-a3db-2dabf40e31a8",
+        "docnum": null,
+        "fecha": "2026-10-23",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 5600,
+        "total_cup": 5600,
+        "movimientos": [
+          {
+            "categoria": "ING_VENTAS",
+            "sentido": "credito",
+            "importe_cup": 5600
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "debito",
+            "importe_cup": 5600
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=VENTA, document_id=23ccd04f-db81-4537-a3db-2dabf40e31a8, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "DEVOLUCION_VENTA",
+        "document_id": "80e84142-8f22-4541-878f-e1ed38e60b74",
+        "docnum": "NC-000014-2026",
+        "fecha": "2026-10-04",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 40280,
+        "total_cup": 40280,
+        "movimientos": [
+          {
+            "categoria": "ING_VENTAS",
+            "sentido": "debito",
+            "importe_cup": 40280
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 40280
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=DEVOLUCION_VENTA, document_id=80e84142-8f22-4541-878f-e1ed38e60b74, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "DEVOLUCION_VENTA",
+        "document_id": "925d905d-c147-4708-8ed4-fef51f93e85e",
+        "docnum": "NC-000015-2026",
+        "fecha": "2026-10-04",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 199125,
+        "total_cup": 199125,
+        "movimientos": [
+          {
+            "categoria": "ING_VENTAS",
+            "sentido": "debito",
+            "importe_cup": 199125
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 199125
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=DEVOLUCION_VENTA, document_id=925d905d-c147-4708-8ed4-fef51f93e85e, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "RECEPCION",
+        "document_id": "d5f3a77b-6b98-4ef4-b9c9-4a50ecb956b0",
+        "docnum": null,
+        "fecha": "2026-10-26",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 35490,
+        "total_cup": 35490,
+        "movimientos": [
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "debito",
+            "importe_cup": 35490
+          },
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "credito",
+            "importe_cup": 35490
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=RECEPCION, document_id=d5f3a77b-6b98-4ef4-b9c9-4a50ecb956b0, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "RECEPCION",
+        "document_id": "02fe9c2c-cdfd-49e2-b1a7-a9035f7f23f1",
+        "docnum": null,
+        "fecha": "2026-08-10",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 1034660,
+        "total_cup": 1034660,
+        "movimientos": [
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "debito",
+            "importe_cup": 1034660
+          },
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "credito",
+            "importe_cup": 1034660
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=RECEPCION, document_id=02fe9c2c-cdfd-49e2-b1a7-a9035f7f23f1, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "RECEPCION",
+        "document_id": "7a741289-674d-4739-8f96-6b584ee68468",
+        "docnum": null,
+        "fecha": "2026-10-14",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 54,
+        "total_cup": 54,
+        "movimientos": [
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "debito",
+            "importe_cup": 54
+          },
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "credito",
+            "importe_cup": 54
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=RECEPCION, document_id=7a741289-674d-4739-8f96-6b584ee68468, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "RECEPCION",
+        "document_id": "34c3fbd0-c9b5-48d1-89e6-207a28024b0e",
+        "docnum": null,
+        "fecha": "2026-08-10",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 918000,
+        "total_cup": 918000,
+        "movimientos": [
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "debito",
+            "importe_cup": 918000
+          },
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "credito",
+            "importe_cup": 918000
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=RECEPCION, document_id=34c3fbd0-c9b5-48d1-89e6-207a28024b0e, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "RECEPCION",
+        "document_id": "aed568be-63f0-4082-a7ab-b20f43513e40",
+        "docnum": null,
+        "fecha": "2026-10-16",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 2,
+        "total_cup": 2,
+        "movimientos": [
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "debito",
+            "importe_cup": 2
+          },
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "credito",
+            "importe_cup": 2
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=RECEPCION, document_id=aed568be-63f0-4082-a7ab-b20f43513e40, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "SERVICIO_RECIBIDO",
+        "document_id": "188a039a-e326-4973-85fd-44316a5a2b8d",
+        "docnum": "SRV-20261107-00094",
+        "fecha": "2026-11-07",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 2400,
+        "total_cup": 2400,
+        "movimientos": [
+          {
+            "categoria": "GAS_SERVICIOS",
+            "sentido": "debito",
+            "importe_cup": 2400
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "credito",
+            "importe_cup": 2400
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=SERVICIO_RECIBIDO, document_id=188a039a-e326-4973-85fd-44316a5a2b8d, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "SERVICIO_RECIBIDO",
+        "document_id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+        "docnum": "SRV-20261110-00116",
+        "fecha": "2026-11-09",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 4000,
+        "total_cup": 4000,
+        "movimientos": [
+          {
+            "categoria": "GAS_SERVICIOS",
+            "sentido": "debito",
+            "importe_cup": 4000
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "credito",
+            "importe_cup": 4000
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=SERVICIO_RECIBIDO, document_id=804a5e3d-90bc-45d1-935c-3de55f1b35a6, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "SERVICIO_RECIBIDO",
+        "document_id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+        "docnum": "SRV-20261110-00115",
+        "fecha": "2026-11-09",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 2900,
+        "total_cup": 2900,
+        "movimientos": [
+          {
+            "categoria": "GAS_SERVICIOS",
+            "sentido": "debito",
+            "importe_cup": 2900
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "credito",
+            "importe_cup": 2900
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=SERVICIO_RECIBIDO, document_id=e350a933-7063-4e1c-9d24-aa48ee7266e4, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "SERVICIO_RECIBIDO",
+        "document_id": "d9e9f2d1-a8e9-4a6a-89db-832dbc71195f",
+        "docnum": "SRV-20261022-00085",
+        "fecha": "2026-10-22",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 2400,
+        "total_cup": 2400,
+        "movimientos": [
+          {
+            "categoria": "GAS_SERVICIOS",
+            "sentido": "debito",
+            "importe_cup": 2400
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "credito",
+            "importe_cup": 2400
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=SERVICIO_RECIBIDO, document_id=d9e9f2d1-a8e9-4a6a-89db-832dbc71195f, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "SERVICIO_RECIBIDO",
+        "document_id": "10b10057-8a58-453e-b3df-a0c56d768a85",
+        "docnum": "SRV-20261026-00087",
+        "fecha": "2026-10-26",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 400,
+        "total_cup": 400,
+        "movimientos": [
+          {
+            "categoria": "GAS_SERVICIOS",
+            "sentido": "debito",
+            "importe_cup": 400
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "credito",
+            "importe_cup": 400
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=SERVICIO_RECIBIDO, document_id=10b10057-8a58-453e-b3df-a0c56d768a85, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "document_id": "a7ec47fa-cbd6-4917-a586-e1d099354fe2",
+        "docnum": "VS-000001-2026",
+        "fecha": "2026-08-15",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 0.6,
+        "total_cup": 0.6,
+        "movimientos": [
+          {
+            "categoria": "GAS_VALES",
+            "sentido": "debito",
+            "importe_cup": 0.6
+          },
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "credito",
+            "importe_cup": 0.6
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=VALE_SALIDA, document_id=a7ec47fa-cbd6-4917-a586-e1d099354fe2, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "document_id": "c7b81a17-4605-47a4-959d-2b49b46c41fe",
+        "docnum": "VS-000002-2026",
+        "fecha": "2026-08-15",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 0.9,
+        "total_cup": 0.9,
+        "movimientos": [
+          {
+            "categoria": "GAS_VALES",
+            "sentido": "debito",
+            "importe_cup": 0.9
+          },
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "credito",
+            "importe_cup": 0.9
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=VALE_SALIDA, document_id=c7b81a17-4605-47a4-959d-2b49b46c41fe, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "document_id": "37708360-97fd-4865-b975-490b01fa8637",
+        "docnum": "VS-000003-2026",
+        "fecha": "2026-09-02",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 50,
+        "total_cup": 50,
+        "movimientos": [
+          {
+            "categoria": "GAS_VALES",
+            "sentido": "debito",
+            "importe_cup": 50
+          },
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "credito",
+            "importe_cup": 50
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=VALE_SALIDA, document_id=37708360-97fd-4865-b975-490b01fa8637, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "document_id": "b1985b9b-c7b6-44d1-a7b9-040c26066cf4",
+        "docnum": "VS-000004-2026",
+        "fecha": "2026-09-05",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 59,
+        "total_cup": 59,
+        "movimientos": [
+          {
+            "categoria": "GAS_VALES",
+            "sentido": "debito",
+            "importe_cup": 59
+          },
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "credito",
+            "importe_cup": 59
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=VALE_SALIDA, document_id=b1985b9b-c7b6-44d1-a7b9-040c26066cf4, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "document_id": "853251b6-9c25-439a-a0c9-1cc92da88a63",
+        "docnum": "VS-000005-2026",
+        "fecha": "2026-09-08",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 0,
+        "total_cup": 0,
+        "movimientos": [
+          {
+            "categoria": "GAS_VALES",
+            "sentido": "debito",
+            "importe_cup": 0
+          },
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "credito",
+            "importe_cup": 0
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=VALE_SALIDA, document_id=853251b6-9c25-439a-a0c9-1cc92da88a63, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "AJUSTE_INVENTARIO",
+        "document_id": "a96e09c3-63e8-4d37-b1d8-0f595de48d8f",
+        "docnum": "a96e09c3-63e8-4d37-b1d8-0f595de48d8f",
+        "fecha": "2026-10-26",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 1,
+        "total_cup": 1,
+        "movimientos": [
+          {
+            "categoria": "ACT_INVENTARIO",
+            "sentido": "debito",
+            "importe_cup": 1
+          },
+          {
+            "categoria": "GAS_AJUSTES",
+            "sentido": "credito",
+            "importe_cup": 1
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=AJUSTE_INVENTARIO, document_id=a96e09c3-63e8-4d37-b1d8-0f595de48d8f, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "COMISION",
+        "document_id": "7374dfad-b01b-477a-b2b0-4175f2dd2bfe",
+        "docnum": "7374dfad-b01b-477a-b2b0-4175f2dd2bfe",
+        "fecha": "2026-10-15",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 300,
+        "total_cup": 300,
+        "movimientos": [
+          {
+            "categoria": "GAS_COMISIONES",
+            "sentido": "debito",
+            "importe_cup": 300
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 300
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=COMISION, document_id=7374dfad-b01b-477a-b2b0-4175f2dd2bfe, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "FLUJO_CAJA",
+        "document_id": "f158d156-d067-4d88-8eae-a0638424d39a",
+        "docnum": "IE-000001-2026",
+        "fecha": "2026-10-23",
+        "moneda_doc": "CUP",
+        "tasa": 1,
+        "total_doc_origen": 8435679.98,
+        "total_cup": 8435679.98,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "debito",
+            "importe_cup": 8435679.98
+          },
+          {
+            "categoria": "ING_VARIOS",
+            "sentido": "credito",
+            "importe_cup": 8435679.98
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=FLUJO_CAJA, document_id=f158d156-d067-4d88-8eae-a0638424d39a, event=reconocimiento) + fin_movements(entry_id→doc)"
+      },
+      {
+        "tipo": "FLUJO_CAJA",
+        "document_id": "cd07fc7d-222c-423a-8afc-463252e4b411",
+        "docnum": "IE-000002-2026",
+        "fecha": "2026-10-23",
+        "moneda_doc": "USD",
+        "tasa": 800,
+        "total_doc_origen": 367,
+        "total_cup": 293600,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "debito",
+            "importe_cup": 293600
+          },
+          {
+            "categoria": "ING_VARIOS",
+            "sentido": "credito",
+            "importe_cup": 293600
+          }
+        ],
+        "trazabilidad": "fin_entries(document_type=FLUJO_CAJA, document_id=cd07fc7d-222c-423a-8afc-463252e4b411, event=reconocimiento) + fin_movements(entry_id→doc)"
+      }
+    ]
+  },
+  "monedas": {
+    "nota": "Importes en moneda de origen y CUP-equivalente reportados por SEPARADO; sin sumas entre monedas distintas ni conversiones no autorizadas.",
+    "por_moneda": [
+      {
+        "moneda": "CUP",
+        "docs": 1210,
+        "importe_origen": 250955173.1284,
+        "importe_cup_equiv": 250955173.12999997
+      },
+      {
+        "moneda": "USD",
+        "docs": 132,
+        "importe_origen": 11071251.97,
+        "importe_cup_equiv": 7578135029.599999
+      }
+    ]
+  },
+  "duplicados": {
+    "numeros_documento": [
+      {
+        "tipo": "RECEPCION",
+        "num": null,
+        "n": 95
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "num": "VS-000002-2026",
+        "n": 2
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "num": "VS-000003-2026",
+        "n": 2
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "num": "VS-000004-2026",
+        "n": 2
+      },
+      {
+        "tipo": "VENTA",
+        "num": null,
+        "n": 716
+      }
+    ],
+    "idempotency_keys": 0
+  },
+  "anulaciones": {
+    "docs_anulados_ya_contabilizados": [],
+    "docs_voided": [
+      {
+        "tipo": "RECEPCION",
+        "n": 0
+      },
+      {
+        "tipo": "SERVICIO_RECIBIDO",
+        "n": 5
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "n": 1
+      }
+    ]
+  },
+  "inconsistencias": [],
+  "idempotencia": {
+    "pasadas": [
+      {
+        "nombre": "PASADA 1",
+        "asientos_elegibles": 1342,
+        "movimientos": 4662,
+        "hash_resultados": "e49ad57b3245227b9970a1f4724d336b7a7f4ef8b4c11e2676be1ed6cc0b7bb4"
+      },
+      {
+        "nombre": "PASADA 2",
+        "asientos_elegibles": 1342,
+        "movimientos": 4662,
+        "hash_resultados": "e49ad57b3245227b9970a1f4724d336b7a7f4ef8b4c11e2676be1ed6cc0b7bb4"
+      }
+    ],
+    "iguales": true,
+    "explicacion": "La segunda pasada recalcula la MISMA elegibilidad (la condición \"SIN asiento previo\" no cambia porque el dry-run no escribe) y produce resultados idénticos (hash SHA-256 de asientos/importes igual). El backfill real es idempotente además por el guard de fin_post_document (asiento existente → NULL) y NOT EXISTS previo en fin_backfill; re-ejecutar el dry-run no puede duplicar nada porque no inserta nada."
+  },
+  "comparacion_originales": {
+    "checks": 2684,
+    "discrepancias": [],
+    "sumas_por_tipo": [
+      {
+        "tipo": "VENTA",
+        "docs": 989,
+        "sum_total_cup_docs": 7611954299.61,
+        "sum_debitos_esperado": 7611954299.61,
+        "coinciden": true
+      },
+      {
+        "tipo": "DEVOLUCION_VENTA",
+        "docs": 2,
+        "sum_total_cup_docs": 239405,
+        "sum_debitos_esperado": 239405,
+        "coinciden": true
+      },
+      {
+        "tipo": "RECEPCION",
+        "docs": 96,
+        "sum_total_cup_docs": 207255149.27,
+        "sum_debitos_esperado": 207255149.27,
+        "coinciden": true
+      },
+      {
+        "tipo": "SERVICIO_RECIBIDO",
+        "docs": 16,
+        "sum_total_cup_docs": 33215,
+        "sum_debitos_esperado": 33215,
+        "coinciden": true
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "docs": 235,
+        "sum_total_cup_docs": 878552.87,
+        "sum_debitos_esperado": 878552.87,
+        "coinciden": true
+      },
+      {
+        "tipo": "AJUSTE_INVENTARIO",
+        "docs": 1,
+        "sum_total_cup_docs": 1,
+        "sum_debitos_esperado": 1,
+        "coinciden": true
+      },
+      {
+        "tipo": "COMISION",
+        "docs": 1,
+        "sum_total_cup_docs": 300,
+        "sum_debitos_esperado": 300,
+        "coinciden": true
+      },
+      {
+        "tipo": "NOMINA",
+        "docs": 0,
+        "sum_total_cup_docs": 0,
+        "sum_debitos_esperado": 0,
+        "coinciden": true
+      },
+      {
+        "tipo": "FLUJO_CAJA",
+        "docs": 2,
+        "sum_total_cup_docs": 8729279.98,
+        "sum_debitos_esperado": 8729279.98,
+        "coinciden": true
+      },
+      {
+        "tipo": "VENTA",
+        "docs": 989,
+        "sum_total_cup_docs": 7611954299.61,
+        "sum_debitos_esperado": 7611954299.61,
+        "coinciden": true
+      },
+      {
+        "tipo": "DEVOLUCION_VENTA",
+        "docs": 2,
+        "sum_total_cup_docs": 239405,
+        "sum_debitos_esperado": 239405,
+        "coinciden": true
+      },
+      {
+        "tipo": "RECEPCION",
+        "docs": 96,
+        "sum_total_cup_docs": 207255149.27,
+        "sum_debitos_esperado": 207255149.27,
+        "coinciden": true
+      },
+      {
+        "tipo": "SERVICIO_RECIBIDO",
+        "docs": 16,
+        "sum_total_cup_docs": 33215,
+        "sum_debitos_esperado": 33215,
+        "coinciden": true
+      },
+      {
+        "tipo": "VALE_SALIDA",
+        "docs": 235,
+        "sum_total_cup_docs": 878552.87,
+        "sum_debitos_esperado": 878552.87,
+        "coinciden": true
+      },
+      {
+        "tipo": "AJUSTE_INVENTARIO",
+        "docs": 1,
+        "sum_total_cup_docs": 1,
+        "sum_debitos_esperado": 1,
+        "coinciden": true
+      },
+      {
+        "tipo": "COMISION",
+        "docs": 1,
+        "sum_total_cup_docs": 300,
+        "sum_debitos_esperado": 300,
+        "coinciden": true
+      },
+      {
+        "tipo": "NOMINA",
+        "docs": 0,
+        "sum_total_cup_docs": 0,
+        "sum_debitos_esperado": 0,
+        "coinciden": true
+      },
+      {
+        "tipo": "FLUJO_CAJA",
+        "docs": 2,
+        "sum_total_cup_docs": 8729279.98,
+        "sum_debitos_esperado": 8729279.98,
+        "coinciden": true
+      }
+    ]
+  },
+  "backfill_pagos_posteriores": {
+    "nota": "fin_backfill también genera asientos de PAGO por payment_transactions de recepciones/servicios (evento='pago', direction='in', sin asiento previo con payment_ref). Incluido en el dry-run:",
+    "elegibles": [
+      {
+        "ref_type": "service",
+        "n": 16,
+        "importe_cup": 33215.0,
+        "asientos_pago": 16,
+        "movimientos": 32
+      }
+    ],
+    "receipt": {
+      "n": 0
+    },
+    "pagos_con_moneda_distinta_al_doc": 0
+  }
+}
