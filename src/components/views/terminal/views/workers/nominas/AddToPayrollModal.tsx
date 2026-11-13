@@ -421,7 +421,7 @@ export function AddToPayrollModal({
         {selected !== 'new' && !loadingDetail && draftDetail && (draftDetail.items ?? []).length > 0 && (
           <div className="mt-2 rounded-lg border border-border/60 bg-muted/20 p-2">
             <p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
-              Trabajadores ya en la nómina ({draftDetail.items.length})
+              Trabajadores ya en la nómina ({(draftDetail.items ?? []).length})
             </p>
             <p className="mt-0.5 text-[11px] text-muted-foreground truncate" title={(draftDetail.items ?? []).map((i) => i.worker_names).join(', ')}>
               {(draftDetail.items ?? []).map((i) => i.worker_names).join(' · ')}

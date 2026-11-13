@@ -122,7 +122,7 @@ beforeEach(() => {
 // ═════════════════════════════════════════════════════════════════════════
 describe('POST /api/payrolls — store_id del body (fix causa raíz nº1)', () => {
   it('con store_id en el body: lo usa como p_store_id (la tienda que opera la UI)', async () => {
-    const res = await CREATE_PAYROLL(makeReq({ ...basePayload, store_id: '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1' }) as any, sessionState.value);
+    const res = await CREATE_PAYROLL(makeReq({ ...basePayload, store_id: '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1' }) as any);
     expect(res.status).toBe(201);
     expect(rpcCalls).toHaveLength(1);
     expect(rpcCalls[0].name).toBe('create_payroll');
@@ -134,28 +134,28 @@ describe('POST /api/payrolls — store_id del body (fix causa raíz nº1)', () =
   });
 
   it('SIN store_id en el body: fallback a profiles.active_store_id (compatibilidad legacy)', async () => {
-    const res = await CREATE_PAYROLL(makeReq(basePayload) as any, sessionState.value);
+    const res = await CREATE_PAYROLL(makeReq(basePayload) as any);
     expect(res.status).toBe(201);
     expect(rpcCalls[0].args.p_store_id).toBe('store-perfil');
   });
 
   it('sin body-store ni perfil → 400 «Usuario sin tienda activa configurada»', async () => {
     profileLookup.value = { active_store_id: null };
-    const res = await CREATE_PAYROLL(makeReq(basePayload) as any, sessionState.value);
+    const res = await CREATE_PAYROLL(makeReq(basePayload) as any);
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: expect.stringMatching(/sin tienda activa/i) });
     expect(rpcCalls).toHaveLength(0);
   });
 
   it('store_id no-uuid → rechazado por zod (400) sin tocar el RPC', async () => {
-    const res = await CREATE_PAYROLL(makeReq({ ...basePayload, store_id: 'no-es-un-uuid' }) as any, sessionState.value);
+    const res = await CREATE_PAYROLL(makeReq({ ...basePayload, store_id: 'no-es-un-uuid' }) as any);
     expect(res.status).toBe(400);
     expect(rpcCalls).toHaveLength(0);
   });
 
   it('error del RPC ERR_WORKER_NOT_ELIGIBLE → 422 con mensaje de usuario y rpc_error', async () => {
     rpcResult.value = { data: null, error: { message: 'ERR_WORKER_NOT_ELIGIBLE: 92cb3140 (debe pertenecer a la tienda y estar activo)' } };
-    const res = await CREATE_PAYROLL(makeReq({ ...basePayload, store_id: '55555555-5555-4555-8555-555555555555' }) as any, sessionState.value);
+    const res = await CREATE_PAYROLL(makeReq({ ...basePayload, store_id: '55555555-5555-4555-8555-555555555555' }) as any);
     expect(res.status).toBe(422);
     const body = await res.json();
     expect(body.error).toMatch(/no pertenece a la tienda o no está activo/i);
@@ -164,7 +164,7 @@ describe('POST /api/payrolls — store_id del body (fix causa raíz nº1)', () =
 
   it('error del RPC ERR_UNAUTHORIZED (store ajeno) → 403 «Sin acceso a la tienda»', async () => {
     rpcResult.value = { data: null, error: { message: 'ERR_UNAUTHORIZED' } };
-    const res = await CREATE_PAYROLL(makeReq({ ...basePayload, store_id: '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1' }) as any, sessionState.value);
+    const res = await CREATE_PAYROLL(makeReq({ ...basePayload, store_id: '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1' }) as any);
     expect(res.status).toBe(403);
     expect((await res.json()).error).toMatch(/sin acceso a la tienda/i);
   });
@@ -173,7 +173,7 @@ describe('POST /api/payrolls — store_id del body (fix causa raíz nº1)', () =
     const res = await CREATE_PAYROLL(makeReq({
       ...basePayload, store_id: '43a4dabc-b8b4-4b66-82b3-0c75335ca5d1',
       items: [{ ...baseItem, worker_names: 'hack', total_net: 999 }],
-    }) as any, sessionState.value);
+    }) as any);
     expect(res.status).toBe(201);
     const item = rpcCalls[0].args.p_items[0];
     expect(item).toMatchObject({ worker_id: baseItem.worker_id, accrued_days: 5 });
@@ -200,41 +200,41 @@ describe('GET /api/workers — búsqueda y tarifa evaluada al período', () => {
   });
 
   it('store_id es obligatorio', async () => {
-    const res = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers') as any, sessionState.value);
+    const res = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers') as any);
     expect(res.status).toBe(400);
   });
 
   it('alias worker_id ≡ id en la respuesta (el <select> original recibía undefined)', async () => {
-    const res = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1') as any, sessionState.value);
+    const res = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1') as any);
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.workers.every((w: any) => w.worker_id === w.id)).toBe(true);
   });
 
   it('q=dup → solo los Dup Test de la tienda (RLS/eq ya acota por store)', async () => {
-    const res = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&q=dup') as any, sessionState.value);
+    const res = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&q=dup') as any);
     const body = await res.json();
     expect(body.workers).toHaveLength(2);
     expect(body.workers.every((w: any) => w.first_name === 'Dup')).toBe(true);
   });
 
   it('q insensible a mayúsculas y acentos (DÚP ≡ dup; JOSÉ ≡ jose)', async () => {
-    const a = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&q=DÚP') as any, sessionState.value);
+    const a = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&q=DÚP') as any);
     expect((await a.json()).workers).toHaveLength(2);
-    const b = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&q=JOSÉ') as any, sessionState.value);
+    const b = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&q=JOSÉ') as any);
     expect((await b.json()).workers).toHaveLength(1);
   });
 
   it('q por CI y por expediente', async () => {
-    const byCi = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&q=99010192524') as any, sessionState.value);
+    const byCi = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&q=99010192524') as any);
     expect((await byCi.json()).workers).toHaveLength(1);
-    const byExp = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&q=EXP-0007') as any, sessionState.value);
+    const byExp = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&q=EXP-0007') as any);
     expect((await byExp.json()).workers).toHaveLength(1);
   });
 
   it('include_rate SIN período → tarifa vigente a HOY (compatibilidad)', async () => {
     // hoy simulado: la tarifa de w-3 venció el 10-31 → sin período no aplica
-    const res = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&include_rate=1') as any, sessionState.value);
+    const res = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&include_rate=1') as any);
     const body = await res.json();
     const w1 = body.workers.find((w: any) => w.id === 'w-1');
     const w2 = body.workers.find((w: any) => w.id === 'w-2');
@@ -248,7 +248,7 @@ describe('GET /api/workers — búsqueda y tarifa evaluada al período', () => {
   });
 
   it('include_rate CON período octubre → la tarifa de w-3 (válida 10-01→10-31) SÍ aplica', async () => {
-    const res = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&include_rate=1&period_start=2026-10-16&period_end=2026-10-31') as any, sessionState.value);
+    const res = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&include_rate=1&period_start=2026-10-16&period_end=2026-10-31') as any);
     const body = await res.json();
     const w3 = body.workers.find((w: any) => w.id === 'w-3');
     expect(w3.rate_amount).toBe(120);
@@ -261,9 +261,9 @@ describe('GET /api/workers — búsqueda y tarifa evaluada al período', () => {
 
   it('status=active filtra (los inactivos no desaparecen si no se pide el filtro)', async () => {
     dbState.workers[1].status = 'inactive';
-    const all = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1') as any, sessionState.value);
+    const all = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1') as any);
     expect((await all.json()).workers).toHaveLength(3);
-    const act = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&status=active') as any, sessionState.value);
+    const act = await LIST_WORKERS(makeGet('http://localhost:3000/api/workers?store_id=s-1&status=active') as any);
     expect((await act.json()).workers).toHaveLength(2);
   });
 });

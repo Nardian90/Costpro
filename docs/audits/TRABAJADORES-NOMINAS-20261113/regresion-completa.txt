@@ -1,0 +1,40 @@
+═══════════════════════════════════════════════════════════════════
+ REGRESIÓN COMPLETA — misión TRABAJADORES↔NÓMINAS (2026-11-13)
+ Entorno: sandbox local · rama fix/trabajadores-nominas-20261113
+═══════════════════════════════════════════════════════════════════
+
+GATES DE CALIDAD (mismos que CI):
+[✓] tsc --noEmit            → 0 errores (NODE_OPTIONS heap expandido 3GB)
+[✓] eslint .                → 0 errores (1544 warnings pre-existentes de
+                               refactor incremental <Button>, sin delta)
+[✓] vitest run (SUITE FULL) → 5956 passed | 95 skipped (pre-existentes)
+                               432 archivos | 6 skipped · Duration 513s
+[✓] ci-gate-ts-checks.js    → ALL TypeScript security checks PASSED
+[✓] check-writers.mjs       → OK (verify-trabajadores-nominas.mjs
+                               declarado como isolationProtected: 15)
+[✓] ci-gate-sql-checks.js   → generación OK (sin migraciones nuevas en
+                               esta misión — superficie SQL intacta)
+
+E2E AISLADA (CostproE2E, ref lguovmvrozxgssupkwpf — PRODUCCIÓN PROHIBIDA):
+[✓] scripts/e2e/verify-trabajadores-nominas.mjs → 26/26 PASS
+    (ver verify-trabajadores-nominas-aislado-26de26.txt)
+[✓] e2e/creation/nominas-worker-selector.spec.ts (browser real,
+    proyecto 'creation', E2E_ALLOW_CREATION=1 E2E_ISOLATION=1) → 2/2 PASS
+    S1 selector dinámico: escribir → resultado con CI+tarifa → seleccionar →
+       línea → horas → Guardar borrador → NOM-* con totales del servidor
+    S2 «Agregar a Nómina» desde la fila → modal → crear nómina → navegación
+       automática a la pestaña Nóminas con el editor abierto
+[✓] data-hygiene-guard.cjs  → PASS — net delta = 0 (stores=0 users=0)
+[✓] global-teardown        → Guardrail PASS — net delta = 0
+
+TESTS UNITARIOS NUEVOS (47):
+[✓] worker-eligibility.test.ts            → 8/8
+[✓] worker-search-select.test.tsx         → 18/18
+[✓] add-to-payroll-modal.test.tsx         → 6/6
+[✓] payrolls-workers-integration-route.ts → 15/15
+
+CASO DUP TEST (producción wthkddeleylijmonclxg, read-only + ciclo auditable):
+[✓] repro-error-original.txt   → HTTP 422 ERR_WORKER_NOT_ELIGIBLE (antes)
+[✓] verify-dup-test-fixed-14de14.txt → 14/14 PASS (después)
+    Nómina de verificación NOM-000001-2026 (e9d54b7e…) queda ANULADA y
+    visible en el histórico de COSTPRO (Prueba) como evidencia auditable.

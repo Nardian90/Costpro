@@ -1,0 +1,48 @@
+══ PERFIL admin@demo.com (ANTES) ══
+{
+  "id": "a1111111-1111-1111-1111-111111111111",
+  "email": "admin@demo.com",
+  "role": "superadmin",
+  "active_store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38"
+}
+
+══ SIGN-IN admin@demo.com ══ OK (token GoTrue obtenido)
+
+══ GET /api/workers (COSTRO Prueba) ══ HTTP 200
+Total workers activos: 53 · con tarifa: 1
+  CON TARIFA → Dup Test 92cb3140-0c47-4c8a-9c93-c9bec0b6f909 · 1000 CUP daily
+
+══ POST /api/payrolls (Dup Test, tarifa diaria, 5 días) ══
+Payload (mismo contrato que PayrollEditor): {
+  "tipo_nomina": "sueldos",
+  "period_start": "2026-11-01",
+  "period_end": "2026-11-13",
+  "payment_method": "efectivo",
+  "cheque_number": null,
+  "cheque_date": null,
+  "reintegro_number": null,
+  "reintegro_date": null,
+  "notes": null,
+  "items": [
+    {
+      "worker_id": "92cb3140-0c47-4c8a-9c93-c9bec0b6f909",
+      "accrued_days": 5,
+      "overtime_hours": 0,
+      "overtime_amount": 0,
+      "vacation_days": 0,
+      "vacation_amount": 0
+    }
+  ],
+  "idempotency_key": "repro-dup-test-1794579017393"
+}
+
+HTTP 422
+{
+  "error": "El trabajador no pertenece a la tienda o no está activo",
+  "rpc_error": "ERR_WORKER_NOT_ELIGIBLE: 92cb3140-0c47-4c8a-9c93-c9bec0b6f909 (debe pertenecer a la tienda y estar activo)"
+}
+
+✗ REPRODUCIDO: la operación NO se completa (nada escrito en BD).
+
+══ CONTRASTE ══ profiles.active_store_id = 5e6fe821-5465-48b1-b3f1-3aa3182edc38 (ENERVIDA-VITALLCONS)
+Workers de esa tienda: 1 — Dup Test NO está ahí → ERR_WORKER_NOT_ELIGIBLE
