@@ -59,6 +59,45 @@ function getErrorMsg(err: unknown): string {
   if (raw.includes('ERR_SKU_LOCKED_BY_MOVEMENTS')) {
     return 'El SKU no puede modificarse: el producto tiene movimientos históricos asociados (trazabilidad contable).';
   }
+  // CP-PROD-DEL-001 (2026-11-13): traducción de errores de BD al eliminar o
+  // desactivar productos — la interfaz explica la causa real, no el SQL crudo.
+  if (raw.includes('audit_logs_store_id_check')) {
+    return 'No se pudo registrar la auditoría de la operación. Inténtalo de nuevo; si persiste, contacta al administrador del sistema.';
+  }
+  if (raw.includes('No se puede eliminar un producto con movimientos')) {
+    return 'No se puede eliminar un producto con movimientos históricos (ventas, recepciones o kardex). Desactívalo en su lugar.';
+  }
+  if (raw.includes('devoluciones registradas')) {
+    return 'No se puede eliminar: el producto tiene devoluciones registradas y su historial debe conservarse.';
+  }
+  if (raw.includes('solicitudes de material')) {
+    return 'No se puede eliminar: el producto aparece en solicitudes de material y su historial debe conservarse.';
+  }
+  if (raw.includes('ventas registradas')) {
+    return 'No se puede eliminar: el producto tiene ventas registradas. Desactívalo en su lugar.';
+  }
+  if (raw.includes('movimientos de inventario registrados')) {
+    return 'No se puede eliminar: el producto tiene movimientos de inventario registrados. Desactívalo en su lugar.';
+  }
+  if (raw.includes('compras registradas')) {
+    return 'No se puede eliminar: el producto aparece en compras registradas. Desactívalo en su lugar.';
+  }
+  if (raw.includes('transferencias entre tiendas')) {
+    return 'No se puede eliminar: el producto aparece en transferencias entre tiendas. Desactívalo en su lugar.';
+  }
+  if (raw.includes('vales de salida')) {
+    return 'No se puede eliminar: el producto aparece en vales de salida. Desactívalo en su lugar.';
+  }
+  if (raw.includes('conteos físicos')) {
+    return 'No se puede eliminar: el producto aparece en conteos físicos de inventario.';
+  }
+  if (raw.includes('órdenes de producción')) {
+    return 'No se puede eliminar: el producto participa en órdenes de producción. Desactívalo en su lugar.';
+  }
+  // FK genérica (23503): documento histórico que referencia al producto.
+  if (raw.includes('violates foreign key constraint')) {
+    return 'No se puede eliminar: existen documentos históricos que referencian este producto y su trazabilidad debe conservarse. Desactívalo en su lugar.';
+  }
   if (!err) return 'Error desconocido';
   if (err instanceof Error) return err.message;
   const obj = err as Record<string, unknown>;
