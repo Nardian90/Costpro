@@ -1,5 +1,5 @@
 {
-  "generado": "2026-11-13T17:09:41.097Z",
+  "generado": "2026-11-13T18:04:34.749Z",
   "ref": "wthkddeleylijmonclxg",
   "modo": "DRY-RUN read-only",
   "conteos_antes": {
@@ -1030,7 +1030,21 @@
         ],
         "trazabilidad": "fin_entries(document_type=FLUJO_CAJA, document_id=cd07fc7d-222c-423a-8afc-463252e4b411, event=reconocimiento) + fin_movements(entry_id→doc)"
       }
-    ]
+    ],
+    "desglose": {
+      "reconocimiento": {
+        "asientos": 1342,
+        "movimientos": 4662
+      },
+      "pagos_posteriores": {
+        "asientos": 16,
+        "movimientos": 32
+      }
+    },
+    "totales": {
+      "asientos": 1358,
+      "movimientos": 4694
+    }
   },
   "monedas": {
     "nota": "Importes en moneda de origen y CUP-equivalente reportados por SEPARADO; sin sumas entre monedas distintas ni conversiones no autorizadas.",
@@ -1050,34 +1064,50 @@
     ]
   },
   "duplicados": {
-    "numeros_documento": [
-      {
-        "tipo": "RECEPCION",
-        "num": null,
-        "n": 95
-      },
-      {
-        "tipo": "VALE_SALIDA",
-        "num": "VS-000002-2026",
-        "n": 2
-      },
-      {
-        "tipo": "VALE_SALIDA",
-        "num": "VS-000003-2026",
-        "n": 2
-      },
-      {
-        "tipo": "VALE_SALIDA",
-        "num": "VS-000004-2026",
-        "n": 2
-      },
-      {
-        "tipo": "VENTA",
-        "num": null,
-        "n": 716
-      }
-    ],
-    "idempotency_keys": 0
+    "numeros_documento": [],
+    "idempotency_keys": 0,
+    "reclasificacion": {
+      "sin_numeracion": [
+        {
+          "tipo": "RECEPCION",
+          "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+          "tienda": "COSTPRO (Prueba)",
+          "n": 3
+        },
+        {
+          "tipo": "RECEPCION",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "tienda": "ENERVIDA-VITALLCONS",
+          "n": 87
+        },
+        {
+          "tipo": "RECEPCION",
+          "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+          "tienda": "PUERTO PADRE",
+          "n": 5
+        },
+        {
+          "tipo": "VENTA",
+          "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+          "tienda": "COSTPRO (Prueba)",
+          "n": 213
+        },
+        {
+          "tipo": "VENTA",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "tienda": "ENERVIDA-VITALLCONS",
+          "n": 434
+        },
+        {
+          "tipo": "VENTA",
+          "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+          "tienda": "PUERTO PADRE",
+          "n": 69
+        }
+      ],
+      "duplicados_reales": [],
+      "duplicados_contabilizacion": []
+    }
   },
   "anulaciones": {
     "docs_anulados_ya_contabilizados": [],
@@ -1101,19 +1131,28 @@
     "pasadas": [
       {
         "nombre": "PASADA 1",
-        "asientos_elegibles": 1342,
-        "movimientos": 4662,
-        "hash_resultados": "e49ad57b3245227b9970a1f4724d336b7a7f4ef8b4c11e2676be1ed6cc0b7bb4"
+        "asientos_reconocimiento": 1342,
+        "movimientos_reconocimiento": 4662,
+        "asientos_pago": 16,
+        "movimientos_pago": 32,
+        "asientos_totales": 1358,
+        "movimientos_totales": 4694,
+        "hash_resultados": "32109d55dd3fb0db098f160b369add2c3a253e8f59fd2b762e092caac30945b4"
       },
       {
         "nombre": "PASADA 2",
-        "asientos_elegibles": 1342,
-        "movimientos": 4662,
-        "hash_resultados": "e49ad57b3245227b9970a1f4724d336b7a7f4ef8b4c11e2676be1ed6cc0b7bb4"
+        "asientos_reconocimiento": 1342,
+        "movimientos_reconocimiento": 4662,
+        "asientos_pago": 16,
+        "movimientos_pago": 32,
+        "asientos_totales": 1358,
+        "movimientos_totales": 4694,
+        "hash_resultados": "32109d55dd3fb0db098f160b369add2c3a253e8f59fd2b762e092caac30945b4"
       }
     ],
     "iguales": true,
-    "explicacion": "La segunda pasada recalcula la MISMA elegibilidad (la condición \"SIN asiento previo\" no cambia porque el dry-run no escribe) y produce resultados idénticos (hash SHA-256 de asientos/importes igual). El backfill real es idempotente además por el guard de fin_post_document (asiento existente → NULL) y NOT EXISTS previo en fin_backfill; re-ejecutar el dry-run no puede duplicar nada porque no inserta nada."
+    "explicacion": "La segunda pasada recalcula la MISMA elegibilidad (la condición \"SIN asiento previo\" no cambia porque el dry-run no escribe) y produce resultados idénticos (hash SHA-256 de asientos/importes igual). El backfill real es idempotente además por el guard de fin_post_document (asiento existente → NULL) y NOT EXISTS previo en fin_backfill; re-ejecutar el dry-run no puede duplicar nada porque no inserta nada.",
+    "alcance_hash": "Por cada doc de RECONOCIMIENTO (orden: TIPO_SQL en orden de clave, filas en orden SQL): \"tipo|id|total_cup|debitos:creditos\". Por cada PAGO posterior (orden pt.id): \"PAGO|pago_id|total_cup|debito:credito\". La lista de elegibles y el importe total_cup de cada doc/pago son los datos que determinan el hash."
   },
   "comparacion_originales": {
     "checks": 2684,
@@ -1247,20 +1286,319 @@
       }
     ]
   },
-  "backfill_pagos_posteriores": {
-    "nota": "fin_backfill también genera asientos de PAGO por payment_transactions de recepciones/servicios (evento='pago', direction='in', sin asiento previo con payment_ref). Incluido en el dry-run:",
-    "elegibles": [
+  "pagos_posteriores": {
+    "por_ref_type": [
       {
         "ref_type": "service",
-        "n": 16,
-        "importe_cup": 33215.0,
-        "asientos_pago": 16,
-        "movimientos": 32
+        "pago_id": "0fe5ba03-51d3-4639-bf41-90b97164ca33",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 300,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 300
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 300
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "0ffb8cff-1103-4f2d-86fc-85c12d6eb4b9",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 5000,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 5000
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 5000
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "2fa12d54-5ed0-479c-8017-40f3d46320ce",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "moneda_pago": "CUP",
+        "importe_cup": 2900,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 2900
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 2900
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "36ce35ef-d001-4a48-b340-5ff3e128945f",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 2400,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 2400
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 2400
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "3c90ca9d-28c5-44e8-864b-45eec6c7de9a",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 860,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 860
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 860
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "4b42169b-8a32-4363-aa3f-8308d82e21a5",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 3000,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 3000
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 3000
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "7c008277-c39b-471b-b015-b4387cfb4e2b",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "moneda_pago": "CUP",
+        "importe_cup": 4000,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 4000
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 4000
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "84368079-3c96-45f9-9d36-ae3869667253",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 2400,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 2400
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 2400
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "85929397-3a23-4c48-8b3a-d657907c59f2",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 6100,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 6100
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 6100
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "8d533694-4c41-4793-8c21-7eee766b2e19",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 1000,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 1000
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 1000
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "95a89b51-1869-4064-bff3-0276f0ba0b66",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 800,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 800
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 800
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "cf5175af-8907-4751-aee7-9342918ffafc",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 250,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 250
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 250
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "d4df9348-e093-4cfb-bc05-ea5b982c4613",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 800,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 800
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 800
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "e9736c20-5569-4721-b4e2-08d7fc84a38b",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 650,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 650
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 650
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "f3f48643-c296-499c-9e55-3cd4bfff3785",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 2355,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 2355
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 2355
+          }
+        ]
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "ffaae38e-459d-4cc9-9e8e-9ae733e22639",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "moneda_pago": "CUP",
+        "importe_cup": 400,
+        "movimientos": [
+          {
+            "categoria": "PAS_CXP_PROV",
+            "sentido": "debito",
+            "importe_cup": 400
+          },
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 400
+          }
+        ]
       }
     ],
-    "receipt": {
-      "n": 0
-    },
-    "pagos_con_moneda_distinta_al_doc": 0
+    "total_asientos": 16,
+    "total_movimientos": 32,
+    "importe_cup": 33215,
+    "pagos_con_moneda_distinta_al_doc": 0,
+    "por_ref_type_resumen": {
+      "service": 16
+    }
   }
 }

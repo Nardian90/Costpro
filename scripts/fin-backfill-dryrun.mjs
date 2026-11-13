@@ -185,13 +185,20 @@ const REPORT = {
   tiendas: [],
   elegibles: { por_grupo: [], total_docs: 0 },
   excluidos: { por_motivo: [], total: 0 },
-  asientos: { por_tipo: [], total: 0, movimientos: 0, balanceados: 0, desbalanceados_docs: [], detalle_muestra: [] },
+  asientos: {
+    por_tipo: [], total: 0, movimientos: 0, balanceados: 0,
+    desbalanceados_docs: [], detalle_muestra: [],
+    // desglose reconciliado: reconocimiento vs pagos posteriores
+    desglose: { reconocimiento: { asientos: 0, movimientos: 0 }, pagos_posteriores: { asientos: 0, movimientos: 0 } },
+    totales: { asientos: 0, movimientos: 0 },
+  },
   monedas: { nota: 'Importes en moneda de origen y CUP-equivalente reportados por SEPARADO; sin sumas entre monedas distintas ni conversiones no autorizadas.', por_moneda: [] },
-  duplicados: { numeros_documento: [], idempotency_keys: 0 },
+  duplicados: { numeros_documento: [], idempotency_keys: 0, reclasificacion: { sin_numeracion: [], duplicados_reales: [], duplicados_contabilizacion: [] } },
   anulaciones: { docs_anulados_ya_contabilizados: [], docs_voided: [] },
   inconsistencias: [],
-  idempotencia: { pasadas: [], iguales: null, explicacion: '' },
+  idempotencia: { pasadas: [], iguales: null, explicacion: '', alcance_hash: '' },
   comparacion_originales: { checks: 0, discrepancias: [], sumas_por_tipo: [] },
+  pagos_posteriores: { por_ref_type: [], total_asientos: 0, total_movimientos: 0, importe_cup: 0, pagos_con_moneda_distinta_al_doc: 0 },
 };
 
 async function simulatePass(nombre) {
@@ -276,7 +283,50 @@ async function simulatePass(nombre) {
       }
     }
   }
+  // ── PAGOS POSTERIORES (parte de la pasada: asientos de pago de
+  //    payment_transactions receipt/service sin asiento previo; espejo del
+  //    evento 'pago' de fin_backfill: 1 asiento = 2 movimientos
+  //    [PAS_CXP_PROV débito / ACT_EFECTIVO_CUP crédito] por pago) ──
+  const pagos = await q(`SELECT pt.id, pt.store_id, pt.ref_type, pt.ref_id,
+      pt.currency AS cur, COALESCE(pt.exchange_rate,1) AS rate, pt.amount AS amt,
+      round(COALESCE(pt.amount_cup,0),2) AS total_cup,
+      EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.payment_ref = pt.id) AS contabilizado
+    FROM public.payment_transactions pt
+    WHERE pt.ref_type IN ('receipt','service') ORDER BY pt.id`);
+  const pagosElegibles = pagos.filter(p => !p.contabilizado);
+  for (const p of pagosElegibles) {
+    const tc = Number(p.total_cup || 0);
+    // asiento de pago simulado (equilibrado por construcción)
+    const movs = [
+      { cat: 'PAS_CXP_PROV', sense: 'debito', amount_cup: Math.abs(tc) },
+      { cat: 'ACT_EFECTIVO_CUP', sense: 'credito', amount_cup: Math.abs(tc) },
+    ];
+    hash.update(`PAGO|${p.id}|${tc}|${movs.map(m => m.amount_cup).join(':')}`);
+    if (nombre === 'PASADA 1') {
+      REPORT.pagos_posteriores.por_ref_type.push({
+        ref_type: p.ref_type, pago_id: p.id, store_id: p.store_id,
+        moneda_pago: p.cur, importe_cup: tc,
+        movimientos: movs.map(m => ({ categoria: m.cat, sentido: m.sense, importe_cup: m.amount_cup })),
+      });
+    }
+  }
+  pass.asientos_pago = pagosElegibles.length;
+  pass.movimientos_pago = pagosElegibles.length * 2;
+  if (nombre === 'PASADA 1') {
+    REPORT.pagos_posteriores.total_asientos = pagosElegibles.length;
+    REPORT.pagos_posteriores.total_movimientos = pagosElegibles.length * 2;
+    REPORT.pagos_posteriores.importe_cup = Math.round(pagosElegibles.reduce((s, p) => s + Number(p.total_cup || 0), 0) * 100) / 100;
+    REPORT.pagos_posteriores.por_ref_type_resumen = {};
+    for (const p of pagosElegibles) {
+      const k = p.ref_type;
+      REPORT.pagos_posteriores.por_ref_type_resumen[k] = (REPORT.pagos_posteriores.por_ref_type_resumen[k] || 0) + 1;
+    }
+  }
+
   pass.hash = hash.digest('hex');
+  // alcance EXACTO de los datos incluidos en el hash (documentado para
+  // verificación independiente: concatenación en orden estable)
+  pass.alcance = 'Por cada doc de RECONOCIMIENTO (orden: TIPO_SQL en orden de clave, filas en orden SQL): "tipo|id|total_cup|debitos:creditos". Por cada PAGO posterior (orden pt.id): "PAGO|pago_id|total_cup|debito:credito". La lista de elegibles y el importe total_cup de cada doc/pago son los datos que determinan el hash.';
   return pass;
 }
 
@@ -292,18 +342,49 @@ async function main() {
   const p1 = await simulatePass('PASADA 1');
   const p2 = await simulatePass('PASADA 2');
   REPORT.idempotencia.pasadas = [
-    { nombre: 'PASADA 1', asientos_elegibles: p1.asientos, movimientos: p1.movimientos, hash_resultados: p1.hash },
-    { nombre: 'PASADA 2', asientos_elegibles: p2.asientos, movimientos: p2.movimientos, hash_resultados: p2.hash },
+    { nombre: 'PASADA 1',
+      asientos_reconocimiento: p1.asientos, movimientos_reconocimiento: p1.movimientos,
+      asientos_pago: p1.asientos_pago, movimientos_pago: p1.movimientos_pago,
+      asientos_totales: p1.asientos + p1.asientos_pago,
+      movimientos_totales: p1.movimientos + p1.movimientos_pago,
+      hash_resultados: p1.hash },
+    { nombre: 'PASADA 2',
+      asientos_reconocimiento: p2.asientos, movimientos_reconocimiento: p2.movimientos,
+      asientos_pago: p2.asientos_pago, movimientos_pago: p2.movimientos_pago,
+      asientos_totales: p2.asientos + p2.asientos_pago,
+      movimientos_totales: p2.movimientos + p2.movimientos_pago,
+      hash_resultados: p2.hash },
   ];
-  REPORT.idempotencia.iguales = p1.hash === p2.hash && p1.asientos === p2.asientos && p1.movimientos === p2.movimientos;
+  REPORT.idempotencia.iguales = p1.hash === p2.hash
+    && p1.asientos === p2.asientos && p1.movimientos === p2.movimientos
+    && p1.asientos_pago === p2.asientos_pago && p1.movimientos_pago === p2.movimientos_pago;
+  REPORT.idempotencia.alcance_hash = p1.alcance;
   REPORT.idempotencia.explicacion = 'La segunda pasada recalcula la MISMA elegibilidad (la condición "SIN asiento previo" no cambia porque el dry-run no escribe) y produce resultados idénticos (hash SHA-256 de asientos/importes igual). El backfill real es idempotente además por el guard de fin_post_document (asiento existente → NULL) y NOT EXISTS previo en fin_backfill; re-ejecutar el dry-run no puede duplicar nada porque no inserta nada.';
 
   // ── duplicados / anulaciones / inconsistencias (read-only) ─────
-  REPORT.duplicados.numeros_documento = await q(`SELECT tipo, num, n FROM (
-    SELECT 'VENTA' AS tipo, invoice_number AS num, count(*)::int AS n FROM public.transactions WHERE status='completed' GROUP BY 2 HAVING count(*)>1
-    UNION ALL SELECT 'RECEPCION', document_number, count(*)::int FROM public.receipts WHERE status='active' GROUP BY 2 HAVING count(*)>1
-    UNION ALL SELECT 'SERVICIO_RECIBIDO', service_number, count(*)::int FROM public.received_services WHERE status='active' GROUP BY 2 HAVING count(*)>1
-    UNION ALL SELECT 'VALE_SALIDA', slip_number, count(*)::int FROM public.issue_slips WHERE status='completed' GROUP BY 2 HAVING count(*)>1) x ORDER BY tipo, num`);
+  // RECONCILIACIÓN v2 (requisito del propietario): separar
+  //   (a) SIN NUMERACIÓN: numeración ausente (invoice_number/document_number/
+  //       slip_number/service_number NULL o vacío) — NO son duplicados;
+  //   (b) DUPLICADOS REALES: misma combinación TIENDA+TIPO+NÚMERO con
+  //       numeración presente (>1 documento con ese triple exacto);
+  //   (c) DUPLICADOS DE CONTABILIZACIÓN: mismos docs ya con >1 asiento en
+  //       fin_entries (hoy 0 → necesariamente vacío).
+  REPORT.duplicados.reclasificacion = {
+    sin_numeracion: await q(`SELECT x.tipo, x.store_id, st.name AS tienda, x.n FROM (
+      SELECT 'VENTA' AS tipo, store_id, count(*)::int AS n FROM public.transactions WHERE status='completed' AND (invoice_number IS NULL OR invoice_number='') GROUP BY 1,2
+      UNION ALL SELECT 'RECEPCION', store_id, count(*)::int FROM public.receipts WHERE status='active' AND (document_number IS NULL OR document_number='') GROUP BY 1,2
+      UNION ALL SELECT 'SERVICIO_RECIBIDO', store_id, count(*)::int FROM public.received_services WHERE status='active' AND (service_number IS NULL OR service_number='') GROUP BY 1,2
+      UNION ALL SELECT 'VALE_SALIDA', store_id, count(*)::int FROM public.issue_slips WHERE status='completed' AND (slip_number IS NULL OR slip_number='') GROUP BY 1,2) x
+      JOIN public.stores st ON st.id=x.store_id ORDER BY 1,2`),
+    duplicados_reales: await q(`SELECT x.tipo, x.store_id, st.name AS tienda, x.num, x.n FROM (
+      SELECT 'VENTA' AS tipo, store_id, invoice_number AS num, count(*)::int AS n FROM public.transactions WHERE status='completed' AND invoice_number IS NOT NULL AND invoice_number<>'' GROUP BY 1,2,3 HAVING count(*)>1
+      UNION ALL SELECT 'RECEPCION', store_id, document_number, count(*)::int FROM public.receipts WHERE status='active' AND document_number IS NOT NULL AND document_number<>'' GROUP BY 1,2,3 HAVING count(*)>1
+      UNION ALL SELECT 'SERVICIO_RECIBIDO', store_id, service_number, count(*)::int FROM public.received_services WHERE status='active' AND service_number IS NOT NULL AND service_number<>'' GROUP BY 1,2,3 HAVING count(*)>1
+      UNION ALL SELECT 'VALE_SALIDA', store_id, slip_number, count(*)::int FROM public.issue_slips WHERE status='completed' AND slip_number IS NOT NULL AND slip_number<>'' GROUP BY 1,2,3 HAVING count(*)>1) x
+      JOIN public.stores st ON st.id=x.store_id ORDER BY 1,2,4`),
+    duplicados_contabilizacion: await q(`SELECT e.document_type AS tipo, e.document_id, count(*)::int AS asientos
+      FROM public.fin_entries e GROUP BY 1,2 HAVING count(*)>1`),
+  };
   REPORT.duplicados.idempotency_keys = (await q(`SELECT count(*)::int AS n FROM (
     SELECT store_id, idempotency_key FROM public.payment_transactions WHERE idempotency_key IS NOT NULL
     GROUP BY 1,2 HAVING count(*)>1) x`))[0].n;
@@ -327,17 +408,38 @@ async function main() {
   const pagosDivisa = await q(`SELECT pt.currency AS moneda_pago, count(*)::int AS n
     FROM public.payment_transactions pt WHERE pt.ref_type IN ('receipt','service') AND pt.currency <> 'CUP' GROUP BY 1`);
   if (pagosDivisa.length) REPORT.inconsistencias.push({ tipo: 'pagos_proveedores_en_divisa (contexto §17.1)', detalle: pagosDivisa });
+  // pagos posteriores con moneda distinta a la del documento fuente
+  REPORT.pagos_posteriores.pagos_con_moneda_distinta_al_doc = (await q(`SELECT count(*)::int AS n
+    FROM public.payment_transactions pt
+    JOIN public.received_services s ON s.id=pt.ref_id AND pt.ref_type='service'
+    WHERE pt.currency <> s.currency
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e WHERE e.payment_ref = pt.id)`))[0].n;
 
   REPORT.conteos_despues = (await q(COUNT_TABLES))[0];
   REPORT.bd_intacta = JSON.stringify(REPORT.conteos_antes) === JSON.stringify(REPORT.conteos_despues);
 
+  // ── desglose reconciliado de totales (7 puntos del propietario) ──
+  REPORT.asientos.desglose.reconocimiento = { asientos: REPORT.asientos.total, movimientos: REPORT.asientos.movimientos };
+  REPORT.asientos.desglose.pagos_posteriores = { asientos: REPORT.pagos_posteriores.total_asientos, movimientos: REPORT.pagos_posteriores.total_movimientos };
+  REPORT.asientos.totales = {
+    asientos: REPORT.asientos.total + REPORT.pagos_posteriores.total_asientos,
+    movimientos: REPORT.asientos.movimientos + REPORT.pagos_posteriores.total_movimientos,
+  };
+
   console.log('Conteos DESPUÉS:', JSON.stringify(REPORT.conteos_despues));
   console.log('BD INTACTA (conteos idénticos):', REPORT.bd_intacta);
-  console.log('\n── RESUMEN ──');
+  console.log('\n── RESUMEN (desglose reconciliado) ──');
   console.log('Tiendas:', REPORT.tiendas.length);
-  console.log('Docs elegibles:', REPORT.elegibles.total_docs, '| Asientos:', REPORT.asientos.total, '| Movimientos:', REPORT.asientos.movimientos);
-  console.log('Excluidos:', JSON.stringify(REPORT.excluidos.por_motivo));
-  console.log('Monedas:', JSON.stringify(REPORT.monedas.por_moneda));
+  console.log('Documentos originales ELEGIBLES:', REPORT.elegibles.total_docs);
+  console.log('Asientos RECONOCIMIENTO:', REPORT.asientos.desglose.reconocimiento.asientos,
+    '| Movimientos RECONOCIMIENTO:', REPORT.asientos.desglose.reconocimiento.movimientos);
+  console.log('Asientos PAGO posterior:', REPORT.asientos.desglose.pagos_posteriores.asientos,
+    '| Movimientos PAGO:', REPORT.asientos.desglose.pagos_posteriores.movimientos);
+  console.log('TOTALES GENERALES: asientos =', REPORT.asientos.totales.asientos,
+    '| movimientos =', REPORT.asientos.totales.movimientos);
+  console.log('Duplicados REALES (tienda+tipo+número):', REPORT.duplicados.reclasificacion.duplicados_reales.length,
+    '| SIN numeración:', REPORT.duplicados.reclasificacion.sin_numeracion.reduce((s, x) => s + x.n, 0),
+    '| duplicados de contabilización:', REPORT.duplicados.reclasificacion.duplicados_contabilizacion.length);
   console.log('Idempotencia (hash iguales):', REPORT.idempotencia.iguales);
   console.log('Desbalanceados:', REPORT.asientos.desbalanceados_docs.length, '| Discrepancias vs originales:', REPORT.comparacion_originales.discrepancias.length);
 
