@@ -1,0 +1,20 @@
+[m016-aplicar-acl-cp-fin.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+Fix ACL funciones CP-FIN → PRODUCCIÓN (wthkddeleylijmonclxg)
+  supabase/migrations/20261113120700_cp_fin_fix_acl_funciones.sql · SHA-256 f628f1527c2d8063e6e366a5c21ddef664b1b5a271d2fc76eec7496f9e5e5ccc
+
+PRE grants PUBLIC/anon sobre fin_*: 42 | tablas fin_*: 8
+→ fix PENDIENTE
+
+Aplicando supabase/migrations/20261113120700_cp_fin_fix_acl_funciones.sql ...
+HTTP 201
+resultado: []
+pgrst schema-cache reload: HTTP 201
+
+── VERIFICACIÓN POST ──
+✓ CERO grants PUBLIC sobre funciones fin_* — n=0
+✓ CERO grants anon sobre funciones fin_* — n=0
+✓ 11 RPCs públicas conservan EXECUTE para authenticated — n=11
+✓ CERO asientos (sin backfill no autorizado) — n=0
+delta: {"t":0,"pt":0,"rs":0,"r":0,"p":0}
+
+══════════ M016 OK: fix ACL funciones CP-FIN APLICADO y VERIFICADO en producción wthkddeleylijmonclxg

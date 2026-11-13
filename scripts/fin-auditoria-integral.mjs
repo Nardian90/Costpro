@@ -63,7 +63,9 @@ async function main() {
   const storeB = (await sql(`SELECT id FROM public.stores WHERE id <> '${store}' ORDER BY created_at LIMIT 1`))[0].id;
   const sampleTx = (await sql(`SELECT store_id, seller_id FROM public.transactions WHERE status='completed' ORDER BY created_at DESC LIMIT 1`))[0];
   const sampleItem = (await sql(`SELECT ti.product_id FROM public.transaction_items ti
-    JOIN public.transactions t ON t.id = ti.transaction_id WHERE t.status='completed' ORDER BY ti.created_at DESC LIMIT 1`))[0];
+    JOIN public.transactions t ON t.id = ti.transaction_id
+    JOIN public.products pr ON pr.id = ti.product_id  -- producto EXISTENTE (hay items huérfanos históricos)
+    WHERE t.status='completed' ORDER BY ti.created_at DESC LIMIT 1`))[0];
   if (!sampleTx || !sampleItem) fatal('sin ventas históricas en la aislada para reutilizar vendedor/producto');
   console.log(`fixtures: store=${store} storeB=${storeB} admin=${admin} seller=${sampleTx.seller_id} product=${sampleItem.product_id}`);
 

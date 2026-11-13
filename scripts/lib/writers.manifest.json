@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-12",
+  "_updated": "2026-11-13",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -17,10 +17,12 @@
     "scripts/m010-aplicar-migracion-20261111120000.mjs",
     "scripts/m011-aplicar-migracion-20261111130000.mjs",
     "scripts/m012-aplicar-migracion-20261112120000.mjs",
+    "scripts/m013-aplicar-migracion-20261112180000.mjs",
+    "scripts/m014-aplicar-migraciones-cp-fin.mjs",
+    "scripts/m015-aplicar-fixes-cp-fin.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
-    "scripts/seed-pick3-history.js",
-    "scripts/m013-aplicar-migracion-20261112180000.mjs"
+    "scripts/seed-pick3-history.js"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
@@ -137,6 +139,7 @@
     "scripts/ops/drift-report.cjs": "CP-T2 D2.3 (2026-11-06): informe de deriva del catálogo — SOLO LECTURA (SELECT de catálogo pg_proc/pg_class/pg_policies vía Management API o DATABASE_URL). El POST detectado es únicamente el transporte del endpoint database/query de la Management API, no una escritura en la BD; la única escritura real es el informe Markdown local (--out) dentro del repo. No es gate de CI; no se cablea guard porque su propósito es precisamente auditar cualquier BD de destino (producción o E2E) elegida por el operador, igual que scripts/ci/compute-function-fingerprint.cjs.",
     "scripts/ci/compute-function-fingerprint.cjs": "CP-SEC-005 T3.3 (2026-11-04): herramienta de huellas de funciones SECURITY DEFINER — SOLO LECTURA (SELECT de catálogo pg_proc/pg_get_functiondef vía Management API o DATABASE_URL). La única escritura es --export, que reescribe docs/security/certified-function-fingerprint.json DENTRO del repo (nunca la BD). Contra producción debe ejecutarse solo en modo lectura (la query es un SELECT); no se cablea guard porque su propósito es precisamente auditar cualquier BD de destino elegida por el operador.",
     "scripts/ops/qa-master-estado-readonly.mjs": "CP-CAT-MAESTRO-QA-ARCHIVE (2026-11-08): verificación READ-ONLY del maestro de pruebas QA-CM-20261030-01 — solo SELECT (master_products/products/catalog_store_links/master_change_log/audit_logs). El POST detectado es únicamente el transporte del query engine de Management API (mismo patrón que drift-report.cjs); no ejecuta escrituras, no invoca RPC de escritura y no toca service_role. Identidad de proyecto verificada antes de consultar; evidencia en audit-evidence/CP-CAT-MAESTRO-QA-ARCHIVE-20261108/.",
-    "scripts/smoke-stores-comparison.mjs": "COSTPRO-SALES-DASHBOARD-REFINEMENT-002: smoke READ-ONLY del RPC get_sales_dashboard_analytics (POST de función STABLE agregada; no escribe datos). El guard auth de la propia función exige sesión; credenciales solo por SMOKE_EMAIL/SMOKE_PASS (sin secretos en el repo)."
+    "scripts/smoke-stores-comparison.mjs": "COSTPRO-SALES-DASHBOARD-REFINEMENT-002: smoke READ-ONLY del RPC get_sales_dashboard_analytics (POST de función STABLE agregada; no escribe datos). El guard auth de la propia función exige sesión; credenciales solo por SMOKE_EMAIL/SMOKE_PASS (sin secretos en el repo).",
+    "scripts/fin-auditoria-integral.mjs": "Auditoría integral CP-FIN (2026-11-13): escribe EXCLUSIVAMENTE en la BD E2E aislada (guard propio: constante REF=lguovmvrozxgssupkwpf hardcodeada — cualquier otra ref es imposible por construcción; canal Management API con SUPABASE_ACCESS_TOKEN). Crea y limpia sus propios datos de prueba (net delta 0 verificado por data-hygiene-guard). No usa los guards estándar porque no lee variables de entorno de destino: la ref aislada es parte del código. Evidencia: audit-evidence/CP-FIN-20261113/."
   }
 }

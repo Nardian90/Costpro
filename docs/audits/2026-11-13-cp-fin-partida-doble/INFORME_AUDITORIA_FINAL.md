@@ -8,9 +8,9 @@
 
 ## VEREDICTO: ✅ MISIÓN COMPLETADA Y VALIDADA
 
-El sistema CP-FIN queda **validado de extremo a extremo** tras la auditoría: 34/34 casos de la auditoría integral, 33/33 tests unitarios FIN, 7/7 del contrato de migraciones, migraciones aplicadas y verificadas en producción (24/24 checks acumulados m014+m015), delta 0 en datos de negocio.
+El sistema CP-FIN queda **validado de extremo a extremo** tras la auditoría: 34/34 casos de la auditoría integral (re-ejecutada tras CADA corrección), 33/33 tests unitarios FIN, 7/7 del contrato de migraciones, migraciones aplicadas y verificadas en producción (28/28 checks acumulados m014+m015+m016), delta 0 en datos de negocio.
 
-**Transparencia:** la auditoría detectó **5 defectos** en la implementación original (1 de endurecimiento + 4 críticos de comportamiento) que fueron corregidos y re-validados durante esta misma misión. El estado final documentado en este informe es el estado POST-corrección. Sin la auditoría independiente, los 4 defectos críticos habrían dejado el motor contabilizando mal ventas, recepciones, servicios, nóminas y flujo de caja desde el primer día en producción.
+**Transparencia:** la auditoría detectó **6 defectos** en la implementación original (1 de endurecimiento + 4 críticos de comportamiento) que fueron corregidos y re-validados durante esta misma misión. El estado final documentado en este informe es el estado POST-corrección. Sin la auditoría independiente, los 4 defectos críticos habrían dejado el motor contabilizando mal ventas, recepciones, servicios, nóminas y flujo de caja desde el primer día en producción.
 
 **Limitaciones documentadas (por diseño, no incumplimientos):** backfill histórico pendiente de autorización expresa del propietario (§12 de la misión); nómina soportada solo en CUP (`ERR_PAYROLL_CURRENCY_NOT_SUPPORTED`); hallazgo pre-existente del módulo servicios en multimoneda (§17, fuera de alcance CP-FIN).
 
@@ -26,7 +26,7 @@ El sistema CP-FIN queda **validado de extremo a extremo** tras la auditoría: 34
 | Multimoneda (USD con tasa autorizada) | Normalización CUP correcta, moneda origen preservada |
 | Suite unitaria FIN | 33/33 PASS |
 | Contrato de migraciones (manifiesto INFRA-011) | 7/7 PASS (23 asertos), 153 migraciones incluidas |
-| Aplicación a producción | m014 (3 migraciones) + m015 (4 fixes) — verificación POST 14/14 + 10/10, delta 0 |
+| Aplicación a producción | m014 (3 migraciones) + m015 (4 fixes) + m016 (ACL funciones) — verificación POST 14/14 + 10/10 + 4/4, delta 0 |
 | Higiene BD aislada | `PASS — net delta = 0` |
 | Secretos en diffs | CERO coincidencias |
 
@@ -69,7 +69,7 @@ Rutas `/api/fin/*` (config, reglas, simulador, estados, detalle, saldos iniciale
 ## 8. Entregable D — Tests
 
 - Migración (contrato 16 asertos → ahora 23 con manifiesto 153), navegación (5), presentación (8), vista (4): **33/33**.
-- Contrato del manifiesto de replay: 7/7 (determinismo byte a byte, posiciones, hashes, `--check` MATCH).
+- Contrato del manifiesto de replay: 7/7 (determinismo byte a byte, posiciones, hashes, `--check` MATCH; 154 migraciones).
 - Fixes de CI de la serie: TS1501 (flag regex ES2018), conteo 146→148→149→153, flake del PDF de caja («Generado:» timestamp).
 
 ## 9. Entregable E — Evidencia y expediente
@@ -139,6 +139,8 @@ El pago SUMABA efectivo/bancos (D ACT_*) y AUMENTABA la deuda (C PAS_*). Contabi
 Activar/desactivar reglas GLOBALES (las 10 semilla) violaba `audit_logs_store_id_check` (23514). Corrección con el patrón master_products/master_parties: ampliación DINÁMICA de la whitelist (sin regredir entradas futuras).
 
 **14.5 — ALTO (endurecimiento, m014):** RLS sin FORCE + anon con privilegios en 6 tablas → `20261113120200` (FORCED ×8 + REVOKE ALL FROM anon).
+
+**14.6 — ALTO (hallazgo del gate SQL DB Security del CI, corrido read-only contra producción):** las 11 RPCs públicas `fin_*` conservaban el grant EXECUTE por defecto a PUBLIC (heredado por anon) — el motor revocó en las 9 internas pero omitió las 11 públicas. Sin exposición efectiva de datos (todas tienen gates internos de autorización), pero con superficie de llamada abierta a anon. Corrección `20261113120700` (REVOKE PUBLIC/anon en 11 RPCs + 10 triggers, EXECUTE authenticated conservado; patrón canónico del repo), aplicada vía m016 con verificación 4/4 y delta 0. Las 9 funciones internas se declararon en `ci-gate-allowlist.json` (helpers sin auth propio por diseño, sin EXECUTE externo).
 
 Todos los fixes: validados primero en la aislada (auditoría integral 34/34 + higiene net delta 0), aplicados a producción UNA SOLA VEZ (m015), verificación POST fail-closed.
 

@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 153 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 154 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -414,9 +414,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // diferidos (20261113120300), métricas nómina/flujo/caja/cobros y recepción
     // (20261113120400), sentidos de pago recepción/servicio (20261113120500) y
     // whitelist audit_logs para reglas globales (20261113120600) = 153
-    expect(m.total_incluidos).toBe(153);
+    // CP-FIN ACL FUNCIONES (2026-11-13, gate SQL DB Security): +1 revocación
+    // PUBLIC/anon en las 11 RPCs públicas y 10 triggers (20261113120700) = 154
+    expect(m.total_incluidos).toBe(154);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(153);
+    expect(incluidos.length).toBe(154);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

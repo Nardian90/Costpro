@@ -79,3 +79,20 @@ Evidencia completa: `audit-evidence/CP-FIN-20261113/m015-verificacion-produccion
 ### Estado final de producción
 
 Esquema CP-FIN completo (7 migraciones), corregido y verificado. Los documentos NUEVOS que alcancen estados definitivos se contabilizan automáticamente con las reglas corregidas; 0 asientos históricos (backfill pendiente de autorización expresa).
+
+
+---
+
+## Lote 3 — m016: ACL de funciones (hallazgo del gate SQL DB Security)
+
+**Fecha de aplicación:** 2026-11-13 15:20 UTC · **Canal:** idéntico (Management API + NOTIFY pgrst).
+**Script:** `scripts/m016-aplicar-acl-cp-fin.mjs` (guard CP-INFRA-019, `--only-verify` disponible).
+**Autorización:** misma instrucción del propietario; validado antes en la aislada (auditoría integral re-ejecutada 34/34 PASS tras el cambio).
+
+| # | Archivo | SHA-256 | HTTP |
+|---|---|---|---|
+| 1 | `supabase/migrations/20261113120700_cp_fin_fix_acl_funciones.sql` | `f628f1527c2d8063e6e366a5c21ddef664b1b5a271d2fc76eec7496f9e5e5ccc` | 201 |
+
+**Defecto que corrige:** las 11 RPCs públicas fin_* conservaban el grant EXECUTE por defecto a PUBLIC/anon (el motor solo había revocado en las 9 internas). Hallazgo del check `secdef_public_grant` del gate SQL DB Security (corre read-only contra producción).
+
+**Verificación POST (4/4 OK):** CERO grants PUBLIC y CERO anon sobre funciones fin_* (antes: 42); 11 RPCs conservan EXECUTE para authenticated; 0 asientos; delta 0. Evidencia: `audit-evidence/CP-FIN-20261113/m016-verificacion-produccion.txt`.
