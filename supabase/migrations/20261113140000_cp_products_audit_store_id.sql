@@ -2,6 +2,10 @@
 -- CP-PROD-DEL-001 (2026-11-13) — El borrado de productos falla con 23514
 -- en audit_logs_store_id_check; añade pre-chequeos de dependencias con
 -- mensajes comprensibles.
+-- DESTRUCTIVE-OK: CP-PROD-DEL-001 (los DELETE que contiene son los del cuerpo
+-- certificado vivo de managed_delete_product — fila por id y por tienda,
+-- jamás tablas completas: inventory/product_variants/products de UN producto.
+-- El guard los marca por su formato multi-línea, no por alcance).
 -- ═══════════════════════════════════════════════════════════════════════════
 -- CAUSA RAÍZ (verificada contra BD viva con JWT emulado, dry-run):
 --   managed_delete_product y managed_toggle_product_active insertan su
