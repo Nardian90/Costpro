@@ -418,6 +418,16 @@ export function AddToPayrollModal({
             <Loader2 className="w-3.5 h-3.5 animate-spin" /> Cargando líneas de la nómina…
           </p>
         )}
+        {selected !== 'new' && !loadingDetail && draftDetail && (draftDetail.items ?? []).length > 0 && (
+          <div className="mt-2 rounded-lg border border-border/60 bg-muted/20 p-2">
+            <p className="text-[10px] font-black uppercase tracking-wide text-muted-foreground">
+              Trabajadores ya en la nómina ({draftDetail.items.length})
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground truncate" title={(draftDetail.items ?? []).map((i) => i.worker_names).join(', ')}>
+              {(draftDetail.items ?? []).map((i) => i.worker_names).join(' · ')}
+            </p>
+          </div>
+        )}
 
         {/* Acciones */}
         <div className="mt-5 flex items-center justify-end gap-2 border-t border-border pt-4">

@@ -138,6 +138,11 @@ export function WorkerSearchSelect({
     [addedWorkerIds],
   );
 
+  // La lista solo aparece cuando hay consulta (patrón ValeSalida/POS: sin
+  // ruido inicial; el guía indica cuántos trabajadores hay disponibles).
+  const query = debouncedSearch.trim();
+  const showResults = query.length >= 1;
+
   const results = useMemo(() => {
     const needle = normalize(debouncedSearch);
     const tokens = needle ? needle.split(/\s+/).filter(Boolean) : [];
@@ -162,7 +167,6 @@ export function WorkerSearchSelect({
   }, [workers, debouncedSearch, addedSet, periodStart, periodEnd]);
 
   const eligibleCount = results.filter((r) => r.elig.eligible).length;
-  const query = debouncedSearch.trim();
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (disabled) return;
@@ -241,13 +245,13 @@ export function WorkerSearchSelect({
         <p className="text-xs text-muted-foreground italic">
           Sin trabajadores en la tienda activa.
         </p>
-      ) : results.length === 0 && query ? (
-        <p className="text-xs text-muted-foreground italic">
-          Sin resultados para «{query}». Prueba con el nombre, apellido, CI o expediente.
-        </p>
-      ) : results.length === 0 && !query ? (
+      ) : !showResults ? (
         <p className="text-xs text-muted-foreground">
           Escribe para buscar entre {workers.length} trabajador{workers.length === 1 ? '' : 'es'} de la tienda.
+        </p>
+      ) : results.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">
+          Sin resultados para «{query}». Prueba con el nombre, apellido, CI o expediente.
         </p>
       ) : (
         <ul
@@ -321,7 +325,7 @@ export function WorkerSearchSelect({
           )}
         </ul>
       )}
-      {results.length > 0 && eligibleCount === 0 && query && (
+      {showResults && results.length > 0 && eligibleCount === 0 && (
         <p className="text-[11px] text-muted-foreground">
           Ningún resultado es elegible: revisa tarifa salarial, período y estado.
           Fija la tarifa desde la pestaña «Trabajadores» (botón Tarifa).
