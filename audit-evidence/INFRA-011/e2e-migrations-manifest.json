@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 564,
-  "total_incluidos": 149,
+  "total_considerados": 568,
+  "total_incluidos": 153,
   "total_excluidos": 415,
-  "digest": "ec7eddb5c1e1bfffef1f1c559ec3cc307c938bdabaeccda40fea0fc290457942",
+  "digest": "85cd85e648070fa0ab74a5d765dd27ae96a44d335afcb9293582eee8a8027505",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5519,6 +5519,50 @@
       "observaciones": [],
       "posicion": 149,
       "sha256_generado": "de885c5ba856af21d2151f35467dbbfe6de855570b5d16826eca8dd2069a3809"
+    },
+    {
+      "nombre": "20261113120300_cp_fin_triggers_diferidos.sql",
+      "bytes": 4465,
+      "sha256_original": "3d0b1e494740dd5b6a68735f96f5a5d6978a5adaeec894a5365ef719d92f14e9",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 150,
+      "sha256_generado": "3d0b1e494740dd5b6a68735f96f5a5d6978a5adaeec894a5365ef719d92f14e9"
+    },
+    {
+      "nombre": "20261113120400_cp_fin_fix_metricas_nomina_flujo.sql",
+      "bytes": 16795,
+      "sha256_original": "429cf5ebba46c3fe8396e7443bd5a151a05f738d9cf97f8001a83918e29ab48d",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 151,
+      "sha256_generado": "429cf5ebba46c3fe8396e7443bd5a151a05f738d9cf97f8001a83918e29ab48d"
+    },
+    {
+      "nombre": "20261113120500_cp_fin_fix_sentidos_pago.sql",
+      "bytes": 4424,
+      "sha256_original": "19c6779070bc67e6ce69d8fe9fbc2a44c2dc6800e7416364df4339ee9bb2c8d7",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 152,
+      "sha256_generado": "19c6779070bc67e6ce69d8fe9fbc2a44c2dc6800e7416364df4339ee9bb2c8d7"
+    },
+    {
+      "nombre": "20261113120600_cp_fin_fix_audit_logs_check.sql",
+      "bytes": 4600,
+      "sha256_original": "7d4fb088e3a039d4d9b64e38171ba5f830f7ccd15c42e03a9ff5ed4e12a6def2",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 153,
+      "sha256_generado": "7d4fb088e3a039d4d9b64e38171ba5f830f7ccd15c42e03a9ff5ed4e12a6def2"
     },
     {
       "nombre": "AUDIT_FIXES.md",

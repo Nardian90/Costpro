@@ -1,0 +1,82 @@
+════ CP-FIN · AUDITORÍA INTEGRAL (BD aislada lguovmvrozxgssupkwpf) ════
+fixtures: store=9635e633-387f-411d-bc15-7d2b6179aae4 storeB=da11a5ec-0000-4000-8000-000000000001 admin=5b12c5d8-15f5-456e-879b-656e4b6e141e seller=18a4b522-bb9e-46dd-8e5d-e33e19fbb3a8 product=33333333-aaaa-4bbb-8ccc-00000000e2e2
+
+── CASO A · Venta en efectivo 100 CUP (costo 60) — REAL, secuencia create_sale_v2 ──
+  ✓ A.1 — 4 movimientos: D efectivo 100 / C ingresos 100 / D costo 60 / C inventario 60 · ef=100 ing=100 cogs=60 inv=60
+  ✓ A.2 — asiento equilibrado (160 D = 160 C) · D=160.00 C=160.00
+  ✓ A.3 — utilidad bruta = 40 (ingresos netos 100, costo de ventas 60) · ing=100 cogs=-60 UB=40
+
+── CASO B · Venta a crédito 200 (costo 120) — PATRÓN (no existe venta a crédito en COSTPRO) ──
+  ✓ B.1 — patrón CxC soportado: D CxC 200 / C ingresos 200 + D costo 120 / C inventario 120 (equilibrado 320=320) · D=320 C=320
+  ✓ B.2 — cobro posterior: D efectivo 200 / C CxC 200 SIN nuevo ingreso · movs=2, ingreso presente=false
+  ✓ B.3 — documentado: la regla por defecto no genera CxC (COSTPRO no tiene ventas a crédito) · ACT_CxC en regla por defecto=false
+
+── CASO C · Servicio recibido pendiente 50 CUP + pago — REAL ──
+  ✓ C.1 — reconocimiento: D GAS_SERVICIOS 50 / C PAS_SERV_PEND 50
+  ✓ C.2 — pago: D PAS_SERV_PEND 50 / C efectivo 50 (deuda ↓ y caja ↓; gasto NO duplicado) · gastos reconocidos=1
+
+── CASO D · Compra inventario pendiente 150 CUP + pago — REAL, secuencia register_reception ──
+  ✓ D.1 — reconocimiento: D ACT_INVENTARIO 150 / C PAS_CXP_PROV 150
+  ✓ D.2 — SIN costo de ventas en la compra (ningún GAS_COSTO_VENTAS)
+  ✓ D.3 — pago: D PAS_CXP_PROV 150 / C efectivo 150 (deuda ↓ y caja ↓; sin re-reconocer inventario ni costo)
+
+── CASO E · Nómina: devengo/deducciones/neto + pago — REAL ──
+  ✓ E.1 — confirmada: D GAS_NOMINAS 1000 (gross) / C PAS_NOMINA_PEND 800 (neto) + C PAS_RETENCIONES 200 · gasto=1000 neta=800 ret=200
+  ✓ E.2 — pagada: D PAS_NOMINA_PEND 800 / C efectivo 800 (SIN nuevo gasto; retenciones quedan pendientes)
+
+── CASO F · Transferencia interna CONFIRMADA — REAL ──
+  ✓ F.1 — transferencia CONFIRMADA: CERO asientos financieros (sin ingresos ni gastos) · asientos=0
+  ✓ F.2 — valor del inventario de la tienda invariante · antes=0 después=0
+
+── CASO G · Anulación (reversión compensatoria, sin duplicados) ──
+  ✓ G.1 — anulación compensa reconocimiento y pago (originales → reversed) · estados=pago:reversed, reconocimiento:reversed
+  ✓ G.2 — sin duplicados: exactamente 2 asientos de anulación pese a re-anulación directa + negocio bloquea doble void · anulaciones=2 dobleVoidBloqueada=true
+  ✓ G.3 — asientos compensatorios equilibrados e INVERSOS (efectivo −50, gasto −50, CxP ±0) · efD=50 gasC=50
+
+── CASO H · Multimoneda (USD con tasa autorizada) — REAL ──
+  ✓ H.1 — movimiento en USD normalizado con tasa del documento: currency_origin=USD, importe 4000 CUP-equiv (10 USD × 400) · cur_orig=USD amount=4000.00 cup=4000.00
+  ✓ H.2 — pago en USD: D ACT_BANCOS 4000 CUP-equivalente / C PAS_SERV_PEND 4000 (banco ≠ cash, moneda origen preservada) · cat=ACT_BANCOS cup=4000.00 orig=USD
+  ✓ H.3 — NINGÚN movimiento suma monedas sin convertir (todos CUP-normalizados; origen en currency_origin) · inconsistencias=0
+  ✓ H.4 — la tasa de conversión es la del documento (10 USD × 400 = 4000, no otra) · montos=4000,4000
+
+── CASO I · Versiones de reglas (históricos conservan versión) ──
+  ✓ I.1 — documento NUEVO usa la versión v2 recién activada · entry=2c3f211a-0bb2-42de-b05b-947971b734bb v2=2c3f211a-0bb2-42de-b05b-947971b734bb
+  ✓ I.2 — documento HISTÓRICO conserva su versión original (v1) · entryC=0874b549-47cc-459c-8a39-508b6c1e5756 v1=0874b549-47cc-459c-8a39-508b6c1e5756
+  ✓ I.3 — estado restaurado: exactamente 1 regla activa (v1) tras la auditoría · activas=1
+
+── CASO J · Concurrencia (llamadas simultáneas, sin duplicados) ──
+  ✓ J.1 — 2 llamadas CONCURRENTES → exactamente 1 asiento (advisory lock + índice único) · asientos=1 (respuestas: [{"r":null}] / [{"r":null}])
+  ✓ J.2 — reintento SECUENCIAL → sigue exactamente 1 asiento (idempotencia) · asientos=1
+
+── RLS MULTITIENDA (SET ROLE authenticated) ──
+  ✓ RLS.1 — miembro de la tienda ve SUS movimientos (23) · visto=23 esperado=23
+  ✓ RLS.2 — NO miembro ve CERO movimientos de la tienda ajena · visto=0
+  ✓ RLS.3 — fin_entries legible por tienda (SELECT-only para authenticated) · visto=11
+
+── MATRIZ DE INTEGRACIÓN DOCUMENTAL (estática: regla × trigger) ──
+  Tipo | Módulo | Regla activa | movs | Trigger | Caso dinámico
+  VENTA | Ventas | true | 8 | true | A
+  DEVOLUCION_VENTA | Ventas | true | 9 | true | —
+  RECEPCION | Inventario | true | 5 | true | D
+  VALE_SALIDA | Inventario | true | 2 | true | —
+  AJUSTE_INVENTARIO | Inventario | true | 4 | true | —
+  TRANSFERENCIA | Inventario | true | 0 | false | F
+  ORDEN_COMPRA | Inventario | false | 0 | false | —
+  ORDEN_PRODUCCION | Producción | false | 0 | false | —
+  ORDEN_TRABAJO | Producción | false | 0 | false | —
+  DEVOLUCION_PROV | Inventario | false | 0 | false | —
+  SERVICIO_RECIBIDO | Servicios | true | 5 | true | C/H/G/J
+  COMISION | Recursos Humanos | true | 4 | true | —
+  NOMINA | Recursos Humanos | true | 6 | true | E
+  FLUJO_CAJA | Caja | true | 6 | true | —
+  APERTURA_FIN | Sistema | false | 0 | false | —
+  ✓ MAT.1 — 10 tipos documentales con regla activa · con regla=10
+  ✓ MAT.2 — los tipos SIN regla son exactamente los documentados (OC, producción, devolución a proveedor) · sin regla: ORDEN_COMPRA, ORDEN_PRODUCCION, ORDEN_TRABAJO, DEVOLUCION_PROV, APERTURA_FIN
+  ✓ MAT.3 — todos los tipos con tabla fuente tienen trigger fin_* (TRANSFERENCIA con regla vacía explícita)
+
+── LIMPIEZA TOTAL (net delta 0) ──
+  ✓ LIMP.1 — cero residuos de la auditoría (net delta 0) · {"e":0,"s":0,"t":0,"r":0,"p":0,"tr":0}
+
+════ RESUMEN DE LA AUDITORÍA ════
+casos: 34/34 PASS
+AUDITORÍA INTEGRAL: TODO OK

@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 149 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 153 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -410,9 +410,13 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // (20261113120000_cp_fin_partida_doble_base) y motor (20261113120100_cp_fin_partida_doble_motor) = 148
     // CP-FIN ENDURECIMIENTO (2026-11-13, auditoría final): +1 RLS FORCED +
     // revocación anon (20261113120200_cp_fin_endurecimiento_rls) = 149
-    expect(m.total_incluidos).toBe(149);
+    // CP-FIN CORRECCIONES AUDITORÍA INTEGRAL (2026-11-13): +4 — triggers
+    // diferidos (20261113120300), métricas nómina/flujo/caja/cobros y recepción
+    // (20261113120400), sentidos de pago recepción/servicio (20261113120500) y
+    // whitelist audit_logs para reglas globales (20261113120600) = 153
+    expect(m.total_incluidos).toBe(153);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(149);
+    expect(incluidos.length).toBe(153);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
