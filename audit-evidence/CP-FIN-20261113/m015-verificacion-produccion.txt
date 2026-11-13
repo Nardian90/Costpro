@@ -1,0 +1,48 @@
+[m015-aplicar-fixes-cp-fin.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+Fixes CP-FIN (auditoría integral) → PRODUCCIÓN (wthkddeleylijmonclxg)
+  supabase/migrations/20261113120300_cp_fin_triggers_diferidos.sql · SHA-256 3d0b1e494740dd5b6a68735f96f5a5d6978a5adaeec894a5365ef719d92f14e9
+  supabase/migrations/20261113120400_cp_fin_fix_metricas_nomina_flujo.sql · SHA-256 429cf5ebba46c3fe8396e7443bd5a151a05f738d9cf97f8001a83918e29ab48d
+  supabase/migrations/20261113120500_cp_fin_fix_sentidos_pago.sql · SHA-256 19c6779070bc67e6ce69d8fe9fbc2a44c2dc6800e7416364df4339ee9bb2c8d7
+  supabase/migrations/20261113120600_cp_fin_fix_audit_logs_check.sql · SHA-256 7d4fb088e3a039d4d9b64e38171ba5f830f7ccd15c42e03a9ff5ed4e12a6def2
+
+PRE tablas fin_*: 8 | triggers diferidos: 0 | asientos: 0 | movimientos: 0
+→ fixes PENDIENTES
+PRE conteos negocio: {"transactions":1008,"devolutions":2,"receipts":97,"received_services":41,"issue_slips":241,"inventory_adjustments":1,"commission_payments":1,"payrolls":1,"cash_flow_documents":2,"payment_transactions":942,"stock_movements":1773,"products":295}
+
+Aplicando supabase/migrations/20261113120300_cp_fin_triggers_diferidos.sql ...
+HTTP 201
+resultado: []
+
+Aplicando supabase/migrations/20261113120400_cp_fin_fix_metricas_nomina_flujo.sql ...
+HTTP 201
+resultado: []
+
+Aplicando supabase/migrations/20261113120500_cp_fin_fix_sentidos_pago.sql ...
+HTTP 201
+resultado: []
+
+Aplicando supabase/migrations/20261113120600_cp_fin_fix_audit_logs_check.sql ...
+HTTP 201
+resultado: []
+pgrst schema-cache reload: HTTP 201
+
+── VERIFICACIÓN POST ─
+✓ 3 CONSTRAINT TRIGGERS diferidos (transactions, devolutions, receipts) — n=3
+✓ trigger de pagos sigue INMEDIATO (métrica autocontenida) — n=1
+✓ fin_compute_metrics con variables tipadas (fix nómina/flujo/caja/cobros/recepción) — fix=true
+✓ CERO asientos/movimientos (sin backfill no autorizado) — e=0 m=0
+✓ sentidos de pago: D PAS_CXP_PROV en recepción (r-pay-cxp) — n=1
+✓ sentidos de pago: D PAS_SERV_PEND en servicio (sp-cxp-c) — n=1
+✓ CERO movimientos de pago con sentidos invertidos (ACT débito / PAS crédito) — n=0
+✓ whitelist audit_logs tolera fin_rule_versions (reglas globales) — OK
+✓ whitelist audit_logs conserva master_products y master_parties (sin regresión) — OK
+✓ RLS FORCED intacto en las 8 tablas fin_* (m014) — categories:F document_types:F entries:F metric_catalog:F movements:F opening_balances:F posting_errors:F rule_versions:F
+
+── INTEGRIDAD (delta 0 en tablas de negocio) ──
+delta: {"transactions":0,"devolutions":0,"receipts":0,"received_services":0,"issue_slips":0,"inventory_adjustments":0,"commission_payments":0,"payrolls":0,"cash_flow_documents":0,"payment_transactions":0,"stock_movements":0,"products":0}
+
+══════════ M015 OK: fixes CP-FIN APLICADOS y VERIFICADOS en producción wthkddeleylijmonclxg
+  supabase/migrations/20261113120300_cp_fin_triggers_diferidos.sql · SHA-256 3d0b1e494740dd5b6a68735f96f5a5d6978a5adaeec894a5365ef719d92f14e9
+  supabase/migrations/20261113120400_cp_fin_fix_metricas_nomina_flujo.sql · SHA-256 429cf5ebba46c3fe8396e7443bd5a151a05f738d9cf97f8001a83918e29ab48d
+  supabase/migrations/20261113120500_cp_fin_fix_sentidos_pago.sql · SHA-256 19c6779070bc67e6ce69d8fe9fbc2a44c2dc6800e7416364df4339ee9bb2c8d7
+  supabase/migrations/20261113120600_cp_fin_fix_audit_logs_check.sql · SHA-256 7d4fb088e3a039d4d9b64e38171ba5f830f7ccd15c42e03a9ff5ed4e12a6def2

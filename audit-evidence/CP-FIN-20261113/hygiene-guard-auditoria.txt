@@ -1,0 +1,3 @@
+◇ injected env (0) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+[data-hygiene-guard:AFTER] residuos E2E — stores=0 users=0 (límites: 12/12) | protegidos: 5 tiendas por config
+[data-hygiene-guard:AFTER] PASS — net delta = 0

@@ -123,6 +123,60 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "fin_apply_templates",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_compute_metrics",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_eval_condition",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_post_annulment_safe",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_post_document",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_post_document_annulment",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_post_document_safe",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_resolve_rule",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_validate_rule_movements",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
       "function": "fn_log_system_health",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",

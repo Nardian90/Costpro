@@ -131,10 +131,19 @@ describe('MISIÓN 2026-11-11 · desglose de Servicios Recibidos por concepto en 
     // Las filas NO-desglose son idénticas 1:1 (presentación pura): se excluyen
     // las sub-filas (prefijo «›») y SUS importes (deducción explicada, no
     // reintroducida) — todo lo demás debe coincidir exactamente.
+    // FLAKE FIX (CP-FIN, 2026-11-13): también se excluye la línea «Generado: …»
+    // (timestamp de generación) — los dos PDF se generan en instantes distintos
+    // y cruzar el límite del segundo hacía fallar el 1:1 de forma intermitente
+    // (evidencia: diff del run 43434833993 con SOLO esa línea distinta).
     const subAmounts = new Set(['-2.900,00', '-5.000,00', '-3.200,00']);
-    const baseOff = off.filter(t => !t.includes('›'));
-    const baseOn = on.filter(t => !t.includes('›') && !subAmounts.has(t));
+    const noVolatil = (t: string) => !t.startsWith('Generado:');
+    const baseOff = off.filter(t => !t.includes('›') && noVolatil(t));
+    const baseOn = on.filter(t => !t.includes('›') && !subAmounts.has(t) && noVolatil(t));
     expect(baseOn).toEqual(baseOff);
+    // La línea de timestamp sigue presente en ambos (solo se excluyó de la
+    // comparación 1:1, no de la generación).
+    expect(off.some(t => t.startsWith('Generado:'))).toBe(true);
+    expect(on.some(t => t.startsWith('Generado:'))).toBe(true);
     // Conciliación visible: la suma de los conceptos = el total global.
     expect(on).toContain('-11.100,00');
   });

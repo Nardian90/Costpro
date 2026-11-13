@@ -1,0 +1,8 @@
+# CP-FIN — Signos del Estado de Rendimiento (BD aislada)
+# Fecha: 2026-11-13 13:28:37 UTC · Script: /home/z/my-project/scripts/fin-sign-check-e2e.mjs
+
+income : {"gastos":-100,"rdo_operativo":-100,"neto":-100}
+dash   : {"gastos":100,"neto":-100}
+SIGNOS OK
+limpieza OK
+exit=0

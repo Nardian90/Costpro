@@ -1,0 +1,36 @@
+[m014-aplicar-migraciones-cp-fin.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+Migraciones CP-FIN → PRODUCCIÓN (wthkddeleylijmonclxg)
+  supabase/migrations/20261113120000_cp_fin_partida_doble_base.sql · SHA-256 638a660ea39671e35f2892d60ff6f2d23b66a96fee66533dc192a25fd948ee73
+  supabase/migrations/20261113120100_cp_fin_partida_doble_motor.sql · SHA-256 e7ac17eff98bb32f1c71aa4d0a2c56f412ef3c44e83ffd186d37c7498f38259e
+  supabase/migrations/20261113120200_cp_fin_endurecimiento_rls.sql · SHA-256 de885c5ba856af21d2151f35467dbbfe6de855570b5d16826eca8dd2069a3809
+
+PRE tablas fin_*: 8 → YA APLICADA
+PRE dependencias: {"t_fuentes":19,"f_acceso":3}
+PRE conteos negocio: {"transactions":1008,"devolutions":2,"receipts":97,"received_services":41,"issue_slips":240,"inventory_adjustments":1,"commission_payments":1,"payrolls":1,"cash_flow_documents":2,"payment_transactions":942,"stock_movements":1772,"products":295}
+
+── VERIFICACIÓN POST ──
+✓ 8 tablas fin_* presentes — t=8
+✓ RLS FORCED en las 8 tablas (estándar payrolls, endurecimiento 20261113120200) — categories:F document_types:F entries:F metric_catalog:F movements:F opening_balances:F posting_errors:F rule_versions:F
+✓ políticas RLS fin_* (≥16) — n=16
+✓ semillas: ≥38 categorías / ≥14 doctypes / ≥10 reglas activas / ≥30 métricas — cat=44 dt=15 reglas=10 met=41
+✓ ≥10 triggers de contabilización fin_trg_% — n=19
+✓ 11 RPCs públicas SECURITY DEFINER — n=11
+✓ ACL: 9 RPCs internas SIN EXECUTE para authenticated/anon/public — n=0
+✓ ACL: 11 RPCs públicas CON EXECUTE para authenticated — n=11
+✓ fin_entries/fin_movements: SELECT-only para authenticated (escritura denegada) — sel=2 escr=0
+✓ CERO privilegios anon en tablas fin_* (endurecimiento) — n=0
+✓ CERO asientos/movimientos tras la migración (sin backfill histórico) — e=0 m=0
+
+── PRUEBAS NEGATIVAS (gates abortan ANTES de escribir) ──
+✓ fin_simulate con documento inexistente → ERR_DOC_NOT_FOUND — HTTP 400
+✓ fin_activate_rule_version id inexistente → ERR_RULE_NOT_FOUND — HTTP 400
+✓ fin_backfill canal postgres sin usuario real → ERR_UNAUTHORIZED (anti-spoofing) — HTTP 400
+
+── INTEGRIDAD (delta 0 en tablas de negocio) ──
+delta: {"transactions":0,"devolutions":0,"receipts":0,"received_services":0,"issue_slips":0,"inventory_adjustments":0,"commission_payments":0,"payrolls":0,"cash_flow_documents":0,"payment_transactions":0,"stock_movements":0,"products":0}
+
+══════════ M014 OK: migraciones CP-FIN VERIFICADAS (ya aplicadas) en producción wthkddeleylijmonclxg
+  supabase/migrations/20261113120000_cp_fin_partida_doble_base.sql · SHA-256 638a660ea39671e35f2892d60ff6f2d23b66a96fee66533dc192a25fd948ee73
+  supabase/migrations/20261113120100_cp_fin_partida_doble_motor.sql · SHA-256 e7ac17eff98bb32f1c71aa4d0a2c56f412ef3c44e83ffd186d37c7498f38259e
+  supabase/migrations/20261113120200_cp_fin_endurecimiento_rls.sql · SHA-256 de885c5ba856af21d2151f35467dbbfe6de855570b5d16826eca8dd2069a3809
+exit=0

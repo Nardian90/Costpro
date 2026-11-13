@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 146 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 154 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -406,9 +406,19 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // de imagen compartida (20261112120000_cp_catalogo_sku_inmutable) = 145
     // NÓMINAS SC-4-06 (2026-11-12): +1 migración de nóminas de salario
     // (20261112180000_cp_payrolls_sc406) = 146
-    expect(m.total_incluidos).toBe(146);
+    // CP-FIN PARTIDA DOBLE (2026-11-13): +2 motor de partida doble — base
+    // (20261113120000_cp_fin_partida_doble_base) y motor (20261113120100_cp_fin_partida_doble_motor) = 148
+    // CP-FIN ENDURECIMIENTO (2026-11-13, auditoría final): +1 RLS FORCED +
+    // revocación anon (20261113120200_cp_fin_endurecimiento_rls) = 149
+    // CP-FIN CORRECCIONES AUDITORÍA INTEGRAL (2026-11-13): +4 — triggers
+    // diferidos (20261113120300), métricas nómina/flujo/caja/cobros y recepción
+    // (20261113120400), sentidos de pago recepción/servicio (20261113120500) y
+    // whitelist audit_logs para reglas globales (20261113120600) = 153
+    // CP-FIN ACL FUNCIONES (2026-11-13, gate SQL DB Security): +1 revocación
+    // PUBLIC/anon en las 11 RPCs públicas y 10 triggers (20261113120700) = 154
+    expect(m.total_incluidos).toBe(154);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(146);
+    expect(incluidos.length).toBe(154);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

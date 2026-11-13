@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 561,
-  "total_incluidos": 146,
+  "total_considerados": 569,
+  "total_incluidos": 154,
   "total_excluidos": 415,
-  "digest": "45500aeb8e437a26aecc75a63d1f66858971559ef64743606df11a78185297bf",
+  "digest": "b7d831d378617e1506d3c248dc368eb87fcc97583ec8635af7f7ff709a2e9305",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5486,6 +5486,94 @@
       "observaciones": [],
       "posicion": 146,
       "sha256_generado": "4255a3ad3b8cbde3c32b14f54c92ad3e82f0037046b092e4bbec6e3f12795096"
+    },
+    {
+      "nombre": "20261113120000_cp_fin_partida_doble_base.sql",
+      "bytes": 50782,
+      "sha256_original": "638a660ea39671e35f2892d60ff6f2d23b66a96fee66533dc192a25fd948ee73",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 147,
+      "sha256_generado": "638a660ea39671e35f2892d60ff6f2d23b66a96fee66533dc192a25fd948ee73"
+    },
+    {
+      "nombre": "20261113120100_cp_fin_partida_doble_motor.sql",
+      "bytes": 80593,
+      "sha256_original": "e7ac17eff98bb32f1c71aa4d0a2c56f412ef3c44e83ffd186d37c7498f38259e",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 148,
+      "sha256_generado": "e7ac17eff98bb32f1c71aa4d0a2c56f412ef3c44e83ffd186d37c7498f38259e"
+    },
+    {
+      "nombre": "20261113120200_cp_fin_endurecimiento_rls.sql",
+      "bytes": 4195,
+      "sha256_original": "de885c5ba856af21d2151f35467dbbfe6de855570b5d16826eca8dd2069a3809",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 149,
+      "sha256_generado": "de885c5ba856af21d2151f35467dbbfe6de855570b5d16826eca8dd2069a3809"
+    },
+    {
+      "nombre": "20261113120300_cp_fin_triggers_diferidos.sql",
+      "bytes": 4465,
+      "sha256_original": "3d0b1e494740dd5b6a68735f96f5a5d6978a5adaeec894a5365ef719d92f14e9",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 150,
+      "sha256_generado": "3d0b1e494740dd5b6a68735f96f5a5d6978a5adaeec894a5365ef719d92f14e9"
+    },
+    {
+      "nombre": "20261113120400_cp_fin_fix_metricas_nomina_flujo.sql",
+      "bytes": 16795,
+      "sha256_original": "429cf5ebba46c3fe8396e7443bd5a151a05f738d9cf97f8001a83918e29ab48d",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 151,
+      "sha256_generado": "429cf5ebba46c3fe8396e7443bd5a151a05f738d9cf97f8001a83918e29ab48d"
+    },
+    {
+      "nombre": "20261113120500_cp_fin_fix_sentidos_pago.sql",
+      "bytes": 4424,
+      "sha256_original": "19c6779070bc67e6ce69d8fe9fbc2a44c2dc6800e7416364df4339ee9bb2c8d7",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 152,
+      "sha256_generado": "19c6779070bc67e6ce69d8fe9fbc2a44c2dc6800e7416364df4339ee9bb2c8d7"
+    },
+    {
+      "nombre": "20261113120600_cp_fin_fix_audit_logs_check.sql",
+      "bytes": 4600,
+      "sha256_original": "7d4fb088e3a039d4d9b64e38171ba5f830f7ccd15c42e03a9ff5ed4e12a6def2",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 153,
+      "sha256_generado": "7d4fb088e3a039d4d9b64e38171ba5f830f7ccd15c42e03a9ff5ed4e12a6def2"
+    },
+    {
+      "nombre": "20261113120700_cp_fin_fix_acl_funciones.sql",
+      "bytes": 6886,
+      "sha256_original": "f628f1527c2d8063e6e366a5c21ddef664b1b5a271d2fc76eec7496f9e5e5ccc",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 154,
+      "sha256_generado": "f628f1527c2d8063e6e366a5c21ddef664b1b5a271d2fc76eec7496f9e5e5ccc"
     },
     {
       "nombre": "AUDIT_FIXES.md",

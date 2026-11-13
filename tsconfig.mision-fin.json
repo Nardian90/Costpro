@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/app/api/fin/config/route.ts",
+    "src/app/api/fin/config/rule-action/route.ts",
+    "src/app/api/fin/config/simulate/route.ts",
+    "src/app/api/fin/statements/route.ts",
+    "src/app/api/fin/statements/category-detail/route.ts",
+    "src/app/api/fin/opening-balances/route.ts",
+    "src/app/api/fin/posting/route.ts",
+    "src/app/api/fin/documents/route.ts",
+    "src/components/views/terminal/views/financial_config/types.ts",
+    "src/components/views/terminal/views/financial_config/DocumentConfigView.tsx",
+    "src/components/views/terminal/views/financial_config/OpeningBalancesDialog.tsx",
+    "src/store/index.ts",
+    "src/config/navigation/navigation-definition.ts"
+  ]
+}
