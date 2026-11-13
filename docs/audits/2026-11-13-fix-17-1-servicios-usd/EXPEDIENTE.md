@@ -76,4 +76,4 @@ El paso 2 NO se ha ejecutado ni se ejecutará sin aprobación expresa del propie
 - Rama creada desde `main` post-merge CP-FIN (#1610); **cero contacto** con componentes CP-FIN validados (no se tocó `fin_*`).
 - `ci-gate-allowlist.json`: sin cambios necesarios (las 3 funciones ya estaban clasificadas o no requieren entrada nueva).
 - `scripts/lib/writers.manifest.json`: `scripts/auditoria-17-1-servicios-usd.mjs` declarado `guardProtected` (usa `assert-not-production` con destino real). `check-writers` PASS.
-- Secretos en el diff: CERO coincidencias (`github_pat_`, `sb_secret_`, `sbp_`, `sb_publishable_`, `eyJhbGciOi`, credenciales BD) — verificado en el paso final.
+- Secretos en el diff: CERO coincidencias (patrones de PAT/tokens/llaves/JWT/credenciales BD — verificado con el escaneo del paso final).
