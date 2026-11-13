@@ -1615,6 +1615,9 @@ export const VALID_VIEWS: Set<string> = new Set([
   // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros (OPERACIÓN,
   // junto al Dashboard de la tienda: Situación / Rendimiento / Dashboard).
   'financial-statements',
+  // MISIÓN CP-FIN (2026-11-13): Vista A — Configuración de Documentos
+  // (ANÁLISIS: reglas de partida doble del motor financiero).
+  'document-config',
 ]);
 
 /**

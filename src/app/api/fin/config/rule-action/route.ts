@@ -9,9 +9,10 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withSecurity } from '@/lib/with-security';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 
 const actionSchema = z.object({
-  rule_version_id: z.string().uuid(),
+  rule_version_id: uuidLoose,
   action: z.enum(['activate', 'deactivate']),
 });
 

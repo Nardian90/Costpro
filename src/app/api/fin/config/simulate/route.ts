@@ -10,10 +10,11 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withSecurity } from '@/lib/with-security';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 
 const simulateSchema = z.object({
   doctype: z.string().min(2).max(30),
-  document_id: z.string().uuid().nullable().optional(),
+  document_id: uuidLoose.nullable().optional(),
   metrics_manual: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).nullable().optional(),
   movements_override: z.array(z.record(z.string(), z.unknown())).nullable().optional(),
 });

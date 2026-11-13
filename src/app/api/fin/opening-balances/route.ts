@@ -13,6 +13,7 @@ import { withSecurity } from '@/lib/with-security';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 
 const createSchema = z.object({
   action: z.literal('create'),
@@ -26,7 +27,7 @@ const createSchema = z.object({
 
 const idActionSchema = z.object({
   action: z.enum(['apply', 'void']),
-  id: z.string().uuid(),
+  id: uuidLoose,
 });
 
 const bodySchema = z.union([createSchema, idActionSchema]);

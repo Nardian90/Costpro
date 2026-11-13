@@ -11,15 +11,16 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withSecurity } from '@/lib/with-security';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { z } from 'zod';
+import { uuidLoose } from '@/validation/api-schemas';
 
 const reprocessSchema = z.object({
   action: z.literal('reprocess'),
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
 });
 
 const backfillSchema = z.object({
   action: z.literal('backfill'),
-  store_id: z.string().uuid(),
+  store_id: uuidLoose,
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   dry_run: z.boolean().default(true),
