@@ -1,0 +1,23 @@
+════ VALIDACIÓN FIX DRY-RUN v3 (ESPEJO DE PAGOS) · BD AISLADA lguovmvrozxgssupkwpf ════
+Hora: 2026-11-13T20:36:26.888Z
+Tienda de prueba: Enervida 9635e633-387f-411d-bc15-7d2b6179aae4
+Snapshot ANTES: {"servicios":0,"pagos":5,"entries":143,"movements":286,"errors":0}
+  PASS · Regla activa SERVICIO_RECIBIDO: evento pago debita PAS_SERV_PEND — ["ACT_EFECTIVO_CUP:credito","ACT_BANCOS:credito","PAS_SERV_PEND:debito"]
+Creados: servicio TEST-FIXDRY3-1794602194677 5182a2ee-12bd-4905-a939-2eba59d87290 | pago 60b95b94-f401-4eee-818b-08b4cc6f356c
+  PASS · El motor contabilizó el asiento de pago (trigger fin_trg_payment_transactions)
+  PASS · Asiento REAL: débito PAS_SERV_PEND 100,00 — [{"categoria":"ACT_EFECTIVO_CUP","sentido":"credito","importe":100},{"categoria":"PAS_SERV_PEND","sentido":"debito","importe":100}]
+  PASS · Asiento REAL: crédito ACT_EFECTIVO_CUP 100,00
+  PASS · Asiento REAL equilibrado — D=100 C=100
+  PASS · El motor contabilizó el reconocimiento (GAS_SERVICIOS D / PAS_SERV_PEND C)
+  PASS · Reconocimiento: crédito PAS_SERV_PEND (misma cuenta que el pago debita)
+  PASS · Espejo dry-run v3 (PAGOS_SIM_SQL) incluye el pago creado
+  PASS · Espejo: débito PAS_SERV_PEND por el importe del pago — [{"categoria":"ACT_EFECTIVO_CUP","sentido":"credito","importe":100},{"categoria":"PAS_SERV_PEND","sentido":"debito","importe":100}]
+  PASS · Espejo: crédito ACT_EFECTIVO_CUP por el importe del pago
+  PASS · Espejo: asiento de pago equilibrado (D=C) — D=100 C=100
+  PASS · Espejo: NO reporta PAS_CXP_PROV en el pago de un servicio — v2 habría puesto PAS_CXP_PROV aquí
+  PASS · Espejo == ASIENTO REAL contabilizado por el motor (mismas categorías/sentidos/importes) — espejo=[{"categoria":"ACT_EFECTIVO_CUP","sentido":"credito","importe":100},{"categoria":"PAS_SERV_PEND","sentido":"debito","importe":100}] real=[{"categoria":"ACT_EFECTIVO_CUP","sentido":"credito","importe":100},{"categoria":"PAS_SERV_PEND","sentido":"debito","importe":100}]
+  PASS · Espejo == REGLA ACTIVA (PAS_SERV_PEND débito en evento pago)
+Snapshot DESPUÉS: {"servicios":0,"pagos":5,"entries":143,"movements":286,"errors":0}
+  PASS · NET DELTA 0 (limpieza total) — antes={"servicios":0,"pagos":5,"entries":143,"movements":286,"errors":0} después={"servicios":0,"pagos":5,"entries":143,"movements":286,"errors":0}
+
+════ RESULTADO: PASS TOTAL (espejo==regla==motor==asiento real) ════

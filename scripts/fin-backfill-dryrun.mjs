@@ -73,7 +73,7 @@ function assertReadOnly(query) {
 }
 async function q(sql) { return mgmt(assertReadOnly(sql)); }
 
-// ── SIMULACIÓN DE PAGOS DESDE EL MOTOR (exportada para el test aislado) ──────
+// ── SIMULACIÓN DE PAGOS DESDE EL MOTOR (exportada para el test aislado) ───────
 // Espejo EXACTO del evento 'pago' de fin_backfill/fin_trg_payment_transactions:
 // mapea ref_type→doctype y resuelve la regla activa por tienda igual que
 // fin_resolve_rule; fin_compute_metrics + fin_apply_templates hacen el resto.
@@ -81,19 +81,19 @@ export const PAGOS_SIM_SQL = `
   SELECT pt.id AS pago_id, pt.ref_id AS doc_id, pt.ref_type, pt.store_id, st.name AS tienda,
          pt.currency AS moneda_pago, round(pt.amount,2) AS importe_pago,
          round(pt.amount_cup,2) AS total_cup,
+         rv.id::text AS regla_id, rv.version AS regla_version,
          m.metrics, movs.movimientos
   FROM public.payment_transactions pt
   JOIN public.stores st ON st.id=pt.store_id
   CROSS JOIN LATERAL (SELECT public.fin_compute_metrics(
       CASE pt.ref_type WHEN 'receipt' THEN 'RECEPCION' ELSE 'SERVICIO_RECIBIDO' END,
       pt.ref_id, 'pago', pt.id) AS metrics) m
-  CROSS JOIN LATERAL (SELECT public.fin_apply_templates(
-      (SELECT rv.movements FROM public.fin_rule_versions rv
-        WHERE rv.document_type = CASE pt.ref_type WHEN 'receipt' THEN 'RECEPCION' ELSE 'SERVICIO_RECIBIDO' END
+  CROSS JOIN LATERAL (SELECT rv.id, rv.version, rv.movements FROM public.fin_rule_versions rv
+      WHERE rv.document_type = CASE pt.ref_type WHEN 'receipt' THEN 'RECEPCION' ELSE 'SERVICIO_RECIBIDO' END
           AND rv.status='active' AND rv.effective_from <= CURRENT_DATE
           AND (rv.store_id = pt.store_id OR rv.store_id IS NULL)
-        ORDER BY rv.store_id DESC NULLS LAST LIMIT 1),
-      'pago', m.metrics) AS movimientos) movs
+      ORDER BY rv.store_id DESC NULLS LAST LIMIT 1) rv
+  CROSS JOIN LATERAL (SELECT public.fin_apply_templates(rv.movements, 'pago', m.metrics) AS movimientos) movs
   WHERE pt.ref_type IN ('receipt','service') AND coalesce(pt.direction,'in')='in'
     AND NOT EXISTS (SELECT 1 FROM public.fin_entries e WHERE e.payment_ref = pt.id)
   ORDER BY pt.id`;
@@ -123,31 +123,36 @@ const TIPO_SQL = {
             ELSE t.total_amount*t.sale_exchange_rate END,2) AS total_cup,
       (t.status='completed') AS postable,
       EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.document_type='VENTA' AND e.document_id=t.id) AS contabilizado
-    FROM public.transactions t`,
+    FROM public.transactions t
+    ORDER BY t.store_id, t.created_at, t.id`,
   DEVOLUCION_VENTA: `SELECT d.store_id, d.id, d.devolution_number AS docnum, d.processed_at::date AS d,
       d.status, d.currency AS cur, COALESCE(d.exchange_rate,1) AS rate, d.total_amount AS amt,
       round(CASE WHEN d.currency='CUP' OR COALESCE(d.exchange_rate,0)<=0 THEN COALESCE(d.total_amount,0)
             ELSE d.total_amount*d.exchange_rate END,2) AS total_cup,
       (d.status='completed') AS postable,
       EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.document_type='DEVOLUCION_VENTA' AND e.document_id=d.id) AS contabilizado
-    FROM public.devolutions d`,
+    FROM public.devolutions d
+    ORDER BY d.store_id, d.processed_at, d.id`,
   RECEPCION: `SELECT r.store_id, r.id, r.document_number AS docnum, r.reception_date AS d,
       r.status, 'CUP' AS cur, 1 AS rate, r.total_cost AS amt, COALESCE(r.total_cost,0) AS total_cup,
       (r.status='active') AS postable,
       EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.document_type='RECEPCION' AND e.document_id=r.id) AS contabilizado
-    FROM public.receipts r`,
+    FROM public.receipts r
+    ORDER BY r.store_id, r.reception_date, r.id`,
   SERVICIO_RECIBIDO: `SELECT s.store_id, s.id, s.service_number AS docnum, s.service_date AS d,
       s.status, s.currency AS cur, COALESCE(s.exchange_rate,1) AS rate, s.total_amount AS amt,
       round(CASE WHEN s.currency='CUP' OR COALESCE(s.exchange_rate,0)<=0 THEN COALESCE(s.total_amount,0)
             ELSE s.total_amount*s.exchange_rate END,2) AS total_cup,
       (s.status='active') AS postable,
       EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.document_type='SERVICIO_RECIBIDO' AND e.document_id=s.id) AS contabilizado
-    FROM public.received_services s`,
+    FROM public.received_services s
+    ORDER BY s.store_id, s.service_date, s.id`,
   VALE_SALIDA: `SELECT i.store_id, i.id, i.slip_number AS docnum, i.created_at::date AS d,
       i.status, 'CUP' AS cur, 1 AS rate, i.total_cost AS amt, COALESCE(i.total_cost,0) AS total_cup,
       (i.status='completed') AS postable,
       EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.document_type='VALE_SALIDA' AND e.document_id=i.id) AS contabilizado
-    FROM public.issue_slips i`,
+    FROM public.issue_slips i
+    ORDER BY i.store_id, i.created_at, i.id`,
   AJUSTE_INVENTARIO: `SELECT a.store_id, a.id, a.id::text AS docnum, a.confirmed_at::date AS d,
       a.status, 'CUP' AS cur, 1 AS rate,
       (SELECT round(coalesce(sum(abs(i2.difference) * coalesce(NULLIF(w.wac,0), p.cost_average, 0)),0),2)
@@ -166,27 +171,31 @@ const TIPO_SQL = {
         WHERE i2.adjustment_id=a.id) AS total_cup,
       (a.status='confirmed') AS postable,
       EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.document_type='AJUSTE_INVENTARIO' AND e.document_id=a.id) AS contabilizado
-    FROM public.inventory_adjustments a`,
+    FROM public.inventory_adjustments a
+    ORDER BY a.store_id, a.confirmed_at, a.id`,
   COMISION: `SELECT c.store_id, c.id, c.id::text AS docnum, c.paid_at::date AS d,
       c.status, COALESCE(c.currency,'CUP') AS cur, COALESCE(c.exchange_rate,1) AS rate, c.final_amount AS amt,
       round(CASE WHEN COALESCE(c.currency,'CUP')='CUP' OR COALESCE(c.exchange_rate,0)<=0 THEN COALESCE(c.final_amount,0)
             ELSE c.final_amount*c.exchange_rate END,2) AS total_cup,
       (c.status='paid') AS postable,
       EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.document_type='COMISION' AND e.document_id=c.id AND e.event='pago') AS contabilizado
-    FROM public.commission_payments c`,
+    FROM public.commission_payments c
+    ORDER BY c.store_id, c.paid_at, c.id`,
   NOMINA: `SELECT n.store_id, n.id, n.payroll_number AS docnum, n.period_end AS d,
       n.status, COALESCE(n.currency,'CUP') AS cur, 1 AS rate, n.total_gross AS amt,
       round(COALESCE(n.total_gross,0),2) AS total_cup,
       (n.status IN ('confirmed','paid')) AS postable,
       EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.document_type='NOMINA' AND e.document_id=n.id AND e.event='reconocimiento') AS contabilizado
-    FROM public.payrolls n`,
+    FROM public.payrolls n
+    ORDER BY n.store_id, n.period_end, n.id`,
   FLUJO_CAJA: `SELECT f.store_id, f.id, f.document_number AS docnum, f.operation_date::date AS d,
       f.status, f.currency AS cur, COALESCE(f.exchange_rate,1) AS rate, f.amount AS amt,
       round(CASE WHEN f.currency='CUP' OR COALESCE(f.exchange_rate,0)<=0 THEN COALESCE(f.amount,0)
             ELSE f.amount*f.exchange_rate END,2) AS total_cup,
       (f.status='confirmado') AS postable,
       EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.document_type='FLUJO_CAJA' AND e.document_id=f.id) AS contabilizado
-    FROM public.cash_flow_documents f`,
+    FROM public.cash_flow_documents f
+    ORDER BY f.store_id, f.operation_date, f.id`,
 };
 
 // ── plantilla de asientos por tipo (espejo v2 — SOLO referencia; la regla
@@ -205,13 +214,18 @@ const ASIENTO = {
 const MOVIMIENTOS_POR_ASIENTO = { VENTA: 4, DEVOLUCION_VENTA: 2, RECEPCION: 2, SERVICIO_RECIBIDO: 2, VALE_SALIDA: 2, AJUSTE_INVENTARIO: 2, COMISION: 2, NOMINA: 3, FLUJO_CAJA: 2 };
 
 const REPORT = {
-  version: 3,
+  version: 4,
   generado: new Date().toISOString(), ref, modo: 'DRY-RUN read-only',
   correcciones_v3: [
     'Asientos de pago simulados con el MOTOR real (fin_compute_metrics + fin_apply_templates + regla activa por tienda): pago de SERVICIO_RECIBIDO debita PAS_SERV_PEND (v2 reportaba PAS_CXP_PROV).',
     'Semántica de divisa verificada por documento: total_amount de ventas en divisa ES el equivalente CUP (pagos lo prueban); economía corregida + inflación por doble conversión de la fórmula v2.',
     'Pre-check de ERR_UNBALANCED que el backfill real encontraría (ventas sin pagos, doble conversión USD, parciales/excesos) + movimientos reales por método/costo.',
     'Desglose por tienda de documentos, importes, pagos y errores esperados.',
+  ],
+  correcciones_v4: [
+    'HASH DE ESTRUCTURA CONTABLE COMPLETA (sustituye al hash v3 de totales): cada asiento serializa tipo documental + documento original + evento + payment_ref + versión de regla + POR MOVIMIENTO: categoría, sentido, importe original, CUP-equivalente, moneda y currency_origin, en orden determinista. El hash v3 (32109d55…) queda RETIRADO como prueba de integridad: probaba totales, no estructura (no cambiaba al corregir PAS_CXP_PROV→PAS_SERV_PEND).',
+    'ORDEN DETERMINISTA: cada consulta TIPO_SQL lleva ORDER BY explícito (store, fecha, id) y los pagos por pt.id; la serialización por asiento es estable entre pasadas.',
+    'Demo de sensibilidad incluida en el informe: misma estructura contable con categoría de pasivo distinta (defecto v2) → hash v3 idéntico (no detecta) vs hash v4 distinto (detecta).',
   ],
   conteos_antes: null, conteos_despues: null, bd_intacta: null,
   tiendas: [],
@@ -236,17 +250,39 @@ const REPORT = {
   duplicados: { numeros_documento: [], idempotency_keys: 0, reclasificacion: { sin_numeracion: [], duplicados_reales: [], duplicados_contabilizacion: [] } },
   anulaciones: { docs_anulados_ya_contabilizados: [], docs_voided: [] },
   inconsistencias: [],
-  idempotencia: { pasadas: [], iguales: null, explicacion: '', alcance_hash: '' },
+  idempotencia: { pasadas: [], iguales: null, explicacion: '', alcance_hash: '', demo_sensibilidad: null, hash_retirado: '32109d55… (v3, totales sin estructura): retirado como prueba de integridad del asiento' },
   comparacion_originales: { checks: 0, discrepancias: [], sumas_por_tipo: [] },
   pagos_posteriores: { por_ref_type: [], total_asientos: 0, total_movimientos: 0, importe_cup: 0, pagos_con_moneda_distinta_al_doc: 0, categorias_debitadas: {} },
 };
+
+// ── SERIALIZACIÓN v4 — ESTRUCTURA CONTABLE COMPLETA (exportada p/ tests) ────
+// Cada asiento: tipo documental | documento original | evento | payment_ref |
+// versión de regla + POR MOVIMIENTO (orden de plantilla, determinista):
+// categoría | sentido | importe original | CUP-equivalente | moneda | currency_origin.
+// El hash v3 serializaba «tipo|id|total_cup|débitos:créditos»: NO capturaba
+// categorías → permanecía idéntico al corregir PAS_CXP_PROV→PAS_SERV_PEND.
+export const numCent = v => (Math.round(Number(v ?? 0) * 100) / 100).toFixed(2);
+export function serializarMovimiento(m) {
+  return `MOV|${m.categoria}|${m.sentido}|${numCent(m.importe_origen)}|${numCent(m.importe_cup)}|${m.moneda}|${m.moneda_origen}`;
+}
+export function serializarAsiento(a) {
+  const cab = `ASIENTO|${a.tipo}|${a.doc_id}|${a.evento}|${a.payment_ref ?? '-'}|${a.regla ?? '-'}`;
+  return [cab, ...(a.movimientos || []).map(serializarMovimiento)].join('|') + '\n';
+}
+export function hashEstructura(asiento) { return createHash('sha256').update(serializarAsiento(asiento)).digest('hex'); }
+// hash del formato v3 (solo totales) — para la demo de sensibilidad
+export function hashTotalesV3(pagoId, totalCup, deb, cred) {
+  return createHash('sha256').update(`PAGO|${pagoId}|${totalCup}|${deb}:${cred}`).digest('hex');
+}
 
 async function simulatePass(nombre, pagosMotor, pagosPorId) {
   const hash = createHash('sha256');
   const pass = { nombre, asientos: 0, movimientos: 0 };
 
-  // reglas activas por tipo (misma fuente que fin_backfill)
+  // reglas activas por tipo (misma fuente que fin_backfill) + VERSIÓN (hash v4)
   const rules = await q(`SELECT DISTINCT document_type AS dt FROM public.fin_rule_versions WHERE status='active'`);
+  const ruleVersions = await q(`SELECT document_type AS dt, id::text AS rid, version AS v FROM public.fin_rule_versions WHERE status='active' AND store_id IS NULL`);
+  const reglaPorTipo = Object.fromEntries(ruleVersions.map(r => [r.dt, `${r.rid.slice(0, 8)}:v${r.v}`]));
   const tiposConRegla = new Set(rules.map(r => r.dt));
   const todosLosTipos = Object.keys(TIPO_SQL);
   for (const t of todosLosTipos.filter(t => !tiposConRegla.has(t))) {
@@ -290,7 +326,14 @@ async function simulatePass(nombre, pagosMotor, pagosPorId) {
       const cred = movs.filter(x => x.sense === 'credito').reduce((s, x) => s + x.amount_cup, 0);
       if (Math.abs(deb - cred) > 0.01) { desbal += 1; REPORT.asientos.desbalanceados_docs.push({ tipo, id: r.id, docnum: r.docnum, deb, cred }); }
       if (!Number.isFinite(tc)) REPORT.comparacion_originales.discrepancias.push({ tipo, id: r.id, docnum: r.docnum, problema: 'total_cup nulo/NaN' });
-      hash.update(`${tipo}|${r.id}|${tc}|${deb}:${cred}`);
+      // hash v4: ESTRUCTURA CONTABLE COMPLETA (categorías/monedas/regla incluidos)
+      hash.update(serializarAsiento({
+        tipo, doc_id: r.id, evento: 'reconocimiento', payment_ref: null,
+        regla: reglaPorTipo[tipo] ?? '-',
+        movimientos: movs.map(m => ({ categoria: m.cat, sentido: m.sense,
+          importe_origen: Number(r.amt || 0), importe_cup: m.amount_cup,
+          moneda: 'CUP', moneda_origen: r.cur || 'CUP' })),
+      }));
       if (nombre === 'PASADA 1' && REPORT.asientos.detalle_muestra.filter(x => x.tipo === tipo).length < 5) {
         REPORT.asientos.detalle_muestra.push({
           tipo, document_id: r.id, docnum: r.docnum, fecha: String(r.d), moneda_doc: r.cur, tasa: Number(r.rate),
@@ -328,7 +371,15 @@ async function simulatePass(nombre, pagosMotor, pagosPorId) {
     if (Math.abs(deb - cred) > 0.01) {
       REPORT.inconsistencias.push({ tipo: 'pago_no_balanceado_por_regla_activa', pago_id: p.pago_id, deb, cred, movimientos: movs });
     }
-    hash.update(`PAGO|${p.pago_id}|${tc}|${movs.map(m => m.amount_cup).join(':')}`);
+    // hash v4: estructura del asiento de PAGO (categoría debitada incluida)
+    hash.update(serializarAsiento({
+      tipo: p.ref_type === 'receipt' ? 'RECEPCION' : 'SERVICIO_RECIBIDO',
+      doc_id: p.doc_id, evento: 'pago', payment_ref: p.pago_id,
+      regla: p.regla_id ? `${String(p.regla_id).slice(0, 8)}:v${p.regla_version}` : '-',
+      movimientos: movs.map(m => ({ categoria: m.cat, sentido: m.sense,
+        importe_origen: Number(p.importe_pago || 0), importe_cup: m.amount_cup,
+        moneda: 'CUP', moneda_origen: p.moneda_pago || 'CUP' })),
+    }));
     if (nombre === 'PASADA 1') {
       REPORT.pagos_posteriores.por_ref_type.push({
         ref_type: p.ref_type, pago_id: p.pago_id, store_id: p.store_id, tienda: p.tienda,
@@ -357,12 +408,12 @@ async function simulatePass(nombre, pagosMotor, pagosPorId) {
   }
 
   pass.hash = hash.digest('hex');
-  pass.alcance = 'Por cada doc de RECONOCIMIENTO (orden: TIPO_SQL en orden de clave, filas en orden SQL): "tipo|id|total_cup|debitos:creditos". Por cada PAGO posterior (orden pt.id): "PAGO|pago_id|total_cup|debito:credito". La lista de elegibles y el importe total_cup de cada doc/pago son los datos que determinan el hash.';
+  pass.alcance = 'HASH v4 (ESTRUCTURA CONTABLE COMPLETA): por cada asiento (reconocimiento en orden TIPO_SQL + filas con ORDER BY explícito; pagos por pt.id): ASIENTO|tipo|doc_id|evento|payment_ref|regla(versión) + un MOV|categoría|sentido|importe_original|importe_cup|moneda|currency_origin POR MOVIMIENTO en orden de plantilla. Cambia si cambia CUALQUIER categoría, sentido, moneda, importe, documento o versión de regla; ya NO basta con que cuadren los totales.';
   return pass;
 }
 
 async function main() {
-  console.log('════ CP-FIN · DRY-RUN BACKFILL HISTÓRICO v3 · PRODUCCIÓN (read-only) ════');
+  console.log('════ CP-FIN · DRY-RUN BACKFILL HISTÓRICO v4 · PRODUCCIÓN (read-only) ════');
   console.log('Hora:', new Date().toISOString());
 
   REPORT.conteos_antes = (await q(COUNT_TABLES))[0];
@@ -395,7 +446,32 @@ async function main() {
     && p1.asientos === p2.asientos && p1.movimientos === p2.movimientos
     && p1.asientos_pago === p2.asientos_pago && p1.movimientos_pago === p2.movimientos_pago;
   REPORT.idempotencia.alcance_hash = p1.alcance;
-  REPORT.idempotencia.explicacion = 'La segunda pasada recalcula la MISMA elegibilidad (la condición "SIN asiento previo" no cambia porque el dry-run no escribe) y produce resultados idénticos (hash SHA-256 de asientos/importes igual). El backfill real es idempotente además por el guard de fin_post_document (asiento existente → NULL) y NOT EXISTS previo en fin_backfill; re-ejecutar el dry-run no puede duplicar nada porque no inserta nada.';
+  REPORT.idempotencia.explicacion = 'La segunda pasada recalcula la MISMA elegibilidad (la condición "SIN asiento previo" no cambia porque el dry-run no escribe) y produce resultados idénticos, incluido el hash v4 de ESTRUCTURA CONTABLE COMPLETA (no solo totales). El backfill real es idempotente además por el guard de fin_post_document (asiento existente → NULL) y NOT EXISTS previo en fin_backfill; re-ejecutar el dry-run no puede duplicar nada porque no inserta nada.';
+
+  // ── DEMO DE SENSIBILIDAD: el hash v4 representa la ESTRUCTURA, no los totales ──
+  // Caso real del defecto corregido en v3: el pago de un servicio debita
+  // PAS_SERV_PEND (correcto post-m015) o PAS_CXP_PROV (defecto v2). Mismos
+  // importes y sentidos → v3 (totales) NO cambia; v4 (estructura) SÍ cambia.
+  const mkPago = categoriaDebito => ({
+    tipo: 'SERVICIO_RECIBIDO', doc_id: 'DEMO-00000000-0000-0000-0000-000000000001',
+    evento: 'pago', payment_ref: 'DEMO-00000000-0000-0000-0000-000000000002', regla: 'DEMO:v99',
+    movimientos: [
+      { categoria: categoriaDebito, sentido: 'debito', importe_origen: 100, importe_cup: 100, moneda: 'CUP', moneda_origen: 'CUP' },
+      { categoria: 'ACT_EFECTIVO_CUP', sentido: 'credito', importe_origen: 100, importe_cup: 100, moneda: 'CUP', moneda_origen: 'CUP' },
+    ],
+  });
+  const pagoCorrecto = mkPago('PAS_SERV_PEND');   // regla activa post-m015
+  const pagoDefectoV2 = mkPago('PAS_CXP_PROV');    // espejo defectuoso v2
+  REPORT.idempotencia.demo_sensibilidad = {
+    escenario: 'Pago de SERVICIO_RECIBIDO de 100,00 CUP: categoría de débito PAS_SERV_PEND (correcto) vs PAS_CXP_PROV (defecto v2). Mismos totales débito=crédito=100,00.',
+    hash_v3_totales_correcto: hashTotalesV3('DEMO-2', 100, 100, 100),
+    hash_v3_totales_defecto: hashTotalesV3('DEMO-2', 100, 100, 100),
+    v3_detecta_el_defecto: hashTotalesV3('DEMO-2', 100, 100, 100) !== hashTotalesV3('DEMO-2', 100, 100, 100), // false: idénticos → NO detecta
+    hash_v4_estructura_correcto: hashEstructura(pagoCorrecto),
+    hash_v4_estructura_defecto: hashEstructura(pagoDefectoV2),
+    v4_detecta_el_defecto: hashEstructura(pagoCorrecto) !== hashEstructura(pagoDefectoV2),
+    conclusion: 'v3 (totales) NO detecta el cambio de categoría contable; v4 (estructura) SÍ. Por eso el hash 32109d55… quedó retirado como prueba de integridad y el informe v4 solo cita el hash v4.',
+  };
 
   // ── duplicados / anulaciones / inconsistencias (read-only; igual que v2) ──
   REPORT.duplicados.reclasificacion = {
@@ -588,7 +664,7 @@ async function main() {
   writeFileSync('/home/z/my-project/download/fin-backfill-dryrun-informe.json', out);
   writeFileSync('/home/z/my-project/scripts/fin-backfill-dryrun-informe.json', out);
   console.log('\nInforme JSON: /home/z/my-project/download/fin-backfill-dryrun-informe.json');
-  console.log('DRY-RUN v3 COMPLETADO — sin escrituras.');
+  console.log('DRY-RUN v4 COMPLETADO — sin escrituras.');
   if (!REPORT.bd_intacta) { console.error('FALLO: conteos cambiaron'); process.exit(5); }
   if (!REPORT.idempotencia.iguales) { console.error('FALLO: idempotencia no demostrada'); process.exit(6); }
   if (REPORT.inconsistencias.some(i => i.tipo === 'pago_no_balanceado_por_regla_activa')) {

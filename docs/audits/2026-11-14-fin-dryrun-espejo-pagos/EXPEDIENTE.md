@@ -90,3 +90,31 @@ Backfill real NO autorizado; saldos iniciales NO autorizados; PR #1612 sin merge
 ni despliegue; ninguna migración aplicada a producción en esta rama; PR #1612
 sigue independiente de CP-FIN. La rama corrige SOLO la herramienta de simulación
 (informe); el motor de producción no se toca (sus reglas ya son correctas).
+
+## 6. FASE FINAL 2026-11-14 — HASH DE ESTRUCTURA CONTABLE COMPLETA (v4)
+
+Defecto detectado por el propietario: el hash v3 serializaba
+`tipo|id|total_cup|débitos:créditos` → NO capturaba categorías contables.
+Corregir `PAS_CXP_PROV`→`PAS_SERV_PEND` dejaba el hash IDÉNTICO (32109d55…).
+
+### Corrección aplicada (scripts/fin-backfill-dryrun.mjs v4)
+
+Cada asiento serializa AHORA (orden determinista):
+- `ASIENTO|tipo|doc_id|evento|payment_ref|regla(id:versión)`
+- POR MOVIMIENTO: `MOV|categoría|sentido|importe_original|importe_cup|moneda|currency_origin`
+- ORDER BY explícito en cada TIPO_SQL (store, fecha, id) + pagos por `pt.id`.
+- `PAGOS_SIM_SQL` expone `regla_id`/`regla_version` (resolución idéntica a
+  `fin_resolve_rule`) y el validador de BD aislada se re-ejecutó PASS TOTAL.
+
+### Evidencia (dos simulaciones completas + demo de sensibilidad)
+
+- PASADA 1 y PASADA 2 sobre producción (read-only, BD intacta, conteos
+  ANTES==DESPUÉS): hash v4 idéntico `d3dae0d9ba98d779…` (determinismo).
+- Demo de sensibilidad (incluida en `idempotencia.demo_sensibilidad`):
+  pago 100,00 CUP con débito `PAS_SERV_PEND` (correcto) vs `PAS_CXP_PROV`
+  (defecto v2): hash v3 idéntico (`v3_detecta_el_defecto: false`) vs
+  hash v4 distinto (`v4_detecta_el_defecto: true`).
+- **El hash 32109d55… (v3) queda RETIRADO como prueba de integridad del
+  asiento**; el expediente e informe citan exclusivamente el hash v4.
+- El propio informe F1 v4 reporta la inflación única del lote USD:
+  7.566.770.544,63 CUP (misma cifra que S5, misma regla de cálculo).
