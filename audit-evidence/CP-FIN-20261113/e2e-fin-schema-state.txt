@@ -1,0 +1,16 @@
+# CP-FIN — Estado del esquema en BD aislada (lguovmvrozxgssupkwpf)
+# Fecha: 2026-11-13 13:29:09 UTC · Solo lectura vía Management API
+
+tablas_fin       8
+categorias       44
+doc_types        15
+rule_versions    10
+entries          0
+movements        0
+posting_errors   0
+sentinel         true
+
+## Producción (wthkddeleylijmonclxg) — verificación read-only
+
+CERO tablas fin_* en producción
+→ La migración CP-FIN NO está aplicada en producción; se aplica tras el merge del PR (decisión del propietario).

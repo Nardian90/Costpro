@@ -1,0 +1,18 @@
+# CP-FIN — Smoke funcional del motor (BD aislada lguovmvrozxgssupkwpf)
+# Fecha: 2026-11-13 13:28:03 UTC · Script: /home/z/my-project/scripts/fin-smoke-e2e.mjs
+
+[fin-smoke] tienda de prueba: 9635e633-387f-411d-bc15-7d2b6179aae4
+[fin-smoke] simulación: {"movs":4,"D":160,"C":160,"eq":true}
+[fin-smoke] ✓ Caso A simulado: 100 efectivo + 60 costo → débitos 160 = créditos 160
+[fin-smoke] ✓ trigger servicio → asiento 50 D gasto / 50 C CxP (Caso C)
+[fin-smoke] ✓ pago posterior → 50 D efectivo / 50 C CxP (gasto NO duplicado)
+[fin-smoke] ✓ idempotencia: exactamente 1 asiento de pago
+[fin-smoke] ✓ anulación → 2 asientos compensatorios (reconocimiento y pago), originales reversed (Caso G)
+[fin-smoke] balance: {"activos":0,"diferencia":0,"equilibrado":true,"pasivos_mas_patrimonio":0}
+[fin-smoke] ✓ ecuación patrimonial cuadrada (dif=0)
+[fin-smoke] rendimiento: {"gastos":0,"neto":0}
+[fin-smoke] ✓ gasto compensado tras anulación: Estado de Rendimiento en 0 neto
+[fin-smoke] ✓ limpieza completa — net delta 0
+[fin-smoke] FIN — TODO OK
+
+exit=0

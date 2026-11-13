@@ -1,0 +1,7 @@
+# CP-FIN — Guardrail de higiene post-E2E (net delta 0)
+# Fecha: 2026-11-13 13:28:48 UTC · Comando: node e2e/scripts/data-hygiene-guard.cjs
+
+◇ injected env (14) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+[data-hygiene-guard:AFTER] residuos E2E — stores=0 users=0 (límites: 12/12) | protegidos: 5 tiendas por config
+[data-hygiene-guard:AFTER] PASS — net delta = 0
+exit=0

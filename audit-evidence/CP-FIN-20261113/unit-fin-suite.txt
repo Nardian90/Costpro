@@ -1,0 +1,9 @@
+# CP-FIN — Suite unitaria (vitest)
+# Fecha: 2026-11-13 13:29:13 UTC
+
+ ✓ src/__tests__/components/financial-statements-view.test.tsx (4 tests) 120ms
+ ✓ src/__tests__/migrations/cp-fin-partida-doble-migration.test.ts (16 tests) 14ms
+ ✓ src/__tests__/navigation/fin-navigation.test.ts (5 tests) 5ms
+ ✓ src/__tests__/lib/fin-presentation.test.ts (8 tests) 14ms
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
