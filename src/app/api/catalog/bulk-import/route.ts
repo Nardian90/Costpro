@@ -31,6 +31,14 @@ import { bulkImportProductSchema, type BulkImportProduct } from '@/validation/ap
  *   3. Los no-admin conservan el check de membresía activa por tienda
  *      (FIX-SEC-H2) y, además, la organización de la fila debe coincidir
  *      con la del llamante (defensa en profundidad).
+ *
+ * CP-CAT-IMPORT-001 (2026-11-13): la escritura ya no es un upsert directo
+ *   en products: se delega en la RPC de dominio managed_bulk_import_products
+ *   (mismo servicio que la alta manual/recepciones), que garantiza el registro
+ *   y vínculo con el Catálogo Maestro en tiendas conectadas, es idempotente
+ *   (re-importar no duplica), transaccional por fila (sin huérfanos) y
+ *   reporta resultados/errores POR FILA. Tiendas NO conectadas conservan el
+ *   comportamiento de alta local histórica.
  */
 // FIX-SEC-H2: Wrap with withAuth for membership-enriched session
 async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -276,96 +284,69 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
       );
     }
 
-    // ── Step 4b: CP-CAT-MAESTRO-003 — safeguard de identidad compartida ─────
-    // Si la tienda destino está conectada al catálogo maestro de su
-    // organización y el SKU ya existe como maestro ACTIVO, la fila se estampa
-    // con master_product_id ANTES del upsert: reutiliza la identidad existente
-    // (jamás una bifurcación) y el trigger trg_products_master_identity_guard
-    // coerciona sku/name al maestro. Crear maestros NUEVOS desde importaciones
-    // queda en el mecanismo gobernado existente (create_master_product /
-    // incorporate_store_products_to_master) — fuera del alcance conservador de
-    // esta ruta. Best-effort: un fallo de estampado NO bloquea la importación
-    // (la reconciliación posterior puede recuperar esas filas: la RPC
-    // incorporate_store_products_to_master es idempotente).
-    try {
-      const importStoreIds = [...new Set(authorizedProducts.map(p => p.store_id))];
-      const { data: connectedLinks, error: linksErr } = await (client as any)
-        .from('catalog_store_links')
-        .select('store_id, tenant_id, status')
-        .in('store_id', importStoreIds)
-        .eq('status', 'connected');
-      if (linksErr) throw linksErr;
-      const connectedStoreIds = new Set<string>(((connectedLinks || []) as Array<{ store_id: string }>).map(l => l.store_id));
-
-      if (connectedStoreIds.size > 0) {
-        const skusByStore = new Map<string, Set<string>>();
-        for (const p of authorizedProducts) {
-          if (!connectedStoreIds.has(p.store_id)) continue;
-          const sku = String(p.sku || '').trim();
-          if (!sku) continue;
-          if (!skusByStore.has(p.store_id)) skusByStore.set(p.store_id, new Set());
-          skusByStore.get(p.store_id)!.add(sku);
-        }
-        const activeMasterIdByTenantSku = new Map<string, string>();
-        for (const [sid, skus] of skusByStore) {
-          const tid = storeTenantMap.get(sid);
-          if (!tid) continue;
-          const { data: masters, error: mastersErr } = await (client as any)
-            .from('master_products')
-            .select('id, sku, tenant_id, status')
-            .eq('tenant_id', tid)
-            .in('sku', [...skus]);
-          if (mastersErr) throw mastersErr;
-          for (const m of (masters || []) as Array<{ id: string; sku: string; tenant_id: string; status: string }>) {
-            if (m.status === 'active') activeMasterIdByTenantSku.set(`${m.tenant_id}|${m.sku}`, m.id);
-          }
-        }
-        let stamped = 0;
-        for (const p of authorizedProducts) {
-          const tid = storeTenantMap.get(p.store_id);
-          const sku = String(p.sku || '').trim();
-          const mid = tid && sku ? activeMasterIdByTenantSku.get(`${tid}|${sku}`) : undefined;
-          if (mid) {
-            (p as Record<string, unknown>).master_product_id = mid;
-            stamped++;
-          }
-        }
-        if (stamped > 0) {
-          logInfo(route, `bulk-import master-stamp: ${stamped} fila(s) reutilizan identidad compartida existente`, { stamped });
-        }
-      }
-    } catch (stampErr) {
-      logError(route, 'bulk-import master-stamp failed (best-effort, importación continúa)', stampErr);
+    // ── CP-CAT-IMPORT-001: alta masiva integrada con el Catálogo Maestro ──
+    // Las filas (ya autorizadas y estampadas con tenant_id del servidor) se
+    // agrupan por tienda y se delegan a la RPC de dominio
+    // managed_bulk_import_products — el MISMO servicio de dominio que la
+    // creación manual y las recepciones (create_master_product /
+    // register_reception): garantiza maestro por (tenant, sku) en tiendas
+    // conectadas (reutiliza o crea), vincula la fila local y reporta errores
+    // POR FILA sin abortar el lote. Escritura transaccional por fila:
+    // jamás un producto local huérfano ni un maestro huérfano.
+    // La RPC re-verifica la autorización contra la BD (defensa en profundidad).
+    type ImportRow = Record<string, unknown>;
+    const rowsByStore = new Map<string, ImportRow[]>();
+    for (const p of authorizedProducts) {
+      const group = rowsByStore.get(p.store_id) ?? [];
+      group.push(p as unknown as ImportRow);
+      rowsByStore.set(p.store_id, group);
     }
 
-    // Use explicit any cast for the array to avoid 'any[]' to 'never[]' assignment error
-    let upsertResult = await (client
-      .from('products') as any)
-      .upsert(authorizedProducts as any, { onConflict: 'sku,store_id' });
+    const aggregateResults = {
+      created_products: 0,
+      updated_products: 0,
+      masters_created: 0,
+      masters_reused: 0,
+      results: [] as unknown[],
+      errors: [] as unknown[],
+    };
+    let rpcHardError: { message: string; code?: string } | null = null;
 
-    // If column mismatch, retry without optional columns
-    if (upsertResult.error) {
-      const errMsg = upsertResult.error.message || '';
-      const errCode = upsertResult.error.code || '';
-      console.warn(`[${route}] First upsert attempt failed:`, { code: errCode, message: errMsg });
+    for (const [storeId, rows] of rowsByStore) {
+      const { data: importResult, error: importErr } = await (client as any).rpc(
+        'managed_bulk_import_products',
+        {
+          p_store_id: storeId,
+          p_rows: JSON.parse(JSON.stringify(rows)),
+          p_user_id: session.user.id,
+        }
+      );
 
-      if (errCode === 'PGRST204' || errMsg.toLowerCase().includes('column')) {
-        console.log(`[${route}] Retrying without barcode/min_stock/supplier columns`);
-        const minimalProducts = authorizedProducts.map(
-          ({ barcode, barcode_type, min_stock, supplier, ...rest }: any) => rest
-        );
-        upsertResult = await (client
-          .from('products') as any)
-          .upsert(minimalProducts as any, { onConflict: 'sku,store_id' });
+      if (importErr) {
+        // Error de invocación (autorización BD, tienda inexistente, límite…).
+        logError(route, `bulk-import RPC failed for store ${storeId}`, importErr);
+        rpcHardError = { message: importErr.message || 'managed_bulk_import_products failed', code: importErr.code };
+        break;
       }
+
+      aggregateResults.created_products += importResult?.created_products ?? 0;
+      aggregateResults.updated_products += importResult?.updated_products ?? 0;
+      aggregateResults.masters_created += importResult?.masters_created ?? 0;
+      aggregateResults.masters_reused += importResult?.masters_reused ?? 0;
+      aggregateResults.results.push(...(importResult?.results ?? []));
+      aggregateResults.errors.push(
+        ...((importResult?.errors ?? []) as Array<Record<string, unknown>>).map(e => ({
+          ...e,
+          store_id: storeId,
+        }))
+      );
     }
 
-    // ── Step 6: Handle errors ─────────────────────────────────
-    if (upsertResult.error) {
-      const err = upsertResult.error;
-      const errMsg = err.message || '';
-      const errCode = err.code || '';
-      console.error(`[${route}] Upsert failed:`, { code: errCode, message: errMsg, details: err.details, hint: err.hint });
+    // ── Handle errors ─────────────────────────────────────────
+    if (rpcHardError) {
+      const errCode = rpcHardError.code || '';
+      const errMsg = rpcHardError.message || '';
+      console.error(`[${route}] Import RPC failed:`, { code: errCode, message: errMsg });
 
       // RLS permission denied (Postgres error 42501)
       if (errCode === '42501' || errMsg.toLowerCase().includes('row-level security') || errMsg.toLowerCase().includes('policy')) {
@@ -378,30 +359,52 @@ async function bulkImportHandler(req: NextRequest, session: AuthenticatedSession
         );
       }
 
-      // Constraint violation (e.g., unique constraint on sku+store_id)
-      if (errCode === '23505') {
+      // Authorization enforced by the domain service (defensa en profundidad)
+      if (errMsg.startsWith('ERR_UNAUTHORIZED')) {
         return NextResponse.json(
-          { ...createApiError('BULK_IMPORT_CONFLICT'), detail: errMsg },
-          { status: 409 }
+          { ...createApiError('STORE_ACCESS_DENIED'), detail: errMsg },
+          { status: 403 }
         );
       }
 
-      // Generic database error
+      if (errMsg.startsWith('ERR_STORE_NOT_FOUND')) {
+        return NextResponse.json(
+          { ...createApiError('BULK_IMPORT_INVALID_PRODUCT'), detail: errMsg },
+          { status: 400 }
+        );
+      }
+
       return NextResponse.json(
         { ...createApiError('BULK_IMPORT_FAILED'), detail: errMsg, code: errCode },
         { status: 500 }
       );
     }
 
-    // ── Step 7: Success ───────────────────────────────────────
+    // ── Success (con resultados por fila) ─────────────────────
     const duration = Date.now() - startTime;
-    console.log(`[${route}] Success: ${authorizedProducts.length} products upserted in ${duration}ms`);
-    logInfo(route, `Import completed: ${authorizedProducts.length} products (${duration}ms)`, { count: authorizedProducts.length, duration });
+    const totalRows = aggregateResults.created_products + aggregateResults.updated_products;
+    const errorCount = aggregateResults.errors.length;
+    console.log(`[${route}] Success: ${totalRows} products upserted, ${aggregateResults.masters_created} masters created, ${errorCount} row error(s) in ${duration}ms`);
+    logInfo(route, `Import completed: ${totalRows} products (${duration}ms)`, {
+      count: totalRows,
+      duration,
+      created: aggregateResults.created_products,
+      updated: aggregateResults.updated_products,
+      masters_created: aggregateResults.masters_created,
+      masters_reused: aggregateResults.masters_reused,
+      row_errors: errorCount,
+    });
 
     return NextResponse.json({
       success: true,
-      count: authorizedProducts.length,
-      inserted: (upsertResult as any).data ? ((upsertResult as any).data as any[]).length : authorizedProducts.length,
+      count: totalRows,
+      inserted: aggregateResults.created_products,
+      updated: aggregateResults.updated_products,
+      masters_created: aggregateResults.masters_created,
+      masters_reused: aggregateResults.masters_reused,
+      catalog_connected_stores: [...rowsByStore.keys()],
+      results: aggregateResults.results,
+      errors: aggregateResults.errors,
     });
   } catch (error: unknown) {
     const duration = Date.now() - startTime;
