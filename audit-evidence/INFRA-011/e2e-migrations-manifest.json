@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 561,
-  "total_incluidos": 146,
+  "total_considerados": 563,
+  "total_incluidos": 148,
   "total_excluidos": 415,
-  "digest": "45500aeb8e437a26aecc75a63d1f66858971559ef64743606df11a78185297bf",
+  "digest": "c399a7d8b9a96a42c15b47096046db47e2afff01095225eec8dc3e0afdfb31b6",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5486,6 +5486,28 @@
       "observaciones": [],
       "posicion": 146,
       "sha256_generado": "4255a3ad3b8cbde3c32b14f54c92ad3e82f0037046b092e4bbec6e3f12795096"
+    },
+    {
+      "nombre": "20261113120000_cp_fin_partida_doble_base.sql",
+      "bytes": 50782,
+      "sha256_original": "638a660ea39671e35f2892d60ff6f2d23b66a96fee66533dc192a25fd948ee73",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 147,
+      "sha256_generado": "638a660ea39671e35f2892d60ff6f2d23b66a96fee66533dc192a25fd948ee73"
+    },
+    {
+      "nombre": "20261113120100_cp_fin_partida_doble_motor.sql",
+      "bytes": 80430,
+      "sha256_original": "27545ad61341527e9380d65dd528d6c1c74e50888f1161088375ec146642cce7",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261113",
+      "observaciones": [],
+      "posicion": 148,
+      "sha256_generado": "27545ad61341527e9380d65dd528d6c1c74e50888f1161088375ec146642cce7"
     },
     {
       "nombre": "AUDIT_FIXES.md",
