@@ -35,7 +35,7 @@ Por tipo documental (asientos de reconocimiento):
 
 ## 2. Asientos de reconocimiento
 
-**1.342** asientos de reconocimiento (uno por documento original elegible). Todos balanceados (Σdébitos = Σcréditos = `total_cup`, tolerancia 0,01): **1342 balanceados / 0 desbalanceados**.
+**1.342** asientos de reconocimiento (uno por documento original elegible). Todos balanceados (Σdébitos = Σcréditos = `total_cup`, tolerancia 0,01): **1.342 balanceados / 0 desbalanceados**.
 
 ## 3. Asientos de pagos posteriores
 
