@@ -1,31 +1,32 @@
 #!/usr/bin/env node
 /**
- * CP-FIN — DRY-RUN DEL BACKFILL HISTÓRICO sobre PRODUCCIÓN (2026-11-13)
+ * CP-FIN — DRY-RUN DEL BACKFILL HISTÓRICO sobre PRODUCCIÓN (v3 · 2026-11-14)
  * =====================================================================
- * Frente F1 de la autorización del propietario (2026-11-13): simulación
- * READ-ONLY del backfill histórico. NINGUNA escritura (guard CP-INFRA-019
+ * Frente F1 de la autorización del propietario: simulación READ-ONLY del
+ * backfill histórico. NINGUNA escritura (guard CP-INFRA-019
  * ALLOW_PROD=read-only + bloqueador estático de sentencias no-SELECT).
  *
- * Rediseño v2 (eficiente): TODO el cálculo se hace con UNA consulta por tipo
- * documental (agregaciones en SQL, no N+1 por documento) y la partida doble
- * se valida como conjuntos. Re-ejecutable, idempotente por diseño.
+ * v3 — CORRECCIONES (rama fix/fin-dryrun-espejo-pagos-20261114):
+ *   1. ESPEJO DE PAGOS DESDE EL MOTOR REAL: los asientos de pago ya NO se
+ *      hardcodean (v2 usaba PAS_CXP_PROV D / ACT_EFECTIVO_CUP C para TODOS
+ *      los pagos). Ahora se simulan con las PROPIAS funciones del motor
+ *      (fin_compute_metrics + fin_apply_templates + regla activa resuelta
+ *      por tienda) → los pagos de SERVICIO_RECIBIDO debit PAS_SERV_PEND y
+ *      los de RECEPCION debit PAS_CXP_PROV, con crédito ACT_EFECTIVO_CUP
+ *      (cash) o ACT_BANCOS (no cash), exactamente como postearía el motor.
+ *      El informe v2 reportaba mal la categoría del pago de servicios.
+ *   2. SEMÁNTICA DE DIVISA: verificación por documento de que total_amount
+ *      de ventas en divisa ES el equivalente CUP (evidencia: pagos con
+ *      Σamount_cup == total_amount). Se reporta la economía CORREGIDA y la
+ *      inflación por doble conversión de la fórmula v2 (amt × tasa).
+ *   3. MOTOR REAL vs PLANTILLA: conteo de movimientos REALES (métodos con
+ *      importe, ingreso y par de costo para VENTA; motor para el resto) y
+ *      pre-check de ERR_UNBALANCED que el backfill real encontraría
+ *      (ventas sin pagos, doble conversión USD, parciales/excesos).
+ *   4. DESGLOSE POR TIENDA: documentos, importes (v2 y corregidos), pagos y
+ *      errores esperados por tienda.
  *
- * Puntos del informe requeridos por el propietario:
- *   A. Elegibles por tienda × período (mes) × tipo documental.
- *   B. Excluidos + motivo (ya contabilizado / estado no-postable / sin regla).
- *   C. Asientos que se generarían (estructura por regla semilla + importe
- *      por documento: categoría/sentido/importe CUP; trazabilidad doc_id).
- *      Validación de partida doble: Σdébitos=Σcréditos por asiento.
- *   D. Totales por moneda (CUP/USD/otras): importe en moneda de origen y
- *      CUP-equivalente por SEPARADO. Sin conversiones cruzadas.
- *   E. Duplicados, previamente contabilizados, anulaciones, inconsistencias.
- *   F. Idempotencia: DOS pasadas de la MISMA simulación; hash de resultados
- *      idéntico + elegibilidad dependiente de "SIN asiento previo" (que el
- *      dry-run no altera) → demostrado.
- *   G. Comparación con originales: por tipo, total de documentos elegibles
- *      según la tabla fuente vs Σmovimientos esperados (D=C=total_cup);
- *      discrepancias por documento reportadas.
- *
+ * Puntos del informe requeridos por el propietario (A-G de v2, intactos).
  * Uso: ALLOW_PROD=read-only node scripts/fin-backfill-dryrun.mjs
  */
 import { readFileSync, writeFileSync } from 'fs';
@@ -41,7 +42,7 @@ for (const l of readFileSync(resolve(process.cwd(), '.env'), 'utf8').split('\n')
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 const TOKEN = env.SUPABASE_ACCESS_TOKEN;
 const ref = SUPABASE_URL.match(/https:\/\/(.*?)\.supabase\.co/)[1];
-assertNotProduction({ mode: 'read-only', url: SUPABASE_URL, context: 'fin-backfill-dryrun.mjs' });
+assertNotProduction({ mode: 'read-only', url: SUPABASE_URL, context: 'fin-backfill-dryrun.mjs v3' });
 if (ref !== 'wthkddeleylijmonclxg') {
   console.error('FALLO DE GUARD: destino no es producción (wthkddeleylijmonclxg)');
   process.exit(2);
@@ -71,6 +72,31 @@ function assertReadOnly(query) {
   return query;
 }
 async function q(sql) { return mgmt(assertReadOnly(sql)); }
+
+// ── SIMULACIÓN DE PAGOS DESDE EL MOTOR (exportada para el test aislado) ──────
+// Espejo EXACTO del evento 'pago' de fin_backfill/fin_trg_payment_transactions:
+// mapea ref_type→doctype y resuelve la regla activa por tienda igual que
+// fin_resolve_rule; fin_compute_metrics + fin_apply_templates hacen el resto.
+export const PAGOS_SIM_SQL = `
+  SELECT pt.id AS pago_id, pt.ref_id AS doc_id, pt.ref_type, pt.store_id, st.name AS tienda,
+         pt.currency AS moneda_pago, round(pt.amount,2) AS importe_pago,
+         round(pt.amount_cup,2) AS total_cup,
+         m.metrics, movs.movimientos
+  FROM public.payment_transactions pt
+  JOIN public.stores st ON st.id=pt.store_id
+  CROSS JOIN LATERAL (SELECT public.fin_compute_metrics(
+      CASE pt.ref_type WHEN 'receipt' THEN 'RECEPCION' ELSE 'SERVICIO_RECIBIDO' END,
+      pt.ref_id, 'pago', pt.id) AS metrics) m
+  CROSS JOIN LATERAL (SELECT public.fin_apply_templates(
+      (SELECT rv.movements FROM public.fin_rule_versions rv
+        WHERE rv.document_type = CASE pt.ref_type WHEN 'receipt' THEN 'RECEPCION' ELSE 'SERVICIO_RECIBIDO' END
+          AND rv.status='active' AND rv.effective_from <= CURRENT_DATE
+          AND (rv.store_id = pt.store_id OR rv.store_id IS NULL)
+        ORDER BY rv.store_id DESC NULLS LAST LIMIT 1),
+      'pago', m.metrics) AS movimientos) movs
+  WHERE pt.ref_type IN ('receipt','service') AND coalesce(pt.direction,'in')='in'
+    AND NOT EXISTS (SELECT 1 FROM public.fin_entries e WHERE e.payment_ref = pt.id)
+  ORDER BY pt.id`;
 
 const COUNT_TABLES = `
 SELECT
@@ -163,9 +189,8 @@ const TIPO_SQL = {
     FROM public.cash_flow_documents f`,
 };
 
-// ── plantilla de asientos por tipo (reglas semilla auditadas CP-FIN) ───────
-// (categoria, sentido) × importe = total_cup del documento (espejo del motor:
-//  el dry-run valida D=C=total_cup; la regla real vive en fin_rule_versions)
+// ── plantilla de asientos por tipo (espejo v2 — SOLO referencia; la regla
+//    real vive en fin_rule_versions y el motor la aplica) ────────────────────
 const ASIENTO = {
   VENTA: [['ING_VENTAS','credito'],['ACT_EFECTIVO_CUP','debito']],
   DEVOLUCION_VENTA: [['ING_VENTAS','debito'],['ACT_EFECTIVO_CUP','credito']],
@@ -180,7 +205,14 @@ const ASIENTO = {
 const MOVIMIENTOS_POR_ASIENTO = { VENTA: 4, DEVOLUCION_VENTA: 2, RECEPCION: 2, SERVICIO_RECIBIDO: 2, VALE_SALIDA: 2, AJUSTE_INVENTARIO: 2, COMISION: 2, NOMINA: 3, FLUJO_CAJA: 2 };
 
 const REPORT = {
+  version: 3,
   generado: new Date().toISOString(), ref, modo: 'DRY-RUN read-only',
+  correcciones_v3: [
+    'Asientos de pago simulados con el MOTOR real (fin_compute_metrics + fin_apply_templates + regla activa por tienda): pago de SERVICIO_RECIBIDO debita PAS_SERV_PEND (v2 reportaba PAS_CXP_PROV).',
+    'Semántica de divisa verificada por documento: total_amount de ventas en divisa ES el equivalente CUP (pagos lo prueban); economía corregida + inflación por doble conversión de la fórmula v2.',
+    'Pre-check de ERR_UNBALANCED que el backfill real encontraría (ventas sin pagos, doble conversión USD, parciales/excesos) + movimientos reales por método/costo.',
+    'Desglose por tienda de documentos, importes, pagos y errores esperados.',
+  ],
   conteos_antes: null, conteos_despues: null, bd_intacta: null,
   tiendas: [],
   elegibles: { por_grupo: [], total_docs: 0 },
@@ -188,27 +220,34 @@ const REPORT = {
   asientos: {
     por_tipo: [], total: 0, movimientos: 0, balanceados: 0,
     desbalanceados_docs: [], detalle_muestra: [],
-    // desglose reconciliado: reconocimiento vs pagos posteriores
     desglose: { reconocimiento: { asientos: 0, movimientos: 0 }, pagos_posteriores: { asientos: 0, movimientos: 0 } },
     totales: { asientos: 0, movimientos: 0 },
   },
   monedas: { nota: 'Importes en moneda de origen y CUP-equivalente reportados por SEPARADO; sin sumas entre monedas distintas ni conversiones no autorizadas.', por_moneda: [] },
+  semantica_divisa: {
+    nota: 'Ventas en divisa: total_amount ES el equivalente CUP de la venta (semántica de create_sale_v2/src/lib/currency/sale-currency.ts: balance=total_amount−Σpagos.amountCUP; ítems: price_at_sale en divisa, price_at_sale_cup=divisa×tasa).',
+    por_documento: [], resumen: null,
+  },
+  motor_real: {
+    nota: 'Pre-check de lo que el motor REAL contabilizaría. fin_post_document valida D=Σcobros vs C=total_cup (fórmula amt×tasa) → ERR_UNBALANCED en los casos listados; fin_post_document_safe los registraría en fin_posting_errors.',
+    ventas_por_estado: [], pagos_desde_motor: [], advertencia_plantillas: 'Los movimientos de reconocimiento de VENTA/DEVOLUCIÓN dependen de los métodos de pago y del costo presentes en cada documento; MOVIMIENTOS_POR_ASIENTO de v2 es una aproximación por plantilla. Esta sección reporta el conteo real.',
+  },
+  por_tienda: [],
   duplicados: { numeros_documento: [], idempotency_keys: 0, reclasificacion: { sin_numeracion: [], duplicados_reales: [], duplicados_contabilizacion: [] } },
   anulaciones: { docs_anulados_ya_contabilizados: [], docs_voided: [] },
   inconsistencias: [],
   idempotencia: { pasadas: [], iguales: null, explicacion: '', alcance_hash: '' },
   comparacion_originales: { checks: 0, discrepancias: [], sumas_por_tipo: [] },
-  pagos_posteriores: { por_ref_type: [], total_asientos: 0, total_movimientos: 0, importe_cup: 0, pagos_con_moneda_distinta_al_doc: 0 },
+  pagos_posteriores: { por_ref_type: [], total_asientos: 0, total_movimientos: 0, importe_cup: 0, pagos_con_moneda_distinta_al_doc: 0, categorias_debitadas: {} },
 };
 
-async function simulatePass(nombre) {
+async function simulatePass(nombre, pagosMotor, pagosPorId) {
   const hash = createHash('sha256');
   const pass = { nombre, asientos: 0, movimientos: 0 };
 
   // reglas activas por tipo (misma fuente que fin_backfill)
   const rules = await q(`SELECT DISTINCT document_type AS dt FROM public.fin_rule_versions WHERE status='active'`);
   const tiposConRegla = new Set(rules.map(r => r.dt));
-  // tipos postables documentados sin regla (matriz CP-FIN: sin regla por diseño)
   const todosLosTipos = Object.keys(TIPO_SQL);
   for (const t of todosLosTipos.filter(t => !tiposConRegla.has(t))) {
     REPORT.excluidos.por_motivo.push({ tipo: t, motivo: 'SIN_REGLA_ACTIVA (documentado: no contabiliza por diseño)', n: null });
@@ -245,8 +284,6 @@ async function simulatePass(nombre) {
       porMoneda[cur].importe_origen += Number(r.amt || 0);
       porMoneda[cur].importe_cup_equiv += Number(r.total_cup || 0);
       sumDocs += 1; sumCup += Number(r.total_cup || 0);
-      // asiento simulado: cada movimiento = total_cup (D y C) → equilibrado
-      // por construcción; validamos contra el ORIGINAL (total_cup nulo/NaN)
       const tc = Number(r.total_cup || 0);
       const movs = ASIENTO[tipo].map(([cat, sense]) => ({ cat, sense, amount_cup: Math.abs(tc), doc: r.id }));
       const deb = movs.filter(x => x.sense === 'debito').reduce((s, x) => s + x.amount_cup, 0);
@@ -254,7 +291,6 @@ async function simulatePass(nombre) {
       if (Math.abs(deb - cred) > 0.01) { desbal += 1; REPORT.asientos.desbalanceados_docs.push({ tipo, id: r.id, docnum: r.docnum, deb, cred }); }
       if (!Number.isFinite(tc)) REPORT.comparacion_originales.discrepancias.push({ tipo, id: r.id, docnum: r.docnum, problema: 'total_cup nulo/NaN' });
       hash.update(`${tipo}|${r.id}|${tc}|${deb}:${cred}`);
-      // muestra trazable (máx 5 por tipo) solo pasada 1
       if (nombre === 'PASADA 1' && REPORT.asientos.detalle_muestra.filter(x => x.tipo === tipo).length < 5) {
         REPORT.asientos.detalle_muestra.push({
           tipo, document_id: r.id, docnum: r.docnum, fecha: String(r.d), moneda_doc: r.cur, tasa: Number(r.rate),
@@ -264,7 +300,6 @@ async function simulatePass(nombre) {
         });
       }
     }
-    // comparación con originales por tipo: Σ(total_cup docs) == Σ(debitos)
     const nMovs = sumDocs * MOVIMIENTOS_POR_ASIENTO[tipo];
     REPORT.comparacion_originales.checks += sumDocs;
     REPORT.comparacion_originales.sumas_por_tipo.push({ tipo, docs: sumDocs, sum_total_cup_docs: Math.round(sumCup * 100) / 100, sum_debitos_esperado: Math.round(sumCup * 100) / 100, coinciden: true });
@@ -283,55 +318,51 @@ async function simulatePass(nombre) {
       }
     }
   }
-  // ── PAGOS POSTERIORES (parte de la pasada: asientos de pago de
-  //    payment_transactions receipt/service sin asiento previo; espejo del
-  //    evento 'pago' de fin_backfill: 1 asiento = 2 movimientos
-  //    [PAS_CXP_PROV débito / ACT_EFECTIVO_CUP crédito] por pago) ──
-  const pagos = await q(`SELECT pt.id, pt.store_id, pt.ref_type, pt.ref_id,
-      pt.currency AS cur, COALESCE(pt.exchange_rate,1) AS rate, pt.amount AS amt,
-      round(COALESCE(pt.amount_cup,0),2) AS total_cup,
-      EXISTS(SELECT 1 FROM public.fin_entries e WHERE e.payment_ref = pt.id) AS contabilizado
-    FROM public.payment_transactions pt
-    WHERE pt.ref_type IN ('receipt','service') ORDER BY pt.id`);
-  const pagosElegibles = pagos.filter(p => !p.contabilizado);
-  for (const p of pagosElegibles) {
+  // ── PAGOS POSTERIORES: asientos de pago SIMULADOS CON EL MOTOR REAL ──
+  // (misma elegibilidad que v2; movimientos desde la regla activa)
+  for (const p of pagosMotor) {
     const tc = Number(p.total_cup || 0);
-    // asiento de pago simulado (equilibrado por construcción)
-    const movs = [
-      { cat: 'PAS_CXP_PROV', sense: 'debito', amount_cup: Math.abs(tc) },
-      { cat: 'ACT_EFECTIVO_CUP', sense: 'credito', amount_cup: Math.abs(tc) },
-    ];
-    hash.update(`PAGO|${p.id}|${tc}|${movs.map(m => m.amount_cup).join(':')}`);
+    const movs = (p.movimientos || []).map(m => ({ cat: m.categoria, sense: m.sentido, amount_cup: Number(m.amount) }));
+    const deb = movs.filter(x => x.sense === 'debito').reduce((s, x) => s + x.amount_cup, 0);
+    const cred = movs.filter(x => x.sense === 'credito').reduce((s, x) => s + x.amount_cup, 0);
+    if (Math.abs(deb - cred) > 0.01) {
+      REPORT.inconsistencias.push({ tipo: 'pago_no_balanceado_por_regla_activa', pago_id: p.pago_id, deb, cred, movimientos: movs });
+    }
+    hash.update(`PAGO|${p.pago_id}|${tc}|${movs.map(m => m.amount_cup).join(':')}`);
     if (nombre === 'PASADA 1') {
       REPORT.pagos_posteriores.por_ref_type.push({
-        ref_type: p.ref_type, pago_id: p.id, store_id: p.store_id,
-        moneda_pago: p.cur, importe_cup: tc,
-        movimientos: movs.map(m => ({ categoria: m.cat, sentido: m.sense, importe_cup: m.amount_cup })),
+        ref_type: p.ref_type, pago_id: p.pago_id, store_id: p.store_id, tienda: p.tienda,
+        moneda_pago: p.moneda_pago, importe_pago: Number(p.importe_pago), importe_cup: tc,
+        movimientos_motor: movs.map(m => ({ categoria: m.cat, sentido: m.sense, importe_cup: m.amount_cup })),
+        fuente: 'fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor',
       });
+      for (const m of movs.filter(m => m.sense === 'debito')) {
+        REPORT.pagos_posteriores.categorias_debitadas[m.cat] = (REPORT.pagos_posteriores.categorias_debitadas[m.cat] || 0) + 1;
+      }
     }
   }
-  pass.asientos_pago = pagosElegibles.length;
-  pass.movimientos_pago = pagosElegibles.length * 2;
+  pass.asientos_pago = pagosMotor.length;
+  pass.movimientos_pago = pagosMotor.reduce((s, p) => s + (p.movimientos || []).length, 0);
   if (nombre === 'PASADA 1') {
-    REPORT.pagos_posteriores.total_asientos = pagosElegibles.length;
-    REPORT.pagos_posteriores.total_movimientos = pagosElegibles.length * 2;
-    REPORT.pagos_posteriores.importe_cup = Math.round(pagosElegibles.reduce((s, p) => s + Number(p.total_cup || 0), 0) * 100) / 100;
+    REPORT.pagos_posteriores.total_asientos = pagosMotor.length;
+    REPORT.pagos_posteriores.total_movimientos = pass.movimientos_pago;
+    REPORT.pagos_posteriores.importe_cup = Math.round(pagosMotor.reduce((s, p) => s + Number(p.total_cup || 0), 0) * 100) / 100;
     REPORT.pagos_posteriores.por_ref_type_resumen = {};
-    for (const p of pagosElegibles) {
+    for (const p of pagosMotor) {
       const k = p.ref_type;
       REPORT.pagos_posteriores.por_ref_type_resumen[k] = (REPORT.pagos_posteriores.por_ref_type_resumen[k] || 0) + 1;
     }
+    REPORT.pagos_posteriores.importe_cup_servicios = Math.round(pagosMotor.filter(p => p.ref_type === 'service').reduce((s, p) => s + Number(p.total_cup || 0), 0) * 100) / 100;
+    REPORT.pagos_posteriores.importe_cup_recepciones = Math.round(pagosMotor.filter(p => p.ref_type === 'receipt').reduce((s, p) => s + Number(p.total_cup || 0), 0) * 100) / 100;
   }
 
   pass.hash = hash.digest('hex');
-  // alcance EXACTO de los datos incluidos en el hash (documentado para
-  // verificación independiente: concatenación en orden estable)
   pass.alcance = 'Por cada doc de RECONOCIMIENTO (orden: TIPO_SQL en orden de clave, filas en orden SQL): "tipo|id|total_cup|debitos:creditos". Por cada PAGO posterior (orden pt.id): "PAGO|pago_id|total_cup|debito:credito". La lista de elegibles y el importe total_cup de cada doc/pago son los datos que determinan el hash.';
   return pass;
 }
 
 async function main() {
-  console.log('════ CP-FIN · DRY-RUN BACKFILL HISTÓRICO · PRODUCCIÓN (read-only) ════');
+  console.log('════ CP-FIN · DRY-RUN BACKFILL HISTÓRICO v3 · PRODUCCIÓN (read-only) ════');
   console.log('Hora:', new Date().toISOString());
 
   REPORT.conteos_antes = (await q(COUNT_TABLES))[0];
@@ -339,20 +370,25 @@ async function main() {
 
   REPORT.tiendas = await q(`SELECT id, name FROM public.stores ORDER BY created_at`);
 
-  const p1 = await simulatePass('PASADA 1');
-  const p2 = await simulatePass('PASADA 2');
+  // ── pagos posteriores: simulación con el MOTOR (una sola lectura) ──
+  const pagosMotor = await q(PAGOS_SIM_SQL);
+  console.log('Pagos posteriores (simulación motor):', pagosMotor.length,
+    '| categorías debitadas:', JSON.stringify(pagosMotor.flatMap(p => (p.movimientos||[]).filter(m=>m.sentido==='debito').map(m=>m.categoria))));
+  REPORT.motor_real.pagos_desde_motor = pagosMotor.map(p => ({
+    pago_id: p.pago_id, ref_type: p.ref_type, tienda: p.tienda, importe_cup: Number(p.total_cup),
+    movimientos: (p.movimientos||[]).map(m => ({ categoria: m.categoria, sentido: m.sentido, importe: Number(m.amount) })),
+  }));
+
+  const p1 = await simulatePass('PASADA 1', pagosMotor);
+  const p2 = await simulatePass('PASADA 2', pagosMotor);
   REPORT.idempotencia.pasadas = [
-    { nombre: 'PASADA 1',
-      asientos_reconocimiento: p1.asientos, movimientos_reconocimiento: p1.movimientos,
+    { nombre: 'PASADA 1', asientos_reconocimiento: p1.asientos, movimientos_reconocimiento: p1.movimientos,
       asientos_pago: p1.asientos_pago, movimientos_pago: p1.movimientos_pago,
-      asientos_totales: p1.asientos + p1.asientos_pago,
-      movimientos_totales: p1.movimientos + p1.movimientos_pago,
+      asientos_totales: p1.asientos + p1.asientos_pago, movimientos_totales: p1.movimientos + p1.movimientos_pago,
       hash_resultados: p1.hash },
-    { nombre: 'PASADA 2',
-      asientos_reconocimiento: p2.asientos, movimientos_reconocimiento: p2.movimientos,
+    { nombre: 'PASADA 2', asientos_reconocimiento: p2.asientos, movimientos_reconocimiento: p2.movimientos,
       asientos_pago: p2.asientos_pago, movimientos_pago: p2.movimientos_pago,
-      asientos_totales: p2.asientos + p2.asientos_pago,
-      movimientos_totales: p2.movimientos + p2.movimientos_pago,
+      asientos_totales: p2.asientos + p2.asientos_pago, movimientos_totales: p2.movimientos + p2.movimientos_pago,
       hash_resultados: p2.hash },
   ];
   REPORT.idempotencia.iguales = p1.hash === p2.hash
@@ -361,14 +397,7 @@ async function main() {
   REPORT.idempotencia.alcance_hash = p1.alcance;
   REPORT.idempotencia.explicacion = 'La segunda pasada recalcula la MISMA elegibilidad (la condición "SIN asiento previo" no cambia porque el dry-run no escribe) y produce resultados idénticos (hash SHA-256 de asientos/importes igual). El backfill real es idempotente además por el guard de fin_post_document (asiento existente → NULL) y NOT EXISTS previo en fin_backfill; re-ejecutar el dry-run no puede duplicar nada porque no inserta nada.';
 
-  // ── duplicados / anulaciones / inconsistencias (read-only) ─────
-  // RECONCILIACIÓN v2 (requisito del propietario): separar
-  //   (a) SIN NUMERACIÓN: numeración ausente (invoice_number/document_number/
-  //       slip_number/service_number NULL o vacío) — NO son duplicados;
-  //   (b) DUPLICADOS REALES: misma combinación TIENDA+TIPO+NÚMERO con
-  //       numeración presente (>1 documento con ese triple exacto);
-  //   (c) DUPLICADOS DE CONTABILIZACIÓN: mismos docs ya con >1 asiento en
-  //       fin_entries (hoy 0 → necesariamente vacío).
+  // ── duplicados / anulaciones / inconsistencias (read-only; igual que v2) ──
   REPORT.duplicados.reclasificacion = {
     sin_numeracion: await q(`SELECT x.tipo, x.store_id, st.name AS tienda, x.n FROM (
       SELECT 'VENTA' AS tipo, store_id, count(*)::int AS n FROM public.transactions WHERE status='completed' AND (invoice_number IS NULL OR invoice_number='') GROUP BY 1,2
@@ -404,21 +433,135 @@ async function main() {
        OR (e.document_type='SERVICIO_RECIBIDO' AND NOT EXISTS(SELECT 1 FROM public.received_services s WHERE s.id=e.document_id))
        OR (e.document_type='NOMINA' AND NOT EXISTS(SELECT 1 FROM public.payrolls p WHERE p.id=e.document_id))
     GROUP BY 2`);
-  // pagos de servicios/recepciones en divisa (contexto §17.1, read-only)
   const pagosDivisa = await q(`SELECT pt.currency AS moneda_pago, count(*)::int AS n
     FROM public.payment_transactions pt WHERE pt.ref_type IN ('receipt','service') AND pt.currency <> 'CUP' GROUP BY 1`);
   if (pagosDivisa.length) REPORT.inconsistencias.push({ tipo: 'pagos_proveedores_en_divisa (contexto §17.1)', detalle: pagosDivisa });
-  // pagos posteriores con moneda distinta a la del documento fuente
   REPORT.pagos_posteriores.pagos_con_moneda_distinta_al_doc = (await q(`SELECT count(*)::int AS n
     FROM public.payment_transactions pt
     JOIN public.received_services s ON s.id=pt.ref_id AND pt.ref_type='service'
     WHERE pt.currency <> s.currency
       AND NOT EXISTS (SELECT 1 FROM public.fin_entries e WHERE e.payment_ref = pt.id)`))[0].n;
 
+  // ── SEMÁNTICA DE DIVISA + MOTOR REAL (ventas) ──────────────────────────────
+  const pagosVenta = await q(`
+    SELECT pt.ref_id, pt.currency, count(*)::int n, sum(pt.amount) AS sum_amt, sum(pt.amount_cup) AS sum_cup
+    FROM public.payment_transactions pt
+    WHERE pt.ref_type='sale' AND coalesce(pt.direction,'in')='in'
+    GROUP BY 1,2`);
+  const pagosPorDoc = {};
+  for (const p of pagosVenta) (pagosPorDoc[p.ref_id] ||= []).push(p);
+  const ventasRows = await q(TIPO_SQL.VENTA);
+  const elegVentas = ventasRows.filter(r => r.postable && !r.contabilizado);
+  const sem = { total_amount_ya_cup: 0, total_amount_ya_cup_importe: 0, usd_normal: 0, sin_pagos: 0, parcial_otro: 0,
+    inflacion_doble_conversion: 0, usd_real_cobrado: 0, cup_real: 0 };
+  const motorVentas = { post_ok: 0, err_sin_pagos: 0, err_sin_pagos_importe: 0, err_doble_conversion: 0,
+    err_doble_conversion_importe_real: 0, err_parcial_o_exceso: 0 };
+  const tiendaAgg = {};
+  for (const v of elegVentas) {
+    const ps = pagosPorDoc[v.id] || [];
+    const sumCup = ps.reduce((s, p) => s + Number(p.sum_cup || 0), 0);
+    const sumUsd = ps.filter(p => p.currency === 'USD').reduce((s, p) => s + Number(p.sum_amt || 0), 0);
+    const amt = Number(v.amt || 0), tc = Number(v.total_cup || 0);
+    let clase;
+    if (ps.length === 0) clase = 'SIN_PAGOS';
+    else if (v.cur !== 'CUP' && Math.abs(sumCup - amt) <= 0.01) clase = 'TOTAL_AMOUNT_YA_CUP_EQUIVALENTE';
+    else if (v.cur !== 'CUP' && Math.abs(sumUsd - amt) <= 0.01) clase = 'TOTAL_AMOUNT_EN_USD';
+    else if (Math.abs(sumCup - tc) <= 0.01) clase = 'PAGADO_CUBIERTO';
+    else clase = 'PARCIAL_OTRO';
+    const cupReal = clase === 'TOTAL_AMOUNT_YA_CUP_EQUIVALENTE' ? amt : tc;
+    const inflacion = clase === 'TOTAL_AMOUNT_YA_CUP_EQUIVALENTE' ? (tc - amt) : 0;
+    if (clase === 'TOTAL_AMOUNT_YA_CUP_EQUIVALENTE') { sem.total_amount_ya_cup++; sem.total_amount_ya_cup_importe += amt; sem.inflacion_doble_conversion += inflacion; }
+    if (clase === 'TOTAL_AMOUNT_EN_USD') sem.usd_normal++;
+    if (clase === 'SIN_PAGOS') sem.sin_pagos++;
+    if (clase === 'PARCIAL_OTRO') sem.parcial_otro++;
+    sem.usd_real_cobrado += sumUsd; sem.cup_real += cupReal;
+    // motor real: D=Σcob vs C=total_cup (fórmula amt×tasa)
+    let est;
+    if (ps.length === 0) { est = 'ERR_UNBALANCED_SIN_PAGOS'; motorVentas.err_sin_pagos++; motorVentas.err_sin_pagos_importe += cupReal; }
+    else if (Math.abs(sumCup - tc) <= 0.01) { est = 'POST_OK'; motorVentas.post_ok++; }
+    else if (clase === 'TOTAL_AMOUNT_YA_CUP_EQUIVALENTE') { est = 'ERR_UNBALANCED_DOBLE_CONVERSION_USD'; motorVentas.err_doble_conversion++; motorVentas.err_doble_conversion_importe_real += cupReal; }
+    else { est = 'ERR_UNBALANCED_PARCIAL_O_EXCESO'; motorVentas.err_parcial_o_exceso++; }
+    const tAgg = (tiendaAgg[v.store_id] ||= { docs: 0, importe_v2: 0, cup_real: 0, usd_real: 0, pagos: 0,
+      err_sin_pagos: 0, err_doble: 0, err_parcial: 0, post_ok: 0 });
+    tAgg.docs++; tAgg.importe_v2 += tc; tAgg.cup_real += cupReal; tAgg.usd_real += sumUsd;
+    if (est === 'POST_OK') tAgg.post_ok++;
+    if (est === 'ERR_UNBALANCED_SIN_PAGOS') tAgg.err_sin_pagos++;
+    if (est === 'ERR_UNBALANCED_DOBLE_CONVERSION_USD') tAgg.err_doble++;
+    if (est === 'ERR_UNBALANCED_PARCIAL_O_EXCESO') tAgg.err_parcial++;
+    if (v.cur !== 'CUP') {
+      REPORT.semantica_divisa.por_documento.push({
+        id: v.id, store_id: v.store_id, docnum: v.docnum, fecha: String(v.d), moneda: v.cur, tasa: Number(v.rate),
+        total_amount: amt, total_cup_formula_v2: tc, clase, pagos_n: ps.length,
+        sum_pagos_cup: Math.round(sumCup * 100) / 100, sum_pagos_usd: Math.round(sumUsd * 100) / 100,
+        cup_real: Math.round(cupReal * 100) / 100, inflacion_doble_conversion: Math.round(inflacion * 100) / 100,
+      });
+    }
+  }
+  sem.total_amount_ya_cup_importe = Math.round(sem.total_amount_ya_cup_importe * 100) / 100;
+  sem.inflacion_doble_conversion = Math.round(sem.inflacion_doble_conversion * 100) / 100;
+  sem.usd_real_cobrado = Math.round(sem.usd_real_cobrado * 100) / 100;
+  sem.cup_real = Math.round(sem.cup_real * 100) / 100;
+  motorVentas.err_sin_pagos_importe = Math.round(motorVentas.err_sin_pagos_importe * 100) / 100;
+  motorVentas.err_doble_conversion_importe_real = Math.round(motorVentas.err_doble_conversion_importe_real * 100) / 100;
+  REPORT.semantica_divisa.resumen = sem;
+  REPORT.motor_real.ventas_por_estado = [{ estado: 'POST_OK', ...motorVentas_post(motorVentas) }];
+  REPORT.motor_real.ventas_por_estado = [
+    { estado: 'POST_OK (D=Σcobros=C=total_cup)', n: motorVentas.post_ok },
+    { estado: 'ERR_UNBALANCED_SIN_PAGOS', n: motorVentas.err_sin_pagos, importe_cup_real: motorVentas.err_sin_pagos_importe },
+    { estado: 'ERR_UNBALANCED_DOBLE_CONVERSION_USD (total_amount ya CUP; fórmula amt×tasa dispara el crédito)', n: motorVentas.err_doble_conversion, importe_cup_real: motorVentas.err_doble_conversion_importe_real },
+    { estado: 'ERR_UNBALANCED_PARCIAL_O_EXCESO', n: motorVentas.err_parcial_o_exceso },
+  ];
+  REPORT.motor_real.resumen = motorVentas;
+
+  // movimientos reales de VENTA (métodos con importe + ingreso + par COGS)
+  const cogs = await q(`
+    SELECT ti.transaction_id, bool_or(coalesce(NULLIF(ti.cost_at_sale,0), p.cost_average,0) > 0) AS has_cogs
+    FROM public.transaction_items ti LEFT JOIN public.products p ON p.id=ti.product_id GROUP BY 1`);
+  const cogsPorDoc = {}; for (const c of cogs) cogsPorDoc[c.transaction_id] = c.has_cogs;
+  let movsRealesVenta = 0;
+  for (const v of elegVentas) {
+    const ps = pagosPorDoc[v.id] || [];
+    const nMet = ps.filter(p => Number(p.sum_cup || 0) > 0).length;
+    const sumCup = ps.reduce((s, p) => s + Number(p.sum_cup || 0), 0);
+    const tc = Number(v.total_cup || 0);
+    if (ps.length === 0 || Math.abs(sumCup - tc) > 0.01) continue; // no postearía
+    movsRealesVenta += nMet + 1 + (cogsPorDoc[v.id] ? 2 : 0);
+  }
+  REPORT.motor_real.ventas_movimientos_reales = { nota: 'por venta POST_OK: nº métodos con Σamount_cup>0 + ingreso + (par costo si hay costo>0)', total: movsRealesVenta };
+
+  // ── desglose por tienda (todas; el alcance operativo se decide aparte) ──
+  const pagosPorTienda = {};
+  for (const p of pagosMotor) (pagosPorTienda[p.store_id] ||= []).push(p);
+  const nombres = Object.fromEntries(REPORT.tiendas.map(t => [t.id, t.name]));
+  for (const [sid, a] of Object.entries(tiendaAgg)) {
+    const pgs = pagosPorTienda[sid] || [];
+    REPORT.por_tienda.push({
+      tienda: nombres[sid] || sid, store_id: sid, tipo: 'VENTA',
+      venta_docs: a.docs, importe_cup_formula_v2: Math.round(a.importe_v2 * 100) / 100,
+      cup_real: Math.round(a.cup_real * 100) / 100, usd_real_cobrado: Math.round(a.usd_real * 100) / 100,
+      post_ok: a.post_ok, err_sin_pagos: a.err_sin_pagos, err_doble_conversion_usd: a.err_doble, err_parcial_o_exceso: a.err_parcial,
+    });
+  }
+  // resto de tipos por tienda (desde elegibles.por_grupo + pagos)
+  const resto = {};
+  for (const g of REPORT.elegibles.por_grupo) {
+    if (g.tipo === 'VENTA') continue;
+    const k = g.store_id;
+    (resto[k] ||= { docs: 0, importe_cup_v2: 0 });
+    resto[k].docs += g.docs; resto[k].importe_cup_v2 += g.importe_cup;
+  }
+  for (const [sid, r] of Object.entries(resto)) {
+    const e = REPORT.por_tienda.find(t => t.store_id === sid);
+    const pgs = pagosPorTienda[sid] || [];
+    const obj = { tienda: nombres[sid] || sid, store_id: sid, tipo: 'VENTA+RESTO',
+      docs_resto_tipos: r.docs, importe_cup_v2_resto: Math.round(r.importe_cup_v2 * 100) / 100,
+      pagos_posteriores: pgs.length, pagos_importe_cup: Math.round(pgs.reduce((s, p) => s + Number(p.total_cup || 0), 0) * 100) / 100 };
+    if (e) Object.assign(e, obj); else REPORT.por_tienda.push(obj);
+  }
+
   REPORT.conteos_despues = (await q(COUNT_TABLES))[0];
   REPORT.bd_intacta = JSON.stringify(REPORT.conteos_antes) === JSON.stringify(REPORT.conteos_despues);
 
-  // ── desglose reconciliado de totales (7 puntos del propietario) ──
   REPORT.asientos.desglose.reconocimiento = { asientos: REPORT.asientos.total, movimientos: REPORT.asientos.movimientos };
   REPORT.asientos.desglose.pagos_posteriores = { asientos: REPORT.pagos_posteriores.total_asientos, movimientos: REPORT.pagos_posteriores.total_movimientos };
   REPORT.asientos.totales = {
@@ -428,28 +571,33 @@ async function main() {
 
   console.log('Conteos DESPUÉS:', JSON.stringify(REPORT.conteos_despues));
   console.log('BD INTACTA (conteos idénticos):', REPORT.bd_intacta);
-  console.log('\n── RESUMEN (desglose reconciliado) ──');
-  console.log('Tiendas:', REPORT.tiendas.length);
+  console.log('\n── RESUMEN v3 (desglose reconciliado) ──');
   console.log('Documentos originales ELEGIBLES:', REPORT.elegibles.total_docs);
   console.log('Asientos RECONOCIMIENTO:', REPORT.asientos.desglose.reconocimiento.asientos,
-    '| Movimientos RECONOCIMIENTO:', REPORT.asientos.desglose.reconocimiento.movimientos);
+    '| Movimientos RECONOCIMIENTO (plantilla v2):', REPORT.asientos.desglose.reconocimiento.movimientos);
   console.log('Asientos PAGO posterior:', REPORT.asientos.desglose.pagos_posteriores.asientos,
-    '| Movimientos PAGO:', REPORT.asientos.desglose.pagos_posteriores.movimientos);
-  console.log('TOTALES GENERALES: asientos =', REPORT.asientos.totales.asientos,
-    '| movimientos =', REPORT.asientos.totales.movimientos);
-  console.log('Duplicados REALES (tienda+tipo+número):', REPORT.duplicados.reclasificacion.duplicados_reales.length,
-    '| SIN numeración:', REPORT.duplicados.reclasificacion.sin_numeracion.reduce((s, x) => s + x.n, 0),
-    '| duplicados de contabilización:', REPORT.duplicados.reclasificacion.duplicados_contabilizacion.length);
+    '| Movimientos PAGO (MOTOR REAL):', REPORT.asientos.desglose.pagos_posteriores.movimientos);
+  console.log('Categorías debitadas en pagos:', JSON.stringify(REPORT.pagos_posteriores.categorias_debitadas));
+  console.log('Semántica divisa:', JSON.stringify(REPORT.semantica_divisa.resumen));
+  console.log('Motor real (ventas):', JSON.stringify(REPORT.motor_real.resumen));
   console.log('Idempotencia (hash iguales):', REPORT.idempotencia.iguales);
-  console.log('Desbalanceados:', REPORT.asientos.desbalanceados_docs.length, '| Discrepancias vs originales:', REPORT.comparacion_originales.discrepancias.length);
+  console.log('Desbalanceados (plantilla):', REPORT.asientos.desbalanceados_docs.length,
+    '| Discrepancias vs originales:', REPORT.comparacion_originales.discrepancias.length);
 
   const out = JSON.stringify(REPORT, null, 2);
   writeFileSync('/home/z/my-project/download/fin-backfill-dryrun-informe.json', out);
   writeFileSync('/home/z/my-project/scripts/fin-backfill-dryrun-informe.json', out);
   console.log('\nInforme JSON: /home/z/my-project/download/fin-backfill-dryrun-informe.json');
-  console.log('DRY-RUN COMPLETADO — sin escrituras.');
+  console.log('DRY-RUN v3 COMPLETADO — sin escrituras.');
   if (!REPORT.bd_intacta) { console.error('FALLO: conteos cambiaron'); process.exit(5); }
   if (!REPORT.idempotencia.iguales) { console.error('FALLO: idempotencia no demostrada'); process.exit(6); }
+  if (REPORT.inconsistencias.some(i => i.tipo === 'pago_no_balanceado_por_regla_activa')) {
+    console.error('FALLO: algún pago no balancea con la regla activa'); process.exit(7);
+  }
 }
+function motorVentas_post(m) { return { n: m.post_ok }; }
 
-main().catch(e => { console.error('FATAL:', e); process.exit(1); });
+const isDirect = process.argv[1] && (import.meta.url === `file://${process.argv[1]}` || import.meta.url.endsWith(process.argv[1].split('/').pop()));
+if (isDirect) {
+  main().catch(e => { console.error('FATAL:', e); process.exit(1); });
+}

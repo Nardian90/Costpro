@@ -1,7 +1,14 @@
 {
-  "generado": "2026-11-13T17:09:41.097Z",
+  "version": 3,
+  "generado": "2026-11-13T19:43:45.685Z",
   "ref": "wthkddeleylijmonclxg",
   "modo": "DRY-RUN read-only",
+  "correcciones_v3": [
+    "Asientos de pago simulados con el MOTOR real (fin_compute_metrics + fin_apply_templates + regla activa por tienda): pago de SERVICIO_RECIBIDO debita PAS_SERV_PEND (v2 reportaba PAS_CXP_PROV).",
+    "Semántica de divisa verificada por documento: total_amount de ventas en divisa ES el equivalente CUP (pagos lo prueban); economía corregida + inflación por doble conversión de la fórmula v2.",
+    "Pre-check de ERR_UNBALANCED que el backfill real encontraría (ventas sin pagos, doble conversión USD, parciales/excesos) + movimientos reales por método/costo.",
+    "Desglose por tienda de documentos, importes, pagos y errores esperados."
+  ],
   "conteos_antes": {
     "fin_entries": 0,
     "fin_movements": 0,
@@ -1030,7 +1037,21 @@
         ],
         "trazabilidad": "fin_entries(document_type=FLUJO_CAJA, document_id=cd07fc7d-222c-423a-8afc-463252e4b411, event=reconocimiento) + fin_movements(entry_id→doc)"
       }
-    ]
+    ],
+    "desglose": {
+      "reconocimiento": {
+        "asientos": 1342,
+        "movimientos": 4662
+      },
+      "pagos_posteriores": {
+        "asientos": 16,
+        "movimientos": 32
+      }
+    },
+    "totales": {
+      "asientos": 1358,
+      "movimientos": 4694
+    }
   },
   "monedas": {
     "nota": "Importes en moneda de origen y CUP-equivalente reportados por SEPARADO; sin sumas entre monedas distintas ni conversiones no autorizadas.",
@@ -1049,35 +1070,2541 @@
       }
     ]
   },
-  "duplicados": {
-    "numeros_documento": [
+  "semantica_divisa": {
+    "nota": "Ventas en divisa: total_amount ES el equivalente CUP de la venta (semántica de create_sale_v2/src/lib/currency/sale-currency.ts: balance=total_amount−Σpagos.amountCUP; ítems: price_at_sale en divisa, price_at_sale_cup=divisa×tasa).",
+    "por_documento": [
       {
-        "tipo": "RECEPCION",
-        "num": null,
-        "n": 95
+        "id": "d461485c-7657-4dc0-a704-8585eacd6779",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-12",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 107000,
+        "total_cup_formula_v2": 72760000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 107000,
+        "sum_pagos_usd": 130,
+        "cup_real": 107000,
+        "inflacion_doble_conversion": 72653000
       },
       {
-        "tipo": "VALE_SALIDA",
-        "num": "VS-000002-2026",
-        "n": 2
+        "id": "3ab47c5e-a575-474d-ac80-818e4613a2b8",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-17",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 319600,
+        "total_cup_formula_v2": 217328000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 319600,
+        "sum_pagos_usd": 450,
+        "cup_real": 319600,
+        "inflacion_doble_conversion": 217008400
       },
       {
-        "tipo": "VALE_SALIDA",
-        "num": "VS-000003-2026",
-        "n": 2
+        "id": "e1af550b-92b4-4dec-adee-1e4df9e28e85",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-17",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 30600,
+        "total_cup_formula_v2": 20808000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 30600,
+        "sum_pagos_usd": 45,
+        "cup_real": 30600,
+        "inflacion_doble_conversion": 20777400
       },
       {
-        "tipo": "VALE_SALIDA",
-        "num": "VS-000004-2026",
-        "n": 2
+        "id": "9f57f515-76da-42cf-ba2b-79933a7503cc",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-15",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 15300,
+        "total_cup_formula_v2": 10404000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 15300,
+        "sum_pagos_usd": 20,
+        "cup_real": 15300,
+        "inflacion_doble_conversion": 10388700
       },
       {
-        "tipo": "VENTA",
-        "num": null,
-        "n": 716
+        "id": "2e5edd30-68cf-44c8-89eb-44ec27766312",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-17",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 30600,
+        "total_cup_formula_v2": 20808000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 30600,
+        "sum_pagos_usd": 45,
+        "cup_real": 30600,
+        "inflacion_doble_conversion": 20777400
+      },
+      {
+        "id": "d5e50186-4f42-439d-95eb-06c97664eb56",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-17",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 9520,
+        "total_cup_formula_v2": 6473600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 9520,
+        "sum_pagos_usd": 14,
+        "cup_real": 9520,
+        "inflacion_doble_conversion": 6464080
+      },
+      {
+        "id": "9087281f-2ae9-46c8-934f-6fa4eb991e30",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-12",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 11560,
+        "total_cup_formula_v2": 7860800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 11560,
+        "sum_pagos_usd": 17,
+        "cup_real": 11560,
+        "inflacion_doble_conversion": 7849240
+      },
+      {
+        "id": "05ff9c9a-92f6-475c-bf7a-5a5927618613",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-15",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 15300,
+        "total_cup_formula_v2": 10404000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 15300,
+        "sum_pagos_usd": 20,
+        "cup_real": 15300,
+        "inflacion_doble_conversion": 10388700
+      },
+      {
+        "id": "d9800547-89a5-468f-ae46-2c16aed75d5f",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-17",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 30600,
+        "total_cup_formula_v2": 20808000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 30600,
+        "sum_pagos_usd": 45,
+        "cup_real": 30600,
+        "inflacion_doble_conversion": 20777400
+      },
+      {
+        "id": "383ca0e8-7c10-4634-af9c-607f9608cc3b",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-15",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 152560,
+        "total_cup_formula_v2": 103740800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 152560,
+        "sum_pagos_usd": 150,
+        "cup_real": 152560,
+        "inflacion_doble_conversion": 103588240
+      },
+      {
+        "id": "8e4740e2-2910-4416-8619-eb0bf428c72a",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-11",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 198520,
+        "total_cup_formula_v2": 134993600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 198520,
+        "sum_pagos_usd": 62,
+        "cup_real": 198520,
+        "inflacion_doble_conversion": 134795080
+      },
+      {
+        "id": "2df946c1-34eb-4743-948c-c89a5e782ab5",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-15",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 47600,
+        "total_cup_formula_v2": 32368000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 47600,
+        "sum_pagos_usd": 70,
+        "cup_real": 47600,
+        "inflacion_doble_conversion": 32320400
+      },
+      {
+        "id": "522be60d-85c2-415f-98f5-d8fb557fda8d",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-17",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 30600,
+        "total_cup_formula_v2": 20808000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 30600,
+        "sum_pagos_usd": 45,
+        "cup_real": 30600,
+        "inflacion_doble_conversion": 20777400
+      },
+      {
+        "id": "6ad5b9a3-f7c8-4531-b49b-5bb367650978",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-08",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 40800,
+        "total_cup_formula_v2": 27744000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 40800,
+        "sum_pagos_usd": 60,
+        "cup_real": 40800,
+        "inflacion_doble_conversion": 27703200
+      },
+      {
+        "id": "ef8bd997-4687-4d6f-8e18-b8866bd7040d",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-08",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 15750,
+        "total_cup_formula_v2": 10710000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 15750,
+        "sum_pagos_usd": 17.5,
+        "cup_real": 15750,
+        "inflacion_doble_conversion": 10694250
+      },
+      {
+        "id": "d9acbcc4-3bb0-4dce-899b-1e253dc10b83",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-08",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 4760,
+        "total_cup_formula_v2": 3236800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 4760,
+        "sum_pagos_usd": 7,
+        "cup_real": 4760,
+        "inflacion_doble_conversion": 3232040
+      },
+      {
+        "id": "33550933-7d88-477d-9e22-7c8416eee405",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-08",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 6800,
+        "total_cup_formula_v2": 4624000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 6800,
+        "sum_pagos_usd": 10,
+        "cup_real": 6800,
+        "inflacion_doble_conversion": 4617200
+      },
+      {
+        "id": "6023fa07-7097-48c2-95c8-f3bb3a1487bd",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-08",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 13600,
+        "total_cup_formula_v2": 9248000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 13600,
+        "sum_pagos_usd": 20,
+        "cup_real": 13600,
+        "inflacion_doble_conversion": 9234400
+      },
+      {
+        "id": "c96d3a09-69be-4b4f-a3b5-acbabeb64aee",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-08",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 3400,
+        "total_cup_formula_v2": 2312000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 3400,
+        "sum_pagos_usd": 5,
+        "cup_real": 3400,
+        "inflacion_doble_conversion": 2308600
+      },
+      {
+        "id": "ab291dcd-dd72-4969-9cdc-96d00fb9b1da",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-08",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 30600,
+        "total_cup_formula_v2": 20808000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 30600,
+        "sum_pagos_usd": 45,
+        "cup_real": 30600,
+        "inflacion_doble_conversion": 20777400
+      },
+      {
+        "id": "e63ffc78-e014-46ce-a74d-0cc0e6d738a5",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-08",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 15300,
+        "total_cup_formula_v2": 10404000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 15300,
+        "sum_pagos_usd": 22.5,
+        "cup_real": 15300,
+        "inflacion_doble_conversion": 10388700
+      },
+      {
+        "id": "e2614f36-4c86-4317-b80f-6f2fb5d34648",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-11-07",
+        "moneda": "USD",
+        "tasa": 930,
+        "total_amount": 125550,
+        "total_cup_formula_v2": 116761500,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 125550,
+        "sum_pagos_usd": 135,
+        "cup_real": 125550,
+        "inflacion_doble_conversion": 116635950
+      },
+      {
+        "id": "834e3b09-5703-4dd2-a521-f627bb3bb22a",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-08",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 30600,
+        "total_cup_formula_v2": 20808000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 30600,
+        "sum_pagos_usd": 45,
+        "cup_real": 30600,
+        "inflacion_doble_conversion": 20777400
+      },
+      {
+        "id": "6b2623ca-c852-45b6-b381-21d073bcf3fb",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-10",
+        "moneda": "USD",
+        "tasa": 695,
+        "total_amount": 210,
+        "total_cup_formula_v2": 145950,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 210,
+        "sum_pagos_usd": 0.3,
+        "cup_real": 210,
+        "inflacion_doble_conversion": 145740
+      },
+      {
+        "id": "9fb91131-6280-4919-8a07-ff76f6564eb5",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-14",
+        "moneda": "USD",
+        "tasa": 790,
+        "total_amount": 165900,
+        "total_cup_formula_v2": 131061000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 165900,
+        "sum_pagos_usd": 210,
+        "cup_real": 165900,
+        "inflacion_doble_conversion": 130895100
+      },
+      {
+        "id": "dbff3625-96d1-419e-9a80-08f61b4a55c8",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-07-24",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 1496000,
+        "total_cup_formula_v2": 1017280000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 1496000,
+        "sum_pagos_usd": 2200,
+        "cup_real": 1496000,
+        "inflacion_doble_conversion": 1015784000
+      },
+      {
+        "id": "c29b329c-bbcc-48ce-aefd-006e1c0c2b5f",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-07-30",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 37400,
+        "total_cup_formula_v2": 25432000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 37400,
+        "sum_pagos_usd": 55,
+        "cup_real": 37400,
+        "inflacion_doble_conversion": 25394600
+      },
+      {
+        "id": "d711af5e-8d3c-4cdf-b6b9-88eb621a8776",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-13",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 34000,
+        "total_cup_formula_v2": 23120000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 34000,
+        "sum_pagos_usd": 50,
+        "cup_real": 34000,
+        "inflacion_doble_conversion": 23086000
+      },
+      {
+        "id": "39100d4c-0d16-4540-880f-a7dfc44960b3",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-13",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 34000,
+        "total_cup_formula_v2": 23120000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 34000,
+        "sum_pagos_usd": 50,
+        "cup_real": 34000,
+        "inflacion_doble_conversion": 23086000
+      },
+      {
+        "id": "d51961bc-ca08-48e8-b9c5-a1059ec90779",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-13",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 251600,
+        "total_cup_formula_v2": 171088000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 251600,
+        "sum_pagos_usd": 370,
+        "cup_real": 251600,
+        "inflacion_doble_conversion": 170836400
+      },
+      {
+        "id": "e7c3fc62-db4d-4d95-a20d-66555a6b51e2",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-13",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 4760,
+        "total_cup_formula_v2": 3236800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 4760,
+        "sum_pagos_usd": 7,
+        "cup_real": 4760,
+        "inflacion_doble_conversion": 3232040
+      },
+      {
+        "id": "51982fc0-4449-4685-81be-d4d64f040a83",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 21420,
+        "total_cup_formula_v2": 14565600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 21420,
+        "sum_pagos_usd": 31.5,
+        "cup_real": 21420,
+        "inflacion_doble_conversion": 14544180
+      },
+      {
+        "id": "fcb25cd0-cd30-419d-a318-6fa43ea903d1",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 21420,
+        "total_cup_formula_v2": 14565600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 21420,
+        "sum_pagos_usd": 31.5,
+        "cup_real": 21420,
+        "inflacion_doble_conversion": 14544180
+      },
+      {
+        "id": "5bad9fe1-7aba-4f8d-8726-9e3442d9579a",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-20",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18970,
+        "total_cup_formula_v2": 12899600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 18970,
+        "sum_pagos_usd": 14,
+        "cup_real": 18970,
+        "inflacion_doble_conversion": 12880630
+      },
+      {
+        "id": "68d222b3-1161-4081-acf6-16ed8d366c53",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-20",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18360,
+        "total_cup_formula_v2": 12484800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18360,
+        "sum_pagos_usd": 27,
+        "cup_real": 18360,
+        "inflacion_doble_conversion": 12466440
+      },
+      {
+        "id": "9c54f847-3d4b-4eb2-b306-b81f0d8f7376",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-20",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18360,
+        "total_cup_formula_v2": 12484800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18360,
+        "sum_pagos_usd": 27,
+        "cup_real": 18360,
+        "inflacion_doble_conversion": 12466440
+      },
+      {
+        "id": "74c170b6-eb08-428a-ad5f-2998fc88f998",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-20",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 1360,
+        "total_cup_formula_v2": 924800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 1360,
+        "sum_pagos_usd": 2,
+        "cup_real": 1360,
+        "inflacion_doble_conversion": 923440
+      },
+      {
+        "id": "9033864b-2c13-4aa3-b2b8-2fd645a190db",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-21",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 224400,
+        "total_cup_formula_v2": 152592000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 224400,
+        "sum_pagos_usd": 330,
+        "cup_real": 224400,
+        "inflacion_doble_conversion": 152367600
+      },
+      {
+        "id": "d63f734a-f4ba-4b51-8384-70ff939e9998",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-21",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 224400,
+        "total_cup_formula_v2": 152592000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 224400,
+        "sum_pagos_usd": 330,
+        "cup_real": 224400,
+        "inflacion_doble_conversion": 152367600
+      },
+      {
+        "id": "055a921f-067d-40ca-aed8-d795d1e56086",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-21",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 4760,
+        "total_cup_formula_v2": 3236800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 4760,
+        "sum_pagos_usd": 7,
+        "cup_real": 4760,
+        "inflacion_doble_conversion": 3232040
+      },
+      {
+        "id": "837e9795-d3e2-4687-a847-0ba62addfe69",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-21",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18360,
+        "total_cup_formula_v2": 12484800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18360,
+        "sum_pagos_usd": 27,
+        "cup_real": 18360,
+        "inflacion_doble_conversion": 12466440
+      },
+      {
+        "id": "64cca1da-35d7-43e5-9135-93f98a264fdb",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-21",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18360,
+        "total_cup_formula_v2": 12484800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18360,
+        "sum_pagos_usd": 27,
+        "cup_real": 18360,
+        "inflacion_doble_conversion": 12466440
+      },
+      {
+        "id": "fb6921b2-a61f-43a9-bb83-452a068f7096",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-21",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 4760,
+        "total_cup_formula_v2": 3236800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 4760,
+        "sum_pagos_usd": 7,
+        "cup_real": 4760,
+        "inflacion_doble_conversion": 3232040
+      },
+      {
+        "id": "9c573072-f211-4bdb-a91b-eae0999d43aa",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-21",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 23800,
+        "total_cup_formula_v2": 16184000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 23800,
+        "sum_pagos_usd": 35,
+        "cup_real": 23800,
+        "inflacion_doble_conversion": 16160200
+      },
+      {
+        "id": "c7a5062c-a00c-458d-91a0-894f89171951",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-21",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 680,
+        "total_cup_formula_v2": 462400,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 680,
+        "sum_pagos_usd": 1,
+        "cup_real": 680,
+        "inflacion_doble_conversion": 461720
+      },
+      {
+        "id": "7650ba9f-342e-48f2-bead-f08c8d729486",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-22",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 200600,
+        "total_cup_formula_v2": 136408000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 200600,
+        "sum_pagos_usd": 295,
+        "cup_real": 200600,
+        "inflacion_doble_conversion": 136207400
+      },
+      {
+        "id": "3d19e5e7-2080-4eb1-8eca-cf7e391f30b9",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-22",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 224400,
+        "total_cup_formula_v2": 152592000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 224400,
+        "sum_pagos_usd": 330,
+        "cup_real": 224400,
+        "inflacion_doble_conversion": 152367600
+      },
+      {
+        "id": "8b3ff00e-679a-4438-8f33-e6eb19099a58",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-24",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 200600,
+        "total_cup_formula_v2": 136408000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 200600,
+        "sum_pagos_usd": 295,
+        "cup_real": 200600,
+        "inflacion_doble_conversion": 136207400
+      },
+      {
+        "id": "e29abcdf-720d-4925-8577-bd0957fc99a5",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-24",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 10200,
+        "total_cup_formula_v2": 6936000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 10200,
+        "sum_pagos_usd": 15,
+        "cup_real": 10200,
+        "inflacion_doble_conversion": 6925800
+      },
+      {
+        "id": "a8bf50f9-a796-48fb-b656-49905f9d049f",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-24",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 4755,
+        "total_cup_formula_v2": 3233400,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 4755,
+        "sum_pagos_usd": 6,
+        "cup_real": 4755,
+        "inflacion_doble_conversion": 3228645
+      },
+      {
+        "id": "755ca7a6-89e3-4e2c-9842-7e0d00dd6e5b",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-24",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18360,
+        "total_cup_formula_v2": 12484800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18360,
+        "sum_pagos_usd": 27,
+        "cup_real": 18360,
+        "inflacion_doble_conversion": 12466440
+      },
+      {
+        "id": "e651bdd9-c256-400b-b1ad-86440294684d",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-24",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18360,
+        "total_cup_formula_v2": 12484800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18360,
+        "sum_pagos_usd": 27,
+        "cup_real": 18360,
+        "inflacion_doble_conversion": 12466440
+      },
+      {
+        "id": "26892022-e923-4a3e-b812-7928734d06e3",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-25",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 6120,
+        "total_cup_formula_v2": 4161600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 6120,
+        "sum_pagos_usd": 9,
+        "cup_real": 6120,
+        "inflacion_doble_conversion": 4155480
+      },
+      {
+        "id": "ba22e9e6-e27d-4d5e-b13d-501c9b14312b",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-25",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 6080,
+        "total_cup_formula_v2": 4134400,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 6080,
+        "sum_pagos_usd": 6,
+        "cup_real": 6080,
+        "inflacion_doble_conversion": 4128320
+      },
+      {
+        "id": "e0f888f8-3e89-42ae-916a-edf7e92c400d",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-26",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 44200,
+        "total_cup_formula_v2": 30056000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 44200,
+        "sum_pagos_usd": 65,
+        "cup_real": 44200,
+        "inflacion_doble_conversion": 30011800
+      },
+      {
+        "id": "cdd5900f-aeb0-4075-9148-049fd4b43859",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-26",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 17000,
+        "total_cup_formula_v2": 11560000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 17000,
+        "sum_pagos_usd": 25,
+        "cup_real": 17000,
+        "inflacion_doble_conversion": 11543000
+      },
+      {
+        "id": "940ea192-b7c8-479b-930c-7bebcdedd32e",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-28",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 4760,
+        "total_cup_formula_v2": 3236800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 4760,
+        "sum_pagos_usd": 7,
+        "cup_real": 4760,
+        "inflacion_doble_conversion": 3232040
+      },
+      {
+        "id": "c493086e-e3de-40c1-8573-344d3d1b00d5",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-28",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 17000,
+        "total_cup_formula_v2": 11560000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 17000,
+        "sum_pagos_usd": 25,
+        "cup_real": 17000,
+        "inflacion_doble_conversion": 11543000
+      },
+      {
+        "id": "e73a84c4-697c-42c7-9fbd-9b7346b6cb79",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-28",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 23800,
+        "total_cup_formula_v2": 16184000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 23800,
+        "sum_pagos_usd": 35,
+        "cup_real": 23800,
+        "inflacion_doble_conversion": 16160200
+      },
+      {
+        "id": "13330c2d-7a7a-4aee-a628-b9fceded1312",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-28",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 680,
+        "total_cup_formula_v2": 462400,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 680,
+        "sum_pagos_usd": 1,
+        "cup_real": 680,
+        "inflacion_doble_conversion": 461720
+      },
+      {
+        "id": "e108ac4b-c4ae-4b31-8390-d8da635468cf",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-31",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 200700,
+        "total_cup_formula_v2": 136476000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 200700,
+        "sum_pagos_usd": 295.15,
+        "cup_real": 200700,
+        "inflacion_doble_conversion": 136275300
+      },
+      {
+        "id": "6d087008-7a11-415a-9ba0-425597e82342",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-08-31",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 9250,
+        "total_cup_formula_v2": 6290000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 9250,
+        "sum_pagos_usd": 13.6,
+        "cup_real": 9250,
+        "inflacion_doble_conversion": 6280750
+      },
+      {
+        "id": "5bf9dd7c-8f7b-485f-a496-968fa97806b3",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-01",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 398250,
+        "total_cup_formula_v2": 270810000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 398250,
+        "sum_pagos_usd": 295,
+        "cup_real": 398250,
+        "inflacion_doble_conversion": 270411750
+      },
+      {
+        "id": "275cd2ba-246b-4c6e-95fc-4ed334e976a5",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-01",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 40800,
+        "total_cup_formula_v2": 27744000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 40800,
+        "sum_pagos_usd": 60,
+        "cup_real": 40800,
+        "inflacion_doble_conversion": 27703200
+      },
+      {
+        "id": "b53701db-8cca-4db6-a1b2-18e4695a11df",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-01",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 40800,
+        "total_cup_formula_v2": 27744000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 40800,
+        "sum_pagos_usd": 60,
+        "cup_real": 40800,
+        "inflacion_doble_conversion": 27703200
+      },
+      {
+        "id": "556b5d1b-5673-428c-9671-07d010dd5abb",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-04",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 21420,
+        "total_cup_formula_v2": 14565600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 21420,
+        "sum_pagos_usd": 31.5,
+        "cup_real": 21420,
+        "inflacion_doble_conversion": 14544180
+      },
+      {
+        "id": "6f04f064-7582-4fb6-8c52-848d263d34a8",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-11",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 49660,
+        "total_cup_formula_v2": 33768800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 49660,
+        "sum_pagos_usd": 73.03,
+        "cup_real": 49660,
+        "inflacion_doble_conversion": 33719140
+      },
+      {
+        "id": "3fad8395-4e3d-4fc4-9575-3e44980c62e3",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-11",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 21409.99,
+        "total_cup_formula_v2": 14558793.2,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 21410,
+        "sum_pagos_usd": 30.5,
+        "cup_real": 21409.99,
+        "inflacion_doble_conversion": 14537383.21
+      },
+      {
+        "id": "5a26c18f-8a17-4cb0-8194-b37f02299d64",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-18",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 142800,
+        "total_cup_formula_v2": 97104000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 142800,
+        "sum_pagos_usd": 210,
+        "cup_real": 142800,
+        "inflacion_doble_conversion": 96961200
+      },
+      {
+        "id": "18e6f0d6-fbac-42df-8a06-58589a8eff3a",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 41400,
+        "total_cup_formula_v2": 28152000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 41400,
+        "sum_pagos_usd": 40,
+        "cup_real": 41400,
+        "inflacion_doble_conversion": 28110600
+      },
+      {
+        "id": "f493d492-ebd7-4a90-a5d3-d23827490314",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-04",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 21420,
+        "total_cup_formula_v2": 14565600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 21420,
+        "sum_pagos_usd": 31.5,
+        "cup_real": 21420,
+        "inflacion_doble_conversion": 14544180
+      },
+      {
+        "id": "36f198f3-6adb-4ea3-b85a-43e0aaf8532e",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-09",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 3060,
+        "total_cup_formula_v2": 2080800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 3060,
+        "sum_pagos_usd": 4.5,
+        "cup_real": 3060,
+        "inflacion_doble_conversion": 2077740
+      },
+      {
+        "id": "5fc0ed7d-75fe-44ec-9831-c75ce3cb8616",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-16",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 23800,
+        "total_cup_formula_v2": 16184000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 23800,
+        "sum_pagos_usd": 35,
+        "cup_real": 23800,
+        "inflacion_doble_conversion": 16160200
+      },
+      {
+        "id": "24521ee5-230b-4856-8ba1-91b69fa665fa",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-18",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 40800,
+        "total_cup_formula_v2": 27744000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 40800,
+        "sum_pagos_usd": 60,
+        "cup_real": 40800,
+        "inflacion_doble_conversion": 27703200
+      },
+      {
+        "id": "cb42cf15-9da0-4ec7-8015-ab50664bfe9a",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 4760,
+        "total_cup_formula_v2": 3236800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 4760,
+        "sum_pagos_usd": 7,
+        "cup_real": 4760,
+        "inflacion_doble_conversion": 3232040
+      },
+      {
+        "id": "de37ce5b-3415-4255-8875-0993bd1b55f4",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-23",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 61200,
+        "total_cup_formula_v2": 41616000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 61200,
+        "sum_pagos_usd": 90,
+        "cup_real": 61200,
+        "inflacion_doble_conversion": 41554800
+      },
+      {
+        "id": "0b69a3c4-a273-4820-83ec-a112e7323405",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-04",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 9520,
+        "total_cup_formula_v2": 6473600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 9520,
+        "sum_pagos_usd": 14,
+        "cup_real": 9520,
+        "inflacion_doble_conversion": 6464080
+      },
+      {
+        "id": "cacda37c-ecf6-4726-b976-0a05c0199d79",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-15",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 40800,
+        "total_cup_formula_v2": 27744000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 40800,
+        "sum_pagos_usd": 60,
+        "cup_real": 40800,
+        "inflacion_doble_conversion": 27703200
+      },
+      {
+        "id": "58cc7065-30fc-4da0-82ba-3dd34418afab",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 142800,
+        "total_cup_formula_v2": 97104000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 142800,
+        "sum_pagos_usd": 210,
+        "cup_real": 142800,
+        "inflacion_doble_conversion": 96961200
+      },
+      {
+        "id": "782461d1-fec0-4a1e-995b-0247cd0741b2",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-04",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 690,
+        "total_cup_formula_v2": 469200,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 690,
+        "sum_pagos_usd": 1.01,
+        "cup_real": 690,
+        "inflacion_doble_conversion": 468510
+      },
+      {
+        "id": "dab83b03-43dc-4817-892a-c8d5793126d2",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-11",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 21420,
+        "total_cup_formula_v2": 14565600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 21420,
+        "sum_pagos_usd": 31.5,
+        "cup_real": 21420,
+        "inflacion_doble_conversion": 14544180
+      },
+      {
+        "id": "cf37eac6-0f09-4d41-a81a-2ca7c80d6289",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-11",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 21420,
+        "total_cup_formula_v2": 14565600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 21420,
+        "sum_pagos_usd": 31.5,
+        "cup_real": 21420,
+        "inflacion_doble_conversion": 14544180
+      },
+      {
+        "id": "492bfdd7-37a6-49e3-83e3-10148c59c051",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-15",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 13600,
+        "total_cup_formula_v2": 9248000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 13600,
+        "sum_pagos_usd": 20,
+        "cup_real": 13600,
+        "inflacion_doble_conversion": 9234400
+      },
+      {
+        "id": "2e11b9cb-5b8c-4e72-a5c9-3d0268ab4ae7",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 142800,
+        "total_cup_formula_v2": 97104000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 142800,
+        "sum_pagos_usd": 210,
+        "cup_real": 142800,
+        "inflacion_doble_conversion": 96961200
+      },
+      {
+        "id": "6d69e2c2-40eb-420d-9e7b-f1756e3b37e6",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 680,
+        "total_cup_formula_v2": 462400,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 680,
+        "sum_pagos_usd": 1,
+        "cup_real": 680,
+        "inflacion_doble_conversion": 461720
+      },
+      {
+        "id": "ca56f97f-da76-4b0e-81ac-2eeb5aff1961",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-16",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 68000,
+        "total_cup_formula_v2": 46240000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 68000,
+        "sum_pagos_usd": 100,
+        "cup_real": 68000,
+        "inflacion_doble_conversion": 46172000
+      },
+      {
+        "id": "80952075-5c72-4e79-bcbe-6ce784970b95",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-18",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 2210000,
+        "total_cup_formula_v2": 1502800000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 2210000,
+        "sum_pagos_usd": 3250,
+        "cup_real": 2210000,
+        "inflacion_doble_conversion": 1500590000
+      },
+      {
+        "id": "feb06439-f38a-4b5c-adee-2a2247ee97fc",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18360,
+        "total_cup_formula_v2": 12484800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18360,
+        "sum_pagos_usd": 27,
+        "cup_real": 18360,
+        "inflacion_doble_conversion": 12466440
+      },
+      {
+        "id": "fd89dd11-a428-44ba-ae9d-e3633a50c6ac",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-25",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 20400,
+        "total_cup_formula_v2": 13872000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 20400,
+        "sum_pagos_usd": 30,
+        "cup_real": 20400,
+        "inflacion_doble_conversion": 13851600
+      },
+      {
+        "id": "28219435-0c95-43dc-9a41-c704697ec260",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-09",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 2390,
+        "total_cup_formula_v2": 1625200,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 2390,
+        "sum_pagos_usd": 3.51,
+        "cup_real": 2390,
+        "inflacion_doble_conversion": 1622810
+      },
+      {
+        "id": "f7e57375-4250-4975-b932-dcb429b12b2a",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 15300,
+        "total_cup_formula_v2": 10404000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 15300,
+        "sum_pagos_usd": 22.5,
+        "cup_real": 15300,
+        "inflacion_doble_conversion": 10388700
+      },
+      {
+        "id": "3c6de44a-e909-44cb-b34e-2ed12934d2d8",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-21",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 285600,
+        "total_cup_formula_v2": 194208000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 285600,
+        "sum_pagos_usd": 420,
+        "cup_real": 285600,
+        "inflacion_doble_conversion": 193922400
+      },
+      {
+        "id": "1c1f0a7c-b226-4354-8212-e05334af2f60",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-23",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 285600,
+        "total_cup_formula_v2": 194208000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 285600,
+        "sum_pagos_usd": 420,
+        "cup_real": 285600,
+        "inflacion_doble_conversion": 193922400
+      },
+      {
+        "id": "c28f48f5-10e8-42e0-af18-81ef421c9316",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-24",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 20800,
+        "total_cup_formula_v2": 14144000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 20800,
+        "sum_pagos_usd": 20,
+        "cup_real": 20800,
+        "inflacion_doble_conversion": 14123200
+      },
+      {
+        "id": "f36fa873-a588-4da1-b2b3-4464c3fdc300",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-05",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 110160,
+        "total_cup_formula_v2": 74908800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 110160,
+        "sum_pagos_usd": 162,
+        "cup_real": 110160,
+        "inflacion_doble_conversion": 74798640
+      },
+      {
+        "id": "ed9b85cf-2f60-4627-a58d-3a94f1e61260",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-09",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 40280,
+        "total_cup_formula_v2": 27390400,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 40280,
+        "sum_pagos_usd": 59.24,
+        "cup_real": 40280,
+        "inflacion_doble_conversion": 27350120
+      },
+      {
+        "id": "aeccf90a-cfa0-4b00-97bf-cca38727e504",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 15300,
+        "total_cup_formula_v2": 10404000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 15300,
+        "sum_pagos_usd": 22.5,
+        "cup_real": 15300,
+        "inflacion_doble_conversion": 10388700
+      },
+      {
+        "id": "66ddb5ba-007e-4771-ac14-53b0b6d006c0",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18360,
+        "total_cup_formula_v2": 12484800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18360,
+        "sum_pagos_usd": 27,
+        "cup_real": 18360,
+        "inflacion_doble_conversion": 12466440
+      },
+      {
+        "id": "f240f2ae-b3f1-4694-8090-fd7d0f1ec014",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-05",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 61200,
+        "total_cup_formula_v2": 41616000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 61200,
+        "sum_pagos_usd": 90,
+        "cup_real": 61200,
+        "inflacion_doble_conversion": 41554800
+      },
+      {
+        "id": "2c64540b-5007-43b1-a954-d2f537e8d497",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-09",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 3060,
+        "total_cup_formula_v2": 2080800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 3060,
+        "sum_pagos_usd": 4.5,
+        "cup_real": 3060,
+        "inflacion_doble_conversion": 2077740
+      },
+      {
+        "id": "a5a75adc-3b83-4267-b5ba-3ddf90e921ee",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-11",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 21420,
+        "total_cup_formula_v2": 14565600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 21420,
+        "sum_pagos_usd": 31.5,
+        "cup_real": 21420,
+        "inflacion_doble_conversion": 14544180
+      },
+      {
+        "id": "67a0627b-540e-4ad1-a0d1-f2713d5bbc08",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-19",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 285600,
+        "total_cup_formula_v2": 194208000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 285600,
+        "sum_pagos_usd": 420,
+        "cup_real": 285600,
+        "inflacion_doble_conversion": 193922400
+      },
+      {
+        "id": "fbf7f78f-625f-4381-8b05-1bcda671b37c",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-22",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 142800,
+        "total_cup_formula_v2": 97104000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 142800,
+        "sum_pagos_usd": 210,
+        "cup_real": 142800,
+        "inflacion_doble_conversion": 96961200
+      },
+      {
+        "id": "ddbd6c32-17b4-47a0-9b32-5987200ac9fb",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-25",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 40800,
+        "total_cup_formula_v2": 27744000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 40800,
+        "sum_pagos_usd": 60,
+        "cup_real": 40800,
+        "inflacion_doble_conversion": 27703200
+      },
+      {
+        "id": "01b7fc41-05dd-4e5c-996b-bee834d089b0",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-09",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 3060,
+        "total_cup_formula_v2": 2080800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 3060,
+        "sum_pagos_usd": 4.5,
+        "cup_real": 3060,
+        "inflacion_doble_conversion": 2077740
+      },
+      {
+        "id": "1a03c37f-3a9b-4c5a-912c-3958ebbaf91c",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-22",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 142800,
+        "total_cup_formula_v2": 97104000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 142800,
+        "sum_pagos_usd": 210,
+        "cup_real": 142800,
+        "inflacion_doble_conversion": 96961200
+      },
+      {
+        "id": "2937be33-9c3f-46e7-8085-c8cb0f1c2ea8",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-25",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 142800,
+        "total_cup_formula_v2": 97104000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 142800,
+        "sum_pagos_usd": 210,
+        "cup_real": 142800,
+        "inflacion_doble_conversion": 96961200
+      },
+      {
+        "id": "8aff99ad-1232-4297-b349-32ab147618f7",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-25",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 20599.98,
+        "total_cup_formula_v2": 14007986.4,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 20599.98,
+        "sum_pagos_usd": 25,
+        "cup_real": 20599.98,
+        "inflacion_doble_conversion": 13987386.42
+      },
+      {
+        "id": "8262c353-cdce-4c99-b884-4b396851034b",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-25",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18900,
+        "total_cup_formula_v2": 12852000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18900,
+        "sum_pagos_usd": 27.79,
+        "cup_real": 18900,
+        "inflacion_doble_conversion": 12833100
+      },
+      {
+        "id": "f9edb700-367d-4b28-b7ad-3f348830326d",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-26",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 40800,
+        "total_cup_formula_v2": 27744000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 40800,
+        "sum_pagos_usd": 60,
+        "cup_real": 40800,
+        "inflacion_doble_conversion": 27703200
+      },
+      {
+        "id": "b99f8771-2cd6-42a4-bf86-5b0e5d34c7f7",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-26",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 142800,
+        "total_cup_formula_v2": 97104000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 142800,
+        "sum_pagos_usd": 210,
+        "cup_real": 142800,
+        "inflacion_doble_conversion": 96961200
+      },
+      {
+        "id": "a6bed0a5-c9fb-4add-a496-ed7321b8d3db",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-26",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 680,
+        "total_cup_formula_v2": 462400,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 680,
+        "sum_pagos_usd": 1,
+        "cup_real": 680,
+        "inflacion_doble_conversion": 461720
+      },
+      {
+        "id": "8932c4a7-e9ac-48b5-a5f9-b2f0507714fe",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-26",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 680,
+        "total_cup_formula_v2": 462400,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 680,
+        "sum_pagos_usd": 1,
+        "cup_real": 680,
+        "inflacion_doble_conversion": 461720
+      },
+      {
+        "id": "d0d39bb9-2bfa-48e7-8fb7-68fce03fbb3d",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-29",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 20400,
+        "total_cup_formula_v2": 13872000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 20400,
+        "sum_pagos_usd": 30,
+        "cup_real": 20400,
+        "inflacion_doble_conversion": 13851600
+      },
+      {
+        "id": "7a830133-2ae7-463e-b8d0-65d7a50a8bf0",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-29",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 142800,
+        "total_cup_formula_v2": 97104000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 142800,
+        "sum_pagos_usd": 210,
+        "cup_real": 142800,
+        "inflacion_doble_conversion": 96961200
+      },
+      {
+        "id": "5e240cc3-7ac4-45df-924c-7efd121d8de6",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-29",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 40800,
+        "total_cup_formula_v2": 27744000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 40800,
+        "sum_pagos_usd": 60,
+        "cup_real": 40800,
+        "inflacion_doble_conversion": 27703200
+      },
+      {
+        "id": "772ced97-4fb2-47ec-98e3-ee6b539c7da9",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-30",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 6800,
+        "total_cup_formula_v2": 4624000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 6800,
+        "sum_pagos_usd": 10,
+        "cup_real": 6800,
+        "inflacion_doble_conversion": 4617200
+      },
+      {
+        "id": "3da3185f-6b8c-4e72-9cea-9f6d8a54af8e",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-30",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 30600,
+        "total_cup_formula_v2": 20808000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 30600,
+        "sum_pagos_usd": 45,
+        "cup_real": 30600,
+        "inflacion_doble_conversion": 20777400
+      },
+      {
+        "id": "23117cd8-b419-48dc-8e9d-4d13561b5150",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-30",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 30600,
+        "total_cup_formula_v2": 20808000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 30600,
+        "sum_pagos_usd": 45,
+        "cup_real": 30600,
+        "inflacion_doble_conversion": 20777400
+      },
+      {
+        "id": "802e08a4-52cf-4e85-96c4-678190970957",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-30",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 4760,
+        "total_cup_formula_v2": 3236800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 4760,
+        "sum_pagos_usd": 7,
+        "cup_real": 4760,
+        "inflacion_doble_conversion": 3232040
+      },
+      {
+        "id": "3e7c1bb7-9e5d-4ddd-af34-9094da92f36d",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-30",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 680,
+        "total_cup_formula_v2": 462400,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 680,
+        "sum_pagos_usd": 1,
+        "cup_real": 680,
+        "inflacion_doble_conversion": 461720
+      },
+      {
+        "id": "7afa1962-fc23-4eb8-ad0e-b4ae1fca3f81",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-30",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 94120,
+        "total_cup_formula_v2": 64001600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 2,
+        "sum_pagos_cup": 94120,
+        "sum_pagos_usd": 14,
+        "cup_real": 94120,
+        "inflacion_doble_conversion": 63907480
+      },
+      {
+        "id": "df0cc044-817c-4d64-8da9-a986d2cf40e5",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-30",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 8840,
+        "total_cup_formula_v2": 6011200,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 8840,
+        "sum_pagos_usd": 13,
+        "cup_real": 8840,
+        "inflacion_doble_conversion": 6002360
+      },
+      {
+        "id": "f3bd82df-2676-4807-965f-004e8d2299f3",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-30",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 27200,
+        "total_cup_formula_v2": 18496000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 27200,
+        "sum_pagos_usd": 40,
+        "cup_real": 27200,
+        "inflacion_doble_conversion": 18468800
+      },
+      {
+        "id": "3041a9c4-5147-4513-ab78-29aeb6762636",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-09-30",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 6800,
+        "total_cup_formula_v2": 4624000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 6800,
+        "sum_pagos_usd": 10,
+        "cup_real": 6800,
+        "inflacion_doble_conversion": 4617200
+      },
+      {
+        "id": "b4e7d323-b8c6-4527-9b93-ec551b5d76c2",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-01",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 142800,
+        "total_cup_formula_v2": 97104000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 142800,
+        "sum_pagos_usd": 210,
+        "cup_real": 142800,
+        "inflacion_doble_conversion": 96961200
+      },
+      {
+        "id": "c5d0118f-04a9-442e-ac99-4f8198c15b48",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-01",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18360,
+        "total_cup_formula_v2": 12484800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18360,
+        "sum_pagos_usd": 27,
+        "cup_real": 18360,
+        "inflacion_doble_conversion": 12466440
+      },
+      {
+        "id": "1574b07c-f7b1-4894-b4f1-f7b52c6686ee",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-01",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 18360,
+        "total_cup_formula_v2": 12484800,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 18360,
+        "sum_pagos_usd": 27,
+        "cup_real": 18360,
+        "inflacion_doble_conversion": 12466440
+      },
+      {
+        "id": "e3214231-65b1-4c13-9b96-8b99b8dc3347",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-01",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 9520,
+        "total_cup_formula_v2": 6473600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 9520,
+        "sum_pagos_usd": 14,
+        "cup_real": 9520,
+        "inflacion_doble_conversion": 6464080
+      },
+      {
+        "id": "d2d7594b-97f1-4914-a09d-d1d999303fa1",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-03",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 13600,
+        "total_cup_formula_v2": 9248000,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 13600,
+        "sum_pagos_usd": 20,
+        "cup_real": 13600,
+        "inflacion_doble_conversion": 9234400
+      },
+      {
+        "id": "2753440f-595e-4e66-b2be-c6728d7c52bc",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "docnum": null,
+        "fecha": "2026-10-04",
+        "moneda": "USD",
+        "tasa": 680,
+        "total_amount": 33320,
+        "total_cup_formula_v2": 22657600,
+        "clase": "TOTAL_AMOUNT_YA_CUP_EQUIVALENTE",
+        "pagos_n": 1,
+        "sum_pagos_cup": 33320,
+        "sum_pagos_usd": 49,
+        "cup_real": 33320,
+        "inflacion_doble_conversion": 22624280
       }
     ],
-    "idempotency_keys": 0
+    "resumen": {
+      "total_amount_ya_cup": 131,
+      "total_amount_ya_cup_importe": 11070884.97,
+      "usd_normal": 0,
+      "sin_pagos": 165,
+      "parcial_otro": 3,
+      "inflacion_doble_conversion": 7566770544.63,
+      "usd_real_cobrado": 37204.64,
+      "cup_real": 45183754.98
+    }
+  },
+  "motor_real": {
+    "nota": "Pre-check de lo que el motor REAL contabilizaría. fin_post_document valida D=Σcobros vs C=total_cup (fórmula amt×tasa) → ERR_UNBALANCED en los casos listados; fin_post_document_safe los registraría en fin_posting_errors.",
+    "ventas_por_estado": [
+      {
+        "estado": "POST_OK (D=Σcobros=C=total_cup)",
+        "n": 690
+      },
+      {
+        "estado": "ERR_UNBALANCED_SIN_PAGOS",
+        "n": 165,
+        "importe_cup_real": 3163110
+      },
+      {
+        "estado": "ERR_UNBALANCED_DOBLE_CONVERSION_USD (total_amount ya CUP; fórmula amt×tasa dispara el crédito)",
+        "n": 131,
+        "importe_cup_real": 11070884.97
+      },
+      {
+        "estado": "ERR_UNBALANCED_PARCIAL_O_EXCESO",
+        "n": 3
+      }
+    ],
+    "pagos_desde_motor": [
+      {
+        "pago_id": "0fe5ba03-51d3-4639-bf41-90b97164ca33",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 300,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 300
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 300
+          }
+        ]
+      },
+      {
+        "pago_id": "0ffb8cff-1103-4f2d-86fc-85c12d6eb4b9",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 5000,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 5000
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 5000
+          }
+        ]
+      },
+      {
+        "pago_id": "2fa12d54-5ed0-479c-8017-40f3d46320ce",
+        "ref_type": "service",
+        "tienda": "PUERTO PADRE",
+        "importe_cup": 2900,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 2900
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 2900
+          }
+        ]
+      },
+      {
+        "pago_id": "36ce35ef-d001-4a48-b340-5ff3e128945f",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 2400,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 2400
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 2400
+          }
+        ]
+      },
+      {
+        "pago_id": "3c90ca9d-28c5-44e8-864b-45eec6c7de9a",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 860,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 860
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 860
+          }
+        ]
+      },
+      {
+        "pago_id": "4b42169b-8a32-4363-aa3f-8308d82e21a5",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 3000,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 3000
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 3000
+          }
+        ]
+      },
+      {
+        "pago_id": "7c008277-c39b-471b-b015-b4387cfb4e2b",
+        "ref_type": "service",
+        "tienda": "PUERTO PADRE",
+        "importe_cup": 4000,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 4000
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 4000
+          }
+        ]
+      },
+      {
+        "pago_id": "84368079-3c96-45f9-9d36-ae3869667253",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 2400,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 2400
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 2400
+          }
+        ]
+      },
+      {
+        "pago_id": "85929397-3a23-4c48-8b3a-d657907c59f2",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 6100,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 6100
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 6100
+          }
+        ]
+      },
+      {
+        "pago_id": "8d533694-4c41-4793-8c21-7eee766b2e19",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 1000,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 1000
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 1000
+          }
+        ]
+      },
+      {
+        "pago_id": "95a89b51-1869-4064-bff3-0276f0ba0b66",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 800,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 800
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 800
+          }
+        ]
+      },
+      {
+        "pago_id": "cf5175af-8907-4751-aee7-9342918ffafc",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 250,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 250
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 250
+          }
+        ]
+      },
+      {
+        "pago_id": "d4df9348-e093-4cfb-bc05-ea5b982c4613",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 800,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 800
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 800
+          }
+        ]
+      },
+      {
+        "pago_id": "e9736c20-5569-4721-b4e2-08d7fc84a38b",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 650,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 650
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 650
+          }
+        ]
+      },
+      {
+        "pago_id": "f3f48643-c296-499c-9e55-3cd4bfff3785",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 2355,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 2355
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 2355
+          }
+        ]
+      },
+      {
+        "pago_id": "ffaae38e-459d-4cc9-9e8e-9ae733e22639",
+        "ref_type": "service",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "importe_cup": 400,
+        "movimientos": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe": 400
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe": 400
+          }
+        ]
+      }
+    ],
+    "advertencia_plantillas": "Los movimientos de reconocimiento de VENTA/DEVOLUCIÓN dependen de los métodos de pago y del costo presentes en cada documento; MOVIMIENTOS_POR_ASIENTO de v2 es una aproximación por plantilla. Esta sección reporta el conteo real.",
+    "resumen": {
+      "post_ok": 690,
+      "err_sin_pagos": 165,
+      "err_sin_pagos_importe": 3163110,
+      "err_doble_conversion": 131,
+      "err_doble_conversion_importe_real": 11070884.97,
+      "err_parcial_o_exceso": 3
+    },
+    "ventas_movimientos_reales": {
+      "nota": "por venta POST_OK: nº métodos con Σamount_cup>0 + ingreso + (par costo si hay costo>0)",
+      "total": 2775
+    }
+  },
+  "por_tienda": [
+    {
+      "tienda": "ENERVIDA-VITALLCONS",
+      "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "tipo": "VENTA+RESTO",
+      "venta_docs": 707,
+      "importe_cup_formula_v2": 7602662844.61,
+      "cup_real": 35892299.98,
+      "usd_real_cobrado": 36407.64,
+      "post_ok": 408,
+      "err_sin_pagos": 165,
+      "err_doble_conversion_usd": 131,
+      "err_parcial_o_exceso": 3,
+      "docs_resto_tipos": 340,
+      "importe_cup_v2_resto": 204799533.19,
+      "pagos_posteriores": 14,
+      "pagos_importe_cup": 26315
+    },
+    {
+      "tienda": "COSTPRO (Prueba)",
+      "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "tipo": "VENTA+RESTO",
+      "venta_docs": 213,
+      "importe_cup_formula_v2": 7182085,
+      "cup_real": 7182085,
+      "usd_real_cobrado": 0,
+      "post_ok": 213,
+      "err_sin_pagos": 0,
+      "err_doble_conversion_usd": 0,
+      "err_parcial_o_exceso": 0,
+      "docs_resto_tipos": 5,
+      "importe_cup_v2_resto": 12327808.43,
+      "pagos_posteriores": 0,
+      "pagos_importe_cup": 0
+    },
+    {
+      "tienda": "PUERTO PADRE",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "tipo": "VENTA+RESTO",
+      "venta_docs": 69,
+      "importe_cup_formula_v2": 2109370,
+      "cup_real": 2109370,
+      "usd_real_cobrado": 797,
+      "post_ok": 69,
+      "err_sin_pagos": 0,
+      "err_doble_conversion_usd": 0,
+      "err_parcial_o_exceso": 0,
+      "docs_resto_tipos": 8,
+      "importe_cup_v2_resto": 8561.5,
+      "pagos_posteriores": 2,
+      "pagos_importe_cup": 6900
+    }
+  ],
+  "duplicados": {
+    "numeros_documento": [],
+    "idempotency_keys": 0,
+    "reclasificacion": {
+      "sin_numeracion": [
+        {
+          "tipo": "RECEPCION",
+          "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+          "tienda": "COSTPRO (Prueba)",
+          "n": 3
+        },
+        {
+          "tipo": "RECEPCION",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "tienda": "ENERVIDA-VITALLCONS",
+          "n": 87
+        },
+        {
+          "tipo": "RECEPCION",
+          "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+          "tienda": "PUERTO PADRE",
+          "n": 5
+        },
+        {
+          "tipo": "VENTA",
+          "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+          "tienda": "COSTPRO (Prueba)",
+          "n": 213
+        },
+        {
+          "tipo": "VENTA",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "tienda": "ENERVIDA-VITALLCONS",
+          "n": 434
+        },
+        {
+          "tipo": "VENTA",
+          "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+          "tienda": "PUERTO PADRE",
+          "n": 69
+        }
+      ],
+      "duplicados_reales": [],
+      "duplicados_contabilizacion": []
+    }
   },
   "anulaciones": {
     "docs_anulados_ya_contabilizados": [],
@@ -1101,19 +3628,28 @@
     "pasadas": [
       {
         "nombre": "PASADA 1",
-        "asientos_elegibles": 1342,
-        "movimientos": 4662,
-        "hash_resultados": "e49ad57b3245227b9970a1f4724d336b7a7f4ef8b4c11e2676be1ed6cc0b7bb4"
+        "asientos_reconocimiento": 1342,
+        "movimientos_reconocimiento": 4662,
+        "asientos_pago": 16,
+        "movimientos_pago": 32,
+        "asientos_totales": 1358,
+        "movimientos_totales": 4694,
+        "hash_resultados": "32109d55dd3fb0db098f160b369add2c3a253e8f59fd2b762e092caac30945b4"
       },
       {
         "nombre": "PASADA 2",
-        "asientos_elegibles": 1342,
-        "movimientos": 4662,
-        "hash_resultados": "e49ad57b3245227b9970a1f4724d336b7a7f4ef8b4c11e2676be1ed6cc0b7bb4"
+        "asientos_reconocimiento": 1342,
+        "movimientos_reconocimiento": 4662,
+        "asientos_pago": 16,
+        "movimientos_pago": 32,
+        "asientos_totales": 1358,
+        "movimientos_totales": 4694,
+        "hash_resultados": "32109d55dd3fb0db098f160b369add2c3a253e8f59fd2b762e092caac30945b4"
       }
     ],
     "iguales": true,
-    "explicacion": "La segunda pasada recalcula la MISMA elegibilidad (la condición \"SIN asiento previo\" no cambia porque el dry-run no escribe) y produce resultados idénticos (hash SHA-256 de asientos/importes igual). El backfill real es idempotente además por el guard de fin_post_document (asiento existente → NULL) y NOT EXISTS previo en fin_backfill; re-ejecutar el dry-run no puede duplicar nada porque no inserta nada."
+    "explicacion": "La segunda pasada recalcula la MISMA elegibilidad (la condición \"SIN asiento previo\" no cambia porque el dry-run no escribe) y produce resultados idénticos (hash SHA-256 de asientos/importes igual). El backfill real es idempotente además por el guard de fin_post_document (asiento existente → NULL) y NOT EXISTS previo en fin_backfill; re-ejecutar el dry-run no puede duplicar nada porque no inserta nada.",
+    "alcance_hash": "Por cada doc de RECONOCIMIENTO (orden: TIPO_SQL en orden de clave, filas en orden SQL): \"tipo|id|total_cup|debitos:creditos\". Por cada PAGO posterior (orden pt.id): \"PAGO|pago_id|total_cup|debito:credito\". La lista de elegibles y el importe total_cup de cada doc/pago son los datos que determinan el hash."
   },
   "comparacion_originales": {
     "checks": 2684,
@@ -1247,20 +3783,372 @@
       }
     ]
   },
-  "backfill_pagos_posteriores": {
-    "nota": "fin_backfill también genera asientos de PAGO por payment_transactions de recepciones/servicios (evento='pago', direction='in', sin asiento previo con payment_ref). Incluido en el dry-run:",
-    "elegibles": [
+  "pagos_posteriores": {
+    "por_ref_type": [
       {
         "ref_type": "service",
-        "n": 16,
-        "importe_cup": 33215.0,
-        "asientos_pago": 16,
-        "movimientos": 32
+        "pago_id": "0fe5ba03-51d3-4639-bf41-90b97164ca33",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 300,
+        "importe_cup": 300,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 300
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 300
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "0ffb8cff-1103-4f2d-86fc-85c12d6eb4b9",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 5000,
+        "importe_cup": 5000,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 5000
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 5000
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "2fa12d54-5ed0-479c-8017-40f3d46320ce",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "tienda": "PUERTO PADRE",
+        "moneda_pago": "CUP",
+        "importe_pago": 2900,
+        "importe_cup": 2900,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 2900
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 2900
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "36ce35ef-d001-4a48-b340-5ff3e128945f",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 2400,
+        "importe_cup": 2400,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 2400
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 2400
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "3c90ca9d-28c5-44e8-864b-45eec6c7de9a",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 860,
+        "importe_cup": 860,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 860
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 860
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "4b42169b-8a32-4363-aa3f-8308d82e21a5",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 3000,
+        "importe_cup": 3000,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 3000
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 3000
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "7c008277-c39b-471b-b015-b4387cfb4e2b",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "tienda": "PUERTO PADRE",
+        "moneda_pago": "CUP",
+        "importe_pago": 4000,
+        "importe_cup": 4000,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 4000
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 4000
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "84368079-3c96-45f9-9d36-ae3869667253",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 2400,
+        "importe_cup": 2400,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 2400
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 2400
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "85929397-3a23-4c48-8b3a-d657907c59f2",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 6100,
+        "importe_cup": 6100,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 6100
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 6100
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "8d533694-4c41-4793-8c21-7eee766b2e19",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 1000,
+        "importe_cup": 1000,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 1000
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 1000
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "95a89b51-1869-4064-bff3-0276f0ba0b66",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 800,
+        "importe_cup": 800,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 800
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 800
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "cf5175af-8907-4751-aee7-9342918ffafc",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 250,
+        "importe_cup": 250,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 250
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 250
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "d4df9348-e093-4cfb-bc05-ea5b982c4613",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 800,
+        "importe_cup": 800,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 800
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 800
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "e9736c20-5569-4721-b4e2-08d7fc84a38b",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 650,
+        "importe_cup": 650,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 650
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 650
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "f3f48643-c296-499c-9e55-3cd4bfff3785",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 2355,
+        "importe_cup": 2355,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 2355
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 2355
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
+      },
+      {
+        "ref_type": "service",
+        "pago_id": "ffaae38e-459d-4cc9-9e8e-9ae733e22639",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "tienda": "ENERVIDA-VITALLCONS",
+        "moneda_pago": "CUP",
+        "importe_pago": 400,
+        "importe_cup": 400,
+        "movimientos_motor": [
+          {
+            "categoria": "ACT_EFECTIVO_CUP",
+            "sentido": "credito",
+            "importe_cup": 400
+          },
+          {
+            "categoria": "PAS_SERV_PEND",
+            "sentido": "debito",
+            "importe_cup": 400
+          }
+        ],
+        "fuente": "fin_compute_metrics + fin_apply_templates (regla activa por tienda) — espejo exacto del motor"
       }
     ],
-    "receipt": {
-      "n": 0
+    "total_asientos": 16,
+    "total_movimientos": 32,
+    "importe_cup": 33215,
+    "pagos_con_moneda_distinta_al_doc": 0,
+    "categorias_debitadas": {
+      "PAS_SERV_PEND": 16
     },
-    "pagos_con_moneda_distinta_al_doc": 0
+    "por_ref_type_resumen": {
+      "service": 16
+    },
+    "importe_cup_servicios": 33215,
+    "importe_cup_recepciones": 0
   }
 }
