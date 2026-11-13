@@ -23,7 +23,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ElementType } from 'react';
 import {
   AlertTriangle, BadgeCheck, Ban, Check, Coins, FileDown, FileText,
-  Landmark, Loader2, Pencil, Plus, RefreshCw, Trash2, Users, Wallet,
+  Landmark, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, Users, Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
@@ -37,6 +37,11 @@ import type {
   Payroll, PayrollConceptInput, PayrollItemInput, PayrollStatus,
   SalaryRateType, TipoNomina, WorkerSalaryRate,
 } from '@/lib/payrolls/types';
+import {
+  WorkerSearchSelect,
+  evaluateWorkerEligibility,
+  type SelectableWorker,
+} from './WorkerSearchSelect';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilidades de presentación
@@ -295,13 +300,8 @@ function PayrollEditor({
   storeId, workers, existing, onClose, onSaved,
 }: {
   storeId: string;
-  /** Trabajadores activos de la tienda (con perfil laboral y tarifa actual). */
-  workers: Array<{
-    worker_id: string; first_name: string; last_name: string;
-    expediente_laboral?: string | null; categoria_ocupacional?: string | null;
-    rate_type?: SalaryRateType | null; rate_amount?: number | null;
-    rate_currency?: string | null;
-  }>;
+  /** Trabajadores de la tienda (todos los estados, con perfil laboral y tarifa evaluada al período). */
+  workers: SelectableWorker[];
   /** Nómina borrador a editar (null = nueva). */
   existing: Payroll | null;
   onClose: () => void;
@@ -340,7 +340,34 @@ function PayrollEditor({
       })),
     })),
   );
-  const [addWorkerId, setAddWorkerId] = useState('');
+  // worker_id ya incorporados (el selector deshabilita duplicados con explicación).
+  const addedWorkerIds = useMemo(() => new Set(lines.map((l) => l.worker_id)), [lines]);
+
+  // Trabajadores con tarifa evaluada al PERÍODO del documento: los datos del
+  // padre (referencia: hoy) sirven de arranque; al fijar un período válido se
+  // re-consulta con la MISMA regla del motor servidor (fn_payroll_validate_
+  // items) para que la elegibilidad del selector refleje el período real.
+  const [workersState, setWorkersState] = useState<SelectableWorker[]>(workers);
+  const [workersLoading, setWorkersLoading] = useState(false);
+  useEffect(() => { setWorkersState(workers); }, [workers]);
+  useEffect(() => {
+    if (!storeId) return;
+    if (!periodStart || !periodEnd || periodStart > periodEnd) return;
+    let cancelled = false;
+    setWorkersLoading(true);
+    void (async () => {
+      try {
+        const data = await apiFetch(`/api/workers?store_id=${storeId}&include_rate=1&period_start=${periodStart}&period_end=${periodEnd}`);
+        if (!cancelled) setWorkersState(data.workers ?? []);
+      } catch {
+        // Se conservan los datos vigentes (referencia: hoy) — el servidor
+        // revalida la elegibilidad al guardar en cualquier caso.
+      } finally {
+        if (!cancelled) setWorkersLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [storeId, periodStart, periodEnd]);
 
   // Documento guardado (para la vista previa con totales de servidor)
   const [savedPayroll, setSavedPayroll] = useState<Payroll | null>(existing ?? null);
@@ -396,25 +423,21 @@ function PayrollEditor({
 
   const previewStale = !!savedPayroll && !!previewSigRef.current && previewSigRef.current !== previewSignature;
 
-  const availableWorkers = useMemo(
-    () => workers.filter((w) => !lines.some((l) => l.worker_id === w.worker_id)),
-    [workers, lines],
-  );
-
-  const addLine = () => {
-    const w = workers.find((x) => x.worker_id === addWorkerId);
-    if (!w) { toast.error('Selecciona un trabajador'); return; }
-    if (!w.rate_amount) {
-      toast.error(`${w.first_name} ${w.last_name} no tiene tarifa salarial vigente — fíjala primero en Trabajadores`);
+  const addWorker = (w: SelectableWorker) => {
+    // Doble validación local (el selector ya filtra, pero el editor es la
+    // barrera antes del servidor — que SIEMPRE revalida todo).
+    const elig = evaluateWorkerEligibility(w, addedWorkerIds, periodStart, periodEnd);
+    if (!elig.eligible) {
+      toast.error(`${w.first_name} ${w.last_name}: ${elig.label}`);
       return;
     }
     setLines((ls) => [...ls, {
       worker_id: w.worker_id,
       worker_names: `${w.first_name} ${w.last_name}`,
-      rate_type: w.rate_type ?? null,
+      rate_type: (w.rate_type as SalaryRateType | null) ?? null,
       rate_amount: w.rate_amount ?? null,
       rate_currency: w.rate_currency ?? null,
-      regular_hours: w.rate_type === 'daily' ? 0 : 0,
+      regular_hours: 0,
       accrued_days: 0,
       overtime_hours: 0,
       overtime_amount: 0,
@@ -422,7 +445,7 @@ function PayrollEditor({
       vacation_amount: 0,
       concepts: [],
     }]);
-    setAddWorkerId('');
+    toast.success(`${w.first_name} ${w.last_name} incorporado — introduce ${w.rate_type === 'daily' ? 'los días devengados' : 'las horas regulares'}`);
   };
 
   const patchLine = (workerId: string, patch: Partial<EditorLine>) =>
@@ -496,7 +519,10 @@ function PayrollEditor({
       } else {
         result = await apiFetch('/api/payrolls', {
           method: 'POST',
-          body: JSON.stringify({ ...base, idempotency_key: idempotencyRef.current }),
+          // store_id EXPLÍCITO (tienda operada por la UI): evita la divergencia
+          // con profiles.active_store_id — causa raíz del caso Dup Test. La
+          // autorización la mantiene el RPC (has_store_access_as).
+          body: JSON.stringify({ ...base, store_id: storeId, idempotency_key: idempotencyRef.current }),
         });
       }
       toast.success(`Nómina ${result.payroll_number} guardada en borrador — totales calculados por el servidor`);
@@ -623,29 +649,33 @@ function PayrollEditor({
               </label>
             </section>
 
-            {/* Añadir trabajador */}
+            {/* Añadir trabajador — búsqueda dinámica (misma experiencia que el
+                selector de productos de ventas/entradas/documentos) */}
             <section aria-label="Añadir trabajador" className="rounded-xl border border-border/60 p-3">
-              <div className="flex flex-wrap items-end gap-2">
-                <label className="flex-1 min-w-[200px] text-[10px] font-black uppercase text-muted-foreground">
-                  Trabajador activo de la tienda
-                  <select className={cn(inputCls, 'mt-1')} value={addWorkerId} onChange={(e) => setAddWorkerId(e.target.value)}>
-                    <option value="">— selecciona —</option>
-                    {availableWorkers.map((w) => (
-                      <option key={w.worker_id} value={w.worker_id}>
-                        {w.first_name} {w.last_name}
-                        {w.rate_amount ? ` · ${money(w.rate_amount)} ${w.rate_currency ?? 'CUP'}/${w.rate_type === 'daily' ? 'día' : 'hora'}` : ' · SIN TARIFA'}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <button type="button" onClick={addLine} disabled={!addWorkerId}
-                  className={cn('flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary border border-primary/30 text-xs font-semibold', touch)}>
-                  <Plus className="w-4 h-4" /> Añadir a la nómina
-                </button>
-              </div>
-              {availableWorkers.length > 0 && availableWorkers.every((w) => !w.rate_amount) && (
+              <label htmlFor="payroll-worker-search" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                <Search className="w-3 h-3" aria-hidden="true" />
+                Agregar trabajador
+              </label>
+              <p className="mt-0.5 mb-2 text-[10px] text-muted-foreground">
+                Trabajadores de la tienda con tarifa vigente para el período. Los no
+                elegibles aparecen deshabilitados con su causa (sin ocultarlos).
+              </p>
+              <WorkerSearchSelect
+                workers={workersState}
+                addedWorkerIds={addedWorkerIds}
+                periodStart={periodStart}
+                periodEnd={periodEnd}
+                onSelect={addWorker}
+                inputId="payroll-worker-search"
+              />
+              {workersLoading && (
+                <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                  <Loader2 className="w-3 h-3 animate-spin" aria-hidden="true" /> Actualizando elegibilidad de tarifas para el período…
+                </p>
+              )}
+              {workersState.length > 0 && workersState.every((w) => !w.rate_amount) && (
                 <p className="mt-2 text-[11px] text-muted-foreground">
-                  Ningún trabajador disponible tiene tarifa salarial: fíjala en la pestaña
+                  Ningún trabajador de la tienda tiene tarifa vigente: fíjala en la pestaña
                   «Trabajadores» (botón «Tarifa», icono de moneda) antes de confeccionar.
                 </p>
               )}
@@ -795,26 +825,29 @@ function PayrollEditor({
 // ─────────────────────────────────────────────────────────────────────────────
 // Pestaña Nóminas — listado + flujo documental
 // ─────────────────────────────────────────────────────────────────────────────
-/** Trabajador activo con perfil laboral y tarifa vigente (para confección). */
-export interface NominaWorker {
-  worker_id: string;
-  first_name: string;
-  last_name: string;
-  expediente_laboral?: string | null;
-  categoria_ocupacional?: string | null;
-  rate_type?: SalaryRateType | null;
-  rate_amount?: number | null;
-  rate_currency?: string | null;
-}
+/**
+ * Trabajador de la tienda con perfil laboral y tarifa vigente (para
+ * confección). Alias de compatibilidad del selector: todos los estados —
+ * los no elegibles (inactivos, sin tarifa, tarifa no vigente para el
+ * período) se muestran deshabilitados CON explicación, nunca ocultos.
+ */
+export type NominaWorker = SelectableWorker;
 
-export function NominasTab({ storeId }: { storeId: string }) {
-  // Trabajadores activos con tarifa vigente (fuente propia de la pestaña —
-  // desacoplada del resumen de comisiones).
+export function NominasTab({ storeId, openPayrollId, onOpenPayrollConsumed }: {
+  storeId: string;
+  /** Nómina que WorkersView pide abrir en el editor (flujo «Agregar a Nómina»). */
+  openPayrollId?: string | null;
+  /** Consumido por NominasTab al abrir el editor (WorkersView limpia su estado). */
+  onOpenPayrollConsumed?: () => void;
+}) {
+  // Trabajadores de la tienda con tarifa (fuente propia de la pestaña —
+  // desacoplada del resumen de comisiones). SIN filtro de estado: el selector
+  // del editor muestra los inactivos deshabilitados con su causa.
   const [workers, setWorkers] = useState<NominaWorker[]>([]);
   const fetchWorkers = useCallback(async () => {
     if (!storeId) return;
     try {
-      const data = await apiFetch(`/api/workers?store_id=${storeId}&status=active&include_rate=1`);
+      const data = await apiFetch(`/api/workers?store_id=${storeId}&include_rate=1`);
       setWorkers(data.workers ?? []);
     } catch {
       setWorkers([]);
@@ -878,6 +911,29 @@ export function NominasTab({ storeId }: { storeId: string }) {
     }
     setEditorOpen(true);
   };
+
+  // Flujo «Agregar a Nómina» desde Trabajadores: WorkersView pasa la nómina a
+  // abrir (borrador recién creado o editado). Consumo único: al abrir, se
+  // notifica para limpiar el estado del padre.
+  useEffect(() => {
+    if (!openPayrollId || !storeId) return;
+    let cancelled = false;
+    void (async () => {
+      const data = await apiFetch(`/api/payrolls/${openPayrollId}`).catch(() => null);
+      if (cancelled) return;
+      const p = data?.payroll ?? null;
+      if (p && p.status === 'draft') {
+        setEditing(p);
+        setEditorOpen(true);
+      } else if (p) {
+        toast.error('Solo se pueden editar nóminas en borrador');
+      } else {
+        toast.error('No se pudo abrir la nómina solicitada');
+      }
+      onOpenPayrollConsumed?.();
+    })();
+    return () => { cancelled = true; };
+  }, [openPayrollId, storeId]);
 
   return (
     <div className="space-y-3">

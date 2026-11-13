@@ -42,6 +42,7 @@ import {
   Filter,
   Layers,
   HelpCircle,
+  FilePlus2,
 } from 'lucide-react';
 import { useAuthStore, useUIStore, type CommissionNavContext, type ViewType } from '@/store';
 import { toast } from 'sonner';
@@ -65,6 +66,10 @@ import { ExchangeRatesModal } from './ExchangeRatesModal';
 // con el MISMO builder PDF del servidor de verdad; ciclo Borrador → Confirmada
 // → Pagada (+ Contabilizada) · Anulada con motivo.
 import { NominasTab, SalaryRateModal } from './nominas/NominasTab';
+// AGREGAR A NÓMINA (2026-11-13): incorporación directa desde la tabla de
+// trabajadores hacia una nómina borrador (o nueva) — MISMO servicio backend
+// que el editor de nóminas (PUT/POST /api/payrolls), sin duplicar lógica.
+import { AddToPayrollModal } from './nominas/AddToPayrollModal';
 
 /**
  * WorkersView — Gestión de Trabajadores y Comisiones.
@@ -273,6 +278,11 @@ export function WorkersView() {
   // NÓMINAS SC-4-06: modal de tarifa salarial (vive con las nóminas — no es
   // una comisión; alimenta el cálculo de las nóminas con historial de vigencias)
   const [rateModalWorker, setRateModalWorker] = useState<WorkerSummary | null>(null);
+
+  // AGREGAR A NÓMINA (2026-11-13): trabajador a incorporar + nómina a abrir en
+  // la pestaña Nóminas tras completar (navegación con contexto de tienda).
+  const [addToPayrollWorker, setAddToPayrollWorker] = useState<WorkerSummary | null>(null);
+  const [openPayrollId, setOpenPayrollId] = useState<string | null>(null);
 
   // v2: Toggle de status (activo/inactivo)
   const handleToggleWorkerStatus = async (worker: WorkerSummary) => {
@@ -530,11 +540,16 @@ export function WorkersView() {
             onPayCommission={(w: any) => setPayModalWorker(w)}
             onEditWorker={(w: WorkerSummary) => setEditModalWorker(w)}
             onSetRate={(w: WorkerSummary) => setRateModalWorker(w)}
+            onAddToPayroll={(w: WorkerSummary) => setAddToPayrollWorker(w)}
             onToggleStatus={handleToggleWorkerStatus}
           />
         )}
         {activeTab === 'nominas' && (
-          <NominasTab storeId={storeId || ''} />
+          <NominasTab
+            storeId={storeId || ''}
+            openPayrollId={openPayrollId}
+            onOpenPayrollConsumed={() => setOpenPayrollId(null)}
+          />
         )}
         {activeTab === 'rules' && (
           <RulesTab
@@ -828,6 +843,21 @@ export function WorkersView() {
           onSaved={() => {}}
         />
       )}
+
+      {/* AGREGAR A NÓMINA (2026-11-13): incorpora a borrador/nueva con el
+          mismo servicio del editor y navega a la nómina guardada. */}
+      {addToPayrollWorker && storeId && (
+        <AddToPayrollModal
+          worker={addToPayrollWorker}
+          storeId={storeId}
+          onClose={() => setAddToPayrollWorker(null)}
+          onDone={(payrollId) => {
+            setAddToPayrollWorker(null);
+            setOpenPayrollId(payrollId);
+            setActiveTab('nominas');
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -836,7 +866,7 @@ export function WorkersView() {
 // TAB 1: Trabajadores
 // ════════════════════════════════════════════════════════════════════
 function WorkersTab({
-  workers, loading, error, dateFrom, dateTo, onDateFromChange, onDateToChange, onRefresh, onPayCommission, onEditWorker, onToggleStatus, onSetRate,
+  workers, loading, error, dateFrom, dateTo, onDateFromChange, onDateToChange, onRefresh, onPayCommission, onEditWorker, onToggleStatus, onSetRate, onAddToPayroll,
 }: any) {
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -966,6 +996,15 @@ function WorkersTab({
                   <Coins className="w-4 h-4" />
                 </button>
                 <button
+                  onClick={() => onAddToPayroll?.(w)}
+                  disabled={w.status !== 'active'}
+                  className="px-3 py-2.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 disabled:opacity-40 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  title="Agregar a nómina (borrador o nueva)"
+                  aria-label={`Agregar ${w.first_name} a una nómina`}
+                >
+                  <FilePlus2 className="w-4 h-4" />
+                </button>
+                <button
                   onClick={() => onEditWorker(w)}
                   className="px-3 py-2.5 rounded-lg bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border min-h-[44px] min-w-[44px] flex items-center justify-center"
                   aria-label={`Editar ${w.first_name}`}
@@ -1072,6 +1111,16 @@ function WorkersTab({
                           aria-label={`Tarifa salarial de ${w.first_name}`}
                         >
                           <Coins className="w-3.5 h-3.5" />
+                        </button>
+                        {/* Agregar a Nómina (trabajadores ↔ nóminas) */}
+                        <button
+                          onClick={() => onAddToPayroll?.(w)}
+                          disabled={w.status !== 'active'}
+                          className="p-2 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          title="Agregar a nómina (borrador o nueva)"
+                          aria-label={`Agregar ${w.first_name} a una nómina`}
+                        >
+                          <FilePlus2 className="w-3.5 h-3.5" />
                         </button>
                         {/* Editar */}
                         <button

@@ -9,7 +9,16 @@
  *      Confecciona una nómina (estado borrador) vía RPC create_payroll.
  *
  * TRUST BOUNDARY (misma arquitectura que /api/vale-salida):
- *   - store_id  → derivado de profiles.active_store_id (DB lookup con JWT)
+ *   - store_id  → EXPLÍCITO del body (la tienda que la UI está operando),
+ *                validado por el RPC con has_store_access_as(JWT). Si el body
+ *                no lo trae (clientes/scripts legacy), se deriva de
+ *                profiles.active_store_id como antes.
+ *                FIX 2026-11-13 (trabajadores↔nóminas): antes SIEMPRE se
+ *                derivaba del perfil, que puede divergir de la tienda activa
+ *                de la sesión (p. ej. perfil con active_store_id huérfano por
+ *                una membresía revocada) → la nómina se intentaba crear en
+ *                OTRA tienda y los trabajadores de la tienda visible caían en
+ *                ERR_WORKER_NOT_ELIGIBLE (caso Dup Test / COSTPRO (Prueba)).
  *   - user_id    → derivado de session.user.id (JWT), NUNCA del body
  *   - totales    → calculados SIEMPRE por el servidor (única fuente de
  *                  verdad); el cliente solo envía identificadores y
@@ -18,13 +27,18 @@
  *   - identidad/tarifa/entidad → SNAPSHOT resuelto servidor por línea.
  *
  * El body SOLO puede enviar:
+ *   - store_id (opcional, uuid — tienda operada por la UI)
  *   - tipo_nomina, period_start, period_end (obligatorios)
  *   - payment_method, cheque_number, cheque_date,
  *     reintegro_number, reintegro_date, notes (opcionales)
  *   - items[] (worker_id + cantidades + concepts[])
  *   - idempotency_key (obligatoria, ≥8 chars)
  *
- * Cualquier intento de enviar store_id, user_id o totales es ignorado.
+ * Cualquier intento de enviar user_id o totales es ignorado. El store_id del
+ * body NUNCA elude la autorización: create_payroll exige
+ * has_store_access_as(p_user_id, p_store_id) (membresía activa o rol
+ * administrativo de plataforma) — un store_id ajeno devuelve
+ * ERR_UNAUTHORIZED (403).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -61,6 +75,9 @@ const itemSchema = z.object({
 });
 
 const createPayrollSchema = z.object({
+  // FIX 2026-11-13 (trabajadores↔nóminas): tienda explícita de la UI. La
+  // autorización NO se relaja: create_payroll valida has_store_access_as.
+  store_id: uuidLoose.optional(),
   tipo_nomina: z.enum(['sueldos', 'jornales', 'vacaciones', 'licencias', 'subsidios', 'movilizados', 'otros']),
   period_start: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'period_start YYYY-MM-DD' }),
   period_end: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'period_end YYYY-MM-DD' }),
@@ -144,20 +161,28 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
     );
   }
 
-  // store_id derivado del perfil del usuario (NUNCA del body)
+  // store_id: EXPLÍCITO del body cuando la UI lo envía (tienda operada);
+  // si no viene (clientes legacy / scripts de verificación), se deriva del
+  // perfil del usuario como antes. La autorización real la mantiene el RPC
+  // (has_store_access_as sobre el store_id resuelto — JWT, nunca del body).
   const admin = getSupabaseAdminSafe();
   if (!admin) {
     return NextResponse.json({ error: 'Servicio no disponible' }, { status: 503 });
   }
-  const { data: profile, error: profileErr } = await admin
-    .from('profiles')
-    .select('active_store_id')
-    .eq('id', session.user.id)
-    .single();
-  if (profileErr || !profile?.active_store_id) {
-    return NextResponse.json({ error: 'Usuario sin tienda activa configurada' }, { status: 400 });
+  let store_id: string;
+  if (b.store_id) {
+    store_id = b.store_id;
+  } else {
+    const { data: profile, error: profileErr } = await admin
+      .from('profiles')
+      .select('active_store_id')
+      .eq('id', session.user.id)
+      .single();
+    if (profileErr || !profile?.active_store_id) {
+      return NextResponse.json({ error: 'Usuario sin tienda activa configurada' }, { status: 400 });
+    }
+    store_id = profile.active_store_id;
   }
-  const store_id = profile.active_store_id;
 
   // items: solo identificadores y cantidades (sin importes calculados).
   const items = b.items.map((it) => ({
