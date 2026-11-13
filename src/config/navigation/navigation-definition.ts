@@ -61,7 +61,7 @@ import {
   ClipboardCheck,
   ReceiptText, Coins, Tags,
   Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson, CalendarClock, SlidersHorizontal,
-  UsersRound,
+  UsersRound, Settings2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -153,6 +153,20 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         type: 'item',
         navClass: 'primary',
         keywords: ['dashboard', 'tienda', 'kpi', 'indicadores', 'consolidado', 'resumen', 'inicio', 'productos', 'comportamiento', 'insights', 'orden de compra'],
+      },
+      {
+        // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros, generados
+        // automáticamente por el motor de partida doble (misma sección que el
+        // Dashboard de la tienda: lectura ejecutiva de la operación diaria).
+        // Roles: superficie financiera de consulta (admin/manager/encargado);
+        // el gate REAL de acceso a la tienda lo hace cada RPC server-side.
+        id: 'financial-statements',
+        label: 'Estados Financieros',
+        description: 'Situación, rendimiento y dashboard por tienda.',
+        icon: BarChart3,
+        type: 'item',
+        roles: ['admin', 'manager', 'encargado'],
+        keywords: ['estados financieros', 'balance', 'situación financiera', 'estado de situación', 'estado de rendimiento', 'resultado', 'utilidad', 'patrimonio', 'activos', 'pasivos', 'partida doble', 'cp-fin', 'ecuación contable', 'dashboard financiero'],
       },
       // CAMBIO 4 (HOME/SALES/PERFORMANCE DEFAULTS): grupo explícito "Ventas"
       // con la acción de vender + las opciones administrativas. La antigua
@@ -696,6 +710,21 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: BarChart3,
         type: 'item',
         keywords: ['abc', 'análisis', 'productos', 'clasificación', 'pareto'],
+      },
+      {
+        // MISIÓN CP-FIN (2026-11-13): Vista A — Configuración de Documentos.
+        // Administra las reglas de partida doble del motor financiero por
+        // tipo documental (plantillas de movimientos, simulador, versiones).
+        // Roles: mínimo privilegio financiero (admin/manager); el gate REAL
+        // de activación lo hace el motor (admin de tienda) server-side.
+        id: 'document-config',
+        label: 'Configuración de Documentos',
+        description: 'Reglas de partida doble y efectos económicos por tipo de documento: constructor de movimientos, simulador y versiones de reglas.',
+        icon: Settings2,
+        type: 'item',
+        route: { view: 'document-config' },
+        roles: ['admin', 'manager'],
+        keywords: ['configuración de documentos', 'partida doble', 'reglas', 'motor financiero', 'débito', 'crédito', 'asientos', 'contabilización', 'categorías económicas', 'saldos iniciales', 'apertura financiera', 'cp-fin', 'simulador'],
       },
     ],
   },
@@ -1583,6 +1612,9 @@ export const VALID_VIEWS: Set<string> = new Set([
   // SectionHubView) + vista canónica del documento Ingreso/Egreso.
   'caja', 'ingresos_egresos',
   'operacion', 'recursos-humanos', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
+  // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros (OPERACIÓN,
+  // junto al Dashboard de la tienda: Situación / Rendimiento / Dashboard).
+  'financial-statements',
 ]);
 
 /**

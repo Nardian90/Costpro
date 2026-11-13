@@ -45,7 +45,13 @@ export type ViewType = 'occ' | 'dashboard' | 'store-dashboard' | 'pos' | 'invent
 // MISIÓN 2026-11-09 (CP-SALES-PRICE-LIST-001): listado de precios (consulta + PDF)
 | 'listado-precios'
 // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
-| 'production-orders';
+| 'production-orders'
+// MISIÓN CP-FIN (2026-11-13): Vista A — Configuración de Documentos
+// (ANÁLISIS → reglas de partida doble por tipo documental).
+| 'document-config'
+// MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros (Situación,
+// Rendimiento y Dashboard por tienda, sobre el motor de partida doble).
+| 'financial-statements';
 
 export type SidebarState = 'expanded' | 'rail' | 'closed';
 

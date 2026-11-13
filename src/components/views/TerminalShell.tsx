@@ -170,6 +170,12 @@ const AccountsReceivableView = dynamic(() => import('@/components/views/terminal
 // CAMBIO 2026-10: modal de reporte sustituido por la vista dedicada CashReportView (import dinámico arriba)
 // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
 const ProductionOrdersView = dynamic(() => import('@/components/views/terminal/views/production_orders/ProductionOrdersView'), { ssr: false });
+// MISIÓN CP-FIN (2026-11-13): Vista A — Configuración de Documentos
+// (ANÁLISIS → reglas de partida doble y efectos económicos por tipo documental).
+const DocumentConfigView = dynamic(() => import('@/components/views/terminal/views/financial_config/DocumentConfigView'), { ssr: false });
+// MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros (Situación,
+// Rendimiento y Dashboard por tienda, sobre el motor de partida doble).
+const FinancialStatementsView = dynamic(() => import('@/components/views/terminal/views/financial_statements/FinancialStatementsView'), { ssr: false });
 // V1.2: Devoluciones, Clientes, Cotizaciones, Cierre Fiscal
 const DevolutionsView = dynamic(() => import('@/components/views/terminal/views/devolutions/DevolutionsView').then(m => ({ default: m.DevolutionsView })), { ssr: false });
 const CustomersView = dynamic(() => import('@/components/views/terminal/views/customers/CustomersView').then(m => ({ default: m.CustomersView })), { ssr: false });
@@ -614,6 +620,10 @@ export default function TerminalShell() {
         case 'listado-precios': return <ViewErrorBoundary viewName="Listado de precios"><PriceListView /></ViewErrorBoundary>;
         // FIX-PRODUCTION (2026-07-12): órdenes de producción y trabajo
         case 'production-orders': return <ViewErrorBoundary viewName="Órdenes de Producción"><ProductionOrdersView /></ViewErrorBoundary>;
+        // MISIÓN CP-FIN (2026-11-13): Vista A — Configuración de Documentos
+        case 'document-config': return <ViewErrorBoundary viewName="Configuración de Documentos"><DocumentConfigView /></ViewErrorBoundary>;
+        // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros
+        case 'financial-statements': return <ViewErrorBoundary viewName="Estados Financieros"><FinancialStatementsView /></ViewErrorBoundary>;
         // V1.2: Devoluciones, Clientes CRM, Cotizaciones, Cierre Fiscal
         case 'devolutions': return <ViewErrorBoundary viewName="Devoluciones"><DevolutionsView /></ViewErrorBoundary>;
         case 'customers': return <ViewErrorBoundary viewName="Clientes"><CustomersView /></ViewErrorBoundary>;

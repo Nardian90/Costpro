@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/components/views/terminal/views/financial_statements/FinancialStatementsView.tsx",
+    "src/components/views/terminal/views/financial_statements/BalanceSheetTab.tsx",
+    "src/components/views/terminal/views/financial_statements/IncomeStatementTab.tsx",
+    "src/components/views/terminal/views/financial_statements/DashboardTab.tsx",
+    "src/components/views/terminal/views/financial_statements/CategoryDetailPanel.tsx",
+    "src/components/views/terminal/views/financial_statements/exporters.ts",
+    "src/components/views/terminal/views/financial_statements/types.ts",
+    "src/components/views/terminal/views/financial_statements/fin-api.ts",
+    "src/store/index.ts",
+    "src/components/views/TerminalShell.tsx",
+    "src/config/navigation/navigation-definition.ts"
+  ]
+}

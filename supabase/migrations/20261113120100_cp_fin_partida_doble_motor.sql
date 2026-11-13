@@ -1322,12 +1322,14 @@ BEGIN
     'ajustes_ingresos', round(v_ing_aj, 2),
     'ingresos_netos', round(v_ing_op + v_ing_aj, 2),
     'costo_ventas', round(v_costo, 2),
-    'utilidad_bruta', round(v_ing_op + v_ing_aj - v_costo, 2),
+    -- Los saldos de costo/gasto llegan NEGATIVOS (crédito−débito): se SUMAN
+    -- con su signo — restarlos volvería a sumarlos (bug de signos corregido).
+    'utilidad_bruta', round(v_ing_op + v_ing_aj + v_costo, 2),
     'gastos_operacionales', round(v_gastos, 2),
-    'resultado_operativo', round(v_ing_op + v_ing_aj - v_costo - v_gastos, 2),
+    'resultado_operativo', round(v_ing_op + v_ing_aj + v_costo + v_gastos, 2),
     'ingresos_no_operacionales', round(v_ing_noop, 2),
     'gastos_no_operacionales', round(v_gas_noop, 2),
-    'resultado_neto', round(v_ing_op + v_ing_aj - v_costo - v_gastos + v_ing_noop - v_gas_noop, 2));
+    'resultado_neto', round(v_ing_op + v_ing_aj + v_costo + v_gastos + v_ing_noop + v_gas_noop, 2));
 END $function$;
 
 CREATE OR REPLACE FUNCTION public.fin_get_dashboard(
