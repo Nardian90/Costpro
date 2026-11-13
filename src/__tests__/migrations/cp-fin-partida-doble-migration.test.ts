@@ -93,7 +93,7 @@ describe('migración base 20261113120000 — modelo fin_*', () => {
       expect(s).toContain(`('${dt}',`);
     }
     // La transferencia interna queda SIN efecto económico (Caso F)
-    expect(s).toMatch(/TRANSFERENCIA.*'active', '\[\]'::jsonb/s);
+    expect(s).toMatch(/TRANSFERENCIA[\s\S]*'active', '\[\]'::jsonb/);
     // Verificación de cierre fail-closed de las semillas
     expect(s).toMatch(/RAISE EXCEPTION 'CP-FIN base: categorías semilla incompletas/);
     expect(s).toMatch(/RAISE EXCEPTION 'CP-FIN base: reglas activas semilla incompletas/);
