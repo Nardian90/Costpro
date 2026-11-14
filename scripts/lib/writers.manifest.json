@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-15 — CP-INVENTORY-TRACEABILITY-RECONCILIATION-001: m028/m028b (reparación de trazabilidad de los 208 + idempotencia/auditoría) guardProtected; m026/m026b/m027/m027b/m027c/m029/m030/m030b-e/m031/m031b-d/m032/m032a/m033/m033b/m034/m038 read-only como excepciones justificadas (solo SELECT por Management API /database/query).",
+  "_updated": "2026-11-15 — CP-FIN-VALUATION-RECTIFICATION-003: m044/m045/m046/m047/m048 read-only (SELECT por Management API /database/query o ensambladores locales sin conexión). E2E aislado: m049 (a añadir).",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -192,6 +192,9 @@
     "scripts/m034-fase5-valoraciones.mjs": "READ-ONLY (CP-INVENTORY-TRACEABILITY-RECONCILIATION-001): análisis/conciliación por el canal de consulta Management API /database/query (única vía de SQL); solo SELECT, sin DML/DDL. Evidencia en docs/audits/inventory-traceability-20261115/.",
     "scripts/m038-verifica-sql.mjs": "READ-ONLY (CP-INVENTORY-TRACEABILITY-RECONCILIATION-001): análisis/conciliación por el canal de consulta Management API /database/query (única vía de SQL); solo SELECT, sin DML/DDL. Evidencia en docs/audits/inventory-traceability-20261115/.",
     "scripts/m039-rect002-faseA-verificacion.mjs": "CP-FIN-VALUATION-CORRECTION-002: verificación read-only de producción (GET + SELECT vía REST service_role; ni un write). Señales de credencial sin operación de escritura real. Evidencia: docs/audits/valuation-correction-20261115/.",
-    "scripts/m043-rect002-gen-evidencias.mjs": "CP-FIN-VALUATION-CORRECTION-002: ensamblador LOCAL de evidencias JSON (lee scripts/out/*.json, escribe en download/ y docs/audits/). Sin conexión a ninguna BD: las señales provienen de strings descriptivos del contexto. Evidencia: docs/audits/valuation-correction-20261115/."
+    "scripts/m043-rect002-gen-evidencias.mjs": "CP-FIN-VALUATION-CORRECTION-002: ensamblador LOCAL de evidencias JSON (lee scripts/out/*.json, escribe en download/ y docs/audits/). Sin conexión a ninguna BD: las señales provienen de strings descriptivos del contexto. Evidencia: docs/audits/valuation-correction-20261115/.",
+    "scripts/m044-probe-esquema.mjs": "CP-FIN-VALUATION-RECTIFICATION-003: probeo read-only de esquema (SELECT a information_schema + stock_movements por Management API). Ni un write. Evidencia: docs/audits/valuation-rectification-003-20261115/.",
+    "scripts/m045-rect003-faseI-snapshot.mjs": "CP-FIN-VALUATION-RECTIFICATION-003: Fase I congelar producción — EXCLUSIVAMENTE SELECT por Management API /database/query (guard de ref de producción + snapshots con hashes). Ni un write. Evidencia: docs/audits/valuation-rectification-003-20261115/.",
+    "scripts/m046-rect003-faseI-complemento.mjs": "CP-FIN-VALUATION-RECTIFICATION-003: complemento Fase I — EXCLUSIVAMENTE SELECT por Management API /database/query (asientos de ventas/vales, transaction_items, tasa_audit, recepciones proveedor). Ni un write. Evidencia: docs/audits/valuation-rectification-003-20261115/."
   }
 }
