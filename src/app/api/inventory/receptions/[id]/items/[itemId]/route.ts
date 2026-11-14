@@ -124,8 +124,13 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
 
   const oldMoneda = currentItem.moneda_recepcion;
   const oldTasa = currentItem.tasa_cambio_recepcion;
-  const receiptStatus = currentItem.receipts?.status;
-  const storeId = currentItem.receipts?.store_id;
+  // CP-RECEIPT-INTEGRITY-001: el cliente Supabase no lleva el genérico Database,
+  // así que el embed many-to-one `receipts(...)` se tipa como array aunque
+  // PostgREST devuelva un objeto único. Normalizamos (misma convención que
+  // costeo-dinamico) para acceder de forma type-safe sin cambiar el runtime.
+  const receiptRow = Array.isArray(currentItem.receipts) ? currentItem.receipts[0] : currentItem.receipts;
+  const receiptStatus = receiptRow?.status;
+  const storeId = receiptRow?.store_id;
   const newMoneda = moneda_recepcion || oldMoneda;
   const newTasa = tasa_cambio_recepcion !== undefined ? tasa_cambio_recepcion : oldTasa;
 

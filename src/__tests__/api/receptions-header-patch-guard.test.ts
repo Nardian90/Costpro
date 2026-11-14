@@ -60,7 +60,9 @@ function makeReq(body: any): Request {
   } as any;
 }
 async function call(body: any) {
-  const res = await PATCH(makeReq(body) as any, sessionState.value);
+  // PATCH (withAuth real) tiene firma de 1 argumento; el mock de withAuth
+  // inyecta sessionState.value desde su closure, así que basta con la req.
+  const res = await PATCH(makeReq(body) as any);
   const data = await res.json();
   return { status: res.status, data };
 }

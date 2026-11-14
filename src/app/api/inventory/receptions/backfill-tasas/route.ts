@@ -143,7 +143,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     updated++;
-    const receiptId = item.receipts?.id;
+    // Embed many-to-one tipado como array (cliente sin genérico Database):
+    // normalizar antes de leer el id (misma convención que costeo-dinamico).
+    const receiptRef = Array.isArray(item.receipts) ? item.receipts[0] : item.receipts;
+    const receiptId = receiptRef?.id;
     if (receiptId && typeof rpcResult?.new_total_cost === 'number') {
       totalsByReceipt.set(receiptId, rpcResult.new_total_cost);
     } else if (receiptId) {

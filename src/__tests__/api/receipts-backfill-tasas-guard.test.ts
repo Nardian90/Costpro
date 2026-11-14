@@ -26,7 +26,8 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 // ─── Admin client con builder capturador de filtros ───
-const accessState = { value: { data: true, error: null as any } };
+// `data` admite boolean | null: la RPC devolvería null cuando falla con error.
+const accessState = { value: { data: true as boolean | null, error: null as any } };
 const queryState = { value: { data: [] as any[], error: null as any } };
 const rpcItemResults = { queue: [] as Array<{ data: any; error: any }> };
 const rpcCalls: Array<{ name: string; args: any }> = [];
