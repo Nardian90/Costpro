@@ -361,6 +361,9 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
       const importedCount = typeof result?.count === 'number' ? result.count : importPreview.rows.length;
       const mastersCreated = typeof result?.masters_created === 'number' ? result.masters_created : 0;
       const mastersReused = typeof result?.masters_reused === 'number' ? result.masters_reused : 0;
+      // CP-POST-MERGE-002 §2: informe al usuario de cuántos productos recibieron
+      // el costo nominal 1 CUP (costo ausente o cero en el archivo importado).
+      const nominalCost = typeof result?.nominal_cost_assigned === 'number' ? result.nominal_cost_assigned : 0;
 
       if (serverErrors.length > 0) {
         const firstErrors = serverErrors
@@ -378,7 +381,10 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
         const catálogoMsg = mastersCreated > 0
           ? ` (${mastersCreated} maestro(s) nuevo(s)${mastersReused > 0 ? `, ${mastersReused} reutilizado(s)` : ''})`
           : '';
-        toast.success(`${importedCount} producto(s) importado(s) correctamente${catálogoMsg}.`);
+        const nominalMsg = nominalCost > 0
+          ? ` ${nominalCost} producto(s) recibieron el costo nominal de 1 CUP (sin costo en el archivo).`
+          : '';
+        toast.success(`${importedCount} producto(s) importado(s) correctamente${catálogoMsg}.${nominalMsg}`);
       }
       onOpenChange(false);
     } catch (err: any) {
