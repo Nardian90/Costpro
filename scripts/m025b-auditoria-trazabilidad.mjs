@@ -8,6 +8,7 @@
  */
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 
 const env = {};
 for (const l of readFileSync(resolve(process.cwd(), '.env'), 'utf8').split('\n')) {
@@ -16,7 +17,8 @@ for (const l of readFileSync(resolve(process.cwd(), '.env'), 'utf8').split('\n')
 }
 const TOKEN = env.SUPABASE_ACCESS_TOKEN;
 const ref = env.NEXT_PUBLIC_SUPABASE_URL.match(/https:\/\/(.*?)\.supabase\.co/)[1];
-if (ref !== 'wthkddeleylijmonclxg') { console.error('FALLO DE GUARD'); process.exit(2); }
+assertNotProduction({ mode: 'write', url: env.NEXT_PUBLIC_SUPABASE_URL, context: 'm025b-auditoria-trazabilidad.mjs' });
+if (ref !== 'wthkddeleylijmonclxg') { console.error('FALLO DE GUARD: no es producción'); process.exit(2); }
 
 const FVC = 'fd9d6c88-5db8-49ea-b185-8bc96cc93e63';
 const ENER = '5e6fe821-5465-48b1-b3f1-3aa3182edc38';
