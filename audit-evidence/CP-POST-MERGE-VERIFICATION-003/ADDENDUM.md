@@ -134,6 +134,10 @@ resultados históricos heredados del PR:
   **success** (`2026-11-14T17:45:41Z`, evento pull_request). Incluye el replay actualizado
   (171 migraciones) y el guard de residuos net-zero. No se repite localmente porque el árbol
   es idéntico y el mandato prohíbe re-ejecutar pasos ya completados.
+- **E2E Aislado re-ejecutado por CI el 2026-11-15** sobre la rama de este addendum
+  (`7b438ea85` = árbol de main + solo este archivo `.md`): **success** junto con CI y Test
+  Coverage — evidencia E2E fresca del mismo árbol de código, ya en el propio PR de
+  verificación (#1629).
 
 ## §6. Hallazgos (con clasificación e impacto)
 
