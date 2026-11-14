@@ -1,0 +1,292 @@
+{
+  "mision": "CP-RECEIPT-INTEGRITY-001",
+  "fecha_extraccion_utc": "2026-11-14T12:51:22.544Z",
+  "metodo": "REST PostgREST (service_role) — SOLO LECTURA (GET + 1 RPC SELECT)",
+  "alcance": "Producción wthkddeleylijmonclxg — EXCLUSIVAMENTE LECTURA (GET + RPC SELECT). Sin ninguna escritura.",
+  "caso": {
+    "recepcion": {
+      "id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+      "reference_doc": "FAC-VITALLCONS-001",
+      "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "tienda": "ENERVIDA-VITALLCONS",
+      "supplier": "Vitallcons",
+      "estado_real": "active",
+      "estado_ui_equivale": "Confirmada",
+      "reception_date": "2026-07-01",
+      "created_at": "2026-08-11T22:49:18.423872+00:00",
+      "updated_at": "2026-07-01T12:00:00+00:00",
+      "total_cost": 192039436,
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "due_date": "2026-07-31",
+      "document_number": null,
+      "confirmed_at": null,
+      "nota_ciclo_vida": "Creada 2026-08-11T22:49:18Z vía importación legacy (audit UPDATE_STATUS pending→active 1 s después; sin REGISTER_RECEPTION). reception_date retroactiva 42 días; updated_at forjado ANTERIOR a created_at."
+    },
+    "lineas": {
+      "total": 101
+    },
+    "distribucion_monedas": {
+      "CUP": 79,
+      "USD": 22
+    },
+    "tasas": {
+      "CUP": 1,
+      "USD": 680
+    },
+    "subtotales_por_moneda": {
+      "CUP": 5129706,
+      "USD": 274867.25
+    },
+    "suma_mezcla_sin_convertir": 5404573.25,
+    "suma_equivalentes_cup": 192039436,
+    "total_cabecera": 192039436,
+    "diferencia_cabecera_vs_cup": 0,
+    "diferencia_ui_reportada": 186634862.75,
+    "explicacion_diferencia": "186.634.862,75 = 274.867,25 USD × (680 − 1): la conversión FX de las 22 líneas USD aplicada EXACTAMENTE una vez. La UI mostraba los subtotales de línea en moneda original con etiqueta «CUP» junto a un total en CUP.",
+    "lineas_con_moneda_discrepante_al_producto": [
+      {
+        "linea": "4a456f42",
+        "sku": "90",
+        "producto": "Cable Solar Rojo 6mm",
+        "moneda_linea": "USD",
+        "moneda_producto": "CUP"
+      },
+      {
+        "linea": "cb31e953",
+        "sku": "92",
+        "producto": "Juego de pata",
+        "moneda_linea": "CUP",
+        "moneda_producto": "USD"
+      },
+      {
+        "linea": "80a1767b",
+        "sku": "111",
+        "producto": "Grapas plásticas con clavo de acero",
+        "moneda_linea": "USD",
+        "moneda_producto": "CUP"
+      },
+      {
+        "linea": "3d28dee9",
+        "sku": "999",
+        "producto": "Servicio de cripiar",
+        "moneda_linea": "CUP",
+        "moneda_producto": "USD"
+      },
+      {
+        "linea": "9bb973d7",
+        "sku": "120",
+        "producto": "Estación de carga",
+        "moneda_linea": "CUP",
+        "moneda_producto": "USD"
+      }
+    ],
+    "rpc_total_autoritario": {
+      "http": 404,
+      "param": "args",
+      "resultado": "{\"code\":\"PGRST202\",\"details\":\"Searched for the function public.calculate_receipt_total_cup with parameter args or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.\",\"hint\":null,\"message\":\"Could not find the function public.calculate_receipt_total_cup(args) in the schema cache\"}"
+    },
+    "tasas_oficiales_referencia": {
+      "2026-07-01": "BCC seg.3 ≈ 585-589 · elToque ≈ 620 · SIN fila 2026-08-11 (fecha real de importación)",
+      "2026-11-14": "BCC seg.3 = 832 · Diviza = 910 · store_exchange_rates ENERVIDA = 910"
+    },
+    "propagacion": {
+      "stock_movements": "105 movimientos de compra (101 con movement_date forjado 2026-07-01T12:00 + 4 el 2026-08-10), reference_id NULL, reference_doc «Confirmacion recepcion» (texto plano) → TRAZABILIDAD ROTA. unit_cost YA convertido a CUP (680000=1000×680; 44200=65×680; 6800=10×680).",
+      "wac": "cost_average de varios productos = uc×680 (Yee MC4 6800; Transfer trifásico 44200; Caja TRIC 17000). wac_correction GATE16 (2026-10-06/07, 57 eventos) cita fd9d6c88 como evidencia, con contradicciones documentadas (unit_cost 1000 USD/ud vs precio venta 1000 CUP).",
+      "cp_fin": "fin_entries «reconocimiento» posted_at 2026-11-14T01:51:20Z (backfill m020, PR #1621) por 192.039.436 CUP (débito ACT_INVENTARIO / crédito PAS_CXP_PROV), recomputado en vivo desde receipt_items (Σ qty·uc·tasa).",
+      "balance": "Inventario contable 192M CUP con stock_current mayoritariamente 0 → activo fantasma mientras no se concilie."
+    },
+    "mutabilidad_demostrada": {
+      "receipt_tasa_audit": [
+        {
+          "id": "a957f271-93b5-41a4-abeb-d1add1bcfa0a",
+          "receipt_item_id": "e1b5794a-015d-4f3d-8dbc-2142572683de",
+          "valor_anterior": 680,
+          "valor_nuevo": 680,
+          "moneda_anterior": "USD",
+          "moneda_nueva": "USD",
+          "modificado_por": "a1111111-1111-1111-1111-111111111111",
+          "modificado_at": "2026-11-14T12:15:56.300875+00:00",
+          "motivo": "Actualización desde detalle de recepción"
+        }
+      ],
+      "interpretacion": "Edición de tasa sobre una línea de la recepción ACTIVE ejecutada el 2026-11-14T12:15:56Z (usuario admin demo): valor 680→680 sin cambio numérico, pero el camino de escritura (PATCH /items/[itemId] con service_role, sin guard de estado y sin recalculo de cabecera) funcionaba. Corregido por esta misión."
+    },
+    "auditoria_documental": {
+      "audit_logs": [
+        {
+          "id": "7e054bc1-ce1f-471a-80ef-16835a3b2ad1",
+          "created_at": "2026-08-11T22:49:19.266205+00:00",
+          "user_id": "a1111111-1111-1111-1111-111111111111",
+          "table_name": "receipts",
+          "record_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+          "action": "UPDATE_STATUS",
+          "old_data": {
+            "old": "pending"
+          },
+          "new_data": {
+            "new": "active"
+          },
+          "metadata": null,
+          "updated_at": "2026-08-11T22:49:19.266205+00:00",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "trace_id": null
+        }
+      ],
+      "total_eventos": 1,
+      "interpretacion": "Un único UPDATE_STATUS pending→active 1 s tras la creación — sin REGISTER_RECEPTION canónico."
+    }
+  },
+  "veredicto": {
+    "cual_es_el_total_correcto": "Arithméticamente, AMBOS importes son correctos en SU denominación: 5.404.573,25 es la suma de subtotales en MONEDA ORIGINAL mezclada (5.129.706 CUP + 274.867,25 USD); 192.039.436,00 es el equivalente CUP con la tasa congelada de cada línea. El total económico del documento en CUP es 192.039.436,00. Si la tasa 680 no refleja la transacción real, el valor correcto debe decidirlo el propietario y rectificarse por procedimiento autorizado.",
+    "cual_importe_esta_mal": "Ninguno a nivel de cálculo. El DEFECTO real es de PRESENTACIÓN (modal mezcla denominaciones con etiqueta «CUP») + el uso de una tasa ad-hoc 680 no documentada + la creación fuera del flujo canónico.",
+    "capa_de_la_diferencia": "Interfaz (nivel D) introduce la PERCEPCIÓN de la diferencia (subtotales en moneda original etiquetados CUP junto a total CUP). Niveles A/B/C consistentes entre sí.",
+    "afecta_otras_recepciones": "La aritmética NO (0 de 98 con diferencia de cabecera >1 CUP). El defecto de presentación SÍ afecta a las 5 recepciones con líneas FX (fd9d6c88 + 4 del 2026-10-26). 9 recepciones siguen SIN contabilizar (PUERTO PADRE 5 + COSTPRO-Prueba 4): backfill m020 pendiente.",
+    "editar_tasas_altera_historia": "Los PRODUCTOS no (snapshot por línea). PERO las rutas de edición de tasa/moneda de líneas SÍ alteraban recepciones confirmadas (demostrado hoy a las 12:15Z). Corregido: guard de estado + recalculo + trigger de inmutabilidad.",
+    "consecuencias_inventario_wac_cpfin": "Inventario: 105 movimientos sin vínculo; WAC: valoración 680 propagada (WAC=uc×680 en varios productos); CP-FIN: asiento de 192M CUP ya emitido (posted hoy) — con stock mayoritariamente 0: reconciliación pendiente.",
+    "correcciones_y_orden": "Ver INFORME_FORENSE_RECEPCION_FAC-VITALLCONS-001.md §Correcciones (implementadas ya en la rama fix/recepciones-integridad-20261114 + propuestas para decisión del propietario)."
+  },
+  "matriz_global": {
+    "recepciones_evaluadas": 98,
+    "resumen_clasificacion": {
+      "Correcta": 93,
+      "Caso principal — requiere intervención del propietario": 1,
+      "Diferencia monetaria (presentación) + requiere intervención del propietario": 1,
+      "Diferencia monetaria (presentación)": 3
+    },
+    "recepciones_fx": [
+      {
+        "id": "fd9d6c88",
+        "factura": "FAC-VITALLCONS-001",
+        "fecha": "2026-07-01",
+        "monedas": "CUP+USD (CUP:79,USD:22)",
+        "tasas": "CUP@1 / USD@680",
+        "tasa_oficial": "620-620",
+        "clasificacion": "Caso principal — requiere intervención del propietario"
+      },
+      {
+        "id": "41b16484",
+        "factura": "FAC-0004",
+        "fecha": "2026-10-26",
+        "monedas": "USD",
+        "tasas": "USD@840",
+        "tasa_oficial": "743-845",
+        "clasificacion": "Diferencia monetaria (presentación) + requiere intervención del propietario"
+      },
+      {
+        "id": "7c305acb",
+        "factura": "Ajuste-0001",
+        "fecha": "2026-10-26",
+        "monedas": "USD",
+        "tasas": "USD@835",
+        "tasa_oficial": "743-845",
+        "clasificacion": "Diferencia monetaria (presentación)"
+      },
+      {
+        "id": "d5f3a77b",
+        "factura": "FAC-0009",
+        "fecha": "2026-10-26",
+        "monedas": "USD",
+        "tasas": "USD@845",
+        "tasa_oficial": "743-845",
+        "clasificacion": "Diferencia monetaria (presentación)"
+      },
+      {
+        "id": "0d40955f",
+        "factura": "FAC-0006",
+        "fecha": "2026-10-26",
+        "monedas": "USD",
+        "tasas": "USD@840",
+        "tasa_oficial": "743-845",
+        "clasificacion": "Diferencia monetaria (presentación)"
+      }
+    ],
+    "sin_contabilizar": [
+      {
+        "id": "b7f5df9f",
+        "tienda": "COSTPRO (Prueba)",
+        "fecha": "2026-05-01",
+        "total": 5044463.67
+      },
+      {
+        "id": "6fb4548d",
+        "tienda": "COSTPRO (Prueba)",
+        "fecha": "2026-06-29",
+        "total": 7213500
+      },
+      {
+        "id": "0a133757",
+        "tienda": "PUERTO PADRE",
+        "fecha": "2026-10-10",
+        "total": 4
+      },
+      {
+        "id": "5e1b6b87",
+        "tienda": "PUERTO PADRE",
+        "fecha": "2026-10-10",
+        "total": 515
+      },
+      {
+        "id": "2e393c20",
+        "tienda": "PUERTO PADRE",
+        "fecha": "2026-10-10",
+        "total": 34
+      },
+      {
+        "id": "646be7c5",
+        "tienda": "PUERTO PADRE",
+        "fecha": "2026-10-10",
+        "total": 680
+      },
+      {
+        "id": "351fa9fe",
+        "tienda": "PUERTO PADRE",
+        "fecha": "2026-10-10",
+        "total": 383.5
+      },
+      {
+        "id": "a3fe3e76",
+        "tienda": "COSTPRO (Prueba)",
+        "fecha": "2026-11-04",
+        "total": 960
+      },
+      {
+        "id": "a57bd2c1",
+        "tienda": "COSTPRO (Prueba)",
+        "fecha": "2026-11-05",
+        "total": 200
+      }
+    ],
+    "archivo_csv_trabajo": "scripts/out/matriz-recepciones.csv (sandbox) · xlsx entregado: MATRIZ_RECONCILIACION_RECEPCIONES.xlsx"
+  },
+  "hashes": {
+    "nota": "SHA-256 de cada sección de la extracción cruda (read-only). La extracción íntegra está en scripts/out/forensic-fd9d6c88-raw.json.",
+    "openapi_columnas": "b9433ee4147ef63c5559449c9ceeb8cb041baef4a7661033e986947f8b1348ca",
+    "rpc_calc_params": "2974f58cae34da8383836d4ee1d1c48640992c400cf1d7191b591bf6ebd4b8d8",
+    "receipt": "fdf41f5cb21a213fd936eb1afaf47f9565352f8f55de8daef6765b6844534471",
+    "receipt_items": "d5ce9098860969dbd561b84d2c3f8d000b537e1c6a58e3abca30d7d4357bada9",
+    "pr2_backup_receipt": "36fd2481a2a157156e971656acd4c277f99c40e6ea3939c3ba6e81909ea57332",
+    "pr2_backup_receipt_items": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "products": "cfcd30b01b87e98496f33346bc0cb160c45c34c24418186d4ffbf64f9d8054d6",
+    "stores": "10b8cd95c0bb6667a0330a97addd3d9a63853403b1fce8d7735ccebf45dc2875",
+    "store_exchange_rates": "4fb879e53f8ae34a18b3063868043121f20ba193d162655bc822dcd85b0e1525",
+    "receipt_tasa_audit": "09435ca9c4e94e208ff7dc1d5678de434338dc1e1a632f4fdfe19f9608278cad",
+    "stock_movements_ref": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "stock_movements_notes": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "kardex_entries": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "wac_change_log_products": "1b0a2129569951e6f781e9d1205daaf7a16b282a7516f2b4daaf2c25cf05bb58",
+    "fin_entries": "07e82c85228c95edd10fbeca3275396c784581f4447210a07608abada929f14e",
+    "fin_movements": "4306f1aaf03b2cfe4d0b87822ade098faeb60880a1cc692a1a47e35820fbe405",
+    "fin_posting_errors": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "payment_transactions": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "audit_logs_receipt": "6271beac5bde2ee02dc6819691a9969ab5a8005d10beeaa623a8e6c4c2ca143d",
+    "audit_logs_items": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "audit_logs_receipts_table": "6271beac5bde2ee02dc6819691a9969ab5a8005d10beeaa623a8e6c4c2ca143d",
+    "audit_logs_receipt_items_table": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "exchange_rates_jun_aug": "a33cbefa86c21d225ca3a8b882d6b44245e1cf795e5b64a177d40e62489eaaae",
+    "exchange_rates_reciente": "241d2eb49fe297114857545aaab9d6ac97260d24df8e0ad925616fdc1632364d",
+    "rpc_calculate_receipt_total_cup": "3b3dd3e9b90e3ba435568eb97c6b65f21119d02ea4790e4f999d3479d3b75890",
+    "recomputo_independiente": "512d6f330f72b840a633c7ce1d86091c4a457f56295259269d8defed1239cc95",
+    "__global_secciones": "b7a87bde918b43f0aa846a85174de292c2550ead297ade0a62c0a5189a25b548"
+  }
+}
