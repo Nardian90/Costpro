@@ -1,0 +1,35 @@
+════ VALIDACIÓN SEMÁNTICA VENTAS USD · BD AISLADA lguovmvrozxgssupkwpf ════
+Hora: 2026-11-13T20:52:50.570Z
+Tienda de prueba: Enervida | vendedor: 0c13aa78-0411-4eb0-b766-ce9dcd6b58c3
+Snapshot ANTES (estado limpio): {"ventas":0,"items":2,"pagos":0,"devoluciones":0,"entries":143,"movements":286,"errors":0} | fin_compute_metrics: 068c4a25e86db003
+
+── FASE A: función ORIGINAL (antes del fix) ──
+  PASS · C1 venta CUP·pago CUP: contabiliza (regresión)
+  PASS · C1: D ACT_EFECTIVO_CUP 1000 / C ING_VENTAS 1000 — [{"cat":"ACT_EFECTIVO_CUP","s":"debito","amt":1000,"cur":"CUP","curO":"CUP"},{"cat":"ING_VENTAS","s":"credito","amt":1000,"cur":"CUP","curO":"CUP"}]
+  PASS · C2 venta USD·pago zelle USD completo: ANTES → ERR_UNBALANCED (doble conversión 374000×680≠374000) — ERR_UNBALANCED: débitos=374000.00 créditos=254320000.00 (tip
+  PASS · C3 venta USD·pago cash CUP completo: ANTES → ERR_UNBALANCED
+  PASS · C4 venta USD·pago mixto zelle USD + cash CUP: ANTES → ERR_UNBALANCED
+  PASS · C5 venta USD·pago PARCIAL (100 de 550 USD): ERR por diseño (CXC = política pendiente)
+  PASS · C6 venta CUP·pago mixto CUP+USD: contabiliza (regresión; doc CUP sin conversión)
+  PASS · C6: D ACT_BANCOS 68000 (zelle) + D ACT_EFECTIVO_CUP 32000 / C ING_VENTAS 100000
+  PASS · C8 venta CUP SIN pagos (caso de las 165): ERR por diseño
+  PASS · C9 venta CUP con costo 400: COGS completo (regresión)
+  PASS · C7 devolución USD (informativo): ERR_UNBALANCED — semántica de devoluciones NO cambiada por este fix (documentado)
+
+── FASE B: aplica migración de la rama (BD aislada) y re-publica ──
+  migración 20261114120000 aplicada a la BD aislada
+  PASS · C2 DESPUÉS: contabiliza (total_cup = total_amount, sin ×tasa)
+  PASS · C2: D ACT_BANCOS 374000 (zelle_usd) / C ING_VENTAS 374000 — [{"cat":"ACT_BANCOS","s":"debito","amt":374000,"cur":"CUP","curO":"USD"},{"cat":"ING_VENTAS","s":"credito","amt":374000,"cur":"CUP","curO":"USD"}]
+  PASS · C2: movimientos en CUP con currency_origin=USD (traza de divisa)
+  PASS · C2: D=C (equilibrado) — {"d":374000,"c":374000}
+  PASS · C3 DESPUÉS: contabiliza · D ACT_EFECTIVO_CUP 374000 / C ING_VENTAS 374000
+  PASS · C4 DESPUÉS: mixto · D ACT_BANCOS 340000 + D ACT_EFECTIVO_CUP 160000 / C ING_VENTAS 500000
+  PASS · C5 DESPUÉS: sigue ERR_UNBALANCED (pago parcial; política CXC pendiente — decisión del propietario)
+  PASS · C8 DESPUÉS: sigue ERR_UNBALANCED (sin pagos; migración de legacy/CXC pendiente)
+  PASS · Idempotencia: re-publicar C1 no duplica asientos — 1→1
+
+── Restauración y limpieza ──
+  PASS · fin_compute_metrics RESTAURADA (hash idéntico al original) — antes=068c4a25e86db003 tras=068c4a25e86db003
+  PASS · NET DELTA 0 (limpieza total; función restaurada) — antes={"ventas":0,"items":2,"pagos":0,"devoluciones":0,"entries":143,"movements":286,"errors":0} después={"ventas":0,"items":2,"pagos":0,"devoluciones":0,"entries":143,"movements":286,"errors":0}
+
+════ RESULTADO: PASS TOTAL (semántica USD validada: antes ERR_UNBALANCED → después asientos correctos y equilibrados) ════

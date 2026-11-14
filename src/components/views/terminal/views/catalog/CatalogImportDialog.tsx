@@ -355,11 +355,31 @@ export default function CatalogImportDialog({ open, onOpenChange, onImportSucces
       // Notify parent to refresh data
       onImportSuccess();
 
-      const msg = importPreview.errors.length > 0
-        ? `${importPreview.rows.length} productos importados con ${importPreview.errors.length} advertencia(s).`
-        : `${importPreview.rows.length} productos importados correctamente.`;
+      // CP-CAT-IMPORT-001: la ruta reporta resultados y errores POR FILA
+      // (servidor). Un fallo de fila no aborta el lote: se informa con causa.
+      const serverErrors: Array<{ sku?: string; reason?: string; detail?: unknown }> = result?.errors ?? [];
+      const importedCount = typeof result?.count === 'number' ? result.count : importPreview.rows.length;
+      const mastersCreated = typeof result?.masters_created === 'number' ? result.masters_created : 0;
+      const mastersReused = typeof result?.masters_reused === 'number' ? result.masters_reused : 0;
 
-      toast.success(msg);
+      if (serverErrors.length > 0) {
+        const firstErrors = serverErrors
+          .slice(0, 3)
+          .map(e => {
+            const detail = typeof e.detail === 'string' ? e.detail : e.reason || '';
+            return `${e.sku ?? '(sin SKU)'}: ${detail}`;
+          })
+          .join(' · ');
+        toast.warning(
+          `${importedCount} producto(s) importado(s) y vinculado(s) al Catálogo Maestro. ${serverErrors.length} fila(s) rechazada(s): ${firstErrors}`,
+          { duration: 9000 }
+        );
+      } else {
+        const catálogoMsg = mastersCreated > 0
+          ? ` (${mastersCreated} maestro(s) nuevo(s)${mastersReused > 0 ? `, ${mastersReused} reutilizado(s)` : ''})`
+          : '';
+        toast.success(`${importedCount} producto(s) importado(s) correctamente${catálogoMsg}.`);
+      }
       onOpenChange(false);
     } catch (err: any) {
       console.error('Import error:', err);

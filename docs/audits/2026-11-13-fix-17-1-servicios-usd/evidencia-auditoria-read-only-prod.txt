@@ -1,0 +1,86 @@
+§17.1 — Auditoría técnica READ-ONLY · producción wthkddeleylijmonclxg
+Modo: solo lectura (sin escrituras). Hora: 2026-11-13T16:07:46.551Z
+
+── Q1a. update_payment_status (rama service, ¿guarda SUM(amount_cup)?) (1 filas) ──
+[
+  {
+    "defecto_paid_cup": "SI: v_paid=SUM(amount_cup) → paid_amount en CUP"
+  }
+]
+
+── Q1b. prevent_received_service_edit (regla 4: compara en divisa?) (1 filas) ──
+[
+  {
+    "guard_mezcla_monedas": "SI: guard compara total_amount(divisa) vs paid_amount(CUP)"
+  }
+]
+
+── Q2. received_services: servicios por moneda × estado × payment_status (3 filas) ──
+[
+  {
+    "currency": "CUP",
+    "status": "active",
+    "payment_status": "paid",
+    "n": 16,
+    "avg_total": "2075.94",
+    "avg_paid": "2075.94"
+  },
+  {
+    "currency": "CUP",
+    "status": "draft",
+    "payment_status": "unpaid",
+    "n": 20,
+    "avg_total": "3712.00",
+    "avg_paid": "0.00"
+  },
+  {
+    "currency": "CUP",
+    "status": "voided",
+    "payment_status": "unpaid",
+    "n": 5,
+    "avg_total": "8000.20",
+    "avg_paid": "0.00"
+  }
+]
+
+── Q3. Inconsistencia moneda: paid_amount (CUP) guardado vs pagos en divisa del doc (0 filas) ──
+[]
+
+── Q4. Servicios divisa con pagos: ¿paid_amount > total_amount → bloqueados para edición? (0 filas) ──
+[]
+
+── Q5. payment_transactions de servicios: moneda del pago vs moneda del doc (1 filas) ──
+[
+  {
+    "moneda_doc": "CUP",
+    "moneda_pago": "CUP",
+    "n_pagos": 16,
+    "sum_amount": "33215.00",
+    "sum_amount_cup": "33215.00"
+  }
+]
+
+── Q6. Servicios divisa con payment_status mal computado (comparación CUP vs divisa) (0 filas) ──
+[]
+
+── Q7. receipts con pagos (contexto: rama receipt opera en CUP, sin mezcla) (1 filas) ──
+[
+  {
+    "receipts_con_pagos": 0,
+    "paid_mayor_total": null
+  }
+]
+
+── Q8. Conteos globales (1 filas) ──
+[
+  {
+    "servicios_total": 41,
+    "servicios_divisa": 0,
+    "divisa_con_pagos": 0,
+    "bloqueados_estimados": 0,
+    "pagos_servicios": 16,
+    "pagos_servicios_divisa": 0
+  }
+]
+
+AUDITORÍA READ-ONLY COMPLETADA — sin escrituras.

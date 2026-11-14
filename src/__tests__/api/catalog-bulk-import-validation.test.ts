@@ -48,8 +48,10 @@ vi.mock('@/lib/observability/logger', () => ({
 }));
 
 // ── Mock del cliente service-role que construye la ruta ──
-const upsertCalls: any[] = [];
-const upsertResult = { value: { data: [], error: null } };
+// CP-CAT-IMPORT-001 (2026-11-13): la ruta ya NO hace upsert directo en
+// products; delega por tienda en la RPC de dominio managed_bulk_import_products.
+const rpcCalls: Array<{ fn: string; args: Record<string, unknown> }> = [];
+const rpcResult = { value: { data: null as any, error: null as any } };
 
 // Estado multi-tabla para las lecturas de autorización (stores/profiles)
 const dbState = {
@@ -57,19 +59,28 @@ const dbState = {
   profiles: [] as Array<{ id: string; tenant_id: string | null }>,
 };
 
-function makeProductsTable() {
-  const t: any = {};
-  t.upsert = (rows: any, opts: any) => {
-    upsertCalls.push({ rows, opts });
-    const obj: any = {
-      ...upsertResult.value,
-      then(res?: any, rej?: any) {
-        return Promise.resolve({ data: upsertResult.value.data, error: upsertResult.value.error }).then(res, rej);
-      },
-    };
-    return obj;
+function makeRpc(fn: string, args: Record<string, unknown>) {
+  rpcCalls.push({ fn, args });
+  const obj: any = {
+    then(res?: any, rej?: any) {
+      return Promise.resolve({ data: rpcResult.value.data, error: rpcResult.value.error }).then(res, rej);
+    },
   };
-  return t;
+  return obj;
+}
+
+function rpcDefaultOk() {
+  return {
+    status: 'success',
+    store_id: STORE_MAIN,
+    total: 1,
+    created_products: 1,
+    updated_products: 0,
+    masters_created: 1,
+    masters_reused: 0,
+    results: [],
+    errors: [],
+  };
 }
 
 // Builder genérico para las lecturas .select().in() / .select().eq().maybeSingle()
@@ -98,8 +109,8 @@ function makeLookupTable(table: 'stores' | 'profiles') {
 // infiere firma [] y CUALQUIER spread sobre ella es TS2556 (el patrón
 // service-types funciona porque su vi.fn() va sin implementación).
 const createClientMock = vi.fn((..._args: unknown[]) => ({
-  from: (table: string) =>
-    table === 'products' ? makeProductsTable() : makeLookupTable(table as 'stores' | 'profiles'),
+  from: (table: string) => makeLookupTable(table as 'stores' | 'profiles'),
+  rpc: (fn: string, args: Record<string, unknown>) => makeRpc(fn, args),
 }));
 vi.mock('@supabase/supabase-js', () => ({
   // any[] (no unknown[]): el spread sobre createClientMock requiere tipo
@@ -174,8 +185,8 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  upsertCalls.length = 0;
-  upsertResult.value = { data: [], error: null };
+  rpcCalls.length = 0;
+  rpcResult.value = { data: rpcDefaultOk(), error: null };
   mockSession.value = null;
   rlsFlag.value = false;
   seedDb();
@@ -204,7 +215,7 @@ describe('POST /api/catalog/bulk-import — validación por fila (CP-CAT-005)', 
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.errors[0].issues.join(' ')).toContain('tenant_id');
-    expect(upsertCalls.length).toBe(0);
+    expect(rpcCalls.length).toBe(0);
   });
 
   it('3 · store_id no UUID → 400 (uuidLoose)', async () => {
@@ -248,8 +259,9 @@ describe('POST /api/catalog/bulk-import — validación por fila (CP-CAT-005)', 
     const json = await res.json();
     expect(json.success).toBe(true);
     expect(json.count).toBe(1);
-    expect(upsertCalls.length).toBe(1);
-    const sent = upsertCalls[0].rows[0];
+    expect(rpcCalls.length).toBe(1);
+    expect(rpcCalls[0].fn).toBe('managed_bulk_import_products');
+    const sent = (rpcCalls[0].args.p_rows as Array<Record<string, unknown>>)[0];
     expect(Object.keys(sent).sort()).toEqual(
       ['barcode', 'barcode_type', 'category', 'cost_price', 'description', 'image_url',
        'is_active', 'is_service', 'min_stock', 'name', 'price', 'sku', 'store_id',
@@ -296,9 +308,9 @@ describe('POST /api/catalog/bulk-import — validación por fila (CP-CAT-005)', 
       products: [{ ...VALID_ROW, store_id: '99999999-9999-4999-8999-999999999999' }],
     }));
     expect(res.status).toBe(200);
-    expect(upsertCalls[0].rows).toHaveLength(1);
+    expect(rpcCalls[0].args.p_rows).toHaveLength(1);
     // El tenant_id estampado es el de la tienda destino (servidor), no el del llamante.
-    expect(upsertCalls[0].rows[0].tenant_id).toBe(TENANT_OTHER);
+    expect((rpcCalls[0].args.p_rows as any[])[0].tenant_id).toBe(TENANT_OTHER);
   });
 
   it('11 · tienda inexistente en BD → 400 (nada se importa)', async () => {
@@ -310,7 +322,7 @@ describe('POST /api/catalog/bulk-import — validación por fila (CP-CAT-005)', 
     const json = await res.json();
     expect(json.key).toBe('apiErrors.bulkImportInvalidProduct');
     expect(json.stores).toEqual(['99999999-9999-4999-8999-999999999999']);
-    expect(upsertCalls.length).toBe(0);
+    expect(rpcCalls.length).toBe(0);
   });
 
   it('12 · tienda con tenant_id nulo → 403 fail-closed (no se generan filas huérfanas sin organización)', async () => {
@@ -320,7 +332,7 @@ describe('POST /api/catalog/bulk-import — validación por fila (CP-CAT-005)', 
     expect(res.status).toBe(403);
     const json = await res.json();
     expect(json.key).toBe('apiErrors.storeAccessDenied');
-    expect(upsertCalls.length).toBe(0);
+    expect(rpcCalls.length).toBe(0);
   });
 
   it('13 · admin con USE_TENANT_RLS=true no puede importar a otra organización → 403 STORE_TENANT_MISMATCH', async () => {
@@ -334,7 +346,7 @@ describe('POST /api/catalog/bulk-import — validación por fila (CP-CAT-005)', 
     const json = await res.json();
     expect(json.key).toBe('apiErrors.storeTenantMismatch');
     expect(json.stores).toEqual(['99999999-9999-4999-8999-999999999999']);
-    expect(upsertCalls.length).toBe(0);
+    expect(rpcCalls.length).toBe(0);
   });
 
   it('14 · superadmin conserva alcance de plataforma: importa a otra organización con tenant estampado', async () => {
@@ -345,7 +357,7 @@ describe('POST /api/catalog/bulk-import — validación por fila (CP-CAT-005)', 
       products: [{ ...VALID_ROW, store_id: '99999999-9999-4999-8999-999999999999' }],
     }));
     expect(res.status).toBe(200);
-    expect(upsertCalls[0].rows[0].tenant_id).toBe(TENANT_OTHER);
+    expect((rpcCalls[0].args.p_rows as any[])[0].tenant_id).toBe(TENANT_OTHER);
   });
 
   it('15 · no-admin con membresía activa pero tienda de otra organización → 403 (defensa en profundidad)', async () => {
@@ -362,6 +374,106 @@ describe('POST /api/catalog/bulk-import — validación por fila (CP-CAT-005)', 
     expect(res.status).toBe(403);
     const json = await res.json();
     expect(json.key).toBe('apiErrors.storeTenantMismatch');
-    expect(upsertCalls.length).toBe(0);
+    expect(rpcCalls.length).toBe(0);
+  });
+
+  // ── CP-CAT-IMPORT-001: integración Catálogo Maestro vía RPC de dominio ──
+  it('16 · CP-CAT-IMPORT-001: delega por tienda en managed_bulk_import_products con p_user_id del llamante y respuestas por fila', async () => {
+    adminSession();
+    rpcResult.value = {
+      data: {
+        status: 'success',
+        store_id: STORE_MAIN,
+        total: 2,
+        created_products: 2,
+        updated_products: 0,
+        masters_created: 2,
+        masters_reused: 0,
+        results: [
+          { row: 1, sku: 'SKU-100', action: 'created', product_id: 'p1', master_product_id: 'm1' },
+          { row: 2, sku: 'SKU-101', action: 'created', product_id: 'p2', master_product_id: 'm2' },
+        ],
+        errors: [],
+      },
+      error: null,
+    };
+    const res = await POST(jsonReq({ products: [VALID_ROW, { ...VALID_ROW, sku: 'SKU-101' }] }));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(rpcCalls.length).toBe(1);
+    expect(rpcCalls[0].fn).toBe('managed_bulk_import_products');
+    expect(rpcCalls[0].args.p_store_id).toBe(STORE_MAIN);
+    expect(rpcCalls[0].args.p_user_id).toBe('u-admin');
+    expect(rpcCalls[0].args.p_rows).toHaveLength(2);
+    // El contrato de respuesta expone el estado del Catálogo Maestro por fila.
+    expect(json.success).toBe(true);
+    expect(json.count).toBe(2);
+    expect(json.masters_created).toBe(2);
+    expect(json.results).toHaveLength(2);
+    expect(json.errors).toEqual([]);
+  });
+
+  it('17 · CP-CAT-IMPORT-001: errores POR FILA de la RPC se agregan en la respuesta sin 500 (aislamiento por fila)', async () => {
+    adminSession();
+    rpcResult.value = {
+      data: {
+        status: 'completed_with_errors',
+        store_id: STORE_MAIN,
+        total: 2,
+        created_products: 1,
+        updated_products: 0,
+        masters_created: 1,
+        masters_reused: 0,
+        results: [{ row: 1, sku: 'SKU-100', action: 'created', product_id: 'p1', master_product_id: 'm1' }],
+        errors: [
+          { row: 2, sku: ' 103 ', reason: 'ERR_SKU_WITH_SPACES', detail: 'SKU con espacios' },
+        ],
+      },
+      error: null,
+    };
+    const res = await POST(jsonReq({ products: [VALID_ROW, { ...VALID_ROW, sku: 'SKU-101' }] }));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.success).toBe(true);
+    expect(json.count).toBe(1);
+    expect(json.errors).toHaveLength(1);
+    expect(json.errors[0].reason).toBe('ERR_SKU_WITH_SPACES');
+    // El store_id se agrega al error para trazar la fila hasta su tienda.
+    expect(json.errors[0].store_id).toBe(STORE_MAIN);
+  });
+
+  it('18 · CP-CAT-IMPORT-001: la RPC re-verifica la autorización de BD — ERR_UNAUTHORIZED → 403 STORE_ACCESS_DENIED', async () => {
+    adminSession();
+    rpcResult.value = { data: null, error: { message: 'ERR_UNAUTHORIZED', code: 'P0001' } };
+    const res = await POST(jsonReq({ products: [VALID_ROW] }));
+    expect(res.status).toBe(403);
+    const json = await res.json();
+    expect(json.key).toBe('apiErrors.storeAccessDenied');
+  });
+
+  it('19 · CP-CAT-IMPORT-001: fallo duro de la RPC (tienda inexistente) → 400 con detalle', async () => {
+    adminSession();
+    rpcResult.value = { data: null, error: { message: 'ERR_STORE_NOT_FOUND: xxx', code: 'P0001' } };
+    const res = await POST(jsonReq({ products: [VALID_ROW] }));
+    expect(res.status).toBe(400);
+    const json = await res.json();
+    expect(json.key).toBe('apiErrors.bulkImportInvalidProduct');
+  });
+
+  it('20 · CP-CAT-IMPORT-001: agrupa filas por tienda y llama una vez por tienda', async () => {
+    adminSession();
+    dbState.stores.push({ id: '99999999-9999-4999-8999-999999999999', tenant_id: TENANT_OTHER });
+    rpcResult.value = { data: rpcDefaultOk(), error: null };
+    const res = await POST(jsonReq({
+      products: [
+        VALID_ROW,
+        { ...VALID_ROW, sku: 'SKU-OTRA', store_id: '99999999-9999-4999-8999-999999999999' },
+      ],
+    }));
+    expect(res.status).toBe(200);
+    expect(rpcCalls.length).toBe(2);
+    expect(rpcCalls.map(c => c.args.p_store_id).sort()).toEqual([STORE_MAIN, '99999999-9999-4999-8999-999999999999'].sort());
+    const mainCall = rpcCalls.find(c => c.args.p_store_id === STORE_MAIN)!;
+    expect(mainCall.args.p_rows).toHaveLength(1);
   });
 });
