@@ -1,0 +1,28 @@
+[m018-migracion-legacy-165.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+M018 · migración legacy 161 ventas → PRODUCCIÓN (wthkddeleylijmonclxg)
+  archivo: docs/audits/2026-11-13-migracion-legacy-pagos/MIGRACION.sql · SHA-256 73fdcd9621dc87beda17cfaaf590de8fde91ec0e4e365fe5050b5adf90a6b5c0
+
+── 1 · RECONSTRUCCIÓN de la población elegible ──
+  población: {"total_165":165,"migrables_161":161,"importe_161":"3128769.99830","ya_migradas":0}
+  incompatibles (devo/store_credit): {"devoluciones":0,"store_credit":0}
+  ANTES: {"pagos":944,"asientos":4,"suma_legacy_total":"45208654.9883999999415733","errores":0}
+
+── 2 · DRY-RUN (SELECT con los mismos guards del INSERT) ──
+  DRY-RUN: {"ventas_cubiertas":161,"filas":170,"importe_cup":"3128769.998299999995"}
+
+── 3 · EJECUCIÓN transaccional v1 ──
+  HTTP 201 OK
+
+── 4 · VERIFICACIÓN post (fila a fila) ──
+  POST: {"filas":170,"ventas":161,"importe":"3128769.998299999995","p2_p7_ok":170,"p1_fecha_mal":0,"importe_mal":18,"p2_metodo_mal":0,"zelle_migradas":0}
+FALLO en la verificación fila a fila.
+verificación post-migración · MIGRACION.sql SHA-256 73fdcd9621dc87beda17cfaaf590de8fde91ec0e4e365fe5050b5adf90a6b5c0
+A · POR VENTA: {"ventas_con_suma_mal":0,"ventas_cubiertas":161,"filas":170,"importe_total":"3128769.998299999995","p2_p7_ok":170,"p1_fechas_mal":0,"p2_metodo_incoherente":0}
+B · filas sobre las 4 zelle+CUP (esperado 0): {"n":0}
+C · INTEGRIDAD: {"pagos_totales":1114,"pagos_ventas":1059,"asientos":4,"errores":0,"suma_legacy_total":"45208654.9883999999415733","ventas_completadas":990}
+[f3-verify-migracion.mjs (idempotencia)] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+D · re-ejecución de MIGRACION.sql (idempotencia)…
+   HTTP 201 OK
+   tras re-ejecutar: {"filas":170,"ventas":161,"importe":"3128769.998299999995"}
+
+VERIFICACIÓN FINAL: TODO OK — 161 ventas cubiertas (170 filas, Σ3.128.769,998 CUP), 4 zelle bloqueadas, idempotente, 0 asientos duplicados, legacy intacto.
