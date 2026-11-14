@@ -20,6 +20,13 @@
 4. **Informe de deriva posterior** — `node scripts/ops/drift-report.cjs` (credenciales por
    entorno, solo lectura): correrlo ANTES de cada aplicación (línea base) y DESPUÉS
    (verificación), guardando la salida en la evidencia del paso 3.
+5. **Control de sincronización libro ↔ repo (CP-SECURITY-BACKLOG-CLOSURE-001, 2026-11-14):**
+   tras cada aplicación, correr `node scripts/ops/ledger-sync-check.mjs` (requiere
+   SUPABASE_ACCESS_TOKEN; solo lectura). Falla (exit 1) si hay migraciones con efectos
+   en producción sin fila en el libro o filas con archivo inexistente en el repo. Este
+   control es el mecanismo de PREVENCIÓN DE REINCIDENCIA de atrasos del libro: la regla
+   operativa es que el paso 2 (fila en el libro) ocurre en el MISMO ciclo que la
+   aplicación, y este script lo verifica de forma reproducible.
 
 ## Compuertas (frases literales del propietario)
 

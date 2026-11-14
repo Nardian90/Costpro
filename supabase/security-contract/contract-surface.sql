@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-14T00:50:04.541Z
+-- Captured  : 2026-11-14T14:51:32.401Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 207 (SECURITY DEFINER write functions, public schema)
+-- Functions : 208 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -31,7 +31,7 @@ BEGIN
   IF v_pay.status <> 'confirmed' THEN
     RAISE EXCEPTION 'ERR_NOT_CONFIRMED: solo se contabilizan nóminas confirmadas (estado actual: %)', v_pay.status;
   END IF;
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_pay.store_id) THEN
+  IF v_caller_uid IS NULL OR NOT public.can_manage_payroll_as(v_caller_uid, v_pay.store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
   IF v_pay.accounted_by IS NOT NULL THEN
@@ -2773,7 +2773,7 @@ BEGIN
   IF v_pay.status <> 'draft' THEN
     RAISE EXCEPTION 'ERR_NOT_DRAFT: solo se pueden confirmar nóminas en borrador (estado actual: %)', v_pay.status;
   END IF;
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_pay.store_id) THEN
+  IF v_caller_uid IS NULL OR NOT public.can_manage_payroll_as(v_caller_uid, v_pay.store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
@@ -4657,7 +4657,7 @@ DECLARE
   v_param_hash text;
   v_existing jsonb;
 BEGIN
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+  IF v_caller_uid IS NULL OR NOT public.can_manage_payroll_as(v_caller_uid, p_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
   IF p_tipo_nomina NOT IN ('sueldos', 'jornales', 'vacaciones', 'licencias', 'subsidios', 'movilizados', 'otros') THEN
@@ -11188,7 +11188,7 @@ BEGIN
   IF v_pay.status <> 'confirmed' THEN
     RAISE EXCEPTION 'ERR_NOT_CONFIRMED: solo se marcan pagadas las nóminas confirmadas (estado actual: %)', v_pay.status;
   END IF;
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_pay.store_id) THEN
+  IF v_caller_uid IS NULL OR NOT public.can_manage_payroll_as(v_caller_uid, v_pay.store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
@@ -12040,6 +12040,63 @@ BEGIN
   DELETE FROM public.store_reset_snapshots WHERE created_at < NOW() - (p_days || ' days')::INTERVAL;
   GET DIAGNOSTICS v_deleted = ROW_COUNT;
   RETURN v_deleted;
+END;
+$function$
+
+
+-- @contract-function name=rate_limit_take args="p_bucket_key text, p_limit integer, p_window_seconds integer" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.rate_limit_take(p_bucket_key text, p_limit integer, p_window_seconds integer)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_window_start timestamptz;
+  v_hits bigint;
+  v_allowed boolean;
+  v_reset_at timestamptz;
+BEGIN
+  -- Validación de parámetros (fail-closed ante valores absurdos)
+  IF p_bucket_key IS NULL OR btrim(p_bucket_key) = '' OR length(p_bucket_key) > 300 THEN
+    RAISE EXCEPTION 'ERR_RATE_LIMIT_KEY_INVALID';
+  END IF;
+  IF p_limit IS NULL OR p_limit < 1 OR p_limit > 100000 THEN
+    RAISE EXCEPTION 'ERR_RATE_LIMIT_LIMIT_INVALID: %', p_limit;
+  END IF;
+  IF p_window_seconds IS NULL OR p_window_seconds < 1 OR p_window_seconds > 86400 THEN
+    RAISE EXCEPTION 'ERR_RATE_LIMIT_WINDOW_INVALID: %', p_window_seconds;
+  END IF;
+
+  -- Ventana fija alineada al epoch (fuente de tiempo: el servidor de BD)
+  v_window_start := to_timestamp(
+    floor(extract(epoch FROM now()) / p_window_seconds) * p_window_seconds
+  );
+  v_reset_at := v_window_start + make_interval(secs => p_window_seconds);
+
+  -- Incremento ATÓMICO (UPSERT): sin carreras aunque varios procesos
+  -- simultáneos (o instancias serverless distintas) golpeen la misma clave.
+  INSERT INTO public.rate_limit_buckets (bucket_key, window_start, hits)
+  VALUES (p_bucket_key, v_window_start, 1)
+  ON CONFLICT (bucket_key, window_start)
+  DO UPDATE SET hits = public.rate_limit_buckets.hits + 1,
+                updated_at = now()
+  RETURNING hits INTO v_hits;
+
+  v_allowed := v_hits <= p_limit;
+
+  -- Limpieza oportunista (≈1% de las llamadas): ventanas de hace >24 h
+  IF random() < 0.01 THEN
+    DELETE FROM public.rate_limit_buckets
+     WHERE window_start < now() - INTERVAL '24 hours';
+  END IF;
+
+  RETURN jsonb_build_object(
+    'allowed', v_allowed,
+    'count', v_hits,
+    'limit', p_limit,
+    'reset_at', v_reset_at
+  );
 END;
 $function$
 
@@ -16424,7 +16481,7 @@ BEGIN
   IF NOT FOUND THEN
     RAISE EXCEPTION 'ERR_WORKER_NOT_FOUND: %', p_worker_id;
   END IF;
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_worker.store_id) THEN
+  IF v_caller_uid IS NULL OR NOT public.can_manage_payroll_as(v_caller_uid, v_worker.store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
   IF p_rate_type NOT IN ('hourly', 'daily') THEN
@@ -17126,7 +17183,7 @@ BEGIN
   IF v_pay.status <> 'draft' THEN
     RAISE EXCEPTION 'ERR_NOT_DRAFT: solo se pueden editar nóminas en borrador (estado actual: %)', v_pay.status;
   END IF;
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_pay.store_id) THEN
+  IF v_caller_uid IS NULL OR NOT public.can_manage_payroll_as(v_caller_uid, v_pay.store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
   IF p_tipo_nomina NOT IN ('sueldos', 'jornales', 'vacaciones', 'licencias', 'subsidios', 'movilizados', 'otros') THEN
@@ -18097,7 +18154,7 @@ BEGIN
   IF v_pay.status NOT IN ('draft', 'confirmed') THEN
     RAISE EXCEPTION 'ERR_NOT_VOIDABLE: solo se pueden anular nóminas en borrador o confirmadas (estado actual: %)', v_pay.status;
   END IF;
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_pay.store_id) THEN
+  IF v_caller_uid IS NULL OR NOT public.can_manage_payroll_as(v_caller_uid, v_pay.store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
   IF p_reason IS NULL OR btrim(p_reason) = '' THEN

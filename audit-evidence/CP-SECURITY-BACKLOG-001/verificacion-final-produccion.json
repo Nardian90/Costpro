@@ -1,0 +1,94 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T14:52:18.201Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT 'pol_payrolls_admin' AS check, count(*)::int AS n FROM pg_policies  WHERE schemaname='public' AND tablename='payr",
+      "rows": [
+        {
+          "check": "pol_payrolls_admin",
+          "n": 1
+        },
+        {
+          "check": "rpc_gateados",
+          "n": 7
+        },
+        {
+          "check": "policies_viejas",
+          "n": 0
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT count(*)::int AS tablas, count(*) FILTER (WHERE relrowsecurity AND relforcerowsecurity)::int AS rls_forced   FROM",
+      "rows": [
+        {
+          "tablas": 179,
+          "rls_forced": 22
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT count(*)::int AS residuos FROM information_schema.table_privileges  WHERE table_schema='public' AND grantee IN ('",
+      "rows": [
+        {
+          "residuos": 0
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT (SELECT count(*)::int FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace          WHERE n.nspname='public",
+      "rows": [
+        {
+          "fn_block_truncate": 0,
+          "triggers_freno": 0
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT count(*)::int AS filas_libro,        count(*) FILTER (WHERE status='applied')::int AS aplicadas   FROM public.pro",
+      "rows": [
+        {
+          "filas_libro": 49,
+          "aplicadas": 48
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT conname FROM pg_constraint  WHERE conrelid='public.commission_payments'::regclass AND contype='x'",
+      "rows": [
+        {
+          "conname": "commission_payments_no_overlap"
+        }
+      ]
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT (SELECT count(*)::int FROM information_schema.tables          WHERE table_schema='public' AND table_name='rate_li",
+      "rows": [
+        {
+          "tabla": 1,
+          "politicas": 0,
+          "grants_anon_auth": 0
+        }
+      ]
+    },
+    {
+      "statement": 8,
+      "sql": "SELECT (SELECT count(*)::int FROM pg_constraint          WHERE conrelid='public.audit_logs'::regclass AND conname='audit",
+      "rows": [
+        {
+          "whitelist_ok": 1,
+          "fn_rate_limit": 1
+        }
+      ]
+    }
+  ]
+}

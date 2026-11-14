@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-14 — CP-SECURITY-AND-BACKLOG-CLOSURE-001: +verify-payroll-privacy-pg (matriz RLS/RPC nóminas) y +rate-limit-concurrency-proof (prueba multi-proceso del limiter distribuido), ambos isolationProtected",
+  "_updated": "2026-11-14 — CP-SECURITY-BACKLOG-CLOSURE-001: +aplicador producción (guardProtected) y +runner de baterías SQL E2E (isolationProtected)",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -34,7 +34,8 @@
     "scripts/validar-ciclo-divisa-devoluciones.mjs",
     "scripts/validar-fix-17-1-servicios-usd.mjs",
     "scripts/validar-fix-dryrun-pagos.mjs",
-    "scripts/validar-semantica-ventas-usd.mjs"
+    "scripts/validar-semantica-ventas-usd.mjs",
+    "scripts/cp-security-backlog-001-aplicar-produccion.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
@@ -53,7 +54,8 @@
     "scripts/e2e/verify-nominas-api.mjs",
     "scripts/e2e/verify-trabajadores-nominas.mjs",
     "scripts/e2e/verify-payroll-privacy-pg.mjs",
-    "scripts/rate-limit-concurrency-proof.mjs"
+    "scripts/rate-limit-concurrency-proof.mjs",
+    "scripts/e2e/run-sql-test-e2e.mjs"
   ],
   "exceptions": {
     "scripts/audit_kardex_live.cjs": "Herramienta histórica de una misión puntual ya ejecutada (one-shot, evidenciada en docs/audits/): señales de escritura en SQL/strings/fetch pero sin flujo productivo recurrente. No se cablea el guard en este PR (alcance limitado a los defectos demostrados); re-ejecutarla contra producción exige hoy revisión manual explícita.",
