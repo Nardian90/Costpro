@@ -89,7 +89,7 @@ Correctiva NUEVA `20261114190200` (sha `a45b0c9f…`, fila libro id 59), cuerpo 
 
 ## §7. Integración y CI
 
-- Manifiesto replay regenerado: 167 → **170 migraciones** (digest `3bd53c0d…`, `--check MATCH`).
+- Manifiesto replay regenerado: 167 → **171 migraciones** (digest `75fbbbe7…`, `--check MATCH`).
 - Test replay actualizado (170 incluidas).
 - Contract-surface re-certificado desde producción: 208 funciones, sha `76383724…`; estático 208/208, **0 divergencias**; **LIVE: TODAS LAS FUNCIONES PASAN**.
 - Suite local completa: **tsc 0 errores** · **eslint 0 errores** · **6069 tests PASS / 0 FAIL** (446 archivos; +6 del nuevo test) · `check-writers` OK (161 escritores declarados) · `check-destructive-guard` OK (sin destructivos sin guard).
@@ -106,6 +106,7 @@ Correctiva NUEVA `20261114190200` (sha `a45b0c9f…`, fila libro id 59), cuerpo 
 | 20261114190000 (1 CUP) | ✓ (este PR) | ✓ [MEDIDO 0 cero] | N/A | ✓ §3 |
 | 20261114190100 (venta) | ✓ (este PR) | ✓ [MEDIDO 355/355] | N/A | ✓ §4 |
 | 20261114190200 (import fix) | ✓ (este PR) | ✓ [MEDIDO] | N/A | ✓ §5 |
+| 20261114190300 (RLS auditoría 1 CUP) | ✓ (este PR) | ✓ [MEDIDO] | N/A | ✓ §7-bis |
 | Frontend informe nominal (dialog) | ✓ (este PR) | pendiente merge PR → Vercel | — | ✓ suite local |
 
 ## §9. Residuos y prohibiciones verificadas
@@ -116,6 +117,11 @@ Correctiva NUEVA `20261114190200` (sha `a45b0c9f…`, fila libro id 59), cuerpo 
 - No se tocaron precios de venta, costos documentales, recepciones, facturas, fichas de costo ni movimientos históricos (verificado por igualdad post-migración).
 - Sin TRUNCATE de prueba sobre tablas reales de producción.
 - Diff de la rama escaneado contra los patrones canónicos de secretos de este repo (PAT de GitHub, claves Supabase de servicio/publicables y prefijos JWT): **0 coincidencias reales** (la única detección era esta misma línea del checklist; reformulada para no producir ruido en scanners).
+
+## §7-bis. Fix del SQL Security Gate (hallazgo tables_no_rls)
+
+- El gate en vivo (contra la BD) marcó `cp_cost_nominal_20261114_audit` (creada por 190000) como tabla sin RLS.
+- Correctiva `20261114190300`: `ENABLE ROW LEVEL SECURITY` sin políticas = deny-all fail-closed (lectura solo owner/service_role). Aplicada en producción (libro id 60), manifiesto 171, test replay 171 PASS, XLSX actualizado.
 
 ## §10. Pendientes y siguientes pasos
 

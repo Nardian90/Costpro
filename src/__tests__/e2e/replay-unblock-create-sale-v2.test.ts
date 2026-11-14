@@ -443,10 +443,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // CP-POST-MERGE-EXECUTION-002 (2026-11-14, adenda del propietario): +3 —
     //   20261114190000_cp_cost_nominal_1cup (1 CUP nominal a costos promedio cero)
     //   20261114190100_cp_operational_class_venta_prod (clasificación venta)
-    //   20261114190200_cp_import_flow_recurrence_fix (fix reincidencia importador) = 170
-    expect(m.total_incluidos).toBe(170);
+    //   20261114190200_cp_import_flow_recurrence_fix (fix reincidencia importador)
+    //   20261114190300_cp_cost_audit_rls (RLS deny-all tabla auditoría 1 CUP) = 171
+    expect(m.total_incluidos).toBe(171);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(170);
+    expect(incluidos.length).toBe(171);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

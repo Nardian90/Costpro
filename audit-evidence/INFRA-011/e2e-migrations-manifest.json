@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 585,
-  "total_incluidos": 170,
+  "total_considerados": 586,
+  "total_incluidos": 171,
   "total_excluidos": 415,
-  "digest": "2a6c7c5a427eb5284f481783e976eb28721b0cfc110396f136d54f2955bb543c",
+  "digest": "77afe5d2aaba022725e3d0892182eeefe0e815b22d12ce0d8075a2ad13b85b64",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5750,6 +5750,17 @@
       "observaciones": [],
       "posicion": 170,
       "sha256_generado": "a45b0c9f7e46510a71aec9cb028976666d7340b68d5262d9ff9dff3366294989"
+    },
+    {
+      "nombre": "20261114190300_cp_cost_audit_rls.sql",
+      "bytes": 2106,
+      "sha256_original": "e370ef17d043a0db60807a2f01c5dea606c5a17ba5d0dc4b7d46cec6d235d979",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261114",
+      "observaciones": [],
+      "posicion": 171,
+      "sha256_generado": "e370ef17d043a0db60807a2f01c5dea606c5a17ba5d0dc4b7d46cec6d235d979"
     },
     {
       "nombre": "AUDIT_FIXES.md",
