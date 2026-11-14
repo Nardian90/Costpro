@@ -341,3 +341,19 @@ tareas.csv (IPV-003 + CP-SEC-012), INVENTARIO_MAESTRO + WORKLOG (IPV-003).
 6. **Código de la app sin desplegar**: los cambios de código (limiter, UI nóminas, test BUG-024)
    se activan en producción al fusionar el PR (Vercel despliega main); la BD ya está protegida
    server-side desde ahora.
+
+## 16. Pasos siguientes mínimos (del propietario)
+
+1. **Fusionar el PR #1625** (CI verde) → Vercel despliega el código: limiter distribuido activo
+   en las rutas, UI de nóminas restringida, prueba de regresión BUG-024 en la suite.
+2. **Compuerta del freno de TRUNCATE**: si decide instalarlo, enviar exactamente
+   `AUTORIZO BREAKER PROD` — el procedimiento v2 (BYPASS_FRENO_TRUNCATE.md) está probado en la
+   BD aislada y verificado paso a paso (aplicar 20261110120000 + 20261114180300, verificar
+   34/34 ENABLE ALWAYS, fila en el libro).
+3. **Decisión de costos ENERVIDA** (bloqueo CP-COST-RECONCILIATION): la matriz del 13/11 y la
+   de 115 productos de esta misión son los insumos; sin decisión, los costos no se asignan
+   (por mandato, sin valores inventados).
+4. **Deriva 20261110090000** (default 'venta' de operational_class): decidir aplicar o retirar
+   del repo; hoy la columna tiene 274 NULL en producción y la migración está en main sin aplicar.
+5. **Re-certificar el fingerprint de funciones** (mantenimiento, no bloqueante) usando el drift
+   report de este expediente como línea base.
