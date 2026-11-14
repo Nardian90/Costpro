@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-15 — CP-FIN-VALUATION-RECTIFICATION-003: m044/m045/m046 read-only (excepciones); m049 E2E aislado (isolationProtected: sentinela e2e_is_isolated_db REST+SQL fail-closed, demostrado TODAS PASS).",
+  "_updated": "2026-11-15 — CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004: m050a/m050b-preesquema/m050b read-only (excepciones); m050d/m050e E2E aislado (isolationProtected: sentinela e2e_is_isolated_db REST+SQL fail-closed + assert-not-production CP-INFRA-020; demostrado TODO_PASS).",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -50,22 +50,24 @@
     "scripts/dev-price-list-e2e-evidence.ts",
     "scripts/e2e/fc-e2e-clean-orphans.mjs",
     "scripts/e2e/reset-remote-e2e-db.mjs",
+    "scripts/e2e/run-sql-test-e2e.mjs",
     "scripts/e2e/verify-catalogo-identidad-pg.mjs",
     "scripts/e2e/verify-master-gestion-pg.mjs",
+    "scripts/e2e/verify-nominas-api.mjs",
     "scripts/e2e/verify-nominas-pg.mjs",
     "scripts/e2e/verify-operational-classification-pg.mjs",
-    "scripts/e2e/verify-product-commission-pg.mjs",
-    "scripts/landing-demo-provision.cjs",
-    "scripts/provision-e2e-offers-identity.mjs",
-    "scripts/sc006-e2e-verification.mjs",
-    "scripts/sc006-real-reception-evidence.mjs",
-    "scripts/e2e/verify-nominas-api.mjs",
-    "scripts/e2e/verify-trabajadores-nominas.mjs",
     "scripts/e2e/verify-payroll-privacy-pg.mjs",
-    "scripts/rate-limit-concurrency-proof.mjs",
-    "scripts/e2e/run-sql-test-e2e.mjs",
+    "scripts/e2e/verify-product-commission-pg.mjs",
+    "scripts/e2e/verify-trabajadores-nominas.mjs",
+    "scripts/landing-demo-provision.cjs",
     "scripts/m042-rect002-e2e-prototipo.mjs",
-    "scripts/m049-rect003-faseV-e2e-prototipo.mjs"
+    "scripts/m049-rect003-faseV-e2e-prototipo.mjs",
+    "scripts/m050d-rect004-reversal-semantics.mjs",
+    "scripts/m050e-rect004-e2e-prototipo.mjs",
+    "scripts/provision-e2e-offers-identity.mjs",
+    "scripts/rate-limit-concurrency-proof.mjs",
+    "scripts/sc006-e2e-verification.mjs",
+    "scripts/sc006-real-reception-evidence.mjs"
   ],
   "exceptions": {
     "scripts/audit_kardex_live.cjs": "Herramienta histórica de una misión puntual ya ejecutada (one-shot, evidenciada en docs/audits/): señales de escritura en SQL/strings/fetch pero sin flujo productivo recurrente. No se cablea el guard en este PR (alcance limitado a los defectos demostrados); re-ejecutarla contra producción exige hoy revisión manual explícita.",
@@ -196,6 +198,9 @@
     "scripts/m043-rect002-gen-evidencias.mjs": "CP-FIN-VALUATION-CORRECTION-002: ensamblador LOCAL de evidencias JSON (lee scripts/out/*.json, escribe en download/ y docs/audits/). Sin conexión a ninguna BD: las señales provienen de strings descriptivos del contexto. Evidencia: docs/audits/valuation-correction-20261115/.",
     "scripts/m044-probe-esquema.mjs": "CP-FIN-VALUATION-RECTIFICATION-003: probeo read-only de esquema (SELECT a information_schema + stock_movements por Management API). Ni un write. Evidencia: docs/audits/valuation-rectification-003-20261115/.",
     "scripts/m045-rect003-faseI-snapshot.mjs": "CP-FIN-VALUATION-RECTIFICATION-003: Fase I congelar producción — EXCLUSIVAMENTE SELECT por Management API /database/query (guard de ref de producción + snapshots con hashes). Ni un write. Evidencia: docs/audits/valuation-rectification-003-20261115/.",
-    "scripts/m046-rect003-faseI-complemento.mjs": "CP-FIN-VALUATION-RECTIFICATION-003: complemento Fase I — EXCLUSIVAMENTE SELECT por Management API /database/query (asientos de ventas/vales, transaction_items, tasa_audit, recepciones proveedor). Ni un write. Evidencia: docs/audits/valuation-rectification-003-20261115/."
+    "scripts/m046-rect003-faseI-complemento.mjs": "CP-FIN-VALUATION-RECTIFICATION-003: complemento Fase I — EXCLUSIVAMENTE SELECT por Management API /database/query (asientos de ventas/vales, transaction_items, tasa_audit, recepciones proveedor). Ni un write. Evidencia: docs/audits/valuation-rectification-003-20261115/.",
+    "scripts/m050a-rect004-fase0-probe.mjs": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004: probe de entorno READ-ONLY (SELECT por Management API /database/query a producción con guard de ref + sentinela E2E leída por REST/RPC). Ni un write. Evidencia: docs/audits/valuation-rectification-release-gate-004/m050a-fase0-probe.json",
+    "scripts/m050b-rect004-preesquema.mjs": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004: probe de esquema READ-ONLY (SELECT a information_schema/pg_views por Management API). Ni un write. Evidencia: scripts/out/m050b-preesquema.json",
+    "scripts/m050b-rect004-faseDP-snapshot.mjs": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004: snapshot DP de producción EXCLUSIVAMENTE SELECT por Management API /database/query (guard de ref de producción; hashes por sección; DP-1/DP-2/DP-3). Ni un write. Evidencia: docs/audits/valuation-rectification-release-gate-004/rect004-faseDP-snapshot.json"
   }
 }

@@ -16,12 +16,15 @@
 //   T12 LA TRAMPA: anular el documento tras una reversión parcial → ¿se compensa el resto?
 //   T13 re-post idempotente tras voided→active                 → motor no duplica
 // REGLA: producción INTACTA; todo ocurre en lguovmvrozxgssupkwpf (E2E aislada).
+// Guard de aislamiento: réplica del contrato e2e/fixtures/assert-isolated-db.ts
+// (sentinela e2e_is_isolated_db() verificada por REST y SQL, fail-closed).
 // Uso: node scripts/m050d-rect004-reversal-semantics.mjs
 // ============================================================================
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import pg from 'pg';
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 
 const env = {};
 for (const l of readFileSync(resolve(process.cwd(), '.env'), 'utf8').split('\n')) {
@@ -30,6 +33,8 @@ for (const l of readFileSync(resolve(process.cwd(), '.env'), 'utf8').split('\n')
 }
 const BASE = 'https://lguovmvrozxgssupkwpf.supabase.co';
 const KEY = env.E2E_SUPABASE_SERVICE_ROLE_KEY;
+// CP-INFRA-020 (fix RECT004): guard de producción — este script escribe SOLO en la BD E2E aislada.
+assertNotProduction({ mode: 'write', url: BASE, context: 'm050d-rect004-reversal-semantics' });
 const POOLER = { host: 'aws-0-us-east-1.pooler.supabase.com', port: 6543, database: 'postgres',
   user: 'postgres.lguovmvrozxgssupkwpf', password: decodeURIComponent(env.E2E_SUPABASE_DB_URL.match(/:\/\/[^:]+:([^@]+)@/)[1]),
   ssl: { rejectUnauthorized: false } };
