@@ -75,10 +75,13 @@ SELECT test_assert((SELECT count(*) FROM public.cp_infra_020_t_test) = 2,
   '2. TRUNCATE bloqueado incluso con session_replication_role=replica');
 
 -- ── 3. Bypass administrativo: GUC on (como postgres) → PERMITIDO ──
+--    (reset explícito del modo replica del test 2: SET LOCAL persiste en la
+--     transacción exterior; este test valida el bypass en modo ORDINARIO)
 DO $t$
 DECLARE v_before int;
 BEGIN
   v_before := (SELECT count(*) FROM public.cp_infra_020_t_test);
+  SET LOCAL session_replication_role = 'origin';
   SET LOCAL costpro.allow_truncate = 'on';
   TRUNCATE public.cp_infra_020_t_test;  -- debe PASAR (postgres + GUC)
   INSERT INTO public.cp_infra_020_t_test VALUES (1, 'truncado-y-repoblado');

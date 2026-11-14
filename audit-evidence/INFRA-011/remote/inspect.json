@@ -2,25 +2,25 @@
   "modo": "--inspect",
   "transporte": "api",
   "ref": "lguovmvrozxgssupkwpf",
-  "inicio": "2026-11-08T17:54:17.385Z",
+  "inicio": "2026-11-14T14:13:48.955Z",
   "pasos": [
     {
       "nombre": "identidad-management-api",
       "ok": true,
       "detalle": "nombre=CostproE2E ref=lguovmvrozxgssupkwpf region=us-east-1 estado=ACTIVE_HEALTHY",
-      "ts": "2026-11-08T17:54:17.537Z"
+      "ts": "2026-11-14T14:13:49.295Z"
     },
     {
       "nombre": "guard-identidad-sin-centinela",
       "ok": true,
       "detalle": "identidad validada (excepción §3.3)",
-      "ts": "2026-11-08T17:54:17.538Z"
+      "ts": "2026-11-14T14:13:49.295Z"
     },
     {
       "nombre": "inspeccion-read-only",
       "ok": true,
-      "detalle": "tablas_public=166 funciones_public=560 centinela=true",
-      "ts": "2026-11-08T17:54:31.946Z"
+      "detalle": "tablas_public=178 funciones_public=614 centinela=true",
+      "ts": "2026-11-14T14:14:03.775Z"
     }
   ],
   "identidad": {
@@ -62,6 +62,14 @@
       "document_sequences",
       "exchange_rate_audit",
       "exchange_rates",
+      "fin_categories",
+      "fin_document_types",
+      "fin_entries",
+      "fin_metric_catalog",
+      "fin_movements",
+      "fin_opening_balances",
+      "fin_posting_errors",
+      "fin_rule_versions",
       "fiscal_closings",
       "idempotency_keys",
       "idempotency_registry",
@@ -91,6 +99,9 @@
       "party_store_links",
       "payment_transactions",
       "payment_transactions_purga_20261026_archive",
+      "payroll_item_concepts",
+      "payroll_items",
+      "payrolls",
       "physical_count_items",
       "physical_counts",
       "physical_inventories",
@@ -195,10 +206,11 @@
       "whatsapp_messages",
       "whatsapp_product_posts",
       "whatsapp_risk_state",
+      "worker_salary_rates",
       "workers",
       "z_reports"
     ],
-    "public_funciones": 560,
+    "public_funciones": 614,
     "extensiones": [
       "btree_gist@1.7",
       "pg_cron@1.6.4",
@@ -906,6 +918,41 @@
         "nombre": "20261106120000_sec005_drop_dead_overloads_close_cash_shift5_devolution_v11.sql",
         "estado": "aplicada",
         "sha256": "4983d647c186fb27543916e214eff17a7ec736f7f652ac7980a891640b3bc14b"
+      },
+      {
+        "nombre": "20261106130000_production_migration_ledger.sql",
+        "estado": "aplicada",
+        "sha256": "639d719d8d9460d0565e5dc13f583622019bb2d41aebb8eeff0152012fb1223f"
+      },
+      {
+        "nombre": "20261107120000_cp_catalogo_maestro_sync_register_reception.sql",
+        "estado": "aplicada",
+        "sha256": "cba3d9807eaa4027df473643c20fac5bf26b90990e6619655b697ce37c10051c"
+      },
+      {
+        "nombre": "20261108120000_cp_catalogo_reconciliacion_datos_compartidos.sql",
+        "estado": "aplicada",
+        "sha256": "33fd328d88e9f5e9e5caa00a21627b2fc1e8ff2d76abb40f3a3a58be99352fc7"
+      },
+      {
+        "nombre": "20261108140000_data_integrity_remediation_001_soft_refs.sql",
+        "estado": "aplicada",
+        "sha256": "eeede162afbc281130bcdefd986d01a9d8b2514d785dcd994688b8b907a872ef"
+      },
+      {
+        "nombre": "20261108140100_data_integrity_remediation_001_storage_reconcile.sql",
+        "estado": "aplicada",
+        "sha256": "41b848c147bb241df4d24c9a090cca66962528e1eaae21278c936b7abfa9abd1"
+      },
+      {
+        "nombre": "20261108140200_data_integrity_remediation_001_prevention.sql",
+        "estado": "aplicada",
+        "sha256": "9db12859cd4b659dbcb64ffe63d562b46a0eeda73af6408eaefa94a58166b74b"
+      },
+      {
+        "nombre": "20261108140300_data_integrity_remediation_001_rpc_permissions.sql",
+        "estado": "aplicada",
+        "sha256": "cd35f370eb637880d65f8fd326792a4d30c169e1aa5eff94c1b0a6964022aff3"
       },
       {
         "nombre": "BASELINE:production-schema-snapshot-20260828.sql",

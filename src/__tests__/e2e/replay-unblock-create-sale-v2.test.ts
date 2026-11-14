@@ -436,9 +436,12 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261114180200_cp_commission_constraint_dedup (restricción duplicada)
     //   20261114180300_cp_infra_020_breaker_v2 (freno TRUNCATE fail-closed)
     //   20261114180400_cp_sec_rate_limit_store (limiter distribuido) = 165
-    expect(m.total_incluidos).toBe(165);
+    //   20261114180500_cp_fix_legal_incidents_audit_whitelist (regresión
+    //   BUG-024: el check audit_logs_store_id_check rompía el POST de
+    //   incidentes; whitelist + legal_incidents) = 166
+    expect(m.total_incluidos).toBe(166);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(165);
+    expect(incluidos.length).toBe(166);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

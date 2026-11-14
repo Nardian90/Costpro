@@ -95,10 +95,14 @@ test.describe('Legal', () => {
     const admin_headers = getAuthHeaders('admin');
     if (!user_headers || !admin_headers) { test.skip(true, 'Auth headers missing'); return; }
 
-    // 1) POST autenticado → 201 con id (BUG-017/018 ya cubiertos en otros tests)
+    // 1) POST autenticado → 201 con id (BUG-017/018 ya cubiertos en otros tests).
+    //    Se usa la sesión ADMIN para el POST: los tests previos de este spec
+    //    (validaciones 400 ×5 y ráfaga concurrente BUG-018) consumen el bucket
+    //    5/min del usuario «cajero» — con el limiter distribuido el budget es
+    //    GLOBAL y predecible (antes: contadores aislados por instancia).
     const marker = `BUG-024-E2E-${Date.now()}`;
     const post = await request.post('/api/legal/incidents', {
-      headers: user_headers,
+      headers: admin_headers,
       data: {
         title: `Regresión BUG-024 ${marker}`,
         description: `Verificación de persistencia duradera (Decisión D): ${marker}. La escritura debe vivir en audit_logs y ser consultable por un administrador.`,

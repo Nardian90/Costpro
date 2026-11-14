@@ -2,47 +2,47 @@
   "modo": "--apply-replay",
   "transporte": "api",
   "ref": "lguovmvrozxgssupkwpf",
-  "inicio": "2026-11-08T17:56:23.410Z",
+  "inicio": "2026-11-14T14:43:41.257Z",
   "pasos": [
     {
       "nombre": "guard-identidad-replay",
       "ok": true,
       "detalle": "identidad validada (centinela diferido al final del replay: desviación documentada)",
-      "ts": "2026-11-08T17:56:23.410Z"
+      "ts": "2026-11-14T14:43:41.258Z"
     },
     {
       "nombre": "tabla-estado-replay",
       "ok": true,
       "detalle": "e2e_infra.e2e_migrations_replay_state (IF NOT EXISTS)",
-      "ts": "2026-11-08T17:56:29.185Z"
+      "ts": "2026-11-14T14:43:47.202Z"
     },
     {
       "nombre": "baseline-ya-aplicado",
       "ok": true,
       "detalle": "sha coincide — reanudación",
-      "ts": "2026-11-08T17:56:31.223Z"
+      "ts": "2026-11-14T14:43:49.336Z"
     },
     {
       "nombre": "replay-completo",
       "ok": true,
-      "detalle": "baseline OK + tramo: 1 aplicadas en esta corrida + 133 reanudadas = 134/134",
-      "ts": "2026-11-08T17:56:35.119Z"
+      "detalle": "baseline OK + tramo: 1 aplicadas en esta corrida + 165 reanudadas = 166/166",
+      "ts": "2026-11-14T14:43:53.355Z"
     },
     {
       "nombre": "centinela-rest-instalado",
       "ok": true,
       "detalle": "HTTP 200 — public.e2e_is_isolated_db() === true",
-      "ts": "2026-11-08T17:56:38.462Z"
+      "ts": "2026-11-14T14:43:56.525Z"
     },
     {
       "nombre": "guard-normal-final",
       "ok": true,
       "detalle": "estado final: guard normal acepta el destino",
-      "ts": "2026-11-08T17:56:39.269Z"
+      "ts": "2026-11-14T14:43:57.285Z"
     }
   ],
-  "manifest_sha256": "5e1c8994d795d2d8fb8fb5e208b6e016d90e71e0c399e41838e2c806b4fa2051",
-  "manifest_total_tramo": 134,
+  "manifest_sha256": "97ee8e1dcf6230eb455be1bab37113db9044b80017fb2889766f9b61ca8e1e69",
+  "manifest_total_tramo": 166,
   "aplicadas_esta_corrida": 1,
-  "omitidas_reanudacion": 133
+  "omitidas_reanudacion": 165
 }

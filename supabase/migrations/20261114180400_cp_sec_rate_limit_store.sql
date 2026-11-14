@@ -52,8 +52,11 @@ CREATE INDEX IF NOT EXISTS idx_rate_limit_buckets_window
 ALTER TABLE public.rate_limit_buckets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rate_limit_buckets FORCE ROW LEVEL SECURITY;
 
--- Sin políticas para anon/authenticated: denegación total por RLS.
--- service_role (bypassrls) y postgres conservan acceso.
+-- CERO privilegios para anon/authenticated sobre la tabla (independiente del
+-- orden de 20261114180100: los defaults de Supabase otorgan arwd a las
+-- tablas nuevas — aquí se revocan TODOS; la protección real es RLS FORCED
+-- sin políticas + RPC service-only).
+REVOKE ALL ON public.rate_limit_buckets FROM anon, authenticated;
 
 -- RPC atómico de toma de un golpe de rate limit (ventana fija)
 CREATE OR REPLACE FUNCTION public.rate_limit_take(

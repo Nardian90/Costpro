@@ -148,20 +148,32 @@ const FX = {
   w1:      'ee100020-0000-4000-8000-000000000020', // trabajador store1 con tarifa
   rate1:   'ee100021-0000-4000-8000-000000000021',
   p1:      'ee100030-0000-4000-8000-000000000030', // nómina store1 (draft)
+  p1c:     'ee100033-0000-4000-8000-000000000033', // nómina store1 (CONFIRMADA — para mark_paid/account)
   p2:      'ee100031-0000-4000-8000-000000000031', // nómina store2 (tenant A)
   p3:      'ee100032-0000-4000-8000-000000000032', // nómina store3 (tenant B)
   pi1:     'ee100040-0000-4000-8000-000000000040', // línea de p1
 };
 
 async function cleanup() {
-  await q(`DELETE FROM public.payroll_item_concepts WHERE item_id = $1`, [FX.pi1]);
-  await q(`DELETE FROM public.payroll_items WHERE payroll_id IN ($1,$2,$3)`, [FX.p1, FX.p2, FX.p3]);
-  await q(`DELETE FROM public.payrolls WHERE id IN ($1,$2,$3) OR (store_id IN ($4,$5,$6) AND payroll_number LIKE 'NOM-EE-%')`,
-    [FX.p1, FX.p2, FX.p3, FX.store1, FX.store2, FX.store3]);
+  // Orden por FKs: concepts → items → payrolls → rates → workers → memberships.
+  // Los payrolls creados dinámicamente por los tests D9/D10 (numeración
+  // NOM-00000X del document_sequences) también se limpian: las tiendas EE son
+  // exclusivas de este script, todo payrolls suyo es del fixture.
+  await q(`DELETE FROM public.payroll_item_concepts WHERE item_id IN (
+    SELECT i.id FROM public.payroll_items i
+    WHERE i.payroll_id IN (SELECT id FROM public.payrolls WHERE store_id IN ($1,$2,$3)))`,
+    [FX.store1, FX.store2, FX.store3]);
+  await q(`DELETE FROM public.payroll_items WHERE worker_id = $1 OR payroll_id IN (
+    SELECT id FROM public.payrolls WHERE store_id IN ($2,$3,$4))`,
+    [FX.w1, FX.store1, FX.store2, FX.store3]);
+  await q(`DELETE FROM public.payrolls WHERE id IN ($1,$2,$3,$4) OR store_id IN ($5,$6,$7)`,
+    [FX.p1, FX.p1c, FX.p2, FX.p3, FX.store1, FX.store2, FX.store3]);
   await q(`DELETE FROM public.worker_salary_rates WHERE worker_id = $1 OR id = $2`, [FX.w1, FX.rate1]);
   await q(`DELETE FROM public.workers WHERE id = $1`, [FX.w1]);
   await q(`DELETE FROM public.user_store_memberships WHERE user_id IN ($1,$2,$3,$4,$5)`,
     [FX.uAdmSto, FX.uEnc, FX.uClerk, FX.uUsu, FX.uSuper]);
+  await q(`DELETE FROM public.document_sequences WHERE store_id IN ($1,$2,$3) AND document_type='payroll'`,
+    [FX.store1, FX.store2, FX.store3]);
 }
 
 async function main() {
@@ -185,12 +197,27 @@ async function main() {
 
   // ── FASE B: fixture ──
   await cleanup();
-  await q(`INSERT INTO public.profiles (id, role, tenant_id) VALUES
-    ($1,'superadmin',NULL),($2,'admin',$6),($3,'usuario',$6),($4,'encargado',$6),($5,'usuario',$6),($7,'usuario',$6)
-    ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role, tenant_id = EXCLUDED.tenant_id`,
-    [FX.uSuper, FX.uAdmPlat, FX.uAdmSto, FX.uEnc, FX.uClerk, FX.tenantA, FX.uUsu]);
+  // auth.users primero (FK profiles_id_fkey); persisten entre corridas (patrón
+  // verify-nominas-pg: soft-delete impide el DELETE físico de profiles).
+  await q(`INSERT INTO auth.users (id, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_user_meta_data)
+    VALUES ($1,'ee-privacy-super@test.local','x',now(),now(),now(),'{}'::jsonb),
+           ($2,'ee-privacy-admplat@test.local','x',now(),now(),now(),'{}'::jsonb),
+           ($3,'ee-privacy-admsto@test.local','x',now(),now(),now(),'{}'::jsonb),
+           ($4,'ee-privacy-enc@test.local','x',now(),now(),now(),'{}'::jsonb),
+           ($5,'ee-privacy-clerk@test.local','x',now(),now(),now(),'{}'::jsonb),
+           ($6,'ee-privacy-usu@test.local','x',now(),now(),now(),'{}'::jsonb)
+    ON CONFLICT (id) DO NOTHING`, [FX.uSuper, FX.uAdmPlat, FX.uAdmSto, FX.uEnc, FX.uClerk, FX.uUsu]);
+  await q(`INSERT INTO public.profiles (id, role) VALUES
+    ($1,'superadmin'),($2,'admin'),($3,'usuario'),($4,'encargado'),($5,'usuario'),($6,'usuario')
+    ON CONFLICT (id) DO UPDATE SET role = EXCLUDED.role`,
+    [FX.uSuper, FX.uAdmPlat, FX.uAdmSto, FX.uEnc, FX.uClerk, FX.uUsu]);
+  // tenants primero (FK profiles.tenant_id → tenants), luego el UPDATE del
+  // tenant de cada profile (FK circular profiles↔tenants).
   await q(`INSERT INTO public.tenants (id, name, owner_id) VALUES ($1,'ORG-EE-PRIVACY-A',$2),($3,'ORG-EE-PRIVACY-B',$2)
     ON CONFLICT (id) DO NOTHING`, [FX.tenantA, FX.uAdmPlat, FX.tenantB]);
+  await q(`UPDATE public.profiles SET tenant_id = $7 WHERE id IN ($2,$3,$4,$5,$6)
+    AND (tenant_id IS DISTINCT FROM $7)`,
+    [FX.uSuper, FX.uAdmPlat, FX.uAdmSto, FX.uEnc, FX.uClerk, FX.uUsu, FX.tenantA]);
   await q(`INSERT INTO public.stores (id, name, tenant_id) VALUES
     ($1,'EE Privacidad Store1',$4),($2,'EE Privacidad Store2',$4),($3,'EE Privacidad Store3',$5)
     ON CONFLICT (id) DO NOTHING`, [FX.store1, FX.store2, FX.store3, FX.tenantA, FX.tenantB]);
@@ -203,10 +230,16 @@ async function main() {
   await q(`INSERT INTO public.worker_salary_rates (id, worker_id, store_id, tenant_id, rate_type, rate_amount, currency, valid_from, created_by)
     VALUES ($1,$2,$3,$4,'hourly',50.00,'CUP',CURRENT_DATE - 30,$5)
     ON CONFLICT (id) DO NOTHING`, [FX.rate1, FX.w1, FX.store1, FX.tenantA, FX.uAdmSto]);
-  for (const [pid, store, num] of [[FX.p1, FX.store1, 'NOM-EE-000001-2026'], [FX.p2, FX.store2, 'NOM-EE-000002-2026'], [FX.p3, FX.store3, 'NOM-EE-000003-2026']]) {
+  for (const [pid, store, num, status] of [
+    [FX.p1, FX.store1, 'NOM-EE-000001-2026', 'draft'],
+    [FX.p1c, FX.store1, 'NOM-EE-000004-2026', 'confirmed'],
+    [FX.p2, FX.store2, 'NOM-EE-000002-2026', 'draft'],
+    [FX.p3, FX.store3, 'NOM-EE-000003-2026', 'draft'],
+  ]) {
     await q(`INSERT INTO public.payrolls (id, store_id, tenant_id, payroll_number, status, tipo_nomina, period_start, period_end, currency, entidad_nombre, payment_method, total_workers, total_net, created_by)
-      VALUES ($1,$2,$5,$6,'draft','sueldos',CURRENT_DATE - 10,CURRENT_DATE - 4,'CUP','EE','efectivo',1,50.00,$4)
-      ON CONFLICT (id) DO NOTHING`, [pid, store, null, FX.uAdmSto, store === FX.store1 ? FX.tenantA : (store === FX.store2 ? FX.tenantA : FX.tenantB), num]);
+      VALUES ($1,$2,$5,$6,$7,'sueldos',CURRENT_DATE - 10,CURRENT_DATE - 4,'CUP','EE','efectivo',1,50.00,$4)
+      ON CONFLICT (id) DO NOTHING`,
+      [pid, store, null, FX.uAdmSto, store === FX.store1 || store === FX.store2 ? FX.tenantA : FX.tenantB, num, status]);
   }
   await q(`INSERT INTO public.payroll_items (id, payroll_id, worker_id, worker_names, rate_type, rate_amount, rate_currency, regular_hours, base_salary, total_gross, total_net)
     VALUES ($1,$2,$3,'Ester Ejemplo','hourly',50.00,'CUP',8,400.00,400.00,400.00)
@@ -266,15 +299,18 @@ async function main() {
   check('D5. encargado NO puede confirmar nómina', /ERR_UNAUTHORIZED/i.test(e5 || ''), (e5 || '').slice(0, 80));
   const e6 = await asAuthRpcExpectError(`SELECT public.void_payroll('${FX.p1}','motivo prueba','${FX.uUsu}')`, FX.uUsu);
   check('D6. usuario NO puede anular nómina', /ERR_UNAUTHORIZED/i.test(e6 || ''), (e6 || '').slice(0, 80));
-  const e7 = await asAuthRpcExpectError(`SELECT public.mark_payroll_paid('${FX.p1}','${FX.uClerk}')`, FX.uClerk);
-  check('D7. clerk NO puede marcar pagada', /ERR_UNAUTHORIZED/i.test(e7 || ''), (e7 || '').slice(0, 80));
-  const e8 = await asAuthRpcExpectError(`SELECT public.account_payroll('${FX.p1}','${FX.uEnc}')`, FX.uEnc);
-  check('D8. encargado NO puede contabilizar', /ERR_UNAUTHORIZED/i.test(e8 || ''), (e8 || '').slice(0, 80));
+  const e7 = await asAuthRpcExpectError(`SELECT public.mark_payroll_paid('${FX.p1c}','${FX.uClerk}')`, FX.uClerk);
+  check('D7. clerk NO puede marcar pagada (nómina confirmada)', /ERR_UNAUTHORIZED/i.test(e7 || ''), (e7 || '').slice(0, 80));
+  const e8 = await asAuthRpcExpectError(`SELECT public.account_payroll('${FX.p1c}','${FX.uEnc}')`, FX.uEnc);
+  check('D8. encargado NO puede contabilizar (nómina confirmada)', /ERR_UNAUTHORIZED/i.test(e8 || ''), (e8 || '').slice(0, 80));
 
   // Operaciones legítimas de administradores SIGUEN funcionando
   let admOk = true, admDetail = '';
   try {
-    await asAuthRpc(`SELECT public.create_payroll('${FX.store2}','sueldos',CURRENT_DATE - 3,CURRENT_DATE - 2,'efectivo',NULL,NULL,NULL,NULL,NULL,${ITEMS},'EE-MTX-ADMPLAT','${FX.uAdmPlat}')`, FX.uAdmPlat);
+    // store1 es del tenant A del admin de plataforma: debe poder confeccionar
+    // (w1 es trabajador ELEGIBLE de store1 — el gate de autorización es lo
+    // que se prueba aquí).
+    await asAuthRpc(`SELECT public.create_payroll('${FX.store1}','sueldos',CURRENT_DATE - 3,CURRENT_DATE - 2,'efectivo',NULL,NULL,NULL,NULL,NULL,${ITEMS},'EE-MTX-ADMPLAT','${FX.uAdmPlat}')`, FX.uAdmPlat);
   } catch (e) { admOk = false; admDetail = e.message.slice(0, 90); }
   check('D9. admin de plataforma SÍ confecciona nómina de su tenant', admOk, admDetail);
 
