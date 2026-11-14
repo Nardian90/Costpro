@@ -430,9 +430,12 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // devolución en divisa — total canónico en DEVOLUCION_VENTA (sin ×tasa) y
     // tasa efectiva exacta en las filas de reembolso (amount_cup = total canónico)
     // (20261114140000_cp_fin_ciclo_devolucion_divisa) = 160
-    expect(m.total_incluidos).toBe(160);
+    // CP-RECEIPT-INTEGRITY-001 (2026-11-14): +1 trigger de inmutabilidad
+    // económica de receipt_items en recepciones confirmadas
+    // (20261114160000_cp_receipt_items_immutable) = 161
+    expect(m.total_incluidos).toBe(161);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(160);
+    expect(incluidos.length).toBe(161);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

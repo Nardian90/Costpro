@@ -12,6 +12,13 @@ import { withSecurity } from '@/lib/with-security';
  * Antes: 2 llamadas separadas (mutation header + RPC items) → estado parcial.
  * Ahora: una sola API route que llama al RPC update_reception_items con los datos del header.
  *
+ * CP-RECEIPT-INTEGRITY-001 (2026-11-14): guard de estado para la cabecera.
+ * Los campos económicos/documentales (supplier, referenceDoc, itemUpdates)
+ * de una recepción NO pendiente son inmutables: solo `notes` (anotación no
+ * económica) puede editarse en documentos confirmados/anulados/revertidos.
+ * Antes el update directo (RLS no filtra por estado) permitía re-etiquetar
+ * facturas de documentos terminados.
+ *
  * Body: {
  *   supplier?: string,
  *   referenceDoc?: string,
@@ -52,6 +59,38 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseForSession(session);
   const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
+  // CP-RECEIPT-INTEGRITY-001: cargar estado ANTES de mutar. Los campos
+  // económicos/documentales son inmutables salvo en 'pending'; `notes` es
+  // una anotación permitida en cualquier estado.
+  const economicFields: string[] = [];
+  if (supplier !== undefined) economicFields.push('supplier');
+  if (referenceDoc !== undefined) economicFields.push('referenceDoc');
+  if (Array.isArray(itemUpdates) && itemUpdates.length > 0) economicFields.push('itemUpdates');
+
+  if (economicFields.length > 0) {
+    const { data: receiptRow, error: receiptErr } = await supabase
+      .from('receipts')
+      .select('status')
+      .eq('id', id)
+      .single();
+
+    if (receiptErr && String(receiptErr.code || '') !== 'PGRST116') {
+      return NextResponse.json({ error: `Error consultando recepción: ${receiptErr.message}` }, { status: 500 });
+    }
+    const status = receiptRow?.status;
+    if (!status) {
+      return NextResponse.json({ error: 'Recepción no encontrada' }, { status: 404 });
+    }
+    if (status !== 'pending') {
+      return NextResponse.json({
+        error: `La recepción está '${status}': sus datos económicos/documentales son inmutables (solo 'notes' es editable)`,
+        code: 'ERR_NOT_EDITABLE',
+        campos_bloqueados: economicFields,
+        remedio: 'Use reversión/anulación controlada + recepción correctiva, o la corrección gobernada documentada.',
+      }, { status: 409 });
+    }
+  }
+
   // 1. Actualizar header de la recepción
   const headerUpdate: Record<string, unknown> = {};
   if (supplier !== undefined) headerUpdate.supplier = supplier;
@@ -80,7 +119,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     if (rpcErr) {
       const msg = rpcErr.message;
       if (msg.includes('ERR_NOT_EDITABLE')) {
-        return NextResponse.json({ error: 'Solo se pueden editar recepciones pendientes' }, { status: 400 });
+        return NextResponse.json({ error: 'Solo se pueden editar recepciones pendientes', code: 'ERR_NOT_EDITABLE' }, { status: 409 });
       }
       if (msg.includes('ERR_UNAUTHORIZED')) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

@@ -72,8 +72,10 @@ export function ReceptionDetailsModal({
   const [batchTasa, setBatchTasa] = useState(1);
   const [batchLoading, setBatchLoading] = useState(false);
 
-  // FIX-BACKFILL: Función para actualizar moneda/tasa de un item individual
-  // Funciona incluso en recepciones confirmadas (active) — solo requiere admin/manager
+  // FIX-BACKFILL: Función para actualizar moneda/tasa de un item individual.
+  // CP-RECEIPT-INTEGRITY-001: solo recepciones PENDIENTES son editables; la
+  // ruta responde 409 ERR_NOT_EDITABLE para documentos confirmados/anulados/
+  // revertidos (inmutabilidad económica) con el remedio en el cuerpo.
   const updateItemTasa = async (itemId: string, moneda: string, tasa: number) => {
     if (!receipt) return;
     setTasaUpdateLoading(itemId);
@@ -88,6 +90,13 @@ export function ReceptionDetailsModal({
       });
     } catch (e: any) {
       console.error('[ReceptionDetail] Error updating tasa:', e);
+      const msg = typeof e?.message === 'string' ? e.message : '';
+      const notEditable = msg.includes('inmutables') || msg.includes('ERR_NOT_EDITABLE') || msg.includes('anulada');
+      toast.error(
+        notEditable
+          ? `Recepción no editable — ${msg}`
+          : (msg || 'No se pudo actualizar la tasa')
+      );
     } finally {
       setTasaUpdateLoading(null);
     }
@@ -129,9 +138,33 @@ export function ReceptionDetailsModal({
 
   if (!receipt && !isLoading) return null;
 
+  // CP-RECEIPT-INTEGRITY-001: el «Total Costo» de cabecera está en CUP
+  // (Σ qty·unit_cost·tasa por línea) mientras los subtotales de línea se
+  // muestran en su MONEDA ORIGINAL. Antes ambos se formateaban como CUP sin
+  // distinción → el usuario comparaba 5.404.573,25 «CUP» (mezcla CUP+USD
+  // sin convertir) contra 192.039.436,00 CUP y leía una diferencia de
+  // 186.634.862,75 «inexplicable». Ahora cada línea declara su moneda, las
+  // líneas en divisa muestran su equivalente CUP y el pie resume en CUP.
   const subtotal = receipt?.total_cost || 0;
   const taxes = subtotal * 0;
   const total = subtotal + taxes;
+
+  const lineItems = items || [];
+  const itemsCupTotal = lineItems.reduce(
+    (s, i) => s + Number(i.quantity || 0) * Number(i.unit_cost || 0) * Number(i.tasa_cambio_recepcion ?? 1),
+    0
+  );
+  const perCurrency = lineItems.reduce((acc, i) => {
+    const mon = i.moneda_recepcion || 'CUP';
+    acc[mon] = (acc[mon] || 0) + Number(i.quantity || 0) * Number(i.unit_cost || 0);
+    return acc;
+  }, {} as Record<string, number>);
+  const currencyList = Object.keys(perCurrency);
+  const hasMixedCurrencies = currencyList.length > 1;
+  const hasFxLines = currencyList.some((c) => c !== 'CUP');
+  const breakdownText = currencyList
+    .map((c) => `${formatCurrency(perCurrency[c], c)}`)
+    .join(' + ');
 
   return (
     <BaseModal
@@ -498,7 +531,7 @@ export function ReceptionDetailsModal({
                   "text-xs font-black uppercase tracking-widest",
                   receipt?.status === 'voided' ? "text-destructive" : "text-primary"
                 )}>
-                  {receipt?.status === 'voided' ? 'Anulada' : 'Total Costo'}
+                  {receipt?.status === 'voided' ? 'Anulada' : 'Total Costo (CUP)'}
                 </div>
                 <div className={cn(
                   "font-black text-lg tabular-nums",
@@ -506,6 +539,11 @@ export function ReceptionDetailsModal({
                 )}>
                   {formatCurrency(receipt?.total_cost || 0)}
                 </div>
+                {hasFxLines && receipt?.status !== 'voided' && (
+                  <div className="text-[10px] font-bold text-muted-foreground leading-tight">
+                    Incluye líneas en divisa convertidas una sola vez con la tasa congelada de cada línea.
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -586,7 +624,7 @@ export function ReceptionDetailsModal({
                                   aria-label={`Costo unitario de ${item.products?.name}`}
                                 />
                               ) : (
-                                formatCurrency(item.unit_cost)
+                                formatCurrency(item.unit_cost, item.moneda_recepcion || 'CUP')
                               )}
                             </td>
                             <td className="p-3 text-center">
@@ -645,7 +683,14 @@ export function ReceptionDetailsModal({
                               />
                             </td>
                             <td className="p-3 text-right font-black text-primary tabular-nums">
-                              {formatCurrency(item.quantity * item.unit_cost)}
+                              <div className="flex flex-col items-end leading-tight">
+                                <span>{formatCurrency(item.quantity * item.unit_cost, item.moneda_recepcion || 'CUP')}</span>
+                                {(item.moneda_recepcion || 'CUP') !== 'CUP' && (
+                                  <span className="text-[10px] font-bold text-muted-foreground" title="Equivalente en CUP con la tasa congelada de la línea">
+                                    ≈ {formatCurrency(item.quantity * item.unit_cost * (item.tasa_cambio_recepcion || 1))}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             {isItemEditable && (
                               <td className="p-3 text-center">
@@ -683,16 +728,22 @@ export function ReceptionDetailsModal({
         {/* Financial Summary */}
         <div className="mt-6 pt-4 border-t border-white/5">
            <div className="flex flex-col items-end gap-1">
+              {hasMixedCurrencies && (
+                <div className="flex justify-between w-full max-w-[280px] text-[10px] font-bold text-muted-foreground uppercase tabular-nums">
+                  <span>Líneas por moneda:</span>
+                  <span>{breakdownText}</span>
+                </div>
+              )}
               <div className="flex justify-between w-full max-w-[200px] text-xs font-bold text-muted-foreground uppercase tabular-nums">
-                <span>Subtotal:</span>
-                <span>{formatCurrency(subtotal)}</span>
+                <span>Subtotal (CUP):</span>
+                <span>{formatCurrency(lineItems.length ? itemsCupTotal : subtotal)}</span>
               </div>
               <div className="flex justify-between w-full max-w-[200px] text-xs font-bold text-muted-foreground uppercase tabular-nums">
                 <span>Impuestos (0%):</span>
                 <span>{formatCurrency(taxes)}</span>
               </div>
               <div className="flex justify-between w-full max-w-[200px] text-sm font-black text-primary uppercase border-t border-primary/20 pt-1 mt-1 tabular-nums">
-                <span>Total:</span>
+                <span>Total (CUP):</span>
                 <span>{formatCurrency(total)}</span>
               </div>
            </div>
