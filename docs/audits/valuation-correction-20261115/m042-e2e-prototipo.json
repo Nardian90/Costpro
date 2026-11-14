@@ -1,0 +1,493 @@
+{
+ "mision": "CP-FIN-VALUATION-CORRECTION-002",
+ "fase": "G — prototipo E2E aislado",
+ "generado": "2026-11-14T18:00:02.167Z",
+ "bd": {
+  "url": "https://lguovmvrozxgssupkwpf.supabase.co",
+  "proyecto": "lguovmvrozxgssupkwpf (CostproE2E — AISLADA)",
+  "sentinela": true,
+  "canal_escritura": "pooler IPv4 aws-0-us-east-1:6543 + REST service_role"
+ },
+ "pasos": {
+  "preflight": {
+   "ms": 5937,
+   "resumen": "sentinela=true (REST+SQL); residuos previos eliminados"
+  },
+  "seed_store_productos": {
+   "ms": 587,
+   "resumen": "tienda + 2 productos réplica (precios de venta intactos)"
+  },
+  "seed_recepcion_defectuosa": {
+   "ms": 549,
+   "resumen": "recepción réplica: 2 líneas USD@680 (defecto original)"
+  },
+  "seed_kardex": {
+   "ms": 5936,
+   "resumen": "21 movimientos réplica insertados (created_at desempatado)"
+  },
+  "seed_asientos_historicos": {
+   "ms": 534,
+   "resumen": "3 asientos réplica: reconocimiento 151,3M + COGS 5 + vales 88"
+  },
+  "validar_antes": {
+   "ms": 1055,
+   "resumen": "estado defectuoso replicado OK"
+  },
+  "rectificacion_aplicada": {
+   "ms": 7594,
+   "resumen": "\"ok\"",
+   "detalle": {
+    "items": 2,
+    "receipt": 1,
+    "movs_compra": 2,
+    "movs_salida": 7,
+    "wac": 2,
+    "asientos": 2,
+    "audit": 12
+   }
+  },
+  "validar_despues": {
+   "ms": 2306,
+   "resumen": "TODAS LAS VALIDACIONES PASS"
+  },
+  "idempotencia_segunda_pasada": {
+   "ms": 4413,
+   "resumen": "\"ok\""
+  },
+  "rollback_controlado": {
+   "ms": 7971,
+   "resumen": "rollback restaura el estado ANTES exacto"
+  },
+  "reaplicar": {
+   "ms": 5812,
+   "resumen": "re-aplicación tras rollback OK (repetible)"
+  },
+  "cleanup": {
+   "ms": 6503,
+   "resumen": "NET DELTA = 0 — cero residuos"
+  }
+ },
+ "validaciones": {
+  "antes": {
+   "total_recepcion": 151300000,
+   "lineas": [
+    {
+     "sku": "111",
+     "uc": 2500,
+     "moneda": "USD",
+     "tasa": 680
+    },
+    {
+     "sku": "112",
+     "uc": 1000,
+     "moneda": "USD",
+     "tasa": 680
+    }
+   ],
+   "precios": [
+    {
+     "sku": "111",
+     "price": 2000,
+     "moneda": "CUP"
+    },
+    {
+     "sku": "112",
+     "price": 1000,
+     "moneda": "USD"
+    }
+   ],
+   "saldos": {
+    "sku111": 10,
+    "sku112": 20
+   },
+   "cogs_registrado": -5,
+   "vales_registrados": -89,
+   "ok": true
+  },
+  "despues": {
+   "precios_venta": {
+    "sku111": {
+     "price": 2000,
+     "moneda": "CUP"
+    },
+    "sku112": {
+     "price": 1000,
+     "moneda": "USD"
+    }
+   },
+   "productos_detalle": {
+    "sku111": {
+     "stock_current": 10,
+     "cost_average": 1
+    },
+    "sku112": {
+     "stock_current": 20,
+     "cost_average": 1
+    }
+   },
+   "lineas": [
+    {
+     "sku": "111",
+     "uc": 1,
+     "moneda": "CUP",
+     "tasa": 1,
+     "valor": 49
+    },
+    {
+     "sku": "112",
+     "uc": 1,
+     "moneda": "CUP",
+     "tasa": 1,
+     "valor": 100
+    }
+   ],
+   "total_recepcion": 149,
+   "kardex_final": {
+    "sku111": {
+     "saldo": 10,
+     "valor": 10
+    },
+    "sku112": {
+     "saldo": 20,
+     "valor": 20
+    }
+   },
+   "cogs_ventas": -7,
+   "vales_ajustes": -113,
+   "por_asiento": {
+    "7ec70002-0000-4000-8000-c0b100000001": {
+     "D": 151300000,
+     "C": 151300000
+    },
+    "7ec70002-0000-4000-8000-c0b100000004": {
+     "D": 5,
+     "C": 5
+    },
+    "7ec70002-0000-4000-8000-c0b100000005": {
+     "D": 88,
+     "C": 88
+    },
+    "7ec70002-0000-4000-8000-d0b100000001": {
+     "D": 151299851,
+     "C": 151299851
+    },
+    "7ec70002-0000-4000-8000-d0b100000002": {
+     "D": 26,
+     "C": 26
+    }
+   },
+   "neto_ACT_INVENTARIO": 30,
+   "neto_PAS_CXP_PROV": -149,
+   "valor_libros": 30,
+   "inventario_tabla": [
+    {
+     "product_id": "7ec70002-0000-4000-8000-000000000111",
+     "qty": 10
+    },
+    {
+     "product_id": "7ec70002-0000-4000-8000-000000000112",
+     "qty": 20
+    }
+   ],
+   "reversal_of": "7ec70002-0000-4000-8000-c0b100000001",
+   "checks": {
+    "V1_precios_conservados": true,
+    "V2_costo_1cup": true,
+    "V3_valoracion_149": true,
+    "V4_wac_cronologico": true,
+    "V5_cogs_correcto": true,
+    "V6_balance_equilibrado": true,
+    "V7_trazabilidad": true,
+    "V10_sin_duplicacion": true
+   },
+   "todo_ok": true
+  }
+ },
+ "idempotencia": {
+  "segunda_pasada": {
+   "items": 0,
+   "receipt": 0,
+   "movs_compra": 0,
+   "movs_salida": 0,
+   "wac": 0,
+   "asientos": 0,
+   "audit": 0
+  },
+  "ok": true
+ },
+ "rollback": {
+  "restaurado_byte_a_byte": true,
+  "asiento_testigo": "7ec70002-0000-4000-8000-d0b100000099"
+ },
+ "cleanup": {
+  "baseline_conteos": {
+   "stores": 77,
+   "products": 30,
+   "receipts": 1,
+   "receipt_items": 2,
+   "stock_movements": 4,
+   "fin_entries": 148,
+   "fin_movements": 297,
+   "wac_change_log": 528,
+   "audit_logs": 2888,
+   "inventory": 23,
+   "kardex_entries": 4
+  },
+  "conteos_finales": {
+   "stores": 77,
+   "products": 30,
+   "receipts": 1,
+   "receipt_items": 2,
+   "stock_movements": 4,
+   "fin_entries": 148,
+   "fin_movements": 297,
+   "wac_change_log": 528,
+   "audit_logs": 2888,
+   "inventory": 23,
+   "kardex_entries": 4
+  },
+  "delta_por_tabla": {
+   "stores": 0,
+   "products": 0,
+   "receipts": 0,
+   "receipt_items": 0,
+   "stock_movements": 0,
+   "fin_entries": 0,
+   "fin_movements": 0,
+   "wac_change_log": 0,
+   "audit_logs": 0,
+   "inventory": 0,
+   "kardex_entries": 0
+  },
+  "net_delta": 0
+ },
+ "diagnostico_productos": [
+  {
+   "label": "tras_seed_kardex",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": 10,
+     "cost_average": 1,
+     "price": 2000
+    },
+    {
+     "sku": "112",
+     "stock_current": 20,
+     "cost_average": 1,
+     "price": 1000
+    }
+   ]
+  },
+  {
+   "label": "inicio_tx",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": "10.0000",
+     "cost_average": "1"
+    },
+    {
+     "sku": "112",
+     "stock_current": "20.0000",
+     "cost_average": "1"
+    }
+   ]
+  },
+  {
+   "label": "tras_S3_compras",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": "10.0000",
+     "cost_average": "1"
+    },
+    {
+     "sku": "112",
+     "stock_current": "20.0000",
+     "cost_average": "1"
+    }
+   ]
+  },
+  {
+   "label": "tras_S4_salidas",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": "10.0000",
+     "cost_average": "1"
+    },
+    {
+     "sku": "112",
+     "stock_current": "20.0000",
+     "cost_average": "1"
+    }
+   ]
+  },
+  {
+   "label": "tras_rectificacion_1",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": 10,
+     "cost_average": 1,
+     "price": 2000
+    },
+    {
+     "sku": "112",
+     "stock_current": 20,
+     "cost_average": 1,
+     "price": 1000
+    }
+   ]
+  },
+  {
+   "label": "inicio_tx",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": "10.0000",
+     "cost_average": "1"
+    },
+    {
+     "sku": "112",
+     "stock_current": "20.0000",
+     "cost_average": "1"
+    }
+   ]
+  },
+  {
+   "label": "tras_S3_compras",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": "10.0000",
+     "cost_average": "1"
+    },
+    {
+     "sku": "112",
+     "stock_current": "20.0000",
+     "cost_average": "1"
+    }
+   ]
+  },
+  {
+   "label": "tras_S4_salidas",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": "10.0000",
+     "cost_average": "1"
+    },
+    {
+     "sku": "112",
+     "stock_current": "20.0000",
+     "cost_average": "1"
+    }
+   ]
+  },
+  {
+   "label": "tras_rectificacion_2",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": 10,
+     "cost_average": 1,
+     "price": 2000
+    },
+    {
+     "sku": "112",
+     "stock_current": 20,
+     "cost_average": 1,
+     "price": 1000
+    }
+   ]
+  },
+  {
+   "label": "inicio_tx",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": "10.0000",
+     "cost_average": "1"
+    },
+    {
+     "sku": "112",
+     "stock_current": "20.0000",
+     "cost_average": "1"
+    }
+   ]
+  },
+  {
+   "label": "tras_S3_compras",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": "10.0000",
+     "cost_average": "1"
+    },
+    {
+     "sku": "112",
+     "stock_current": "20.0000",
+     "cost_average": "1"
+    }
+   ]
+  },
+  {
+   "label": "tras_S4_salidas",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": "10.0000",
+     "cost_average": "1"
+    },
+    {
+     "sku": "112",
+     "stock_current": "20.0000",
+     "cost_average": "1"
+    }
+   ]
+  },
+  {
+   "label": "tras_rectificacion_3",
+   "prods": [
+    {
+     "sku": "111",
+     "stock_current": 10,
+     "cost_average": 1,
+     "price": 2000
+    },
+    {
+     "sku": "112",
+     "stock_current": 20,
+     "cost_average": 1,
+     "price": 1000
+    }
+   ]
+  }
+ ],
+ "reaplicacion": {
+  "cambios": {
+   "items": 0,
+   "receipt": 0,
+   "movs_compra": 0,
+   "movs_salida": 0,
+   "wac": 2,
+   "asientos": 2,
+   "audit": 0
+  },
+  "ok": true
+ },
+ "resumen": {
+  "validaciones_antes": true,
+  "validaciones_despues": true,
+  "idempotencia": true,
+  "rollback": true,
+  "reaplicacion": true,
+  "net_delta": 0,
+  "veredicto": "PROTOTIPO E2E COMPLETO — TODAS LAS PRUEBAS PASS"
+ },
+ "hashes": {
+  "evidencia": "b10e1af74ea250a9496bbcb924b4abc2e700560bb48fc6c5d0e265bf1f155c0c"
+ }
+}
