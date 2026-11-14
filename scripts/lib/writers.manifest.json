@@ -9,6 +9,8 @@
     "scripts/apply-sql-migration.js",
     "scripts/apply_migration_20260824000002.mjs",
     "scripts/auditoria-17-1-servicios-usd.mjs",
+    "scripts/f8-verify-todos.mjs",
+    "scripts/f9-controles.mjs",
     "scripts/landing-demo-cleanup.cjs",
     "scripts/m002-aplicar-migracion-20261031140000.mjs",
     "scripts/m002-aplicar-migracion-PRODUCCION.mjs",
