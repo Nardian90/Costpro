@@ -1,6 +1,11 @@
 name: CI
 
 on:
+  # workflow_dispatch (CP-FIN-FINAL-CLOSE-005): re-disparo manual legítimo tras
+  # anomalía de GitHub (21:30Z+): los eventos push/synchronize dejaron de crear
+  # runs sin causa en el repo (PR head sí se actualizaba). Mismo conjunto de
+  # jobs y gates — no se desactiva ni debilita ningún control.
+  workflow_dispatch:
   push:
     branches: [main, master, develop]
   pull_request:
