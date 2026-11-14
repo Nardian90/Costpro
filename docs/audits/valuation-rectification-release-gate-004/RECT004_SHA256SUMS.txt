@@ -27,3 +27,6 @@ f1b5e6ec104cec1daf1aff6fd0c01f0cfedf238f15a8d8867e6207906c0d88b8  scripts/m050c-
 96c0e3fbb63755b38ef2ca650815b469a37139313817b9786f321bac4612ed7d  scripts/m050d-rect004-reversal-semantics.mjs
 19f49d1359ff986290b4546032bdbc74099525a1b403a4bfe21bdbf9a2373d1a  scripts/m050e-rect004-e2e-prototipo.mjs
 0b66b4767dacd5a0358f58401ef5f12911e6caaa701d72d98f705177f9d4f19d  scripts/m050f-rect004-gen-xlsx.py
+
+## Addendum (CP-FIN-FINAL-CLOSE-005, 2026-11-15)
+da41cf8fc41558eebaef2a80dd0632022aef39a2dd15a805cc3fa8efc516d776  RECT004_ADDENDUM_T12_GUARD.md

@@ -1,0 +1,121 @@
+{
+  "mision": "CP-FIN-FINAL-CLOSE-005",
+  "script": "m052-t12-guard-regression.mjs",
+  "fecha": "2026-11-14T21:51:12.585Z",
+  "base": "https://lguovmvrozxgssupkwpf.supabase.co",
+  "pasos": {
+    "P0_preflight": {
+      "estado": "PASS",
+      "resumen": "sentinela=true (REST+SQL); residuos previos eliminados; baseline capturada"
+    },
+    "P1_seed": {
+      "estado": "PASS",
+      "resumen": "3 recepciones contabilizadas por el MOTOR real (A/B/C)"
+    },
+    "P2_anulacion_ordinaria_intacta": {
+      "estado": "PASS",
+      "resumen": "A: compensatorio completo 1000 CUP; original reversed"
+    },
+    "P3_reversión_parcial_RECT1": {
+      "estado": "PASS",
+      "resumen": "B: parcial 3000 enlazado → residual 2000.00 CUP"
+    },
+    "P4_bloqueo_negocio_trigger": {
+      "estado": "PASS",
+      "resumen": "UPDATE bloqueado (trigger BEFORE); B sigue 'active'"
+    },
+    "P5_bloqueo_motor_y_auditoria": {
+      "estado": "PASS",
+      "resumen": "_safe→0; fin_posting_errors registra ERR_PARTIAL_REVERSAL_PENDING; residual 2000 intacto"
+    },
+    "P6_reversión_completa_intacta": {
+      "estado": "PASS",
+      "resumen": "C: voided sin 2ª compensación ni error (reversión completa respetada)"
+    },
+    "P7_regularización_y_cauce_ordinario": {
+      "estado": "PASS",
+      "resumen": "B: residual regularizado → anulación ordinaria habilitada"
+    },
+    "P8_limpieza_neta_0": {
+      "estado": "PASS",
+      "resumen": "NET DELTA 0 en las 8 tablas tocadas — BD aislada sin residuos"
+    }
+  },
+  "preguntas": {
+    "P2": {
+      "pregunta": "¿la anulación ordinaria (sin reversión previa) sigue intacta?",
+      "evidencia": "A: asiento anulacion 278723d3 enlazado, sentidos invertidos, débitos 1000=1000, original 'reversed'",
+      "resultado": "SÍ — sin regresión"
+    },
+    "P4": {
+      "pregunta": "¿el bloqueo se aplica en servidor y no solo en la interfaz?",
+      "evidencia": "UPDATE directo SQL bloqueado con ERR_PARTIAL_REVERSAL_PENDING: la recepción 7ec70005-0000-4000-8000-000000000b02 tiene el asiento bc5e3541-80d3-40ce-ad4b…; B sigue 'active'; 0 asientos anulacion. Todas las vías (API/RPC/UPDATE) convergen en este UPDATE de status.",
+      "resultado": "SÍ — trigger BEFORE server-side (PostgreSQL)"
+    },
+    "P5": {
+      "pregunta": "¿ningún proceso automático puede ignorar el residual pendiente?",
+      "evidencia": "fin_post_annulment_safe→0 compensatorios + fin_posting_errors(error_code~ERR_PARTIAL_REVERSAL_PENDING): «ERR_PARTIAL_REVERSAL_PENDING: el asiento bc5e3541-80d3-40ce-ad4b-b94abfa1ac60 (doc RECEPCION 7ec70005-0000-4000-8000-000000000b02) tiene rev…»; residual intacto 2000.00",
+      "resultado": "NO — el motor se niega y registra el intento"
+    },
+    "P6": {
+      "pregunta": "¿se mantiene la integridad de las reversiones completas ordinarias?",
+      "evidencia": "C: reversión completa enlazada (residual 0) → anulación pasa, sin 2ª compensación, sin error; original queda 'posted' compensado por la reversión externa.",
+      "resultado": "SÍ — idempotencia intacta"
+    },
+    "P7": {
+      "pregunta": "¿la solución permite una regularización explícita y documentada del residual?",
+      "evidencia": "B: 2ª reversión parcial documentada (2000) → residual 0 → UPDATE voided PASA (trigger + motor); sin duplicar compensación (cobertura externa completa).",
+      "resultado": "SÍ — regularizar y luego anular funciona por el cauce ordinario"
+    }
+  },
+  "baseline_conteos": {
+    "fin_entries": 148,
+    "fin_movements": 297,
+    "receipts": 1,
+    "receipt_items": 3,
+    "products": 30,
+    "stores": 77,
+    "audit_logs": 2918,
+    "fin_posting_errors": 1
+  },
+  "asientos": {
+    "A": "5b778b63-9107-40b7-8459-5400365dc0a5",
+    "B": "bc5e3541-80d3-40ce-ad4b-b94abfa1ac60",
+    "C": "7583566e-ab16-4a48-af95-f916cbeb5d4b"
+  },
+  "residual_B": "2000.00",
+  "limpieza": {
+    "baseline": {
+      "fin_entries": 148,
+      "fin_movements": 297,
+      "receipts": 1,
+      "receipt_items": 3,
+      "products": 30,
+      "stores": 77,
+      "audit_logs": 2918,
+      "fin_posting_errors": 1
+    },
+    "finales": {
+      "fin_entries": 148,
+      "fin_movements": 297,
+      "receipts": 1,
+      "receipt_items": 3,
+      "products": 30,
+      "stores": 77,
+      "audit_logs": 2918,
+      "fin_posting_errors": 1
+    },
+    "delta": {
+      "fin_entries": 0,
+      "fin_movements": 0,
+      "receipts": 0,
+      "receipt_items": 0,
+      "products": 0,
+      "stores": 0,
+      "audit_logs": 0,
+      "fin_posting_errors": 0
+    },
+    "net_delta_0": true
+  },
+  "hash_evidencia": "74f0c691727fda051c206cbc25aa903e6c2208492923153af87d9896697b8342"
+}
