@@ -88,7 +88,7 @@ La columna «Cambio» cita la evidencia del avance. «=» sin cambio de estado d
 |---|---|---|---|---|
 | CP-IPV-001 | PRE_LEDGER/RECONCILIATION permanentes (CENTRAL/ENERVIDA) + 26 PRICE_AN | PENDIENTE CONFIRMADA | PENDIENTE CONFIRMADA | = (sin cambios) |
 | CP-IPV-002 | TAREA 3: re-costeo de COGS histórico no iniciado | PENDIENTE CONFIRMADA | PARCIALMENTE RESUELTA | Decisión C ratificada 20/10 (backfill evidencia-based SIN mutar Kardex). Migración 20261020000004_cogs_derived.sql en main: 5 columnas nuevas + 8 derivables con evidencia `wac_chan |
-| CP-IPV-003 | 4 WAC vigentes inflados 680x (SKU 67/68/107/121) + diluciones SKU 90/9 | PENDIENTE CONFIRMADA | PENDIENTE CONFIRMADA | = (sin cambios) |
+| CP-IPV-003 | 4 WAC vigentes inflados 680x (SKU 67/68/107/121) + diluciones SKU 90/9 | PENDIENTE CONFIRMADA | CERRADA POR DECISIÓN DEL PROPIETARIO — COSTOS EN CUP DE PROCEDENCIA NO VERIFICADA (RIESGO ACEPTADO, SIN CORRECCIÓN DE DATOS) | FINAL-CYCLE-CLOSE-001 T6 (2026-11-08): premisa re-verificada [MEDIDO] (4 SKUs ×680 exactos, solo 107 con stock, margen 27.27% @935 aritmético); propietario acepta el riesgo sin corrección de datos. Texto aplicado a los registros vivos el 2026-11-14 (CP-SECURITY-AND-BACKLOG-CLOSURE-001) |
 | CP-IPV-004 | Procedencia de costos ENERVIDA: 0% con evidencia documental | PENDIENTE CONFIRMADA | PENDIENTE CONFIRMADA | = (sin cambios) |
 | CP-IPV-005 | Deuda técnica del módulo IPV clásico (Dexie, componentes sobredimensio | PENDIENTE CONFIRMADA | PENDIENTE CONFIRMADA | = (sin cambios) |
 | CP-RES-007 | WAC cero: TAREA 2 (44 reconstruidos) y TAREA 2B (13 a 1 CUP, decisión  | RESUELTA VERIFICADA | RESUELTA VERIFICADA | = (sin cambios) |

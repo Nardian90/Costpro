@@ -679,6 +679,18 @@
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
       "expires": "2027-06-30"
+    },
+    {
+      "function": "can_manage_payroll_as",
+      "reason": "CP-SECURITY-BACKLOG-CLOSURE-001 (2026-11-14) · helper-interno · Helper de autorización de nóminas (misma clase que has_store_access_as/is_admin_check, ya allowlisted): resuelve la identidad server-side desde profiles/user_store_memberships por p_user_id explícito que los 7 RPC de nómina SÍ validan antes (patrón anti-spoofing v2.12.9 intacto en cada caller). Sin EXECUTE para anon/authenticated (REVOKE explícito en 20261114180000); solo service_role. Clasificación: gate de los RPC create/update/confirm/account/mark_paid/void/set_worker_salary_rate — verificados por scripts/e2e/verify-payroll-privacy-pg.mjs (matriz por rol).",
+      "added_by": "cp-security-backlog-closure-001",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "rate_limit_take",
+      "reason": "CP-SECURITY-BACKLOG-CLOSURE-001 (2026-11-14) · RPC service-only · Incremento atómico del contador de rate limit distribuido (UPSERT sobre rate_limit_buckets). Sin verificación de identidad PROPIA por diseño: la autorización es por ACL, no por claims — REVOKE EXECUTE de PUBLIC/anon/authenticated y GRANT solo a service_role (20261114180400, verificación fail-closed incluida). La tabla es RLS FORCED sin políticas. Solo alcanzable desde el servidor Next.js con service role. Pruebas: src/__tests__/lib/rate-limit-distributed.test.ts + scripts/rate-limit-concurrency-proof.mjs.",
+      "added_by": "cp-security-backlog-closure-001",
+      "expires": "2027-06-30"
     }
   ],
   "tables_without_rls": [],

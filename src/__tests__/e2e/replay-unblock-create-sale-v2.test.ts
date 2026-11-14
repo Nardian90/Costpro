@@ -430,9 +430,15 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // devolución en divisa — total canónico en DEVOLUCION_VENTA (sin ×tasa) y
     // tasa efectiva exacta en las filas de reembolso (amount_cup = total canónico)
     // (20261114140000_cp_fin_ciclo_devolucion_divisa) = 160
-    expect(m.total_incluidos).toBe(160);
+    // CP-SECURITY-AND-BACKLOG-CLOSURE-001 (2026-11-14): +5 —
+    //   20261114180000_cp_sec_payroll_privacy (RLS por rol + gates RPC nómina)
+    //   20261114180100_cp_sec_privileges_minimo (REVOKE TRUNCATE/TRIGGER/REFERENCES)
+    //   20261114180200_cp_commission_constraint_dedup (restricción duplicada)
+    //   20261114180300_cp_infra_020_breaker_v2 (freno TRUNCATE fail-closed)
+    //   20261114180400_cp_sec_rate_limit_store (limiter distribuido) = 165
+    expect(m.total_incluidos).toBe(165);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(160);
+    expect(incluidos.length).toBe(165);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

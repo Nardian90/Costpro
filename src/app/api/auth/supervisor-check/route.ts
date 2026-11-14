@@ -54,9 +54,14 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  // CP-SEC-RATELIMIT: failMode 'closed' — ruta de AUTENTICACIÓN/SEGURIDAD
+  // (validación de credenciales de supervisor): si el almacén compartido no
+  // puede verificar el límite, se DENIEGA. La protección contra fuerza
+  // bruta no se diluye por degradación de infraestructura.
   const { allowed } = await rateLimit(`supervisor-check:${session.user.id}`, {
     windowMs: 60_000,
     maxRequests: 5,
+    failMode: 'closed',
   });
   if (!allowed) {
     return NextResponse.json({ error: 'Too many attempts' }, { status: 429 });

@@ -81,7 +81,7 @@
 | CP-INV-009 | INV | Vales de Salida sin superficie UI de reversión (backend existe) | PARCIALMENTE RESUELTA | P2 | [DOC] ENERVIDA-FLOW-DISCOVERY §2/§8.A + [CÓD] `useReverseDocument.ts` | `ReversibleDocType` no incluye vale_salida en UI | Ninguna |
 | CP-IPV-001 | IPV | PRE_LEDGER/RECONCILIATION permanentes (CENTRAL/ENERVIDA) + 26 PRICE_ANOMALY | PENDIENTE CONFIRMADA | P2 | [DOC] AUDITORIA_IPV §5/§15 + INCIDENTE_IPV §D | Cargas iniciales sin ledger; devoluciones de agosto sin `return` | Backfill requiere autorización |
 | CP-IPV-002 | IPV | TAREA 3: re-costeo de COGS histórico no iniciado | PENDIENTE CONFIRMADA | P2 | [DOC] ENERVIDA-WAC-ZERO-COST-CIERRE + COST-PROVENANCE §10 | Requiere política por clase de costo + facturas externas | CP-IPV-003, decisión contable |
-| CP-IPV-003 | IPV | 4 WAC vigentes inflados 680x (SKU 67/68/107/121) + diluciones SKU 90/999 | PENDIENTE CONFIRMADA | P1 | [DOC] ENERVIDA-COST-PROVENANCE §8-bis | WAC pre-log irreconstruible (era sin `wac_change_log`) | CP-IPV-002 |
+| CP-IPV-003 | IPV | 4 WAC vigentes inflados 680x (SKU 67/68/107/121) + diluciones SKU 90/999 | CERRADA POR DECISIÓN DEL PROPIETARIO — COSTOS EN CUP DE PROCEDENCIA NO VERIFICADA (RIESGO ACEPTADO, SIN CORRECCIÓN DE DATOS) | P1 | [DOC] ENERVIDA-COST-PROVENANCE §8-bis + [MEDIDO 2026-11-08] audit-evidence/FINAL-CYCLE-CLOSE-001/T6-IPV-003.md | WAC pre-log irreconstruible (era sin `wac_change_log`) | CP-IPV-002 |
 | CP-IPV-004 | IPV | Procedencia de costos ENERVIDA: 0% con evidencia documental | PENDIENTE CONFIRMADA | P3 | [DOC] ENERVIDA-COST-PROVENANCE (reporte-solo) | Era pre-log; 51% costo=precio de venta | CP-IPV-002 |
 | CP-IPV-005 | IPV | Deuda técnica del módulo IPV clásico (Dexie, componentes sobredimensionados) | PENDIENTE CONFIRMADA | P3 | [DOC] EVALUACION_IPV | Acoplamiento MatchingEngine↔Dexie; refactor en 4 fases propuesto | Ninguna |
 | CP-CAT-001 | CAT | Categorías como texto libre en `products.category` | PENDIENTE CONFIRMADA | P3 | [DOC] audit_v3_multi_store §1 | Sin tabla de categorías ni FK | Ninguna |
@@ -579,19 +579,20 @@
 - **Limitaciones de la auditoría:** —
 
 #### CP-IPV-003 — 4 WAC vigentes inflados 680x + diluciones anómalas
-- **ID estable:** CP-IPV-003 · **Área:** IPV/CAT · **Estado verificado:** PENDIENTE CONFIRMADA · **Prioridad:** P1
+- **ID estable:** CP-IPV-003 · **Área:** IPV/CAT · **Estado verificado:** CERRADA POR DECISIÓN DEL PROPIETARIO — COSTOS EN CUP DE PROCEDENCIA NO VERIFICADA (RIESGO ACEPTADO, SIN CORRECCIÓN DE DATOS) · **Prioridad:** P1
 - **Descripción del problema:** SKU 67, 68, 107 y 121 tienen WAC vigente inflado 680x (USD×680 en era pre-log); SKU 90 y 999 con diluciones anómalas. No corregidos; el COGS histórico de sus ventas ya quedó inflado.
 - **Comportamiento esperado:** WAC realista con log de cambio gobernado.
 - **Origen documental:** `docs/audits/ENERVIDA-COST-PROVENANCE-AUDIT.md` §8-bis.
 - **Fecha del registro original:** 2026-10-07.
-- **Evidencia en el código actual:** datos citados; sin corrección posterior localizada.
-- **Pruebas realizadas:** evidencia documental.
-- **Resultado observado:** pendiente (decisión contable posterior).
-- **Impacto de mantenerla pendiente:** márgenes absurdos en reportes de esos SKUs; riesgo de decisiones de precio basadas en costos falsos.
+- **Cierre (2026-11-08, COSTPRO-FINAL-CYCLE-CLOSE-001 T6):** premisa re-verificada por lectura directa de producción [MEDIDO]: los 4 SKUs satisfacen EXACTAMENTE cost_average = precio_USD×680; solo el SKU 107 conserva existencia (2 uds); margen aparente 27.27% a tasa 935 (verificación aritmética derivada). El propietario aceptó el riesgo SIN corrección de datos. Nota (2026-11-14): el commit b7d8a8f93 anunció esta redacción en su mensaje pero el diff real no la escribió; el texto quedó aplicado en los registros vivos (tareas.csv, este inventario, WORKLOG) por CP-SECURITY-AND-BACKLOG-CLOSURE-001.
+- **Evidencia en el código actual:** `audit-evidence/FINAL-CYCLE-CLOSE-001/T6-IPV-003.md` (tabla por SKU, margen, hipótesis, impacto y decisión humana mínima).
+- **Pruebas realizadas:** verificación aritmética + lectura directa de producción (sin escrituras).
+- **Resultado observado:** CERRADA POR DECISIÓN DEL PROPIETARIO (riesgo aceptado, sin corrección de datos).
+- **Impacto de mantener el riesgo (documentado, sin corrección):** el WAC del SKU 107 (17 000 CUP) sobrevalúa el COGS de futuras ventas hasta que nueva recepción lo diluya; los otros 3 SKUs tienen stock 0.
 - **Causa raíz confirmada o hipótesis:** conversión USD×680 aplicada como costo en era sin wac_change_log.
-- **Dependencias y riesgos:** corrección gobernada (mismo tratamiento que los 13 del TAREA 2B).
-- **Trabajo que faltaría realizar:** corrección gobernada con wac_change_log + decisión sobre COGS histórico.
-- **Criterios de aceptación propuestos:** WAC de los 4 SKUs dentro de rango plausible; cambio auditado.
+- **Dependencias y riesgos:** corrección futura solo vía misión gobernada con `wac_change_log` + decisión sobre COGS histórico (fuera del alcance del cierre).
+- **Trabajo que faltaría realizar:** ninguno para el cierre; corrección gobernada solo si el propietario la pide.
+- **Criterios de aceptación propuestos:** (cumplido por decisión) cierre documental con riesgo aceptado y evidencia medible.
 - **Método recomendado para verificar la corrección:** query de wac_change_log y valores vigentes.
 - **Limitaciones de la auditoría:** valores actuales no consultados en vivo.
 
