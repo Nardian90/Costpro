@@ -440,9 +440,13 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261114180300_cp_infra_020_breaker_v2 (freno TRUNCATE fail-closed)
     //   20261114180400_cp_sec_rate_limit_store (limiter distribuido)
     //   20261114180500_cp_fix_legal_incidents_audit_whitelist (regresión BUG-024) = 167
-    expect(m.total_incluidos).toBe(167);
+    // CP-POST-MERGE-EXECUTION-002 (2026-11-14, adenda del propietario): +3 —
+    //   20261114190000_cp_cost_nominal_1cup (1 CUP nominal a costos promedio cero)
+    //   20261114190100_cp_operational_class_venta_prod (clasificación venta)
+    //   20261114190200_cp_import_flow_recurrence_fix (fix reincidencia importador) = 170
+    expect(m.total_incluidos).toBe(170);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(167);
+    expect(incluidos.length).toBe(170);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
