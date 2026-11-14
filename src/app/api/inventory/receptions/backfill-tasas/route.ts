@@ -31,13 +31,28 @@ const backfillSchema = z.object({
 /**
  * POST /api/inventory/receptions/backfill-tasas
  *
- * Backfill masivo: asigna moneda + tasa a todas las recepciones
- * en un rango de fecha que todavía tienen tasa=1.0 (CUP).
+ * Backfill masivo: asigna moneda + tasa a las líneas de recepciones
+ * PENDIENTES en un rango de fecha que todavía tienen tasa=1.0 (CUP).
  *
- * Solo afecta receipt_items con tasa_cambio_recepcion = 1.0 (default).
- * No toca items que ya tienen una tasa asignada manualmente.
+ * CP-RECEIPT-INTEGRITY-001 (2026-11-14) — dos correcciones sobre el diseño
+ * legacy:
+ *   1. GUARD DE ESTADO: solo receipts.status='pending'. Antes el filtro era
+ *      por tienda y fecha únicamente → mutaba en silencio líneas de
+ *      recepciones CONFIRMADAS/ANULADAS/REVERTIDAS (rompía la inmutabilidad
+ *      económica de documentos terminados).
+ *   2. CONSISTENCIA DE CABECERA: cada mutación se delega a la RPC canónica
+ *      update_receipt_item_tasa, que recalcula receipts.total_cost con
+ *      calculate_receipt_total_cup y escribe auditoría dual
+ *      (receipt_tasa_audit + audit_logs). Antes actualizaba las líneas con
+ *      service_role SIN recalculo → la cabecera quedaba desfasada respecto a
+ *      las líneas (WAC/kardex/CP-FIN ya aplicados + costeo dinámico y
+ *      pendiente_cup con el nuevo valor: divergencia de 3 vías).
  *
- * Genera auditoría por cada item actualizado.
+ * Solo afecta receipt_items con tasa_cambio_recepcion = 1.0 (default) y
+ * moneda 'CUP'. No toca items que ya tienen una tasa asignada manualmente.
+ *
+ * Autorización: pre-check has_store_access_as (membresía activa o rol
+ * administrativo de plataforma) + revalidación por item en la RPC.
  */
 async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
@@ -54,14 +69,31 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const supabase = getSupabaseAdminSafe();
   if (!supabase) return NextResponse.json({ error: 'Server misconfigured' }, { status: 500 });
 
-  // 1. Encontrar receipt_items con tasa=1.0 (default CUP) en el rango de fecha
+  // 0. Autorización de tienda ANTES de mutar nada (fail-fast: evita lotes
+  // parcialmente aplicados seguidos de un 403). La RPC revalida por item.
+  const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '')
+    ? session.user.id : null;
+  const { data: accessOk, error: accessErr } = await supabase.rpc('has_store_access_as', {
+    p_user_id: userId,
+    p_store_id: store_id,
+  });
+  if (accessErr || accessOk !== true) {
+    return NextResponse.json({
+      error: 'Forbidden — sin acceso a la tienda indicada',
+      code: 'ERR_UNAUTHORIZED',
+    }, { status: 403 });
+  }
+
+  // 1. Encontrar receipt_items con tasa=1.0 (default CUP) en PENDING receipts
+  // del rango de fecha. Guard CP-RECEIPT-INTEGRITY-001: receipts.status='pending'.
   let query = supabase
     .from('receipt_items')
     .select(`
       id, product_id,
-      receipts!inner(store_id, reception_date)
+      receipts!inner(id, status, store_id, reception_date)
     `)
     .eq('receipts.store_id', store_id)
+    .eq('receipts.status', 'pending')
     .eq('tasa_cambio_recepcion', 1.0)
     .eq('moneda_recepcion', 'CUP');
 
@@ -82,62 +114,64 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({
       success: true,
       updated: 0,
-      message: 'No se encontraron items con tasa default (1.0 CUP) en el rango especificado.',
+      recalculated_receipts: 0,
+      message: 'No se encontraron items con tasa default (1.0 CUP) en recepciones PENDIENTES del rango especificado.',
     });
   }
 
-  // 2. Actualizar cada item + crear auditoría
-  const userId = session.user.id;
+  // 2. Actualizar cada item vía la RPC canónica (auditoría + recalculo de
+  // cabecera atómico por línea + guard de estado revalidado en el servidor).
   let updated = 0;
-  const auditRows: any[] = [];
+  let failed = 0;
+  const failedItems: Array<{ itemId: string; error: string }> = [];
+  const totalsByReceipt = new Map<string, number>();
 
   for (const item of itemsToUpdate) {
-    // Update the item
-    const { error: updateError } = await supabase
-      .from('receipt_items')
-      .update({
-        moneda_recepcion: moneda,
-        tasa_cambio_recepcion: tasa,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', item.id);
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('update_receipt_item_tasa', {
+      p_receipt_item_id: item.id,
+      p_new_tasa_cambio_recepcion: tasa,
+      p_new_moneda_recepcion: moneda,
+      p_motivo: motivo || `Backfill masivo: tasa ${tasa} ${moneda}/CUP`,
+      p_user_id: userId,
+    });
 
-    if (updateError) {
-      logger.error('DATABASE', 'BACKFILL_ITEM_UPDATE_FAILED', { itemId: item.id, error: updateError.message });
+    if (rpcError) {
+      failed++;
+      failedItems.push({ itemId: item.id, error: rpcError.message });
+      logger.warn('DATABASE', 'BACKFILL_ITEM_UPDATE_FAILED', { itemId: item.id, error: rpcError.message });
       continue;
     }
 
-    // Prepare audit row
-    auditRows.push({
-      receipt_item_id: item.id,
-      valor_anterior: 1.0,
-      valor_nuevo: tasa,
-      moneda_anterior: 'CUP',
-      moneda_nueva: moneda,
-      modificado_por: userId,
-      motivo: motivo || `Backfill masivo: tasa ${tasa} ${moneda}/CUP`,
-    });
     updated++;
+    // Embed many-to-one tipado como array (cliente sin genérico Database):
+    // normalizar antes de leer el id (misma convención que costeo-dinamico).
+    const receiptRef = Array.isArray(item.receipts) ? item.receipts[0] : item.receipts;
+    const receiptId = receiptRef?.id;
+    if (receiptId && typeof rpcResult?.new_total_cost === 'number') {
+      totalsByReceipt.set(receiptId, rpcResult.new_total_cost);
+    } else if (receiptId) {
+      totalsByReceipt.set(receiptId, Number(rpcResult?.new_total_cost ?? 0));
+    }
   }
 
-  // 3. Insertar auditoría en batch
-  if (auditRows.length > 0) {
-    await supabase.from('receipt_tasa_audit').insert(auditRows);
-  }
-
-  // 4. Invalidar cache del costeo dinámico
+  // 3. Invalidar cache del costeo dinámico
   invalidateCacheForStore(store_id);
 
   logger.info('DATABASE', 'BACKFILL_TASAS_COMPLETED', {
-    storeId: store_id, updated, moneda, tasa, dateFrom: date_from, dateTo: date_to,
+    storeId: store_id, updated, failed, moneda, tasa, dateFrom: date_from, dateTo: date_to,
+    receiptsRecalculados: totalsByReceipt.size,
   });
 
   return NextResponse.json({
     success: true,
     updated,
+    failed,
+    failed_items: failedItems,
+    recalculated_receipts: totalsByReceipt.size,
+    totals_por_recepcion: Object.fromEntries(totalsByReceipt),
     moneda,
     tasa,
-    message: `${updated} items actualizados a ${moneda} ${tasa} CUP/${moneda}`,
+    message: `${updated} items actualizados a ${moneda} ${tasa} CUP/${moneda} en recepciones pendientes; ${totalsByReceipt.size} cabeceras recalculadas.`,
   });
 }
 

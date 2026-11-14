@@ -1,0 +1,18 @@
+# MANIFIESTO SHA-256 — CP-RECEIPT-INTEGRITY-001 (2026-11-14)
+
+Entregables de download/:
+2ac71a5aaec7cb62d9982e7941a35f422e40d5f3687dc495cbc50128ee60e29b  INFORME_FORENSE_RECEPCION_FAC-VITALLCONS-001.md
+b1e7fb85a33098c41a9f5b4419ac111623a988724dd26aba05c040b9a9d3aeab  MATRIZ_RECONCILIACION_RECEPCIONES.xlsx
+796050ddefe2de12b3649e86d97cf47044dfe620e9eb0a6df8b522a3414b1a3b  EVIDENCIA_FAC-VITALLCONS-001.json
+efe4f0a5f358c033173da6e60503019edbe2bb83dc9c170c8ce747aafb202ebf  consultas_sql_independientes.sql
+
+Expediente dentro del repo (docs/audits/receipt-integrity-20261114/):
+2ac71a5aaec7cb62d9982e7941a35f422e40d5f3687dc495cbc50128ee60e29b  INFORME_FORENSE_RECEPCION_FAC-VITALLCONS-001.md
+b1e7fb85a33098c41a9f5b4419ac111623a988724dd26aba05c040b9a9d3aeab  MATRIZ_RECONCILIACION_RECEPCIONES.xlsx
+796050ddefe2de12b3649e86d97cf47044dfe620e9eb0a6df8b522a3414b1a3b  EVIDENCIA_FAC-VITALLCONS-001.json
+efe4f0a5f358c033173da6e60503019edbe2bb83dc9c170c8ce747aafb202ebf  consultas_sql_independientes.sql
+64d2d464188d407e15cbbff1359151f7797124b62d176720cc68956b996a2696  README.md
+09c566b14384617a560d3cb6f4966add5a4d46c410dd34763f6f5f9b6e8062ae  forensic-extract-fd9d6c88.mjs
+7b7d9a7f168627c1ee079a143be497dfba783442500aa50771a960d22c0ca300  matriz-recepciones.mjs
+
+Evidencia cruda de la extracción read-only (101 líneas, hashes por sección) en scripts/out/forensic-fd9d6c88-raw.json del sandbox.

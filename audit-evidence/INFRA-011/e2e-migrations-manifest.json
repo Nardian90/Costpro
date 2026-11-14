@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 581,
-  "total_incluidos": 166,
+  "total_considerados": 582,
+  "total_incluidos": 167,
   "total_excluidos": 415,
-  "digest": "b06fd5d2c46f14eb92b2b1ec822742f150d7aa75823c60ab249ade0c8d0c6801",
+  "digest": "74a46ceacdda86d2a761e0f3efc222500a574b51963b26b5eb2ae7673c72e005",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5642,6 +5642,17 @@
       "sha256_generado": "2cfc45807e8aa47ae56ead052807376b6138021cd80637f49c93e267489a92c7"
     },
     {
+      "nombre": "20261114160000_cp_receipt_items_immutable.sql",
+      "bytes": 4986,
+      "sha256_original": "f3bbd5fb37241f7a94a4f6fd773d6c19e8e695e67ef2ccd5e16d806be41be2af",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261114",
+      "observaciones": [],
+      "posicion": 161,
+      "sha256_generado": "f3bbd5fb37241f7a94a4f6fd773d6c19e8e695e67ef2ccd5e16d806be41be2af"
+    },
+    {
       "nombre": "20261114180000_cp_sec_payroll_privacy.sql",
       "bytes": 39258,
       "sha256_original": "0578ebb1ea4b56c042e7260c9804e599feef10e7234950ec97aa62ad45c87fec",
@@ -5649,7 +5660,7 @@
       "razon": null,
       "timestamp": "20261114",
       "observaciones": [],
-      "posicion": 161,
+      "posicion": 162,
       "sha256_generado": "0578ebb1ea4b56c042e7260c9804e599feef10e7234950ec97aa62ad45c87fec"
     },
     {
@@ -5660,7 +5671,7 @@
       "razon": null,
       "timestamp": "20261114",
       "observaciones": [],
-      "posicion": 162,
+      "posicion": 163,
       "sha256_generado": "3b6a2feeb1dbbd94f021f1e695209b33b1b4edce0ab015d820ce83a592a11911"
     },
     {
@@ -5671,7 +5682,7 @@
       "razon": null,
       "timestamp": "20261114",
       "observaciones": [],
-      "posicion": 163,
+      "posicion": 164,
       "sha256_generado": "c970109a2bc0fee27b3e4216870a10f67db7334fc1934286a23c5e133e1eda15"
     },
     {
@@ -5682,7 +5693,7 @@
       "razon": null,
       "timestamp": "20261114",
       "observaciones": [],
-      "posicion": 164,
+      "posicion": 165,
       "sha256_generado": "f8284f63fe593bf7524ae8a24b9624267607642f8692a203bc1b0ae977f8fb3f"
     },
     {
@@ -5693,7 +5704,7 @@
       "razon": null,
       "timestamp": "20261114",
       "observaciones": [],
-      "posicion": 165,
+      "posicion": 166,
       "sha256_generado": "e5dcd4b90f7cfc67f3580d3545081961959db90db52c4b0de5dd49cce83b3b68"
     },
     {
@@ -5704,7 +5715,7 @@
       "razon": null,
       "timestamp": "20261114",
       "observaciones": [],
-      "posicion": 166,
+      "posicion": 167,
       "sha256_generado": "fa619857700e0eceb773dd35afdcf383dde0e3fee35701279ddd0a250f69bf53"
     },
     {
