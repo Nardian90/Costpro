@@ -1,7 +1,7 @@
 {
   "mision": "CP-FIN-FINAL-CLOSE-005",
   "script": "m053-readonly-preflight.mjs",
-  "fecha": "2026-11-14T21:57:20.090Z",
+  "fecha": "2026-11-14T23:08:11.079Z",
   "comparacion": {
     "referencia": {
       "archivo": "/home/z/my-project/Costpro/docs/audits/valuation-rectification-release-gate-004/rect004-faseDP-snapshot.json",
@@ -9,7 +9,7 @@
     },
     "fresco": {
       "archivo": "/home/z/my-project/scripts/out/rect004-faseDP-snapshot.json",
-      "extraccion": "2026-11-14T21:54:29.246Z"
+      "extraccion": "2026-11-14T23:06:54.111Z"
     }
   },
   "secciones": {

@@ -1,0 +1,12 @@
+# RECT005_SHA256SUMS.txt — CP-FIN-FINAL-CLOSE-005
+# Manifiesto de hashes de los entregables de la misión 005 (este manifiesto se excluye a sí mismo).
+# Generado: 2026-11-14T23:14:39Z
+
+189abe371c8ca0877ac155d236f2dc04a9fbacf6bcf2af9bad1dc5a6887efcff  CP_FIN_FINAL_CLOSE_005.md
+21a2bca503f71b01ca20fa3ec0057669f8ea4cd6de5ccace97b30a5e4800482a  t12-guard-regression.json
+cb8143071d496d910c1b0c48ee6902156a1a1692ae1ee428f1c5070e9c0a86b6  preflight-readonly-evidencia.json
+817ee1d68038c9332c9f9ecaedc21c134c8724ca8a931dbcccc62b06b603e290  scripts/m052-t12-guard-regression.mjs
+09af4d2b8b2571b9dfaae23d5ff04747c60c809ae27999b2ca230064675e8991  scripts/m052c-t12-sqlbat-pg.mjs
+7e0f9a155c1a95f79f2283ec44f4d9cb525969a9bdb63201ba58d551c45168d7  scripts/m053-readonly-preflight.mjs
+3429613c4bd26e33843be28b8174c336a785189330033433309bec6573e19481  supabase/migrations/20261115100000_cp_fin_t12_partial_reversal_guard.sql
+8d18b4fa53fa1c1b2077a6ef64de0ed38072616fa616611d87e7c592caf3496b  supabase/tests/cp_fin_t12_partial_reversal_guard_test.sql
