@@ -884,5 +884,15 @@
       "expires": "2026-12-31"
     }
   ],
-  "source_of_truth_baseline": []
+  "source_of_truth_baseline": [
+    {
+      "function": "create_devolution_v2/12",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "PR #1616 (ciclo devolución en divisa): migración 20261114140000 redefine create_devolution_v2 (tasa efectiva exacta en filas de reembolso USD/AS_PAID) CON AUTORIZACIÓN PENDIENTE — producción no debe tocarse sin decisión del propietario. El replay del PR diverge del surface certificado (vivo) hasta que la migración se aplique con autorización; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/nominas). El cuerpo propuesto está validado íntegro en BD E2E aislada (37/37 PASS + net delta 0).",
+      "added_by": "CP-FIN misión final 2026-11-13 (PR #1616)",
+      "expires": "2026-12-31"
+    }
+  ]
 }
