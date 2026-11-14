@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-13T17:33:36.976Z
+-- Captured  : 2026-11-14T00:50:04.541Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 207 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -1742,43 +1742,6 @@ BEGIN
 END $function$
 
 
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
-END;
-$function$
-
-
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1815,6 +1778,43 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
+END;
+$function$
+
+
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
 END;
 $function$
 
@@ -4007,6 +4007,15 @@ BEGIN
       END IF;
       v_refund_rate := v_rate_sale;
       v_refund_amount := round(v_total / v_rate_sale, 2);
+      -- 20261114140000 (ciclo divisa): conservar la invariante DOCUMENTADA de este
+      -- RPC («amount = canónico / tasa para USD ⇒ amount_cup conserva el total
+      -- canónico»). round() al céntimo USD la rompía: amount×tasa ≠ v_total →
+      -- ERR_UNBALANCED en el asiento de DEVOLUCION_VENTA. La fila lleva ahora la
+      -- TASA EFECTIVA exacta v_total/v_refund_amount (amount_cup = v_total);
+      -- la tasa histórica de la venta permanece en v_rate_sale y audit_logs
+      -- (rate_sale). El importe físico sigue en céntimos USD reales.
+      v_refund_rate := CASE WHEN v_refund_amount > 0
+                             THEN v_total / v_refund_amount ELSE v_rate_sale END;
     ELSE
       v_refund_amount := v_total;
     END IF;
@@ -4076,7 +4085,10 @@ BEGIN
           payment_date, direction, paid_by, idempotency_key
         ) VALUES (
           p_store_id, 'devolution', v_devolution_id, p_original_transaction_id,
-          v_comp_usd, p_payment_method, 'USD', v_rate_sale,
+          v_comp_usd, p_payment_method, 'USD',
+          -- 20261114140000 (ciclo divisa): tasa efectiva exacta del componente USD
+          -- ⇒ amount_cup = v_total − v_comp_cup (canónico; misma invariante que M3).
+          (v_total - v_comp_cup) / NULLIF(v_comp_usd, 0),
           v_eff, 'refund', v_caller_uid, 'dev-' || v_devolution_id::text || '-refund-USD'
         ) RETURNING id INTO v_pt_id;
       END IF;
