@@ -1,0 +1,2759 @@
+{
+ "mision": "CP-FIN-VALUATION-RECTIFICATION-003",
+ "fase": "I-complemento",
+ "secciones": {},
+ "transaction_items": [
+  {
+   "id": "090b0ba7-88dd-427f-ae92-c736e3f8b05f",
+   "transaction_id": "4c76a1a1-4b77-4d26-9093-bd183285ec50",
+   "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+   "sku": "111",
+   "quantity": "1.0000",
+   "price_at_sale": "2000.00",
+   "price_at_sale_cup": "2000.00",
+   "cost_at_sale": "1",
+   "price_currency": "CUP",
+   "exchange_rate": "1"
+  },
+  {
+   "id": "f004941e-b1d3-4519-a9dc-806da145a087",
+   "transaction_id": "99d8993f-480c-406b-840f-1f2e183725ac",
+   "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+   "sku": "111",
+   "quantity": "1.0000",
+   "price_at_sale": "2500.0",
+   "price_at_sale_cup": "2500.00",
+   "cost_at_sale": "0",
+   "price_currency": "CUP",
+   "exchange_rate": null
+  },
+  {
+   "id": "b3b85434-e3f1-4769-837b-4f0b3ebda529",
+   "transaction_id": "a0d9f44d-9f54-4f69-a91f-db05f3dd4886",
+   "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+   "sku": "111",
+   "quantity": "1.0000",
+   "price_at_sale": "2000.00",
+   "price_at_sale_cup": "2000.00",
+   "cost_at_sale": "1",
+   "price_currency": "CUP",
+   "exchange_rate": "1"
+  },
+  {
+   "id": "eb5d6522-4031-4656-a65b-df515a598261",
+   "transaction_id": "acc2b470-ee74-4d44-8e3a-2289c8331c36",
+   "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+   "sku": "112",
+   "quantity": "3.0000",
+   "price_at_sale": "1500.00",
+   "price_at_sale_cup": "1500.00",
+   "cost_at_sale": "1",
+   "price_currency": "CUP",
+   "exchange_rate": null
+  },
+  {
+   "id": "4e0d1d1e-fc65-41f4-a7b7-189ebb88b6a9",
+   "transaction_id": "d939ea06-b328-42f8-ac42-931f201e81c2",
+   "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+   "sku": "111",
+   "quantity": "1.0000",
+   "price_at_sale": "2000.00",
+   "price_at_sale_cup": "2000.00",
+   "cost_at_sale": "0",
+   "price_currency": "CUP",
+   "exchange_rate": null
+  }
+ ],
+ "transaction_items_todos": [
+  {
+   "transaction_id": "a0d9f44d-9f54-4f69-a91f-db05f3dd4886",
+   "items": 1,
+   "unidades": 1
+  },
+  {
+   "transaction_id": "99d8993f-480c-406b-840f-1f2e183725ac",
+   "items": 1,
+   "unidades": 1
+  },
+  {
+   "transaction_id": "d939ea06-b328-42f8-ac42-931f201e81c2",
+   "items": 1,
+   "unidades": 1
+  },
+  {
+   "transaction_id": "acc2b470-ee74-4d44-8e3a-2289c8331c36",
+   "items": 1,
+   "unidades": 3
+  },
+  {
+   "transaction_id": "4c76a1a1-4b77-4d26-9093-bd183285ec50",
+   "items": 1,
+   "unidades": 1
+  }
+ ],
+ "fin_entries_ventas": [
+  {
+   "id": "c5726e2e-74ed-4e31-a544-8c0dc6354649",
+   "document_type": "VENTA",
+   "document_id": "99d8993f-480c-406b-840f-1f2e183725ac",
+   "document_number": "FAC-004479-2026",
+   "event": "reconocimiento",
+   "economic_date": "2026-07-24",
+   "posted_at": "2026-11-14 02:03:38.476018+00",
+   "status": "posted",
+   "description": "Venta FAC-004479-2026",
+   "reversal_of": null
+  },
+  {
+   "id": "da289831-e699-462e-939b-9b8c456f7485",
+   "document_type": "VENTA",
+   "document_id": "d939ea06-b328-42f8-ac42-931f201e81c2",
+   "document_number": null,
+   "event": "reconocimiento",
+   "economic_date": "2026-10-04",
+   "posted_at": "2026-11-14 02:08:29.060477+00",
+   "status": "posted",
+   "description": "Venta ",
+   "reversal_of": null
+  },
+  {
+   "id": "185d26f6-fa06-4ab4-b48e-a05e704a452d",
+   "document_type": "VENTA",
+   "document_id": "acc2b470-ee74-4d44-8e3a-2289c8331c36",
+   "document_number": null,
+   "event": "reconocimiento",
+   "economic_date": "2026-10-05",
+   "posted_at": "2026-11-14 02:05:15.508344+00",
+   "status": "posted",
+   "description": "Venta ",
+   "reversal_of": null
+  },
+  {
+   "id": "49f5ff74-298c-41c8-a02b-03f0d80003d2",
+   "document_type": "VENTA",
+   "document_id": "4c76a1a1-4b77-4d26-9093-bd183285ec50",
+   "document_number": null,
+   "event": "reconocimiento",
+   "economic_date": "2026-10-14",
+   "posted_at": "2026-11-14 01:57:51.3406+00",
+   "status": "posted",
+   "description": "Venta ",
+   "reversal_of": null
+  },
+  {
+   "id": "3dc8c5ac-096c-435a-9999-2f4f29b8ed47",
+   "document_type": "VENTA",
+   "document_id": "a0d9f44d-9f54-4f69-a91f-db05f3dd4886",
+   "document_number": null,
+   "event": "reconocimiento",
+   "economic_date": "2026-10-22",
+   "posted_at": "2026-11-14 02:04:07.538808+00",
+   "status": "posted",
+   "description": "Venta ",
+   "reversal_of": null
+  }
+ ],
+ "fin_movements_ventas": [
+  {
+   "id": "146a51fa-edf4-4b2a-aace-dbd6e8d80613",
+   "entry_id": "185d26f6-fa06-4ab4-b48e-a05e704a452d",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "3.00",
+   "amount_cup": "3.00",
+   "economic_date": "2026-10-05",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_productos_cup",
+    "template": "v-cogs-c"
+   }
+  },
+  {
+   "id": "3131c7fa-98fe-4393-a36d-3ef4952fdb64",
+   "entry_id": "185d26f6-fa06-4ab4-b48e-a05e704a452d",
+   "category_code": "ACT_EFECTIVO_CUP",
+   "sense": "debito",
+   "amount": "4500.00",
+   "amount_cup": "4500.00",
+   "economic_date": "2026-10-05",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "cob_cash_cup",
+    "template": "v-cash-cup"
+   }
+  },
+  {
+   "id": "525b2b44-18eb-4c27-afa0-752b3a55c681",
+   "entry_id": "185d26f6-fa06-4ab4-b48e-a05e704a452d",
+   "category_code": "GAS_COSTO_VENTAS",
+   "sense": "debito",
+   "amount": "3.00",
+   "amount_cup": "3.00",
+   "economic_date": "2026-10-05",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_productos_cup",
+    "template": "v-cogs-d"
+   }
+  },
+  {
+   "id": "a78b4bfa-e235-493d-958f-d0920c5668c0",
+   "entry_id": "185d26f6-fa06-4ab4-b48e-a05e704a452d",
+   "category_code": "ING_VENTAS",
+   "sense": "credito",
+   "amount": "4500.00",
+   "amount_cup": "4500.00",
+   "economic_date": "2026-10-05",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "total_cup",
+    "template": "v-ingreso"
+   }
+  },
+  {
+   "id": "919ed068-720f-49d3-92f6-00ce5774b984",
+   "entry_id": "3dc8c5ac-096c-435a-9999-2f4f29b8ed47",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "1.00",
+   "amount_cup": "1.00",
+   "economic_date": "2026-10-22",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_productos_cup",
+    "template": "v-cogs-c"
+   }
+  },
+  {
+   "id": "a65e2e55-a585-45aa-9ef1-b2ecab6acae1",
+   "entry_id": "3dc8c5ac-096c-435a-9999-2f4f29b8ed47",
+   "category_code": "ING_VENTAS",
+   "sense": "credito",
+   "amount": "2000.00",
+   "amount_cup": "2000.00",
+   "economic_date": "2026-10-22",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "total_cup",
+    "template": "v-ingreso"
+   }
+  },
+  {
+   "id": "bb4a7577-193a-4d46-af16-cad09a177ef5",
+   "entry_id": "3dc8c5ac-096c-435a-9999-2f4f29b8ed47",
+   "category_code": "ACT_EFECTIVO_CUP",
+   "sense": "debito",
+   "amount": "2000.00",
+   "amount_cup": "2000.00",
+   "economic_date": "2026-10-22",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "cob_cash_cup",
+    "template": "v-cash-cup"
+   }
+  },
+  {
+   "id": "fb41c4f4-a2fd-405b-8f23-28b710e66667",
+   "entry_id": "3dc8c5ac-096c-435a-9999-2f4f29b8ed47",
+   "category_code": "GAS_COSTO_VENTAS",
+   "sense": "debito",
+   "amount": "1.00",
+   "amount_cup": "1.00",
+   "economic_date": "2026-10-22",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_productos_cup",
+    "template": "v-cogs-d"
+   }
+  },
+  {
+   "id": "79e1c9c6-99cb-404a-95dc-6d8bb2b74c68",
+   "entry_id": "49f5ff74-298c-41c8-a02b-03f0d80003d2",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "1.00",
+   "amount_cup": "1.00",
+   "economic_date": "2026-10-14",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_productos_cup",
+    "template": "v-cogs-c"
+   }
+  },
+  {
+   "id": "8fd66c34-4c04-4835-9cd0-57fc56f98d6c",
+   "entry_id": "49f5ff74-298c-41c8-a02b-03f0d80003d2",
+   "category_code": "GAS_COSTO_VENTAS",
+   "sense": "debito",
+   "amount": "1.00",
+   "amount_cup": "1.00",
+   "economic_date": "2026-10-14",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_productos_cup",
+    "template": "v-cogs-d"
+   }
+  },
+  {
+   "id": "b66b3041-845f-481f-8b11-750d760d178e",
+   "entry_id": "49f5ff74-298c-41c8-a02b-03f0d80003d2",
+   "category_code": "ACT_EFECTIVO_CUP",
+   "sense": "debito",
+   "amount": "2000.00",
+   "amount_cup": "2000.00",
+   "economic_date": "2026-10-14",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "cob_cash_cup",
+    "template": "v-cash-cup"
+   }
+  },
+  {
+   "id": "c4c7e705-feaa-468a-ad59-0671379ed15c",
+   "entry_id": "49f5ff74-298c-41c8-a02b-03f0d80003d2",
+   "category_code": "ING_VENTAS",
+   "sense": "credito",
+   "amount": "2000.00",
+   "amount_cup": "2000.00",
+   "economic_date": "2026-10-14",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "total_cup",
+    "template": "v-ingreso"
+   }
+  },
+  {
+   "id": "282fba20-81e1-4761-a37d-8f5666c0e015",
+   "entry_id": "c5726e2e-74ed-4e31-a544-8c0dc6354649",
+   "category_code": "ING_VENTAS",
+   "sense": "credito",
+   "amount": "2500.00",
+   "amount_cup": "2500.00",
+   "economic_date": "2026-07-24",
+   "description": "Venta FAC-004479-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "total_cup",
+    "template": "v-ingreso"
+   }
+  },
+  {
+   "id": "45e39c9b-7222-4920-ba87-35d36ab17e72",
+   "entry_id": "c5726e2e-74ed-4e31-a544-8c0dc6354649",
+   "category_code": "GAS_COSTO_VENTAS",
+   "sense": "debito",
+   "amount": "1.00",
+   "amount_cup": "1.00",
+   "economic_date": "2026-07-24",
+   "description": "Venta FAC-004479-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_productos_cup",
+    "template": "v-cogs-d"
+   }
+  },
+  {
+   "id": "87d47c63-1069-48a8-be53-929d1a52b9a3",
+   "entry_id": "c5726e2e-74ed-4e31-a544-8c0dc6354649",
+   "category_code": "ACT_EFECTIVO_CUP",
+   "sense": "debito",
+   "amount": "2500.00",
+   "amount_cup": "2500.00",
+   "economic_date": "2026-07-24",
+   "description": "Venta FAC-004479-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "cob_cash_cup",
+    "template": "v-cash-cup"
+   }
+  },
+  {
+   "id": "f2324f11-d7a5-4c2a-a36e-b5a91444e467",
+   "entry_id": "c5726e2e-74ed-4e31-a544-8c0dc6354649",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "1.00",
+   "amount_cup": "1.00",
+   "economic_date": "2026-07-24",
+   "description": "Venta FAC-004479-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_productos_cup",
+    "template": "v-cogs-c"
+   }
+  },
+  {
+   "id": "35cbe282-df5f-4777-974d-fe6bf02493b7",
+   "entry_id": "da289831-e699-462e-939b-9b8c456f7485",
+   "category_code": "GAS_COSTO_VENTAS",
+   "sense": "debito",
+   "amount": "1.00",
+   "amount_cup": "1.00",
+   "economic_date": "2026-10-04",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_productos_cup",
+    "template": "v-cogs-d"
+   }
+  },
+  {
+   "id": "5c7af3bd-2b2e-46fe-bb99-4de073788749",
+   "entry_id": "da289831-e699-462e-939b-9b8c456f7485",
+   "category_code": "ING_VENTAS",
+   "sense": "credito",
+   "amount": "2000.00",
+   "amount_cup": "2000.00",
+   "economic_date": "2026-10-04",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "total_cup",
+    "template": "v-ingreso"
+   }
+  },
+  {
+   "id": "8c5f78d3-e359-4d6d-aea9-7f9a0460ff9a",
+   "entry_id": "da289831-e699-462e-939b-9b8c456f7485",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "1.00",
+   "amount_cup": "1.00",
+   "economic_date": "2026-10-04",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_productos_cup",
+    "template": "v-cogs-c"
+   }
+  },
+  {
+   "id": "b86833f0-8ebe-4169-a284-73c02c99686a",
+   "entry_id": "da289831-e699-462e-939b-9b8c456f7485",
+   "category_code": "ACT_EFECTIVO_CUP",
+   "sense": "debito",
+   "amount": "2000.00",
+   "amount_cup": "2000.00",
+   "economic_date": "2026-10-04",
+   "description": "Venta ",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "cob_cash_cup",
+    "template": "v-cash-cup"
+   }
+  }
+ ],
+ "vale_numbers": [
+  "VS-000037",
+  "VS-000138",
+  "VS-000139",
+  "VS-000148",
+  "VS-000165",
+  "VS-000157",
+  "VS-000158",
+  "VS-000208",
+  "VS-000223",
+  "VS-000225"
+ ],
+ "fin_entries_vales": [
+  {
+   "id": "8892fcf6-dc78-42a2-80a4-89bde288debb",
+   "document_type": "VALE_SALIDA",
+   "document_id": "3fdbd68c-1d0a-45bf-becd-bbd044e082bc",
+   "document_number": "VS-000148-2026",
+   "event": "reconocimiento",
+   "economic_date": "2026-10-09",
+   "posted_at": "2026-11-14 01:42:59.651331+00",
+   "status": "posted",
+   "description": "Vale de salida VS-000148-2026",
+   "reversal_of": null
+  },
+  {
+   "id": "76b81ef3-258e-4ae3-91b4-38a243ec1854",
+   "document_type": "VALE_SALIDA",
+   "document_id": "52f1fab0-555a-4f48-afc6-a1324fa051a8",
+   "document_number": "VS-000157-2026",
+   "event": "reconocimiento",
+   "economic_date": "2026-10-10",
+   "posted_at": "2026-11-14 01:43:22.721658+00",
+   "status": "posted",
+   "description": "Vale de salida VS-000157-2026",
+   "reversal_of": null
+  },
+  {
+   "id": "377b1003-5b7d-4240-8816-4b62043a1eb4",
+   "document_type": "VALE_SALIDA",
+   "document_id": "558e2585-3f53-4f02-9b1b-3c1c1511e50c",
+   "document_number": "VS-000158-2026",
+   "event": "reconocimiento",
+   "economic_date": "2026-10-10",
+   "posted_at": "2026-11-14 01:43:24.556059+00",
+   "status": "posted",
+   "description": "Vale de salida VS-000158-2026",
+   "reversal_of": null
+  },
+  {
+   "id": "66c9813a-82d9-4bf5-80d9-3282b0813180",
+   "document_type": "VALE_SALIDA",
+   "document_id": "e34d0795-aff0-4999-be3d-f41e7bd613e9",
+   "document_number": "VS-000165-2026",
+   "event": "reconocimiento",
+   "economic_date": "2026-10-10",
+   "posted_at": "2026-11-14 01:47:10.278092+00",
+   "status": "posted",
+   "description": "Vale de salida VS-000165-2026",
+   "reversal_of": null
+  },
+  {
+   "id": "28185aeb-fa3f-44f3-94e4-31b4037e103e",
+   "document_type": "VALE_SALIDA",
+   "document_id": "221603a6-ecd4-4689-94d9-1b50d23f1456",
+   "document_number": "VS-000208-2026",
+   "event": "reconocimiento",
+   "economic_date": "2026-10-28",
+   "posted_at": "2026-11-14 01:42:10.84483+00",
+   "status": "posted",
+   "description": "Vale de salida VS-000208-2026",
+   "reversal_of": null
+  },
+  {
+   "id": "46e2a5da-6095-4996-8308-2d4821568155",
+   "document_type": "VALE_SALIDA",
+   "document_id": "3c6a80aa-ceca-4cec-8a28-79d562d5c2db",
+   "document_number": "VS-000225-2026",
+   "event": "reconocimiento",
+   "economic_date": "2026-11-07",
+   "posted_at": "2026-11-14 01:42:55.635037+00",
+   "status": "posted",
+   "description": "Vale de salida VS-000225-2026",
+   "reversal_of": null
+  }
+ ],
+ "fin_movements_vales": [
+  {
+   "id": "2f3f81fc-15ad-4ad2-adf2-58f0a2a5b031",
+   "entry_id": "28185aeb-fa3f-44f3-94e4-31b4037e103e",
+   "document_number": "VS-000208-2026",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "229862.57",
+   "amount_cup": "229862.57",
+   "economic_date": "2026-10-28",
+   "description": "Vale de salida VS-000208-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-inv-c"
+   }
+  },
+  {
+   "id": "faa0aa9b-d538-4fcd-8ca4-2285bd94118b",
+   "entry_id": "28185aeb-fa3f-44f3-94e4-31b4037e103e",
+   "document_number": "VS-000208-2026",
+   "category_code": "GAS_VALES",
+   "sense": "debito",
+   "amount": "229862.57",
+   "amount_cup": "229862.57",
+   "economic_date": "2026-10-28",
+   "description": "Vale de salida VS-000208-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-gasto-d"
+   }
+  },
+  {
+   "id": "2527ec14-090e-42df-8391-54f979f86f11",
+   "entry_id": "377b1003-5b7d-4240-8816-4b62043a1eb4",
+   "document_number": "VS-000158-2026",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "20.00",
+   "amount_cup": "20.00",
+   "economic_date": "2026-10-10",
+   "description": "Vale de salida VS-000158-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-inv-c"
+   }
+  },
+  {
+   "id": "4c299471-b895-4b2c-8f21-b746e169091b",
+   "entry_id": "377b1003-5b7d-4240-8816-4b62043a1eb4",
+   "document_number": "VS-000158-2026",
+   "category_code": "GAS_VALES",
+   "sense": "debito",
+   "amount": "20.00",
+   "amount_cup": "20.00",
+   "economic_date": "2026-10-10",
+   "description": "Vale de salida VS-000158-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-gasto-d"
+   }
+  },
+  {
+   "id": "2856fc18-08ca-42e2-8a61-45d8ab36796e",
+   "entry_id": "46e2a5da-6095-4996-8308-2d4821568155",
+   "document_number": "VS-000225-2026",
+   "category_code": "GAS_VALES",
+   "sense": "debito",
+   "amount": "5.00",
+   "amount_cup": "5.00",
+   "economic_date": "2026-11-07",
+   "description": "Vale de salida VS-000225-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-gasto-d"
+   }
+  },
+  {
+   "id": "cfb5f12f-9d7f-4e9d-b140-939ede910fcc",
+   "entry_id": "46e2a5da-6095-4996-8308-2d4821568155",
+   "document_number": "VS-000225-2026",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "5.00",
+   "amount_cup": "5.00",
+   "economic_date": "2026-11-07",
+   "description": "Vale de salida VS-000225-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-inv-c"
+   }
+  },
+  {
+   "id": "303607f8-0a58-4e18-83e7-c774d6b8905e",
+   "entry_id": "66c9813a-82d9-4bf5-80d9-3282b0813180",
+   "document_number": "VS-000165-2026",
+   "category_code": "GAS_VALES",
+   "sense": "debito",
+   "amount": "10.00",
+   "amount_cup": "10.00",
+   "economic_date": "2026-10-10",
+   "description": "Vale de salida VS-000165-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-gasto-d"
+   }
+  },
+  {
+   "id": "c705fd23-45c1-486f-a9b5-785818aa6536",
+   "entry_id": "66c9813a-82d9-4bf5-80d9-3282b0813180",
+   "document_number": "VS-000165-2026",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "10.00",
+   "amount_cup": "10.00",
+   "economic_date": "2026-10-10",
+   "description": "Vale de salida VS-000165-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-inv-c"
+   }
+  },
+  {
+   "id": "5feb9277-f111-45ca-a18a-2e9ec7be1bd2",
+   "entry_id": "76b81ef3-258e-4ae3-91b4-38a243ec1854",
+   "document_number": "VS-000157-2026",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "20.00",
+   "amount_cup": "20.00",
+   "economic_date": "2026-10-10",
+   "description": "Vale de salida VS-000157-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-inv-c"
+   }
+  },
+  {
+   "id": "fac52f94-7186-4b8d-9d68-e137f2ec3698",
+   "entry_id": "76b81ef3-258e-4ae3-91b4-38a243ec1854",
+   "document_number": "VS-000157-2026",
+   "category_code": "GAS_VALES",
+   "sense": "debito",
+   "amount": "20.00",
+   "amount_cup": "20.00",
+   "economic_date": "2026-10-10",
+   "description": "Vale de salida VS-000157-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-gasto-d"
+   }
+  },
+  {
+   "id": "299ab0f3-a216-4630-a3d9-f5649c554956",
+   "entry_id": "8892fcf6-dc78-42a2-80a4-89bde288debb",
+   "document_number": "VS-000148-2026",
+   "category_code": "GAS_VALES",
+   "sense": "debito",
+   "amount": "1.00",
+   "amount_cup": "1.00",
+   "economic_date": "2026-10-09",
+   "description": "Vale de salida VS-000148-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-gasto-d"
+   }
+  },
+  {
+   "id": "ec2bae4b-f6c7-4c41-bc45-909e210bbd3f",
+   "entry_id": "8892fcf6-dc78-42a2-80a4-89bde288debb",
+   "document_number": "VS-000148-2026",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "1.00",
+   "amount_cup": "1.00",
+   "economic_date": "2026-10-09",
+   "description": "Vale de salida VS-000148-2026",
+   "traza": {
+    "regla": "motor-cp-fin",
+    "metrica": "costo_cup",
+    "template": "vs-inv-c"
+   }
+  }
+ ],
+ "receipt_tasa_audit": [
+  {
+   "id": "a957f271-93b5-41a4-abeb-d1add1bcfa0a",
+   "receipt_item_id": "e1b5794a-015d-4f3d-8dbc-2142572683de",
+   "valor_anterior": "680.0000",
+   "valor_nuevo": "680.0000",
+   "moneda_anterior": "USD",
+   "moneda_nueva": "USD",
+   "modificado_por": "a1111111-1111-1111-1111-111111111111",
+   "modificado_at": "2026-11-14 12:15:56.300875+00",
+   "motivo": "Actualización desde detalle de recepción",
+   "product_id": "84feaebe-2d47-4e5e-abce-03d892aaf56b",
+   "sku": "119"
+  }
+ ],
+ "receipts_vitallcons": [
+  {
+   "id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+   "reference_doc": "FAC-VITALLCONS-001",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "192039436.000000000",
+   "reception_date": "2026-07-01",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-07-31",
+   "paid_at": null,
+   "created_at": "2026-08-11 22:49:18.423872+00"
+  },
+  {
+   "id": "34c3fbd0-c9b5-48d1-89e6-207a28024b0e",
+   "reference_doc": "INV-INIT-ELEC-2026-08-10",
+   "supplier": "Inventario inicial Vitallcons (electricos)",
+   "status": "active",
+   "total_cost": "918000.0",
+   "reception_date": "2026-08-10",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-09-09",
+   "paid_at": null,
+   "created_at": "2026-08-10 17:00:00+00"
+  },
+  {
+   "id": "44b8f20f-1548-4487-971f-f3b7e1b40fb3",
+   "reference_doc": "INV-INIT-SERV-2026-08-10",
+   "supplier": "Inventario inicial Vitallcons (servicios)",
+   "status": "active",
+   "total_cost": "13600.0",
+   "reception_date": "2026-08-10",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-09-09",
+   "paid_at": null,
+   "created_at": "2026-08-10 18:00:00+00"
+  },
+  {
+   "id": "02fe9c2c-cdfd-49e2-b1a7-a9035f7f23f1",
+   "reference_doc": "INV-INIT-2026-08-10",
+   "supplier": "Inventario inicial Vitallcons",
+   "status": "active",
+   "total_cost": "1034660.0",
+   "reception_date": "2026-08-10",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-09-09",
+   "paid_at": null,
+   "created_at": "2026-08-10 16:00:00+00"
+  },
+  {
+   "id": "855e9a6e-3d03-4f83-8a85-a195340fd49a",
+   "reference_doc": "IMPORT-ENERVIDA-478",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "153",
+   "reception_date": "2026-09-02",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-02",
+   "paid_at": null,
+   "created_at": "2026-09-02 16:00:00+00"
+  },
+  {
+   "id": "2f004cde-9693-41c1-9d83-140c36e92236",
+   "reference_doc": "IMPORT-ENERVIDA-521",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "200",
+   "reception_date": "2026-09-09",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-09",
+   "paid_at": null,
+   "created_at": "2026-09-09 16:00:00+00"
+  },
+  {
+   "id": "2153ffcd-8e7a-4609-b9c3-5b56fd962d63",
+   "reference_doc": "IMPORT-ENERVIDA-540",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-09",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-09",
+   "paid_at": null,
+   "created_at": "2026-09-09 16:00:00+00"
+  },
+  {
+   "id": "1f682887-5bec-44ec-909e-8a29aec4ef82",
+   "reference_doc": "IMPORT-ENERVIDA-539",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-09",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-09",
+   "paid_at": null,
+   "created_at": "2026-09-09 16:00:00+00"
+  },
+  {
+   "id": "342c17bc-ef81-48e4-aa92-126045e0106a",
+   "reference_doc": "IMPORT-ENERVIDA-538",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "10",
+   "reception_date": "2026-09-09",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-09",
+   "paid_at": null,
+   "created_at": "2026-09-09 16:00:00+00"
+  },
+  {
+   "id": "64b9a8b1-a0cf-4f9e-a9d3-063101fc2ae6",
+   "reference_doc": "IMPORT-ENERVIDA-522",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "2",
+   "reception_date": "2026-09-09",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-09",
+   "paid_at": null,
+   "created_at": "2026-09-09 16:00:00+00"
+  },
+  {
+   "id": "0101f0e4-294c-4b7a-976a-cf926a6accf1",
+   "reference_doc": "IMPORT-ENERVIDA-605",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-18",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-18",
+   "paid_at": null,
+   "created_at": "2026-09-18 16:00:00+00"
+  },
+  {
+   "id": "a4dbdcd5-d7db-4025-a359-892af1ccd1f7",
+   "reference_doc": "IMPORT-ENERVIDA-613",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "8",
+   "reception_date": "2026-09-18",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-18",
+   "paid_at": null,
+   "created_at": "2026-09-18 16:00:00+00"
+  },
+  {
+   "id": "d623d1b5-4d8c-43d3-9d86-fa5a11a819a8",
+   "reference_doc": "IMPORT-ENERVIDA-607",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "63",
+   "reception_date": "2026-09-18",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-18",
+   "paid_at": null,
+   "created_at": "2026-09-18 16:00:00+00"
+  },
+  {
+   "id": "e27c1934-703f-4f21-ad24-072034268898",
+   "reference_doc": "IMPORT-ENERVIDA-641",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "2000",
+   "reception_date": "2026-09-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-19",
+   "paid_at": null,
+   "created_at": "2026-09-19 16:00:00+00"
+  },
+  {
+   "id": "3b1ad7cb-e52d-468a-ab51-51d5066f7dc5",
+   "reference_doc": "IMPORT-ENERVIDA-642",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "2500",
+   "reception_date": "2026-09-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-19",
+   "paid_at": null,
+   "created_at": "2026-09-19 16:00:00+00"
+  },
+  {
+   "id": "c7ebea25-b0ad-4634-b46c-2b095839122d",
+   "reference_doc": "IMPORT-ENERVIDA-643",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1000",
+   "reception_date": "2026-09-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-19",
+   "paid_at": null,
+   "created_at": "2026-09-19 16:00:00+00"
+  },
+  {
+   "id": "e3bf72bd-d062-4d2c-b2ab-a642ac8013e9",
+   "reference_doc": "IMPORT-ENERVIDA-644",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "3990",
+   "reception_date": "2026-09-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-19",
+   "paid_at": null,
+   "created_at": "2026-09-19 16:00:00+00"
+  },
+  {
+   "id": "a8a72305-d656-4e50-ab10-77ba8f9dae41",
+   "reference_doc": "IMPORT-ENERVIDA-645",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "12000",
+   "reception_date": "2026-09-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-19",
+   "paid_at": null,
+   "created_at": "2026-09-19 16:00:00+00"
+  },
+  {
+   "id": "41fe8469-5f26-4d58-926a-8bf5f0ee818e",
+   "reference_doc": "IMPORT-ENERVIDA-666",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "6",
+   "reception_date": "2026-09-21",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-21",
+   "paid_at": null,
+   "created_at": "2026-09-21 16:00:00+00"
+  },
+  {
+   "id": "54657352-b71d-4018-8963-b5422a232918",
+   "reference_doc": "IMPORT-ENERVIDA-678",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-22",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-22",
+   "paid_at": null,
+   "created_at": "2026-09-22 16:00:00+00"
+  },
+  {
+   "id": "30538c95-c8e4-42fb-8cc9-cd79cbdec80b",
+   "reference_doc": "IMPORT-ENERVIDA-679",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-22",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-22",
+   "paid_at": null,
+   "created_at": "2026-09-22 16:00:00+00"
+  },
+  {
+   "id": "becd9890-a215-44cb-b3c6-f81a1a5f1188",
+   "reference_doc": "IMPORT-ENERVIDA-677",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-22",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-22",
+   "paid_at": null,
+   "created_at": "2026-09-22 16:00:00+00"
+  },
+  {
+   "id": "0af48646-dc5e-4775-bcd5-8a6de1827ccb",
+   "reference_doc": "IMPORT-ENERVIDA-714",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "50",
+   "reception_date": "2026-09-24",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-24",
+   "paid_at": null,
+   "created_at": "2026-09-24 16:00:00+00"
+  },
+  {
+   "id": "fcf52615-b071-4e63-97ed-c6e2ca5c6aef",
+   "reference_doc": "IMPORT-ENERVIDA-715",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "30",
+   "reception_date": "2026-09-24",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-24",
+   "paid_at": null,
+   "created_at": "2026-09-24 16:00:00+00"
+  },
+  {
+   "id": "84d46950-75f4-49f4-bd4f-b2ef6940f892",
+   "reference_doc": "IMPORT-ENERVIDA-716",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "50",
+   "reception_date": "2026-09-24",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-24",
+   "paid_at": null,
+   "created_at": "2026-09-24 16:00:00+00"
+  },
+  {
+   "id": "743ec655-f20f-42a2-8259-bb2704c25518",
+   "reference_doc": "IMPORT-ENERVIDA-717",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "30",
+   "reception_date": "2026-09-24",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-24",
+   "paid_at": null,
+   "created_at": "2026-09-24 16:00:00+00"
+  },
+  {
+   "id": "8d07e0f7-c754-4da2-ac99-3174e61e16c5",
+   "reference_doc": "IMPORT-ENERVIDA-710",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-24",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-24",
+   "paid_at": null,
+   "created_at": "2026-09-24 16:00:00+00"
+  },
+  {
+   "id": "55e5d20c-ee9e-4018-9d38-df19d54d11f6",
+   "reference_doc": "IMPORT-ENERVIDA-738",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "20",
+   "reception_date": "2026-09-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-26",
+   "paid_at": null,
+   "created_at": "2026-09-26 16:00:00+00"
+  },
+  {
+   "id": "f4486ddb-b89d-41cc-a501-96a90c323381",
+   "reference_doc": "IMPORT-ENERVIDA-739",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "30",
+   "reception_date": "2026-09-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-26",
+   "paid_at": null,
+   "created_at": "2026-09-26 16:00:00+00"
+  },
+  {
+   "id": "c0af5364-37da-4a36-966b-3443737f0cbf",
+   "reference_doc": "IMPORT-ENERVIDA-773",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "ce42c3fa-c6f0-4d45-a277-9ef933d72f59",
+   "reference_doc": "IMPORT-ENERVIDA-774",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "10",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "88658c65-5743-43a9-a4b2-9543d54c3a68",
+   "reference_doc": "IMPORT-ENERVIDA-770",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "2",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "559172bb-3145-4c59-8c5c-a8a4ed0389ff",
+   "reference_doc": "IMPORT-ENERVIDA-771",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "9",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "9d10a218-29c8-43bb-914a-6c415e2eae2a",
+   "reference_doc": "IMPORT-ENERVIDA-772",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "2",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "671313bb-7be7-4f46-bf56-c6bddd4ac6a7",
+   "reference_doc": "IMPORT-ENERVIDA-784",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "8786b1a9-7935-4943-afd6-d99d2c3396ba",
+   "reference_doc": "IMPORT-ENERVIDA-783",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "4177c213-0b71-4ecf-95b4-8c33d5cdf439",
+   "reference_doc": "IMPORT-ENERVIDA-777",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "1bf16dfb-532b-439c-8a97-71e3a41b2983",
+   "reference_doc": "IMPORT-ENERVIDA-776",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "86d0fd51-4450-4056-a6bd-138ba6e66135",
+   "reference_doc": "IMPORT-ENERVIDA-766",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "28",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "028e9635-f5ae-4aff-8dcc-2294edb5b323",
+   "reference_doc": "IMPORT-ENERVIDA-767",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "300",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "49c8f174-513e-4440-b3f9-efd3da4e18b0",
+   "reference_doc": "IMPORT-ENERVIDA-775",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "5",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "f22d8ceb-4587-41fc-95e5-e5339942d35c",
+   "reference_doc": "IMPORT-ENERVIDA-768",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "f297b3d6-c7de-4051-afc2-bc9da0cd7d6d",
+   "reference_doc": "IMPORT-ENERVIDA-769",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-30",
+   "paid_at": null,
+   "created_at": "2026-09-30 16:00:00+00"
+  },
+  {
+   "id": "dfddb9f9-b133-4036-9fe5-a1e624588b00",
+   "reference_doc": "IMPORT-ENERVIDA-801",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "40",
+   "reception_date": "2026-10-01",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-31",
+   "paid_at": null,
+   "created_at": "2026-10-01 16:00:00+00"
+  },
+  {
+   "id": "9ef1cb6b-451b-4965-9ae4-d4957c4f8365",
+   "reference_doc": "IMPORT-ENERVIDA-800",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "10",
+   "reception_date": "2026-10-01",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-31",
+   "paid_at": null,
+   "created_at": "2026-10-01 16:00:00+00"
+  },
+  {
+   "id": "e4138902-51d5-486a-adb2-83473d6ef64f",
+   "reference_doc": "IMPORT-ENERVIDA-799",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "6",
+   "reception_date": "2026-10-01",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-31",
+   "paid_at": null,
+   "created_at": "2026-10-01 16:00:00+00"
+  },
+  {
+   "id": "320084f9-d40e-4dc3-9c07-b0a85d41469e",
+   "reference_doc": "IMPORT-ENERVIDA-798",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "6",
+   "reception_date": "2026-10-01",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-10-31",
+   "paid_at": null,
+   "created_at": "2026-10-01 16:00:00+00"
+  },
+  {
+   "id": "86271ee6-5aae-4c78-9873-d689990ea51d",
+   "reference_doc": "IMPORT-ENERVIDA-OP08",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "15",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-05",
+   "paid_at": null,
+   "created_at": "2026-10-06 23:59:59+00"
+  },
+  {
+   "id": "03421f4a-9b7c-4ea1-8113-078177f9eb8a",
+   "reference_doc": "IMPORT-ENERVIDA-OP01",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "24",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-05",
+   "paid_at": null,
+   "created_at": "2026-10-06 23:59:59+00"
+  },
+  {
+   "id": "ca38c88d-7273-44dc-9917-94e842093999",
+   "reference_doc": "IMPORT-ENERVIDA-OP02",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "4",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-05",
+   "paid_at": null,
+   "created_at": "2026-10-06 23:59:59+00"
+  },
+  {
+   "id": "00fed3a4-888c-4c80-b705-dd5394af7cce",
+   "reference_doc": "IMPORT-ENERVIDA-OP03",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "200",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-05",
+   "paid_at": null,
+   "created_at": "2026-10-06 23:59:59+00"
+  },
+  {
+   "id": "eb67f3b4-a9c6-426e-8729-16a2a713a1d3",
+   "reference_doc": "IMPORT-ENERVIDA-OP07",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "66",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-05",
+   "paid_at": null,
+   "created_at": "2026-10-06 23:59:59+00"
+  },
+  {
+   "id": "1360bd49-170d-47ce-8826-7e1ea0d15e94",
+   "reference_doc": "IMPORT-ENERVIDA-OP13",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "12",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-05",
+   "paid_at": null,
+   "created_at": "2026-10-06 23:59:59+00"
+  },
+  {
+   "id": "535c5ec6-b015-43c1-adf1-e675b4120daa",
+   "reference_doc": "IMPORT-ENERVIDA-OP14",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "4",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-05",
+   "paid_at": null,
+   "created_at": "2026-10-06 23:59:59+00"
+  },
+  {
+   "id": "6ab2ce3b-84ed-489d-9015-9ce76a1946ad",
+   "reference_doc": "IMPORT-ENERVIDA-OP31",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "30",
+   "reception_date": "2026-10-08",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-07",
+   "paid_at": null,
+   "created_at": "2026-10-08 23:59:59+00"
+  },
+  {
+   "id": "21ff6606-2dc7-4bde-a220-ed7d9e5590c7",
+   "reference_doc": "IMPORT-ENERVIDA-OP18",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-10-08",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-07",
+   "paid_at": null,
+   "created_at": "2026-10-08 23:59:59+00"
+  },
+  {
+   "id": "3d453caf-273b-4c9d-b59c-d3b7ee6ddb8d",
+   "reference_doc": "IMPORT-ENERVIDA-OP32",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "6",
+   "reception_date": "2026-10-08",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-07",
+   "paid_at": null,
+   "created_at": "2026-10-08 23:59:59+00"
+  },
+  {
+   "id": "ca66b61d-452c-478f-8656-5be7cba97b5d",
+   "reference_doc": "REG-1415-OP17",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "15.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-13",
+   "paid_at": null,
+   "created_at": "2026-10-14 16:00:00+00"
+  },
+  {
+   "id": "a14c635e-e6f0-468d-ae48-9c3a11829c5c",
+   "reference_doc": "REG-1415-OP18",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "50.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-13",
+   "paid_at": null,
+   "created_at": "2026-10-14 16:00:00+00"
+  },
+  {
+   "id": "29404c42-f3db-4c64-b8a4-e7aa70d1e4ca",
+   "reference_doc": "REG-1415-OP19",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "150.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-13",
+   "paid_at": null,
+   "created_at": "2026-10-14 16:00:00+00"
+  },
+  {
+   "id": "0fab1e37-5d05-4c9d-9a9f-b0333f0eb894",
+   "reference_doc": "REG-1415-OP20",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "10.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-13",
+   "paid_at": null,
+   "created_at": "2026-10-14 16:00:00+00"
+  },
+  {
+   "id": "7a741289-674d-4739-8f96-6b584ee68468",
+   "reference_doc": "REG-1415-OP09 | Convirtiendo a metros",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "54.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-13",
+   "paid_at": null,
+   "created_at": "2026-10-14 16:00:00+00"
+  },
+  {
+   "id": "f1edee3e-6709-4487-b868-24bea1d9124c",
+   "reference_doc": "REG-1415-OP21",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "10.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-13",
+   "paid_at": null,
+   "created_at": "2026-10-14 16:00:00+00"
+  },
+  {
+   "id": "172662ff-c33f-45de-98ee-1ae49545b558",
+   "reference_doc": "REG-1415-OP15",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-13",
+   "paid_at": null,
+   "created_at": "2026-10-14 16:00:00+00"
+  },
+  {
+   "id": "0a2cdbf8-2cde-44b8-b526-a67be4e855a5",
+   "reference_doc": "REG-1415-OP16",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "5.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-13",
+   "paid_at": null,
+   "created_at": "2026-10-14 16:00:00+00"
+  },
+  {
+   "id": "2f9afe82-d854-48fd-a82a-45fefa98bc3e",
+   "reference_doc": "REG-1415-OP27",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1.0",
+   "reception_date": "2026-10-15",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-14",
+   "paid_at": null,
+   "created_at": "2026-10-15 16:00:00+00"
+  },
+  {
+   "id": "28322248-4a0a-4c23-9ace-39c1a173f945",
+   "reference_doc": "REG-1415-OP25",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1.20",
+   "reception_date": "2026-10-15",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-14",
+   "paid_at": null,
+   "created_at": "2026-10-15 16:00:00+00"
+  },
+  {
+   "id": "6afab3ab-f1b8-443c-a207-b4118af2d910",
+   "reference_doc": "REG-1415-OP24",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1.0",
+   "reception_date": "2026-10-15",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-14",
+   "paid_at": null,
+   "created_at": "2026-10-15 16:00:00+00"
+  },
+  {
+   "id": "0a3af49f-ab6a-498a-829c-eb009ae5951f",
+   "reference_doc": "REG-1415-OP23",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1.0",
+   "reception_date": "2026-10-15",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-14",
+   "paid_at": null,
+   "created_at": "2026-10-15 16:00:00+00"
+  },
+  {
+   "id": "53bf4982-5410-4ca5-bb7c-d6f402f2411c",
+   "reference_doc": "REG-1415-OP26",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1.0",
+   "reception_date": "2026-10-15",
+   "payment_status": "unpaid",
+   "paid_amount": "0",
+   "due_date": "2026-11-14",
+   "paid_at": null,
+   "created_at": "2026-10-15 16:00:00+00"
+  }
+ ],
+ "receipts_store_enervida": [
+  {
+   "id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+   "reference_doc": "FAC-VITALLCONS-001",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "192039436.000000000",
+   "reception_date": "2026-07-01",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "44b8f20f-1548-4487-971f-f3b7e1b40fb3",
+   "reference_doc": "INV-INIT-SERV-2026-08-10",
+   "supplier": "Inventario inicial Vitallcons (servicios)",
+   "status": "active",
+   "total_cost": "13600.0",
+   "reception_date": "2026-08-10",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "34c3fbd0-c9b5-48d1-89e6-207a28024b0e",
+   "reference_doc": "INV-INIT-ELEC-2026-08-10",
+   "supplier": "Inventario inicial Vitallcons (electricos)",
+   "status": "active",
+   "total_cost": "918000.0",
+   "reception_date": "2026-08-10",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "02fe9c2c-cdfd-49e2-b1a7-a9035f7f23f1",
+   "reference_doc": "INV-INIT-2026-08-10",
+   "supplier": "Inventario inicial Vitallcons",
+   "status": "active",
+   "total_cost": "1034660.0",
+   "reception_date": "2026-08-10",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "855e9a6e-3d03-4f83-8a85-a195340fd49a",
+   "reference_doc": "IMPORT-ENERVIDA-478",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "153",
+   "reception_date": "2026-09-02",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "342c17bc-ef81-48e4-aa92-126045e0106a",
+   "reference_doc": "IMPORT-ENERVIDA-538",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "10",
+   "reception_date": "2026-09-09",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "1f682887-5bec-44ec-909e-8a29aec4ef82",
+   "reference_doc": "IMPORT-ENERVIDA-539",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-09",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "2153ffcd-8e7a-4609-b9c3-5b56fd962d63",
+   "reference_doc": "IMPORT-ENERVIDA-540",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-09",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "2f004cde-9693-41c1-9d83-140c36e92236",
+   "reference_doc": "IMPORT-ENERVIDA-521",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "200",
+   "reception_date": "2026-09-09",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "64b9a8b1-a0cf-4f9e-a9d3-063101fc2ae6",
+   "reference_doc": "IMPORT-ENERVIDA-522",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "2",
+   "reception_date": "2026-09-09",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "0101f0e4-294c-4b7a-976a-cf926a6accf1",
+   "reference_doc": "IMPORT-ENERVIDA-605",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-18",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "a4dbdcd5-d7db-4025-a359-892af1ccd1f7",
+   "reference_doc": "IMPORT-ENERVIDA-613",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "8",
+   "reception_date": "2026-09-18",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "d623d1b5-4d8c-43d3-9d86-fa5a11a819a8",
+   "reference_doc": "IMPORT-ENERVIDA-607",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "63",
+   "reception_date": "2026-09-18",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "c7ebea25-b0ad-4634-b46c-2b095839122d",
+   "reference_doc": "IMPORT-ENERVIDA-643",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1000",
+   "reception_date": "2026-09-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "3b1ad7cb-e52d-468a-ab51-51d5066f7dc5",
+   "reference_doc": "IMPORT-ENERVIDA-642",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "2500",
+   "reception_date": "2026-09-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "e27c1934-703f-4f21-ad24-072034268898",
+   "reference_doc": "IMPORT-ENERVIDA-641",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "2000",
+   "reception_date": "2026-09-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "a8a72305-d656-4e50-ab10-77ba8f9dae41",
+   "reference_doc": "IMPORT-ENERVIDA-645",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "12000",
+   "reception_date": "2026-09-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "e3bf72bd-d062-4d2c-b2ab-a642ac8013e9",
+   "reference_doc": "IMPORT-ENERVIDA-644",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "3990",
+   "reception_date": "2026-09-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "41fe8469-5f26-4d58-926a-8bf5f0ee818e",
+   "reference_doc": "IMPORT-ENERVIDA-666",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "6",
+   "reception_date": "2026-09-21",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "30538c95-c8e4-42fb-8cc9-cd79cbdec80b",
+   "reference_doc": "IMPORT-ENERVIDA-679",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-22",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "becd9890-a215-44cb-b3c6-f81a1a5f1188",
+   "reference_doc": "IMPORT-ENERVIDA-677",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-22",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "54657352-b71d-4018-8963-b5422a232918",
+   "reference_doc": "IMPORT-ENERVIDA-678",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-22",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "743ec655-f20f-42a2-8259-bb2704c25518",
+   "reference_doc": "IMPORT-ENERVIDA-717",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "30",
+   "reception_date": "2026-09-24",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "84d46950-75f4-49f4-bd4f-b2ef6940f892",
+   "reference_doc": "IMPORT-ENERVIDA-716",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "50",
+   "reception_date": "2026-09-24",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "0af48646-dc5e-4775-bcd5-8a6de1827ccb",
+   "reference_doc": "IMPORT-ENERVIDA-714",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "50",
+   "reception_date": "2026-09-24",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "8d07e0f7-c754-4da2-ac99-3174e61e16c5",
+   "reference_doc": "IMPORT-ENERVIDA-710",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-24",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "fcf52615-b071-4e63-97ed-c6e2ca5c6aef",
+   "reference_doc": "IMPORT-ENERVIDA-715",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "30",
+   "reception_date": "2026-09-24",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "f4486ddb-b89d-41cc-a501-96a90c323381",
+   "reference_doc": "IMPORT-ENERVIDA-739",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "30",
+   "reception_date": "2026-09-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "55e5d20c-ee9e-4018-9d38-df19d54d11f6",
+   "reference_doc": "IMPORT-ENERVIDA-738",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "20",
+   "reception_date": "2026-09-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "86d0fd51-4450-4056-a6bd-138ba6e66135",
+   "reference_doc": "IMPORT-ENERVIDA-766",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "28",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "028e9635-f5ae-4aff-8dcc-2294edb5b323",
+   "reference_doc": "IMPORT-ENERVIDA-767",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "300",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "f22d8ceb-4587-41fc-95e5-e5339942d35c",
+   "reference_doc": "IMPORT-ENERVIDA-768",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "f297b3d6-c7de-4051-afc2-bc9da0cd7d6d",
+   "reference_doc": "IMPORT-ENERVIDA-769",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "88658c65-5743-43a9-a4b2-9543d54c3a68",
+   "reference_doc": "IMPORT-ENERVIDA-770",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "2",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "559172bb-3145-4c59-8c5c-a8a4ed0389ff",
+   "reference_doc": "IMPORT-ENERVIDA-771",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "9",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "9d10a218-29c8-43bb-914a-6c415e2eae2a",
+   "reference_doc": "IMPORT-ENERVIDA-772",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "2",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "c0af5364-37da-4a36-966b-3443737f0cbf",
+   "reference_doc": "IMPORT-ENERVIDA-773",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "ce42c3fa-c6f0-4d45-a277-9ef933d72f59",
+   "reference_doc": "IMPORT-ENERVIDA-774",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "10",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "49c8f174-513e-4440-b3f9-efd3da4e18b0",
+   "reference_doc": "IMPORT-ENERVIDA-775",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "5",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "1bf16dfb-532b-439c-8a97-71e3a41b2983",
+   "reference_doc": "IMPORT-ENERVIDA-776",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "4177c213-0b71-4ecf-95b4-8c33d5cdf439",
+   "reference_doc": "IMPORT-ENERVIDA-777",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "8786b1a9-7935-4943-afd6-d99d2c3396ba",
+   "reference_doc": "IMPORT-ENERVIDA-783",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "671313bb-7be7-4f46-bf56-c6bddd4ac6a7",
+   "reference_doc": "IMPORT-ENERVIDA-784",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-09-30",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "320084f9-d40e-4dc3-9c07-b0a85d41469e",
+   "reference_doc": "IMPORT-ENERVIDA-798",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "6",
+   "reception_date": "2026-10-01",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "e4138902-51d5-486a-adb2-83473d6ef64f",
+   "reference_doc": "IMPORT-ENERVIDA-799",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "6",
+   "reception_date": "2026-10-01",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "9ef1cb6b-451b-4965-9ae4-d4957c4f8365",
+   "reference_doc": "IMPORT-ENERVIDA-800",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "10",
+   "reception_date": "2026-10-01",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "dfddb9f9-b133-4036-9fe5-a1e624588b00",
+   "reference_doc": "IMPORT-ENERVIDA-801",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "40",
+   "reception_date": "2026-10-01",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "03421f4a-9b7c-4ea1-8113-078177f9eb8a",
+   "reference_doc": "IMPORT-ENERVIDA-OP01",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "24",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "ca38c88d-7273-44dc-9917-94e842093999",
+   "reference_doc": "IMPORT-ENERVIDA-OP02",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "4",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "00fed3a4-888c-4c80-b705-dd5394af7cce",
+   "reference_doc": "IMPORT-ENERVIDA-OP03",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "200",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "eb67f3b4-a9c6-426e-8729-16a2a713a1d3",
+   "reference_doc": "IMPORT-ENERVIDA-OP07",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "66",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "86271ee6-5aae-4c78-9873-d689990ea51d",
+   "reference_doc": "IMPORT-ENERVIDA-OP08",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "15",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "1360bd49-170d-47ce-8826-7e1ea0d15e94",
+   "reference_doc": "IMPORT-ENERVIDA-OP13",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "12",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "535c5ec6-b015-43c1-adf1-e675b4120daa",
+   "reference_doc": "IMPORT-ENERVIDA-OP14",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "4",
+   "reception_date": "2026-10-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "21ff6606-2dc7-4bde-a220-ed7d9e5590c7",
+   "reference_doc": "IMPORT-ENERVIDA-OP18",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100",
+   "reception_date": "2026-10-08",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "3d453caf-273b-4c9d-b59c-d3b7ee6ddb8d",
+   "reference_doc": "IMPORT-ENERVIDA-OP32",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "6",
+   "reception_date": "2026-10-08",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "6ab2ce3b-84ed-489d-9015-9ce76a1946ad",
+   "reference_doc": "IMPORT-ENERVIDA-OP31",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "30",
+   "reception_date": "2026-10-08",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "0b026405-d090-46cc-9d68-60ff7cca3783",
+   "reference_doc": "—",
+   "supplier": "—",
+   "status": "active",
+   "total_cost": "19200.0",
+   "reception_date": "2026-10-12",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "a14c635e-e6f0-468d-ae48-9c3a11829c5c",
+   "reference_doc": "REG-1415-OP18",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "50.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "ca66b61d-452c-478f-8656-5be7cba97b5d",
+   "reference_doc": "REG-1415-OP17",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "15.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "7a741289-674d-4739-8f96-6b584ee68468",
+   "reference_doc": "REG-1415-OP09 | Convirtiendo a metros",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "54.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "f1edee3e-6709-4487-b868-24bea1d9124c",
+   "reference_doc": "REG-1415-OP21",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "10.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "0fab1e37-5d05-4c9d-9a9f-b0333f0eb894",
+   "reference_doc": "REG-1415-OP20",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "10.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "29404c42-f3db-4c64-b8a4-e7aa70d1e4ca",
+   "reference_doc": "REG-1415-OP19",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "150.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "0a2cdbf8-2cde-44b8-b526-a67be4e855a5",
+   "reference_doc": "REG-1415-OP16",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "5.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "172662ff-c33f-45de-98ee-1ae49545b558",
+   "reference_doc": "REG-1415-OP15",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "100.0",
+   "reception_date": "2026-10-14",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "0a3af49f-ab6a-498a-829c-eb009ae5951f",
+   "reference_doc": "REG-1415-OP23",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1.0",
+   "reception_date": "2026-10-15",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "53bf4982-5410-4ca5-bb7c-d6f402f2411c",
+   "reference_doc": "REG-1415-OP26",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1.0",
+   "reception_date": "2026-10-15",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "28322248-4a0a-4c23-9ace-39c1a173f945",
+   "reference_doc": "REG-1415-OP25",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1.20",
+   "reception_date": "2026-10-15",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "2f9afe82-d854-48fd-a82a-45fefa98bc3e",
+   "reference_doc": "REG-1415-OP27",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1.0",
+   "reception_date": "2026-10-15",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "6afab3ab-f1b8-443c-a207-b4118af2d910",
+   "reference_doc": "REG-1415-OP24",
+   "supplier": "Vitallcons",
+   "status": "active",
+   "total_cost": "1.0",
+   "reception_date": "2026-10-15",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "aed568be-63f0-4082-a7ab-b20f43513e40",
+   "reference_doc": "MISION-1610-F20-SKU139",
+   "supplier": "Proveedor1",
+   "status": "active",
+   "total_cost": "2.0",
+   "reception_date": "2026-10-16",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "79ffb3a9-9aa5-4258-b845-78049e06d814",
+   "reference_doc": "0000",
+   "supplier": "—",
+   "status": "active",
+   "total_cost": "35",
+   "reception_date": "2026-10-19",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "e564adca-c9b9-479b-bdbe-146033712085",
+   "reference_doc": "0002",
+   "supplier": "—",
+   "status": "active",
+   "total_cost": "200",
+   "reception_date": "2026-10-22",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "eeda4e65-2a91-4369-9c66-3f00e06e944d",
+   "reference_doc": "FAC-0003",
+   "supplier": "Pedro Infante",
+   "status": "active",
+   "total_cost": "400",
+   "reception_date": "2026-10-23",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "f5457812-9dcc-42a4-aee7-6c30c18afe8a",
+   "reference_doc": "FAC-0005",
+   "supplier": "Pedro Infante",
+   "status": "active",
+   "total_cost": "199600",
+   "reception_date": "2026-10-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "7c305acb-a978-4a8e-84f3-667568e47e76",
+   "reference_doc": "Ajuste-0001",
+   "supplier": "Tienda Pueblo",
+   "status": "active",
+   "total_cost": "835",
+   "reception_date": "2026-10-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "d5f3a77b-6b98-4ef4-b9c9-4a50ecb956b0",
+   "reference_doc": "FAC-0009",
+   "supplier": "Tienda Pueblo",
+   "status": "active",
+   "total_cost": "35490",
+   "reception_date": "2026-10-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "11d1304d-c3fa-4b08-898d-373cfcfa8581",
+   "reference_doc": "FAC-0007",
+   "supplier": "Tienda Pueblo",
+   "status": "active",
+   "total_cost": "1",
+   "reception_date": "2026-10-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "41b16484-6d8a-4eb9-a590-30a7977945ea",
+   "reference_doc": "FAC-0004",
+   "supplier": "Juan Carlos",
+   "status": "active",
+   "total_cost": "336000.00000000",
+   "reception_date": "2026-10-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "c5c1c037-b7db-45d2-b6b3-d426e442d188",
+   "reference_doc": "FAC-0008",
+   "supplier": "Proveedor General",
+   "status": "active",
+   "total_cost": "200000",
+   "reception_date": "2026-10-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "0d40955f-4d61-4ebf-9011-888e9dfed17d",
+   "reference_doc": "FAC-0006",
+   "supplier": "Tienda Pueblo",
+   "status": "active",
+   "total_cost": "840",
+   "reception_date": "2026-10-26",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "170dc139-305e-4143-9302-5c603d58d8d3",
+   "reference_doc": "Fac-31102026",
+   "supplier": "Pedro Infante",
+   "status": "active",
+   "total_cost": "120000",
+   "reception_date": "2026-10-31",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "dd84e089-c3ae-4ed9-9352-64c03fa8c4d2",
+   "reference_doc": "Rec-04112026",
+   "supplier": "Juan Carlos",
+   "status": "active",
+   "total_cost": "0.9",
+   "reception_date": "2026-11-04",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "55ed12df-2810-4b4e-a9ee-73f63f35b64d",
+   "reference_doc": "Fac-0009",
+   "supplier": "Juan Carlos",
+   "status": "active",
+   "total_cost": "4877",
+   "reception_date": "2026-11-06",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "b8327f96-ae49-403f-88f0-a09422ce552a",
+   "reference_doc": "Rec-07112026",
+   "supplier": "Laudelina Olivera (Lary)",
+   "status": "active",
+   "total_cost": "45",
+   "reception_date": "2026-11-07",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "d6392d32-de85-4554-bbc2-1204cee444b4",
+   "reference_doc": "Rec-07112026-2",
+   "supplier": "Laudelina Olivera (Lary)",
+   "status": "active",
+   "total_cost": "20",
+   "reception_date": "2026-11-07",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "64dee9d8-555f-4608-80f2-4602ab9a8f34",
+   "reference_doc": "Fac-10112026",
+   "supplier": "Juan Carlos",
+   "status": "active",
+   "total_cost": "48000",
+   "reception_date": "2026-11-10",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  },
+  {
+   "id": "b9759c29-ff32-436c-b5a1-6a7ed0b15740",
+   "reference_doc": "Rec-13112026",
+   "supplier": "Tienda Pueblo",
+   "status": "active",
+   "total_cost": "1.3",
+   "reception_date": "2026-11-13",
+   "payment_status": "unpaid",
+   "paid_amount": "0"
+  }
+ ],
+ "kardex_salidas_ids": [
+  {
+   "id": "68a3ff08-a301-4232-937a-85f183452d5c",
+   "sku": "111",
+   "fecha": "2026-07-24",
+   "tipo": "sale",
+   "q": -1,
+   "uc": 0,
+   "ref": "99d8993f-480c-406b-840f-1f2e183725ac",
+   "doc": "Venta POS v2"
+  },
+  {
+   "id": "a1330957-1e49-43ed-a309-c7a20c2ee714",
+   "sku": "111",
+   "fecha": "2026-08-18",
+   "tipo": "adjustment",
+   "q": -1,
+   "uc": 0,
+   "ref": null,
+   "doc": "Cuadre importación ENERVIDA: sku=111 Δ=-1 (diferencia acumulada pre-corte vs Excel)"
+  },
+  {
+   "id": "a8a82720-df49-485d-949c-acfc082fc3b6",
+   "sku": "112",
+   "fecha": "2026-08-18",
+   "tipo": "adjustment",
+   "q": -17,
+   "uc": 0,
+   "ref": null,
+   "doc": "Cuadre importación ENERVIDA: sku=112 Δ=-17 (diferencia acumulada pre-corte vs Excel)"
+  },
+  {
+   "id": "335e2fcc-f4d3-426b-a7ff-878af184acab",
+   "sku": "112",
+   "fecha": "2026-09-19",
+   "tipo": "issue_slip_out",
+   "q": -4,
+   "uc": 0,
+   "ref": "8c4c2c0e-40b8-4cb5-8aa2-8b8a8466c281",
+   "doc": "Vale de Salida VS-000037-2026"
+  },
+  {
+   "id": "673ede95-75cc-4c4e-aa19-1dc893c5cd79",
+   "sku": "111",
+   "fecha": "2026-10-04",
+   "tipo": "sale",
+   "q": -1,
+   "uc": 0,
+   "ref": "d939ea06-b328-42f8-ac42-931f201e81c2",
+   "doc": "Venta POS v2"
+  },
+  {
+   "id": "8e73af98-aa78-4861-9378-08c1562e7473",
+   "sku": "112",
+   "fecha": "2026-10-05",
+   "tipo": "sale",
+   "q": -3,
+   "uc": 1,
+   "ref": "acc2b470-ee74-4d44-8e3a-2289c8331c36",
+   "doc": "Venta POS v2"
+  },
+  {
+   "id": "9d47f6c1-756a-4e0f-9e56-85d1dc2ca557",
+   "sku": "112",
+   "fecha": "2026-10-05",
+   "tipo": "issue_slip_out",
+   "q": -1,
+   "uc": 0,
+   "ref": "de744e90-0c5d-4771-85dd-a1b9e6e9ff33",
+   "doc": "Vale de Salida VS-000138-2026"
+  },
+  {
+   "id": "25db100f-9238-45b4-b53e-c3559eb60651",
+   "sku": "111",
+   "fecha": "2026-10-05",
+   "tipo": "issue_slip_out",
+   "q": -1,
+   "uc": 0,
+   "ref": "7876eb7e-0729-4701-afc3-791725129c1f",
+   "doc": "Vale de Salida VS-000139-2026"
+  },
+  {
+   "id": "d4aeac82-6314-4fca-9ce9-cc53b04452f6",
+   "sku": "111",
+   "fecha": "2026-10-09",
+   "tipo": "issue_slip_out",
+   "q": -1,
+   "uc": 1,
+   "ref": "3fdbd68c-1d0a-45bf-becd-bbd044e082bc",
+   "doc": "Vale de Salida VS-000148-2026"
+  },
+  {
+   "id": "26ef0b69-0fcb-4b30-ac13-30b170f2557a",
+   "sku": "112",
+   "fecha": "2026-10-10",
+   "tipo": "issue_slip_out",
+   "q": -10,
+   "uc": 1,
+   "ref": "e34d0795-aff0-4999-be3d-f41e7bd613e9",
+   "doc": "Vale de Salida VS-000165-2026"
+  },
+  {
+   "id": "88fdcc47-f2d1-4daa-b4d4-6b7e11bc7906",
+   "sku": "112",
+   "fecha": "2026-10-10",
+   "tipo": "issue_slip_out",
+   "q": -20,
+   "uc": 1,
+   "ref": "52f1fab0-555a-4f48-afc6-a1324fa051a8",
+   "doc": "Vale de Salida VS-000157-2026"
+  },
+  {
+   "id": "9688337a-6929-492d-bcdb-bc82bc868d0c",
+   "sku": "111",
+   "fecha": "2026-10-10",
+   "tipo": "issue_slip_out",
+   "q": -20,
+   "uc": 1,
+   "ref": "558e2585-3f53-4f02-9b1b-3c1c1511e50c",
+   "doc": "Vale de Salida VS-000158-2026"
+  },
+  {
+   "id": "66ab762f-3b97-49bc-8ca6-cdcff4b04105",
+   "sku": "111",
+   "fecha": "2026-10-14",
+   "tipo": "sale",
+   "q": -1,
+   "uc": 1,
+   "ref": "4c76a1a1-4b77-4d26-9093-bd183285ec50",
+   "doc": "Venta POS v2"
+  },
+  {
+   "id": "2c2da14b-e29f-4c88-911f-87d8fc2c6611",
+   "sku": "111",
+   "fecha": "2026-10-22",
+   "tipo": "sale",
+   "q": -1,
+   "uc": 1,
+   "ref": "a0d9f44d-9f54-4f69-a91f-db05f3dd4886",
+   "doc": "Venta POS v2"
+  },
+  {
+   "id": "76d41fcd-39d2-43cf-825c-ebb61d3233fa",
+   "sku": "111",
+   "fecha": "2026-10-28",
+   "tipo": "issue_slip_out",
+   "q": -12,
+   "uc": 1,
+   "ref": "221603a6-ecd4-4689-94d9-1b50d23f1456",
+   "doc": "Vale de Salida VS-000208-2026"
+  },
+  {
+   "id": "1a2eddc4-a74b-459e-9a25-9e1ac266cd98",
+   "sku": "112",
+   "fecha": "2026-10-28",
+   "tipo": "issue_slip_out",
+   "q": -20,
+   "uc": 1,
+   "ref": "221603a6-ecd4-4689-94d9-1b50d23f1456",
+   "doc": "Vale de Salida VS-000208-2026"
+  },
+  {
+   "id": "0e3fa663-f4d6-4f68-b63f-ef8c06c27fe3",
+   "sku": "112",
+   "fecha": "2026-11-07",
+   "tipo": "issue_slip_out",
+   "q": -1,
+   "uc": 1,
+   "ref": "e4e811da-6722-468c-b4fd-14ff8fb5f084",
+   "doc": "Vale de Salida VS-000223-2026"
+  },
+  {
+   "id": "a48df909-4084-43f6-9e65-f191d8bf966a",
+   "sku": "112",
+   "fecha": "2026-11-07",
+   "tipo": "issue_slip_out",
+   "q": -5,
+   "uc": 1,
+   "ref": "3c6a80aa-ceca-4cec-8a28-79d562d5c2db",
+   "doc": "Vale de Salida VS-000225-2026"
+  }
+ ],
+ "inventory_batches": [],
+ "product_lots": [],
+ "hashes": {
+  "mision": "31a52a3b2ae502375f80481911bb4a3a3a64afa074a8625b6166db2d2c8ca09c",
+  "fase": "e4598cb2fc1a0aee73e4d2b8dec303d8b0dfb4ce393d61b1e1d4c90074abc0e8",
+  "secciones": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "transaction_items": "248c871b470f6259ed5b7246a8f0dde885a7d5b94b18c39fc1c3801ffb7fa5ea",
+  "transaction_items_todos": "aaf484e0515bf8b152bdbec85bc770f750824529136a86288beac030e8783e7e",
+  "fin_entries_ventas": "5aa3e2d14e7b350c12f0f0a7ea3c9dd3153e857df78bcf4a52954ef6bf3771f9",
+  "fin_movements_ventas": "ece873d93d1d93a8692ebb5a160d197eda90623cdfca7189dc1989403f673032",
+  "vale_numbers": "5ffccdf4c609777aa3af403b9bba52c13e8dddd5e364d3eff87941195785cb9c",
+  "fin_entries_vales": "85deed1a2515ffffa8f0b0169ce06c5f271fe686fc066ccb95eee9c27486f2fa",
+  "fin_movements_vales": "c755b40df6b0daf6052a3782c9a33be303c78f6039594b8b33508c0022ee915d",
+  "receipt_tasa_audit": "caa6eca9d0f940346b2af0fbf8071e43c205276b18ece5ffb999b7170f12fa8d",
+  "receipts_vitallcons": "5038d8f65a33dda8a734e9af4066d9ac95095a31fdadc0ebcbc01401b9b6ecca",
+  "receipts_store_enervida": "69153fb5cf93fc5c0c50273ddace1b929e141552be9f221906382e52e3dce074",
+  "kardex_salidas_ids": "0a7b96128daf96ee95c46233c5537d7fa958c700d97aa123807a9b85d4f797ac",
+  "inventory_batches": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "product_lots": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+ }
+}

@@ -1,0 +1,302 @@
+{
+ "mision": "CP-FIN-VALUATION-CORRECTION-002",
+ "fase": "A2",
+ "fecha": "2026-11-14T17:35:18.019Z",
+ "audit_products_111_112": [
+  {
+   "id": "3668b346-b7b2-4c6d-a4a6-dc73e7111d10",
+   "created_at": "2026-08-20T02:28:45.462403+00:00",
+   "user_id": "a1111111-1111-1111-1111-111111111111",
+   "table_name": "products",
+   "record_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+   "action": "price_change",
+   "old_data": null,
+   "new_data": null,
+   "metadata": {
+    "new_cost": 0,
+    "old_cost": 0,
+    "new_price": 1000,
+    "old_price": 1000,
+    "timestamp": "2026-08-20T02:28:46.693Z",
+    "price_diff": 0
+   },
+   "updated_at": "2026-08-20T02:28:45.462403+00:00",
+   "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+   "trace_id": null
+  },
+  {
+   "id": "85375256-e912-447c-b2e9-9f496dbc9622",
+   "created_at": "2026-08-20T02:29:58.133701+00:00",
+   "user_id": "a1111111-1111-1111-1111-111111111111",
+   "table_name": "products",
+   "record_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+   "action": "price_change",
+   "old_data": null,
+   "new_data": null,
+   "metadata": {
+    "new_cost": 0,
+    "old_cost": 0,
+    "new_price": 2500,
+    "old_price": 2500,
+    "timestamp": "2026-08-20T02:29:59.372Z",
+    "price_diff": 0
+   },
+   "updated_at": "2026-08-20T02:29:58.133701+00:00",
+   "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+   "trace_id": null
+  },
+  {
+   "id": "a6643dfc-da96-4666-830c-3ea23ab841a9",
+   "created_at": "2026-10-16T14:14:15.200545+00:00",
+   "user_id": "051c6157-600b-425e-b8c0-72388bacf541",
+   "table_name": "products",
+   "record_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+   "action": "UPDATE_PRODUCT",
+   "old_data": {
+    "sku": "111",
+    "name": "Grapas plasticas con clavo de acero",
+    "price": 2500,
+    "cost_price": 0,
+    "price_currency": "USD"
+   },
+   "new_data": {
+    "sku": "111",
+    "name": "Grapas plásticas con clavo de acero",
+    "price": 2500,
+    "cost_price": 0,
+    "price_currency": "USD"
+   },
+   "metadata": null,
+   "updated_at": "2026-10-16T14:14:15.200545+00:00",
+   "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+   "trace_id": null
+  },
+  {
+   "id": "09e55016-4a0d-4875-b936-590d929edcb9",
+   "created_at": "2026-10-16T14:14:16.003779+00:00",
+   "user_id": "051c6157-600b-425e-b8c0-72388bacf541",
+   "table_name": "products",
+   "record_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+   "action": "UPDATE_PRODUCT",
+   "old_data": {
+    "sku": "112",
+    "name": "Grapas metalicas 3/4 con tornillo roscante",
+    "price": 1000,
+    "cost_price": 0,
+    "price_currency": "USD"
+   },
+   "new_data": {
+    "sku": "112",
+    "name": "Grapas metálicas 3/4 con tornillo roscante",
+    "price": 1000,
+    "cost_price": 0,
+    "price_currency": "USD"
+   },
+   "metadata": null,
+   "updated_at": "2026-10-16T14:14:16.003779+00:00",
+   "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+   "trace_id": null
+  },
+  {
+   "id": "f05a3fdc-c15d-4819-914e-db7498400d39",
+   "created_at": "2026-10-22T18:46:08.081836+00:00",
+   "user_id": "a1111111-1111-1111-1111-111111111111",
+   "table_name": "products",
+   "record_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+   "action": "UPDATE_PRODUCT",
+   "old_data": {
+    "sku": "111",
+    "name": "Grapas plásticas con clavo de acero",
+    "price": 2500,
+    "cost_price": 0,
+    "price_currency": "USD"
+   },
+   "new_data": {
+    "sku": "111",
+    "name": "Grapas plásticas con clavo de acero",
+    "price": 2500,
+    "cost_price": 0,
+    "price_currency": "CUP"
+   },
+   "metadata": null,
+   "updated_at": "2026-10-22T18:46:08.081836+00:00",
+   "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+   "trace_id": null
+  },
+  {
+   "id": "10e40553-e2e7-4fbb-80d9-31404fc68e05",
+   "created_at": "2026-10-22T18:46:09.200947+00:00",
+   "user_id": "a1111111-1111-1111-1111-111111111111",
+   "table_name": "products",
+   "record_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+   "action": "price_change",
+   "old_data": null,
+   "new_data": null,
+   "metadata": {
+    "new_cost": 0,
+    "old_cost": 0,
+    "new_price": 2500,
+    "old_price": 2500,
+    "timestamp": "2026-10-22T18:46:09.370Z",
+    "price_diff": 0
+   },
+   "updated_at": "2026-10-22T18:46:09.200947+00:00",
+   "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+   "trace_id": null
+  },
+  {
+   "id": "d3ca0c40-88c2-4615-a258-efe96c6cd981",
+   "created_at": "2026-10-22T18:47:25.415958+00:00",
+   "user_id": "a1111111-1111-1111-1111-111111111111",
+   "table_name": "products",
+   "record_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+   "action": "UPDATE_PRODUCT",
+   "old_data": {
+    "sku": "111",
+    "name": "Grapas plásticas con clavo de acero",
+    "price": 2500,
+    "cost_price": 0,
+    "price_currency": "CUP"
+   },
+   "new_data": {
+    "sku": "111",
+    "name": "Grapas plásticas con clavo de acero",
+    "price": 2000,
+    "cost_price": 0,
+    "price_currency": "CUP"
+   },
+   "metadata": null,
+   "updated_at": "2026-10-22T18:47:25.415958+00:00",
+   "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+   "trace_id": null
+  },
+  {
+   "id": "e81295d9-e19f-49c3-8490-4fb8c80d9942",
+   "created_at": "2026-10-22T18:47:28.286735+00:00",
+   "user_id": "a1111111-1111-1111-1111-111111111111",
+   "table_name": "products",
+   "record_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+   "action": "price_change",
+   "old_data": null,
+   "new_data": null,
+   "metadata": {
+    "new_cost": 0,
+    "old_cost": 0,
+    "new_price": 2000,
+    "old_price": 2000,
+    "timestamp": "2026-10-22T18:47:27.804Z",
+    "price_diff": 0
+   },
+   "updated_at": "2026-10-22T18:47:28.286735+00:00",
+   "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+   "trace_id": null
+  }
+ ],
+ "audit_receipt_items": [],
+ "cambios_precio": [
+  {
+   "at": "2026-08-20T02:28:45.462403+00:00",
+   "accion": "price_change",
+   "old": null,
+   "new": null,
+   "tabla": "products"
+  },
+  {
+   "at": "2026-08-20T02:29:58.133701+00:00",
+   "accion": "price_change",
+   "old": null,
+   "new": null,
+   "tabla": "products"
+  },
+  {
+   "at": "2026-10-16T14:14:15.200545+00:00",
+   "accion": "UPDATE_PRODUCT",
+   "old": {
+    "sku": "111",
+    "name": "Grapas plasticas con clavo de acero",
+    "price": 2500,
+    "cost_price": 0,
+    "price_currency": "USD"
+   },
+   "new": {
+    "sku": "111",
+    "name": "Grapas plásticas con clavo de acero",
+    "price": 2500,
+    "cost_price": 0,
+    "price_currency": "USD"
+   },
+   "tabla": "products"
+  },
+  {
+   "at": "2026-10-16T14:14:16.003779+00:00",
+   "accion": "UPDATE_PRODUCT",
+   "old": {
+    "sku": "112",
+    "name": "Grapas metalicas 3/4 con tornillo roscante",
+    "price": 1000,
+    "cost_price": 0,
+    "price_currency": "USD"
+   },
+   "new": {
+    "sku": "112",
+    "name": "Grapas metálicas 3/4 con tornillo roscante",
+    "price": 1000,
+    "cost_price": 0,
+    "price_currency": "USD"
+   },
+   "tabla": "products"
+  },
+  {
+   "at": "2026-10-22T18:46:08.081836+00:00",
+   "accion": "UPDATE_PRODUCT",
+   "old": {
+    "sku": "111",
+    "name": "Grapas plásticas con clavo de acero",
+    "price": 2500,
+    "cost_price": 0,
+    "price_currency": "USD"
+   },
+   "new": {
+    "sku": "111",
+    "name": "Grapas plásticas con clavo de acero",
+    "price": 2500,
+    "cost_price": 0,
+    "price_currency": "CUP"
+   },
+   "tabla": "products"
+  },
+  {
+   "at": "2026-10-22T18:46:09.200947+00:00",
+   "accion": "price_change",
+   "old": null,
+   "new": null,
+   "tabla": "products"
+  },
+  {
+   "at": "2026-10-22T18:47:25.415958+00:00",
+   "accion": "UPDATE_PRODUCT",
+   "old": {
+    "sku": "111",
+    "name": "Grapas plásticas con clavo de acero",
+    "price": 2500,
+    "cost_price": 0,
+    "price_currency": "CUP"
+   },
+   "new": {
+    "sku": "111",
+    "name": "Grapas plásticas con clavo de acero",
+    "price": 2000,
+    "cost_price": 0,
+    "price_currency": "CUP"
+   },
+   "tabla": "products"
+  },
+  {
+   "at": "2026-10-22T18:47:28.286735+00:00",
+   "accion": "price_change",
+   "old": null,
+   "new": null,
+   "tabla": "products"
+  }
+ ]
+}

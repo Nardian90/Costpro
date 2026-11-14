@@ -29,6 +29,10 @@ name: SQL Security Gate
 #     post-fusión solo quedó verificado por sonda manual posterior.
 
 on:
+  # workflow_dispatch (CP-FIN-FINAL-CLOSE-005): re-disparo manual legítimo tras
+  # anomalía de GitHub (21:30Z+): los eventos push/synchronize dejaron de crear
+  # runs. Mismos checks estáticos y de BD — ningún control desactivado.
+  workflow_dispatch:
   pull_request:
     paths:
       - 'supabase/migrations/**'

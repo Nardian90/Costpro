@@ -1,0 +1,238 @@
+{
+ "mision": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004",
+ "fase": "§12 — prototipo E2E final: RECT-1 y RECT-2 separables",
+ "generado": "2026-11-14T20:16:20.372Z",
+ "bd": {
+  "proyecto": "lguovmvrozxgssupkwpf (CostproE2E — AISLADA)",
+  "canal": "pooler IPv4 :6543 (postgres/service_role)"
+ },
+ "pasos": {
+  "P0_preflight": {
+   "estado": "OK",
+   "ms": 7165
+  },
+  "P1_seed_réplica": {
+   "estado": "OK",
+   "ms": 10091
+  },
+  "P3_aplicación_parcial_RECT1_solo": {
+   "estado": "OK",
+   "ms": 2237
+  },
+  "P4_verificación_intermedia": {
+   "estado": "OK",
+   "ms": 2440
+  },
+  "P5_idempotencia_RECT1": {
+   "estado": "OK",
+   "ms": 2031
+  },
+  "P6_reanudación_RECT2": {
+   "estado": "OK",
+   "ms": 1424
+  },
+  "P7_verificación_final": {
+   "estado": "OK",
+   "ms": 3263
+  },
+  "P8_idempotencia_total": {
+   "estado": "OK",
+   "ms": 3262
+  },
+  "P9_concurrencia": {
+   "estado": "OK",
+   "ms": 4278
+  },
+  "P10_rollback_RECT2_individual": {
+   "estado": "OK",
+   "ms": 3673
+  },
+  "P11_reaplicar_RECT2": {
+   "estado": "OK",
+   "ms": 3870
+  },
+  "P12_rollback_total": {
+   "estado": "OK",
+   "ms": 6100
+  },
+  "P13_replay_completo": {
+   "estado": "OK",
+   "ms": 6102
+  },
+  "P14_controles_intactos": {
+   "estado": "OK",
+   "ms": 1633
+  },
+  "P15_producción_intacta": {
+   "estado": "OK",
+   "ms": 2136
+  },
+  "P16_limpieza_neta_0": {
+   "estado": "OK",
+   "ms": 4680
+  }
+ },
+ "validaciones": {
+  "estado_inicial": {
+   "total": 151300000,
+   "payment_status": "unpaid",
+   "lineas": "2500@USD/t680 | 1000@USD/t680",
+   "capas_uc1": 0,
+   "salidas_uc0": 7,
+   "salidas_uc0_unidades": 26,
+   "cogs": 7,
+   "gas_vales": 88,
+   "gas_perdida": 0,
+   "act_neto": 151299905,
+   "cxp_neto": 151300000,
+   "asientos": 12,
+   "movimientos": 34,
+   "audit_rect004": 0
+  },
+  "estado_intermedio": {
+   "total": 149,
+   "payment_status": "unpaid",
+   "lineas": "1@CUP/t1 | 1@CUP/t1",
+   "capas_uc1": 2,
+   "salidas_uc0": 7,
+   "salidas_uc0_unidades": 26,
+   "cogs": 7,
+   "gas_vales": 88,
+   "gas_perdida": 0,
+   "act_neto": 54,
+   "cxp_neto": 149,
+   "asientos": 13,
+   "movimientos": 36,
+   "audit_rect004": 4
+  },
+  "intermedia_ok": true,
+  "estado_final": {
+   "total": 149,
+   "payment_status": "unpaid",
+   "lineas": "1@CUP/t1 | 1@CUP/t1",
+   "capas_uc1": 2,
+   "salidas_uc0": 0,
+   "salidas_uc0_unidades": 0,
+   "cogs": 7,
+   "gas_vales": 94,
+   "gas_perdida": 18,
+   "act_neto": 30,
+   "cxp_neto": 149,
+   "asientos": 14,
+   "movimientos": 39,
+   "audit_rect004": 5
+  },
+  "final_ok": true,
+  "tras_rollback_rect2": {
+   "total": 149,
+   "payment_status": "unpaid",
+   "lineas": "1@CUP/t1 | 1@CUP/t1",
+   "capas_uc1": 2,
+   "salidas_uc0": 7,
+   "salidas_uc0_unidades": 26,
+   "cogs": 7,
+   "gas_vales": 88,
+   "gas_perdida": 0,
+   "act_neto": 54,
+   "cxp_neto": 149,
+   "asientos": 13,
+   "movimientos": 36,
+   "audit_rect004": 4
+  },
+  "estado_tras_rollback_total": {
+   "total": 151300000,
+   "payment_status": "unpaid",
+   "lineas": "2500@USD/t680 | 1000@USD/t680",
+   "capas_uc1": 0,
+   "salidas_uc0": 7,
+   "salidas_uc0_unidades": 26,
+   "cogs": 7,
+   "gas_vales": 88,
+   "gas_perdida": 0,
+   "act_neto": 151299905,
+   "cxp_neto": 151300000,
+   "asientos": 12,
+   "movimientos": 34,
+   "audit_rect004": 0
+  },
+  "hash_tras_rollback_total": "ef56f3b8071345da64c7b1665636456a7d06ba178c9315a1c753747b73d1aff1",
+  "rollback_total_byte_a_byte": true,
+  "replay_ok": true
+ },
+ "permisos": {
+  "m021_sin_hatch": "RECHAZADO (ERR_RECEIPT_ITEM_IMMUTABLE: la recepción 7ec70005-0000-4000-)",
+  "rls_fin": "fin_entries: rls=true force=true | fin_movements: rls=true force=true",
+  "motor_anon": false,
+  "motor_authenticated": false,
+  "fin_entries_anon": {
+   "a": false,
+   "b": false
+  },
+  "sentinela": true
+ },
+ "produccion": {
+  "verificado": "2026-11-14T20:17:22.521Z",
+  "canal": "Management API /database/query (SELECT)",
+  "total": 192039436,
+  "lineas": 101,
+  "asientos_fvc": 1,
+  "reversiones": 0,
+  "kardex": 21,
+  "pago": "unpaid",
+  "intacta": true
+ },
+ "limpiar": {
+  "baseline": {
+   "receipts": 1,
+   "receipt_items": 3,
+   "stock_movements": 4,
+   "fin_entries": 148,
+   "fin_movements": 297,
+   "wac_change_log": 534,
+   "audit_logs": 2902,
+   "products": 30,
+   "stores": 77,
+   "inventory": 23
+  },
+  "finales": {
+   "receipts": 1,
+   "receipt_items": 3,
+   "stock_movements": 4,
+   "fin_entries": 148,
+   "fin_movements": 297,
+   "wac_change_log": 534,
+   "audit_logs": 2902,
+   "products": 30,
+   "stores": 77,
+   "inventory": 23
+  },
+  "delta": {
+   "receipts": 0,
+   "receipt_items": 0,
+   "stock_movements": 0,
+   "fin_entries": 0,
+   "fin_movements": 0,
+   "wac_change_log": 0,
+   "audit_logs": 0,
+   "products": 0,
+   "stores": 0,
+   "inventory": 0
+  },
+  "net_delta_0": true
+ },
+ "hash_estado_inicial": "ef56f3b8071345da64c7b1665636456a7d06ba178c9315a1c753747b73d1aff1",
+ "veredicto": {
+  "separables": true,
+  "idempotencia": true,
+  "interrupción_reanudación": true,
+  "rollback_individual": true,
+  "rollback_total_byte_a_byte": true,
+  "replay": true,
+  "concurrencia": true,
+  "controles_intactos": true,
+  "produccion_intacta": true,
+  "net_delta_0": true,
+  "TODO_PASS": true
+ },
+ "hash_evidencia": "628da812ac9449f3797680fda39b2c406bc7aee7de091cc6c9413f42c338e5b9"
+}

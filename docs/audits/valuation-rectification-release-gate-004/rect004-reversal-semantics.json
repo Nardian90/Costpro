@@ -1,0 +1,278 @@
+{
+ "mision": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004",
+ "fase": "§6 — semántica de reversal_of: pruebas del motor real (BD aislada)",
+ "generado": "2026-11-14T20:10:54.724Z",
+ "bd": {
+  "proyecto": "lguovmvrozxgssupkwpf (CostproE2E — AISLADA)",
+  "canal": "pooler IPv4 :6543 (postgres/service_role)"
+ },
+ "preguntas": {
+  "1_2_t1": {
+   "pregunta": "¿reversión completa: cómo funciona? ¿reversal_of solo para anulaciones completas?",
+   "evidencia": "UPDATE receipts→voided dispara fin_trg_receipts→fin_post_document_annulment: crea asiento 'anulacion' con reversal_of=original, copia TODOS los movimientos con sentidos invertidos y MISMO importe (D 1000 = original D 1000), y marca original status='reversed'. Sentidos invertidos 1:1: true",
+   "resultado": "COMPLETA solamente — importe y filas del original, sin parcialidad"
+  },
+  "1_2_t2": {
+   "pregunta": "¿el sistema permite reversiones parciales?",
+   "evidencia": "La BD las ADMITE (sin constraint sobre reversal_of) y los reportes las netean: tras el parcial de 3000 sobre original 5000, mayor ACT=4000 CXP=4000 (A anulada 0 + B 2000 + C 2000). El ORIGINAL conserva status='posted' (posted) — correcto: aún queda deuda viva 2000. El motor de anulación NUNCA genera parciales (solo completas).",
+   "resultado": "PERMITIDA por la BD (asiento ajuste_manual compensatorio enlazado); NO generada por el motor"
+  },
+  "3_t3": {
+   "pregunta": "¿existe una restricción que impida múltiples reversiones parciales del mismo asiento?",
+   "evidencia": "a) MISMA tupla (RECEPCION,R-B,ajuste_manual,NULL) con id distinto → RECHAZADA por uq_fin_entries_doc_event: duplicate key value violates unique constraint \"uq_fin_entries_doc_event\"… b) misma id → ON CONFLICT DO NOTHING → 0 filas (0). c) con event/texto diferente el índice NO protege (prueba insertó new row for relation \"fin_entries\" violates check constraint \"fin_entry_event_check\" y se revirtió): la cardinalidad de reversal_of NO está limitada por la BD — la gobernanza es del procedimiento (ids deterministas + verificación de importe pendiente).",
+   "resultado": "NO existe constraint de cardinalidad; el índice único de tupla y los ids deterministas son la protección efectiva"
+  },
+  "7_t4": {
+   "pregunta": "¿cómo se impediría revertir dos veces el mismo importe (motor)?",
+   "evidencia": "fin_post_document_annulment('RECEPCION',R-A) re-ejecutada → devuelve 0: el guard EXISTS(fin_entries.reversal_of=original) salta el asiento ya revertido. Para anulaciones COMPLETAS del motor es idempotente.",
+   "resultado": "motor idempotente para completas"
+  },
+  "6_t6": {
+   "pregunta": "¿la BD impide revertir más que el importe original?",
+   "evidencia": "NO: el INSERT de un parcial de 9999 sobre un original de 2000 fue ACEPTADO por la BD (sin constraint de importe entre reversal_of y el original). La protección debe ser del PROCEDIMIENTO: pre-flight dentro de la transacción verifica importe ≤ resto pendiente. Se ejecutó ROLLBACK → 0 residuo.",
+   "resultado": "NO hay protección de importe en la BD — control procedimental obligatorio"
+  },
+  "7_t7": {
+   "pregunta": "¿qué ocurre si dos ejecuciones concurrentes aplican la misma reversión?",
+   "evidencia": "2 conexiones simultáneas con advisory lock + id determinista + ON CONFLICT: resultado inserciones=1+0=1, filas=1, movimientos=2. Sin duplicación.",
+   "resultado": "concurrencia segura (advisory lock + id determinista + unique)"
+  },
+  "8_t9": {
+   "pregunta": "¿qué pasa si otra operación modifica el saldo entre dry-run y ejecución?",
+   "evidencia": "La reversión parcial es COMPENSATORIA por importes fijos (no recalcula): tras interrupción parcial de R-C (1000 de 2000), el estado es CONSULTABLE y CONSISTENTE (original posted, parcial enlazado, mayor ACT=3000); la reanudación solo decide aplicar o revertir el resto. Entre dry-run y ejecución la transacción única con locks + verificación pre-flight de condiciones (deuda pendiente, uc intactos) cierra la ventana TOCTOU.",
+   "resultado": "estados intermedios consistentes y verificables"
+  },
+  "6_t10": {
+   "pregunta": "¿cómo se presentan ambas operaciones en el historial y estados financieros?",
+   "evidencia": "La consulta por document_id muestra TODOS los asientos (original + anulacion + ajustes_manuales) con su reversal_of. Los estados financieros (fin_get_balance_sheet/dashboard) SUMAN fin_movements sin filtrar status: anulación completa netea a 0; el parcial aporta su importe y netea lo que declara. Ambos son visibles y auditables.",
+   "resultado": "historial completo y estados neteados por movimientos"
+  },
+  "4_11": {
+   "pregunta": "¿cómo determina el sistema que un asiento está completamente revertido?",
+   "evidencia": "status='reversed' SOLO lo pone fin_post_document_annulment tras crear la compensatoria completa. Ni los parciales ni ningún trigger lo tocan (original de R-B sigue posted con parcial aplicado). Los reportes no usan status: la determinación real es ARITMÉTICA (suma de movimientos netos). Tras todo: ACT=3000 CXP=3000 (A anulada 0; B 2000; C 1000).",
+   "resultado": "status es metadato del motor de anulaciones; la verdad contable es la suma de movimientos"
+  },
+  "5_t12": {
+   "pregunta": "¿una reversión parcial podría marcar incorrectamente el documento original como anulado / bloquear su compensación futura?",
+   "evidencia": "TRAMPA CONFIRMADA: con el parcial aplicado, al anular R-B el motor NO creó asiento de anulación (creó) y el original QUEDÓ reversed — el residual 2000 NO se compensó automáticamente. El EXISTS de fin_post_document_annulment trata «tiene CUALQUIER reversión» como «ya revertido». Mitigación: si un documento con rectificación parcial se anula en el futuro, se exige asiento manual del residual (documentado en el runbook).",
+   "resultado": "CONFIRMADO: el parcial bloquea la anulación completa automática — mitigación documentada"
+  }
+ },
+ "pruebas": {
+  "preflight": {
+   "estado": "OK",
+   "ms": 6110,
+   "resumen": "sentinela=true (REST+SQL); residuos previos eliminados (hard-delete gobernado); baseline capturada"
+  },
+  "seed": {
+   "estado": "OK",
+   "ms": 2010,
+   "resumen": "3 recepciones contabilizadas por el MOTOR real: A=9c160529 B=3f8697bc C=4543c5cc"
+  },
+  "T1_reversión_completa": {
+   "estado": "OK",
+   "ms": 845,
+   "resumen": "anulación bf6e72ed enlazada a 9c160529; original reversed; débitos iguales (1000)"
+  },
+  "T2_reversión_parcial": {
+   "estado": "OK",
+   "ms": 1473,
+   "resumen": "parcial 3000/5000 aplicado; original sigue posted; saldos netos ACT=4000 CXP=4000; D=C=3000"
+  },
+  "T3_dos_parciales_sucesivas": {
+   "estado": "OK",
+   "ms": 631,
+   "resumen": "tupla duplicada rechazada por índice único; reintentos no-op"
+  },
+  "T4_anulación_duplicada": {
+   "estado": "OK",
+   "ms": 210,
+   "resumen": "re-llamada de anulación → 0 asientos nuevos (idempotente)"
+  },
+  "T5_reintento_ejecutada": {
+   "estado": "OK",
+   "ms": 419,
+   "resumen": "re-ejecución del parcial → 0 cambios; asientos de R-B = 2"
+  },
+  "T6_importe_excesivo": {
+   "estado": "OK",
+   "ms": 1046,
+   "resumen": "exceso ACEPTADO por la BD (sin constraint) → rollback → cero residuo"
+  },
+  "T7_concurrencia": {
+   "estado": "OK",
+   "ms": 4745,
+   "resumen": "concurrencia: 1 inserción (1/0), 1 fila, 2 movimientos"
+  },
+  "T8_rollback_transacción": {
+   "estado": "OK",
+   "ms": 1266,
+   "resumen": "BEGIN→INSERT→ROLLBACK: 6=6 asientos (cero residuo)"
+  },
+  "T9_reanudación_interrumpida": {
+   "estado": "OK",
+   "ms": 420,
+   "resumen": "tras interrupción: ACT=3000 (A0+B2000+C1000); original posted; parcial enlazado"
+  },
+  "T10_historial": {
+   "estado": "OK",
+   "ms": 838,
+   "resumen": "historial capturado: R-A:undefined(reversed) · R-A:undefined(posted) · R-B:undefined(posted) · R-B:undefined(posted) · R-C:undefined(posted) · R-C:undefined(posted)"
+  },
+  "T11_saldos_después": {
+   "estado": "OK",
+   "ms": 419,
+   "resumen": "saldos finales ACT=3000 CXP=3000 — neteo exacto por movimientos"
+  },
+  "T12_trampa_anulación_posterior": {
+   "estado": "OK",
+   "ms": 665,
+   "resumen": "R-B: 2→3 asientos tras void; original reversed; anulación automática creada"
+  },
+  "T13_repost_idempotente": {
+   "estado": "OK",
+   "ms": 422,
+   "resumen": "re-llamada del posting para R-B → NULL (idempotencia por tupla); reconocimientos=1 (sin duplicado)"
+  },
+  "limpieza_neta_0": {
+   "estado": "OK",
+   "ms": 5662,
+   "resumen": "NET DELTA 0 en las 8 tablas tocadas — BD aislada sin residuos"
+  }
+ },
+ "limpiar": {
+  "baseline_conteos": {
+   "fin_entries": 148,
+   "fin_movements": 297,
+   "receipts": 1,
+   "receipt_items": 3,
+   "products": 30,
+   "stores": 77,
+   "audit_logs": 2902,
+   "fin_posting_errors": 1
+  },
+  "conteos_finales": {
+   "fin_entries": 148,
+   "fin_movements": 297,
+   "receipts": 1,
+   "receipt_items": 3,
+   "products": 30,
+   "stores": 77,
+   "audit_logs": 2902,
+   "fin_posting_errors": 1
+  },
+  "delta": {
+   "fin_entries": 0,
+   "fin_movements": 0,
+   "receipts": 0,
+   "receipt_items": 0,
+   "products": 0,
+   "stores": 0,
+   "audit_logs": 0,
+   "fin_posting_errors": 0
+  },
+  "net_delta_0": true
+ },
+ "reconocimientos": {
+  "A": "9c160529-14c4-4015-b7b5-27fde3c3e3e8",
+  "B": "3f8697bc-c8fd-4e85-88e8-ad07a5a92478",
+  "C": "4543c5cc-32c6-4214-b3c3-500959852488"
+ },
+ "movimientos_tras_seed": [
+  {
+   "asiento": "9c160529",
+   "doc": "0201",
+   "evento": "reconocimiento",
+   "categoria": "ACT_INVENTARIO",
+   "sentido": "debito",
+   "monto": 1000
+  },
+  {
+   "asiento": "9c160529",
+   "doc": "0201",
+   "evento": "reconocimiento",
+   "categoria": "PAS_CXP_PROV",
+   "sentido": "credito",
+   "monto": 1000
+  },
+  {
+   "asiento": "3f8697bc",
+   "doc": "0202",
+   "evento": "reconocimiento",
+   "categoria": "ACT_INVENTARIO",
+   "sentido": "debito",
+   "monto": 5000
+  },
+  {
+   "asiento": "3f8697bc",
+   "doc": "0202",
+   "evento": "reconocimiento",
+   "categoria": "PAS_CXP_PROV",
+   "sentido": "credito",
+   "monto": 5000
+  },
+  {
+   "asiento": "4543c5cc",
+   "doc": "0203",
+   "evento": "reconocimiento",
+   "categoria": "PAS_CXP_PROV",
+   "sentido": "credito",
+   "monto": 2000
+  },
+  {
+   "asiento": "4543c5cc",
+   "doc": "0203",
+   "evento": "reconocimiento",
+   "categoria": "ACT_INVENTARIO",
+   "sentido": "debito",
+   "monto": 2000
+  }
+ ],
+ "saldos_antes": {
+  "act": 8000,
+  "cxp": 8000
+ },
+ "historial": [
+  {
+   "doc": "R-A",
+   "evento": "reconocimiento",
+   "status": "reversed",
+   "reversal_de": null
+  },
+  {
+   "doc": "R-A",
+   "evento": "anulacion",
+   "status": "posted",
+   "reversal_de": "reconocimiento"
+  },
+  {
+   "doc": "R-B",
+   "evento": "reconocimiento",
+   "status": "posted",
+   "reversal_de": null
+  },
+  {
+   "doc": "R-B",
+   "evento": "ajuste_manual",
+   "status": "posted",
+   "reversal_de": null
+  },
+  {
+   "doc": "R-C",
+   "evento": "reconocimiento",
+   "status": "posted",
+   "reversal_de": null
+  },
+  {
+   "doc": "R-C",
+   "evento": "ajuste_manual",
+   "status": "posted",
+   "reversal_de": null
+  }
+ ],
+ "saldos_despues": {
+  "act": 3000,
+  "cxp": 3000
+ },
+ "hash_evidencia": "9078e77c7a8c2d8de693f1a221dfd84d9fdab30ae7b8e13ee321475777655c3b"
+}

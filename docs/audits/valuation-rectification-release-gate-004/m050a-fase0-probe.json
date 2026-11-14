@@ -1,0 +1,29 @@
+{
+  "mision": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004",
+  "fase": "0 — probe de entorno (recuperación)",
+  "generado": "2026-11-14T19:43:56.161Z",
+  "produccion": {
+    "canal": "Management API /database/query",
+    "ref": "wthkddeleylijmonclxg",
+    "resultado": {
+      "db": "postgres",
+      "ts": "2026-11-14 19:43:57.99331+00",
+      "pgver": "17.6"
+    },
+    "hash_sha256": "49d463620a1b1b4c881020a5d7e8e7427c88fe47e9ed56a958a38f19ed639df8"
+  },
+  "e2e_aislada": {
+    "rest_sentinela": {
+      "http": 200,
+      "cuerpo": "true"
+    },
+    "sql": {
+      "sentinela": true,
+      "db": "postgres",
+      "ts": "2026-11-14T19:44:00.356Z",
+      "canal": "pooler IPv4 :6543"
+    },
+    "hash_sha256": "5b01f17f6bba7ec9bf989b5e1bd826e6fd43eed24f354eaeab5e47b70f6089d2"
+  },
+  "declaracion": "Este script no contiene ninguna sentencia de escritura (solo SELECT / RPC read-only)."
+}

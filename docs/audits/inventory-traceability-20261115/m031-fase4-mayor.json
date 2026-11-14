@@ -1,0 +1,1051 @@
+{
+  "generado": "2026-11-14T16:44:24.656Z",
+  "mision": "CP-INVENTORY-TRACEABILITY-RECONCILIATION-001",
+  "fase": "IV — mayor ACT_INVENTARIO",
+  "saldo_inicial": 0,
+  "debitos": 207256112.57,
+  "creditos": 5556866.0200000005,
+  "saldo_contable_final": 201699246.54999998,
+  "por_tipo": [
+    {
+      "document_type": "AJUSTE_INVENTARIO",
+      "event": "reconocimiento",
+      "sense": "credito",
+      "n_asientos": 1,
+      "n_movs": 1,
+      "total": 1
+    },
+    {
+      "document_type": "DEVOLUCION_VENTA",
+      "event": "reconocimiento",
+      "sense": "debito",
+      "n_asientos": 2,
+      "n_movs": 2,
+      "total": 2
+    },
+    {
+      "document_type": "RECEPCION",
+      "event": "anulacion",
+      "sense": "credito",
+      "n_asientos": 1,
+      "n_movs": 1,
+      "total": 960
+    },
+    {
+      "document_type": "RECEPCION",
+      "event": "reconocimiento",
+      "sense": "debito",
+      "n_asientos": 98,
+      "n_movs": 98,
+      "total": 207256110.57
+    },
+    {
+      "document_type": "VALE_SALIDA",
+      "event": "reconocimiento",
+      "sense": "credito",
+      "n_asientos": 198,
+      "n_movs": 198,
+      "total": 808863.11
+    },
+    {
+      "document_type": "VENTA",
+      "event": "reconocimiento",
+      "sense": "credito",
+      "n_asientos": 700,
+      "n_movs": 700,
+      "total": 4747041.91
+    }
+  ],
+  "por_tienda": [
+    {
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "name": "PUERTO PADRE",
+      "debitos": 1616.5,
+      "creditos": 0
+    },
+    {
+      "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "name": "ENERVIDA-VITALLCONS",
+      "debitos": 194995372.4,
+      "creditos": 5555906.02
+    },
+    {
+      "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "name": "COSTPRO (Prueba)",
+      "debitos": 12259123.67,
+      "creditos": 960
+    }
+  ],
+  "serie_mensual": [
+    {
+      "mes": "2026-05-01",
+      "debitos": 5044463.67,
+      "creditos": 0,
+      "saldo_acum": 5044463.67
+    },
+    {
+      "mes": "2026-06-01",
+      "debitos": 7213500,
+      "creditos": 0,
+      "saldo_acum": 12257963.67
+    },
+    {
+      "mes": "2026-07-01",
+      "debitos": 192039436,
+      "creditos": 1487518.61,
+      "saldo_acum": 202809881.06
+    },
+    {
+      "mes": "2026-08-01",
+      "debitos": 1966260,
+      "creditos": 2453083.49,
+      "saldo_acum": 202323057.57
+    },
+    {
+      "mes": "2026-09-01",
+      "debitos": 23205,
+      "creditos": 545999.47,
+      "saldo_acum": 201800263.1
+    },
+    {
+      "mes": "2026-10-01",
+      "debitos": 915143.7,
+      "creditos": 838059.76,
+      "saldo_acum": 201877347.04
+    },
+    {
+      "mes": "2026-11-01",
+      "debitos": 54104.2,
+      "creditos": 232204.69,
+      "saldo_acum": 201699246.55
+    }
+  ],
+  "recepciones_por_documento": [
+    {
+      "document_number": null,
+      "document_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+      "event": "reconocimiento",
+      "amount_cup": 192039436,
+      "sense": "debito",
+      "economic_date": "2026-07-01",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "6fb4548d-2277-4652-a164-1aabc6de0727",
+      "event": "reconocimiento",
+      "amount_cup": 7213500,
+      "sense": "debito",
+      "economic_date": "2026-06-29",
+      "tienda": "COSTPRO (Prueba)"
+    },
+    {
+      "document_number": null,
+      "document_id": "b7f5df9f-e80c-4f7b-9f15-a0878567b66c",
+      "event": "reconocimiento",
+      "amount_cup": 5044463.67,
+      "sense": "debito",
+      "economic_date": "2026-05-01",
+      "tienda": "COSTPRO (Prueba)"
+    },
+    {
+      "document_number": null,
+      "document_id": "02fe9c2c-cdfd-49e2-b1a7-a9035f7f23f1",
+      "event": "reconocimiento",
+      "amount_cup": 1034660,
+      "sense": "debito",
+      "economic_date": "2026-08-10",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "34c3fbd0-c9b5-48d1-89e6-207a28024b0e",
+      "event": "reconocimiento",
+      "amount_cup": 918000,
+      "sense": "debito",
+      "economic_date": "2026-08-10",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "41b16484-6d8a-4eb9-a590-30a7977945ea",
+      "event": "reconocimiento",
+      "amount_cup": 336000,
+      "sense": "debito",
+      "economic_date": "2026-10-26",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "c5c1c037-b7db-45d2-b6b3-d426e442d188",
+      "event": "reconocimiento",
+      "amount_cup": 200000,
+      "sense": "debito",
+      "economic_date": "2026-10-26",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "f5457812-9dcc-42a4-aee7-6c30c18afe8a",
+      "event": "reconocimiento",
+      "amount_cup": 199600,
+      "sense": "debito",
+      "economic_date": "2026-10-26",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "170dc139-305e-4143-9302-5c603d58d8d3",
+      "event": "reconocimiento",
+      "amount_cup": 120000,
+      "sense": "debito",
+      "economic_date": "2026-10-31",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": "ENT-000001-2026",
+      "document_id": "64dee9d8-555f-4608-80f2-4602ab9a8f34",
+      "event": "reconocimiento",
+      "amount_cup": 48000,
+      "sense": "debito",
+      "economic_date": "2026-11-10",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "d5f3a77b-6b98-4ef4-b9c9-4a50ecb956b0",
+      "event": "reconocimiento",
+      "amount_cup": 35490,
+      "sense": "debito",
+      "economic_date": "2026-10-26",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "0b026405-d090-46cc-9d68-60ff7cca3783",
+      "event": "reconocimiento",
+      "amount_cup": 19200,
+      "sense": "debito",
+      "economic_date": "2026-10-12",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "44b8f20f-1548-4487-971f-f3b7e1b40fb3",
+      "event": "reconocimiento",
+      "amount_cup": 13600,
+      "sense": "debito",
+      "economic_date": "2026-08-10",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "a8a72305-d656-4e50-ab10-77ba8f9dae41",
+      "event": "reconocimiento",
+      "amount_cup": 12000,
+      "sense": "debito",
+      "economic_date": "2026-09-19",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "55ed12df-2810-4b4e-a9ee-73f63f35b64d",
+      "event": "reconocimiento",
+      "amount_cup": 4877,
+      "sense": "debito",
+      "economic_date": "2026-11-06",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "e3bf72bd-d062-4d2c-b2ab-a642ac8013e9",
+      "event": "reconocimiento",
+      "amount_cup": 3990,
+      "sense": "debito",
+      "economic_date": "2026-09-19",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "3b1ad7cb-e52d-468a-ab51-51d5066f7dc5",
+      "event": "reconocimiento",
+      "amount_cup": 2500,
+      "sense": "debito",
+      "economic_date": "2026-09-19",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "e27c1934-703f-4f21-ad24-072034268898",
+      "event": "reconocimiento",
+      "amount_cup": 2000,
+      "sense": "debito",
+      "economic_date": "2026-09-19",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "c7ebea25-b0ad-4634-b46c-2b095839122d",
+      "event": "reconocimiento",
+      "amount_cup": 1000,
+      "sense": "debito",
+      "economic_date": "2026-09-19",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "a3fe3e76-5ac8-4bf3-b25b-5451e4ea2d8e",
+      "event": "reconocimiento",
+      "amount_cup": 960,
+      "sense": "debito",
+      "economic_date": "2026-11-04",
+      "tienda": "COSTPRO (Prueba)"
+    },
+    {
+      "document_number": null,
+      "document_id": "a3fe3e76-5ac8-4bf3-b25b-5451e4ea2d8e",
+      "event": "anulacion",
+      "amount_cup": 960,
+      "sense": "credito",
+      "economic_date": "2026-11-04",
+      "tienda": "COSTPRO (Prueba)"
+    },
+    {
+      "document_number": null,
+      "document_id": "0d40955f-4d61-4ebf-9011-888e9dfed17d",
+      "event": "reconocimiento",
+      "amount_cup": 840,
+      "sense": "debito",
+      "economic_date": "2026-10-26",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "7c305acb-a978-4a8e-84f3-667568e47e76",
+      "event": "reconocimiento",
+      "amount_cup": 835,
+      "sense": "debito",
+      "economic_date": "2026-10-26",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "646be7c5-9d74-47a2-871f-0f1c1f790424",
+      "event": "reconocimiento",
+      "amount_cup": 680,
+      "sense": "debito",
+      "economic_date": "2026-10-10",
+      "tienda": "PUERTO PADRE"
+    },
+    {
+      "document_number": null,
+      "document_id": "5e1b6b87-4123-4b60-8c76-5c9bb09d2a38",
+      "event": "reconocimiento",
+      "amount_cup": 515,
+      "sense": "debito",
+      "economic_date": "2026-10-10",
+      "tienda": "PUERTO PADRE"
+    },
+    {
+      "document_number": null,
+      "document_id": "eeda4e65-2a91-4369-9c66-3f00e06e944d",
+      "event": "reconocimiento",
+      "amount_cup": 400,
+      "sense": "debito",
+      "economic_date": "2026-10-23",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "351fa9fe-dec7-4fcb-8497-9663aadc7349",
+      "event": "reconocimiento",
+      "amount_cup": 383.5,
+      "sense": "debito",
+      "economic_date": "2026-10-10",
+      "tienda": "PUERTO PADRE"
+    },
+    {
+      "document_number": null,
+      "document_id": "028e9635-f5ae-4aff-8dcc-2294edb5b323",
+      "event": "reconocimiento",
+      "amount_cup": 300,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "2f004cde-9693-41c1-9d83-140c36e92236",
+      "event": "reconocimiento",
+      "amount_cup": 200,
+      "sense": "debito",
+      "economic_date": "2026-09-09",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "a57bd2c1-460b-4877-ab3d-64643bd7e10f",
+      "event": "reconocimiento",
+      "amount_cup": 200,
+      "sense": "debito",
+      "economic_date": "2026-11-05",
+      "tienda": "COSTPRO (Prueba)"
+    },
+    {
+      "document_number": null,
+      "document_id": "00fed3a4-888c-4c80-b705-dd5394af7cce",
+      "event": "reconocimiento",
+      "amount_cup": 200,
+      "sense": "debito",
+      "economic_date": "2026-10-06",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "e564adca-c9b9-479b-bdbe-146033712085",
+      "event": "reconocimiento",
+      "amount_cup": 200,
+      "sense": "debito",
+      "economic_date": "2026-10-22",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "855e9a6e-3d03-4f83-8a85-a195340fd49a",
+      "event": "reconocimiento",
+      "amount_cup": 153,
+      "sense": "debito",
+      "economic_date": "2026-09-02",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "29404c42-f3db-4c64-b8a4-e7aa70d1e4ca",
+      "event": "reconocimiento",
+      "amount_cup": 150,
+      "sense": "debito",
+      "economic_date": "2026-10-14",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "21ff6606-2dc7-4bde-a220-ed7d9e5590c7",
+      "event": "reconocimiento",
+      "amount_cup": 100,
+      "sense": "debito",
+      "economic_date": "2026-10-08",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "2153ffcd-8e7a-4609-b9c3-5b56fd962d63",
+      "event": "reconocimiento",
+      "amount_cup": 100,
+      "sense": "debito",
+      "economic_date": "2026-09-09",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "671313bb-7be7-4f46-bf56-c6bddd4ac6a7",
+      "event": "reconocimiento",
+      "amount_cup": 100,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "8786b1a9-7935-4943-afd6-d99d2c3396ba",
+      "event": "reconocimiento",
+      "amount_cup": 100,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "30538c95-c8e4-42fb-8cc9-cd79cbdec80b",
+      "event": "reconocimiento",
+      "amount_cup": 100,
+      "sense": "debito",
+      "economic_date": "2026-09-22",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "54657352-b71d-4018-8963-b5422a232918",
+      "event": "reconocimiento",
+      "amount_cup": 100,
+      "sense": "debito",
+      "economic_date": "2026-09-22",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "becd9890-a215-44cb-b3c6-f81a1a5f1188",
+      "event": "reconocimiento",
+      "amount_cup": 100,
+      "sense": "debito",
+      "economic_date": "2026-09-22",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "1f682887-5bec-44ec-909e-8a29aec4ef82",
+      "event": "reconocimiento",
+      "amount_cup": 100,
+      "sense": "debito",
+      "economic_date": "2026-09-09",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "172662ff-c33f-45de-98ee-1ae49545b558",
+      "event": "reconocimiento",
+      "amount_cup": 100,
+      "sense": "debito",
+      "economic_date": "2026-10-14",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "eb67f3b4-a9c6-426e-8729-16a2a713a1d3",
+      "event": "reconocimiento",
+      "amount_cup": 66,
+      "sense": "debito",
+      "economic_date": "2026-10-06",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "d623d1b5-4d8c-43d3-9d86-fa5a11a819a8",
+      "event": "reconocimiento",
+      "amount_cup": 63,
+      "sense": "debito",
+      "economic_date": "2026-09-18",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "7a741289-674d-4739-8f96-6b584ee68468",
+      "event": "reconocimiento",
+      "amount_cup": 54,
+      "sense": "debito",
+      "economic_date": "2026-10-14",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "84d46950-75f4-49f4-bd4f-b2ef6940f892",
+      "event": "reconocimiento",
+      "amount_cup": 50,
+      "sense": "debito",
+      "economic_date": "2026-09-24",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "0af48646-dc5e-4775-bcd5-8a6de1827ccb",
+      "event": "reconocimiento",
+      "amount_cup": 50,
+      "sense": "debito",
+      "economic_date": "2026-09-24",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "a14c635e-e6f0-468d-ae48-9c3a11829c5c",
+      "event": "reconocimiento",
+      "amount_cup": 50,
+      "sense": "debito",
+      "economic_date": "2026-10-14",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "b8327f96-ae49-403f-88f0-a09422ce552a",
+      "event": "reconocimiento",
+      "amount_cup": 45,
+      "sense": "debito",
+      "economic_date": "2026-11-07",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "dfddb9f9-b133-4036-9fe5-a1e624588b00",
+      "event": "reconocimiento",
+      "amount_cup": 40,
+      "sense": "debito",
+      "economic_date": "2026-10-01",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "79ffb3a9-9aa5-4258-b845-78049e06d814",
+      "event": "reconocimiento",
+      "amount_cup": 35,
+      "sense": "debito",
+      "economic_date": "2026-10-19",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "2e393c20-e8e4-40a0-ba72-14f5dbfe805f",
+      "event": "reconocimiento",
+      "amount_cup": 34,
+      "sense": "debito",
+      "economic_date": "2026-10-10",
+      "tienda": "PUERTO PADRE"
+    },
+    {
+      "document_number": null,
+      "document_id": "fcf52615-b071-4e63-97ed-c6e2ca5c6aef",
+      "event": "reconocimiento",
+      "amount_cup": 30,
+      "sense": "debito",
+      "economic_date": "2026-09-24",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "743ec655-f20f-42a2-8259-bb2704c25518",
+      "event": "reconocimiento",
+      "amount_cup": 30,
+      "sense": "debito",
+      "economic_date": "2026-09-24",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "f4486ddb-b89d-41cc-a501-96a90c323381",
+      "event": "reconocimiento",
+      "amount_cup": 30,
+      "sense": "debito",
+      "economic_date": "2026-09-26",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "6ab2ce3b-84ed-489d-9015-9ce76a1946ad",
+      "event": "reconocimiento",
+      "amount_cup": 30,
+      "sense": "debito",
+      "economic_date": "2026-10-08",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "86d0fd51-4450-4056-a6bd-138ba6e66135",
+      "event": "reconocimiento",
+      "amount_cup": 28,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "03421f4a-9b7c-4ea1-8113-078177f9eb8a",
+      "event": "reconocimiento",
+      "amount_cup": 24,
+      "sense": "debito",
+      "economic_date": "2026-10-06",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "55e5d20c-ee9e-4018-9d38-df19d54d11f6",
+      "event": "reconocimiento",
+      "amount_cup": 20,
+      "sense": "debito",
+      "economic_date": "2026-09-26",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "d6392d32-de85-4554-bbc2-1204cee444b4",
+      "event": "reconocimiento",
+      "amount_cup": 20,
+      "sense": "debito",
+      "economic_date": "2026-11-07",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "86271ee6-5aae-4c78-9873-d689990ea51d",
+      "event": "reconocimiento",
+      "amount_cup": 15,
+      "sense": "debito",
+      "economic_date": "2026-10-06",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "ca66b61d-452c-478f-8656-5be7cba97b5d",
+      "event": "reconocimiento",
+      "amount_cup": 15,
+      "sense": "debito",
+      "economic_date": "2026-10-14",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "1360bd49-170d-47ce-8826-7e1ea0d15e94",
+      "event": "reconocimiento",
+      "amount_cup": 12,
+      "sense": "debito",
+      "economic_date": "2026-10-06",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "0fab1e37-5d05-4c9d-9a9f-b0333f0eb894",
+      "event": "reconocimiento",
+      "amount_cup": 10,
+      "sense": "debito",
+      "economic_date": "2026-10-14",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "9ef1cb6b-451b-4965-9ae4-d4957c4f8365",
+      "event": "reconocimiento",
+      "amount_cup": 10,
+      "sense": "debito",
+      "economic_date": "2026-10-01",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "f1edee3e-6709-4487-b868-24bea1d9124c",
+      "event": "reconocimiento",
+      "amount_cup": 10,
+      "sense": "debito",
+      "economic_date": "2026-10-14",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "ce42c3fa-c6f0-4d45-a277-9ef933d72f59",
+      "event": "reconocimiento",
+      "amount_cup": 10,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "342c17bc-ef81-48e4-aa92-126045e0106a",
+      "event": "reconocimiento",
+      "amount_cup": 10,
+      "sense": "debito",
+      "economic_date": "2026-09-09",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "559172bb-3145-4c59-8c5c-a8a4ed0389ff",
+      "event": "reconocimiento",
+      "amount_cup": 9,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "a4dbdcd5-d7db-4025-a359-892af1ccd1f7",
+      "event": "reconocimiento",
+      "amount_cup": 8,
+      "sense": "debito",
+      "economic_date": "2026-09-18",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "3d453caf-273b-4c9d-b59c-d3b7ee6ddb8d",
+      "event": "reconocimiento",
+      "amount_cup": 6,
+      "sense": "debito",
+      "economic_date": "2026-10-08",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "e4138902-51d5-486a-adb2-83473d6ef64f",
+      "event": "reconocimiento",
+      "amount_cup": 6,
+      "sense": "debito",
+      "economic_date": "2026-10-01",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "320084f9-d40e-4dc3-9c07-b0a85d41469e",
+      "event": "reconocimiento",
+      "amount_cup": 6,
+      "sense": "debito",
+      "economic_date": "2026-10-01",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "41fe8469-5f26-4d58-926a-8bf5f0ee818e",
+      "event": "reconocimiento",
+      "amount_cup": 6,
+      "sense": "debito",
+      "economic_date": "2026-09-21",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "49c8f174-513e-4440-b3f9-efd3da4e18b0",
+      "event": "reconocimiento",
+      "amount_cup": 5,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "0a2cdbf8-2cde-44b8-b526-a67be4e855a5",
+      "event": "reconocimiento",
+      "amount_cup": 5,
+      "sense": "debito",
+      "economic_date": "2026-10-14",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "0a133757-48e3-47c5-8055-9e2f45b02b1a",
+      "event": "reconocimiento",
+      "amount_cup": 4,
+      "sense": "debito",
+      "economic_date": "2026-10-10",
+      "tienda": "PUERTO PADRE"
+    },
+    {
+      "document_number": null,
+      "document_id": "ca38c88d-7273-44dc-9917-94e842093999",
+      "event": "reconocimiento",
+      "amount_cup": 4,
+      "sense": "debito",
+      "economic_date": "2026-10-06",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "535c5ec6-b015-43c1-adf1-e675b4120daa",
+      "event": "reconocimiento",
+      "amount_cup": 4,
+      "sense": "debito",
+      "economic_date": "2026-10-06",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "88658c65-5743-43a9-a4b2-9543d54c3a68",
+      "event": "reconocimiento",
+      "amount_cup": 2,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "64b9a8b1-a0cf-4f9e-a9d3-063101fc2ae6",
+      "event": "reconocimiento",
+      "amount_cup": 2,
+      "sense": "debito",
+      "economic_date": "2026-09-09",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "9d10a218-29c8-43bb-914a-6c415e2eae2a",
+      "event": "reconocimiento",
+      "amount_cup": 2,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "aed568be-63f0-4082-a7ab-b20f43513e40",
+      "event": "reconocimiento",
+      "amount_cup": 2,
+      "sense": "debito",
+      "economic_date": "2026-10-16",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": "ENT-000002-2026",
+      "document_id": "b9759c29-ff32-436c-b5a1-6a7ed0b15740",
+      "event": "reconocimiento",
+      "amount_cup": 1.3,
+      "sense": "debito",
+      "economic_date": "2026-11-13",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "28322248-4a0a-4c23-9ace-39c1a173f945",
+      "event": "reconocimiento",
+      "amount_cup": 1.2,
+      "sense": "debito",
+      "economic_date": "2026-10-15",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "53bf4982-5410-4ca5-bb7c-d6f402f2411c",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-10-15",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "8d07e0f7-c754-4da2-ac99-3174e61e16c5",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-09-24",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "f297b3d6-c7de-4051-afc2-bc9da0cd7d6d",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "f22d8ceb-4587-41fc-95e5-e5339942d35c",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "11d1304d-c3fa-4b08-898d-373cfcfa8581",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-10-26",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "c0af5364-37da-4a36-966b-3443737f0cbf",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "0a3af49f-ab6a-498a-829c-eb009ae5951f",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-10-15",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "0101f0e4-294c-4b7a-976a-cf926a6accf1",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-09-18",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "1bf16dfb-532b-439c-8a97-71e3a41b2983",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "6afab3ab-f1b8-443c-a207-b4118af2d910",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-10-15",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "4177c213-0b71-4ecf-95b4-8c33d5cdf439",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-09-30",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "2f9afe82-d854-48fd-a82a-45fefa98bc3e",
+      "event": "reconocimiento",
+      "amount_cup": 1,
+      "sense": "debito",
+      "economic_date": "2026-10-15",
+      "tienda": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "document_number": null,
+      "document_id": "dd84e089-c3ae-4ed9-9352-64c03fa8c4d2",
+      "event": "reconocimiento",
+      "amount_cup": 0.9,
+      "sense": "debito",
+      "economic_date": "2026-11-04",
+      "tienda": "ENERVIDA-VITALLCONS"
+    }
+  ],
+  "identidades_valor": {
+    "purchase_vs_recepciones": {
+      "movimientos": 207256110.57,
+      "ledger": 207256110.57
+    },
+    "sale_vs_cogs": {
+      "movimientos": 2332549.53291843,
+      "ledger": 4747041.91
+    },
+    "vales_vs_gastos": {
+      "movimientos": 998554.882350706,
+      "ledger": 808863.11
+    },
+    "return_vs_devoluciones": {
+      "movimientos": 2,
+      "ledger": 2
+    },
+    "adjustment_vs_ajuste": {
+      "movimientos": -511418,
+      "ledger": 1
+    },
+    "purchase_reverse_vs_anulacion": {
+      "movimientos": 960,
+      "ledger": 960
+    },
+    "sale_reverse": 353389.586185061,
+    "sale_void": 1.5,
+    "issue_slip_reverse": 120002,
+    "saldo_movimientos_valor": 203886575.740916
+  },
+  "dimension_producto_fin_movements": "NULL en 1000/1000 — reconstrucción indirecta obligatoria (misión §6)",
+  "conteos_fisicos": {
+    "physical_counts": 0,
+    "physical_inventories": 11
+  }
+}

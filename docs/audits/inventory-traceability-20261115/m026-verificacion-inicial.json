@@ -1,0 +1,574 @@
+{
+  "generado": "2026-11-14T16:24:54.747Z",
+  "mision": "CP-INVENTORY-TRACEABILITY-RECONCILIATION-001",
+  "purchase_sin_ref_por_tienda": [
+    {
+      "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "tienda": "ENERVIDA-VITALLCONS",
+      "n": 111
+    },
+    {
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "tienda": "PUERTO PADRE",
+      "n": 56
+    },
+    {
+      "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "tienda": "COSTPRO (Prueba)",
+      "n": 41
+    }
+  ],
+  "purchase_sin_ref_por_fecha": [
+    {
+      "fecha": "2026-05-01",
+      "n": 33
+    },
+    {
+      "fecha": "2026-06-29",
+      "n": 6
+    },
+    {
+      "fecha": "2026-08-10",
+      "n": 9
+    },
+    {
+      "fecha": "2026-09-02",
+      "n": 1
+    },
+    {
+      "fecha": "2026-09-09",
+      "n": 5
+    },
+    {
+      "fecha": "2026-09-18",
+      "n": 3
+    },
+    {
+      "fecha": "2026-09-19",
+      "n": 5
+    },
+    {
+      "fecha": "2026-09-21",
+      "n": 1
+    },
+    {
+      "fecha": "2026-09-22",
+      "n": 3
+    },
+    {
+      "fecha": "2026-09-24",
+      "n": 5
+    },
+    {
+      "fecha": "2026-09-26",
+      "n": 2
+    },
+    {
+      "fecha": "2026-09-30",
+      "n": 14
+    },
+    {
+      "fecha": "2026-10-01",
+      "n": 4
+    },
+    {
+      "fecha": "2026-10-06",
+      "n": 7
+    },
+    {
+      "fecha": "2026-10-08",
+      "n": 3
+    },
+    {
+      "fecha": "2026-10-10",
+      "n": 56
+    },
+    {
+      "fecha": "2026-10-12",
+      "n": 1
+    },
+    {
+      "fecha": "2026-10-14",
+      "n": 8
+    },
+    {
+      "fecha": "2026-10-15",
+      "n": 5
+    },
+    {
+      "fecha": "2026-10-16",
+      "n": 1
+    },
+    {
+      "fecha": "2026-10-19",
+      "n": 1
+    },
+    {
+      "fecha": "2026-10-22",
+      "n": 2
+    },
+    {
+      "fecha": "2026-10-23",
+      "n": 1
+    },
+    {
+      "fecha": "2026-10-26",
+      "n": 9
+    },
+    {
+      "fecha": "2026-10-31",
+      "n": 1
+    },
+    {
+      "fecha": "2026-11-04",
+      "n": 2
+    },
+    {
+      "fecha": "2026-11-05",
+      "n": 1
+    },
+    {
+      "fecha": "2026-11-06",
+      "n": 15
+    },
+    {
+      "fecha": "2026-11-07",
+      "n": 2
+    },
+    {
+      "fecha": "2026-11-10",
+      "n": 1
+    },
+    {
+      "fecha": "2026-11-13",
+      "n": 1
+    }
+  ],
+  "total_purchase": [
+    {
+      "total": 309,
+      "sin_ref": 208,
+      "con_ref": 101
+    }
+  ],
+  "tipos_movimiento": [
+    {
+      "movement_type": "sale",
+      "n": 1051,
+      "sin_ref": 0
+    },
+    {
+      "movement_type": "purchase",
+      "n": 309,
+      "sin_ref": 208
+    },
+    {
+      "movement_type": "issue_slip_out",
+      "n": 305,
+      "sin_ref": 0
+    },
+    {
+      "movement_type": "adjustment",
+      "n": 77,
+      "sin_ref": 77
+    },
+    {
+      "movement_type": "sale_reverse",
+      "n": 24,
+      "sin_ref": 0
+    },
+    {
+      "movement_type": "issue_slip_reverse",
+      "n": 5,
+      "sin_ref": 0
+    },
+    {
+      "movement_type": "return",
+      "n": 2,
+      "sin_ref": 0
+    },
+    {
+      "movement_type": "purchase_reverse",
+      "n": 1,
+      "sin_ref": 1
+    },
+    {
+      "movement_type": "sale_void",
+      "n": 1,
+      "sin_ref": 1
+    }
+  ],
+  "fvc": [
+    {
+      "total": 192039436,
+      "status": "active",
+      "reception_date": "2026-07-01"
+    }
+  ],
+  "fvc_asientos": [
+    {
+      "n": 1
+    }
+  ],
+  "fvc_refs": [
+    {
+      "n": 101
+    }
+  ],
+  "conteos": [
+    {
+      "receipts": 98,
+      "receipt_items": 309,
+      "fin_entries": 1033,
+      "fin_movements": 3516,
+      "fin_posting_errors": 0,
+      "stock_movements": 1775,
+      "products": 355,
+      "stores": 7,
+      "audit_traceability": 101
+    }
+  ],
+  "cols_stock_movements": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "store_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "product_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "variant_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "quantity_change",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "movement_type",
+      "data_type": "USER-DEFINED"
+    },
+    {
+      "column_name": "reference_id",
+      "data_type": "text"
+    },
+    {
+      "column_name": "reference_doc",
+      "data_type": "text"
+    },
+    {
+      "column_name": "movement_date",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "created_by",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "unit_cost",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "unit_price",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "cost_value_change",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "balance_after",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "notes",
+      "data_type": "text"
+    },
+    {
+      "column_name": "tenant_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "unit_cost_derived",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "unit_cost_derived_source",
+      "data_type": "text"
+    },
+    {
+      "column_name": "unit_cost_derived_evidence_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "unit_cost_derived_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "cogs_derivation_status",
+      "data_type": "text"
+    }
+  ],
+  "cols_fin_movements": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "entry_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "store_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "category_code",
+      "data_type": "text"
+    },
+    {
+      "column_name": "sense",
+      "data_type": "text"
+    },
+    {
+      "column_name": "amount",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "currency",
+      "data_type": "text"
+    },
+    {
+      "column_name": "exchange_rate",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "amount_cup",
+      "data_type": "numeric"
+    },
+    {
+      "column_name": "economic_date",
+      "data_type": "date"
+    },
+    {
+      "column_name": "document_number",
+      "data_type": "text"
+    },
+    {
+      "column_name": "description",
+      "data_type": "text"
+    },
+    {
+      "column_name": "worker_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "product_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "customer_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "traza",
+      "data_type": "jsonb"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "currency_origin",
+      "data_type": "text"
+    },
+    {
+      "column_name": "amount_origin",
+      "data_type": "numeric"
+    }
+  ],
+  "cols_fin_entries": [
+    {
+      "column_name": "id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "store_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "document_type",
+      "data_type": "text"
+    },
+    {
+      "column_name": "document_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "document_number",
+      "data_type": "text"
+    },
+    {
+      "column_name": "event",
+      "data_type": "text"
+    },
+    {
+      "column_name": "payment_ref",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "economic_date",
+      "data_type": "date"
+    },
+    {
+      "column_name": "posted_at",
+      "data_type": "timestamp with time zone"
+    },
+    {
+      "column_name": "rule_version_id",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "movements_snapshot",
+      "data_type": "jsonb"
+    },
+    {
+      "column_name": "reversal_of",
+      "data_type": "uuid"
+    },
+    {
+      "column_name": "status",
+      "data_type": "text"
+    },
+    {
+      "column_name": "description",
+      "data_type": "text"
+    },
+    {
+      "column_name": "created_by",
+      "data_type": "uuid"
+    }
+  ],
+  "cols_inventory": [
+    {
+      "table_name": "inventory",
+      "column_name": "id"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "store_id"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "product_id"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "quantity"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "low_stock_threshold"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "updated_at"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "version"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "created_at"
+    },
+    {
+      "table_name": "inventory",
+      "column_name": "tenant_id"
+    }
+  ],
+  "tiendas": [
+    {
+      "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "name": "COSTPRO (Prueba)"
+    },
+    {
+      "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "name": "ENERVIDA-VITALLCONS"
+    },
+    {
+      "id": "8eb56fa3-7e22-408e-a44b-8f14cdd7f52f",
+      "name": "FERROCARRIL VITALLCONS"
+    },
+    {
+      "id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "name": "PUERTO PADRE"
+    },
+    {
+      "id": "6691b866-a7cd-409b-b1e5-dd9bc2ad9d7a",
+      "name": "QA UI Icons Store"
+    },
+    {
+      "id": "30c3a373-2012-4728-8f51-d8d8ad73eb17",
+      "name": "QA-Release-1593-Plantillas"
+    },
+    {
+      "id": "bc94e3d0-32c3-4f2f-8e42-d46a341f9451",
+      "name": "SHADDAI"
+    }
+  ],
+  "cuentas_inventario": [],
+  "tablas_fin": [
+    {
+      "table_name": "fin_categories"
+    },
+    {
+      "table_name": "fin_document_types"
+    },
+    {
+      "table_name": "fin_entries"
+    },
+    {
+      "table_name": "fin_metric_catalog"
+    },
+    {
+      "table_name": "fin_movements"
+    },
+    {
+      "table_name": "fin_opening_balances"
+    },
+    {
+      "table_name": "fin_posting_errors"
+    },
+    {
+      "table_name": "fin_rule_versions"
+    },
+    {
+      "table_name": "pick3_ledger"
+    },
+    {
+      "table_name": "production_migration_ledger"
+    },
+    {
+      "table_name": "report_definitions"
+    },
+    {
+      "table_name": "store_credit_ledger"
+    },
+    {
+      "table_name": "transaction_recovery_ledger"
+    },
+    {
+      "table_name": "wallet_accounts"
+    }
+  ]
+}

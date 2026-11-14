@@ -1,0 +1,689 @@
+{
+ "mision": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004",
+ "fase": "análisis DP + protección + diff",
+ "generado": "2026-11-14T19:53:50.246Z",
+ "proteccion_75_lineas": {
+  "comparadas": 101,
+  "cambios": [],
+  "sku_111_112": [
+   {
+    "sku": "111",
+    "uc_actual": "2500.0",
+    "moneda": "USD",
+    "tasa": "680.0000",
+    "q": "49.0000"
+   },
+   {
+    "sku": "112",
+    "uc_actual": "1000.0",
+    "moneda": "USD",
+    "tasa": "680.0000",
+    "q": "100.0000"
+   }
+  ],
+  "fuera_de_alcance_intactos": 99,
+  "n_cambios": 0,
+  "total_lineas": 101,
+  "lineas_moneda": [
+   {
+    "sku": "17",
+    "uc": 6500,
+    "moneda": "CUP",
+    "tasa": 1,
+    "categoria": "Sin problema detectado (costo ≠ precio, moneda consistente)"
+   },
+   {
+    "sku": "47",
+    "uc": 14000,
+    "moneda": "CUP",
+    "tasa": 1,
+    "categoria": "Sin problema detectado (costo ≠ precio, moneda consistente)"
+   },
+   {
+    "sku": "86",
+    "uc": 370,
+    "moneda": "USD",
+    "tasa": 680,
+    "categoria": "Sin problema detectado (costo ≠ precio, moneda consistente)"
+   },
+   {
+    "sku": "90",
+    "uc": 5,
+    "moneda": "USD",
+    "tasa": 680,
+    "categoria": "Discrepancia de moneda (magnitud idéntica a un precio CUP)"
+   },
+   {
+    "sku": "92",
+    "uc": 1,
+    "moneda": "CUP",
+    "tasa": 1,
+    "categoria": "Discrepancia de moneda (costo 1 auténtico, valor trivial)"
+   },
+   {
+    "sku": "113",
+    "uc": 200,
+    "moneda": "CUP",
+    "tasa": 1,
+    "categoria": "Sin problema detectado (costo ≠ precio, moneda consistente)"
+   },
+   {
+    "sku": "118",
+    "uc": 80,
+    "moneda": "USD",
+    "tasa": 680,
+    "categoria": "Sin problema detectado (costo ≠ precio, moneda consistente)"
+   },
+   {
+    "sku": "119",
+    "uc": 10,
+    "moneda": "USD",
+    "tasa": 680,
+    "categoria": "Sin problema detectado (costo ≠ precio, moneda consistente)"
+   },
+   {
+    "sku": "120",
+    "uc": 1,
+    "moneda": "CUP",
+    "tasa": 1,
+    "categoria": "Discrepancia de moneda (costo 1 auténtico, valor trivial)"
+   },
+   {
+    "sku": "999",
+    "uc": 1,
+    "moneda": "CUP",
+    "tasa": 1,
+    "categoria": "Discrepancia de moneda (costo 1 auténtico, valor trivial)"
+   }
+  ],
+  "n_lineas_moneda": 10,
+  "n_lineas_no_verificables": 71,
+  "exposicion_no_verificables_congelada": {
+   "lineas": 71,
+   "valor_conjunto_cup": 24510805,
+   "usd_lineas": 16,
+   "usd_valor": 20129530,
+   "cup_lineas": 55,
+   "cup_valor": 4381275,
+   "nota": "Exposición CONTINGENTE si el propietario declarara el mismo defecto en más líneas. NO corregir por inferencia."
+  }
+ },
+ "diff_snapshot_003_004": {
+  "corte_003": "2026-11-14T18:58:17.447Z",
+  "corte_004": "2026-11-14T19:51:12.069Z",
+  "secciones": [
+   {
+    "seccion": "receipt_items",
+    "filas_antes": 101,
+    "filas_ahora": 101,
+    "idéntica": true
+   },
+   {
+    "seccion": "kardex_111_112",
+    "filas_antes": 21,
+    "filas_ahora": 21,
+    "idéntica": true
+   },
+   {
+    "seccion": "fin_entries_fvc",
+    "filas_antes": 1,
+    "filas_ahora": 1,
+    "idéntica": true
+   },
+   {
+    "seccion": "fin_movements_fvc",
+    "filas_antes": 2,
+    "filas_ahora": 2,
+    "idéntica": true
+   },
+   {
+    "seccion": "issue_slips",
+    "filas_antes": 10,
+    "filas_ahora": 10,
+    "idéntica": true
+   },
+   {
+    "seccion": "issue_slip_items",
+    "filas_antes": 11,
+    "filas_ahora": 11,
+    "idéntica": true
+   },
+   {
+    "seccion": "inventory_adjustments",
+    "filas_antes": 0,
+    "filas_ahora": 0,
+    "idéntica": true
+   },
+   {
+    "seccion": "devolution_items_111_112",
+    "estado": "SECCIÓN RENOMBRADA/NUEVA entre misiones"
+   },
+   {
+    "seccion": "devolutions",
+    "estado": "SECCIÓN RENOMBRADA/NUEVA entre misiones"
+   },
+   {
+    "seccion": "inventory_111_112",
+    "filas_antes": 2,
+    "filas_ahora": 2,
+    "idéntica": true
+   },
+   {
+    "seccion": "products_111_112",
+    "filas_antes": 2,
+    "filas_ahora": 2,
+    "idéntica": false
+   },
+   {
+    "seccion": "receipt_items_todas",
+    "estado": "SECCIÓN RENOMBRADA/NUEVA entre misiones"
+   },
+   {
+    "seccion": "fin_movements_cxp_fvc",
+    "filas_antes": 1,
+    "filas_ahora": 1,
+    "idéntica": true
+   },
+   {
+    "seccion": "v_purchase_orders_cxp",
+    "filas_antes": 0,
+    "filas_ahora": 0,
+    "idéntica": true
+   },
+   {
+    "seccion": "fin_entries_reversal_of",
+    "filas_antes": 0,
+    "filas_ahora": 0,
+    "idéntica": true
+   },
+   {
+    "seccion": "wac_change_log",
+    "filas_antes": 2,
+    "filas_ahora": 2,
+    "idéntica": true
+   }
+  ],
+  "receipts_fvc_identica": true,
+  "kardex_mismos_ids": true,
+  "mayores": {
+   "pas_cxp_prov_003": 207255150.57,
+   "pas_cxp_prov_004": 207255150.57,
+   "act_inventario_003": 201699246.55,
+   "act_inventario_004": 201681043.51
+  },
+  "products_111_112": [
+   {
+    "sku": "111",
+    "stock_003": "10.0000",
+    "stock_004": "10.0000",
+    "precio_003": "2000",
+    "precio_004": "2000",
+    "wac_003": "1",
+    "wac_004": "1"
+   },
+   {
+    "sku": "112",
+    "stock_003": "20.0000",
+    "stock_004": "20.0000",
+    "precio_003": "1000",
+    "precio_004": "1000",
+    "wac_003": "1",
+    "wac_004": "1"
+   }
+  ],
+  "actividad_posterior": {
+   "fin_entries_nuevos": [
+    {
+     "ts": "2026-11-14 19:08:47",
+     "tipo": "VENTA",
+     "evento": "reconocimiento",
+     "doc": null,
+     "status": "reversed",
+     "desc": "Venta "
+    },
+    {
+     "ts": "2026-11-14 19:11:21",
+     "tipo": "VENTA",
+     "evento": "anulacion",
+     "doc": null,
+     "status": "posted",
+     "desc": "Anulación: Venta "
+    },
+    {
+     "ts": "2026-11-14 19:11:57",
+     "tipo": "VENTA",
+     "evento": "reconocimiento",
+     "doc": null,
+     "status": "posted",
+     "desc": "Venta "
+    },
+    {
+     "ts": "2026-11-14 19:13:18",
+     "tipo": "VENTA",
+     "evento": "reconocimiento",
+     "doc": null,
+     "status": "posted",
+     "desc": "Venta "
+    },
+    {
+     "ts": "2026-11-14 19:17:06",
+     "tipo": "SERVICIO_RECIBIDO",
+     "evento": "reconocimiento",
+     "doc": "SRV-20261114-00123",
+     "status": "posted",
+     "desc": "Servicio recibido SRV-20261114-00123"
+    },
+    {
+     "ts": "2026-11-14 19:17:22",
+     "tipo": "SERVICIO_RECIBIDO",
+     "evento": "pago",
+     "doc": "SRV-20261114-00123",
+     "status": "posted",
+     "desc": "Servicio recibido SRV-20261114-00123"
+    },
+    {
+     "ts": "2026-11-14 19:28:16",
+     "tipo": "SERVICIO_RECIBIDO",
+     "evento": "reconocimiento",
+     "doc": "SRV-20261114-00124",
+     "status": "posted",
+     "desc": "Servicio recibido SRV-20261114-00124"
+    },
+    {
+     "ts": "2026-11-14 19:28:28",
+     "tipo": "SERVICIO_RECIBIDO",
+     "evento": "pago",
+     "doc": "SRV-20261114-00124",
+     "status": "posted",
+     "desc": "Servicio recibido SRV-20261114-00124"
+    }
+   ],
+   "transactions_nuevas": [
+    {
+     "ts": "2026-11-14 19:08:47",
+     "status": "voided",
+     "total": 53400,
+     "cur": "CUP"
+    },
+    {
+     "ts": "2026-11-14 19:11:57",
+     "status": "completed",
+     "total": 10000,
+     "cur": "CUP"
+    },
+    {
+     "ts": "2026-11-14 19:13:18",
+     "status": "completed",
+     "total": 43400,
+     "cur": "CUP"
+    }
+   ],
+   "payments_nuevos": [
+    {
+     "ts": "2026-11-14 19:08:47",
+     "ref_type": "sale",
+     "amount": 53400,
+     "cur": "CUP",
+     "dir": "in"
+    },
+    {
+     "ts": "2026-11-14 19:11:57",
+     "ref_type": "sale",
+     "amount": 10000,
+     "cur": "CUP",
+     "dir": "in"
+    },
+    {
+     "ts": "2026-11-14 19:13:18",
+     "ref_type": "sale",
+     "amount": 43400,
+     "cur": "CUP",
+     "dir": "in"
+    },
+    {
+     "ts": "2026-11-14 19:17:22",
+     "ref_type": "service",
+     "amount": 31860,
+     "cur": "CUP",
+     "dir": "in"
+    },
+    {
+     "ts": "2026-11-14 19:28:28",
+     "ref_type": "service",
+     "amount": 500,
+     "cur": "CUP",
+     "dir": "in"
+    }
+   ],
+   "kardex_111_112_nuevos": 0,
+   "receipts_proveedor_nuevos": 0
+  }
+ },
+ "dp2_conciliacion_deuda": {
+  "verificaciones": [],
+  "fvc": {
+   "payment_status": "unpaid",
+   "paid_amount": 0,
+   "paid_at": null,
+   "due_date": "2026-07-31",
+   "status": "active",
+   "reversed_at": null,
+   "total": 192039436
+  },
+  "pagos_fvc": 0,
+  "pagos_proveedor_ref": 0,
+  "pagos_out": [
+   {
+    "ref_type": "cash_flow",
+    "fecha": "2026-10-23",
+    "monto_cup": 293600,
+    "currency": "USD"
+   },
+   {
+    "ref_type": "cash_flow",
+    "fecha": "2026-10-23",
+    "monto_cup": 8435679.98,
+    "currency": "CUP"
+   }
+  ],
+  "purga_archivo": [
+   {
+    "n": 0,
+    "total": 0
+   }
+  ],
+  "recepciones_proveedor": {
+   "total": 70,
+   "duplicados_documento": 0,
+   "fvc_mencionada": 1
+  },
+  "anulaciones": [
+   {
+    "document_type": "RECEPCION",
+    "n": 1
+   },
+   {
+    "document_type": "VENTA",
+    "n": 1
+   }
+  ],
+  "reversal_of_fvc": 0,
+  "credit_ledger_reversas": [
+   {
+    "n": 0,
+    "total": 0
+   }
+  ],
+  "mayor_pas_cxp_prov": {
+   "grupos": [
+    {
+     "document_type": "RECEPCION",
+     "event": "reconocimiento",
+     "sense": "credito",
+     "n_movs": 98,
+     "total": 207256110.57
+    },
+    {
+     "document_type": "RECEPCION",
+     "event": "anulacion",
+     "sense": "debito",
+     "n_movs": 1,
+     "total": 960
+    }
+   ],
+   "neto": 207255150.57
+  },
+  "vista_cxp": 0,
+  "conclusion": "La deuda de FAC-VITALLCONS-001 permanece 100% pendiente (unpaid, 0 pagos, 0 transacciones de pago, 0 anulaciones de la FVC, 0 anticipos/compensaciones al proveedor)."
+ },
+ "dp3_salidas_sin_asiento": {
+  "vales_sin_asiento": [
+   {
+    "vale": "VS-000037-2026",
+    "status": "completed",
+    "creado": "2026-09-19 16:00:00",
+    "unidades": [
+     {
+      "sku": "112",
+      "q": 4,
+      "uc": 0
+     }
+    ],
+    "costo_total": 4,
+    "asiento": "NINGUNO (verificado: 0 fin_entries con document_id/document_number de este vale)"
+   },
+   {
+    "vale": "VS-000138-2026",
+    "status": "completed",
+    "creado": "2026-10-05 16:00:00",
+    "unidades": [
+     {
+      "sku": "112",
+      "q": 1,
+      "uc": 0
+     }
+    ],
+    "costo_total": 1,
+    "asiento": "NINGUNO (verificado: 0 fin_entries con document_id/document_number de este vale)"
+   },
+   {
+    "vale": "VS-000139-2026",
+    "status": "completed",
+    "creado": "2026-10-05 16:00:00",
+    "unidades": [
+     {
+      "sku": "111",
+      "q": 1,
+      "uc": 0
+     }
+    ],
+    "costo_total": 1,
+    "asiento": "NINGUNO (verificado: 0 fin_entries con document_id/document_number de este vale)"
+   },
+   {
+    "vale": "VS-000223-2026",
+    "status": "reversed",
+    "creado": "2026-11-07 14:12:00",
+    "unidades": [
+     {
+      "sku": "112",
+      "q": 1,
+      "uc": 1
+     }
+    ],
+    "costo_total": 1,
+    "asiento": "NINGUNO (verificado: 0 fin_entries con document_id/document_number de este vale)"
+   }
+  ],
+  "ajustes_cuadre": [
+   {
+    "sku": "111",
+    "unidades": 1,
+    "fecha": "2026-08-18",
+    "ref_doc": "Cuadre importación ENERVIDA: sku=111 Δ=-1 (diferencia acumulada pre-corte vs Excel)",
+    "id": "a1330957-1e49-43ed-a309-c7a20c2ee714",
+    "uc": 0,
+    "doc_inventario": "NINGUNO (movimiento de regularización legacy sin inventory_adjustments)",
+    "asiento": "NINGUNO (0 fin_entries AJUSTE_INVENTARIO vinculados)"
+   },
+   {
+    "sku": "112",
+    "unidades": 17,
+    "fecha": "2026-08-18",
+    "ref_doc": "Cuadre importación ENERVIDA: sku=112 Δ=-17 (diferencia acumulada pre-corte vs Excel)",
+    "id": "a8a82720-df49-485d-949c-acfc082fc3b6",
+    "uc": 0,
+    "doc_inventario": "NINGUNO (movimiento de regularización legacy sin inventory_adjustments)",
+    "asiento": "NINGUNO (0 fin_entries AJUSTE_INVENTARIO vinculados)"
+   }
+  ],
+  "total_vales_sin_asiento": 6,
+  "vale_anulado_vs_223": {
+   "vale": "VS-000223-2026",
+   "status": "reversed",
+   "creado": "2026-11-07 14:12:00",
+   "unidades": [
+    {
+     "sku": "112",
+     "q": 1,
+     "uc": 1
+    }
+   ],
+   "costo_total": 1,
+   "asiento": "NINGUNO (verificado: 0 fin_entries con document_id/document_number de este vale)"
+  },
+  "total_ajustes": 18,
+  "total_rect2": 24,
+  "verificacion_vales_con_asiento": [
+   {
+    "doc": "VS-000148-2026",
+    "monto": 1,
+    "sentido": "debito"
+   },
+   {
+    "doc": "VS-000157-2026",
+    "monto": 20,
+    "sentido": "debito"
+   },
+   {
+    "doc": "VS-000158-2026",
+    "monto": 20,
+    "sentido": "debito"
+   },
+   {
+    "doc": "VS-000165-2026",
+    "monto": 10,
+    "sentido": "debito"
+   },
+   {
+    "doc": "VS-000208-2026",
+    "monto": 229862.57,
+    "sentido": "debito"
+   },
+   {
+    "doc": "VS-000225-2026",
+    "monto": 5,
+    "sentido": "debito"
+   }
+  ],
+  "cogs_motor": {
+   "asientos": [
+    {
+     "doc": "FAC-004479-2026",
+     "monto": 1,
+     "sentido": "debito"
+    },
+    {
+     "doc": "d939ea06-b328-42f8-ac42-931f201e81c2",
+     "monto": 1,
+     "sentido": "debito"
+    },
+    {
+     "doc": "acc2b470-ee74-4d44-8e3a-2289c8331c36",
+     "monto": 3,
+     "sentido": "debito"
+    },
+    {
+     "doc": "4c76a1a1-4b77-4d26-9093-bd183285ec50",
+     "monto": 1,
+     "sentido": "debito"
+    },
+    {
+     "doc": "a0d9f44d-9f54-4f69-a91f-db05f3dd4886",
+     "monto": 1,
+     "sentido": "debito"
+    }
+   ],
+   "total_gas_costo_ventas": 7
+  },
+  "sin_doble_contabilizacion": "COGS motor 7 CUP intacto; vales con asiento 88 CUP intactos; RECT-2 SOLO reconoce 24 CUP de brechas documentales (6 vales + 18 ajustes)"
+ },
+ "conciliacion": {
+  "historica": {
+   "existencia_final": {
+    "sku111": 10,
+    "sku112": 20,
+    "total": 30
+   },
+   "costo_unitario_real": {
+    "sku111": 1,
+    "sku112": 1
+   },
+   "valor_existencia": {
+    "sku111": 10,
+    "sku112": 20,
+    "total": 30
+   },
+   "cogs_reconocido": 7,
+   "salidas_pendientes": 24,
+   "rectificacion_exceso": 151299851
+  },
+  "actual": {
+   "stock_current": {
+    "sku111": 10,
+    "sku112": 20
+   },
+   "inventory": [
+    {
+     "sku": "112",
+     "q": 20
+    },
+    {
+     "sku": "111",
+     "q": 10
+    }
+   ],
+   "kardex_saldo": {
+    "sku111": 10,
+    "sku112": 20
+   },
+   "wac": {
+    "sku111": 1,
+    "sku112": 1
+   },
+   "movimientos_nuevos_post_corte": 0
+  },
+  "identidad_actual_ok": true,
+  "reingreso_vs_223": {
+   "documento": "VS-000223-2026",
+   "status_vale": "reversed",
+   "salida": {
+    "unidades": 1,
+    "uc": 1,
+    "fecha": "2026-11-07"
+   },
+   "reingreso": {
+    "unidades": 1,
+    "tipo": "issue_slip_reverse",
+    "uc": 1,
+    "fecha": "2026-11-07"
+   },
+   "asientos_ambos_sentidos": "NINGUNO (verificado: 0 fin_entries para VS-000223)",
+   "neto_contable": 0,
+   "tratamiento": "NO se contabiliza en RECT-2 (neto 0)"
+  }
+ },
+ "dp1_separacion": {
+  "sku111": {
+   "costo_adquisicion_registrado": 2500,
+   "moneda_registrada": "USD",
+   "tasa_registrada": 680,
+   "costo_real": 1,
+   "precio_venta": 2000,
+   "moneda_precio": "CUP"
+  },
+  "sku112": {
+   "costo_adquisicion_registrado": 1000,
+   "moneda_registrada": "USD",
+   "tasa_registrada": 680,
+   "costo_real": 1,
+   "precio_venta": 1000,
+   "moneda_precio": "USD"
+  },
+  "validacion": "El registro de origen (2.500/1.000 USD@680) sigue SIN convertirse: son precios de venta CUP leídos como costo USD. La rectificación propuesta los fija a 1 CUP@1. Los precios de venta del maestro (2.000 CUP / 1.000 USD) permanecen intactos."
+ },
+ "hashes": {
+  "m045": "35 secciones",
+  "generado": "b3a2c019041cdb4a9918752a523faa11a0560fa54143b6dcd266395533159bbe"
+ }
+}

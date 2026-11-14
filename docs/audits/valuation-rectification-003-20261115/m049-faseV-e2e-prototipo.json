@@ -1,0 +1,337 @@
+{
+ "mision": "CP-FIN-VALUATION-RECTIFICATION-003",
+ "fase": "V — prototipo E2E aislado extendido",
+ "generado": "2026-11-14T19:13:34.594Z",
+ "bd": {
+  "url": "https://lguovmvrozxgssupkwpf.supabase.co",
+  "proyecto": "lguovmvrozxgssupkwpf (CostproE2E — AISLADA)",
+  "sentinela": true,
+  "canal_escritura": "pooler IPv4 aws-0-us-east-1:6543 + REST service_role"
+ },
+ "pasos": {
+  "preflight": {
+   "ms": 5032,
+   "resumen": "sentinela=true (REST+SQL); residuos previos eliminados"
+  },
+  "seed_store_productos": {
+   "ms": 895,
+   "resumen": "tienda + 2 productos réplica (precios de venta intactos)"
+  },
+  "seed_recepcion_defectuosa": {
+   "ms": 646,
+   "resumen": "recepción réplica: 2 líneas USD@680 (defecto original) · unpaid/0 pagos (como producción)"
+  },
+  "seed_kardex_21_movimientos": {
+   "ms": 5652,
+   "resumen": "21 movimientos réplica (cost_value_change=0 como en producción: 1.776/1.776)"
+  },
+  "seed_asientos_reales": {
+   "ms": 6336,
+   "resumen": "12 asientos réplica: reconocimiento 151,3M + 5 ventas (COGS motor 7 CUP) + 6 vales (88 CUP) — 34 movimientos. SIN asiento: VS-37/138/139/223 y 2 ajustes (brechas reales)"
+  },
+  "validar_antes": {
+   "ms": 1311,
+   "resumen": "estado defectuoso replicado OK (con brechas documentales reales)"
+  },
+  "rectificacion_aplicada": {
+   "ms": 6449,
+   "resumen": "\"ok\"",
+   "detalle": {
+    "items": 2,
+    "receipt": 1,
+    "movs_compra": 2,
+    "movs_salida": 7,
+    "wac": 2,
+    "asientos": 2,
+    "audit": 14
+   }
+  },
+  "validar_despues": {
+   "ms": 1966,
+   "resumen": "TODAS LAS VALIDACIONES V1-V12 PASS"
+  },
+  "idempotencia_segunda_pasada": {
+   "ms": 3832,
+   "resumen": "\"ok\""
+  },
+  "rollback_controlado": {
+   "ms": 8006,
+   "resumen": "rollback restaura el estado ANTES exacto (items+receipt+movs+asientos)"
+  },
+  "reaplicar": {
+   "ms": 5361,
+   "resumen": "re-aplicación tras rollback OK (repetible y correcta)"
+  },
+  "cleanup": {
+   "ms": 5834,
+   "resumen": "NET DELTA = 0 — cero residuos"
+  }
+ },
+ "validaciones": {
+  "antes": {
+   "total_recepcion": 151300000,
+   "lineas": [
+    {
+     "sku": "111",
+     "uc": 2500,
+     "moneda": "USD",
+     "tasa": 680
+    },
+    {
+     "sku": "112",
+     "uc": 1000,
+     "moneda": "USD",
+     "tasa": 680
+    }
+   ],
+   "saldos": {
+    "sku111": 10,
+    "sku112": 20
+   },
+   "kardex": {
+    "cogs_registrado": -5,
+    "vales_ajustes_registrado": -89
+   },
+   "motor": {
+    "cogs": 7,
+    "gas_vales": 88
+   },
+   "n_asientos": 12,
+   "n_movs_kardex": 21,
+   "n_fin_movements": 34,
+   "ok": true
+  },
+  "despues": {
+   "v1_precios_venta_conservados": {
+    "sku111": {
+     "price": 2000,
+     "moneda": "CUP"
+    },
+    "sku112": {
+     "price": 1000,
+     "moneda": "USD"
+    }
+   },
+   "v2_costo_1cup": [
+    {
+     "sku": "111",
+     "uc": 1,
+     "moneda": "CUP",
+     "tasa": 1
+    },
+    {
+     "sku": "112",
+     "uc": 1,
+     "moneda": "CUP",
+     "tasa": 1
+    }
+   ],
+   "v3_recepcion_149": 149,
+   "v4_wac_cronologico": {
+    "saldos": {
+     "sku111": 10,
+     "sku112": 20
+    },
+    "cost_average": {
+     "sku111": 1,
+     "sku112": 1
+    }
+   },
+   "v5_cogs_119_salidas": {
+    "ventas_kardex": -7,
+    "vales_ajustes_kardex_bruto": -113,
+    "reingreso": 1,
+    "salidas_brutas_valor": 120,
+    "salidas_netas_valor": 119,
+    "cogs_motor": 7,
+    "unidades_netas": 119
+   },
+   "v6_balance": {
+    "por_asiento": {
+     "7ec70003-0000-4000-8000-c0b300000001": {
+      "D": 151300000,
+      "C": 151300000
+     },
+     "7ec70003-0000-4000-8000-c0b400000001": {
+      "D": 2501,
+      "C": 2501
+     },
+     "7ec70003-0000-4000-8000-c0b400000002": {
+      "D": 2001,
+      "C": 2001
+     },
+     "7ec70003-0000-4000-8000-c0b400000003": {
+      "D": 4503,
+      "C": 4503
+     },
+     "7ec70003-0000-4000-8000-c0b400000004": {
+      "D": 2001,
+      "C": 2001
+     },
+     "7ec70003-0000-4000-8000-c0b400000005": {
+      "D": 2001,
+      "C": 2001
+     },
+     "7ec70003-0000-4000-8000-c0b500000001": {
+      "D": 1,
+      "C": 1
+     },
+     "7ec70003-0000-4000-8000-c0b500000002": {
+      "D": 20,
+      "C": 20
+     },
+     "7ec70003-0000-4000-8000-c0b500000003": {
+      "D": 20,
+      "C": 20
+     },
+     "7ec70003-0000-4000-8000-c0b500000004": {
+      "D": 10,
+      "C": 10
+     },
+     "7ec70003-0000-4000-8000-c0b500000005": {
+      "D": 32,
+      "C": 32
+     },
+     "7ec70003-0000-4000-8000-c0b500000006": {
+      "D": 5,
+      "C": 5
+     },
+     "7ec70003-0000-4000-8000-d0b300000001": {
+      "D": 151299851,
+      "C": 151299851
+     },
+     "7ec70003-0000-4000-8000-d0b300000002": {
+      "D": 24,
+      "C": 24
+     }
+    },
+    "neto_ACT_INVENTARIO": 30,
+    "neto_PAS_CXP_PROV": -149,
+    "gas_vales_total": 94,
+    "gas_perdida_inv_total": 18,
+    "valor_libros_30u": 30
+   },
+   "v7_trazabilidad": {
+    "rect1": {
+     "reversal_of": "7ec70003-0000-4000-8000-c0b300000001",
+     "document_number": "FAC-VITALLCONS-001-RECT"
+    },
+    "rect2": {
+     "document_number": "FAC-VITALLCONS-001-RECT-SAL"
+    },
+    "capas_compra_ref": true,
+    "audit_rows": 15
+   },
+   "v12_conciliacion_ACT": {
+    "neto_ACT": 30,
+    "valor_kardex": 30,
+    "valor_libros": 30,
+    "kardex_saldos": {
+     "sku111": 10,
+     "sku112": 20
+    }
+   },
+   "conteos": {
+    "asientos": 14,
+    "fin_movements": 39,
+    "kardex_movs": 21
+   },
+   "checks": {
+    "V1": true,
+    "V2": true,
+    "V3": true,
+    "V4": true,
+    "V5": true,
+    "V6": true,
+    "V7": true,
+    "V8_antes": true,
+    "V10_sin_duplicacion": true,
+    "V12": true
+   },
+   "todo_ok": true
+  }
+ },
+ "idempotencia": {
+  "segunda_pasada": {
+   "items": 0,
+   "receipt": 0,
+   "movs_compra": 0,
+   "movs_salida": 0,
+   "wac": 0,
+   "asientos": 0,
+   "audit": 0
+  },
+  "ok": true
+ },
+ "rollback": {
+  "restaurado_byte_a_byte": true,
+  "asiento_testigo": "7ec70003-0000-4000-8000-d0b300000099"
+ },
+ "reaplicacion": {
+  "cambios": {
+   "items": 0,
+   "receipt": 0,
+   "movs_compra": 0,
+   "movs_salida": 0,
+   "wac": 2,
+   "asientos": 2,
+   "audit": 2
+  },
+  "ok": true,
+  "neto_ACT_tras_reaplicar": 30
+ },
+ "cleanup": {
+  "baseline_conteos": {
+   "stores": 77,
+   "products": 30,
+   "receipts": 1,
+   "receipt_items": 2,
+   "stock_movements": 4,
+   "fin_entries": 148,
+   "fin_movements": 297,
+   "wac_change_log": 528,
+   "audit_logs": 2888,
+   "inventory": 23,
+   "kardex_entries": 4
+  },
+  "conteos_finales": {
+   "stores": 77,
+   "products": 30,
+   "receipts": 1,
+   "receipt_items": 2,
+   "stock_movements": 4,
+   "fin_entries": 148,
+   "fin_movements": 297,
+   "wac_change_log": 528,
+   "audit_logs": 2888,
+   "inventory": 23,
+   "kardex_entries": 4
+  },
+  "delta_por_tabla": {
+   "stores": 0,
+   "products": 0,
+   "receipts": 0,
+   "receipt_items": 0,
+   "stock_movements": 0,
+   "fin_entries": 0,
+   "fin_movements": 0,
+   "wac_change_log": 0,
+   "audit_logs": 0,
+   "inventory": 0,
+   "kardex_entries": 0
+  },
+  "net_delta": 0
+ },
+ "resumen": {
+  "validaciones_antes": true,
+  "validaciones_despues": true,
+  "idempotencia": true,
+  "rollback": true,
+  "reaplicacion": true,
+  "net_delta": 0,
+  "veredicto": "PROTOTIPO E2E EXTENDIDO COMPLETO — TODAS LAS PRUEBAS PASS"
+ },
+ "hashes": {
+  "evidencia": "d22f2e84cf4865892520aba682a05c8c2c4caa07a9fb2a37d33046d7118f5036"
+ }
+}

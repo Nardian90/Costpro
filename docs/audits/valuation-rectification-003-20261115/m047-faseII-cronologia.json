@@ -1,0 +1,553 @@
+{
+ "mision": "CP-FIN-VALUATION-RECTIFICATION-003",
+ "fase": "II — cronología de las 119 unidades salidas",
+ "generado": "2026-11-14T19:05:04.194Z",
+ "fuente": "rect003-faseI-snapshot.json + rect003-faseI-complemento.json (producción read-only 2026-11-15)",
+ "cronologia_salidas": [
+  {
+   "sku": "111",
+   "fecha": "2026-07-24",
+   "tipo_salida": "venta",
+   "documento": "Venta POS v2 99d8993f",
+   "documento_id": "99d8993f-480c-406b-840f-1f2e183725ac",
+   "destino": "Venta al cliente (Cliente Vitallcons)",
+   "cantidad": 1,
+   "costo_origen_registrado_cup": 1700000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 0,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 0,
+   "valor_correcto": 1,
+   "estado_contable": "MOTOR ya contabilizó COGS 1 CUP (cost_average=1)",
+   "asiento": "FAC-004479-2026 (motor CP-FIN: GAS_COSTO_VENTAS débito 1 × 1)",
+   "movimiento_id": "68a3ff08-a301-4232-937a-85f183452d5c"
+  },
+  {
+   "sku": "111",
+   "fecha": "2026-08-18",
+   "tipo_salida": "ajuste",
+   "documento": "SIN DOCUMENTO — Cuadre importación ENERVIDA",
+   "documento_id": null,
+   "destino": "Regularización legacy de la importación (sku=111 Δ=-1.0000 «diferencia acumulada pre-corte vs Excel»)",
+   "cantidad": 1,
+   "costo_origen_registrado_cup": 1700000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 0,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 0,
+   "valor_correcto": 1,
+   "estado_contable": "no contabilizado (0 CUP en mayor)",
+   "asiento": "SIN ASIENTO (movimiento sin reference_id)",
+   "movimiento_id": "a1330957-1e49-43ed-a309-c7a20c2ee714"
+  },
+  {
+   "sku": "112",
+   "fecha": "2026-08-18",
+   "tipo_salida": "ajuste",
+   "documento": "SIN DOCUMENTO — Cuadre importación ENERVIDA",
+   "documento_id": null,
+   "destino": "Regularización legacy de la importación (sku=112 Δ=-17.0000 «diferencia acumulada pre-corte vs Excel»)",
+   "cantidad": 17,
+   "costo_origen_registrado_cup": 680000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 0,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 0,
+   "valor_correcto": 17,
+   "estado_contable": "no contabilizado (0 CUP en mayor)",
+   "asiento": "SIN ASIENTO (movimiento sin reference_id)",
+   "movimiento_id": "a8a82720-df49-485d-949c-acfc082fc3b6"
+  },
+  {
+   "sku": "112",
+   "fecha": "2026-09-19",
+   "tipo_salida": "vale",
+   "documento": "VS-000037-2026",
+   "documento_id": "8c4c2c0e-40b8-4cb5-8aa2-8b8a8466c281",
+   "destino": "Orden/47",
+   "cantidad": 4,
+   "costo_origen_registrado_cup": 680000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 0,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 0,
+   "valor_correcto": 4,
+   "estado_contable": "no contabilizado (0 CUP en mayor)",
+   "asiento": "SIN ASIENTO (brecha documental)",
+   "movimiento_id": "335e2fcc-f4d3-426b-a7ff-878af184acab"
+  },
+  {
+   "sku": "111",
+   "fecha": "2026-10-04",
+   "tipo_salida": "venta",
+   "documento": "Venta POS v2 d939ea06",
+   "documento_id": "d939ea06-b328-42f8-ac42-931f201e81c2",
+   "destino": "Venta al cliente (consumidor final, efectivo)",
+   "cantidad": 1,
+   "costo_origen_registrado_cup": 1700000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 0,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 0,
+   "valor_correcto": 1,
+   "estado_contable": "MOTOR ya contabilizó COGS 1 CUP (cost_average=1)",
+   "asiento": "d939ea06 (motor CP-FIN: GAS_COSTO_VENTAS débito 1 × 1)",
+   "movimiento_id": "673ede95-75cc-4c4e-aa19-1dc893c5cd79"
+  },
+  {
+   "sku": "112",
+   "fecha": "2026-10-05",
+   "tipo_salida": "venta",
+   "documento": "Venta POS v2 acc2b470",
+   "documento_id": "acc2b470-ee74-4d44-8e3a-2289c8331c36",
+   "destino": "Venta al cliente (consumidor final, efectivo)",
+   "cantidad": 3,
+   "costo_origen_registrado_cup": 680000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 3,
+   "valor_correcto": 3,
+   "estado_contable": "MOTOR ya contabilizó COGS 3 CUP (cost_average=1)",
+   "asiento": "acc2b470 (motor CP-FIN: GAS_COSTO_VENTAS débito 3 × 1)",
+   "movimiento_id": "8e73af98-aa78-4861-9378-08c1562e7473"
+  },
+  {
+   "sku": "112",
+   "fecha": "2026-10-05",
+   "tipo_salida": "vale",
+   "documento": "VS-000138-2026",
+   "documento_id": "de744e90-0c5d-4771-85dd-a1b9e6e9ff33",
+   "destino": "Grapas metálicas 3/4 con tornillo roscante",
+   "cantidad": 1,
+   "costo_origen_registrado_cup": 680000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 0,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 0,
+   "valor_correcto": 1,
+   "estado_contable": "no contabilizado (0 CUP en mayor)",
+   "asiento": "SIN ASIENTO (brecha documental)",
+   "movimiento_id": "9d47f6c1-756a-4e0f-9e56-85d1dc2ca557"
+  },
+  {
+   "sku": "111",
+   "fecha": "2026-10-05",
+   "tipo_salida": "vale",
+   "documento": "VS-000139-2026",
+   "documento_id": "7876eb7e-0729-4701-afc3-791725129c1f",
+   "destino": "Grapas plásticas con clavo de acero",
+   "cantidad": 1,
+   "costo_origen_registrado_cup": 1700000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 0,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 0,
+   "valor_correcto": 1,
+   "estado_contable": "no contabilizado (0 CUP en mayor)",
+   "asiento": "SIN ASIENTO (brecha documental)",
+   "movimiento_id": "25db100f-9238-45b4-b53e-c3559eb60651"
+  },
+  {
+   "sku": "111",
+   "fecha": "2026-10-09",
+   "tipo_salida": "vale",
+   "documento": "VS-000148-2026",
+   "documento_id": "3fdbd68c-1d0a-45bf-becd-bbd044e082bc",
+   "destino": "OT/Ferro",
+   "cantidad": 1,
+   "costo_origen_registrado_cup": 1700000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 1,
+   "valor_correcto": 1,
+   "estado_contable": "asiento existe por 1 CUP (parte del vale)",
+   "asiento": "VS-000148-2026 (GAS_VALES débito 1)",
+   "movimiento_id": "d4aeac82-6314-4fca-9ce9-cc53b04452f6"
+  },
+  {
+   "sku": "112",
+   "fecha": "2026-10-10",
+   "tipo_salida": "vale",
+   "documento": "VS-000165-2026",
+   "documento_id": "e34d0795-aff0-4999-be3d-f41e7bd613e9",
+   "destino": "OT/Ferro",
+   "cantidad": 10,
+   "costo_origen_registrado_cup": 680000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 10,
+   "valor_correcto": 10,
+   "estado_contable": "asiento existe por 10 CUP (parte del vale)",
+   "asiento": "VS-000165-2026 (GAS_VALES débito 10)",
+   "movimiento_id": "26ef0b69-0fcb-4b30-ac13-30b170f2557a"
+  },
+  {
+   "sku": "112",
+   "fecha": "2026-10-10",
+   "tipo_salida": "vale",
+   "documento": "VS-000157-2026",
+   "documento_id": "52f1fab0-555a-4f48-afc6-a1324fa051a8",
+   "destino": "Transferencia a Puerto Padre",
+   "cantidad": 20,
+   "costo_origen_registrado_cup": 680000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 20,
+   "valor_correcto": 20,
+   "estado_contable": "asiento existe por 20 CUP (parte del vale)",
+   "asiento": "VS-000157-2026 (GAS_VALES débito 20)",
+   "movimiento_id": "88fdcc47-f2d1-4daa-b4d4-6b7e11bc7906"
+  },
+  {
+   "sku": "111",
+   "fecha": "2026-10-10",
+   "tipo_salida": "vale",
+   "documento": "VS-000158-2026",
+   "documento_id": "558e2585-3f53-4f02-9b1b-3c1c1511e50c",
+   "destino": "Transferencia a Puerto Padre",
+   "cantidad": 20,
+   "costo_origen_registrado_cup": 1700000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 20,
+   "valor_correcto": 20,
+   "estado_contable": "asiento existe por 20 CUP (parte del vale)",
+   "asiento": "VS-000158-2026 (GAS_VALES débito 20)",
+   "movimiento_id": "9688337a-6929-492d-bcdb-bc82bc868d0c"
+  },
+  {
+   "sku": "111",
+   "fecha": "2026-10-14",
+   "tipo_salida": "venta",
+   "documento": "Venta POS v2 4c76a1a1",
+   "documento_id": "4c76a1a1-4b77-4d26-9093-bd183285ec50",
+   "destino": "Venta al cliente (consumidor final, efectivo)",
+   "cantidad": 1,
+   "costo_origen_registrado_cup": 1700000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 1,
+   "valor_correcto": 1,
+   "estado_contable": "MOTOR ya contabilizó COGS 1 CUP (cost_average=1)",
+   "asiento": "4c76a1a1 (motor CP-FIN: GAS_COSTO_VENTAS débito 1 × 1)",
+   "movimiento_id": "66ab762f-3b97-49bc-8ca6-cdcff4b04105"
+  },
+  {
+   "sku": "111",
+   "fecha": "2026-10-22",
+   "tipo_salida": "venta",
+   "documento": "Venta POS v2 a0d9f44d",
+   "documento_id": "a0d9f44d-9f54-4f69-a91f-db05f3dd4886",
+   "destino": "Venta al cliente (consumidor final, efectivo)",
+   "cantidad": 1,
+   "costo_origen_registrado_cup": 1700000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 1,
+   "valor_correcto": 1,
+   "estado_contable": "MOTOR ya contabilizó COGS 1 CUP (cost_average=1)",
+   "asiento": "a0d9f44d (motor CP-FIN: GAS_COSTO_VENTAS débito 1 × 1)",
+   "movimiento_id": "2c2da14b-e29f-4c88-911f-87d8fc2c6611"
+  },
+  {
+   "sku": "111",
+   "fecha": "2026-10-28",
+   "tipo_salida": "vale",
+   "documento": "VS-000208-2026",
+   "documento_id": "221603a6-ecd4-4689-94d9-1b50d23f1456",
+   "destino": "Transferencias a la Tienda Ferrocarril.",
+   "cantidad": 12,
+   "costo_origen_registrado_cup": 1700000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 12,
+   "valor_correcto": 12,
+   "estado_contable": "asiento existe por 12 CUP (parte del vale)",
+   "asiento": "VS-000208-2026 (GAS_VALES débito 12)",
+   "movimiento_id": "76d41fcd-39d2-43cf-825c-ebb61d3233fa"
+  },
+  {
+   "sku": "112",
+   "fecha": "2026-10-28",
+   "tipo_salida": "vale",
+   "documento": "VS-000208-2026",
+   "documento_id": "221603a6-ecd4-4689-94d9-1b50d23f1456",
+   "destino": "Transferencias a la Tienda Ferrocarril.",
+   "cantidad": 20,
+   "costo_origen_registrado_cup": 680000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 20,
+   "valor_correcto": 20,
+   "estado_contable": "asiento existe por 20 CUP (parte del vale)",
+   "asiento": "VS-000208-2026 (GAS_VALES débito 20)",
+   "movimiento_id": "1a2eddc4-a74b-459e-9a25-9e1ac266cd98"
+  },
+  {
+   "sku": "112",
+   "fecha": "2026-11-07",
+   "tipo_salida": "vale",
+   "documento": "VS-000223-2026",
+   "documento_id": "e4e811da-6722-468c-b4fd-14ff8fb5f084",
+   "destino": "Salida para el Ferro dejado de pasar del dia 26/10/2026 Vale 38-26 Antonio Ye Batista es la persona a la q se le entrego.",
+   "cantidad": 1,
+   "costo_origen_registrado_cup": 680000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 1,
+   "valor_correcto": 1,
+   "estado_contable": "no contabilizado (0 CUP en mayor)",
+   "asiento": "SIN ASIENTO (brecha documental)",
+   "movimiento_id": "0e3fa663-f4d6-4f68-b63f-ef8c06c27fe3"
+  },
+  {
+   "sku": "112",
+   "fecha": "2026-11-07",
+   "tipo_salida": "vale",
+   "documento": "VS-000225-2026",
+   "documento_id": "3c6a80aa-ceca-4cec-8a28-79d562d5c2db",
+   "destino": "Salida para el Ferro dejado de pasar del dia 26/10/2026 Vale 38-26 Antonio Ye Batista es la persona a la q se le entrego.",
+   "cantidad": 5,
+   "costo_origen_registrado_cup": 680000,
+   "costo_origen_correcto_cup": 1,
+   "costo_contabilizado_unitario": 1,
+   "costo_correcto_unitario": 1,
+   "valor_contabilizado": 5,
+   "valor_correcto": 5,
+   "estado_contable": "asiento existe por 5 CUP (parte del vale)",
+   "asiento": "VS-000225-2026 (GAS_VALES débito 5)",
+   "movimiento_id": "a48df909-4084-43f6-9e65-f191d8bf966a"
+  }
+ ],
+ "reingreso_vs000223": [
+  {
+   "sku": "112",
+   "fecha": "2026-11-07",
+   "tipo": "reversión de vale",
+   "documento": "VS-000223-2026",
+   "cantidad": 1,
+   "uc_registrado": 1,
+   "valor": 1,
+   "estado_contable": "SIN ASIENTO (ni la salida ni el reingreso del vale anulado tienen asiento — se cancelan entre sí)",
+   "notas": "Salida para el Ferro dejado de pasar del dia 26/10/2026 Vale 38-26 Antonio Ye Batista es la persona a la q se le entrego."
+  }
+ ],
+ "reconciliacion_por_sku": {
+  "111": {
+   "recibidas": 49,
+   "actuales": 10,
+   "salidas_brutas": {
+    "movs": 9,
+    "unidades": 39
+   },
+   "reingresos": {
+    "unidades": 0
+   },
+   "salidas_netas": 39,
+   "identidad": "49 − 39 brutas + 0 reingreso = 10",
+   "identidad_ok": true,
+   "por_tipo": {
+    "venta": {
+     "movs": 4,
+     "unidades": 4,
+     "valor_contabilizado": 2,
+     "valor_correcto": 4,
+     "uc0": 2
+    },
+    "ajuste": {
+     "movs": 1,
+     "unidades": 1,
+     "valor_contabilizado": 0,
+     "valor_correcto": 1,
+     "uc0": 1
+    },
+    "vale": {
+     "movs": 4,
+     "unidades": 34,
+     "valor_contabilizado": 33,
+     "valor_correcto": 34,
+     "uc0": 1
+    }
+   },
+   "valor_salidas_registrado": 35,
+   "valor_salidas_correcto": 39,
+   "subvaluacion": 4,
+   "unidades_uc0": 4
+  },
+  "112": {
+   "recibidas": 100,
+   "actuales": 20,
+   "salidas_brutas": {
+    "movs": 9,
+    "unidades": 81
+   },
+   "reingresos": {
+    "unidades": 1,
+    "detalle": [
+     {
+      "sku": "112",
+      "fecha": "2026-11-07",
+      "tipo": "reversión de vale",
+      "documento": "VS-000223-2026",
+      "cantidad": 1,
+      "uc_registrado": 1,
+      "valor": 1,
+      "estado_contable": "SIN ASIENTO (ni la salida ni el reingreso del vale anulado tienen asiento — se cancelan entre sí)",
+      "notas": "Salida para el Ferro dejado de pasar del dia 26/10/2026 Vale 38-26 Antonio Ye Batista es la persona a la q se le entrego."
+     }
+    ]
+   },
+   "salidas_netas": 80,
+   "identidad": "100 − 81 brutas + 1 reingreso = 20",
+   "identidad_ok": true,
+   "por_tipo": {
+    "ajuste": {
+     "movs": 1,
+     "unidades": 17,
+     "valor_contabilizado": 0,
+     "valor_correcto": 17,
+     "uc0": 17
+    },
+    "vale": {
+     "movs": 7,
+     "unidades": 61,
+     "valor_contabilizado": 56,
+     "valor_correcto": 61,
+     "uc0": 5
+    },
+    "venta": {
+     "movs": 1,
+     "unidades": 3,
+     "valor_contabilizado": 3,
+     "valor_correcto": 3,
+     "uc0": 0
+    }
+   },
+   "valor_salidas_registrado": 59,
+   "valor_salidas_correcto": 80,
+   "subvaluacion": 22,
+   "unidades_uc0": 22
+  }
+ },
+ "consolidado": {
+  "salidas_brutas": {
+   "movs": 18,
+   "unidades": 120
+  },
+  "reingreso": 1,
+  "salidas_netas": 119,
+  "por_tipo": {
+   "ventas": {
+    "movs": 5,
+    "unidades": 7
+   },
+   "vales_brutos": {
+    "movs": 11,
+    "unidades": 95
+   },
+   "vales_netos": 94,
+   "ajustes": {
+    "movs": 2,
+    "unidades": 18
+   }
+  },
+  "cogs_ventas": {
+   "correcto": 7,
+   "kardex_registrado": 5,
+   "motor_cpfin_atribuido": 7,
+   "diferencia_kardex_vs_motor": 2,
+   "nota": "El MOTOR CP-FIN ya contabilizó 7 CUP (COGS a cost_average=1). El kardex registra 5 CUP (2 movimientos uc=0). Subvaluación SOLO en la capa kardex: 2 CUP."
+  },
+  "vales": {
+   "valor_correcto_bruto": 95,
+   "kardex_registrado": 89,
+   "mayor_contabilizado": 88,
+   "sin_asiento": 7
+  },
+  "ajustes": {
+   "unidades": 18,
+   "valor_correcto": 18,
+   "kardex_registrado": 0,
+   "mayor_contabilizado": 0
+  },
+  "unidades_uc0": 26,
+  "subvaluacion_total_kardex": 26
+ },
+ "salidas_sin_documento": {
+  "n_movimientos": 2,
+  "unidades": 18,
+  "detalle": [
+   {
+    "sku": "111",
+    "fecha": "2026-08-18",
+    "cantidad": 1,
+    "motivo": "Regularización legacy de la importación (sku=111 Δ=-1.0000 «diferencia acumulada pre-corte vs Excel»)"
+   },
+   {
+    "sku": "112",
+    "fecha": "2026-08-18",
+    "cantidad": 17,
+    "motivo": "Regularización legacy de la importación (sku=112 Δ=-17.0000 «diferencia acumulada pre-corte vs Excel»)"
+   }
+  ],
+  "explicacion": "Los 2 movimientos de ajuste (18 unidades) provienen de la importación legacy del 2026-08-18 («Cuadre importación ENERVIDA ... diferencia acumulada pre-corte vs Excel»): regularización de existencias al migrar el kardex histórico al sistema. NO tienen documento ni reference_id — son ajustes de cuadre de migración, no salidas operativas. Se contabilizan (tras rectificación) como GAS_PERDIDA_INV siguiendo el patrón del asiento AJUSTE_INVENTARIO existente."
+ },
+ "salidas_sin_asiento": {
+  "movs": 6,
+  "unidades": 25,
+  "valor_correcto": 25,
+  "detalle": [
+   {
+    "sku": "111",
+    "doc": "SIN DOCUMENTO — Cuadre importación ENERVIDA",
+    "fecha": "2026-08-18",
+    "u": 1
+   },
+   {
+    "sku": "112",
+    "doc": "SIN DOCUMENTO — Cuadre importación ENERVIDA",
+    "fecha": "2026-08-18",
+    "u": 17
+   },
+   {
+    "sku": "112",
+    "doc": "VS-000037-2026",
+    "fecha": "2026-09-19",
+    "u": 4
+   },
+   {
+    "sku": "112",
+    "doc": "VS-000138-2026",
+    "fecha": "2026-10-05",
+    "u": 1
+   },
+   {
+    "sku": "111",
+    "doc": "VS-000139-2026",
+    "fecha": "2026-10-05",
+    "u": 1
+   },
+   {
+    "sku": "112",
+    "doc": "VS-000223-2026",
+    "fecha": "2026-11-07",
+    "u": 1
+   }
+  ]
+ },
+ "hashes": {
+  "cronologia": "63f7cb7ca84df81fb1113b09bcd880f3098492d729658b10ec1bb16993144eed",
+  "reconciliacion": "f42ad465b093a0f787986b9e71a033257ced890fb5de93708897f744d6945863",
+  "consolidado": "b37dced09e27d4b288014b459d424c4fddd1f7551b08c5df60f2409f533c4c94"
+ }
+}
