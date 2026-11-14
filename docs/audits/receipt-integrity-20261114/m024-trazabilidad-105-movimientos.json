@@ -1,0 +1,1477 @@
+{
+  "generado": "2026-11-14T15:11:28.836Z",
+  "fvc": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+  "lineas_fvc": 101,
+  "movimientos_candidatos": 110,
+  "otras_recepciones_contexto": [
+    {
+      "id": "02fe9c2c-cdfd-49e2-b1a7-a9035f7f23f1",
+      "document_number": null,
+      "reference_doc": "INV-INIT-2026-08-10",
+      "reception_date": "2026-08-10",
+      "created_at": "2026-08-10 16:00:00+00",
+      "n_lineas": 4
+    },
+    {
+      "id": "34c3fbd0-c9b5-48d1-89e6-207a28024b0e",
+      "document_number": null,
+      "reference_doc": "INV-INIT-ELEC-2026-08-10",
+      "reception_date": "2026-08-10",
+      "created_at": "2026-08-10 17:00:00+00",
+      "n_lineas": 4
+    },
+    {
+      "id": "44b8f20f-1548-4487-971f-f3b7e1b40fb3",
+      "document_number": null,
+      "reference_doc": "INV-INIT-SERV-2026-08-10",
+      "reception_date": "2026-08-10",
+      "created_at": "2026-08-10 18:00:00+00",
+      "n_lineas": 1
+    }
+  ],
+  "veredictos": {
+    "UNIVOCO": 101,
+    "PERTENECE_A_OTRA_RECEPCION": 9
+  },
+  "pareo": [
+    {
+      "mov_id": "00c7bd8f-9958-4730-a8a8-8bfd7cfed489",
+      "producto": "1e47c4e5-e2c5-434d-8557-5b9f20847f44",
+      "cantidad": 6,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "0a327f0a-0dc3-4f65-a5d8-c2a39981f292"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "04b5bb1f-e5df-4787-8215-4ddd248acd27",
+      "producto": "bd826299-e514-4106-8646-3c27214c54a6",
+      "cantidad": 1,
+      "unit_cost": 69900,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "60aac4a2-e480-46a0-b760-af2000fcda19"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "058b7e9a-bef5-46d9-9921-b7ca2bf8def9",
+      "producto": "aee96e33-8e35-4390-aa65-bdeb917473db",
+      "cantidad": 68,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "a18900b0-8c39-497b-aa5f-582b391f3ec1"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "0b6c6647-c3b3-44ba-95a2-e691e69673ff",
+      "producto": "55307d87-4105-4ad2-9805-e22ff9013dcf",
+      "cantidad": 10,
+      "unit_cost": 1500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "1699bf61-27d8-4f1f-bf5c-eb8c8be7b103"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "146a7f89-1d75-4afe-9e7d-a30ec4139e57",
+      "producto": "8859ef67-f829-4543-8bf8-6bb7e970e92d",
+      "cantidad": 95,
+      "unit_cost": 350,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "29fcc9aa-4d24-4bb2-adea-ac3587ef0121"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "14b09828-dd6b-4ab7-8210-4dc4e98f990c",
+      "producto": "0ed7b327-ebe4-474e-8b50-e6a399ac108f",
+      "cantidad": 108,
+      "unit_cost": 150,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "ea5588af-aabb-455e-9fdf-4f84160d876b"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "19cd62d5-4060-426d-8844-7885d72fa24b",
+      "producto": "58483ce8-df93-42b4-8168-f30460e0402f",
+      "cantidad": 3,
+      "unit_cost": 3000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "99f7dd26-4455-4f5c-834e-cf2b59aebd5f"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "20f4c492-5904-4cbd-8b26-c6ccc43806b1",
+      "producto": "b64d50cd-93b0-4001-a798-49167eb62155",
+      "cantidad": 16,
+      "unit_cost": 1500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "b9d6864b-04a6-4f32-8aed-3e937c84c49d"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "290acb2a-c0c0-4c05-9dfd-852b0632de95",
+      "producto": "2cbc0017-93f5-4d3f-9c12-fc8c8ac44f05",
+      "cantidad": 33,
+      "unit_cost": 10000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "659702f2-acc1-46ed-98fc-e293794c3e93"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "2b2a09f8-8578-4547-be50-8b555e7e4a87",
+      "producto": "d9650919-c674-4ed3-bd38-fbbb33daa36f",
+      "cantidad": 5,
+      "unit_cost": 22000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "7b485fb2-30bf-4575-87ae-b0edc658ef63"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "2ca04283-6dd7-4561-b4ea-8dc5927e9be5",
+      "producto": "fb5f945c-274c-439f-9535-541a32b7987f",
+      "cantidad": 4,
+      "unit_cost": 3500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "27e7566e-b1ff-4927-a35b-ed99058599a2"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "2cb6ce08-8811-403e-b993-3cbb8a9f1203",
+      "producto": "fcadebcd-1f99-4736-973d-cea194902399",
+      "cantidad": 7,
+      "unit_cost": 1000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "3ad936a6-a516-43d7-a3fb-ea03e38c0f0c"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "2f5029c1-1e22-40d3-bf63-4a73e8ba437c",
+      "producto": "ac865b9c-53a2-4048-91e6-40a362adb913",
+      "cantidad": 66,
+      "unit_cost": 6500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "d369a11f-c698-4b64-944f-62812e395646"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "36eb88a7-e179-4378-8854-8661885ccb96",
+      "producto": "3e11bff7-fa4d-4eab-b032-85972bb63092",
+      "cantidad": 1,
+      "unit_cost": 30600,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "f260700a-0c5c-43e3-80cc-6f8fb84d3017"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "370cf364-a074-4f87-a3f7-6705876c1e5a",
+      "producto": "a648cb46-3b8a-4061-af67-6c0079135114",
+      "cantidad": 2,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "df06717a-d432-4334-acab-eeb3937fe812"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "382468e5-ad9a-4ebb-acad-c8598ed27d66",
+      "producto": "6261d0e9-ccd1-4597-9016-6f6aa7485481",
+      "cantidad": 42,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "a51e873b-83c6-4cef-9480-3d897b82e410"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "39893af5-e268-4d53-b323-a2c38b7a0f3a",
+      "producto": "65d81028-0eed-41ec-836b-0ae64be5c523",
+      "cantidad": 5,
+      "unit_cost": 350,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "e1afc71d-4aa0-4dcf-a089-1a61a83ff7e5"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "3c4a4062-06ff-494a-86f5-c872c0508cc7",
+      "producto": "2bc30f23-44cf-4e4f-88db-208ac7d37da5",
+      "cantidad": 1,
+      "unit_cost": 2500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "5bcee92c-b284-405c-b766-fc0eba9ad84c"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "42de8671-85e6-4c61-9160-5b5b62415ec1",
+      "producto": "bcd07538-3e64-45d0-a13d-c0c96c769f49",
+      "cantidad": 22,
+      "unit_cost": 1000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "ee81962e-e989-4142-a5c8-6d9ce4be1b1f"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "454d3a58-edb4-4c60-9d57-264eeb3a9b12",
+      "producto": "f253520d-d5c1-4be2-a6b2-e42758c89f89",
+      "cantidad": 219,
+      "unit_cost": 1200,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "bc560fb8-f451-4af1-a9c5-295d39b5fa68"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "48594bdc-39a5-4350-bd83-5a967805cbde",
+      "producto": "cb969aba-5b05-4198-9fd6-5857abff2ac8",
+      "cantidad": 3,
+      "unit_cost": 2000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "cb0382ae-c6c7-4099-9ce7-271aeb6d48bf"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "4a3ba059-e1e6-42da-8f22-13c65b49b9c7",
+      "producto": "7870cb6b-7417-496f-b9d7-7304ecc3a8f1",
+      "cantidad": 89.5,
+      "unit_cost": 1350,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "502c1251-84db-4f73-aaef-3b7fb338be81"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "4b68292e-1d5f-4a00-a28c-d11876bce855",
+      "producto": "21fb9ced-f6d8-4b2a-8194-893188367234",
+      "cantidad": 4,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "28cb466e-89b9-474e-bd5c-0fa3c0de8dc6"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "4de1ff84-42c7-4ef6-a669-9fdac988531e",
+      "producto": "a3c6abc0-87b0-4d4a-bbd4-3a9630dc42d2",
+      "cantidad": 23,
+      "unit_cost": 17000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "8f984be0-0bc0-4e56-8b0f-cf88e1d1326a"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "4e00de4a-92e1-47ad-93ed-0adf9c0412e0",
+      "producto": "a8b0168d-574e-418c-be86-e99053459b39",
+      "cantidad": 377,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "efe9f6fe-f9ab-4cb5-beeb-9bea8eb3f292"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "4feaf863-00ea-4b64-b771-679c8074075a",
+      "producto": "e54cf638-86f8-4b34-b60d-6dcca0909530",
+      "cantidad": 13,
+      "unit_cost": 20000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "c6fdd9cb-4a80-4e8c-9ffb-a44945872915"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "540b16ac-3d43-4273-8104-79384c345ec0",
+      "producto": "963cd5c6-f496-471f-bf4b-6db083c8929f",
+      "cantidad": 4,
+      "unit_cost": 40000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "c591db69-ab87-4955-ad5f-b18c3498cee3"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "55ce34c0-79a6-4cdc-b564-db98fae64efb",
+      "producto": "a2396677-560b-417c-947a-b97b5946fae6",
+      "cantidad": 12,
+      "unit_cost": 44200,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "632cf8a1-41c2-4985-aabc-82674a0f7fb6"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "58d5b921-a690-4785-847c-486be043221a",
+      "producto": "aabb4a3a-f787-438d-b283-bbb328d9a98f",
+      "cantidad": 8,
+      "unit_cost": 1000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "6c4bcbc9-e1b8-44c5-a786-0439ca08d1e4"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "5e56c779-4a7d-4e14-a98f-70fed9a8248a",
+      "producto": "7b2f8ec3-2e3e-47f4-8a84-7ed62d0737f5",
+      "cantidad": 8,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "2e5567f4-0c0e-4ff4-a3f2-781185d852a6"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "5f58e2b1-156b-46b2-8f6d-c491b15a350c",
+      "producto": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+      "cantidad": 49,
+      "unit_cost": 1700000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "80a1767b-8902-48c6-833b-abf713bdc7b0"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "6233fd1e-1f7a-45de-ac3d-b677e91d0406",
+      "producto": "6862a061-50d0-4c8d-96d4-7b6d6ed082cd",
+      "cantidad": 11,
+      "unit_cost": 50,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "cdaf8879-0f9d-4fc7-9cfe-a2f8548befc7"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "64cfcfc9-a9f9-4b4a-851b-9018486a77b7",
+      "producto": "372180f6-9837-44b6-a939-91dc67e21d7a",
+      "cantidad": 16,
+      "unit_cost": 500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "a41e712a-e09e-41d9-b286-db352c8592a3"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "6597fe2c-fe83-4507-b0c9-bd5be3ec1a18",
+      "producto": "81cf320e-a75e-4585-a4d5-82e21dbf8f6c",
+      "cantidad": 20,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "d9b783f4-a5de-4214-81ba-1c1d96226f0c"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "66351331-d552-493e-8346-c0ec65d985bc",
+      "producto": "5182b826-d245-42eb-b2f8-282eadedd99c",
+      "cantidad": 100,
+      "unit_cost": 150,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "2720910f-1fc2-4450-9e50-057248942123"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "6747061c-6b0d-407d-8e87-28b72afad0ec",
+      "producto": "79addf1a-370c-427e-a9a0-328359e94ee5",
+      "cantidad": 4,
+      "unit_cost": 800,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "aacde29a-c879-4669-a9a6-ab16e67d09b2"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "67f8ca03-99ee-4078-a926-9efcb7cba854",
+      "producto": "8769cde9-6135-4011-a56c-86a96e02bf7b",
+      "cantidad": 38,
+      "unit_cost": 250,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "7b06e9e6-c689-4525-a14e-c5bfbd6cd32a"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "69266c97-ebdf-42f2-a0df-a92dc94887ad",
+      "producto": "fddc4a93-605c-4e45-b8b9-6bfd80131adf",
+      "cantidad": 1,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "9bb973d7-73ca-4d88-840a-cf2e60b1ab6c"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "6b25d040-452a-4c48-8503-429aa69e4cf2",
+      "producto": "bc39c25c-b582-4246-9f6e-44bc5c455d77",
+      "cantidad": 5,
+      "unit_cost": 258400,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "26a9b9ec-e366-449f-a878-aed0364ed345"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "6df9f3ca-2266-4f9d-a4b0-fa289697f249",
+      "producto": "e72c94ec-3986-4486-9f49-81cded6048ca",
+      "cantidad": 23,
+      "unit_cost": 12500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "49947269-e064-4502-bd23-a3c2219bb307"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "701f7c7e-3588-46ae-84f0-6bf8e9bb35d2",
+      "producto": "22c18cf5-e7d6-4217-9e4a-1bd722711883",
+      "cantidad": 3,
+      "unit_cost": 2000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "de92e5bf-8017-48ce-a0da-baba0ec5063d"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "707e38ac-3422-43fd-ad3e-873058f116c5",
+      "producto": "7c6c64a2-a1ac-4fb0-9000-90a95d23c78f",
+      "cantidad": 15,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "eaa042ac-e923-47d8-b3ad-77e4b6e1ea60"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "70d69673-b1be-4698-8d68-56f2d8984ec6",
+      "producto": "3ee29fd6-ce19-473b-9c26-3e72b6ecfd9f",
+      "cantidad": 4,
+      "unit_cost": 6000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "1dae4375-0975-48a6-89eb-25b2efa318ee"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "75a14714-d44b-491c-b488-5745f825fbdd",
+      "producto": "30124691-337c-422f-9955-23eeaae3e140",
+      "cantidad": 401,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "2e63e54b-e0f3-40cb-84ae-52a2ff20a6fc"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "7d2794ca-847c-4f88-af63-498376fd1fd6",
+      "producto": "8b05170d-4b3d-4cc4-937e-b4d7daa2a6fd",
+      "cantidad": 3,
+      "unit_cost": 122400,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "93a91f4c-0162-471f-bc40-438a790682c3"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "80cb825e-0e59-4b22-a7de-8d7a51616983",
+      "producto": "1c85b182-203d-4ecf-bc72-c0f3295034d2",
+      "cantidad": 1,
+      "unit_cost": 3400,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "772753d1-4731-46c1-b0f8-fab49f699285"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "84c8d473-e806-4d88-aa04-551b733db62e",
+      "producto": "490936b7-b7bf-4e17-9de6-8666e0f5c770",
+      "cantidad": 6,
+      "unit_cost": 1600,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "76a44012-2713-4359-8b71-76d02b23ce57"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "8552e290-b627-4b75-b9af-7779399ab22b",
+      "producto": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+      "cantidad": 100,
+      "unit_cost": 680000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "9c9e6010-b848-4d0f-b667-304282f7584b"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "86027ea3-2aaa-444e-bdec-2020ffd9408b",
+      "producto": "a764a5b5-e680-49ee-9fcf-88721e0e243e",
+      "cantidad": 10,
+      "unit_cost": 250,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "2f221f00-7c7e-47a1-a0fb-785b37d8218c"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "889b3803-3172-470f-85d9-cb415293a5ff",
+      "producto": "0fcaccef-5e72-482a-aedb-70964190fc15",
+      "cantidad": 1,
+      "unit_cost": 149600,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "f4d82c20-76ee-452b-ae19-00dac4be1236"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "8bad7b13-e8d8-4706-a975-0890ebbfc488",
+      "producto": "c0ca7553-28e4-4391-9c9e-770d63642948",
+      "cantidad": 29,
+      "unit_cost": 200,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "e2a0391f-2964-4e45-a588-7d9017e9c058"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "8f441758-c359-44d4-b595-9cfe18987181",
+      "producto": "cbb05aca-0c14-4a46-b54a-52014e96ac5c",
+      "cantidad": 69,
+      "unit_cost": 350,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "f8eafea0-fb60-4996-ae7e-eef3dbc272f6"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "8fbb8846-84bf-4724-8c18-7241c5986048",
+      "producto": "680c132e-b328-4390-926e-18b1368f6444",
+      "cantidad": 6,
+      "unit_cost": 2176000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "36c0f2c6-5e61-4912-9588-1be91ab0835c"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "9566b939-0bc9-4b18-9eef-655fe658fc3a",
+      "producto": "04ee0798-2912-42c1-8af0-aa04d5b78613",
+      "cantidad": 36,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "dc7eb5ff-87d1-4cf1-9d89-c2ebe9bbb6af"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "99f8795f-47ab-47f7-8a25-4cf76ce6e41b",
+      "producto": "574373b8-f104-46af-8c6c-4114852ce591",
+      "cantidad": 3,
+      "unit_cost": 54400,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "e3402f10-26a3-4928-9ce1-1662fab1098d"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "9aa3774f-0951-4ca5-b96c-ad567b49574f",
+      "producto": "21f4cf28-3a63-4bd1-8531-87cbda683300",
+      "cantidad": 7,
+      "unit_cost": 2500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "cca925f1-db2a-46ab-b772-613591441bc7"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "9b699edf-e1aa-40e3-a4bb-ea4477e98f51",
+      "producto": "5da894db-e432-461b-9411-a92cb0c1dac5",
+      "cantidad": 266,
+      "unit_cost": 1500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "3fa98d1e-f111-4c25-873f-9a668cb80068"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "9c6b3342-d0a7-4d27-950a-0d9620fa8903",
+      "producto": "a918cf13-d5ee-42ff-9f40-8fd074c2279c",
+      "cantidad": 4,
+      "unit_cost": 23000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "5a8121ea-92b8-4203-8634-7ec94ad88f17"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "9cd4c428-094b-42e1-bdb5-0b1c5ba8bd60",
+      "producto": "f3d0f5a3-7e9d-46c9-91c1-a166129cb187",
+      "cantidad": 35,
+      "unit_cost": 5000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "bcbef1ff-5a9d-403f-ac77-736345878062"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "9ced2479-59c6-4ac8-84d3-00a804961c10",
+      "producto": "9f279860-e020-4749-a40c-fee16beb35df",
+      "cantidad": 10,
+      "unit_cost": 1500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "1fa0dd35-45c1-4492-911c-d3adac607545"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "9e11a3b3-8b58-4c39-8f85-080df0b20253",
+      "producto": "c8070dfe-85cd-43f9-bc40-a202126958b6",
+      "cantidad": 212,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "7c1363bf-021f-4702-bb79-691afcbb9d67"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "9f73246c-c3ca-443e-90e1-8ff3c589df6c",
+      "producto": "34f49170-6f4f-426c-a1f2-3c396c416b74",
+      "cantidad": 4,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "3d28dee9-79f1-4920-be8a-9da9567d3fa2"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "a029a8fd-fca7-4c1c-bf89-b35ee1366c63",
+      "producto": "f2ad0fc0-59ee-4308-8cb8-e522e5f2bf6d",
+      "cantidad": 28,
+      "unit_cost": 400,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "e3c7f0ad-5ebb-488c-b062-1c5623fe09fe"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "a11c4ec0-97fe-432e-aadd-df17bb203e16",
+      "producto": "1b0d19fd-e0fe-4ac1-972c-3a1361d61263",
+      "cantidad": 173,
+      "unit_cost": 3400,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "4a456f42-2b80-4a9f-b530-d7b53fd882b3"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "a215dbf8-6f8d-425d-bb30-714481a6302e",
+      "producto": "a38829be-3866-4860-b125-ced53287cee6",
+      "cantidad": 12,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "cb31e953-1c20-45e0-b051-779cf88ca5fe"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "a409d251-2593-45c8-880a-aa8a63c1e8a7",
+      "producto": "f2757338-f26f-4538-945e-5da97ec10a8f",
+      "cantidad": 339,
+      "unit_cost": 3060,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "eae8664e-1cf6-4bd6-b776-d028a8d6e003"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "a62143ed-0a72-41ed-8e9b-473805971048",
+      "producto": "b1e30ab0-ce01-42b0-a703-844f135b9cc7",
+      "cantidad": 122,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "47613048-c098-499f-acf2-2324bc4e888f"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "a69f074d-f0fd-4f70-b99f-ab359fa98a4c",
+      "producto": "2b2e648d-feea-4a1b-a3c6-f614ae320ab8",
+      "cantidad": 6,
+      "unit_cost": 250,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "9199db05-74b0-4ac4-b373-189c3da59ba3"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "a7e8b3d7-d45a-4772-86c5-183e7603bcdc",
+      "producto": "73c3ebfa-7a0e-406f-b581-a1e95a7cd300",
+      "cantidad": 155,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "6833f740-654e-47ed-82f5-89c103c9aaef"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "a9ad0610-24dd-4b97-822b-89431ae4bedf",
+      "producto": "b08987c6-3853-4808-bff8-946492a78393",
+      "cantidad": 2,
+      "unit_cost": 6000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "1f04d60d-7be0-4805-8c83-95dfc434cd40"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "af93d182-d0a3-4c32-9f58-f8b0026ca58e",
+      "producto": "5444f7b6-cf77-4bba-9717-202ddef54c32",
+      "cantidad": 2,
+      "unit_cost": 74800,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "af5a95d4-6919-4e93-bd19-138837161321"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "b06d5013-3982-4aa2-a906-ca1280d6e9fe",
+      "producto": "0ce44331-4402-455f-acfb-44e396ebeb83",
+      "cantidad": 32,
+      "unit_cost": 350,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "e1823f34-753a-4c3e-af8c-bcdffcdcdc23"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "b18e3a15-30f3-4a36-9c30-9babf50b15aa",
+      "producto": "30dca90c-1606-4ba2-8a06-1fbcb5792e68",
+      "cantidad": 27,
+      "unit_cost": 6500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "f0065136-3a90-400b-8f7a-def615d89243"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "b1da9830-084e-449f-95ab-cc673f876925",
+      "producto": "84feaebe-2d47-4e5e-abce-03d892aaf56b",
+      "cantidad": 20,
+      "unit_cost": 6800,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "e1b5794a-015d-4f3d-8dbc-2142572683de"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "b471803f-92da-4bb4-9f26-43e7c83aad06",
+      "producto": "ff5145c8-d43c-4104-82c3-81dacef80e78",
+      "cantidad": 9,
+      "unit_cost": 1800,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "e226a025-a338-4946-8163-8b0cd3b50ed8"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "b7f7e490-03ba-4cb4-8a62-ee22e5e867bf",
+      "producto": "5ecd4e54-7710-4da4-8bd1-510511946b2f",
+      "cantidad": 1,
+      "unit_cost": 69900,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "9e78cff6-fc43-43c5-a377-03de3c46dcc3"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "bd500b0b-bfac-4a90-b460-28293822449c",
+      "producto": "e3f52f11-6732-4e7d-a7e2-f60c440b58d3",
+      "cantidad": 107,
+      "unit_cost": 1200,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "203a0794-f77b-4ed9-8393-98452275d041"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "be16d51c-ab4b-490c-892f-820f954c1b77",
+      "producto": "7a6af746-d8ca-4325-b0eb-ed4cb574f5ad",
+      "cantidad": 532,
+      "unit_cost": 200,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "b81b7746-5534-4636-81df-12146145f464"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "c1e7fa46-05a1-4885-a6f1-76010f10ae40",
+      "producto": "b5bde54a-0cb8-4305-8f93-82291a134d97",
+      "cantidad": 27,
+      "unit_cost": 3200,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "2f235069-b768-48b3-a32b-da6ffe926e94"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "c4d30c6c-b987-49c8-9a9e-f6db95b03932",
+      "producto": "d33cbe53-01f8-49b2-b0d2-48ec4bf61822",
+      "cantidad": 204,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "c6b5e9c3-8860-4468-a427-9542373b93a2"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "c82b3f61-86c6-4d31-957f-6a1b1ee5478f",
+      "producto": "7d50c274-922e-4674-bdff-a452884bf03e",
+      "cantidad": 44,
+      "unit_cost": 2500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "e4660f83-68fd-49ad-a34a-b449eb2b82f4"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "c92747b4-db63-4e20-b217-595431cb2624",
+      "producto": "6cda2af1-6e24-4bfc-a2f8-bcd52797e841",
+      "cantidad": 39,
+      "unit_cost": 2800,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "0150aaaa-57a2-4644-aab3-30c447438469"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "d248e988-efd0-4a46-9bee-783f254b96be",
+      "producto": "ce3f2c20-7aaf-4eb6-b6af-38834fb37fc2",
+      "cantidad": 15,
+      "unit_cost": 200,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "44b0ffe8-12ed-4be8-9fef-c368beb3a40c"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "d28ca9a1-ea18-4d28-a873-cff193fa5a3b",
+      "producto": "e46b0164-5f65-40b9-8c48-a8154138e2be",
+      "cantidad": 58,
+      "unit_cost": 251600,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "fa838ef0-e41c-42d6-933f-1d9e47b4acc2"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "d4c2ca95-a5ec-4cf8-82a1-a928db3247ce",
+      "producto": "d0cab976-b1cc-42a9-a177-97aa48a393a5",
+      "cantidad": 82,
+      "unit_cost": 600,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "569630e6-bb6c-41ee-a1c7-76a63e2bef05"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "d742f52f-a5c6-4211-8a36-02f3843c823d",
+      "producto": "909e914d-0672-4952-9f7a-57bf60ab07d5",
+      "cantidad": 122.5,
+      "unit_cost": 3400,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "ea0fe7c3-0c9b-4b62-9c1d-abc18712688e"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "d76b420a-c8b4-4037-83cc-baa3fd05ae60",
+      "producto": "b4b2f0e7-14df-4108-a5b4-14577292c35e",
+      "cantidad": 20,
+      "unit_cost": 32500,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "34b9df9c-3181-4b64-92ca-1b39b4f9b53e"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "d89f49f9-28fc-4487-aea8-5ab555a80172",
+      "producto": "544f9415-1bda-4267-a524-948f836f23bf",
+      "cantidad": 4,
+      "unit_cost": 12240,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "1b56e878-ef09-4865-b837-626fc0ba3e8a"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "d9a6a5a7-16d9-44f8-8c2d-327f3a4018cd",
+      "producto": "3c072e9a-1c0d-4adf-add5-b337485bc3e4",
+      "cantidad": 444.5,
+      "unit_cost": 3060,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "283e949f-ef22-4ef4-ad1b-ebf4657666d3"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "df454794-747d-4b04-9230-fbe1c7f75353",
+      "producto": "c2f4df7e-045a-4990-a34a-d211387e3924",
+      "cantidad": 2,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "d4073c38-8cc7-4e86-a6a6-647575c30a43"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "e3e00517-815c-4afc-8905-86d3820b6fdb",
+      "producto": "d9f474ad-310d-4c78-8517-665db0bc1c89",
+      "cantidad": 19,
+      "unit_cost": 350,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "2746c1c0-ec82-47f4-8b98-285bab4a4a26"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "e6755c37-2a20-4db6-90a7-2296c68b78eb",
+      "producto": "1c945584-bb91-4d29-bab7-4c1050205f82",
+      "cantidad": 1,
+      "unit_cost": 136000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "e85f9587-e6bb-4a0d-8972-c576f4651acc"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "e98e0a7b-143e-4b82-8e82-f42e395d72c9",
+      "producto": "6fb35013-d343-4f2f-8f24-00ff79869cf2",
+      "cantidad": 26,
+      "unit_cost": 250,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "e5050cb1-26d3-42a7-b36e-5acee80e116e"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "ec4ac748-221b-4a91-865e-c37f385c8cb1",
+      "producto": "0012bb78-b717-4c09-bb67-47fe780319e4",
+      "cantidad": 226,
+      "unit_cost": 4760,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "cad99680-6216-4574-a132-3f0b9aae7898"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "ec759b93-4a33-4c01-969e-61fa8661baf6",
+      "producto": "618ce7eb-f90b-4094-ad2e-c104ed3e496c",
+      "cantidad": 37,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "6e6903be-7916-4053-a01a-9ceaa9c8f994"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "ef86eeaf-2787-44d8-80a3-3f2e4641159e",
+      "producto": "ebcde03e-b5f3-4271-b074-17264e4eb6b2",
+      "cantidad": 3,
+      "unit_cost": 1,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "dfdd61fc-dee3-458a-b230-e5c79630b2a9"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "f06f1143-3fe9-443d-970d-745a1971bd6b",
+      "producto": "e356ca7a-b631-4df9-8e3e-a701d9459d25",
+      "cantidad": 126,
+      "unit_cost": 200,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "832094a8-d8f7-4316-a051-9ffe7c5d50e1"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "f0d9aa0c-ae6d-42a1-82e2-55236c0a270d",
+      "producto": "abe8dc9d-1d76-4216-8958-838c90ac7269",
+      "cantidad": 2,
+      "unit_cost": 2000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "0d9f69a4-49e1-45a7-adaf-0489219329e1"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "f6274bfd-54a5-4ac6-9564-53b0b0c162ba",
+      "producto": "1498f8ec-aa50-49a0-bf89-4e7eb7e29b1c",
+      "cantidad": 1,
+      "unit_cost": 4000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "a56c0d1a-262c-4466-a104-68d2851d20e0"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "fb1428b7-4793-4e55-bace-6f57b2264646",
+      "producto": "ea9f3d5e-2d7e-4ae9-adf4-d8469ae24cb3",
+      "cantidad": 5,
+      "unit_cost": 17000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "8f215077-3248-4e95-82f1-6aab6b82138a"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "ff7474a1-07cf-4f64-a2cf-60e2e448f23e",
+      "producto": "6e67d2ac-8f1e-4da1-827a-15f6e6ff8005",
+      "cantidad": 39,
+      "unit_cost": 14000,
+      "fecha": "2026-07-01",
+      "reference_doc": "Confirmacion recepcion",
+      "lineas_fvc_candidatas": [
+        "48e2b68d-4db1-4e78-b694-dd416b05e55d"
+      ],
+      "lineas_otras_candidatas": [],
+      "veredicto": "UNIVOCO"
+    },
+    {
+      "mov_id": "1774a578-83f3-44c9-86b0-f3c39ed15488",
+      "producto": "f2757338-f26f-4538-945e-5da97ec10a8f",
+      "cantidad": 100,
+      "unit_cost": 3060,
+      "fecha": "2026-08-10",
+      "reference_doc": "Recepción de mercancía",
+      "lineas_fvc_candidatas": [],
+      "lineas_otras_candidatas": [
+        "02fe9c2c-cdfd-49e2-b1a7-a9035f7f23f1"
+      ],
+      "veredicto": "PERTENECE_A_OTRA_RECEPCION"
+    },
+    {
+      "mov_id": "bafaa593-2e16-413d-84c7-b5fefb2a44f5",
+      "producto": "11ca852e-4d72-4be5-8ee6-6777ebaba5df",
+      "cantidad": 4,
+      "unit_cost": 5040,
+      "fecha": "2026-08-10",
+      "reference_doc": "Recepción de mercancía",
+      "lineas_fvc_candidatas": [],
+      "lineas_otras_candidatas": [
+        "02fe9c2c-cdfd-49e2-b1a7-a9035f7f23f1"
+      ],
+      "veredicto": "PERTENECE_A_OTRA_RECEPCION"
+    },
+    {
+      "mov_id": "e91dce47-93c6-42a1-b85a-82139749ee61",
+      "producto": "d9650919-c674-4ed3-bd38-fbbb33daa36f",
+      "cantidad": 13,
+      "unit_cost": 22000,
+      "fecha": "2026-08-10",
+      "reference_doc": "Recepción de mercancía",
+      "lineas_fvc_candidatas": [],
+      "lineas_otras_candidatas": [
+        "02fe9c2c-cdfd-49e2-b1a7-a9035f7f23f1"
+      ],
+      "veredicto": "PERTENECE_A_OTRA_RECEPCION"
+    },
+    {
+      "mov_id": "f5c8fa8d-b071-4aa5-93a0-4bb5347ad4b0",
+      "producto": "b4b2f0e7-14df-4108-a5b4-14577292c35e",
+      "cantidad": 13,
+      "unit_cost": 32500,
+      "fecha": "2026-08-10",
+      "reference_doc": "Recepción de mercancía",
+      "lineas_fvc_candidatas": [],
+      "lineas_otras_candidatas": [
+        "02fe9c2c-cdfd-49e2-b1a7-a9035f7f23f1"
+      ],
+      "veredicto": "PERTENECE_A_OTRA_RECEPCION"
+    },
+    {
+      "mov_id": "4fae6bb8-ee09-4213-b754-13aed6ab3cdf",
+      "producto": "2e7b4157-99a4-4b81-b135-33ff2c983d13",
+      "cantidad": 5,
+      "unit_cost": 13600,
+      "fecha": "2026-08-10",
+      "reference_doc": "Recepción de mercancía",
+      "lineas_fvc_candidatas": [],
+      "lineas_otras_candidatas": [
+        "34c3fbd0-c9b5-48d1-89e6-207a28024b0e"
+      ],
+      "veredicto": "PERTENECE_A_OTRA_RECEPCION"
+    },
+    {
+      "mov_id": "69c62e19-c84a-4d37-9316-10389f43e5fc",
+      "producto": "158ffb1e-ac5e-4b44-a52a-edcca969cf1e",
+      "cantidad": 5,
+      "unit_cost": 81600,
+      "fecha": "2026-08-10",
+      "reference_doc": "Recepción de mercancía",
+      "lineas_fvc_candidatas": [],
+      "lineas_otras_candidatas": [
+        "34c3fbd0-c9b5-48d1-89e6-207a28024b0e"
+      ],
+      "veredicto": "PERTENECE_A_OTRA_RECEPCION"
+    },
+    {
+      "mov_id": "90379c90-4064-4146-931b-217f520d0320",
+      "producto": "dd0f6d35-5542-4713-b12b-9ce2f113e962",
+      "cantidad": 10,
+      "unit_cost": 23800,
+      "fecha": "2026-08-10",
+      "reference_doc": "Recepción de mercancía",
+      "lineas_fvc_candidatas": [],
+      "lineas_otras_candidatas": [
+        "34c3fbd0-c9b5-48d1-89e6-207a28024b0e"
+      ],
+      "veredicto": "PERTENECE_A_OTRA_RECEPCION"
+    },
+    {
+      "mov_id": "e8c312fc-fd75-427f-994a-b39c4740f97d",
+      "producto": "1f8ab888-9fed-461f-8342-7102b201acbb",
+      "cantidad": 10,
+      "unit_cost": 20400,
+      "fecha": "2026-08-10",
+      "reference_doc": "Recepción de mercancía",
+      "lineas_fvc_candidatas": [],
+      "lineas_otras_candidatas": [
+        "34c3fbd0-c9b5-48d1-89e6-207a28024b0e"
+      ],
+      "veredicto": "PERTENECE_A_OTRA_RECEPCION"
+    },
+    {
+      "mov_id": "4479b00c-11f0-4eff-870a-97b83cc17179",
+      "producto": "34f49170-6f4f-426c-a1f2-3c396c416b74",
+      "cantidad": 20,
+      "unit_cost": 680,
+      "fecha": "2026-08-10",
+      "reference_doc": "Recepción de mercancía",
+      "lineas_fvc_candidatas": [],
+      "lineas_otras_candidatas": [
+        "44b8f20f-1548-4487-971f-f3b7e1b40fb3"
+      ],
+      "veredicto": "PERTENECE_A_OTRA_RECEPCION"
+    }
+  ],
+  "resumen_lineas": {
+    "cubiertas_1a1": 101,
+    "sin_movimiento": 0,
+    "con_multiples": 0
+  },
+  "conclusion": {
+    "trazabilidad_reparable": true,
+    "nota": "Cada movimiento unívoco aporta la línea FVC exacta (producto+cantidad+costo CUP convertido). La corrección consistiría en backfill de reference_id SOLO para los UNIVOCOS con auditoría dual, idempotente (WHERE reference_id IS NULL) y reversible (restaurar NULL)."
+  }
+}

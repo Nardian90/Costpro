@@ -1,0 +1,846 @@
+{
+  "generado": "2026-11-14T15:06:36.748Z",
+  "documentos": [
+    {
+      "id": "0a133757-48e3-47c5-8055-9e2f45b02b1a",
+      "tienda": "PUERTO PADRE",
+      "store": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "doc": "Recibido de JuanCarlos-184",
+      "ciclo": "reconocimiento",
+      "fase": "PRE-CHECK",
+      "pre": {
+        "id": "0a133757-48e3-47c5-8055-9e2f45b02b1a",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "status": "active",
+        "document_number": null,
+        "reference_doc": "Recibido de JuanCarlos-184",
+        "total_cost": 4,
+        "reception_date": "2026-10-10",
+        "n_lineas": 1,
+        "suma_lineas": 4,
+        "n_no_cup": 0,
+        "tasas_distintas": 1,
+        "n_mov_inv": 1,
+        "n_asientos": 0,
+        "n_errores_previos": 0
+      },
+      "criterios": {
+        "tienda_ok": true,
+        "estado_ok": true,
+        "cabecera_cuadra": true,
+        "monedas_ok": true,
+        "tasa_unica": true,
+        "inventario_ok": true,
+        "sin_asientos_previos": true,
+        "sin_errores_previos": true
+      },
+      "entry_reconocimiento": "691f3688-f9af-4cfd-9320-34e19ad9d958",
+      "post": [
+        {
+          "id": "691f3688-f9af-4cfd-9320-34e19ad9d958",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "economic_date": "2026-10-10",
+          "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+          "movements_snapshot": [
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-inv-d"
+              },
+              "amount": 4,
+              "sentido": "debito",
+              "currency": "CUP",
+              "categoria": "ACT_INVENTARIO",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            },
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-cxp-c"
+              },
+              "amount": 4,
+              "sentido": "credito",
+              "currency": "CUP",
+              "categoria": "PAS_CXP_PROV",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            }
+          ],
+          "n_movs": 2,
+          "debitos": 4,
+          "creditos": 4,
+          "reversal_de": null
+        }
+      ],
+      "checks": {
+        "un_reconocimiento": true,
+        "monto_ok": true,
+        "balance_ok": true,
+        "regla_ok": true
+      }
+    },
+    {
+      "id": "2e393c20-e8e4-40a0-ba72-14f5dbfe805f",
+      "tienda": "PUERTO PADRE",
+      "store": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "doc": "Almacen Lari",
+      "ciclo": "reconocimiento",
+      "fase": "PRE-CHECK",
+      "pre": {
+        "id": "2e393c20-e8e4-40a0-ba72-14f5dbfe805f",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "status": "active",
+        "document_number": null,
+        "reference_doc": "Almacen Lari",
+        "total_cost": 34,
+        "reception_date": "2026-10-10",
+        "n_lineas": 1,
+        "suma_lineas": 34,
+        "n_no_cup": 0,
+        "tasas_distintas": 1,
+        "n_mov_inv": 1,
+        "n_asientos": 0,
+        "n_errores_previos": 0
+      },
+      "criterios": {
+        "tienda_ok": true,
+        "estado_ok": true,
+        "cabecera_cuadra": true,
+        "monedas_ok": true,
+        "tasa_unica": true,
+        "inventario_ok": true,
+        "sin_asientos_previos": true,
+        "sin_errores_previos": true
+      },
+      "entry_reconocimiento": "96a1c4b0-efe7-42fe-a7f4-a2641cdfead8",
+      "post": [
+        {
+          "id": "96a1c4b0-efe7-42fe-a7f4-a2641cdfead8",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "economic_date": "2026-10-10",
+          "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+          "movements_snapshot": [
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-inv-d"
+              },
+              "amount": 34,
+              "sentido": "debito",
+              "currency": "CUP",
+              "categoria": "ACT_INVENTARIO",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            },
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-cxp-c"
+              },
+              "amount": 34,
+              "sentido": "credito",
+              "currency": "CUP",
+              "categoria": "PAS_CXP_PROV",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            }
+          ],
+          "n_movs": 2,
+          "debitos": 34,
+          "creditos": 34,
+          "reversal_de": null
+        }
+      ],
+      "checks": {
+        "un_reconocimiento": true,
+        "monto_ok": true,
+        "balance_ok": true,
+        "regla_ok": true
+      }
+    },
+    {
+      "id": "5e1b6b87-4123-4b60-8c76-5c9bb09d2a38",
+      "tienda": "PUERTO PADRE",
+      "store": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "doc": "S/N",
+      "ciclo": "reconocimiento",
+      "fase": "PRE-CHECK",
+      "pre": {
+        "id": "5e1b6b87-4123-4b60-8c76-5c9bb09d2a38",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "status": "active",
+        "document_number": null,
+        "reference_doc": "S/N",
+        "total_cost": 515,
+        "reception_date": "2026-10-10",
+        "n_lineas": 13,
+        "suma_lineas": 515,
+        "n_no_cup": 0,
+        "tasas_distintas": 1,
+        "n_mov_inv": 13,
+        "n_asientos": 0,
+        "n_errores_previos": 0
+      },
+      "criterios": {
+        "tienda_ok": true,
+        "estado_ok": true,
+        "cabecera_cuadra": true,
+        "monedas_ok": true,
+        "tasa_unica": true,
+        "inventario_ok": true,
+        "sin_asientos_previos": true,
+        "sin_errores_previos": true
+      },
+      "entry_reconocimiento": "45fb351a-2c8a-4377-8451-1ef1c0cb0bc2",
+      "post": [
+        {
+          "id": "45fb351a-2c8a-4377-8451-1ef1c0cb0bc2",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "economic_date": "2026-10-10",
+          "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+          "movements_snapshot": [
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-inv-d"
+              },
+              "amount": 515,
+              "sentido": "debito",
+              "currency": "CUP",
+              "categoria": "ACT_INVENTARIO",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            },
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-cxp-c"
+              },
+              "amount": 515,
+              "sentido": "credito",
+              "currency": "CUP",
+              "categoria": "PAS_CXP_PROV",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            }
+          ],
+          "n_movs": 2,
+          "debitos": 515,
+          "creditos": 515,
+          "reversal_de": null
+        }
+      ],
+      "checks": {
+        "un_reconocimiento": true,
+        "monto_ok": true,
+        "balance_ok": true,
+        "regla_ok": true
+      }
+    },
+    {
+      "id": "646be7c5-9d74-47a2-871f-0f1c1f790424",
+      "tienda": "PUERTO PADRE",
+      "store": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "doc": "Recibido de JuanCarlos",
+      "ciclo": "reconocimiento",
+      "fase": "PRE-CHECK",
+      "pre": {
+        "id": "646be7c5-9d74-47a2-871f-0f1c1f790424",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "status": "active",
+        "document_number": null,
+        "reference_doc": "Recibido de JuanCarlos",
+        "total_cost": 680,
+        "reception_date": "2026-10-10",
+        "n_lineas": 13,
+        "suma_lineas": 680,
+        "n_no_cup": 0,
+        "tasas_distintas": 1,
+        "n_mov_inv": 13,
+        "n_asientos": 0,
+        "n_errores_previos": 0
+      },
+      "criterios": {
+        "tienda_ok": true,
+        "estado_ok": true,
+        "cabecera_cuadra": true,
+        "monedas_ok": true,
+        "tasa_unica": true,
+        "inventario_ok": true,
+        "sin_asientos_previos": true,
+        "sin_errores_previos": true
+      },
+      "entry_reconocimiento": "513ba2e3-ca19-4aab-863d-73fa3604f032",
+      "post": [
+        {
+          "id": "513ba2e3-ca19-4aab-863d-73fa3604f032",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "economic_date": "2026-10-10",
+          "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+          "movements_snapshot": [
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-inv-d"
+              },
+              "amount": 680,
+              "sentido": "debito",
+              "currency": "CUP",
+              "categoria": "ACT_INVENTARIO",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            },
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-cxp-c"
+              },
+              "amount": 680,
+              "sentido": "credito",
+              "currency": "CUP",
+              "categoria": "PAS_CXP_PROV",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            }
+          ],
+          "n_movs": 2,
+          "debitos": 680,
+          "creditos": 680,
+          "reversal_de": null
+        }
+      ],
+      "checks": {
+        "un_reconocimiento": true,
+        "monto_ok": true,
+        "balance_ok": true,
+        "regla_ok": true
+      }
+    },
+    {
+      "id": "351fa9fe-dec7-4fcb-8497-9663aadc7349",
+      "tienda": "PUERTO PADRE",
+      "store": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "doc": "Conteo Inv1",
+      "ciclo": "reconocimiento",
+      "fase": "PRE-CHECK",
+      "pre": {
+        "id": "351fa9fe-dec7-4fcb-8497-9663aadc7349",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "status": "active",
+        "document_number": null,
+        "reference_doc": "Conteo Inv1",
+        "total_cost": 383.5,
+        "reception_date": "2026-10-10",
+        "n_lineas": 28,
+        "suma_lineas": 383.5,
+        "n_no_cup": 0,
+        "tasas_distintas": 1,
+        "n_mov_inv": 28,
+        "n_asientos": 0,
+        "n_errores_previos": 0
+      },
+      "criterios": {
+        "tienda_ok": true,
+        "estado_ok": true,
+        "cabecera_cuadra": true,
+        "monedas_ok": true,
+        "tasa_unica": true,
+        "inventario_ok": true,
+        "sin_asientos_previos": true,
+        "sin_errores_previos": true
+      },
+      "entry_reconocimiento": "33dbad76-b702-4962-a157-e08cbb5826c7",
+      "post": [
+        {
+          "id": "33dbad76-b702-4962-a157-e08cbb5826c7",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "economic_date": "2026-10-10",
+          "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+          "movements_snapshot": [
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-inv-d"
+              },
+              "amount": 383.5,
+              "sentido": "debito",
+              "currency": "CUP",
+              "categoria": "ACT_INVENTARIO",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            },
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-cxp-c"
+              },
+              "amount": 383.5,
+              "sentido": "credito",
+              "currency": "CUP",
+              "categoria": "PAS_CXP_PROV",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            }
+          ],
+          "n_movs": 2,
+          "debitos": 383.5,
+          "creditos": 383.5,
+          "reversal_de": null
+        }
+      ],
+      "checks": {
+        "un_reconocimiento": true,
+        "monto_ok": true,
+        "balance_ok": true,
+        "regla_ok": true
+      }
+    },
+    {
+      "id": "b7f5df9f-e80c-4f7b-9f15-a0878567b66c",
+      "tienda": "COSTPRO (Prueba)",
+      "store": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "doc": "REC-PP-001-2026",
+      "ciclo": "reconocimiento",
+      "fase": "PRE-CHECK",
+      "pre": {
+        "id": "b7f5df9f-e80c-4f7b-9f15-a0878567b66c",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "status": "active",
+        "document_number": null,
+        "reference_doc": "REC-PP-001-2026",
+        "total_cost": 5044463.67,
+        "reception_date": "2026-05-01",
+        "n_lineas": 33,
+        "suma_lineas": 5044463.67,
+        "n_no_cup": 0,
+        "tasas_distintas": 1,
+        "n_mov_inv": 33,
+        "n_asientos": 0,
+        "n_errores_previos": 0
+      },
+      "criterios": {
+        "tienda_ok": true,
+        "estado_ok": true,
+        "cabecera_cuadra": true,
+        "monedas_ok": true,
+        "tasa_unica": true,
+        "inventario_ok": true,
+        "sin_asientos_previos": true,
+        "sin_errores_previos": true
+      },
+      "entry_reconocimiento": "68ec338a-9757-44b6-8998-5b3655bea86d",
+      "post": [
+        {
+          "id": "68ec338a-9757-44b6-8998-5b3655bea86d",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "economic_date": "2026-05-01",
+          "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+          "movements_snapshot": [
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-inv-d"
+              },
+              "amount": 5044463.67,
+              "sentido": "debito",
+              "currency": "CUP",
+              "categoria": "ACT_INVENTARIO",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            },
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-cxp-c"
+              },
+              "amount": 5044463.67,
+              "sentido": "credito",
+              "currency": "CUP",
+              "categoria": "PAS_CXP_PROV",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            }
+          ],
+          "n_movs": 2,
+          "debitos": 5044463.67,
+          "creditos": 5044463.67,
+          "reversal_de": null
+        }
+      ],
+      "checks": {
+        "un_reconocimiento": true,
+        "monto_ok": true,
+        "balance_ok": true,
+        "regla_ok": true
+      }
+    },
+    {
+      "id": "6fb4548d-2277-4652-a164-1aabc6de0727",
+      "tienda": "COSTPRO (Prueba)",
+      "store": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "doc": "IPV-REC-29-06-2026",
+      "ciclo": "reconocimiento",
+      "fase": "PRE-CHECK",
+      "pre": {
+        "id": "6fb4548d-2277-4652-a164-1aabc6de0727",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "status": "active",
+        "document_number": null,
+        "reference_doc": "IPV-REC-29-06-2026",
+        "total_cost": 7213500,
+        "reception_date": "2026-06-29",
+        "n_lineas": 6,
+        "suma_lineas": 7213500,
+        "n_no_cup": 0,
+        "tasas_distintas": 1,
+        "n_mov_inv": 6,
+        "n_asientos": 0,
+        "n_errores_previos": 0
+      },
+      "criterios": {
+        "tienda_ok": true,
+        "estado_ok": true,
+        "cabecera_cuadra": true,
+        "monedas_ok": true,
+        "tasa_unica": true,
+        "inventario_ok": true,
+        "sin_asientos_previos": true,
+        "sin_errores_previos": true
+      },
+      "entry_reconocimiento": "cf764a68-5c68-476e-8088-ba997ea22700",
+      "post": [
+        {
+          "id": "cf764a68-5c68-476e-8088-ba997ea22700",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "economic_date": "2026-06-29",
+          "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+          "movements_snapshot": [
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-inv-d"
+              },
+              "amount": 7213500,
+              "sentido": "debito",
+              "currency": "CUP",
+              "categoria": "ACT_INVENTARIO",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            },
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-cxp-c"
+              },
+              "amount": 7213500,
+              "sentido": "credito",
+              "currency": "CUP",
+              "categoria": "PAS_CXP_PROV",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            }
+          ],
+          "n_movs": 2,
+          "debitos": 7213500,
+          "creditos": 7213500,
+          "reversal_de": null
+        }
+      ],
+      "checks": {
+        "un_reconocimiento": true,
+        "monto_ok": true,
+        "balance_ok": true,
+        "regla_ok": true
+      }
+    },
+    {
+      "id": "a57bd2c1-460b-4877-ab3d-64643bd7e10f",
+      "tienda": "COSTPRO (Prueba)",
+      "store": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "doc": "FAC-VERIF-20261106",
+      "ciclo": "reconocimiento",
+      "fase": "PRE-CHECK",
+      "pre": {
+        "id": "a57bd2c1-460b-4877-ab3d-64643bd7e10f",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "status": "active",
+        "document_number": null,
+        "reference_doc": "FAC-VERIF-20261106",
+        "total_cost": 200,
+        "reception_date": "2026-11-05",
+        "n_lineas": 1,
+        "suma_lineas": 200,
+        "n_no_cup": 0,
+        "tasas_distintas": 1,
+        "n_mov_inv": 1,
+        "n_asientos": 0,
+        "n_errores_previos": 0
+      },
+      "criterios": {
+        "tienda_ok": true,
+        "estado_ok": true,
+        "cabecera_cuadra": true,
+        "monedas_ok": true,
+        "tasa_unica": true,
+        "inventario_ok": true,
+        "sin_asientos_previos": true,
+        "sin_errores_previos": true
+      },
+      "entry_reconocimiento": "d7791696-b2a9-4f1a-9ff9-e9726b2f9f4a",
+      "post": [
+        {
+          "id": "d7791696-b2a9-4f1a-9ff9-e9726b2f9f4a",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "economic_date": "2026-11-05",
+          "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+          "movements_snapshot": [
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-inv-d"
+              },
+              "amount": 200,
+              "sentido": "debito",
+              "currency": "CUP",
+              "categoria": "ACT_INVENTARIO",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            },
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-cxp-c"
+              },
+              "amount": 200,
+              "sentido": "credito",
+              "currency": "CUP",
+              "categoria": "PAS_CXP_PROV",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            }
+          ],
+          "n_movs": 2,
+          "debitos": 200,
+          "creditos": 200,
+          "reversal_de": null
+        }
+      ],
+      "checks": {
+        "un_reconocimiento": true,
+        "monto_ok": true,
+        "balance_ok": true,
+        "regla_ok": true
+      }
+    },
+    {
+      "id": "a3fe3e76-5ac8-4bf3-b25b-5451e4ea2d8e",
+      "tienda": "COSTPRO (Prueba)",
+      "store": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "doc": "FAC-TEST-CP001",
+      "ciclo": "reconocimiento+anulacion",
+      "fase": "PRE-CHECK",
+      "pre": {
+        "id": "a3fe3e76-5ac8-4bf3-b25b-5451e4ea2d8e",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "status": "reversed",
+        "document_number": null,
+        "reference_doc": "FAC-TEST-CP001",
+        "total_cost": 960,
+        "reception_date": "2026-11-04",
+        "n_lineas": 1,
+        "suma_lineas": 960,
+        "n_no_cup": 0,
+        "tasas_distintas": 1,
+        "n_mov_inv": 1,
+        "n_asientos": 0,
+        "n_errores_previos": 0
+      },
+      "criterios": {
+        "tienda_ok": true,
+        "estado_ok": true,
+        "cabecera_cuadra": true,
+        "monedas_ok": true,
+        "tasa_unica": true,
+        "inventario_ok": true,
+        "sin_asientos_previos": true,
+        "sin_errores_previos": true
+      },
+      "entry_reconocimiento": "eb4f1a1f-9940-498e-9fa4-36206e180e85",
+      "anulaciones": 1,
+      "post": [
+        {
+          "id": "eb4f1a1f-9940-498e-9fa4-36206e180e85",
+          "event": "reconocimiento",
+          "status": "reversed",
+          "payment_ref": null,
+          "economic_date": "2026-11-04",
+          "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+          "movements_snapshot": [
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-inv-d"
+              },
+              "amount": 960,
+              "sentido": "debito",
+              "currency": "CUP",
+              "categoria": "ACT_INVENTARIO",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            },
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-cxp-c"
+              },
+              "amount": 960,
+              "sentido": "credito",
+              "currency": "CUP",
+              "categoria": "PAS_CXP_PROV",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            }
+          ],
+          "n_movs": 2,
+          "debitos": 960,
+          "creditos": 960,
+          "reversal_de": null
+        },
+        {
+          "id": "87345c6f-dcd6-4502-be8c-54a3249623d7",
+          "event": "anulacion",
+          "status": "posted",
+          "payment_ref": null,
+          "economic_date": "2026-11-04",
+          "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+          "movements_snapshot": [
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-inv-d"
+              },
+              "amount": 960,
+              "sentido": "debito",
+              "currency": "CUP",
+              "categoria": "ACT_INVENTARIO",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            },
+            {
+              "traza": {
+                "regla": "motor-cp-fin",
+                "metrica": "total_cup",
+                "template": "r-cxp-c"
+              },
+              "amount": 960,
+              "sentido": "credito",
+              "currency": "CUP",
+              "categoria": "PAS_CXP_PROV",
+              "exchange_rate": 1,
+              "currency_origin": "CUP"
+            }
+          ],
+          "n_movs": 2,
+          "debitos": 960,
+          "creditos": 960,
+          "reversal_de": "eb4f1a1f-9940-498e-9fa4-36206e180e85"
+        }
+      ],
+      "checks": {
+        "un_reconocimiento": true,
+        "monto_ok": true,
+        "balance_ok": true,
+        "regla_ok": true,
+        "una_anulacion": true,
+        "anulacion_enlazada": true,
+        "neto_cero": true,
+        "nota_verificacion": "anulacion_enlazada corregido post-ejecución: el verificador consultaba el campo antes de enriquecerlo (bug de orden, no de datos). Verificación directa en BD: anulacion.reversal_of=eb4f1a1f-9940-498e-9fa4-36206e180e85 = id del reconocimiento; sentidos espejo (D PAS_CXP_PROV/C ACT_INVENTARIO vs D ACT_INVENTARIO/C PAS_CXP_PROV); neto 0. Script corregido para futuras corridas (reversal_of consultado directo en POST-CHECK)."
+      },
+      "reversal_of_verificado": {
+        "reconocimiento": "eb4f1a1f-9940-498e-9fa4-36206e180e85",
+        "anulacion_reversal_of": "eb4f1a1f-9940-498e-9fa4-36206e180e85",
+        "enlace_correcto": true
+      }
+    }
+  ],
+  "parado": false,
+  "conteo_antes": {
+    "fin_entries": 1023,
+    "fin_recepcion": 89,
+    "fin_movements": 3496,
+    "fin_posting_errors": 0,
+    "stock_movements": 1775,
+    "receipt_items": 309
+  },
+  "fac_vitallcons_antes": {
+    "total": 192039436,
+    "status": "active",
+    "asientos": 1
+  },
+  "idempotencia": {
+    "muestra": "0a133757-48e3-47c5-8055-9e2f45b02b1a",
+    "asientos_antes": 1,
+    "asientos_despues": 1,
+    "entry_id_devuelta": null
+  },
+  "conteo_despues": {
+    "fin_entries": 1033,
+    "fin_recepcion": 99,
+    "fin_movements": 3516,
+    "fin_posting_errors": 0,
+    "stock_movements": 1775,
+    "receipt_items": 309
+  },
+  "deltas": {
+    "fin_entries": 10,
+    "fin_recepcion": 10,
+    "fin_movements": 20,
+    "fin_posting_errors": 0,
+    "stock_movements": 0,
+    "receipt_items": 0
+  },
+  "fac_vitallcons_despues": {
+    "total": 192039436,
+    "status": "active",
+    "asientos": 1
+  },
+  "resultado_ok": true,
+  "errores_criticos_reales": 0,
+  "correccion_verificador": "El único FALLO reportado en la corrida original era un bug del verificador (orden de consulta de reversal_of), no del backfill. Deltas finales exactos: +10 fin_entries (RECEPCION 89→99), +20 fin_movements, 0 fin_posting_errors, 0 stock_movements, 0 receipt_items; FAC-VITALLCONS-001 intacta."
+}
