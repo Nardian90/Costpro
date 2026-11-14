@@ -1,0 +1,47 @@
+════ M2-3 · VALIDACIÓN MIGRACIÓN LEGACY PAGOS · BD AISLADA lguovmvrozxgssupkwpf ════
+Hora UTC: 2026-11-13T22:31:10.224Z
+Operaciones del expediente: 165 | tienda aislada: 9635e633-387f-411d-bc15-7d2b6179aae4
+Snapshot ANTES: {"ventas":0,"pagos":0,"items":0,"entries":0,"errores":0}
+  PASS · Carga: 165 copias de ventas reales (ids/imports/fechas de producción)
+
+── FASE A: estado actual (cobros SOLO en campos legacy) ──
+  PASS · A·03658085 (cash): ERR_UNBALANCED (Σcob=0 ≠ total 13000) — ERR_UNBALANCED: débitos=0 créditos=13000
+  PASS · A·b57528b1 (cash): ERR_UNBALANCED (Σcob=0 ≠ total 12000) — ERR_UNBALANCED: débitos=0 créditos=12000
+  PASS · A·72bdaf00 (transfer): ERR_UNBALANCED (Σcob=0 ≠ total 13000) — ERR_UNBALANCED: débitos=0 créditos=13000
+  PASS · A·92bc5e61 (cash+transfer): ERR_UNBALANCED (Σcob=0 ≠ total 87500) — ERR_UNBALANCED: débitos=0 créditos=87500
+
+── FASE B: aplica MIGRACIÓN PROPUESTA v1 (m2-2) ──
+  PASS · B·P3 cobertura: 161 ventas cubiertas (4 zelle EXCLUIDAS por PT005) — cobertura=161
+  PASS · B·P3 filas: una por venta×método (138+14+9×2 = 170) — filas=170 (esperadas 170)
+  PASS · B·importe total migrado == Σ legacy de las 161 (3.128.770 CUP; 3.163.110 − 34.340 de las 4 zelle) — importe=3128770 esperado=3128770
+  PASS · B·las 4 ventas zelle+ CUP quedan SIN filas (bloqueadas para decisión del propietario) — filas=0
+
+── FASE C: verificación fila a fila (P1/P2/P3/P7) ──
+  PASS · C·P1 fechas históricas conservadas (payment_date = fecha de la venta, 161/161) — 161/161
+  PASS · C·P2 métodos/monedas originales (campo legacy→método, CUP, rate 1, in, referencia migración) — 170/170
+  PASS · C·P3 una fila por venta×método con clave canónica — 161/161 ventas
+  PASS · C·P3 claves de idempotencia correctas y únicas — 161/161
+  PASS · C·P7 pagos vinculados a la venta original (ref_id = transaction_id = id venta) — 161/161
+  PASS · C·montos: Σ amount_cup == total_amount por venta (161/161) — 161/161
+
+── FASE D: posting tras la migración (P4) ──
+  PASS · D·03658085 (cash): contabiliza con débitos por método / C ING_VENTAS 13000 — [{"cat":"ACT_EFECTIVO_CUP","s":"debito","amt":13000},{"cat":"ING_VENTAS","s":"credito","amt":13000}]
+  PASS · D·03658085 EXACTAMENTE 1 asiento (sin asiento de pago aparte — el hecho económico no se duplica) — asientos=1
+  PASS · D·b57528b1 (cash): contabiliza con débitos por método / C ING_VENTAS 12000 — [{"cat":"ACT_EFECTIVO_CUP","s":"debito","amt":12000},{"cat":"ING_VENTAS","s":"credito","amt":12000}]
+  PASS · D·b57528b1 EXACTAMENTE 1 asiento (sin asiento de pago aparte — el hecho económico no se duplica) — asientos=1
+  PASS · D·72bdaf00 (transfer): contabiliza con débitos por método / C ING_VENTAS 13000 — [{"cat":"ACT_BANCOS","s":"debito","amt":13000},{"cat":"ING_VENTAS","s":"credito","amt":13000}]
+  PASS · D·72bdaf00 EXACTAMENTE 1 asiento (sin asiento de pago aparte — el hecho económico no se duplica) — asientos=1
+  PASS · D·92bc5e61 (cash+transfer): contabiliza con débitos por método / C ING_VENTAS 87500 — [{"cat":"ACT_EFECTIVO_CUP","s":"debito","amt":12500},{"cat":"ACT_BANCOS","s":"debito","amt":75000},{"cat":"ING_VENTAS","s":"credito","amt":87500}]
+  PASS · D·92bc5e61 EXACTAMENTE 1 asiento (sin asiento de pago aparte — el hecho económico no se duplica) — asientos=1
+  PASS · D·re-publicar NO duplica (idempotencia del motor) — asientos=1
+
+── FASE E: idempotencia (P5) y reversión controlada (P6) ──
+  PASS · E·P5 re-ejecutar la migración NO añade filas (idempotente) — 170→170
+  PASS · E·P6 reversión borra EXACTAMENTE lo insertado (0 filas de migración) — filas=0
+  PASS · E·P6 las 165 ventas y sus campos legacy quedan INTACTOS tras la reversión — ventas=165 legacy=3163110
+  PASS · E·P6/P5 re-aplicar tras revertir reproduce exactamente las mismas filas (re-ejecutable) — 170==170
+
+── Limpieza total ──
+  PASS · NET DELTA 0 (limpieza total de las 165 copias y sus pagos) — antes={"ventas":0,"pagos":0,"items":0,"entries":0,"errores":0} después={"ventas":0,"pagos":0,"items":0,"entries":0,"errores":0}
+
+════ RESULTADO: PASS TOTAL (migración de cobros legacy: 161 migrables + 4 bloqueadas zelle; 7 propiedades demostradas) ════
