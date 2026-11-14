@@ -1,0 +1,1841 @@
+{
+  "generado": "2026-11-14T16:57:12.367Z",
+  "mision": "CP-INVENTORY-TRACEABILITY-RECONCILIATION-001",
+  "fase": "IV-b — conciliación por documento de origen",
+  "ventas": {
+    "transacciones_con_movs": 979,
+    "con_asiento": 671,
+    "sin_asiento": 308,
+    "valor_movs_sin_asiento": 354568.54,
+    "con_asiento_dif": 330,
+    "suma_dif": -2753082.12,
+    "detalle_difs": [
+      {
+        "tx": "d9036f6c-498d-4315-ab27-d6c355fc946b",
+        "valor_movs": 0,
+        "cogs_entry": 32500,
+        "dif": -32500
+      },
+      {
+        "tx": "a88d3b01-a653-4e49-9b3e-012ad94e4f94",
+        "valor_movs": 0,
+        "cogs_entry": 23000,
+        "dif": -23000
+      },
+      {
+        "tx": "72a9b133-3918-4064-a90a-828e0e3d41e0",
+        "valor_movs": 0,
+        "cogs_entry": 4,
+        "dif": -4
+      },
+      {
+        "tx": "87ceda0b-1a22-4eee-81d1-31d0484af0ef",
+        "valor_movs": 0,
+        "cogs_entry": 9.57,
+        "dif": -9.57
+      },
+      {
+        "tx": "d35afce4-a457-45a3-8bd2-e9ad25e52931",
+        "valor_movs": 0,
+        "cogs_entry": 6000,
+        "dif": -6000
+      },
+      {
+        "tx": "a74d65ad-f03e-48ec-a79d-33b8714bda3a",
+        "valor_movs": 0,
+        "cogs_entry": 1200,
+        "dif": -1200
+      },
+      {
+        "tx": "fc08238f-c16d-46f0-aac8-fead39d8c4db",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "8363aa48-5f75-467b-a1d9-dafb37f74231",
+        "valor_movs": 0,
+        "cogs_entry": 8400,
+        "dif": -8400
+      },
+      {
+        "tx": "ed4fccca-9276-43d2-afa2-5ac9743adfe6",
+        "valor_movs": 0,
+        "cogs_entry": 0.3,
+        "dif": -0.3
+      },
+      {
+        "tx": "72125ff7-8354-4858-a583-d19353426dbd",
+        "valor_movs": 0,
+        "cogs_entry": 32500,
+        "dif": -32500
+      },
+      {
+        "tx": "dd8e39ae-d1f2-4080-850c-adc57a86caf6",
+        "valor_movs": 0,
+        "cogs_entry": 4.35,
+        "dif": -4.35
+      },
+      {
+        "tx": "0839f30c-84f6-481c-b6c0-9e9dfa930a99",
+        "valor_movs": 0,
+        "cogs_entry": 0.6,
+        "dif": -0.6
+      },
+      {
+        "tx": "18be7e13-2ef4-443c-9328-e903b9675d3f",
+        "valor_movs": 0,
+        "cogs_entry": 5,
+        "dif": -5
+      },
+      {
+        "tx": "a512618d-ee03-4573-8650-d9dcbdd1a8dd",
+        "valor_movs": 0,
+        "cogs_entry": 1680,
+        "dif": -1680
+      },
+      {
+        "tx": "c073ae6a-61e3-4d0d-ac0b-a2c8d9322a8d",
+        "valor_movs": 0,
+        "cogs_entry": 4.35,
+        "dif": -4.35
+      },
+      {
+        "tx": "e38ad0cc-1ba1-4f5e-bb76-7066ac322904",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "3eeb5876-ef0b-483d-9313-17573e145607",
+        "valor_movs": 0,
+        "cogs_entry": 6000,
+        "dif": -6000
+      },
+      {
+        "tx": "472e84e4-2fe0-43b6-8996-a4dd1091d6ab",
+        "valor_movs": 0,
+        "cogs_entry": 62500,
+        "dif": -62500
+      },
+      {
+        "tx": "0b18938e-1e90-4e39-bce2-29abca5c5d80",
+        "valor_movs": 0,
+        "cogs_entry": 4.35,
+        "dif": -4.35
+      },
+      {
+        "tx": "5d96a0d8-d7d3-42ed-b258-d67f333c72ec",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "29372201-a737-4590-aef6-ae5b0d5446b6",
+        "valor_movs": 0,
+        "cogs_entry": 4200,
+        "dif": -4200
+      },
+      {
+        "tx": "7678190e-cb39-42a3-b1c1-0e1d187ec717",
+        "valor_movs": 0,
+        "cogs_entry": 2881.6,
+        "dif": -2881.6
+      },
+      {
+        "tx": "9c0aebe3-f090-4210-bc4f-102d56dd97bf",
+        "valor_movs": 0,
+        "cogs_entry": 8400,
+        "dif": -8400
+      },
+      {
+        "tx": "349b8a04-44fa-43a9-999b-298ed0b607c7",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "ecae9b74-b518-4c95-a703-684d8b6daf00",
+        "valor_movs": 0,
+        "cogs_entry": 4,
+        "dif": -4
+      },
+      {
+        "tx": "454b637f-f016-4464-8329-7bea87fdf87c",
+        "valor_movs": 0,
+        "cogs_entry": 0.14,
+        "dif": -0.14
+      },
+      {
+        "tx": "9e9041d1-155f-4d3b-859b-bcd611e9378d",
+        "valor_movs": 0,
+        "cogs_entry": 0.3,
+        "dif": -0.3
+      },
+      {
+        "tx": "da121466-c80d-4bb7-bf2d-0996ae437917",
+        "valor_movs": 0,
+        "cogs_entry": 6000,
+        "dif": -6000
+      },
+      {
+        "tx": "928df051-00fe-43d2-9dba-9055611afb40",
+        "valor_movs": 0,
+        "cogs_entry": 97500,
+        "dif": -97500
+      },
+      {
+        "tx": "11da1b10-26bb-4a11-a0d2-9186c2034188",
+        "valor_movs": 0,
+        "cogs_entry": 2400,
+        "dif": -2400
+      },
+      {
+        "tx": "d9059e60-904a-4e77-9477-9177ffea995a",
+        "valor_movs": 0,
+        "cogs_entry": 19,
+        "dif": -19
+      },
+      {
+        "tx": "e1eaf8fb-bba2-4936-af87-c7a60f164e76",
+        "valor_movs": 0,
+        "cogs_entry": 32500,
+        "dif": -32500
+      },
+      {
+        "tx": "96ee0507-e0dd-4eca-b615-fcf93b9737cc",
+        "valor_movs": 0,
+        "cogs_entry": 2,
+        "dif": -2
+      },
+      {
+        "tx": "39dba0de-0b5f-49db-87c8-36c41f10e43a",
+        "valor_movs": 0,
+        "cogs_entry": 0.3,
+        "dif": -0.3
+      },
+      {
+        "tx": "ac9767da-0a2f-4253-80f7-727efe9f372a",
+        "valor_movs": 0,
+        "cogs_entry": 420,
+        "dif": -420
+      },
+      {
+        "tx": "e0066370-87a2-4b8b-a61d-5860628b526b",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "648b29b0-df75-4786-b32b-124bef6cc2e7",
+        "valor_movs": 0,
+        "cogs_entry": 1500,
+        "dif": -1500
+      },
+      {
+        "tx": "f3d11038-9dbb-4c58-9f00-23d4fa1376ed",
+        "valor_movs": 0,
+        "cogs_entry": 1000,
+        "dif": -1000
+      },
+      {
+        "tx": "69538fa2-fe89-4c8f-978d-c2548da6cf91",
+        "valor_movs": 0,
+        "cogs_entry": 500,
+        "dif": -500
+      },
+      {
+        "tx": "2d554214-f3d7-4601-9ca7-044c791c666f",
+        "valor_movs": 0,
+        "cogs_entry": 2.56,
+        "dif": -2.56
+      },
+      {
+        "tx": "5c676364-581b-4a62-974a-07a6d76a851d",
+        "valor_movs": 0,
+        "cogs_entry": 840,
+        "dif": -840
+      },
+      {
+        "tx": "eaf1c5db-5bbf-412c-8273-53d061b4ae44",
+        "valor_movs": 0,
+        "cogs_entry": 4200,
+        "dif": -4200
+      },
+      {
+        "tx": "1eb386a9-151e-4e21-b071-70e4cc2805b7",
+        "valor_movs": 0,
+        "cogs_entry": 420,
+        "dif": -420
+      },
+      {
+        "tx": "953a03da-3608-40c4-a2c9-261a452836b2",
+        "valor_movs": 0,
+        "cogs_entry": 6,
+        "dif": -6
+      },
+      {
+        "tx": "3cbfe25e-f7c4-447e-a1e5-e3c3a4cca325",
+        "valor_movs": 0,
+        "cogs_entry": 16000,
+        "dif": -16000
+      },
+      {
+        "tx": "37131e36-9e99-439f-8e92-e8e8740e5e5f",
+        "valor_movs": 0,
+        "cogs_entry": 3360,
+        "dif": -3360
+      },
+      {
+        "tx": "096bfd79-46d2-495e-b669-23d55d9d6d67",
+        "valor_movs": 0,
+        "cogs_entry": 4200,
+        "dif": -4200
+      },
+      {
+        "tx": "b183590c-6993-488b-9acc-025db991b492",
+        "valor_movs": 0,
+        "cogs_entry": 0.9,
+        "dif": -0.9
+      },
+      {
+        "tx": "9247892e-8a0a-4ab8-85bd-a3e16271a455",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "a55d525e-e6a6-4711-84b6-edf2c0739d56",
+        "valor_movs": 0,
+        "cogs_entry": 2,
+        "dif": -2
+      },
+      {
+        "tx": "4e48d491-2fd7-45a8-8768-6b6ecab67da1",
+        "valor_movs": 0,
+        "cogs_entry": 12000,
+        "dif": -12000
+      },
+      {
+        "tx": "d3da9e84-4fbc-4ff1-9299-2d0c3a739e1c",
+        "valor_movs": 0,
+        "cogs_entry": 32500,
+        "dif": -32500
+      },
+      {
+        "tx": "8c3d4b7a-c022-42c9-b8e8-3506f17d0ce9",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "cac486a9-c910-4ced-9e6f-b700c63bbc0d",
+        "valor_movs": 0,
+        "cogs_entry": 2400,
+        "dif": -2400
+      },
+      {
+        "tx": "c644ac9a-be24-4b83-9e3d-c2d1969d88ae",
+        "valor_movs": 0,
+        "cogs_entry": 6.94,
+        "dif": -6.94
+      },
+      {
+        "tx": "07adf9dd-ca04-4424-b7d2-8c16ebc281d1",
+        "valor_movs": 0,
+        "cogs_entry": 22000,
+        "dif": -22000
+      },
+      {
+        "tx": "06b634bf-eae8-411d-ba30-48d91fd07ca2",
+        "valor_movs": 0,
+        "cogs_entry": 0.3,
+        "dif": -0.3
+      },
+      {
+        "tx": "80bd3d5c-b2a8-444a-b173-7d88e44f93c5",
+        "valor_movs": 0,
+        "cogs_entry": 60000,
+        "dif": -60000
+      },
+      {
+        "tx": "640ceab3-27b4-44dd-b6da-ff1f6a119963",
+        "valor_movs": 0,
+        "cogs_entry": 37500,
+        "dif": -37500
+      },
+      {
+        "tx": "63a0d72d-3b69-4cea-b3d1-249124184037",
+        "valor_movs": 0,
+        "cogs_entry": 8400,
+        "dif": -8400
+      },
+      {
+        "tx": "c5a2a8c6-b895-463b-9ac7-120a3acd44bc",
+        "valor_movs": 0,
+        "cogs_entry": 2000,
+        "dif": -2000
+      },
+      {
+        "tx": "e1baff05-59b2-4d7a-bb0f-e24a74c49ec3",
+        "valor_movs": 0,
+        "cogs_entry": 0.6,
+        "dif": -0.6
+      },
+      {
+        "tx": "1fca084d-210a-469e-b02a-960160087509",
+        "valor_movs": 0,
+        "cogs_entry": 9.02,
+        "dif": -9.02
+      },
+      {
+        "tx": "d949d892-12d7-496a-989a-cd304776a1d9",
+        "valor_movs": 0,
+        "cogs_entry": 15000,
+        "dif": -15000
+      },
+      {
+        "tx": "e082752d-22a4-42ad-b199-ffae244901be",
+        "valor_movs": 0,
+        "cogs_entry": 0.3,
+        "dif": -0.3
+      },
+      {
+        "tx": "536c90a6-9e82-433d-bae2-7ea2fd5ad4a9",
+        "valor_movs": 0,
+        "cogs_entry": 2520,
+        "dif": -2520
+      },
+      {
+        "tx": "38403484-add8-4ab0-aa27-fa1c85c1feac",
+        "valor_movs": 0,
+        "cogs_entry": 4,
+        "dif": -4
+      },
+      {
+        "tx": "82c4a763-b1e2-4628-9bab-5be9bb5b1157",
+        "valor_movs": 0,
+        "cogs_entry": 0.6,
+        "dif": -0.6
+      },
+      {
+        "tx": "da1d3c33-144c-485f-95d0-893bfd423573",
+        "valor_movs": 0,
+        "cogs_entry": 0.99,
+        "dif": -0.99
+      },
+      {
+        "tx": "10727927-4058-4e38-bfff-a7ec657192b8",
+        "valor_movs": 0,
+        "cogs_entry": 5000,
+        "dif": -5000
+      },
+      {
+        "tx": "df55af11-d506-4414-a8e4-d900c3e1c8ea",
+        "valor_movs": 0,
+        "cogs_entry": 7204,
+        "dif": -7204
+      },
+      {
+        "tx": "a5611b1c-a4f8-46e1-835e-5f65e00e6b3b",
+        "valor_movs": 0,
+        "cogs_entry": 17000,
+        "dif": -17000
+      },
+      {
+        "tx": "c3f21d4f-9f14-44b5-93f9-1561a316eaec",
+        "valor_movs": 0,
+        "cogs_entry": 10.43,
+        "dif": -10.43
+      },
+      {
+        "tx": "77407e0c-ed1a-4a1d-926c-569315de1a20",
+        "valor_movs": 0,
+        "cogs_entry": 8,
+        "dif": -8
+      },
+      {
+        "tx": "baf3a60a-9c27-4c7c-b6d0-f7dc7bf186d3",
+        "valor_movs": 0,
+        "cogs_entry": 0.6,
+        "dif": -0.6
+      },
+      {
+        "tx": "f9d68b97-95b8-47ad-ae6b-ed0f537aff5f",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "b2e56d73-9f40-4eaf-a4c6-50f94a28daa6",
+        "valor_movs": 0,
+        "cogs_entry": 97500,
+        "dif": -97500
+      },
+      {
+        "tx": "44df6c63-dbfe-47de-b969-a9e65d0f1d71",
+        "valor_movs": 0,
+        "cogs_entry": 0.3,
+        "dif": -0.3
+      },
+      {
+        "tx": "3823f681-63e6-4914-bfd0-b2201efd5ce5",
+        "valor_movs": 0,
+        "cogs_entry": 40000,
+        "dif": -40000
+      },
+      {
+        "tx": "fccaac12-0bee-4ed9-8120-b26a7f3b2333",
+        "valor_movs": 0,
+        "cogs_entry": 0.99,
+        "dif": -0.99
+      },
+      {
+        "tx": "e7656809-0b90-47e6-8aa4-6ae0d24c46bb",
+        "valor_movs": 0,
+        "cogs_entry": 12.43,
+        "dif": -12.43
+      },
+      {
+        "tx": "9750213c-c5bc-4931-b689-4647a2e9bb0f",
+        "valor_movs": 0,
+        "cogs_entry": 3600,
+        "dif": -3600
+      },
+      {
+        "tx": "f4096bfa-be0b-48a7-8019-e0c5d7186fc5",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "bce152c0-2d75-419c-acba-0603e8995945",
+        "valor_movs": 0,
+        "cogs_entry": 30600,
+        "dif": -30600
+      },
+      {
+        "tx": "f3f77f46-a706-453f-9b41-c86f93f7607b",
+        "valor_movs": 0,
+        "cogs_entry": 1680,
+        "dif": -1680
+      },
+      {
+        "tx": "f31135ff-a3c9-4ce1-befc-5cad8e5543a1",
+        "valor_movs": 0,
+        "cogs_entry": 16800,
+        "dif": -16800
+      },
+      {
+        "tx": "7ab3923c-7ea6-4f2c-a66b-2135dbea643b",
+        "valor_movs": 0,
+        "cogs_entry": 21840,
+        "dif": -21840
+      },
+      {
+        "tx": "5d9a938b-c950-408c-bd6d-a25f70d981f1",
+        "valor_movs": 0,
+        "cogs_entry": 56280,
+        "dif": -56280
+      },
+      {
+        "tx": "59f0e134-d4e6-4aa2-8493-ff17ad81fb0d",
+        "valor_movs": 0,
+        "cogs_entry": 4200,
+        "dif": -4200
+      },
+      {
+        "tx": "26a074ce-891b-47bf-b8bf-602fba22d165",
+        "valor_movs": 0,
+        "cogs_entry": 8400,
+        "dif": -8400
+      },
+      {
+        "tx": "6345f337-1e34-47d4-bb37-7a32d81e7e0e",
+        "valor_movs": 0,
+        "cogs_entry": 8.27,
+        "dif": -8.27
+      },
+      {
+        "tx": "3d19e5e7-2080-4eb1-8eca-cf7e391f30b9",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "99d8993f-480c-406b-840f-1f2e183725ac",
+        "valor_movs": 0,
+        "cogs_entry": 1,
+        "dif": -1
+      },
+      {
+        "tx": "f7f2eb08-dfb8-4177-858f-7607e25172f4",
+        "valor_movs": 0,
+        "cogs_entry": 32500,
+        "dif": -32500
+      },
+      {
+        "tx": "9c99c757-d0a6-4b37-a572-377f9e953c37",
+        "valor_movs": 0,
+        "cogs_entry": 13000,
+        "dif": -13000
+      },
+      {
+        "tx": "5677638e-6311-4c18-be62-01abd5b39973",
+        "valor_movs": 0,
+        "cogs_entry": 7560,
+        "dif": -7560
+      },
+      {
+        "tx": "cfb52483-3d33-4f59-9c63-d9b5be5341a2",
+        "valor_movs": 0,
+        "cogs_entry": 32500,
+        "dif": -32500
+      },
+      {
+        "tx": "670723f3-60d5-4e83-ae69-6962d9b87110",
+        "valor_movs": 0,
+        "cogs_entry": 6,
+        "dif": -6
+      },
+      {
+        "tx": "3b236a1a-8651-47be-953a-58da5630b283",
+        "valor_movs": 0,
+        "cogs_entry": 12.17,
+        "dif": -12.17
+      },
+      {
+        "tx": "98801302-c64d-42b8-a709-39471c3a47e9",
+        "valor_movs": 0,
+        "cogs_entry": 3.76,
+        "dif": -3.76
+      }
+    ],
+    "detalle_sin_asiento": [
+      {
+        "tx": "7cf41b96-efd5-4faa-afe0-6fb37085442f",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "a4d7bb6f-ea22-4760-8160-dbd85b920b95",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "ce641785-c743-4e8c-8459-817b80a2c0fb",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "4d4d0a38-b75f-4171-9d7e-4f6d66604b2e",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "0536d9c7-5ef4-4a23-abc2-839471be727b",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "45a029d8-2da9-4c10-b72b-da8577dbacdd",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 12,
+        "valor_movs": 0
+      },
+      {
+        "tx": "642fee54-4a99-457a-b4f1-33421480c2a2",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 21,
+        "valor_movs": 21
+      },
+      {
+        "tx": "a947ddbe-1d82-46b3-b134-ea26aaa15609",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 6,
+        "valor_movs": 0
+      },
+      {
+        "tx": "dc5a0475-fcc0-40be-b796-b9498378f8af",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "01976581-0baf-421a-a981-14c4ac3f4060",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "3e20ee4c-de84-4543-b969-7f82cc3c4ac9",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 2.16,
+        "valor_movs": 0
+      },
+      {
+        "tx": "427bcc1d-26bf-427f-8e5f-270e6307fb4c",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "a5e8e21d-f3eb-4834-b3ac-67b104662721",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 2
+      },
+      {
+        "tx": "78ad8d2e-ad0d-4520-86c1-532c3de1a1ea",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "5e1c8d90-eb01-430b-8af5-fd9a626c6406",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "a4452a6f-5edd-4d62-9316-63ae0ebcd740",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 2
+      },
+      {
+        "tx": "7063d76b-b086-4436-a345-837f7ad940b5",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "da3dd60b-8fab-4726-984d-8ea34839bf7c",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 12,
+        "valor_movs": 0
+      },
+      {
+        "tx": "75d4758e-7dfd-4aef-bfd0-ed74154275de",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "f98d55a5-2f16-45b6-879c-440498a2f4cd",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "2713079b-ffb0-4889-b9e8-78c4ba428ded",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 3,
+        "valor_movs": 0
+      },
+      {
+        "tx": "f7c6a0fd-6ecc-4a27-b4f6-677f14f1183d",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "bb316970-837e-41bf-98bb-5da14a642038",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "46d7717c-3bc9-4ffb-ac62-2eb07f955006",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "8c7019ac-ca3f-45d3-8712-f761681a0805",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 3,
+        "valor_movs": 0
+      },
+      {
+        "tx": "db4c15bc-6f00-47d6-ad07-2c5c978fdfe3",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "0b80f6ba-91f0-49fc-9cbf-558045f6eeb9",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "0d0701e9-63f1-460e-9bca-cb785fbf19e2",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "0f5afae9-f63c-4cda-b5ee-2f3a639c731b",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 0
+      },
+      {
+        "tx": "c81ce2bb-8dca-40f3-8948-d98a7bd2b4ce",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 5,
+        "valor_movs": 5
+      },
+      {
+        "tx": "9aa726fd-c0ff-4efd-b3f1-1819dc06797a",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "8a7a99b3-116b-4a56-9c2c-a8897ff61cdd",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "7b846518-b695-45be-9c7c-057635fea30f",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 2
+      },
+      {
+        "tx": "1b74cd89-2ab2-4e8b-a416-5072f2d26d07",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "n_items": 8,
+        "unidades": 37,
+        "valor_movs": 353364
+      },
+      {
+        "tx": "456cce40-75a6-48c2-b9c6-c2f3b3d3fe5a",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 0
+      },
+      {
+        "tx": "1c2f282d-5034-4176-8d48-47ba9519b8c3",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "n_items": 1,
+        "unidades": 32,
+        "valor_movs": 0
+      },
+      {
+        "tx": "68385d7f-bd28-47cb-bd9c-c76bed0b7b7b",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "17bca719-72f0-43eb-acf0-74a1234d5647",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 2
+      },
+      {
+        "tx": "a73eb190-d3e0-40db-9cbd-e146ed679533",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 10,
+        "valor_movs": 0
+      },
+      {
+        "tx": "89699f22-bf80-4ab4-95df-ed46a4013565",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 7,
+        "valor_movs": 7
+      },
+      {
+        "tx": "79e71992-f276-4e1f-8e1b-8a94e945ef57",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 4,
+        "valor_movs": 0
+      },
+      {
+        "tx": "9d6620d4-e76e-48db-889d-11bfde97dceb",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1.08,
+        "valor_movs": 0
+      },
+      {
+        "tx": "68fb03b5-1e77-4c6e-98df-10bd6d36c640",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "040912ef-07b5-45e8-bcc3-00f176155f05",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1.08,
+        "valor_movs": 0
+      },
+      {
+        "tx": "10e8e2a7-ecbc-45dc-8855-1e29944244bd",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "n_items": 1,
+        "unidades": 5,
+        "valor_movs": 0
+      },
+      {
+        "tx": "fdecfe91-80b2-4ed7-89c1-a3931cf50db7",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 4,
+        "valor_movs": 0
+      },
+      {
+        "tx": "2dcb3bba-3950-42ee-91c5-8bd9b79ea89a",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 0
+      },
+      {
+        "tx": "8a12d012-16ec-449d-8abb-536eaa74c918",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 4,
+        "valor_movs": 0
+      },
+      {
+        "tx": "60b368fc-50f3-423e-b834-b293751a5a15",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 11,
+        "valor_movs": 0
+      },
+      {
+        "tx": "10057697-eb80-4ef8-b72c-05ea9d193320",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 0
+      },
+      {
+        "tx": "b8b8ca95-8dd9-459a-bf6c-f170b1c5882f",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "7ac6f654-e2db-4dcf-99f2-96c3e2bc3159",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "7d9e3f98-a229-4a56-b149-a8beb6db7197",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "e453401f-45eb-4bc5-8194-d73b224ad90f",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "a90837d9-2d1f-424c-949f-73d90078bf47",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 5,
+        "valor_movs": 0
+      },
+      {
+        "tx": "894f9d13-1ad7-4583-8cdf-ef97db5ce7ef",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 0
+      },
+      {
+        "tx": "972f379f-35ce-4a74-9688-4668329030a3",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 6,
+        "valor_movs": 0
+      },
+      {
+        "tx": "de360b29-6ddb-4a31-86ae-39a49d0cb85c",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 5,
+        "valor_movs": 0
+      },
+      {
+        "tx": "37d7fc70-4b8d-4742-a95a-e24acb58ddcb",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "ebfa8d95-7abb-43d8-909a-9517fc95deca",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "ede6d409-df49-4150-9d1a-8af9279cf798",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 4,
+        "valor_movs": 0
+      },
+      {
+        "tx": "0d1c8095-a82a-49e3-9c76-530e15162176",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 0.9747,
+        "valor_movs": 0
+      },
+      {
+        "tx": "f7c8643c-3efe-4046-97ed-52ded955b124",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 4,
+        "valor_movs": 0
+      },
+      {
+        "tx": "e51a83bb-d573-4650-bf5a-6c8165dcc84f",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "47c26fcc-2075-4b3e-8078-513026275a08",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 0
+      },
+      {
+        "tx": "678d8805-3f85-453d-be1d-73b688d547b0",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 2
+      },
+      {
+        "tx": "d142302c-2c6e-44c5-ac98-924cf737dbde",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 2
+      },
+      {
+        "tx": "e966e1f6-f6be-4d5e-bbd5-60fc51203723",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 3,
+        "valor_movs": 3
+      },
+      {
+        "tx": "cd70f126-32b0-461c-b227-beb40aa7ba69",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "6f981aa7-765c-4b2a-b1f2-660f6860f03d",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "706fd146-c553-4096-be9c-69b70311a4bb",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 6,
+        "valor_movs": 6
+      },
+      {
+        "tx": "8ada253f-47f5-41b6-8a95-2f346d62c75f",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "34776150-b2a4-4518-9aa6-6242185d95da",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 12,
+        "valor_movs": 12
+      },
+      {
+        "tx": "8c2259c3-c8f5-4086-a586-b80d00d9fbcf",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 5,
+        "valor_movs": 0
+      },
+      {
+        "tx": "5f8b810c-368c-404e-8c8b-992ab794241a",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "2d84f63b-5fe4-403b-9c75-e175ff2e86c6",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "c19fe011-0cd8-4ee4-bf1e-be869ae69daa",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 2
+      },
+      {
+        "tx": "0fc67f1e-e22f-4b28-881a-6359e32ef8eb",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 0
+      },
+      {
+        "tx": "9be636ce-1dfc-445c-ab6c-467cd7fd57bd",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 4,
+        "valor_movs": 0
+      },
+      {
+        "tx": "46e296a2-752e-43a1-aac6-2b282ae84b72",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 14,
+        "valor_movs": 0
+      },
+      {
+        "tx": "1cfac6e9-6be2-437f-b3e3-038f4980bbaf",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "a1a14411-d657-4ce9-a816-256f10042d06",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 6,
+        "valor_movs": 0
+      },
+      {
+        "tx": "1978d7a4-94ec-4d00-a4f1-d4f25dc8dda0",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 0.5,
+        "valor_movs": 0
+      },
+      {
+        "tx": "6a030f5a-252e-4f60-9a04-31a2aa5e78a2",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "ea9b9bdb-a7be-4198-9f1e-eff71289a5b4",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 3,
+        "valor_movs": 0
+      },
+      {
+        "tx": "20f3e202-1393-4839-ba2e-79e27cf5f158",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 0
+      },
+      {
+        "tx": "9cf60081-0b94-46df-a32e-9fdf6b16e318",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "2becaac2-354a-447a-9712-9beb6a41489c",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "349d274d-9efc-4013-af41-b0d1a9017718",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 2
+      },
+      {
+        "tx": "33af9db9-3fc0-4e74-97cf-5b9961fc247e",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 0
+      },
+      {
+        "tx": "363bb4eb-2115-4fdd-8d76-dbb86a19de2c",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 2,
+        "valor_movs": 0
+      },
+      {
+        "tx": "bb700f58-31fb-4a59-b8ab-8a68106d5fa2",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 3,
+        "valor_movs": 3
+      },
+      {
+        "tx": "f7f4d2d0-6224-4fc0-91a5-f876459a2626",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 4,
+        "valor_movs": 0
+      },
+      {
+        "tx": "c1cd8f04-e7ba-4dd0-b2dc-7dec05541350",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      },
+      {
+        "tx": "08fa34f4-31f1-473d-ae87-6ce8f1d8a0aa",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 13,
+        "valor_movs": 0
+      },
+      {
+        "tx": "841f28b3-7f47-47d4-9885-4b281bca3891",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 4,
+        "unidades": 6,
+        "valor_movs": 6
+      },
+      {
+        "tx": "48376ee1-c465-448d-be75-2d9fb1d08d5a",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 0
+      },
+      {
+        "tx": "d552ea10-363f-40ed-b664-af234d23d66f",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 10,
+        "valor_movs": 10
+      },
+      {
+        "tx": "3ef501e5-30e2-4e75-aaf5-5e722d0cdfa2",
+        "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 960
+      },
+      {
+        "tx": "01624b86-080c-4453-978a-9f100e991c13",
+        "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+        "n_items": 1,
+        "unidades": 1,
+        "valor_movs": 1
+      }
+    ]
+  },
+  "vales": {
+    "vales_con_movs": 240,
+    "con_asiento": 198,
+    "sin_asiento": 42,
+    "valor_sin_asiento": 189691.76,
+    "dif_n": 0,
+    "dif_valor": 0,
+    "detalle_difs": []
+  },
+  "ajustes": {
+    "movimientos_por_doc": [
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=68 Δ=-6 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -6,
+        "valor": -265200
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=119 Δ=-14 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -14,
+        "valor": -95200
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=39 Δ=-25 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -25,
+        "valor": -70000
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=121 Δ=-1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -1,
+        "valor": -20400
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=76 Δ=-12 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -12,
+        "valor": -18000
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=107 Δ=-1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -1,
+        "valor": -17000
+      },
+      {
+        "reference_doc": "Cuadre servicios ENERVIDA: sku=999 Δ=-23 (servicio: existencia no aplica, Cat fin2=0; create_sale_v2 no descuenta stock de servicios)",
+        "n": 1,
+        "unidades": -23,
+        "valor": -10208
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=109 Δ=-5 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -5,
+        "valor": -6000
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=75 Δ=-5 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -5,
+        "valor": -5000
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=77 Δ=-4 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -4,
+        "valor": -4000
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=106 Δ=-235 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -235,
+        "valor": -235
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=71 Δ=-1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -1,
+        "valor": -150
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=65 Δ=-17 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -17,
+        "valor": -17
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=103 Δ=-7 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -7,
+        "valor": -7
+      },
+      {
+        "reference_doc": "Cuadre servicios ENERVIDA: sku=998 Δ=-1 (servicio: existencia no aplica, Cat fin2=0; create_sale_v2 no descuenta stock de servicios)",
+        "n": 1,
+        "unidades": -1,
+        "valor": -1
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=12 Δ=-75.5 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -75.5,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=112 Δ=-17 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -17,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=9 Δ=-8 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -8,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=89 Δ=-11 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -11,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=17 Δ=-11.5 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -11.5,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=47 Δ=-20 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -20,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=117 Δ=-2 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -2,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=110 Δ=-40 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -40,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=13 Δ=-200 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -200,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=97 Δ=-85 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -85,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=38 Δ=-6 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -6,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=111 Δ=-1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -1,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=32 Δ=-28 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -28,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=90 Δ=-21 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -21,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=84 Δ=-1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -1,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=81 Δ=-201 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -201,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=5 Δ=-2 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -2,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=31 Δ=-40 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -40,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=82 Δ=-1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -1,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=46 Δ=-3 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -3,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=30 Δ=-100 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -100,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=73 Δ=-2 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -2,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=79 Δ=-3 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -3,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=115 Δ=-10 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -10,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=19 Δ=-1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -1,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=22 Δ=-33 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -33,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=80 Δ=-1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -1,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=86 Δ=-14 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -14,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=11 Δ=-63 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": -63,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Ajuste documental confirmado",
+        "n": 1,
+        "unidades": -1,
+        "valor": 0
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=40 Δ=1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 1,
+        "valor": 1
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=3 Δ=1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 1,
+        "valor": 1
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=129 Δ=1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 1,
+        "valor": 1
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=140 Δ=1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 1,
+        "valor": 1
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=998 Δ=1 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 1,
+        "valor": 1
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=123 Δ=2 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 2,
+        "valor": 2
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=133 Δ=2 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 2,
+        "valor": 2
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=36 Δ=2 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 2,
+        "valor": 2
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=136 Δ=2 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 2,
+        "valor": 2
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=126 Δ=2 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 2,
+        "valor": 2
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=130 Δ=3 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 3,
+        "valor": 3
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=125 Δ=4 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 4,
+        "valor": 4
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=127 Δ=4 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 4,
+        "valor": 4
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=132 Δ=4 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 4,
+        "valor": 4
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=100 Δ=5 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 5,
+        "valor": 5
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=999 Δ=5 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 5,
+        "valor": 5
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=124 Δ=5 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 5,
+        "valor": 5
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=55 Δ=7 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 7,
+        "valor": 7
+      },
+      {
+        "reference_doc": "Ajuste ENERVIDA fila 721 (nota Excel: Ajuste)",
+        "n": 1,
+        "unidades": 7.7,
+        "valor": 7.7
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=99 Δ=8 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 8,
+        "valor": 8
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=131 Δ=9 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 9,
+        "valor": 9
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=128 Δ=11 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 11,
+        "valor": 11
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=15 Δ=19 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 19,
+        "valor": 19
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=87 Δ=22 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 22,
+        "valor": 22
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=37 Δ=24 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 24,
+        "valor": 24
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=102 Δ=27 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 27,
+        "valor": 27
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=92 Δ=31 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 31,
+        "valor": 31
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=134 Δ=34 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 34,
+        "valor": 34
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=135 Δ=44.5 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 44.5,
+        "valor": 44.5
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=88 Δ=80.3 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 80.3,
+        "valor": 80.3
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=113 Δ=85 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 85,
+        "valor": 85
+      },
+      {
+        "reference_doc": "Cuadre importación ENERVIDA: sku=66 Δ=98 (diferencia acumulada pre-corte vs Excel)",
+        "n": 1,
+        "unidades": 98,
+        "valor": 98
+      }
+    ],
+    "asientos": [
+      {
+        "id": "4f6ac7be-f71f-42c0-ae49-d9ea68ba8747",
+        "document_id": "a96e09c3-63e8-4d37-b1d8-0f595de48d8f",
+        "description": "Ajuste de inventario (OTHER)",
+        "amount_cup": 1,
+        "sense": "debito"
+      },
+      {
+        "id": "4f6ac7be-f71f-42c0-ae49-d9ea68ba8747",
+        "document_id": "a96e09c3-63e8-4d37-b1d8-0f595de48d8f",
+        "description": "Ajuste de inventario (OTHER)",
+        "amount_cup": 1,
+        "sense": "credito"
+      }
+    ]
+  },
+  "reversiones": [
+    {
+      "movement_type": "sale_void",
+      "n": 1,
+      "valor": 1.5,
+      "unidades": 1.5
+    },
+    {
+      "movement_type": "sale_reverse",
+      "n": 24,
+      "valor": 353389.586185061,
+      "unidades": 259.5
+    },
+    {
+      "movement_type": "purchase_reverse",
+      "n": 1,
+      "valor": -960,
+      "unidades": -1
+    },
+    {
+      "movement_type": "issue_slip_reverse",
+      "n": 5,
+      "valor": 120002,
+      "unidades": 5
+    }
+  ],
+  "entradas_reversal": [
+    {
+      "document_type": "RECEPCION",
+      "event": "anulacion",
+      "n": 1
+    }
+  ]
+}
