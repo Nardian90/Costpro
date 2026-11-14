@@ -24,6 +24,7 @@
     "scripts/m016-aplicar-acl-cp-fin.mjs",
     "scripts/m017-aplicar-migraciones-mision-final.mjs",
     "scripts/m018-migracion-legacy-165.mjs",
+    "scripts/m020-backfill-lotes-enervida.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
     "scripts/seed-pick3-history.js",
