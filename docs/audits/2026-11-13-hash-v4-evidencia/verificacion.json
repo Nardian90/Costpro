@@ -1,0 +1,96 @@
+{
+ "generado": "2026-11-13T22:46:23.016Z",
+ "modo": "read-only",
+ "hash_v4_pasada1": "d3dae0d9ba98d779202fe7a7dba4096b75d03495fa43d0319198986ee55b49dc",
+ "hash_v4_pasada2": "d3dae0d9ba98d779202fe7a7dba4096b75d03495fa43d0319198986ee55b49dc",
+ "pasadas_iguales": true,
+ "conteos": {
+  "reconocimiento": [
+   1342,
+   4662
+  ],
+  "pagos": [
+   16,
+   32
+  ]
+ },
+ "sensibilidad": {
+  "v4_correcto": "b710bda659b986bff3dbad49156df2e5167fd5ea17564c077a903da3412d3a19",
+  "v4_defecto": "880090288b417c7a27adea55471c6e1b4279dbef2337aaf9908df3a5b90d9933",
+  "v4_detecta": true,
+  "v3_no_detecta": true
+ },
+ "reglas_versiones": [
+  "AJUSTE_INVENTARIO:v1",
+  "COMISION:v1",
+  "DEVOLUCION_VENTA:v1",
+  "FLUJO_CAJA:v1",
+  "NOMINA:v1",
+  "RECEPCION:v1",
+  "SERVICIO_RECIBIDO:v1",
+  "VALE_SALIDA:v1",
+  "VENTA:v1"
+ ],
+ "categorias_cubiertas": [
+  "ACT_BANCOS",
+  "ACT_EFECTIVO_CUP",
+  "ACT_EFECTIVO_USD",
+  "ACT_INVENTARIO",
+  "GAS_COMISIONES",
+  "GAS_COSTO_VENTAS",
+  "GAS_NOMINAS",
+  "GAS_OTROS_OPER",
+  "GAS_PERDIDA_INV",
+  "GAS_SERVICIOS",
+  "GAS_VALES",
+  "ING_DEVOLUCIONES",
+  "ING_OTROS_OPER",
+  "ING_VENTAS",
+  "PAS_ANTICIPOS_CLI",
+  "PAS_CXP_PROV",
+  "PAS_NOMINA_PEND",
+  "PAS_RETENCIONES",
+  "PAS_SERV_PEND"
+ ],
+ "sentidos_cubiertos": [
+  "credito",
+  "debito"
+ ],
+ "currency_origin_divisa": {
+  "USD_docs": 131
+ },
+ "sql_independiente": {
+  "tipos": [
+   {
+    "tipo": "VENTA",
+    "docs": 989,
+    "suma_importes_documentales_cup": 7611954299.61
+   },
+   {
+    "tipo": "DEVOLUCION_VENTA",
+    "docs": 2,
+    "suma_importes_documentales_cup": 239405
+   },
+   {
+    "tipo": "RECEPCION",
+    "docs": 96,
+    "suma_importes_documentales_cup": 207255149.27
+   },
+   {
+    "tipo": "SERVICIO_RECIBIDO",
+    "docs": 16,
+    "suma_importes_documentales_cup": 33215
+   },
+   {
+    "tipo": "VALE_SALIDA",
+    "docs": 235,
+    "suma_importes_documentales_cup": 878552.87
+   }
+  ],
+  "coincide_con_json": true
+ },
+ "rotulacion": "SUMA DE IMPORTES DOCUMENTALES / VOLUMEN BRUTO DE OPERACIONES — no ingresos/activos/patrimonio/utilidad/saldo",
+ "suma_importes_documentales_global_cup": 15658180405.46,
+ "determinismo": "ORDER BY explícitos (reconocimiento por TIPO_SQL + orden de filas; pagos por pt.id) + serialización de plantilla en orden definido; demostrado por la igualdad de las dos pasadas y por la sensibilidad v4.",
+ "fallas": 0
+}
