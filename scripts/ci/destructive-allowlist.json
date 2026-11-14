@@ -1,6 +1,6 @@
 {
   "_doc": "CP-INFRA-020 T2 — Excepciones al lint de destructivos. Cada entrada: expires (YYYY-MM-DD, máx 90 días desde su creación) + justification (mín. 20 caracteres, caso por caso). Un script destructivo NO puede entrar aquí para 'que pase el CI': la excepción es para archivos históricos de solo-lectura o fixtures que el lint no pueda clasificar. Vencida la fecha, el hallazgo vuelve a fallar (fail-closed).",
-  "_updated": "2026-11-10",
+  "_updated": "2026-11-14",
   "exceptions": {
     "docs/audits/caja-ingresos-egresos-20261024/scripts/setup_cajamision.mjs": {
       "expires": "2027-02-08",
@@ -25,6 +25,10 @@
       "justification": "ARCHIVO GENERADO (scripts/export-contract-surface.cjs): snapshot de solo lectura de las 185 funciones SECURITY DEFINER de producción (cuerpos con DELETE/TABLE donde los hay). Es un documento de referencia, no un script ejecutable; editarlo a mano rompería el flujo del contract test. Re-evaluar al vencer.",
       "added": "2026-11-10",
       "case": "CP-INFRA-020-T2"
+    },
+    "supabase/migrations/20261114180400_cp_sec_rate_limit_store.sql": {
+      "expires": "2027-02-12",
+      "justification": "CP-SECURITY-AND-BACKLOG-CLOSURE-001: falso positivo del lint sobre una migración YA APLICADA a producción (2026-11-14, fila 44 del libro production_migration_ledger con SHA-256 registrado). El único DELETE del archivo está DENTRO de rate_limit_take(): 'DELETE FROM public.rate_limit_buckets WHERE window_start < now() - INTERVAL 24 hours' — limpieza oportunista de ventanas expiradas, CON WHERE (el lint no ve el WHERE por estar en la línea siguiente). No se añade el comentario DESTRUCTIVE-OK al archivo porque modificar una migración ya aplicada rompería la trazabilidad repo↔libro (regla del mandato: migraciones aplicadas son inmutables; corregir = migración nueva, innecesaria aquí porque no hay defecto real). Re-evaluar al vencer: si una futura migración toca rate_limit_buckets, valorar marcador en aquella."
     }
   }
 }

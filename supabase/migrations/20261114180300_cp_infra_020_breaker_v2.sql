@@ -2,6 +2,11 @@
 -- CP-INFRA-020 v2 — FRENO DE TRUNCATE: CORRECCIÓN DEL DEFECTO Y ENDURECIMIENTO
 -- Misión CP-SECURITY-AND-BACKLOG-CLOSURE-001 (2026-11-14)
 -- ═══════════════════════════════════════════════════════════════════════════
+-- DESTRUCTIVE-OK: CP-INFRA-020 (los patrones detectados son: (a) el texto
+-- «session_replication_role=replica» dentro de un COMMENT ON FUNCTION —
+-- documentación del comportamiento ENABLE ALWAYS, no una sentencia; y (b) los
+-- DROP FUNCTION/TRIGGER IF EXISTS idempotentes de la propia reinstalación.
+-- El archivo NO ejecuta TRUNCATE/DROP de datos: los PREVIENE.)
 --
 -- DEFECTOS DE 20261110120000 CORREGIDOS AQUÍ (sin modificar aquella
 -- migración: ya forma parte del replay E2E certificado):

@@ -165,7 +165,7 @@
   "total_considerados": 582,
   "total_incluidos": 167,
   "total_excluidos": 415,
-  "digest": "74a46ceacdda86d2a761e0f3efc222500a574b51963b26b5eb2ae7673c72e005",
+  "digest": "ecd964b4899a499ef826547ec9f159e7b426d8101d30a966ee758ea1c03da0e0",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5687,14 +5687,14 @@
     },
     {
       "nombre": "20261114180300_cp_infra_020_breaker_v2.sql",
-      "bytes": 10374,
-      "sha256_original": "f8284f63fe593bf7524ae8a24b9624267607642f8692a203bc1b0ae977f8fb3f",
+      "bytes": 10747,
+      "sha256_original": "20af628075cff058fefbfc77673a3874264d3a682e657409f8aabe4824d579c1",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261114",
       "observaciones": [],
       "posicion": 165,
-      "sha256_generado": "f8284f63fe593bf7524ae8a24b9624267607642f8692a203bc1b0ae977f8fb3f"
+      "sha256_generado": "20af628075cff058fefbfc77673a3874264d3a682e657409f8aabe4824d579c1"
     },
     {
       "nombre": "20261114180400_cp_sec_rate_limit_store.sql",
