@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-15 — CP-FIN-VALUATION-RECTIFICATION-003: m044/m045/m046/m047/m048 read-only (SELECT por Management API /database/query o ensambladores locales sin conexión). E2E aislado: m049 (a añadir).",
+  "_updated": "2026-11-15 — CP-FIN-VALUATION-RECTIFICATION-003: m044/m045/m046 read-only (excepciones); m049 E2E aislado (isolationProtected: sentinela e2e_is_isolated_db REST+SQL fail-closed, demostrado TODAS PASS).",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -64,7 +64,8 @@
     "scripts/e2e/verify-payroll-privacy-pg.mjs",
     "scripts/rate-limit-concurrency-proof.mjs",
     "scripts/e2e/run-sql-test-e2e.mjs",
-    "scripts/m042-rect002-e2e-prototipo.mjs"
+    "scripts/m042-rect002-e2e-prototipo.mjs",
+    "scripts/m049-rect003-faseV-e2e-prototipo.mjs"
   ],
   "exceptions": {
     "scripts/audit_kardex_live.cjs": "Herramienta histórica de una misión puntual ya ejecutada (one-shot, evidenciada en docs/audits/): señales de escritura en SQL/strings/fetch pero sin flujo productivo recurrente. No se cablea el guard en este PR (alcance limitado a los defectos demostrados); re-ejecutarla contra producción exige hoy revisión manual explícita.",

@@ -11,6 +11,8 @@
 // reconocimiento de salidas nunca contabilizadas GAS_VALES 6 + GAS_PERDIDA_INV 18).
 // Validaciones V1-V12 + idempotencia + rollback + re-aplicación + net delta 0.
 // REGLA: producción INTACTA; todo write ocurre en lguovmvrozxgssupkwpf (E2E).
+// Guard de aislamiento: réplica del contrato e2e/fixtures/assert-isolated-db.ts
+// (sentinela e2e_is_isolated_db() verificada por REST y SQL, fail-closed).
 // Uso: E2E_SUPABASE_SERVICE_ROLE_KEY=... E2E_SUPABASE_DB_PASSWORD=... node scripts/m049-rect003-faseV-e2e-prototipo.mjs
 // ============================================================================
 import { createHash } from 'node:crypto';
