@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 574,
-  "total_incluidos": 159,
+  "total_considerados": 575,
+  "total_incluidos": 160,
   "total_excluidos": 415,
-  "digest": "2549522572e1b49c6f52884889da6493c6ce9d21cb88f943cc79c3088f094a30",
+  "digest": "541fbcfce8597b725201bdd6e1da1712d8ab25326228aa5d64ae1831d81032c1",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5629,6 +5629,17 @@
       "observaciones": [],
       "posicion": 159,
       "sha256_generado": "44a775480bdbdc9d98f61867e72c88e2689cfb37766883e81347cb246def28e4"
+    },
+    {
+      "nombre": "20261114140000_cp_fin_ciclo_devolucion_divisa.sql",
+      "bytes": 50509,
+      "sha256_original": "2cfc45807e8aa47ae56ead052807376b6138021cd80637f49c93e267489a92c7",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261114",
+      "observaciones": [],
+      "posicion": 160,
+      "sha256_generado": "2cfc45807e8aa47ae56ead052807376b6138021cd80637f49c93e267489a92c7"
     },
     {
       "nombre": "AUDIT_FIXES.md",

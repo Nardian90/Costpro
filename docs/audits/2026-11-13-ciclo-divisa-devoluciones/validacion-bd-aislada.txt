@@ -1,0 +1,57 @@
+════ VALIDACIÓN CICLO DIVISA · DEVOLUCIONES · BD AISLADA lguovmvrozxgssupkwpf ════
+Hora UTC: 2026-11-13T22:15:57.854Z
+Tienda de prueba: Enervida | usuario RPC: 32d9ce95-ef81-41fd-a548-63b06eeacb60
+Funciones originales reinstaladas como línea base (determinismo).
+Snapshot ANTES: {"ventas":0,"v_items":0,"pagos":0,"devoluciones":0,"d_items":0,"entries":143,"movements":286,"errors":0,"productos":0,"kar_movs":0,"inv_rows":0,"cash_movs":0,"sesiones":0,"idem":0,"audits":0,"seq_cn":8}
+fin_compute_metrics: 2178ed29edaadf9a | create_devolution_v2: 4d461dce7876cd8f
+
+── FASE A: aplica migración del PR #1615 (semántica VENTA) ──
+  migración 20261114120000 aplicada (rama #1615)
+  PASS · A·S1 venta USD cobrada íntegra en USD (tasa no divisible): contabiliza (regresión #1615)
+  PASS · A·S1 D ACT_BANCOS 100.000 (zelle_usd) / C ING_VENTAS 100.000 — [{"cat":"ACT_BANCOS","s":"debito","amt":100000,"cur":"CUP","curO":"USD"},{"cat":"ING_VENTAS","s":"credito","amt":100000,"cur":"CUP","curO":"USD"},{"cat":"GAS_COSTO_VENTAS","s":"debito","amt":800,"cur":"CUP","curO":"USD"},{"cat":"ACT_INVENTARIO","s":"credito","amt":800,"cur":"CUP","curO":"USD"}]
+  PASS · A·S2 venta USD 680 exacta: contabiliza
+  PASS · A·S3 venta USD cobrada en CUP: contabiliza
+  PASS · A·S4 venta CUP: contabiliza
+  PASS · A·S5 venta USD cobro mixto USD+CUP: contabiliza
+  PASS · A·D1 devolución TOTAL USD (RPC real, tasa no divisible): ANTES → ERR_UNBALANCED (round() rompe amount_cup = total canónico) — ERR_UNBALANCED: débitos=100800.00 créditos=100802.90 (tipo=DEVOLUCION_VENTA doc=70741cd2-2
+    fila reembolso D1 (vía RPC, ANTES): amount=107.53 rate=930.0000000000000000 amount_cup=100002.900000000000000000
+  PASS · A·C7′ devolución currency=USD (sintética): ANTES → ERR_UNBALANCED (métricas ×tasa) — ERR_UNBALANCED: débitos=25432000.00 créditos=37400.00 (tipo=DEVOLUCION_VENTA doc=182883c1-
+
+── FASE B: aplica migración 20261114140000 (ciclo divisa devoluciones) ──
+  migración 20261114140000 aplicada (BD aislada)
+  PASS · B·E1 venta S7 (USD 930 no divisible) para el ciclo post-fix: contabiliza
+  PASS · B·E1 devolución TOTAL USD post-fix (RPC real, tasa no divisible): contabiliza
+  PASS · B·E1 D ING_DEVOLUCIONES 100.000 / C ACT_BANCOS 100.000 (zelle_usd) — [{"cat":"ACT_BANCOS","s":"credito","amt":100000,"cur":"CUP","curO":"CUP"},{"cat":"ING_DEVOLUCIONES","s":"debito","amt":100000,"cur":"CUP","curO":"CUP"},{"cat":"GAS_COSTO_VENTAS","s":"credito","amt":800,"cur":"CUP","curO":"CUP"},{"cat":"ACT_INVENTARIO","s":"debito","amt":800,"cur":"CUP","curO":"CUP"}]
+  PASS · B·E1 costo devuelto CONSERVADO: D ACT_INVENTARIO 800 / C GAS_COSTO_VENTAS 800 (cost_at_sale 400×2, NO cost_average 999)
+  PASS · B·E1 equilibrado D=C — {"d":100800,"c":100800}
+  PASS · B·E1 asiento de la venta S7 INTACTO (1 asiento VENTA)
+  PASS · B·E1 fila de reembolso con tasa EFECTIVA: amount físico 107.53 USD · amount_cup = 100.000 exacto (invariante canónica) — amount=107.53 rate=929.9730307821073189 amount_cup=100000.000000000000001317
+  PASS · B·E1 D1 (pre-fix) conserva su error documentado — la migración NO reescribe filas históricas (0 devoluciones USD reales hoy)
+  PASS · B·E2 devolución PARCIAL USD (RPC): contabiliza
+  PASS · B·E2 D ING_DEVOLUCIONES 374.000 / C ACT_BANCOS 374.000 + costo 500 (cost_at_sale de P2, NO 999)
+  PASS · B·E2 equilibrado D=C — {"d":374500,"c":374500}
+  PASS · B·E3 devolución del resto USD (RPC): contabiliza y equilibrada
+  PASS · B·E4 venta CUP + devolución CUP: contabiliza
+  PASS · B·E4 D ING_DEVOLUCIONES 2.000 / C ACT_BANCOS 2.000 + costo 600 (cost_at_sale)
+  PASS · B·E5 venta USD cobrada CUP + devolución CUP: contabiliza
+  PASS · B·E5 D ING_DEVOLUCIONES 160.000 / C ACT_BANCOS 160.000 + costo 600
+  PASS · B·E6 venta S6 (financiación del cajón, liquidación explícita): contabiliza
+  PASS · B·E6 venta USD mixta + devolución AS_PAID: contabiliza
+  PASS · B·E6 C ACT_EFECTIVO_CUP 20.000 + C ACT_EFECTIVO_USD 80.000 / D ING_DEVOLUCIONES 100.000
+  PASS · B·E6 equilibrado D=C (componentes exactos) — {"d":100250,"c":100250}
+  PASS · B·E7 anulación crea asiento espejo (event=anulacion)
+  PASS · B·E7 espejo invertido: cada movimiento con sentido opuesto e igual importe — 4 vs 4
+  PASS · B·E7 anulación idempotente (2ª llamada no añade asientos) — antes=1 ahora=2
+  PASS · B·E7 asiento de la venta S2 intacto tras la anulación
+  PASS · B·E8 re-publicar la venta NO duplica asientos — 1
+  PASS · B·E9 re-publicar la devolución NO duplica asientos — 1
+  PASS · B·E9 ingreso reconocido UNA sola vez (1 movimiento ING_VENTAS por venta) — 1
+  PASS · B·E10 devolución currency=USD republicada: contabiliza (total_cup = total_amount, sin ×tasa)
+  PASS · B·E10 D ING_DEVOLUCIONES 37.400 / C ACT_BANCOS 37.400
+
+── Restauración y limpieza ──
+  PASS · fin_compute_metrics RESTAURADA (hash idéntico) — 5c6518ec37ad854c→5c6518ec37ad854c
+  PASS · create_devolution_v2 RESTAURADA (hash idéntico) — b0ea556d4d354d8a→b0ea556d4d354d8a
+  PASS · NET DELTA 0 (limpieza total; ambas funciones restauradas) — antes={"ventas":0,"v_items":0,"pagos":0,"devoluciones":0,"d_items":0,"entries":143,"movements":286,"errors":0,"productos":0,"kar_movs":0,"inv_rows":0,"cash_movs":0,"sesiones":0,"idem":0,"audits":0,"seq_cn":8} después={"ventas":0,"v_items":0,"pagos":0,"devoluciones":0,"d_items":0,"entries":143,"movements":286,"errors":0,"productos":0,"kar_movs":0,"inv_rows":0,"cash_movs":0,"sesiones":0,"idem":0,"audits":0,"seq_cn":8}
+
+════ RESULTADO: PASS TOTAL (ciclo de divisa completo: venta+devolución+anulación coherentes con moneda original y equivalente CUP) ════
