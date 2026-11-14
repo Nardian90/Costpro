@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-14",
+  "_updated": "2026-11-14 — cierre CP-RECEIPT-INTEGRITY-001: m021 (aplicación migración immutable), m022 (backfill 9 recepciones), m025/m025b (trazabilidad + auditoría) guardProtected; m023/m024 reconciliación/análisis read-only como excepciones justificadas (solo SELECT por el canal Management API). CP-SECURITY-AND-BACKLOG-CLOSURE-001: fix-ledger-versions + fix2-ledger guardProtected; ledger-sync-check excepción read-only.",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -31,6 +31,10 @@
     "scripts/m017-aplicar-migraciones-mision-final.mjs",
     "scripts/m018-migracion-legacy-165.mjs",
     "scripts/m020-backfill-lotes-enervida.mjs",
+    "scripts/m021-aplicar-migracion-receipt-items-immutable.mjs",
+    "scripts/m022-backfill-nueve-recepciones.mjs",
+    "scripts/m025-corrige-trazabilidad-movimientos.mjs",
+    "scripts/m025b-auditoria-trazabilidad.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
     "scripts/seed-pick3-history.js",
@@ -160,6 +164,8 @@
     "scripts/ops/qa-master-estado-readonly.mjs": "CP-CAT-MAESTRO-QA-ARCHIVE (2026-11-08): verificación READ-ONLY del maestro de pruebas QA-CM-20261030-01 — solo SELECT (master_products/products/catalog_store_links/master_change_log/audit_logs). El POST detectado es únicamente el transporte del query engine de Management API (mismo patrón que drift-report.cjs); no ejecuta escrituras, no invoca RPC de escritura y no toca service_role. Identidad de proyecto verificada antes de consultar; evidencia en audit-evidence/CP-CAT-MAESTRO-QA-ARCHIVE-20261108/.",
     "scripts/smoke-stores-comparison.mjs": "COSTPRO-SALES-DASHBOARD-REFINEMENT-002: smoke READ-ONLY del RPC get_sales_dashboard_analytics (POST de función STABLE agregada; no escribe datos). El guard auth de la propia función exige sesión; credenciales solo por SMOKE_EMAIL/SMOKE_PASS (sin secretos en el repo).",
     "scripts/fin-auditoria-integral.mjs": "Auditoría integral CP-FIN (2026-11-13): escribe EXCLUSIVAMENTE en la BD E2E aislada (guard propio: constante REF=lguovmvrozxgssupkwpf hardcodeada — cualquier otra ref es imposible por construcción; canal Management API con SUPABASE_ACCESS_TOKEN). Crea y limpia sus propios datos de prueba (net delta 0 verificado por data-hygiene-guard). No usa los guards estándar porque no lee variables de entorno de destino: la ref aislada es parte del código. Evidencia: audit-evidence/CP-FIN-20261113/.",
-    "scripts/ops/ledger-sync-check.mjs": "CP-SECURITY-AND-BACKLOG-CLOSURE-001 (2026-11-14): control READ-ONLY de sincronización libro↔repo (prevención de reincidencia CP-MIGRATION-LEDGER). Solo SELECT de catálogo/libro por Management API; guard de identidad fail-closed por ref exacto (CP_LEDGER_REF==wthkddeleylijmonclxg, exit 2 si no); sin flags de escritura. El POST detectado es únicamente el canal de consulta de la Management API (/database/query), no una operación de escritura. Documentado en docs/OPERATIONS/PROCESO_CAMBIOS_PRODUCCION.md paso 5."
+    "scripts/ops/ledger-sync-check.mjs": "CP-SECURITY-AND-BACKLOG-CLOSURE-001 (2026-11-14): control READ-ONLY de sincronización libro↔repo (prevención de reincidencia CP-MIGRATION-LEDGER). Solo SELECT de catálogo/libro por Management API; guard de identidad fail-closed por ref exacto (CP_LEDGER_REF==wthkddeleylijmonclxg, exit 2 si no); sin flags de escritura. El POST detectado es únicamente el canal de consulta de la Management API (/database/query), no una operación de escritura. Documentado en docs/OPERATIONS/PROCESO_CAMBIOS_PRODUCCION.md paso 5.",
+    "scripts/m023-reconciliacion-posterior.mjs": "CP-RECEIPT-INTEGRITY-001 (cierre): READ-ONLY — solo SELECT vía Management API /database/query (única vía de consulta SQL); la señal de escritura es la del POST del canal de consulta, no hay DML/DDL en el script. Re-ejecutable sin efectos.",
+    "scripts/m024-trazabilidad-105-movimientos.mjs": "CP-RECEIPT-INTEGRITY-001 (cierre): READ-ONLY — solo SELECT vía Management API /database/query (única vía de consulta SQL); la señal de escritura es la del POST del canal de consulta, no hay DML/DDL en el script. Re-ejecutable sin efectos."
   }
 }

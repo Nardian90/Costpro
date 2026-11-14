@@ -1,0 +1,301 @@
+{
+  "generado": "2026-11-14T15:20:27.765Z",
+  "A_recepciones": {
+    "total": 98,
+    "por_estado": {
+      "active": 97,
+      "reversed": 1
+    },
+    "tiendas": {
+      "COSTPRO (Prueba)|active": 3,
+      "COSTPRO (Prueba)|reversed": 1,
+      "ENERVIDA-VITALLCONS|active": 89,
+      "PUERTO PADRE|active": 5
+    },
+    "cuadran": 98,
+    "no_cuadran": [],
+    "sin_asiento": [],
+    "reconocimientos_distintos_de_1": []
+  },
+  "B_cpfin": {
+    "asientos": 99,
+    "por_evento": {
+      "reconocimiento": 98,
+      "anulacion": 1
+    },
+    "por_estado": {
+      "posted": 98,
+      "reversed": 1
+    },
+    "por_tienda": {
+      "ENERVIDA-VITALLCONS": 89,
+      "PUERTO PADRE": 5,
+      "COSTPRO (Prueba)": 5
+    },
+    "desbalanceados": 0,
+    "reglas": [
+      "dd429aab-c74f-4815-8a50-a2d70b4cd254"
+    ],
+    "duplicados": [],
+    "anulaciones": {
+      "total": 1,
+      "enlazadas": 1,
+      "estados_recepcion": [
+        "reversed"
+      ]
+    },
+    "fin_posting_errors": 0,
+    "fin_posting_errors_recepcion": 0,
+    "por_tienda_neto": [
+      {
+        "tienda": "COSTPRO (Prueba)",
+        "bruto": 12259123.67,
+        "anulaciones": 960,
+        "neto": 12258163.67
+      },
+      {
+        "tienda": "ENERVIDA-VITALLCONS",
+        "bruto": 194995370.4,
+        "anulaciones": 0,
+        "neto": 194995370.4
+      },
+      {
+        "tienda": "PUERTO PADRE",
+        "bruto": 1616.5,
+        "anulaciones": 0,
+        "neto": 1616.5
+      }
+    ]
+  },
+  "C_inventario": {
+    "movs_compra": [
+      {
+        "movement_type": "purchase",
+        "n_movs": 309,
+        "unidades": 18766.7533,
+        "valor": 207256110.57
+      },
+      {
+        "movement_type": "purchase_reverse",
+        "n_movs": 1,
+        "unidades": -1,
+        "valor": -960
+      }
+    ],
+    "sin_reference_id": 208,
+    "con_reference_id": 101,
+    "correspondencia": [
+      {
+        "tienda": "COSTPRO (Prueba)",
+        "id": "b7f5df9f",
+        "lineas": 33,
+        "movs": 33,
+        "reversas": 0,
+        "total": 5044463.67
+      },
+      {
+        "tienda": "COSTPRO (Prueba)",
+        "id": "6fb4548d",
+        "lineas": 6,
+        "movs": 6,
+        "reversas": 0,
+        "total": 7213500
+      },
+      {
+        "tienda": "COSTPRO (Prueba)",
+        "id": "a3fe3e76",
+        "lineas": 1,
+        "movs": 1,
+        "reversas": 0,
+        "total": 960
+      },
+      {
+        "tienda": "COSTPRO (Prueba)",
+        "id": "a57bd2c1",
+        "lineas": 1,
+        "movs": 1,
+        "reversas": 0,
+        "total": 200
+      },
+      {
+        "tienda": "ENERVIDA-VITALLCONS",
+        "id": "fd9d6c88",
+        "lineas": 101,
+        "movs": 101,
+        "reversas": 0,
+        "total": 192039436
+      },
+      {
+        "tienda": "PUERTO PADRE",
+        "id": "2e393c20",
+        "lineas": 1,
+        "movs": 1,
+        "reversas": 0,
+        "total": 34
+      },
+      {
+        "tienda": "PUERTO PADRE",
+        "id": "5e1b6b87",
+        "lineas": 13,
+        "movs": 13,
+        "reversas": 0,
+        "total": 515
+      },
+      {
+        "tienda": "PUERTO PADRE",
+        "id": "351fa9fe",
+        "lineas": 28,
+        "movs": 28,
+        "reversas": 0,
+        "total": 383.5
+      },
+      {
+        "tienda": "PUERTO PADRE",
+        "id": "0a133757",
+        "lineas": 1,
+        "movs": 1,
+        "reversas": 0,
+        "total": 4
+      },
+      {
+        "tienda": "PUERTO PADRE",
+        "id": "646be7c5",
+        "lineas": 13,
+        "movs": 13,
+        "reversas": 0,
+        "total": 680
+      }
+    ],
+    "todos_vinculados": true,
+    "wac_sample": [
+      {
+        "name": "Abrazadera metálica de 1 pulgadas",
+        "wac": 339.09375,
+        "movs_compra": 2
+      },
+      {
+        "name": "Abrazadera metálica de 3/4",
+        "wac": 350,
+        "movs_compra": 1
+      },
+      {
+        "name": "Alarma",
+        "wac": 1,
+        "movs_compra": 1
+      },
+      {
+        "name": "Araganes",
+        "wac": 960,
+        "movs_compra": 2
+      },
+      {
+        "name": "Araganes",
+        "wac": 0.2,
+        "movs_compra": 1
+      },
+      {
+        "name": "Autorroscante chiquito",
+        "wac": 1,
+        "movs_compra": 3
+      },
+      {
+        "name": "Banqueta",
+        "wac": 1,
+        "movs_compra": 1
+      },
+      {
+        "name": "Banqueticas",
+        "wac": 1500,
+        "movs_compra": 1
+      },
+      {
+        "name": "Barra con 3 banquetas",
+        "wac": 27000,
+        "movs_compra": 1
+      },
+      {
+        "name": "Barrena 34mm Madera",
+        "wac": 1,
+        "movs_compra": 1
+      },
+      {
+        "name": "Barrena 5mm Madera",
+        "wac": 1,
+        "movs_compra": 1
+      },
+      {
+        "name": "Barrena 6mm Madera",
+        "wac": 1,
+        "movs_compra": 1
+      },
+      {
+        "name": "Batería 4 Kilos 12.8 V 314 Ah",
+        "wac": 1,
+        "movs_compra": 1
+      },
+      {
+        "name": "Bisagra",
+        "wac": 4000,
+        "movs_compra": 1
+      },
+      {
+        "name": "Bote sifón",
+        "wac": 300,
+        "movs_compra": 1
+      }
+    ]
+  },
+  "D_fac_vitallcons": {
+    "recepcion": {
+      "id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+      "status": "active",
+      "total_cost": 192039436,
+      "n_lineas": 101,
+      "n_asientos": 1,
+      "n_movs_fin": 2,
+      "n_movs_inv": 101
+    },
+    "asiento": [
+      {
+        "id": "93bb5da9-0afd-4325-baad-a275710062c5",
+        "event": "reconocimiento",
+        "status": "posted",
+        "economic_date": "2026-07-01",
+        "posted_at": "2026-11-14 01:51:20.117662+00",
+        "d": 192039436,
+        "c": 192039436,
+        "movs": [
+          {
+            "cat": "ACT_INVENTARIO",
+            "imp": 192039436,
+            "sen": "debito"
+          },
+          {
+            "cat": "PAS_CXP_PROV",
+            "imp": 192039436,
+            "sen": "credito"
+          }
+        ]
+      }
+    ],
+    "salidas_posteriores": {
+      "ventas": 708,
+      "devoluciones": 2,
+      "vales": 232,
+      "asientos_tienda": 1023
+    }
+  },
+  "resumen": {
+    "recepciones_98": true,
+    "todas_cuadran": true,
+    "sin_asiento_cero": true,
+    "un_reconocimiento_por_doc": true,
+    "cpfin_balanceado": true,
+    "cpfin_sin_duplicados": true,
+    "cpfin_sin_errores": true,
+    "anulacion_enlazada_una": true,
+    "inventario_vinculado": true,
+    "fvc_total_ok": true,
+    "fvc_un_asiento": true
+  }
+}

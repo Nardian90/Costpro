@@ -1,0 +1,18 @@
+{
+  "generado": "2026-11-14T15:16:25.251Z",
+  "motivo": "CP-RECEIPT-INTEGRITY-001 (§8): backfill trazable de reference_id — asociación unívoca demostrada (producto+cantidad+costo CUP) M024; solo se añade la referencia, valores económicos intactos",
+  "actor": "a1111111-1111-1111-1111-111111111111",
+  "pares_mov_linea": 101,
+  "filas_audit": 101,
+  "verificaciones": {
+    "con_reference": 101,
+    "economicos_intactos": true,
+    "idempotente": true,
+    "otros9_intactos": 9,
+    "fvc_intacta": true,
+    "auditoria_completa": true
+  },
+  "inversion_reversible": "UPDATE public.stock_movements SET reference_id=NULL WHERE id IN ('00c7bd8f-9958-4730-a8a8-8bfd7cfed489','04b5bb1f-e5df-4787-8215-4ddd248acd27','058b7e9a-bef5-46d9-9921-b7ca2bf8def9','0b6c6647-c3b3-44ba-95a2-e691e69673ff','146a7f89-1d75-4afe-9e7d-a30ec4139e57','14b0...) AND reference_id='fd9d6c88-5db8-49ea-b185-8bc96cc93e63' — documentada en audit_logs.metadata.reversible por movimiento",
+  "resultado_ok": true,
+  "nota_auditoria": "Las 101 filas TRACEABILITY_BACKFILL se insertaron con m025b-auditoria-trazabilidad.mjs (jsonb_build_object, sin escapes frágiles): usuario a1111111 (propietario), fecha real de inserción, motivo, old_data {reference_id:null}, new_data {reference_id:FVC}, línea asociada y procedimiento reversible por movimiento. Idempotente por NOT EXISTS (record_id+action)."
+}
