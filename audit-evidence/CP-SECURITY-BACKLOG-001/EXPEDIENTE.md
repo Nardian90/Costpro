@@ -284,13 +284,25 @@ misión exige no declarar resueltos los que no tienen evidencia fiable.
 
 ## 13. CI y evidencias de la misión
 
-- Suite unitaria completa: **6019 PASS / 0 FAIL** (440 archivos; 6 skipped preexistentes).
+- Suite unitaria completa: **6063 PASS / 0 FAIL** (445 archivos; 6 skipped preexistentes)
+  — re-verificada tras integrar main (PR #1624 recepciones + PR #1626 cierre de
+  recepciones) en esta rama.
 - Contrato de seguridad: estático OK (208/208 representadas, 0 divergencias; 2 warnings
   MEDIUM/LOW preexistentes) + LIVE «TODAS LAS FUNCIONES PASAN». Snapshot re-certificado
   desde producción tras la aplicación (sha256 014cde7a…).
-- Manifiesto de replay E2E: 166 migraciones; test de conteo actualizado; `--check` MATCH.
-- Gates: check-writers OK; ci-gate-sql-checks OK (allowlist +2 entradas justificadas:
-  can_manage_payroll_as, rate_limit_take).
+- Manifiesto de replay E2E: **167 migraciones** (166 de la misión + 1 de CP-RECEIPT-INTEGRITY-001
+  llegada por el merge del PR #1624); manifiesto regenerado determinísticamente; test de conteo
+  unificado a 167; `--check` MATCH (sin deriva).
+- Gates: check-writers OK (unión con el cierre de recepciones: 40 guardProtected + 18
+  isolationProtected + 103 excepciones justificadas — incluye los 2 correctores del libro y
+  ledger-sync-check de esta misión); check-destructive-guard exit 0 (marcador DESTRUCTIVE-OK en
+  20261114180300 — no aplicada, texto de COMMENT; excepción con vencimiento 2027-02-12 para
+  20261114180400 — ya aplicada e inmutable, DELETE con WHERE en línea siguiente: falso positivo
+  documentado); ci-gate-sql-checks OK (allowlist +2 justificadas: can_manage_payroll_as,
+  rate_limit_take).
+- Integración con main: dos merges (PR #1624 y PR #1626) resueltos sin cambios funcionales —
+  conflictos solo en manifiestos de control (e2e-migrations-manifest regenerado;
+  writers.manifest por unión). `tsc --noEmit` 0 errores; eslint 0 errores.
 - Informes de deriva ANTES/DESPUÉS en este directorio (la deriva preexistente del fingerprint
   —54 funciones sobrantes de misiones 8–13/11— queda documentada; re-certificarla es tarea de
   mantenimiento pendiente, no bloqueante).
