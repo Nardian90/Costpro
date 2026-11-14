@@ -1,0 +1,54 @@
+[m017-aplicar-migraciones-mision-final.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+M017 · migraciones de la misión final → PRODUCCIÓN (wthkddeleylijmonclxg)
+  supabase/migrations/20261113120800_fix_servicios_recibidos_moneda_documento.sql
+    SHA-256 50d09c665918aef68748295af8c5c92cc8df4f87e482f5b6b902589d4d73fc76
+  supabase/migrations/20261114120000_cp_fin_semantica_total_amount_cup.sql
+    SHA-256 44a775480bdbdc9d98f61867e72c88e2689cfb37766883e81347cb246def28e4
+  supabase/migrations/20261114140000_cp_fin_ciclo_devolucion_divisa.sql
+    SHA-256 2cfc45807e8aa47ae56ead052807376b6138021cd80637f49c93e267489a92c7
+
+── FASE 0 · PRE-VUELO (read-only) ──
+marcadores: {"fix_17_1":0,"fix_semantica":0,"fix_ciclo":0,"existe_cdv2":1,"existe_fcm":1}
+dependencias: {"t_deps":9,"f_deps":3}
+conteos ANTES: {"transactions":1009,"devolutions":2,"receipts":98,"received_services":42,"issue_slips":241,"inventory_adjustments":1,"commission_payments":1,"cash_flow_documents":2,"payment_transactions":944,"stock_movements":1775,"products":355,"store_credit_ledger":0}
+asientos ANTES: {"entries":4,"movements":10}
+
+── FASE 1 · APLICACIÓN (lote único por archivo, sin reintentos) ──
+  supabase/migrations/20261113120800_fix_servicios_recibidos_moneda_documento.sql → HTTP 201 OK
+    NOTIFY pgrst: HTTP 201 OK
+  supabase/migrations/20261114120000_cp_fin_semantica_total_amount_cup.sql → HTTP 201 OK
+    NOTIFY pgrst: HTTP 201 OK
+  supabase/migrations/20261114140000_cp_fin_ciclo_devolucion_divisa.sql → HTTP 201 OK
+    NOTIFY pgrst: HTTP 201 OK
+
+── FASE 2 · VERIFICACIÓN POST ──
+marcadores: {"fix_17_1":1,"fix_semantica":1,"fix_ciclo":1,"existe_cdv2":1,"existe_fcm":1}
+conteos DESPUÉS: {"transactions":1009,"devolutions":2,"receipts":98,"received_services":42,"issue_slips":241,"inventory_adjustments":1,"commission_payments":1,"cash_flow_documents":2,"payment_transactions":944,"stock_movements":1775,"products":355,"store_credit_ledger":0}
+asientos DESPUÉS: {"entries":4,"movements":10}
+DELTA 0 en tablas de negocio/asientos: OK
+RLS FORCED en fin_*: 8 OK
+
+── FASE 3 · REGULARIZACIÓN production_migration_ledger ──
+  reg 20261111120000: 15
+  reg 20261111130000: 16
+  reg 20261112120000: 17
+  reg 20261112180000: 18
+  reg 20261113120000: 19
+  reg 20261113120100: 20
+  reg 20261113120200: 21
+  reg 20261113120300: 22
+  reg 20261113120400: 23
+  reg 20261113120500: 24
+  reg 20261113120600: 25
+  reg 20261113120700: 26
+  reg 20261113140000: 27
+  reg 20261113140100: 28
+  reg 20261113140200: 29
+
+── FASE 4 · FILAS NUEVAS (aplicación de hoy) ──
+  nueva 20261113120800: 30
+  nueva 20261114120000: 31
+  nueva 20261114140000: 32
+
+production_migration_ledger: 32 filas.
+M017 COMPLETADO — migraciones aplicadas, libro regularizado, verificación fail-closed OK.

@@ -22,6 +22,7 @@
     "scripts/m014-aplicar-migraciones-cp-fin.mjs",
     "scripts/m015-aplicar-fixes-cp-fin.mjs",
     "scripts/m016-aplicar-acl-cp-fin.mjs",
+    "scripts/m017-aplicar-migraciones-mision-final.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
     "scripts/seed-pick3-history.js",
