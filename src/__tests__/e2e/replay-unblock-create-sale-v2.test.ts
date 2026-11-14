@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 167 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 168 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -440,9 +440,12 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261114180300_cp_infra_020_breaker_v2 (freno TRUNCATE fail-closed)
     //   20261114180400_cp_sec_rate_limit_store (limiter distribuido)
     //   20261114180500_cp_fix_legal_incidents_audit_whitelist (regresión BUG-024) = 167
-    expect(m.total_incluidos).toBe(167);
+    // CP-FIN-FINAL-CLOSE-005 (2026-11-15, PR #1628): +1 salvaguarda T12 de
+    // reversión parcial vs anulación automática — guard de cobertura del motor
+    // + trigger BEFORE en receipts (20261115100000_cp_fin_t12_partial_reversal_guard) = 168
+    expect(m.total_incluidos).toBe(168);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(167);
+    expect(incluidos.length).toBe(168);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
