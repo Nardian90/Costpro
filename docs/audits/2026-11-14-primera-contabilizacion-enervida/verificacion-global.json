@@ -1,0 +1,61 @@
+{
+  "generado": "2026-11-14T02:16:30.163Z",
+  "hash_plan": "af45b3249646d27a787fcaf7ac1fe487d434f56d66172b6ce5358367167ee2da",
+  "hash_real": "af45b3249646d27a787fcaf7ac1fe487d434f56d66172b6ce5358367167ee2da",
+  "coinciden": true,
+  "asientos": 1023,
+  "movimientos": 3496,
+  "diferencias": [],
+  "desbalanceados": [],
+  "por_tipo": {
+    "VENTA": {
+      "asientos": 700,
+      "movimientos": 2846,
+      "debitos": 40410821.899999976,
+      "creditos": 40410821.899999976
+    },
+    "RECEPCION": {
+      "asientos": 89,
+      "movimientos": 178,
+      "debitos": 194995370.4,
+      "creditos": 194995370.4
+    },
+    "VALE_SALIDA": {
+      "asientos": 198,
+      "movimientos": 396,
+      "debitos": 808863.1100000003,
+      "creditos": 808863.1100000003
+    },
+    "SERVICIO_RECIBIDO": {
+      "asientos": 30,
+      "movimientos": 60,
+      "debitos": 53030,
+      "creditos": 53030
+    },
+    "COMISION": {
+      "asientos": 1,
+      "movimientos": 2,
+      "debitos": 300,
+      "creditos": 300
+    },
+    "DEVOLUCION_VENTA": {
+      "asientos": 2,
+      "movimientos": 8,
+      "debitos": 239407,
+      "creditos": 239407
+    },
+    "AJUSTE_INVENTARIO": {
+      "asientos": 1,
+      "movimientos": 2,
+      "debitos": 1,
+      "creditos": 1
+    },
+    "FLUJO_CAJA": {
+      "asientos": 2,
+      "movimientos": 4,
+      "debitos": 8729279.98,
+      "creditos": 8729279.98
+    }
+  },
+  "fin_posting_errors": 0
+}

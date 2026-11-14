@@ -1,0 +1,71 @@
+{
+  "generado": "2026-11-14T02:11:31.586Z",
+  "actor": "a1111111-1111-1111-1111-111111111111",
+  "lotes": {
+    "F": {
+      "lote": "F",
+      "nombre": "Ventas USD (semántica total_amount=CUP-eq aplicada)",
+      "inicio": "2026-11-14T02:11:33.582Z",
+      "VENTA": {
+        "docs": 131,
+        "plan_ok": 131,
+        "sin_efectos": 0,
+        "desbalanceados": 0,
+        "deriva_centimos": [
+          {
+            "tipo": "VENTA",
+            "id": "3fad8395-4e3d-4fc4-9575-3e44980c62e3",
+            "deriva": 0.01
+          }
+        ]
+      },
+      "bloqueados": {
+        "desbalanceados": 0,
+        "centimos": [
+          {
+            "tipo": "VENTA",
+            "doc": "3fad8395-4e3d-4fc4-9575-3e44980c62e3",
+            "deriva": 0.01
+          }
+        ],
+        "sin_efectos": []
+      },
+      "hash_plan": "fe9195631f6852376da45fc57c8279d142d161419755b16da71f023bafe27e8e",
+      "asientos_plan": 130,
+      "movimientos_plan": 536,
+      "suma_debitos": 12101943.4,
+      "suma_creditos": 12101943.4,
+      "plan_total": 131,
+      "ejecutados": 130,
+      "fallidos": [],
+      "bloqueados_centimos": [],
+      "asientos_reales": 130,
+      "movimientos_reales": 536,
+      "hash_real": "fe9195631f6852376da45fc57c8279d142d161419755b16da71f023bafe27e8e",
+      "hash_coincide": true,
+      "partida_doble_desbalanceados": 0,
+      "fin_posting_errors_lote": 0,
+      "idempotencia": {
+        "muestra": 3,
+        "devolvieron_null": 3,
+        "asientos_tras_muestra": 130
+      },
+      "fin": "2026-11-14T02:16:08.743Z"
+    }
+  },
+  "antes": {
+    "entries": 893,
+    "movements": 2960,
+    "errores": 0
+  },
+  "despues": {
+    "entries": 1023,
+    "movements": 3496,
+    "errores": 0
+  },
+  "delta": {
+    "entries": 130,
+    "movements": 536,
+    "errores": 0
+  }
+}

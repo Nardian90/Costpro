@@ -1,0 +1,20 @@
+asientos publicados ENERVIDA: 1023 · movimientos: 3496
+
+por tipo documental:
+  VENTA                asientos=700 movs=2846 ΣD=40410821.90 ΣC=40410821.90 ✓
+  RECEPCION            asientos=89 movs=178 ΣD=194995370.40 ΣC=194995370.40 ✓
+  VALE_SALIDA          asientos=198 movs=396 ΣD=808863.11 ΣC=808863.11 ✓
+  SERVICIO_RECIBIDO    asientos=30 movs=60 ΣD=53030.00 ΣC=53030.00 ✓
+  COMISION             asientos=1 movs=2 ΣD=300.00 ΣC=300.00 ✓
+  DEVOLUCION_VENTA     asientos=2 movs=8 ΣD=239407.00 ΣC=239407.00 ✓
+  AJUSTE_INVENTARIO    asientos=1 movs=2 ΣD=1.00 ΣC=1.00 ✓
+  FLUJO_CAJA           asientos=2 movs=4 ΣD=8729279.98 ΣC=8729279.98 ✓
+
+HASH v4 plan (re-derivado):  af45b3249646d27a787fcaf7ac1fe487d434f56d66172b6ce5358367167ee2da
+HASH v4 real (contabilizado): af45b3249646d27a787fcaf7ac1fe487d434f56d66172b6ce5358367167ee2da
+hash plan == hash real: SÍ ✓ (control #12)
+asientos con estructura ≠ plan: 0 
+asientos con D≠C exacto: 0
+fin_posting_errors ENERVIDA: 0
+
+VERIFICACIÓN GLOBAL: TODO OK

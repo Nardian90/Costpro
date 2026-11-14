@@ -1,0 +1,48 @@
+[m020-backfill-lotes-enervida.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+M020 · PRIMERA CONTABILIZACIÓN HISTÓRICA ENERVIDA — LOTES A–G
+Actor: propietario (superadmin) · Exclusiones: PP/COSTPRO, 3 inconsistentes, 34 vales cero, total<=0
+
+ANTES: {"entries":4,"movements":10,"errores":0}
+
+════ LOTE A — Servicios recibidos ENERVIDA ════
+  [A/SERVICIO_RECIBIDO] docs=14 plan_ok=14 desbalanceados=0
+  [A/pagos] filas=14 plan_ok=14 errores=0
+  [A] PLAN: asientos=28 movimientos=56 ΣD=52630 ΣC=52630
+  [A] HASH v4 plan: beacf9ca20f85f32094ac4ea7e86686c2511fc34c199773a0f893673b821cc31
+
+════ LOTE B — Docs autocontenidos (FLUJO_CAJA + COMISION + AJUSTE_INVENTARIO) ════
+  [B/FLUJO_CAJA] docs=2 plan_ok=2 desbalanceados=0
+  [B/COMISION] docs=1 plan_ok=1 desbalanceados=0
+  [B/AJUSTE_INVENTARIO] docs=1 plan_ok=1 desbalanceados=0
+  [B] PLAN: asientos=4 movimientos=8 ΣD=8729580.98 ΣC=8729580.98
+  [B] HASH v4 plan: 1fffce3240a55439a40b536472afd541396ec651d08734f06b0f62d4690efc7e
+
+════ LOTE C — Vales de salida con costo documental válido ════
+  [C/VALE_SALIDA] docs=198 plan_ok=198 desbalanceados=0
+  [C] PLAN: asientos=198 movimientos=396 ΣD=808863.11 ΣC=808863.11
+  [C] HASH v4 plan: 2c1068337b542b70a789fcf779177b59f91d6de1d19b332f882bb0779a49f486
+
+════ LOTE D — Recepciones ENERVIDA (reconocimiento) ════
+  [D/RECEPCION] docs=88 plan_ok=88 desbalanceados=0
+  [D/pagos] filas=0 plan_ok=0 errores=0
+  [D] PLAN: asientos=88 movimientos=176 ΣD=194995369.1 ΣC=194995369.1
+  [D] HASH v4 plan: 6cd85fcc088dd6e602a1f24c75b6501f48b0a21e50b33fa8c0b43173c6733445
+
+════ LOTE E — Ventas CUP íntegramente cobradas (incluye 161 migradas) ════
+  [E/VENTA] docs=569 plan_ok=569 desbalanceados=0
+  [E] PLAN: asientos=569 movimientos=2306 ΣD=28288077.2 ΣC=28288077.2
+  [E] HASH v4 plan: d346e47adae210eb87569e0bf61796a0482f862dc8847934e53f9260512ea359
+
+════ LOTE F — Ventas USD (semántica total_amount=CUP-eq aplicada) ════
+  [F/VENTA] docs=131 plan_ok=131 desbalanceados=0
+  [F] PLAN: asientos=130 movimientos=536 ΣD=12101943.4 ΣC=12101943.4
+  [F] HASH v4 plan: 96abdaa5dd2296d0f5267fee09cb82c388affa2cd84c6c6ffa3c98162a3a98e7
+
+════ LOTE G — Devoluciones de venta ════
+  [G/DEVOLUCION_VENTA] docs=2 plan_ok=2 desbalanceados=0
+  [G] PLAN: asientos=2 movimientos=8 ΣD=239407 ΣC=239407
+  [G] HASH v4 plan: ba0b3333da10c6daa10b07bf0c5ea1389898eb39092d987d0bc3b423d7443751
+
+DESPUÉS: {"entries":4,"movements":10,"errores":0}
+DELTA: {"entries":0,"movements":0,"errores":0}
+Evidencia → /home/z/my-project/Costpro/docs/audits/2026-11-14-primera-contabilizacion-enervida/lotes.json
