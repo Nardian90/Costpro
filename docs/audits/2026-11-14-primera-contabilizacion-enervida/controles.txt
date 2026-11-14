@@ -1,0 +1,17 @@
+✓ · 1. Partida doble D=C exacto por asiento — desbalanceados=0
+✓ · 2. Ingresos: 1 asiento y 1 movimiento ING_VENTAS por venta — asientos=700 ventas_distintas=700 movs_ingreso=700 movs_ing_devoluciones=2
+✓ · 2b. Ingreso == total_amount (CUP-eq) de su documento — desajustes=0
+✓ · 3. Cobros: débitos por método/moneda == Σ amount_cup del documento — desajustes=0
+✓ · 4. Divisas: mayor en CUP; divisa documentada por movimiento (currency_origin) — movs_no_cup=0 con_origen_usd=538 ventas_usd_contabilizadas=130
+✓ · 5. Devoluciones revierten ingreso y costo (par completo) — asientos=2 reversiones_costo=2
+✓ · 6. Inventario físico intacto (1775 stock / 1775 kardex / 258 inventory) — {"stock_movements":1775,"kardex":1775,"inventory":258}
+✓ · 7a. COGS == fórmula canónica del motor (cost_at_sale, fallback cost_average) — desajustes=0
+✓ · 7b. Fallback documentado (líneas sin costo histórico → cost_average vigente) — lineas=333 cogs_fallback=2754857.48 de_costo_1=75 (INCIDENCIA RESIDUAL conocida: infravaloración de costo pendiente de decisión — matriz FASE V)
+✓ · 8. Pasivos CXP == valor documental de recepciones activas — contabilizado=194995370.40 documental=194995370.400000000
+✓ · 9. fin_posting_errors = 0 en ENERVIDA — errores=0
+✓ · 10. Unicidad de asientos (idempotencia estructural) — duplicados=0
+✓ · 11. Trazabilidad: regla + movimientos + documento fuente en cada asiento — {"sin_regla":0,"sin_movimientos":0,"docs_inexistentes":0}
+✓ · 12. Hash v4 plan==real (verificador global: af45b324…) — ver f8-verify-todos.mjs
+✓ · Bloqueos vigentes: 8 ventas y 34 vales SIN asientos — {"asientos_bloqueadas":0,"vales_cero_sin_asiento":34}
+
+════ FASE IX: 12/12 CONTROLES OK ════
