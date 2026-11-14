@@ -18,6 +18,9 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import pg from 'pg';
+// GUARD CANÓNICO (CP-INFRA-019): el destino es la BD E2E aislada y debe
+// verificarse ANTES de cualquier operación (exigido por check-destructive-guard).
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 
 const BASE = 'https://lguovmvrozxgssupkwpf.supabase.co';
 const KEY = process.env.E2E_SUPABASE_SERVICE_ROLE_KEY;
@@ -28,6 +31,9 @@ const POOLER = { host: 'aws-0-us-east-1.pooler.supabase.com', port: 6543, databa
 const OUT = '/home/z/my-project/scripts/out/rect003-faseV-e2e-prototipo.json';
 
 // ── IDs deterministas (segmento 0003 para no colisionar con runs previos) ──
+// Aislamiento canónico: fail-closed si el destino no es CostproE2E (E2E).
+assertNotProduction({ projectRef: 'lguovmvrozxgssupkwpf', mode: 'write', context: 'm049-rect003-faseV-e2e-prototipo' });
+
 const S = '7ec70003-0000-4000-8000-000000000002';
 const P111 = '7ec70003-0000-4000-8000-000000000111';
 const P112 = '7ec70003-0000-4000-8000-000000000112';
