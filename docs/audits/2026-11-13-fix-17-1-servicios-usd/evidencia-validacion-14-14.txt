@@ -1,0 +1,20 @@
+════ FIX §17.1 — VALIDACIÓN E2E (BD aislada lguovmvrozxgssupkwpf) ════
+fixtures: store=9635e633-387f-411d-bc15-7d2b6179aae4
+migración aplicada (BD aislada): 20261113120800
+  ✓ F0a — update_payment_status vigente acumula en moneda del documento · fix presente
+  ✓ F0b — register_supplier_payment vigente con overpay en moneda del documento · fix presente
+  ✓ P1 — CUP completo: paid=100 CUP, status paid · paid=100 status=paid
+  ✓ P2 — CUP parcial: paid=80 CUP, status partial · paid=80 status=partial
+  ✓ P3 — USD completo: paid=10 (moneda del doc), status paid — ANTES paid=4000 · paid=10 status=paid
+  ✓ P4 — USD parcial: paid=4, status partial — ANTES quedaba paid · paid=4 status=partial
+  ✓ P5 — USD doc pagado en CUP: paid=10 (4000/400), status paid · paid=10.0000000000000000 status=paid
+  ✓ P6a — editar servicio USD pagado: subir total 10→12 USD ADMITIDO (antes ERR_TOTAL_BELOW_PAID espurio) · update ok
+  ✓ P6b — bajar total por debajo de lo pagado SIGUE bloqueado (ERR_TOTAL_BELOW_PAID legítimo) · bloqueado correctamente
+  ✓ P7 — overpay USD: pago 11 a doc de 10 RECHAZADO (saldo en moneda del doc) · rechazado: (HTTP 400) {"message":"Failed to run sql query: ERROR:  P0001: El pago (11) exce
+  ✓ P8 — anulación void de servicio USD pagado: SUCCESS y reset a unpaid/paid=0 · rpc=ok status=unpaid paid=0
+  ✓ P9 — guard DELETE vivo (PT007) y acumulado USD correcto (paid=7, partial) · acum=7/partial del=PT007
+  ✓ P10 — doc CUP con pago mixto: paid=5000 CUP (semántica CUP intacta) · paid=5000.0000000000000000 status=paid
+  ✓ L1 — limpieza: CERO servicios FIX17-% residuales · svc=0 pagos=0
+
+════ RESULTADO: 14/14 PASS ════
+TODO PASS — fix §17.1 validado en BD aislada.
