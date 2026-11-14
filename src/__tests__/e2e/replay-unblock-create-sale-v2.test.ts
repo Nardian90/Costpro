@@ -421,9 +421,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // RPC del importador masivo integrada al Catálogo Maestro
     // (20261113140100_cp_catalogo_importador_maestro) y reconciliación ACL
     // Capa C de las 9 RPCs fin_* (20261113140200_cp_fin_acl_reconcile) = 157
-    expect(m.total_incluidos).toBe(157);
+    // FIX §17.1 SERVICIOS USD (2026-11-13, PR #1612): +1 moneda del documento
+    // en servicios recibidos (20261113120800_fix_servicios_recibidos_moneda_documento) = 158
+    expect(m.total_incluidos).toBe(158);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(157);
+    expect(incluidos.length).toBe(158);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

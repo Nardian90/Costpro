@@ -8,6 +8,7 @@
     "scripts/apply-rpc-fix.sh",
     "scripts/apply-sql-migration.js",
     "scripts/apply_migration_20260824000002.mjs",
+    "scripts/auditoria-17-1-servicios-usd.mjs",
     "scripts/landing-demo-cleanup.cjs",
     "scripts/m002-aplicar-migracion-20261031140000.mjs",
     "scripts/m002-aplicar-migracion-PRODUCCION.mjs",
@@ -23,7 +24,8 @@
     "scripts/m016-aplicar-acl-cp-fin.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
-    "scripts/seed-pick3-history.js"
+    "scripts/seed-pick3-history.js",
+    "scripts/validar-fix-17-1-servicios-usd.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
