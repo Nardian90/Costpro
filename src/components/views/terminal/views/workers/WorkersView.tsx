@@ -232,6 +232,11 @@ function formatDate(s: string | null): string {
 export function WorkersView() {
   const { user } = useAuthStore();
   const storeId = user?.activeStoreId;
+  // CP-SEC-PAYROLL (2026-11-14): las operaciones de nóminas/tarifas salariales
+  // están restringidas a administradores. El servidor (RLS + gates RPC) es la
+  // barrera real; la UI oculta los botones para no ofrecer acciones que
+  // fallarían con ERR_UNAUTHORIZED.
+  const canManagePayrolls = user?.role === 'admin' || user?.role === 'superadmin';
   // NAV-2026-10: navegación bidireccional Reporte Entrega ↔ Trabajadores y Comisiones
   const setCurrentView = useUIStore((s: { setCurrentView: (v: ViewType) => void }) => s.setCurrentView);
   const commissionNavContext = useUIStore((s: { commissionNavContext: CommissionNavContext | null }) => s.commissionNavContext);
@@ -539,8 +544,8 @@ export function WorkersView() {
             onRefresh={fetchWorkers}
             onPayCommission={(w: any) => setPayModalWorker(w)}
             onEditWorker={(w: WorkerSummary) => setEditModalWorker(w)}
-            onSetRate={(w: WorkerSummary) => setRateModalWorker(w)}
-            onAddToPayroll={(w: WorkerSummary) => setAddToPayrollWorker(w)}
+            onSetRate={canManagePayrolls ? (w: WorkerSummary) => setRateModalWorker(w) : undefined}
+            onAddToPayroll={canManagePayrolls ? (w: WorkerSummary) => setAddToPayrollWorker(w) : undefined}
             onToggleStatus={handleToggleWorkerStatus}
           />
         )}
@@ -986,6 +991,7 @@ function WorkersTab({
                 >
                   <DollarSign className="w-3.5 h-3.5" /> Pagar
                 </button>
+                {onSetRate && (
                 <button
                   onClick={() => onSetRate(w)}
                   disabled={w.status !== 'active'}
@@ -995,6 +1001,8 @@ function WorkersTab({
                 >
                   <Coins className="w-4 h-4" />
                 </button>
+                )}
+                {onAddToPayroll && (
                 <button
                   onClick={() => onAddToPayroll?.(w)}
                   disabled={w.status !== 'active'}
@@ -1004,6 +1012,7 @@ function WorkersTab({
                 >
                   <FilePlus2 className="w-4 h-4" />
                 </button>
+                )}
                 <button
                   onClick={() => onEditWorker(w)}
                   className="px-3 py-2.5 rounded-lg bg-muted/50 text-muted-foreground hover:bg-primary/10 hover:text-primary border border-border min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -1102,7 +1111,8 @@ function WorkersTab({
                           <DollarSign className="w-3 h-3" />
                           <span className="hidden sm:inline">Pagar</span>
                         </button>
-                        {/* Tarifa salarial (Nóminas SC-4-06) */}
+                        {/* Tarifa salarial (Nóminas SC-4-06) — CP-SEC-PAYROLL: solo admin */}
+                        {onSetRate && (
                         <button
                           onClick={() => onSetRate(w)}
                           disabled={w.status !== 'active'}
@@ -1112,7 +1122,9 @@ function WorkersTab({
                         >
                           <Coins className="w-3.5 h-3.5" />
                         </button>
-                        {/* Agregar a Nómina (trabajadores ↔ nóminas) */}
+                        )}
+                        {/* Agregar a Nómina (trabajadores ↔ nóminas) — CP-SEC-PAYROLL: solo admin */}
+                        {onAddToPayroll && (
                         <button
                           onClick={() => onAddToPayroll?.(w)}
                           disabled={w.status !== 'active'}
@@ -1122,6 +1134,7 @@ function WorkersTab({
                         >
                           <FilePlus2 className="w-3.5 h-3.5" />
                         </button>
+                        )}
                         {/* Editar */}
                         <button
                           onClick={() => onEditWorker(w)}

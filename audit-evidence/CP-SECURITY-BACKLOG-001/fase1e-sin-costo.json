@@ -1,0 +1,72 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:36:37.490Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT s.name AS store, count(*)::int AS sin_costo   FROM public.products p JOIN public.stores s ON s.id = p.store_id  W",
+      "rows": [
+        {
+          "store": "ENERVIDA-VITALLCONS",
+          "sin_costo": 243
+        },
+        {
+          "store": "PUERTO PADRE",
+          "sin_costo": 57
+        },
+        {
+          "store": "COSTPRO (Prueba)",
+          "sin_costo": 1
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT count(*)::int AS total_sin_costo,        count(*) FILTER (WHERE cost_price IS NULL)::int AS costo_null,        co",
+      "rows": [
+        {
+          "total_sin_costo": 301,
+          "costo_null": 0,
+          "costo_cero": 301,
+          "costo_negativo": 0
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT count(*)::int AS sin_costo_activos   FROM public.products  WHERE (cost_price IS NULL OR cost_price <= 0) AND is_a",
+      "rows": [
+        {
+          "sin_costo_activos": 301
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT s.name AS store, count(*)::int AS productos,        count(*) FILTER (WHERE p.cost_price IS NULL OR p.cost_price <",
+      "rows": [
+        {
+          "store": "ENERVIDA-VITALLCONS",
+          "productos": 258,
+          "sin_costo": 243
+        },
+        {
+          "store": "PUERTO PADRE",
+          "productos": 58,
+          "sin_costo": 57
+        },
+        {
+          "store": "COSTPRO (Prueba)",
+          "productos": 37,
+          "sin_costo": 1
+        },
+        {
+          "store": "QA UI Icons Store",
+          "productos": 2,
+          "sin_costo": 0
+        }
+      ]
+    }
+  ]
+}

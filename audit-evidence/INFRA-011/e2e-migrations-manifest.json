@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 576,
-  "total_incluidos": 161,
+  "total_considerados": 582,
+  "total_incluidos": 167,
   "total_excluidos": 415,
-  "digest": "4d32c972e4d4a171e7b7c3b3bd616d35c4cfd471551ce06301e935d0add89e3e",
+  "digest": "ecd964b4899a499ef826547ec9f159e7b426d8101d30a966ee758ea1c03da0e0",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5651,6 +5651,72 @@
       "observaciones": [],
       "posicion": 161,
       "sha256_generado": "f3bbd5fb37241f7a94a4f6fd773d6c19e8e695e67ef2ccd5e16d806be41be2af"
+    },
+    {
+      "nombre": "20261114180000_cp_sec_payroll_privacy.sql",
+      "bytes": 39258,
+      "sha256_original": "0578ebb1ea4b56c042e7260c9804e599feef10e7234950ec97aa62ad45c87fec",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261114",
+      "observaciones": [],
+      "posicion": 162,
+      "sha256_generado": "0578ebb1ea4b56c042e7260c9804e599feef10e7234950ec97aa62ad45c87fec"
+    },
+    {
+      "nombre": "20261114180100_cp_sec_privileges_minimo.sql",
+      "bytes": 8488,
+      "sha256_original": "3b6a2feeb1dbbd94f021f1e695209b33b1b4edce0ab015d820ce83a592a11911",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261114",
+      "observaciones": [],
+      "posicion": 163,
+      "sha256_generado": "3b6a2feeb1dbbd94f021f1e695209b33b1b4edce0ab015d820ce83a592a11911"
+    },
+    {
+      "nombre": "20261114180200_cp_commission_constraint_dedup.sql",
+      "bytes": 6191,
+      "sha256_original": "c970109a2bc0fee27b3e4216870a10f67db7334fc1934286a23c5e133e1eda15",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261114",
+      "observaciones": [],
+      "posicion": 164,
+      "sha256_generado": "c970109a2bc0fee27b3e4216870a10f67db7334fc1934286a23c5e133e1eda15"
+    },
+    {
+      "nombre": "20261114180300_cp_infra_020_breaker_v2.sql",
+      "bytes": 10747,
+      "sha256_original": "20af628075cff058fefbfc77673a3874264d3a682e657409f8aabe4824d579c1",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261114",
+      "observaciones": [],
+      "posicion": 165,
+      "sha256_generado": "20af628075cff058fefbfc77673a3874264d3a682e657409f8aabe4824d579c1"
+    },
+    {
+      "nombre": "20261114180400_cp_sec_rate_limit_store.sql",
+      "bytes": 7407,
+      "sha256_original": "e5dcd4b90f7cfc67f3580d3545081961959db90db52c4b0de5dd49cce83b3b68",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261114",
+      "observaciones": [],
+      "posicion": 166,
+      "sha256_generado": "e5dcd4b90f7cfc67f3580d3545081961959db90db52c4b0de5dd49cce83b3b68"
+    },
+    {
+      "nombre": "20261114180500_cp_fix_legal_incidents_audit_whitelist.sql",
+      "bytes": 4655,
+      "sha256_original": "fa619857700e0eceb773dd35afdcf383dde0e3fee35701279ddd0a250f69bf53",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261114",
+      "observaciones": [],
+      "posicion": 167,
+      "sha256_generado": "fa619857700e0eceb773dd35afdcf383dde0e3fee35701279ddd0a250f69bf53"
     },
     {
       "nombre": "AUDIT_FIXES.md",

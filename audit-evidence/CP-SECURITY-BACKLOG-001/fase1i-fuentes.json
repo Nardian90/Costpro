@@ -1,0 +1,87 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:39:05.150Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT column_name, data_type FROM information_schema.columns  WHERE table_schema='public' AND table_name='receipt_items",
+      "rows": [
+        {
+          "column_name": "id",
+          "data_type": "uuid"
+        },
+        {
+          "column_name": "receipt_id",
+          "data_type": "uuid"
+        },
+        {
+          "column_name": "product_id",
+          "data_type": "uuid"
+        },
+        {
+          "column_name": "quantity",
+          "data_type": "numeric"
+        },
+        {
+          "column_name": "unit_cost",
+          "data_type": "numeric"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp with time zone"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp with time zone"
+        },
+        {
+          "column_name": "moneda_recepcion",
+          "data_type": "text"
+        },
+        {
+          "column_name": "tasa_cambio_recepcion",
+          "data_type": "numeric"
+        },
+        {
+          "column_name": "variant_id",
+          "data_type": "uuid"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT count(DISTINCT p.id)::int AS pp_productos,        count(DISTINCT ri.id)::int AS lineas_recepcion,        count(DI",
+      "rows": [
+        {
+          "pp_productos": 44,
+          "lineas_recepcion": 44,
+          "lineas_con_costo": 44
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT count(DISTINCT p.id)::int AS enervida_productos,        count(DISTINCT ri.id)::int AS lineas_recepcion,        co",
+      "rows": [
+        {
+          "enervida_productos": 71,
+          "lineas_recepcion": 105,
+          "lineas_con_costo": 105
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT column_name FROM information_schema.columns  WHERE table_schema='public' AND table_name='products'    AND (column",
+      "rows": [
+        {
+          "column_name": "master_product_id"
+        },
+        {
+          "column_name": "supplier"
+        }
+      ]
+    }
+  ]
+}

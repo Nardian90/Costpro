@@ -22,11 +22,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ElementType } from 'react';
 import {
-  AlertTriangle, BadgeCheck, Ban, Check, Coins, FileDown, FileText,
-  Landmark, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, Users, Wallet,
+  AlertTriangle, BadgeCheck, Ban, Check, Coins, FileDown, FileText, Landmark,
+  Loader2, Lock, Pencil, Plus, RefreshCw, Search, Trash2, Users, Wallet,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiFetch } from '@/lib/api-fetch';
+import { useAuthStore } from '@/store';
 import { cn } from '@/lib/utils';
 import { buildPayrollPdf } from '@/lib/payrolls/pdf';
 import {
@@ -840,6 +841,18 @@ export function NominasTab({ storeId, openPayrollId, onOpenPayrollConsumed }: {
   /** Consumido por NominasTab al abrir el editor (WorkersView limpia su estado). */
   onOpenPayrollConsumed?: () => void;
 }) {
+  // CP-SEC-PAYROLL (2026-11-14): la lectura y gestión de nóminas está
+  // restringida a administradores (superadmin global; admin de plataforma
+  // limitado a su tenant; admin de tienda por membresía activa). La
+  // AUTORIDAD REAL vive en el servidor (RLS payrolls_admin_privacy + gate
+  // can_manage_payroll_as en los RPC); este gate de UI es defensa en
+  // profundidad y claridad para el usuario (no una barrera de seguridad).
+  // Los admin de tienda con profile role no-admin quedan cubiertos
+  // server-side; en producción hoy TODAS las membresías 'admin' tienen
+  // profile role admin/superadmin [MEDIDO 2026-11-14].
+  const { user } = useAuthStore();
+  const canManagePayrolls = user?.role === 'admin' || user?.role === 'superadmin';
+
   // Trabajadores de la tienda con tarifa (fuente propia de la pestaña —
   // desacoplada del resumen de comisiones). SIN filtro de estado: el selector
   // del editor muestra los inactivos deshabilitados con su causa.
@@ -882,7 +895,7 @@ export function NominasTab({ storeId, openPayrollId, onOpenPayrollConsumed }: {
     }
   }, [storeId, statusFilter]);
 
-  useEffect(() => { void fetchPayrolls(); }, [fetchPayrolls]);
+  useEffect(() => { if (canManagePayrolls) void fetchPayrolls(); }, [fetchPayrolls, canManagePayrolls]);
 
   const transition = async (p: Payroll, action: 'confirm' | 'account' | 'pay', label: string) => {
     setBusyId(p.id);
@@ -934,6 +947,22 @@ export function NominasTab({ storeId, openPayrollId, onOpenPayrollConsumed }: {
     })();
     return () => { cancelled = true; };
   }, [openPayrollId, storeId]);
+
+  // CP-SEC-PAYROLL: usuarios sin nivel administrativo NO ven datos salariales.
+  // El servidor ya lo garantiza (RLS + gates RPC); aquí se comunica con
+  // claridad en lugar de mostrar una lista vacía engañosa.
+  if (!canManagePayrolls) {
+    return (
+      <div className="rounded-xl border border-dashed border-border p-8 text-center" role="alert">
+        <Lock className="mx-auto w-8 h-8 text-muted-foreground" />
+        <p className="mt-3 text-sm font-semibold">Sección restringida</p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Las nóminas y tarifas salariales solo están disponibles para administradores
+          (privacidad de salarios, CP-SEC-PAYROLL).
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">

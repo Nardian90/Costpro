@@ -1,0 +1,100 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:35:19.808Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT 'get_sales_dashboard_analytics' AS obj, count(*)::int AS n   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pron",
+      "rows": [
+        {
+          "obj": "get_sales_dashboard_analytics",
+          "n": 1
+        },
+        {
+          "obj": "get_sales_dashboard_product_detail",
+          "n": 1
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT column_name, data_type, udt_name, column_default   FROM information_schema.columns  WHERE table_schema='public' A",
+      "rows": [
+        {
+          "column_name": "operational_class",
+          "data_type": "USER-DEFINED",
+          "udt_name": "product_operational_class",
+          "column_default": null
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT t.typname, count(e.enumlabel)::int AS labels   FROM pg_type t LEFT JOIN pg_enum e ON e.enumtypid = t.oid  WHERE t",
+      "rows": [
+        {
+          "typname": "product_operational_class",
+          "labels": 4
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT column_name FROM information_schema.columns  WHERE table_schema='public' AND table_name='stores' AND column_name=",
+      "rows": [
+        {
+          "column_name": "store_code"
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT column_name FROM information_schema.columns  WHERE table_schema='public' AND table_name='receipts' AND column_nam",
+      "rows": [
+        {
+          "column_name": "document_number"
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT policyname, cmd FROM pg_policies  WHERE schemaname='public' AND tablename='cost_sheet_templates' ORDER BY policyn",
+      "rows": [
+        {
+          "policyname": "Templates delete admin",
+          "cmd": "DELETE"
+        },
+        {
+          "policyname": "Templates delete owner private",
+          "cmd": "DELETE"
+        },
+        {
+          "policyname": "Templates insert",
+          "cmd": "INSERT"
+        },
+        {
+          "policyname": "Templates update admin",
+          "cmd": "UPDATE"
+        },
+        {
+          "policyname": "Templates update owner private",
+          "cmd": "UPDATE"
+        },
+        {
+          "policyname": "Templates visibility",
+          "cmd": "SELECT"
+        }
+      ]
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT indexname FROM pg_indexes  WHERE schemaname='public' AND indexname='products_operational_class_store_idx'",
+      "rows": [
+        {
+          "indexname": "products_operational_class_store_idx"
+        }
+      ]
+    }
+  ]
+}

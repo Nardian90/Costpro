@@ -1,0 +1,423 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:38:37.081Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT count(*)::int AS creadados_antes_12nov,        count(*) FILTER (WHERE p.created_at >= '2026-11-12')::int AS cread",
+      "rows": [
+        {
+          "creadados_antes_12nov": 40,
+          "creadados_despues_12nov": 0
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT p.sku, p.name, p.stock_current, p.cost_average, p.price, p.price_currency,        p.created_at::date AS creado, p",
+      "rows": [
+        {
+          "sku": "107",
+          "name": "Caja de distribución TRIC",
+          "stock_current": "2.0000",
+          "cost_average": "17000.000000000000",
+          "price": "25",
+          "price_currency": "USD",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "111",
+          "name": "Grapas plásticas con clavo de acero",
+          "stock_current": "10.0000",
+          "cost_average": "1",
+          "price": "2000",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "112",
+          "name": "Grapas metálicas 3/4 con tornillo roscante",
+          "stock_current": "20.0000",
+          "cost_average": "1",
+          "price": "1000",
+          "price_currency": "USD",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-07"
+        },
+        {
+          "sku": "116",
+          "name": "Herraje",
+          "stock_current": "1.0000",
+          "cost_average": "1.0",
+          "price": "0",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "117",
+          "name": "Inversor",
+          "stock_current": "1.0000",
+          "cost_average": "1",
+          "price": "3200",
+          "price_currency": "USD",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-10"
+        },
+        {
+          "sku": "122",
+          "name": "Controladores de voltaje",
+          "stock_current": "2.0000",
+          "cost_average": "1",
+          "price": "35",
+          "price_currency": "USD",
+          "creado": "2026-08-18",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "123",
+          "name": "Alarma",
+          "stock_current": "1.0000",
+          "cost_average": "280.222222222222222222220000",
+          "price": "120",
+          "price_currency": "USD",
+          "creado": "2026-08-18",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "14",
+          "name": "Distribuidor de corriente 4 salidas",
+          "stock_current": "6.0000",
+          "cost_average": "500.0",
+          "price": "500",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "15",
+          "name": "Cemento Cola",
+          "stock_current": "52.0000",
+          "cost_average": "0.991067914769213470512060143061742500",
+          "price": "10000",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-13"
+        },
+        {
+          "sku": "17",
+          "name": "Césped Artificial",
+          "stock_current": "20.0000",
+          "cost_average": "1.00000000000000000000000000000",
+          "price": "9000",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-07"
+        },
+        {
+          "sku": "19",
+          "name": "Codo de 90",
+          "stock_current": "15.0000",
+          "cost_average": "200.0",
+          "price": "200",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "20",
+          "name": "Codos de 45 grado",
+          "stock_current": "15.0000",
+          "cost_average": "200.0",
+          "price": "200",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "22",
+          "name": "Conectores MC4",
+          "stock_current": "21.0000",
+          "cost_average": "0.300751879699248120301",
+          "price": "7",
+          "price_currency": "USD",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-07"
+        },
+        {
+          "sku": "26",
+          "name": "Disco de esmeril",
+          "stock_current": "1.0000",
+          "cost_average": "2000.0",
+          "price": "2000",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "27",
+          "name": "Escobas",
+          "stock_current": "2.0000",
+          "cost_average": "1800.0",
+          "price": "1800",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-05"
+        },
+        {
+          "sku": "28",
+          "name": "Espejo",
+          "stock_current": "11.0000",
+          "cost_average": "5000.0",
+          "price": "5000",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-12"
+        },
+        {
+          "sku": "37",
+          "name": "J de techo",
+          "stock_current": "25.0000",
+          "cost_average": "0.96000000000000000000",
+          "price": "50",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "39",
+          "name": "Tubo de Lámpara de 40",
+          "stock_current": "5.0000",
+          "cost_average": "2800.0000000000000000",
+          "price": "2800",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "4",
+          "name": "Bisagra",
+          "stock_current": "1.0000",
+          "cost_average": "4000.0",
+          "price": "4000",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "40",
+          "name": "Latiguillo de media por 3/8",
+          "stock_current": "3.0000",
+          "cost_average": "0.14285714285714285714",
+          "price": "1000",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "45",
+          "name": "Malla perli",
+          "stock_current": "1.0000",
+          "cost_average": "40000.0",
+          "price": "40000",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "48",
+          "name": "Nudo de media",
+          "stock_current": "10.0000",
+          "cost_average": "250",
+          "price": "250",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "49",
+          "name": "Nudos de 3/4",
+          "stock_current": "3.0000",
+          "cost_average": "1.0",
+          "price": "250",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "50",
+          "name": "Nudos de 50",
+          "stock_current": "3.0000",
+          "cost_average": "250.0",
+          "price": "250",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "52",
+          "name": "Pintura Verde 4L",
+          "stock_current": "22.0000",
+          "cost_average": "2500.0000000000000000",
+          "price": "2500",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-13"
+        },
+        {
+          "sku": "58",
+          "name": "Rosca Chapa",
+          "stock_current": "269.0000",
+          "cost_average": "1.000000000000000000000",
+          "price": "1",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-13"
+        },
+        {
+          "sku": "61",
+          "name": "T de media",
+          "stock_current": "5.0000",
+          "cost_average": "250.0000000000000000",
+          "price": "250",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-07"
+        },
+        {
+          "sku": "62",
+          "name": "T de pulgada a 3/4",
+          "stock_current": "2.0000",
+          "cost_average": "1.00000000000000000000",
+          "price": "800",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "70",
+          "name": "Unión universal de media",
+          "stock_current": "22.0000",
+          "cost_average": "600.0000000000000000",
+          "price": "600",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-31"
+        },
+        {
+          "sku": "72",
+          "name": "Yee de 50",
+          "stock_current": "2.0000",
+          "cost_average": "250.0000000000000000",
+          "price": "250",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-31"
+        },
+        {
+          "sku": "73",
+          "name": "Interruptor doble",
+          "stock_current": "3.0000",
+          "cost_average": "1500.0",
+          "price": "1500",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "76",
+          "name": "Toma corriente 20 Amp. con tapa",
+          "stock_current": "41.0000",
+          "cost_average": "1.0000000000000000000000000000",
+          "price": "1500",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-13"
+        },
+        {
+          "sku": "81",
+          "name": "Bridas",
+          "stock_current": "2200.0000",
+          "cost_average": "1.0000000000000000000000000",
+          "price": "100",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-13"
+        },
+        {
+          "sku": "83",
+          "name": "Cripiadora Roja con 6 dabas rojas",
+          "stock_current": "2.0000",
+          "cost_average": "1",
+          "price": "180",
+          "price_currency": "USD",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "84",
+          "name": "Conector XT60",
+          "stock_current": "30.0000",
+          "cost_average": "6500.0",
+          "price": "6500",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "87",
+          "name": "Cable Solar Negro 4mm",
+          "stock_current": "83.0000",
+          "cost_average": "840.000000000000000000000000000000000000",
+          "price": "4.5",
+          "price_currency": "USD",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-10"
+        },
+        {
+          "sku": "88",
+          "name": "Cable Solar Rojo 4mm",
+          "stock_current": "157.0000",
+          "cost_average": "840.00000000000000000000000000000000",
+          "price": "4.5",
+          "price_currency": "USD",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-10"
+        },
+        {
+          "sku": "9",
+          "name": "Brecker D 63A",
+          "stock_current": "8.0000",
+          "cost_average": "6000.00000000000000000",
+          "price": "25",
+          "price_currency": "USD",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-10"
+        },
+        {
+          "sku": "90",
+          "name": "Cable Solar Rojo 6mm",
+          "stock_current": "3.0000",
+          "cost_average": "0.751879699248120300752",
+          "price": "5",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-10-28"
+        },
+        {
+          "sku": "99",
+          "name": "Electrodo 4mm",
+          "stock_current": "1728.0000",
+          "cost_average": "1.0000000000000000000000000000",
+          "price": "0",
+          "price_currency": "CUP",
+          "creado": "2026-08-11",
+          "actualizado": "2026-11-06"
+        }
+      ]
+    }
+  ]
+}

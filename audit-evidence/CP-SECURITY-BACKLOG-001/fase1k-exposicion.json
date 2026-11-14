@@ -1,0 +1,477 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:40:47.580Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT viewname, definition ILIKE '%payroll%' AS toca_payroll,        definition ILIKE '%worker_salary_rates%' AS toca_r",
+      "rows": []
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT routine_name, grantee, privilege_type   FROM information_schema.routine_privileges  WHERE routine_schema='public'",
+      "rows": [
+        {
+          "routine_name": "account_payroll",
+          "grantee": "authenticated",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "account_payroll",
+          "grantee": "postgres",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "account_payroll",
+          "grantee": "service_role",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "confirm_payroll",
+          "grantee": "authenticated",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "confirm_payroll",
+          "grantee": "postgres",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "confirm_payroll",
+          "grantee": "service_role",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "create_payroll",
+          "grantee": "authenticated",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "create_payroll",
+          "grantee": "postgres",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "create_payroll",
+          "grantee": "service_role",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "fn_payroll_validate_items",
+          "grantee": "postgres",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "fn_payroll_validate_items",
+          "grantee": "service_role",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "mark_payroll_paid",
+          "grantee": "authenticated",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "mark_payroll_paid",
+          "grantee": "postgres",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "mark_payroll_paid",
+          "grantee": "service_role",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "void_payroll",
+          "grantee": "authenticated",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "void_payroll",
+          "grantee": "postgres",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "routine_name": "void_payroll",
+          "grantee": "service_role",
+          "privilege_type": "EXECUTE"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT p.proname, p.prosecdef AS security_definer   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace  WHERE ",
+      "rows": [
+        {
+          "proname": "account_payroll",
+          "security_definer": true
+        },
+        {
+          "proname": "confirm_payroll",
+          "security_definer": true
+        },
+        {
+          "proname": "create_payroll",
+          "security_definer": true
+        },
+        {
+          "proname": "fin_backfill",
+          "security_definer": true
+        },
+        {
+          "proname": "fin_compute_metrics",
+          "security_definer": true
+        },
+        {
+          "proname": "fin_post_document_safe",
+          "security_definer": true
+        },
+        {
+          "proname": "fn_payroll_validate_items",
+          "security_definer": false
+        },
+        {
+          "proname": "mark_payroll_paid",
+          "security_definer": true
+        },
+        {
+          "proname": "set_worker_salary_rate",
+          "security_definer": true
+        },
+        {
+          "proname": "update_payroll",
+          "security_definer": true
+        },
+        {
+          "proname": "void_payroll",
+          "security_definer": true
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT table_name, grantee, privilege_type   FROM information_schema.table_privileges  WHERE table_schema='public'    AN",
+      "rows": [
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "authenticated",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "postgres",
+          "privilege_type": "UPDATE"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "postgres",
+          "privilege_type": "DELETE"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "postgres",
+          "privilege_type": "TRUNCATE"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "postgres",
+          "privilege_type": "REFERENCES"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "postgres",
+          "privilege_type": "TRIGGER"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "postgres",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "postgres",
+          "privilege_type": "INSERT"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "service_role",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "service_role",
+          "privilege_type": "UPDATE"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "service_role",
+          "privilege_type": "DELETE"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "service_role",
+          "privilege_type": "TRUNCATE"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "service_role",
+          "privilege_type": "REFERENCES"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "service_role",
+          "privilege_type": "TRIGGER"
+        },
+        {
+          "table_name": "payroll_item_concepts",
+          "grantee": "service_role",
+          "privilege_type": "INSERT"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "authenticated",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "postgres",
+          "privilege_type": "UPDATE"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "postgres",
+          "privilege_type": "DELETE"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "postgres",
+          "privilege_type": "TRUNCATE"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "postgres",
+          "privilege_type": "REFERENCES"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "postgres",
+          "privilege_type": "TRIGGER"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "postgres",
+          "privilege_type": "INSERT"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "postgres",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "service_role",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "service_role",
+          "privilege_type": "INSERT"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "service_role",
+          "privilege_type": "UPDATE"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "service_role",
+          "privilege_type": "DELETE"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "service_role",
+          "privilege_type": "TRUNCATE"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "service_role",
+          "privilege_type": "REFERENCES"
+        },
+        {
+          "table_name": "payroll_items",
+          "grantee": "service_role",
+          "privilege_type": "TRIGGER"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "authenticated",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "postgres",
+          "privilege_type": "INSERT"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "postgres",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "postgres",
+          "privilege_type": "UPDATE"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "postgres",
+          "privilege_type": "DELETE"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "postgres",
+          "privilege_type": "TRUNCATE"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "postgres",
+          "privilege_type": "REFERENCES"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "postgres",
+          "privilege_type": "TRIGGER"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "service_role",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "service_role",
+          "privilege_type": "UPDATE"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "service_role",
+          "privilege_type": "DELETE"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "service_role",
+          "privilege_type": "TRUNCATE"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "service_role",
+          "privilege_type": "REFERENCES"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "service_role",
+          "privilege_type": "TRIGGER"
+        },
+        {
+          "table_name": "payrolls",
+          "grantee": "service_role",
+          "privilege_type": "INSERT"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "authenticated",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "postgres",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "postgres",
+          "privilege_type": "UPDATE"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "postgres",
+          "privilege_type": "DELETE"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "postgres",
+          "privilege_type": "TRUNCATE"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "postgres",
+          "privilege_type": "REFERENCES"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "postgres",
+          "privilege_type": "TRIGGER"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "postgres",
+          "privilege_type": "INSERT"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "service_role",
+          "privilege_type": "SELECT"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "service_role",
+          "privilege_type": "UPDATE"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "service_role",
+          "privilege_type": "DELETE"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "service_role",
+          "privilege_type": "TRUNCATE"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "service_role",
+          "privilege_type": "REFERENCES"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "service_role",
+          "privilege_type": "TRIGGER"
+        },
+        {
+          "table_name": "worker_salary_rates",
+          "grantee": "service_role",
+          "privilege_type": "INSERT"
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT table_name, column_name FROM information_schema.columns  WHERE table_schema='public' AND (column_name ILIKE '%sal",
+      "rows": [
+        {
+          "table_name": "commission_rules",
+          "column_name": "salary_amount"
+        },
+        {
+          "table_name": "payroll_items",
+          "column_name": "base_salary"
+        },
+        {
+          "table_name": "payrolls",
+          "column_name": "total_base_salary"
+        }
+      ]
+    }
+  ]
+}

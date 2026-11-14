@@ -1,0 +1,259 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:32:48.101Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT 'block_truncate_fn' AS check, count(*)::int AS n   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace  ",
+      "rows": [
+        {
+          "check": "block_truncate_fn",
+          "n": 0
+        },
+        {
+          "check": "trg_cp_infra_020_triggers",
+          "n": 0
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT conname, pg_get_constraintdef(oid) AS def   FROM pg_constraint  WHERE conrelid = 'public.commission_payments'::re",
+      "rows": [
+        {
+          "conname": "commission_payments_no_overlap",
+          "def": "EXCLUDE USING gist (worker_id WITH =, daterange(period_start, period_end, '[]'::text) WITH &&) WHERE ((status <> 'cancelled'::text))"
+        },
+        {
+          "conname": "no_overlapping_periods",
+          "def": "EXCLUDE USING gist (worker_id WITH =, daterange(period_start, period_end, '[]'::text) WITH &&) WHERE ((status <> 'cancelled'::text))"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT tablename, policyname, cmd, roles, qual   FROM pg_policies  WHERE schemaname = 'public'    AND tablename IN ('pay",
+      "rows": [
+        {
+          "tablename": "payroll_item_concepts",
+          "policyname": "payroll_item_concepts_store_isolation",
+          "cmd": "ALL",
+          "roles": "{authenticated}",
+          "qual": "(item_id IN ( SELECT i.id\n   FROM (payroll_items i\n     JOIN payrolls p ON ((p.id = i.payroll_id)))\n  WHERE (p.store_id = ANY (current_user_store_ids()))))"
+        },
+        {
+          "tablename": "payroll_items",
+          "policyname": "payroll_items_store_isolation",
+          "cmd": "ALL",
+          "roles": "{authenticated}",
+          "qual": "(payroll_id IN ( SELECT payrolls.id\n   FROM payrolls\n  WHERE (payrolls.store_id = ANY (current_user_store_ids()))))"
+        },
+        {
+          "tablename": "payrolls",
+          "policyname": "payrolls_store_isolation",
+          "cmd": "ALL",
+          "roles": "{authenticated}",
+          "qual": "(store_id = ANY (current_user_store_ids()))"
+        },
+        {
+          "tablename": "worker_salary_rates",
+          "policyname": "worker_salary_rates_store_isolation",
+          "cmd": "ALL",
+          "roles": "{authenticated}",
+          "qual": "(store_id = ANY (current_user_store_ids()))"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT grantee, privilege_type, count(*)::int AS n_tables   FROM information_schema.table_privileges  WHERE table_schema",
+      "rows": [
+        {
+          "grantee": "anon",
+          "privilege_type": "REFERENCES",
+          "n_tables": 152
+        },
+        {
+          "grantee": "anon",
+          "privilege_type": "TRIGGER",
+          "n_tables": 152
+        },
+        {
+          "grantee": "anon",
+          "privilege_type": "TRUNCATE",
+          "n_tables": 149
+        },
+        {
+          "grantee": "authenticated",
+          "privilege_type": "REFERENCES",
+          "n_tables": 158
+        },
+        {
+          "grantee": "authenticated",
+          "privilege_type": "TRIGGER",
+          "n_tables": 158
+        },
+        {
+          "grantee": "authenticated",
+          "privilege_type": "TRUNCATE",
+          "n_tables": 155
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT count(*)::int AS ledger_rows FROM public.production_migration_ledger",
+      "rows": [
+        {
+          "ledger_rows": 32
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT version, file, applied_at, mechanism, status   FROM public.production_migration_ledger  ORDER BY applied_at DESC ",
+      "rows": [
+        {
+          "version": "20261114140000",
+          "file": "supabase/migrations/20261114140000_cp_fin_ciclo_devolucion_divisa.sql",
+          "applied_at": "2026-11-14 00:49:41.428653+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261114120000",
+          "file": "supabase/migrations/20261114120000_cp_fin_semantica_total_amount_cup.sql",
+          "applied_at": "2026-11-14 00:49:39.543284+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261113120800",
+          "file": "supabase/migrations/20261113120800_fix_servicios_recibidos_moneda_documento.sql",
+          "applied_at": "2026-11-14 00:49:37.650268+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261113120700",
+          "file": "supabase/migrations/20261113120700_cp_fin_fix_acl_funciones.sql",
+          "applied_at": "2026-11-13 15:20:00+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261113120400",
+          "file": "supabase/migrations/20261113120400_cp_fin_fix_metricas_nomina_flujo.sql",
+          "applied_at": "2026-11-13 15:12:00+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261113120500",
+          "file": "supabase/migrations/20261113120500_cp_fin_fix_sentidos_pago.sql",
+          "applied_at": "2026-11-13 15:12:00+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261113120300",
+          "file": "supabase/migrations/20261113120300_cp_fin_triggers_diferidos.sql",
+          "applied_at": "2026-11-13 15:12:00+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261113120600",
+          "file": "supabase/migrations/20261113120600_cp_fin_fix_audit_logs_check.sql",
+          "applied_at": "2026-11-13 15:12:00+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261113120100",
+          "file": "supabase/migrations/20261113120100_cp_fin_partida_doble_motor.sql",
+          "applied_at": "2026-11-13 14:18:00+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261113120200",
+          "file": "supabase/migrations/20261113120200_cp_fin_endurecimiento_rls.sql",
+          "applied_at": "2026-11-13 14:18:00+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261113120000",
+          "file": "supabase/migrations/20261113120000_cp_fin_partida_doble_base.sql",
+          "applied_at": "2026-11-13 14:18:00+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        },
+        {
+          "version": "20261113140100",
+          "file": "supabase/migrations/20261113140100_cp_catalogo_importador_maestro.sql",
+          "applied_at": "2026-11-13 00:00:00+00",
+          "mechanism": "management_api",
+          "status": "applied"
+        }
+      ]
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT schemaname, tablename   FROM pg_publication_tables  WHERE pubname = 'supabase_realtime'    AND tablename IN ('pay",
+      "rows": []
+    },
+    {
+      "statement": 8,
+      "sql": "SELECT role, count(*)::int AS n FROM public.profiles GROUP BY role ORDER BY role",
+      "rows": [
+        {
+          "role": "admin",
+          "n": 4
+        },
+        {
+          "role": "superadmin",
+          "n": 1
+        },
+        {
+          "role": "clerk",
+          "n": 1
+        },
+        {
+          "role": "warehouse",
+          "n": 1
+        },
+        {
+          "role": "encargado",
+          "n": 8
+        },
+        {
+          "role": "usuario",
+          "n": 4
+        },
+        {
+          "role": "costo",
+          "n": 4
+        },
+        {
+          "role": "tenant_admin",
+          "n": 10
+        }
+      ]
+    },
+    {
+      "statement": 9,
+      "sql": "SELECT (SELECT count(*)::int FROM public.payrolls) AS payrolls,        (SELECT count(*)::int FROM public.payroll_items) ",
+      "rows": [
+        {
+          "payrolls": 1,
+          "payroll_items": 1,
+          "concepts": 0,
+          "salary_rates": 1
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:39:45.685Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT count(*)::int AS pp_total,        count(*) FILTER (WHERE p.created_at < '2026-11-12')::int AS antes_12nov,       ",
+      "rows": [
+        {
+          "pp_total": 58,
+          "antes_12nov": 58,
+          "desde_12nov": 0
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT count(*)::int AS pp_sin_costo_antes12   FROM public.products p JOIN public.stores s ON s.id = p.store_id  WHERE s",
+      "rows": [
+        {
+          "pp_sin_costo_antes12": 57
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT count(*)::int AS pp_act_vis_sin_costo_antes12   FROM public.products p JOIN public.stores s ON s.id = p.store_id ",
+      "rows": [
+        {
+          "pp_act_vis_sin_costo_antes12": 57
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT p.sku, p.name, p.cost_price, p.cost_average, p.stock_current,        ri.unit_cost AS rec_unit_cost, ri.moneda_rec",
+      "rows": [
+        {
+          "sku": "109",
+          "name": "Inicio Z",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "15.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "110",
+          "name": "Intermedio",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "20.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "111",
+          "name": "Grapas plásticas con clavo de acero",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "20.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "112",
+          "name": "Grapas metálicas 3/4 con tornillo roscante",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "20.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "115",
+          "name": "Regleta",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "16.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "117",
+          "name": "Inversor",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "1.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "119",
+          "name": "Yee MC4",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "2.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "12",
+          "name": "Cable Conductor eléctrico 10",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "185.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "122",
+          "name": "Controladores de voltaje",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "2.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "123",
+          "name": "Alarma",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "3.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "124",
+          "name": "Linterna de casa 4.2 V",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "2.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        },
+        {
+          "sku": "125",
+          "name": "Linterna de cabeza de 15W",
+          "cost_price": "0",
+          "cost_average": "1.000000000000000000000",
+          "stock_current": "2.0000",
+          "rec_unit_cost": "1",
+          "moneda_recepcion": "CUP",
+          "tasa_cambio_recepcion": "1.0000"
+        }
+      ]
+    }
+  ]
+}

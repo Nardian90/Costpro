@@ -1,0 +1,73 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:37:28.387Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT count(*)::int AS sin_costo_con_stock   FROM public.products  WHERE (cost_price IS NULL OR cost_price <= 0) AND st",
+      "rows": [
+        {
+          "sin_costo_con_stock": 115
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT s.name AS store, count(*)::int AS n   FROM public.products p JOIN public.stores s ON s.id = p.store_id  WHERE (p.",
+      "rows": [
+        {
+          "store": "ENERVIDA-VITALLCONS",
+          "n": 71
+        },
+        {
+          "store": "PUERTO PADRE",
+          "n": 44
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT count(*)::int AS wac_invalido   FROM public.products WHERE cost_average IS NULL OR cost_average <= 0",
+      "rows": [
+        {
+          "wac_invalido": 97
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT count(*)::int AS pp_total, count(*) FILTER (WHERE cost_price IS NULL OR cost_price <= 0)::int AS pp_sin_costo   F",
+      "rows": [
+        {
+          "pp_total": 58,
+          "pp_sin_costo": 57
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT count(*)::int AS costo_assignado_despues_12nov   FROM public.products  WHERE cost_price > 0 AND updated_at >= '20",
+      "rows": [
+        {
+          "costo_assignado_despues_12nov": 11
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT column_name FROM information_schema.columns  WHERE table_schema='public' AND table_name='products' AND column_nam",
+      "rows": [
+        {
+          "column_name": "cost_price"
+        },
+        {
+          "column_name": "cost_average"
+        },
+        {
+          "column_name": "cost_sheet_id"
+        }
+      ]
+    }
+  ]
+}

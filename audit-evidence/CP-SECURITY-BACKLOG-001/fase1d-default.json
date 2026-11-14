@@ -1,0 +1,36 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:35:44.791Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT column_name, is_nullable, column_default   FROM information_schema.columns  WHERE table_schema='public' AND table",
+      "rows": [
+        {
+          "column_name": "operational_class",
+          "is_nullable": "YES",
+          "column_default": null
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT count(*)::int AS null_op_class FROM public.products WHERE operational_class IS NULL",
+      "rows": [
+        {
+          "null_op_class": 274
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT count(*)::int AS master_fn_default   FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace  WHERE n.nspnam",
+      "rows": [
+        {
+          "master_fn_default": 0
+        }
+      ]
+    }
+  ]
+}

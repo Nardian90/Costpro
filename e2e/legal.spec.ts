@@ -77,7 +77,55 @@ test.describe('Legal', () => {
     });
   });
 
-  test('[BUG-024 REGRESSION] incidents on ephemeral filesystem', async () => {
-    test.skip(true, 'BUG-024: Architecture issue, data/incidents.json is ephemeral in serverless');
+  // CP-SECURITY-BACKLOG-001 (2026-11-14) — CIERRE FORMAL DE BUG-024.
+  //
+  // Defecto original (docs/audits/PLAN_PRIORIZADO_CORRECCIONES_COSTPRO_2026-10-16.md
+  // §CP-SEC-012): los incidentes legales se persistían en `data/incidents.json`
+  // (FS efímero en serverless → pérdida total en cada despliegue; sin GET).
+  // Corregido por Decisión D ratificada por el propietario (2026-10-20,
+  // PR #1431): persistencia en `audit_logs` con action='legal_incident'
+  // (migración 20261020000005: índice parcial que sostiene el GET).
+  //
+  // Este test sustituye el `test.skip` obsoleto («Architecture issue...»)
+  // que impedía el cierre formal: verifica el COMPORTAMIENTO esperado de
+  // la Decisión D — el incidente POST se persiste de forma consultable
+  // (GET admin paginado por action) y la lectura queda restringida a admin.
+  test('[BUG-024 REGRESSION] incident POST persists (audit_logs) and only admin can list it', async ({ request }) => {
+    const user_headers = getAuthHeaders('user');
+    const admin_headers = getAuthHeaders('admin');
+    if (!user_headers || !admin_headers) { test.skip(true, 'Auth headers missing'); return; }
+
+    // 1) POST autenticado → 201 con id (BUG-017/018 ya cubiertos en otros tests).
+    //    Se usa la sesión ADMIN para el POST: los tests previos de este spec
+    //    (validaciones 400 ×5 y ráfaga concurrente BUG-018) consumen el bucket
+    //    5/min del usuario «cajero» — con el limiter distribuido el budget es
+    //    GLOBAL y predecible (antes: contadores aislados por instancia).
+    const marker = `BUG-024-E2E-${Date.now()}`;
+    const post = await request.post('/api/legal/incidents', {
+      headers: admin_headers,
+      data: {
+        title: `Regresión BUG-024 ${marker}`,
+        description: `Verificación de persistencia duradera (Decisión D): ${marker}. La escritura debe vivir en audit_logs y ser consultable por un administrador.`,
+        severity: 'low',
+      },
+    });
+    expect(post.status()).toBe(201);
+    const body = await post.json();
+    expect(body.success).toBe(true);
+    expect(body.incidentId).toBeTruthy();
+
+    // 2) GET admin → el incidente de este run ESTÁ persistido (paginación
+    //    primera página + fallback por si hay >limit incidentes)
+    const first = await request.get('/api/legal/incidents?limit=50&offset=0', { headers: admin_headers });
+    expect(first.status()).toBe(200);
+    const listBody = await first.json();
+    const allIncidents = listBody.incidents || listBody.data || [];
+    const found = Array.isArray(allIncidents) &&
+      allIncidents.some((i: { title?: string }) => (i.title || '').includes(marker));
+    expect(found).toBe(true);
+
+    // 3) GET usuario NO admin → 403 (el legajo es solo-admin)
+    const denied = await request.get('/api/legal/incidents?limit=10&offset=0', { headers: user_headers });
+    expect(denied.status()).toBe(403);
   });
 });

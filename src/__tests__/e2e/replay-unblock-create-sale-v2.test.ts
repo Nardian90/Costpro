@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 154 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 167 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -430,12 +430,19 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // devolución en divisa — total canónico en DEVOLUCION_VENTA (sin ×tasa) y
     // tasa efectiva exacta en las filas de reembolso (amount_cup = total canónico)
     // (20261114140000_cp_fin_ciclo_devolucion_divisa) = 160
-    // CP-RECEIPT-INTEGRITY-001 (2026-11-14): +1 trigger de inmutabilidad
-    // económica de receipt_items en recepciones confirmadas
+    // CP-RECEIPT-INTEGRITY-001 (2026-11-14, PR #1624): +1 receipt_items inmutable
+    // (trigger de protección de tasas/monedas de recepciones históricas)
     // (20261114160000_cp_receipt_items_immutable) = 161
-    expect(m.total_incluidos).toBe(161);
+    // CP-SECURITY-AND-BACKLOG-CLOSURE-001 (2026-11-14, PR #1625): +6 —
+    //   20261114180000_cp_sec_payroll_privacy (RLS por rol + gates RPC nómina)
+    //   20261114180100_cp_sec_privileges_minimo (REVOKE TRUNCATE/TRIGGER/REFERENCES)
+    //   20261114180200_cp_commission_constraint_dedup (restricción duplicada)
+    //   20261114180300_cp_infra_020_breaker_v2 (freno TRUNCATE fail-closed)
+    //   20261114180400_cp_sec_rate_limit_store (limiter distribuido)
+    //   20261114180500_cp_fix_legal_incidents_audit_whitelist (regresión BUG-024) = 167
+    expect(m.total_incluidos).toBe(167);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(161);
+    expect(incluidos.length).toBe(167);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
