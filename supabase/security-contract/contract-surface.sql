@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-14T14:51:32.401Z
+-- Captured  : 2026-11-14T17:22:50.689Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 208 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -143,7 +143,7 @@ $function$
 
 
 -- @contract-function name=activate_master_product args="p_master_id uuid, p_store_id uuid, p_user_id uuid, p_operational_class product_operational_class" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.activate_master_product(p_master_id uuid, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_operational_class product_operational_class DEFAULT NULL::product_operational_class)
+CREATE OR REPLACE FUNCTION public.activate_master_product(p_master_id uuid, p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_operational_class product_operational_class DEFAULT 'venta'::product_operational_class)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -4345,7 +4345,7 @@ $function$
 
 
 -- @contract-function name=create_master_product args="p_store_id uuid, p_sku text, p_name text, p_description text, p_image_path text, p_barcode text, p_barcode_type text, p_unit_of_measure text, p_is_service boolean, p_local jsonb, p_user_id uuid, p_operational_class product_operational_class" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_master_product(p_store_id uuid, p_sku text, p_name text, p_description text DEFAULT NULL::text, p_image_path text DEFAULT NULL::text, p_barcode text DEFAULT NULL::text, p_barcode_type text DEFAULT NULL::text, p_unit_of_measure text DEFAULT 'unidad'::text, p_is_service boolean DEFAULT false, p_local jsonb DEFAULT '{}'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_operational_class product_operational_class DEFAULT NULL::product_operational_class)
+CREATE OR REPLACE FUNCTION public.create_master_product(p_store_id uuid, p_sku text, p_name text, p_description text DEFAULT NULL::text, p_image_path text DEFAULT NULL::text, p_barcode text DEFAULT NULL::text, p_barcode_type text DEFAULT NULL::text, p_unit_of_measure text DEFAULT 'unidad'::text, p_is_service boolean DEFAULT false, p_local jsonb DEFAULT '{}'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_operational_class product_operational_class DEFAULT 'venta'::product_operational_class)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -9717,6 +9717,11 @@ DECLARE
   v_barcode_type text;
   v_uom text;
   v_oc text;
+  v_oc_was_default boolean;
+  v_ca_seed numeric;
+  v_ca_origin text;
+  v_nominal_cost int := 0;
+  v_venta_default int := 0;
   v_row_is_active boolean;
   v_is_service boolean;
   v_constraint text;
@@ -9801,6 +9806,7 @@ BEGIN
       v_barcode_type := NULLIF(btrim(COALESCE(v_row->>'barcode_type', '')), '');
       v_uom := NULLIF(btrim(COALESCE(v_row->>'unit_of_measure', '')), '');
       v_oc := NULLIF(btrim(COALESCE(v_row->>'operational_class', '')), '');
+      v_oc_was_default := (v_oc IS NULL);
       v_is_service := COALESCE((v_row->>'is_service')::boolean, false);
       v_row_is_active := COALESCE((v_row->>'is_active')::boolean, true);
 
@@ -9822,6 +9828,32 @@ BEGIN
           'detail', 'clasificación operativa no válida: ' || v_oc
             || ' (válidas: venta, insumo, activo_fijo, util_herramienta)');
         CONTINUE;
+      END IF;
+
+      -- CP-POST-MERGE-002 §3 (decisión del propietario): ningún producto sin
+      -- clasificación. Celda vacía → 'venta'. El DEFAULT de la columna cubre
+      -- los INSERT que omiten el campo, no los que envían NULL explícito:
+      -- aquí se resuelve ANTES de la escritura (sin NULLs que lo anulen).
+      v_oc := COALESCE(v_oc, 'venta');
+
+      -- CP-POST-MERGE-002 §2: nunca un costo promedio (WAC, en CUP) cero
+      -- silencioso en productos NUEVOS.
+      --   · costo importado CUP > 0 → seed = costo (WAC inicial documentado;
+      --     una recepción posterior lo recalcula por blend D-01).
+      --   · costo ausente o cero → asignación NOMINAL 1 CUP (decisión del
+      --     propietario, adenda 002 §2), contada y reportada por fila.
+      --   · costo > 0 en moneda ≠ CUP → NO se siembra (el WAC es CUP; sin
+      --     tasa documental no se convierte): se reporta por fila como
+      --     pendiente de WAC (visibilidad, nunca silencio).
+      IF v_currency = 'CUP' AND v_cost > 0 THEN
+        v_ca_seed := v_cost;
+        v_ca_origin := 'imported_cost_cup';
+      ELSIF v_cost = 0 THEN
+        v_ca_seed := 1;
+        v_ca_origin := 'nominal_1cup_owner_rule';
+      ELSE
+        v_ca_seed := NULL;
+        v_ca_origin := 'non_cup_cost_not_seeded_pending_wac';
       END IF;
 
       -- ── Identidad compartida: garantizar el maestro por (tenant, sku) ──
@@ -9871,14 +9903,14 @@ BEGIN
       -- ── Fila local de la tienda (alta o refresco idempotente) ──
       INSERT INTO public.products
         (store_id, tenant_id, master_product_id, sku, name, description, image_url,
-         unit_of_measure, is_service, price, price_currency, cost_price, min_stock,
+         unit_of_measure, is_service, price, price_currency, cost_price, cost_average, min_stock,
          stock_current, is_active, is_complete, category, supplier,
          barcode, barcode_type, operational_class)
       VALUES
         (p_store_id, v_tenant, v_master_id, v_sku, v_name, v_row->>'description',
          v_row->>'image_url',
          COALESCE(v_uom, 'unidad'),
-         v_is_service, v_price, v_currency, v_cost, v_min_stock,
+         v_is_service, v_price, v_currency, v_cost, COALESCE(v_ca_seed, 0), v_min_stock,
          0, v_row_is_active, true,
          NULLIF(btrim(COALESCE(v_row->>'category', '')), ''),
          NULLIF(btrim(COALESCE(v_row->>'supplier', '')), ''),
@@ -9899,7 +9931,9 @@ BEGIN
         barcode = EXCLUDED.barcode,
         barcode_type = EXCLUDED.barcode_type,
         master_product_id = COALESCE(EXCLUDED.master_product_id, public.products.master_product_id),
-        operational_class = COALESCE(EXCLUDED.operational_class, public.products.operational_class),
+        operational_class = CASE WHEN v_oc_was_default
+                                 THEN public.products.operational_class
+                                 ELSE EXCLUDED.operational_class END,
         updated_at = now()
       RETURNING id, (xmax = 0) INTO v_product_id, v_was_inserted;
 
@@ -9908,6 +9942,12 @@ BEGIN
       IF v_was_inserted THEN
         v_created := v_created + 1;
         v_action := 'created';
+        IF v_oc_was_default THEN
+          v_venta_default := v_venta_default + 1;
+        END IF;
+        IF v_ca_origin = 'nominal_1cup_owner_rule' THEN
+          v_nominal_cost := v_nominal_cost + 1;
+        END IF;
       ELSE
         v_updated := v_updated + 1;
         v_action := 'updated';
@@ -9917,7 +9957,10 @@ BEGIN
         'row', v_idx, 'sku', v_sku, 'action', v_action,
         'product_id', v_product_id,
         'master_product_id', v_master_id,
-        'master_created', v_master_created_this_row);
+        'master_created', v_master_created_this_row,
+        'operational_class', v_oc,
+        'operational_class_default_applied', v_oc_was_default,
+        'cost_average_origin', v_ca_origin);
 
       -- Auditoría por fila (acción de tienda: store_id satisface el check)
       INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
@@ -9926,7 +9969,9 @@ BEGIN
          jsonb_build_object('sku', v_sku, 'action', v_action,
                             'catalog_connected', v_connected,
                             'master_product_id', v_master_id,
-                            'master_created', v_master_created_this_row));
+                            'master_created', v_master_created_this_row,
+                            'operational_class', v_oc,
+                            'cost_average_origin', v_ca_origin));
 
     EXCEPTION
       WHEN unique_violation THEN
@@ -9987,6 +10032,8 @@ BEGIN
     'updated_products', v_updated,
     'masters_created', v_masters_created,
     'masters_reused', v_masters_reused,
+    'nominal_cost_assigned', v_nominal_cost,
+    'venta_default_applied', v_venta_default,
     'errors', v_errors,
     'results', v_results,
     'audit_actor', v_caller_uid
@@ -14071,81 +14118,6 @@ END;
 $function$
 
 
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
-$function$
-
-
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -14369,6 +14341,81 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
+$function$
+
+
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
 $function$
 
 

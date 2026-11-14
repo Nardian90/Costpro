@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 168 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 172 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -440,12 +440,17 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261114180300_cp_infra_020_breaker_v2 (freno TRUNCATE fail-closed)
     //   20261114180400_cp_sec_rate_limit_store (limiter distribuido)
     //   20261114180500_cp_fix_legal_incidents_audit_whitelist (regresión BUG-024) = 167
+    // CP-POST-MERGE-EXECUTION-002 (2026-11-14, adenda del propietario): +4 —
+    //   20261114190000_cp_cost_nominal_1cup (1 CUP nominal a costos promedio cero)
+    //   20261114190100_cp_operational_class_venta_prod (clasificación venta)
+    //   20261114190200_cp_import_flow_recurrence_fix (fix reincidencia importador)
+    //   20261114190300_cp_cost_audit_rls (RLS deny-all tabla auditoría 1 CUP) = 171
     // CP-FIN-FINAL-CLOSE-005 (2026-11-15, PR #1628): +1 salvaguarda T12 de
     // reversión parcial vs anulación automática — guard de cobertura del motor
-    // + trigger BEFORE en receipts (20261115100000_cp_fin_t12_partial_reversal_guard) = 168
-    expect(m.total_incluidos).toBe(168);
+    // + trigger BEFORE en receipts (20261115100000_cp_fin_t12_partial_reversal_guard) = 172
+    expect(m.total_incluidos).toBe(172);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(168);
+    expect(incluidos.length).toBe(172);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

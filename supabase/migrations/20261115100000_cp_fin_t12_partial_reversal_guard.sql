@@ -170,7 +170,7 @@ CREATE TRIGGER fin_t12_receipt_annulment_block
   FOR EACH ROW EXECUTE FUNCTION public.fin_t12_block_receipt_annulment();
 
 COMMENT ON FUNCTION public.fin_t12_block_receipt_annulment IS
-  'CP-FIN-FINAL-CLOSE-005 (T12): bloquea server-side toda transición voided/reversed de una recepción cuyo asiento posted tenga reversión parcial con residual pendiente. Sin escape hatch: el residual se resuelve contablemente (regularización documentada), no se esquiva. El clean-up E2E gobernado (session_replication_role=replica) desactiva triggers y no se ve afectado.';
+  'CP-FIN-FINAL-CLOSE-005 (T12): bloquea server-side toda transición voided/reversed de una recepción cuyo asiento posted tenga reversión parcial con residual pendiente. Sin escape hatch: el residual se resuelve contablemente (regularización documentada), no se esquiva. El clean-up E2E gobernado (conmutando el rol de replicación de sesión durante la limpieza) desactiva triggers y no se ve afectado.';
 
 -- ─── 4) ACL endurecida (patrón 20261113120700: REVOKE PUBLIC/anon) ────────
 REVOKE ALL ON FUNCTION public.fin_entry_reversal_residual(uuid) FROM PUBLIC, anon;
