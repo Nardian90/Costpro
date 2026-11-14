@@ -1,0 +1,59 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:38:23.083Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT s.name AS store, count(*)::int AS n   FROM public.products p JOIN public.stores s ON s.id = p.store_id  WHERE (p.",
+      "rows": [
+        {
+          "store": "ENERVIDA-VITALLCONS",
+          "n": 40
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT s.name AS store, count(*)::int AS n   FROM public.products p JOIN public.stores s ON s.id = p.store_id  WHERE (p.",
+      "rows": [
+        {
+          "store": "ENERVIDA-VITALLCONS",
+          "n": 4
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT s.name AS store, count(*)::int AS n   FROM public.products p JOIN public.stores s ON s.id = p.store_id  WHERE (p.",
+      "rows": [
+        {
+          "store": "ENERVIDA-VITALLCONS",
+          "n": 67
+        },
+        {
+          "store": "PUERTO PADRE",
+          "n": 44
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT count(*)::int AS de_los_71_con_wac_1   FROM public.products p JOIN public.stores s ON s.id = p.store_id  WHERE s.",
+      "rows": [
+        {
+          "de_los_71_con_wac_1": 38
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT count(*)::int AS pp_stock_sin_recepcion   FROM public.products p JOIN public.stores s ON s.id = p.store_id  WHERE",
+      "rows": [
+        {
+          "pp_stock_sin_recepcion": 0
+        }
+      ]
+    }
+  ]
+}

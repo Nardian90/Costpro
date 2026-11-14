@@ -1,0 +1,405 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:34:07.115Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT version, file, applied_at, mechanism, status, notes   FROM public.production_migration_ledger  ORDER BY version",
+      "rows": [
+        {
+          "version": "20260811000010",
+          "file": "supabase/migrations/20260811000010_pr4_4g_fix_usd_visualization.sql",
+          "applied_at": "2026-11-08 18:00:36.748874+00",
+          "mechanism": "agent_sql",
+          "status": "applied",
+          "notes": "NO ejecutada: YA APLICADA con anterioridad (get_transactions ya devolvía columnas USD — verificado por catálogo 2026-11-08 antes de la misión). Registro por trazabilidad."
+        },
+        {
+          "version": "20261020000004",
+          "file": "supabase/migrations/20261020000004_cogs_derived.sql",
+          "applied_at": "2026-11-08 18:00:36.160714+00",
+          "mechanism": "agent_sql",
+          "status": "applied",
+          "notes": "Aplicada el 2026-11-08 por COSTPRO-FINAL-CYCLE-CLOSE-001 T2.2. Columnas unit_cost_derived* + backfill: 9 derived (con evidencia wac_change_log), 624 not_derivable, 1104 nulos por diseño (fuera del alcance derivable). Idempotente."
+        },
+        {
+          "version": "20261020000005",
+          "file": "supabase/migrations/20261020000005_legal_incidents_index.sql",
+          "applied_at": "2026-11-08 18:00:36.358437+00",
+          "mechanism": "agent_sql",
+          "status": "applied",
+          "notes": "Aplicada el 2026-11-08 por COSTPRO-FINAL-CYCLE-CLOSE-001 T2.2. Índice parcial idx_audit_logs_legal_incident_created_at verificado por catálogo."
+        },
+        {
+          "version": "20261022000001",
+          "file": "supabase/migrations/20261022000001_cp_sec_003_products_update_policy_consolidation.sql",
+          "applied_at": "2026-11-08 17:59:40.766441+00",
+          "mechanism": "owner_manual",
+          "status": "applied",
+          "notes": "CP-SEC-003 consolidación de política UPDATE de products. Aplicada en producción 2026-11-04 con compuerta literal del propietario (opción B)."
+        },
+        {
+          "version": "20261022000002",
+          "file": "supabase/migrations/20261022000002_cp_ui_001_commission_payments_no_overlap.sql",
+          "applied_at": "2026-11-08 17:59:40.766441+00",
+          "mechanism": "owner_manual",
+          "status": "applied",
+          "notes": "CP-UI-001 opción B: restricción de exclusión commission_payments_no_overlap. Aplicada en producción 2026-11-04. NOTA T3: está DUPLICADA con no_overlapping_periods (20260714000001); su retirada planificada requiere la frase AUTORIZO UI-001 LIMPIEZA PROD."
+        },
+        {
+          "version": "20261028112100",
+          "file": "supabase/migrations/20261028112100_cp_catalogo_rpcs_ciclo_vida.sql",
+          "applied_at": "2026-11-08 18:00:36.553604+00",
+          "mechanism": "agent_sql",
+          "status": "applied",
+          "notes": "Aplicada el 2026-11-08 por COSTPRO-FINAL-CYCLE-CLOSE-001 T2.2 (reconciliación parcial→completa: faltaban propose_master_change y review_master_proposal; 6/6 RPCs verificadas)."
+        },
+        {
+          "version": "20261103000001",
+          "file": "supabase/migrations/20261103000001_cp_sec_026_membership_audit_trigger.sql",
+          "applied_at": "2026-11-08 17:59:40.766441+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "CP-SEC-026: trigger de auditoría de membresías (trg_sec026_membership_audit). Aplicada con verificación por catálogo."
+        },
+        {
+          "version": "20261105130000",
+          "file": "supabase/migrations/20261105130000_cp_clasificador_maestro_base.sql",
+          "applied_at": "2026-11-08 18:00:36.944142+00",
+          "mechanism": "agent_sql",
+          "status": "applied",
+          "notes": "NO ejecutada: YA APLICADA con anterioridad (master_parties/party_store_links/party_change_log presentes — verificado por catálogo 2026-11-08). Registro por trazabilidad."
+        },
+        {
+          "version": "20261106130000",
+          "file": "supabase/migrations/20261106130000_production_migration_ledger.sql",
+          "applied_at": "2026-11-08 17:59:42.28661+00",
+          "mechanism": "agent_sql",
+          "status": "applied",
+          "notes": "COSTPRO-FINAL-CYCLE-CLOSE-001 T2: tabla del libro (RLS deny-all + trigger append-only verificados; grants a anon/authenticated revocados explícitamente)."
+        },
+        {
+          "version": "20261108140000",
+          "file": "supabase/migrations/20261108140000_data_integrity_remediation_001_soft_refs.sql",
+          "applied_at": "2026-11-08 17:59:41.433625+00",
+          "mechanism": "agent_sql",
+          "status": "applied",
+          "notes": "COSTPRO-FINAL-CYCLE-CLOSE-001 T3: referencias suaves (72 versiones + 10 PO items) + triggers de marcado/validación. Aplicada con transacción única y verificación por catálogo (audit-evidence/FINAL-CYCLE-CLOSE-001/T3-secuencia-integridad.md)."
+        },
+        {
+          "version": "20261108140100",
+          "file": "supabase/migrations/20261108140100_data_integrity_remediation_001_storage_reconcile.sql",
+          "applied_at": "2026-11-08 17:59:41.647295+00",
+          "mechanism": "agent_sql",
+          "status": "applied",
+          "notes": "COSTPRO-FINAL-CYCLE-CLOSE-001 T3: auditoría del falso positivo Storage (31 objetos fantasma). Sin DML sobre storage.objects."
+        },
+        {
+          "version": "20261108140200",
+          "file": "supabase/migrations/20261108140200_data_integrity_remediation_001_prevention.sql",
+          "applied_at": "2026-11-08 17:59:41.860323+00",
+          "mechanism": "agent_sql",
+          "status": "applied",
+          "notes": "COSTPRO-FINAL-CYCLE-CLOSE-001 T3: check_data_integrity + reconcile_storage_metadata + trigger stores. Los permisos a authenticated fueron endurecidos inmediatamente después por 140300 (secuencia controlada)."
+        },
+        {
+          "version": "20261108140300",
+          "file": "supabase/migrations/20261108140300_data_integrity_remediation_001_rpc_permissions.sql",
+          "applied_at": "2026-11-08 17:59:42.07357+00",
+          "mechanism": "agent_sql",
+          "status": "applied",
+          "notes": "COSTPRO-FINAL-CYCLE-CLOSE-001 T1: REVOKE EXECUTE a authenticated en RPC de diagnóstico SECURITY DEFINER; gate service_role|superadmin. Aislamiento verificado en CostproE2E (anon 42501 / authenticated 403 / service_role 200)."
+        },
+        {
+          "version": "20261111120000",
+          "file": "supabase/migrations/20261111120000_cp_catalogo_master_gestion_tienda.sql",
+          "applied_at": "2026-11-11 00:00:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): aplicada el 11/11 sin fila en el libro; SHA del expediente de aplicación. Hora exacta no registrada en el expediente — se asienta la fecha documentada."
+        },
+        {
+          "version": "20261111130000",
+          "file": "supabase/migrations/20261111130000_cp_data_integrity_trigger_acl_normalization.sql",
+          "applied_at": "2026-11-11 00:00:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): aplicación conjunta del 11/11 («+ normalización de ACL», mismo expediente). Hora exacta no registrada."
+        },
+        {
+          "version": "20261112120000",
+          "file": "supabase/migrations/20261112120000_cp_catalogo_sku_inmutable.sql",
+          "applied_at": "2026-11-12 00:00:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): aplicada el 12/11 (m012) sin fila; SHA idéntico al verificado en aislada (36/36). Hora exacta no registrada en el expediente."
+        },
+        {
+          "version": "20261112180000",
+          "file": "supabase/migrations/20261112180000_cp_payrolls_sc406.sql",
+          "applied_at": "2026-11-12 00:00:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): aplicada el 12/11 (m013) sin fila; verificación aislada 54/54 + API 39/39. Hora exacta no registrada."
+        },
+        {
+          "version": "20261113120000",
+          "file": "supabase/migrations/20261113120000_cp_fin_partida_doble_base.sql",
+          "applied_at": "2026-11-13 14:18:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): lote 1 m014 (CP-FIN base) — 14/14 verificaciones OK del expediente."
+        },
+        {
+          "version": "20261113120100",
+          "file": "supabase/migrations/20261113120100_cp_fin_partida_doble_motor.sql",
+          "applied_at": "2026-11-13 14:18:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): lote 1 m014 (motor CP-FIN) — hora del inicio del lote documentado (14:18–14:22 UTC)."
+        },
+        {
+          "version": "20261113120200",
+          "file": "supabase/migrations/20261113120200_cp_fin_endurecimiento_rls.sql",
+          "applied_at": "2026-11-13 14:18:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): lote 1 m014 (RLS FORCED) — hora del inicio del lote documentado (14:18–14:22 UTC)."
+        },
+        {
+          "version": "20261113120300",
+          "file": "supabase/migrations/20261113120300_cp_fin_triggers_diferidos.sql",
+          "applied_at": "2026-11-13 15:12:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): lote 2 m015 (triggers diferidos) — 10/10 OK."
+        },
+        {
+          "version": "20261113120400",
+          "file": "supabase/migrations/20261113120400_cp_fin_fix_metricas_nomina_flujo.sql",
+          "applied_at": "2026-11-13 15:12:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): lote 2 m015 (métricas) — hora documentada del lote (15:12 UTC)."
+        },
+        {
+          "version": "20261113120500",
+          "file": "supabase/migrations/20261113120500_cp_fin_fix_sentidos_pago.sql",
+          "applied_at": "2026-11-13 15:12:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): lote 2 m015 (sentidos de pago) — hora documentada del lote (15:12 UTC)."
+        },
+        {
+          "version": "20261113120600",
+          "file": "supabase/migrations/20261113120600_cp_fin_fix_audit_logs_check.sql",
+          "applied_at": "2026-11-13 15:12:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): lote 2 m015 (whitelist audit_logs) — hora documentada del lote (15:12 UTC)."
+        },
+        {
+          "version": "20261113120700",
+          "file": "supabase/migrations/20261113120700_cp_fin_fix_acl_funciones.sql",
+          "applied_at": "2026-11-13 15:20:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): lote 3 m016 (ACL funciones) — 4/4 OK."
+        },
+        {
+          "version": "20261113120800",
+          "file": "supabase/migrations/20261113120800_fix_servicios_recibidos_moneda_documento.sql",
+          "applied_at": "2026-11-14 00:49:37.650268+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "MISIÓN MAESTRA CP-FIN (autorización general del propietario 2026-11-13 §1/§4.B); validada en BD aislada (PR #1612: 14/14 · #1615: 23/23 · #1616: 37/37, NET DELTA 0). Aplicada por m017 con verificación fail-closed y delta 0."
+        },
+        {
+          "version": "20261113140000",
+          "file": "supabase/migrations/20261113140000_cp_products_audit_store_id.sql",
+          "applied_at": "2026-11-13 00:00:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): SKU 197 aplicada el 13/11 (PR #1613) — objetos verificados read-only en producción (managed_delete_product / managed_toggle_product_active). Hora exacta no registrada."
+        },
+        {
+          "version": "20261113140100",
+          "file": "supabase/migrations/20261113140100_cp_catalogo_importador_maestro.sql",
+          "applied_at": "2026-11-13 00:00:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): SKU 197 (importador maestro) — managed_bulk_import_products verificada en producción. Hora exacta no registrada."
+        },
+        {
+          "version": "20261113140200",
+          "file": "supabase/migrations/20261113140200_cp_fin_acl_reconcile.sql",
+          "applied_at": "2026-11-13 00:00:00+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "REGULARIZACIÓN (m017): SKU 197 (reconciliación ACL Capa C fin_*) — commit fa3abdad2 del PR #1613; el expediente la registra como aplicada (no-op en producción: replica la ACL viva). Hora exacta no registrada."
+        },
+        {
+          "version": "20261114120000",
+          "file": "supabase/migrations/20261114120000_cp_fin_semantica_total_amount_cup.sql",
+          "applied_at": "2026-11-14 00:49:39.543284+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "MISIÓN MAESTRA CP-FIN (autorización general del propietario 2026-11-13 §1/§4.B); validada en BD aislada (PR #1612: 14/14 · #1615: 23/23 · #1616: 37/37, NET DELTA 0). Aplicada por m017 con verificación fail-closed y delta 0."
+        },
+        {
+          "version": "20261114140000",
+          "file": "supabase/migrations/20261114140000_cp_fin_ciclo_devolucion_divisa.sql",
+          "applied_at": "2026-11-14 00:49:41.428653+00",
+          "mechanism": "management_api",
+          "status": "applied",
+          "notes": "MISIÓN MAESTRA CP-FIN (autorización general del propietario 2026-11-13 §1/§4.B); validada en BD aislada (PR #1612: 14/14 · #1615: 23/23 · #1616: 37/37, NET DELTA 0). Aplicada por m017 con verificación fail-closed y delta 0."
+        },
+        {
+          "version": "BASELINE-2026-11-06",
+          "file": "(baseline: estado del catálogo medido por T0)",
+          "applied_at": "2026-11-08 17:59:40.766441+00",
+          "mechanism": "owner_manual",
+          "status": "baseline",
+          "notes": "Todo lo anterior a esta fecha tiene PROCEDENCIA NO REGISTRADA en producción: 534 migraciones SQL en el repo, 12 filas en supabase_migrations.schema_migrations (última 20260615000003). El estado real está en la huella T0 (309 funciones SECURITY DEFINER) y en la deriva documentada (docs/audits/DERIVA_PRODUCCION_VS_REPO_2026-11-06.md). A partir de aquí: todo cambio de esquema = migración versionada + fila en este libro + evidencia + informe de deriva posterior."
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT version FROM supabase_migrations.schema_migrations ORDER BY version",
+      "rows": [
+        {
+          "version": "202401230001"
+        },
+        {
+          "version": "20260612000000"
+        },
+        {
+          "version": "20260612000001"
+        },
+        {
+          "version": "20260613000001"
+        },
+        {
+          "version": "20260614000001"
+        },
+        {
+          "version": "20260614000002"
+        },
+        {
+          "version": "20260614000003"
+        },
+        {
+          "version": "20260614000004"
+        },
+        {
+          "version": "20260614000005"
+        },
+        {
+          "version": "20260615000001"
+        },
+        {
+          "version": "20260615000002"
+        },
+        {
+          "version": "20260615000003"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT pg_get_userbyid(defaclrole) AS grantor_role, defaclnamespace::regnamespace AS schema, defaclobjtype, defaclacl   ",
+      "rows": [
+        {
+          "grantor_role": "postgres",
+          "schema": "public",
+          "defaclobjtype": "r",
+          "defaclacl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}"
+        },
+        {
+          "grantor_role": "postgres",
+          "schema": "public",
+          "defaclobjtype": "f",
+          "defaclacl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+        },
+        {
+          "grantor_role": "postgres",
+          "schema": "public",
+          "defaclobjtype": "S",
+          "defaclacl": "{postgres=rwU/postgres,anon=rwU/postgres,authenticated=rwU/postgres,service_role=rwU/postgres}"
+        },
+        {
+          "grantor_role": "supabase_admin",
+          "schema": "public",
+          "defaclobjtype": "S",
+          "defaclacl": "{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}"
+        },
+        {
+          "grantor_role": "supabase_admin",
+          "schema": "public",
+          "defaclobjtype": "r",
+          "defaclacl": "{postgres=arwdDxtm/supabase_admin,anon=arwdDxtm/supabase_admin,authenticated=arwdDxtm/supabase_admin,service_role=arwdDxtm/supabase_admin}"
+        },
+        {
+          "grantor_role": "supabase_admin",
+          "schema": "public",
+          "defaclobjtype": "f",
+          "defaclacl": "{postgres=X/supabase_admin,anon=X/supabase_admin,authenticated=X/supabase_admin,service_role=X/supabase_admin}"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT rolname, has_schema_privilege(rolname, 'public', 'CREATE') AS can_create   FROM pg_roles  WHERE rolname IN ('post",
+      "rows": [
+        {
+          "rolname": "authenticated",
+          "can_create": false
+        },
+        {
+          "rolname": "anon",
+          "can_create": false
+        },
+        {
+          "rolname": "service_role",
+          "can_create": false
+        },
+        {
+          "rolname": "supabase_admin",
+          "can_create": true
+        },
+        {
+          "rolname": "postgres",
+          "can_create": true
+        },
+        {
+          "rolname": "supabase_auth_admin",
+          "can_create": false
+        },
+        {
+          "rolname": "supabase_storage_admin",
+          "can_create": false
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT count(*)::int AS public_tables FROM pg_tables WHERE schemaname = 'public'",
+      "rows": [
+        {
+          "public_tables": 178
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT extname FROM pg_extension WHERE extname IN ('btree_gist','pg_cron')",
+      "rows": [
+        {
+          "extname": "btree_gist"
+        }
+      ]
+    }
+  ]
+}

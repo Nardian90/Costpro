@@ -1,0 +1,207 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-14T13:41:12.471Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT routine_name, grantee   FROM information_schema.routine_privileges  WHERE routine_schema='public'    AND routine_",
+      "rows": [
+        {
+          "routine_name": "set_worker_salary_rate",
+          "grantee": "authenticated"
+        },
+        {
+          "routine_name": "set_worker_salary_rate",
+          "grantee": "postgres"
+        },
+        {
+          "routine_name": "set_worker_salary_rate",
+          "grantee": "service_role"
+        },
+        {
+          "routine_name": "update_payroll",
+          "grantee": "authenticated"
+        },
+        {
+          "routine_name": "update_payroll",
+          "grantee": "postgres"
+        },
+        {
+          "routine_name": "update_payroll",
+          "grantee": "service_role"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT count(*)::int AS rules, count(salary_amount)::int AS con_salary, count(*) FILTER (WHERE salary_amount > 0)::int A",
+      "rows": [
+        {
+          "rules": 1,
+          "con_salary": 0,
+          "salary_positivo": 0
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT grantee, privilege_type FROM information_schema.table_privileges  WHERE table_schema='public' AND table_name='com",
+      "rows": [
+        {
+          "grantee": "anon",
+          "privilege_type": "INSERT"
+        },
+        {
+          "grantee": "anon",
+          "privilege_type": "SELECT"
+        },
+        {
+          "grantee": "anon",
+          "privilege_type": "UPDATE"
+        },
+        {
+          "grantee": "anon",
+          "privilege_type": "DELETE"
+        },
+        {
+          "grantee": "anon",
+          "privilege_type": "TRUNCATE"
+        },
+        {
+          "grantee": "anon",
+          "privilege_type": "REFERENCES"
+        },
+        {
+          "grantee": "anon",
+          "privilege_type": "TRIGGER"
+        },
+        {
+          "grantee": "authenticated",
+          "privilege_type": "INSERT"
+        },
+        {
+          "grantee": "authenticated",
+          "privilege_type": "SELECT"
+        },
+        {
+          "grantee": "authenticated",
+          "privilege_type": "UPDATE"
+        },
+        {
+          "grantee": "authenticated",
+          "privilege_type": "DELETE"
+        },
+        {
+          "grantee": "authenticated",
+          "privilege_type": "TRUNCATE"
+        },
+        {
+          "grantee": "authenticated",
+          "privilege_type": "REFERENCES"
+        },
+        {
+          "grantee": "authenticated",
+          "privilege_type": "TRIGGER"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT tablename, policyname, cmd, roles FROM pg_policies  WHERE schemaname='public' AND tablename IN ('commission_rules",
+      "rows": [
+        {
+          "tablename": "commission_rules",
+          "policyname": "commission_rules_delete",
+          "cmd": "DELETE",
+          "roles": "{authenticated}"
+        },
+        {
+          "tablename": "commission_rules",
+          "policyname": "commission_rules_insert",
+          "cmd": "INSERT",
+          "roles": "{authenticated}"
+        },
+        {
+          "tablename": "commission_rules",
+          "policyname": "commission_rules_select",
+          "cmd": "SELECT",
+          "roles": "{authenticated}"
+        },
+        {
+          "tablename": "commission_rules",
+          "policyname": "commission_rules_service_role_all",
+          "cmd": "ALL",
+          "roles": "{service_role}"
+        },
+        {
+          "tablename": "commission_rules",
+          "policyname": "commission_rules_tenant_select",
+          "cmd": "SELECT",
+          "roles": "{authenticated}"
+        },
+        {
+          "tablename": "commission_rules",
+          "policyname": "commission_rules_update",
+          "cmd": "UPDATE",
+          "roles": "{authenticated}"
+        },
+        {
+          "tablename": "workers",
+          "policyname": "workers_delete_admin",
+          "cmd": "DELETE",
+          "roles": "{authenticated}"
+        },
+        {
+          "tablename": "workers",
+          "policyname": "workers_insert_admin_manager",
+          "cmd": "INSERT",
+          "roles": "{authenticated}"
+        },
+        {
+          "tablename": "workers",
+          "policyname": "workers_select_authenticated",
+          "cmd": "SELECT",
+          "roles": "{authenticated}"
+        },
+        {
+          "tablename": "workers",
+          "policyname": "workers_service_role_all",
+          "cmd": "ALL",
+          "roles": "{service_role}"
+        },
+        {
+          "tablename": "workers",
+          "policyname": "workers_tenant_select",
+          "cmd": "SELECT",
+          "roles": "{authenticated}"
+        },
+        {
+          "tablename": "workers",
+          "policyname": "workers_update_admin_manager",
+          "cmd": "UPDATE",
+          "roles": "{authenticated}"
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT count(*)::int AS workers FROM public.workers",
+      "rows": [
+        {
+          "workers": 54
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT s.name, count(*)::int AS rates   FROM public.worker_salary_rates wsr JOIN public.stores s ON s.id = wsr.store_id ",
+      "rows": [
+        {
+          "name": "COSTPRO (Prueba)",
+          "rates": 1
+        }
+      ]
+    }
+  ]
+}
