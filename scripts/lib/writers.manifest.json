@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-15 — CP-FIN-T12-PR-CLOSE-007: m057 declarado READ-ONLY (verificación pre/post-merge para cierre del PR #1630 — solo SELECT por Management API con guard de ref de producción en línea). Hereda de CP-FIN-T12-PRODUCTION-MIGRATION-006: m055 guardProtected; m054/m056 READ-ONLY.",
+  "_updated": "2026-11-16 CP-FIN-T12-PR-CLOSE-007: m057 READ-ONLY (verificación pre/post-merge del cierre PR #1630, solo SELECT + guard de ref). Integra la línea de CP-VALUATION-NOMINAL-ACTIVATION-004 (2026-11-15): + scripts/val004-apply-prod.mjs guardProtected (doble flag operador + assert-not-production) + val004-apply-e2e.mjs y val004-e2e-prototype.mjs isolationProtected. Hereda de CP-FIN-T12-PRODUCTION-MIGRATION-006: m055 guardProtected; m054/m056 READ-ONLY.",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -41,6 +41,7 @@
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
     "scripts/seed-pick3-history.js",
+    "scripts/val004-apply-prod.mjs",
     "scripts/validar-ciclo-divisa-devoluciones.mjs",
     "scripts/validar-fix-17-1-servicios-usd.mjs",
     "scripts/validar-fix-dryrun-pagos.mjs",
@@ -65,12 +66,14 @@
     "scripts/m049-rect003-faseV-e2e-prototipo.mjs",
     "scripts/m050d-rect004-reversal-semantics.mjs",
     "scripts/m050e-rect004-e2e-prototipo.mjs",
+    "scripts/m052-t12-guard-regression.mjs",
+    "scripts/m052c-t12-sqlbat-pg.mjs",
     "scripts/provision-e2e-offers-identity.mjs",
     "scripts/rate-limit-concurrency-proof.mjs",
     "scripts/sc006-e2e-verification.mjs",
     "scripts/sc006-real-reception-evidence.mjs",
-    "scripts/m052-t12-guard-regression.mjs",
-    "scripts/m052c-t12-sqlbat-pg.mjs"
+    "scripts/val004-apply-e2e.mjs",
+    "scripts/val004-e2e-prototype.mjs"
   ],
   "exceptions": {
     "scripts/audit_kardex_live.cjs": "Herramienta histórica de una misión puntual ya ejecutada (one-shot, evidenciada en docs/audits/): señales de escritura en SQL/strings/fetch pero sin flujo productivo recurrente. No se cablea el guard en este PR (alcance limitado a los defectos demostrados); re-ejecutarla contra producción exige hoy revisión manual explícita.",
