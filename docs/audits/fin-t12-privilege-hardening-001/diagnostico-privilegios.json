@@ -1,0 +1,381 @@
+{
+  "mision": "CP-FIN-T12-PRIVILEGE-HARDENING-001",
+  "script": "m054-fin-t12-privilege-diagnostico.mjs",
+  "fecha_utc": "2026-11-15T18:23:37.761Z",
+  "modo": "READ-ONLY — Management API /database/query, SOLO SELECT",
+  "origen": "wthkddeleylijmonclxg (producción) · guard ref OK",
+  "libro_migraciones": [
+    {
+      "id": 63,
+      "version": "20261115120100",
+      "file": "supabase/migrations/20261115120100_cp_valuation_activation_nominal.sql",
+      "sha256": "c65eb82a83d87cdc6bc8a65d5e17f6bafe38a39d525824dce3ab019b91991014",
+      "applied_at": "2026-11-15 13:02:39.0588+00",
+      "mechanism": "management_api",
+      "evidence": "audit-evidence/CP-VALUATION-NOMINAL-ACTIVATION-004",
+      "applied_by": "agent-cp-valuation-nominal-activation-004",
+      "status": "applied",
+      "notes": "CP-VALUATION-NOMINAL-ACTIVATION-004: autorización expresa del propietario (adenda 2026-11-15); aplicada en lote único atómico con verificación fail-closed interna"
+    },
+    {
+      "id": 62,
+      "version": "20261115120000",
+      "file": "supabase/migrations/20261115120000_cp_valuation_nominal_pp64.sql",
+      "sha256": "293e86b8c6a36a1b2e3eca85b1b02cdbc94a5ff2d27317bf3a87e5fd75c1de9a",
+      "applied_at": "2026-11-15 13:02:36.549195+00",
+      "mechanism": "management_api",
+      "evidence": "audit-evidence/CP-VALUATION-NOMINAL-ACTIVATION-004",
+      "applied_by": "agent-cp-valuation-nominal-activation-004",
+      "status": "applied",
+      "notes": "CP-VALUATION-NOMINAL-ACTIVATION-004: autorización expresa del propietario (adenda 2026-11-15); aplicada en lote único atómico con verificación fail-closed interna"
+    },
+    {
+      "id": 61,
+      "version": "20261115100000",
+      "file": "supabase/migrations/20261115100000_cp_fin_t12_partial_reversal_guard.sql",
+      "sha256": "3429613c4bd26e33843be28b8174c336a785189330033433309bec6573e19481",
+      "applied_at": "2026-11-15 12:26:09.697192+00",
+      "mechanism": "management_api",
+      "evidence": "docs/audits/cp-fin-t12-production-migration-006/",
+      "applied_by": "agent",
+      "status": "applied",
+      "notes": "CP-FIN-T12-PRODUCTION-MIGRATION-006: salvaguarda T12 (guard de reversión parcial). Autorización específica del propietario (misión 006). Una única migración aplicada por canal oficial; sin RECT-1/RECT-2 ni cambios de datos financieros."
+    },
+    {
+      "id": 60,
+      "version": "20261114190300",
+      "file": "supabase/migrations/20261114190300_cp_cost_audit_rls.sql",
+      "sha256": "e370ef17d043a0db60807a2f01c5dea606c5a17ba5d0dc4b7d46cec6d235d979",
+      "applied_at": "2026-11-14 17:44:00.970483+00",
+      "mechanism": "management_api",
+      "evidence": "{\"mission\":\"CP-POST-MERGE-EXECUTION-002\",\"file\":\"supabase/migrations/20261114190300_cp_cost_audit_rls.sql\",\"sha256\":\"e370ef17d043a0db60807a2f01c5dea606c5a17ba5d0dc4b7d46cec6d235d979\",\"applied_via\":\"management_api\",\"batch\":\"single_batch_atomic\",\"authorized_by\":\"ADENDA VINCULANTE CP-POST-MERGE-EXECUTION-002 (2026-11-14) §2 (tabla de auditoría de la decisión §2)\",\"notes\":\"RLS deny-all en cp_cost_nominal_20261114_audit: hallazgo tables_no_rls del SQL Security Gate; sin políticas (fail-closed), lectura solo owner/service_role.\"}",
+      "applied_by": "agent",
+      "status": "applied",
+      "notes": "RLS tabla auditoría costo nominal (fix gate)"
+    },
+    {
+      "id": 59,
+      "version": "20261114190200",
+      "file": "supabase/migrations/20261114190200_cp_import_flow_recurrence_fix.sql",
+      "sha256": "a45b0c9f7e46510a71aec9cb028976666d7340b68d5262d9ff9dff3366294989",
+      "applied_at": "2026-11-14 17:21:17.933464+00",
+      "mechanism": "management_api",
+      "evidence": "{\"mission\":\"CP-POST-MERGE-EXECUTION-002\",\"file\":\"supabase/migrations/20261114190200_cp_import_flow_recurrence_fix.sql\",\"sha256\":\"a45b0c9f7e46510a71aec9cb028976666d7340b68d5262d9ff9dff3366294989\",\"applied_via\":\"management_api\",\"batch\":\"single_batch_atomic\",\"authorized_by\":\"ADENDA VINCULANTE CP-POST-MERGE-EXECUTION-002 (2026-11-14) §5\",\"notes\":\"Fix de reincidencia del importador: altas con cost_average con origen (costo CUP importado, nominal 1 CUP, o pendiente reportado en moneda extranjera), clasificacion venta por defecto en celda vacia, re-import conservador (no degrada clasificacion ni cost_average ni stock), informe nominal_cost_assigned. E2E validada funcionalmente (altas, re-imports, contadores).\"}",
+      "applied_by": "agent",
+      "status": "applied",
+      "notes": "Fix reincidencia importador (adenda 002 §5)"
+    },
+    {
+      "id": 58,
+      "version": "20261114190100",
+      "file": "supabase/migrations/20261114190100_cp_operational_class_venta_prod.sql",
+      "sha256": "9c995669a554870c0e70e56098ce82dbfbe8184eca8a5ece83fca6fa957d59eb",
+      "applied_at": "2026-11-14 17:14:11.928456+00",
+      "mechanism": "management_api",
+      "evidence": "{\"mission\":\"CP-POST-MERGE-EXECUTION-002\",\"file\":\"supabase/migrations/20261114190100_cp_operational_class_venta_prod.sql\",\"sha256\":\"9c995669a554870c0e70e56098ce82dbfbe8184eca8a5ece83fca6fa957d59eb\",\"applied_via\":\"management_api\",\"batch\":\"single_batch_atomic\",\"authorized_by\":\"ADENDA VINCULANTE CP-POST-MERGE-EXECUTION-002 (2026-11-14) §3\",\"notes\":\"Clasificacion operativa venta: backfill 274 NULL -> venta (274 esperado), DEFAULT venta, NOT NULL, RPCs create/activate_master_product con DEFAULT venta (bodies verbatim de 20261110090000). Correctiva nueva por inmutabilidad del replay. Verificacion fail-closed pasada DENTRO del lote. E2E validada + idempotente.\"}",
+      "applied_by": "agent",
+      "status": "applied",
+      "notes": "Clasificacion venta decision del propietario (adenda 002 §3)"
+    }
+  ],
+  "helper_definicion": [
+    {
+      "firma": "fin_entry_reversal_residual(uuid)",
+      "owner": "postgres",
+      "security_definer": true,
+      "provolatile": "s",
+      "search_path": [
+        "search_path=public, pg_temp"
+      ],
+      "proacl_bruta": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "definicion": "CREATE OR REPLACE FUNCTION public.fin_entry_reversal_residual(p_entry_id uuid)\n RETURNS numeric\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  SELECT GREATEST(\n    abs(coalesce((SELECT sum(m.amount) FROM public.fin_movements m\n                   WHERE m.entry_id = p_entry_id AND m.sense = 'debito'), 0)\n      - coalesce((SELECT sum(rm.amount) FROM public.fin_entries r\n                   JOIN public.fin_movements rm ON rm.entry_id = r.id\n                  WHERE r.reversal_of = p_entry_id AND rm.sense = 'credito'), 0)),\n    abs(coalesce((SELECT sum(m.amount) FROM public.fin_movements m\n                   WHERE m.entry_id = p_entry_id AND m.sense = 'credito'), 0)\n      - coalesce((SELECT sum(rm.amount) FROM public.fin_entries r\n                   JOIN public.fin_movements rm ON rm.entry_id = r.id\n                  WHERE r.reversal_of = p_entry_id AND rm.sense = 'debito'), 0))\n  );\n$function$\n"
+    }
+  ],
+  "acl_efectiva": [
+    {
+      "firma": "fin_entry_reversal_residual(uuid)",
+      "owner": "postgres",
+      "security_definer": true,
+      "grantee": "16384",
+      "privilege_type": "EXECUTE",
+      "is_grantable": false
+    },
+    {
+      "firma": "fin_entry_reversal_residual(uuid)",
+      "owner": "postgres",
+      "security_definer": true,
+      "grantee": "16481",
+      "privilege_type": "EXECUTE",
+      "is_grantable": false
+    },
+    {
+      "firma": "fin_entry_reversal_residual(uuid)",
+      "owner": "postgres",
+      "security_definer": true,
+      "grantee": "16482",
+      "privilege_type": "EXECUTE",
+      "is_grantable": false
+    },
+    {
+      "firma": "fin_post_document_annulment(text,uuid)",
+      "owner": "postgres",
+      "security_definer": true,
+      "grantee": "16384",
+      "privilege_type": "EXECUTE",
+      "is_grantable": false
+    },
+    {
+      "firma": "fin_post_document_annulment(text,uuid)",
+      "owner": "postgres",
+      "security_definer": true,
+      "grantee": "16482",
+      "privilege_type": "EXECUTE",
+      "is_grantable": false
+    },
+    {
+      "firma": "fin_t12_block_receipt_annulment()",
+      "owner": "postgres",
+      "security_definer": true,
+      "grantee": "16384",
+      "privilege_type": "EXECUTE",
+      "is_grantable": false
+    },
+    {
+      "firma": "fin_t12_block_receipt_annulment()",
+      "owner": "postgres",
+      "security_definer": true,
+      "grantee": "16481",
+      "privilege_type": "EXECUTE",
+      "is_grantable": false
+    },
+    {
+      "firma": "fin_t12_block_receipt_annulment()",
+      "owner": "postgres",
+      "security_definer": true,
+      "grantee": "16482",
+      "privilege_type": "EXECUTE",
+      "is_grantable": false
+    }
+  ],
+  "has_function_privilege": [
+    {
+      "rol": "anon",
+      "helper": false,
+      "motor": false
+    },
+    {
+      "rol": "authenticated",
+      "helper": true,
+      "motor": false
+    },
+    {
+      "rol": "service_role",
+      "helper": true,
+      "motor": true
+    }
+  ],
+  "invocadores_en_bd": [
+    {
+      "firma": "fin_post_document_annulment(text,uuid)",
+      "security_definer": true,
+      "owner": "postgres",
+      "es_trigger": false,
+      "n_triggers": 0,
+      "relacion": "invoca al helper"
+    },
+    {
+      "firma": "fin_t12_block_receipt_annulment()",
+      "security_definer": true,
+      "owner": "postgres",
+      "es_trigger": true,
+      "n_triggers": 1,
+      "relacion": "invoca al helper"
+    }
+  ],
+  "rls_fin": [
+    {
+      "relname": "fin_entries",
+      "rls_enabled": true,
+      "rls_forced": true,
+      "n_politicas": 1
+    },
+    {
+      "relname": "fin_movements",
+      "rls_enabled": true,
+      "rls_forced": true,
+      "n_politicas": 1
+    },
+    {
+      "relname": "fin_posting_errors",
+      "rls_enabled": true,
+      "rls_forced": true,
+      "n_politicas": 2
+    }
+  ],
+  "superficie_rpc_fin": [
+    {
+      "firma": "fin_activate_rule_version(uuid,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_apply_opening_balance(uuid,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_apply_templates(jsonb,text,jsonb)",
+      "ejecutable_por_authenticated": false,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_backfill(uuid,date,date,boolean,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_compute_metrics(text,uuid,text,uuid)",
+      "ejecutable_por_authenticated": false,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_deactivate_rule_version(uuid,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_entry_reversal_residual(uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_eval_condition(jsonb,jsonb)",
+      "ejecutable_por_authenticated": false,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_get_balance_sheet(uuid,date,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_get_category_detail(uuid,text,date,date,integer,integer,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_get_dashboard(uuid,date,date,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_get_document_types_status(uuid,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_get_income_statement(uuid,date,date,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_post_annulment_safe(text,uuid)",
+      "ejecutable_por_authenticated": false,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_post_document(text,uuid,text,uuid,uuid)",
+      "ejecutable_por_authenticated": false,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_post_document_annulment(text,uuid)",
+      "ejecutable_por_authenticated": false,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_post_document_safe(text,uuid,text,uuid)",
+      "ejecutable_por_authenticated": false,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_reprocess_posting_errors(uuid,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_resolve_rule(text,uuid)",
+      "ejecutable_por_authenticated": false,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_simulate(text,uuid,jsonb,jsonb,uuid)",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_t12_block_receipt_annulment()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_trg_cash_flow_documents()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_trg_commission_payments()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_trg_devolutions()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_trg_inventory_adjustments()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_trg_issue_slips()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_trg_payment_transactions()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_trg_payrolls()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_trg_receipts()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_trg_received_services()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_trg_transactions()",
+      "ejecutable_por_authenticated": true,
+      "ejecutable_por_anon": false
+    },
+    {
+      "firma": "fin_validate_rule_movements(jsonb)",
+      "ejecutable_por_authenticated": false,
+      "ejecutable_por_anon": false
+    }
+  ],
+  "veredicto_diagnostico": {
+    "helper_en_produccion": true,
+    "t12_aplicada": false
+  }
+}

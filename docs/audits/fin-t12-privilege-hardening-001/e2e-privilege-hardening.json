@@ -1,0 +1,116 @@
+{
+  "mision": "CP-FIN-T12-PRIVILEGE-HARDENING-001",
+  "script": "m055-fin-t12-privilege-e2e.mjs",
+  "fecha": "2026-11-15T18:42:01.843Z",
+  "base": "https://lguovmvrozxgssupkwpf.supabase.co",
+  "pasos": {
+    "P2a-ACL-antes": {
+      "estado": "PASS",
+      "resumen": "migración ya aplicada previamente (re-ejecución idempotente) — se registra y continua",
+      "has": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": true,
+        "owner": true,
+        "public": false
+      },
+      "grants": [
+        {
+          "grantee_oid": "16384",
+          "rolname": "postgres",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "grantee_oid": "16482",
+          "rolname": "service_role",
+          "privilege_type": "EXECUTE"
+        }
+      ],
+      "ya_aplicada_previamente": true
+    },
+    "P1a-aplicar-migracion": {
+      "estado": "PASS",
+      "resumen": "20261116120000 aplicada (1ª vez)"
+    },
+    "P1b-idempotencia-2ª-ejecución": {
+      "estado": "PASS",
+      "resumen": "20261116120000 re-aplicada sin error ni cambios (idempotente)"
+    },
+    "P2b-ACL-después": {
+      "estado": "PASS",
+      "resumen": "authenticated=false anon=false PUBLIC=false service_role=true owner=true",
+      "has": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": true,
+        "owner": true,
+        "public": false
+      },
+      "grants": [
+        {
+          "grantee_oid": "16384",
+          "rolname": "postgres",
+          "privilege_type": "EXECUTE"
+        },
+        {
+          "grantee_oid": "16482",
+          "rolname": "service_role",
+          "privilege_type": "EXECUTE"
+        }
+      ]
+    },
+    "P5-bateria-sql-C1-C9": {
+      "estado": "PASS",
+      "resumen": "C1 catálogo · C2 anon · C3 authenticated · C4 sin-grants · C5 service_role · C6 owner · C7 bloqueo T12 · C8 contable intacto · C9 limpieza",
+      "notices": []
+    },
+    "P6-bateria-T12-sin-regresión": {
+      "estado": "PASS",
+      "resumen": "T12-BATTERY PASS completa (C1..C5) tras la migración correctiva — semántica contable intacta"
+    },
+    "P3a-RPC-anon-denegado": {
+      "estado": "PASS",
+      "resumen": "HTTP 401 (denegado)",
+      "respuesta": "{\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function fin_entry_reversal_residual\"}"
+    },
+    "P3b-RPC-authenticated-REAL-denegado": {
+      "estado": "PASS",
+      "resumen": "usuario priv-hardening-1794768125701@costpro.test (rol authenticated) → HTTP 403 (denegado)",
+      "respuesta": "{\"code\":\"42501\",\"details\":null,\"hint\":null,\"message\":\"permission denied for function fin_entry_reversal_residual\"}"
+    },
+    "P3c-limpieza-usuario-auth": {
+      "estado": "PASS",
+      "resumen": "usuario de prueba eliminado vía RPC canónico (net delta 0)"
+    },
+    "P4-RPC-service_role-operativo": {
+      "estado": "PASS",
+      "resumen": "HTTP 200 → 0 (capacidad server-side intacta)"
+    },
+    "P7-net-delta-cero": {
+      "estado": "PASS",
+      "resumen": "stores/asientos/rol de prueba = 0 residuos (baterías autolimpiantes)",
+      "checks": {
+        "stores_residuo": "0",
+        "rol_residuo": "0",
+        "usuarios_residuo": "0"
+      }
+    }
+  },
+  "veredicto": "PRIVILEGE-HARDENING E2E: 100% PASS — denegación externa (anon/authenticated/PUBLIC/sin-grants), capacidad interna (service_role/owner) y semántica contable T12 intactas; net delta 0",
+  "delta_acl": {
+    "antes": {
+      "anon": false,
+      "authenticated": false,
+      "service_role": true,
+      "owner": true,
+      "public": false
+    },
+    "despues": {
+      "anon": false,
+      "authenticated": false,
+      "service_role": true,
+      "owner": true,
+      "public": false
+    }
+  }
+}

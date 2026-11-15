@@ -142,9 +142,9 @@
     },
     {
       "function": "fin_entry_reversal_residual",
-      "reason": "CP-FIN-FINAL-CLOSE-005 (T12, migración 20261115100000) · helper-interno de solo lectura (LANGUAGE sql STABLE, retorna residual numérico entre un asiento y sus reversiones enlazadas por reversal_of). Sin auth.uid por diseño: helper aritmético invocado por la función motor fin_post_document_annulment (SECDEF con advisory lock) y por tests SQL (supabase/tests/cp_fin_t12_partial_reversal_guard_test.sql). Cero llamadas desde la app (verificado 2026-11-15: sin coincidencias en src/ ni e2e/). Exposición anon=False; GRANT EXECUTE a authenticated presente en T12 — RECOMENDACIÓN documentada: la misión FIN debe restringirlo a service_role en su siguiente migración. Entrada añadida por CP-VALUATION-NOMINAL-ACTIVATION-004 al detectar el gate roto tras la aplicación de T12 a producción (2026-11-15 12:26 UTC, posterior al CI del PR #1628).",
-      "added_by": "CP-VALUATION-NOMINAL-ACTIVATION-004 (2026-11-15)",
-      "expires": "2027-02-15"
+      "reason": "CP-FIN-T12-PRIVILEGE-HARDENING-001 (2026-11-16) · helper-interno · Helper de cálculo (SQL STABLE, SOLO lectura) del residual de cobertura de reversiones enlazadas por reversal_of (guard T12, migración 20261115100000): sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public desde la migración correctiva de privilegio mínimo 20261116120000 (REVOKE authenticated/anon/PUBLIC, GRANT conservado a service_role) — cumple la recomendación documentada por CP-VALUATION-NOMINAL-ACTIVATION-004 (2026-11-15); idéntica clase que la familia fin_* (fin_apply_templates/fin_eval_condition/...). Solo alcanzable desde fin_post_document_annulment y el trigger fin_t12_receipt_annulment_block (ambos SECURITY DEFINER owner postgres con sus propios cauces de autorización) y desde service_role. Evidencia: diagnóstico read-only de producción (Q3/Q4/Q5) + batería SQL de denegación real en BD aislada + PostgREST (anon 401 / authenticated 403 / service_role 200).",
+      "added_by": "CP-FIN-T12-PRIVILEGE-HARDENING-001 (fusiona entrada de CP-VALUATION-NOMINAL-ACTIVATION-004)",
+      "expires": "2027-06-30"
     },
     {
       "function": "fin_eval_condition",

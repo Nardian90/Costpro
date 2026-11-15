@@ -1,0 +1,50 @@
+{
+  "fecha_utc": "2026-11-15T18:26:56.509Z",
+  "modo": "READ-ONLY",
+  "oid_map": [
+    {
+      "oid": 16384,
+      "rolname": "postgres"
+    },
+    {
+      "oid": 16481,
+      "rolname": "authenticated"
+    },
+    {
+      "oid": 16482,
+      "rolname": "service_role"
+    }
+  ],
+  "definiciones_live": [
+    {
+      "firma": "fin_entry_reversal_residual(uuid)",
+      "owner": "postgres",
+      "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "def": "CREATE OR REPLACE FUNCTION public.fin_entry_reversal_residual(p_entry_id uuid)\n RETURNS numeric\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  SELECT GREATEST(\n    abs(coalesce((SELECT sum(m.amount) FROM public.fin_movements m\n                   WHERE m.entry_id = p_entry_id AND m.sense = 'debito'), 0)\n      - coalesce((SELECT sum(rm.amount) FROM public.fin_entries r\n                   JOIN public.fin_movements rm ON rm.entry_id = r.id\n                  WHERE r.reversal_of = p_entry_id AND rm.sense = 'credito'), 0)),\n    abs(coalesce((SELECT sum(m.amount) FROM public.fin_movements m\n                   WHERE m.entry_id = p_entry_id AND m.sense = 'credito'), 0)\n      - coalesce((SELECT sum(rm.amount) FROM public.fin_entries r\n                   JOIN public.fin_movements rm ON rm.entry_id = r.id\n                  WHERE r.reversal_of = p_entry_id AND rm.sense = 'debito'), 0))\n  );\n$function$\n"
+    },
+    {
+      "firma": "fin_post_document_annulment(text,uuid)",
+      "owner": "postgres",
+      "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+      "def": "CREATE OR REPLACE FUNCTION public.fin_post_document_annulment(p_doctype text, p_document_id uuid)\n RETURNS integer\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  e record; m record; v_new uuid; v_count integer := 0;\n  v_residual numeric;\nBEGIN\n  PERFORM pg_advisory_xact_lock(hashtext('fin:' || p_doctype || ':' || p_document_id::text));\n  FOR e IN\n    SELECT * FROM public.fin_entries\n    WHERE document_type = p_doctype AND document_id = p_document_id\n      AND status = 'posted' AND event IN ('reconocimiento', 'pago')\n    ORDER BY posted_at\n  LOOP\n    -- ¿ya tiene anulación? (idempotencia)\n    IF EXISTS (SELECT 1 FROM public.fin_entries x\n               WHERE x.reversal_of = e.id) THEN\n      -- T12 (CP-FIN-FINAL-CLOSE-005): distinguir cobertura TOTAL de PARCIAL.\n      -- · Reversión completa ordinaria → idempotencia intacta (se respeta el\n      --   «ya revertido» y NO se crea una segunda compensación).\n      -- · Reversión parcial/en exceso → residual contable pendiente: la\n      --   anulación automática NO puede saltar el asiento en silencio.\n      v_residual := public.fin_entry_reversal_residual(e.id);\n      IF v_residual <= 0.01 THEN\n        CONTINUE;\n      END IF;\n      RAISE EXCEPTION 'ERR_PARTIAL_REVERSAL_PENDING: el asiento % (doc % %) tiene reversiones parciales enlazadas y un residual de % CUP sin compensar. Regularice primero el residual contable (asiento explícito documentado, p. ej. runbook RECT004 §regularización); después la anulación funcionará por el cauce ordinario. El canal _safe registra este intento en fin_posting_errors.',\n        e.id, p_doctype, p_document_id, v_residual;\n    END IF;\n    INSERT INTO public.fin_entries (\n      store_id, document_type, document_id, document_number, event, payment_ref,\n      economic_date, rule_version_id, movements_snapshot, reversal_of, description, created_by)\n    VALUES (\n      e.store_id, e.document_type, e.document_id, e.document_number, 'anulacion',\n      e.payment_ref, e.economic_date, e.rule_version_id, e.movements_snapshot, e.id,\n      'Anulación: ' || coalesce(e.description, ''), e.created_by)\n    RETURNING id INTO v_new;\n    FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = e.id LOOP\n      INSERT INTO public.fin_movements (\n        entry_id, store_id, category_code, sense, amount, currency, exchange_rate,\n        economic_date, document_number, description, currency_origin, traza)\n      VALUES (\n        v_new, m.store_id, m.category_code,\n        CASE WHEN m.sense = 'debito' THEN 'credito' ELSE 'debito' END,\n        m.amount, m.currency, m.exchange_rate, m.economic_date, m.document_number,\n        'Anulación: ' || coalesce(m.description, ''), m.currency_origin,\n        m.traza || jsonb_build_object('anulacion_de', m.id));\n    END LOOP;\n    UPDATE public.fin_entries SET status = 'reversed' WHERE id = e.id;\n    v_count := v_count + 1;\n  END LOOP;\n  RETURN v_count;\nEND;\n$function$\n"
+    },
+    {
+      "firma": "fin_t12_block_receipt_annulment()",
+      "owner": "postgres",
+      "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "def": "CREATE OR REPLACE FUNCTION public.fin_t12_block_receipt_annulment()\n RETURNS trigger\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_entry uuid;\n  v_residual numeric;\nBEGIN\n  -- Solo transiciones de anulación (estado previo vivo → voided/reversed).\n  IF NEW.status NOT IN ('voided', 'reversed') OR OLD.status IN ('voided', 'reversed') THEN\n    RETURN NEW;\n  END IF;\n  -- ¿Algún asiento posted (reconocimiento/pago) con reversión parcial enlazada?\n  -- (las recepciones pending no tienen asientos → flujo ordinario intacto)\n  SELECT e.id, public.fin_entry_reversal_residual(e.id)\n    INTO v_entry, v_residual\n  FROM public.fin_entries e\n  WHERE e.document_type = 'RECEPCION' AND e.document_id = NEW.id\n    AND e.status = 'posted' AND e.event IN ('reconocimiento', 'pago')\n    AND EXISTS (SELECT 1 FROM public.fin_entries r WHERE r.reversal_of = e.id)\n    AND public.fin_entry_reversal_residual(e.id) > 0.01\n  LIMIT 1;\n  IF v_entry IS NOT NULL THEN\n    RAISE WARNING 'ERR_PARTIAL_REVERSAL_PENDING (intento bloqueado): recepción % con asiento % en reversión parcial y residual % CUP pendiente. Regularice el residual contable antes de anular (runbook RECT004 §regularización).',\n      NEW.id, v_entry, v_residual;\n    RAISE EXCEPTION 'ERR_PARTIAL_REVERSAL_PENDING: la recepción % tiene el asiento % con reversión parcial enlazada (residual % CUP sin compensar). Regularice primero el residual contable con un asiento explícito documentado (runbook RECT004 §regularización); después la anulación funcionará por el cauce ordinario.',\n      NEW.id, v_entry, v_residual;\n  END IF;\n  RETURN NEW;\nEND;\n$function$\n"
+    }
+  ],
+  "drift": {
+    "fin_entry_reversal_residual": {
+      "bloque_en_migracion": true,
+      "bloque_en_live": true,
+      "identicos_normalizados": false
+    },
+    "fin_post_document_annulment": {
+      "bloque_en_migracion": true,
+      "bloque_en_live": true,
+      "identicos_normalizados": false
+    }
+  }
+}
