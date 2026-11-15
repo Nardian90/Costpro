@@ -1,0 +1,38 @@
+# SHA256SUMS.txt — CP-FIN-T12-PRODUCTION-MIGRATION-006
+# Manifiesto de hashes de los entregables de la misión 006 (este manifiesto se excluye a sí mismo).
+# Generado: 2026-11-15T12:45:01Z
+# ACTUALIZADO por CP-FIN-T12-PR-CLOSE-007 (2026-11-16): + SQL_DB_GATE_FINAL_EVIDENCE.md,
+# + CONTRACT_SURFACE_FINAL.md, + RECTIFICATION_AUTHORIZATION_READINESS.md, + pr1630-premerge-evidence.json,
+# + scripts/m057-pr1630-close-verify.mjs; recalculados ci-gate-allowlist.json y writers.manifest.json
+# (fix del SQL DB Security Gate: entrada fin_entry_reversal_residual + declaración m057).
+# Los documentos históricos de la misión 006 NO fueron modificados (hashes originales conservados).
+# RE-RECALCULADOS tras integrar main (PR #1631 fusionado 19:14Z) en la rama del
+# PR #1630: ci-gate-allowlist.json (duplicado de merge eliminado), writers.manifest.json
+# (_updated combinada) y contract-surface.sql (versión de main, la más fresca).
+dbbd2cdc6a779ce7db2bd17d95073fb012a06ddbe59831c102a230b016f87ecf  BEFORE_AFTER_SCHEMA_DIFF.md
+6fc2a67c581a87c5c61d3e54c4596e048ed2622356fc1ba7b8ba4141958d000f  CONTRACT_SURFACE_FINAL.md
+17db9f860ceee19d554e6df81bd6cb3656124ddb09f64f4acfc900d7c2ae3644  CONTRACT_SURFACE_RESULT.md
+1cf105b8b33be0bf6901acfe3e31520e75c782e9e1eb0f1609297051109da22b  CP_FIN_T12_PRODUCTION_REPORT.md
+a251ec7c1b48f1d59e9ad8fe5d13fc88eba07cf0d2ea29a00358bac5cd8823aa  MIGRATION_EXECUTION_EVIDENCE.json
+b2f088687464dea1464b61564f0f3523ff21b46616e64723313d1704bb217157  MIGRATION_EXECUTION_EVIDENCE.md
+1cb703844084a198fd09530027289dc80bafa64fca15d938d0e69a2d1d3fe930  MIGRATION_PREFLIGHT.md
+a3f336ba969b1372c729b71ac1b50bb005b71d6f693587b6b94bd12212f58f13  PRODUCTION_POSTCHECK.json
+c825378b1d3b468ead565b83b638e1e45a597a79f107db3e4efc611ba567d688  PRODUCTION_POSTCHECK.md
+4be9b7740a1591f4c097037de3c766451bb1d0da8881e2a9f97a122008f4ed07  RECTIFICATION_AUTHORIZATION_READINESS.md
+f94a4c001ab130fc7f5dd112b3f4512d14c30cad0d104347dd700d8257acac6f  RECTIFICATION_READINESS.md
+4373d9f86c84e1d3e8d6d425ba883d66f014acad9adf69eb672778acf0b1173d  SQL_DB_GATE_FINAL_EVIDENCE.md
+6bfcde2731ed94617e2a5dfbbb9e519233578d74bcd9ff741d0d7ba495a3c9b3  WORKLOG_MISION_006.md
+0ca6e86e84bcb264251613dc2376f4ccd39667d6929855a9f1a018595d482599  apply-console-first-run.txt
+06916159c160a1eb4377395afebab3894b87d469a65514b5681e8c1db3856232  drift-report-baseline.txt
+8c7b5a6c1f373f89d9606c569845100c6f8fb4f5d477f81f8d7e202db7a04310  drift-report-post.txt
+120b7b39dfb515490cde48c87bce81d543754e6d90b155dd43626dd6bbc3b774  ledger-pre-aplicacion.json
+fe5152dbd4de6199511dd823d4de14849785a05a7767c8e454ecccf3b3713253  poststate-snapshot.json
+180d237d5d58a44e06e024b12823421500e40ad674d018258c082fe14e71e0b2  pr1630-premerge-evidence.json
+b31bd7f354a27bb299d24a029c60ffe6697a6d4123a16bb3c91fd7cdde5075ad  prestate-snapshot.json
+273e5f13c66db9d4eb9d24fe93d48c0f7588b182548a1ec3900575063beffa70  ../../../scripts/m054-t12-prod-prestate.mjs
+42973e6e94d8ec1de5183ff5e1d4e684f35a1a2fcd20fd17ecc43890bb7b7a00  ../../../scripts/m055-t12-apply.mjs
+e5eb54ba5c3b652ff09fade07728b98bca69d915579297a136e790f8444863ad  ../../../scripts/m056-t12-postcert.mjs
+819567f99b000df2eb3c2e59ad8110be16f12e92ca2e5d636e13e6848eea6453  ../../../scripts/m057-pr1630-close-verify.mjs
+e7a853e1802f50d16566587938c73d606fdf97aabeb30f6a22695f93a70920dd  ../../../scripts/lib/writers.manifest.json
+f0da43053e25bc692f115f0ed67cd22d0b5908228918e5922d454de8f00b8ea2  ../../../ci-gate-allowlist.json
+0ba2181f6bf27be8e769dc77fd1df75df30d346e090ccd90c37a31fb657eae07  ../../../supabase/security-contract/contract-surface.sql

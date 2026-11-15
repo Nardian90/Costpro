@@ -1,0 +1,106 @@
+{
+  "mision": "CP-FIN-T12-PRODUCTION-MIGRATION-006",
+  "script": "m055-t12-apply.mjs",
+  "resultado": "OK",
+  "modo": "solo-registrar (SQL ya aplicado HTTP 201, verificado por catálogo; sin re-envío)",
+  "iniciado_utc": "2026-11-15T12:25:58.248Z",
+  "finalizado_utc": "2026-11-15T12:26:09.870Z",
+  "destino": {
+    "proyecto_ref": "wthkddeleylijmonclxg",
+    "etiqueta": "CostproBD (PRODUCCIÓN)",
+    "guard": "assertNotProduction mode=write projectRef (CP-INFRA-019)"
+  },
+  "flags_autorizacion": {
+    "ALLOW_PROD": "read-only",
+    "ALLOW_PROD_WRITE": "I_UNDERSTAND",
+    "cli": "--aplicar"
+  },
+  "migracion": {
+    "archivo": "supabase/migrations/20261115100000_cp_fin_t12_partial_reversal_guard.sql",
+    "sha256_aplicado": "3429613c4bd26e33843be28b8174c336a785189330033433309bec6573e19481",
+    "sha256_aprobado": "3429613c4bd26e33843be28b8174c336a785189330033433309bec6573e19481",
+    "bytes": 10475
+  },
+  "transporte": {
+    "canal": "Management API POST /v1/projects/<ref>/database/query",
+    "http_status": null,
+    "transaccion_implicita_unica": true,
+    "respuesta": null,
+    "nota": "HTTP 201 con cuerpo [] = éxito sin filas en la Management API. La primera ejecución (12:23:15.983Z) clasificó 201 como fallo (falso negativo del script); el estado real fue verificado inmediatamente por catálogo en solo lectura: helper + fin_t12_block_receipt_annulment + motor presentes y trigger habilitado (tgenabled O). No se re-envió el SQL."
+  },
+  "error_detalle": null,
+  "ledger": {
+    "version": "20261115100000",
+    "mechanism": "management_api",
+    "applied_by": "agent",
+    "status": "applied",
+    "evidence_path": "docs/audits/cp-fin-t12-production-migration-006/"
+  },
+  "post_verificacion_inmediata": {
+    "helper_creado": true,
+    "t12block_creado": true,
+    "trigger": {
+      "tgname": "fin_t12_receipt_annulment_block",
+      "tgenabled": "O"
+    },
+    "motor_marcador": {
+      "pos": 1264
+    }
+  },
+  "declaraciones": {
+    "solo_esta_migracion": true,
+    "sin_fragmentos_manuales": true,
+    "sin_migracion_inversa": true,
+    "sin_RECT1_RECT2": true,
+    "sin_cambios_datos_financieros": true
+  },
+  "bitacora": [
+    "[GUARD] assertNotProduction PASÓ — destino identificado: wthkddeleylijmonclxg (CostproBD, PRODUCCIÓN).",
+    "[SHA] supabase/migrations/20261115100000_cp_fin_t12_partial_reversal_guard.sql = 3429613c4bd26e33843be28b8174c336a785189330033433309bec6573e19481 — coincide con el manifiesto aprobado (RECT005_SHA256SUMS.txt).",
+    "[SQL] Contenido contiene las dos protecciones (motor + negocio). Sin reescrituras.",
+    "[PRE-STATE] Referencias §6 congeladas y coincidentes (FVC activa 192.039.436; 101 líneas; 0 reversiones; COGS 7).",
+    "[LEDGER] 20261115100000 no aplicada; última fila = 20261114190300 (applied). Única pendiente autorizada.",
+    "[SOLO-REGISTRAR] NO se re-envía el SQL: aplicada previamente (HTTP 201) y verificada por catálogo. Solo re-verifica y completa el libro.",
+    "[POST] Motor redefine fin_post_document_annulment (ERR_PARTIAL_REVERSAL_PENDING presente), helper y función de trigger creados, trigger habilitado.",
+    "[LEDGER] Fila insertada: 20261115100000 · management_api · applied · sha256 aprobado."
+  ],
+  "historial_de_ejecucion": [
+    {
+      "paso": 1,
+      "utc": "2026-11-15T12:23:15.983Z",
+      "accion": "POST Management API con el contenido EXACTO del archivo aprobado (10475 bytes, transacción implícita única)",
+      "resultado": "HTTP 201 Created con cuerpo [] — ÉXITO de la aplicación (la Management API responde 201 en éxito sin filas)"
+    },
+    {
+      "paso": 2,
+      "utc": "2026-11-15T12:23:15Z",
+      "accion": "Interpretación del script m055 de la primera ejecución",
+      "resultado": "FALSO NEGATIVO: el script clasificó HTTP 201 como fallo (solo aceptaba 200) y no completó NOTIFY/verificación/registro. Ningún SQL adicional fue enviado; ningún objeto fue tocado."
+    },
+    {
+      "paso": 3,
+      "utc": "2026-11-15T12:24:05Z aprox",
+      "accion": "Verificación inmediata del estado real por catálogo (solo lectura, prod-query + guard)",
+      "resultado": "fin_entry_reversal_residual(uuid) + fin_t12_block_receipt_annulment() + fin_post_document_annulment(text,uuid) presentes; trigger fin_t12_receipt_annulment_block tgenabled=O; ledger sin fila T12 (0)"
+    },
+    {
+      "paso": 4,
+      "utc": "2026-11-15T12:25:58.248Z",
+      "accion": "m055 re-ejecutado en modo --solo-registrar (sin re-envío del SQL)",
+      "resultado": "Verificación post PASS (motor con ERR_PARTIAL_REVERSAL_PENDING en pos=1264; helper y función de trigger creados; trigger habilitado)"
+    },
+    {
+      "paso": 5,
+      "utc": "2026-11-15T12:26:09.697192+00",
+      "accion": "INSERT en public.production_migration_ledger (paso 2 del proceso oficial)",
+      "resultado": "Fila aplicada: 20261115100000 · management_api · agent · applied · sha256 3429613c...19481"
+    },
+    {
+      "paso": 6,
+      "utc": "2026-11-15T12:26:20.149Z",
+      "accion": "ledger-sync-check oficial post-aplicación",
+      "resultado": "OK — 60 filas; sin migraciones adicionales; solo 2 pendientes históricas con compuerta propia (no tocadas)"
+    }
+  ],
+  "nota_de_transparencia": "La aplicación real ocurrió en el paso 1 (HTTP 201). El fallo del paso 2 fue de clasificación del script (201 no contemplado), no de la BD: la transacción implícita única del servidor aplicó los 4 statements completos (verificado por catálogo en paso 3 y por m056 22/22). No se reenvió el SQL ni se ejecutaron fragmentos manuales."
+}
