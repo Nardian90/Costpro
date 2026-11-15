@@ -6,6 +6,9 @@
 # + scripts/m057-pr1630-close-verify.mjs; recalculados ci-gate-allowlist.json y writers.manifest.json
 # (fix del SQL DB Security Gate: entrada fin_entry_reversal_residual + declaración m057).
 # Los documentos históricos de la misión 006 NO fueron modificados (hashes originales conservados).
+# RE-RECALCULADOS tras integrar main (PR #1631 fusionado 19:14Z) en la rama del
+# PR #1630: ci-gate-allowlist.json (duplicado de merge eliminado), writers.manifest.json
+# (_updated combinada) y contract-surface.sql (versión de main, la más fresca).
 dbbd2cdc6a779ce7db2bd17d95073fb012a06ddbe59831c102a230b016f87ecf  BEFORE_AFTER_SCHEMA_DIFF.md
 6fc2a67c581a87c5c61d3e54c4596e048ed2622356fc1ba7b8ba4141958d000f  CONTRACT_SURFACE_FINAL.md
 17db9f860ceee19d554e6df81bd6cb3656124ddb09f64f4acfc900d7c2ae3644  CONTRACT_SURFACE_RESULT.md
@@ -30,6 +33,6 @@ b31bd7f354a27bb299d24a029c60ffe6697a6d4123a16bb3c91fd7cdde5075ad  prestate-snaps
 42973e6e94d8ec1de5183ff5e1d4e684f35a1a2fcd20fd17ecc43890bb7b7a00  ../../../scripts/m055-t12-apply.mjs
 e5eb54ba5c3b652ff09fade07728b98bca69d915579297a136e790f8444863ad  ../../../scripts/m056-t12-postcert.mjs
 819567f99b000df2eb3c2e59ad8110be16f12e92ca2e5d636e13e6848eea6453  ../../../scripts/m057-pr1630-close-verify.mjs
-6d69e1e310c16f9e538f045c164b0021c9a22cb1fc340e47443f5b70e1d0801e  ../../../scripts/lib/writers.manifest.json
-5babd63fe1afb6ac12fe42b5d3b67fa54f8e8a4a794a4e968a9e89ab6d0495d7  ../../../ci-gate-allowlist.json
-b15b9d2c85ee29fe918374ac10e473ff7410518d0d1fe399c0a529390585829f  ../../../supabase/security-contract/contract-surface.sql
+2a8ad2041efa7b017847d758a9cc8ad9832b0491e8aceae10759e3828e6cc925  ../../../scripts/lib/writers.manifest.json
+ad69c775a4da8c71355e1ce1a12e3f71832876ea33e3ec600ec786770019e858  ../../../ci-gate-allowlist.json
+3dddf3ee09af827dc10d9fc0392100ab0010238c37cf861e5ee332e214a46ef1  ../../../supabase/security-contract/contract-surface.sql
