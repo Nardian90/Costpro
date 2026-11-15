@@ -153,6 +153,12 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "fin_entry_reversal_residual",
+      "reason": "CP-FIN-FINAL-CLOSE-005 (T12, migración 20261115100000) · helper-interno de solo lectura (LANGUAGE sql STABLE, retorna residual numérico entre un asiento y sus reversiones enlazadas por reversal_of). Sin auth.uid por diseño: helper aritmético invocado por la función motor fin_post_document_annulment (SECDEF con advisory lock) y por tests SQL (supabase/tests/cp_fin_t12_partial_reversal_guard_test.sql). Cero llamadas desde la app (verificado 2026-11-15: sin coincidencias en src/ ni e2e/). Exposición anon=False; GRANT EXECUTE a authenticated presente en T12 — RECOMENDACIÓN documentada: la misión FIN debe restringirlo a service_role en su siguiente migración. Entrada añadida por CP-VALUATION-NOMINAL-ACTIVATION-004 al detectar el gate roto tras la aplicación de T12 a producción (2026-11-15 12:26 UTC, posterior al CI del PR #1628).",
+      "added_by": "CP-VALUATION-NOMINAL-ACTIVATION-004 (2026-11-15)",
+      "expires": "2027-02-15"
+    },
+    {
       "function": "fin_post_document_annulment",
       "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
       "added_by": "cp-fin-auditoria-final",
