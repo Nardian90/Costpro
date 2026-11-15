@@ -33,6 +33,6 @@ b31bd7f354a27bb299d24a029c60ffe6697a6d4123a16bb3c91fd7cdde5075ad  prestate-snaps
 42973e6e94d8ec1de5183ff5e1d4e684f35a1a2fcd20fd17ecc43890bb7b7a00  ../../../scripts/m055-t12-apply.mjs
 e5eb54ba5c3b652ff09fade07728b98bca69d915579297a136e790f8444863ad  ../../../scripts/m056-t12-postcert.mjs
 819567f99b000df2eb3c2e59ad8110be16f12e92ca2e5d636e13e6848eea6453  ../../../scripts/m057-pr1630-close-verify.mjs
-2a8ad2041efa7b017847d758a9cc8ad9832b0491e8aceae10759e3828e6cc925  ../../../scripts/lib/writers.manifest.json
-ad69c775a4da8c71355e1ce1a12e3f71832876ea33e3ec600ec786770019e858  ../../../ci-gate-allowlist.json
-3dddf3ee09af827dc10d9fc0392100ab0010238c37cf861e5ee332e214a46ef1  ../../../supabase/security-contract/contract-surface.sql
+e7a853e1802f50d16566587938c73d606fdf97aabeb30f6a22695f93a70920dd  ../../../scripts/lib/writers.manifest.json
+f0da43053e25bc692f115f0ed67cd22d0b5908228918e5922d454de8f00b8ea2  ../../../ci-gate-allowlist.json
+0ba2181f6bf27be8e769dc77fd1df75df30d346e090ccd90c37a31fb657eae07  ../../../supabase/security-contract/contract-surface.sql
