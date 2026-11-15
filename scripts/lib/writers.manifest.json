@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-15 — CP-FIN-FINAL-CLOSE-005: m052/m052c E2E aislado (isolationProtected: sentinela e2e_is_isolated_db fail-closed + assert-not-production CP-INFRA-020; T12 guard TODO_PASS tras migración 20261115100000).",
+  "_updated": "2026-11-15 — CP-FIN-T12-PRODUCTION-MIGRATION-006: m055 declarado guardProtected (aplicador de la migración T12 autorizada; guard CP-INFRA-019 con projectRef + doble flag + --aplicar); m054/m056 declarados READ-ONLY (captura pre/post y certificación posterior por catálogo, solo SELECT).",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -37,6 +37,7 @@
     "scripts/m025b-auditoria-trazabilidad.mjs",
     "scripts/m028-fase2-corrige-208.mjs",
     "scripts/m028b-idempotencia-fase2.mjs",
+    "scripts/m055-t12-apply.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
     "scripts/seed-pick3-history.js",
@@ -203,6 +204,8 @@
     "scripts/m046-rect003-faseI-complemento.mjs": "CP-FIN-VALUATION-RECTIFICATION-003: complemento Fase I — EXCLUSIVAMENTE SELECT por Management API /database/query (asientos de ventas/vales, transaction_items, tasa_audit, recepciones proveedor). Ni un write. Evidencia: docs/audits/valuation-rectification-003-20261115/.",
     "scripts/m050a-rect004-fase0-probe.mjs": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004: probe de entorno READ-ONLY (SELECT por Management API /database/query a producción con guard de ref + sentinela E2E leída por REST/RPC). Ni un write. Evidencia: docs/audits/valuation-rectification-release-gate-004/m050a-fase0-probe.json",
     "scripts/m050b-rect004-preesquema.mjs": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004: probe de esquema READ-ONLY (SELECT a information_schema/pg_views por Management API). Ni un write. Evidencia: scripts/out/m050b-preesquema.json",
-    "scripts/m050b-rect004-faseDP-snapshot.mjs": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004: snapshot DP de producción EXCLUSIVAMENTE SELECT por Management API /database/query (guard de ref de producción; hashes por sección; DP-1/DP-2/DP-3). Ni un write. Evidencia: docs/audits/valuation-rectification-release-gate-004/rect004-faseDP-snapshot.json"
+    "scripts/m050b-rect004-faseDP-snapshot.mjs": "CP-FIN-VALUATION-RECTIFICATION-RELEASE-GATE-004: snapshot DP de producción EXCLUSIVAMENTE SELECT por Management API /database/query (guard de ref de producción; hashes por sección; DP-1/DP-2/DP-3). Ni un write. Evidencia: docs/audits/valuation-rectification-release-gate-004/rect004-faseDP-snapshot.json",
+    "scripts/m054-t12-prod-prestate.mjs": "CP-FIN-T12-PRODUCTION-MIGRATION-006 (2026-11-15): captura de estado PRE/POST — READ-ONLY estricto, solo SELECT por Management API /database/query (fase de congelación y comparación); sin DML/DDL; la señal de escritura es el PATH de la API en strings. Guard propio de ref de producción en línea + uso del guard oficial en m055 para escrituras.",
+    "scripts/m056-t12-postcert.mjs": "CP-FIN-T12-PRODUCTION-MIGRATION-006 (2026-11-15): certificación posterior — READ-ONLY estricto, solo SELECT por Management API /database/query (pg_get_functiondef/catálogos/comparación pre→post); sin DML/DDL; la señal de escritura es el PATH de la API en strings."
   }
 }

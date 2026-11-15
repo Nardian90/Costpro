@@ -96,3 +96,15 @@ Cambios de esquema autorizados y **exclusivos** (drift oficial: +2 funciones, +1
 ## K. Contenido del expediente
 
 `MIGRATION_PREFLIGHT.md` · `MIGRATION_EXECUTION_EVIDENCE.md/.json` · `PRODUCTION_POSTCHECK.md/.json` · `BEFORE_AFTER_SCHEMA_DIFF.md` · `CONTRACT_SURFACE_RESULT.md` · `RECTIFICATION_READINESS.md` · `WORKLOG_MISION_006.md` · `SHA256SUMS.txt` · evidencia machine-readable: `prestate-snapshot.json`, `poststate-snapshot.json`, `ledger-pre-aplicacion.json`, `drift-report-baseline.txt`, `drift-report-post.txt`, `apply-console-first-run.txt` · scripts re-ejecutables: `scripts/m054-t12-prod-prestate.mjs`, `scripts/m055-t12-apply.mjs`, `scripts/m056-t12-postcert.mjs`.
+
+## L. CI del PR del expediente (#1630) — resultados y atribución
+
+Ejecución sobre el SHA inicial de la rama (`308b3a1ac`), 2026-11-15T12:39Z: 9 check-runs — verdes: Vercel Preview Comments · TypeScript Security Checks · SQL Static Checks · Allowlist Review (+ en curso: Unit&Integration, E2E Aislado, TypeCheck+Lint+Unit+Build). Dos fallos, clasificados:
+
+1. **Security Audit — hallazgo legítimo del control del repo, CORREGIDO en la rama**: el verificador de escritores (`check-writers`) detectó los 3 scripts nuevos (m054/m055/m056) sin declarar en `scripts/lib/writers.manifest.json`. Corrección: m055 declarado `guardProtected` (importa `assert-not-production` con projectRef real + doble flag + `--aplicar`), m054/m056 declarados `exceptions` READ-ONLY (solo SELECT; misma convención que m050b/m053). `node scripts/lib/check-writers.mjs` → **OK** (43 guardProtected · 24 isolationProtected · 134 excepciones). La corrección va en el segundo push de la rama (sin desactivar ningún control: el manifiesto es exactamente el mecanismo previsto).
+
+2. **SQL DB Security Checks — fallo PREEXISTENTE, no introducido por esta misión**: el job exige `secrets.DATABASE_URL` y en este run la vio vacía. El secret EXISTE en el repo (`DATABASE_URL`, updated 2026-10-19). Evidencia de preexistencia: el **run #264 del mismo workflow (2026-11-14T17:40Z, head `671ff6258f`, PR ajeno a esta misión) falló con el error idéntico** «DATABASE_URL no está configurado», y los runs #265/#269/#270/#271 pasaron. Clasificación: comportamiento de inyección de secrets en eventos `pull_request` (infra GitHub), externo al contenido de la rama (el job estático SQL Static Checks pasa y el PR no toca `supabase/migrations/**`). No se desactivó ni degradó ningún control para obtener verde; el gate de BD en vivo fue certificado en esta misión por canales independientes (catálogos vía Management API con guard, m056 22/22).
+
+## M. Re-chequeo post-corrección
+
+Segundo push de la rama (manifiesto de escritores + addendum): nueva ejecución de los gates sobre el SHA actualizado; Security Audit pasa con la declaración de escritores; el estado del SQL DB Gate se registra tal cual (sin manipularlo). El expediente de esta misión no depende del CI del PR: la migración quedó aplicada y certificada en producción por evidencia independiente (ledger + catálogos + m056).

@@ -51,3 +51,7 @@ El patrón oficial (`apply-migration-mgmt.ts`) emite `NOTIFY pgrst, 'reload sche
 ## 6. Gestión de errores aplicada (§7 de la misión)
 
 Al detectar la discrepancia de clasificación se detuvo la ejecución, se determinó por catálogo que la migración quedó **aplicada** (transacción implícita única del servidor), no se ejecutaron fragmentos sueltos, no se eliminó ningún objeto y se conservó toda la evidencia antes de continuar.
+
+## 7. CI del PR del expediente (adenda 2026-11-15)
+
+El primer push de la rama levantó dos fallos de gate, clasificados en el informe (§L): Security Audit (escritores sin declarar — hallazgo legítimo del control, corregido declarando m055 en guardProtected y m054/m056 en exceptions; check-writers OK) y SQL DB Security Checks (preexistente: el run #264 de 2026-11-14 sobre un PR ajeno falló con el mismo «DATABASE_URL no está configurado»; el secret existe en el repo; no se desactivó ningún control).
