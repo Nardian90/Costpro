@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-14T17:22:50.689Z
+-- Captured  : 2026-11-15T12:32:57.610Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 208 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -8063,6 +8063,7 @@ CREATE OR REPLACE FUNCTION public.fin_post_document_annulment(p_doctype text, p_
 AS $function$
 DECLARE
   e record; m record; v_new uuid; v_count integer := 0;
+  v_residual numeric;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext('fin:' || p_doctype || ':' || p_document_id::text));
   FOR e IN
@@ -8071,10 +8072,20 @@ BEGIN
       AND status = 'posted' AND event IN ('reconocimiento', 'pago')
     ORDER BY posted_at
   LOOP
-    -- ¿ya tiene anulación? (idempotente)
+    -- ¿ya tiene anulación? (idempotencia)
     IF EXISTS (SELECT 1 FROM public.fin_entries x
                WHERE x.reversal_of = e.id) THEN
-      CONTINUE;
+      -- T12 (CP-FIN-FINAL-CLOSE-005): distinguir cobertura TOTAL de PARCIAL.
+      -- · Reversión completa ordinaria → idempotencia intacta (se respeta el
+      --   «ya revertido» y NO se crea una segunda compensación).
+      -- · Reversión parcial/en exceso → residual contable pendiente: la
+      --   anulación automática NO puede saltar el asiento en silencio.
+      v_residual := public.fin_entry_reversal_residual(e.id);
+      IF v_residual <= 0.01 THEN
+        CONTINUE;
+      END IF;
+      RAISE EXCEPTION 'ERR_PARTIAL_REVERSAL_PENDING: el asiento % (doc % %) tiene reversiones parciales enlazadas y un residual de % CUP sin compensar. Regularice primero el residual contable (asiento explícito documentado, p. ej. runbook RECT004 §regularización); después la anulación funcionará por el cauce ordinario. El canal _safe registra este intento en fin_posting_errors.',
+        e.id, p_doctype, p_document_id, v_residual;
     END IF;
     INSERT INTO public.fin_entries (
       store_id, document_type, document_id, document_number, event, payment_ref,
@@ -8099,7 +8110,8 @@ BEGIN
     v_count := v_count + 1;
   END LOOP;
   RETURN v_count;
-END $function$
+END;
+$function$
 
 
 -- @contract-function name=fin_post_document_safe args="p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
