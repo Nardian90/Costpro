@@ -39,6 +39,12 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "can_manage_payroll_as",
+      "reason": "CP-SECURITY-BACKLOG-CLOSURE-001 (2026-11-14) · helper-interno · Helper de autorización de nóminas (misma clase que has_store_access_as/is_admin_check, ya allowlisted): resuelve la identidad server-side desde profiles/user_store_memberships por p_user_id explícito que los 7 RPC de nómina SÍ validan antes (patrón anti-spoofing v2.12.9 intacto en cada caller). Sin EXECUTE para anon/authenticated (REVOKE explícito en 20261114180000); solo service_role. Clasificación: gate de los RPC create/update/confirm/account/mark_paid/void/set_worker_salary_rate — verificados por scripts/e2e/verify-payroll-privacy-pg.mjs (matriz por rol).",
+      "added_by": "cp-security-backlog-closure-001",
+      "expires": "2027-06-30"
+    },
+    {
       "function": "can_pos_undo_transaction",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
@@ -135,15 +141,15 @@
       "expires": "2027-06-30"
     },
     {
-      "function": "fin_eval_condition",
-      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
-      "added_by": "cp-fin-auditoria-final",
+      "function": "fin_entry_reversal_residual",
+      "reason": "CP-FIN-T12-PRIVILEGE-HARDENING-001 (2026-11-16) · helper-interno · Helper de cálculo (SQL STABLE, SOLO lectura) del residual de cobertura de reversiones enlazadas por reversal_of (guard T12, migración 20261115100000): sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public desde la migración correctiva de privilegio mínimo 20261116120000 (REVOKE authenticated/anon/PUBLIC, GRANT conservado a service_role) — cumple la recomendación documentada por CP-VALUATION-NOMINAL-ACTIVATION-004 (2026-11-15); idéntica clase que la familia fin_* (fin_apply_templates/fin_eval_condition/...). Solo alcanzable desde fin_post_document_annulment y el trigger fin_t12_receipt_annulment_block (ambos SECURITY DEFINER owner postgres con sus propios cauces de autorización) y desde service_role. Evidencia: diagnóstico read-only de producción (Q3/Q4/Q5) + batería SQL de denegación real en BD aislada + PostgREST (anon 401 / authenticated 403 / service_role 200).",
+      "added_by": "CP-FIN-T12-PRIVILEGE-HARDENING-001 (fusiona entrada de CP-VALUATION-NOMINAL-ACTIVATION-004)",
       "expires": "2027-06-30"
     },
     {
-      "function": "fin_entry_reversal_residual",
-      "reason": "CP-FIN-T12-PRIVILEGE-HARDENING-001 (2026-11-16) · helper-interno · Helper de cálculo (SQL STABLE, SOLO lectura) del residual de cobertura de reversiones enlazadas (guard T12): sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración correctiva de privilegio mínimo, idéntica clase que fin_apply_templates/fin_eval_condition y resto de la familia fin_*); solo alcanzable desde fin_post_document_annulment y el trigger fin_t12_receipt_annulment_block (ambos SECURITY DEFINER owner postgres, con sus propios cauces de autorización) y desde service_role. Evidencia: diagnóstico read-only producción (Q3/Q4/Q5) + batería SQL de denegación en BD aislada.",
-      "added_by": "CP-FIN-T12-PRIVILEGE-HARDENING-001",
+      "function": "fin_eval_condition",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
       "expires": "2027-06-30"
     },
     {
@@ -543,6 +549,12 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "rate_limit_take",
+      "reason": "CP-SECURITY-BACKLOG-CLOSURE-001 (2026-11-14) · RPC service-only · Incremento atómico del contador de rate limit distribuido (UPSERT sobre rate_limit_buckets). Sin verificación de identidad PROPIA por diseño: la autorización es por ACL, no por claims — REVOKE EXECUTE de PUBLIC/anon/authenticated y GRANT solo a service_role (20261114180400, verificación fail-closed incluida). La tabla es RLS FORCED sin políticas. Solo alcanzable desde el servidor Next.js con service role. Pruebas: src/__tests__/lib/rate-limit-distributed.test.ts + scripts/rate-limit-concurrency-proof.mjs.",
+      "added_by": "cp-security-backlog-closure-001",
+      "expires": "2027-06-30"
+    },
+    {
       "function": "receive_against_po",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
@@ -684,18 +696,6 @@
       "function": "void_reception_with_reversal",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
-      "expires": "2027-06-30"
-    },
-    {
-      "function": "can_manage_payroll_as",
-      "reason": "CP-SECURITY-BACKLOG-CLOSURE-001 (2026-11-14) · helper-interno · Helper de autorización de nóminas (misma clase que has_store_access_as/is_admin_check, ya allowlisted): resuelve la identidad server-side desde profiles/user_store_memberships por p_user_id explícito que los 7 RPC de nómina SÍ validan antes (patrón anti-spoofing v2.12.9 intacto en cada caller). Sin EXECUTE para anon/authenticated (REVOKE explícito en 20261114180000); solo service_role. Clasificación: gate de los RPC create/update/confirm/account/mark_paid/void/set_worker_salary_rate — verificados por scripts/e2e/verify-payroll-privacy-pg.mjs (matriz por rol).",
-      "added_by": "cp-security-backlog-closure-001",
-      "expires": "2027-06-30"
-    },
-    {
-      "function": "rate_limit_take",
-      "reason": "CP-SECURITY-BACKLOG-CLOSURE-001 (2026-11-14) · RPC service-only · Incremento atómico del contador de rate limit distribuido (UPSERT sobre rate_limit_buckets). Sin verificación de identidad PROPIA por diseño: la autorización es por ACL, no por claims — REVOKE EXECUTE de PUBLIC/anon/authenticated y GRANT solo a service_role (20261114180400, verificación fail-closed incluida). La tabla es RLS FORCED sin políticas. Solo alcanzable desde el servidor Next.js con service role. Pruebas: src/__tests__/lib/rate-limit-distributed.test.ts + scripts/rate-limit-concurrency-proof.mjs.",
-      "added_by": "cp-security-backlog-closure-001",
       "expires": "2027-06-30"
     }
   ],

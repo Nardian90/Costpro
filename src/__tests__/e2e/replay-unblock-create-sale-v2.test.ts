@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 172 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 174 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -448,11 +448,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // CP-FIN-FINAL-CLOSE-005 (2026-11-15, PR #1628): +1 salvaguarda T12 de
     // reversión parcial vs anulación automática — guard de cobertura del motor
     // + trigger BEFORE en receipts (20261115100000_cp_fin_t12_partial_reversal_guard) = 172
-    // CP-VALUATION-NOMINAL-ACTIVATION-004 (2026-11-15, libro ids 62/63): +2
-    //   recuperadas al repo desde la rama de la misión (SHA verificados contra
-    //   el libro) — 20261115120000_cp_valuation_nominal_pp64 (normalización
-    //   nominal de los 64 PP vía fn_recalc_wac) y 20261115120100_cp_valuation_
-    //   activation_nominal (ACTIVATE_MASTER_PRODUCT respeta el nominal 1 CUP) = 174
+    // CP-VALUATION-NOMINAL-ACTIVATION-004 (2026-11-15, PR #1631, libro ids 62/63): +2
+    //   20261115120000_cp_valuation_nominal_pp64 (normalización nominal de los 64
+    //   PP vía fn_recalc_wac) + 20261115120100_cp_valuation_activation_nominal
+    //   (ACTIVATE_MASTER_PRODUCT respeta el nominal 1 CUP) = 174
     // CP-FIN-T12-PRIVILEGE-HARDENING-001 (2026-11-16): +1 — 20261116120000_cp_
     //   fin_t12_privilege_hardening (REVOKE EXECUTE authenticated del helper
     //   fin_entry_reversal_residual; privilegio mínimo) = 175

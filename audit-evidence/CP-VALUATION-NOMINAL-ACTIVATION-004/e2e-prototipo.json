@@ -1,0 +1,173 @@
+{
+  "mision": "CP-VALUATION-NOMINAL-ACTIVATION-004",
+  "fase": "prototipo E2E aislado",
+  "generado": "2026-11-15T12:46:06.599Z",
+  "bd": {
+    "url": "https://lguovmvrozxgssupkwpf.supabase.co",
+    "proyecto": "lguovmvrozxgssupkwpf (CostproE2E — AISLADA)",
+    "sentinela": true,
+    "canal_escritura": "pooler IPv4 aws-0-us-east-1:6543 + REST service_role"
+  },
+  "escenarios": {
+    "preflight": {
+      "ms": 4806,
+      "resumen": "sentinela=true (REST+SQL); residuos previos del segmento eliminados"
+    },
+    "seed": {
+      "ms": 1153,
+      "resumen": "tenant + 2 tiendas + 2 links + 2 maestros",
+      "tenant": "7ec70004-0000-4000-8000-000000000001",
+      "admin": "5b12c5d8-15f5-456e-879b-656e4b6e141e"
+    },
+    "S1_alta_nominal_1cup": {
+      "ms": 534,
+      "resumen": "activación nueva con WAC nominal 1 CUP exacto",
+      "producto": {
+        "id": "69ef2957-cf46-400a-8ceb-ecf33163e9c9",
+        "cost_average": "1",
+        "cost_price": "0",
+        "price": "0",
+        "stock_current": "0.0000",
+        "oc": "venta",
+        "is_active": true,
+        "master": "7ec70004-0000-4000-8000-000000000010"
+      },
+      "respuesta_rpc": {
+        "status": "success",
+        "product_id": "69ef2957-cf46-400a-8ceb-ecf33163e9c9",
+        "cost_average": 1,
+        "already_active": false,
+        "master_product_id": "7ec70004-0000-4000-8000-000000000010",
+        "cost_average_origin": "nominal_1cup_owner_policy",
+        "nominal_cost_assigned": true
+      }
+    },
+    "S2_reactivacion_sin_degradacion": {
+      "ms": 454,
+      "resumen": "reactivación NO degrada (cost_average preexistente intacto)",
+      "respuesta": {
+        "status": "success",
+        "product_id": "69ef2957-cf46-400a-8ceb-ecf33163e9c9",
+        "cost_average": 1,
+        "already_active": true,
+        "master_product_id": "7ec70004-0000-4000-8000-000000000010",
+        "cost_average_origin": "preexistente_intacto"
+      }
+    },
+    "S3_primera_recepcion_reemplaza_nominal": {
+      "ms": 967,
+      "resumen": "1ª recepción 10u@500 → WAC=500 EXACTO (nominal reemplazado)",
+      "wac": "500.00000000000000000",
+      "stock": "10.0000",
+      "receipt_id": "98f1a66f-45f3-4735-a26b-c83ee3a85ad2",
+      "wac_log_reception_in": 1,
+      "movimientos": [
+        {
+          "movement_type": "purchase",
+          "n": 1
+        }
+      ]
+    },
+    "S4_segunda_recepcion_ponderada": {
+      "ms": 466,
+      "resumen": "2ª recepción 5u@700 → WAC=566.666666666666666666667 (ponderación (10·500+5·700)/15)",
+      "wac": "566.666666666666666666667",
+      "esperado": 566.6666666666666,
+      "stock": "15.0000",
+      "receipt_id": "75a9055b-17cc-4ada-822b-f5313ae683c1"
+    },
+    "S5_dos_tiendas_independientes": {
+      "ms": 660,
+      "resumen": "tienda B con nominal 1; tienda A conserva su WAC real (566.67); maestro compartido",
+      "tienda_a": {
+        "id": "69ef2957-cf46-400a-8ceb-ecf33163e9c9",
+        "cost_average": "566.666666666666666666667",
+        "cost_price": "0",
+        "price": "0"
+      },
+      "tienda_b": {
+        "id": "80c87d05-0fca-4763-8715-8c1bfe90eef5",
+        "cost_average": "1",
+        "cost_price": "0",
+        "price": "0",
+        "stock_current": "0.0000",
+        "master": "7ec70004-0000-4000-8000-000000000010"
+      }
+    },
+    "S6_reactivacion_post_wac_real": {
+      "ms": 456,
+      "resumen": "reactivación tras WAC real → cost_average intacto (566.67)",
+      "wac": "566.666666666666666666667"
+    },
+    "S7_correccion_pp64_idempotente": {
+      "ms": 3815,
+      "resumen": "migración corrige el cero → 1 CUP canónico; 2ª corrida SIN cambios de datos (idempotente)",
+      "legado_despues": {
+        "cost_average": "1.00000000000000000000",
+        "cost_price": "0",
+        "price": "0",
+        "stock_current": "0.0000",
+        "sku": "VAL004-M2",
+        "name": "Maestro VAL004 M2 (legado)",
+        "master": "7ec70004-0000-4000-8000-000000000011"
+      },
+      "wac_log": {
+        "event": "cp_valuation_004_nominal",
+        "wac_before": "0",
+        "wac_after": "1.00000000000000000000",
+        "qty_in": "1",
+        "uc_in": "1"
+      },
+      "snapshot_filas": {
+        "tras_1a": 1,
+        "tras_2a": 1
+      },
+      "universo_cero_tras_politica": 0
+    },
+    "S8_costo_documental_precio_intactos": {
+      "ms": 204,
+      "resumen": "cost_price=0 y price=0 en todos los productos del flujo (documental/precio intactos)",
+      "filas": 3
+    },
+    "S9_guard_wac_activo": {
+      "ms": 721,
+      "resumen": "UPDATE directo sin token → ERR_WAC_SINGLE_WRITER_VIOLATION; guard activo",
+      "tgenabled": "O",
+      "tgtype": 19,
+      "mensaje": "ERR_WAC_SINGLE_WRITER_VIOLATION: UPDATE cost_average sin token (OLD=1.00000000000000000000 NEW=7). Unico escritor: fn_recalc_wac"
+    },
+    "cleanup_net_delta_0": {
+      "ms": 8389,
+      "resumen": "net delta = 0 (todas las tablas del segmento limpiadas)",
+      "delta_final": {
+        "stores": 2,
+        "products": 3,
+        "master_products": 2,
+        "receipts": 2,
+        "receipt_items": 2,
+        "stock_movements": 2,
+        "wac_change_log": 3,
+        "audit_logs": 8,
+        "catalog_store_links": 2,
+        "tenants": 1
+      }
+    }
+  },
+  "idempotencia": {},
+  "guard": {},
+  "cleanup": {
+    "baseline_conteos": {
+      "stores": 77,
+      "products": 30,
+      "master_products": 22,
+      "receipts": 1,
+      "receipt_items": 3,
+      "stock_movements": 4,
+      "wac_change_log": 592,
+      "audit_logs": 2943,
+      "catalog_store_links": 8,
+      "tenants": 58
+    }
+  },
+  "checksum_evidencia": "e29d65da7bc28ef033649ec2a2ab482e1c9b31063d5c9ee09d043a90f67c4675"
+}
