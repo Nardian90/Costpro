@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-15 CP-VALUATION-NOMINAL-ACTIVATION-004: + scripts/val004-apply-e2e.mjs (aplicación de migraciones SOLO a la BD E2E aislada, ref fijado fail-closed) y scripts/val004-e2e-prototype.mjs (prototipo E2E de la política nominal; sentinelas REST+SQL + assert-not-production)",
+  "_updated": "2026-11-15 CP-VALUATION-NOMINAL-ACTIVATION-004: + scripts/val004-apply-prod.mjs (aplicador de migraciones a producción con doble guard: doble flag operador + assert-not-production; pre-verificación con ABORT y fila del libro en el mismo ciclo) + scripts/val004-apply-e2e.mjs y val004-e2e-prototype.mjs en isolationProtected",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -40,6 +40,7 @@
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
     "scripts/seed-pick3-history.js",
+    "scripts/val004-apply-prod.mjs",
     "scripts/validar-ciclo-divisa-devoluciones.mjs",
     "scripts/validar-fix-17-1-servicios-usd.mjs",
     "scripts/validar-fix-dryrun-pagos.mjs",
