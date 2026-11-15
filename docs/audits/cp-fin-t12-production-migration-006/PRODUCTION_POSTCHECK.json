@@ -1,0 +1,197 @@
+{
+  "mision": "CP-FIN-T12-PRODUCTION-MIGRATION-006",
+  "script": "m056-t12-postcert.mjs",
+  "fecha_utc": "2026-11-15T12:31:31.681Z",
+  "destino": {
+    "proyecto_ref": "wthkddeleylijmonclxg",
+    "nombre": "CostproBD (PRODUCCIÓN)"
+  },
+  "modo": "SOLO LECTURA (ninguna escritura en esta fase; la demostración funcional proviene de las pruebas E2E aisladas 9/9 + inspección del código desplegado)",
+  "veredicto": "PASS",
+  "controles": [
+    {
+      "id": "A1",
+      "control": "Migración 20261115100000 registrada exactamente una vez",
+      "resultado": "PASS",
+      "detalle": "filas=1"
+    },
+    {
+      "id": "A2",
+      "control": "Checksum registrado = SHA-256 del archivo aprobado",
+      "resultado": "PASS",
+      "detalle": "registrado=3429613c4bd26e33843be28b8174c336a785189330033433309bec6573e19481"
+    },
+    {
+      "id": "A3",
+      "control": "Mecanismo oficial y estado applied",
+      "resultado": "PASS",
+      "detalle": "management_api/applied"
+    },
+    {
+      "id": "A4",
+      "control": "Ninguna migración adicional aplicada (solo T12)",
+      "resultado": "PASS",
+      "detalle": "nuevas=[20261115100000]"
+    },
+    {
+      "id": "B1",
+      "control": "Detección de cobertura parcial: residual > 0.01 genera ERR_PARTIAL_REVERSAL_PENDING",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "B2",
+      "control": "Cobertura total conservada (idempotencia ordinaria: rama exacta IF residual<=0.01 THEN CONTINUE)",
+      "resultado": "PASS",
+      "detalle": "hash_vivo=ed0940bb36f24682fd7ae0d08d26cc43f6352da06c09b8f7665bb0ae70d80677"
+    },
+    {
+      "id": "B3",
+      "control": "Cuerpo desplegado del motor = cuerpo del archivo aprobado (hash)",
+      "resultado": "PASS",
+      "detalle": "248 líneas verbatim"
+    },
+    {
+      "id": "B4",
+      "control": "Helper fin_entry_reversal_residual = archivo aprobado (hash)",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "B5",
+      "control": "Canal _safe intacto y registrador (WHEN others → fin_posting_errors)",
+      "resultado": "PASS",
+      "detalle": "sin cambios pre→post"
+    },
+    {
+      "id": "C1",
+      "control": "Trigger fin_t12_receipt_annulment_block existe",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "C2",
+      "control": "Trigger habilitado",
+      "resultado": "PASS",
+      "detalle": "tgenabled=O"
+    },
+    {
+      "id": "C3",
+      "control": "Asociado a la tabla y evento correctos (BEFORE UPDATE OF status ON public.receipts)",
+      "resultado": "PASS",
+      "detalle": "CREATE TRIGGER fin_t12_receipt_annulment_block BEFORE UPDATE OF status ON public.receipts FOR EACH ROW EXECUTE FUNCTION fin_t12_block_receipt_annulment()"
+    },
+    {
+      "id": "C4",
+      "control": "Función ejecutora = código aprobado (hash de cuerpo)",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "C5",
+      "control": "La función de negocio bloquea (RAISE EXCEPTION) y advierte (RAISE WARNING)",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "C6",
+      "control": "Ningún otro trigger de receipts deshabilitado o bloqueante del bloqueo",
+      "resultado": "PASS",
+      "detalle": "otros=fin_trg_receipts(O), trg_audit_receipt_changes(O), trg_cp_infra_020_block_truncate(A), trg_receipts_assign_document_number(O), trg_set_due_date_receipt(O), trg_validate_receipt_transition(O)"
+    },
+    {
+      "id": "C7",
+      "control": "Sin escape hatch en el código desplegado (motor y trigger)",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "D1",
+      "control": "RLS intacta en las 6 tablas clave (pre→post idéntico)",
+      "resultado": "PASS",
+      "detalle": "6 tablas"
+    },
+    {
+      "id": "D2",
+      "control": "Sin EXECUTE para PUBLIC/anon (ACL endurecida)",
+      "resultado": "PASS",
+      "detalle": "fin_entry_reversal_residual:authenticated:EXECUTE · fin_entry_reversal_residual:postgres:EXECUTE · fin_entry_reversal_residual:service_role:EXECUTE · fin_post_annulment_safe:postgres:EXECUTE · fin_post_annulment_safe:service_role:EXECUTE · fin_post_document_annulment:postgres:EXECUTE · fin_post_document_annulment:service_role:EXECUTE · fin_t12_block_receipt_annulment:authenticated:EXECUTE · fin_t12_block_receipt_annulment:postgres:EXECUTE · fin_t12_block_receipt_annulment:service_role:EXECUTE"
+    },
+    {
+      "id": "D3",
+      "control": "service_role conserva EXECUTE del motor (operativa de la app)",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "D4",
+      "control": "Sin rutas de escritura nuevas fuera del diseño",
+      "resultado": "PASS",
+      "detalle": "encontradas=fin_post_annulment_safe, fin_post_document_annulment, fin_t12_block_receipt_annulment"
+    },
+    {
+      "id": "D5",
+      "control": "Datos financieros invariantes: 11 secciones hash-idénticas pre→post",
+      "resultado": "PASS",
+      "detalle": "FVC 192.039.436 · 101 líneas · 1 asiento posted · 0 reversiones · CXP pendiente · stock 10/20 · WAC 1 · COGS 7 · 0 post-corte"
+    },
+    {
+      "id": "D6",
+      "control": "fin_posting_errors sigue vacío (sin intentos bloqueados ni errores)",
+      "resultado": "PASS",
+      "detalle": "n=0"
+    }
+  ],
+  "detalle": {
+    "ledger_fila": {
+      "version": "20261115100000",
+      "file": "supabase/migrations/20261115100000_cp_fin_t12_partial_reversal_guard.sql",
+      "sha256": "3429613c4bd26e33843be28b8174c336a785189330033433309bec6573e19481",
+      "mechanism": "management_api",
+      "status": "applied",
+      "applied_at": "2026-11-15 12:26:09.697192+00"
+    },
+    "hashes_cuerpo": {
+      "motor_vivo": "ed0940bb36f24682fd7ae0d08d26cc43f6352da06c09b8f7665bb0ae70d80677",
+      "motor_aprobado": "ed0940bb36f24682fd7ae0d08d26cc43f6352da06c09b8f7665bb0ae70d80677",
+      "helper": "f1dee4f29747dbc35fbe1cebe1adc9dc1d1379bb5da182d5b696832d564c181c",
+      "t12_trigger": "7e99e20f7216c883c30932185063f3c99e01b7224bb02a66ef354c0aac58f1ba"
+    },
+    "trigger": {
+      "nombre": "fin_t12_receipt_annulment_block",
+      "tgenabled": "O",
+      "def": "CREATE TRIGGER fin_t12_receipt_annulment_block BEFORE UPDATE OF status ON public.receipts FOR EACH ROW EXECUTE FUNCTION fin_t12_block_receipt_annulment()"
+    },
+    "privilegios": [
+      "fin_entry_reversal_residual:authenticated:EXECUTE",
+      "fin_entry_reversal_residual:postgres:EXECUTE",
+      "fin_entry_reversal_residual:service_role:EXECUTE",
+      "fin_post_annulment_safe:postgres:EXECUTE",
+      "fin_post_annulment_safe:service_role:EXECUTE",
+      "fin_post_document_annulment:postgres:EXECUTE",
+      "fin_post_document_annulment:service_role:EXECUTE",
+      "fin_t12_block_receipt_annulment:authenticated:EXECUTE",
+      "fin_t12_block_receipt_annulment:postgres:EXECUTE",
+      "fin_t12_block_receipt_annulment:service_role:EXECUTE"
+    ],
+    "secciones_hash_post": {
+      "fvc_cabecera": "9f2d8959c3e0ab82ad7065533aab61012ac0b1e4d098b6850b6791fc970f7090",
+      "fvc_lineas": "ae939370e8905f85d06f50edf925bb201dbb993ed5c05c1e6a11dcf689d05ead",
+      "asiento_reconocimiento": "2c56616659c1d37ba3dd5f253c98ac0d384f1c759664afb140a174ddcc76e1d5",
+      "reversiones_asiento": "36273a43b0daef05b1b22504aaa7a5eb7a24c8e93ab0bfe2f98d8136f08180b6",
+      "fin_movements_cxp_fvc": "c0c2201158676132783a39928b02f02056a9a406eeb6276e8c8b03e9f3a1e795",
+      "mayor_pas_cxp_prov": "3b0cebe5798055e5820890af68cee900c36a1f566c69d0bd59b30f0851869447",
+      "inventario_111_112": "ea08b13ed53c65b66ee2d1cebe1b5127fe802d3ef7fc491fcb2bf6020ba4cde7",
+      "wac_log": "3ccdc61933e9fafc4e93a913ebd14c6be5127bba70e75b374a83fc10243ce8b4",
+      "cogs_ventas": "764e71d9c65e0f278a72dd27548d6074342a7465654acb86638a3332be4a2685",
+      "conteos_totales": "208887e113b58c035c77dd8e1fe8a0517f1ba20a6407f39fb809343f69748ce5",
+      "movimientos_postcorte_111_112": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "func_def_annulment_actual": "2ae93fc3abba9cec6f85733c0b7114cf71c8e6b8a35f4c6f6343da6d424a6261",
+      "func_def_annulment_safe_actual": "7fbf447712835382774ce7cbb13ff23172df4053f414f637df9a6e1cc2b89698",
+      "triggers_receipts": "9b9094493beab8b4998f26cfbb6837551d8a435ddf4643a2cd357abc9e2ba04d",
+      "rls_tablas": "5a05e1e4f4328ec3c1a166339680c833e83fd2534a3b219c2955db850a52c9c5",
+      "privilegios_funciones": "9b6911aea00b34890b13dc45e3fbfaea2ccfba4117b51fa8176eb5a63f5664e8",
+      "proacl_annulment": "30da125ed1dd06380207d38f699f163a42d7ef1de1c2afe6d6b55b58b13e66cc"
+    }
+  }
+}

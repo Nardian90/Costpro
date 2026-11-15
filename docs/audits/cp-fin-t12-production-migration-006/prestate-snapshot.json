@@ -1,0 +1,283 @@
+{
+  "mision": "CP-FIN-T12-PRODUCTION-MIGRATION-006",
+  "script": "m054-t12-prod-prestate.mjs",
+  "capturado_utc": "2026-11-15T12:18:05.048Z",
+  "objetivo": {
+    "proyecto_ref": "wthkddeleylijmonclxg",
+    "etiqueta": "CostproBD (PRODUCCIÓN)"
+  },
+  "identidad": {
+    "db": "postgres",
+    "usr": "postgres",
+    "pg": "17.6",
+    "server_now": "2026-11-15 12:18:06.914428+00"
+  },
+  "fvc_cabecera": [
+    {
+      "id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+      "document_number": null,
+      "status": "active",
+      "total_cost": "192039436.000000000",
+      "payment_status": "unpaid",
+      "created_at": "2026-08-11 22:49:18.423872+00",
+      "updated_at": "2026-07-01 12:00:00+00"
+    }
+  ],
+  "fvc_lineas": {
+    "n": 101,
+    "suma_recomputada": "192039436.00"
+  },
+  "asiento_reconocimiento": [
+    {
+      "id": "93bb5da9-0afd-4325-baad-a275710062c5",
+      "event": "reconocimiento",
+      "status": "posted",
+      "document_type": "RECEPCION",
+      "document_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+      "reversal_of": null,
+      "posted_at": "2026-11-14 01:51:20.117662+00",
+      "suma_debito_cup": "192039436.00",
+      "suma_credito_cup": "192039436.00"
+    }
+  ],
+  "reversiones_asiento": [
+    {
+      "n": 0
+    }
+  ],
+  "fin_movements_cxp_fvc": [
+    {
+      "id": "81d6b9a0-d8e9-4018-8e36-5935c0b95a56",
+      "entry_id": "93bb5da9-0afd-4325-baad-a275710062c5",
+      "document_type": "RECEPCION",
+      "document_number": null,
+      "event": "reconocimiento",
+      "category_code": "PAS_CXP_PROV",
+      "sense": "credito",
+      "amount": "192039436.00",
+      "amount_cup": "192039436.00",
+      "economic_date": "2026-07-01",
+      "description": "Entrada de almacén ",
+      "traza": {
+        "regla": "motor-cp-fin",
+        "metrica": "total_cup",
+        "template": "r-cxp-c"
+      },
+      "reversal_of": null
+    }
+  ],
+  "mayor_pas_cxp_prov": [
+    {
+      "document_type": "RECEPCION",
+      "event": "reconocimiento",
+      "sense": "credito",
+      "n_movs": 98,
+      "total": 207256110.57
+    },
+    {
+      "document_type": "RECEPCION",
+      "event": "anulacion",
+      "sense": "debito",
+      "n_movs": 1,
+      "total": 960
+    }
+  ],
+  "inventario_111_112": [
+    {
+      "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+      "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "quantity": "20.0000"
+    },
+    {
+      "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+      "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "quantity": "10.0000"
+    }
+  ],
+  "wac_log": [
+    {
+      "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+      "wac_before": "0",
+      "wac_after": "1",
+      "event": "wac_correction",
+      "qty_in": null,
+      "uc_in": null,
+      "source_ref": {
+        "caso": "B — COSTO_NOMINAL_1_JUSTIFICADO",
+        "gate": "GATE16 ENERVIDA 05/10/2026 FASE 5",
+        "method": "governed_admin_write",
+        "decision": "Costo nominal minimo 1 CUP; NO se fabrica costo real; venta del papel fila r19 tendra COGS 3 CUP",
+        "evidence": "SIN costo real recuperable fiable: receipt_items(receipt fd9d6c88) unit_cost=1000 USD/ud (contradice precio venta 1000 CUP); stock_movements purchase unit_cost=680000 (escala contradictoria)",
+        "protocol": "replica del protocolo del escritor canonico fn_recalc_wac (token app.wac_writer + wac_change_log)",
+        "precedent": "SKU 141 Cemento TBV WAC=1 (reception_in 50x1, receipt 0af48646) mismo papel 05/10; 43 reception_in + 32 adjustment_plus con uc_in=1 en wac_change_log de esta tienda",
+        "authorized_by": "admin@demo.com"
+      },
+      "created_at": "2026-10-06 04:01:12.485699+00"
+    },
+    {
+      "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+      "wac_before": "0",
+      "wac_after": "1",
+      "event": "wac_correction",
+      "qty_in": null,
+      "uc_in": null,
+      "source_ref": {
+        "gate": "DECISION CONTABLE AUTORIZADA POR EL PROPIETARIO (mandato TAREA 2B)",
+        "task": "TAREA-2B",
+        "method": "governed_admin_write",
+        "decision": "DECISION CONTABLE EXPLICITA: WAC nominal = 1 CUP para saneamiento de cost_average=0. No representa reconstruccion demostrada del costo historico.",
+        "procedencia": "ver docs/audits/ENERVIDA-COST-PROVENANCE-AUDIT.md (TAREA 2C, PR 1375)",
+        "correction_id": "ENERVIDA-WAC-2026-DECISION-1CUP-SKU-111"
+      },
+      "created_at": "2026-10-07 11:39:40.310871+00"
+    }
+  ],
+  "cogs_ventas": [
+    {
+      "total": "7.00",
+      "n": 5
+    }
+  ],
+  "conteos_totales": {
+    "fin_entries": 1041,
+    "fin_movements": 3540,
+    "receipts": 98,
+    "receipt_items": 309,
+    "fin_posting_errors": 0
+  },
+  "movimientos_postcorte_111_112": [],
+  "func_def_annulment_actual": "CREATE OR REPLACE FUNCTION public.fin_post_document_annulment(p_doctype text, p_document_id uuid)\n RETURNS integer\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  e record; m record; v_new uuid; v_count integer := 0;\nBEGIN\n  PERFORM pg_advisory_xact_lock(hashtext('fin:' || p_doctype || ':' || p_document_id::text));\n  FOR e IN\n    SELECT * FROM public.fin_entries\n    WHERE document_type = p_doctype AND document_id = p_document_id\n      AND status = 'posted' AND event IN ('reconocimiento', 'pago')\n    ORDER BY posted_at\n  LOOP\n    -- ¿ya tiene anulación? (idempotente)\n    IF EXISTS (SELECT 1 FROM public.fin_entries x\n               WHERE x.reversal_of = e.id) THEN\n      CONTINUE;\n    END IF;\n    INSERT INTO public.fin_entries (\n      store_id, document_type, document_id, document_number, event, payment_ref,\n      economic_date, rule_version_id, movements_snapshot, reversal_of, description, created_by)\n    VALUES (\n      e.store_id, e.document_type, e.document_id, e.document_number, 'anulacion',\n      e.payment_ref, e.economic_date, e.rule_version_id, e.movements_snapshot, e.id,\n      'Anulación: ' || coalesce(e.description, ''), e.created_by)\n    RETURNING id INTO v_new;\n    FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = e.id LOOP\n      INSERT INTO public.fin_movements (\n        entry_id, store_id, category_code, sense, amount, currency, exchange_rate,\n        economic_date, document_number, description, currency_origin, traza)\n      VALUES (\n        v_new, m.store_id, m.category_code,\n        CASE WHEN m.sense = 'debito' THEN 'credito' ELSE 'debito' END,\n        m.amount, m.currency, m.exchange_rate, m.economic_date, m.document_number,\n        'Anulación: ' || coalesce(m.description, ''), m.currency_origin,\n        m.traza || jsonb_build_object('anulacion_de', m.id));\n    END LOOP;\n    UPDATE public.fin_entries SET status = 'reversed' WHERE id = e.id;\n    v_count := v_count + 1;\n  END LOOP;\n  RETURN v_count;\nEND $function$\n",
+  "func_def_annulment_safe_actual": "CREATE OR REPLACE FUNCTION public.fin_post_annulment_safe(p_doctype text, p_document_id uuid)\n RETURNS integer\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\nDECLARE\n  v_n integer;\nBEGIN\n  BEGIN\n    v_n := public.fin_post_document_annulment(p_doctype, p_document_id);\n    RETURN v_n;\n  EXCEPTION WHEN others THEN\n    INSERT INTO public.fin_posting_errors (store_id, document_type, document_id, event, error_code, error_detail)\n    VALUES (NULL, p_doctype, p_document_id, 'anulacion',\n            substr(SQLERRM, 1, 80), substr(SQLERRM, 1, 2000));\n    RETURN 0;\n  END;\nEND $function$\n",
+  "func_residual_existe": {
+    "existe": false
+  },
+  "func_t12block_existe": {
+    "existe": false
+  },
+  "triggers_receipts": [
+    {
+      "tgname": "fin_trg_receipts",
+      "tgenabled": "O",
+      "def": "CREATE CONSTRAINT TRIGGER fin_trg_receipts AFTER INSERT OR UPDATE ON public.receipts DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION fin_trg_receipts()",
+      "func": "fin_trg_receipts"
+    },
+    {
+      "tgname": "trg_audit_receipt_changes",
+      "tgenabled": "O",
+      "def": "CREATE TRIGGER trg_audit_receipt_changes AFTER UPDATE ON public.receipts FOR EACH ROW EXECUTE FUNCTION log_transaction_changes()",
+      "func": "log_transaction_changes"
+    },
+    {
+      "tgname": "trg_cp_infra_020_block_truncate",
+      "tgenabled": "A",
+      "def": "CREATE TRIGGER trg_cp_infra_020_block_truncate BEFORE TRUNCATE ON public.receipts FOR EACH STATEMENT EXECUTE FUNCTION block_truncate()",
+      "func": "block_truncate"
+    },
+    {
+      "tgname": "trg_receipts_assign_document_number",
+      "tgenabled": "O",
+      "def": "CREATE TRIGGER trg_receipts_assign_document_number BEFORE INSERT OR UPDATE OF status, document_number ON public.receipts FOR EACH ROW WHEN (((new.status = 'active'::text) AND ((new.document_number IS NULL) OR (new.document_number = ''::text)))) EXECUTE FUNCTION assign_receipt_document_number()",
+      "func": "assign_receipt_document_number"
+    },
+    {
+      "tgname": "trg_set_due_date_receipt",
+      "tgenabled": "O",
+      "def": "CREATE TRIGGER trg_set_due_date_receipt BEFORE INSERT ON public.receipts FOR EACH ROW EXECUTE FUNCTION set_default_due_date_receipt()",
+      "func": "set_default_due_date_receipt"
+    },
+    {
+      "tgname": "trg_validate_receipt_transition",
+      "tgenabled": "O",
+      "def": "CREATE TRIGGER trg_validate_receipt_transition BEFORE UPDATE OF status ON public.receipts FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('receipts')",
+      "func": "fn_validate_document_transition"
+    }
+  ],
+  "rls_tablas": [
+    {
+      "relname": "fin_entries",
+      "rls": true,
+      "force_rls": true
+    },
+    {
+      "relname": "fin_movements",
+      "rls": true,
+      "force_rls": true
+    },
+    {
+      "relname": "fin_posting_errors",
+      "rls": true,
+      "force_rls": true
+    },
+    {
+      "relname": "production_migration_ledger",
+      "rls": true,
+      "force_rls": false
+    },
+    {
+      "relname": "receipt_items",
+      "rls": true,
+      "force_rls": false
+    },
+    {
+      "relname": "receipts",
+      "rls": true,
+      "force_rls": false
+    }
+  ],
+  "privilegios_funciones": [
+    {
+      "routine_name": "fin_post_annulment_safe",
+      "grantee": "postgres",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "routine_name": "fin_post_annulment_safe",
+      "grantee": "service_role",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "routine_name": "fin_post_document_annulment",
+      "grantee": "postgres",
+      "privilege_type": "EXECUTE"
+    },
+    {
+      "routine_name": "fin_post_document_annulment",
+      "grantee": "service_role",
+      "privilege_type": "EXECUTE"
+    }
+  ],
+  "proacl_annulment": {
+    "acl": [
+      "(16384,EXECUTE)",
+      "(16482,EXECUTE)"
+    ]
+  },
+  "ledger_t12_pre": {
+    "n": 0
+  },
+  "ledger_ultima": {
+    "version": "20261114190300",
+    "file": "supabase/migrations/20261114190300_cp_cost_audit_rls.sql",
+    "applied_at": "2026-11-14 17:44:00.970483+00",
+    "status": "applied"
+  },
+  "hashes": {
+    "fvc_cabecera": "9f2d8959c3e0ab82ad7065533aab61012ac0b1e4d098b6850b6791fc970f7090",
+    "fvc_lineas": "ae939370e8905f85d06f50edf925bb201dbb993ed5c05c1e6a11dcf689d05ead",
+    "asiento_reconocimiento": "2c56616659c1d37ba3dd5f253c98ac0d384f1c759664afb140a174ddcc76e1d5",
+    "reversiones_asiento": "36273a43b0daef05b1b22504aaa7a5eb7a24c8e93ab0bfe2f98d8136f08180b6",
+    "fin_movements_cxp_fvc": "c0c2201158676132783a39928b02f02056a9a406eeb6276e8c8b03e9f3a1e795",
+    "mayor_pas_cxp_prov": "3b0cebe5798055e5820890af68cee900c36a1f566c69d0bd59b30f0851869447",
+    "inventario_111_112": "ea08b13ed53c65b66ee2d1cebe1b5127fe802d3ef7fc491fcb2bf6020ba4cde7",
+    "wac_log": "3ccdc61933e9fafc4e93a913ebd14c6be5127bba70e75b374a83fc10243ce8b4",
+    "cogs_ventas": "764e71d9c65e0f278a72dd27548d6074342a7465654acb86638a3332be4a2685",
+    "conteos_totales": "208887e113b58c035c77dd8e1fe8a0517f1ba20a6407f39fb809343f69748ce5",
+    "movimientos_postcorte_111_112": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "func_def_annulment_actual": "ad69af0fd75f3130fd0e113275d6e8af658ab2cbfb9d46bfff17a364ead6e3b7",
+    "func_def_annulment_safe_actual": "7fbf447712835382774ce7cbb13ff23172df4053f414f637df9a6e1cc2b89698",
+    "triggers_receipts": "8bd3fca73c5c4d414885ad28aa188525bac5d877783c84412bfdf92ffc6f4879",
+    "rls_tablas": "5a05e1e4f4328ec3c1a166339680c833e83fd2534a3b219c2955db850a52c9c5",
+    "privilegios_funciones": "8e544da330a12dba7b6065290b1bbe017c4ff70bb63456687c4c468ef24f08bc",
+    "proacl_annulment": "30da125ed1dd06380207d38f699f163a42d7ef1de1c2afe6d6b55b58b13e66cc"
+  }
+}

@@ -1,0 +1,19 @@
+[m055-t12-apply.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+[GUARD] assertNotProduction PASÓ — destino identificado: wthkddeleylijmonclxg (CostproBD, PRODUCCIÓN).
+[SHA] supabase/migrations/20261115100000_cp_fin_t12_partial_reversal_guard.sql = 3429613c4bd26e33843be28b8174c336a785189330033433309bec6573e19481 — coincide con el manifiesto aprobado (RECT005_SHA256SUMS.txt).
+[SQL] Contenido contiene las dos protecciones (motor + negocio). Sin reescrituras.
+[PRE-STATE] Referencias §6 congeladas y coincidentes (FVC activa 192.039.436; 101 líneas; 0 reversiones; COGS 7).
+[LEDGER] 20261115100000 no aplicada; última fila = 20261114190300 (applied). Única pendiente autorizada.
+[APLICANDO] 2026-11-15T12:23:15.983Z — POST Management API (transacción implícita única)…
+[APLICADO] HTTP 201 — respuesta: []
+FALLO: la migración NO se aplicó (transacción implícita revertida por el servidor). NO ejecutar fragmentos sueltos.
+file:///home/z/my-project/Costpro/scripts/m055-t12-apply.mjs:168
+    post_verificacion_inmediata: { helper_creado: v1?.existe ?? null, t12block_creado: v2?.existe ?? null, trigger: v3 || null, motor_marcador: v4 || null },
+                                                  ^
+
+ReferenceError: Cannot access 'v1' before initialization
+    at writeEvidence (file:///home/z/my-project/Costpro/scripts/m055-t12-apply.mjs:168:51)
+    at file:///home/z/my-project/Costpro/scripts/m055-t12-apply.mjs:122:3
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+
+Node.js v24.22.3
