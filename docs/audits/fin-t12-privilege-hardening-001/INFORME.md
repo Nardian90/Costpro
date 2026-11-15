@@ -1,6 +1,6 @@
 # CP-FIN-T12-PRIVILEGE-HARDENING-001 — Auditoría y restricción de EXECUTE de `fin_entry_reversal_residual`
 
-**Fecha:** 2026-11-16 · **Migración correctiva:** `supabase/migrations/20261116120000_cp_fin_t12_privilege_hardening.sql` · **Estado:** aplicación a producción PENDIENTE de autorización de despliegue (runbook `scripts/m056-fin-t12-privilege-deploy.mjs`)
+**Fecha:** 2026-11-16 · **PR:** #1632 (`fix/fin-t12-privilege-hardening-20261116` → main) · **Migración correctiva:** `supabase/migrations/20261116120000_cp_fin_t12_privilege_hardening.sql` · **Estado:** aplicación a producción PENDIENTE de autorización de despliegue (runbook `scripts/m056-fin-t12-privilege-deploy.mjs`)
 
 ---
 
@@ -92,3 +92,19 @@ node scripts/m056-fin-t12-privilege-deploy.mjs --autorizado-por="<quién/cuándo
 - `audit-evidence/INFRA-011/e2e-migrations-manifest.json` — regenerado (175 incluidas).
 - `supabase/migrations/20261115120000_…` y `20261115120100_…` — recuperación CP-004 (SHA verificados contra libro 62/63).
 - `supabase/tests/cp_fin_t12_privilege_hardening_test.sql`, `scripts/m054/m054b/m055/m056`, evidencia JSON de este directorio, manifiesto de escritores, ajuste de conteo del test de replay.
+
+## 8. Conciliación con el PR #1631 (CP-VALUATION-NOMINAL-ACTIVATION-004)
+
+Mientras este PR estaba abierto, **#1631 fusionó la rama CP-004** (que incluía las
+mismas 2 migraciones recuperadas — byte-idénticas, sin conflicto — y una entrada
+propia del helper en la allowlist que documentaba la RECOMENDACIÓN de restringir
+el GRANT). El merge de main en esta rama (commit afa02d269) concilió:
+
+- `ci-gate-allowlist.json`: las 2 entradas del helper se fusionaron en UNA
+  (razón enriquecida: la recomendación queda cumplida por 20261116120000;
+  expira 2027-06-30, estándar de la familia fin_*).
+- `writers.manifest.json`: unión de ambos lados (val004-* + m054/m054b/m055/m056).
+- Test de replay: 175 con comentarios combinados (+2 CP-004 con PR #1631, +1 este PR).
+- contract-surface y manifiesto replay: nuestra captura (más reciente);
+  `--check` MATCH; contrato estático 3 capas OK; gate EN VIVO TODO PASS;
+  check-writers OK; 82/82 tests de los 2 archivos afectados.
