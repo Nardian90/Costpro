@@ -448,9 +448,17 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // CP-FIN-FINAL-CLOSE-005 (2026-11-15, PR #1628): +1 salvaguarda T12 de
     // reversión parcial vs anulación automática — guard de cobertura del motor
     // + trigger BEFORE en receipts (20261115100000_cp_fin_t12_partial_reversal_guard) = 172
-    expect(m.total_incluidos).toBe(172);
+    // CP-VALUATION-NOMINAL-ACTIVATION-004 (2026-11-15, libro ids 62/63): +2
+    //   recuperadas al repo desde la rama de la misión (SHA verificados contra
+    //   el libro) — 20261115120000_cp_valuation_nominal_pp64 (normalización
+    //   nominal de los 64 PP vía fn_recalc_wac) y 20261115120100_cp_valuation_
+    //   activation_nominal (ACTIVATE_MASTER_PRODUCT respeta el nominal 1 CUP) = 174
+    // CP-FIN-T12-PRIVILEGE-HARDENING-001 (2026-11-16): +1 — 20261116120000_cp_
+    //   fin_t12_privilege_hardening (REVOKE EXECUTE authenticated del helper
+    //   fin_entry_reversal_residual; privilegio mínimo) = 175
+    expect(m.total_incluidos).toBe(175);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(172);
+    expect(incluidos.length).toBe(175);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

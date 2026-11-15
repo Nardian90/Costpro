@@ -141,6 +141,12 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "fin_entry_reversal_residual",
+      "reason": "CP-FIN-T12-PRIVILEGE-HARDENING-001 (2026-11-16) · helper-interno · Helper de cálculo (SQL STABLE, SOLO lectura) del residual de cobertura de reversiones enlazadas (guard T12): sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración correctiva de privilegio mínimo, idéntica clase que fin_apply_templates/fin_eval_condition y resto de la familia fin_*); solo alcanzable desde fin_post_document_annulment y el trigger fin_t12_receipt_annulment_block (ambos SECURITY DEFINER owner postgres, con sus propios cauces de autorización) y desde service_role. Evidencia: diagnóstico read-only producción (Q3/Q4/Q5) + batería SQL de denegación en BD aislada.",
+      "added_by": "CP-FIN-T12-PRIVILEGE-HARDENING-001",
+      "expires": "2027-06-30"
+    },
+    {
       "function": "fin_post_annulment_safe",
       "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
       "added_by": "cp-fin-auditoria-final",
@@ -904,15 +910,6 @@
       ],
       "reason": "PR #1616 (ciclo devolución en divisa): migración 20261114140000 redefine create_devolution_v2 (tasa efectiva exacta en filas de reembolso USD/AS_PAID) CON AUTORIZACIÓN PENDIENTE — producción no debe tocarse sin decisión del propietario. El replay del PR diverge del surface certificado (vivo) hasta que la migración se aplique con autorización; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/nominas). El cuerpo propuesto está validado íntegro en BD E2E aislada (37/37 PASS + net delta 0).",
       "added_by": "CP-FIN misión final 2026-11-13 (PR #1616)",
-      "expires": "2026-12-31"
-    },
-    {
-      "function": "fin_post_document_annulment/2",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "PR #1628 (CP-FIN-FINAL-CLOSE-005 §5): migración 20261115100000 redefine fin_post_document_annulment con el guard T12 (distinción cobertura total vs parcial — excepción ERR_PARTIAL_REVERSAL_PENDING en reversión parcial; idempotencia de la reversión completa intacta, demostrado m052 9/9 PASS en BD E2E aislada) CON AUTORIZACIÓN PENDIENTE — producción no se toca hasta que el propietario aplique la migración por el cauce normal. El replay del PR diverge del surface certificado (vivo) hasta esa aplicación; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (mismo patrón que create_devolution_v2/12 del PR #1616).",
-      "added_by": "CP-FIN-FINAL-CLOSE-005 (PR #1628) 2026-11-15",
       "expires": "2026-12-31"
     }
   ]
