@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-15 — CP-FIN-FINAL-CLOSE-005: m052/m052c E2E aislado (isolationProtected: sentinela e2e_is_isolated_db fail-closed + assert-not-production CP-INFRA-020; T12 guard TODO_PASS tras migración 20261115100000).",
+  "_updated": "2026-11-15 CP-VALUATION-NOMINAL-ACTIVATION-004: + scripts/val004-apply-e2e.mjs (aplicación de migraciones SOLO a la BD E2E aislada, ref fijado fail-closed) y scripts/val004-e2e-prototype.mjs (prototipo E2E de la política nominal; sentinelas REST+SQL + assert-not-production)",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -64,12 +64,14 @@
     "scripts/m049-rect003-faseV-e2e-prototipo.mjs",
     "scripts/m050d-rect004-reversal-semantics.mjs",
     "scripts/m050e-rect004-e2e-prototipo.mjs",
+    "scripts/m052-t12-guard-regression.mjs",
+    "scripts/m052c-t12-sqlbat-pg.mjs",
     "scripts/provision-e2e-offers-identity.mjs",
     "scripts/rate-limit-concurrency-proof.mjs",
     "scripts/sc006-e2e-verification.mjs",
     "scripts/sc006-real-reception-evidence.mjs",
-    "scripts/m052-t12-guard-regression.mjs",
-    "scripts/m052c-t12-sqlbat-pg.mjs"
+    "scripts/val004-apply-e2e.mjs",
+    "scripts/val004-e2e-prototype.mjs"
   ],
   "exceptions": {
     "scripts/audit_kardex_live.cjs": "Herramienta histórica de una misión puntual ya ejecutada (one-shot, evidenciada en docs/audits/): señales de escritura en SQL/strings/fetch pero sin flujo productivo recurrente. No se cablea el guard en este PR (alcance limitado a los defectos demostrados); re-ejecutarla contra producción exige hoy revisión manual explícita.",

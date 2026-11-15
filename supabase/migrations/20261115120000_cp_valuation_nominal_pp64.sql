@@ -51,9 +51,11 @@
 --   20261114190300: la tabla de auditoría nace protegida).
 --
 -- IDEMPOTENTE Y PORTABLE (replay E2E): re-ejecución → 0 filas nuevas en el
---   snapshot (ON CONFLICT DO NOTHING), 0 asignaciones (no quedan ceros),
---   verificaciones universales pasan sin efecto. En la BD E2E aislada la
---   migración es no-op (0 productos en cero [MEDIDO]).
+--   snapshot (ON CONFLICT DO NOTHING), 0 asignaciones y 0 asientos nuevos en
+--   wac_change_log (los bucles solo procesan filas TODAVÍA en cost_average=0:
+--   el snapshot histórico no se reprocesa), verificaciones universales pasan
+--   sin efecto. En la BD E2E aislada la migración es no-op (0 productos en
+--   cero [MEDIDO]).
 --
 -- VERIFICACIÓN FAIL-CLOSED (aborta el lote si falla cualquier punto):
 --   · 0 productos con cost_average = 0 / IS NULL / < 0 tras la asignación.
@@ -152,6 +154,8 @@ begin
     end if;
 
     -- ── 2a. stock = 0 con tienda: escritor canónico (blend → exactamente 1) ──
+    --    Filtro p.cost_average = 0: solo filas TODAVÍA en cero (la reejecución
+    --    no reprocesa el snapshot histórico ni genera asientos redundantes 1→1).
     for r in
         select a.product_id, a.store_id
           from public.cp_cost_nominal_pp64_20261115_audit a
@@ -159,6 +163,7 @@ begin
          where a.old_cost_average = 0
            and a.store_id is not null
            and p.stock_current = 0
+           and p.cost_average = 0
     loop
         perform public.fn_recalc_wac(
             r.store_id, r.product_id, 'cp_valuation_004_nominal',
@@ -173,6 +178,7 @@ begin
 
     -- ── 2b. stock > 0 con tienda: patrón sellado del escritor canónico ──
     --    (blend D-01 no puede producir exactamente 1 con S>0; decisión exige 1)
+    --    Mismo filtro p.cost_average = 0 (idempotencia estricta).
     for r in
         select a.product_id, a.store_id
           from public.cp_cost_nominal_pp64_20261115_audit a
@@ -180,6 +186,7 @@ begin
          where a.old_cost_average = 0
            and a.store_id is not null
            and p.stock_current > 0
+           and p.cost_average = 0
     loop
         set local app.wac_writer = 'fn_recalc_wac';
         update public.products
@@ -201,11 +208,14 @@ begin
     end loop;
 
     -- ── 2c. Huérfanos sin tienda (0 en producción): patrón sellado, sin log ──
+    --    Mismo filtro p.cost_average = 0 (idempotencia estricta).
     for r in
         select a.product_id
           from public.cp_cost_nominal_pp64_20261115_audit a
+          join public.products p on p.id = a.product_id
          where a.old_cost_average = 0
            and a.store_id is null
+           and p.cost_average = 0
     loop
         set local app.wac_writer = 'fn_recalc_wac';
         update public.products
