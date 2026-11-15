@@ -1,0 +1,156 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-15T12:26:15.731Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": " SELECT COUNT(*) AS total_products,        COUNT(*) FILTER (WHERE cost_average IS NULL) AS nulos,        COUNT(*) FILTER",
+      "rows": [
+        {
+          "total_products": 419,
+          "nulos": 0,
+          "en_cero": 64,
+          "negativos": 0,
+          "en_1": 244,
+          "mayores": 99
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT s.name AS tienda, COUNT(*) AS n,        COUNT(*) FILTER (WHERE p.cost_price = 0) AS doc_cero,        COUNT(*) FIL",
+      "rows": [
+        {
+          "tienda": "PUERTO PADRE",
+          "n": 64,
+          "doc_cero": 64,
+          "doc_mayor": 0,
+          "precio_mayor_cero": 0,
+          "moneda_no_cup": 0,
+          "stock_cero": 64,
+          "activos": 64,
+          "sin_maestro": 0,
+          "alta_min": "2026-11-14 19:56:34.791863+00",
+          "alta_max": "2026-11-14 19:58:37.279866+00"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT COUNT(*) AS en_cero_total,        COUNT(*) FILTER (WHERE mp.id IS NOT NULL) AS con_maestro,        COUNT(*) FILTE",
+      "rows": [
+        {
+          "en_cero_total": 64,
+          "con_maestro": 64,
+          "maestro_activo": 64,
+          "sin_maestro": 0
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT (SELECT COUNT(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace         WHERE n.nspname = 'public' ",
+      "rows": [
+        {
+          "fn_recalc_wac": 1,
+          "guard_trigger": 1,
+          "guard_enabled": "O",
+          "guard_fn": 1
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT id, version, status, applied_at FROM public.production_migration_ledger WHERE version LIKE '2026111%' ORDER BY id",
+      "rows": [
+        {
+          "id": 60,
+          "version": "20261114190300",
+          "status": "applied",
+          "applied_at": "2026-11-14 17:44:00.970483+00"
+        },
+        {
+          "id": 59,
+          "version": "20261114190200",
+          "status": "applied",
+          "applied_at": "2026-11-14 17:21:17.933464+00"
+        },
+        {
+          "id": 58,
+          "version": "20261114190100",
+          "status": "applied",
+          "applied_at": "2026-11-14 17:14:11.928456+00"
+        },
+        {
+          "id": 57,
+          "version": "20261114190000",
+          "status": "applied",
+          "applied_at": "2026-11-14 17:11:04.35683+00"
+        },
+        {
+          "id": 56,
+          "version": "20261114180300",
+          "status": "applied",
+          "applied_at": "2026-11-14 17:00:38.578056+00"
+        },
+        {
+          "id": 55,
+          "version": "20261110120000-2",
+          "status": "applied",
+          "applied_at": "2026-11-14 17:00:04.209644+00"
+        },
+        {
+          "id": 53,
+          "version": "20261114160000",
+          "status": "applied",
+          "applied_at": "2026-11-14 15:03:21.731015+00"
+        },
+        {
+          "id": 49,
+          "version": "20261110120000",
+          "status": "applied",
+          "applied_at": "2026-11-14 00:00:00+00"
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT p.oid::regprocedure::text AS firma,        p.prosecdef AS secdef FROM pg_proc p JOIN pg_namespace n ON n.oid = p.",
+      "rows": [
+        {
+          "firma": "activate_master_product(uuid,uuid,uuid,product_operational_class)",
+          "secdef": true
+        }
+      ]
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT count(*) AS activaciones_total,        count(*) FILTER (WHERE created_at >= '2026-11-14 19:00:00+00') AS desde_14",
+      "rows": [
+        {
+          "activaciones_total": 124,
+          "desde_14nov": 64
+        }
+      ]
+    },
+    {
+      "statement": 8,
+      "sql": "SELECT COUNT(*) AS con_receipt_items FROM public.products p JOIN public.receipt_items ri ON ri.product_id = p.id WHERE p",
+      "rows": [
+        {
+          "con_receipt_items": 0
+        }
+      ]
+    },
+    {
+      "statement": 9,
+      "sql": "SELECT COUNT(*) AS con_movimientos FROM public.products p JOIN public.stock_movements sm ON sm.product_id = p.id WHERE p",
+      "rows": [
+        {
+          "con_movimientos": 0
+        }
+      ]
+    }
+  ]
+}

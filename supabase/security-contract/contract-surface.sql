@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-14T17:22:50.689Z
+-- Captured  : 2026-11-15T13:04:00.168Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 208 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -156,6 +156,7 @@ DECLARE
   v_master public.master_products;
   v_existing uuid;
   v_product_id uuid;
+  v_existing_ca numeric;
 BEGIN
   IF v_caller_uid IS NULL OR p_master_id IS NULL OR p_store_id IS NULL THEN
     RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
@@ -191,8 +192,10 @@ BEGIN
   -- Idempotencia: máx. una fila local por (maestro, tienda). Si la fila ya
   -- existía y el usuario pidió una clasificación, se aplica AQUÍ (misma
   -- transacción): un re-intento de activación corrige la clasificación sin
-  -- efectos colaterales.
-  SELECT id INTO v_existing FROM public.products
+  -- efectos colaterales. PROHIBIDO tocar cost_average aquí: la reactivación
+  -- NUNCA degrada el WAC existente (política CP-VALUATION-NOMINAL-ACTIVATION-
+  -- 004 §4); el WAC solo lo escribe fn_recalc_wac (guard W62-01).
+  SELECT id, cost_average INTO v_existing, v_existing_ca FROM public.products
    WHERE master_product_id = p_master_id AND store_id = p_store_id;
   IF v_existing IS NOT NULL THEN
     IF p_operational_class IS NOT NULL THEN
@@ -201,29 +204,42 @@ BEGIN
        WHERE id = v_existing;
     END IF;
     RETURN jsonb_build_object('status','success','already_active', true,
-      'product_id', v_existing, 'master_product_id', p_master_id);
+      'product_id', v_existing, 'master_product_id', p_master_id,
+      'cost_average', v_existing_ca,
+      'cost_average_origin', 'preexistente_intacto');
   END IF;
 
   -- Fila local con valores por defecto del alta manual: SIN existencias, SIN
   -- recepciones, SIN movimientos, SIN precios de otras tiendas (misión §10).
   -- CP-OPERATIONAL-CLASS-002 §6: clasificación persistida en la misma
   -- transacción que crea la fila local.
+  -- CP-VALUATION-NOMINAL-ACTIVATION-004 §4 (decisión del propietario): el
+  -- costo promedio nace NOMINAL en 1 CUP (nunca 0): estado INICIAL de la fila
+  -- por INSERT (el guard trg_guard_wac_writer vigila UPDATEs de cost_average,
+  -- no INSERTs); la primera recepción real lo sustituye por el costo real
+  -- exacto vía fn_recalc_wac (blend D-01, S=0). Patrón idéntico al importador
+  -- (20261114190200): cost_average en el INSERT + origen reportado.
   INSERT INTO public.products
     (store_id, tenant_id, master_product_id, sku, name, description, image_url,
-     unit_of_measure, is_service, price, price_currency, cost_price, min_stock,
-     stock_current, is_active, is_complete, operational_class)
+     unit_of_measure, is_service, price, price_currency, cost_price, cost_average,
+     min_stock, stock_current, is_active, is_complete, operational_class)
   VALUES
     (p_store_id, v_tenant, p_master_id, v_master.sku, v_master.name, v_master.description,
      v_master.image_path, COALESCE(v_master.unit_of_measure, 'unidad'), v_master.is_service,
-     0, 'CUP', 0, 1, 0, true, true, p_operational_class)
+     0, 'CUP', 0, 1, 1, 0, true, true, p_operational_class)
   RETURNING id INTO v_product_id;
 
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
   VALUES ('ACTIVATE_MASTER_PRODUCT', 'master_products', p_master_id, p_store_id, v_caller_uid,
-          jsonb_build_object('product_id', v_product_id, 'tenant_id', v_tenant));
+          jsonb_build_object('product_id', v_product_id, 'tenant_id', v_tenant,
+            'nominal_cost_assigned', true, 'cost_average', 1,
+            'cost_average_origin', 'nominal_1cup_owner_policy',
+            'policy', 'CP-VALUATION-NOMINAL-ACTIVATION-004'));
 
   RETURN jsonb_build_object('status','success','already_active', false,
-    'product_id', v_product_id, 'master_product_id', p_master_id);
+    'product_id', v_product_id, 'master_product_id', p_master_id,
+    'cost_average', 1, 'nominal_cost_assigned', true,
+    'cost_average_origin', 'nominal_1cup_owner_policy');
 END;
 $function$
 
@@ -8063,6 +8079,7 @@ CREATE OR REPLACE FUNCTION public.fin_post_document_annulment(p_doctype text, p_
 AS $function$
 DECLARE
   e record; m record; v_new uuid; v_count integer := 0;
+  v_residual numeric;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext('fin:' || p_doctype || ':' || p_document_id::text));
   FOR e IN
@@ -8071,10 +8088,20 @@ BEGIN
       AND status = 'posted' AND event IN ('reconocimiento', 'pago')
     ORDER BY posted_at
   LOOP
-    -- ¿ya tiene anulación? (idempotente)
+    -- ¿ya tiene anulación? (idempotencia)
     IF EXISTS (SELECT 1 FROM public.fin_entries x
                WHERE x.reversal_of = e.id) THEN
-      CONTINUE;
+      -- T12 (CP-FIN-FINAL-CLOSE-005): distinguir cobertura TOTAL de PARCIAL.
+      -- · Reversión completa ordinaria → idempotencia intacta (se respeta el
+      --   «ya revertido» y NO se crea una segunda compensación).
+      -- · Reversión parcial/en exceso → residual contable pendiente: la
+      --   anulación automática NO puede saltar el asiento en silencio.
+      v_residual := public.fin_entry_reversal_residual(e.id);
+      IF v_residual <= 0.01 THEN
+        CONTINUE;
+      END IF;
+      RAISE EXCEPTION 'ERR_PARTIAL_REVERSAL_PENDING: el asiento % (doc % %) tiene reversiones parciales enlazadas y un residual de % CUP sin compensar. Regularice primero el residual contable (asiento explícito documentado, p. ej. runbook RECT004 §regularización); después la anulación funcionará por el cauce ordinario. El canal _safe registra este intento en fin_posting_errors.',
+        e.id, p_doctype, p_document_id, v_residual;
     END IF;
     INSERT INTO public.fin_entries (
       store_id, document_type, document_id, document_number, event, payment_ref,
@@ -8099,7 +8126,8 @@ BEGIN
     v_count := v_count + 1;
   END LOOP;
   RETURN v_count;
-END $function$
+END;
+$function$
 
 
 -- @contract-function name=fin_post_document_safe args="p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
