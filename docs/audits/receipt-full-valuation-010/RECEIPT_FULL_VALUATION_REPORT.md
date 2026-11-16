@@ -90,7 +90,7 @@ Contraste con la matriz congelada m048 (misión 003): **99/99 líneas protegidas
 
 - **Rama**: `docs/receipt-full-valuation-010-20261117` desde `main` (`a78fd3e9a`).
 - **Contenido**: expediente `docs/audits/receipt-full-valuation-010/` (10 entregables con `SHA256SUMS.txt`) + scripts del ciclo (m069–m073) + entradas READ-ONLY del manifest de escritores.
-- **PR**: abierto por API con cuerpo en español (qué cambia, evidencia, seguridad); checks CI / Test Coverage verdes antes de integrar; integración por merge normal de GitHub (sin push directo a main ni force-push). Número de PR y SHA de merge: ver `worklog.md` (registro por etapas 11a).
+- **PR**: **#1638** — https://github.com/Nardian90/Costpro/pull/1638 (abierto por API con cuerpo en español: qué cambia, evidencia, seguridad); checks CI / Test Coverage verdes antes de integrar; integración por merge normal de GitHub (sin push directo a main ni force-push). SHA de merge: ver `worklog.md` (registro por etapas 11a).
 - **Post-merge**: verificación de expediente en main, hashes íntegros y CI del push del merge.
 
 ---
