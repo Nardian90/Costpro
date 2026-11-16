@@ -1,0 +1,410 @@
+{
+  "mision": "CP-FIN-FINAL-VALUATION-EXECUTION-009",
+  "generado": "2026-11-16T16:12:41.788Z",
+  "canal": "Supabase Management API /database/query — 1 llamada = 1 transacción atómica (validado por sonda E2E 6/6)",
+  "proyecto_produccion": "wthkddeleylijmonclxg",
+  "documentos_rectores": [
+    "docs/audits/valuation-rectification-release-gate-004/RECT004_PRODUCTION_RUNBOOK.md (§5 RECT-1, §6 RECT-2, §7 verificación, §8 idempotencia, §11 abortos)",
+    "docs/audits/valuation-rectification-release-gate-004/RECT004_ADDENDUM_T12_GUARD.md (salvaguarda T12 server-side)",
+    "docs/audits/valuation-rectification-release-gate-004/RECT004_REVERSAL_SEMANTICS.md (semántica parcial reversal_of)"
+  ],
+  "autorizacion": "Misión 009 §1 — el propietario autoriza expresa e inequívocamente RECT-1 (151.299.851 CUP) y RECT-2 (24 CUP); prohibido volver a pedirla",
+  "constantes": {
+    "recepcion_FVC": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+    "asiento_original": "93bb5da9-0afd-4325-baad-a275710062c5",
+    "tienda_ENERVIDA": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+    "sku_111": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+    "sku_112": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+    "linea_111": "80a1767b-8902-48c6-833b-abf713bdc7b0",
+    "linea_112": "9c9e6010-b848-4d0f-b667-304282f7584b",
+    "capa_compra_111": "5f58e2b1-156b-46b2-8f6d-c491b15a350c",
+    "capa_compra_112": "8552e290-b627-4b75-b9af-7779399ab22b"
+  },
+  "ids_deterministas_mision_009": {
+    "segmento": "7ec90009-0000-4000-8000",
+    "rect1": {
+      "entry": "7ec90009-0000-4000-8000-d0b300000001",
+      "movements": [
+        "7ec90009-0000-4000-8000-f0b300000001",
+        "7ec90009-0000-4000-8000-f0b300000002"
+      ],
+      "wac_change_log": [
+        "7ec90009-0000-4000-8000-9cb300000001",
+        "7ec90009-0000-4000-8000-9cb300000002"
+      ],
+      "audit_logs": [
+        "7ec90009-0000-4000-8000-e0b300000001",
+        "7ec90009-0000-4000-8000-e0b300000002",
+        "7ec90009-0000-4000-8000-e0b300000003",
+        "7ec90009-0000-4000-8000-e0b300000004",
+        "7ec90009-0000-4000-8000-e0b300000005",
+        "7ec90009-0000-4000-8000-e0b300000006"
+      ]
+    },
+    "rect2": {
+      "entry": "7ec90009-0000-4000-8000-d0b300000002",
+      "movements": [
+        "7ec90009-0000-4000-8000-f0b300000003",
+        "7ec90009-0000-4000-8000-f0b300000004",
+        "7ec90009-0000-4000-8000-f0b300000005"
+      ],
+      "audit_logs": [
+        "7ec90009-0000-4000-8000-e0b300000007",
+        "7ec90009-0000-4000-8000-e0b300000008",
+        "7ec90009-0000-4000-8000-e0b300000009",
+        "7ec90009-0000-4000-8000-e0b300000010",
+        "7ec90009-0000-4000-8000-e0b300000011",
+        "7ec90009-0000-4000-8000-e0b300000012",
+        "7ec90009-0000-4000-8000-e0b300000013",
+        "7ec90009-0000-4000-8000-e0b300000014"
+      ]
+    },
+    "nota": "Ids sin colisión en producción (m060 T8: 0/22). ON CONFLICT DO NOTHING + guards WHERE <> objetivo + advisory lock = idempotencia (runbook §8)."
+  },
+  "audit_logs": {
+    "trace_id": "RECT-PROD",
+    "total_filas": 14,
+    "por_accion": {
+      "SYSTEM_RECT_VALUATION": 2,
+      "SYSTEM_RECT_TOTAL": 1,
+      "SYSTEM_RECT_MOV_UC": 2,
+      "SYSTEM_RECT_ENTRY": 2,
+      "SYSTEM_RECT_MOV_SALIDA": 7
+    },
+    "detalle": [
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000001",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "receipt_items",
+        "record_id": "80a1767b-8902-48c6-833b-abf713bdc7b0",
+        "action": "SYSTEM_RECT_VALUATION",
+        "old_data": {
+          "uc": 2500,
+          "tasa": 680,
+          "moneda": "USD"
+        },
+        "new_data": {
+          "uc": 1,
+          "tasa": 1,
+          "moneda": "CUP"
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "motivo": "costo real 1 CUP/u (decisión propietario)",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000002",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "receipt_items",
+        "record_id": "9c9e6010-b848-4d0f-b667-304282f7584b",
+        "action": "SYSTEM_RECT_VALUATION",
+        "old_data": {
+          "uc": 1000,
+          "tasa": 680,
+          "moneda": "USD"
+        },
+        "new_data": {
+          "uc": 1,
+          "tasa": 1,
+          "moneda": "CUP"
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000003",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "receipts",
+        "record_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+        "action": "SYSTEM_RECT_TOTAL",
+        "old_data": {
+          "total_cost": 192039436
+        },
+        "new_data": {
+          "total_cost": 40739585
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000004",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "stock_movements",
+        "record_id": "5f58e2b1-156b-46b2-8f6d-c491b15a350c",
+        "action": "SYSTEM_RECT_MOV_UC",
+        "old_data": {
+          "uc": 1700000
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000005",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "stock_movements",
+        "record_id": "8552e290-b627-4b75-b9af-7779399ab22b",
+        "action": "SYSTEM_RECT_MOV_UC",
+        "old_data": {
+          "uc": 680000
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000006",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "fin_entries",
+        "record_id": "7ec90009-0000-4000-8000-d0b300000001",
+        "action": "SYSTEM_RECT_ENTRY",
+        "old_data": {
+          "asiento": "93bb5da9-0afd-4325-baad-a275710062c5",
+          "importe": 192039436
+        },
+        "new_data": {
+          "debito": {
+            "PAS_CXP_PROV": 151299851
+          },
+          "asiento": "RECT-1",
+          "credito": {
+            "ACT_INVENTARIO": 151299851
+          },
+          "reversal_of": "93bb5da9-0afd-4325-baad-a275710062c5"
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "documento": "FAC-VITALLCONS-001-RECT",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000007",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "68a3ff08-a301-4232-937a-85f183452d5c",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "Venta POS v2 2026-07-24 sku111 q-1 (COGS ya en mayor)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000008",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "a1330957-1e49-43ed-a309-c7a20c2ee714",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "Cuadre importación sku111 Δ-1 (GAS_PERDIDA_INV)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000009",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "a8a82720-df49-485d-949c-acfc082fc3b6",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "Cuadre importación sku112 Δ-17 (GAS_PERDIDA_INV)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000010",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "335e2fcc-f4d3-426b-a7ff-878af184acab",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "VS-000037-2026 4u (GAS_VALES)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000011",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "673ede95-75cc-4c4e-aa19-1dc893c5cd79",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "Venta POS v2 2026-10-04 sku111 q-1 (COGS ya en mayor)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000012",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "9d47f6c1-756a-4e0f-9e56-85d1dc2ca557",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "VS-000138-2026 1u (GAS_VALES)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000013",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "25db100f-9238-45b4-b53e-c3559eb60651",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "VS-000139-2026 1u (GAS_VALES)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000014",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "fin_entries",
+        "record_id": "7ec90009-0000-4000-8000-d0b300000002",
+        "action": "SYSTEM_RECT_ENTRY",
+        "old_data": {
+          "asiento": null,
+          "importe": 0
+        },
+        "new_data": {
+          "debito": {
+            "GAS_VALES": 6,
+            "GAS_PERDIDA_INV": 18
+          },
+          "asiento": "RECT-2",
+          "credito": {
+            "ACT_INVENTARIO": 24
+          }
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "documento": "FAC-VITALLCONS-001-RECT-SAL",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      }
+    ]
+  },
+  "hallazgos_tecnicos": [
+    {
+      "id": "S3-scope",
+      "severidad": "alta (potencial)",
+      "hallazgo": "El S3 literal del runbook (reference_id+movement_type sin filtro de producto) habría tocado 80 capas de compra con uc<>1 — 78 fuera del alcance autorizado (líneas protegidas §6).",
+      "resolucion": "Ejecutado con filtro AND product_id IN (sku111,sku112): exactamente 2 capas (1.700.000→1 y 680.000→1). Alcance económico autorizado PRESERVADO. Autorizado por misión 009 §7 (defectos técnicos dentro del mecanismo).",
+      "evidencia": "m060 T4 · m061 nota_tecnica_s3"
+    },
+    {
+      "id": "returning-semantics",
+      "severidad": "baja (documental)",
+      "hallazgo": "Los valores RETURNING de los UPDATE son POST-update (semántica PostgreSQL); los alias *_antes de la evidencia muestran el valor nuevo.",
+      "resolucion": "Los valores ANTES reales constan en audit_logs.old_data (fuente de trazabilidad antes/después). Anotado en m061/m062 evidencias.",
+      "evidencia": "m061-rect1-ejecucion.json nota_semantica_returning"
+    },
+    {
+      "id": "sesiones-pooler",
+      "severidad": "media (canal)",
+      "hallazgo": "Cada llamada al Management API /database/query es una sesión independiente (sin afinidad de pooler); una transacción abierta no sobrevive a la siguiente llamada.",
+      "resolucion": "Cada transacción gobernada cabe COMPLETA en una llamada (BEGIN..COMMIT incluidos); validado con sonda E2E 6/6 (P1-P5: atomicidad, persistencia post-COMMIT, rollback, error a mitad, DO-block).",
+      "evidencia": "m061-sonda-transaccional-e2e.json"
+    },
+    {
+      "id": "gas_perdida_preexistente",
+      "severidad": "informativa",
+      "hallazgo": "GAS_PERDIDA_INV global tenía 1 CUP preexistente al preflight (ajeno a la rectificación).",
+      "resolucion": "RECT-2 aporta exactamente 18 (m063 R5); global tras ejecución = 19 (1+18). El criterio del runbook §7.7 se verifica sobre la porción de la rectificación.",
+      "evidencia": "m060 baselines · m063 R5"
+    }
+  ],
+  "scripts_oficiales": [
+    "scripts/m060-rect-preflight.mjs",
+    "scripts/m061-rect1-execute.mjs",
+    "scripts/m062-rect2-execute.mjs",
+    "scripts/m063-rect-final-certification.mjs",
+    "scripts/m064-rect-gen-xlsx.py"
+  ],
+  "evidencias": [
+    "m060-preflight-evidencia.json",
+    "m053-preflight-009.json",
+    "m061-sonda-transaccional-e2e.json",
+    "m061-rect1-ejecucion.json",
+    "m061-rect1-postverificacion.json",
+    "m062-rect2-ejecucion.json",
+    "m062-rect2-postverificacion.json",
+    "m063-certificacion-final.json"
+  ]
+}
