@@ -1,0 +1,58 @@
+{
+  "mision": "CP-FIN-ULTIMATE-CLOSE-008",
+  "script": "m059-ultimate-security-cert.mjs",
+  "capturado_utc": "2026-11-16T13:01:54.765Z",
+  "modo": "READ-ONLY",
+  "proyecto": "wthkddeleylijmonclxg",
+  "veredicto": "PASS",
+  "resumen": {
+    "total": 6,
+    "pass": 6,
+    "fail": 0
+  },
+  "checks": [
+    {
+      "id": "R1",
+      "control": "RLS activa en las 9 tablas clave",
+      "resultado": "PASS",
+      "detalle": "faltantes=[] · rls=[{\"t\":\"fin_entries\",\"rls\":true},{\"t\":\"fin_movements\",\"rls\":true},{\"t\":\"fin_posting_errors\",\"rls\":true},{\"t\":\"payment_transactions\",\"rls\":true},{\"t\":\"production_migration_ledger\",\"rls\":true},{\"t\":\"products\",\"rls\":true},{\"t\":\"receipt_items\",\"rls\":true},{\"t\":\"receipts\",\"rls\":true},{\"t\":\"stock_movements\",\"rls\":true}]"
+    },
+    {
+      "id": "A1-fin_entry_reve",
+      "control": "fin_entry_reversal_residual: SECURITY DEFINER y ACL solo postgres/service_role",
+      "resultado": "PASS",
+      "detalle": "acl=postgres=EXECUTE, service_role=EXECUTE"
+    },
+    {
+      "id": "A1-fin_post_docum",
+      "control": "fin_post_document_annulment: SECURITY DEFINER y ACL solo postgres/service_role",
+      "resultado": "PASS",
+      "detalle": "acl=postgres=EXECUTE, service_role=EXECUTE"
+    },
+    {
+      "id": "A1-trigger",
+      "control": "fin_t12_block_receipt_annulment: SECURITY DEFINER, sin anon ni PUBLIC",
+      "resultado": "PASS",
+      "detalle": "acl=postgres=EXECUTE, authenticated=EXECUTE, service_role=EXECUTE"
+    },
+    {
+      "id": "A2-motor",
+      "control": "ACL del motor = exactamente {postgres, service_role} (sin authenticated/anon/PUBLIC)",
+      "resultado": "PASS",
+      "detalle": "postgres=EXECUTE, service_role=EXECUTE"
+    },
+    {
+      "id": "C1",
+      "control": "Census SD estable; EXECUTE a anon solo en excepciones documentadas",
+      "resultado": "PASS",
+      "detalle": "{\"sd\":367,\"con_anon\":8}"
+    }
+  ],
+  "notas": {
+    "fin_t12_block_receipt_annulment": "authenticated=EXECUTE presente: inócuo (RETURNS trigger no invocable directamente) y consentido por el SQL Security Gate verde; anon/PUBLIC revocados. REVOKE opcional recomendado para higiene en misión futura."
+  },
+  "census": {
+    "security_definer": 367,
+    "con_execute_anon": 8
+  }
+}

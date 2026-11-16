@@ -1,0 +1,65 @@
+{
+  "mision": "CP-FIN-FINAL-CLOSE-005",
+  "script": "m053-readonly-preflight.mjs",
+  "fecha": "2026-11-16T12:57:51.263Z",
+  "comparacion": {
+    "referencia": {
+      "archivo": "docs/audits/valuation-rectification-release-gate-004/rect004-faseDP-snapshot.json",
+      "extraccion": "2026-11-14T19:51:12.069Z"
+    },
+    "fresco": {
+      "archivo": "/home/z/my-project/scripts/out/rect004-faseDP-snapshot.json",
+      "extraccion": "2026-11-16T12:56:27.492Z"
+    }
+  },
+  "secciones": {
+    "receipts_fvc": "IDÉNTICA",
+    "receipt_items_111_112": "IDÉNTICA",
+    "products_111_112": "IDÉNTICA",
+    "fin_entries_fvc": "IDÉNTICA",
+    "fin_movements_fvc": "IDÉNTICA",
+    "fin_movements_cxp_fvc": "IDÉNTICA",
+    "kardex_111_112": "IDÉNTICA",
+    "receipts_proveedor": "IDÉNTICA",
+    "payment_transactions_fvc_proveedor": "IDÉNTICA",
+    "receipt_items": "IDÉNTICA",
+    "issue_slip_items": "IDÉNTICA",
+    "inventory_111_112": "IDÉNTICA",
+    "wac_change_log": "IDÉNTICA",
+    "fin_entries_vales_sku": "IDÉNTICA",
+    "fin_entries_vales_num": "IDÉNTICA",
+    "fin_movements_gas_vales": "IDÉNTICA",
+    "reconstruccion_kardex": "IDÉNTICA",
+    "fin_movements_cogs_ventas": "IDÉNTICA",
+    "fin_movements_act_ventas": "IDÉNTICA",
+    "fin_opening_balances": "IDÉNTICA"
+  },
+  "veredicto": "PRE-FLIGHT VIGENTE — todas las secciones congeladas idénticas; la propuesta RECT-1 (151.299.851 CUP) y RECT-2 (24 CUP) NO requiere recálculo",
+  "secciones_comparadas": 20,
+  "controles": {
+    "fvc_activa": true,
+    "fvc_total": 192039436,
+    "fvc_payment_status": "unpaid",
+    "lineas_fvc": 101,
+    "pagos_fvc_proveedor": 0,
+    "reversiones_fvc": 0,
+    "asientos_fvc": [
+      "reconocimiento:posted"
+    ],
+    "kardex_111_112_filas": 21,
+    "kardex_nuevos_post_corte": 0,
+    "stocks_111_112": [
+      {
+        "sku": "112",
+        "stock": "20.0000",
+        "wac": "1"
+      },
+      {
+        "sku": "111",
+        "stock": "10.0000",
+        "wac": "1"
+      }
+    ],
+    "cogs_motor_7": 7
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "fecha_utc": "2026-11-16T12:54:41.590Z",
+  "modo": "READ-ONLY",
+  "version": "20261110090000_cp_operational_class_default_venta",
+  "columna": [
+    {
+      "column_default": "'venta'::product_operational_class",
+      "is_nullable": "NO",
+      "data_type": "USER-DEFINED"
+    }
+  ],
+  "sin_clasificacion": [
+    {
+      "n": 0
+    }
+  ],
+  "funciones": [
+    {
+      "proname": "activate_master_product",
+      "contiene_venta": true
+    },
+    {
+      "proname": "create_master_product",
+      "contiene_venta": true
+    }
+  ],
+  "veredicto": "EFECTOS PRESENTES EN PRODUCCIÓN (aplicada sin registro en ledger — drift de proceso histórico, ajena al ciclo)"
+}

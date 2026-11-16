@@ -1,0 +1,23 @@
+# SHA256SUMS.txt — CP-FIN-ULTIMATE-CLOSE-008
+# Manifiesto de hashes del expediente maestro de cierre (este manifiesto se excluye a sí mismo).
+# Generado: 2026-11-16 · Misión de cierre definitivo del ciclo CP-FIN.
+# Incluye: 9 documentos, inventario JSON+XLSX, 4 evidencias JSON y los 3 scripts de
+# verificación re-ejecutable con su manifest de escritores actualizado (m058/m058b/m059 READ-ONLY).
+f9afaaa0c046a700ea1c77dc3a98d119fbf8f2664b9a37fa88425f44e6dcd2e6  ../../../scripts/lib/writers.manifest.json
+68b3b27a884a7bc37ac6cc9e85fb8a98da2a421db57f60fcef4a11c3de2b5df0  ../../../scripts/m058-migration-inventory.mjs
+6095feabab579c9a185c25ce8d031184e7e623b9f8cf51510f8934d4d5c2a252  ../../../scripts/m058b-check-operational-class.mjs
+27374b38471ce2aec98affba49c1db2c22c12abab7e266f515963179f45b59ba  ../../../scripts/m059-ultimate-security-cert.mjs
+171fa8d19ab5ab28500c49fa6e42406c5c773676366e8cb2e784dff8084c95f5  CONTRACT_SURFACE_FINAL.md
+a989f82cb0a73036363ef3f860717c50a6e2b869addfed589312ef88a452d538  CP_FIN_ULTIMATE_CLOSE_REPORT.md
+5726f2ab25110705f855d9561b0ed003aea01d0880655a38670c8cf38b4fc4cc  FINANCIAL_INTEGRITY_POSTCHECK.md
+8b89af57d01e7c4904444c7d771e76ad7f98ad45566bf7f4326a8927cf7dae37  GITHUB_PR_INTEGRATION.md
+6f799eaab9eee99b1e7a50ae46ae1900e58a87ff98a9a82f238970ea750c41a5  PRODUCTION_MIGRATION_EVIDENCE.md
+f460b6477a169a359e9326933f66b4904d0cf86a68c5889b925f64ee0b136711  PRODUCTION_MIGRATION_INVENTORY.json
+37cdeb7978b85ae8996d59f363ee09b5e515cc4a1445141eb56a30dbd5e6500c  PRODUCTION_MIGRATION_INVENTORY.xlsx
+c502f7fb4311a77ef40e41a85795661dceb4d31466a478051875785f7273bd72  RECT004_FINAL_READINESS.md
+3c5ff25502975467822f4bcb31ca0494948ed984ada2865e7f810af8b19a6472  T12_AND_PRIVILEGE_CERTIFICATION.md
+dfeb07ae6559fc6ba2101dd42a2677b29eaa4fbdbfccd298af2685d80d9bface  WORKLOG_FINAL.md
+d49b859f7878bcb6151b569f95c9b0a98e8de4d930d5ed8d9450d55b5bc89e62  m053-preflight-evidencia.json
+21b6387476c333b56a68e0b56752db46709247679b053f1393bb8788edeb5af7  m057-postmerge-recheck.json
+5cc858a248d082f8de78255fd7a0621afd0e078b58a8500c2f3c35dc18a23588  m058b-20261110090000-check.json
+59fea52e393db28d17d426ed55f2481d38a60d2643ad4b17fc7e967cf677029c  m059-security-cert.json
