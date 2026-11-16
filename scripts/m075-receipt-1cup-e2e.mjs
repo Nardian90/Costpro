@@ -179,6 +179,7 @@ if (MODE === '--genconfig') {
     fm_vales: 'f11300000004', fm_perd: 'f11300000005',
     aud_total: 'e11300000001', aud_entry: 'e11300000002',
     trace: 'RECT011-E2E', mision: 'CP-FIN-RECEIPT-UNIT-COST-1-CUP-011',
+    entry_document_type: 'AJUSTE_INVENTARIO', entry_event: 'reconocimiento',
     economic_date: '2026-07-01', doc_number: 'TEST-FAC-011-VAL1CUP',
   };
   writeFileSync(resolve(BASE, 'config-e2e.json'), JSON.stringify(cfg, null, 2));

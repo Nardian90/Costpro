@@ -35,6 +35,13 @@ TRACE = cfg.get('trace', 'RECT011-PROD')
 MISION = cfg.get('mision', 'CP-FIN-RECEIPT-UNIT-COST-1-CUP-011')
 ECO_DATE = cfg.get('economic_date', '2026-07-01')
 DOC_NUM = cfg.get('doc_number', 'FAC-VITALLCONS-001-VAL1CUP')
+# (type, event) del asiento: la restricción única uq_fin_entries_doc_event impone
+# una sola entrada por (document_type, document_id, event). RECT-1 ocupa
+# (RECEPCION, FVC, ajuste_manual) y RECT-2 (AJUSTE_INVENTARIO, FVC, ajuste_manual);
+# la combinación libre para RECT-011 es (AJUSTE_INVENTARIO, FVC, reconocimiento)
+# — reconocimiento de ajuste de inventario por revalorización a 1 CUP/u.
+ENTRY_TYPE = cfg.get('entry_document_type', 'AJUSTE_INVENTARIO')
+ENTRY_EVENT = cfg.get('entry_event', 'reconocimiento')
 E011 = f"{SEG}-{cfg['entry_suffix']}"          # …-d11300000001
 FMS = {k: f"{SEG}-{v}" for k, v in {
     'cxp': cfg['fm_cxp'], 'inv': cfg['fm_inv'], 'cogs': cfg['fm_cogs'],
@@ -266,6 +273,7 @@ snap_movs = json.dumps([
 ], ensure_ascii=False)
 
 loteD = f"""-- LOTE-D · m011 · asiento de ajuste RECT-011 (idempotente, ids deterministas)
+-- Combinación única: ({ENTRY_TYPE}, FVC, {ENTRY_EVENT}) — libres (RECT-1/RECT-2 ocupan las demás)
 BEGIN;
 SELECT pg_advisory_xact_lock(hashtext('fin:RECEPCION:'||'{FVC}'));
 CREATE TEMP TABLE m011d(paso text, payload jsonb);
@@ -293,7 +301,7 @@ BEGIN
 END $do$;
 INSERT INTO public.fin_entries (id, store_id, document_type, document_id, document_number, event,
   reversal_of, economic_date, posted_at, status, description, movements_snapshot)
-VALUES ('{E011}','{STORE}','RECEPCION','{FVC}','{DOC_NUM}','ajuste_manual',
+VALUES ('{E011}','{STORE}','{ENTRY_TYPE}','{FVC}','{DOC_NUM}','{ENTRY_EVENT}',
   '{ORIG}','{ECO_DATE}',now(),'posted',
   '{desc_entry}',
   '{snap_movs}'::jsonb)

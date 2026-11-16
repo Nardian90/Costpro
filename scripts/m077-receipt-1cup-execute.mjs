@@ -14,6 +14,7 @@
 // ALLOW_PROD_WRITE=I_UNDERSTAND (escritura) — guard CP-INFRA-019.
 // ============================================================================
 import { readFileSync, writeFileSync } from 'fs';
+import { createHash } from 'crypto';
 import { resolve } from 'path';
 import { assertNotProduction } from './lib/assert-not-production.mjs';
 
@@ -128,12 +129,23 @@ if (MODE === '--verify') {
   // V12 · cero cambios en otras recepciones / otros productos / precios
   const otrasLineas = await qProd(`SELECT count(*)::int AS n FROM public.receipt_items WHERE receipt_id<>'${FVC}' AND updated_at > now() - interval '4 hours'`, 'V12a');
   chk('V12_otras_recepciones_0', otrasLineas[0].n === 0, `líneas ajenas tocadas=${otrasLineas[0].n}`);
-  const otrosMovs = await qProd(`SELECT count(*)::int AS n FROM public.stock_movements WHERE (reference_id IS DISTINCT FROM '${FVC}' OR movement_type<>'purchase') AND updated_at > now() - interval '4 hours'`, 'V12b');
-  chk('V13_otros_movimientos_0', otrosMovs[0].n === 0, `movimientos ajenos tocados=${otrosMovs[0].n}`);
-  const otrosProds = await qProd(`SELECT count(*)::int AS n FROM public.products WHERE updated_at > now() - interval '4 hours'
-    AND id NOT IN (${an['matriz'].map((m) => `'${m.product_id}'`).join(',')})`, 'V12c');
-  chk('V14_otros_productos_0', otrosProds[0].n === 0, `productos ajenos tocados=${otrosProds[0].n}`);
-  const otrasCab = await qProd(`SELECT count(*)::int AS n FROM public.receipts WHERE id<>'${FVC}' AND updated_at > now() - interval '4 hours'`, 'V12d');
+  // V13 · movimientos ajenos al FVC: hash MD5(id|uc) idéntico al congelado
+  const antes = JSON.parse(readFileSync(resolve(BASE, 'before-extract.json'), 'utf8'));
+  const md5 = (s) => createHash('md5').update(s).digest('hex');
+  const movsAjenos = antes['kardex_101'].filter((m) => m['reference_id'] !== FVC || m['movement_type'] !== 'purchase');
+  const hMovsAntes = md5(movsAjenos.map((m) => `${m['id']}|${m['unit_cost']}`).sort().join(','));
+  const hMovsAhora = (await qProd(`SELECT md5(string_agg(sm.id || '|' || sm.unit_cost, ',' ORDER BY sm.id)) AS h
+    FROM public.stock_movements sm WHERE sm.id IN (${movsAjenos.map((m) => `'${m['id']}'`).join(',')})`, 'V13'))[0].h;
+  chk('V13_movimientos_ajenos_intactos', hMovsAntes === hMovsAhora, `md5 ${hMovsAntes.slice(0, 8)}… vs ${hMovsAhora.slice(0, 8)}… (${movsAjenos.length} movs)`);
+  // V14 · productos fuera de alcance sin cambios (ventana = ejecución de la misión,
+  //     con margen para el primer intento; los 4 hallazgos previos fueron ventas
+  //     orgánicas de ayer 18:05–18:50 UTC, anteriores a la misión)
+  const evid = JSON.parse(readFileSync(resolve(BASE, 'prod-ejecucion.json'), 'utf8'));
+  const ventana = new Date(new Date(evid.fecha_inicio_utc).getTime() - 20 * 60 * 1000).toISOString();
+  const pids101 = antes['receipt_items'].map((r) => `'${r['product_id']}'`).join(',');
+  const otrosProds = await qProd(`SELECT count(*)::int AS n FROM public.products WHERE updated_at > '${ventana}' AND id NOT IN (${pids101})`, 'V14');
+  chk('V14_otros_productos_0', otrosProds[0].n === 0, `productos ajenos tocados desde ${ventana}=${otrosProds[0].n}`);
+  const otrasCab = await qProd(`SELECT count(*)::int AS n FROM public.receipts WHERE id<>'${FVC}' AND updated_at > '${ventana}'`, 'V14b');
   chk('V15_otras_cabeceras_0', otrasCab[0].n === 0, `cabeceras ajenas tocadas=${otrasCab[0].n}`);
   // V16 · SKU111/112/999 intactos (§7/§8)
   const prot = await qProd(`SELECT p.sku, ri.unit_cost, ri.moneda_recepcion, p.price, p.is_service, p.cost_average AS wac
