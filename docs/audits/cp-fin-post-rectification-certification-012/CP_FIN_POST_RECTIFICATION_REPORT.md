@@ -143,7 +143,7 @@ Elementos preexistentes **protegidos y no reabiertos** (mandato §1): 71 líneas
 |---|---|
 | Rama | `docs/cp-fin-post-rectification-cert-012-20261116` (desde `main` = `683a6c466`) |
 | Commits | 1) scripts m080/m080b/m080c/m081/m082/m083 + writers manifest · 2) expediente completo · 3) cierre (worklog + PR + hashes) |
-| PR | (se completa en el commit de cierre) |
+| PR | **#1642** — https://github.com/Nardian90/Costpro/pull/1642 (head `e956f59d0`) |
 | Checks | CI · Test Coverage · E2E Aislado · Security Audit · Vercel |
 | Merge | Por el flujo habitual cuando los controles estén verdes |
 | Expediente | `docs/audits/cp-fin-post-rectification-certification-012/` (10 entregables, SHA256SUMS) |
