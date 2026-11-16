@@ -210,8 +210,24 @@ Las redefiniciones son CREATE OR REPLACE con firmas idénticas → **front antig
 
 ### 15.9 PR complementario de conciliación post-despliegue
 
-Rama `chore/cp-log-reception-conciliacion-20261116`: regeneración del contract-surface LIVE, retirada de las 3 entradas temporales, aplicador de migraciones declarado en el manifiesto de escritores, evidencia de aplicación y esta adenda. CI y fusión por el procedimiento normal. (**Completar número de PR y SHA de merge al fusionar.**)
+**PR #1637** (`chore/cp-log-reception-conciliacion-20261116`, este PR): regeneración del contract-surface LIVE, retirada de las 3 entradas temporales, aplicador de migraciones declarado en el manifiesto de escritores, evidencia de aplicación (`audit-evidence/cp-log-reception-001/`) y esta adenda §15. CI y fusión por el procedimiento normal, sin commits directos a `main`. SHA del merge: registro en el historial del PR #1637 y en el worklog de la sesión.
 
-### 15.10 Controles finales sobre `main` (post-fusión)
+### 15.10 Controles finales (post-fusión #1636, sobre el contenido integrado)
 
-(Se registra tras la fusión del PR complementario — ver §15.9.)
+| Control | Ejecución | Resultado |
+|---|---|---|
+| Pruebas unitarias + integración (vitest) | LOCAL ahora | **6116 pasan / 0 fallan** (95 skip normales; 455 archivos) |
+| ESLint | LOCAL ahora | **0 errores** (1569 warnings preexistentes) |
+| TypeScript (`tsc --noEmit`) | CI (runner 16 GB) — el sandbox OOM (exit 137, limitación documentada §13.7; sin cambios de TS en este PR) | Check CI «TypeCheck + Lint + Unit Tests + Build» del PR #1637 (autoritativo) |
+| Suite E2E aislada (20 escenarios) | CI (workflow E2E Aislado) sobre head del PR | Evidencia histórica del PR #1636: 20/20 PASS + net delta 0; re-ejecución CI en #1637 |
+| SQL Security Gate (estático) | LOCAL ahora | Checks generados íntegros (secdef_no_auth, secdef_public_grant, tables_no_rls, __canary__) |
+| SQL Security Gate (DB) | CI sobre BD aislada | Check CI «SQL DB Security Checks» |
+| Security Audit | CI | Check CI «Security Audit» |
+| check-writers | LOCAL ahora | OK — 218 escritores detectados, todos declarados |
+| Guard de operaciones destructivas | CI (CP-INFRA-020) | Check CI «TypeScript Security Checks» / Security Audit |
+| Validación RLS | CI (SQL DB Security) + contrato | CONTRATO OK |
+| Replay de migraciones | LOCAL ahora | `--check` MATCH sin deriva (`35105964…`) |
+| ledger-sync-check | LOCAL ahora | **OK** — libro sincronizado con el repo; 0 migraciones aplicadas sin registrar (2 SIN_APLICAR preexistentes y documentadas, pendientes de compuerta — no atribuibles a esta misión) |
+| Contract-surface estático (A/B/C) | LOCAL ahora | CONTRATO OK — 210/210, 0 divergencias bloqueantes |
+| Contract-surface LIVE | LOCAL ahora | 210/210 pasan, 0 violaciones |
+| Libro de migraciones | LOCAL ahora | Ambas migraciones `applied` en `production_migration_ledger` (libro canónico del proyecto, mecanismo `management_api` — igual que las migraciones de noviembre precedentes) |
