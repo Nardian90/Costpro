@@ -1,0 +1,360 @@
+{
+  "mision": "CP-FIN-FINAL-VALUATION-EXECUTION-009",
+  "script": "m060-rect-preflight.mjs",
+  "fecha_utc": "2026-11-16T15:55:45.498Z",
+  "canal": "Management API /database/query — SOLO SELECT",
+  "proyecto": "wthkddeleylijmonclxg",
+  "autorizacion": "RECT-1 y RECT-2 expresamente autorizadas por el propietario en la misión 009",
+  "constantes": {
+    "FVC": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+    "STORE": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+    "ORIG": "93bb5da9-0afd-4325-baad-a275710062c5",
+    "L111": "80a1767b-8902-48c6-833b-abf713bdc7b0",
+    "L112": "9c9e6010-b848-4d0f-b667-304282f7584b",
+    "P111": "5f58e2b1-156b-46b2-8f6d-c491b15a350c",
+    "P112": "8552e290-b627-4b75-b9af-7779399ab22b",
+    "EXITS7": [
+      "68a3ff08-a301-4232-937a-85f183452d5c",
+      "a1330957-1e49-43ed-a309-c7a20c2ee714",
+      "a8a82720-df49-485d-949c-acfc082fc3b6",
+      "335e2fcc-f4d3-426b-a7ff-878af184acab",
+      "673ede95-75cc-4c4e-aa19-1dc893c5cd79",
+      "9d47f6c1-756a-4e0f-9e56-85d1dc2ca557",
+      "25db100f-9238-45b4-b53e-c3559eb60651"
+    ],
+    "ids_mision_009": {
+      "rect1_entry": "7ec90009-0000-4000-8000-d0b300000001",
+      "rect2_entry": "7ec90009-0000-4000-8000-d0b300000002",
+      "fm_r1_cxp": "7ec90009-0000-4000-8000-f0b300000001",
+      "fm_r1_inv": "7ec90009-0000-4000-8000-f0b300000002",
+      "fm_r2_vales": "7ec90009-0000-4000-8000-f0b300000003",
+      "fm_r2_perdida": "7ec90009-0000-4000-8000-f0b300000004",
+      "fm_r2_inv": "7ec90009-0000-4000-8000-f0b300000005",
+      "wcl_111": "7ec90009-0000-4000-8000-9cb300000001",
+      "wcl_112": "7ec90009-0000-4000-8000-9cb300000002",
+      "aud": [
+        "7ec90009-0000-4000-8000-e0b300000001",
+        "7ec90009-0000-4000-8000-e0b300000002",
+        "7ec90009-0000-4000-8000-e0b300000003",
+        "7ec90009-0000-4000-8000-e0b300000004",
+        "7ec90009-0000-4000-8000-e0b300000005",
+        "7ec90009-0000-4000-8000-e0b300000006",
+        "7ec90009-0000-4000-8000-e0b300000007",
+        "7ec90009-0000-4000-8000-e0b300000008",
+        "7ec90009-0000-4000-8000-e0b300000009",
+        "7ec90009-0000-4000-8000-e0b300000010",
+        "7ec90009-0000-4000-8000-e0b300000011",
+        "7ec90009-0000-4000-8000-e0b300000012",
+        "7ec90009-0000-4000-8000-e0b300000013",
+        "7ec90009-0000-4000-8000-e0b300000014"
+      ]
+    }
+  },
+  "checks": {
+    "T1_constraint": "CREATE UNIQUE INDEX uq_fin_entries_doc_event ON public.fin_entries USING btree (document_type, document_id, event, COALESCE(payment_ref, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (document_id IS NOT NULL)",
+    "T2_triggers": [
+      {
+        "name": "trg_check_reception_cost_variation",
+        "enabled": "O",
+        "def": "CREATE TRIGGER trg_check_reception_cost_variation BEFORE INSERT ON public.receipt_items FOR EACH ROW EXECUTE FUNCTION check_reception_cost_variation()"
+      },
+      {
+        "name": "trg_cp_infra_020_block_truncate",
+        "enabled": "A",
+        "def": "CREATE TRIGGER trg_cp_infra_020_block_truncate BEFORE TRUNCATE ON public.receipt_items FOR EACH STATEMENT EXECUTE FUNCTION block_truncate()"
+      },
+      {
+        "name": "trg_receipt_items_economic_immutable",
+        "enabled": "O",
+        "def": "CREATE TRIGGER trg_receipt_items_economic_immutable BEFORE UPDATE ON public.receipt_items FOR EACH ROW EXECUTE FUNCTION trg_fn_receipt_items_economic_immutable()"
+      },
+      {
+        "name": "trg_sync_has_movements_receipt",
+        "enabled": "O",
+        "def": "CREATE TRIGGER trg_sync_has_movements_receipt AFTER INSERT ON public.receipt_items FOR EACH ROW EXECUTE FUNCTION sync_product_has_movements()"
+      },
+      {
+        "name": "fin_t12_receipt_annulment_block",
+        "enabled": "O",
+        "def": "CREATE TRIGGER fin_t12_receipt_annulment_block BEFORE UPDATE OF status ON public.receipts FOR EACH ROW EXECUTE FUNCTION fin_t12_block_receipt_annulment()"
+      },
+      {
+        "name": "fin_trg_receipts",
+        "enabled": "O",
+        "def": "CREATE CONSTRAINT TRIGGER fin_trg_receipts AFTER INSERT OR UPDATE ON public.receipts DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION fin_trg_receipts()"
+      },
+      {
+        "name": "trg_audit_receipt_changes",
+        "enabled": "O",
+        "def": "CREATE TRIGGER trg_audit_receipt_changes AFTER UPDATE ON public.receipts FOR EACH ROW EXECUTE FUNCTION log_transaction_changes()"
+      },
+      {
+        "name": "trg_cp_infra_020_block_truncate",
+        "enabled": "A",
+        "def": "CREATE TRIGGER trg_cp_infra_020_block_truncate BEFORE TRUNCATE ON public.receipts FOR EACH STATEMENT EXECUTE FUNCTION block_truncate()"
+      },
+      {
+        "name": "trg_receipts_assign_document_number",
+        "enabled": "O",
+        "def": "CREATE TRIGGER trg_receipts_assign_document_number BEFORE INSERT OR UPDATE OF status, document_number ON public.receipts FOR EACH ROW WHEN (((new.status = 'active'::text) AND ((new.document_number IS NULL) OR (new.document_number = ''::text)))) EXECUTE FUNCTION assign_receipt_document_number()"
+      },
+      {
+        "name": "trg_set_due_date_receipt",
+        "enabled": "O",
+        "def": "CREATE TRIGGER trg_set_due_date_receipt BEFORE INSERT ON public.receipts FOR EACH ROW EXECUTE FUNCTION set_default_due_date_receipt()"
+      },
+      {
+        "name": "trg_validate_receipt_transition",
+        "enabled": "O",
+        "def": "CREATE TRIGGER trg_validate_receipt_transition BEFORE UPDATE OF status ON public.receipts FOR EACH ROW EXECUTE FUNCTION fn_validate_document_transition('receipts')"
+      }
+    ],
+    "T2_analisis": {
+      "desconocidos": [],
+      "motorSoloStatus": true,
+      "audit_nunca_toca_fin": true,
+      "audit_solo_cambio_status": true
+    },
+    "T3": {
+      "missing": [],
+      "wcl_changed_by": "YES",
+      "audit_record_id_type": "uuid"
+    },
+    "T4_nota_tecnica": "S3 del runbook ejecutado CON filtro de producto (hallazgo 009: sin filtro tocaría 80 capas — 99 fuera del alcance autorizado). Alcance económico autorizado PRESERVADO: solo P111/P112.",
+    "resultados": [
+      {
+        "id": "S1",
+        "control": "FVC activa, unpaid, sin reversa, total 192.039.436",
+        "resultado": "PASS",
+        "detalle": "status=active pay=unpaid paid=0 total=192039436.000000000"
+      },
+      {
+        "id": "S2",
+        "control": "Asiento original único (93bb5da9, reconocimiento, posted, sin reversal_of) y par D/C 192.039.436",
+        "resultado": "PASS",
+        "detalle": "n=1 event=reconocimiento status=posted fm=[{\"category_code\":\"ACT_INVENTARIO\",\"sense\":\"debito\",\"amount_cup\":\"192039436.00\"},{\"category_code\":\"PAS_CXP_PROV\",\"sense\":\"credito\",\"amount_cup\":\"192039436.00\"}]"
+      },
+      {
+        "id": "S3",
+        "control": "Deuda 100% pendiente (unpaid/paid 0) y CXP global neta > exceso autorizado",
+        "resultado": "PASS",
+        "detalle": "X_cxp=207255150.57"
+      },
+      {
+        "id": "S4",
+        "control": "Cero pagos FVC/proveedor, cero reversiones del asiento original, cero duplicados",
+        "resultado": "PASS",
+        "detalle": "pagos=0 reversiones=0 duplicados=0"
+      },
+      {
+        "id": "S5",
+        "control": "Líneas 111/112 intactas (49@2500 USD@680, 100@1000 USD@680) y exceso = 151.299.851 exacto",
+        "resultado": "PASS",
+        "detalle": "l111=2500.0/USD@680.0000 l112=1000.0/USD@680.0000"
+      },
+      {
+        "id": "S5b",
+        "control": "Precios de venta maestros = congelados (2000 CUP / 1000 USD) — RECT no toca precios",
+        "resultado": "PASS",
+        "detalle": "[{\"sku\":\"111\",\"price\":\"2000\",\"price_currency\":\"CUP\"},{\"sku\":\"112\",\"price\":\"1000\",\"price_currency\":\"USD\"}]"
+      },
+      {
+        "id": "S6",
+        "control": "Kardex 21 movimientos, salidas uc=0 = EXACTAMENTE las 7 filas congeladas / 26 u, stocks 10/20, sin movimientos nuevos post-corte",
+        "resultado": "PASS",
+        "detalle": "kardex=21 exits=7 u=26 ids_ok=true nuevos=0"
+      },
+      {
+        "id": "S7",
+        "control": "VS-37/138/139 completed y SIN asiento; 2 ajustes de cuadre SIN asiento; sin inventory_adjustments",
+        "resultado": "PASS",
+        "detalle": "vales_sin=3 estados=[{\"slip_number\":\"VS-000037-2026\",\"status\":\"completed\"},{\"slip_number\":\"VS-000138-2026\",\"status\":\"completed\"},{\"slip_number\":\"VS-000139-2026\",\"status\":\"completed\"},{\"slip_number\":\"VS-000223-2026\",\"status\":\"reversed\"}] adj_sin=2 inv_adj=0"
+      },
+      {
+        "id": "S8",
+        "control": "VS-000223: vale reversed, par salida/reingreso neto 0 a uc=1, sin asiento, fuera del alcance uc=0",
+        "resultado": "PASS",
+        "detalle": "par=[[\"issue_slip_out\",-1,1],[\"issue_slip_reverse\",1,1]] asientos=0"
+      },
+      {
+        "id": "S9",
+        "control": "T12 en producción: trigger habilitado (tgenabled=O) + motor v2 con ERR_PARTIAL_REVERSAL_PENDING + fn residual",
+        "resultado": "PASS",
+        "detalle": "trigger=O motor_v2=true resid=1"
+      },
+      {
+        "id": "S10",
+        "control": "Hardening vigente: motor ACL {postgres,service_role}, helper/trigger SD, RLS activa en 9 tablas",
+        "resultado": "PASS",
+        "detalle": "motor=postgres=EXECUTE, service_role=EXECUTE rls=9"
+      },
+      {
+        "id": "T1",
+        "control": "Índice ÚNICO uq_fin_entries_doc_event existe (document_type, document_id, event, coalesce(payment_ref))",
+        "resultado": "PASS",
+        "detalle": "CREATE UNIQUE INDEX uq_fin_entries_doc_event ON public.fin_entries USING btree (document_type, document_id, event, COALESCE(payment_ref, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (document_id IS NOT NULL)"
+      },
+      {
+        "id": "T2",
+        "control": "El UPDATE de total_cost de S2 no dispara acción financiera ni re-posting (motor solo en transición de status; auditoría solo en cambio de status; sin triggers desconocidos) y T12 es BEFORE UPDATE OF status",
+        "resultado": "PASS",
+        "detalle": "triggers=fin_t12_receipt_annulment_block,fin_trg_receipts,trg_audit_receipt_changes,trg_cp_infra_020_block_truncate,trg_receipts_assign_document_number,trg_set_due_date_receipt,trg_validate_receipt_transition motor_solo_status=true"
+      },
+      {
+        "id": "T3",
+        "control": "Columnas del runbook presentes; wac_change_log.changed_by anulable o con default; audit_logs.record_id uuid",
+        "resultado": "PASS",
+        "detalle": "missing=[] changed_by=YES record_id=uuid"
+      },
+      {
+        "id": "T4",
+        "control": "Capas de compra S3 = exactamente las 2 congeladas (1.700.000 / 680.000); sin filtro de producto el S3 literal tocaría 80 capas",
+        "resultado": "PASS",
+        "detalle": "[[\"8552e290-b627-4b75-b9af-7779399ab22b\",680000],[\"5f58e2b1-156b-46b2-8f6d-c491b15a350c\",1700000]] · sin_filtro=80"
+      },
+      {
+        "id": "T5",
+        "control": "Sin auditoría previa RECT-PROD (la rectificación no se ha ejecutado antes)",
+        "resultado": "PASS",
+        "detalle": "n=0"
+      },
+      {
+        "id": "T6",
+        "control": "fin_posting_errors: baseline registrada (comparar tras ejecución)",
+        "resultado": "PASS",
+        "detalle": "n=0 "
+      },
+      {
+        "id": "T7",
+        "control": "Baselines de los 5 mayores capturadas (X_act/X_cxp anotados para el después)",
+        "resultado": "PASS",
+        "detalle": "X_act=201681043.51 X_cxp=207255150.57"
+      },
+      {
+        "id": "T8",
+        "control": "Los 22 ids deterministas de la misión 009 NO colisionan en producción",
+        "resultado": "PASS",
+        "detalle": "entries=0 movements=0 wcl=0 audit=0"
+      },
+      {
+        "id": "T9",
+        "control": "Sin filas event=rectificacion previas para SKU 111/112 (S4 idempotente)",
+        "resultado": "PASS",
+        "detalle": "n=0"
+      }
+    ]
+  },
+  "baselines": {
+    "receipts_fvc": {
+      "id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+      "status": "active",
+      "total_cost": "192039436.000000000",
+      "payment_status": "unpaid",
+      "paid_amount": "0",
+      "paid_at": null,
+      "reversed_at": null,
+      "due_date": "2026-07-31"
+    },
+    "X_cxp": 207255150.57,
+    "precios_venta": [
+      {
+        "sku": "111",
+        "price": "2000",
+        "price_currency": "CUP"
+      },
+      {
+        "sku": "112",
+        "price": "1000",
+        "price_currency": "USD"
+      }
+    ],
+    "exits7": [
+      {
+        "id": "68a3ff08-a301-4232-937a-85f183452d5c",
+        "sku": "111",
+        "q": -1,
+        "tipo": "sale",
+        "doc": "Venta POS v2"
+      },
+      {
+        "id": "a1330957-1e49-43ed-a309-c7a20c2ee714",
+        "sku": "111",
+        "q": -1,
+        "tipo": "adjustment",
+        "doc": "Cuadre importación ENERVIDA: sku=111 Δ=-1 (diferencia acumulada pre-corte vs Excel)"
+      },
+      {
+        "id": "a8a82720-df49-485d-949c-acfc082fc3b6",
+        "sku": "112",
+        "q": -17,
+        "tipo": "adjustment",
+        "doc": "Cuadre importación ENERVIDA: sku=112 Δ=-17 (diferencia acumulada pre-corte vs Excel)"
+      },
+      {
+        "id": "335e2fcc-f4d3-426b-a7ff-878af184acab",
+        "sku": "112",
+        "q": -4,
+        "tipo": "issue_slip_out",
+        "doc": "Vale de Salida VS-000037-2026"
+      },
+      {
+        "id": "673ede95-75cc-4c4e-aa19-1dc893c5cd79",
+        "sku": "111",
+        "q": -1,
+        "tipo": "sale",
+        "doc": "Venta POS v2"
+      },
+      {
+        "id": "9d47f6c1-756a-4e0f-9e56-85d1dc2ca557",
+        "sku": "112",
+        "q": -1,
+        "tipo": "issue_slip_out",
+        "doc": "Vale de Salida VS-000138-2026"
+      },
+      {
+        "id": "25db100f-9238-45b4-b53e-c3559eb60651",
+        "sku": "111",
+        "q": -1,
+        "tipo": "issue_slip_out",
+        "doc": "Vale de Salida VS-000139-2026"
+      }
+    ],
+    "fin_posting_errors": {
+      "n": 0,
+      "codes": ""
+    },
+    "mayores_antes": {
+      "ACT_INVENTARIO": {
+        "neto": 201681043.51,
+        "n": 1004
+      },
+      "GAS_COSTO_VENTAS": {
+        "neto": 4765242.95,
+        "n": 706
+      },
+      "GAS_PERDIDA_INV": {
+        "neto": 1,
+        "n": 1
+      },
+      "GAS_VALES": {
+        "neto": 808863.11,
+        "n": 198
+      },
+      "PAS_CXP_PROV": {
+        "neto": -207255150.57,
+        "n": 99
+      }
+    },
+    "X_act": 201681043.51,
+    "esperado_despues": {
+      "ACT_INVENTARIO": 50381168.50999999,
+      "PAS_CXP_PROV": 55955299.56999999
+    }
+  },
+  "total": {
+    "checks": 20,
+    "pass": 20,
+    "fail": 0
+  },
+  "veredicto": "PREFLIGHT APROBADO — las 10 condiciones §3 de la misión y las verificaciones técnicas se cumplen; autorizada la ejecución de RECT-1 y luego RECT-2"
+}
