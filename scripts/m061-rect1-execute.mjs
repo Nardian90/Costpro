@@ -27,6 +27,7 @@
 // ============================================================================
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
+import { assertNotProduction } from './lib/assert-not-production.mjs';
 
 const MODE = process.argv[2] || '--verify';
 const env = {};
@@ -58,15 +59,19 @@ const TRACE = 'RECT-PROD';
 const MISION = 'CP-FIN-VALUATION-RECTIFICATION-003/004';
 const MISION_EJEC = 'CP-FIN-FINAL-VALUATION-EXECUTION-009';
 
-async function qApi(ref, sql) {
+async function qApi(ref, sql, guardContext, guardMode) {
+  // Guard de producción (CP-INFRA-019): fail-closed. E2E conocido → paso libre;
+  // producción: lectura exige ALLOW_PROD=read-only; escritura exige además
+  // ALLOW_PROD_WRITE=I_UNDERSTAND (flags explícitos del operador autorizado).
+  assertNotProduction({ mode: guardMode, projectRef: ref, context: guardContext });
   const res = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {
     method: 'POST', headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ query: sql }) });
   const text = await res.text();
   return { ok: res.ok, status: res.status, text, rows: res.ok ? JSON.parse(text || '[]') : null };
 }
-const qProd = (sql) => qApi('wthkddeleylijmonclxg', sql);
-const qE2E = (sql) => qApi('lguovmvrozxgssupkwpf', sql);
+const qProd = (sql) => qApi('wthkddeleylijmonclxg', sql, `m061-rect1-${MODE}`, MODE === '--execute' ? 'write' : 'read');
+const qE2E = (sql) => qApi('lguovmvrozxgssupkwpf', sql, 'm061-probe (BD E2E aislada)', 'write');
 
 // ═════════════════════════════ MODO --probe ══════════════════════════════════
 if (MODE === '--probe') {
@@ -255,9 +260,12 @@ if (MODE === '--verify') {
   const compras = (await qProd(`SELECT id, product_id, unit_cost FROM public.stock_movements WHERE reference_id='${FVC}' AND movement_type='purchase' AND product_id IN ('${S111}','${S112}') ORDER BY product_id`)).rows;
   chk('V3', 'Capas de compra 111/112 a uc=1', compras.length === 2 && compras.every((c) => Number(c.unit_cost) === 1), JSON.stringify(compras.map((c) => c.id)));
   const entries = (await qProd(`SELECT id, document_type, document_number, event, status, reversal_of FROM public.fin_entries WHERE document_id='${FVC}' ORDER BY posted_at`)).rows;
-  chk('V4', 'Asientos FVC = 2: original intacto + RECT-1 (reversal_of=original, ajuste_manual, posted)',
-    entries.length === 2 && entries[0].id === ORIG && entries[0].status === 'posted' && !entries[0].reversal_of
-      && entries[1].id === E_RECT1 && entries[1].event === 'ajuste_manual' && entries[1].status === 'posted' && entries[1].reversal_of === ORIG, JSON.stringify(entries));
+  const origOk = entries.length >= 2 && entries[0].id === ORIG && entries[0].status === 'posted' && !entries[0].reversal_of
+    && entries[1].id === E_RECT1 && entries[1].event === 'ajuste_manual' && entries[1].status === 'posted' && entries[1].reversal_of === ORIG;
+  // Estado válido: 2 asientos (solo RECT-1 aplicada) o 3 (RECT-1+RECT-2 — certificación m063)
+  chk('V4', 'Original intacto + RECT-1 enlazada (reversal_of=original, ajuste_manual, posted); 2 o 3 asientos según fase (RECT-2 ya aplicada ⇒ 3)',
+    origOk && (entries.length === 2 || (entries.length === 3 && entries[2].event === 'ajuste_manual' && entries[2].status === 'posted')),
+    `n=${entries.length} [${entries.map((e) => e.document_number ?? 'ORIGINAL').join(', ')}]`);
   const bal = (await qProd(`SELECT sum(CASE WHEN sense='debito' THEN amount ELSE -amount END)::numeric AS d FROM public.fin_movements WHERE entry_id='${E_RECT1}'`)).rows[0];
   chk('V5', 'RECT-1 equilibrada D=C=0,00 y par exacto (D CXP 151.299.851 / C INV 151.299.851)',
     Number(bal.d) === 0, `balance=${bal.d}`);
@@ -272,8 +280,10 @@ if (MODE === '--verify') {
   chk('V7', 'Idempotencia: re-ejecución de S1/S2/S3 tocaría 0 filas (conteo read-only de las cláusulas WHERE)',
     idem.s1 === 0 && idem.s2 === 0 && idem.s3 === 0, JSON.stringify(idem));
   const audit = (await qProd(`SELECT action, count(*)::int AS n FROM public.audit_logs WHERE trace_id='RECT-PROD' AND action IN ('SYSTEM_RECT_VALUATION','SYSTEM_RECT_TOTAL','SYSTEM_RECT_MOV_UC','SYSTEM_RECT_ENTRY') GROUP BY 1 ORDER BY 1`)).rows;
-  chk('V8', 'Auditoría RECT-1 registrada (2 VALUATION + 1 TOTAL + 2 MOV_UC + 1 ENTRY)',
-    audit.reduce((a, r) => a + r.n, 0) === 6 && audit.find((r) => r.action === 'SYSTEM_RECT_VALUATION')?.n === 2, JSON.stringify(audit));
+  const byAct = Object.fromEntries(audit.map((r) => [r.action, r.n]));
+  // Fila(s) SYSTEM_RECT_ENTRY: 1 si solo RECT-1; 2 si RECT-1+RECT-2 (estado completo)
+  chk('V8', 'Auditoría RECT-1 registrada (2 VALUATION + 1 TOTAL + 2 MOV_UC + ENTRY≥1)',
+    byAct.SYSTEM_RECT_VALUATION === 2 && byAct.SYSTEM_RECT_TOTAL === 1 && byAct.SYSTEM_RECT_MOV_UC === 2 && byAct.SYSTEM_RECT_ENTRY >= 1, JSON.stringify(byAct));
   const otros = (await qProd(`SELECT count(*)::int AS n FROM public.receipt_items WHERE receipt_id='${FVC}' AND updated_at > now() - interval '10 minutes' AND product_id NOT IN ('${S111}','${S112}')`)).rows[0];
   chk('V9', 'Ninguna otra línea de la recepción fue modificada', otros.n === 0, `otras_lineas_tocadas=${otros.n}`);
   const fails = checks.filter((c) => c.resultado === 'FAIL');

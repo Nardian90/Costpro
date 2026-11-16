@@ -388,6 +388,13 @@
       "hallazgo": "GAS_PERDIDA_INV global tenía 1 CUP preexistente al preflight (ajeno a la rectificación).",
       "resolucion": "RECT-2 aporta exactamente 18 (m063 R5); global tras ejecución = 19 (1+18). El criterio del runbook §7.7 se verifica sobre la porción de la rectificación.",
       "evidencia": "m060 baselines · m063 R5"
+    },
+    {
+      "id": "guard-integration",
+      "severidad": "informativa",
+      "hallazgo": "El lint destructivo CP-INFRA-020 exigió el guard de producción para el DROP SCHEMA de la sonda (m061).",
+      "resolucion": "m061 integra scripts/lib/assert-not-production.mjs: E2E pasa libre; producción fail-closed (lectura ALLOW_PROD=read-only; escritura además ALLOW_PROD_WRITE=I_UNDERSTAND). Reclasificado a guardProtected. m062 sin patrones destructivos permanece en exceptions. Verificación re-ejecutable 9/9 en ambos estados (con/sin RECT-2).",
+      "evidencia": "check-destructive-guard: sin destructivos sin guard · m061 --verify 9/9"
     }
   ],
   "scripts_oficiales": [

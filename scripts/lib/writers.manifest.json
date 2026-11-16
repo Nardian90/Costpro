@@ -46,7 +46,8 @@
     "scripts/validar-ciclo-divisa-devoluciones.mjs",
     "scripts/validar-fix-17-1-servicios-usd.mjs",
     "scripts/validar-fix-dryrun-pagos.mjs",
-    "scripts/validar-semantica-ventas-usd.mjs"
+    "scripts/validar-semantica-ventas-usd.mjs",
+    "scripts/m061-rect1-execute.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
@@ -219,7 +220,6 @@
     "scripts/m058b-check-operational-class.mjs": "CP-FIN-ULTIMATE-CLOSE-008 (2026-11-16): verificación read-only de los efectos vivos de 20261110090000 (columna DEFAULT/NOT NULL, conteos) — solo SELECT por Management API; guard de ref de producción en línea.",
     "scripts/m059-ultimate-security-cert.mjs": "CP-FIN-ULTIMATE-CLOSE-008 (2026-11-16): certificación de seguridad integral (RLS, ACLs T12, census) — READ-ONLY estricto, solo SELECT por Management API; guard de ref de producción en línea.",
     "scripts/m060-rect-preflight.mjs": "CP-FIN-FINAL-VALUATION-EXECUTION-009 (2026-11-16): preflight §3 de la misión — 10 condiciones financieras + 9 verificaciones técnicas, READ-ONLY estricto (solo SELECT por Management API /database/query); guard de ref de producción en línea (wthkddeleylijmonclxg). La señal de escritura es el PATH de la API.",
-    "scripts/m061-rect1-execute.mjs": "CP-FIN-FINAL-VALUATION-EXECUTION-009 (2026-11-16): ESCRITOR GOBERNADO — ejecución autorizada por el PROPIETARIO en la misión 009 §1 (RECT-1 151.299.851 CUP) según RECT004_PRODUCTION_RUNBOOK §5 + addendum T12. Transacción única atómica (BEGIN…COMMIT en 1 llamada), advisory lock, pre-flight intra-transacción, guards de conteo A-5/A-6 con RAISE→rollback, ids deterministas. Modos: --probe (BD E2E aislada), --execute (producción, UNA vez), --verify (read-only).",
     "scripts/m062-rect2-execute.mjs": "CP-FIN-FINAL-VALUATION-EXECUTION-009 (2026-11-16): ESCRITOR GOBERNADO — ejecución autorizada por el PROPIETARIO en la misión 009 §1 (RECT-2 24 CUP) según RECT004_PRODUCTION_RUNBOOK §6. Transacción separada atómica, advisory lock fin:RECEP2, pre-guard RECT-1 aplicada, T1 exactamente 7 filas congeladas, D=C verificado, sin GAS_COSTO_VENTAS. Modos: --execute (UNA vez), --verify (read-only).",
     "scripts/m063-rect-final-certification.mjs": "CP-FIN-FINAL-VALUATION-EXECUTION-009 (2026-11-16): certificación financiera post-ejecución §7-§8 (11 controles R1-R11), READ-ONLY estricto (solo SELECT por Management API /database/query); guard de ref de producción en línea. La señal de escritura es el PATH de la API."
   }

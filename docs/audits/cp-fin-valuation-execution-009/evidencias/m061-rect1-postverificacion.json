@@ -1,5 +1,5 @@
 {
-  "fecha_utc": "2026-11-16T16:07:35.750Z",
+  "fecha_utc": "2026-11-16T16:30:55.405Z",
   "modo": "--verify",
   "checks": [
     {
@@ -22,9 +22,9 @@
     },
     {
       "id": "V4",
-      "control": "Asientos FVC = 2: original intacto + RECT-1 (reversal_of=original, ajuste_manual, posted)",
+      "control": "Original intacto + RECT-1 enlazada (reversal_of=original, ajuste_manual, posted); 2 o 3 asientos según fase (RECT-2 ya aplicada ⇒ 3)",
       "resultado": "PASS",
-      "detalle": "[{\"id\":\"93bb5da9-0afd-4325-baad-a275710062c5\",\"document_type\":\"RECEPCION\",\"document_number\":null,\"event\":\"reconocimiento\",\"status\":\"posted\",\"reversal_of\":null},{\"id\":\"7ec90009-0000-4000-8000-d0b300000001\",\"document_type\":\"RECEPCION\",\"document_number\":\"FAC-VITALLCONS-001-RECT\",\"event\":\"ajuste_manual\""
+      "detalle": "n=3 [ORIGINAL, FAC-VITALLCONS-001-RECT, FAC-VITALLCONS-001-RECT-SAL]"
     },
     {
       "id": "V5",
@@ -46,9 +46,9 @@
     },
     {
       "id": "V8",
-      "control": "Auditoría RECT-1 registrada (2 VALUATION + 1 TOTAL + 2 MOV_UC + 1 ENTRY)",
+      "control": "Auditoría RECT-1 registrada (2 VALUATION + 1 TOTAL + 2 MOV_UC + ENTRY≥1)",
       "resultado": "PASS",
-      "detalle": "[{\"action\":\"SYSTEM_RECT_ENTRY\",\"n\":1},{\"action\":\"SYSTEM_RECT_MOV_UC\",\"n\":2},{\"action\":\"SYSTEM_RECT_TOTAL\",\"n\":1},{\"action\":\"SYSTEM_RECT_VALUATION\",\"n\":2}]"
+      "detalle": "{\"SYSTEM_RECT_ENTRY\":2,\"SYSTEM_RECT_MOV_UC\":2,\"SYSTEM_RECT_TOTAL\":1,\"SYSTEM_RECT_VALUATION\":2}"
     },
     {
       "id": "V9",
