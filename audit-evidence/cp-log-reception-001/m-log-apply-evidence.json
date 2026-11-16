@@ -1,0 +1,26 @@
+{
+  "stamp": "2026-11-16T17:18:02.295Z",
+  "ref": "wthkddeleylijmonclxg",
+  "applied": [
+    "20261116140000:aplicada",
+    "20261116140100:aplicada"
+  ],
+  "log": [
+    "[guard] assert-not-production OK — ref=wthkddeleylijmonclxg mode=write",
+    "[sha] 20261116140000 094527e6f5d3c184… == aprobado ✓",
+    "[sha] 20261116140100 8f18d153485f6d63… == aprobado ✓",
+    "[ledger] última fila = 20261116120000 ✓",
+    "[pre] migraciones NO registradas previamente ✓",
+    "[objs] pre-estado: {\"trg_link_guard\":0,\"fn_reactivate\":0,\"fn_classify\":0,\"fn_resolve\":0}",
+    "[apply] 20261116140000 (PARTE 1 — regla estructural + escritores corregidos) — POST único, 48412 bytes…",
+    "[apply] 20261116140000 OK (HTTP 201)",
+    "[pgrst] NOTIFY reload schema OK",
+    "[apply] 20261116140100 (PARTE 2 — motor de clasificación del importador) — POST único, 39874 bytes…",
+    "[apply] 20261116140100 OK (HTTP 201)",
+    "[pgrst] NOTIFY reload schema OK",
+    "[ledger] 20261116140000 registrada ✓",
+    "[ledger] 20261116140100 registrada ✓",
+    "[objs] post-estado: {\"trg_link_guard\":1,\"fn_reactivate\":1,\"fn_activate\":1,\"fn_classify\":1,\"fn_resolve\":1,\"fn_register\":1,\"fn_transfer\":1}",
+    "[POST] todos los objetos presentes ✓"
+  ]
+}
