@@ -16,6 +16,7 @@
     "scripts/f9-controles.mjs",
     "scripts/fin-backfill-dryrun.mjs",
     "scripts/landing-demo-cleanup.cjs",
+    "scripts/m-log-reception-apply.mjs",
     "scripts/m002-aplicar-migracion-20261031140000.mjs",
     "scripts/m002-aplicar-migracion-PRODUCCION.mjs",
     "scripts/m003-aplicar-migracion.mjs",
@@ -38,8 +39,10 @@
     "scripts/m028-fase2-corrige-208.mjs",
     "scripts/m028b-idempotencia-fase2.mjs",
     "scripts/m055-t12-apply.mjs",
-    "scripts/m-log-reception-apply.mjs",
     "scripts/m056-fin-t12-privilege-deploy.mjs",
+    "scripts/m061-rect1-execute.mjs",
+    "scripts/m075-receipt-1cup-e2e.mjs",
+    "scripts/m077-receipt-1cup-execute.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
     "scripts/seed-pick3-history.js",
@@ -47,8 +50,7 @@
     "scripts/validar-ciclo-divisa-devoluciones.mjs",
     "scripts/validar-fix-17-1-servicios-usd.mjs",
     "scripts/validar-fix-dryrun-pagos.mjs",
-    "scripts/validar-semantica-ventas-usd.mjs",
-    "scripts/m061-rect1-execute.mjs"
+    "scripts/validar-semantica-ventas-usd.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
