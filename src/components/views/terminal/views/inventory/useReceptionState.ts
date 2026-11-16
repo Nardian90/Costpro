@@ -1099,8 +1099,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         // Mapeo visual de estados del backend → estados de fila.
         let status: ImportRowStatus = bStatus;
         if (bStatus === 'identified' && productId
-            && parsed.salePrice !== null && parsed.salePrice > 0
-            && priceBySku.get(parsed.sku.toLowerCase()) !== parsed.salePrice) {
+            && parsed.sale_price !== null && parsed.sale_price > 0
+            && priceBySku.get(parsed.sku.toLowerCase()) !== parsed.sale_price) {
           status = 'price_changed'; // variante de A: se usa el existente Y se ofrece actualizar precio
         }
         if (bStatus === 'new_local') status = 'new';              // equivalente visual legacy

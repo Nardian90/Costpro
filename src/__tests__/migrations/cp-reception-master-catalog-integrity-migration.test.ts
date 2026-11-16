@@ -28,7 +28,7 @@ describe('20261116140000 — regla estructural anti-huérfanos (misión §7)', (
   const s = read(MIGRATION);
 
   it('guard de BD: trigger BEFORE INSERT/UPDATE dirigido sobre products', () => {
-    expect(s).toMatch(/CREATE TRIGGER trg_products_master_link_guard\s+BEFORE INSERT OR UPDATE OF is_active, master_product_id, store_id, tenant_id ON public\.products/s);
+    expect(s).toMatch(/CREATE TRIGGER trg_products_master_link_guard\s+BEFORE INSERT OR UPDATE OF is_active, master_product_id, store_id, tenant_id ON public\.products/);
   });
 
   it('el guard prohíbe la fila operativa sin maestro en tienda conectada (INSERT)', () => {
