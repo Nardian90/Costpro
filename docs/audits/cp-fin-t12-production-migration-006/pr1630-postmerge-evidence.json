@@ -1,0 +1,179 @@
+{
+  "mision": "CP-FIN-T12-PR-CLOSE-007",
+  "script": "m057-pr1630-close-verify.mjs",
+  "modo": "postmerge",
+  "capturado_utc": "2026-11-15T20:22:27.014Z",
+  "objetivo": {
+    "proyecto_ref": "wthkddeleylijmonclxg",
+    "etiqueta": "CostproBD (PRODUCCIÓN)",
+    "solo_lectura": true
+  },
+  "sha_migracion_aprobada": "3429613c4bd26e33843be28b8174c336a785189330033433309bec6573e19481",
+  "checks": [
+    {
+      "id": "A1",
+      "control": "Ledger registra exactamente UNA aplicación de 20261115100000",
+      "resultado": "PASS",
+      "detalle": "filas=1"
+    },
+    {
+      "id": "A2",
+      "control": "SHA-256 de la migración en el ledger = archivo aprobado",
+      "resultado": "PASS",
+      "detalle": "ledger=3429613c4bd2… aprobado=3429613c4bd2…"
+    },
+    {
+      "id": "A3",
+      "control": "Estado de la aplicación = applied",
+      "resultado": "PASS",
+      "detalle": "applied"
+    },
+    {
+      "id": "A4",
+      "control": "Ledger: base 60 (cierre 006) + entradas posteriores de otras misiones documentadas (total=63)",
+      "resultado": "PASS",
+      "detalle": "post-T12=[{\"version\":\"20261115120000\",\"applied_by\":\"agent-cp-valuation-nominal-activation-004\",\"applied_at\":\"2026-11-15 13:02:36.549195+00\"},{\"version\":\"20261115120100\",\"applied_by\":\"agent-cp-valuation-nominal-activation-004\",\"applied_at\":\"2026-11-15 13:02:39.0588+00\"},{\"version\":\"20261116120000\",\"applied_by\":\"runbook-m056\",\"applied_at\":\"2026-11-15 20:05:21.821126+00\"}]"
+    },
+    {
+      "id": "B1",
+      "control": "Helper existe en producción",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "B2",
+      "control": "Cuerpo vivo del helper = cuerpo aprobado en migración T12 (hash)",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "B3",
+      "control": "Helper SECURITY DEFINER STABLE (sin escritura)",
+      "resultado": "PASS",
+      "detalle": "{\"prosecdef\":true,\"provolatile\":\"s\"}"
+    },
+    {
+      "id": "B4",
+      "control": "ACL del helper: sin PUBLIC ni anon con EXECUTE",
+      "resultado": "PASS",
+      "detalle": "postgres=EXECUTE, service_role=EXECUTE"
+    },
+    {
+      "id": "C1",
+      "control": "Motor existe en producción (firma text, uuid)",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "C2",
+      "control": "Cuerpo vivo del motor = cuerpo aprobado en migración T12 (hash)",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "C3",
+      "control": "Motor contiene ERR_PARTIAL_REVERSAL_PENDING",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "D1",
+      "control": "Trigger existe y habilitado",
+      "resultado": "PASS",
+      "detalle": "tgenabled=O"
+    },
+    {
+      "id": "D2",
+      "control": "Cuerpo vivo de la función trigger = código aprobado (hash)",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "D3",
+      "control": "Trigger montado en receipts BEFORE UPDATE OF status",
+      "resultado": "PASS",
+      "detalle": null
+    },
+    {
+      "id": "D4",
+      "control": "Ningún otro trigger de receipts deshabilitado (D)",
+      "resultado": "PASS",
+      "detalle": "[{\"tgname\":\"fin_trg_receipts\",\"tgenabled\":\"O\"},{\"tgname\":\"trg_audit_receipt_changes\",\"tgenabled\":\"O\"},{\"tgname\":\"trg_cp_infra_020_block_truncate\",\"tgenabled\":\"A\"},{\"tgname\":\"trg_receipts_assign_document_number\",\"tgenabled\":\"O\"},{\"tgname\":\"trg_set_due_date_receipt\",\"tgenabled\":\"O\"},{\"tgname\":\"trg_validate_receipt_transition\",\"tgenabled\":\"O\"}]"
+    },
+    {
+      "id": "E1",
+      "control": "FAC-VITALLCONS-001 sigue active",
+      "resultado": "PASS",
+      "detalle": "status=active"
+    },
+    {
+      "id": "E2",
+      "control": "Total de cabecera = 192039436.000000000",
+      "resultado": "PASS",
+      "detalle": "192039436.000000000"
+    },
+    {
+      "id": "E3",
+      "control": "Líneas de la recepción = 101 y suma recomputada = 192039436.00",
+      "resultado": "PASS",
+      "detalle": "n=101 suma=192039436.00"
+    },
+    {
+      "id": "E4",
+      "control": "Asiento posted original único e intacto",
+      "resultado": "PASS",
+      "detalle": "n=1 id=93bb5da9-0afd-4325-baad-a275710062c5"
+    },
+    {
+      "id": "E5",
+      "control": "Cero reversiones vinculadas a la recepción",
+      "resultado": "PASS",
+      "detalle": "n=0"
+    },
+    {
+      "id": "E6",
+      "control": "CXP de la recepción pendiente de pago (unpaid)",
+      "resultado": "PASS",
+      "detalle": "payment_status=unpaid"
+    },
+    {
+      "id": "E7",
+      "control": "Stock SKU111 = 10",
+      "resultado": "PASS",
+      "detalle": "qty=10.0000"
+    },
+    {
+      "id": "E8",
+      "control": "Stock SKU112 = 20",
+      "resultado": "PASS",
+      "detalle": "qty=20.0000"
+    },
+    {
+      "id": "E9",
+      "control": "WAC SKU111/SKU112 = 1 CUP",
+      "resultado": "PASS",
+      "detalle": "[{\"id\":\"14aeb370\",\"wac\":\"1\"},{\"id\":\"4afef9a7\",\"wac\":\"1\"}]"
+    },
+    {
+      "id": "E10",
+      "control": "COGS ventas SKU111/112 = 7 CUP (sin cambios)",
+      "resultado": "PASS",
+      "detalle": "total=7.00 n=5"
+    },
+    {
+      "id": "E11",
+      "control": "fin_posting_errors = 0 (sin intentos de anulación bloqueada ni errores)",
+      "resultado": "PASS",
+      "detalle": "n=0"
+    }
+  ],
+  "census": {
+    "security_definer": 367
+  },
+  "veredicto": "PASS",
+  "resumen": {
+    "total": 26,
+    "pass": 26,
+    "fail": 0
+  }
+}
