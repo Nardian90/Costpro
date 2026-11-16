@@ -1,0 +1,97 @@
+{
+  "mision": "CP-FIN-FINAL-VALUATION-EXECUTION-009",
+  "operacion": "RECT-2",
+  "fecha_inicio_utc": "2026-11-16T16:07:46.569Z",
+  "fecha_fin_utc": "2026-11-16T16:07:48.916Z",
+  "canal": "Management API /database/query (1 llamada = 1 transacción)",
+  "proyecto": "wthkddeleylijmonclxg (producción)",
+  "autorizacion": "Propietario — misión 009 §1",
+  "ids": {
+    "entry": "7ec90009-0000-4000-8000-d0b300000002",
+    "movements": [
+      "7ec90009-0000-4000-8000-f0b300000003",
+      "7ec90009-0000-4000-8000-f0b300000004",
+      "7ec90009-0000-4000-8000-f0b300000005"
+    ],
+    "audit": [
+      "7ec90009-0000-4000-8000-e0b300000007",
+      "7ec90009-0000-4000-8000-e0b300000008",
+      "7ec90009-0000-4000-8000-e0b300000009",
+      "7ec90009-0000-4000-8000-e0b300000010",
+      "7ec90009-0000-4000-8000-e0b300000011",
+      "7ec90009-0000-4000-8000-e0b300000012",
+      "7ec90009-0000-4000-8000-e0b300000013",
+      "7ec90009-0000-4000-8000-e0b300000014"
+    ]
+  },
+  "nota_respuesta": "Éxito = HTTP OK (guards internos con RAISE como barrera; desviación → HTTP 400 y ROLLBACK atómico; RECT-1 conserva su estado). Detalles en --verify y audit_logs.",
+  "http_status": 201,
+  "respuesta": [
+    {
+      "paso": "balance_debe",
+      "payload": 0
+    },
+    {
+      "paso": "T1",
+      "payload": [
+        {
+          "id": "335e2fcc-f4d3-426b-a7ff-878af184acab",
+          "antes": 1,
+          "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+          "quantity_change": -4
+        },
+        {
+          "id": "68a3ff08-a301-4232-937a-85f183452d5c",
+          "antes": 1,
+          "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+          "quantity_change": -1
+        },
+        {
+          "id": "a1330957-1e49-43ed-a309-c7a20c2ee714",
+          "antes": 1,
+          "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+          "quantity_change": -1
+        },
+        {
+          "id": "a8a82720-df49-485d-949c-acfc082fc3b6",
+          "antes": 1,
+          "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+          "quantity_change": -17
+        },
+        {
+          "id": "673ede95-75cc-4c4e-aa19-1dc893c5cd79",
+          "antes": 1,
+          "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+          "quantity_change": -1
+        },
+        {
+          "id": "9d47f6c1-756a-4e0f-9e56-85d1dc2ca557",
+          "antes": 1,
+          "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+          "quantity_change": -1
+        },
+        {
+          "id": "25db100f-9238-45b4-b53e-c3559eb60651",
+          "antes": 1,
+          "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+          "quantity_change": -1
+        }
+      ]
+    },
+    {
+      "paso": "T2_entry",
+      "payload": 1
+    },
+    {
+      "paso": "T2_movements",
+      "payload": 3
+    },
+    {
+      "paso": "T3_audit",
+      "payload": 8
+    }
+  ],
+  "texto_error": null,
+  "resultado": "RECT-2 COMMITED — transacción gobernada aplicada (guards A-5/A-6 superados); verificar con --verify",
+  "nota_semantica_returning": "Valores RETURNING = POST-update; los valores ANTES reales constan en audit_logs.old_data (uc=0 en las 7 salidas)."
+}

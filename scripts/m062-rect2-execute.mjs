@@ -180,9 +180,11 @@ if (MODE === '--verify') {
   chk('W2', 'Salidas uc=0 restantes = 0 filas', g3.n === 0, `n=${g3.n}`);
   const t1rows = (await qProd(`SELECT id, unit_cost FROM public.stock_movements WHERE id IN ('${EXITS7.join("','")}')`)).rows;
   chk('W3', 'Las 7 salidas congeladas quedan a uc=1 (26 u valorizadas)', t1rows.length === 7 && t1rows.every((r) => Number(r.unit_cost) === 1), `n=${t1rows.length}`);
-  const cogs = (await qProd(`SELECT count(*)::int AS asientos, coalesce(sum(CASE WHEN sense='debito' THEN amount_cup ELSE -amount_cup END),0)::numeric AS total FROM public.fin_movements fm JOIN public.fin_entries fe ON fe.id=fm.entry_id WHERE fm.category_code='GAS_COSTO_VENTAS' AND fe.store_id='${STORE}'`)).rows[0];
-  chk('W4', 'COGS del motor intacto: 7 CUP en 5 asientos (sin duplicación, sin GAS_COSTO_VENTAS nuevo)',
-    Number(cogs.total) === 7 && cogs.asientos === 5, JSON.stringify(cogs));
+  const cogs = (await qProd(`SELECT count(*)::int AS asientos, coalesce(sum(CASE WHEN sense='debito' THEN amount_cup ELSE -amount_cup END),0)::numeric AS total FROM public.fin_movements fm JOIN public.fin_entries fe ON fe.id=fm.entry_id WHERE fm.category_code='GAS_COSTO_VENTAS' AND fe.document_id IN (
+    SELECT sm.reference_id::uuid FROM public.stock_movements sm WHERE sm.product_id IN ('${S111}','${S112}') AND sm.movement_type='sale' AND sm.reference_id ~ '^[0-9a-f-]{36}$')`)).rows[0];
+  const cogsNuevo = (await qProd(`SELECT count(*)::int AS n FROM public.fin_movements WHERE category_code='GAS_COSTO_VENTAS' AND (entry_id='${E_RECT2}' OR entry_id IN (SELECT id FROM public.fin_entries WHERE document_id='${FVC}'))`)).rows[0];
+  chk('W4', 'COGS del motor de las 5 ventas SKU111/112 intacto: 7 CUP (sin duplicación) y CERO GAS_COSTO_VENTAS nuevo en RECT-2/FVC',
+    Number(cogs.total) === 7 && cogs.asientos === 5 && cogsNuevo.n === 0, `cogs_5_ventas=${JSON.stringify(cogs)} · nuevo_asociado_RECT_FVC=${cogsNuevo.n}`);
   const entries = (await qProd(`SELECT id, document_type, document_number, event, status, reversal_of FROM public.fin_entries WHERE document_id='${FVC}' ORDER BY posted_at`)).rows;
   chk('W5', 'Asientos de la FVC = 3: original + RECT-1 + RECT-2, todos posted',
     entries.length === 3 && entries.every((e) => e.status === 'posted'), JSON.stringify(entries.map((e) => [e.document_number, e.event])));

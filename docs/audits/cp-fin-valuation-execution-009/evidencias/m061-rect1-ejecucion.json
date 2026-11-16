@@ -1,0 +1,97 @@
+{
+  "mision": "CP-FIN-FINAL-VALUATION-EXECUTION-009",
+  "operacion": "RECT-1",
+  "fecha_inicio_utc": "2026-11-16T16:06:56.345Z",
+  "fecha_fin_utc": "2026-11-16T16:06:58.794Z",
+  "canal": "Management API /database/query (1 llamada = 1 transacción)",
+  "proyecto": "wthkddeleylijmonclxg (producción)",
+  "autorizacion": "Propietario — misión 009 §1",
+  "ids": {
+    "entry": "7ec90009-0000-4000-8000-d0b300000001",
+    "movements": [
+      "7ec90009-0000-4000-8000-f0b300000001",
+      "7ec90009-0000-4000-8000-f0b300000002"
+    ],
+    "wac": [
+      "7ec90009-0000-4000-8000-9cb300000001",
+      "7ec90009-0000-4000-8000-9cb300000002"
+    ],
+    "audit": [
+      "7ec90009-0000-4000-8000-e0b300000001",
+      "7ec90009-0000-4000-8000-e0b300000002",
+      "7ec90009-0000-4000-8000-e0b300000003",
+      "7ec90009-0000-4000-8000-e0b300000004",
+      "7ec90009-0000-4000-8000-e0b300000005",
+      "7ec90009-0000-4000-8000-e0b300000006"
+    ]
+  },
+  "nota_tecnica_s3": "S3 con filtro de producto (hallazgo 009) — alcance autorizado preservado: solo P111/P112",
+  "nota_respuesta": "Éxito = HTTP OK (los guards internos A-1..A-6 con RAISE son la barrera; cualquier desviación → HTTP 400 y ROLLBACK atómico). Los detalles por fila se capturan en --verify y en audit_logs (old_data/new_data).",
+  "http_status": 201,
+  "respuesta": [
+    {
+      "paso": "balance_debe",
+      "payload": 0
+    },
+    {
+      "paso": "S1",
+      "payload": [
+        {
+          "id": "80a1767b-8902-48c6-833b-abf713bdc7b0",
+          "uc_antes": 1,
+          "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+          "moneda_antes": "CUP"
+        },
+        {
+          "id": "9c9e6010-b848-4d0f-b667-304282f7584b",
+          "uc_antes": 1,
+          "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+          "moneda_antes": "CUP"
+        }
+      ]
+    },
+    {
+      "paso": "S2",
+      "payload": [
+        {
+          "id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+          "antes": 40739585
+        }
+      ]
+    },
+    {
+      "paso": "S3",
+      "payload": [
+        {
+          "id": "5f58e2b1-156b-46b2-8f6d-c491b15a350c",
+          "antes": 1,
+          "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16"
+        },
+        {
+          "id": "8552e290-b627-4b75-b9af-7779399ab22b",
+          "antes": 1,
+          "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4"
+        }
+      ]
+    },
+    {
+      "paso": "S4",
+      "payload": 2
+    },
+    {
+      "paso": "S5_entry",
+      "payload": 1
+    },
+    {
+      "paso": "S5_movements",
+      "payload": 2
+    },
+    {
+      "paso": "S6_audit",
+      "payload": 6
+    }
+  ],
+  "texto_error": null,
+  "resultado": "RECT-1 COMMITED — transacción gobernada aplicada (guards A-5/A-6 superados); verificar con --verify",
+  "nota_semantica_returning": "Los valores de RETURNING en la respuesta son POST-update (semántica PostgreSQL): los campos etiquetados *_antes/antes muestran el valor NUEVO aplicado. Los valores REALES anteriores constan en audit_logs.old_data (uc 2500/1000 USD@680; total 192.039.436; capas 1.700.000/680.000) y son la fuente de trazabilidad antes/después."
+}

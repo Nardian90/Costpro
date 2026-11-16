@@ -1,0 +1,47 @@
+{
+  "fecha_utc": "2026-11-16T16:08:40.686Z",
+  "modo": "--verify",
+  "checks": [
+    {
+      "id": "W1",
+      "control": "RECT-2 equilibrada (D=C=0,00) con exactamente D VALES 6 + D PERDIDA 18 / C INV 24",
+      "resultado": "PASS",
+      "detalle": "{\"d\":\"0.00\",\"vales\":\"6.00\",\"perdida\":\"18.00\",\"inv\":\"24.00\"}"
+    },
+    {
+      "id": "W2",
+      "control": "Salidas uc=0 restantes = 0 filas",
+      "resultado": "PASS",
+      "detalle": "n=0"
+    },
+    {
+      "id": "W3",
+      "control": "Las 7 salidas congeladas quedan a uc=1 (26 u valorizadas)",
+      "resultado": "PASS",
+      "detalle": "n=7"
+    },
+    {
+      "id": "W4",
+      "control": "COGS del motor de las 5 ventas SKU111/112 intacto: 7 CUP (sin duplicación) y CERO GAS_COSTO_VENTAS nuevo en RECT-2/FVC",
+      "resultado": "PASS",
+      "detalle": "cogs_5_ventas={\"asientos\":5,\"total\":\"7.00\"} · nuevo_asociado_RECT_FVC=0"
+    },
+    {
+      "id": "W5",
+      "control": "Asientos de la FVC = 3: original + RECT-1 + RECT-2, todos posted",
+      "resultado": "PASS",
+      "detalle": "[[null,\"reconocimiento\"],[\"FAC-VITALLCONS-001-RECT\",\"ajuste_manual\"],[\"FAC-VITALLCONS-001-RECT-SAL\",\"ajuste_manual\"]]"
+    },
+    {
+      "id": "W6",
+      "control": "Auditoría total RECT-PROD = 14 filas (6 de RECT-1 + 8 de RECT-2)",
+      "resultado": "PASS",
+      "detalle": "[{\"action\":\"SYSTEM_RECT_ENTRY\",\"n\":2},{\"action\":\"SYSTEM_RECT_MOV_SALIDA\",\"n\":7},{\"action\":\"SYSTEM_RECT_MOV_UC\",\"n\":2},{\"action\":\"SYSTEM_RECT_TOTAL\",\"n\":1},{\"action\":\"SYSTEM_RECT_VALUATION\",\"n\":2}]"
+    }
+  ],
+  "total": {
+    "pass": 6,
+    "fail": 0
+  },
+  "veredicto": "RECT-2 VERIFICADA — ejecución completa; procede la certificación m063"
+}

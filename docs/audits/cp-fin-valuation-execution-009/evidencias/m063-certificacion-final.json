@@ -1,0 +1,825 @@
+{
+  "mision": "CP-FIN-FINAL-VALUATION-EXECUTION-009",
+  "script": "m063-rect-final-certification.mjs",
+  "fecha_utc": "2026-11-16T16:12:41.788Z",
+  "canal": "Management API /database/query — SOLO SELECT",
+  "checks": {
+    "resultados": [
+      {
+        "id": "R1",
+        "control": "Kardex 21 movimientos · capas compra uc=1 · salidas uc=0 restantes = 0",
+        "resultado": "PASS",
+        "detalle": "n=21 compras=2 uc0=0"
+      },
+      {
+        "id": "R2",
+        "control": "3 asientos de la FVC (original + RECT-1 + RECT-2), D=C exacto en cada uno",
+        "resultado": "PASS",
+        "detalle": "[[null,\"reconocimiento\",\"0.00\"],[\"FAC-VITALLCONS-001-RECT\",\"ajuste_manual\",\"0.00\"],[\"FAC-VITALLCONS-001-RECT-SAL\",\"ajuste_manual\",\"0.00\"]]"
+      },
+      {
+        "id": "R3",
+        "control": "Mayores exactos: ACT=50381168.51 y CXP=55955299.57 (deltas < 0.01; actividad viva posterior listada si la hay: 0 filas)",
+        "resultado": "PASS",
+        "detalle": "ACT=50381168.51 (Δ0.0000000075) CXP=55955299.57 (Δ0.0000000075) viva=0"
+      },
+      {
+        "id": "R4",
+        "control": "Kardex valorizado 111/112 = 30,00 CUP (10×1 + 20×1) — valor en libros del subconjunto",
+        "resultado": "PASS",
+        "detalle": "valorizado=30"
+      },
+      {
+        "id": "R5",
+        "control": "COGS 5 ventas = 7,00 CUP intacto (0 nuevo) · GAS_VALES porción 111/112 = 94,00 (88 kardex + 6 RECT-2) · GAS_PERDIDA_INV = 18,00",
+        "resultado": "PASS",
+        "detalle": "cogs=7.00 (5) nuevo=0 kardex_vales=88.0000+6=94 perdida=18.00"
+      },
+      {
+        "id": "R6",
+        "control": "Idempotencia total: re-ejecutar S1/S2/S3/T1 tocaría 0 filas",
+        "resultado": "PASS",
+        "detalle": "{\"s1\":0,\"s2\":0,\"s3\":0,\"t1\":0}"
+      },
+      {
+        "id": "R7",
+        "control": "Existencias 10/20 · WAC 1/1 · precios venta congelados (2000 CUP / 1000 USD) · 2 filas rectificacion en wac log",
+        "resultado": "PASS",
+        "detalle": "[{\"sku\":\"111\",\"price\":\"2000\",\"price_currency\":\"CUP\",\"cost_average\":\"1\",\"stock_current\":\"10.0000\"},{\"sku\":\"112\",\"price\":\"1000\",\"price_currency\":\"USD\",\"cost_average\":\"1\",\"stock_current\":\"20.0000\"}] wcl_total=4"
+      },
+      {
+        "id": "R8",
+        "control": "Las 99 líneas protegidas (incluidas 71 no verificables + 4 moneda) idénticas al snapshot congelado",
+        "resultado": "PASS",
+        "detalle": "intactas=99/99 divergentes=[] moneda=[{\"sku\":\"999\",\"uc\":1,\"m\":\"CUP\",\"t\":1},{\"sku\":\"90\",\"uc\":5,\"m\":\"USD\",\"t\":680},{\"sku\":\"120\",\"uc\":1,\"m\":\"CUP\",\"t\":1},{\"sku\":\"92\",\"uc\":1,\"m\":\"CUP\",\"t\":1}]"
+      },
+      {
+        "id": "R9",
+        "control": "T12 habilitada (O) · ACL motor {postgres,service_role} · RLS activa en 9 tablas",
+        "resultado": "PASS",
+        "detalle": "trigger=O acl=postgres=EXECUTE, service_role=EXECUTE rls=9"
+      },
+      {
+        "id": "R10",
+        "control": "fin_posting_errors sin errores nuevos injustificados (baseline 0) · auditoría RECT-PROD completa = 14 filas",
+        "resultado": "PASS",
+        "detalle": "n=0  · audit=[{\"action\":\"SYSTEM_RECT_ENTRY\",\"n\":2},{\"action\":\"SYSTEM_RECT_MOV_SALIDA\",\"n\":7},{\"action\":\"SYSTEM_RECT_MOV_UC\",\"n\":2},{\"action\":\"SYSTEM_RECT_TOTAL\",\"n\":1},{\"action\":\"SYSTEM_RECT_VALUATION\",\"n\":2}]"
+      },
+      {
+        "id": "R11",
+        "control": "Actividad viva posterior al preflight documentada y AJENA a la FVC/SKU del alcance",
+        "resultado": "PASS",
+        "detalle": "0 asientos nuevos listados en captura"
+      }
+    ]
+  },
+  "captura": {
+    "mayores_despues": {
+      "ACT_INVENTARIO": {
+        "neto": 50381168.51,
+        "n": 1006
+      },
+      "GAS_COSTO_VENTAS": {
+        "neto": 4765242.95,
+        "n": 706
+      },
+      "GAS_PERDIDA_INV": {
+        "neto": 19,
+        "n": 2
+      },
+      "GAS_VALES": {
+        "neto": 808869.11,
+        "n": 199
+      },
+      "PAS_CXP_PROV": {
+        "neto": 55955299.57,
+        "n": 100
+      }
+    },
+    "esperado_despues": {
+      "ACT_INVENTARIO": 50381168.50999999,
+      "PAS_CXP_PROV": 55955299.56999999
+    },
+    "deltas_vs_esperado": {
+      "ACT_INVENTARIO": 7.450580596923828e-9,
+      "PAS_CXP_PROV": 7.450580596923828e-9
+    },
+    "actividad_viva_post_preflight": [],
+    "entries_fvc": [
+      {
+        "id": "93bb5da9-0afd-4325-baad-a275710062c5",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "document_type": "RECEPCION",
+        "document_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+        "document_number": null,
+        "event": "reconocimiento",
+        "payment_ref": null,
+        "economic_date": "2026-07-01",
+        "posted_at": "2026-11-14 01:51:20.117662+00",
+        "rule_version_id": "dd429aab-c74f-4815-8a50-a2d70b4cd254",
+        "movements_snapshot": [
+          {
+            "traza": {
+              "regla": "motor-cp-fin",
+              "metrica": "total_cup",
+              "template": "r-inv-d"
+            },
+            "amount": 192039436,
+            "sentido": "debito",
+            "currency": "CUP",
+            "categoria": "ACT_INVENTARIO",
+            "exchange_rate": 1,
+            "currency_origin": "CUP"
+          },
+          {
+            "traza": {
+              "regla": "motor-cp-fin",
+              "metrica": "total_cup",
+              "template": "r-cxp-c"
+            },
+            "amount": 192039436,
+            "sentido": "credito",
+            "currency": "CUP",
+            "categoria": "PAS_CXP_PROV",
+            "exchange_rate": 1,
+            "currency_origin": "CUP"
+          }
+        ],
+        "reversal_of": null,
+        "status": "posted",
+        "description": "Entrada de almacén ",
+        "created_by": "a1111111-1111-1111-1111-111111111111"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-d0b300000001",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "document_type": "RECEPCION",
+        "document_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+        "document_number": "FAC-VITALLCONS-001-RECT",
+        "event": "ajuste_manual",
+        "payment_ref": null,
+        "economic_date": "2026-07-01",
+        "posted_at": "2026-11-16 16:06:58.192805+00",
+        "rule_version_id": null,
+        "movements_snapshot": [
+          {
+            "traza": {
+              "regla": "rect-cxp-d",
+              "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+              "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+            },
+            "amount": 151299851,
+            "sentido": "debito",
+            "currency": "CUP",
+            "categoria": "PAS_CXP_PROV"
+          },
+          {
+            "traza": {
+              "regla": "rect-inv-c",
+              "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+              "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+            },
+            "amount": 151299851,
+            "sentido": "credito",
+            "currency": "CUP",
+            "categoria": "ACT_INVENTARIO"
+          }
+        ],
+        "reversal_of": "93bb5da9-0afd-4325-baad-a275710062c5",
+        "status": "posted",
+        "description": "Rectificación CP-FIN-VALUATION-RECTIFICATION-003/004: reversión del exceso de reconocimiento SKU 111/112 (precio de venta importado como costo USD; costo real 1 CUP/u)",
+        "created_by": null
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-d0b300000002",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "document_type": "AJUSTE_INVENTARIO",
+        "document_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+        "document_number": "FAC-VITALLCONS-001-RECT-SAL",
+        "event": "ajuste_manual",
+        "payment_ref": null,
+        "economic_date": "2026-11-15",
+        "posted_at": "2026-11-16 16:07:48.447449+00",
+        "rule_version_id": null,
+        "movements_snapshot": [
+          {
+            "traza": {
+              "regla": "rect-vales-d",
+              "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+              "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+            },
+            "amount": 6,
+            "sentido": "debito",
+            "currency": "CUP",
+            "categoria": "GAS_VALES"
+          },
+          {
+            "traza": {
+              "regla": "rect-perdida-d",
+              "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+              "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+            },
+            "amount": 18,
+            "sentido": "debito",
+            "currency": "CUP",
+            "categoria": "GAS_PERDIDA_INV"
+          },
+          {
+            "traza": {
+              "regla": "rect-inv-c",
+              "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+              "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+            },
+            "amount": 24,
+            "sentido": "credito",
+            "currency": "CUP",
+            "categoria": "ACT_INVENTARIO"
+          }
+        ],
+        "reversal_of": null,
+        "status": "posted",
+        "description": "Rectificación CP-FIN-VALUATION-RECTIFICATION-003/004: reconocimiento de salidas nunca contabilizadas (6 u vales VS-37/138/139 + 18 u ajustes cuadre × 1 CUP)",
+        "created_by": null
+      }
+    ],
+    "movements_rect": [
+      {
+        "id": "7ec90009-0000-4000-8000-f0b300000002",
+        "entry_id": "7ec90009-0000-4000-8000-d0b300000001",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "category_code": "ACT_INVENTARIO",
+        "sense": "credito",
+        "amount": "151299851.00",
+        "currency": "CUP",
+        "exchange_rate": "1.000000",
+        "amount_cup": "151299851.00",
+        "economic_date": "2026-07-01",
+        "document_number": null,
+        "description": "Rectificación FAC-VITALLCONS-001: exceso 151.299.851 (SKU 111/112)",
+        "worker_id": null,
+        "product_id": null,
+        "customer_id": null,
+        "traza": {
+          "regla": "rect-inv-c",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "currency_origin": null,
+        "amount_origin": null
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-f0b300000001",
+        "entry_id": "7ec90009-0000-4000-8000-d0b300000001",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "category_code": "PAS_CXP_PROV",
+        "sense": "debito",
+        "amount": "151299851.00",
+        "currency": "CUP",
+        "exchange_rate": "1.000000",
+        "amount_cup": "151299851.00",
+        "economic_date": "2026-07-01",
+        "document_number": null,
+        "description": "Rectificación FAC-VITALLCONS-001: exceso 151.299.851 (SKU 111/112)",
+        "worker_id": null,
+        "product_id": null,
+        "customer_id": null,
+        "traza": {
+          "regla": "rect-cxp-d",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "currency_origin": null,
+        "amount_origin": null
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-f0b300000005",
+        "entry_id": "7ec90009-0000-4000-8000-d0b300000002",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "category_code": "ACT_INVENTARIO",
+        "sense": "credito",
+        "amount": "24.00",
+        "currency": "CUP",
+        "exchange_rate": "1.000000",
+        "amount_cup": "24.00",
+        "economic_date": "2026-11-15",
+        "document_number": null,
+        "description": "Salidas SKU 111/112 (24 u × 1 CUP)",
+        "worker_id": null,
+        "product_id": null,
+        "customer_id": null,
+        "traza": {
+          "regla": "rect-inv-c",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "currency_origin": null,
+        "amount_origin": null
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-f0b300000004",
+        "entry_id": "7ec90009-0000-4000-8000-d0b300000002",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "category_code": "GAS_PERDIDA_INV",
+        "sense": "debito",
+        "amount": "18.00",
+        "currency": "CUP",
+        "exchange_rate": "1.000000",
+        "amount_cup": "18.00",
+        "economic_date": "2026-11-15",
+        "document_number": null,
+        "description": "Ajustes de cuadre importación: sku=111 Δ−1 + sku=112 Δ−17",
+        "worker_id": null,
+        "product_id": null,
+        "customer_id": null,
+        "traza": {
+          "regla": "rect-perdida-d",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "currency_origin": null,
+        "amount_origin": null
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-f0b300000003",
+        "entry_id": "7ec90009-0000-4000-8000-d0b300000002",
+        "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+        "category_code": "GAS_VALES",
+        "sense": "debito",
+        "amount": "6.00",
+        "currency": "CUP",
+        "exchange_rate": "1.000000",
+        "amount_cup": "6.00",
+        "economic_date": "2026-11-15",
+        "document_number": null,
+        "description": "Vales sin asiento: VS-000037 (4 u) + VS-000138 (1 u) + VS-000139 (1 u)",
+        "worker_id": null,
+        "product_id": null,
+        "customer_id": null,
+        "traza": {
+          "regla": "rect-vales-d",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "currency_origin": null,
+        "amount_origin": null
+      }
+    ],
+    "audit_rect": [
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000001",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "receipt_items",
+        "record_id": "80a1767b-8902-48c6-833b-abf713bdc7b0",
+        "action": "SYSTEM_RECT_VALUATION",
+        "old_data": {
+          "uc": 2500,
+          "tasa": 680,
+          "moneda": "USD"
+        },
+        "new_data": {
+          "uc": 1,
+          "tasa": 1,
+          "moneda": "CUP"
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "motivo": "costo real 1 CUP/u (decisión propietario)",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000002",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "receipt_items",
+        "record_id": "9c9e6010-b848-4d0f-b667-304282f7584b",
+        "action": "SYSTEM_RECT_VALUATION",
+        "old_data": {
+          "uc": 1000,
+          "tasa": 680,
+          "moneda": "USD"
+        },
+        "new_data": {
+          "uc": 1,
+          "tasa": 1,
+          "moneda": "CUP"
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000003",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "receipts",
+        "record_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+        "action": "SYSTEM_RECT_TOTAL",
+        "old_data": {
+          "total_cost": 192039436
+        },
+        "new_data": {
+          "total_cost": 40739585
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000004",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "stock_movements",
+        "record_id": "5f58e2b1-156b-46b2-8f6d-c491b15a350c",
+        "action": "SYSTEM_RECT_MOV_UC",
+        "old_data": {
+          "uc": 1700000
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000005",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "stock_movements",
+        "record_id": "8552e290-b627-4b75-b9af-7779399ab22b",
+        "action": "SYSTEM_RECT_MOV_UC",
+        "old_data": {
+          "uc": 680000
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000006",
+        "created_at": "2026-11-16 16:06:58.192805+00",
+        "table_name": "fin_entries",
+        "record_id": "7ec90009-0000-4000-8000-d0b300000001",
+        "action": "SYSTEM_RECT_ENTRY",
+        "old_data": {
+          "asiento": "93bb5da9-0afd-4325-baad-a275710062c5",
+          "importe": 192039436
+        },
+        "new_data": {
+          "debito": {
+            "PAS_CXP_PROV": 151299851
+          },
+          "asiento": "RECT-1",
+          "credito": {
+            "ACT_INVENTARIO": 151299851
+          },
+          "reversal_of": "93bb5da9-0afd-4325-baad-a275710062c5"
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "documento": "FAC-VITALLCONS-001-RECT",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000007",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "68a3ff08-a301-4232-937a-85f183452d5c",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "Venta POS v2 2026-07-24 sku111 q-1 (COGS ya en mayor)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000008",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "a1330957-1e49-43ed-a309-c7a20c2ee714",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "Cuadre importación sku111 Δ-1 (GAS_PERDIDA_INV)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000009",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "a8a82720-df49-485d-949c-acfc082fc3b6",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "Cuadre importación sku112 Δ-17 (GAS_PERDIDA_INV)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000010",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "335e2fcc-f4d3-426b-a7ff-878af184acab",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "VS-000037-2026 4u (GAS_VALES)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000011",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "673ede95-75cc-4c4e-aa19-1dc893c5cd79",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "Venta POS v2 2026-10-04 sku111 q-1 (COGS ya en mayor)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000012",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "9d47f6c1-756a-4e0f-9e56-85d1dc2ca557",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "VS-000138-2026 1u (GAS_VALES)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000013",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "stock_movements",
+        "record_id": "25db100f-9238-45b4-b53e-c3559eb60651",
+        "action": "SYSTEM_RECT_MOV_SALIDA",
+        "old_data": {
+          "uc": 0
+        },
+        "new_data": {
+          "uc": 1
+        },
+        "metadata": {
+          "doc": "VS-000139-2026 1u (GAS_VALES)",
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      },
+      {
+        "id": "7ec90009-0000-4000-8000-e0b300000014",
+        "created_at": "2026-11-16 16:07:48.447449+00",
+        "table_name": "fin_entries",
+        "record_id": "7ec90009-0000-4000-8000-d0b300000002",
+        "action": "SYSTEM_RECT_ENTRY",
+        "old_data": {
+          "asiento": null,
+          "importe": 0
+        },
+        "new_data": {
+          "debito": {
+            "GAS_VALES": 6,
+            "GAS_PERDIDA_INV": 18
+          },
+          "asiento": "RECT-2",
+          "credito": {
+            "ACT_INVENTARIO": 24
+          }
+        },
+        "metadata": {
+          "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+          "documento": "FAC-VITALLCONS-001-RECT-SAL",
+          "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+        },
+        "trace_id": "RECT-PROD"
+      }
+    ],
+    "receipt_final": {
+      "id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+      "total_cost": "40739585.00",
+      "payment_status": "unpaid",
+      "paid_amount": "0",
+      "status": "active",
+      "updated_at": "2026-11-16 16:06:58.192805+00"
+    },
+    "kardex_final": [
+      {
+        "id": "8552e290-b627-4b75-b9af-7779399ab22b",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "purchase",
+        "quantity_change": "100.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "5f58e2b1-156b-46b2-8f6d-c491b15a350c",
+        "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "movement_type": "purchase",
+        "quantity_change": "49.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "68a3ff08-a301-4232-937a-85f183452d5c",
+        "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "movement_type": "sale",
+        "quantity_change": "-1.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "a8a82720-df49-485d-949c-acfc082fc3b6",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "adjustment",
+        "quantity_change": "-17.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "a1330957-1e49-43ed-a309-c7a20c2ee714",
+        "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "movement_type": "adjustment",
+        "quantity_change": "-1.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "335e2fcc-f4d3-426b-a7ff-878af184acab",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-4.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "673ede95-75cc-4c4e-aa19-1dc893c5cd79",
+        "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "movement_type": "sale",
+        "quantity_change": "-1.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "8e73af98-aa78-4861-9378-08c1562e7473",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "sale",
+        "quantity_change": "-3.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "9d47f6c1-756a-4e0f-9e56-85d1dc2ca557",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-1.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "25db100f-9238-45b4-b53e-c3559eb60651",
+        "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-1.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "d4aeac82-6314-4fca-9ce9-cc53b04452f6",
+        "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-1.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "9688337a-6929-492d-bcdb-bc82bc868d0c",
+        "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-20.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "26ef0b69-0fcb-4b30-ac13-30b170f2557a",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-10.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "88fdcc47-f2d1-4daa-b4d4-6b7e11bc7906",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-20.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "66ab762f-3b97-49bc-8ca6-cdcff4b04105",
+        "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "movement_type": "sale",
+        "quantity_change": "-1.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "2c2da14b-e29f-4c88-911f-87d8fc2c6611",
+        "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "movement_type": "sale",
+        "quantity_change": "-1.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "1a2eddc4-a74b-459e-9a25-9e1ac266cd98",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-20.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "76d41fcd-39d2-43cf-825c-ebb61d3233fa",
+        "product_id": "4afef9a7-28b7-4a5e-b134-13a9e0ffea16",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-12.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "0e3fa663-f4d6-4f68-b63f-ef8c06c27fe3",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-1.0000",
+        "unit_cost": "1"
+      },
+      {
+        "id": "952cb654-26fa-4e0f-86be-b51c32c84a73",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "issue_slip_reverse",
+        "quantity_change": "1.0000",
+        "unit_cost": "1.0000"
+      },
+      {
+        "id": "a48df909-4084-43f6-9e65-f191d8bf966a",
+        "product_id": "14aeb370-7e00-4889-b29b-ef2bc778f4c4",
+        "movement_type": "issue_slip_out",
+        "quantity_change": "-5.0000",
+        "unit_cost": "1"
+      }
+    ],
+    "actividad_viva": []
+  },
+  "total": {
+    "checks": 11,
+    "pass": 11,
+    "fail": 0
+  },
+  "veredicto": "CERTIFICACIÓN FINANCIERA POST-EJECUCIÓN APROBADA — RECT-1 (151.299.851) y RECT-2 (24) aplicadas, equilibradas, trazadas y con alcance protegido intacto; total ajustado 151.299.875 CUP"
+}
