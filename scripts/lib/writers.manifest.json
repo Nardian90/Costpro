@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-16",
+  "_updated": "2026-11-17 · misión CP-FIN-POST-RECTIFICATION-INDEPENDENT-CERTIFICATION-012: m080/m080b/m080c READ-ONLY (assert-not-production modo read, SELECT exclusivo, guard anti-escritura por consulta)",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -43,6 +43,9 @@
     "scripts/m061-rect1-execute.mjs",
     "scripts/m075-receipt-1cup-e2e.mjs",
     "scripts/m077-receipt-1cup-execute.mjs",
+    "scripts/m080-cert-012-extract.mjs",
+    "scripts/m080b-cert-012-supplement.mjs",
+    "scripts/m080c-cert-012-supplement2.mjs",
     "scripts/pgrst-reload-schema.mjs",
     "scripts/reconcile-storage.mjs",
     "scripts/seed-pick3-history.js",
