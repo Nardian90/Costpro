@@ -40,14 +40,16 @@ import React, { useRef, useCallback, useEffect, useState, useMemo } from 'react'
 import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
+// CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: visualización unitario/importe
+import { compareInventoryProducts, compactMonetaryLabel, inventoryDisplayValue, type InventoryDisplayMode, type InventorySortDir, type InventorySortKey } from '@/lib/inventory/display-mode';
 import { Package, MoreVertical } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
 import { StoreStatusChip } from '@/components/ui/StoreStatusChip';
 import { ProductActionsMenu } from '@/components/ui/ProductActionsMenu';
 
-type SortKey = 'name' | 'stock' | 'price';
-type SortDir = 'asc' | 'desc';
+type SortKey = InventorySortKey;
+type SortDir = InventorySortDir;
 
 interface InventoryMobileTableProps {
   products: Product[];
@@ -70,6 +72,9 @@ interface InventoryMobileTableProps {
   fcStatusMap?: Map<string, ProductFCStatus>;
   fcResolutionMap?: Map<string, FCResolutionResult>;
   onViewFC?: (product: Product, resolution: FCResolutionResult) => void;
+  /** CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: modo de visualización
+   * monetaria — SOLO presentación («importe» = existencia × precio unitario). */
+  displayMode?: InventoryDisplayMode;
 }
 
 function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
@@ -85,23 +90,18 @@ export default function InventoryMobileTable({
   onTogglePriceVisible, isTogglingPriceVisible,
   onToggleStockVisible, isTogglingStockVisible,
   onTogglePromotion, isTogglingPromotion,
+  displayMode = 'unitario',
 }: InventoryMobileTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('name');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
 
   const sortedProducts = useMemo(() => {
     const arr = [...products];
-    arr.sort((a, b) => {
-      let cmp = 0;
-      switch (sortKey) {
-        case 'name': cmp = a.name.localeCompare(b.name); break;
-        case 'stock': cmp = (a.stock_current ?? 0) - (b.stock_current ?? 0); break;
-        case 'price': cmp = (a.price ?? 0) - (b.price ?? 0); break;
-      }
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
+    // CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: ordena por el valor del modo
+    // seleccionado (misión §6) — en «importe», existencia × precio unitario.
+    arr.sort((a, b) => compareInventoryProducts(a, b, sortKey, sortDir, displayMode));
     return arr;
-  }, [products, sortKey, sortDir]);
+  }, [products, sortKey, sortDir, displayMode]);
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -156,9 +156,9 @@ export default function InventoryMobileTable({
           onClick={() => handleSort('price')}
           className="flex items-center justify-end gap-1 text-right min-h-[32px] pr-1 border-r border-border/40"
           style={monoStyle}
-          aria-label="Ordenar por precio"
+          aria-label={displayMode === 'importe' ? 'Ordenar por importe de precio' : 'Ordenar por precio'}
         >
-          Precio <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} />
+          {compactMonetaryLabel('Precio', displayMode)} <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} />
         </button>
         <span
           className="flex items-center justify-center"
@@ -229,10 +229,13 @@ export default function InventoryMobileTable({
                   )}
                 </div>
 
-                {/* Columna 3: Precio — monospace, alineación derecha ESTRICTA */}
+                {/* Columna 3: Precio/Importe — monospace, alineación derecha ESTRICTA.
+                    CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: en «importe» muestra
+                    existencia × precio unitario (mismo campo `price`); la sub-etiqueta
+                    de moneda NO cambia (sin conversiones ni mezclas). */}
                 <div className="flex flex-col items-end justify-center pr-1 border-r border-border/20" style={monoStyle}>
                   <span className="text-[11px] font-bold text-primary tabular-nums leading-none">
-                    {formatCurrency(product.price || 0)}
+                    {formatCurrency(inventoryDisplayValue(product, 'price', displayMode) ?? 0)}
                   </span>
                   <span className="text-[7px] text-muted-foreground leading-none mt-0.5">{product.price_currency || 'CUP'}</span>
                 </div>

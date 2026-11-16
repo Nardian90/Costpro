@@ -58,6 +58,8 @@ import { getQuickPdfUrl } from '@/lib/integration/fc-automation';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 // MISIÓN 2026-11-06 (Objetivo 3): exportación COMPLETA del Stock actual (PDF+Excel)
 import { fetchAllStockFromSupabase, matchesStockFilter, resolveExportFCStatuses, describeStockFilters, type StockExportProduct, type StockFilterValue } from '@/lib/inventory/stock-export';
+// CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: modo de visualización unitario/importe
+import { INVENTORY_DISPLAY_MODE_STORAGE_KEY, resolveInventoryDisplayMode, type InventoryDisplayMode } from '@/lib/inventory/display-mode';
 import { buildStockActualPdf, stockFileName } from '@/components/views/terminal/views/inventory/inventory-stock-pdf';
 // Tabs: Catálogo y Trazabilidad (import dinámico para code-splitting)
 import dynamic from 'next/dynamic';
@@ -170,6 +172,16 @@ export default function InventoryView() {
       }
       return 'all';
     });
+    // CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: modo de visualización monetaria.
+    // «unitario» = comportamiento actual (default); «importe» = existencia × valor
+    // unitario por fila. Es SOLO presentación: no altera datos, costos ni valoración,
+    // y se persiste con el mismo patrón localStorage que el resto de la vista.
+    const [displayMode, setDisplayMode] = useState<InventoryDisplayMode>(() => {
+      if (typeof window !== 'undefined') {
+        return resolveInventoryDisplayMode(localStorage.getItem(INVENTORY_DISPLAY_MODE_STORAGE_KEY));
+      }
+      return 'unitario';
+    });
     const [selectedFCProduct, setSelectedFCProduct] = useState<Product | null>(null);
     const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
     const [kardexProduct, setKardexProduct] = useState<Product | null>(null);
@@ -235,6 +247,10 @@ export default function InventoryView() {
     useEffect(() => {
       if (typeof window !== 'undefined') localStorage.setItem('costpro:inventory:fcFilter', fcFilter);
     }, [fcFilter]);
+    // Persistencia del selector de visualización (mismo patrón que tab/layout/filtros)
+    useEffect(() => {
+      if (typeof window !== 'undefined') localStorage.setItem(INVENTORY_DISPLAY_MODE_STORAGE_KEY, displayMode);
+    }, [displayMode]);
 
     // FIX (2026-07-22): Ya NO forzamos 'card' al detectar móvil.
     // El usuario puede elegir entre card/table vía ViewSwitcher en cualquier viewport.
@@ -956,6 +972,42 @@ export default function InventoryView() {
                             )}
                         </button>
 
+                        {/* CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001 — Selector de
+                            visualización (junto al botón Filtros, misma barra). Segmentado
+                            estilo ViewSwitcher: Unitario (default) ↔ Importe. Solo cambia
+                            la presentación monetaria; no recarga datos ni toca filtros. */}
+                        <div
+                            className="flex items-center p-1 bg-muted/50 rounded-xl border border-border shadow-sm"
+                            role="group"
+                            aria-label="Visualización de precios y costos"
+                        >
+                            <span className="pl-2 pr-1 text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden md:inline">
+                                Visualización
+                            </span>
+                            {([
+                                { key: 'unitario', label: 'Unitario' },
+                                { key: 'importe', label: 'Importe' },
+                            ] as const).map(opt => (
+                                <button
+                                    key={opt.key}
+                                    type="button"
+                                    onClick={() => setDisplayMode(opt.key)}
+                                    aria-pressed={displayMode === opt.key}
+                                    title={opt.key === 'unitario'
+                                        ? 'Valores por unidad (comportamiento actual)'
+                                        : 'Existencia actual × valor unitario por producto'}
+                                    className={cn(
+                                        'px-2.5 py-1.5 min-h-[32px] rounded-lg text-[10px] font-black uppercase tracking-wider transition-all active:scale-95',
+                                        displayMode === opt.key
+                                            ? 'bg-background text-primary shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    )}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+
                         {/* Quick filter chips — click X to clear individual filters */}
                         {selectedCategory && (
                             <button
@@ -1067,6 +1119,7 @@ export default function InventoryView() {
                                 loadMore={fetchMoreProducts}
                                 hasMore={hasNextPage}
                                 isLoading={isFetchingNextPage}
+                                displayMode={displayMode}
                                 onAdjust={handleAdjustProduct}
                                 onEdit={handleOpenEdit}
                                 onViewKardex={setKardexProduct}
@@ -1092,6 +1145,7 @@ export default function InventoryView() {
                                 loadMore={fetchMoreProducts}
                                 hasMore={hasNextPage}
                                 isLoading={isFetchingNextPage}
+                                displayMode={displayMode}
                                 onAdjust={handleAdjustProduct}
                                 onEdit={handleOpenEdit}
                                 onViewKardex={setKardexProduct}
@@ -1113,6 +1167,7 @@ export default function InventoryView() {
                                 loadMore={fetchMoreProducts}
                                 hasMore={hasNextPage}
                                 isLoading={isFetchingNextPage}
+                                displayMode={displayMode}
                                 onAdjust={handleAdjustProduct}
                                 onEdit={handleOpenEdit}
                                 onViewKardex={setKardexProduct}

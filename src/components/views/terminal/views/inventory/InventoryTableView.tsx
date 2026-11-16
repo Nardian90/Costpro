@@ -5,6 +5,8 @@ import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import { cn, resolveProductImage, formatCurrency } from '@/lib/utils';
 import { Package, Edit, BookOpen, ArrowUpDown, ArrowUp, ArrowDown, Store, Eye, EyeOff, DollarSign, Tag, Pencil, MoreVertical } from 'lucide-react';
+// CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: visualización unitario/importe
+import { compareInventoryProducts, inventoryDisplayValue, monetaryColumnLabel, type InventoryDisplayMode, type InventorySortDir, type InventorySortKey } from '@/lib/inventory/display-mode';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import ProductImage from '@/components/ui/ProductImage';
 import { FCStatusBadge } from '@/components/ui/FCStatusBadge';
@@ -18,8 +20,8 @@ import {
     DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 
-type SortKey = 'name' | 'stock' | 'price' | 'cost';
-type SortDir = 'asc' | 'desc';
+type SortKey = InventorySortKey;
+type SortDir = InventorySortDir;
 
 interface InventoryTableViewProps {
     products: Product[];
@@ -46,11 +48,15 @@ interface InventoryTableViewProps {
     fcStatusMap?: Map<string, ProductFCStatus>;
     /** FC resolution map: productId → FCResolutionResult */
     fcResolutionMap?: Map<string, FCResolutionResult>;
-    /** Callback cuando el usuario quiere ver/generar FC de un producto */
+    /** FC callback cuando el usuario quiere ver/generar FC de un producto */
     onViewFC?: (product: Product, resolution: FCResolutionResult) => void;
+    /** CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: modo de visualización
+     * monetaria — «unitario» (default, comportamiento actual) o «importe»
+     * (existencia × valor unitario). SOLO presentación: no cambia datos. */
+    displayMode?: InventoryDisplayMode;
 }
 
-const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onAdjust?: (product: Product) => void; onEdit?: (product: Product) => void; onViewKardex?: (product: Product) => void; onToggleVisible?: (product: Product, visible: boolean) => void; isTogglingVisible?: string | null; onTogglePriceVisible?: (product: Product) => void; isTogglingPriceVisible?: string | null; onToggleStockVisible?: (product: Product) => void; isTogglingStockVisible?: string | null; onTogglePromotion?: (product: Product) => void; isTogglingPromotion?: string | null; fcStatus?: ProductFCStatus; fcResolution?: FCResolutionResult; onViewFC?: (product: Product, resolution: FCResolutionResult) => void }>(({ product, onAdjust, onEdit, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatus, fcResolution, onViewFC }, ref) => {
+const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; displayMode: InventoryDisplayMode; onAdjust?: (product: Product) => void; onEdit?: (product: Product) => void; onViewKardex?: (product: Product) => void; onToggleVisible?: (product: Product, visible: boolean) => void; isTogglingVisible?: string | null; onTogglePriceVisible?: (product: Product) => void; isTogglingPriceVisible?: string | null; onToggleStockVisible?: (product: Product) => void; isTogglingStockVisible?: string | null; onTogglePromotion?: (product: Product) => void; isTogglingPromotion?: string | null; fcStatus?: ProductFCStatus; fcResolution?: FCResolutionResult; onViewFC?: (product: Product, resolution: FCResolutionResult) => void }>(({ product, displayMode, onAdjust, onEdit, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatus, fcResolution, onViewFC }, ref) => {
     // REMEDIACIÓN: el badge Bajo/OK se retiró de la celda Acciones (era
     // informativo, no una acción). Su información está 1:1 en la columna
     // Stock: Agotado (stock=0), Mínimo (0<stock<=min) y ausencia de badge
@@ -91,9 +97,16 @@ const ProductRow = React.forwardRef<HTMLTableRowElement, { product: Product; onA
                     )}
                 </div>
             </td>
-            <td className="p-3 text-right font-bold text-primary tabular-nums" data-label="Precio">{formatCurrency(product.price || 0)}</td>
-            <td className="p-3 text-right font-bold text-warning tabular-nums" data-label="Empresa">{product.precio_empresa ? formatCurrency(product.precio_empresa) : '—'}</td>
-            <td className="p-3 text-right text-muted-foreground tabular-nums" data-label="Costo">{formatCurrency(product.cost_price || 0)}</td>
+            {/* CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: en modo «importe» cada
+                columna monetaria muestra existencia × su MISMO valor unitario de
+                siempre (price / precio_empresa / cost_price). data-label también
+                cambia para que la vista de cards por CSS etiquete sin ambigüedad. */}
+            <td className="p-3 text-right font-bold text-primary tabular-nums" data-label={monetaryColumnLabel('Precio', displayMode)}>{formatCurrency(inventoryDisplayValue(product, 'price', displayMode) ?? 0)}</td>
+            <td className="p-3 text-right font-bold text-warning tabular-nums" data-label={monetaryColumnLabel('Empresa', displayMode)}>{(() => {
+                const empresaValue = inventoryDisplayValue(product, 'precio_empresa', displayMode);
+                return empresaValue == null ? '—' : formatCurrency(empresaValue);
+            })()}</td>
+            <td className="p-3 text-right text-muted-foreground tabular-nums" data-label={monetaryColumnLabel('Costo', displayMode)}>{formatCurrency(inventoryDisplayValue(product, 'cost', displayMode) ?? 0)}</td>
             {/* FC Column — compact badge + icon */}
             <td className="p-3 text-center" data-label="FC" aria-label="Estado Ficha de Costo">
                 <div className="flex items-center justify-center gap-0.5">
@@ -213,24 +226,17 @@ function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; s
         : <ArrowDown className="w-3 h-3 text-primary" />;
 }
 
-export default function InventoryTableView({ products, loadMore, hasMore, isLoading, onAdjust, onEdit, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatusMap, fcResolutionMap, onViewFC }: InventoryTableViewProps) {
+export default function InventoryTableView({ products, loadMore, hasMore, isLoading, displayMode = 'unitario', onAdjust, onEdit, onViewKardex, onToggleVisible, isTogglingVisible, onTogglePriceVisible, isTogglingPriceVisible, onToggleStockVisible, isTogglingStockVisible, onTogglePromotion, isTogglingPromotion, fcStatusMap, fcResolutionMap, onViewFC }: InventoryTableViewProps) {
     const [sortKey, setSortKey] = useState<SortKey>('name');
     const [sortDir, setSortDir] = useState<SortDir>('asc');
 
     const sortedProducts = useMemo(() => {
         const arr = [...products];
-        arr.sort((a, b) => {
-            let cmp = 0;
-            switch (sortKey) {
-                case 'name': cmp = a.name.localeCompare(b.name); break;
-                case 'stock': cmp = (a.stock_current ?? 0) - (b.stock_current ?? 0); break;
-                case 'price': cmp = (a.price ?? 0) - (b.price ?? 0); break;
-                case 'cost': cmp = (a.cost_price ?? 0) - (b.cost_price ?? 0); break;
-            }
-            return sortDir === 'asc' ? cmp : -cmp;
-        });
+        // CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: el ordenamiento usa el valor
+        // del modo seleccionado (misión §6) — en «importe», existencia × valor unitario.
+        arr.sort((a, b) => compareInventoryProducts(a, b, sortKey, sortDir, displayMode));
         return arr;
-    }, [products, sortKey, sortDir]);
+    }, [products, sortKey, sortDir, displayMode]);
 
     const handleSort = (key: SortKey) => {
         if (sortKey === key) {
@@ -266,9 +272,9 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                         <th className="p-3 pl-[60px]"><button type="button" onClick={() => handleSort('name')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Producto <SortIcon col="name" sortKey={sortKey} sortDir={sortDir} /></button></th>
                         <th className="p-3">SKU</th>
                         <th className="p-3 text-right"><button type="button" onClick={() => handleSort('stock')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Stock <SortIcon col="stock" sortKey={sortKey} sortDir={sortDir} /></button></th>
-                        <th className="p-3 text-right"><button type="button" onClick={() => handleSort('price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Precio <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} /></button></th>
-                        <th className="p-3 text-right">Empresa</th>
-                        <th className="p-3 text-right"><button type="button" onClick={() => handleSort('cost')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">Costo <SortIcon col="cost" sortKey={sortKey} sortDir={sortDir} /></button></th>
+                        <th className="p-3 text-right"><button type="button" onClick={() => handleSort('price')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">{monetaryColumnLabel('Precio', displayMode)} <SortIcon col="price" sortKey={sortKey} sortDir={sortDir} /></button></th>
+                        <th className="p-3 text-right">{monetaryColumnLabel('Empresa', displayMode)}</th>
+                        <th className="p-3 text-right"><button type="button" onClick={() => handleSort('cost')} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">{monetaryColumnLabel('Costo', displayMode)} <SortIcon col="cost" sortKey={sortKey} sortDir={sortDir} /></button></th>
                         <th className="p-3 text-center">FC</th>
                         {/* Columna de acciones estable (56px): header icónico para
                             no desbordar el track (el texto "Acciones" forzaba scroll) */}
@@ -282,6 +288,7 @@ export default function InventoryTableView({ products, loadMore, hasMore, isLoad
                         <ProductRow
                             key={product.id}
                             product={product}
+                            displayMode={displayMode}
                             onAdjust={onAdjust}
                             onEdit={onEdit}
                             onViewKardex={onViewKardex}

@@ -24,6 +24,8 @@ import React, { useRef, useCallback, useEffect } from 'react';
 import type { Product, ProductFCStatus } from '@/types';
 import type { FCResolutionResult } from '@/lib/integration/fc-automation';
 import { cn, formatCurrency, resolveProductImage } from '@/lib/utils';
+// CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: visualización unitario/importe
+import { compactMonetaryLabel, inventoryDisplayValue, type InventoryDisplayMode } from '@/lib/inventory/display-mode';
 import { Package, Tag } from 'lucide-react';
 import { CostProLoader } from '@/components/ui/CostProLoader';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -58,6 +60,9 @@ interface InventoryCardViewProps {
     isTogglingStockVisible?: string | null;
     onTogglePromotion?: (product: Product) => void;
     isTogglingPromotion?: string | null;
+    /** CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: modo de visualización
+     * monetaria — SOLO presentación («importe» = existencia × precio unitario). */
+    displayMode?: InventoryDisplayMode;
 }
 
 export default function InventoryCardView({
@@ -66,6 +71,7 @@ export default function InventoryCardView({
     onTogglePriceVisible, isTogglingPriceVisible,
     onToggleStockVisible, isTogglingStockVisible,
     onTogglePromotion, isTogglingPromotion,
+    displayMode = 'unitario',
 }: InventoryCardViewProps) {
     const prefersReduced = useReducedMotion();
     const observer = useRef<IntersectionObserver | null>(null);
@@ -179,8 +185,11 @@ export default function InventoryCardView({
                                             </div>
                                         </div>
                                         <div className="p-1.5 rounded-lg bg-primary/5 border border-primary/10 text-center">
-                                            <div className="text-[10px] font-black uppercase text-primary mb-0.5 tracking-widest">Precio</div>
-                                            <div className="font-black text-xs text-primary tabular-nums">{formatCurrency(product.price || 0)}</div>
+                                            <div className="text-[10px] font-black uppercase text-primary mb-0.5 tracking-widest">{compactMonetaryLabel('Precio', displayMode)}</div>
+                                            {/* CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001: en modo
+                                                «importe» muestra existencia × precio unitario (mismo
+                                                campo `price`); el formato/moneda no cambian. */}
+                                            <div className="font-black text-xs text-primary tabular-nums">{formatCurrency(inventoryDisplayValue(product, 'price', displayMode) ?? 0)}</div>
                                         </div>
                                     </div>
 
