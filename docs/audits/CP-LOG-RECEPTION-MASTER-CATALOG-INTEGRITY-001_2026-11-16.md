@@ -197,6 +197,7 @@ Las redefiniciones son CREATE OR REPLACE con firmas idénticas → **front antig
 
 - Surface re-exportado desde producción LIVE tras el despliegue: **210 funciones** SECURITY DEFINER (`sha256=5f96a1f1…`) — incluye las 4 redefinidas y las 2 nuevas escritoras.
 - **3 entradas temporales `source_of_truth_baseline` retiradas** (`register_reception/11`, `activate_master_product/4`, `create_transfer/7` — cubrían el BODY_DRIFT previo al despliegue): allowlist 4 → 1; se conserva la entrada legítima `create_devolution_v2/12` de otra misión.
+- **Hallazgo post-despliegue en el SQL Security Gate (DB)**: tras aplicar las migraciones, el gate detecta el nuevo helper interno `fn_classify_reception_import_row` como «SECURITY DEFINER sin auth check» (por diseño no llama a `auth.*`: recibe `p_caller_uid` de su RPC envolvente; la verificación `has_store_access_as` la ejecutan `classify/resolve`; EXECUTE revocado a PUBLIC/anon/authenticated — verificado en §15.5). Añadida su entrada justificada a `security_definer_without_auth_check` (patrón de los demás helpers internos del repo, p. ej. `is_admin_check`); allowlist 116 → 117.
 - Contrato estático (capas A/B/C): **CONTRATO OK** — 210/210 funciones representadas en migraciones, **0 divergencias bloqueantes**; 2 warnings MEDIUM/LOW preexistentes (cancel_transfer, reset_store_data — semántica idéntica al LIVE, ajenos a esta misión).
 - Contrato LIVE: **210/210 funciones pasan, 0 violaciones**.
 

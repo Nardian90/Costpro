@@ -189,6 +189,12 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "fn_classify_reception_import_row",
+      "reason": "CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 · helper-interno · Helper interno STABLE SECURITY DEFINER del importador de recepciones (20261116140100). NO llama a auth.uid() por diseño: recibe p_caller_uid de su RPC envolvente; la verificación de acceso (has_store_access_as) la ejecutan classify_reception_import_rows y resolve_reception_import_rows. Exposición: EXECUTE revocado a PUBLIC/anon/authenticated (solo postgres+service_role); no invocable por clientes. Verificación viva 2026-11-16 en producción (recertificación §15.5, ACL grants=[postgres,service_role]).",
+      "added_by": "cp-log-reception-001-cierre",
+      "expires": "2027-11-30"
+    },
+    {
       "function": "fn_log_system_health",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
