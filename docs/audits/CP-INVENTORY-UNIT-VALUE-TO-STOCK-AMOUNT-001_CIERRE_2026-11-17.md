@@ -91,7 +91,7 @@ confirma en el sentido opuesto (costo documental 0 prevalece sobre WAC 1.0).
 |---|---|
 | CI `TypeCheck + Lint + Unit Tests + Build` sobre `683a6c466` | **success** |
 | CI `Security Audit` sobre `683a6c466` | **success** |
-| `Unit & Integration Tests` (Test Coverage) sobre `683a6c466` | Run 1 **cancelado** anómalamente a mitad de corrida (sin commit nuevo que lo justifique; histórico del workflow: todos success) → **re-lanzado (attempt 2)**; en el PR head `cff65fbd3` con contenido idéntico había sido **success** |
+| `Unit & Integration Tests` (Test Coverage) sobre `683a6c466` | Run 1 **cancelado** anómalamente a mitad de corrida (sin commit nuevo que lo justifique; histórico del workflow: todos success) → **re-lanzado (attempt 2): `success`** |
 | E2E Aislado (project) sobre PR head `cff65fbd3` | **success** |
 | E2E aplicable `inventory-display-mode.spec.ts` RE-EJECUTADO post-merge sobre código fusionado, BD aislada (procedimiento docs/e2e/EJECUCION_LOCAL_AISLADA.md) | **2 passed** (2.2 m) — escenario completo C1-C7: login UI, navegación, selector junto a Filtros, cálculo exacto con el formateador de la app, existencia inalterada, ida y vuelta de modo, móvil §10 |
 | Cero escrituras al alternar | Probado doblemente: (a) aserción E2E C7 — ninguna request PATCH/POST a `products` ni llamada a `perform_inventory_adjustment` durante el ciclo; (b) revisión del diff — solo capa de presentación, sin llamadas mutadoras |
