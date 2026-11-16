@@ -19,6 +19,7 @@ import {
   type ReceiveAgainstPOPayload,
 } from './ReceiveAgainstPOModal';
 import { useReceptionState, UNIT_OF_MEASURE_OPTIONS } from './useReceptionState';
+import type { ClassifiedRow } from './useReceptionState';
 import type { Product } from '@/types';
 import { cn, formatCurrency } from '@/lib/utils';
 import {
@@ -38,6 +39,78 @@ import {
 interface ProductReceptionViewProps {
   onCancel: () => void;
   preselectedProduct?: Product | null;
+}
+
+// ────────────────────────────────────────────────────────────
+// CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 (§5/§8): metadatos
+// visuales por clase funcional del motor de clasificación.
+// ────────────────────────────────────────────────────────────
+
+function importRowMeta(r: ClassifiedRow): { label: string; badge: string; action: string } {
+  switch (r.status) {
+    case 'activate_local':
+      return {
+        label: 'Se activará',
+        badge: 'bg-primary/10 text-primary',
+        action: 'Producto existente en el Catálogo Maestro. Se activará en esta tienda.',
+      };
+    case 'reactivate_master':
+      return {
+        label: r.reactivationConfirmed ? 'Reactivar ✓' : 'Inactivo global',
+        badge: r.reactivationConfirmed ? 'bg-violet-500/15 text-violet-600' : 'bg-violet-500/10 text-violet-600',
+        action: r.reactivationConfirmed
+          ? 'Reactivación global confirmada: se reactivará el maestro y se activará en esta tienda.'
+          : 'Producto existente, inactivo en el Catálogo Maestro. Requiere reactivación global (confírmala arriba).',
+      };
+    case 'new_master':
+      if (r.canCreateMaster === false) {
+        return {
+          label: 'Bloqueado',
+          badge: 'bg-destructive/10 text-destructive',
+          action: 'Producto nuevo, pero sin permiso para crear en el Catálogo Maestro. Requiere rol admin/manager/encargado.',
+        };
+      }
+      return {
+        label: 'Nuevo maestro',
+        badge: 'bg-info/10 text-info',
+        action: 'Producto nuevo. Se creará en el Catálogo Maestro y se activará en esta tienda.',
+      };
+    case 'review':
+      return {
+        label: 'Revisión',
+        badge: 'bg-destructive/10 text-destructive',
+        action: 'Requiere revisión. No se creará ni activará nada hasta resolver la identificación.',
+      };
+    case 'price_changed':
+      return {
+        label: 'Identificado + precio',
+        badge: 'bg-warning/10 text-warning',
+        action: 'Producto identificado en el Catálogo Maestro. Se usará el existente y se ofrecerá actualizar el precio.',
+      };
+    case 'new':
+    case 'new_local':
+      return {
+        label: 'Nuevo local',
+        badge: 'bg-info/10 text-info',
+        action: 'Se creará en el catálogo de la tienda al registrar (tienda no conectada al Catálogo Maestro).',
+      };
+    case 'error':
+      return {
+        label: 'Error',
+        badge: 'bg-destructive/10 text-destructive',
+        action: r.errors.join(' · '),
+      };
+    case 'identified':
+    case 'existing':
+    default:
+      return {
+        label: 'Identificado',
+        badge: 'bg-success/10 text-success',
+        action: r.orphanLocal
+          ? 'Producto local histórico sin vínculo al Catálogo Maestro: se usará la fila existente (sin duplicar); pendiente de conciliación.'
+          : 'Producto identificado en el Catálogo Maestro. Se utilizará el producto existente.',
+      };
+  }
 }
 
 // ────────────────────────────────────────────────────────────
@@ -374,24 +447,93 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
               </label>
             )}
 
-            {/* Step 2: Preview / Classification */}
+            {/* Step 2: Preview / Classification — CP-LOG-RECEPTION-...-001 §8 */}
             {s.importStep === 'preview' && (
               <>
-                <div className="grid grid-cols-4 gap-3">
+                {/* Resumen por clase funcional (cifras del BACKEND) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
                   {[
-                    { count: s.importCounts.new, label: 'Nuevos', color: 'text-info bg-info/10 border-info/20' },
-                    { count: s.importCounts.existing, label: 'Existentes', color: 'text-success bg-success/10 border-success/20' },
-                    { count: s.importCounts.price_changed, label: 'Con cambios', color: 'text-warning bg-warning/10 border-warning/20' },
-                    { count: s.importCounts.error, label: 'Errores', color: 'text-destructive bg-destructive/10 border-destructive/20' },
+                    { count: s.importSummary?.identified ?? s.importCounts.existing, label: 'Identificados', color: 'text-success bg-success/10 border-success/20', title: 'Existen en el Catálogo Maestro y están activos y vinculados: se usarán los existentes' },
+                    { count: s.importSummary?.activate_local ?? s.importCounts.activate_local, label: 'Se activarán', color: 'text-primary bg-primary/10 border-primary/20', title: 'Existen en el Catálogo Maestro: se activarán en esta tienda' },
+                    { count: s.importSummary?.reactivate_master ?? s.importCounts.reactivate_master, label: 'Reactivación', color: 'text-violet-600 bg-violet-500/10 border-violet-500/20', title: 'Existen pero están inactivos GLOBALMENTE: requieren reactivación explícita' },
+                    { count: s.importSummary?.new_master ?? s.importCounts.new_master, label: 'Nuevos en Maestro', color: 'text-info bg-info/10 border-info/20', title: 'No existen: se crearán PRIMERO en el Catálogo Maestro y luego se activarán en esta tienda' },
+                    { count: (s.importSummary?.review ?? s.importCounts.review) + (s.importSummary?.new_master_blocked ?? 0) + (s.importSummary?.error ?? s.importCounts.error), label: 'Revisión / Errores', color: 'text-destructive bg-destructive/10 border-destructive/20', title: 'Ambiguos, conflictivos o con datos inválidos: no se creará ni activará nada' },
+                    { count: s.importSummary?.valid_lines_with_reactivation ?? s.classifiedRows.filter(r => !['error', 'review'].includes(r.status)).length, label: 'Líneas válidas', color: 'text-foreground bg-muted border-border', title: 'Líneas que pueden entrar en la recepción (incluye reactivaciones confirmadas)' },
                   ].map(item => (
-                    <div key={item.label} className={cn('p-3 rounded-xl border text-center', item.color)}>
+                    <div key={item.label} className={cn('p-2.5 rounded-xl border text-center', item.color)} title={item.title}>
                       <div className="text-2xl font-black">{item.count}</div>
                       <div className="text-[9px] font-black uppercase tracking-widest mt-1">{item.label}</div>
                     </div>
                   ))}
                 </div>
 
-                {/* Errors list */}
+                {/* Aviso de tienda conectada al Catálogo Maestro */}
+                {s.importSummary?.catalog_connected === true && (
+                  <div className="flex items-start gap-2 p-2.5 rounded-xl bg-primary/5 border border-primary/20">
+                    <Package className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                    <p className="text-[11px] text-muted-foreground">
+                      Tienda <span className="font-bold text-primary">conectada al Catálogo Maestro</span>: los productos nuevos se crean primero en el
+                      Catálogo Maestro y después se activan en esta tienda. Ningún producto queda independiente del catálogo.
+                    </p>
+                  </div>
+                )}
+
+                {/* Reactivación global: confirmación explícita por fila (clase C) */}
+                {s.classifiedRows.filter(r => r.status === 'reactivate_master').length > 0 && (
+                  <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-violet-500/10 border-b border-violet-500/20">
+                      <AlertTriangle className="w-4 h-4 text-violet-600" />
+                      <span className="text-xs font-black uppercase tracking-widest text-violet-600">
+                        Reactivación global del Catálogo Maestro ({s.classifiedRows.filter(r => r.status === 'reactivate_master').length})
+                      </span>
+                    </div>
+                    <div className="p-3 space-y-2">
+                      <p className="text-[11px] text-muted-foreground">
+                        Estos productos existen pero están <span className="font-bold">desactivados GLOBALMENTE</span> en el Catálogo Maestro.
+                        Reactivarlos los hace disponibles para <span className="font-bold">TODAS las tiendas conectadas</span> de la organización.
+                        Sin confirmación explícita, la fila queda bloqueada (no se crea ni activa nada).
+                      </p>
+                      {s.classifiedRows.filter(r => r.status === 'reactivate_master').map((r, idx) => (
+                        <label key={idx} className="flex items-start gap-2 p-2 rounded-lg border border-violet-500/20 bg-background cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={!!r.reactivationConfirmed}
+                            onChange={() => s.toggleReactivationConfirm(r.sku)}
+                            className="mt-0.5 accent-violet-600"
+                          />
+                          <span className="text-xs">
+                            <span className="font-mono font-bold">{r.sku}</span> — {r.masterName || r.name}
+                            <span className="block text-[10px] text-muted-foreground mt-0.5">
+                              Confirmo la reactivación GLOBAL de este producto en el Catálogo Maestro.
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Filas que requieren revisión (clase E) */}
+                {s.classifiedRows.filter(r => r.status === 'review' || (r.status === 'new_master' && r.canCreateMaster === false)).length > 0 && (
+                  <div className="rounded-xl border border-destructive/20 bg-destructive/5 overflow-hidden">
+                    <div className="flex items-center gap-2 px-4 py-2 bg-destructive/10 border-b border-destructive/20">
+                      <AlertCircle className="w-4 h-4 text-destructive" />
+                      <span className="text-xs font-black uppercase tracking-widest text-destructive">
+                        Requieren revisión ({s.classifiedRows.filter(r => r.status === 'review' || (r.status === 'new_master' && r.canCreateMaster === false)).length}) — no se crearán ni activarán
+                      </span>
+                    </div>
+                    <div className="max-h-32 overflow-y-auto p-3 space-y-1.5">
+                      {s.classifiedRows.filter(r => r.status === 'review' || (r.status === 'new_master' && r.canCreateMaster === false)).map((r, idx) => (
+                        <div key={idx} className="text-xs">
+                          <span className="font-mono text-muted-foreground">SKU {r.sku || '--'}:</span>{' '}
+                          <span className="text-destructive">{(r.reasons && r.reasons.length ? r.reasons : r.errors).join(' · ')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Errores de validación */}
                 {s.classifiedRows.filter(r => r.status === 'error').length > 0 && (
                   <div className="rounded-xl border border-destructive/20 bg-destructive/5 overflow-hidden">
                     <div className="flex items-center gap-2 px-4 py-2 bg-destructive/10 border-b border-destructive/20">
@@ -430,19 +572,21 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                   </div>
                 )}
 
-                {/* New products info */}
-                {s.importCounts.new > 0 && (
+                {/* Productos nuevos en el Catálogo Maestro (clase D) */}
+                {(s.importSummary?.new_master ?? 0) > 0 && (
                   <div className="flex items-start gap-3 p-3 rounded-xl bg-info/5 border border-info/20">
-                    <CheckCircle2 className="w-4 h-4 text-info mt-0.5 shrink-0" />
+                    <Package className="w-4 h-4 text-info mt-0.5 shrink-0" />
                     <p className="text-xs text-muted-foreground">
-                      <span className="font-bold text-info">{s.importCounts.new} producto(s)</span> se crearan automaticamente en el catalogo al registrar la recepcion. Unidad de medida por defecto: &quot;unidad&quot;.
+                      <span className="font-bold text-info">{s.importSummary?.new_master} producto(s)</span> no existen en el Catálogo
+                      Maestro: se crearán PRIMERO en el Catálogo Maestro (identidad compartida) y después se activarán en esta tienda
+                      con los precios y costos propios del archivo. Costo promedio inicial nominal 1 CUP hasta la primera recepción real.
                     </p>
                   </div>
                 )}
 
-                {/* Preview table */}
+                {/* Preview table: estado + acción prevista + mensaje */}
                 <div className="rounded-xl border border-border overflow-hidden">
-                  <div className="max-h-48 overflow-y-auto">
+                  <div className="max-h-56 overflow-y-auto">
                     <table className="w-full text-xs">
                       <thead className="bg-muted/50 sticky top-0">
                         <tr className="text-[9px] font-black uppercase tracking-widest text-muted-foreground border-b border-border">
@@ -451,32 +595,25 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                           <th className="p-2 text-left">Nombre</th>
                           <th className="p-2 text-right">Cant</th>
                           <th className="p-2 text-right">Costo</th>
-                          <th className="p-2 text-left">UM</th>
-                          <th className="p-2 text-right">P. Venta</th>
+                          <th className="p-2 text-left">Acción prevista</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {s.classifiedRows.slice(0, 100).map((r, idx) => (
-                          <tr key={idx} className={cn('border-b border-border/50', r.status === 'error' && 'bg-destructive/5')}>
-                            <td className="p-2">
-                              <span className={cn(
-                                'text-[9px] font-black uppercase px-1.5 py-0.5 rounded',
-                                r.status === 'new' ? 'bg-info/10 text-info' :
-                                r.status === 'existing' ? 'bg-success/10 text-success' :
-                                r.status === 'price_changed' ? 'bg-warning/10 text-warning' :
-                                'bg-destructive/10 text-destructive'
-                              )}>
-                                {r.status === 'new' ? 'Nuevo' : r.status === 'existing' ? 'OK' : r.status === 'price_changed' ? 'Cambio' : 'Error'}
-                              </span>
-                            </td>
-                            <td className="p-2 font-mono">{r.sku || '--'}</td>
-                            <td className="p-2 font-bold max-w-[120px] truncate">{r.name}</td>
-                            <td className="p-2 text-right tabular-nums">{r.quantity}</td>
-                            <td className="p-2 text-right tabular-nums">{formatCurrency(r.unitCost)}</td>
-                            <td className="p-2 text-muted-foreground">{r.unitOfMeasure}</td>
-                            <td className="p-2 text-right tabular-nums">{r.salePrice ? formatCurrency(r.salePrice) : '—'}</td>
-                          </tr>
-                        ))}
+                        {s.classifiedRows.slice(0, 100).map((r, idx) => {
+                          const meta = importRowMeta(r);
+                          return (
+                            <tr key={idx} className={cn('border-b border-border/50', (r.status === 'error' || r.status === 'review' || (r.status === 'new_master' && r.canCreateMaster === false)) && 'bg-destructive/5')}>
+                              <td className="p-2">
+                                <span className={cn('text-[9px] font-black uppercase px-1.5 py-0.5 rounded', meta.badge)}>{meta.label}</span>
+                              </td>
+                              <td className="p-2 font-mono">{r.sku || '--'}</td>
+                              <td className="p-2 font-bold max-w-[120px] truncate" title={r.masterName && r.masterName !== r.name ? `Maestro: ${r.masterName}` : undefined}>{r.name}</td>
+                              <td className="p-2 text-right tabular-nums">{r.quantity}</td>
+                              <td className="p-2 text-right tabular-nums">{formatCurrency(r.unitCost)}</td>
+                              <td className="p-2 text-muted-foreground max-w-[180px] truncate" title={meta.action}>{meta.action}</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -487,21 +624,23 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
               </>
             )}
 
-            {/* Step 3: Confirm */}
+            {/* Step 3: Confirm — cifras del backend antes de ejecutar */}
             {s.importStep === 'confirm' && (
               <div className="space-y-4">
                 <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
                   <p className="font-black text-sm">Resumen de la importacion</p>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-success" /><span>{s.importCounts.existing} existente(s) — se recibiran normalmente</span></div>
-                    <div className="flex items-center gap-2"><Package className="w-4 h-4 text-info" /><span>{s.importCounts.new} nuevo(s) — se crearan en el catalogo</span></div>
-                    <div className="flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-warning" /><span>{s.importCounts.price_changed} con cambio de precio — se actualizara</span></div>
-                    <div className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-destructive" /><span>{s.importCounts.error} error(es) — se omitiran</span></div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-success" /><span>{s.importSummary?.identified ?? s.importCounts.existing} identificado(s) — se usaran los existentes</span></div>
+                    <div className="flex items-center gap-2"><Package className="w-4 h-4 text-primary" /><span>{s.importSummary?.activate_local ?? s.importCounts.activate_local} se activaran en esta tienda</span></div>
+                    <div className="flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-violet-600" /><span>{s.classifiedRows.filter(r => r.status === 'reactivate_master' && r.reactivationConfirmed).length} reactivacion(es) global(es) confirmada(s) de {s.importSummary?.reactivate_master ?? 0}</span></div>
+                    <div className="flex items-center gap-2"><Package className="w-4 h-4 text-info" /><span>{s.importSummary?.new_master ?? s.importCounts.new_master} nuevo(s) — se crearán en el Catálogo Maestro y se activarán aquí</span></div>
+                    <div className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-destructive" /><span>{(s.importSummary?.review ?? 0) + (s.importSummary?.new_master_blocked ?? 0)} requieren revisión y {s.importSummary?.error ?? 0} error(es) — se omitiran</span></div>
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground text-center">
-                  Al confirmar, <span className="font-bold">{s.classifiedRows.filter(r => r.status !== 'error').length}</span> producto(s) se agregaran a la recepcion.
-                  {s.importCounts.new > 0 && <> Los productos nuevos se crearan en el catalogo con UM = &quot;unidad&quot;.</>}
+                  Al confirmar: se ejecutara la activación/creación con el escritor canónico y{' '}
+                  <span className="font-bold">{s.importSummary?.valid_lines_with_reactivation ?? s.classifiedRows.filter(r => !['error', 'review'].includes(r.status)).length}</span> línea(s) se agregarán a la recepción.
+                  Las filas bloqueadas no se procesan (ni se crean ni se activan).
                 </p>
               </div>
             )}
@@ -513,10 +652,28 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
             )}
             <SecondaryButton onClick={s.resetImportWizard} label="Cancelar" />
             {s.importStep === 'preview' && (
-              <PrimaryButton onClick={() => s.setImportStep('confirm')} label="Continuar" disabled={s.classifiedRows.filter(r => r.status !== 'error').length === 0} />
+              <PrimaryButton
+                onClick={() => s.setImportStep('confirm')}
+                label="Continuar"
+                disabled={s.classifiedRows.filter(r =>
+                  ['existing', 'price_changed', 'new', 'activate_local'].includes(r.status)
+                  || (r.status === 'reactivate_master' && r.reactivationConfirmed)
+                  || (r.status === 'new_master' && r.canCreateMaster !== false),
+                ).length === 0}
+              />
             )}
             {s.importStep === 'confirm' && (
-              <PrimaryButton onClick={s.handleImportToReception} label={`Agregar ${s.classifiedRows.filter(r => r.status !== 'error').length} producto(s)`} />
+              <PrimaryButton
+                onClick={s.handleImportToReception}
+                disabled={s.isImporting}
+                label={s.isImporting
+                  ? 'Preparando productos…'
+                  : `Agregar ${s.classifiedRows.filter(r =>
+                      ['existing', 'price_changed', 'new', 'activate_local'].includes(r.status)
+                      || (r.status === 'reactivate_master' && r.reactivationConfirmed)
+                      || (r.status === 'new_master' && r.canCreateMaster !== false),
+                    ).length} producto(s)`}
+              />
             )}
           </DialogFooter>
         </DialogContent>

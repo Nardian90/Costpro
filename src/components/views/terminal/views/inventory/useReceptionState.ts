@@ -52,6 +52,38 @@ export interface ReceptionItem {
 
 export type ImportWizardStep = 'upload' | 'preview' | 'confirm';
 
+/**
+ * CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 (§5): estados funcionales del
+ * motor de clasificación del importador. Los estados legacy ('new' /
+ * 'existing' / 'price_changed') se conservan como equivalente visual de
+ * new_local/identified para tiendas NO conectadas y compatibilidad interna.
+ */
+export type ImportRowStatus =
+  | 'identified'        // A · existe en el maestro, activo y vinculado (se usa el existente)
+  | 'activate_local'    // B · existe en el maestro; se activará en esta tienda
+  | 'reactivate_master' // C · existe pero inactivo GLOBALMENTE (requiere reactivación explícita)
+  | 'new_master'        // D · verdaderamente nuevo: se creará PRIMERO en el Catálogo Maestro
+  | 'new_local'         // (tienda no conectada) alta local histórica
+  | 'review'            // E · ambiguo/conflictivo: no se crea ni activa nada
+  | 'error'             // validación de datos de la fila
+  // legacy (equivalentes visuales):
+  | 'new' | 'existing' | 'price_changed';
+
+export interface ImportSummaryCounts {
+  total: number;
+  identified: number;
+  activate_local: number;
+  reactivate_master: number;
+  new_master: number;
+  new_master_blocked: number;
+  new_local: number;
+  review: number;
+  error: number;
+  valid_lines: number;
+  valid_lines_with_reactivation: number;
+  catalog_connected?: boolean;
+}
+
 export interface ClassifiedRow {
   sku: string;
   name: string;
@@ -59,12 +91,21 @@ export interface ClassifiedRow {
   unitCost: number;
   unitOfMeasure: string;
   salePrice: number | null;
-  status: 'new' | 'existing' | 'price_changed' | 'error';
+  status: ImportRowStatus;
   existingProduct: Product | null;
   errors: string[];
   // FIX-P1.2: moneda y tasa leídas del Excel (o fallback al global)
   moneda?: string;
   tasa?: number;
+  // CP-LOG-RECEPTION-...-001: datos del motor backend
+  productId?: string | null;
+  masterProductId?: string | null;
+  masterName?: string | null;
+  orphanLocal?: boolean;
+  canCreateMaster?: boolean;
+  reasons?: string[];
+  /** confirmación explícita de reactivación global (clase C) */
+  reactivationConfirmed?: boolean;
 }
 
 // REC-2 MM-R10: Unidades de medida estructuradas (en vez de string libre).
@@ -281,6 +322,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [importStep, setImportStep] = useState<ImportWizardStep>('upload');
   const [classifiedRows, setClassifiedRows] = useState<ClassifiedRow[]>([]);
+  // CP-LOG-RECEPTION-...-001 §8: resumen calculado por el BACKEND (classify RPC)
+  const [importSummary, setImportSummary] = useState<ImportSummaryCounts | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
   // UX-02: Drag-and-drop state
@@ -469,9 +512,17 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   }, [products, debouncedSearch]);
 
   // Import classification counts
+  // CP-LOG-RECEPTION-...-001: derivado del resumen BACKEND cuando existe
+  // (tienda conectada al Catálogo Maestro); equivalente local para legacy.
   const importCounts = useMemo(() => {
-    const c = { new: 0, existing: 0, price_changed: 0, error: 0 };
-    for (const r of classifiedRows) c[r.status]++;
+    const c: Record<string, number> = {
+      new: 0, existing: 0, price_changed: 0, error: 0,
+      identified: 0, activate_local: 0, reactivate_master: 0,
+      new_master: 0, new_master_blocked: 0, new_local: 0, review: 0,
+    };
+    for (const r of classifiedRows) {
+      if (c[r.status] !== undefined) c[r.status]++;
+    }
     return c;
   }, [classifiedRows]);
 
@@ -899,6 +950,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setIsImportOpen(false);
     setImportStep('upload');
     setClassifiedRows([]);
+    setImportSummary(null);
     setIsImporting(false);
   };
 
@@ -906,6 +958,18 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setIsImportOpen(true);
     setImportStep('upload');
     setClassifiedRows([]);
+    setImportSummary(null);
+  };
+
+  // CP-LOG-RECEPTION-...-001 §5.C: confirmación EXPLÍCITA e individual de la
+  // reactivación global de un maestro archivado (alcance: todas las tiendas
+  // conectadas de la organización). Sin esta marca la fila queda bloqueada.
+  const toggleReactivationConfirm = (sku: string) => {
+    setClassifiedRows(prev => prev.map(r =>
+      r.sku === sku && r.status === 'reactivate_master'
+        ? { ...r, reactivationConfirmed: !r.reactivationConfirmed }
+        : r,
+    ));
   };
 
   const handleImportFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -945,71 +1009,153 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         return;
       }
 
-      // Fetch ALL products for matching (not just paginated subset)
+      // ────────────────────────────────────────────────────────────
+      // CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 (§4/§5/§8):
+      // clasificación BACKEND-AUTORITATIVA. El motor del servidor consulta el
+      // Catálogo Maestro SIN excluir productos por estado (maestros archivados
+      // y filas locales inactivas incluidas) y devuelve el resumen calculado.
+      // CAUSA RAÍZ corregida: antes se consultaba SOLO products de la tienda
+      // con is_active=true → los productos del maestro sin fila local o con
+      // fila inactiva se anunciaban como "nuevos" (duplicaciones).
+      // ────────────────────────────────────────────────────────────
       const storeId = user?.activeStoreId;
-      const { data: allStoreProducts } = storeId
-        ? await supabase.from('products').select('id, sku, name, cost_price, price, unit_of_measure').eq('store_id', storeId).eq('is_active', true)
-        : { data: [] };
-
-      const productBySku = new Map<string, Product>();
-      const productByName = new Map<string, Product>();
-      if (allStoreProducts) {
-        for (const p of allStoreProducts) {
-          if (p.sku) productBySku.set(p.sku.toLowerCase(), p as Product);
-          productByName.set(p.name.toLowerCase(), p as Product);
-        }
+      if (!storeId) {
+        toast.error('No hay una tienda activa seleccionada');
+        setIsImporting(false);
+        return;
       }
 
-      const classified: ClassifiedRow[] = [];
-      const seenSkus = new Set<string>();
-
+      // Parseo literal de las filas (fidelidad: el SKU NO se reformatea aquí;
+      // la normalización para comparar vive en el backend).
+      const parsedRows: {
+        sku: string; name: string; quantity: number; unit_cost: number;
+        unit_of_measure: string; sale_price: number | null;
+        moneda?: string; tasa?: number;
+      }[] = [];
       for (let idx = 0; idx < rows.length; idx++) {
         const row = rows[idx];
         const sku = String(row['SKU'] || row['sku'] || row['Codigo'] || row['codigo'] || '').trim();
         const name = String(row['Nombre'] || row['nombre'] || row['Producto'] || row['producto'] || row['Name'] || '').trim();
+        if (!name && !sku) continue; // skip empty rows
         const quantity = Number(row['Cantidad'] || row['cantidad'] || row['Qty'] || 0);
         const unitCost = Number(row['Costo Unitario'] || row['costo_unitario'] || row['Costo'] || row['costo'] || 0);
-        // FIX-04: New optional columns
         const unitOfMeasure = String(row['Unidad de Medida'] || row['unidad'] || row['UM'] || 'unidad').trim();
         const salePriceRaw = row['Precio Venta'] || row['precio_venta'] || row['Precio'] || row['precio'] || null;
         const salePrice = salePriceRaw !== null ? Number(salePriceRaw) : null;
-        // FIX-P1.2: leer columnas Moneda y Tasa del Excel (opcional, con fallback al global)
         const rowMoneda = String(row['Moneda'] || row['moneda'] || row['Currency'] || '').trim().toUpperCase() || undefined;
         const rowTasa = Number(row['Tasa'] || row['tasa'] || row['Tasa de Cambio'] || row['exchange_rate'] || 0) || undefined;
-
-        const errors: string[] = [];
-        if (!name && !sku) continue; // skip empty rows
-        if (!name) errors.push('Nombre vacio');
-        if (sku && seenSkus.has(sku.toLowerCase())) errors.push(`SKU duplicado en archivo: "${sku}"`);
-        if (quantity < 1) errors.push('Cantidad debe ser >= 1');
-        if (unitCost < 0) errors.push('Costo no puede ser negativo');
-
-        seenSkus.add(sku.toLowerCase());
-
-        if (errors.length > 0) {
-          classified.push({ sku, name, quantity, unitCost, unitOfMeasure, salePrice, status: 'error', existingProduct: null, errors, moneda: rowMoneda, tasa: rowTasa });
-          continue;
-        }
-
-        // Match product
-        const existing = sku
-          ? productBySku.get(sku.toLowerCase()) || (name ? productByName.get(name.toLowerCase()) : null)
-          : (name ? productByName.get(name.toLowerCase()) : null);
-
-        if (!existing) {
-          classified.push({ sku: sku || `AUTO-${Date.now().toString(36).toUpperCase()}-${idx}`, name, quantity: Math.max(0.0001, Number(quantity.toFixed(4))), unitCost, unitOfMeasure, salePrice, status: 'new', existingProduct: null, errors: [] });
-        } else if (salePrice !== null && salePrice > 0 && existing.price !== salePrice) {
-          classified.push({ sku: existing.sku || sku, name: existing.name, quantity: Math.max(0.0001, Number(quantity.toFixed(4))), unitCost, unitOfMeasure, salePrice, status: 'price_changed', existingProduct: existing, errors: [] });
-        } else {
-          classified.push({ sku: existing.sku || sku, name: existing.name, quantity: Math.max(0.0001, Number(quantity.toFixed(4))), unitCost, unitOfMeasure, salePrice, status: 'existing', existingProduct: existing, errors: [] });
-        }
+        parsedRows.push({
+          sku, name, quantity, unit_cost: unitCost,
+          unit_of_measure: unitOfMeasure, sale_price: salePrice,
+          ...(rowMoneda ? { moneda: rowMoneda } : {}),
+          ...(rowTasa ? { tasa: rowTasa } : {}),
+        });
       }
+
+      if (parsedRows.length === 0) {
+        toast.error('No se encontraron productos validos en el archivo');
+        setIsImporting(false);
+        return;
+      }
+
+      // Clasificación canónica (backend). Fail-closed: si el motor no responde
+      // NO se clasifica en el cliente (evita el anuncio erróneo de "nuevos").
+      const { data: classifyRes, error: classifyErr } = await supabase.rpc(
+        'classify_reception_import_rows',
+        { p_store_id: storeId, p_rows: parsedRows },
+      );
+      if (classifyErr || !classifyRes) {
+        console.error('Error clasificando contra el Catálogo Maestro:', classifyErr);
+        toast.error(
+          classifyErr?.message?.includes('ERR_')
+            ? `No se pudo clasificar la importación: ${classifyErr.message}`
+            : 'No se pudo clasificar la importación contra el Catálogo Maestro. Verifica tu conexión e inténtalo de nuevo.',
+          { duration: 8000 },
+        );
+        setIsImporting(false);
+        return;
+      }
+
+      // Precios actuales de la tienda SOLO para detectar cambios de precio de
+      // venta en productos identificados (visual + update_price).
+      const { data: allStoreProducts } = await supabase
+        .from('products')
+        .select('id, sku, name, cost_price, price, unit_of_measure')
+        .eq('store_id', storeId)
+        .eq('is_active', true);
+      const priceBySku = new Map<string, number>();
+      for (const p of (allStoreProducts ?? [])) {
+        if (p.sku) priceBySku.set(p.sku.toLowerCase(), p.price ?? 0);
+      }
+
+      const backendRows = ((classifyRes as { rows?: Record<string, unknown>[] }).rows ?? []) as Record<string, unknown>[];
+      const classified: ClassifiedRow[] = parsedRows.map((parsed, idx) => {
+        const b = backendRows[idx] ?? {};
+        const bStatus = String(b.status ?? 'error') as ImportRowStatus;
+        const bReasons = Array.isArray(b.reasons) ? (b.reasons as string[]) : [];
+        const reasons = bReasons.map(r => String(r));
+        const productId = (b.product_id as string | null) ?? null;
+
+        // Mapeo visual de estados del backend → estados de fila.
+        let status: ImportRowStatus = bStatus;
+        if (bStatus === 'identified' && productId
+            && parsed.sale_price !== null && parsed.sale_price > 0
+            && priceBySku.get(parsed.sku.toLowerCase()) !== parsed.sale_price) {
+          status = 'price_changed'; // variante de A: se usa el existente Y se ofrece actualizar precio
+        }
+        if (bStatus === 'new_local') status = 'new';              // equivalente visual legacy
+        if (bStatus === 'identified') {
+          // 'existing' como equivalente visual para identified sin cambio de precio
+          if (status === 'identified') status = 'existing';
+        }
+        // new_master sin autorización → cuenta como revisión (bloqueada)
+        if (bStatus === 'new_master' && b.can_create_master === false) {
+          // mantiene status new_master; la UI lo muestra bloqueado con razón
+        }
+
+        return {
+          sku: parsed.sku || String(b.sku ?? ''),
+          name: parsed.name || String(b.name ?? ''),
+          quantity: Math.max(0.0001, Number(parsed.quantity.toFixed(4))),
+          unitCost: parsed.unit_cost,
+          unitOfMeasure: parsed.unit_of_measure || 'unidad',
+          salePrice: parsed.sale_price,
+          status,
+          existingProduct: productId ? ({ id: productId, sku: parsed.sku, name: String(b.name ?? parsed.name), price: priceBySku.get(parsed.sku.toLowerCase()) ?? 0 } as unknown as Product) : null,
+          errors: bStatus === 'error' ? (reasons.length ? reasons : ['Fila inválida']) : [],
+          moneda: parsed.moneda,
+          tasa: parsed.tasa,
+          productId,
+          masterProductId: (b.master_product_id as string | null) ?? null,
+          masterName: (b.master_name as string | null) ?? null,
+          orphanLocal: b.orphan_local === true,
+          canCreateMaster: b.can_create_master !== false,
+          reasons,
+        };
+      });
 
       if (classified.length === 0) {
         toast.error('No se encontraron productos validos en el archivo');
         setIsImporting(false);
         return;
       }
+
+      // Resumen del BACKEND (misión §8: cifras reales, no contadores del FE).
+      const bSummary = ((classifyRes as { summary?: Record<string, unknown> }).summary ?? {}) as Record<string, unknown>;
+      setImportSummary({
+        total: Number(bSummary.total ?? classified.length),
+        identified: Number(bSummary.identified ?? 0),
+        activate_local: Number(bSummary.activate_local ?? 0),
+        reactivate_master: Number(bSummary.reactivate_master ?? 0),
+        new_master: Number(bSummary.new_master ?? 0),
+        new_master_blocked: Number(bSummary.new_master_blocked ?? 0),
+        new_local: Number(bSummary.new_local ?? 0),
+        review: Number(bSummary.review ?? 0),
+        error: Number(bSummary.error ?? 0),
+        valid_lines: Number(bSummary.valid_lines ?? 0),
+        valid_lines_with_reactivation: Number(bSummary.valid_lines_with_reactivation ?? 0),
+        catalog_connected: (classifyRes as { catalog_connected?: boolean }).catalog_connected,
+      });
 
       setClassifiedRows(classified);
       setImportStep('preview');
@@ -1026,19 +1172,124 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     else if (importStep === 'preview') { setImportStep('upload'); setClassifiedRows([]); }
   };
 
-  // UX-04: Toast with detailed import summary (string-only, no JSX)
-  const handleImportToReception = () => {
-    const newItems: ReceptionItem[] = classifiedRows
-      .filter(r => r.status !== 'error')
-      .map(r => ({
-        product_id: r.existingProduct?.id || null,
+  // UX-04 + CP-LOG-RECEPTION-...-001 §5/§6/§8: ejecución de la importación.
+  // Clases B/C/D se RESUELVEN con el escritor canónico ANTES de agregar las
+  // líneas (activación local / reactivación global confirmada / creación de
+  // maestro), y el resumen informa las CIFRAS REALES del backend.
+  const handleImportToReception = async () => {
+    const storeId = user?.activeStoreId;
+    if (!storeId) {
+      toast.error('No hay una tienda activa seleccionada');
+      return;
+    }
+
+    // Filas accionables: se agregan a la recepción (identificadas, con cambio
+    // de precio y new_local legacy). Clases B/C/D se resuelven primero.
+    // Review/error (y reactivación no confirmada o sin autorización): NO se
+    // agregan NADA (misión §5.E: "No se creará ni activará ningún producto
+    // hasta resolver la identificación").
+    const actionable = classifiedRows.filter(r =>
+      ['existing', 'price_changed', 'new', 'activate_local', 'reactivate_master', 'new_master'].includes(r.status),
+    );
+
+    // Clase C sin confirmación explícita → bloqueada con explicación.
+    const reactivationRows = classifiedRows.filter(r => r.status === 'reactivate_master');
+    const unconfirmedReactivation = reactivationRows.filter(r => !r.reactivationConfirmed);
+    // Clase D sin autorización → bloqueada con explicación.
+    const unauthorizedNewMaster = classifiedRows.filter(r => r.status === 'new_master' && r.canCreateMaster === false);
+
+    const needsResolve = classifiedRows.filter(r =>
+      ['activate_local', 'reactivate_master', 'new_master'].includes(r.status)
+      && !(r.status === 'reactivate_master' && !r.reactivationConfirmed)
+      && !(r.status === 'new_master' && r.canCreateMaster === false),
+    );
+
+    const blockedRows = [
+      ...unconfirmedReactivation.map(r => ({ sku: r.sku, reason: 'Reactivación global NO confirmada: marca la confirmación explícita o quita la fila.' })),
+      ...unauthorizedNewMaster.map(r => ({ sku: r.sku, reason: 'Sin permiso para crear productos en el Catálogo Maestro (requiere rol admin/manager/encargado).' })),
+    ];
+
+    // ── Resolución canónica (escritor backend) para B/C/D ──
+    let resolvedByIndex = new Map<number, { product_id: string | null; blocked?: string[] }>();
+    if (needsResolve.length > 0) {
+      setIsImporting(true);
+      try {
+        const resolvePayload = needsResolve.map(r => ({
+          sku: r.sku,
+          name: r.name,
+          quantity: r.quantity,
+          unit_cost: r.unitCost,
+          unit_of_measure: r.unitOfMeasure || 'unidad',
+          sale_price: r.salePrice,
+          price_currency: newPriceCurrency,
+        }));
+        const confirmReactivation = reactivationRows
+          .filter(r => r.reactivationConfirmed)
+          .map(r => r.sku);
+        const { data: resolveRes, error: resolveErr } = await supabase.rpc(
+          'resolve_reception_import_rows',
+          {
+            p_store_id: storeId,
+            p_rows: resolvePayload,
+            p_confirm_reactivation: confirmReactivation,
+          },
+        );
+        if (resolveErr || !resolveRes) {
+          console.error('Error resolviendo productos del importador:', resolveErr);
+          toast.error(
+            `No se pudo preparar la importación: ${resolveErr?.message ?? 'error del servidor'}. No se creó ni activó nada.`,
+            { duration: 9000 },
+          );
+          setIsImporting(false);
+          return;
+        }
+        const results = ((resolveRes as { results?: Record<string, unknown>[] }).results ?? []) as Record<string, unknown>[];
+        results.forEach((res, i) => {
+          const idx = Number(res.index ?? (i + 1)) - 1;
+          const action = String(res.action ?? '');
+          if (action === 'blocked') {
+            const reasons = Array.isArray(res.reasons) ? (res.reasons as string[]).map(String) : ['Bloqueada por el servidor'];
+            resolvedByIndex.set(idx, { product_id: null, blocked: reasons });
+            blockedRows.push({ sku: String(res.sku ?? ''), reason: reasons.join(' · ') });
+          } else {
+            resolvedByIndex.set(idx, { product_id: (res.product_id as string | null) ?? null });
+          }
+        });
+      } finally {
+        setIsImporting(false);
+      }
+    }
+
+    // ── Construcción de líneas de recepción ──
+    let resolveCursor = -1; // índice secuencial dentro de needsResolve
+    const newItems: ReceptionItem[] = [];
+    for (const r of classifiedRows) {
+      const isActionableClass = actionable.includes(r);
+      if (!isActionableClass) continue;
+
+      let productId: string | null = r.productId ?? r.existingProduct?.id ?? null;
+      let isNew = r.status === 'new'; // legacy: tienda no conectada
+
+      if (['activate_local', 'reactivate_master', 'new_master'].includes(r.status)) {
+        const skip = (r.status === 'reactivate_master' && !r.reactivationConfirmed)
+          || (r.status === 'new_master' && r.canCreateMaster === false);
+        if (skip) continue;
+        resolveCursor += 1;
+        const resolved = resolvedByIndex.get(resolveCursor);
+        if (!resolved || !resolved.product_id) continue; // bloqueada por el servidor
+        productId = resolved.product_id;
+        isNew = false; // ya existe (creado/activado por el escritor canónico)
+      }
+
+      newItems.push({
+        product_id: productId,
         sku: r.sku,
         name: r.name,
         quantity: r.quantity,
         unit_cost: r.unitCost,
         unit_of_measure: r.unitOfMeasure || 'unidad',
         sale_price: r.salePrice,
-        is_new: r.status === 'new',
+        is_new: isNew,
         update_price: r.status === 'price_changed',
         local_id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${r.sku}`,
         variant_id: null,
@@ -1048,34 +1299,53 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         moneda_recepcion: r.moneda || newMoneda,
         price_currency: newPriceCurrency,
         tasa_cambio_recepcion: r.tasa || newTasa,
-      }));
+      });
+    }
 
     // Merge with existing items (avoid duplicates by SKU)
     const existingSkus = new Set(items.map(i => i.sku.toLowerCase()));
     const toAdd = newItems.filter(ni => !existingSkus.has(ni.sku.toLowerCase()));
 
-    if (toAdd.length === 0) {
+    if (toAdd.length === 0 && blockedRows.length === 0) {
       toast.warning('Todos los productos del archivo ya estan en la recepcion');
       resetImportWizard();
       return;
     }
 
     setItems(prev => [...prev, ...toAdd]);
-    const newCount = toAdd.filter(i => i.is_new).length;
-    const existCount = toAdd.filter(i => !i.is_new && !i.update_price).length;
+
+    // ── Resumen con CIFRAS REALES (resultado del escritor canónico + filas) ──
+    const parts: string[] = ['Importacion completada'];
+    const identifiedCount = toAdd.filter(i => !i.is_new && i.product_id && !i.update_price).length;
+    const resolvedOk = (r: ClassifiedRow) => {
+      const idx = needsResolve.indexOf(r);
+      return idx >= 0 && !!resolvedByIndex.get(idx)?.product_id;
+    };
+    const activatedCount = classifiedRows.filter(r => r.status === 'activate_local' && resolvedOk(r)).length;
+    const reactivatedCount = classifiedRows.filter(r => r.status === 'reactivate_master' && r.reactivationConfirmed && resolvedOk(r)).length;
+    const mastersCreatedCount = classifiedRows.filter(r => r.status === 'new_master' && r.canCreateMaster !== false && resolvedOk(r)).length;
     const priceChangeCount = toAdd.filter(i => i.update_price).length;
-    const errorCount = importCounts.error;
+    const reviewCount = classifiedRows.filter(r => r.status === 'review').length
+      + unconfirmedReactivation.length + unauthorizedNewMaster.length
+      + (blockedRows.length - unconfirmedReactivation.length - unauthorizedNewMaster.length);
+    const errorCount = classifiedRows.filter(r => r.status === 'error').length;
 
-    const summaryParts: string[] = [
-      `Importacion completada`,
-      `${newCount} nuevo(s)`,
-    ];
-    if (existCount > 0) summaryParts.push(`${existCount} existente(s)`);
-    if (priceChangeCount > 0) summaryParts.push(`${priceChangeCount} con cambio de precio`);
-    if (errorCount > 0) summaryParts.push(`${errorCount} error(es)`);
-    summaryParts.push(`${toAdd.length} producto(s) agregados a la recepcion`);
+    parts.push(`Productos identificados: ${identifiedCount}.`);
+    if (activatedCount > 0) parts.push(`Productos activados en esta tienda: ${activatedCount}.`);
+    if (mastersCreatedCount > 0) parts.push(`Nuevos productos creados en el Catálogo Maestro: ${mastersCreatedCount}.`);
+    if (reactivatedCount > 0) parts.push(`Maestros reactivados globalmente: ${reactivatedCount}.`);
+    if (priceChangeCount > 0) parts.push(`${priceChangeCount} con cambio de precio.`);
+    if (reviewCount > 0) parts.push(`Productos que requieren revisión: ${reviewCount}.`);
+    if (errorCount > 0) parts.push(`Errores: ${errorCount}.`);
+    parts.push(`Líneas de recepción importadas: ${toAdd.length}.`);
 
-    toast.success(summaryParts.join(' · '), { duration: 5000 });
+    toast.success(parts.join(' '), { duration: 8000 });
+    if (blockedRows.length > 0) {
+      toast.warning(
+        `Filas bloqueadas (NO se crearon ni activaron):\n${blockedRows.slice(0, 6).map(b => `· ${b.sku || '(sin SKU)'}: ${b.reason}`).join('\n')}${blockedRows.length > 6 ? `\n… y ${blockedRows.length - 6} más` : ''}`,
+        { duration: 12000 },
+      );
+    }
     resetImportWizard();
   };
 
@@ -1241,7 +1511,78 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       // viaja con su objeto new_product DENTRO de p_items y la RPC crea el
       // producto y la recepción en la MISMA transacción: o se registra todo,
       // o no se registra nada.
-      const finalItems = [...items];
+      //
+      // CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 (§5/§6, 2026-11-16):
+      // en tienda CONECTADA al Catálogo Maestro, los items nuevos (alta manual,
+      // OCR o reintentos) se RESUELVEN PRIMERO con el escritor canónico
+      // (resolve_reception_import_rows): activación local / creación autorizada
+      // de maestro + fila local vinculada. Así la previsualización y el alta
+      // manual siguen el MISMO motor que el importador Excel y register_
+      // reception recibe product_ids ya resueltos. En tienda NO conectada el
+      // resolve devuelve new_local (sin escribir) y se conserva el flujo
+      // histórico (new_product dentro de p_items).
+      let finalItems = [...items];
+      const pendingNewItems = finalItems.filter(i => i.is_new && !i.product_id);
+      if (pendingNewItems.length > 0 && user?.activeStoreId) {
+        const resolvePayload = pendingNewItems.map(i => ({
+          sku: i.sku,
+          name: i.name,
+          quantity: i.quantity,
+          unit_cost: i.unit_cost,
+          unit_of_measure: i.unit_of_measure || 'unidad',
+          sale_price: i.sale_price,
+          price_currency: i.price_currency || 'CUP',
+        }));
+        const { data: resolveRes, error: resolveErr } = await supabase.rpc(
+          'resolve_reception_import_rows',
+          { p_store_id: user.activeStoreId, p_rows: resolvePayload, p_confirm_reactivation: [] },
+        );
+        if (resolveErr || !resolveRes) {
+          console.error('Error resolviendo productos nuevos de la recepción:', resolveErr);
+          toast.error(
+            `No se pudo preparar la recepción: ${resolveErr?.message ?? 'error del servidor'}. No se creó ni activó nada.`,
+            { duration: 9000 },
+          );
+          setIsSubmitting(false);
+          return;
+        }
+        const results = ((resolveRes as { results?: Record<string, unknown>[] }).results ?? []) as Record<string, unknown>[];
+        const resolvedIds = new Map<string, string>();
+        const blockedSkus: string[] = [];
+        results.forEach((res) => {
+          const sku = String(res.sku ?? '');
+          const action = String(res.action ?? '');
+          if (action === 'blocked') {
+            const reasons = Array.isArray(res.reasons) ? (res.reasons as string[]).map(String) : [];
+            blockedSkus.push(`${sku}: ${reasons[0] ?? 'requiere revisión'}`);
+          } else if (res.product_id) {
+            // Identificada/activada/creada por el escritor canónico → usar el product_id.
+            resolvedIds.set(sku.toLowerCase(), String(res.product_id));
+          }
+          // new_local (tienda no conectada): sin product_id — el flujo legacy
+          // new_product de register_reception se conserva.
+        });
+        // Fail-closed: conflicto fatal ⇒ la recepción NO se procesa en
+        // silencio (misión §10). Se informa y se detiene.
+        if (blockedSkus.length > 0) {
+          toast.error(
+            `No se registró la recepción. ${blockedSkus.length} producto(s) requieren revisión (no se creó ni activó nada):\n` +
+            blockedSkus.slice(0, 6).map(s => `· ${s}`).join('\n') +
+            (blockedSkus.length > 6 ? `\n… y ${blockedSkus.length - 6} más` : ''),
+            { duration: 12000 },
+          );
+          setIsSubmitting(false);
+          return;
+        }
+        // Items resueltos → referencian su product_id (sin new_product).
+        finalItems = finalItems.map(i => {
+          const pid = i.product_id ?? (i.is_new ? resolvedIds.get(i.sku.toLowerCase()) : undefined);
+          if (pid) {
+            return { ...i, product_id: pid, is_new: false };
+          }
+          return i;
+        });
+      }
       const autoCreatedSkus = finalItems.filter(i => i.is_new && !i.product_id).map(i => i.sku);
 
       // Call register_reception RPC
@@ -1745,6 +2086,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setNewPriceCurrency,
     isImportOpen,
     importStep,
+    importSummary,
+    toggleReactivationConfirm,
     setImportStep,
     classifiedRows,
     isImporting,
