@@ -1,0 +1,110 @@
+{
+  "mision": "CP-FIN-FINAL-VALUATION-EXECUTION-009",
+  "generado": "2026-11-16T16:12:41.788Z",
+  "autorizacion": "Propietario Nardian90 — misión 009 §1 (expresa)",
+  "moneda": "CUP",
+  "asiento_original": {
+    "id": "93bb5da9-0afd-4325-baad-a275710062c5",
+    "estado": "INTACTO — posted, sin reversa",
+    "document_type": "RECEPCION",
+    "document_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+    "movimientos": [
+      {
+        "cuenta": "ACT_INVENTARIO",
+        "sentido": "debito",
+        "importe": 192039436.0
+      },
+      {
+        "cuenta": "PAS_CXP_PROV",
+        "sentido": "credito",
+        "importe": 192039436.0
+      }
+    ]
+  },
+  "asientos_rectificacion": [
+    {
+      "operacion": "RECT-1",
+      "id": "7ec90009-0000-4000-8000-d0b300000001",
+      "document_type": "RECEPCION",
+      "document_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+      "document_number": "FAC-VITALLCONS-001-RECT",
+      "event": "ajuste_manual",
+      "reversal_of": "93bb5da9-0afd-4325-baad-a275710062c5",
+      "economic_date": "2026-07-01",
+      "posted_at": "2026-11-16 16:06:58.192805+00",
+      "status": "posted",
+      "description": "Rectificación CP-FIN-VALUATION-RECTIFICATION-003/004: reversión del exceso de reconocimiento SKU 111/112 (precio de venta importado como costo USD; costo real 1 CUP/u)",
+      "balance_debe": 0.0,
+      "total_operacion": 151299851.0,
+      "movimientos": [
+        {
+          "cuenta": "ACT_INVENTARIO",
+          "sentido": "credito",
+          "importe": 151299851.0,
+          "traza": {
+            "regla": "rect-inv-c",
+            "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+            "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+          }
+        },
+        {
+          "cuenta": "PAS_CXP_PROV",
+          "sentido": "debito",
+          "importe": 151299851.0,
+          "traza": {
+            "regla": "rect-cxp-d",
+            "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+            "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+          }
+        }
+      ]
+    },
+    {
+      "operacion": "RECT-2",
+      "id": "7ec90009-0000-4000-8000-d0b300000002",
+      "document_type": "AJUSTE_INVENTARIO",
+      "document_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+      "document_number": "FAC-VITALLCONS-001-RECT-SAL",
+      "event": "ajuste_manual",
+      "reversal_of": null,
+      "economic_date": "2026-11-15",
+      "posted_at": "2026-11-16 16:07:48.447449+00",
+      "status": "posted",
+      "description": "Rectificación CP-FIN-VALUATION-RECTIFICATION-003/004: reconocimiento de salidas nunca contabilizadas (6 u vales VS-37/138/139 + 18 u ajustes cuadre × 1 CUP)",
+      "balance_debe": 0.0,
+      "total_operacion": 24.0,
+      "movimientos": [
+        {
+          "cuenta": "ACT_INVENTARIO",
+          "sentido": "credito",
+          "importe": 24.0,
+          "traza": {
+            "regla": "rect-inv-c",
+            "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+            "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+          }
+        },
+        {
+          "cuenta": "GAS_PERDIDA_INV",
+          "sentido": "debito",
+          "importe": 18.0,
+          "traza": {
+            "regla": "rect-perdida-d",
+            "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+            "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+          }
+        },
+        {
+          "cuenta": "GAS_VALES",
+          "sentido": "debito",
+          "importe": 6.0,
+          "traza": {
+            "regla": "rect-vales-d",
+            "mision": "CP-FIN-VALUATION-RECTIFICATION-003/004",
+            "mision_ejecucion": "CP-FIN-FINAL-VALUATION-EXECUTION-009"
+          }
+        }
+      ]
+    }
+  ]
+}
