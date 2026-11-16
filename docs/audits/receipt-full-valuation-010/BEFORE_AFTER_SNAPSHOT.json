@@ -1,0 +1,149 @@
+{
+  "mision": "CP-FIN-RECEIPT-FULL-VALUATION-010",
+  "generado_utc": "2026-11-16T18:41:06.145Z",
+  "extraccion_referencia_utc": "2026-11-16T18:26:32.515Z",
+  "alcance": {
+    "receipt_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+    "documento": "FAC-VITALLCONS-001",
+    "fecha_operacional": "2026-07-01",
+    "proveedor": "Vitallcons",
+    "tienda": "ENERVIDA-VITALLCONS"
+  },
+  "metodo": "Hash SHA-256 de secciones de negocio entre la extracción read-only de referencia (durante la auditoría) y la re-extracción al cierre. m070 por Management API SELECT-only con guard de ref de producción. Ninguna escritura en producción.",
+  "secciones_comparadas": {
+    "receipt": {
+      "hash": "94598404192f7f8c",
+      "identica": true
+    },
+    "receipt_items": {
+      "hash": "95ddb2ad71d30a42",
+      "identica": true
+    },
+    "layers_fvc": {
+      "hash": "5eab0092a3db7b14",
+      "identica": true
+    },
+    "kardex_tipos": {
+      "hash": "93746183c3d9aa3e",
+      "identica": true
+    },
+    "rect1_verificacion": {
+      "hash": "b635cf912e340831",
+      "identica": true
+    },
+    "fin_entries_fvc": {
+      "hash": "464d05b3a211e3ce",
+      "identica": true
+    },
+    "fin_movements_fvc": {
+      "hash": "b6d7f90f2468ebac",
+      "identica": true
+    },
+    "payments_fvc": {
+      "hash": "4f53cda18c2baa0c",
+      "identica": true
+    },
+    "t12_trigger": {
+      "hash": "d43b45377a3b9dd7",
+      "identica": true
+    },
+    "fin_posting_errors_recientes": {
+      "hash": "8ac93b211a83fb81",
+      "identica": true
+    },
+    "capas_duplicadas": {
+      "hash": "4f53cda18c2baa0c",
+      "identica": true
+    },
+    "asientos_anulacion_fvc": {
+      "hash": "8ac93b211a83fb81",
+      "identica": true
+    },
+    "_kardex_bruto_con_timestamps": {
+      "identica": true
+    },
+    "_wac_bruto_con_timestamps": {
+      "identica": true
+    }
+  },
+  "veredicto_secciones": "TODAS IDÉNTICAS",
+  "antes": {
+    "importe_certificado_cup": 40739585.0,
+    "lineas": 101,
+    "capas": 101,
+    "monedas": {
+      "CUP": 81,
+      "USD": 20
+    },
+    "clasificacion": {
+      "A": 24,
+      "B": 2,
+      "C": 3,
+      "E": 71,
+      "F": 1
+    },
+    "sku111": {
+      "uc": 1.0,
+      "wac": 1.0,
+      "capa_uc": 1.0,
+      "stock": 8.8,
+      "precio_venta": 2000.0
+    },
+    "sku112": {
+      "uc": 1.0,
+      "wac": 1.0,
+      "capa_uc": 1.0,
+      "stock": 20.0,
+      "precio_venta": 1000.0
+    },
+    "deuda_proveedor": "unpaid — 0 pagos",
+    "t12": "activo",
+    "fin_posting_errors_post_rect2": 0,
+    "asientos_fvc": [
+      "93bb5da9 (RECEPCION reconocimiento 192.039.436 CUP, 2026-07-01)",
+      "RECT-1 ajuste_manual reversal_of=93bb5da9 (151.299.851 CUP)",
+      "RECT-2 ajuste_manual (GAS_VALES 6 + GAS_PERDIDA_INV 18 / ACT_INVENTARIO 24)"
+    ]
+  },
+  "despues": {
+    "importe_certificado_cup": 40739585.0,
+    "lineas": 101,
+    "capas": 101,
+    "monedas": {
+      "CUP": 81,
+      "USD": 20
+    },
+    "clasificacion": {
+      "A": 24,
+      "B": 2,
+      "C": 3,
+      "E": 71,
+      "F": 1
+    },
+    "sku111": {
+      "uc": 1.0,
+      "wac": 1.0,
+      "capa_uc": 1.0,
+      "stock": 8.8,
+      "precio_venta": 2000.0
+    },
+    "sku112": {
+      "uc": 1.0,
+      "wac": 1.0,
+      "capa_uc": 1.0,
+      "stock": 20.0,
+      "precio_venta": 1000.0
+    },
+    "deuda_proveedor": "unpaid — 0 pagos",
+    "t12": "activo",
+    "fin_posting_errors_post_rect2": 0,
+    "cambios_detectados": []
+  },
+  "veredicto": "SIN CAMBIOS — el estado de las 101 líneas y sus documentos asociados es idéntico antes y después de la misión 010 (auditoría 100% read-only; 0 escrituras).",
+  "actividad_comercial_posterior_documentada_no_modificada": {
+    "venta_sku111_1.2u_2026-11-16T18:05Z": "transacción 9bac8945, 1,2 u × 2.000 CUP, cost_at_sale 1 CUP (post-RECT-2, legítima)",
+    "precio_sku111_2500→2000_2026-10-22": "cambio de catálogo audit-logged (UPDATE_PRODUCT), ajeno a RECT-1",
+    "precio_sku112_currency_USD_2026-10-16": "configuración de catálogo previa al ciclo, no tocada",
+    "sku999_wac_443.83": "proviene de recepción ajena 44b8f20f (20 u × 680) y cuadres 2026-08-18; fuera de alcance"
+  }
+}
