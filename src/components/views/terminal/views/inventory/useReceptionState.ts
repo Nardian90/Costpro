@@ -1552,12 +1552,15 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         results.forEach((res) => {
           const sku = String(res.sku ?? '');
           const action = String(res.action ?? '');
-          if (action === 'blocked' || !res.product_id) {
+          if (action === 'blocked') {
             const reasons = Array.isArray(res.reasons) ? (res.reasons as string[]).map(String) : [];
             blockedSkus.push(`${sku}: ${reasons[0] ?? 'requiere revisión'}`);
-          } else {
+          } else if (res.product_id) {
+            // Identificada/activada/creada por el escritor canónico → usar el product_id.
             resolvedIds.set(sku.toLowerCase(), String(res.product_id));
           }
+          // new_local (tienda no conectada): sin product_id — el flujo legacy
+          // new_product de register_reception se conserva.
         });
         // Fail-closed: conflicto fatal ⇒ la recepción NO se procesa en
         // silencio (misión §10). Se informa y se detiene.

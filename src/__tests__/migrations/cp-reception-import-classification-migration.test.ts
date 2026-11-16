@@ -46,7 +46,10 @@ describe('20261116140100 — motor de clasificación del importador (misión §4
 
   it('helper: huérfano local ACTIVO se usa sin duplicar (bandera orphan_local)', () => {
     expect(s).toMatch(/INFO_ORPHAN_LOCAL/);
-    expect(s).toMatch(/'orphan_local', \(v_local IS NOT NULL AND v_local\.master_product_id IS NULL\)/);
+    expect(s).toMatch(/'orphan_local', \(v_local_found AND v_local\.master_product_id IS NULL\)/);
+    // Semántica de RECORD NULL (huérfanos): la existencia se captura con FOUND,
+    // jamás con «v_local IS NOT NULL» (falso si algún campo es NULL).
+    expect(s).toMatch(/v_local_found := FOUND;/);
   });
 
   it('helper: huérfano local + maestro con mismo SKU → revisión (sin auto-vínculo, §7)', () => {

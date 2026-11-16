@@ -455,9 +455,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // CP-FIN-T12-PRIVILEGE-HARDENING-001 (2026-11-16): +1 — 20261116120000_cp_
     //   fin_t12_privilege_hardening (REVOKE EXECUTE authenticated del helper
     //   fin_entry_reversal_residual; privilegio mínimo) = 175
-    expect(m.total_incluidos).toBe(175);
+    // CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 (2026-11-16): +2 —
+    //   20261116140000_cp_reception_master_catalog_integrity (regla estructural
+    //   anti-huérfanos + reactivación gobernador + fail-closed A5/A6/A7) y
+    //   20261116140100_cp_reception_import_classification (motor de
+    //   clasificación/resolución del importador) = 177
+    expect(m.total_incluidos).toBe(177);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(175);
+    expect(incluidos.length).toBe(177);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

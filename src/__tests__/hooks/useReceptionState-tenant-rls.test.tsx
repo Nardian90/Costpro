@@ -37,6 +37,7 @@ import React from 'react';
 // ── Mocks hoisted (compartidos con las factories de vi.mock) ──────────────
 const h = vi.hoisted(() => ({
   fromMock: vi.fn(),
+  rpcMock: vi.fn(),
   registerMock: vi.fn(),
   savePendingMock: vi.fn(),
   confirmPendingMock: vi.fn(),
@@ -45,7 +46,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/supabaseClient', () => ({
-  supabase: { from: h.fromMock },
+  supabase: { from: h.fromMock, rpc: h.rpcMock },
 }));
 
 vi.mock('@/store', () => ({
@@ -165,6 +166,38 @@ describe('useReceptionState — MISIÓN RECEPCIONES: alta transaccional + borrad
     catalogSkuRows = [];
     setupUser();
     installSupabaseMocks();
+    // CP-LOG-RECEPTION-...-001: executeSubmit resuelve los items nuevos con el
+    // escritor canónico ANTES de register_reception. Default del mock: la
+    // tienda NO está conectada al Catálogo Maestro → resolve devuelve
+    // new_local para todas las filas (sin escrituras) y el flujo legacy
+    // (new_product embebido en p_items) se conserva — exactamente el contrato
+    // que estos tests de regresión ejercitan.
+    h.rpcMock.mockReset();
+    h.rpcMock.mockImplementation((name: string, params: any) => {
+      if (name === 'resolve_reception_import_rows') {
+        const rows = (params?.p_rows ?? []) as any[];
+        return Promise.resolve({
+          data: {
+            status: 'success',
+            catalog_connected: false,
+            results: rows.map((r: any, i: number) => ({
+              index: i + 1, sku: r.sku, status: 'new_local',
+              action: 'legacy_register_reception', product_id: null, reasons: [],
+            })),
+            summary: {
+              identified: 0, masters_created: 0, masters_reactivated: 0,
+              locals_created: 0, locals_activated: 0, blocked: 0,
+              valid_lines: rows.length,
+            },
+          },
+          error: null,
+        });
+      }
+      if (name === 'classify_reception_import_rows') {
+        return Promise.resolve({ data: { catalog_connected: false, rows: [], summary: {} }, error: null });
+      }
+      return Promise.resolve({ data: null, error: null });
+    });
     h.registerMock.mockReset();
     h.registerMock.mockResolvedValue('REC-TEST-1');
     h.logReceptionMock.mockReset();
@@ -296,6 +329,12 @@ describe('useReceptionState — MISIÓN RECEPCIONES: alta transaccional + borrad
     act(() => { result.current.executeSubmit(); });
 
     await act(async () => {
+      // CP-LOG-RECEPTION-...-001: executeSubmit ahora AWAITA el resolve
+      // canónico antes de register_reception — el deferred del registerMock
+      // se arma unas vueltas de microtask más tarde. Flush determinista:
+      for (let i = 0; i < 100 && typeof resolveRpc !== 'function'; i++) {
+        await Promise.resolve();
+      }
       resolveRpc('REC-DOUBLE');
       await first;
     });
