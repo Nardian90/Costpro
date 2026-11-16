@@ -76,6 +76,7 @@ DECLARE
   v_master_name text;
   v_master_barcode text;
   v_local record;
+  v_local_found boolean := FALSE;
   v_name_candidates jsonb := '[]'::jsonb;
   v_can_create_master boolean := FALSE;
   v_result jsonb;
@@ -165,6 +166,10 @@ BEGIN
     FROM public.products
    WHERE store_id = p_store_id AND lower(btrim(sku)) = lower(v_sku)
    LIMIT 1;
+  -- NOTA PL/pgSQL: un RECORD con algún campo NULL (p.ej. master_product_id de
+  -- un huérfano) evalúa «IS NOT NULL» como FALSE (semántica de composITOR):
+  -- la existencia se captura con FOUND inmediatamente tras el SELECT.
+  v_local_found := FOUND;
 
   -- Maestro por SKU normalizado (SIN filtrar por status: activos y archivados).
   SELECT id, status, name, barcode
@@ -173,22 +178,22 @@ BEGIN
    WHERE tenant_id = p_tenant_id AND lower(btrim(sku)) = lower(v_sku)
    LIMIT 1;
 
-  IF v_local IS NOT NULL THEN
+  IF v_local_found THEN
     IF v_local.master_product_id IS NOT NULL THEN
-      -- Fila local vinculada: el estado LOCAL manda (activa = identificada).
-      IF v_local.is_active THEN
+      -- Fila local vinculada. La clase C (§5.C) domina por ESTADO GLOBAL del
+      -- maestro: archivado ⇒ producto EXISTENTE inactivo en el Catálogo
+      -- Maestro (requiere reactivación explícita), sin importar el estado
+      -- local. Con maestro activo: local activa ⇒ identificada (A); local
+      -- inactiva ⇒ activación en tienda (B).
+      IF v_master_status = 'archived' THEN
+        v_status := 'reactivate_master';
+        v_reasons := v_reasons || jsonb_build_array('INFO_REACTIVATION_SCOPE: la reactivación es GLOBAL: el producto quedará disponible para TODAS las tiendas conectadas de la organización. Requiere confirmación explícita y un gobernador del catálogo.');
+      ELSIF v_local.is_active THEN
         v_status := 'identified';
         v_product_id := v_local.id;
-        IF v_master_status = 'archived' THEN
-          v_reasons := v_reasons || '["INFO_MASTER_ARCHIVED: el maestro está archivado globalmente; la fila local activa se usa tal cual (reactivación solo si la gobernanza lo requiere)"]'::jsonb;
-        END IF;
       ELSE
-        -- Asociación local inactiva → activación en tienda (misión §5.B)…
-        IF v_master_status = 'archived' THEN
-          v_status := 'reactivate_master';
-        ELSE
-          v_status := 'activate_local';
-        END IF;
+        -- Asociación local inactiva → activación en tienda (misión §5.B).
+        v_status := 'activate_local';
       END IF;
     ELSE
       -- Huérfano histórico (sin vínculo): jamás duplicar ni auto-vincular (§7).
@@ -259,9 +264,9 @@ BEGIN
     'master_product_id', v_master_id,
     'master_status', v_master_status,
     'master_name', v_master_name,
-    'local_row_exists', v_local IS NOT NULL,
-    'local_is_active', (v_local IS NOT NULL AND v_local.is_active),
-    'orphan_local', (v_local IS NOT NULL AND v_local.master_product_id IS NULL),
+    'local_row_exists', v_local_found,
+    'local_is_active', (v_local_found AND v_local.is_active),
+    'orphan_local', (v_local_found AND v_local.master_product_id IS NULL),
     'can_create_master', v_can_create_master,
     'name_match_candidates', v_name_candidates,
     'reasons', v_reasons,
@@ -443,6 +448,7 @@ DECLARE
   v_masters_reactivated int := 0;
   v_blocked int := 0;
   v_valid_lines int := 0;
+  v_seen_skus text[] := '{}';
 BEGIN
   IF v_caller_uid IS NULL OR p_store_id IS NULL THEN
     RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
@@ -475,8 +481,28 @@ BEGIN
       v_class := public.fn_classify_reception_import_row(v_tenant, p_store_id, v_connected, v_row, v_caller_uid);
       v_status := v_class->>'status';
       v_sku := NULLIF(btrim(COALESCE(v_class->>'sku', '')), '');
-      v_name := NULLIF(btrim(COALESCE(p_row->>'name', '')), '');
+      v_name := NULLIF(btrim(COALESCE(v_row->>'name', '')), '');
       v_master_id := NULLIF(v_class->>'master_product_id', '')::uuid;
+
+      -- Duplicados de SKU dentro del lote (misión §5.E/§11.6): ambigüedad →
+      -- fila bloqueada. La clasificación por fila NO puede detectarlo (ve el
+      -- estado tras las escrituras de la fila anterior en la MISMA
+      -- transacción), por lo que el lote lo trackea aquí — igual que classify.
+      IF v_sku IS NOT NULL THEN
+        IF lower(v_sku) = ANY (v_seen_skus) THEN
+          v_blocked := v_blocked + 1;
+          v_errors := v_errors || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'blocked',
+            'reasons', to_jsonb(jsonb_build_array('ERR_SKU_DUPLICATE_FILE: el SKU "' || v_sku || '" aparece más de una vez en el archivo')));
+          v_results := v_results || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'error',
+            'action', 'blocked', 'product_id', NULL,
+            'reasons', to_jsonb(jsonb_build_array('ERR_SKU_DUPLICATE_FILE')));
+          CONTINUE;
+        ELSE
+          v_seen_skus := array_append(v_seen_skus, lower(v_sku));
+        END IF;
+      END IF;
 
       IF v_status = 'error' OR v_status = 'review' THEN
         v_blocked := v_blocked + 1;
@@ -515,11 +541,11 @@ BEGIN
       END IF;
 
       -- Datos locales de la fila (SOLO para la fila local de ESTA tienda).
-      v_price := COALESCE(NULLIF(p_row->>'sale_price', '')::numeric, 0);
-      v_cost := COALESCE(NULLIF(p_row->>'unit_cost', '')::numeric, 0);
-      v_uom := NULLIF(btrim(COALESCE(p_row->>'unit_of_measure', '')), '');
-      v_price_currency := COALESCE(NULLIF(btrim(COALESCE(p_row->>'price_currency', '')), ''), 'CUP');
-      v_barcode := NULLIF(btrim(COALESCE(p_row->>'barcode', '')), '');
+      v_price := COALESCE(NULLIF(v_row->>'sale_price', '')::numeric, 0);
+      v_cost := COALESCE(NULLIF(v_row->>'unit_cost', '')::numeric, 0);
+      v_uom := NULLIF(btrim(COALESCE(v_row->>'unit_of_measure', '')), '');
+      v_price_currency := COALESCE(NULLIF(btrim(COALESCE(v_row->>'price_currency', '')), ''), 'CUP');
+      v_barcode := NULLIF(btrim(COALESCE(v_row->>'barcode', '')), '');
 
       IF v_status = 'reactivate_master' THEN
         -- Clase C (misión §5.C): reactivación GLOBAL, explícita y autorizada.
@@ -707,10 +733,10 @@ BEGIN
         -- causa clara. Nada queda a medias (subtransacción por fila).
         v_blocked := v_blocked + 1;
         v_errors := v_errors || jsonb_build_object(
-          'index', v_idx, 'sku', COALESCE(v_sku, p_row->>'sku'), 'status', 'error',
+          'index', v_idx, 'sku', COALESCE(v_sku, v_row->>'sku'), 'status', 'error',
           'reasons', to_jsonb(jsonb_build_array('ERR_ROW_PROCESSING: ' || substr(SQLERRM, 1, 300))));
         v_results := v_results || jsonb_build_object(
-          'index', v_idx, 'sku', COALESCE(v_sku, p_row->>'sku'), 'status', 'error',
+          'index', v_idx, 'sku', COALESCE(v_sku, v_row->>'sku'), 'status', 'error',
           'action', 'blocked', 'product_id', NULL,
           'reasons', to_jsonb(jsonb_build_array('ERR_ROW_PROCESSING: ' || substr(SQLERRM, 1, 300))));
     END;
