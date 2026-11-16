@@ -75,6 +75,27 @@ async function loginUi(page: Page) {
 
 test.skip(!process.env.E2E_ADMIN_EMAIL || !process.env.E2E_ADMIN_PASS, 'credenciales UI del runner no disponibles');
 
+async function navigateToInventory(page: Page, mobile = false) {
+  if (mobile) {
+    // Móvil: el drawer arranca CERRADO (guard de montaje F1) → abrirlo con el
+    // toggle del Header (aria-label canónico del botón hamburguesa).
+    await page.getByRole('button', { name: 'Cambiar estado del menú' }).click();
+    await page.waitForTimeout(800);
+  }
+  await page.getByText('OPERACIÓN', { exact: true }).first().click();
+  await page.waitForTimeout(600);
+  await page.getByText('Almacén', { exact: true }).first().click();
+  await page.waitForTimeout(600);
+  await page.getByText('Inventario', { exact: true }).first().click();
+  await page.waitForTimeout(4000); // compilación bajo demanda + RPC paginada
+  if (mobile) {
+    // Decisión 2026-07-22: el drawer NO se cierra al navegar en móvil —
+    // cerrarlo tocando el overlay (backdrop z-30) para poder usar la vista.
+    await page.locator('div.fixed.inset-0.bg-black\\/50').click({ position: { x: 300, y: 400 } });
+    await page.waitForTimeout(800);
+  }
+}
+
 test('CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001 · selector Unitario/Importe — cálculo exacto, toggle sin escrituras y capturas', async ({ page }) => {
   // ── Vigilancia de escrituras (§9: alternar NO genera escrituras) ──
   const writeRequests: string[] = [];
@@ -95,12 +116,7 @@ test('CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001 · selector Unitario/Importe �
 
   // ── C1: login + navegación ──────────────────────────────────────────────
   await loginUi(page);
-  await page.getByText('OPERACIÓN', { exact: true }).first().click();
-  await page.waitForTimeout(600);
-  await page.getByText('Almacén', { exact: true }).first().click();
-  await page.waitForTimeout(600);
-  await page.getByText('Inventario', { exact: true }).first().click();
-  await page.waitForTimeout(4000); // compilación bajo demanda + RPC paginada
+  await navigateToInventory(page);
 
   // ── C2: selector presente junto a Filtros, Unitario por defecto ─────────
   const selector = page.getByRole('group', { name: 'Visualización de precios y costos' });
@@ -168,4 +184,63 @@ test('CP-INVENTORY-UNIT-VALUE-TO-STOCK-AMOUNT-001 · selector Unitario/Importe �
   const pageErrors = consoleErrors.filter((e) => e.startsWith('[pageerror]'));
   expect(pageErrors, `pageerror: ${pageErrors.join(' | ')}`).toHaveLength(0);
   if (consoleErrors.length > 0) console.log('[display-mode] console errors (informativo):', consoleErrors);
+});
+
+// ── MÓVIL (§10): 390×844 — selector sin desbordamiento, tarjeta responde ──
+test.describe('móvil', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('§10 · en móvil el selector sigue visible y la tarjeta muestra importes correctos', async ({ page }) => {
+    const writeRequests: string[] = [];
+    page.on('request', (req) => {
+      if ((req.method() === 'PATCH' || req.method() === 'POST') && /rest\/v1\/products/.test(req.url())) {
+        writeRequests.push(`${req.method()} ${req.url().slice(0, 120)}`);
+      }
+    });
+    page.on('pageerror', (err) => consoleErrors.push(`[pageerror] ${String(err).slice(0, 300)}`));
+
+    await loginUi(page);
+    await navigateToInventory(page, true);
+
+    // Selector visible en la barra móvil (etiqueta «Visualización» oculta <768px,
+    // pero los DOS botones quedan junto a Filtros — sin ocultarse ni desbordar)
+    const selector = page.getByRole('group', { name: 'Visualización de precios y costos' });
+    await selector.waitFor({ state: 'visible', timeout: 30_000 });
+    const btnUnitario = selector.getByRole('button', { name: 'Unitario' });
+    const btnImporte = selector.getByRole('button', { name: 'Importe' });
+    await expect(btnUnitario).toBeVisible();
+    await expect(btnImporte).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Filtros' })).toBeVisible();
+
+    // Modo default en móvil: tarjetas (InventoryCardView) — valor unitario
+    const card = page.locator('[role="listitem"]').first();
+    await card.waitFor({ state: 'visible', timeout: 30_000 });
+    let cardText = (await card.textContent()) ?? '';
+    expect(cardText).toContain('Precio');
+    const moneyMatches = cardText.match(/\$[\d,]+(?:\.\d{2})/g) ?? [];
+    expect(moneyMatches.length, `tarjeta con valor monetario: "${cardText.slice(0, 160)}"`).toBeGreaterThan(0);
+    const precioUnit = parseMoney(moneyMatches[0]);
+    // Existencia de la tarjeta (mismo origen stock_current)
+    const stockMatch = cardText.match(/Existencia\s*([\d.,]+)/);
+    expect(stockMatch, 'existencia legible en la tarjeta').toBeTruthy();
+    const stock = parseFloat((stockMatch as RegExpMatchArray)[1]);
+
+    await page.screenshot({ path: `${EVIDENCE_DIR}/modo-unitario-movil.png`, fullPage: false });
+
+    // Importe en móvil: misma aritmética que desktop
+    await btnImporte.click();
+    const cardAfter = page.locator('[role="listitem"]').first();
+    await expect(cardAfter.getByText('Importe precio')).toBeVisible({ timeout: 10_000 });
+    cardText = (await cardAfter.textContent()) ?? '';
+    expect(cardText).toContain(fmt(stock * precioUnit));
+
+    await page.screenshot({ path: `${EVIDENCE_DIR}/modo-importe-movil.png`, fullPage: false });
+
+    // Vuelta a Unitario sin escrituras
+    await btnUnitario.click();
+    const cardBackText = (await card.textContent()) ?? '';
+    expect(cardBackText).toContain('Precio');
+    expect(cardBackText, 'etiqueta compacta retirada al volver a Unitario').not.toContain('Importe precio');
+    expect(writeRequests, `escrituras móviles: ${writeRequests.join(' | ')}`).toHaveLength(0);
+  });
 });
