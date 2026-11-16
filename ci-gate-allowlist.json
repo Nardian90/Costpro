@@ -189,6 +189,12 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "fn_classify_reception_import_row",
+      "reason": "CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 · helper-interno · Helper interno STABLE SECURITY DEFINER del importador de recepciones (20261116140100). NO llama a auth.uid() por diseño: recibe p_caller_uid de su RPC envolvente; la verificación de acceso (has_store_access_as) la ejecutan classify_reception_import_rows y resolve_reception_import_rows. Exposición: EXECUTE revocado a PUBLIC/anon/authenticated (solo postgres+service_role); no invocable por clientes. Verificación viva 2026-11-16 en producción (recertificación §15.5, ACL grants=[postgres,service_role]).",
+      "added_by": "cp-log-reception-001-cierre",
+      "expires": "2027-11-30"
+    },
+    {
       "function": "fn_log_system_health",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
@@ -910,33 +916,6 @@
       ],
       "reason": "PR #1616 (ciclo devolución en divisa): migración 20261114140000 redefine create_devolution_v2 (tasa efectiva exacta en filas de reembolso USD/AS_PAID) CON AUTORIZACIÓN PENDIENTE — producción no debe tocarse sin decisión del propietario. El replay del PR diverge del surface certificado (vivo) hasta que la migración se aplique con autorización; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/nominas). El cuerpo propuesto está validado íntegro en BD E2E aislada (37/37 PASS + net delta 0).",
       "added_by": "CP-FIN misión final 2026-11-13 (PR #1616)",
-      "expires": "2026-12-31"
-    },
-    {
-      "function": "register_reception/11",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "PR (CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001): migración 20261116140000 redefine register_reception (fail-closed A5 rol / A6 maestro archivado / A7 vínculo ocupado; jamás filas huérfanas en tienda conectada) CON AUTORIZACIÓN PENDIENTE — producción no debe tocarse sin decisión del propietario. El replay del PR diverge del surface certificado (vivo) hasta aplicar la migración; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/1616). Cuerpo validado en BD E2E aislada.",
-      "added_by": "CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 (2026-11-16)",
-      "expires": "2026-12-31"
-    },
-    {
-      "function": "activate_master_product/4",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "PR (CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001): migración 20261116140000 redefine activate_master_product (re-activa fila local vinculada inactiva — operación canónica de la clase B del importador; ERR_LOCAL_CONFLICT accionable) CON AUTORIZACIÓN PENDIENTE. Política nominal 1 CUP VERBATIM. Al aplicar a producción se regenerará el surface y se retirará la excepción.",
-      "added_by": "CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 (2026-11-16)",
-      "expires": "2026-12-31"
-    },
-    {
-      "function": "create_transfer/7",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "PR (CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001): migración 20261116140000 redefine create_transfer (espejo con master_product_id del origen + tenant_id del destino; ERR_TRANSFER_MIRROR_NEEDS_MASTER en destino conectado sin maestro) CON AUTORIZACIÓN PENDIENTE. Al aplicar a producción se regenerará el surface y se retirará la excepción.",
-      "added_by": "CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 (2026-11-16)",
       "expires": "2026-12-31"
     }
   ]

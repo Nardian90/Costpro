@@ -126,7 +126,7 @@ Ambas idempotentes (CREATE OR REPLACE / DROP IF EXISTS), aplicadas y verificadas
 
 ## 13. Riesgos y limitaciones restantes
 
-1. **Migraciones NO aplicadas a producción**: el despliegue requiere autorización expresa del propietario (runbook: aplicar 20261116140000 y 20261116140100 → re-certificar `contract-surface.sql` → retirar las 3 entradas `source_of_truth_baseline` del `ci-gate-allowlist.json`).
+1. ~~**Migraciones NO aplicadas a producción**: el despliegue requiere autorización expresa del propietario~~ → **RESUELTO 2026-11-16 (§15): aplicadas y certificadas con autorización expresa del propietario.** Runbook completado: aplicar 20261116140000 y 20261116140100 → re-certificar `contract-surface.sql` → retirar las 3 entradas `source_of_truth_baseline` del `ci-gate-allowlist.json`.
 2. **Cambio de comportamiento deliberado (A6/A7)**: `register_reception` ahora RECHAZA (antes: creaba huérfano) ante maestro archivado o vínculo ocupado en tienda conectada. Cubierto por mensajes accionables; ninguna vía de la app usa ya ese camino (el importador bloquea antes).
 3. **Rol exigido para crear maestros desde recepciones** (A5/importador D): en tiendas conectadas, usuarios sin rol admin/manager/encargado ya no pueden crear identidad maestra desde una recepción (misión §6.3/§11.18). Los vendedores pueden recibir sobre productos existentes/activados con normalidad.
 4. **Ingesta legada** (`fn_process_receipt*`): queda bloqueada fail-closed por el guard en tiendas conectadas (por diseño); si algún flujo interno aún las usa sobre tiendas conectadas, debe migrarse al importador canónico. Hoy no hay llamadas en `src/`.
@@ -145,6 +145,90 @@ Ambas idempotentes (CREATE OR REPLACE / DROP IF EXISTS), aplicadas y verificadas
 7. ✅ Costos, precios y existencias propios por tienda (E2E 11).
 8. ✅ Recepción y WAC íntegros (E2E 12-13; precio de venta no contaminado en 14).
 9. ✅ E2E 20/20 + controles de seguridad PASS.
-10. ⏳ PR abierto con checks — pendiente de CI de GitHub (build local limitado por RAM del sandbox).
+10. ✅ PR #1636 fusionado con 9/9 checks satisfactorios (incluida la fase de sincronización con `main` y re-ejecución completa del CI).
 
 **El criterio fundamental queda satisfecho a nivel arquitectónico:** la regla vive en la BASE DE DATOS (trigger) y en los escritores canónicos, no solo en la pantalla.
+
+---
+
+## 15. DESPLIEGUE EN PRODUCCIÓN Y CERTIFICACIÓN FINAL (2026-11-16, adenda del cierre)
+
+Autorización expresa del propietario (adenda final «FINALIZACIÓN AUTORIZADA»): merge, migraciones de producción, despliegue, re-certificación y cierre.
+
+### 15.1 Pre-merge y sincronización
+
+- `main` avanzó 5 commits (CP-FIN-FINAL-VALUATION-EXECUTION-009, PR #1635) durante el ciclo del PR. La rama se sincronizó por merge `728fd8e3d` (sin conflictos; solapamiento único `scripts/lib/writers.manifest.json` en regiones distintas, verificado contenido fusionado con ambas series de entradas).
+- CI re-ejecutado íntegro sobre el head sincronizado: **9/9 success** (SQL Static, SQL DB Security, TS Security, Allowlist Review, TypeCheck+Lint+Unit+Build, E2E Aislado (project), Security Audit, Unit & Integration, Vercel Preview).
+- Escaneo de secretos en el diff: 0 coincidencias reales (6 alertas = falsos positivos: la cita del propio escaneo en este expediente y `process.env.*` en la spec E2E).
+- SHAs verificados de los archivos de migración contra el manifiesto de replay: `094527e6…` (50.958 B) y `8f18d153…` (41.793 B).
+
+### 15.2 Merge
+
+- **PR #1636 fusionado por el mecanismo normal (commit de merge, sin bypass):** SHA de merge `307aef1c2b778c6c0b79a4bc2baa1600c15956d6`.
+- `origin/main` contiene todos los commits del PR; diff pendiente rama↔main = vacío (verificado bidireccional).
+
+### 15.3 Secuencia de despliegue (compatibilidad)
+
+Las redefiniciones son CREATE OR REPLACE con firmas idénticas → **front antiguo + schema nuevo = compatible** (los cambios de conducta fail-closed A5/A6/A7 son el fix pretendido). Front nuevo exige las RPC nuevas → la ventana «front nuevo + schema viejo» no debe existir. Secuencia aplicada: **merge → aplicar migraciones inmediatamente (mientras Vercel compila) → promo Vercel**. Ventana resultante: front antiguo + schema nuevo (compatible), sin ventana incompatible en ningún tramo.
+
+### 15.4 Migraciones aplicadas en producción (mecanismo canónico)
+
+- Canal oficial: Management API (`mechanism: management_api`), patrón runbook m055 — script `scripts/m-log-reception-apply.mjs` (declarado `guardProtected` en `writers.manifest.json`): guard CP-INFRA-019 modo WRITE + doble flag, SHA-256 de ambos archivos contra los hashes aprobados, pre-chequeo del libro (no registradas; última fila `20261116120000`), **un único POST exacto por migración**, `NOTIFY pgrst 'reload schema'`, registro en `production_migration_ledger`, verificación post-estado.
+- `20261116140000_cp_reception_master_catalog_integrity.sql` — **HTTP 201**, SHA-256 `094527e6f5d3c18411b164925327c616b3512413105333a4f294c98cddb6cfaf`.
+- `20261116140100_cp_reception_import_classification.sql` — **HTTP 201**, SHA-256 `8f18d153485f6d632151432da1b9639ac913f00a23fd7c5c06f95ebb55bf7fcd`.
+- Libro: ambas registradas `status=applied`; replay de migraciones `--check` **MATCH sin deriva** (`35105964…`). Evidencia: `audit-evidence/cp-log-reception-001/m-log-apply-evidence.json`.
+- Restricción de datos respetada: sin limpieza masiva; huérfanos históricos conservados (ver 15.6).
+
+### 15.5 Recertificación del Catálogo Maestro en producción (solo lectura) — 35/35 OK
+
+- **A. Trigger estructural**: `trg_products_master_link_guard` instalado, `tgenabled='O'` (activo), `BEFORE INSERT OR UPDATE OF is_active, master_product_id, store_id, tenant_id…`; cuerpo == migración (SHA `b7e0983a…`).
+- **B. Activaciones**: `activate_master_product` y `reactivate_master_product` — cuerpos == migración (`33cfa6eb…` / `bf9ba52d…`), ACL `authenticated+service_role` (sin anon/PUBLIC), reactivación auditada scope global (`REACTIVATE_MASTER_PRODUCT` + `master_change_log`), rol exigido (`ERR_UNAUTHORIZED`), activación local re-activa fila inactiva y `ERR_LOCAL_CONFLICT` accionable.
+- **C. Recepciones**: `register_reception` cuerpo == migración (`7bd2bca2…`); A6 `ERR_MASTER_ARCHIVED`, A7 `ERR_MASTER_LINK_CONFLICT`, A5 `ERR_UNAUTHORIZED_MASTER_CREATE`; WAC y trazabilidad intactos.
+- **D. Traspasos**: `create_transfer` cuerpo == migración (`0fed4818…`); espejo exige maestro en destino conectado (`ERR_TRANSFER_MIRROR_NEEDS_MASTER`) y porta `master_product_id` + tenant.
+- **E. Importador**: `fn_classify_reception_import_row` (interno, NO ejecutable por clientes), `classify_reception_import_rows` **STABLE** read-only (`provolatile=s`, `search_path=public`), `resolve_reception_import_rows` escritor canónico — cuerpos == migración (`2680781…`/`c90f628d…`/`20d5c17d…`). Sonda read-only vía PostgREST (service_role): SKU inexistente → `new_master` con resumen del backend (`computed_by: backend`); SKU existente (174) → `identified` (clase A).
+
+### 15.6 Integridad de datos (históricos intactos)
+
+- Huérfanos en tiendas conectadas: **activos=0, inactivos=0** (tras migración, sin fila nueva sin vínculo).
+- Census: 419 productos totales (380 en las 4 tiendas conectadas), **260 maestros** (1 archivado: `QA-CM-20261030-01`, prueba técnica — sin cambios), 4 tiendas conectadas + 1 desconectada (comportamiento legacy preservado).
+- Ningún producto, costo, precio, existencia o recepción histórica modificado fuera de las migraciones aprobadas.
+
+### 15.7 Contract-surface y retirada de excepciones temporales
+
+- Surface re-exportado desde producción LIVE tras el despliegue: **210 funciones** SECURITY DEFINER (`sha256=5f96a1f1…`) — incluye las 4 redefinidas y las 2 nuevas escritoras.
+- **3 entradas temporales `source_of_truth_baseline` retiradas** (`register_reception/11`, `activate_master_product/4`, `create_transfer/7` — cubrían el BODY_DRIFT previo al despliegue): allowlist 4 → 1; se conserva la entrada legítima `create_devolution_v2/12` de otra misión.
+- **Hallazgo post-despliegue en el SQL Security Gate (DB)**: tras aplicar las migraciones, el gate detecta el nuevo helper interno `fn_classify_reception_import_row` como «SECURITY DEFINER sin auth check» (por diseño no llama a `auth.*`: recibe `p_caller_uid` de su RPC envolvente; la verificación `has_store_access_as` la ejecutan `classify/resolve`; EXECUTE revocado a PUBLIC/anon/authenticated — verificado en §15.5). Añadida su entrada justificada a `security_definer_without_auth_check` (patrón de los demás helpers internos del repo, p. ej. `is_admin_check`); allowlist 116 → 117.
+- Contrato estático (capas A/B/C): **CONTRATO OK** — 210/210 funciones representadas en migraciones, **0 divergencias bloqueantes**; 2 warnings MEDIUM/LOW preexistentes (cancel_transfer, reset_store_data — semántica idéntica al LIVE, ajenos a esta misión).
+- Contrato LIVE: **210/210 funciones pasan, 0 violaciones**.
+
+### 15.8 Despliegue Vercel y salud de producción
+
+- Vercel desplegó **Production** para el SHA de merge `307aef1c2` (creado 2026-11-16T17:18:18Z, estado success; URL de gestión: `https://vercel.com/nardian90s-projects/costpro/HfRqfA1o8geuMQDMmPYcqXoC9ewn`).
+- `https://costpro4.vercel.app/api/health` → **HTTP 200** `{"status":"ok"}`; root → HTTP 200.
+- RPC nuevas disponibles en producción; `classify_reception_import_rows` sin auth → HTTP 401 (correctamente protegida, no accesible a anon).
+- Estado de conexiones con el Catálogo Maestro: 4 conectadas + 1 desconectada (sin cambios).
+- No se ejecutaron altas de productos, recepciones ficticias ni movimientos de prueba en producción (la prueba de escrituras corresponde a la base E2E aislada, §9).
+
+### 15.9 PR complementario de conciliación post-despliegue
+
+**PR #1637** (`chore/cp-log-reception-conciliacion-20261116`, este PR): regeneración del contract-surface LIVE, retirada de las 3 entradas temporales, aplicador de migraciones declarado en el manifiesto de escritores, evidencia de aplicación (`audit-evidence/cp-log-reception-001/`) y esta adenda §15. CI y fusión por el procedimiento normal, sin commits directos a `main`. SHA del merge: registro en el historial del PR #1637 y en el worklog de la sesión.
+
+### 15.10 Controles finales (post-fusión #1636, sobre el contenido integrado)
+
+| Control | Ejecución | Resultado |
+|---|---|---|
+| Pruebas unitarias + integración (vitest) | LOCAL ahora | **6116 pasan / 0 fallan** (95 skip normales; 455 archivos) |
+| ESLint | LOCAL ahora | **0 errores** (1569 warnings preexistentes) |
+| TypeScript (`tsc --noEmit`) | CI (runner 16 GB) — el sandbox OOM (exit 137, limitación documentada §13.7; sin cambios de TS en este PR) | Check CI «TypeCheck + Lint + Unit Tests + Build» del PR #1637 (autoritativo) |
+| Suite E2E aislada (20 escenarios) | CI (workflow E2E Aislado) sobre head del PR | Evidencia histórica del PR #1636: 20/20 PASS + net delta 0; re-ejecución CI en #1637 |
+| SQL Security Gate (estático) | LOCAL ahora | Checks generados íntegros (secdef_no_auth, secdef_public_grant, tables_no_rls, __canary__) |
+| SQL Security Gate (DB) | CI sobre BD aislada | Check CI «SQL DB Security Checks» |
+| Security Audit | CI | Check CI «Security Audit» |
+| check-writers | LOCAL ahora | OK — 218 escritores detectados, todos declarados |
+| Guard de operaciones destructivas | CI (CP-INFRA-020) | Check CI «TypeScript Security Checks» / Security Audit |
+| Validación RLS | CI (SQL DB Security) + contrato | CONTRATO OK |
+| Replay de migraciones | LOCAL ahora | `--check` MATCH sin deriva (`35105964…`) |
+| ledger-sync-check | LOCAL ahora | **OK** — libro sincronizado con el repo; 0 migraciones aplicadas sin registrar (2 SIN_APLICAR preexistentes y documentadas, pendientes de compuerta — no atribuibles a esta misión) |
+| Contract-surface estático (A/B/C) | LOCAL ahora | CONTRATO OK — 210/210, 0 divergencias bloqueantes |
+| Contract-surface LIVE | LOCAL ahora | 210/210 pasan, 0 violaciones |
+| Libro de migraciones | LOCAL ahora | Ambas migraciones `applied` en `production_migration_ledger` (libro canónico del proyecto, mecanismo `management_api` — igual que las migraciones de noviembre precedentes) |

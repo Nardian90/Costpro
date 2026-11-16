@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-15T18:30:22.067Z
+-- Captured  : 2026-11-16T17:25:05.876Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 208 (SECURITY DEFINER write functions, public schema)
+-- Functions : 210 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -157,6 +157,7 @@ DECLARE
   v_existing uuid;
   v_product_id uuid;
   v_existing_ca numeric;
+  v_existing_is_active boolean;
 BEGIN
   IF v_caller_uid IS NULL OR p_master_id IS NULL OR p_store_id IS NULL THEN
     RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
@@ -189,15 +190,43 @@ BEGIN
     RAISE EXCEPTION 'ERR_STORE_NOT_CONNECTED: la tienda % no usa el catálogo de la organización', p_store_id;
   END IF;
 
-  -- Idempotencia: máx. una fila local por (maestro, tienda). Si la fila ya
-  -- existía y el usuario pidió una clasificación, se aplica AQUÍ (misma
-  -- transacción): un re-intento de activación corrige la clasificación sin
-  -- efectos colaterales. PROHIBIDO tocar cost_average aquí: la reactivación
-  -- NUNCA degrada el WAC existente (política CP-VALUATION-NOMINAL-ACTIVATION-
-  -- 004 §4); el WAC solo lo escribe fn_recalc_wac (guard W62-01).
-  SELECT id, cost_average INTO v_existing, v_existing_ca FROM public.products
+  -- Conflicto previo accionable: fila local huérfana con el MISMO SKU del
+  -- maestro (histórico sin vínculo). ANTES: 23505 crudo de
+  -- products_sku_store_unique. Ahora: error claro. NO se auto-vincula
+  -- (misión §7: la conciliación de huérfanos históricos es revisión
+  -- explícita, jamás automática).
+  IF EXISTS (
+    SELECT 1 FROM public.products
+     WHERE store_id = p_store_id AND sku = v_master.sku
+       AND (master_product_id IS NULL OR master_product_id <> p_master_id)
+  ) THEN
+    RAISE EXCEPTION 'ERR_LOCAL_CONFLICT: la tienda ya tiene un producto local con SKU "%" sin vínculo a este maestro. Concilie el histórico (incorporación al catálogo) antes de activar; no se crea duplicado.', v_master.sku;
+  END IF;
+
+  -- Idempotencia: máx. una fila local por (maestro, tienda).
+  -- CP-LOG-RECEPTION-...-001 §5.B: si la fila local vinculada existe pero
+  -- está INACTIVA, la activación local ES la operación canónica: se pone
+  -- is_active=true SIN tocar costos, precios ni clasificación existente
+  -- (misión: «No sobrescribas costos documentales ni precios de venta
+  -- existentes al activar un producto maestro»).
+  SELECT id, cost_average, is_active INTO v_existing, v_existing_ca, v_existing_is_active
+   FROM public.products
    WHERE master_product_id = p_master_id AND store_id = p_store_id;
   IF v_existing IS NOT NULL THEN
+    IF NOT v_existing_is_active THEN
+      UPDATE public.products SET is_active = true WHERE id = v_existing;
+      INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+      VALUES ('ACTIVATE_MASTER_PRODUCT', 'master_products', p_master_id, p_store_id, v_caller_uid,
+              jsonb_build_object('product_id', v_existing, 'tenant_id', v_tenant,
+                'local_reactivated', true, 'cost_average', v_existing_ca,
+                'cost_average_origin', 'preexistente_intacto',
+                'policy', 'CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001'));
+      RETURN jsonb_build_object('status','success','already_active', false,
+        'product_id', v_existing, 'master_product_id', p_master_id,
+        'local_reactivated', true,
+        'cost_average', v_existing_ca,
+        'cost_average_origin', 'preexistente_intacto');
+    END IF;
     IF p_operational_class IS NOT NULL THEN
       UPDATE public.products
          SET operational_class = p_operational_class
@@ -217,8 +246,7 @@ BEGIN
   -- costo promedio nace NOMINAL en 1 CUP (nunca 0): estado INICIAL de la fila
   -- por INSERT (el guard trg_guard_wac_writer vigila UPDATEs de cost_average,
   -- no INSERTs); la primera recepción real lo sustituye por el costo real
-  -- exacto vía fn_recalc_wac (blend D-01, S=0). Patrón idéntico al importador
-  -- (20261114190200): cost_average en el INSERT + origen reportado.
+  -- exacto vía fn_recalc_wac (blend D-01, S=0).
   INSERT INTO public.products
     (store_id, tenant_id, master_product_id, sku, name, description, image_url,
      unit_of_measure, is_service, price, price_currency, cost_price, cost_average,
@@ -6646,6 +6674,7 @@ DECLARE
   v_effective_date TIMESTAMP WITH TIME ZONE := COALESCE(p_operation_date, NOW());
   v_origin_store RECORD;
   v_dest_store RECORD;
+  v_dest_connected BOOLEAN := FALSE;
 BEGIN
   IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_origin_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
@@ -6663,10 +6692,10 @@ BEGIN
     RAISE EXCEPTION 'ERR_SAME_STORE';
   END IF;
 
-  -- MISIÓN POLÍTICA TEMPORAL (2026-10-18): gate canónico de fechas. Este RPC
-  -- se invoca DIRECTO desde el navegador (transfer-service), por lo que esta
-  -- era la única capa de servidor posible: sin gate, cualquier fecha (futura
-  -- incluida) persistía en transfers.created_at y en el MAX de la tienda.
+  -- CP-LOG-RECEPTION-...-001: el espejo respeta la regla estructural si el
+  -- destino está conectado al Catálogo Maestro (se resuelve UNA vez por RPC).
+  v_dest_connected := public.is_catalog_store_connected(v_dest_store.tenant_id, p_destination_store_id);
+
   PERFORM public.validate_operation_date(v_effective_date, p_origin_store_id);
 
   INSERT INTO public.transfers (
@@ -6687,6 +6716,7 @@ BEGIN
     SELECT p.id, p.stock_current, p.cost_average, p.sku, p.name, p.unit_of_measure,
            p.description, p.category, p.price, p.price_currency,
            COALESCE(p.is_service, false) AS is_service,
+           p.master_product_id,
            p.stock_current - COALESCE(
              (SELECT SUM(r.quantity) FROM public.inventory_reservations r
               WHERE r.product_id = p.id AND r.store_id = p.store_id AND r.status = 'ACTIVE'),
@@ -6699,9 +6729,6 @@ BEGIN
 
     IF NOT FOUND THEN RAISE EXCEPTION 'ERR_PRODUCT_NOT_FOUND: %', v_pid; END IF;
 
-    -- MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): rechazo explícito de servicios.
-    -- Un artículo intangible no tiene existencias transferibles entre
-    -- almacenes; el bloqueo accidental por stock 0 era un error confuso.
     IF v_origin_product.is_service THEN
       RAISE EXCEPTION 'ERR_SERVICE_NOT_TRANSFERABLE: el producto % (SKU %) es un servicio (is_service=true) y no tiene existencias transferibles entre almacenes',
         v_origin_product.name, v_origin_product.sku;
@@ -6723,15 +6750,24 @@ BEGIN
     WHERE sku = v_origin_product.sku AND store_id = p_destination_store_id
     LIMIT 1;
 
-    -- H-049: Si no existe, crear producto espejo con MÁS campos copiados
-    -- MISIÓN TIPO-DE-ARTÍCULO: el espejo copia también is_service.
+    -- H-049: Si no existe, crear producto espejo con MÁS campos copiados.
+    -- CP-LOG-RECEPTION-...-001 §7: el espejo porta la identidad maestra del
+    -- origen (master_product_id) y el tenant REAL del destino. Si el destino
+    -- está conectado y el origen NO tiene maestro, el traspaso se rechaza con
+    -- error accionable: NO se crea un huérfano operativo en destino.
     IF v_dest_product IS NULL THEN
+      IF v_dest_connected AND v_origin_product.master_product_id IS NULL THEN
+        RAISE EXCEPTION 'ERR_TRANSFER_MIRROR_NEEDS_MASTER: el producto % (SKU %) no está vinculado al Catálogo Maestro y la tienda destino está conectada. Incorpore el producto al catálogo (o vincule su histórico) antes de transferirlo; no se crea un producto independiente en la tienda conectada.',
+          v_origin_product.name, v_origin_product.sku;
+      END IF;
       INSERT INTO public.products (
-        store_id, sku, name, description, unit_of_measure,
+        store_id, tenant_id, master_product_id, sku, name, description, unit_of_measure,
         stock_current, cost_average, cost_price, price, price_currency,
         is_active, category, is_service
       ) VALUES (
         p_destination_store_id,
+        v_dest_store.tenant_id,
+        v_origin_product.master_product_id,
         v_origin_product.sku,
         v_origin_product.name,
         COALESCE(v_origin_product.description, v_origin_product.name),  -- H-049: descripción real
@@ -12176,6 +12212,65 @@ END;
 $function$
 
 
+-- @contract-function name=reactivate_master_product args="p_master_id uuid, p_origin_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reactivate_master_product(p_master_id uuid, p_origin_store_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_tenant uuid;
+  v_status text;
+BEGIN
+  IF v_caller_uid IS NULL OR p_master_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+
+  SELECT tenant_id, status INTO v_tenant, v_status
+    FROM public.master_products WHERE id = p_master_id FOR UPDATE;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_MASTER_NOT_FOUND: %', p_master_id;
+  END IF;
+
+  -- Autorización: SOLO gobernador del catálogo (paridad update_master_product;
+  -- la reactivación es una decisión de gobernanza con alcance GLOBAL).
+  IF NOT public.is_catalog_governor(v_tenant, v_caller_uid) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo un gobernador del catálogo puede reactivar un producto maestro (alcance global: disponible para todas las tiendas conectadas)';
+  END IF;
+
+  IF v_status = 'active' THEN
+    RETURN jsonb_build_object('status','success','already_active', true,
+      'master_product_id', p_master_id);
+  END IF;
+  IF v_status IS DISTINCT FROM 'archived' THEN
+    RAISE EXCEPTION 'ERR_MASTER_INVALID_STATUS: %', v_status;
+  END IF;
+
+  UPDATE public.master_products
+     SET status = 'active', updated_at = now()
+   WHERE id = p_master_id;
+
+  INSERT INTO public.master_change_log
+    (master_product_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
+  VALUES
+    (p_master_id, v_tenant, 'status', 'archived', 'active', v_caller_uid, p_origin_store_id);
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('REACTIVATE_MASTER_PRODUCT', 'master_products', p_master_id, p_origin_store_id, v_caller_uid,
+          jsonb_build_object('tenant_id', v_tenant, 'scope', 'global',
+            'previous_status', 'archived',
+            'origin', CASE WHEN p_origin_store_id IS NULL THEN 'catalog_governance'
+                           ELSE 'reception_import' END));
+
+  RETURN jsonb_build_object('status','success','already_active', false,
+    'master_product_id', p_master_id, 'tenant_id', v_tenant);
+END;
+$function$
+
+
 -- @contract-function name=receive_against_po args="p_po_id uuid, p_received_items jsonb, p_user_id uuid, p_reception_date timestamp with time zone, p_invoice_number text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.receive_against_po(p_po_id uuid, p_received_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT NULL::text)
  RETURNS jsonb
@@ -13277,19 +13372,14 @@ BEGIN
     RAISE EXCEPTION 'Unauthorized store access';
   END IF;
 
-  -- B2 (v2.23.0): Supplier is required
   IF p_supplier IS NULL OR p_supplier = '' THEN
     RAISE EXCEPTION 'ERR_SUPPLIER_REQUIRED: supplier is mandatory';
   END IF;
 
-  -- B3 (v2.23.0): Items array must not be empty
   IF p_items IS NULL OR jsonb_array_length(p_items) = 0 THEN
     RAISE EXCEPTION 'ERR_EMPTY_ITEMS: at least one item is required';
   END IF;
 
-  -- D1 (misión recepciones 2026-10-27): factura duplicada → error accionable.
-  -- Antes este caso reventaba como 23505 crudo (idx_receipts_store_reference_doc)
-  -- y el frontend lo clasificaba erróneamente como "SKU ya existe".
   IF p_invoice_number IS NOT NULL AND btrim(p_invoice_number) <> '' AND EXISTS (
     SELECT 1 FROM public.receipts
     WHERE store_id = p_store_id
@@ -13303,7 +13393,6 @@ BEGIN
     id, store_id, user_id, supplier, reception_date,
     reference_doc, total_cost, status, created_at, updated_at,
     po_id,
-    -- CLASIFICATOR-PARTIES (2026-11-04): snapshot identificativo del proveedor
     supplier_code, supplier_address, supplier_phone, supplier_tax_id
   ) VALUES (
     v_receipt_id, p_store_id, v_user_id, p_supplier,
@@ -13318,16 +13407,10 @@ BEGIN
     v_quantity := (v_item->>'quantity')::NUMERIC;
     v_unit_cost := COALESCE((v_item->>'unit_cost')::NUMERIC, 0);
 
-    -- B4 (v2.23.0): Reject items with unit_cost <= 0
     IF v_unit_cost <= 0 THEN
       RAISE EXCEPTION 'ERR_INVALID_UNIT_COST: unit_cost must be > 0 for product %', v_product_id;
     END IF;
 
-    -- D2 (misión recepciones 2026-10-27): alta transaccional del producto
-    -- nuevo. Un item SIN product_id pero CON objeto new_product crea el
-    -- producto DENTRO de esta transacción: si cualquier paso posterior de la
-    -- recepción falla, el producto se revierte con todo lo demás (sin
-    -- huérfanos). La ambigüedad product_id + new_product se rechaza.
     IF v_item ? 'new_product' THEN
       IF v_product_id IS NOT NULL THEN
         RAISE EXCEPTION 'ERR_AMBIGUOUS_ITEM: el item trae product_id y new_product a la vez';
@@ -13343,16 +13426,12 @@ BEGIN
       IF v_new_sku = ANY (v_created_skus) THEN
         RAISE EXCEPTION 'ERR_SKU_DUPLICATE_PAYLOAD: el SKU "%" aparece más de una vez entre los productos nuevos de la recepción', v_new_sku;
       END IF;
-      -- Unicidad REAL contra el catálogo de la tienda (mismo modelo que
-      -- products_sku_store_unique). Mensión misión: si ya existe, el usuario
-      -- debe SELECCIONARLO como existente, no crearlo de nuevo.
       IF EXISTS (
         SELECT 1 FROM public.products
         WHERE store_id = p_store_id AND sku = v_new_sku
       ) THEN
-        RAISE EXCEPTION 'ERR_SKU_EXISTS: el SKU "%" ya existe en el catálogo de esta tienda. Selecciona el producto existente en lugar de crearlo de nuevo.', v_new_sku;
+        RAISE EXCEPTION 'ERR_SKU_EXISTS: el SKU "%" ya existe en el catálogo de esta tienda. Selecciona el producto existente (o actívalo desde el Catálogo Maestro con el asistente de importación) en lugar de crearlo de nuevo.', v_new_sku;
       END IF;
-      -- tenant fail-closed (paridad products_tenant_insert / RLS-FIX cliente)
       IF v_new_tenant_id IS NULL THEN
         SELECT tenant_id INTO v_new_tenant_id FROM public.stores WHERE id = p_store_id;
         IF v_new_tenant_id IS NULL THEN
@@ -13360,32 +13439,7 @@ BEGIN
         END IF;
       END IF;
 
-      -- ═════════════════════════════════════════════════════════════════════
-      -- CP-CAT-MAESTRO-003 (2026-11-07): SINCRONIZACIÓN CON EL CATÁLOGO MAESTRO.
-      -- Causa raíz corregida: hasta ahora el producto nuevo creado desde una
-      -- Recepción se guardaba SOLO en el catálogo local; en una tienda conectada
-      -- al catálogo maestro quedaba fuera de la identidad compartida de la
-      -- organización (desfase detectado en Enervida: 10 productos, SKUs 187-196).
-      -- La operación (producto local + identidad compartida + vínculo) es UNA
-      -- transacción: si algo falla, la recepción completa se revierte — jamás
-      -- quedan huérfanos ni confirmación de éxito sin persistencia real.
-      -- Reglas (misión CP-CAT-MAESTRO-003 §4):
-      --   CASO B · Tienda NO conectada → alta local pura (comportamiento exacto
-      --            anterior; sin maestro, sin relaciones).
-      --   CASO A4 · Maestro ACTIVO con ese SKU → se VINCULA vía
-      --            products.master_product_id; el trigger
-      --            trg_products_master_identity_guard coerciona sku/name al
-      --            maestro. Jamás un segundo registro maestro. Precio, costo,
-      --            existencias y demás datos comerciales siguen siendo locales.
-      --   CASO A5 · Maestro inexistente → se CREA (SOLO identidad: sku, nombre,
-      --            unidad; imagen/código NULL; jamás precio/costo/existencias),
-      --            con auditoría en master_change_log + audit_logs. Carrera
-      --            entre tiendas: unique_violation → reutiliza el maestro
-      --            ganador (un solo maestro por organización).
-      --   CASO A6 · Maestro ARCHIVADO → fila local SIN vínculo + conflicto
-      --            auditado para revisión de gobernanza. La recepción JAMÁS se
-      --            bloquea por un error secundario de sincronización.
-      -- ═════════════════════════════════════════════════════════════════════
+      -- CP-CAT-MAESTRO-003 (2026-11-07) + CP-LOG-RECEPTION-...-001 (2026-11-16)
       v_store_connected := public.is_catalog_store_connected(v_new_tenant_id, p_store_id);
 
       IF v_store_connected THEN
@@ -13402,30 +13456,11 @@ BEGIN
            WHERE master_product_id = v_master_id AND store_id = p_store_id
         ) THEN
           -- CASO A7 · vínculo ya ocupado por otra fila local (inconsistencia
-          -- previa tras reetiquetado): NO se duplica el vínculo (índice único
-          -- parcial products_master_store_unique); fila local sin vínculo y
-          -- conflicto documentado para revisión.
-          INSERT INTO public.products (
-            store_id, tenant_id, sku, name, cost_price, price,
-            unit_of_measure, is_active, is_complete, stock_current
-          ) VALUES (
-            p_store_id, v_new_tenant_id, v_new_sku, btrim(v_new_product->>'name'),
-            COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
-            COALESCE((v_new_product->>'price')::NUMERIC, 0),
-            COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
-            TRUE,
-            COALESCE((v_new_product->>'is_complete')::BOOLEAN, TRUE),
-            0
-          ) RETURNING id INTO v_product_id;
-
-          INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
-          VALUES ('RECEPTION_MASTER_CONFLICT', 'master_products', v_master_id, p_store_id, v_caller_uid,
-            jsonb_build_object(
-              'reason', 'ERR_MASTER_LINK_ALREADY_EXISTS',
-              'sku', v_new_sku,
-              'receipt_id', v_receipt_id,
-              'product_id', v_product_id,
-              'at', now()));
+          -- previa tras reetiquetado). CP-LOG-RECEPTION-...-001 §7/§10: se
+          -- RECHAZA la escritura con error accionable — jamás una fila local
+          -- huérfana en tienda conectada (comportamiento anterior) ni una
+          -- recepción procesada en silencio con conflicto fatal.
+          RAISE EXCEPTION 'ERR_MASTER_LINK_CONFLICT: el vínculo del maestro (SKU "%") con esta tienda ya está ocupado por otra fila local. Requiere revisión de gobernanza (reetiquetado/conciliación): no se crea un producto independiente ni se registra la recepción.', v_new_sku;
         ELSIF v_master_id IS NOT NULL AND v_master_status = 'active' THEN
           -- CASO A4 · maestro existente y activo: VINCULAR (reutilizar identidad).
           INSERT INTO public.products (
@@ -13455,6 +13490,13 @@ BEGIN
         ELSE
           IF v_master_id IS NULL THEN
             -- CASO A5 · alta de identidad compartida (SOLO identidad compartida).
+            -- CP-LOG-RECEPTION-...-001 §6.3: la creación de identidad maestra
+            -- exige autorización (paridad create_master_product): admin global
+            -- o rol admin/manager/encargado en la tienda.
+            IF NOT public.is_admin_check(v_caller_uid)
+               AND NOT public.has_store_role_as(v_caller_uid, p_store_id, ARRAY['admin','manager','encargado']::text[]) THEN
+              RAISE EXCEPTION 'ERR_UNAUTHORIZED_MASTER_CREATE: crear el producto "%" en el Catálogo Maestro requiere rol admin/manager/encargado en la tienda (o administración global). Usa el asistente de importación de recepciones para clasificar y crear con autorización.', v_new_sku;
+            END IF;
             BEGIN
               INSERT INTO public.master_products
                 (tenant_id, sku, name, image_path, barcode, unit_of_measure, is_service, status, created_by)
@@ -13465,13 +13507,9 @@ BEGIN
               RETURNING id INTO v_master_id;
 
               v_master_created_count := v_master_created_count + 1;
-              -- Estado del maestro recién creado (RETURNING solo trae id):
-              -- sin esto, el chequeo posterior leería status NULL y la fila
-              -- local caería por error a la rama "archivado" (sin vínculo).
               v_master_status := 'active';
               v_master_name := btrim(v_new_product->>'name');
 
-              -- Auditoría de identidad (mismo registro que create_master_product)
               INSERT INTO public.master_change_log
                 (master_product_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
               VALUES
@@ -13479,8 +13517,7 @@ BEGIN
                 (v_master_id, v_new_tenant_id, 'name', NULL, btrim(v_new_product->>'name'), v_user_id, p_store_id);
             EXCEPTION WHEN unique_violation THEN
               -- Carrera: otra tienda creó el mismo SKU en paralelo. Se reutiliza
-              -- el maestro ganador (un solo maestro por organización, misión §4.1;
-              -- mismo patrón que create_master_product traduce 23505).
+              -- el maestro ganador (un solo maestro por organización).
               v_master_status := NULL;
               v_master_name := NULL;
               SELECT id, status, name INTO v_master_id, v_master_status, v_master_name
@@ -13516,33 +13553,16 @@ BEGIN
                 'product_id', v_product_id,
                 'at', now()));
           ELSE
-            -- CASO A6 · maestro archivado: sin vínculo + conflicto documentado.
-            INSERT INTO public.products (
-            store_id, tenant_id, sku, name, cost_price, price,
-            unit_of_measure, is_active, is_complete, stock_current
-          ) VALUES (
-            p_store_id, v_new_tenant_id, v_new_sku, btrim(v_new_product->>'name'),
-            COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
-            COALESCE((v_new_product->>'price')::NUMERIC, 0),
-            COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
-            TRUE,
-            COALESCE((v_new_product->>'is_complete')::BOOLEAN, TRUE),
-            0
-          ) RETURNING id INTO v_product_id;
-
-            INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
-            VALUES ('RECEPTION_MASTER_CONFLICT', 'master_products', v_master_id, p_store_id, v_caller_uid,
-              jsonb_build_object(
-                'reason', 'ERR_MASTER_ARCHIVED',
-                'sku', v_new_sku,
-                'receipt_id', v_receipt_id,
-                'product_id', v_product_id,
-                'at', now()));
+            -- CASO A6 · maestro archivado. CP-LOG-RECEPTION-...-001 §5.C/§7:
+            -- se RECHAZA (error accionable) — antes se creaba una fila local
+            -- SIN vínculo (huérfano). La reactivación global es decisión de
+            -- gobernanza (reactivate_master_product) y debe ser explícita.
+            RAISE EXCEPTION 'ERR_MASTER_ARCHIVED: el producto maestro del SKU "%" está archivado en el Catálogo Maestro. Requiere reactivación global por un gobernador del catálogo (confirmación explícita desde el asistente de importación) antes de poder recibirlo; no se crea un producto independiente.', v_new_sku;
           END IF;
         END IF;
       ELSE
         -- CASO B · tienda NO conectada: alta local pura, sin maestro ni
-        -- relaciones (funcionamiento de la tienda sin cambios, misión CASO B).
+        -- relaciones (funcionamiento de la tienda sin cambios).
         INSERT INTO public.products (
             store_id, tenant_id, sku, name, cost_price, price,
             unit_of_measure, is_active, is_complete, stock_current
@@ -13564,7 +13584,6 @@ BEGIN
     v_moneda := COALESCE(v_item->>'moneda_recepcion', 'CUP');
     v_tasa := COALESCE((v_item->>'tasa_cambio_recepcion')::NUMERIC, 1.0);
 
-    -- C1 (v2.23.0): Validate exchange rate is within reasonable range
     IF v_tasa < 0.01 OR v_tasa > 10000 THEN
       RAISE EXCEPTION 'ERR_INVALID_EXCHANGE_RATE: tasa_cambio_recepcion % is out of range [0.01, 10000]', v_tasa;
     END IF;
@@ -13576,7 +13595,6 @@ BEGIN
       v_conversion_factor := COALESCE(v_conversion_factor, 1.0);
     END IF;
 
-    -- C2 (v2.23.0): Warning if product has expired lots (non-blocking)
     IF EXISTS (
       SELECT 1 FROM public.product_lots
       WHERE product_id = v_product_id AND store_id = p_store_id
@@ -13590,7 +13608,6 @@ BEGIN
     v_units_to_add := v_quantity * v_conversion_factor;
     v_unit_cost_cup := v_unit_cost * v_tasa;
 
-    -- B5 (v2.23.0): Product must exist in store — RAISE EXCEPTION (not CONTINUE)
     IF NOT EXISTS (
       SELECT 1 FROM public.products
       WHERE id = v_product_id AND store_id = p_store_id
@@ -13608,14 +13625,9 @@ BEGIN
       v_effective_date, v_effective_date
     );
 
-    -- REM-F4-04 (gate 20260908-rem-f4-04): el camino real de recepción termina
-    -- en el escritor canónico. El trigger trg_update_product_wac (referenciado
-    -- por el comentario A1 v2.22.0) NO existe en la BD viva y
-    -- register_stock_movement ya no escribe WAC (A2 v2.22.0).
+    -- REM-F4-04: el camino real de recepción termina en el escritor canónico.
     -- Orden doctrina W62-01 §6 (idéntico a confirm_pending_reception):
     -- WAC primero → movimiento después (kardex ve ca_new).
-    -- Costo por unidad BASE para el blend canónico:
-    --   q·uc = units_to_add · (unit_cost_cup/factor) = unit_cost_cup · quantity
     v_uc_base := CASE WHEN COALESCE(v_conversion_factor, 1.0) > 0
                       THEN v_unit_cost_cup / COALESCE(v_conversion_factor, 1.0)
                       ELSE v_unit_cost_cup END;
@@ -13657,7 +13669,6 @@ BEGIN
       'items_count', jsonb_array_length(p_items),
       'po_id', p_po_id,
       'new_products_created', v_new_products_count,
-      -- CP-CAT-MAESTRO-003: resultado de la sincronía con el catálogo maestro
       'new_products_master_created', v_master_created_count,
       'new_products_master_linked', v_master_linked_count
     ));
@@ -14443,6 +14454,362 @@ BEGIN
     PERFORM set_config('app.restore_mode', 'false', true);
     RAISE;
   END;
+END;
+$function$
+
+
+-- @contract-function name=resolve_reception_import_rows args="p_store_id uuid, p_rows jsonb, p_confirm_reactivation jsonb, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.resolve_reception_import_rows(p_store_id uuid, p_rows jsonb, p_confirm_reactivation jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_tenant uuid;
+  v_connected boolean;
+  v_row jsonb;
+  v_idx int := 0;
+  v_class jsonb;
+  v_status text;
+  v_sku text;
+  v_name text;
+  v_uom text;
+  v_price numeric;
+  v_cost numeric;
+  v_price_currency text;
+  v_barcode text;
+  v_master_id uuid;
+  v_master_status text;
+  v_product_id uuid;
+  v_local_id uuid;
+  v_master_created boolean;
+  v_results jsonb := '[]'::jsonb;
+  v_errors jsonb := '[]'::jsonb;
+  v_confirm text[] := '{}';
+  v_local_active boolean;
+  v_identified int := 0;
+  v_local_created int := 0;
+  v_local_activated int := 0;
+  v_masters_created int := 0;
+  v_masters_reactivated int := 0;
+  v_blocked int := 0;
+  v_valid_lines int := 0;
+  v_seen_skus text[] := '{}';
+BEGIN
+  IF v_caller_uid IS NULL OR p_store_id IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+  IF p_rows IS NULL OR jsonb_typeof(p_rows) <> 'array' THEN
+    RAISE EXCEPTION 'ERR_INVALID_PAYLOAD: se requiere un array de filas';
+  END IF;
+  IF jsonb_array_length(p_rows) > 500 THEN
+    RAISE EXCEPTION 'ERR_BULK_LIMIT: máximo 500 filas por lote';
+  END IF;
+  IF NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  SELECT tenant_id INTO v_tenant FROM public.stores WHERE id = p_store_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: %', p_store_id;
+  END IF;
+  v_connected := public.is_catalog_store_connected(v_tenant, p_store_id);
+  -- Confirmaciones de reactivación (SKUs, normalizados a minúsculas).
+  v_confirm := ARRAY(SELECT lower(x) FROM jsonb_array_elements_text(COALESCE(p_confirm_reactivation, '[]'::jsonb)) x);
+
+  FOR v_row IN SELECT * FROM jsonb_array_elements(p_rows)
+  LOOP
+    v_idx := v_idx + 1;
+    v_master_created := FALSE;
+    v_product_id := NULL;
+    v_master_id := NULL;
+    BEGIN
+      v_class := public.fn_classify_reception_import_row(v_tenant, p_store_id, v_connected, v_row, v_caller_uid);
+      v_status := v_class->>'status';
+      v_sku := NULLIF(btrim(COALESCE(v_class->>'sku', '')), '');
+      v_name := NULLIF(btrim(COALESCE(v_row->>'name', '')), '');
+      v_master_id := NULLIF(v_class->>'master_product_id', '')::uuid;
+
+      -- Duplicados de SKU dentro del lote (misión §5.E/§11.6): ambigüedad →
+      -- fila bloqueada. La clasificación por fila NO puede detectarlo (ve el
+      -- estado tras las escrituras de la fila anterior en la MISMA
+      -- transacción), por lo que el lote lo trackea aquí — igual que classify.
+      IF v_sku IS NOT NULL THEN
+        IF lower(v_sku) = ANY (v_seen_skus) THEN
+          v_blocked := v_blocked + 1;
+          v_errors := v_errors || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'blocked',
+            'reasons', to_jsonb(jsonb_build_array('ERR_SKU_DUPLICATE_FILE: el SKU "' || v_sku || '" aparece más de una vez en el archivo')));
+          v_results := v_results || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'error',
+            'action', 'blocked', 'product_id', NULL,
+            'reasons', to_jsonb(jsonb_build_array('ERR_SKU_DUPLICATE_FILE')));
+          CONTINUE;
+        ELSE
+          v_seen_skus := array_append(v_seen_skus, lower(v_sku));
+        END IF;
+      END IF;
+
+      IF v_status = 'error' OR v_status = 'review' THEN
+        v_blocked := v_blocked + 1;
+        v_errors := v_errors || jsonb_build_object(
+          'index', v_idx, 'sku', v_class->>'sku', 'status', v_status,
+          'reasons', v_class->'reasons');
+        v_results := v_results || jsonb_build_object(
+          'index', v_idx, 'sku', v_class->>'sku', 'status', v_status,
+          'action', 'blocked', 'product_id', NULL,
+          'reasons', v_class->'reasons');
+        CONTINUE;
+      END IF;
+
+      IF v_status = 'identified' THEN
+        v_product_id := NULLIF(v_class->>'product_id', '')::uuid;
+        v_identified := v_identified + 1;
+        v_results := v_results || jsonb_build_object(
+          'index', v_idx, 'sku', v_class->>'sku', 'status', 'identified',
+          'action', 'use_existing', 'product_id', v_product_id,
+          'master_product_id', v_master_id,
+          'orphan_local', (v_class->>'orphan_local')::boolean,
+          'reasons', v_class->'reasons');
+        v_valid_lines := v_valid_lines + 1;
+        CONTINUE;
+      END IF;
+
+      IF v_status = 'new_local' THEN
+        -- Tienda NO conectada: la crea register_reception (legacy) — aquí no
+        -- se escribe nada (un solo escritor para el flujo local histórico).
+        v_valid_lines := v_valid_lines + 1;
+        v_results := v_results || jsonb_build_object(
+          'index', v_idx, 'sku', v_class->>'sku', 'status', 'new_local',
+          'action', 'legacy_register_reception', 'product_id', NULL,
+          'reasons', v_class->'reasons');
+        CONTINUE;
+      END IF;
+
+      -- Datos locales de la fila (SOLO para la fila local de ESTA tienda).
+      v_price := COALESCE(NULLIF(v_row->>'sale_price', '')::numeric, 0);
+      v_cost := COALESCE(NULLIF(v_row->>'unit_cost', '')::numeric, 0);
+      v_uom := NULLIF(btrim(COALESCE(v_row->>'unit_of_measure', '')), '');
+      v_price_currency := COALESCE(NULLIF(btrim(COALESCE(v_row->>'price_currency', '')), ''), 'CUP');
+      v_barcode := NULLIF(btrim(COALESCE(v_row->>'barcode', '')), '');
+
+      IF v_status = 'reactivate_master' THEN
+        -- Clase C (misión §5.C): reactivación GLOBAL, explícita y autorizada.
+        IF v_sku IS NULL OR NOT (lower(v_sku) = ANY (v_confirm)) THEN
+          v_blocked := v_blocked + 1;
+          v_errors := v_errors || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'blocked',
+            'reasons', to_jsonb(jsonb_build_array('ERR_REACTIVATION_NOT_CONFIRMED: la reactivación global del maestro requiere confirmación explícita (alcance: todas las tiendas conectadas)')));
+          v_results := v_results || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'reactivate_master',
+            'action', 'blocked', 'product_id', NULL,
+            'reasons', to_jsonb(jsonb_build_array('ERR_REACTIVATION_NOT_CONFIRMED')));
+          CONTINUE;
+        END IF;
+        IF NOT public.is_catalog_governor(v_tenant, v_caller_uid) THEN
+          v_blocked := v_blocked + 1;
+          v_errors := v_errors || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'blocked',
+            'reasons', to_jsonb(jsonb_build_array('ERR_UNAUTHORIZED_REACTIVATE: la reactivación global requiere un gobernador del catálogo')));
+          v_results := v_results || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'reactivate_master',
+            'action', 'blocked', 'product_id', NULL,
+            'reasons', to_jsonb(jsonb_build_array('ERR_UNAUTHORIZED_REACTIVATE')));
+          CONTINUE;
+        END IF;
+        -- Operación autorizada (misma RPC de gobernanza; idempotente).
+        PERFORM public.reactivate_master_product(v_master_id, p_store_id, v_caller_uid);
+        v_masters_reactivated := v_masters_reactivated + 1;
+        -- Tras reactivar, la fila continúa como activate_local.
+      END IF;
+
+      IF v_status IN ('activate_local', 'reactivate_master') THEN
+        -- Clase B (misión §5.B): activación canónica en esta tienda.
+        SELECT id, is_active INTO v_local_id, v_local_active
+          FROM public.products
+         WHERE master_product_id = v_master_id AND store_id = p_store_id;
+        IF v_local_id IS NOT NULL THEN
+          IF NOT v_local_active THEN
+            UPDATE public.products SET is_active = true WHERE id = v_local_id;
+            v_local_activated := v_local_activated + 1;
+            INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+            VALUES ('RECEPTION_IMPORT_ACTIVATE_LOCAL', 'products', v_local_id, p_store_id, v_caller_uid,
+                    jsonb_build_object('master_product_id', v_master_id, 'sku', v_sku,
+                      'origin', 'reception_import', 'mode', 'local_reactivated'));
+          END IF;
+          v_product_id := v_local_id;
+        ELSE
+          -- Fila local nueva vinculada (paridad activate_master_product:
+          -- cost_average NOMINAL 1 CUP — la primera recepción real lo
+          -- sustituye vía fn_recalc_wac, S=0). Datos comerciales de ESTA
+          -- tienda (precio/costo del Excel); jamás del maestro ni de otras
+          -- tiendas (misión §6). El barcode canónico vive en el MAESTRO
+          -- (doctrina 20261028110000: la fila local vinculada no lo porta).
+          INSERT INTO public.products (
+            store_id, tenant_id, master_product_id, sku, name, price, price_currency,
+            cost_price, cost_average, unit_of_measure, is_active, is_complete,
+            stock_current, min_stock
+          ) VALUES (
+            p_store_id, v_tenant, v_master_id, v_sku,
+            COALESCE(v_name, v_class->>'name'),
+            v_price, v_price_currency, v_cost, 1,
+            COALESCE(v_uom, 'unidad'), true, true, 0, 1
+          ) RETURNING id INTO v_product_id;
+          v_local_created := v_local_created + 1;
+          INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+          VALUES ('RECEPTION_IMPORT_ACTIVATE_LOCAL', 'products', v_product_id, p_store_id, v_caller_uid,
+                  jsonb_build_object('master_product_id', v_master_id, 'sku', v_sku,
+                    'origin', 'reception_import', 'mode', 'local_created',
+                    'cost_average_origin', 'nominal_1cup_owner_policy'));
+        END IF;
+        v_valid_lines := v_valid_lines + 1;
+        v_results := v_results || jsonb_build_object(
+          'index', v_idx, 'sku', v_class->>'sku',
+          'status', CASE WHEN v_status = 'reactivate_master' THEN 'reactivate_master' ELSE 'activate_local' END,
+          'action', 'activated_local', 'product_id', v_product_id,
+          'master_product_id', v_master_id,
+          'master_reactivated', v_status = 'reactivate_master',
+          'reasons', v_class->'reasons');
+        CONTINUE;
+      END IF;
+
+      IF v_status = 'new_master' THEN
+        -- Clase D (misión §6): PRIMERO el maestro (identidad compartida,
+        -- SOLO identidad), DESPUÉS la fila local vinculada.
+        IF NOT (v_class->>'can_create_master')::boolean THEN
+          v_blocked := v_blocked + 1;
+          v_errors := v_errors || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'blocked',
+            'reasons', v_class->'reasons');
+          v_results := v_results || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'new_master',
+            'action', 'blocked', 'product_id', NULL,
+            'reasons', v_class->'reasons');
+          CONTINUE;
+        END IF;
+        IF v_barcode IS NOT NULL AND EXISTS (
+          SELECT 1 FROM public.master_products WHERE barcode = v_barcode
+        ) THEN
+          v_blocked := v_blocked + 1;
+          v_errors := v_errors || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'blocked',
+            'reasons', to_jsonb(jsonb_build_array('ERR_BARCODE_EXISTS: el código de barras ya pertenece a otro producto del catálogo (global)')));
+          v_results := v_results || jsonb_build_object(
+            'index', v_idx, 'sku', v_class->>'sku', 'status', 'new_master',
+            'action', 'blocked', 'product_id', NULL,
+            'reasons', to_jsonb(jsonb_build_array('ERR_BARCODE_EXISTS')));
+          CONTINUE;
+        END IF;
+
+        BEGIN
+          INSERT INTO public.master_products
+            (tenant_id, sku, name, barcode, barcode_type, unit_of_measure,
+             is_service, status, created_by)
+          VALUES
+            (v_tenant, v_sku, COALESCE(v_name, v_class->>'name'), v_barcode,
+             CASE WHEN v_barcode IS NULL THEN NULL ELSE 'EAN13' END,
+             COALESCE(v_uom, 'unidad'), FALSE, 'active', v_caller_uid)
+          RETURNING id INTO v_master_id;
+          v_master_created := TRUE;
+          v_masters_created := v_masters_created + 1;
+
+          -- Trazabilidad de origen (misión §6): alta desde importación de
+          -- recepción, tienda solicitante, usuario, identidad.
+          INSERT INTO public.master_change_log
+            (master_product_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
+          VALUES
+            (v_master_id, v_tenant, 'sku', NULL, v_sku, v_caller_uid, p_store_id),
+            (v_master_id, v_tenant, 'name', NULL, COALESCE(v_name, v_class->>'name'), v_caller_uid, p_store_id);
+          INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+          VALUES ('RECEPTION_IMPORT_MASTER_CREATED', 'master_products', v_master_id, p_store_id, v_caller_uid,
+                  jsonb_build_object('sku', v_sku, 'tenant_id', v_tenant,
+                    'origin', 'reception_import', 'source', 'excel_reception_import'));
+        EXCEPTION WHEN unique_violation THEN
+          -- Carrera entre tiendas (misión §10): se reutiliza el maestro
+          -- ganador; NUNCA un segundo maestro.
+          v_master_id := NULL;
+          SELECT id, status INTO v_master_id, v_master_status
+            FROM public.master_products
+           WHERE tenant_id = v_tenant AND lower(btrim(sku)) = lower(v_sku)
+           FOR UPDATE;
+          IF v_master_id IS NULL OR v_master_status <> 'active' THEN
+            RAISE EXCEPTION 'ERR_MASTER_SKU_RACE: carrera de unicidad del maestro sin ganador activo para el SKU "%"', v_sku;
+          END IF;
+        END;
+
+        INSERT INTO public.products (
+          store_id, tenant_id, master_product_id, sku, name, price, price_currency,
+          cost_price, cost_average, unit_of_measure, is_active, is_complete,
+          stock_current, min_stock
+        ) VALUES (
+          p_store_id, v_tenant, v_master_id, v_sku,
+          COALESCE(v_name, v_class->>'name'),
+          v_price, v_price_currency, v_cost, 1,
+          COALESCE(v_uom, 'unidad'), true, true, 0, 1
+        ) RETURNING id INTO v_product_id;
+        v_local_created := v_local_created + 1;
+        INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+        VALUES ('RECEPTION_IMPORT_ACTIVATE_LOCAL', 'products', v_product_id, p_store_id, v_caller_uid,
+                jsonb_build_object('master_product_id', v_master_id, 'sku', v_sku,
+                  'origin', 'reception_import', 'mode', 'master_and_local_created',
+                  'cost_average_origin', 'nominal_1cup_owner_policy'));
+
+        v_valid_lines := v_valid_lines + 1;
+        v_results := v_results || jsonb_build_object(
+          'index', v_idx, 'sku', v_class->>'sku', 'status', 'new_master',
+          'action', 'master_and_local_created', 'product_id', v_product_id,
+          'master_product_id', v_master_id, 'master_created', v_master_created,
+          'reasons', v_class->'reasons');
+        CONTINUE;
+      END IF;
+
+      -- Estado no manejado: fail-closed (nunca procesar en silencio).
+      v_blocked := v_blocked + 1;
+      v_errors := v_errors || jsonb_build_object(
+        'index', v_idx, 'sku', v_class->>'sku', 'status', v_status,
+        'reasons', to_jsonb(jsonb_build_array('ERR_UNEXPECTED_STATUS: estado de clasificación no manejado')));
+      v_results := v_results || jsonb_build_object(
+        'index', v_idx, 'sku', v_class->>'sku', 'status', v_status,
+        'action', 'blocked', 'product_id', NULL,
+        'reasons', to_jsonb(jsonb_build_array('ERR_UNEXPECTED_STATUS')));
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        -- Aislamiento por fila: el fallo NO aborta el lote; se reporta con
+        -- causa clara. Nada queda a medias (subtransacción por fila).
+        v_blocked := v_blocked + 1;
+        v_errors := v_errors || jsonb_build_object(
+          'index', v_idx, 'sku', COALESCE(v_sku, v_row->>'sku'), 'status', 'error',
+          'reasons', to_jsonb(jsonb_build_array('ERR_ROW_PROCESSING: ' || substr(SQLERRM, 1, 300))));
+        v_results := v_results || jsonb_build_object(
+          'index', v_idx, 'sku', COALESCE(v_sku, v_row->>'sku'), 'status', 'error',
+          'action', 'blocked', 'product_id', NULL,
+          'reasons', to_jsonb(jsonb_build_array('ERR_ROW_PROCESSING: ' || substr(SQLERRM, 1, 300))));
+    END;
+  END LOOP;
+
+  RETURN jsonb_build_object(
+    'status', CASE WHEN v_blocked > 0 THEN 'completed_with_errors' ELSE 'success' END,
+    'store_id', p_store_id,
+    'tenant_id', v_tenant,
+    'catalog_connected', v_connected,
+    'total', v_idx,
+    'summary', jsonb_build_object(
+      'identified', v_identified,
+      'masters_created', v_masters_created,
+      'masters_reactivated', v_masters_reactivated,
+      'locals_created', v_local_created,
+      'locals_activated', v_local_activated,
+      'blocked', v_blocked,
+      'valid_lines', v_valid_lines,
+      'computed_by', 'backend'
+    ),
+    'results', v_results,
+    'errors', v_errors
+  );
 END;
 $function$
 
