@@ -1,0 +1,65 @@
+{
+  "fecha_utc": "2026-11-16T16:30:55.405Z",
+  "modo": "--verify",
+  "checks": [
+    {
+      "id": "V1",
+      "control": "Cabecera total_cost=40.739.585,00 · unpaid · active",
+      "resultado": "PASS",
+      "detalle": "{\"total_cost\":\"40739585.00\",\"payment_status\":\"unpaid\",\"paid_amount\":\"0\",\"status\":\"active\"}"
+    },
+    {
+      "id": "V2",
+      "control": "Líneas 111/112 a 1 CUP @ tasa 1",
+      "resultado": "PASS",
+      "detalle": "[{\"sku\":\"111\",\"unit_cost\":\"1\",\"moneda_recepcion\":\"CUP\",\"tasa_cambio_recepcion\":\"1.0000\"},{\"sku\":\"112\",\"unit_cost\":\"1\",\"moneda_recepcion\":\"CUP\",\"tasa_cambio_recepcion\":\"1.0000\"}]"
+    },
+    {
+      "id": "V3",
+      "control": "Capas de compra 111/112 a uc=1",
+      "resultado": "PASS",
+      "detalle": "[\"8552e290-b627-4b75-b9af-7779399ab22b\",\"5f58e2b1-156b-46b2-8f6d-c491b15a350c\"]"
+    },
+    {
+      "id": "V4",
+      "control": "Original intacto + RECT-1 enlazada (reversal_of=original, ajuste_manual, posted); 2 o 3 asientos según fase (RECT-2 ya aplicada ⇒ 3)",
+      "resultado": "PASS",
+      "detalle": "n=3 [ORIGINAL, FAC-VITALLCONS-001-RECT, FAC-VITALLCONS-001-RECT-SAL]"
+    },
+    {
+      "id": "V5",
+      "control": "RECT-1 equilibrada D=C=0,00 y par exacto (D CXP 151.299.851 / C INV 151.299.851)",
+      "resultado": "PASS",
+      "detalle": "balance=0.00"
+    },
+    {
+      "id": "V6",
+      "control": "Movimientos de RECT-1 exactos",
+      "resultado": "PASS",
+      "detalle": "[{\"category_code\":\"ACT_INVENTARIO\",\"sense\":\"credito\",\"amount\":\"151299851.00\"},{\"category_code\":\"PAS_CXP_PROV\",\"sense\":\"debito\",\"amount\":\"151299851.00\"}]"
+    },
+    {
+      "id": "V7",
+      "control": "Idempotencia: re-ejecución de S1/S2/S3 tocaría 0 filas (conteo read-only de las cláusulas WHERE)",
+      "resultado": "PASS",
+      "detalle": "{\"s1\":0,\"s2\":0,\"s3\":0}"
+    },
+    {
+      "id": "V8",
+      "control": "Auditoría RECT-1 registrada (2 VALUATION + 1 TOTAL + 2 MOV_UC + ENTRY≥1)",
+      "resultado": "PASS",
+      "detalle": "{\"SYSTEM_RECT_ENTRY\":2,\"SYSTEM_RECT_MOV_UC\":2,\"SYSTEM_RECT_TOTAL\":1,\"SYSTEM_RECT_VALUATION\":2}"
+    },
+    {
+      "id": "V9",
+      "control": "Ninguna otra línea de la recepción fue modificada",
+      "resultado": "PASS",
+      "detalle": "otras_lineas_tocadas=0"
+    }
+  ],
+  "total": {
+    "pass": 9,
+    "fail": 0
+  },
+  "veredicto": "RECT-1 VERIFICADA — lista para RECT-2"
+}

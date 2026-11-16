@@ -1,0 +1,32 @@
+{
+  "fecha_utc": "2026-11-16T16:28:58.686Z",
+  "bd": "lguovmvrozxgssupkwpf (E2E AISLADA)",
+  "proposito": "validar canal antes de producción",
+  "resultados": {
+    "P1_txn_completa_en_una_llamada": {
+      "resultado": "PASS",
+      "detalle": "status=201 rows=[{\"a\":42}]"
+    },
+    "P2_commit_persiste_entre_llamadas": {
+      "resultado": "PASS",
+      "detalle": "n=[{\"n\":1}]"
+    },
+    "P3_rollback_revierte": {
+      "resultado": "PASS",
+      "detalle": "rb_ok=true n=[{\"n\":1}]"
+    },
+    "P4_error_atomico": {
+      "resultado": "PASS",
+      "detalle": "error_ok=true n=[{\"n\":1}]"
+    },
+    "P5_do_block_commit": {
+      "resultado": "PASS",
+      "detalle": "ok=true n=[{\"n\":2}]"
+    },
+    "LIMPIEZA": {
+      "resultado": "PASS",
+      "detalle": "esquema de prueba eliminado (net delta 0)"
+    }
+  },
+  "veredicto": "APROBADA"
+}
