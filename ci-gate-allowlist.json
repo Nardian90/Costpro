@@ -910,24 +910,6 @@
   ],
   "source_of_truth_baseline": [
     {
-      "function": "resolve_reception_import_rows/4",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 (PR en curso): la migración 20261117120000_cp_reception_import_name_authority redefine resolve_reception_import_rows con AUTORIDAD DEL NOMBRE del Catálogo Maestro (§4/§5: filas locales vinculadas SIEMPRE con el nombre canónico del maestro, el del ganador en carreras multitienda; salida ADITIVA effective_name). La migración NO se aplica en producción dentro de esta misión (§12) — el replay del PR diverge del surface certificado (vivo) hasta que el propietario autorice la aplicación; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/1616). El cuerpo propuesto está validado íntegro en BD E2E aislada (E2E misión 17/17 PASS + regresión misión previa 20/20 PASS + data-hygiene-guard net delta 0).",
-      "added_by": "CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 (2026-11-17)",
-      "expires": "2026-12-31"
-    },
-    {
-      "function": "register_reception/11",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 (PR en curso): la migración 20261117120000_cp_reception_import_name_authority redefine register_reception con AUTORIDAD DEL NOMBRE del Catálogo Maestro (§4/§5: filas locales vinculadas SIEMPRE con el nombre canónico del maestro, el del ganador en carreras multitienda; salida ADITIVA effective_name). La migración NO se aplica en producción dentro de esta misión (§12) — el replay del PR diverge del surface certificado (vivo) hasta que el propietario autorice la aplicación; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/1616). El cuerpo propuesto está validado íntegro en BD E2E aislada (E2E misión 17/17 PASS + regresión misión previa 20/20 PASS + data-hygiene-guard net delta 0).",
-      "added_by": "CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 (2026-11-17)",
-      "expires": "2026-12-31"
-    },
-    {
       "function": "create_devolution_v2/12",
       "rules": [
         "BODY_DRIFT_FROM_MIGRATION"
