@@ -465,9 +465,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   del Catálogo Maestro en los escritores del importador: effective_name,
     //   filas locales con el nombre canónico, carreras con el nombre del
     //   ganador, CASO A4/A5 de register_reception con v_master_name) = 178
-    expect(m.total_incluidos).toBe(178);
+    // CP-FIN-OPENING-BALANCES-AND-CASH-RECONCILIATION-015 (2026-11-18): +1 —
+    //   20261118120000_cp_fin_015_opening_cash_usd (modelo físico de caja y
+    //   diferencia de cobro en VENTA; entrega_efectivo como activo en
+    //   FLUJO_CAJA; apertura en cero + inmutabilidad de saldos aplicados;
+    //   aplicada a producción por m109 antes del PR) = 179
+    expect(m.total_incluidos).toBe(179);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(178);
+    expect(incluidos.length).toBe(179);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
