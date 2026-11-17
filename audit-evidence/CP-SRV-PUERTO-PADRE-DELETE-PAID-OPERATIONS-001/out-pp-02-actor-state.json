@@ -1,0 +1,256 @@
+{
+  "profiles": [
+    {
+      "actor": "a1111111-1111-1111-1111-111111111111",
+      "rows": [
+        {
+          "id": "a1111111-1111-1111-1111-111111111111",
+          "full_name": "Admin Demo",
+          "email": "admin@demo.com",
+          "role": "superadmin",
+          "active_store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f"
+        }
+      ]
+    },
+    {
+      "actor": "049478fe-e6b0-4937-94e6-097cdf5f7e12",
+      "rows": [
+        {
+          "id": "049478fe-e6b0-4937-94e6-097cdf5f7e12",
+          "full_name": "Frank",
+          "email": "frank@vitallcons.com",
+          "role": "encargado",
+          "active_store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+          "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f"
+        }
+      ]
+    }
+  ],
+  "memberships": [
+    {
+      "actor": "a1111111-1111-1111-1111-111111111111",
+      "rows": [
+        {
+          "user_id": "a1111111-1111-1111-1111-111111111111",
+          "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+          "role": "admin",
+          "status": "active"
+        },
+        {
+          "user_id": "a1111111-1111-1111-1111-111111111111",
+          "store_id": "bc94e3d0-32c3-4f2f-8e42-d46a341f9451",
+          "role": "admin",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "actor": "049478fe-e6b0-4937-94e6-097cdf5f7e12",
+      "rows": [
+        {
+          "user_id": "049478fe-e6b0-4937-94e6-097cdf5f7e12",
+          "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+          "role": "encargado",
+          "status": "active"
+        }
+      ]
+    }
+  ],
+  "target_services_now": [
+    {
+      "id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+      "service_number": "SRV-20261110-00116",
+      "status": "active",
+      "payment_status": "paid",
+      "paid_amount": 4000,
+      "paid_at": "2026-11-10T13:07:15.851909+00:00",
+      "updated_at": "2026-11-10T13:07:13.349+00:00",
+      "total_amount": 4000,
+      "service_date": "2026-11-09",
+      "currency": "CUP"
+    },
+    {
+      "id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+      "service_number": "SRV-20261110-00115",
+      "status": "active",
+      "payment_status": "paid",
+      "paid_amount": 2900,
+      "paid_at": "2026-11-10T13:07:16.206483+00:00",
+      "updated_at": "2026-11-10T13:07:14.993+00:00",
+      "total_amount": 2900,
+      "service_date": "2026-11-09",
+      "currency": "CUP"
+    },
+    {
+      "id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+      "service_number": "SRV-20261107-00126",
+      "status": "active",
+      "payment_status": "paid",
+      "paid_amount": 2900,
+      "paid_at": "2026-11-17T17:32:26.055392+00:00",
+      "updated_at": "2026-11-17T17:32:02.335+00:00",
+      "total_amount": 2900,
+      "service_date": "2026-11-07",
+      "currency": "CUP"
+    }
+  ],
+  "all_payments_for_targets": [
+    {
+      "id": "5360fdd0-6746-4d6f-9ef3-bccb9484a0f5",
+      "ref_id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+      "amount": 2900,
+      "amount_cup": 2900,
+      "currency": "CUP",
+      "payment_method": "cash",
+      "direction": "in",
+      "payment_date": "2026-11-07T17:00:00+00:00",
+      "created_at": "2026-11-17T17:32:26.055392+00:00",
+      "notes": null
+    },
+    {
+      "id": "7c008277-c39b-471b-b015-b4387cfb4e2b",
+      "ref_id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+      "amount": 4000,
+      "amount_cup": 4000,
+      "currency": "CUP",
+      "payment_method": "cash",
+      "direction": "in",
+      "payment_date": "2026-11-09T17:00:00+00:00",
+      "created_at": "2026-11-10T11:07:15.523646+00:00",
+      "notes": null
+    },
+    {
+      "id": "2fa12d54-5ed0-479c-8017-40f3d46320ce",
+      "ref_id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+      "amount": 2900,
+      "amount_cup": 2900,
+      "currency": "CUP",
+      "payment_method": "cash",
+      "direction": "in",
+      "payment_date": "2026-11-09T17:00:00+00:00",
+      "created_at": "2026-11-10T11:06:55.705035+00:00",
+      "notes": null
+    }
+  ],
+  "payments_with_tx": [],
+  "cash_flow_by_payment": null,
+  "cash_flow_columns_probe": {},
+  "pp_recent_audit": [
+    {
+      "created_at": "2026-11-17T17:32:26.055392+00:00",
+      "action": "SUPPLIER_PAYMENT_REGISTERED",
+      "table_name": "payment_transactions",
+      "record_id": "5360fdd0-6746-4d6f-9ef3-bccb9484a0f5",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T17:32:00.525836+00:00",
+      "action": "SERVICE_CREATED",
+      "table_name": "received_services",
+      "record_id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T17:28:35.241615+00:00",
+      "action": "SUPPLIER_PAYMENT_REGISTERED",
+      "table_name": "payment_transactions",
+      "record_id": "513081df-e03e-45a5-85f3-1e26b9363097",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T17:28:35.241615+00:00",
+      "action": "SUPPLIER_PAYMENT_REGISTERED",
+      "table_name": "payment_transactions",
+      "record_id": "03b9a845-d5fb-4df7-a7a2-6aba5474d882",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T17:28:35.241615+00:00",
+      "action": "CREATE_SALE_V2",
+      "table_name": "transactions",
+      "record_id": "24e8e234-460d-4ff4-ba56-b36289de1217",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T17:27:12.477566+00:00",
+      "action": "price_change",
+      "table_name": "products",
+      "record_id": "fb330991-cca7-4d3b-ab58-5aaffe4517d7",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T17:27:11.434577+00:00",
+      "action": "UPDATE_PRODUCT",
+      "table_name": "products",
+      "record_id": "fb330991-cca7-4d3b-ab58-5aaffe4517d7",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T17:25:25.707758+00:00",
+      "action": "rates_confirmed",
+      "table_name": "store_exchange_rates",
+      "record_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T16:56:58.578311+00:00",
+      "action": "reception_created",
+      "table_name": "receipts",
+      "record_id": "6ed9db04-cc50-4a33-b865-c8e113090dc8",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T16:56:58.072203+00:00",
+      "action": "UPDATE_PRODUCT",
+      "table_name": "products",
+      "record_id": "5d61a67c-2045-4dc7-9563-ae5b50f672bb",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T16:56:57.684003+00:00",
+      "action": "UPDATE_PRODUCT",
+      "table_name": "products",
+      "record_id": "04304de1-fa9a-4a3e-9a1f-18df2e8fff2d",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T16:56:57.310706+00:00",
+      "action": "UPDATE_PRODUCT",
+      "table_name": "products",
+      "record_id": "c11549f9-ed5f-4ebd-8cae-73c0dab2e184",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T16:56:56.924206+00:00",
+      "action": "UPDATE_PRODUCT",
+      "table_name": "products",
+      "record_id": "e696d1a4-302e-4f1e-8234-6f5fa99d56d2",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T16:56:56.526888+00:00",
+      "action": "UPDATE_PRODUCT",
+      "table_name": "products",
+      "record_id": "f6fbe7d8-0214-49c6-9600-d5e097cd134d",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    },
+    {
+      "created_at": "2026-11-17T16:56:56.161007+00:00",
+      "action": "UPDATE_PRODUCT",
+      "table_name": "products",
+      "record_id": "ccf35151-8fc6-438a-a033-46c0e0657298",
+      "user_id": "a1111111-1111-1111-1111-111111111111"
+    }
+  ],
+  "pp_fin_net_by_category": {
+    "ACT_INVENTARIO|CUP": 5318.5,
+    "PAS_CXP_PROV|CUP": -5338.5,
+    "ACT_EFECTIVO_CUP|CUP": 1100,
+    "ACT_BANCOS|CUP": 20000,
+    "ING_VENTAS|CUP": -24000,
+    "GAS_COSTO_VENTAS|CUP": 20,
+    "GAS_SERVICIOS|CUP": 2900,
+    "PAS_SERV_PEND|CUP": 0
+  }
+}

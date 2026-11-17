@@ -1,0 +1,950 @@
+{
+  "generated_at": "2026-11-17T17:50:52.526Z",
+  "project_ref": "wthkddeleylijmonclxg",
+  "stores": [
+    {
+      "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+      "name": "COSTPRO (Prueba)",
+      "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+      "created_at": "2026-06-24T15:24:13.77994+00:00",
+      "is_active": true
+    },
+    {
+      "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+      "name": "ENERVIDA-VITALLCONS",
+      "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+      "created_at": "2026-07-04T02:40:04.769372+00:00",
+      "is_active": true
+    },
+    {
+      "id": "8eb56fa3-7e22-408e-a44b-8f14cdd7f52f",
+      "name": "FERROCARRIL VITALLCONS",
+      "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+      "created_at": "2026-10-31T13:53:56.122054+00:00",
+      "is_active": true
+    },
+    {
+      "id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "name": "PUERTO PADRE",
+      "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+      "created_at": "2026-11-02T13:40:36.311708+00:00",
+      "is_active": true
+    },
+    {
+      "id": "6691b866-a7cd-409b-b1e5-dd9bc2ad9d7a",
+      "name": "QA UI Icons Store",
+      "tenant_id": "6bf78be0-a704-4583-855e-a255a2662b9c",
+      "created_at": "2026-11-07T20:19:43.271563+00:00",
+      "is_active": true
+    },
+    {
+      "id": "30c3a373-2012-4728-8f51-d8d8ad73eb17",
+      "name": "QA-Release-1593-Plantillas",
+      "tenant_id": null,
+      "created_at": "2026-11-10T11:25:30.543689+00:00",
+      "is_active": false
+    },
+    {
+      "id": "bc94e3d0-32c3-4f2f-8e42-d46a341f9451",
+      "name": "SHADDAI",
+      "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+      "created_at": "2026-11-07T14:40:42.775117+00:00",
+      "is_active": true
+    }
+  ],
+  "services_by_number_all_stores": [
+    {
+      "id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "service_number": "SRV-20261107-00126",
+      "service_date": "2026-11-07",
+      "service_type_id": "a4f05770-45a8-4a25-bc23-b99f220813c0",
+      "service_type_name": "Comisión",
+      "supplier": "Tienda Puerto Padre",
+      "reference_doc": "Comis-17112026",
+      "currency": "CUP",
+      "exchange_rate": 1,
+      "total_amount": 2900,
+      "observations": "Pago de comisión.",
+      "status": "active",
+      "distribution_method": "amount",
+      "created_by": "a1111111-1111-1111-1111-111111111111",
+      "created_at": "2026-11-17T17:32:00.525836+00:00",
+      "updated_at": "2026-11-17T17:32:02.335+00:00",
+      "payment_status": "paid",
+      "payment_method": "cash",
+      "paid_amount": 2900,
+      "due_date": "2026-12-07",
+      "paid_at": "2026-11-17T17:32:26.055392+00:00",
+      "payment_terms_days": 30
+    },
+    {
+      "id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "service_number": "SRV-20261110-00115",
+      "service_date": "2026-11-09",
+      "service_type_id": "a4f05770-45a8-4a25-bc23-b99f220813c0",
+      "service_type_name": "Comisión",
+      "supplier": "Tienda Puerto Padre",
+      "reference_doc": "Com-100112026PP",
+      "currency": "CUP",
+      "exchange_rate": 1,
+      "total_amount": 2900,
+      "observations": "Pago de comision por venta",
+      "status": "active",
+      "distribution_method": "amount",
+      "created_by": "a1111111-1111-1111-1111-111111111111",
+      "created_at": "2026-11-10T11:04:02.13095+00:00",
+      "updated_at": "2026-11-10T13:07:14.993+00:00",
+      "payment_status": "paid",
+      "payment_method": "cash",
+      "paid_amount": 2900,
+      "due_date": "2026-12-10",
+      "paid_at": "2026-11-10T13:07:16.206483+00:00",
+      "payment_terms_days": 30
+    },
+    {
+      "id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "service_number": "SRV-20261110-00116",
+      "service_date": "2026-11-09",
+      "service_type_id": "5afff295-d911-48a8-a413-065c1cea69bd",
+      "service_type_name": "Custodios",
+      "supplier": "Tienda Puerto Padre",
+      "reference_doc": "Cust-10112026PP",
+      "currency": "CUP",
+      "exchange_rate": 1,
+      "total_amount": 4000,
+      "observations": "Pago de seguridada",
+      "status": "active",
+      "distribution_method": "amount",
+      "created_by": "a1111111-1111-1111-1111-111111111111",
+      "created_at": "2026-11-10T11:06:20.695633+00:00",
+      "updated_at": "2026-11-10T13:07:13.349+00:00",
+      "payment_status": "paid",
+      "payment_method": "cash",
+      "paid_amount": 4000,
+      "due_date": "2026-12-10",
+      "paid_at": "2026-11-10T13:07:15.851909+00:00",
+      "payment_terms_days": 30
+    }
+  ],
+  "service_ids": [
+    "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+    "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+    "804a5e3d-90bc-45d1-935c-3de55f1b35a6"
+  ],
+  "payments": [
+    {
+      "id": "5360fdd0-6746-4d6f-9ef3-bccb9484a0f5",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "ref_type": "service",
+      "ref_id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+      "amount": 2900,
+      "payment_method": "cash",
+      "currency": "CUP",
+      "exchange_rate": 1,
+      "amount_cup": 2900,
+      "payment_date": "2026-11-07T17:00:00+00:00",
+      "reference": null,
+      "notes": null,
+      "paid_by": "a1111111-1111-1111-1111-111111111111",
+      "created_at": "2026-11-17T17:32:26.055392+00:00",
+      "updated_at": "2026-11-17T17:32:26.055392+00:00",
+      "idempotency_key": "99d16b8e-9b10-422d-a4f7-2cba597dceba:0",
+      "transaction_id": null,
+      "direction": "in"
+    },
+    {
+      "id": "7c008277-c39b-471b-b015-b4387cfb4e2b",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "ref_type": "service",
+      "ref_id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+      "amount": 4000,
+      "payment_method": "cash",
+      "currency": "CUP",
+      "exchange_rate": 1,
+      "amount_cup": 4000,
+      "payment_date": "2026-11-09T17:00:00+00:00",
+      "reference": "Pago de seguridad",
+      "notes": null,
+      "paid_by": "a1111111-1111-1111-1111-111111111111",
+      "created_at": "2026-11-10T11:07:15.523646+00:00",
+      "updated_at": "2026-11-10T11:07:15.523646+00:00",
+      "idempotency_key": "66d416c0-66ce-4094-8ea9-6907eaba72c2:0",
+      "transaction_id": null,
+      "direction": "in"
+    },
+    {
+      "id": "2fa12d54-5ed0-479c-8017-40f3d46320ce",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "ref_type": "service",
+      "ref_id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+      "amount": 2900,
+      "payment_method": "cash",
+      "currency": "CUP",
+      "exchange_rate": 1,
+      "amount_cup": 2900,
+      "payment_date": "2026-11-09T17:00:00+00:00",
+      "reference": "Pago de comision del dia 09/11/2026",
+      "notes": null,
+      "paid_by": "a1111111-1111-1111-1111-111111111111",
+      "created_at": "2026-11-10T11:06:55.705035+00:00",
+      "updated_at": "2026-11-10T11:06:55.705035+00:00",
+      "idempotency_key": "c29f164a-549c-43cb-8630-13eda8a279d6:0",
+      "transaction_id": null,
+      "direction": "in"
+    }
+  ],
+  "fin_entries": [
+    {
+      "id": "e14fdced-4e8a-4d46-9bf0-d306ee8c94e4",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "document_type": "SERVICIO_RECIBIDO",
+      "document_id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+      "document_number": "SRV-20261107-00126",
+      "event": "reconocimiento",
+      "payment_ref": null,
+      "economic_date": "2026-11-07",
+      "posted_at": "2026-11-17T17:32:02.356289+00:00",
+      "rule_version_id": "c20f6071-6250-42ab-82c9-f836412173c1",
+      "movements_snapshot": [
+        {
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "total_cup",
+            "template": "s-gasto-d"
+          },
+          "amount": 2900,
+          "sentido": "debito",
+          "currency": "CUP",
+          "categoria": "GAS_SERVICIOS",
+          "exchange_rate": 1,
+          "currency_origin": "CUP"
+        },
+        {
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "total_cup",
+            "template": "s-cxp-c"
+          },
+          "amount": 2900,
+          "sentido": "credito",
+          "currency": "CUP",
+          "categoria": "PAS_SERV_PEND",
+          "exchange_rate": 1,
+          "currency_origin": "CUP"
+        }
+      ],
+      "reversal_of": null,
+      "status": "posted",
+      "description": "Servicio recibido SRV-20261107-00126",
+      "created_by": null
+    },
+    {
+      "id": "995e4198-342d-4234-a710-ce7e543d33e5",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "document_type": "SERVICIO_RECIBIDO",
+      "document_id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+      "document_number": "SRV-20261107-00126",
+      "event": "pago",
+      "payment_ref": "5360fdd0-6746-4d6f-9ef3-bccb9484a0f5",
+      "economic_date": "2026-11-07",
+      "posted_at": "2026-11-17T17:32:26.055392+00:00",
+      "rule_version_id": "c20f6071-6250-42ab-82c9-f836412173c1",
+      "movements_snapshot": [
+        {
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "importe_pago_cup",
+            "template": "sp-cash-d"
+          },
+          "amount": 2900,
+          "sentido": "credito",
+          "currency": "CUP",
+          "categoria": "ACT_EFECTIVO_CUP",
+          "exchange_rate": 1,
+          "currency_origin": "CUP"
+        },
+        {
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "importe_pago_cup",
+            "template": "sp-cxp-c"
+          },
+          "amount": 2900,
+          "sentido": "debito",
+          "currency": "CUP",
+          "categoria": "PAS_SERV_PEND",
+          "exchange_rate": 1,
+          "currency_origin": "CUP"
+        }
+      ],
+      "reversal_of": null,
+      "status": "posted",
+      "description": "Servicio recibido SRV-20261107-00126",
+      "created_by": null
+    }
+  ],
+  "fin_movements": [
+    {
+      "id": "b9458dee-44f0-4256-8c92-ff5bc05b18f7",
+      "entry_id": "e14fdced-4e8a-4d46-9bf0-d306ee8c94e4",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "category_code": "GAS_SERVICIOS",
+      "sense": "debito",
+      "amount": 2900,
+      "currency": "CUP",
+      "exchange_rate": 1,
+      "amount_cup": 2900,
+      "economic_date": "2026-11-07",
+      "document_number": "SRV-20261107-00126",
+      "description": "Servicio recibido SRV-20261107-00126",
+      "worker_id": null,
+      "product_id": null,
+      "customer_id": null,
+      "traza": {
+        "regla": "motor-cp-fin",
+        "metrica": "total_cup",
+        "template": "s-gasto-d"
+      },
+      "created_at": "2026-11-17T17:32:02.356289+00:00",
+      "currency_origin": "CUP",
+      "amount_origin": null
+    },
+    {
+      "id": "cbf60fc8-c8ab-4e95-b67f-ffc608ec13f5",
+      "entry_id": "e14fdced-4e8a-4d46-9bf0-d306ee8c94e4",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "category_code": "PAS_SERV_PEND",
+      "sense": "credito",
+      "amount": 2900,
+      "currency": "CUP",
+      "exchange_rate": 1,
+      "amount_cup": 2900,
+      "economic_date": "2026-11-07",
+      "document_number": "SRV-20261107-00126",
+      "description": "Servicio recibido SRV-20261107-00126",
+      "worker_id": null,
+      "product_id": null,
+      "customer_id": null,
+      "traza": {
+        "regla": "motor-cp-fin",
+        "metrica": "total_cup",
+        "template": "s-cxp-c"
+      },
+      "created_at": "2026-11-17T17:32:02.356289+00:00",
+      "currency_origin": "CUP",
+      "amount_origin": null
+    },
+    {
+      "id": "4ce75954-0c04-449f-a80b-6bdf98355ccf",
+      "entry_id": "995e4198-342d-4234-a710-ce7e543d33e5",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "category_code": "ACT_EFECTIVO_CUP",
+      "sense": "credito",
+      "amount": 2900,
+      "currency": "CUP",
+      "exchange_rate": 1,
+      "amount_cup": 2900,
+      "economic_date": "2026-11-07",
+      "document_number": "SRV-20261107-00126",
+      "description": "Servicio recibido SRV-20261107-00126",
+      "worker_id": null,
+      "product_id": null,
+      "customer_id": null,
+      "traza": {
+        "regla": "motor-cp-fin",
+        "metrica": "importe_pago_cup",
+        "template": "sp-cash-d"
+      },
+      "created_at": "2026-11-17T17:32:26.055392+00:00",
+      "currency_origin": "CUP",
+      "amount_origin": null
+    },
+    {
+      "id": "eb677a1b-4477-4739-a3c9-9a4ee450c4ed",
+      "entry_id": "995e4198-342d-4234-a710-ce7e543d33e5",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "category_code": "PAS_SERV_PEND",
+      "sense": "debito",
+      "amount": 2900,
+      "currency": "CUP",
+      "exchange_rate": 1,
+      "amount_cup": 2900,
+      "economic_date": "2026-11-07",
+      "document_number": "SRV-20261107-00126",
+      "description": "Servicio recibido SRV-20261107-00126",
+      "worker_id": null,
+      "product_id": null,
+      "customer_id": null,
+      "traza": {
+        "regla": "motor-cp-fin",
+        "metrica": "importe_pago_cup",
+        "template": "sp-cxp-c"
+      },
+      "created_at": "2026-11-17T17:32:26.055392+00:00",
+      "currency_origin": "CUP",
+      "amount_origin": null
+    }
+  ],
+  "service_reception_links": [],
+  "service_cost_distributions": [],
+  "service_production_order_links": [],
+  "service_audit_log": [
+    {
+      "id": "2a9740de-51be-45af-a2e1-5043c56da4fb",
+      "service_id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "action": "edited",
+      "details": {
+        "status": "active"
+      },
+      "created_at": "2026-11-10T11:04:04.74876+00:00"
+    },
+    {
+      "id": "756637d5-df11-4db4-94c7-314ddeadbd6f",
+      "service_id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "action": "edited",
+      "details": {
+        "status": "active"
+      },
+      "created_at": "2026-11-10T11:06:21.471245+00:00"
+    },
+    {
+      "id": "f7eb66e5-1158-4e40-b398-63fa4a5436c2",
+      "service_id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+      "user_id": "049478fe-e6b0-4937-94e6-097cdf5f7e12",
+      "action": "edited",
+      "details": {
+        "service_date": "2026-11-09"
+      },
+      "created_at": "2026-11-10T13:07:13.795337+00:00"
+    },
+    {
+      "id": "96b2dcee-b3e8-4931-919d-85315c0d7cb7",
+      "service_id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+      "user_id": "049478fe-e6b0-4937-94e6-097cdf5f7e12",
+      "action": "edited",
+      "details": {
+        "service_date": "2026-11-09"
+      },
+      "created_at": "2026-11-10T13:07:15.536684+00:00"
+    },
+    {
+      "id": "ec269a0b-96bc-4770-8b66-b666782c1328",
+      "service_id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "action": "edited",
+      "details": {
+        "status": "active"
+      },
+      "created_at": "2026-11-17T17:32:02.648599+00:00"
+    }
+  ],
+  "cash_flow_docs_by_payment": [],
+  "cash_flow_docs_by_service": {
+    "ERROR": "column cash_flow_documents.ref_type does not exist"
+  },
+  "audit_logs_services": [
+    {
+      "id": "27422f10-ec1f-4160-adfa-3f7aba13dba0",
+      "created_at": "2026-11-10T11:04:02.13095+00:00",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "action": "SERVICE_CREATED",
+      "table_name": "received_services",
+      "record_id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+      "metadata": {
+        "currency": "CUP",
+        "supplier": "Tienda Puerto Padre",
+        "total_amount": 2900,
+        "service_number": "SRV-20261110-00115",
+        "receipt_ids_linked": 0,
+        "production_order_ids_linked": 0
+      }
+    },
+    {
+      "id": "77cb27f5-9844-45ea-bc80-d34aa4643351",
+      "created_at": "2026-11-10T11:06:20.695633+00:00",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "action": "SERVICE_CREATED",
+      "table_name": "received_services",
+      "record_id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+      "metadata": {
+        "currency": "CUP",
+        "supplier": "Tienda Puerto Padre",
+        "total_amount": 4000,
+        "service_number": "SRV-20261110-00116",
+        "receipt_ids_linked": 0,
+        "production_order_ids_linked": 0
+      }
+    },
+    {
+      "id": "d192e7b3-cf0f-4f41-85a0-6e1fda3fc39c",
+      "created_at": "2026-11-17T17:32:00.525836+00:00",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "action": "SERVICE_CREATED",
+      "table_name": "received_services",
+      "record_id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+      "metadata": {
+        "currency": "CUP",
+        "supplier": "Tienda Puerto Padre",
+        "total_amount": 2900,
+        "service_number": "SRV-20261107-00126",
+        "receipt_ids_linked": 0,
+        "production_order_ids_linked": 0
+      }
+    }
+  ],
+  "audit_logs_payments": [
+    {
+      "id": "0d44689b-0980-41a2-833b-31c2895cff77",
+      "created_at": "2026-11-10T11:06:55.705035+00:00",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "action": "SUPPLIER_PAYMENT_REGISTERED",
+      "table_name": "payment_transactions",
+      "record_id": "2fa12d54-5ed0-479c-8017-40f3d46320ce",
+      "metadata": {
+        "tg_op": "INSERT",
+        "amount": 2900,
+        "ref_id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+        "currency": "CUP",
+        "ref_type": "service",
+        "amount_cup": 2900,
+        "payment_method": "cash"
+      }
+    },
+    {
+      "id": "9e12b2a8-96ca-4406-8c84-e0f1b6e15789",
+      "created_at": "2026-11-10T11:07:15.523646+00:00",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "action": "SUPPLIER_PAYMENT_REGISTERED",
+      "table_name": "payment_transactions",
+      "record_id": "7c008277-c39b-471b-b015-b4387cfb4e2b",
+      "metadata": {
+        "tg_op": "INSERT",
+        "amount": 4000,
+        "ref_id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+        "currency": "CUP",
+        "ref_type": "service",
+        "amount_cup": 4000,
+        "payment_method": "cash"
+      }
+    },
+    {
+      "id": "fb8cd513-580f-44ff-9a41-18d821423401",
+      "created_at": "2026-11-10T13:07:15.851909+00:00",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "action": "PAYMENT_TRANSACTION_UPDATED",
+      "table_name": "payment_transactions",
+      "record_id": "7c008277-c39b-471b-b015-b4387cfb4e2b",
+      "metadata": {
+        "tg_op": "UPDATE",
+        "amount": 4000,
+        "ref_id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+        "currency": "CUP",
+        "ref_type": "service",
+        "amount_cup": 4000,
+        "payment_method": "cash"
+      }
+    },
+    {
+      "id": "b8a98313-8569-4524-b9b3-8cbdecebb963",
+      "created_at": "2026-11-10T13:07:16.206483+00:00",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "action": "PAYMENT_TRANSACTION_UPDATED",
+      "table_name": "payment_transactions",
+      "record_id": "2fa12d54-5ed0-479c-8017-40f3d46320ce",
+      "metadata": {
+        "tg_op": "UPDATE",
+        "amount": 2900,
+        "ref_id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+        "currency": "CUP",
+        "ref_type": "service",
+        "amount_cup": 2900,
+        "payment_method": "cash"
+      }
+    },
+    {
+      "id": "c36be7c1-c82f-426d-8f8e-f4e60e6c8e4b",
+      "created_at": "2026-11-17T17:32:26.055392+00:00",
+      "user_id": "a1111111-1111-1111-1111-111111111111",
+      "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+      "action": "SUPPLIER_PAYMENT_REGISTERED",
+      "table_name": "payment_transactions",
+      "record_id": "5360fdd0-6746-4d6f-9ef3-bccb9484a0f5",
+      "metadata": {
+        "tg_op": "INSERT",
+        "amount": 2900,
+        "ref_id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+        "currency": "CUP",
+        "ref_type": "service",
+        "amount_cup": 2900,
+        "payment_method": "cash"
+      }
+    }
+  ],
+  "puerto_padre_store": {
+    "id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+    "name": "PUERTO PADRE",
+    "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+    "created_at": "2026-11-02T13:40:36.311708+00:00",
+    "is_active": true
+  },
+  "pp_services_recent": [
+    {
+      "id": "76169a69-388a-409d-bbe2-c7aa9a8113f8",
+      "service_number": "SRV-20261020-00100",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-20",
+      "total_amount": 2700,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:36:14.566958+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:36:14.566958+00:00"
+    },
+    {
+      "id": "e75cd9cf-1bc9-419f-9d7a-f89ab4a5e448",
+      "service_number": "SRV-20261021-00101",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-21",
+      "total_amount": 3480,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:36:22.163504+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:36:22.163504+00:00"
+    },
+    {
+      "id": "32351274-550a-40af-a44f-88b6bdc22f58",
+      "service_number": "SRV-20261022-00102",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-22",
+      "total_amount": 1740,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:36:29.866266+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:36:29.866266+00:00"
+    },
+    {
+      "id": "c175aa05-fdb0-4bb1-a829-3620a458f000",
+      "service_number": "SRV-20261023-00103",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-23",
+      "total_amount": 2500,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:36:37.46663+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:36:37.46663+00:00"
+    },
+    {
+      "id": "d3009d76-a07f-473f-a58f-9291c77bc383",
+      "service_number": "SRV-20261024-00104",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-24",
+      "total_amount": 2900,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:36:45.092896+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:36:45.092896+00:00"
+    },
+    {
+      "id": "8952c36a-3398-4ec2-9d08-3d55a1ec6488",
+      "service_number": "SRV-20261025-00105",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-25",
+      "total_amount": 4900,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:36:52.74051+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:36:52.74051+00:00"
+    },
+    {
+      "id": "d340f4ac-b199-425e-8d9b-8b18abf2872a",
+      "service_number": "SRV-20261026-00106",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-26",
+      "total_amount": 6200,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:37:00.311859+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:37:00.311859+00:00"
+    },
+    {
+      "id": "f45ed6b9-a120-45a1-953e-0bdbcc60b5c7",
+      "service_number": "SRV-20261027-00107",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-27",
+      "total_amount": 3600,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:37:07.855889+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:37:07.855889+00:00"
+    },
+    {
+      "id": "b6a7a854-2d4a-4f3e-8fcf-a6e385ba85a4",
+      "service_number": "SRV-20261028-00108",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-28",
+      "total_amount": 100,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:37:15.435988+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:37:15.435988+00:00"
+    },
+    {
+      "id": "151df508-60c8-4725-a12b-14c145c94493",
+      "service_number": "SRV-20261029-00109",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-29",
+      "total_amount": 2400,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:37:22.994432+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:37:22.994432+00:00"
+    },
+    {
+      "id": "85faba51-2ead-4c8b-bc42-67f79205dda2",
+      "service_number": "SRV-20261030-00110",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-30",
+      "total_amount": 1800,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:37:30.577435+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:37:30.577435+00:00"
+    },
+    {
+      "id": "da623086-f5f9-4422-b892-cf8a9cd0ac20",
+      "service_number": "SRV-20261031-00111",
+      "service_type_name": "Comisión",
+      "service_date": "2026-10-31",
+      "total_amount": 400,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:37:38.142584+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:37:38.142584+00:00"
+    },
+    {
+      "id": "5d5b0818-5684-445c-b38e-293f52894816",
+      "service_number": "SRV-20261102-00112",
+      "service_type_name": "Comisión",
+      "service_date": "2026-11-02",
+      "total_amount": 2100,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:37:47.591452+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:37:47.591452+00:00"
+    },
+    {
+      "id": "9a219cef-8194-409c-97e4-b75d3167b81e",
+      "service_number": "SRV-20261103-00113",
+      "service_type_name": "Comisión",
+      "service_date": "2026-11-03",
+      "total_amount": 3420,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:37:55.576193+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:37:55.576193+00:00"
+    },
+    {
+      "id": "c6f7b3fb-05b2-4fdb-a77f-27ca09d2677c",
+      "service_number": "SRV-20261104-00114",
+      "service_type_name": "Comisión",
+      "service_date": "2026-11-04",
+      "total_amount": 800,
+      "currency": "CUP",
+      "status": "draft",
+      "payment_status": "unpaid",
+      "paid_amount": 0,
+      "created_at": "2026-11-07T21:38:03.443715+00:00",
+      "paid_at": null,
+      "updated_at": "2026-11-07T21:38:03.443715+00:00"
+    },
+    {
+      "id": "6a9bdab2-8ad1-4cda-aa09-1cc00cffc020",
+      "service_number": "SRV-20261107-00126",
+      "service_type_name": "Comisión",
+      "service_date": "2026-11-07",
+      "total_amount": 2900,
+      "currency": "CUP",
+      "status": "active",
+      "payment_status": "paid",
+      "paid_amount": 2900,
+      "created_at": "2026-11-17T17:32:00.525836+00:00",
+      "paid_at": "2026-11-17T17:32:26.055392+00:00",
+      "updated_at": "2026-11-17T17:32:02.335+00:00"
+    },
+    {
+      "id": "804a5e3d-90bc-45d1-935c-3de55f1b35a6",
+      "service_number": "SRV-20261110-00116",
+      "service_type_name": "Custodios",
+      "service_date": "2026-11-09",
+      "total_amount": 4000,
+      "currency": "CUP",
+      "status": "active",
+      "payment_status": "paid",
+      "paid_amount": 4000,
+      "created_at": "2026-11-10T11:06:20.695633+00:00",
+      "paid_at": "2026-11-10T13:07:15.851909+00:00",
+      "updated_at": "2026-11-10T13:07:13.349+00:00"
+    },
+    {
+      "id": "e350a933-7063-4e1c-9d24-aa48ee7266e4",
+      "service_number": "SRV-20261110-00115",
+      "service_type_name": "Comisión",
+      "service_date": "2026-11-09",
+      "total_amount": 2900,
+      "currency": "CUP",
+      "status": "active",
+      "payment_status": "paid",
+      "paid_amount": 2900,
+      "created_at": "2026-11-10T11:04:02.13095+00:00",
+      "paid_at": "2026-11-10T13:07:16.206483+00:00",
+      "updated_at": "2026-11-10T13:07:14.993+00:00"
+    }
+  ],
+  "fin_rules_servicio": [
+    {
+      "id": "c20f6071-6250-42ab-82c9-f836412173c1",
+      "document_type": "SERVICIO_RECIBIDO",
+      "store_id": null,
+      "version": 1,
+      "status": "active",
+      "movements": [
+        {
+          "id": "s-gasto-d",
+          "orden": 1,
+          "evento": "reconocimiento",
+          "origen": {
+            "tipo": "metrica",
+            "metrica": "total_cup"
+          },
+          "sentido": "debito",
+          "categoria": "GAS_SERVICIOS",
+          "condicion": {
+            "op": ">",
+            "campo": "total_cup",
+            "valor": 0
+          }
+        },
+        {
+          "id": "s-cxp-c",
+          "orden": 2,
+          "evento": "reconocimiento",
+          "origen": {
+            "tipo": "metrica",
+            "metrica": "total_cup"
+          },
+          "sentido": "credito",
+          "categoria": "PAS_SERV_PEND",
+          "condicion": {
+            "op": ">",
+            "campo": "total_cup",
+            "valor": 0
+          }
+        },
+        {
+          "id": "sp-cash-d",
+          "orden": 3,
+          "evento": "pago",
+          "origen": {
+            "tipo": "metrica",
+            "metrica": "importe_pago_cup"
+          },
+          "sentido": "credito",
+          "categoria": "ACT_EFECTIVO_CUP",
+          "condicion": {
+            "op": "=",
+            "campo": "metodo_pago",
+            "valor": "cash"
+          }
+        },
+        {
+          "id": "sp-bank-d",
+          "orden": 4,
+          "evento": "pago",
+          "origen": {
+            "tipo": "metrica",
+            "metrica": "importe_pago_cup"
+          },
+          "sentido": "credito",
+          "categoria": "ACT_BANCOS",
+          "condicion": {
+            "op": "!=",
+            "campo": "metodo_pago",
+            "valor": "cash"
+          }
+        },
+        {
+          "id": "sp-cxp-c",
+          "orden": 5,
+          "evento": "pago",
+          "origen": {
+            "tipo": "metrica",
+            "metrica": "importe_pago_cup"
+          },
+          "sentido": "debito",
+          "categoria": "PAS_SERV_PEND",
+          "condicion": null
+        }
+      ],
+      "effective_from": "2026-11-13",
+      "notes": "Gasto al activarse; el pago posterior cancela la obligación sin duplicar el gasto.",
+      "created_by": null,
+      "created_at": "2026-11-13T14:18:46.6414+00:00",
+      "activated_by": null,
+      "activated_at": null,
+      "deactivated_at": null
+    }
+  ]
+}
