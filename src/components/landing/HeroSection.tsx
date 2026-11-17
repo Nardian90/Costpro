@@ -292,17 +292,18 @@ export default function HeroSection({
   return (
     <div ref={leftPanelRef} className="relative flex-1 bg-[#05070A]">
       {/* ── Top Navigation Bar (ADN-BRAND-REBUILD-001) ──
-          Sticky sobre toda la página (fuera del contenedor overflow-hidden del
-          hero): transparente sobre el hero y transformación discreta al
-          desplazarse (fondo profundo + blur + borde). La marca compacta solo
-          aparece cuando la marca grande del hero ya salió de pantalla — nunca
-          dos logotipos en la misma vista. «Acceder» es el único CTA del
-          header (misión §6); los tres caminos siguen viviendo en el selector. */}
+          FIXED sobre toda la página (html/body llevan overflow-x:hidden, que
+          rompe position:sticky en Chromium): transparente sobre el hero y
+          transformación discreta al desplazarse (fondo profundo + blur +
+          borde). El espaciador posterior conserva el flujo del documento.
+          La marca compacta solo aparece cuando la marca grande del hero ya
+          salió de pantalla — nunca dos logotipos en la misma vista.
+          «Acceder» es el único CTA del header (misión §6). */}
       <motion.nav
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
-        className={`sticky top-0 z-40 flex items-center justify-between px-6 sm:px-10 lg:px-16 xl:px-20 py-4 transition-all duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 sm:px-10 lg:px-16 xl:px-20 py-4 transition-all duration-300 ${
           navScrolled
             ? 'bg-[#05070A]/85 backdrop-blur-md border-b border-white/[0.06] shadow-[0_1px_0_rgba(255,255,255,0.02)]'
             : 'bg-transparent border-b border-transparent'
@@ -368,6 +369,8 @@ export default function HeroSection({
           </button>
         </div>
       </motion.nav>
+      {/* Espaciador del header fijo (conserva el flujo del documento) */}
+      <div aria-hidden="true" className="h-[72px]" />
 
       {/* ── Hero viewport: overflow-hidden for Ken Burns zoom ──
           FIX-ENTRY (2026-09-20): height 100vh → minHeight 100vh. Con el selector

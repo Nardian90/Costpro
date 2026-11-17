@@ -33,7 +33,7 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
   {
     id: "dashboard",
     route: "/?view=dashboard",
-    description: "AI Command Center de CostPro: conversa con Darian (asistente IA), consulta costos y ventas, busca productos y ejecuta acciones. Acciones recientes para reanudar trabajo.",
+    description: "AI Command Center de ADNegocio: conversa con Darian (asistente IA), consulta costos y ventas, busca productos y ejecuta acciones. Acciones recientes para reanudar trabajo.",
     actions: ["ask_question", "search_entity", "get_cost_summary", "open_view", "fill_form", "export_document"]
   },
   {

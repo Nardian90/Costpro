@@ -220,7 +220,7 @@ describe('CP-DOC-SC-HEADER-UX-005 · Encabezado institucional de los modelos SC'
     const doc = await renderSc204Pdf(mkModel({ logoUrl: null }));
     const text = decodePdf(doc.output('arraybuffer') as ArrayBuffer);
     // El monograma CP es composición tipográfica vectorial (negrita helvetica)
-    expect(text).toContain('(CP)');
+    expect(text).toContain('(ADN)');
     // y el documento sigue completo.
     expect(text).toContain('MODELO SC-2-04');
   });
