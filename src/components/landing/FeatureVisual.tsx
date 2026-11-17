@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
  * FeatureVisual — Evidencia visual del producto para el landing.
  * ============================================================================
  * LANDING VISUAL EVIDENCE (FASE 4): patrón reutilizable para mostrar capturas
- * REALES de CostPro (public/landing/capturas/*.webp, 1440x900, generadas con
+ * REALES de ADNegocio (public/landing/capturas/*.webp, 1440x900, generadas con
  * scripts/landing-captures.mjs sobre un estado demo controlado — sin PII).
  *
  * Características:
@@ -61,7 +61,7 @@ export default function FeatureVisual({
   alt,
   srcMobile,
   altMobile,
-  frameLabel = 'costpro.app',
+  frameLabel = 'adnegocio.app',
   caption,
   priority = false,
   className = '',

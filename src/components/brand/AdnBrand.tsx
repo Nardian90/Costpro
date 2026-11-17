@@ -109,14 +109,14 @@ export const AdnWordmark = memo(function AdnWordmark({
       aria-label={title}
       focusable="false"
     >
-      {ADN_WORDMARK_PATHS.map((p) =>
+      {ADN_WORDMARK_PATHS.map((p, idx) =>
         'stem' in p && 'dot' in p ? (
-          <g key="i">
+          <g key={`i-${idx}`}>
             <path d={p.stem} fill={ink} />
             <path d={p.dot} fill={accent} />
           </g>
         ) : (
-          <path key={p.ch} d={p.d} fill={ink} />
+          <path key={`${p.ch}-${idx}`} d={p.d} fill={ink} />
         ),
       )}
     </svg>

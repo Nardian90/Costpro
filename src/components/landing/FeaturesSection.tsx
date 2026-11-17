@@ -3,7 +3,75 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { fadeUp } from './animations';
-import { features, integrationPartners } from './data';
+
+/**
+ * FeaturesSection (ADN-BRAND-REBUILD-001) — índice editorial de áreas
+ * funcionales REALES de ADNegocio, confirmadas contra la navegación canónica
+ * (src/config/navigation/navigation-definition.ts):
+ *
+ *   01 Finanzas — Estados Financieros · Caja · Ingresos/Egresos
+ *   02 Ventas — POS · Listado de precios · IPV · Reporte Entrega
+ *   03 Inventario y almacén — Stock · Inventario físico · Ajustes · Vales
+ *   04 Compras y recepciones — Recepciones · Órdenes de compra · Transferencias
+ *   05 Proveedores y clientes — Gestión documentada de terceros
+ *   06 Fichas de costo — Res. 148/2023 · Estructura · Costeo dinámico
+ *   07 Multitienda — Gestión de tiendas · vitrina digital por tienda
+ *   08 Reportes y análisis — Reportes · Análisis ABC · Análisis de datos
+ *   09 Auditoría y control documental — Ajustes documentales · trazabilidad
+ *
+ * Composición editorial: numeración grande, tipografía protagonista y filas
+ * con borde — no una cuadrícula genérica de tarjetas. Sin estadísticas,
+ * clientes ni premios inventados (mandato §5). El contrato e2e exige
+ * `#features` con elementos h3.
+ */
+
+const AREAS = [
+  {
+    n: '01',
+    title: 'Gestión financiera y estados financieros',
+    desc: 'Estados financieros con partida doble, caja con modelo físico de efectivo e ingresos/egresos documentados.',
+  },
+  {
+    n: '02',
+    title: 'Ventas y operaciones',
+    desc: 'Terminal de venta multi-moneda, listado de precios, reporte de entrega e ingresos por ventas.',
+  },
+  {
+    n: '03',
+    title: 'Inventario y almacén',
+    desc: 'Stock en tiempo real, inventario físico, ajustes documentales, vales de salida y etiquetas con códigos.',
+  },
+  {
+    n: '04',
+    title: 'Compras y recepciones',
+    desc: 'Recepciones con autoridad de nombre, órdenes de compra, servicios recibidos y transferencias entre tiendas.',
+  },
+  {
+    n: '05',
+    title: 'Proveedores y clientes',
+    desc: 'Terceros organizados con cuentas por pagar, cobros y antigüedad de saldos siempre visibles.',
+  },
+  {
+    n: '06',
+    title: 'Fichas de costo — Res. 148/2023',
+    desc: 'Estructura de costo calculada, no estimada: transporte, salarios, depreciaciones e impuestos distribuidos según la metodología oficial.',
+  },
+  {
+    n: '07',
+    title: 'Gestión de tiendas y multitienda',
+    desc: 'Cada tienda con su catálogo, inventario y operaciones aisladas — y una vitrina digital propia para tus clientes.',
+  },
+  {
+    n: '08',
+    title: 'Reportes y análisis',
+    desc: 'Reportes configurables con vista previa, análisis ABC por producto y análisis de datos del negocio completo.',
+  },
+  {
+    n: '09',
+    title: 'Auditoría y control documental',
+    desc: 'Cada acción queda registrada: auditoría de eventos, ajustes documentales y trazabilidad completa de operaciones.',
+  },
+];
 
 interface FeaturesSectionProps {
   featuresInView: boolean;
@@ -15,67 +83,53 @@ export default function FeaturesSection({
   featuresRef,
 }: FeaturesSectionProps) {
   return (
-    <>
-      {/* ── FEATURES SECTION ── */}
-      <div ref={featuresRef} id="features">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={featuresInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5 }}
-          className="mb-8"
-        >
-          <h2 className="text-xl sm:text-2xl font-bold text-white text-center">
-            Todo lo que necesitas para saber cuánto te cuesta y cuánto te queda
-          </h2>
-          <p className="text-sm text-white/50 text-center mt-2 max-w-xl mx-auto">
-            CostPro calcula cada componente de tu ficha de costo según la norma oficial — con tus datos reales, no con estimaciones.
-          </p>
-        </motion.div>
+    <div ref={featuresRef} id="features" className="px-2">
+      {/* Section header — editorial */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={featuresInView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.5 }}
+        className="mb-10 sm:mb-14"
+      >
+        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#22c55e] mb-4">
+          Funcionalidades
+        </p>
+        <h2 className="text-2xl sm:text-4xl font-bold text-white tracking-tight leading-tight max-w-2xl font-[family-name:var(--font-space-grotesk)]">
+          Un universo completo de operaciones empresariales
+        </h2>
+        <p className="text-sm sm:text-base text-white/50 mt-4 max-w-2xl leading-relaxed">
+          Lo que empezó como una herramienta de fichas de costo evolucionó en una plataforma integral: finanzas, ventas, inventario, compras, costo y control — operando sobre la misma base, sin duplicar sistemas.
+        </p>
+      </motion.div>
 
-        {/* Feature Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto w-full">
-          {features.map((feature, i) => (
-            <motion.div
-              key={feature.title}
-              custom={i}
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              className="group p-5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] hover:border-[#22c55e]/20 transition-all duration-300"
+      {/* Índice editorial de áreas — filas con borde, número grande */}
+      <div className="max-w-3xl">
+        {AREAS.map((area, i) => (
+          <motion.div
+            key={area.n}
+            custom={i}
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            className="group grid grid-cols-[auto_1fr] gap-4 sm:gap-8 py-5 sm:py-6 border-b border-white/[0.06] last:border-b-0 items-baseline hover:bg-white/[0.02] transition-colors duration-300 rounded-lg px-2 -mx-2"
+          >
+            <span
+              className="text-sm sm:text-base font-bold font-mono text-white/20 group-hover:text-[#22c55e] transition-colors duration-300 tabular-nums w-8"
+              aria-hidden="true"
             >
-              <div className="w-10 h-10 rounded-lg bg-[#22c55e]/10 flex items-center justify-center mb-3">
-                <feature.icon className="w-5 h-5 text-[#22c55e]" />
-              </div>
-              <h3 className="text-sm font-semibold text-white/90 mb-1">{feature.title}</h3>
-              <p className="text-xs text-white/40 leading-relaxed">{feature.desc}</p>
-            </motion.div>
-          ))}
-        </div>
+              {area.n}
+            </span>
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold text-white/90 tracking-tight group-hover:text-white transition-colors duration-300">
+                {area.title}
+              </h3>
+              <p className="text-[13px] sm:text-sm text-white/45 leading-relaxed mt-1.5">
+                {area.desc}
+              </p>
+            </div>
+          </motion.div>
+        ))}
       </div>
-
-      {/* Integration Partners */}
-      <div className="mt-12 max-w-2xl mx-auto w-full">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={featuresInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="flex flex-wrap items-center justify-center gap-3"
-        >
-          {integrationPartners.map((partner) => (
-            <motion.div
-              key={partner.name}
-              whileHover={{ scale: 1.1, y: -2 }}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08] hover:border-[#22c55e]/30 hover:bg-white/[0.08] transition-all duration-300 cursor-default"
-            >
-              <div className="w-6 h-6 rounded-full bg-[#22c55e]/10 border border-[#22c55e]/20 flex items-center justify-center text-[9px] font-bold text-[#22c55e]">
-                {partner.letter}
-              </div>
-              <span className="text-[10px] font-medium text-white/40">{partner.name}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </>
+    </div>
   );
 }

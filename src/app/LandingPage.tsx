@@ -53,9 +53,9 @@ export default function LandingPage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginDefaultTab, setLoginDefaultTab] = useState<'login' | 'register'>('login');
 
-  // FC ACCESS FLOW FIX (2026-09-16): la entrada a /fc/ sin sesión COSTPRO llega aquí
+  // FC ACCESS FLOW FIX (2026-09-16): la entrada a /fc/ sin sesión llega aquí
   // como /?login=1&returnTo=%2Ffc%2F (wrapper del entry point). Abrimos el modal de
-  // login de COSTPRO automáticamente — el único login del ecosistema. returnTo es
+  // ADNegocio automáticamente — el único login del ecosistema. returnTo es
   // solo navegación (allowlist en src/lib/navigation.ts), nunca autorización.
   useEffect(() => {
     try {
@@ -326,7 +326,7 @@ export default function LandingPage() {
   }, []);
 
   return (
-    <div id="landing-root" className="landing-tokens min-h-screen flex flex-col bg-[#020617] pb-[env(safe-area-inset-bottom)]">
+    <div id="landing-root" className="landing-tokens min-h-screen flex flex-col bg-[#05070A] pb-[env(safe-area-inset-bottom)]">
       {/* ─── Reading Progress Bar ─── */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 pointer-events-none">
         <div className="h-full w-full bg-white/5" />
@@ -562,10 +562,10 @@ export default function LandingPage() {
               </nav>
               <div className="p-4 border-t border-white/[0.06]">
                 {/* FIX-ENTRY (2026-09-20): drawer = SOLO navegación. Los tres caminos
-                    (COSTPRO · Ficha de Costo · Demostración) viven únicamente en el
+                    (Plataforma · Ficha de Costo · Demostración) viven únicamente en el
                     selector del hero — el menú móvil ya no compite con esa decisión. */}
                 <p className="text-[11px] text-white/40 text-center px-2">
-                  Los accesos a COSTPRO, Ficha de Costo y Demo están al inicio de la página.
+                  Los accesos a la plataforma, Ficha de Costo y Demo están al inicio de la página.
                 </p>
               </div>
             </motion.div>

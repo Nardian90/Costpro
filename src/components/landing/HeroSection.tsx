@@ -10,6 +10,7 @@ import {
 import { enterFichaDeCosto } from '@/lib/fcEntry';
 import { entrarACostpro } from '@/lib/auth-recovery';
 import { BrandWordmark } from './BrandWordmark';
+import { AdnWordmark, AdnIsotipo } from '@/components/brand/AdnBrand';
 
 /* ── Typewriter Text Component ── */
 function TypewriterText({ text, start, className }: { text: string; start: boolean; className?: string }) {
@@ -257,6 +258,18 @@ export default function HeroSection({
   onOpenDemo,
 }: HeroSectionProps) {
   const [searchFocused, setSearchFocused] = React.useState(false);
+  /* ADN-BRAND-REBUILD-001: header transparente sobre el hero que se transforma
+     discretamente al desplazarse (fondo + blur + borde). Sin logo duplicado:
+     el wordmark compacto solo aparece cuando la marca grande del hero ya no
+     está en pantalla. */
+  const [navScrolled, setNavScrolled] = React.useState(false);
+
+  React.useEffect(() => {
+    const onScroll = () => setNavScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   /* ── Ken Burns + Fade-out + Zoom on scroll for background image ── */
   const { scrollY } = useScroll();
@@ -271,14 +284,91 @@ export default function HeroSection({
   const handleSearchBlur = () => setSearchFocused(false);
 
   const navLinks = [
-    { label: 'Cómo funciona', href: '#como-funciona' },
-    { label: 'Funciones', href: '#features' },
-    { label: 'Precios', href: '#precios' },
-    { label: 'FAQ', href: '#faq' },
+    { label: 'Funcionalidades', href: '#features' },
+    { label: 'Plataforma', href: '#como-funciona' },
+    { label: 'Ayuda', href: '#faq' },
   ];
 
   return (
-    <div ref={leftPanelRef} className="relative flex-1 bg-[#020617]">
+    <div ref={leftPanelRef} className="relative flex-1 bg-[#05070A]">
+      {/* ── Top Navigation Bar (ADN-BRAND-REBUILD-001) ──
+          Sticky sobre toda la página (fuera del contenedor overflow-hidden del
+          hero): transparente sobre el hero y transformación discreta al
+          desplazarse (fondo profundo + blur + borde). La marca compacta solo
+          aparece cuando la marca grande del hero ya salió de pantalla — nunca
+          dos logotipos en la misma vista. «Acceder» es el único CTA del
+          header (misión §6); los tres caminos siguen viviendo en el selector. */}
+      <motion.nav
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className={`sticky top-0 z-40 flex items-center justify-between px-6 sm:px-10 lg:px-16 xl:px-20 py-4 transition-all duration-300 ${
+          navScrolled
+            ? 'bg-[#05070A]/85 backdrop-blur-md border-b border-white/[0.06] shadow-[0_1px_0_rgba(255,255,255,0.02)]'
+            : 'bg-transparent border-b border-transparent'
+        }`}
+        aria-label="Navegación principal"
+      >
+        {/* Marca del encabezado: isotipo al inicio (ancla visual), wordmark
+            compacto al hacer scroll (la marca del hero ya no está visible). */}
+        <div className="flex items-center min-w-[64px]">
+          {navScrolled ? (
+            <AdnWordmark height={17} title="ADNegocio — volver al inicio" className="cursor-pointer" />
+          ) : (
+            <span aria-hidden="true" className="w-8 h-8 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/15 flex items-center justify-center">
+              <Shield className="w-4 h-4 text-[#22c55e]" strokeWidth={1.5} />
+            </span>
+          )}
+        </div>
+
+        {/* Center nav links — desktop (Funcionalidades · Plataforma · Ayuda) */}
+        <div className="hidden md:flex items-center gap-1">
+          {navLinks.map((link, idx) => (
+            <a
+              key={`${link.href}-${idx}`}
+              href={link.href}
+              onClick={(e) => { e.preventDefault(); document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' }); }}
+              className="nav-link-hover px-4 py-2.5 text-[13px] font-medium text-white/60 hover:text-white/80 transition-colors duration-200" /* FIX-ACC-014 */
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Acceder — CTA del header (solo ≥ sm; en móvil vive en el drawer) */}
+          <button
+            type="button"
+            onClick={() => {
+              void entrarACostpro({
+                openLogin: () => {
+                  if (setLoginDefaultTab) setLoginDefaultTab('login');
+                  setShowLoginModal(true);
+                },
+                setLoginDefaultTab,
+              });
+            }}
+            className="hidden sm:inline-flex items-center min-h-[40px] px-5 rounded-xl text-white text-[13px] font-bold transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70"
+            style={{ background: 'linear-gradient(135deg, #15803d 0%, #15803d 45%, #166534 100%)' }}
+            aria-label="Acceder a ADNegocio"
+          >
+            Acceder
+          </button>
+          {/* Mobile hamburger (abre el drawer de navegación único) */}
+          <button
+            onClick={() => setShowMobileNav(!showMobileNav)}
+            className="flex md:hidden items-center justify-center w-11 h-11 rounded-lg hover:bg-white/[0.06] transition-colors"
+            aria-label="Abrir menú"
+          >
+            <div className={`hamburger-icon ${showMobileNav ? 'open' : ''}`}>
+              <span />
+              <span />
+              <span />
+            </div>
+          </button>
+        </div>
+      </motion.nav>
+
       {/* ── Hero viewport: overflow-hidden for Ken Burns zoom ──
           FIX-ENTRY (2026-09-20): height 100vh → minHeight 100vh. Con el selector
           de 3 caminos el contenido del hero puede exceder el viewport en pantallas
@@ -311,7 +401,7 @@ export default function HeroSection({
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: 'linear-gradient(165deg, rgba(2,6,23,0.78) 0%, rgba(2,6,23,0.65) 40%, rgba(2,6,23,0.72) 100%)',
+          background: 'linear-gradient(165deg, rgba(5,7,10,0.78) 0%, rgba(5,7,10,0.65) 40%, rgba(5,7,10,0.72) 100%)',
         }}
         aria-hidden="true"
       />
@@ -374,100 +464,86 @@ export default function HeroSection({
           )}
         </AnimatePresence>
 
-        {/* ── Top Navigation Bar ── */}
-        <motion.nav
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="flex items-center justify-between px-6 sm:px-10 lg:px-16 xl:px-20 py-5"
-        >
-          {/* MISIÓN 2026-10-15 (LP): la marca pequeña de la nav superior se retira
-              — duplicaba el COSTPRO grande del hero a 40px de distancia. Queda el
-              escudo como marca visual del encabezado; el nombre COSTPRO vive
-              únicamente en el <h1> del hero (BrandWordmark). La nav conserva su
-              altura y equilibrio: el chip del escudo ancla la esquina izquierda. */}
-          <div className="flex items-center gap-2.5" aria-hidden="true">
-            <div className="w-8 h-8 rounded-lg bg-[#22c55e]/10 border border-[#22c55e]/15 flex items-center justify-center">
-              <Shield className="w-4 h-4 text-[#22c55e]" strokeWidth={1.5} />
-            </div>
-          </div>
-
-          {/* Center nav links — desktop */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link, idx) => (
-              <a
-                key={`${link.href}-${idx}`}
-                href={link.href}
-                onClick={(e) => { e.preventDefault(); document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' }); }}
-                className="nav-link-hover px-4 py-2.5 text-[13px] font-medium text-white/60 hover:text-white/80 transition-colors duration-200" /* FIX-ACC-014 */
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
-
-          {/* FIX-ENTRY (2026-09-20): header sin CTAs de acción — los tres caminos
-              (COSTPRO · Ficha de Costo · Demostración) viven UNICAMENTE en el
-              selector del hero. El header sirve a navegación e identidad y no
-              compite con la decisión principal. El hamburger móvil abre el
-              drawer de navegación (único menú — se eliminó el dropdown duplicado). */}
-          <div className="flex items-center gap-2">
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setShowMobileNav(!showMobileNav)}
-              className="flex md:hidden items-center justify-center w-11 h-11 rounded-lg hover:bg-white/[0.06] transition-colors"
-              aria-label="Abrir menú"
-            >
-              <div className={`hamburger-icon ${showMobileNav ? 'open' : ''}`}>
-                <span />
-                <span />
-                <span />
-              </div>
-            </button>
-          </div>
-        </motion.nav>
-
         {/* FIX-ENTRY B1 (2026-09-20): dropdown móvil del hero ELIMINADO —
             duplicaba el drawer lateral de LandingPage (ambos se abrían a la vez
             con el mismo estado showMobileNav y el dropdown quedaba muerto bajo
             el overlay). Menú móvil único = drawer de navegación. */}
 
-        {/* ── HERO CENTER ── */}
-        <div ref={heroRef} id="hero" className="flex-1 flex flex-col items-center justify-center px-6 text-center -mt-10">
-          {/* Main brand name */}
+        {/* ── HERO CENTER (ADN-BRAND-REBUILD-001) ──
+            Composición de la misión: marca ADNegocio arriba, titular editorial
+            grande, subtítulo con la propuesta real de la plataforma y los dos
+            accesos (principal → entrar; secundario → conocer funcionalidades). */}
+        <div ref={heroRef} id="hero" className="flex-1 flex flex-col items-center justify-center px-6 text-center pt-10">
+          {/* Marca: isotipo + wordmark (lockup ADNegocio) */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
+            className="flex flex-col items-center"
           >
-            {/* FIX-ENTRY (2026-09-20): tamaño de marca defendido en ultra-small —
-                ver excepción .landing-tokens h1 en base.css (el hardening ≤380px
-                global reducía este h1 a 16px, solapado con el nav).
-                FIX-BRAND-HIERARCHY (2026-10-12): jerarquía Cost verde / Pro blanco
-                (sólido, sin gradiente) — ver BrandWordmark para el motivo. */}
-            <h1 className="text-[3.75rem] sm:text-7xl md:text-8xl lg:text-[9rem] xl:text-[10rem] font-black tracking-tighter leading-none font-[family-name:var(--font-space-grotesk)]">
-              <BrandWordmark />
+            <div className="flex items-center justify-center gap-3.5 mb-8">
+              <AdnIsotipo size={46} className="rounded-[11px]" />
+              <BrandWordmark className="text-2xl sm:text-3xl font-bold tracking-tight font-[family-name:var(--font-space-grotesk)]" />
+            </div>
+            {/* Titular editorial — el mensaje, no el nombre (el nombre ya está arriba) */}
+            <h1 className="text-[2.6rem] sm:text-6xl md:text-7xl lg:text-[5.2rem] font-black tracking-tighter leading-[1.04] font-[family-name:var(--font-space-grotesk)] text-white">
+              Todo tu negocio.
+              <br />
+              <span className="text-[#22c55e]">En un solo lugar.</span>
             </h1>
           </motion.div>
 
-          {/* Tagline — static text, no typewriter effect */}
+          {/* Subtítulo — propuesta de valor real (sin estadísticas inventadas) */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.6 }}
-            className="mt-6 max-w-lg"
+            className="mt-6 max-w-2xl"
           >
-            <p className="text-base sm:text-lg text-white/50 leading-relaxed">
-              Administra todas tus tiendas desde un solo lugar. Inventario, ventas y vitrina digital.
+            <p className="text-base sm:text-lg text-white/55 leading-relaxed">
+              Una plataforma para administrar, controlar y comprender las operaciones de tu empresa desde una experiencia integrada.
             </p>
+          </motion.div>
+
+          {/* Accesos principales (misión §5): principal → entrar; secundario → funcionalidades */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-xl"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                void entrarACostpro({
+                  openLogin: () => {
+                    if (setLoginDefaultTab) setLoginDefaultTab('login');
+                    setShowLoginModal(true);
+                  },
+                  setLoginDefaultTab,
+                });
+              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[48px] px-8 rounded-xl text-white text-sm font-bold transition-all hover:opacity-90 hover:-translate-y-0.5 motion-reduce:transform-none shadow-lg shadow-green-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
+              style={{ background: 'linear-gradient(135deg, #15803d 0%, #15803d 45%, #166534 100%)' }}
+            >
+              Acceder a la plataforma
+              <ArrowRight className="w-4 h-4" aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              onClick={() => document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[48px] px-8 rounded-xl border border-white/[0.14] text-white/80 hover:text-white hover:bg-white/[0.05] hover:border-white/25 text-sm font-semibold transition-all motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
+            >
+              Conocer las funcionalidades
+            </button>
           </motion.div>
 
           {/* ── SELECTOR DE TRES CAMINOS (FIX-ENTRY 2026-09-20) ──
               Una decisión, tres intenciones — NO tres botones iguales.
               Jerarquía derivada del usuario, no arbitraria:
                 1. Ficha de Costo (PRIMARIA)   → la única promesa «gratis» real:
-                   módulo de COSTPRO, Res. 148/2023, con Google o invitado.
-                2. Entrar a COSTPRO (SECUNDARIA) → plataforma completa, requiere cuenta.
+                   módulo de ADNegocio, Res. 148/2023, con Google o invitado.
+                2. Entrar a ADNegocio (SECUNDARIA) → plataforma completa, requiere cuenta.
                 3. Ver demostración (EXPLORATORIA) → conocer el producto, sin registro.
               Diferenciación por ESTRUCTURA (icono + eyebrow + descripción + acción +
               micro-trust), no solo por color (WCAG: el color nunca es el único
@@ -489,12 +565,12 @@ export default function HeroSection({
               <motion.a
                 href="/fc/"
                 data-testid="path-ficha-costo"
-                aria-label="Ficha de Costo gratis, módulo de COSTPRO. Crea y calcula fichas conforme a la Resolución 148 de 2023, con tu cuenta de Google o como invitado."
+                aria-label="Ficha de Costo gratis, módulo de ADNegocio. Crea y calcula fichas conforme a la Resolución 148 de 2023, con tu cuenta de Google o como invitado."
                 onClick={(e) => {
                   e.preventDefault();
                   void enterFichaDeCosto(() => { if (setLoginDefaultTab) setLoginDefaultTab('login'); setShowLoginModal(true); });
                 }}
-                className="group relative flex flex-col rounded-2xl border border-[#2dd4bf]/30 bg-gradient-to-b from-[#004d40]/45 to-[#004d40]/15 p-5 transition-all duration-300 hover:border-[#2dd4bf]/60 hover:from-[#004d40]/60 hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4bf]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020617]"
+                className="group relative flex flex-col rounded-2xl border border-[#2dd4bf]/30 bg-gradient-to-b from-[#004d40]/45 to-[#004d40]/15 p-5 transition-all duration-300 hover:border-[#2dd4bf]/60 hover:from-[#004d40]/60 hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2dd4bf]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
               >
                 <span className="flex items-center justify-between mb-4" aria-hidden="true">
                   <span className="w-10 h-10 rounded-xl bg-[#004d40]/70 border border-[#2dd4bf]/35 flex items-center justify-center">
@@ -505,7 +581,7 @@ export default function HeroSection({
                   </span>
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#5eead4] mb-1" aria-hidden="true">
-                  COSTPRO · Ficha de Costo
+                  ADNegocio · Ficha de Costo
                 </span>
                 <span className="text-lg font-bold text-white tracking-tight mb-1.5">
                   Ficha de Costo gratis
@@ -519,14 +595,14 @@ export default function HeroSection({
                 </span>
               </motion.a>
 
-              {/* ── CAMINO 2 · SECUNDARIA — Entrar a COSTPRO ── */}
+              {/* ── CAMINO 2 · SECUNDARIA — Entrar a ADNegocio ── */}
               <motion.a
                 href="/"
                 data-testid="path-costpro"
-                aria-label="Entrar a COSTPRO, la plataforma completa: tiendas, inventario, punto de venta y vitrina digital. Requiere cuenta."
+                aria-label="Entrar a ADNegocio, la plataforma completa: tiendas, inventario, punto de venta y vitrina digital. Requiere cuenta."
                 onClick={(e) => {
                   e.preventDefault();
-                  // CP-AUTH-RESILIENCE-003 (2026-11-08): el CTA «Entrar a COSTPRO»
+                  // CP-AUTH-RESILIENCE-003 (2026-11-08): el CTA «Entrar a la plataforma»
                   // JAMÁS recarga ni navega con `window.location.assign('/')`.
                   // Antes confiaba en la PRESENCIA de `sb-*-auth-token` (no prueba
                   // de autenticación): con un token residual/vencido, la
@@ -544,7 +620,7 @@ export default function HeroSection({
                     setLoginDefaultTab,
                   });
                 }}
-                className="group relative flex flex-col rounded-2xl border border-white/[0.10] bg-white/[0.04] p-5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.06] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020617]"
+                className="group relative flex flex-col rounded-2xl border border-white/[0.10] bg-white/[0.04] p-5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.06] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
               >
                 <span className="flex items-center justify-between mb-4" aria-hidden="true">
                   <span className="w-10 h-10 rounded-xl bg-[#22c55e]/10 border border-[#22c55e]/25 flex items-center justify-center">
@@ -555,13 +631,13 @@ export default function HeroSection({
                   Plataforma completa
                 </span>
                 <span className="text-lg font-bold text-white tracking-tight mb-1.5">
-                  Entrar a COSTPRO
+                  Entrar a ADNegocio
                 </span>
                 <span className="text-[13px] leading-relaxed text-white/60 mb-5">
                   Gestiona todas tus tiendas: inventario, punto de venta, reportes y vitrina digital en un solo lugar.
                 </span>
                 <span className="mt-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-5 rounded-xl text-white text-sm font-bold transition-all" style={{ background: 'linear-gradient(135deg, #15803d 0%, #15803d 45%, #166534 100%)' }} aria-hidden="true">
-                  Entrar a COSTPRO
+                  Entrar a ADNegocio
                   <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-0.5" />
                 </span>
               </motion.a>
@@ -570,9 +646,9 @@ export default function HeroSection({
               <motion.button
                 type="button"
                 data-testid="path-demo"
-                aria-label="Ver demostración de COSTPRO: recorre la plataforma en dos minutos, sin registro."
+                aria-label="Ver demostración de ADNegocio: recorre la plataforma en dos minutos, sin registro."
                 onClick={onOpenDemo}
-                className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-all duration-300 hover:border-white/25 hover:bg-white/[0.04] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#020617] text-left cursor-pointer"
+                className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-all duration-300 hover:border-white/25 hover:bg-white/[0.04] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A] text-left cursor-pointer"
               >
                 <span className="flex items-center justify-between mb-4" aria-hidden="true">
                   <span className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center">
@@ -660,7 +736,7 @@ export default function HeroSection({
       <div
         className="absolute bottom-0 left-0 right-0 h-72 z-10 pointer-events-none"
         style={{
-          background: 'linear-gradient(to bottom, transparent 0%, rgba(2,6,23,0.5) 25%, rgba(2,6,23,0.8) 55%, #020617 100%)',
+          background: 'linear-gradient(to bottom, transparent 0%, rgba(5,7,10,0.5) 25%, rgba(5,7,10,0.8) 55%, #05070A 100%)',
         }}
         aria-hidden="true"
       />

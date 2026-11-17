@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   Demo Data — Interactive Demo "CostPro en 2 minutos"
+   Demo Data — Interactive Demo "ADNegocio en 2 minutos"
 
    Hilo conductor: María, dueña de panadería en Cuba
    Escena 1 → Crea ficha de costo

@@ -4,9 +4,19 @@ import { motion } from "framer-motion";
 import { useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
+import { BrandWordmark } from "./BrandWordmark";
+
+/**
+ * FinalCTASection (ADN-BRAND-REBUILD-001) — cierre visual del landing.
+ * Composición de la misión §5:
+ *   «Tu negocio merece una visión completa.»
+ *   ADNegocio.
+ *   Acceso a la plataforma.
+ */
 
 interface FinalCTASectionProps {
   onOpenDemo?: () => void;
+  /** Acceso a la plataforma (abre el modal de acceso con pestaña de registro). */
   onSignup?: () => void;
 }
 
@@ -15,47 +25,33 @@ export default function FinalCTASection({ onOpenDemo, onSignup }: FinalCTASectio
   const noAnim = prefersReduced;
 
   return (
-    <section className="py-24 px-4">
+    <section className="py-28 px-4">
       <div className="max-w-2xl mx-auto text-center">
-        {/* Badge */}
-        <motion.span
-          initial={noAnim ? false : { opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-sm font-medium text-white/30 uppercase tracking-widest mb-4 block"
-        >
-          Empieza hoy
-        </motion.span>
-
-        {/* Title */}
+        {/* Cierre — titular editorial */}
         <motion.h2
           initial={noAnim ? false : { opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-3xl md:text-4xl font-semibold tracking-tight mb-6 leading-tight text-white"
+          className="text-3xl md:text-5xl font-black tracking-tight mb-6 leading-[1.08] text-white font-[family-name:var(--font-space-grotesk)]"
         >
-          Administra todas tus tiendas
+          Tu negocio merece
           <br />
-          desde un solo lugar.
-          <br />
-          Con vitrina digital incluida.
+          <span className="text-[#22c55e]">una visión completa.</span>
         </motion.h2>
 
-        {/* Subtitle */}
-        <motion.p
+        {/* Marca */}
+        <motion.div
           initial={noAnim ? false : { opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-white/50 mb-10 text-base leading-relaxed"
+          className="mb-10"
         >
-          Crea tu primera tienda, gestiona inventario y ventas, y dale presencia digital a tu negocio.
-          Con fichas de costo Res. 148/2023 integradas. Gratis. Sin tarjeta.
-        </motion.p>
+          <BrandWordmark className="text-xl sm:text-2xl font-bold tracking-tight font-[family-name:var(--font-space-grotesk)]" />
+        </motion.div>
 
-        {/* CTAs */}
+        {/* Acceso a la plataforma */}
         <motion.div
           initial={noAnim ? false : { opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -63,25 +59,25 @@ export default function FinalCTASection({ onOpenDemo, onSignup }: FinalCTASectio
           transition={{ duration: 0.5, delay: 0.3 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          {/* Primary CTA */}
+          {/* Acceso principal */}
           <Button
             size="lg"
             onClick={onSignup}
-            className="bg-gradient-to-r from-[#15803d] to-[#166534] text-white font-medium hover:from-[#166534] hover:to-[#14532d] shadow-lg shadow-green-500/20 transition-all duration-200 hover:shadow-green-500/30 w-full sm:w-auto px-8"
+            className="bg-gradient-to-r from-[#15803d] to-[#166534] text-white font-medium hover:from-[#166534] hover:to-[#14532d] shadow-lg shadow-green-500/20 transition-all duration-200 hover:shadow-green-500/30 w-full sm:w-auto px-8 min-h-[48px]"
           >
-            Crear mi cuenta gratis
+            Acceder a la plataforma
           </Button>
 
-          {/* Secondary CTA */}
+          {/* Secundario — conocer el producto sin registro */}
           <Button
             size="lg"
             variant="outline"
             onClick={onOpenDemo}
-            className="border-white/[0.12] text-white/80 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.2] transition-all duration-200 w-full sm:w-auto px-8"
+            className="border-white/[0.12] text-white/80 hover:text-white hover:bg-white/[0.06] hover:border-white/[0.2] transition-all duration-200 w-full sm:w-auto px-8 min-h-[48px]"
           >
             <span className="inline-flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              Explorar la demostración
+              Ver la demostración
             </span>
           </Button>
         </motion.div>

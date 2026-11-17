@@ -244,7 +244,7 @@ export function LoginModal({
         <div className="p-6 sm:p-8">
           <DialogHeader className="mb-4">
             <DialogTitle className="sr-only">Iniciar sesión</DialogTitle>
-            <DialogDescription className="sr-only">Formulario de acceso a CostPro</DialogDescription>
+            <DialogDescription className="sr-only">Formulario de acceso a ADNegocio</DialogDescription>
           </DialogHeader>
           <Suspense fallback={<DataDecryption />}>
             <LoginForm key={formKey} defaultTab={defaultTab} />

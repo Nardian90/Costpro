@@ -70,7 +70,7 @@ export default function IPVScene({ elapsed }: IPVSceneProps) {
         {/* Header bar */}
         <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 bg-white/[0.02]">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" aria-hidden="true" />
-          <span className="text-[10px] text-white/40 font-medium tracking-wider flex items-center gap-2">CostPro — IPV Inteligente <span className="sr-only">En línea</span></span>
+          <span className="text-[10px] text-white/40 font-medium tracking-wider flex items-center gap-2">ADNegocio — IPV Inteligente <span className="sr-only">En línea</span></span>
           <div className="ml-auto flex gap-1.5"><div className="w-2 h-2 rounded-full bg-white/10" /><div className="w-2 h-2 rounded-full bg-white/10" /></div>
         </div>
 

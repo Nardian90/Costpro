@@ -152,7 +152,7 @@ export default function FooterSection({
 
         <div className="mt-10 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <p className="text-xs text-white/40">© 2025 CostPro. Todos los derechos reservados.</p>
+            <p className="text-xs text-white/40">© 2024–2026 ADNegocio. Todos los derechos reservados.</p>
             {/* Cookie settings button - show when banner is hidden */}
             {!showCookieBanner && (
               <motion.button

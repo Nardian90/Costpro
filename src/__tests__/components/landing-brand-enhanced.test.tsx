@@ -11,7 +11,8 @@
  *    .enhanced-layer y siempre lleva dark-only + loading-branding-*.
  * 2. Catálogo: el paso 2 «Organiza tu catálogo» debe referenciar las 4
  *    imágenes demo (demo-products) con nombres/precios/stocks originales.
- * 3. Wordmark: BrandWordmark = «Cost» verde + «Pro» blanco, sin gradiente.
+ * 3. Wordmark: BrandWordmark = «ADN» verde + «egocio» blanco, sin gradiente
+ *    (ADN-BRAND-REBUILD-001 — identidad ADNegocio).
  *
  * jsdom no computa la cascada CSS de <style jsx global> ni animaciones:
  * la prohibición de enhanced-layer y del gradiente se blinda a nivel de
@@ -142,16 +143,16 @@ describe('LANDING-CATALOG-IMAGES — «Organiza tu catálogo»', () => {
   });
 });
 
-describe('FIX-BRAND-HIERARCHY — BrandWordmark', () => {
-  it('renderiza «Cost» verde + «Pro» blanco y sin gradiente', () => {
+describe('ADN-BRAND-REBUILD-001 — BrandWordmark', () => {
+  it('renderiza «ADN» verde + «egocio» blanco y sin gradiente', () => {
     render(<BrandWordmark className="text-lg font-bold" />);
-    const cost = screen.getByText('Cost');
-    const pro = screen.getByText('Pro');
-    expect(cost.className).toContain('text-[#22c55e]');
-    expect(cost.className).not.toContain('text-white');
-    expect(pro.className).toContain('text-white');
-    expect(pro.className).not.toContain('bg-clip-text');
-    expect(pro.className).not.toContain('bg-gradient');
+    const adn = screen.getByText('ADN');
+    const egocio = screen.getByText('egocio');
+    expect(adn.className).toContain('text-[#22c55e]');
+    expect(adn.className).not.toContain('text-white');
+    expect(egocio.className).toContain('text-white');
+    expect(egocio.className).not.toContain('bg-clip-text');
+    expect(egocio.className).not.toContain('bg-gradient');
   });
 
   it('contrato de fuente: el landing ya no duplica el wordmark con estilos independientes', () => {
@@ -164,7 +165,7 @@ describe('FIX-BRAND-HIERARCHY — BrandWordmark', () => {
     expect(landing).toContain('BrandWordmark');
     // El componente compartido fija la jerarquía decidida
     const brand = read('src/components/landing/BrandWordmark.tsx');
-    expect(brand).toContain("text-[#22c55e]\">Cost</span>");
-    expect(brand).toContain("text-white\">Pro</span>");
+    expect(brand).toContain("text-[#22c55e]\">ADN</span>");
+    expect(brand).toContain("text-white\">egocio</span>");
   });
 });

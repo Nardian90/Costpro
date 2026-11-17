@@ -98,7 +98,8 @@ html:has(#landing-root) {
 /* Fondo del body: con theme=light el body sería #f8fafc y asomaría en
    overscroll; el landing vivo pinta el lienzo con su fondo de marca. */
 body:has(#landing-root) {
-  background-color: #020617;
+  /* ADN-BRAND-REBUILD-001: negro profundo de la identidad ADNegocio */
+  background-color: #05070A;
 
   /* Nivel 2: mismos tokens para overlays globales (CookieConsent, etc.) */
   --background: #121212;
