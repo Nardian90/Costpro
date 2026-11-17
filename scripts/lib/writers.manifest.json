@@ -1,6 +1,6 @@
 {
  "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
- "_updated": "2026-11-17T00:00:00Z",
+ "_updated": "2026-11-18 (M-015: 6 scripts con guard assert-not-production)",
  "guardProtected": [
   "scripts/apply-migration-mgmt.ts",
   "scripts/apply-migration.cjs",
@@ -59,7 +59,13 @@
   "scripts/m100-negwac014-extract.mjs",
   "scripts/m102-negwac014-e2e.mjs",
   "scripts/m103-negwac014-execute.mjs",
-  "scripts/m104-negwac014-verify.mjs"
+  "scripts/m104-negwac014-verify.mjs",
+  "scripts/m106-openbal-extract.mjs",
+  "scripts/m106b-openbal-followup.mjs",
+  "scripts/m106c-openbal-cash.mjs",
+  "scripts/m106d-prod-baseline.mjs",
+  "scripts/m108-openbal015-e2e.mjs",
+  "scripts/m108b-openbal015-e2e-preclean.mjs"
  ],
  "isolationProtected": [
   "scripts/cleanup-e2e-offers-manual.mjs",
