@@ -1,0 +1,43 @@
+{
+ "mision": "CP-FIN-OPENING-BALANCES-AND-CASH-RECONCILIATION-015",
+ "script": "m109",
+ "fases": [
+  {
+   "fase": 1,
+   "nombre": "infra_v2_activa",
+   "ok": true,
+   "detalle": "{\"v2venta\":1,\"v2fc\":1,\"activas_total\":2,\"trig\":1,\"check0\":1,\"dtr\":1}"
+  },
+  {
+   "fase": 2,
+   "nombre": "RECT015_A",
+   "ok": true,
+   "detalle": "entry 0000000a D=CR=120750.00"
+  },
+  {
+   "fase": 3,
+   "nombre": "RECT015_B",
+   "ok": true,
+   "detalle": "entry 0000000b D=CR=5600.00"
+  },
+  {
+   "fase": 4,
+   "nombre": "RECT015_C",
+   "ok": true,
+   "detalle": "YA_APLICADO (entry preexistente 1)"
+  },
+  {
+   "fase": 5,
+   "nombre": "RECT015_D",
+   "ok": true,
+   "detalle": "entry 0000000d D=CR=8729279.98"
+  },
+  {
+   "fase": 6,
+   "nombre": "apertura_cero",
+   "ok": true,
+   "detalle": "YA_APLICADO"
+  }
+ ],
+ "generado": "2026-11-17T18:43:10.147Z"
+}

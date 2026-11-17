@@ -20,7 +20,7 @@
  * consistente con las vistas legacy del terminal.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Settings2, RefreshCw, Search, ChevronUp, ChevronDown, Pencil, Trash2, Plus,
   Landmark, FileText, History, Play, Save, Zap, Ban, RotateCcw, Scale,
@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore, type FinancialOpeningNavContext } from '@/store';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,6 +116,28 @@ export default function DocumentConfigView() {
 
   // ── Saldos iniciales ──
   const [openingOpen, setOpeningOpen] = useState(false);
+
+  // CP-FIN-015: llegada desde Estados Financieros (consumo único del contexto).
+  // Abre directamente Saldos Iniciales y habilita el regreso a la vista origen.
+  const financialOpeningNav = useUIStore((s) => s.financialOpeningNavContext);
+  const setFinancialOpeningNavContext = useUIStore((s) => s.setFinancialOpeningNavContext);
+  const setCurrentView = useUIStore((s) => s.setCurrentView);
+  const [cameFromStatements, setCameFromStatements] = useState(false);
+  const consumedNavRef = useRef(false);
+  useEffect(() => {
+    if (consumedNavRef.current) return;
+    const ctx: FinancialOpeningNavContext | null = financialOpeningNav;
+    if (ctx && Date.now() - ctx.setAt < 30 * 60 * 1000) {
+      consumedNavRef.current = true;
+      setCameFromStatements(true);
+      if (ctx.openOpeningBalances) setOpeningOpen(true);
+      setFinancialOpeningNavContext(null);
+    }
+  }, [financialOpeningNav, setFinancialOpeningNavContext]);
+  const backToStatements = useCallback(() => {
+    setCameFromStatements(false);
+    setCurrentView('financial-statements');
+  }, [setCurrentView]);
 
   const dirty = useMemo(() => JSON.stringify(editorMovements) !== baseline, [editorMovements, baseline]);
 
@@ -569,7 +591,10 @@ export default function DocumentConfigView() {
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 p-4">
-      <ViewHeader onOpening={() => setOpeningOpen(true)} />
+      <ViewHeader
+        onOpening={() => setOpeningOpen(true)}
+        onBack={cameFromStatements ? backToStatements : undefined}
+      />
 
       {loading && documentTypes.length === 0 ? (
         <div className="bg-card rounded-2xl border border-border p-12 text-center">
@@ -1397,7 +1422,7 @@ export default function DocumentConfigView() {
 // Piezas de la vista
 // ─────────────────────────────────────────────────────────────────
 
-function ViewHeader({ onOpening }: { onOpening?: () => void }) {
+function ViewHeader({ onOpening, onBack }: { onOpening?: () => void; onBack?: () => void }) {
   return (
     <div className="flex items-center justify-between gap-4 flex-wrap">
       <div className="flex items-center gap-4">
@@ -1413,15 +1438,27 @@ function ViewHeader({ onOpening }: { onOpening?: () => void }) {
           </p>
         </div>
       </div>
-      {onOpening && (
-        <Button
-          onClick={onOpening}
-          className="h-11 min-h-[44px] rounded-xl font-black uppercase tracking-widest text-xs gap-2"
-        >
-          <Landmark className="w-4 h-4" />
-          Saldos iniciales
-        </Button>
-      )}
+      <div className="flex items-center gap-2">
+        {onBack && (
+          <Button
+            onClick={onBack}
+            variant="outline"
+            className="h-11 min-h-[44px] rounded-xl font-black uppercase tracking-widest text-xs gap-2"
+            title="Regresar a Estados Financieros"
+          >
+            Estados Financieros
+          </Button>
+        )}
+        {onOpening && (
+          <Button
+            onClick={onOpening}
+            className="h-11 min-h-[44px] rounded-xl font-black uppercase tracking-widest text-xs gap-2"
+          >
+            <Landmark className="w-4 h-4" />
+            Saldos iniciales
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
