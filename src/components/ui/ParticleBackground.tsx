@@ -40,7 +40,7 @@ interface Particle {
 interface ParticleBackgroundProps {
   /** Vista actual para mostrar tip contextual */
   viewId?: string | null;
-  /** FIX-COSTPRO-LOADING: mostrar "COSTPRO" + tips durante la carga de vista */
+  /** FIX-COSTPRO-LOADING: mostrar "ADNEGOCIO" + tips durante la carga de vista */
   showLoadingBranding?: boolean;
 }
 
@@ -256,7 +256,7 @@ export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBack
 
       {/* ── Layer 2: COSTPRO branding + tips — SOLO durante carga ──
           FIX-COSTPRO-LOADING (2026-07-13):
-          - "COSTPRO" texto grande con opacity baja
+          - "ADNEGOCIO" texto grande con opacity baja
           - Tips debajo (contextual a la vista)
           - SOLO visible cuando showLoadingBranding=true (vista cargando)
           - SOLO en enhanced mode (ver CSS html:not(.mode-enhanced) abajo)
@@ -275,7 +275,7 @@ export function ParticleBackground({ viewId, showLoadingBranding }: ParticleBack
         aria-hidden="true"
       >
         <span className="bg-costpro-branding select-none" key={`brand-${viewId}`}>
-          COSTPRO
+          ADNEGOCIO
         </span>
         <span className="bg-tip-text select-none" key={`tip-${viewId}`}>
           {tipText}

@@ -577,7 +577,7 @@ export default function ApiDocsViewer() {
       {/* Footer */}
       <Card className="bg-muted/20">
         <CardContent className="p-4 text-center text-xs text-muted-foreground">
-          <p>CostPro Enterprise API Documentation — Generated dynamically from source code</p>
+          <p>ADNegocio API Documentation — Generated dynamically from source code</p>
           <p className="mt-1">
             Spec available at{' '}
             <code className="font-mono bg-muted/40 px-1 rounded">GET /api/docs</code>

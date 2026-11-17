@@ -33,7 +33,7 @@ export interface SystemFCTemplateMeta {
 
 /** Catálogo completo de plantillas de sistema (13). */
 export const SYSTEM_FC_TEMPLATES: readonly SystemFCTemplateMeta[] = [
-  { id: 'costpro-reinicio', name: 'CostPro — Reinicio (General)', category: 'General', description: 'Plantilla general para reinicio de costo. Incluye todos los campos de la Resolución 148.' },
+  { id: 'costpro-reinicio', name: 'ADNegocio — Reinicio (General)', category: 'General', description: 'Plantilla general para reinicio de costo. Incluye todos los campos de la Resolución 148.' },
   { id: 'template-pizza', name: 'Pizza — Gastronomía', category: 'Gastronomía', description: 'Gastronomía: Pizza. Cálculo de costo con ingredientes, mano de obra y overhead.' },
   { id: 'template-juice', name: 'Jugos — Bebidas', category: 'Bebidas', description: 'Bebidas: Jugos. Materias primas, procesamiento y envasado.' },
   { id: 'template-icecream', name: 'Helados — Gastronomía', category: 'Gastronomía', description: 'Gastronomía: Helados. Base láctea, insumos y conservación.' },
@@ -45,7 +45,7 @@ export const SYSTEM_FC_TEMPLATES: readonly SystemFCTemplateMeta[] = [
   { id: 'template-industrial', name: 'Industrial — Producción', category: 'Producción', description: 'Producción: Industrial. Materias primas, procesos y energía.' },
   { id: 'template-lavar', name: 'Lavandería — Servicios', category: 'Servicios', description: 'Servicios: Lavandería. Insumos, agua, energía y mano de obra.' },
   { id: 'template-pastry', name: 'Pastelería — Gastronomía', category: 'Gastronomía', description: 'Gastronomía: Pastelería. Ingredientes, decoración y horneado.' },
-  { id: 'costpro-ejemplo', name: 'CostPro — Ejemplo Oficial', category: 'General', description: 'Ejemplo oficial de ficha de costo completa de COSTPRO (Resolución 148/2023).' },
+  { id: 'costpro-ejemplo', name: 'ADNegocio — Ejemplo Oficial', category: 'General', description: 'Ejemplo oficial de ficha de costo completa de ADNegocio (Resolución 148/2023).' },
 ] as const;
 
 /** Conjunto de claves válidas de plantilla de sistema (validación O(1)). */

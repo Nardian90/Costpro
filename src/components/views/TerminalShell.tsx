@@ -368,7 +368,7 @@ export default function TerminalShell() {
       // CyberShell (p-2 + borde en ≥sm); h-screen excedía el viewport en 18px y
       // provocaba scroll documental innecesario en escritorio.
       <div className="h-full w-full bg-background">
-        <ViewLoadingSplash label="COSTPRO" showTips={false} />
+        <ViewLoadingSplash label="ADNegocio" showTips={false} />
       </div>
     );
   }

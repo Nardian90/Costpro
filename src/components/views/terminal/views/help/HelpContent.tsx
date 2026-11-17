@@ -218,7 +218,7 @@ export default function HelpContent({
 
         <h2 className="text-xl font-black tracking-tight mb-2">Centro de Documentación</h2>
         <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed mb-8">
-          Selecciona una sección del menú lateral para explorar la documentación funcional y técnica de CostPro.
+          Selecciona una sección del menú lateral para explorar la documentación funcional y técnica de ADNegocio.
         </p>
 
         {/* Quick access cards */}
@@ -297,7 +297,7 @@ export default function HelpContent({
 
           {/* Description pill */}
           <p className="text-[14px] font-medium text-muted-foreground max-w-2xl leading-[1.8] text-justify hyphens-auto">
-            {doc.type === 'iso' && 'Sección del manual oficial de usuario de CostPro. Documentación funcional certificada según los estándares internacionales ISO/IEC 26514 para sistemas de ayuda en línea, garantizando accesibilidad, claridad y completitud en cada apartado.'}
+            {doc.type === 'iso' && 'Sección del manual oficial de usuario de ADNegocio. Documentación funcional certificada según los estándares internacionales ISO/IEC 26514 para sistemas de ayuda en línea, garantizando accesibilidad, claridad y completitud en cada apartado.'}
             {doc.type === 'tutorial' && 'Tutorial paso a paso diseñado para guiar al usuario de forma progresiva a través de las funcionalidades del sistema, desde los conceptos fundamentales hasta las operaciones avanzadas, con explicaciones detalladas y ejemplos prácticos.'}
             {doc.type === 'how-to' && 'Guía práctica con instrucciones detalladas y específicas para ejecutar operaciones concretas dentro del sistema, organizadas de forma secuencial para facilitar su seguimiento y aplicación inmediata en el entorno de trabajo.'}
             {doc.type === 'reference' && 'Referencia técnica completa que documenta la API, parámetros de configuración, estructuras de datos y especificaciones del sistema, servida como fuente autorizada de consulta para desarrolladores y administradores.'}
@@ -359,7 +359,7 @@ export default function HelpContent({
       <div className="pt-8 flex items-center justify-between border-t border-dashed border-border/30">
         <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/30">
           <div className="w-1 h-1 rounded-full bg-muted-foreground/20" />
-          CostPro · Documentation System · ISO/IEC 26514
+          ADNegocio · Documentation System · ISO/IEC 26514
         </div>
         <button type="button"
           aria-label="Volver arriba del documento"

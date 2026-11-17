@@ -111,7 +111,7 @@ export const HealthLayout: React.FC<HealthLayoutProps> = ({
         {/* Línea 2: indicadores compactos */}
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
           <span>
-            COSTPRO <span className="text-foreground font-black">v{data.app.version}</span>
+            ADNegocio <span className="text-foreground font-black">v{data.app.version}</span>
           </span>
           <span
             title="Tiempo total de procesamiento de esta solicitud (incluye la comprobación de BD); no se suma con la latencia de BD."

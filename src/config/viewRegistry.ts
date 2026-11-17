@@ -21,7 +21,7 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
   {
     id: "chat",
     route: "/?view=chat",
-    description: "Chat con Darian, el asistente IA de CostPro. Consulta costos, ventas, busca productos, navega vistas y ejecuta acciones.",
+    description: "Chat con Darian, el asistente IA de ADNegocio. Consulta costos, ventas, busca productos, navega vistas y ejecuta acciones.",
     actions: ["ask_question", "search_entity", "get_cost_summary", "get_sales_summary", "open_view"]
   },
   {

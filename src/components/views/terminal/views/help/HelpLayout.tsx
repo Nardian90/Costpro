@@ -113,7 +113,7 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
                 </Badge>
               </div>
               <p className="text-[11px] font-medium text-muted-foreground tracking-wide mt-0.5">
-                Documentación funcional y técnica de CostPro v5.8
+                Documentación funcional y técnica de ADNegocio
               </p>
             </div>
           </div>
@@ -227,7 +227,7 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
                   <span>Sistema operativo</span>
                 </div>
                 <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">
-                  <span>© 2024–2026 CostPro</span>
+                  <span>© 2024–2026 ADNegocio</span>
                   <span className="text-border">·</span>
                   <span>ISO/IEC 26514</span>
                   <span className="text-border">·</span>
@@ -293,7 +293,7 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
                 <div className="w-1.5 h-1.5 rounded-full bg-success/60" />
                 <span>Sistema operativo</span>
               </div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">© 2024–2026 CostPro · ISO/IEC 26514</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/40">© 2024–2026 ADNegocio · ISO/IEC 26514</span>
             </footer>
           )}
         </main>

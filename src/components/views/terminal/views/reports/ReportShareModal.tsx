@@ -54,9 +54,9 @@ export const ReportShareModal = ({
       return;
     }
     // Build mailto link as a client-side fallback
-    const subject = encodeURIComponent(`Reporte CostPro: ${reportName}`);
+    const subject = encodeURIComponent(`Reporte ADNegocio: ${reportName}`);
     const body = encodeURIComponent(
-      `Se ha generado el reporte "${reportName}" en CostPro Enterprise.\n\nAccede al sistema para ver el documento.`
+      `Se ha generado el reporte "${reportName}" en ADNegocio.\n\nAccede al sistema para ver el documento.`
     );
     window.open(`mailto:${emailTo}?subject=${subject}&body=${body}`, '_blank');
     toast.success(`Abriendo cliente de correo para ${emailTo}`);

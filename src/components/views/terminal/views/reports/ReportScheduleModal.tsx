@@ -181,7 +181,7 @@ export const ReportScheduleModal = ({
                 Para activar la programación recurrente de un reporte, primero guárdalo como
                 plantilla usando &quot;Guardar Plantilla&quot;. Luego, activa la programación desde esta
                 vista. La ejecución automática requiere un servidor de tareas programadas
-                (cron/edge function) configurado en la infraestructura de CostPro.
+                (cron/edge function) configurado en la infraestructura de ADNegocio.
               </p>
             </div>
           </div>

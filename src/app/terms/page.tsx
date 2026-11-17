@@ -3,8 +3,8 @@ import Link from 'next/link';
 import { Scale, User, Shield, FileText, AlertTriangle, Clock, Globe, Mail, Server, Ban, Copyright, Settings } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Términos y Condiciones — CostPro',
-  description: 'Términos y condiciones de uso de la plataforma CostPro Enterprise.',
+  title: 'Términos y Condiciones — ADNegocio',
+  description: 'Términos y condiciones de uso de la plataforma ADNegocio.',
   robots: { index: true },
 };
 
@@ -27,7 +27,7 @@ export default function TermsPage() {
           {/* ── 1. Aceptación de los Términos ── */}
           <Section icon={<Scale className="w-5 h-5" />} title="1. Aceptación de los Términos">
             <p className="text-sm text-muted-foreground">
-              Al acceder, registrarse o utilizar la plataforma CostPro Enterprise (en adelante, &quot;el Servicio&quot;),
+              ADNegocio es la denominación comercial actual de la plataforma (anteriormente CostPro). Al acceder, registrarse o utilizar la plataforma ADNegocio (en adelante, &quot;el Servicio&quot;),
               usted (en adelante, &quot;el Usuario&quot; o &quot;usted&quot;) acepta quedar vinculado de manera irrevocable
               por los presentes Términos y Condiciones (en adelante, &quot;Términos&quot;), así como por nuestra
               {' '}
@@ -41,7 +41,7 @@ export default function TermsPage() {
               constituirá su aceptación de dichos cambios.
             </p>
             <p className="text-sm text-muted-foreground">
-              Estos Términos constituyen un acuerdo legal vinculante entre usted y CostPro Enterprise.
+              Estos Términos constituyen un acuerdo legal vinculante entre usted y ADNegocio.
               En caso de conflicto entre la versión en español y cualquier traducción, prevalecerá la
               versión en español.
             </p>
@@ -50,7 +50,7 @@ export default function TermsPage() {
           {/* ── 2. Descripción del Servicio ── */}
           <Section icon={<Server className="w-5 h-5" />} title="2. Descripción del Servicio">
             <p className="text-sm text-muted-foreground mb-3">
-              CostPro Enterprise es una plataforma integral de gestión empresarial diseñada para optimizar
+              ADNegocio es una plataforma integral de gestión empresarial diseñada para optimizar
               la operación de negocios de cualquier escala. El Servicio incluye, entre otras funcionalidades:
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -71,7 +71,7 @@ export default function TermsPage() {
               ))}
             </div>
             <p className="text-sm text-muted-foreground mt-3">
-              CostPro se reserva el derecho de modificar, suspender o descontinuar cualquier funcionalidad
+              ADNegocio se reserva el derecho de modificar, suspender o descontinuar cualquier funcionalidad
               del Servicio en cualquier momento, con o sin aviso previo, siempre respetando las obligaciones
               contraídas con los usuarios activos.
             </p>
@@ -88,17 +88,17 @@ export default function TermsPage() {
               <li>Mantener la información de su cuenta actualizada en todo momento.</li>
               <li>Ser responsable de toda la actividad que se realice bajo su cuenta.</li>
               <li>No compartir sus credenciales de acceso con terceros bajo ninguna circunstancia.</li>
-              <li>Notificar inmediatamente a CostPro sobre cualquier uso no autorizado de su cuenta.</li>
+              <li>Notificar inmediatamente a ADNegocio sobre cualquier uso no autorizado de su cuenta.</li>
             </ul>
             <p className="text-sm text-muted-foreground mt-3">
-              CostPro asignará un rol al usuario dentro de la organización (administrador, gerente, cajero, etc.)
+              ADNegocio asignará un rol al usuario dentro de la organización (administrador, gerente, cajero, etc.)
               con permisos específicos. El administrador de la organización es responsable de gestionar los
               accesos de su equipo y de velar por el cumplimiento de estos Términos por parte de los usuarios
               de su cuenta.
             </p>
             <p className="text-sm text-muted-foreground">
               Usted debe elegir una contraseña segura que contenga al menos 8 caracteres, incluyendo letras
-              mayúsculas, minúsculas y números. CostPro emplea medidas de seguridad industry-standard para
+              mayúsculas, minúsculas y números. ADNegocio emplea medidas de seguridad industry-standard para
               proteger la información de su cuenta, incluyendo cifrado de contraseñas mediante algoritmos
               de hashing modernos.
             </p>
@@ -112,15 +112,15 @@ export default function TermsPage() {
             </p>
             <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
               <li>Utilizar el Servicio para fines ilegales, fraudulentos o contrarios a la moral y el orden público.</li>
-              <li>Intentar obtener acceso no autorizado a sistemas, cuentas o datos de CostPro o de otros usuarios.</li>
+              <li>Intentar obtener acceso no autorizado a sistemas, cuentas o datos de ADNegocio o de otros usuarios.</li>
               <li>Realizar ingeniería inversa, descompilar o desensamblar cualquier componente del Servicio.</li>
               <li>Interferir o interrumpir la operatividad del Servicio, incluyendo ataques de denegación de servicio (DoS).</li>
               <li>Utilizar robots, scrapers o cualquier means automatizado para extraer datos del Servicio sin autorización expresa.</li>
               <li>Publicar, transmitir o almacenar contenido malicioso, incluyendo virus, malware o código dañino.</li>
-              <li>Vender, sublicenciar, arrendar o transferir su acceso al Servicio a terceros sin consentimiento escrito de CostPro.</li>
-              <li>Suplantar la identidad de otros usuarios o de CostPro Enterprise.</li>
+              <li>Vender, sublicenciar, arrendar o transferir su acceso al Servicio a terceros sin consentimiento escrito de ADNegocio.</li>
+              <li>Suplantar la identidad de otros usuarios o de ADNegocio.</li>
               <li>Violentar derechos de propiedad intelectual de terceros a través del Servicio.</li>
-              <li>Utilizar el Servicio para competir directamente con CostPro Enterprise de manera desleal.</li>
+              <li>Utilizar el Servicio para competir directamente con ADNegocio de manera desleal.</li>
             </ul>
             <p className="text-sm text-muted-foreground mt-3">
               El incumplimiento de estas normas podrá resultar en la suspensión o terminación inmediata de su
@@ -133,7 +133,7 @@ export default function TermsPage() {
             <p className="text-sm text-muted-foreground mb-3">
               Todos los derechos de propiedad intelectual sobre el Servicio, incluyendo但不限于 el código fuente,
               el diseño de la interfaz, los logotipos, marcas, textos, gráficos, iconos, bases de datos y
-              documentación, son propiedad exclusiva de CostPro Enterprise o de sus licenciantes.
+              documentación, son propiedad exclusiva de ADNegocio o de sus licenciantes.
             </p>
             <p className="text-sm text-muted-foreground mb-3">
               El Servicio se concede bajo una licencia limitada, no exclusiva, revocable y no transferible
@@ -147,11 +147,11 @@ export default function TermsPage() {
             <p className="text-sm text-muted-foreground mt-3">
               Respecto al contenido generado por el usuario (fichas de costo, datos de inventario, registros
               de ventas, etc.), usted conserva todos los derechos de propiedad intelectual. Al utilizar el
-              Servicio, usted otorga a CostPro una licencia limitada para procesar, almacenar y mostrar dicho
+              Servicio, usted otorga a ADNegocio una licencia limitada para procesar, almacenar y mostrar dicho
               contenido exclusivamente para la prestación del Servicio.
             </p>
             <p className="text-sm text-muted-foreground">
-              &quot;CostPro&quot;, &quot;CostPro Enterprise&quot; y el logotipo de CostPro son marcas comerciales
+              &quot;ADNegocio&quot; y el logotipo de ADNegocio son marcas comerciales
               registradas. Su uso sin autorización expresa queda terminantemente prohibido.
             </p>
           </Section>
@@ -159,7 +159,7 @@ export default function TermsPage() {
           {/* ── 6. Protección de Datos ── */}
           <Section icon={<Shield className="w-5 h-5" />} title="6. Protección de Datos">
             <p className="text-sm text-muted-foreground mb-3">
-              CostPro se compromete a proteger la privacidad y los datos personales de sus usuarios de
+              ADNegocio se compromete a proteger la privacidad y los datos personales de sus usuarios de
               conformidad con la legislación aplicable, incluyendo el Reglamento General de Protección de
               Datos (UE) 2016/679 (RGPD) en la medida en que resulte aplicable.
             </p>
@@ -170,7 +170,7 @@ export default function TermsPage() {
               </Link>, la cual forma parte integrante de estos Términos. Le recomendamos leerla atentamente.
             </p>
             <p className="text-sm text-muted-foreground">
-              CostPro implementa medidas técnicas y organizativas adecuadas para proteger los datos personales
+              ADNegocio implementa medidas técnicas y organizativas adecuadas para proteger los datos personales
               contra acceso no autorizado, pérdida, destrucción o alteración. Esto incluye cifrado en tránsito
               (TLS 1.3), cifrado en reposo, controles de acceso basados en roles y auditorías de seguridad
               periódicas.
@@ -185,24 +185,24 @@ export default function TermsPage() {
             <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
               <li>
                 <strong>Exención de garantías:</strong> El Servicio se proporciona &quot;tal cual&quot; y &quot;según disponibilidad&quot;.
-                CostPro no otorga garantías de ningún tipo, ya sean expresas o implícitas, incluyendo, sin limitación,
+                ADNegocio no otorga garantías de ningún tipo, ya sean expresas o implícitas, incluyendo, sin limitación,
                 garantías de comerciabilidad, idoneidad para un propósito particular o no infracción.
               </li>
               <li>
-                <strong>Limitación de daños:</strong> En ningún caso CostPro será responsable por daños indirectos,
+                <strong>Limitación de daños:</strong> En ningún caso ADNegocio será responsable por daños indirectos,
                 incidentales, especiales, consecuentes o punitivos, incluyendo pero no limitado a pérdida de
                 beneficios, pérdida de datos, interrupción comercial o pérdida de oportunidades comerciales,
                 que surjan del uso o la imposibilidad de uso del Servicio.
               </li>
               <li>
-                <strong>Límite máximo:</strong> La responsabilidad total acumulada de CostPro con respecto al
-                Servicio no excederá el monto total pagado por usted a CostPro en los doce (12) meses anteriores
+                <strong>Límite máximo:</strong> La responsabilidad total acumulada de ADNegocio con respecto al
+                Servicio no excederá el monto total pagado por usted a ADNegocio en los doce (12) meses anteriores
                 al evento que dé lugar a la reclamación, o cien dólares estadounidenses (USD 100.00), el que
                 resulte mayor.
               </li>
               <li>
                 <strong>Exclusiones:</strong> Nada en estos Términos excluye o limita la responsabilidad de
-                CostPro por dolo, negligencia grave, muerte o lesiones personales causadas por su negligencia,
+                ADNegocio por dolo, negligencia grave, muerte o lesiones personales causadas por su negligencia,
                 o cualquier otra responsabilidad que no pueda excluirse conforme a la legislación aplicable.
               </li>
             </ul>
@@ -211,7 +211,7 @@ export default function TermsPage() {
           {/* ── 8. Disponibilidad del Servicio ── */}
           <Section icon={<Clock className="w-5 h-5" />} title="8. Disponibilidad del Servicio">
             <p className="text-sm text-muted-foreground mb-3">
-              CostPro se esfuerza por mantener el Servicio disponible de manera continua, apuntando a un
+              ADNegocio se esfuerza por mantener el Servicio disponible de manera continua, apuntando a un
               tiempo de actividad (uptime) del 99.9% medido mensualmente. Sin embargo, el Servicio puede
               experimentar interrupciones temporales por razones que incluyen, sin limitación:
             </p>
@@ -237,16 +237,16 @@ export default function TermsPage() {
               electrónico.
             </p>
             <p className="text-sm text-muted-foreground">
-              CostPro no garantiza que el Servicio esté libre de errores, que los defectos serán corregidos
+              ADNegocio no garantiza que el Servicio esté libre de errores, que los defectos serán corregidos
               o que el Servicio funcionará sin interrupciones. Las estadísticas de disponibilidad pueden
-              consultarse en el panel de estado de CostPro.
+              consultarse en el panel de estado de ADNegocio.
             </p>
           </Section>
 
           {/* ── 9. Suspensión y Terminación ── */}
           <Section icon={<Settings className="w-5 h-5" />} title="9. Suspensión y Terminación">
             <p className="text-sm text-muted-foreground mb-3">
-              CostPro se reserva el derecho de suspender o terminar su acceso al Servicio en los siguientes casos:
+              ADNegocio se reserva el derecho de suspender o terminar su acceso al Servicio en los siguientes casos:
             </p>
             <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
               <li>Incumplimiento de cualquiera de los presentes Términos.</li>
@@ -257,8 +257,8 @@ export default function TermsPage() {
               <li>Requerimiento de autoridad competente debidamente fundamentado.</li>
             </ul>
             <p className="text-sm text-muted-foreground mt-3">
-              En caso de terminación, CostPro proporcionará al Usuario un plazo razonable (no inferior a
-              30 días calendario) para exportar y descargar sus datos. Transcurrido dicho plazo, CostPro
+              En caso de terminación, ADNegocio proporcionará al Usuario un plazo razonable (no inferior a
+              30 días calendario) para exportar y descargar sus datos. Transcurrido dicho plazo, ADNegocio
               eliminará de manera segura toda la información asociada a la cuenta, incluyendo datos de
               inventario, registros de ventas, fichas de costo y cualquier otro contenido generado por el
               usuario.
@@ -272,7 +272,7 @@ export default function TermsPage() {
           {/* ── 10. Modificaciones ── */}
           <Section icon={<FileText className="w-5 h-5" />} title="10. Modificaciones">
             <p className="text-sm text-muted-foreground mb-3">
-              CostPro se reserva el derecho de modificar estos Términos en cualquier momento. Las modificaciones
+              ADNegocio se reserva el derecho de modificar estos Términos en cualquier momento. Las modificaciones
               se comunicarán de la siguiente manera:
             </p>
             <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
@@ -314,7 +314,7 @@ export default function TermsPage() {
             </p>
             <p className="text-sm text-muted-foreground">
               Si alguna disposición de estos Términos fuera declarada nula o inaplicable por un tribunal
-              competente, las disposiciones restantes mantendrán su plena vigencia y efecto. CostPro
+              competente, las disposiciones restantes mantendrán su plena vigencia y efecto. ADNegocio
               reemplazará la disposición nula por una disposición válida que refleje, en la medida de lo
               posible, la intención original de la disposición declarada nula.
             </p>
@@ -362,7 +362,7 @@ export default function TermsPage() {
         {/* Back link */}
         <div className="mt-12 pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            Estos Términos constituyen el acuerdo completo entre usted y CostPro Enterprise
+            Estos Términos constituyen el acuerdo completo entre usted y ADNegocio
             respecto al uso del Servicio.
           </p>
           <Link

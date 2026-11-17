@@ -445,7 +445,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       fetchServerPrivateTemplates();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Error al renombrar la plantilla', {
-        description: 'No se pudo actualizar en COSTPRO. Verifica tu conexión.',
+        description: 'No se pudo actualizar en ADNegocio. Verifica tu conexión.',
         action: { label: 'Reintentar', onClick: () => handleRenamePrivate() },
       });
     } finally {
@@ -479,7 +479,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       fetchServerPrivateTemplates();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Error al actualizar la plantilla', {
-        description: 'No se pudo sobrescribir en COSTPRO. Verifica tu conexión.',
+        description: 'No se pudo sobrescribir en ADNegocio. Verifica tu conexión.',
         action: { label: 'Reintentar', onClick: () => doUpdatePrivateContent(template) },
       });
     } finally {
@@ -513,7 +513,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
       fetchServerPrivateTemplates();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Error al eliminar la plantilla', {
-        description: 'No se pudo eliminar de COSTPRO. Verifica tu conexión.',
+        description: 'No se pudo eliminar de ADNegocio. Verifica tu conexión.',
         action: { label: 'Reintentar', onClick: () => doDeletePrivate(template) },
       });
     } finally {
@@ -863,7 +863,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
             <div className="flex items-center gap-3 mb-4">
               <Cloud className="w-5 h-5 text-primary" aria-hidden="true" />
               <h2 id="private-server-heading" className="text-lg font-black uppercase tracking-tighter italic text-primary">
-                Mis Plantillas Guardadas en COSTPRO
+                Mis Plantillas Guardadas en ADNegocio
               </h2>
               <span className="px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black uppercase tracking-widest text-primary">
                 Servidor
@@ -888,7 +888,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
                   <Cloud className="w-10 h-10 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-lg font-black uppercase tracking-tighter italic mb-2 text-center">
-                  Todavía no tienes plantillas privadas guardadas en COSTPRO
+                  Todavía no tienes plantillas privadas guardadas en ADNegocio
                 </h3>
                 <p className="text-sm text-muted-foreground max-w-md text-center font-medium mb-6">
                   Guarda la ficha en la que trabajas como plantilla reutilizable y estará
@@ -949,7 +949,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
             </div>
             <p className="text-xs text-muted-foreground font-medium mb-5 max-w-2xl">
               Plantillas en archivos .json de una carpeta de este equipo (File System Access API).
-              No se sincronizan con COSTPRO: para disponer de ellas en otros dispositivos,
+              No se sincronizan con ADNegocio: para disponer de ellas en otros dispositivos,
               guárdalas también en tu cuenta.
             </p>
 
@@ -1311,7 +1311,7 @@ export const CostSheetTemplateExplorer: React.FC = () => {
                 )}
                 <PreviewRow label="Categoría" value={previewTemplate.category || 'General'} />
                 <PreviewRow label="Origen" value={
-                  previewTemplate.origin === 'server' ? 'COSTPRO (servidor)'
+                  previewTemplate.origin === 'server' ? 'ADNegocio (servidor)'
                   : previewTemplate.origin === 'local' ? 'Archivo local'
                   : 'Sistema'
                 } />

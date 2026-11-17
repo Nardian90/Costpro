@@ -237,7 +237,7 @@ describe('POST /api/product-cost-sheets/generate-from-template (FC-USR-TEMPLATE)
     expect(body.data.generated).toBe(true);
     expect(body.data.fc_status).toBe('vigente');
     expect(body.data.template_source).toBe('system');
-    expect(body.data.template_name).toBe('CostPro — Reinicio (General)');
+    expect(body.data.template_name).toBe('ADNegocio — Reinicio (General)');
     expect(body.data.template_id).toBe('costpro-reinicio');
   });
 

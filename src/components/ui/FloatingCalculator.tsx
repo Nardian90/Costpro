@@ -112,7 +112,7 @@ export const FloatingCalculator: React.FC<FloatingCalculatorProps> = ({ embedded
                 <Calculator className="w-4 h-4 text-primary" />
               </div>
               <div>
-                <h4 className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 leading-none">CostPro Pro</h4>
+                <h4 className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 leading-none">ADNegocio Pro</h4>
                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Calc</p>
               </div>
             </div>
@@ -160,7 +160,7 @@ export const FloatingCalculator: React.FC<FloatingCalculatorProps> = ({ embedded
             animate="open"
             exit="closed"
             role="dialog"
-            aria-label="Calculadora CostPro Pro"
+            aria-label="Calculadora ADNegocio Pro"
             aria-modal="true"
             className={cn(
               "absolute top-24 right-4 sm:right-12 w-[300px] sm:w-[340px] max-w-[calc(100vw-2rem)] max-h-[calc(100vh-8rem)] rounded-[2rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden border flex flex-col pointer-events-auto backdrop-blur-xl",
@@ -176,7 +176,7 @@ export const FloatingCalculator: React.FC<FloatingCalculatorProps> = ({ embedded
                   <Calculator className="w-4 h-4 text-primary" />
                 </div>
                 <div>
-                  <h4 className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 leading-none">CostPro Pro</h4>
+                  <h4 className="text-[9px] font-black uppercase tracking-[0.2em] opacity-40 leading-none">ADNegocio Pro</h4>
                   <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 flex items-center gap-1">
                     Calc <Move className="w-2 h-2 opacity-50" />
                   </p>
@@ -806,7 +806,7 @@ export const ConfigTabContent: React.FC<ConfigTabContentProps> = ({ isDark }) =>
 
       <div className="border-t border-border/30 pt-3">
         <p className="text-[9px] text-muted-foreground/60 text-center">
-          CostPro Pro Calculator v2.1
+          ADNegocio Pro Calculator v2.1
         </p>
       </div>
     </div>

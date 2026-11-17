@@ -15,7 +15,7 @@ import type { FCModalidad, FCPdfFormat } from '@/contracts/store-cost-template';
 // ── Template options (mirrors TEMPLATE_REGISTRY in fc-generator-service) ──
 
 export const FC_TEMPLATE_OPTIONS: { id: string; label: string; category: string }[] = [
-  { id: 'costpro-reinicio', label: 'CostPro — Reinicio (General)', category: 'General' },
+  { id: 'costpro-reinicio', label: 'ADNegocio — Reinicio (General)', category: 'General' },
   { id: 'template-pizza', label: 'Pizza — Gastronomía', category: 'Gastronomía' },
   { id: 'template-juice', label: 'Jugos — Bebidas', category: 'Bebidas' },
   { id: 'template-icecream', label: 'Helados — Gastronomía', category: 'Gastronomía' },
