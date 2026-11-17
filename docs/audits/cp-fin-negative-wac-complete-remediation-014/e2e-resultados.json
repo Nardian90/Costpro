@@ -1,0 +1,116 @@
+{
+ "mision": "CP-FIN-NEGATIVE-WAC-COMPLETE-REMEDIATION-014",
+ "actualizado": "2026-11-17T15:58:03.637Z",
+ "fases": [
+  {
+   "fase": "setup_saldos_calibrados",
+   "ok": true,
+   "detalle": "INV=34435061.24 CXP=-2961795.90 COGS=-16677175.95 VALES=-5105078.39 PÉRD=-9691011.00"
+  },
+  {
+   "fase": "setup_kardex_suma_produccion",
+   "ok": true,
+   "detalle": "Σ kardex = -2055851.51 (producción -2055851.51) · 5 WAC negativos"
+  },
+  {
+   "fase": "V1_wac_no_negativos",
+   "ok": true,
+   "detalle": "0 negativos · 10 productos a 1,00"
+  },
+  {
+   "fase": "V2_existencias_intactas",
+   "ok": true,
+   "detalle": "stock_current idéntico al pre-misión (9 productos espejo)"
+  },
+  {
+   "fase": "V3_balance_RECT-013-C-EXT96",
+   "ok": true,
+   "detalle": "RECT-013-C-EXT96: D−C = 0.00"
+  },
+  {
+   "fase": "V3_balance_RECT-013-B-REGULAR",
+   "ok": true,
+   "detalle": "RECT-013-B-REGULAR: D−C = 0.00"
+  },
+  {
+   "fase": "V3_balance_RECT-013-A-NEGWAC",
+   "ok": true,
+   "detalle": "RECT-013-A-NEGWAC: D−C = 0.00"
+  },
+  {
+   "fase": "V4_pool_igual_kardex",
+   "ok": true,
+   "detalle": "pool 601527.81 = kardex 601527.80 (conciliación §10.7)"
+  },
+  {
+   "fase": "V5_cogs_final",
+   "ok": true,
+   "detalle": "GAS_COSTO_VENTAS = 1747940.88 (esperado 1747940.88)"
+  },
+  {
+   "fase": "V5_vales_final",
+   "ok": true,
+   "detalle": "GAS_VALES = 121879.63 (esperado 121879.63)"
+  },
+  {
+   "fase": "V5_perdida_final",
+   "ok": true,
+   "detalle": "GAS_PERDIDA_INV = 490447.58 (esperado 490447.58)"
+  },
+  {
+   "fase": "V6_cxp_intacta",
+   "ok": true,
+   "detalle": "PAS_CXP_PROV = -2961795.90 (intacta)"
+  },
+  {
+   "fase": "V7_movs_intactos",
+   "ok": true,
+   "detalle": "64 movimientos · hash 99b66d84"
+  },
+  {
+   "fase": "V8_trazabilidad",
+   "ok": true,
+   "detalle": "wcl rect013_restauración=5 · audit WAC=5 · audit asientos=3"
+  },
+  {
+   "fase": "V14_precios_venta_intactos",
+   "ok": true,
+   "detalle": "precios de venta sin cambios"
+  },
+  {
+   "fase": "idem_RECT-013-A-NEGWAC",
+   "ok": true,
+   "detalle": "exactamente 1 asiento (no duplicado)"
+  },
+  {
+   "fase": "idem_RECT-013-B-REGULAR",
+   "ok": true,
+   "detalle": "exactamente 1 asiento (no duplicado)"
+  },
+  {
+   "fase": "idem_RECT-013-C-EXT96",
+   "ok": true,
+   "detalle": "exactamente 1 asiento (no duplicado)"
+  },
+  {
+   "fase": "idem_snapshot_estable",
+   "ok": true,
+   "detalle": "24 movimientos · kardex 601527.80"
+  },
+  {
+   "fase": "cleanup_net_delta_0",
+   "ok": true,
+   "detalle": "pre: {\"prods\":10,\"movs\":64,\"entries\":6,\"fmovs\":24,\"wcl\":5,\"auds\":9} → post: todo 0 · NET DELTA = -118 (objetivo 0)"
+  },
+  {
+   "fase": "rollback_individual",
+   "ok": true,
+   "detalle": "tras ABORT: 5 negativos (persisten) · asientos RECT-013-A: 0 (0 persistidos)"
+  },
+  {
+   "fase": "rollback_total",
+   "ok": true,
+   "detalle": "tras ABORT total: 5 negativos · asientos RECT-013-*: 0 (0 persistidos)"
+  }
+ ]
+}
