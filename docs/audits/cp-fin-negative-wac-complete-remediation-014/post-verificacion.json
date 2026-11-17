@@ -1,0 +1,118 @@
+{
+ "mision": "CP-FIN-NEGATIVE-WAC-COMPLETE-REMEDIATION-014",
+ "criterios": [
+  {
+   "criterio": 1,
+   "nombre": "cinco WAC negativos resueltos",
+   "ok": true,
+   "detalle": "0 WAC negativos en ENERVIDA"
+  },
+  {
+   "criterio": 2,
+   "nombre": "WAC de los 25 recalculados válidos",
+   "ok": true,
+   "detalle": "25 filas lote C · todos a 1,00 o valor del lote"
+  },
+  {
+   "criterio": 3,
+   "nombre": "los restantes 76 conservan valores correctos",
+   "ok": true,
+   "detalle": "0 productos no-5 con WAC alterado respecto a la extracción pre-misión"
+  },
+  {
+   "criterio": 4,
+   "nombre": "sin WAC negativos sin explicar en todo el sistema",
+   "ok": true,
+   "detalle": "0 WAC negativos en todas las tiendas"
+  },
+  {
+   "criterio": 5,
+   "nombre": "101 líneas a 1 CUP/CUP/1",
+   "ok": true,
+   "detalle": "101 líneas"
+  },
+  {
+   "criterio": 6,
+   "nombre": "recepción y CXP del documento en 5.861,50",
+   "ok": true,
+   "detalle": "total_cost 5861.5000 · CXP 5861.50 · unpaid"
+  },
+  {
+   "criterio": 7,
+   "nombre": "inventario y kardex concilian",
+   "ok": true,
+   "detalle": "ENERVIDA: pool 601527.81 = kardex 601527.80 (gap 0.005274)"
+  },
+  {
+   "criterio": 8,
+   "nombre": "COGS, vales y pérdidas en saldos finales esperados",
+   "ok": true,
+   "detalle": "COGS 1747940.88 · VALES 121879.63 · PÉRDIDA 490447.58 (todos positivos)"
+  },
+  {
+   "criterio": 9,
+   "nombre": "sin saldos acreedores ficticios",
+   "ok": true,
+   "detalle": "las tres cuentas de gasto en saldo deudor natural"
+  },
+  {
+   "criterio": 10,
+   "nombre": "CXP correctamente valorada",
+   "ok": true,
+   "detalle": "CXP documento 5861.50 · estado unpaid"
+  },
+  {
+   "criterio": 11,
+   "nombre": "otras tiendas y movimientos intactos",
+   "ok": true,
+   "detalle": "PUERTO PADRE SKU117/90 intactos (wac=1) · 1801 movimientos en el sistema"
+  },
+  {
+   "criterio": 12,
+   "nombre": "motor CP-FIN sin errores nuevos",
+   "ok": true,
+   "detalle": "0 fin_posting_errors"
+  },
+  {
+   "criterio": 13,
+   "nombre": "ejecución idempotente (1 asiento por lote)",
+   "ok": true,
+   "detalle": "RECT-013-A-NEGWAC×1 · RECT-013-B-REGULAR×1 · RECT-013-C-EXT96×1"
+  },
+  {
+   "criterio": 14,
+   "nombre": "T12 y guard WAC activos",
+   "ok": true,
+   "detalle": "fin_t12_receipt_annulment_block=O · trg_guard_wac_writer=O"
+  }
+ ],
+ "idempotencia": {
+  "pre": {
+   "fmovs": 3558,
+   "ents": 3,
+   "wcl": 5,
+   "kx": "601527.8047261074787383302274704530871250000000"
+  },
+  "post": {
+   "fmovs": 3558,
+   "ents": 3,
+   "wcl": 5,
+   "kx": "601527.8047261074787383302274704530871250000000"
+  },
+  "ok": true,
+  "detalle": "3558 movimientos · 3 asientos RECT-013 · 5 wcl · kardex 601527.80"
+ },
+ "generado": "2026-11-17T16:09:16.154Z",
+ "trazabilidad": {
+  "wcl_restauracion": 5,
+  "auditoria": {
+   "SYSTEM_RECT013_ENTRY": 3,
+   "SYSTEM_RECT013_WAC": 5
+  }
+ },
+ "saldos_finales": {
+  "ACT_INVENTARIO": "601527.81",
+  "PAS_CXP_PROV": "-2961795.90"
+ },
+ "hash_movimientos_sistema": "5dacaf727642f65d7701f012ac6cb2c5"
+}

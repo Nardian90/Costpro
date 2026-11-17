@@ -1,0 +1,197 @@
+{
+ "entries": [
+  {
+   "id": "7ec9000f-0000-4000-8000-d01400000001",
+   "document_number": "RECT-013-A-NEGWAC",
+   "event": "ajuste_manual",
+   "economic_date": "2026-11-17",
+   "posted_at": "2026-11-17 16:02:17.452816+00",
+   "description": "Restauración valoración 5 SKU (WAC negativo → 1,00 CUP): exceso de crédito de inventario RECT-011 devuelto a las cuentas de gasto que lo originaron (autorización propietario misión 014 §1)",
+   "neto": "0.00"
+  },
+  {
+   "id": "7ec9000f-0000-4000-8000-d01400000002",
+   "document_number": "RECT-013-B-REGULAR",
+   "event": "ajuste_manual",
+   "economic_date": "2026-11-17",
+   "posted_at": "2026-11-17 16:02:27.855285+00",
+   "description": "Regularización componente residual 5 SKU (misión 013 §B, autorizada misión 014 §1): elimina fantasma restante RECT-011 y re-costea el consumo neto histórico a 1 CUP/u (todas las capas de los 5 SKU son @1)",
+   "neto": "0.00"
+  },
+  {
+   "id": "7ec9000f-0000-4000-8000-d01400000003",
+   "document_number": "RECT-013-C-EXT96",
+   "event": "ajuste_manual",
+   "economic_date": "2026-11-17",
+   "posted_at": "2026-11-17 16:02:41.345195+00",
+   "description": "Extensión de la regularización a los otros 96 productos de FAC-VITALLCONS-001 (misión 014 §6, autorización propietario): C1 eliminación del saldo acreedor ficticio restante por canal + C2 reconocimiento del consumo infravalorado por el drift; total fijado por la conciliación inventario↔kardex (§10.7)",
+   "neto": "0.00"
+  }
+ ],
+ "movs": [
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000001",
+   "document_number": "RECT-013-A-NEGWAC",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "2657379.32",
+   "economic_date": "2026-11-17",
+   "description": "Liberación atribución ficticia de inventario 5 SKU"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000001",
+   "document_number": "RECT-013-A-NEGWAC",
+   "category_code": "GAS_COSTO_VENTAS",
+   "sense": "debito",
+   "amount": "566546.45",
+   "economic_date": "2026-11-17",
+   "description": "Restauración WAC 5 SKU (reparto proporcional créditos RECT-011)"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000001",
+   "document_number": "RECT-013-A-NEGWAC",
+   "category_code": "GAS_PERDIDA_INV",
+   "sense": "debito",
+   "amount": "1017914.60",
+   "economic_date": "2026-11-17",
+   "description": "Restauración WAC 5 SKU (residuo de reparto)"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000001",
+   "document_number": "RECT-013-A-NEGWAC",
+   "category_code": "GAS_VALES",
+   "sense": "debito",
+   "amount": "1072918.27",
+   "economic_date": "2026-11-17",
+   "description": "Restauración WAC 5 SKU"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000002",
+   "document_number": "RECT-013-B-REGULAR",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "8704161.30",
+   "economic_date": "2026-11-17",
+   "description": "Liberación residuo obsoleto atribuible 5 SKU (contribución → valor kardex 34,00)"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000002",
+   "document_number": "RECT-013-B-REGULAR",
+   "category_code": "GAS_COSTO_VENTAS",
+   "sense": "debito",
+   "amount": "1855777.48",
+   "economic_date": "2026-11-17",
+   "description": "Elimina fantasma restante COGS 5 SKU (1.855.669,55) + re-costeo venta (107,93)"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000002",
+   "document_number": "RECT-013-B-REGULAR",
+   "category_code": "GAS_PERDIDA_INV",
+   "sense": "debito",
+   "amount": "3334106.40",
+   "economic_date": "2026-11-17",
+   "description": "Elimina fantasma restante PÉRDIDA 5 SKU (3.334.083,40) + re-costeo pérdida (23,00)"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000002",
+   "document_number": "RECT-013-B-REGULAR",
+   "category_code": "GAS_VALES",
+   "sense": "debito",
+   "amount": "3514277.42",
+   "economic_date": "2026-11-17",
+   "description": "Elimina fantasma restante VALES 5 SKU (3.514.242,73) + re-costeo vales (34,69)"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000003",
+   "document_number": "RECT-013-C-EXT96",
+   "category_code": "ACT_INVENTARIO",
+   "sense": "credito",
+   "amount": "22471992.81",
+   "economic_date": "2026-11-17",
+   "description": "Liberación residuo obsoleto atribuible 96 productos (conciliación inventario↔kardex)"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000003",
+   "document_number": "RECT-013-C-EXT96",
+   "category_code": "GAS_COSTO_VENTAS",
+   "sense": "debito",
+   "amount": "16002792.90",
+   "economic_date": "2026-11-17",
+   "description": "C1 14.254.852,02 + C2 1.747.940,88"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000003",
+   "document_number": "RECT-013-C-EXT96",
+   "category_code": "GAS_PERDIDA_INV",
+   "sense": "debito",
+   "amount": "5829437.58",
+   "economic_date": "2026-11-17",
+   "description": "C1 5.338.990,00 + C2 490.447,58"
+  },
+  {
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000003",
+   "document_number": "RECT-013-C-EXT96",
+   "category_code": "GAS_VALES",
+   "sense": "debito",
+   "amount": "639762.33",
+   "economic_date": "2026-11-17",
+   "description": "C1 517.882,70 + C2 121.879,63"
+  }
+ ],
+ "audit": [
+  {
+   "action": "SYSTEM_RECT013_ENTRY",
+   "n": 3,
+   "primera": "2026-11-17 16:02:17.452816+00",
+   "ultima": "2026-11-17 16:02:41.345195+00"
+  },
+  {
+   "action": "SYSTEM_RECT013_WAC",
+   "n": 5,
+   "primera": "2026-11-17 16:02:17.452816+00",
+   "ultima": "2026-11-17 16:02:17.452816+00"
+  }
+ ],
+ "wac_change_log": [
+  {
+   "product_id": "680c132e-b328-4390-926e-18b1368f6444",
+   "sku": "117",
+   "wac_before": "-2175998.000000000000",
+   "wac_after": "1.00",
+   "event": "rect013_restauracion",
+   "created_at": "2026-11-17 16:02:17.452816+00"
+  },
+  {
+   "product_id": "6862a061-50d0-4c8d-96d4-7b6d6ed082cd",
+   "sku": "37",
+   "wac_before": "-1.000000000000",
+   "wac_after": "1.00",
+   "event": "rect013_restauracion",
+   "created_at": "2026-11-17 16:02:17.452816+00"
+  },
+  {
+   "product_id": "fcadebcd-1f99-4736-973d-cea194902399",
+   "sku": "40",
+   "wac_before": "-665.857142857143",
+   "wac_after": "1.00",
+   "event": "rect013_restauracion",
+   "created_at": "2026-11-17 16:02:17.452816+00"
+  },
+  {
+   "product_id": "8b05170d-4b3d-4cc4-937e-b4d7daa2a6fd",
+   "sku": "83",
+   "wac_before": "-122398.000000000000",
+   "wac_after": "1.00",
+   "event": "rect013_restauracion",
+   "created_at": "2026-11-17 16:02:17.452816+00"
+  },
+  {
+   "product_id": "1b0d19fd-e0fe-4ac1-972c-3a1361d61263",
+   "sku": "90",
+   "wac_before": "-78176.248120300752",
+   "wac_after": "1.00",
+   "event": "rect013_restauracion",
+   "created_at": "2026-11-17 16:02:17.452816+00"
+  }
+ ]
+}
