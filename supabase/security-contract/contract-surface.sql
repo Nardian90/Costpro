@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-16T17:25:05.876Z
+-- Captured  : 2026-11-17T15:16:12.159Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 210 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -13326,7 +13326,7 @@ $function$
 
 
 -- @contract-function name=register_reception args="p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone, p_invoice_number text, p_items jsonb, p_user_id uuid, p_po_id uuid, p_supplier_code text, p_supplier_address text, p_supplier_phone text, p_supplier_tax_id text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.register_reception(p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT ''::text, p_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_po_id uuid DEFAULT NULL::uuid, p_supplier_code text DEFAULT NULL::text, p_supplier_address text DEFAULT NULL::text, p_supplier_phone text DEFAULT NULL::text, p_supplier_tax_id text DEFAULT NULL::text)
+CREATE OR REPLACE FUNCTION public.register_reception(p_store_id uuid, p_supplier text, p_reception_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_invoice_number text DEFAULT NULL::text, p_items jsonb DEFAULT NULL::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_po_id uuid DEFAULT NULL::uuid, p_supplier_code text DEFAULT NULL::text, p_supplier_address text DEFAULT NULL::text, p_supplier_phone text DEFAULT NULL::text, p_supplier_tax_id text DEFAULT NULL::text)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -13439,7 +13439,6 @@ BEGIN
         END IF;
       END IF;
 
-      -- CP-CAT-MAESTRO-003 (2026-11-07) + CP-LOG-RECEPTION-...-001 (2026-11-16)
       v_store_connected := public.is_catalog_store_connected(v_new_tenant_id, p_store_id);
 
       IF v_store_connected THEN
@@ -13456,18 +13455,20 @@ BEGIN
            WHERE master_product_id = v_master_id AND store_id = p_store_id
         ) THEN
           -- CASO A7 · vínculo ya ocupado por otra fila local (inconsistencia
-          -- previa tras reetiquetado). CP-LOG-RECEPTION-...-001 §7/§10: se
-          -- RECHAZA la escritura con error accionable — jamás una fila local
-          -- huérfana en tienda conectada (comportamiento anterior) ni una
-          -- recepción procesada en silencio con conflicto fatal.
+          -- previa tras reetiquetado). Se RECHAZA la escritura con error
+          -- accionable — jamás una fila local huérfana en tienda conectada.
           RAISE EXCEPTION 'ERR_MASTER_LINK_CONFLICT: el vínculo del maestro (SKU "%") con esta tienda ya está ocupado por otra fila local. Requiere revisión de gobernanza (reetiquetado/conciliación): no se crea un producto independiente ni se registra la recepción.', v_new_sku;
         ELSIF v_master_id IS NOT NULL AND v_master_status = 'active' THEN
           -- CASO A4 · maestro existente y activo: VINCULAR (reutilizar identidad).
+          -- CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 §5: el nombre de la
+          -- fila local es el CANÓNICO del maestro (v_master_name) — NUNCA el
+          -- nombre del payload/Excel. La auditoría conserva
+          -- 'local_name_requested' para trazabilidad.
           INSERT INTO public.products (
               store_id, tenant_id, master_product_id, sku, name, cost_price, price,
               unit_of_measure, is_active, is_complete, stock_current
             ) VALUES (
-              p_store_id, v_new_tenant_id, v_master_id, v_new_sku, btrim(v_new_product->>'name'),
+              p_store_id, v_new_tenant_id, v_master_id, v_new_sku, v_master_name,
               COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
               COALESCE((v_new_product->>'price')::NUMERIC, 0),
               COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
@@ -13484,15 +13485,15 @@ BEGIN
               'master_product_id', v_master_id,
               'master_name', v_master_name,
               'local_name_requested', btrim(v_new_product->>'name'),
+              'name_source', 'master_canonical',
               'receipt_id', v_receipt_id,
               'product_id', v_product_id,
               'at', now()));
         ELSE
           IF v_master_id IS NULL THEN
             -- CASO A5 · alta de identidad compartida (SOLO identidad compartida).
-            -- CP-LOG-RECEPTION-...-001 §6.3: la creación de identidad maestra
-            -- exige autorización (paridad create_master_product): admin global
-            -- o rol admin/manager/encargado en la tienda.
+            -- La creación de identidad maestra exige autorización (paridad
+            -- create_master_product): admin global o rol admin/manager/encargado.
             IF NOT public.is_admin_check(v_caller_uid)
                AND NOT public.has_store_role_as(v_caller_uid, p_store_id, ARRAY['admin','manager','encargado']::text[]) THEN
               RAISE EXCEPTION 'ERR_UNAUTHORIZED_MASTER_CREATE: crear el producto "%" en el Catálogo Maestro requiere rol admin/manager/encargado en la tienda (o administración global). Usa el asistente de importación de recepciones para clasificar y crear con autorización.', v_new_sku;
@@ -13514,10 +13515,11 @@ BEGIN
                 (master_product_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
               VALUES
                 (v_master_id, v_new_tenant_id, 'sku', NULL, v_new_sku, v_user_id, p_store_id),
-                (v_master_id, v_new_tenant_id, 'name', NULL, btrim(v_new_product->>'name'), v_user_id, p_store_id);
+                (v_master_id, v_new_tenant_id, 'name', NULL, v_master_name, v_user_id, p_store_id);
             EXCEPTION WHEN unique_violation THEN
               -- Carrera: otra tienda creó el mismo SKU en paralelo. Se reutiliza
-              -- el maestro ganador (un solo maestro por organización).
+              -- el maestro ganador (un solo maestro por organización) y su
+              -- NOMBRE canónico — el payload de ESTA llamada no renombra (§9).
               v_master_status := NULL;
               v_master_name := NULL;
               SELECT id, status, name INTO v_master_id, v_master_status, v_master_name
@@ -13528,11 +13530,13 @@ BEGIN
           END IF;
 
           IF v_master_id IS NOT NULL AND v_master_status = 'active' THEN
+            -- CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 §5: nombre local =
+            -- v_master_name (canónico; el del GANADOR en la carrera §9).
             INSERT INTO public.products (
               store_id, tenant_id, master_product_id, sku, name, cost_price, price,
               unit_of_measure, is_active, is_complete, stock_current
             ) VALUES (
-              p_store_id, v_new_tenant_id, v_master_id, v_new_sku, btrim(v_new_product->>'name'),
+              p_store_id, v_new_tenant_id, v_master_id, v_new_sku, v_master_name,
               COALESCE((v_new_product->>'cost_price')::NUMERIC, 0),
               COALESCE((v_new_product->>'price')::NUMERIC, 0),
               COALESCE(NULLIF(btrim(COALESCE(v_new_product->>'unit_of_measure', '')), ''), 'unidad'),
@@ -13549,14 +13553,13 @@ BEGIN
                 'master_product_id', v_master_id,
                 'master_name', v_master_name,
                 'local_name_requested', btrim(v_new_product->>'name'),
+                'name_source', 'master_canonical',
                 'receipt_id', v_receipt_id,
                 'product_id', v_product_id,
                 'at', now()));
           ELSE
-            -- CASO A6 · maestro archivado. CP-LOG-RECEPTION-...-001 §5.C/§7:
-            -- se RECHAZA (error accionable) — antes se creaba una fila local
-            -- SIN vínculo (huérfano). La reactivación global es decisión de
-            -- gobernanza (reactivate_master_product) y debe ser explícita.
+            -- CASO A6 · maestro archivado: se RECHAZA (error accionable) —
+            -- la reactivación global es decisión de gobernanza explícita.
             RAISE EXCEPTION 'ERR_MASTER_ARCHIVED: el producto maestro del SKU "%" está archivado en el Catálogo Maestro. Requiere reactivación global por un gobernador del catálogo (confirmación explícita desde el asistente de importación) antes de poder recibirlo; no se crea un producto independiente.', v_new_sku;
           END IF;
         END IF;
@@ -13625,9 +13628,7 @@ BEGIN
       v_effective_date, v_effective_date
     );
 
-    -- REM-F4-04: el camino real de recepción termina en el escritor canónico.
-    -- Orden doctrina W62-01 §6 (idéntico a confirm_pending_reception):
-    -- WAC primero → movimiento después (kardex ve ca_new).
+    -- WAC primero → movimiento después (orden doctrina W62-01 §6).
     v_uc_base := CASE WHEN COALESCE(v_conversion_factor, 1.0) > 0
                       THEN v_unit_cost_cup / COALESCE(v_conversion_factor, 1.0)
                       ELSE v_unit_cost_cup END;
@@ -13654,7 +13655,6 @@ BEGIN
       p_operation_date := v_effective_date,
       p_skip_access_check := TRUE
     );
-
 
     v_total_cost := v_total_cost + (v_unit_cost_cup * v_quantity);
   END LOOP;
@@ -14459,7 +14459,7 @@ $function$
 
 
 -- @contract-function name=resolve_reception_import_rows args="p_store_id uuid, p_rows jsonb, p_confirm_reactivation jsonb, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.resolve_reception_import_rows(p_store_id uuid, p_rows jsonb, p_confirm_reactivation jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid)
+CREATE OR REPLACE FUNCTION public.resolve_reception_import_rows(p_store_id uuid, p_rows jsonb, p_confirm_reactivation jsonb DEFAULT NULL::jsonb, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -14483,6 +14483,10 @@ DECLARE
   v_barcode text;
   v_master_id uuid;
   v_master_status text;
+  -- CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001: nombre canónico del maestro
+  -- (autoridad del nombre para productos existentes; nombre del ganador en
+  -- la carrera multitienda §9).
+  v_master_name text;
   v_product_id uuid;
   v_local_id uuid;
   v_master_created boolean;
@@ -14526,17 +14530,17 @@ BEGIN
     v_master_created := FALSE;
     v_product_id := NULL;
     v_master_id := NULL;
+    v_master_name := NULL;
     BEGIN
       v_class := public.fn_classify_reception_import_row(v_tenant, p_store_id, v_connected, v_row, v_caller_uid);
       v_status := v_class->>'status';
       v_sku := NULLIF(btrim(COALESCE(v_class->>'sku', '')), '');
       v_name := NULLIF(btrim(COALESCE(v_row->>'name', '')), '');
       v_master_id := NULLIF(v_class->>'master_product_id', '')::uuid;
+      -- AUTORIDAD DEL NOMBRE (§4): el maestro existente impone su nombre.
+      v_master_name := NULLIF(v_class->>'master_name', '');
 
-      -- Duplicados de SKU dentro del lote (misión §5.E/§11.6): ambigüedad →
-      -- fila bloqueada. La clasificación por fila NO puede detectarlo (ve el
-      -- estado tras las escrituras de la fila anterior en la MISMA
-      -- transacción), por lo que el lote lo trackea aquí — igual que classify.
+      -- Duplicados de SKU dentro del lote: ambigüedad → fila bloqueada.
       IF v_sku IS NOT NULL THEN
         IF lower(v_sku) = ANY (v_seen_skus) THEN
           v_blocked := v_blocked + 1;
@@ -14572,6 +14576,8 @@ BEGIN
           'index', v_idx, 'sku', v_class->>'sku', 'status', 'identified',
           'action', 'use_existing', 'product_id', v_product_id,
           'master_product_id', v_master_id,
+          -- §7: nombre canónico que mostrará la línea de recepción.
+          'product_name', COALESCE(v_master_name, v_class->>'effective_name'),
           'orphan_local', (v_class->>'orphan_local')::boolean,
           'reasons', v_class->'reasons');
         v_valid_lines := v_valid_lines + 1;
@@ -14585,6 +14591,7 @@ BEGIN
         v_results := v_results || jsonb_build_object(
           'index', v_idx, 'sku', v_class->>'sku', 'status', 'new_local',
           'action', 'legacy_register_reception', 'product_id', NULL,
+          'product_name', v_class->>'effective_name',
           'reasons', v_class->'reasons');
         CONTINUE;
       END IF;
@@ -14597,7 +14604,7 @@ BEGIN
       v_barcode := NULLIF(btrim(COALESCE(v_row->>'barcode', '')), '');
 
       IF v_status = 'reactivate_master' THEN
-        -- Clase C (misión §5.C): reactivación GLOBAL, explícita y autorizada.
+        -- Clase C: reactivación GLOBAL, explícita y autorizada.
         IF v_sku IS NULL OR NOT (lower(v_sku) = ANY (v_confirm)) THEN
           v_blocked := v_blocked + 1;
           v_errors := v_errors || jsonb_build_object(
@@ -14621,13 +14628,15 @@ BEGIN
           CONTINUE;
         END IF;
         -- Operación autorizada (misma RPC de gobernanza; idempotente).
+        -- reactivate_master_product SOLO cambia status: el nombre canónico
+        -- queda intacto (§11.13).
         PERFORM public.reactivate_master_product(v_master_id, p_store_id, v_caller_uid);
         v_masters_reactivated := v_masters_reactivated + 1;
         -- Tras reactivar, la fila continúa como activate_local.
       END IF;
 
       IF v_status IN ('activate_local', 'reactivate_master') THEN
-        -- Clase B (misión §5.B): activación canónica en esta tienda.
+        -- Clase B: activación canónica en esta tienda.
         SELECT id, is_active INTO v_local_id, v_local_active
           FROM public.products
          WHERE master_product_id = v_master_id AND store_id = p_store_id;
@@ -14646,15 +14655,20 @@ BEGIN
           -- cost_average NOMINAL 1 CUP — la primera recepción real lo
           -- sustituye vía fn_recalc_wac, S=0). Datos comerciales de ESTA
           -- tienda (precio/costo del Excel); jamás del maestro ni de otras
-          -- tiendas (misión §6). El barcode canónico vive en el MAESTRO
-          -- (doctrina 20261028110000: la fila local vinculada no lo porta).
+          -- tiendas. El barcode canónico vive en el MAESTRO.
+          --
+          -- CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 §4/§5: el nombre de la
+          -- fila local es el CANÓNICO del maestro — NUNCA el del Excel. La
+          -- activación local jamás copia el nombre del Excel al producto
+          -- (el trigger de identidad ya lo coerciona; aquí se hace explícito:
+          -- defensa en profundidad, §14.6).
           INSERT INTO public.products (
             store_id, tenant_id, master_product_id, sku, name, price, price_currency,
             cost_price, cost_average, unit_of_measure, is_active, is_complete,
             stock_current, min_stock
           ) VALUES (
             p_store_id, v_tenant, v_master_id, v_sku,
-            COALESCE(v_name, v_class->>'name'),
+            COALESCE(v_master_name, v_class->>'effective_name'),
             v_price, v_price_currency, v_cost, 1,
             COALESCE(v_uom, 'unidad'), true, true, 0, 1
           ) RETURNING id INTO v_product_id;
@@ -14663,6 +14677,7 @@ BEGIN
           VALUES ('RECEPTION_IMPORT_ACTIVATE_LOCAL', 'products', v_product_id, p_store_id, v_caller_uid,
                   jsonb_build_object('master_product_id', v_master_id, 'sku', v_sku,
                     'origin', 'reception_import', 'mode', 'local_created',
+                    'name_source', 'master_canonical',
                     'cost_average_origin', 'nominal_1cup_owner_policy'));
         END IF;
         v_valid_lines := v_valid_lines + 1;
@@ -14672,13 +14687,16 @@ BEGIN
           'action', 'activated_local', 'product_id', v_product_id,
           'master_product_id', v_master_id,
           'master_reactivated', v_status = 'reactivate_master',
+          'product_name', COALESCE(v_master_name, v_class->>'effective_name'),
           'reasons', v_class->'reasons');
         CONTINUE;
       END IF;
 
       IF v_status = 'new_master' THEN
-        -- Clase D (misión §6): PRIMERO el maestro (identidad compartida,
-        -- SOLO identidad), DESPUÉS la fila local vinculada.
+        -- Clase D: PRIMERO el maestro (identidad compartida, SOLO identidad),
+        -- DESPUÉS la fila local vinculada. ÚNICO caso en el que el Excel
+        -- proporciona el nombre (nombre INICIAL del maestro verdaderamente
+        -- nuevo; tras la creación, el maestro es su fuente de verdad).
         IF NOT (v_class->>'can_create_master')::boolean THEN
           v_blocked := v_blocked + 1;
           v_errors := v_errors || jsonb_build_object(
@@ -14709,29 +14727,33 @@ BEGIN
             (tenant_id, sku, name, barcode, barcode_type, unit_of_measure,
              is_service, status, created_by)
           VALUES
-            (v_tenant, v_sku, COALESCE(v_name, v_class->>'name'), v_barcode,
+            (v_tenant, v_sku, COALESCE(v_name, v_class->>'effective_name'), v_barcode,
              CASE WHEN v_barcode IS NULL THEN NULL ELSE 'EAN13' END,
              COALESCE(v_uom, 'unidad'), FALSE, 'active', v_caller_uid)
           RETURNING id INTO v_master_id;
           v_master_created := TRUE;
           v_masters_created := v_masters_created + 1;
+          v_master_name := COALESCE(v_name, v_class->>'effective_name');
 
-          -- Trazabilidad de origen (misión §6): alta desde importación de
-          -- recepción, tienda solicitante, usuario, identidad.
+          -- Trazabilidad de origen: alta desde importación de recepción,
+          -- tienda solicitante, usuario, identidad.
           INSERT INTO public.master_change_log
             (master_product_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
           VALUES
             (v_master_id, v_tenant, 'sku', NULL, v_sku, v_caller_uid, p_store_id),
-            (v_master_id, v_tenant, 'name', NULL, COALESCE(v_name, v_class->>'name'), v_caller_uid, p_store_id);
+            (v_master_id, v_tenant, 'name', NULL, v_master_name, v_caller_uid, p_store_id);
           INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
           VALUES ('RECEPTION_IMPORT_MASTER_CREATED', 'master_products', v_master_id, p_store_id, v_caller_uid,
                   jsonb_build_object('sku', v_sku, 'tenant_id', v_tenant,
                     'origin', 'reception_import', 'source', 'excel_reception_import'));
         EXCEPTION WHEN unique_violation THEN
-          -- Carrera entre tiendas (misión §10): se reutiliza el maestro
-          -- ganador; NUNCA un segundo maestro.
+          -- Carrera entre tiendas (§9): se reutiliza el maestro ganador;
+          -- NUNCA un segundo maestro. El NOMBRE canónico es el DEL GANADOR:
+          -- la fila local de ESTA tienda no puede imponer el nombre de su
+          -- Excel sobre la identidad compartida.
           v_master_id := NULL;
-          SELECT id, status INTO v_master_id, v_master_status
+          v_master_name := NULL;
+          SELECT id, status, name INTO v_master_id, v_master_status, v_master_name
             FROM public.master_products
            WHERE tenant_id = v_tenant AND lower(btrim(sku)) = lower(v_sku)
            FOR UPDATE;
@@ -14746,7 +14768,7 @@ BEGIN
           stock_current, min_stock
         ) VALUES (
           p_store_id, v_tenant, v_master_id, v_sku,
-          COALESCE(v_name, v_class->>'name'),
+          COALESCE(v_master_name, v_class->>'effective_name'),
           v_price, v_price_currency, v_cost, 1,
           COALESCE(v_uom, 'unidad'), true, true, 0, 1
         ) RETURNING id INTO v_product_id;
@@ -14755,6 +14777,7 @@ BEGIN
         VALUES ('RECEPTION_IMPORT_ACTIVATE_LOCAL', 'products', v_product_id, p_store_id, v_caller_uid,
                 jsonb_build_object('master_product_id', v_master_id, 'sku', v_sku,
                   'origin', 'reception_import', 'mode', 'master_and_local_created',
+                  'name_source', 'master_canonical',
                   'cost_average_origin', 'nominal_1cup_owner_policy'));
 
         v_valid_lines := v_valid_lines + 1;
@@ -14762,6 +14785,7 @@ BEGIN
           'index', v_idx, 'sku', v_class->>'sku', 'status', 'new_master',
           'action', 'master_and_local_created', 'product_id', v_product_id,
           'master_product_id', v_master_id, 'master_created', v_master_created,
+          'product_name', v_master_name,
           'reasons', v_class->'reasons');
         CONTINUE;
       END IF;
@@ -14779,7 +14803,8 @@ BEGIN
     EXCEPTION
       WHEN OTHERS THEN
         -- Aislamiento por fila: el fallo NO aborta el lote; se reporta con
-        -- causa clara. Nada queda a medias (subtransacción por fila).
+        -- causa clara. Nada queda a medias (subtransacción por fila) — ningún
+        -- cambio parcial de nombres (§11.16).
         v_blocked := v_blocked + 1;
         v_errors := v_errors || jsonb_build_object(
           'index', v_idx, 'sku', COALESCE(v_sku, v_row->>'sku'), 'status', 'error',
