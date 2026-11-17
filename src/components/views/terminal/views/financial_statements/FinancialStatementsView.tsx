@@ -22,10 +22,11 @@ import {
   Loader2,
   RefreshCw,
   Scale,
+  Settings2,
   TrendingUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore } from '@/store';
 import { toast } from 'sonner';
 import { havanaNow, toDateInputValue } from '@/lib/sales-dashboard/periods';
 import { BalanceSheetTab } from './BalanceSheetTab';
@@ -82,6 +83,22 @@ const TODAY = () => toDateInputValue(havanaNow());
 export default function FinancialStatementsView() {
   const user = useAuthStore((s) => s.user);
   const storeId = user?.activeStoreId ?? '';
+  // CP-FIN-015: accesos directos a la configuración de saldos iniciales y a la
+  // Configuración de Documentos (el aviso «Estado incompleto» ya no deja al
+  // usuario sin ruta: dos clics desde aquí).
+  const setCurrentView = useUIStore((s) => s.setCurrentView);
+  const setFinancialOpeningNavContext = useUIStore((s) => s.setFinancialOpeningNavContext);
+  const canConfigureFin = user?.role === 'admin' || user?.role === 'manager';
+
+  const goOpeningBalances = useCallback(() => {
+    setFinancialOpeningNavContext({ openOpeningBalances: true, setAt: Date.now() });
+    setCurrentView('document-config');
+  }, [setCurrentView, setFinancialOpeningNavContext]);
+
+  const goDocumentConfig = useCallback(() => {
+    setFinancialOpeningNavContext({ openOpeningBalances: false, setAt: Date.now() });
+    setCurrentView('document-config');
+  }, [setCurrentView, setFinancialOpeningNavContext]);
 
   const [activeTab, setActiveTab] = useState<FinancialStatementTabId>('situacion');
 
@@ -331,6 +348,28 @@ export default function FinancialStatementsView() {
             )}
 
             <div className="flex flex-wrap items-center gap-2 ml-auto">
+              {canConfigureFin && (
+                <>
+                  <button
+                    type="button"
+                    onClick={goOpeningBalances}
+                    title="Configurar los saldos iniciales (apertura) de la tienda activa"
+                    className="h-11 px-3 rounded-lg border border-primary/40 bg-primary/5 text-primary text-xs font-black uppercase tracking-wide hover:bg-primary/10 transition-all min-h-[44px] flex items-center gap-1.5"
+                    data-testid="go-opening-balances"
+                  >
+                    <Landmark className="w-3.5 h-3.5" /> Configurar saldos iniciales
+                  </button>
+                  <button
+                    type="button"
+                    onClick={goDocumentConfig}
+                    title="Reglas de partida doble por tipo de documento (Configuración de Documentos)"
+                    className="h-11 px-3 rounded-lg border border-border text-xs font-black uppercase tracking-wide text-muted-foreground hover:bg-muted transition-all min-h-[44px] flex items-center gap-1.5"
+                    data-testid="go-document-config"
+                  >
+                    <Settings2 className="w-3.5 h-3.5" /> Configuración de Documentos
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 onClick={applyFilters}

@@ -15,7 +15,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Landmark, RefreshCw, Plus, CheckCircle2, Ban, Info,
+  Landmark, RefreshCw, Plus, CheckCircle2, Ban, Info, ArrowLeftRight,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
@@ -44,6 +44,13 @@ function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Convención M-015: apertura = día anterior al primer documento del motor. */
+function dayBefore(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
 export interface OpeningBalancesDialogProps {
   open: boolean;
   onClose: () => void;
@@ -64,6 +71,11 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  // CP-FIN-015: fecha de apertura sugerida (día anterior al primer documento)
+  // + estado de completitud del motor para esta tienda.
+  const [suggestedDate, setSuggestedDate] = useState<string | null>(null);
+  const [primerDocumento, setPrimerDocumento] = useState<string | null>(null);
+
   // Formulario
   const [categoryCode, setCategoryCode] = useState('');
   const [amount, setAmount] = useState('');
@@ -71,6 +83,7 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
   const [exchangeRate, setExchangeRate] = useState('');
   const [asOfDate, setAsOfDate] = useState(todayISO());
   const [notes, setNotes] = useState('');
+  const [zeroDeclaration, setZeroDeclaration] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Confirmaciones (aplicar genera asiento real: siempre confirmado)
@@ -80,6 +93,20 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
     () => categories.filter((c) => ['activo', 'pasivo', 'patrimonio'].includes(c.clase)),
     [categories],
   );
+
+  // M-015: resumen débe/haber de la apertura (estructura de partida doble).
+  // Naturaleza: activo/gasto = débito; pasivo/patrimonio = crédito. Las filas
+  // aplicadas generan un asiento cada una; el conjunto debe quedar equilibrado.
+  const debeHaber = useMemo(() => {
+    let debe = 0; let haber = 0;
+    for (const ob of balances) {
+      if (ob.status !== 'applied') continue;
+      const cat = categories.find((c) => c.code === ob.category_code);
+      const cup = ob.currency === 'CUP' ? ob.amount : ob.amount * (ob.exchange_rate ?? 0);
+      if (cat && ['activo', 'gasto'].includes(cat.clase)) debe += cup; else haber += cup;
+    }
+    return { debe, haber, diferencia: Math.round((debe - haber) * 100) / 100 };
+  }, [balances, categories]);
 
   const fetchBalances = useCallback(async () => {
     if (!storeId) return;
@@ -104,8 +131,25 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
   }, [storeId, authToken]);
 
   useEffect(() => {
-    if (open) fetchBalances();
-  }, [open, fetchBalances]);
+    if (!open || !storeId) return;
+    fetchBalances();
+    // Sugerencia de fecha de apertura: día anterior al primer documento del
+    // motor (completitud del balance). Si el motor aún no tiene documentos,
+    // se usa la fecha de hoy.
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/fin/statements?type=balance&store_id=${storeId}&as_of=${todayISO()}`,
+          { headers: { ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) } },
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        const pd: string | null = data?.completitud?.primer_documento ?? null;
+        setPrimerDocumento(pd);
+        setSuggestedDate(pd ? dayBefore(pd) : todayISO());
+      } catch { /* sugerencia best-effort */ }
+    })();
+  }, [open, fetchBalances, storeId, authToken]);
 
   // Reset del formulario al abrir
   useEffect(() => {
@@ -114,16 +158,26 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
       setAmount('');
       setCurrency('CUP');
       setExchangeRate('');
-      setAsOfDate(todayISO());
+      setAsOfDate(suggestedDate ?? todayISO());
       setNotes('');
+      setZeroDeclaration(false);
     }
-  }, [open]);
+  }, [open, suggestedDate]);
 
   const handleCreate = async () => {
     if (submitting) return;
     const amt = parseFloat(amount);
     if (!categoryCode) { toast.error('Selecciona una categoría'); return; }
-    if (!amt || amt <= 0) { toast.error('El importe debe ser mayor a 0'); return; }
+    if (zeroDeclaration) {
+      // Declaración de apertura en cero: exige fuente de verificación documentada.
+      if (amt !== 0) { toast.error('Con la declaración en cero el importe debe ser 0'); return; }
+      if (!notes.trim() || notes.trim().length < 20) {
+        toast.error('Describe en notas la fuente que verifica la inexistencia de saldo (mínimo 20 caracteres)');
+        return;
+      }
+    } else {
+      if (!amt || amt <= 0) { toast.error('El importe debe ser mayor a 0'); return; }
+    }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(asOfDate)) { toast.error('Indica la fecha del saldo'); return; }
     if (currency !== 'CUP') {
       const rate = parseFloat(exchangeRate);
@@ -137,17 +191,19 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
         body: JSON.stringify({
           action: 'create',
           category_code: categoryCode,
-          amount: amt,
-          currency,
-          ...(currency !== 'CUP' ? { exchange_rate: parseFloat(exchangeRate) } : {}),
+          amount: zeroDeclaration ? 0 : amt,
+          currency: zeroDeclaration ? 'CUP' : currency,
+          ...(!zeroDeclaration && currency !== 'CUP' ? { exchange_rate: parseFloat(exchangeRate) } : {}),
           as_of_date: asOfDate,
           notes: notes.trim() || null,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Error al crear el saldo inicial');
-      toast.success('Saldo inicial creado en borrador. Revísalo y aplícalo para generar el asiento de apertura.');
-      setAmount(''); setNotes(''); setCategoryCode(''); setCurrency('CUP'); setExchangeRate('');
+      toast.success(zeroDeclaration
+        ? 'Declaración de apertura en cero registrada. Aplícala para dejar constancia en el libro.'
+        : 'Saldo inicial creado en borrador. Revísalo y aplícalo para generar el asiento de apertura.');
+      setAmount(''); setNotes(''); setCategoryCode(''); setCurrency('CUP'); setExchangeRate(''); setZeroDeclaration(false);
       fetchBalances();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Error de conexión');
@@ -212,13 +268,32 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
       maxWidth="sm:max-w-3xl"
     >
       <div className="space-y-5">
-        {/* Principio de apertura */}
+        {/* Ruta de navegación (CP-FIN-015) + principio de apertura */}
+        <div className="rounded-xl border border-border bg-muted/30 p-3 space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+            <ArrowLeftRight className="w-3 h-3" /> Ruta de navegación
+          </p>
+          <p className="text-xs text-foreground font-bold">
+            Inicio → ANÁLISIS → Configuración de Documentos → <span className="text-primary">Saldos iniciales</span>
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            También accesible desde Estados Financieros con el botón «Configurar saldos iniciales».
+          </p>
+        </div>
         <div className="flex items-start gap-3 rounded-xl border border-border bg-muted/30 p-3">
           <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Los saldos iniciales representan la situación real de la tienda antes de usar el motor.
-            Nunca se usan ajustes ficticios para cuadrar.
-          </p>
+          <div className="text-xs leading-relaxed text-muted-foreground">
+            <p>
+              Los saldos iniciales representan la situación real de la tienda antes de usar el motor.
+              Nunca se usan ajustes ficticios para cuadrar.
+            </p>
+            {primerDocumento && (
+              <p className="mt-1">
+                Primer documento del motor: <span className="font-bold tabular-nums text-foreground">{primerDocumento}</span>
+                {suggestedDate ? ` · fecha de apertura sugerida: ${suggestedDate} (día anterior).` : ''}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Tabla de saldos existentes */}
@@ -308,15 +383,52 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
           )}
         </div>
 
+        {/* Resumen débe/haber de la apertura aplicada (partida doble) */}
+        {balances.length > 0 && (
+          <div className="rounded-2xl border border-border p-3 grid grid-cols-3 gap-2 text-center" data-testid="opening-debe-haber">
+            <div className="rounded-lg bg-muted/40 p-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Débe (aplicado)</p>
+              <p className="text-sm font-black tabular-nums">{formatCurrency(debeHaber.debe)}</p>
+            </div>
+            <div className="rounded-lg bg-muted/40 p-2">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Haber (aplicado)</p>
+              <p className="text-sm font-black tabular-nums">{formatCurrency(debeHaber.haber)}</p>
+            </div>
+            <div className={cn('rounded-lg p-2', Math.abs(debeHaber.diferencia) < 0.01 ? 'bg-emerald-500/10' : 'bg-amber-500/10')}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Diferencia</p>
+              <p className={cn('text-sm font-black tabular-nums', Math.abs(debeHaber.diferencia) < 0.01 ? 'text-emerald-600' : 'text-amber-600')}>
+                {formatCurrency(debeHaber.diferencia)}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Formulario de creación */}
         <div className="rounded-2xl border border-border p-4 space-y-3">
           <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
             Nuevo saldo inicial
           </p>
+          {primerDocumento && suggestedDate && (
+            <p className="text-[11px] text-muted-foreground">
+              El motor contabiliza desde el primer documento ({primerDocumento}); la apertura se
+              recomienda al cierre anterior ({suggestedDate}) para no mezclar el saldo inicial con
+              movimientos operacionales del mismo período.
+            </p>
+          )}
+          <label className="flex items-center gap-2 text-xs font-bold text-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              checked={zeroDeclaration}
+              onChange={(e) => { setZeroDeclaration(e.target.checked); if (e.target.checked) setAmount('0'); }}
+              className="w-4 h-4 accent-[var(--primary)]"
+              data-testid="zero-declaration"
+            />
+            Declarar apertura en cero (sin saldos preexistentes; exige justificación en notas)
+          </label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs">Categoría (activo, pasivo o patrimonio)</Label>
-              <Select value={categoryCode} onValueChange={setCategoryCode}>
+              <Select value={categoryCode} onValueChange={setCategoryCode} disabled={zeroDeclaration}>
                 <SelectTrigger className="min-h-[44px] bg-background"><SelectValue placeholder="Selecciona categoría" /></SelectTrigger>
                 <SelectContent>
                   {openingCategories.map((c) => (
@@ -325,29 +437,33 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Importe</Label>
-              <Input
-                type="number"
-                min="0"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="0.00"
-                className="min-h-[44px] tabular-nums"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Moneda</Label>
-              <Select value={currency} onValueChange={(v) => setCurrency(v as 'CUP' | 'USD')}>
-                <SelectTrigger className="min-h-[44px] bg-background"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CUP">CUP</SelectItem>
-                  <SelectItem value="USD">USD</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {currency === 'USD' ? (
+            {!zeroDeclaration && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Importe</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="min-h-[44px] tabular-nums"
+                />
+              </div>
+            )}
+            {!zeroDeclaration && (
+              <div className="space-y-1.5">
+                <Label className="text-xs">Moneda</Label>
+                <Select value={currency} onValueChange={(v) => setCurrency(v as 'CUP' | 'USD')}>
+                  <SelectTrigger className="min-h-[44px] bg-background"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="CUP">CUP</SelectItem>
+                    <SelectItem value="USD">USD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {!zeroDeclaration && currency === 'USD' ? (
               <div className="space-y-1.5">
                 <Label className="text-xs">Tasa de cambio (a CUP)</Label>
                 <Input
@@ -371,7 +487,7 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
                 />
               </div>
             )}
-            {currency === 'USD' && (
+            {!zeroDeclaration && currency === 'USD' && (
               <div className="space-y-1.5">
                 <Label className="text-xs">Fecha del saldo</Label>
                 <Input
@@ -383,11 +499,15 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
               </div>
             )}
             <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs">Notas (opcional)</Label>
+              <Label className="text-xs">
+                {zeroDeclaration ? 'Justificación de la declaración en cero (fuente de verificación, obligatoria)' : 'Notas (opcional)'}
+              </Label>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Origen del saldo, autorización, referencia..."
+                placeholder={zeroDeclaration
+                  ? 'Ej: Sin saldos preexistentes — primer documento del motor 2026-07-01; sin ventas, pagos ni flujo de caja anterior (verificado)'
+                  : 'Origen del saldo, autorización, referencia...'}
                 className="min-h-[44px] min-h-[66px]"
                 rows={2}
               />
@@ -396,7 +516,7 @@ export default function OpeningBalancesDialog({ open, onClose, categories }: Ope
           <div className="flex justify-end">
             <Button onClick={handleCreate} disabled={submitting} className="min-h-[44px] font-black uppercase tracking-widest text-xs gap-2">
               <Plus className="w-4 h-4" />
-              {submitting ? 'Creando...' : 'Crear saldo'}
+              {submitting ? 'Creando...' : zeroDeclaration ? 'Registrar declaración' : 'Crear saldo'}
             </Button>
           </div>
         </div>

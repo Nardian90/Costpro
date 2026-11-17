@@ -60,6 +60,18 @@ export interface PendingAuditFilter {
   severity: 'CRITICAL' | 'WARNING' | 'INFO' | 'all';
 }
 
+// MISIÓN CP-FIN-015 (2026-11-18): contexto de navegación Estados Financieros →
+// Configuración de Documentos. Se fija al pulsar «Configurar saldos iniciales»
+// (o «Configuración de Documentos») desde Estados Financieros y se CONSUME UNA
+// sola vez (mismo patrón que commissionNavContext): DocumentConfigView lo usa
+// para abrir directamente el diálogo de Saldos Iniciales. `setAt` permite
+// descartar contextos viejos (>30 min).
+export interface FinancialOpeningNavContext {
+  /** true = abrir el diálogo de Saldos Iniciales al llegar a la vista. */
+  openOpeningBalances: boolean;
+  setAt: number;
+}
+
 // NAV-2026-10: contexto de navegación Reporte Entrega ↔ Trabajadores y Comisiones.
 // Se fija al pulsar «Gestionar comisiones» desde Reporte Entrega y se CONSUME UNA
 // sola vez (patrón forceOpenCart): WorkersView lo usa para pre-cargar el período y
@@ -125,6 +137,9 @@ interface UIState {
   // NAV-2026-10: contexto Reporte Entrega ↔ Trabajadores y Comisiones (consumo único)
   commissionNavContext: CommissionNavContext | null;
   setCommissionNavContext: (ctx: CommissionNavContext | null) => void;
+  // CP-FIN-015: contexto Estados Financieros → Configuración de Documentos (consumo único)
+  financialOpeningNavContext: FinancialOpeningNavContext | null;
+  setFinancialOpeningNavContext: (ctx: FinancialOpeningNavContext | null) => void;
   // CP-UX-ORG-STORES-002: contexto de la página dedicada de organización.
   organizationDetailState: OrganizationDetailState;
   setOrganizationDetailState: (orgId: string | null, tab?: OrganizationDetailTab) => void;
@@ -182,8 +197,10 @@ export const useUIStore = create<UIState>()(
       forceOpenCart: false,
       setForceOpenCart: (v: boolean) => set({ forceOpenCart: v }),
       commissionNavContext: null,
+      financialOpeningNavContext: null,
       organizationDetailState: { orgId: null, tab: 'tiendas' as OrganizationDetailTab },
       setCommissionNavContext: (ctx: CommissionNavContext | null) => set({ commissionNavContext: ctx }),
+      setFinancialOpeningNavContext: (ctx: FinancialOpeningNavContext | null) => set({ financialOpeningNavContext: ctx }),
       // CP-UX-ORG-STORES-002: fija el contexto organizativo de la página
       // dedicada (org + pestaña; default 'tiendas' — entrada principal).
       setOrganizationDetailState: (orgId: string | null, tab: OrganizationDetailTab = 'tiendas') =>

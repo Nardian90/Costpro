@@ -124,6 +124,7 @@ export function CategoryDetailPanel({
               <th className="px-2.5 py-2 text-left">Evento</th>
               <th className="px-2.5 py-2 text-center">Débito/Crédito</th>
               <th className="px-2.5 py-2 text-right">Importe</th>
+              <th className="px-2.5 py-2 text-right hidden md:table-cell">Moneda origen</th>
               <th className="px-2.5 py-2 text-left">Descripción</th>
             </tr>
           </thead>
@@ -155,6 +156,13 @@ export function CategoryDetailPanel({
                   )}
                 >
                   {formatCurrency(m.amount_cup)}
+                </td>
+                {/* M-015: importe original y moneda de origen cuando no es CUP
+                    (evita confundir el nominal USD con el equivalente CUP). */}
+                <td className="px-2.5 py-2 text-right tabular-nums whitespace-nowrap text-muted-foreground hidden md:table-cell">
+                  {m.currency_origin && m.currency_origin !== 'CUP'
+                    ? `${formatCurrency(m.amount)} ${m.currency_origin}`
+                    : '—'}
                 </td>
                 <td className="px-2.5 py-2 text-muted-foreground max-w-[220px] truncate" title={m.description ?? ''}>
                   {m.description || '—'}

@@ -11,7 +11,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, ChevronDown, Landmark, RefreshCw, Scale } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore } from '@/store';
 import { Skeleton } from '@/components/ui/skeleton';
 import { fetchBalanceSheet } from './fin-api';
 import { CategoryDetailPanel } from './CategoryDetailPanel';
@@ -55,6 +55,16 @@ function AmountCell({ value, className }: { value: number; className?: string })
 
 export function BalanceSheetTab({ storeId, asOf, refreshKey, onDataLoaded }: BalanceSheetTabProps) {
   const token = useAuthStore((s) => s.token);
+  const user = useAuthStore((s) => s.user);
+  const setCurrentView = useUIStore((s) => s.setCurrentView);
+  const setFinancialOpeningNavContext = useUIStore((s) => s.setFinancialOpeningNavContext);
+  const canConfigureFin = user?.role === 'admin' || user?.role === 'manager';
+
+  const goOpeningBalances = useCallback(() => {
+    setFinancialOpeningNavContext({ openOpeningBalances: true, setAt: Date.now() });
+    setCurrentView('document-config');
+  }, [setCurrentView, setFinancialOpeningNavContext]);
+
   const [data, setData] = useState<BalanceSheetData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -153,6 +163,10 @@ export function BalanceSheetTab({ storeId, asOf, refreshKey, onDataLoaded }: Bal
 
   const renderCategoryRow = (cat: BalanceCategoryRow) => {
     const isOpen = expanded === cat.code;
+    // M-015: las cuentas denominadas en moneda extranjera (p. ej. caja USD)
+    // muestran su equivalente contable en CUP: se etiqueta para no mezclar
+    // importe nominal y equivalente en el mismo total.
+    const isForeignCurrency = cat.code.endsWith('_USD');
     return (
       <div key={cat.code} className="border-b border-border/50 last:border-b-0">
         <button
@@ -169,6 +183,11 @@ export function BalanceSheetTab({ storeId, asOf, refreshKey, onDataLoaded }: Bal
           />
           <span className="flex-1 text-xs sm:text-sm font-medium text-foreground truncate">
             {cat.name}
+            {isForeignCurrency && (
+              <span className="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded bg-muted text-[9px] font-black uppercase tracking-wider text-muted-foreground whitespace-nowrap align-middle">
+                equiv. CUP
+              </span>
+            )}
           </span>
           <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider text-muted-foreground whitespace-nowrap">
             {cat.movimientos} asiento{cat.movimientos !== 1 ? 's' : ''}
@@ -209,13 +228,25 @@ export function BalanceSheetTab({ storeId, asOf, refreshKey, onDataLoaded }: Bal
     <div className="space-y-4" data-testid="balance-sheet-tab">
       {/* Completitud: información del motor, tal cual (sin ajustes automáticos) */}
       {data.completitud.sin_apertura && data.completitud.primer_documento && (
-        <div className="flex items-start gap-2.5 rounded-xl border border-warning/40 bg-warning/10 p-3 text-foreground">
+        <div className="flex items-start gap-2.5 rounded-xl border border-warning/40 bg-warning/10 p-3 text-foreground" data-testid="apertura-warning">
           <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
-          <p className="text-xs leading-relaxed">
-            <span className="font-black uppercase tracking-wide">Estado incompleto:</span> no existen
-            saldos iniciales (apertura). Configure los saldos iniciales en Configuración de
-            Documentos antes del <span className="font-bold tabular-nums">{data.completitud.primer_documento}</span>.
-          </p>
+          <div className="flex-1 text-xs leading-relaxed">
+            <p>
+              <span className="font-black uppercase tracking-wide">Estado incompleto:</span> no existen
+              saldos iniciales (apertura). Configure los saldos iniciales antes del{' '}
+              <span className="font-bold tabular-nums">{data.completitud.primer_documento}</span>.
+            </p>
+            {canConfigureFin && (
+              <button
+                type="button"
+                onClick={goOpeningBalances}
+                className="mt-2 inline-flex items-center gap-1.5 h-11 px-3 rounded-lg bg-warning/15 border border-warning/40 text-xs font-black uppercase tracking-wide text-foreground hover:bg-warning/25 transition-all min-h-[44px]"
+                data-testid="go-opening-balances-warning"
+              >
+                <Landmark className="w-3.5 h-3.5" /> Configurar saldos iniciales
+              </button>
+            )}
+          </div>
         </div>
       )}
       {data.completitud.apertura_tardia && (
@@ -361,8 +392,10 @@ export function BalanceSheetTab({ storeId, asOf, refreshKey, onDataLoaded }: Bal
       </div>
 
       <p className="text-[11px] text-muted-foreground">
-        Importes en CUP (moneda contable del motor). Cifras generadas automáticamente por el motor
-        de partida doble — el sistema no registra ajustes manuales.
+        Importes en CUP (moneda contable del motor). Las cuentas denominadas en otra moneda
+        (p. ej. «Efectivo en caja (USD)») muestran su equivalente contable en CUP, no el importe
+        nominal de billetes. Cifras generadas automáticamente por el motor de partida doble — el
+        sistema no registra ajustes manuales.
       </p>
     </div>
   );

@@ -18,7 +18,9 @@ import { uuidLoose } from '@/validation/api-schemas';
 const createSchema = z.object({
   action: z.literal('create'),
   category_code: z.string().min(2).max(40),
-  amount: z.number().positive(),
+  // M-015: amount >= 0. amount = 0 solo como DECLARACIÓN DE APERTURA EN CERO
+  // (verificación documentada de inexistencia de saldos; exige notas).
+  amount: z.number().nonnegative(),
   currency: z.enum(['CUP', 'USD', 'EUR', 'MLC']).default('CUP'),
   exchange_rate: z.number().positive().optional(),
   as_of_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -82,6 +84,20 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
 
   if (parsed.data.action === 'create') {
     const b = parsed.data;
+    // M-015: la declaración en cero exige documento/justificación en notas
+    // (nunca se registra un cero sin evidencia de verificación).
+    if (b.amount === 0 && !b.notes) {
+      return NextResponse.json(
+        { error: 'La declaración de apertura en cero exige notas con la fuente de verificación' },
+        { status: 400 },
+      );
+    }
+    if (b.currency !== 'CUP' && b.amount === 0) {
+      return NextResponse.json(
+        { error: 'La declaración en cero se registra en CUP (sin importes ni conversión)' },
+        { status: 400 },
+      );
+    }
     const rate = b.currency === 'CUP' ? 1 : b.exchange_rate;
     if (b.currency !== 'CUP' && !rate) {
       return NextResponse.json({ error: 'exchange_rate es requerido para moneda extranjera' }, { status: 400 });
