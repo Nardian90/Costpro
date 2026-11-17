@@ -1,0 +1,155 @@
+{
+  "mission": "CP-SRV-PUERTO-PADRE-DELETE-PAID-OPERATIONS-001",
+  "started_at": "2026-11-17T18:04:06.042Z",
+  "finished_at": "2026-11-17T18:04:28.838Z",
+  "project_ref": "wthkddeleylijmonclxg",
+  "steps": [
+    {
+      "step": "pago_archivado_y_purgado",
+      "detail": "SRV-20261107-00126 — pago 5360fdd0-6746-4d6f-9ef3-bccb9484a0f5 (2900 CUP) archivado con motivo y purgado; documento recalculado a unpaid/0",
+      "at": "2026-11-17T18:04:17.027Z"
+    },
+    {
+      "step": "servicio_anulado",
+      "detail": "SRV-20261107-00126 — RPC canónico OK: {\"status\":\"success\",\"new_status\":\"voided\",\"service_id\":\"6a9bdab2-8ad1-4cda-aa09-1cc00cffc020\",\"service_number\":\"SRV-20261107-00126\"}",
+      "at": "2026-11-17T18:04:17.876Z"
+    },
+    {
+      "step": "servicio_retirado",
+      "detail": "SRV-20261107-00126 — fila retirada de vistas operativas (documento erróneo; evidencia en audit_logs + service_audit_log + libro fin)",
+      "at": "2026-11-17T18:04:18.670Z"
+    },
+    {
+      "step": "pago_archivado_y_purgado",
+      "detail": "SRV-20261110-00116 — pago 7c008277-c39b-471b-b015-b4387cfb4e2b (4000 CUP) archivado con motivo y purgado; documento recalculado a unpaid/0",
+      "at": "2026-11-17T18:04:21.465Z"
+    },
+    {
+      "step": "servicio_anulado",
+      "detail": "SRV-20261110-00116 — RPC canónico OK: {\"status\":\"success\",\"new_status\":\"voided\",\"service_id\":\"804a5e3d-90bc-45d1-935c-3de55f1b35a6\",\"service_number\":\"SRV-20261110-00116\"}",
+      "at": "2026-11-17T18:04:22.101Z"
+    },
+    {
+      "step": "servicio_retirado",
+      "detail": "SRV-20261110-00116 — fila retirada de vistas operativas (documento erróneo; evidencia en audit_logs + service_audit_log + libro fin)",
+      "at": "2026-11-17T18:04:22.875Z"
+    },
+    {
+      "step": "pago_archivado_y_purgado",
+      "detail": "SRV-20261110-00115 — pago 2fa12d54-5ed0-479c-8017-40f3d46320ce (2900 CUP) archivado con motivo y purgado; documento recalculado a unpaid/0",
+      "at": "2026-11-17T18:04:25.624Z"
+    },
+    {
+      "step": "servicio_anulado",
+      "detail": "SRV-20261110-00115 — RPC canónico OK: {\"status\":\"success\",\"new_status\":\"voided\",\"service_id\":\"e350a933-7063-4e1c-9d24-aa48ee7266e4\",\"service_number\":\"SRV-20261110-00115\"}",
+      "at": "2026-11-17T18:04:26.161Z"
+    },
+    {
+      "step": "servicio_retirado",
+      "detail": "SRV-20261110-00115 — fila retirada de vistas operativas (documento erróneo; evidencia en audit_logs + service_audit_log + libro fin)",
+      "at": "2026-11-17T18:04:26.919Z"
+    }
+  ],
+  "post": {
+    "services_left": [],
+    "payments_left": [],
+    "archive_rows": [
+      {
+        "id": "5360fdd0-6746-4d6f-9ef3-bccb9484a0f5",
+        "amount": 2900,
+        "archived_at": "2026-11-17T18:04:15.80144+00:00"
+      },
+      {
+        "id": "7c008277-c39b-471b-b015-b4387cfb4e2b",
+        "amount": 4000,
+        "archived_at": "2026-11-17T18:04:20.505901+00:00"
+      },
+      {
+        "id": "2fa12d54-5ed0-479c-8017-40f3d46320ce",
+        "amount": 2900,
+        "archived_at": "2026-11-17T18:04:24.699249+00:00"
+      }
+    ],
+    "fin_entries_after": [
+      {
+        "id": "9b336431-0328-4d9d-9eb7-4fa3e81fad04",
+        "document_number": "SRV-20261107-00126",
+        "event": "anulacion",
+        "status": "posted",
+        "reversal_of": "e14fdced-4e8a-4d46-9bf0-d306ee8c94e4"
+      },
+      {
+        "id": "addd261b-28e0-4293-b6db-57e00ccbecf4",
+        "document_number": "SRV-20261107-00126",
+        "event": "anulacion",
+        "status": "posted",
+        "reversal_of": "995e4198-342d-4234-a710-ce7e543d33e5"
+      },
+      {
+        "id": "995e4198-342d-4234-a710-ce7e543d33e5",
+        "document_number": "SRV-20261107-00126",
+        "event": "pago",
+        "status": "reversed",
+        "reversal_of": null
+      },
+      {
+        "id": "e14fdced-4e8a-4d46-9bf0-d306ee8c94e4",
+        "document_number": "SRV-20261107-00126",
+        "event": "reconocimiento",
+        "status": "reversed",
+        "reversal_of": null
+      }
+    ],
+    "service_audit_log_preserved_count": 5,
+    "pp_fin_net_after": {
+      "ACT_INVENTARIO|CUP": 5318.5,
+      "PAS_CXP_PROV|CUP": -5338.5,
+      "ACT_EFECTIVO_CUP|CUP": 4000,
+      "ACT_BANCOS|CUP": 20000,
+      "ING_VENTAS|CUP": -24000,
+      "GAS_COSTO_VENTAS|CUP": 20,
+      "GAS_SERVICIOS|CUP": 0,
+      "PAS_SERV_PEND|CUP": 0
+    }
+  },
+  "log": [
+    "── GUARD 1: identidad y estado de los 3 servicios ──",
+    "· SRV-20261107-00126 OK — status=active pay=paid/2900 fecha=2026-11-07",
+    "· SRV-20261110-00116 OK — status=active pay=paid/4000 fecha=2026-11-09",
+    "· SRV-20261110-00115 OK — status=active pay=paid/2900 fecha=2026-11-09",
+    "── GUARD 2: pagos vinculados ──",
+    "· SRV-20261107-00126 pago 5360fdd0 OK — 2900 CUP cash fecha_pago=2026-11-07T17:00:00+00:00",
+    "· SRV-20261110-00116 pago 7c008277 OK — 4000 CUP cash fecha_pago=2026-11-09T17:00:00+00:00",
+    "· SRV-20261110-00115 pago 2fa12d54 OK — 2900 CUP cash fecha_pago=2026-11-09T17:00:00+00:00",
+    "── GUARD 3: dependencias ──",
+    "· sin vínculos de flujo de caja ni dependencias operativas",
+    "── GUARD 4: libro fin previo ──",
+    "· SRV-20261107-00126: 2 asientos fin (posted=2, anulacion=0)",
+    "· SRV-20261110-00116: 0 asientos fin (posted=0, anulacion=0)",
+    "· SRV-20261110-00115: 0 asientos fin (posted=0, anulacion=0)",
+    "── GUARD 5: canal de purga ──",
+    "· canal Management API corre como postgres ✓",
+    "═════════ SRV-20261107-00126 ═════════",
+    "▸ pago_archivado_y_purgado: SRV-20261107-00126 — pago 5360fdd0-6746-4d6f-9ef3-bccb9484a0f5 (2900 CUP) archivado con motivo y purgado; documento recalculado a unpaid/0",
+    "▸ servicio_anulado: SRV-20261107-00126 — RPC canónico OK: {\"status\":\"success\",\"new_status\":\"voided\",\"service_id\":\"6a9bdab2-8ad1-4cda-aa09-1cc00cffc020\",\"service_number\":\"SRV-20261107-00126\"}",
+    "▸ servicio_retirado: SRV-20261107-00126 — fila retirada de vistas operativas (documento erróneo; evidencia en audit_logs + service_audit_log + libro fin)",
+    "═════════ SRV-20261110-00116 ═════════",
+    "▸ pago_archivado_y_purgado: SRV-20261110-00116 — pago 7c008277-c39b-471b-b015-b4387cfb4e2b (4000 CUP) archivado con motivo y purgado; documento recalculado a unpaid/0",
+    "▸ servicio_anulado: SRV-20261110-00116 — RPC canónico OK: {\"status\":\"success\",\"new_status\":\"voided\",\"service_id\":\"804a5e3d-90bc-45d1-935c-3de55f1b35a6\",\"service_number\":\"SRV-20261110-00116\"}",
+    "▸ servicio_retirado: SRV-20261110-00116 — fila retirada de vistas operativas (documento erróneo; evidencia en audit_logs + service_audit_log + libro fin)",
+    "═════════ SRV-20261110-00115 ═════════",
+    "▸ pago_archivado_y_purgado: SRV-20261110-00115 — pago 2fa12d54-5ed0-479c-8017-40f3d46320ce (2900 CUP) archivado con motivo y purgado; documento recalculado a unpaid/0",
+    "▸ servicio_anulado: SRV-20261110-00115 — RPC canónico OK: {\"status\":\"success\",\"new_status\":\"voided\",\"service_id\":\"e350a933-7063-4e1c-9d24-aa48ee7266e4\",\"service_number\":\"SRV-20261110-00115\"}",
+    "▸ servicio_retirado: SRV-20261110-00115 — fila retirada de vistas operativas (documento erróneo; evidencia en audit_logs + service_audit_log + libro fin)",
+    "── VERIFICACIÓN POST-EJECUCIÓN ──",
+    "· servicios restantes para los 3 ids: 0",
+    "· pagos restantes para los 3 servicios: 0",
+    "· filas en archivo: 3 (esperado 3)",
+    "· asientos fin involucrados: 4",
+    "· audit SERVICE_VOIDED 2026-11-17T18:04:17.467497+00:00 → {\"reason\":\"CP-SRV-PUERTO-PADRE-DELETE-PAID-OPERATIONS-001: retiro autorizado por el propietario (servicio y pagos registrados por error; restauracion del estado anterior).\",\"after_status\":\"voided\",\"before_status\":\"active\",\"service_number\":\"SRV-20261107-00126\",\"before_paid_amount\":0,\"before_payment_status\":\"unpaid\",\"payment_transactions_reversed\":0}",
+    "· audit SERVICE_VOIDED 2026-11-17T18:04:21.878019+00:00 → {\"reason\":\"CP-SRV-PUERTO-PADRE-DELETE-PAID-OPERATIONS-001: retiro autorizado por el propietario (servicio y pagos registrados por error; restauracion del estado anterior).\",\"after_status\":\"voided\",\"before_status\":\"active\",\"service_number\":\"SRV-20261110-00116\",\"before_paid_amount\":0,\"before_payment_status\":\"unpaid\",\"payment_transactions_reversed\":0}",
+    "· audit SERVICE_VOIDED 2026-11-17T18:04:26.014951+00:00 → {\"reason\":\"CP-SRV-PUERTO-PADRE-DELETE-PAID-OPERATIONS-001: retiro autorizado por el propietario (servicio y pagos registrados por error; restauracion del estado anterior).\",\"after_status\":\"voided\",\"before_status\":\"active\",\"service_number\":\"SRV-20261110-00115\",\"before_paid_amount\":0,\"before_payment_status\":\"unpaid\",\"payment_transactions_reversed\":0}",
+    "· service_audit_log preservado: 5 filas",
+    "· saldos fin PP después:"
+  ]
+}
