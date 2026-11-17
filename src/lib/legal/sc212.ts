@@ -786,7 +786,7 @@ export async function renderSc212Pdf(model: Sc212ModelData) {
   if (model.estado && model.estado !== 'Completado') {
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(8.5);
-    doc.text(`ESTADO DE LA VENTA EN COSTPRO: ${model.estado}`, pageWidth - marginX, y, { align: 'right' });
+    doc.text(`ESTADO DE LA VENTA EN ADNEGOCIO: ${model.estado}`, pageWidth - marginX, y, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
   }
@@ -882,7 +882,7 @@ export async function renderSc212Pdf(model: Sc212ModelData) {
   );
 
   // ── Pie normativo ──
-  drawRes11Footer(doc, `Identificador COSTPRO de la venta: ${model.identificadorVenta}`);
+  drawRes11Footer(doc, `Identificador ADNegocio de la venta: ${model.identificadorVenta}`);
 
   return doc;
 }

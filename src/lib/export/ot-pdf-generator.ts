@@ -511,8 +511,8 @@ export function generateOTPDF(data: OTData): Uint8Array {
   doc.setProperties({
     title: `Orden de Trabajo ${data.order_number}`,
     subject: `OT para ${data.customer_name || 'cliente'}`,
-    author: data.store_name || 'CostPro',
-    creator: 'CostPro',
+    author: data.store_name || 'ADNegocio',
+    creator: 'ADNegocio',
   });
 
   return new Uint8Array(doc.output('arraybuffer') as ArrayBuffer);

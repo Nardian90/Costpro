@@ -9,7 +9,7 @@ export async function exportAuditToPdf(logs: AuditLog[]) {
   // Header
   doc.setFontSize(20);
   doc.setTextColor(16, 185, 129); // Primary color
-  doc.text('COSTPRO - REPORTE DE AUDITORÍA', 14, 22);
+  doc.text('ADNEGOCIO - REPORTE DE AUDITORÍA', 14, 22);
 
   doc.setFontSize(10);
   doc.setTextColor(100);
@@ -33,5 +33,5 @@ export async function exportAuditToPdf(logs: AuditLog[]) {
     margin: { top: 45 },
   });
 
-  doc.save(`costpro_audit_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
+  doc.save(`adnegocio_audit_${format(new Date(), 'yyyyMMdd_HHmm')}.pdf`);
 }

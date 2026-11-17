@@ -17,7 +17,7 @@ import { render, screen, fireEvent, act, cleanup } from '@testing-library/react'
 import CashReportView from '@/components/views/terminal/views/cash/CashReportView';
 
 // ── MOCK del exportador Word (unidad bajo prueba: la VISTA, no el .docx) ──
-const descargarWordMock = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => 'COSTPRO_Reporte_Entrega_Tienda_Central_2026-10-01.docx'));
+const descargarWordMock = vi.hoisted(() => vi.fn(async (..._args: unknown[]) => 'ADNegocio_Reporte_Entrega_Tienda_Central_2026-10-01.docx'));
 vi.mock('@/components/views/terminal/views/cash/cash-report-docx', () => ({
   descargarCashReportWord: (...args: unknown[]) => descargarWordMock(...args),
 }));

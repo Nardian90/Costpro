@@ -769,7 +769,7 @@ export async function buildCashReportExcelWorkbook(
     aud.merges.push({ s: { r, c: 2 }, e: { r, c: 6 } });
   }
   aud.aoa.push([]);
-  aud.aoa.push([sanitizeExcelText('El reporte principal representa la configuración elegida por el usuario; los importes oficiales de esta auditoría representan TODOS los movimientos aplicables de COSTPRO.')]);
+  aud.aoa.push([sanitizeExcelText('El reporte principal representa la configuración elegida por el usuario; los importes oficiales de esta auditoría representan TODOS los movimientos aplicables de ADNegocio.')]);
   const audNotaRow = aud.aoa.length - 1;
   aud.merges.push({ s: { r: audNotaRow, c: 0 }, e: { r: audNotaRow, c: 6 } });
   aud.aoa.push([]);
@@ -811,7 +811,7 @@ export async function buildCashReportExcelWorkbook(
       ['Ventas totales del reporte personalizado', rec.ventasTotalesPersonalizado, true],
       ['Diferencia de ventas totales (personalizado − oficial)', rec.diferenciaVentasTotales, true],
       ['Saldo inicial oficial', rec.saldoInicialOficial, true],
-      ['Efectivo esperado OFICIAL (fórmula completa COSTPRO)', rec.efectivoEsperadoOficial, true],
+      ['Efectivo esperado OFICIAL (fórmula completa ADNegocio)', rec.efectivoEsperadoOficial, true],
       ['Efectivo esperado PERSONALIZADO (conceptos activos)', rec.efectivoEsperadoPersonalizado, true],
       ...(cur === 'CUP' ? ([
         ['Equivalencia canónica CUP oficial (contable, no billetes)', rec.equivalenciaOficial, true],
@@ -933,7 +933,7 @@ export async function buildCashReportExcelWorkbook(
 
   // ── Nombre de archivo descriptivo (misión §6), sin caracteres inválidos ──
   const snFile = sn.replace(/[^a-zA-Z0-9]+/g, '_');
-  const filename = `COSTPRO_Reporte_Entrega_${snFile}_${startDate}.xlsx`
+  const filename = `ADNegocio_Reporte_Entrega_${snFile}_${startDate}.xlsx`
     .replace(/[^a-zA-Z0-9._\-]+/g, '_');
 
   // Impresión por hoja (lo consume buildCashReportExcelBlob):

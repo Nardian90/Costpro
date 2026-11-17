@@ -384,7 +384,7 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
     finalY += 5.5;
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(8.5);
-    doc.text(`ESTADO DEL DOCUMENTO EN COSTPRO: ${model.estado}`, pageWidth - marginX, finalY, {
+    doc.text(`ESTADO DEL DOCUMENTO EN ADNEGOCIO: ${model.estado}`, pageWidth - marginX, finalY, {
       align: 'right',
     });
     doc.setFont('helvetica', 'normal');
@@ -396,7 +396,7 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
     finalY += 7;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.text('DEVOLUCIÓN AL ALMACÉN (registrada en COSTPRO):', marginX, finalY);
+    doc.text('DEVOLUCIÓN AL ALMACÉN (registrada en ADNEGOCIO):', marginX, finalY);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     finalY += 5;
@@ -436,7 +436,7 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
   // ── Pie normativo ──
   drawRes11Footer(
     doc,
-    `Identificador COSTPRO del vale: ${model.identificadorVale}${model.entidadNombre ? ` — Almacén: ${model.entidadNombre}` : ''}`,
+    `Identificador ADNegocio del vale: ${model.identificadorVale}${model.entidadNombre ? ` — Almacén: ${model.entidadNombre}` : ''}`,
   );
 
   return doc;

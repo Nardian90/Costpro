@@ -1,14 +1,14 @@
 {
  "schemaVersion": 2,
- "product": "COSTPRO",
- "productName": "COSTPRO — Ficha de Costo (superficie de producto de COSTPRO) · Resolución 148/2023 MFP",
+ "product": "ADNEGOCIO",
+ "productName": "ADNegocio — Ficha de Costo (superficie de producto de ADNegocio) · Resolución 148/2023 MFP",
  "version": "12.10.0",
  "channel": "stable",
  "releaseDate": "2026-09-19",
  "minimumVersion": "12.10.0",
  "latestVersion": "12.10.0",
  "releaseFile": "FC.html",
- "sha256": "4b118574cee8e8e84017643a1a52afb3ed225ea7697bbe8c14ad00eace6cea03",
+ "sha256": "9c96453799db7710925e40e7dfeacb73381e0abf432a5485b552029f1fcccb98",
  "canonicalProvenance": {
   "source": "fichascosto repo (Nardian90/fichascosto) · scripts/build-release.js · release/FC.release.html",
   "canonicalVersion": "12.10.0",
@@ -44,5 +44,6 @@
   "pwaStartUrl": "./index.html (el wrapper decide identidad en cada arranque en frío; evita envelope obsoleto tras rotación de refresh_token)"
  },
  "noSecrets": "Sin cambios respecto al canónico: solo la publishable key de Supabase (credencial PÚBLICA de cliente por diseño); sin claves de servicio, sin secretos, sin tokens privados. El plan comercial se verifica contra public.profiles.plan (Supabase) y las operaciones de datos siguen sujetas a RLS (created_by = auth.uid()).",
- "buildSuffix": "fc.4"
+ "buildSuffix": "fc.4",
+ "brandHistory": "ADNegocio, anteriormente COSTPRO (ADN-BRAND-REBUILD-001, 2026-11-18): rebrand de identidad visible; identificadores técnicos (format costpro-ficha 1.0, caché costpo-release, dominio) intactos; región del motor byte-igual."
 }

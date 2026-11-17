@@ -82,7 +82,7 @@ export async function buildCountSheetPdf(payload: CountSheetPayload): Promise<js
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(0, 0, 0);
-      doc.text('COSTPRO — HOJA DE INVENTARIO FÍSICO', M, M + 6);
+      doc.text('ADNEGOCIO — HOJA DE INVENTARIO FÍSICO', M, M + 6);
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(7.5);
       doc.setTextColor(110);

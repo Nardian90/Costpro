@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>COSTPRO · Ficha de Costo</title>
+<title>ADNegocio · Ficha de Costo</title>
 <link rel="icon" href="icons/icon-192.png">
 <script>
 /* =====================================================================
-   COSTPRO FC-MVP · puente de identidad same-origin (entry point /fc/)
+   ADNegocio FC · puente de identidad same-origin (entry point /fc/)
    v3 — 2026-09-19 · GATE 1 UX: identidad + modo invitado local (guest=1)
    ---------------------------------------------------------------------
    Cadena:  /fc → 307 aquí → este wrapper decide → FC.html (superficie
-   de producto de COSTPRO; el release canónico v12.10.0 de fichascosto
+   de producto de ADNegocio (anteriormente COSTPRO); el release canónico v12.10.0 de fichascosto
    con 11 parches de identidad documentados en release-manifest.json).
 
    DECISIÓN DE ENTRADA (Flujo 1 y 2 del mandato):
-   · Hay token de sesión COSTPRO (sb-<ref>-auth-token en este mismo
+   · Hay token de sesión de ADNegocio (sb-<ref>-auth-token en este mismo
      origen) → se siembra el sobre FC_CLOUD_SESSION_V1 (que FC ya sabe
      leer para plan/sync) y se entra a FC.html. NO se vuelve a pedir
      login: la identidad es la de COSTPRO.

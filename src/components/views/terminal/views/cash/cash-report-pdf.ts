@@ -922,7 +922,7 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
   y += 1;
   setText(C_WARN); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
   doc.text('El reporte principal representa la configuración elegida por el usuario; los importes oficiales', m, y); y += 3.2;
-  doc.text('de esta auditoría representan TODOS los movimientos aplicables de COSTPRO.', m, y); y += 5;
+  doc.text('de esta auditoría representan TODOS los movimientos aplicables de ADNegocio.', m, y); y += 5;
   setText(C_DARK);
 
   for (const cur of (['CUP', 'USD'] as const)) {
@@ -955,7 +955,7 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
       ['Ventas totales del reporte personalizado', amt(rec.ventasTotalesPersonalizado)],
       ['Diferencia de ventas totales (personalizado − oficial)', sgn(rec.diferenciaVentasTotales)],
       ['Saldo inicial oficial', amt(rec.saldoInicialOficial)],
-      ['Efectivo esperado OFICIAL (fórmula completa COSTPRO)', amt(rec.efectivoEsperadoOficial)],
+      ['Efectivo esperado OFICIAL (fórmula completa ADNegocio)', amt(rec.efectivoEsperadoOficial)],
       ['Efectivo esperado PERSONALIZADO (conceptos activos)', amt(rec.efectivoEsperadoPersonalizado)],
       ...(cur === 'CUP' ? ([
         ['Equivalencia canónica CUP oficial (contable, no billetes)', amt(rec.equivalenciaOficial)],
@@ -998,7 +998,7 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(6); setText(C_MUTED); doc.setFont('helvetica', 'normal');
-    doc.text(`CostPro — Reporte de Caja · ${sn} · Página ${i} de ${pageCount}`, pw / 2, ph - 5, { align: 'center' });
+    doc.text(`ADNegocio — Reporte de Caja · ${sn} · Página ${i} de ${pageCount}`, pw / 2, ph - 5, { align: 'center' });
   }
   return doc;
 }
@@ -1508,7 +1508,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     y += 2;
     setText(C_WARN); doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
     doc.text('El reporte principal representa la configuración elegida por el usuario; los importes', m, y); y += 3.2;
-    doc.text('oficiales de esta auditoría representan TODOS los movimientos aplicables de COSTPRO.', m, y); y += 5;
+    doc.text('oficiales de esta auditoría representan TODOS los movimientos aplicables de ADNegocio.', m, y); y += 5;
     setText(C_DARK);
 
     // Tabla por concepto + conciliación, por moneda.
@@ -1580,7 +1580,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
         ['Ventas totales del reporte personalizado', fmt(rec.ventasTotalesPersonalizado)],
         ['Diferencia de ventas totales (personalizado − oficial)', sgn(rec.diferenciaVentasTotales)],
         ['Saldo inicial oficial', fmt(rec.saldoInicialOficial)],
-        ['Efectivo esperado OFICIAL (fórmula completa COSTPRO)', fmt(rec.efectivoEsperadoOficial)],
+        ['Efectivo esperado OFICIAL (fórmula completa ADNegocio)', fmt(rec.efectivoEsperadoOficial)],
         ['Efectivo esperado PERSONALIZADO (conceptos activos)', fmt(rec.efectivoEsperadoPersonalizado)],
         ...(cur === 'CUP' ? ([
           ['Equivalencia canónica CUP oficial (contable, no billetes)', fmt(rec.equivalenciaOficial)],
@@ -2054,7 +2054,7 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
     const secLbl = [...new Set(names)].join(' + ');
     const orientLbl = orientation === 'horizontal' ? 'Horizontal' : 'Vertical';
     const pageTail = ` · Página ${i} de ${pageCount}`;
-    const before = `CostPro — Reporte Diario (${orientLbl}) · ${sn} · ${secLbl} · Período ${startDate}`;
+    const before = `ADNegocio — Reporte Diario (${orientLbl}) · ${sn} · ${secLbl} · Período ${startDate}`;
     if (singleDay) {
       drawTextWithArrow(doc, pw / 2, ph - 5, before + pageTail, '', true, { fontSize: 7, color: C_MUTED, align: 'center' });
     } else {

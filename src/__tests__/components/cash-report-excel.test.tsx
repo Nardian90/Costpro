@@ -400,7 +400,7 @@ describe('PARTE E — estructura del libro espejo del PDF', () => {
 
   it('nombre de archivo descriptivo y sin caracteres inválidos (misión §6)', async () => {
     const { filename } = await buildCashReportExcelWorkbook(buildContext(), SUMMARIES, COMMISSIONS);
-    expect(filename).toBe('COSTPRO_Reporte_Entrega_ENERVIDA_VITALLCONS_2026-10-17.xlsx');
+    expect(filename).toBe('ADNegocio_Reporte_Entrega_ENERVIDA_VITALLCONS_2026-10-17.xlsx');
   });
 });
 
@@ -641,12 +641,12 @@ describe('MISIÓN P0 — hoja Auditoría: diferencia de valoración clasificada'
     const { wb } = await buildCashReportExcelWorkbook(ctx, SUMMARIES_FANTASMA, COMMISSIONS);
     const aud = rows(wb.Sheets['Auditoría']);
     // El OFICIAL de la hoja CUP: 241.655 + 450 − 2.400 − 300 − 239.405 = 0
-    const esperado = findRow(aud, 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)');
+    const esperado = findRow(aud, 'Efectivo esperado OFICIAL (fórmula completa ADNegocio)');
     expect(Number(esperado.row[2])).toBe(0);
     // La hoja USD: 367 − 367 = 0
     const usdHoja = aud.findIndex(r => String(r[0] ?? '').startsWith('HOJA USD — COMPARACIÓN'));
     expect(usdHoja).toBeGreaterThanOrEqual(0);
-    const esperadoUsd = aud.filter(r => String(r[0] ?? '') === 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)');
+    const esperadoUsd = aud.filter(r => String(r[0] ?? '') === 'Efectivo esperado OFICIAL (fórmula completa ADNegocio)');
     expect(Number(esperadoUsd[esperadoUsd.length - 1]?.[2])).toBe(0);
   });
 

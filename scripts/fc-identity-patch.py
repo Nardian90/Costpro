@@ -51,6 +51,30 @@ OUT = '/home/z/my-project/Costpro/public/fc/FC.html'
 
 SB_REF = 'wthkddeleylijmonclxg'  # proyecto Supabase compartido (idéntico al wrapper)
 
+# ---------------------------------------------------------------- v4 (ADN-BRAND-REBUILD-001, 2026-11-18) ----
+# R23 REBRAND: tras los parches, la identidad visible COSTPRO pasa a ADNegocio
+# (marca actual del producto; "ADNegocio, anteriormente COSTPRO"). Idempotente y
+# determinista: SOLO reemplaza el token completo "COSTPRO" fuera de la región del
+# motor. Los identificadores técnicos en minúsculas (formato costpro-ficha 1.0,
+# caché costpo-release-*, dominio del sitio) NO se tocan.
+POST_REBRAND_OLD = 'COSTPRO'
+POST_REBRAND_NEW = 'ADNegocio'
+
+
+def apply_post_rebrand(text: str) -> str:
+    eng = None
+    m = None
+    import re as _re
+    parts = _re.split(r'(__ENGINE_START__[\s\S]*?__ENGINE_END__)', text)
+    out = []
+    for i, part in enumerate(parts):
+        if part.startswith('__ENGINE_START__'):
+            out.append(part)
+        else:
+            out.append(part.replace(POST_REBRAND_OLD, POST_REBRAND_NEW))
+    return ''.join(out)
+
+
 REDIRECT_LOGIN = 'window.location.replace("/?login=1&returnTo=%2Ffc%2F")'
 
 # ---------------------------------------------------------------- targets ----
@@ -329,6 +353,7 @@ def main():
     assert 'fcres-wrap' in out and 'Resultado final' in out, 'P5: fcres ausente'
     assert out.count('fcres-item') >= 8, 'P5: fcres items incompletos'
 
+    out = apply_post_rebrand(out)  # R23 (ADN-BRAND-REBUILD-001): identidad visible → ADNegocio
     open(OUT, 'w', encoding='utf-8', newline='').write(out)
 
     report = {

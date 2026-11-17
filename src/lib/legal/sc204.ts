@@ -192,7 +192,7 @@ export interface Sc204ModelData {
   importesTotales: Array<{ label: string; importe: string }>;
   // 13. Número consecutivo — no gestionado
   numeroConsecutivo: string;
-  // Identificador COSTPRO de la recepción (nota al pie / nombre de archivo)
+  // Identificador ADNegocio de la recepción (nota al pie / nombre de archivo)
   identificadorRecepcion: string;
   /**
    * Nota al pie sobre el saldo en existencia ('' si todo se pudo derivar del
@@ -706,7 +706,7 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
     { maxWidth: contentWidth },
   );
   doc.text(
-    `Identificador COSTPRO de la recepción: ${model.identificadorRecepcion}`,
+    `Identificador ADNegocio de la recepción: ${model.identificadorRecepcion}`,
     marginX,
     pageHeight - 8,
     { maxWidth: contentWidth },

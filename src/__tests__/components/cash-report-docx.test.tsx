@@ -137,7 +137,7 @@ describe('MISIÓN WORD — generación de archivo válido', () => {
     const { blob, filename } = await buildCashReportWordBlob(buildContext(), SUMMARIES, COMMISSIONS);
     expect(blob.type).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     expect(blob.size).toBeGreaterThan(1000);
-    expect(filename).toBe('COSTPRO_Reporte_Entrega_ENERVIDA_VITALLCONS_2026-10-17.docx');
+    expect(filename).toBe('ADNegocio_Reporte_Entrega_ENERVIDA_VITALLCONS_2026-10-17.docx');
     // El blob se puede re-abrir como ZIP válido (round-trip de descarga).
     const zip = await JSZip.loadAsync(await blob.arrayBuffer());
     expect(zip.file('word/document.xml')).toBeTruthy();
@@ -145,7 +145,7 @@ describe('MISIÓN WORD — generación de archivo válido', () => {
 
   it('nombre de archivo sanitiza caracteres inválidos', () => {
     expect(cashReportWordFilename('Tienda/Perú *2', '2026-10-17'))
-      .toBe('COSTPRO_Reporte_Entrega_Tienda_Per_2_2026-10-17.docx');
+      .toBe('ADNegocio_Reporte_Entrega_Tienda_Per_2_2026-10-17.docx');
   });
 
   it('sin conceptos activos → fail-closed (misma guardia que PDF y Excel)', async () => {
@@ -199,7 +199,7 @@ describe('MISIÓN WORD — plantilla DIARIO: estructura espejo del PDF', () => {
     // Anexo de auditoría.
     expect(text).toContain('Anexo de Auditoría — Reporte Entrega');
     expect(text).toContain('Hoja CUP — comparación por concepto');
-    expect(text).toContain('Efectivo esperado OFICIAL (fórmula completa COSTPRO)');
+    expect(text).toContain('Efectivo esperado OFICIAL (fórmula completa ADNegocio)');
     expect(text).toContain('Hoja CUP — conciliación configurado vs oficial');
     // Órdenes de trabajo.
     expect(text).toContain('Reporte de Órdenes de Trabajo');
@@ -266,7 +266,7 @@ describe('MISIÓN WORD — plantilla DIARIO: estructura espejo del PDF', () => {
     const footers = Object.keys(zip.files).filter(n => /^word\/footer\d+\.xml$/.test(n));
     expect(footers.length).toBeGreaterThan(0);
     const first = await zip.file(footers[0])!.async('string');
-    expect(first).toContain('CostPro — Reporte Diario (Vertical) · ENERVIDA-VITALLCONS');
+    expect(first).toContain('ADNegocio — Reporte Diario (Vertical) · ENERVIDA-VITALLCONS');
     expect(first).toContain('PAGE');
     expect(first).toContain('NUMPAGES');
   });
@@ -371,7 +371,7 @@ describe('MISIÓN WORD — plantillas Estándar y Simple', () => {
     const { zip } = await pack(ctx);
     const footers = Object.keys(zip.files).filter(n => /^word\/footer\d+\.xml$/.test(n));
     const first = await zip.file(footers[0])!.async('string');
-    expect(first).toContain('CostPro — Reporte de Caja');
+    expect(first).toContain('ADNegocio — Reporte de Caja');
   });
 
   it('simple: sin desglose ni USD (fidelidad a SU descripción — igual que el PDF)', async () => {

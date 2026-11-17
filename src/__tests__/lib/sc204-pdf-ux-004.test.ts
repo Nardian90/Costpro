@@ -381,6 +381,6 @@ describe('CP-DOC-PDF-UX-004 · Escenario F — regresión documental (saldo y to
     expect(text).toContain('MODELO SC-2-04');
     expect(text).toContain('INFORME DE RECEPCIÓN');
     expect(text).toContain('Res. No. 11/2007 MFP');
-    expect(text).toContain('Identificador COSTPRO de la recepción: bbbbbbbb');
+    expect(text).toContain('Identificador ADNegocio de la recepción: bbbbbbbb');
   }, 30_000);
 });

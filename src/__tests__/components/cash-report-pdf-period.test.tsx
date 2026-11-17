@@ -124,7 +124,7 @@ describe('MISIÓN 2026-10-23 §6 — Período completo con flecha vectorial', ()
 
   it('Pie de página: el período completo centrado con la flecha vectorial (ambas fechas presentes)', async () => {
     await buildCashReportPdf(ctxWith('2026-10-21', '2026-10-22'), summaries());
-    const footerEntry = textLog.find(e => e.text.includes('CostPro — Reporte Diario'));
+    const footerEntry = textLog.find(e => e.text.includes('ADNegocio — Reporte Diario'));
     expect(footerEntry).toBeTruthy();
     expect(footerEntry!.text).toContain('Período 2026-10-21');
     // El segmento posterior del pie lleva la fecha final + numeración

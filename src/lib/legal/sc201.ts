@@ -388,7 +388,7 @@ export async function renderSc201Pdf(model: Sc201ModelData) {
     finalY += 5;
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(8.5);
-    doc.text(`ESTADO DE LA ORDEN EN COSTPRO: ${model.estado}`, pageWidth - marginX, finalY, { align: 'right' });
+    doc.text(`ESTADO DE LA ORDEN EN ADNEGOCIO: ${model.estado}`, pageWidth - marginX, finalY, { align: 'right' });
   }
 
   // ── Datos 7–8: firmas — pie unificado (referencia de diseño 2026-11-09) ──
@@ -411,7 +411,7 @@ export async function renderSc201Pdf(model: Sc201ModelData) {
   );
 
   // ── Pie normativo ──
-  drawRes11Footer(doc, `Identificador COSTPRO de la orden: ${model.identificadorOrden}`);
+  drawRes11Footer(doc, `Identificador ADNegocio de la orden: ${model.identificadorOrden}`);
 
   return doc;
 }
