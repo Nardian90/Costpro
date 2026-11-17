@@ -14,6 +14,8 @@ import { useGlobalOperationDate, validateOperationDate } from '@/hooks/api/useGl
 // para el default y el tope del selector — el slice UTC adelantaba el día a
 // partir de las 20:00 Habana y dejaba registrar recepciones fechadas "mañana".
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+// CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001: autoridad del nombre del maestro
+import { effectiveImportName } from '@/lib/receptions/name-authority';
 // MISIÓN FECHAS DE TRABAJO (2026-10-18): default = preferencia de trabajo
 // del usuario para recepciones (válida contra los límites vivos) o HOY.
 import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
@@ -101,6 +103,11 @@ export interface ClassifiedRow {
   productId?: string | null;
   masterProductId?: string | null;
   masterName?: string | null;
+  // CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 §4/§6: nombre que SE UTILIZARÁ
+  // (autoridad del Catálogo Maestro para productos existentes; nombre inicial
+  // del Excel SOLO para verdaderamente nuevos). 'name' conserva la fidelidad
+  // del Excel para la trazabilidad de la previsualización.
+  effectiveName?: string | null;
   orphanLocal?: boolean;
   canCreateMaster?: boolean;
   reasons?: string[];
@@ -1121,13 +1128,17 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           unitOfMeasure: parsed.unit_of_measure || 'unidad',
           salePrice: parsed.sale_price,
           status,
-          existingProduct: productId ? ({ id: productId, sku: parsed.sku, name: String(b.name ?? parsed.name), price: priceBySku.get(parsed.sku.toLowerCase()) ?? 0 } as unknown as Product) : null,
+          // CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 §6: el producto
+          // existente se muestra con su nombre CANÓNICO (effective_name del
+          // motor = maestro), no con el nombre del Excel.
+          existingProduct: productId ? ({ id: productId, sku: parsed.sku, name: String(b.effective_name ?? b.name ?? parsed.name), price: priceBySku.get(parsed.sku.toLowerCase()) ?? 0 } as unknown as Product) : null,
           errors: bStatus === 'error' ? (reasons.length ? reasons : ['Fila inválida']) : [],
           moneda: parsed.moneda,
           tasa: parsed.tasa,
           productId,
           masterProductId: (b.master_product_id as string | null) ?? null,
           masterName: (b.master_name as string | null) ?? null,
+          effectiveName: (b.effective_name as string | null) ?? null,
           orphanLocal: b.orphan_local === true,
           canCreateMaster: b.can_create_master !== false,
           reasons,
@@ -1284,7 +1295,12 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       newItems.push({
         product_id: productId,
         sku: r.sku,
-        name: r.name,
+        // CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 §7: la línea de recepción
+        // muestra el nombre oficial del Catálogo Maestro (effective_name del
+        // motor: maestro canónico para existentes; nombre inicial del Excel
+        // SOLO para verdaderamente nuevos). El nombre del Excel queda en la
+        // previsualización como referencia, no en la línea.
+        name: effectiveImportName(r),
         quantity: r.quantity,
         unit_cost: r.unitCost,
         unit_of_measure: r.unitOfMeasure || 'unidad',
