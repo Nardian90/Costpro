@@ -103,7 +103,7 @@ Controles ejecutados AHORA (post-merge, en esta sesión de cierre) vs resultados
 ## 8. Deployment (FASE 10)
 
 - `https://costpro4.vercel.app` accesible (HTTP 200); `/api/health` HTTP 200 `{"status":"ok","service":"costpro-enterprise"}`.
-- Vercel Production despliega el commit fusionado; el SHA final se registra en el expediente tras el merge del PR complementario (las dos funciones corregidas viven en la BD — el comportamiento del importador no depende del bundle FE para la autoridad del nombre; el bundle FE aporta la jerarquía §6/§7 ya incluida en el merge de #1645).
+- **Deployment Vercel verificado:** check `Vercel = success` sobre el merge del PR principal `2eb8fc14f59cf2e8c042c5ca0137209ce8a7e22c` y sobre el merge del PR complementario `1e96bef3724063785491ceeb6e99e0906af915e6` (HEAD final de `main`). `https://costpro4.vercel.app` HTTP 200; `/api/health` HTTP 200 `{"status":"ok","service":"costpro-enterprise"}`. Las dos funciones corregidas viven en la BD (recertificadas byte-a-byte); el bundle FE aporta la jerarquía §6/§7 incluida en el merge de #1645.
 
 ## 9. Alcance y garantías
 
@@ -113,4 +113,4 @@ Controles ejecutados AHORA (post-merge, en esta sesión de cierre) vs resultados
 
 ## 10. PR complementario
 
-Este expediente se entrega junto con la conciliación (surface regenerado + retirada de las 2 baselines) en el PR complementario de esta misma misión (número y SHA tras el merge, registrados en la sección 8 y en el worklog).
+Este expediente se entregó junto con la conciliación (surface regenerado + retirada de las 2 baselines temporales) en el **PR complementario #1646** — fusionado con el mecanismo normal tras CI 9/9 success sobre su head final `d966722851ff78fc17422ad3619d2b5b44c326e6`; **merge SHA `1e96bef3724063785491ceeb6e99e0906af915e6`**. El worklog registra el ciclo completo.
