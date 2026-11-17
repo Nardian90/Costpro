@@ -164,9 +164,9 @@ Ejecutada en **CostproE2E** (`lguovmvrozxgssupkwpf`, NUNCA producción) con fixt
 |---|---|
 | Rama | `docs/cp-fin-negative-wac-remediation-013-20261117` (desde `main` = `ebe6be5cc`) |
 | Commits | 1) maquinaria m090/m091/m092/m093 + writers manifest · 2) expediente completo · 3) cierre (worklog + PR + SHA256SUMS) |
-| PR | **#1643** — https://github.com/Nardian90/Costpro/pull/1643 |
-| Checks | CI · Test Coverage · E2E Aislado · Security · Vercel |
-| Merge | Por el flujo habitual cuando los controles estén verdes |
+| PR | **#1643** — https://github.com/Nardian90/Costpro/pull/1643 (head `21fabc9d0`) |
+| Checks | **5/5 success** (TypeCheck+Lint+Build · Unit & Integration Tests · E2E Aislado · Security Audit · Vercel Preview Comments) · mergeable_state clean |
+| Merge | **MERGED** → **main = `c060ba88b`** (merge API, 2026-11-17) · expediente y SHA256SUMS 8/8 OK verificados en main |
 | Expediente | `docs/audits/cp-fin-negative-wac-remediation-013/` (9 entregables, SHA256SUMS) |
 
 ## §12. Conclusión
