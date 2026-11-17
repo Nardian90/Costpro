@@ -1,0 +1,12 @@
+{
+ "mision": "CP-FIN-OPENING-BALANCES-AND-CASH-RECONCILIATION-015",
+ "fases": [
+  {
+   "fase": 14,
+   "nombre": "cleanup_NET_DELTA_0",
+   "ok": true,
+   "detalle": "{\"ents\":0,\"movs\":0,\"txs\":0,\"cfs\":0,\"obs\":0,\"prods\":0,\"stores\":0,\"profs\":0,\"ausers\":0,\"perrs\":0,\"audits\":0}"
+  }
+ ],
+ "generado": "2026-11-17T18:30:28.927Z"
+}

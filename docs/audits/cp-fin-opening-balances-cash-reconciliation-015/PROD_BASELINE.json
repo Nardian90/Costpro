@@ -1,0 +1,227 @@
+{
+ "mision": "CP-FIN-OPENING-BALANCES-AND-CASH-RECONCILIATION-015",
+ "script": "m106d-linea-base",
+ "generado": "2026-11-17T18:31:21.808Z",
+ "secciones": {
+  "S1": {
+   "nombre": "reglas",
+   "filas": 2,
+   "data": [
+    {
+     "document_type": "FLUJO_CAJA",
+     "version": 1,
+     "status": "active",
+     "created_at": "2026-11-13",
+     "effective_from": "2026-11-13"
+    },
+    {
+     "document_type": "VENTA",
+     "version": 1,
+     "status": "active",
+     "created_at": "2026-11-13",
+     "effective_from": "2026-11-13"
+    }
+   ]
+  },
+  "S2": {
+   "nombre": "check_amount",
+   "filas": 1,
+   "data": [
+    {
+     "conname": "fin_opening_balances_amount_check",
+     "def": "CHECK ((amount > (0)::numeric))"
+    }
+   ]
+  },
+  "S3": {
+   "nombre": "funciones_m015",
+   "filas": 2,
+   "data": [
+    {
+     "proname": "fin_apply_opening_balance",
+     "tiene_diferencia": false,
+     "tiene_cero": false
+    },
+    {
+     "proname": "fin_compute_metrics",
+     "tiene_diferencia": false,
+     "tiene_cero": false
+    }
+   ]
+  },
+  "S4": {
+   "nombre": "trigger_apertura",
+   "filas": 0,
+   "data": []
+  },
+  "S5": {
+   "nombre": "opening_balances",
+   "filas": 1,
+   "data": [
+    {
+     "n": 0
+    }
+   ]
+  },
+  "S6": {
+   "nombre": "seis_movimientos",
+   "filas": 6,
+   "data": [
+    {
+     "fin_entry_id": "267ee6f5-d559-4ec7-9d5e-5cbed9efd0eb",
+     "fin_movement_id": "e441af6e-66f8-4d69-b7c2-b1132bac305c",
+     "document_type": "FLUJO_CAJA",
+     "economic_date": "2026-10-23",
+     "sense": "credito",
+     "amount_cup": "293600.00",
+     "currency_origin": "USD"
+    },
+    {
+     "fin_entry_id": "1b1d8cb5-a4e2-48af-9da6-299773b1c7bf",
+     "fin_movement_id": "019f5125-562a-4647-a314-cb4d77d698a3",
+     "document_type": "VENTA",
+     "economic_date": "2026-10-26",
+     "sense": "debito",
+     "amount_cup": "32000.00",
+     "currency_origin": "CUP"
+    },
+    {
+     "fin_entry_id": "ab81d466-2fc0-40f5-bd74-773601117bbd",
+     "fin_movement_id": "e4677648-990b-4fde-8994-fce06a9d455d",
+     "document_type": "VENTA",
+     "economic_date": "2026-10-27",
+     "sense": "debito",
+     "amount_cup": "60840.00",
+     "currency_origin": "CUP"
+    },
+    {
+     "fin_entry_id": "ebf02baa-4799-407b-843b-89de3e0c62a7",
+     "fin_movement_id": "7b60bec7-4ccd-4a85-ad98-ebcaf077bfd1",
+     "document_type": "VENTA",
+     "economic_date": "2026-11-07",
+     "sense": "debito",
+     "amount_cup": "930.00",
+     "currency_origin": "CUP"
+    },
+    {
+     "fin_entry_id": "8f033ac4-5006-4b94-8969-1c4d019a67b3",
+     "fin_movement_id": "b16d022b-e4a2-4e5d-9a34-5ea859a7b324",
+     "document_type": "VENTA",
+     "economic_date": "2026-11-07",
+     "sense": "debito",
+     "amount_cup": "6510.00",
+     "currency_origin": "CUP"
+    },
+    {
+     "fin_entry_id": "cb419a22-f1ff-4e12-b478-22c3f24700e9",
+     "fin_movement_id": "024e0091-daa3-4150-a738-33dbdbb6200d",
+     "document_type": "VENTA",
+     "economic_date": "2026-11-16",
+     "sense": "debito",
+     "amount_cup": "9200.00",
+     "currency_origin": "CUP"
+    }
+   ]
+  },
+  "S7": {
+   "nombre": "ventas_espejo",
+   "filas": 3,
+   "data": [
+    {
+     "tid": "23ccd04f",
+     "fecha": "2026-10-23",
+     "total_amount": "5600.00",
+     "status": "completed",
+     "posted": 1
+    },
+    {
+     "tid": "28e94349",
+     "fecha": "2026-10-19",
+     "total_amount": "177770.00",
+     "status": "completed",
+     "posted": 0
+    },
+    {
+     "tid": "68e7464d",
+     "fecha": "2026-10-17",
+     "total_amount": "289750.00",
+     "status": "completed",
+     "posted": 1
+    }
+   ]
+  },
+  "S8": {
+   "nombre": "saldos_clave",
+   "filas": 8,
+   "data": [
+    {
+     "category_code": "ACT_BANCOS",
+     "saldo": "25972120.01"
+    },
+    {
+     "category_code": "ACT_EFECTIVO_CUP",
+     "saldo": "1026370.00"
+    },
+    {
+     "category_code": "ACT_EFECTIVO_USD",
+     "saldo": "-184120.00"
+    },
+    {
+     "category_code": "ACT_INVENTARIO",
+     "saldo": "601527.81"
+    },
+    {
+     "category_code": "GAS_COSTO_VENTAS",
+     "saldo": "1747940.88"
+    },
+    {
+     "category_code": "GAS_OTROS_OPER",
+     "saldo": "8729279.98"
+    },
+    {
+     "category_code": "ING_VENTAS",
+     "saldo": "-35843129.99"
+    },
+    {
+     "category_code": "PAS_CXP_PROV",
+     "saldo": "-2961795.90"
+    }
+   ]
+  },
+  "S9": {
+   "nombre": "posting_errors",
+   "filas": 1,
+   "data": [
+    {
+     "n": 0
+    }
+   ]
+  },
+  "S10": {
+   "nombre": "entregas_efectivo",
+   "filas": 2,
+   "data": [
+    {
+     "document_number": "IE-000001-2026",
+     "concept": "entrega_efectivo",
+     "amount": "8435679.98",
+     "currency": "CUP",
+     "exchange_rate": "1",
+     "amount_cup": "8435679.98",
+     "operation_date": "2026-10-23",
+     "status": "confirmado"
+    },
+    {
+     "document_number": "IE-000002-2026",
+     "concept": "entrega_efectivo",
+     "amount": "367",
+     "currency": "USD",
+     "exchange_rate": "800.0000",
+     "amount_cup": "293600.0000",
+     "operation_date": "2026-10-23",
+     "status": "confirmado"
+    }
+   ]
+  }
+ }
+}

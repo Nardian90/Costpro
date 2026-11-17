@@ -1,0 +1,298 @@
+{
+ "mision": "CP-FIN-OPENING-BALANCES-AND-CASH-RECONCILIATION-015",
+ "antes": {
+  "ACT_EFECTIVO_CUP": "1026370.00",
+  "ACT_EFECTIVO_USD": "-184120.00",
+  "ACT_BANCOS": "25972120.01",
+  "ACT_INVENTARIO": "601527.81",
+  "PAS_CXP_PROV": "2961795.90",
+  "ING_VENTAS": "35843129.99",
+  "ING_DEVOLUCIONES": "-239405.00",
+  "GAS_COSTO_VENTAS": "1747940.88",
+  "GAS_OTROS_OPER": "8729279.98",
+  "fin_opening_balances": 0
+ },
+ "seis_movimientos": {
+  "n": 6,
+  "debitos": "109480.00",
+  "creditos": "293600.00",
+  "neto": "-184120.00",
+  "saldo_mostrado": "-184120.00",
+  "identidad_ok": true,
+  "lista": [
+   {
+    "fin_entry_id": "267ee6f5-d559-4ec7-9d5e-5cbed9efd0eb",
+    "fin_movement_id": "e441af6e-66f8-4d69-b7c2-b1132bac305c",
+    "document_type": "FLUJO_CAJA",
+    "economic_date": "2026-10-23",
+    "sense": "credito",
+    "amount_cup": "293600.00",
+    "currency_origin": "USD"
+   },
+   {
+    "fin_entry_id": "1b1d8cb5-a4e2-48af-9da6-299773b1c7bf",
+    "fin_movement_id": "019f5125-562a-4647-a314-cb4d77d698a3",
+    "document_type": "VENTA",
+    "economic_date": "2026-10-26",
+    "sense": "debito",
+    "amount_cup": "32000.00",
+    "currency_origin": "CUP"
+   },
+   {
+    "fin_entry_id": "ab81d466-2fc0-40f5-bd74-773601117bbd",
+    "fin_movement_id": "e4677648-990b-4fde-8994-fce06a9d455d",
+    "document_type": "VENTA",
+    "economic_date": "2026-10-27",
+    "sense": "debito",
+    "amount_cup": "60840.00",
+    "currency_origin": "CUP"
+   },
+   {
+    "fin_entry_id": "ebf02baa-4799-407b-843b-89de3e0c62a7",
+    "fin_movement_id": "7b60bec7-4ccd-4a85-ad98-ebcaf077bfd1",
+    "document_type": "VENTA",
+    "economic_date": "2026-11-07",
+    "sense": "debito",
+    "amount_cup": "930.00",
+    "currency_origin": "CUP"
+   },
+   {
+    "fin_entry_id": "8f033ac4-5006-4b94-8969-1c4d019a67b3",
+    "fin_movement_id": "b16d022b-e4a2-4e5d-9a34-5ea859a7b324",
+    "document_type": "VENTA",
+    "economic_date": "2026-11-07",
+    "sense": "debito",
+    "amount_cup": "6510.00",
+    "currency_origin": "CUP"
+   },
+   {
+    "fin_entry_id": "cb419a22-f1ff-4e12-b478-22c3f24700e9",
+    "fin_movement_id": "024e0091-daa3-4150-a738-33dbdbb6200d",
+    "document_type": "VENTA",
+    "economic_date": "2026-11-16",
+    "sense": "debito",
+    "amount_cup": "9200.00",
+    "currency_origin": "CUP"
+   }
+  ]
+ },
+ "cinco_ventas_posteadas": [
+  {
+   "transaction_id": "8757444f-f38b-4b05-8a51-77b322f3769d",
+   "fecha": "2026-10-26",
+   "venta_cup": "32000.00",
+   "pago_usd": "40.00",
+   "tasa": "800.00",
+   "pago_cup": "32000.00",
+   "coincide_con_debito": true
+  },
+  {
+   "transaction_id": "e825ba93-e752-4c0e-87f8-f38fbf80c57c",
+   "fecha": "2026-10-27",
+   "venta_cup": "60840.00",
+   "pago_usd": "72.00",
+   "tasa": "845.00",
+   "pago_cup": "60840.00",
+   "coincide_con_debito": true
+  },
+  {
+   "transaction_id": "6501f8da-e759-4493-945a-5e3adc76ebb2",
+   "fecha": "2026-11-07",
+   "venta_cup": "930.00",
+   "pago_usd": "1.00",
+   "tasa": "930.00",
+   "pago_cup": "930.00",
+   "coincide_con_debito": true
+  },
+  {
+   "transaction_id": "9d1ccef8-83ab-4fca-8eb9-ab016eb98a85",
+   "fecha": "2026-11-07",
+   "venta_cup": "6510.00",
+   "pago_usd": "7.00",
+   "tasa": "930.00",
+   "pago_cup": "6510.00",
+   "coincide_con_debito": true
+  },
+  {
+   "transaction_id": "97263a9c-054f-45a0-a6fe-bc52c155bcff",
+   "fecha": "2026-11-16",
+   "venta_cup": "9200.00",
+   "pago_usd": "10.00",
+   "tasa": "920.00",
+   "pago_cup": "9200.00",
+   "coincide_con_debito": true
+  }
+ ],
+ "egreso_entrega_usd": {
+  "id": "cd07fc7d-222c-423a-8afc-463252e4b411",
+  "document_number": "IE-000002-2026",
+  "concept": "entrega_efectivo",
+  "amount_usd": "367.00",
+  "rate": "800.00",
+  "amount_cup": "293600.00",
+  "counterparty": "Belkis",
+  "justification": "Entrega para ingresar al banco",
+  "status": "confirmado",
+  "entry": "267ee6f5-d559-4ec7-9d5e-5cbed9efd0eb",
+  "contraparte_posteada": "GAS_OTROS_OPER (debito) — INCORRECTO: es entrega de efectivo, no gasto"
+ },
+ "ventas_usd_reconstruidas": {
+  "68e7464d": {
+   "fecha": "2026-10-17",
+   "venta_total_cup": "289750.00",
+   "usd": "150",
+   "tasa": "805",
+   "usd_cup": "120750.00",
+   "cup_real": "169000.00",
+   "estado_motor": "POSTEADA — cobro completo clasificado CUP (error de moneda)",
+   "entry": "52c43919-2938-45b6-a16a-95139b5268c7"
+  },
+  "28e94349": {
+   "fecha": "2026-10-19",
+   "venta_total_cup": "177770.00",
+   "usd": "207",
+   "tasa": "810",
+   "usd_cup": "167670.00",
+   "cup_real": "2000.00",
+   "faltante_aceptado": "8100.00",
+   "estado_motor": "NO CONTABILIZADA (cobros 169,670 ≠ total 177,770; el motor no tiene línea de diferencia)"
+  },
+  "23ccd04f": {
+   "fecha": "2026-10-23",
+   "venta_total_cup": "5600.00",
+   "usd": "10",
+   "tasa": "560.00",
+   "usd_cup": "5600.00",
+   "cup_real": "0.00",
+   "estado_motor": "POSTEADA — cobro completo clasificado CUP (error de moneda)",
+   "entry": "6c7b76df-80cf-4aca-b8e3-a816067708df"
+  }
+ },
+ "cajon_usd_fisico": {
+  "cobros_previos_entrega": "367",
+  "entrega_10_23": "367",
+  "identidad_cobro_entrega": true,
+  "detalle": "150 (10-17) + 207 (10-19) + 10 (10-23) = 367 = ENTREGA IE-000002-2026 (barrido completo)",
+  "cobros_posteriores": "130.00",
+  "saldo_final_fisico_usd": "130.00",
+  "sin_movimientos_pre_17_10": true,
+  "apertura_requerida": "0"
+ },
+ "rectificaciones": {
+  "RECT-015-A": {
+   "nombre": "Reclasificación 68e7464d CUP→USD",
+   "dr": {
+    "ACT_EFECTIVO_USD": "120750.00"
+   },
+   "cr": {
+    "ACT_EFECTIVO_CUP": "120750.00"
+   },
+   "refs": [
+    "entry 52c43919-2938-45b6-a16a-95139b5268c7",
+    "venta 68e7464d-c50d-426f-a8ff-cbe701e9d1a5",
+    "ítem 150 USD @805 (caja: carve físico)"
+   ],
+   "total_dr": "120750.00",
+   "total_cr": "120750.00",
+   "equilibrada": true
+  },
+  "RECT-015-B": {
+   "nombre": "Reclasificación 23ccd04f CUP→USD",
+   "dr": {
+    "ACT_EFECTIVO_USD": "5600.00"
+   },
+   "cr": {
+    "ACT_EFECTIVO_CUP": "5600.00"
+   },
+   "refs": [
+    "entry 6c7b76df-80cf-4aca-b8e3-a816067708df",
+    "venta 23ccd04f-db81-4537-a3db-2dabf40e31a8",
+    "settlement cash_received_usd=10"
+   ],
+   "total_dr": "5600.00",
+   "total_cr": "5600.00",
+   "equilibrada": true
+  },
+  "RECT-015-C": {
+   "nombre": "Contabilización venta 28e94349 (vía regla v2 del motor)",
+   "dr": {
+    "ACT_EFECTIVO_USD": "167670.00",
+    "ACT_EFECTIVO_CUP": "2000.00",
+    "ING_DESCUENTOS": "8100.00",
+    "GAS_COSTO_VENTAS": "2.30"
+   },
+   "cr": {
+    "ING_VENTAS": "177770.00",
+    "ACT_INVENTARIO": "2.30"
+   },
+   "refs": [
+    "venta 28e94349-0a3e-499c-935f-c4a25c9db3fe",
+    "items: 207 USD @810 + CUP 2,000; faltante 8,100 aceptado (payment_incidents)",
+    "fin_post_document (regla VENTA v2 con línea de diferencia de cobro)"
+   ],
+   "total_dr": "177772.30",
+   "total_cr": "177772.30",
+   "equilibrada": true
+  },
+  "RECT-015-D": {
+   "nombre": "Reclasificación entregas de efectivo GAS_OTROS_OPER→ACT_OTROS_CORR",
+   "dr": {
+    "ACT_OTROS_CORR": "8729279.98"
+   },
+   "cr": {
+    "GAS_OTROS_OPER": "8729279.98"
+   },
+   "refs": [
+    "entry 267ee6f5 (IE-000002-2026, USD 367 @800 = 293,600)",
+    "entry 8f1644bd (IE-000001-2026, CUP 8,435,679.98)",
+    "concept entrega_efectivo: entrega de efectivo acumulado, no gasto"
+   ],
+   "total_dr": "8729279.98",
+   "total_cr": "8729279.98",
+   "equilibrada": true
+  }
+ },
+ "apertura": {
+  "tienda": "ENERVIDA-VITALLCONS (5e6fe821-5465-48b1-b3f1-3aa3182edc38)",
+  "fecha": "2026-06-30",
+  "convencion": "día anterior al primer documento (2026-07-01, recepción FAC-VITALLCONS-001)",
+  "evidencia_cero": {
+   "transactions_pre": 0,
+   "payments_pre": 0,
+   "cash_flow_pre": 0,
+   "primer_doc": "2026-07-01",
+   "primer_venta": "2026-07-16 12:00:00+00",
+   "fuente": "consulta read-only sesión 015 (u14): 0 ventas/pagos/flujo caja pre-01-07 en ENERVIDA",
+   "certificaciones_previas": "m011/m014 (101 líneas FAC-VITALLCONS-001 a 1 CUP; reconstrucción completa)"
+  },
+  "declaracion": "PAT_CAPITAL amount=0 aplicado → asiento event=apertura SIN movimientos (verificación documentada de inexistencia de saldos preexistentes)"
+ },
+ "despues": {
+  "ACT_EFECTIVO_CUP": "902020.00",
+  "ACT_EFECTIVO_USD": "109900.00",
+  "ACT_BANCOS": "25972120.01",
+  "ACT_INVENTARIO": "601525.51",
+  "ACT_OTROS_CORR": "8729279.98",
+  "PAS_CXP_PROV": "2961795.90",
+  "ING_VENTAS": "36020899.99",
+  "ING_DESCUENTOS": "-8100.00",
+  "GAS_COSTO_VENTAS": "1747943.18",
+  "GAS_OTROS_OPER": "0.00",
+  "resto_gastos": "672402.21",
+  "ING_DEVOLUCIONES": "-239405.00",
+  "total_activos": "36314845.50",
+  "resultado": "33353049.60",
+  "pasivos_mas_patrimonio": "36314845.50",
+  "diferencia": "0.00",
+  "ecuacion_ok": true,
+  "usd_nunca_negativo": {
+   "10_17": "120750.00",
+   "10_19": "288420.00",
+   "10_23_pre": "294020.00",
+   "10_23_post_entrega": "420.00",
+   "final": "109900.00",
+   "minimo": "420.00"
+  }
+ },
+ "resultado_delta": "8898947.68"
+}

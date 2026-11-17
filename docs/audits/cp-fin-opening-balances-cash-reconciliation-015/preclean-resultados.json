@@ -1,0 +1,25 @@
+{
+ "mision": "CP-FIN-OPENING-BALANCES-AND-CASH-RECONCILIATION-015",
+ "script": "m108b-preclean",
+ "fases": [
+  {
+   "fase": 1,
+   "nombre": "fixture_borrado_NET_DELTA_0",
+   "ok": true,
+   "detalle": "{\"ents\":0,\"movs\":0,\"txs\":0,\"cfs\":0,\"obs\":0,\"prods\":0,\"stores\":0,\"profs\":0,\"ausers\":0,\"audits\":0}"
+  },
+  {
+   "fase": 2,
+   "nombre": "dedup_v2_inactivas",
+   "ok": true,
+   "detalle": "eliminadas (ver F1 log) · pre=24"
+  },
+  {
+   "fase": 3,
+   "nombre": "una_v2_activa_por_doctype",
+   "ok": true,
+   "detalle": "[{\"document_type\":\"FLUJO_CAJA\",\"version\":1,\"status\":\"inactive\",\"n\":1},{\"document_type\":\"FLUJO_CAJA\",\"version\":2,\"status\":\"active\",\"n\":1},{\"document_type\":\"VENTA\",\"version\":1,\"status\":\"inactive\",\"n\":1},{\"document_type\":\"VENTA\",\"version\":2,\"status\":\"active\",\"n\":1}]"
+  }
+ ],
+ "generado": "2026-11-17T18:10:53.377Z"
+}
