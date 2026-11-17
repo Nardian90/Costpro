@@ -40,7 +40,7 @@ Las **Órdenes de Compra (OC)** documentan la intención de compra antes de reci
 | **Recibida** | Todo lo pedido fue recibido. | Consulta y comparación pedido vs. recibido. |
 | **Cancelada** | Anulada antes de completarse. | Solo consulta. |
 
-La OC no tiene flujo de "envío al proveedor" ni respuesta del proveedor dentro del sistema: el pedido en sí se hace por sus canales habituales y CostPro documenta y controla el cumplimiento.
+La OC no tiene flujo de "envío al proveedor" ni respuesta del proveedor dentro del sistema: el pedido en sí se hace por sus canales habituales y ADNegocio documenta y controla el cumplimiento.
 
 ## Cómo recibir contra una OC
 
@@ -77,7 +77,7 @@ No. Solo al confirmar la recepción se incorpora la mercancía y su costo al inv
 **¿Puedo crear la OC con productos que no están en el catálogo?**
 Sí: los ítems son texto libre. Al recibir, si el producto no existe, la recepción puede agregarlo como nuevo.
 
-**¿Se puede enviar la OC al proveedor desde CostPro?**
+**¿Se puede enviar la OC al proveedor desde ADNegocio?**
 No hay envío ni PDF de la OC: el documento es de control interno. Use sus canales habituales para el pedido.
 
 **¿Qué pasa si recibo más de lo pedido?**

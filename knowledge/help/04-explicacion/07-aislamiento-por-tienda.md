@@ -6,7 +6,7 @@
 
 Si usted es administrador de 5 tiendas, podría pensar: *"Quiero ver TODO junto: las ventas de las 5 tiendas en una sola pantalla, el inventario de las 5 en una sola tabla."*
 
-CostPro **sí** le permite hacer eso, pero **no por defecto**. Por defecto, cada tienda es un "mundo aparte" y usted tiene que cambiar de tienda para ver sus datos.
+ADNegocio **sí** le permite hacer eso, pero **no por defecto**. Por defecto, cada tienda es un "mundo aparte" y usted tiene que cambiar de tienda para ver sus datos.
 
 ¿Por qué? Porque si todo estuviera mezclado, habría **5 problemas graves**:
 

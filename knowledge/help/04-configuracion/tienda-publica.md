@@ -1,10 +1,10 @@
 # Tienda Pública: Catálogo en Línea por Tienda
 
-La Tienda Pública es una funcionalidad de CostPro que genera automáticamente un **catálogo en línea visible para los clientes**, asociado a cada tienda registrada en el sistema. A través de una URL pública, los clientes pueden explorar el inventario, buscar productos y consultar precios sin necesidad de acceder al sistema interno.
+La Tienda Pública es una funcionalidad de ADNegocio que genera automáticamente un **catálogo en línea visible para los clientes**, asociado a cada tienda registrada en el sistema. A través de una URL pública, los clientes pueden explorar el inventario, buscar productos y consultar precios sin necesidad de acceder al sistema interno.
 
 ## ¿Qué es la Tienda Pública?
 
-La Tienda Pública es una página web autogestionada que CostPro crea para cada sucursal. Esta página muestra el catálogo de productos de la tienda en un formato limpio y responsivo, diseñado para que los clientes finales puedan navegar productos, filtrar por categoría y buscar artículos específicos.
+La Tienda Pública es una página web autogestionada que ADNegocio crea para cada sucursal. Esta página muestra el catálogo de productos de la tienda en un formato limpio y responsivo, diseñado para que los clientes finales puedan navegar productos, filtrar por categoría y buscar artículos específicos.
 
 A diferencia del terminal POS, la Tienda Pública es **solo de lectura**: los clientes pueden ver productos y precios, pero no pueden realizar compras ni modificar datos.
 
@@ -36,7 +36,7 @@ Para obtener y compartir el enlace de la Tienda Pública:
 4. Haz clic en **Copiar enlace** para copiar la URL al portapapeles.
 5. Comparte el enlace por los canales deseados: WhatsApp, redes sociales, correo electrónico, mensaje de texto.
 
-El enlace es permanente y no requiere que el cliente tenga una cuenta ni inicie sesión en CostPro.
+El enlace es permanente y no requiere que el cliente tenga una cuenta ni inicie sesión en ADNegocio.
 
 ## Características de la Tienda Pública
 
@@ -58,13 +58,13 @@ Cada producto en la Tienda Pública muestra:
 
 | Campo | Origen del dato |
 |-------|----------------|
-| **Imagen** | Imagen del producto en el catálogo de CostPro |
+| **Imagen** | Imagen del producto en el catálogo de ADNegocio |
 | **Nombre** | Nombre del producto configurado en el sistema |
 | **Precio** | Precio de venta indexado en la tienda activa |
 | **Categoría** | Categoría asignada al producto |
 | **Stock** | Indicador de disponibilidad (en stock / agotado) |
 
-> **Importante:** La Tienda Pública utiliza los mismos datos del catálogo interno. Cualquier actualización de precio, imagen o categoría en CostPro se refleja automáticamente en la Tienda Pública.
+> **Importante:** La Tienda Pública utiliza los mismos datos del catálogo interno. Cualquier actualización de precio, imagen o categoría en ADNegocio se refleja automáticamente en la Tienda Pública.
 
 ## Configuración de Tienda que Afecta el Frontend
 
@@ -130,7 +130,7 @@ La Tienda Pública es una extensión del catálogo hacia afuera, mientras que el
 
 ### Mantenimiento Continuo
 
-- **Actualiza el catálogo regularmente:** Los cambios en CostPro se reflejan en la Tienda Pública de forma inmediata. Mantén precios, stock e imágenes actualizados.
+- **Actualiza el catálogo regularmente:** Los cambios en ADNegocio se reflejan en la Tienda Pública de forma inmediata. Mantén precios, stock e imágenes actualizados.
 - **Monitorea productos agotados:** Los productos sin stock se marcan automáticamente como agotados en la Tienda Pública. Si un producto está descontinuado, considéralo ocultar del catálogo en lugar de dejarlo como agotado.
 - **Actualiza datos de contacto:** Si cambia el teléfono, dirección o WhatsApp de la tienda, actualízalo en la configuración para que los clientes siempre tengan información correcta.
 

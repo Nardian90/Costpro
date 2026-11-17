@@ -2,7 +2,7 @@
 
 ## 1. Jerarquía de Roles
 
-CostPro implementa un sistema de roles jerárquico basado en el principio de **mínimo privilegio**. Cada rol tiene un conjunto definido de permisos, donde los niveles superiores heredan y amplían los del nivel inmediato inferior.
+ADNegocio implementa un sistema de roles jerárquico basado en el principio de **mínimo privilegio**. Cada rol tiene un conjunto definido de permisos, donde los niveles superiores heredan y amplían los del nivel inmediato inferior.
 
 ![Vista de Roles y Permisos con la gestión de permisos del sistema](/help/capturas/roles-permisos.webp "Figura 1. Roles y Permisos — gestión granular de permisos por módulo")
 
@@ -89,7 +89,7 @@ La siguiente tabla detalla el nivel de acceso de cada rol a los módulos princip
 
 ## 3. Permisos Granulares
 
-El sistema RBAC de CostPro utiliza **17 banderas de permisos granulares** que controlan el acceso a nivel de acción dentro de cada módulo. Estas banderas se evalúan en el frontend y en el backend para garantizar la seguridad en ambas capas.
+El sistema RBAC de ADNegocio utiliza **17 banderas de permisos granulares** que controlan el acceso a nivel de acción dentro de cada módulo. Estas banderas se evalúan en el frontend y en el backend para garantizar la seguridad en ambas capas.
 
 ### Catálogo de Productos
 
@@ -137,7 +137,7 @@ El sistema RBAC de CostPro utiliza **17 banderas de permisos granulares** que co
 
 ### Anulación y reversión de ventas (MODELO C)
 
-CostPro distingue **dos operaciones distintas** para revertir una venta:
+ADNegocio distingue **dos operaciones distintas** para revertir una venta:
 
 | | POS Undo ("Deshacer") | Reversión administrativa ("Revertir") |
 |---|---|---|
@@ -175,7 +175,7 @@ en base de datos — el frontend solo refleja la política:
 
 ### Autenticación
 
-CostPro utiliza **Supabase** como proveedor de autenticación, lo que garantiza:
+ADNegocio utiliza **Supabase** como proveedor de autenticación, lo que garantiza:
 
 - **Cifrado** de contraseñas con algoritmos modernos (bcrypt).
 - **Gestión de sesiones** con tokens JWT de corta duración.

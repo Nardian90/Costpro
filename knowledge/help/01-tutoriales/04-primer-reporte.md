@@ -8,7 +8,7 @@
 
 Los reportes son como **fotografías** de cómo está su negocio en un momento dado. Sin reportes, usted trabaja "a ciegas": no sabe si vendió más hoy que ayer, no sabe qué producto se vende más, no sabe si está ganando dinero o perdiendo.
 
-CostPro puede generar **11 tipos de reportes**. En este tutorial aprenderá a hacer el más usado: el **Reporte de Ventas**.
+ADNegocio puede generar **11 tipos de reportes**. En este tutorial aprenderá a hacer el más usado: el **Reporte de Ventas**.
 
 ## Paso 1 — Ir al Generador de Reportes
 

@@ -1,6 +1,6 @@
 # Cómo Administrar Tiendas y Usuarios
 
-Guía completa para la gestión multi-tienda, administración de usuarios y control de acceso por roles en CostPro.
+Guía completa para la gestión multi-tienda, administración de usuarios y control de acceso por roles en ADNegocio.
 
 ## Contenido
 
@@ -102,7 +102,7 @@ Las tiendas representan sucursales físicas o puntos de venta dentro de tu organ
 
 ## 3. Gestión de Roles
 
-Los roles definen los permisos y funcionalidades a las que un usuario tiene acceso dentro de CostPro.
+Los roles definen los permisos y funcionalidades a las que un usuario tiene acceso dentro de ADNegocio.
 
 ### Roles Disponibles
 

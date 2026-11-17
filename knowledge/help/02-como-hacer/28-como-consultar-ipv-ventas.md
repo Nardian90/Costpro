@@ -6,7 +6,7 @@
 
 **IPV — Ingresos por Ventas** es un **informe de solo lectura** que reconstruye, producto por producto, la conciliación de inventario e ingresos de un período: existencia inicial, movimientos clasificados, existencia final e importe vendido. Todo se calcula desde el registro de movimientos de stock (Kardex) y las líneas de venta.
 
-> ⚠️ **En CostPro hay más de una cosa llamada «IPV»**:
+> ⚠️ **En ADNegocio hay más de una cosa llamada «IPV»**:
 > - Esta vista activa: **IPV — Ingresos por Ventas** (OPERACIÓN → Ventas) — el informe que documenta esta guía.
 > - Un módulo **IPV** en la sección **EN DESARROLLO** (solo administradores): banco de trabajo experimental de conciliación bancaria. Vea «¿Qué es el IPV?» para ese módulo.
 > - El nombre histórico **«Tabla IPV»** de la Tabla de Venta: la vista llevó ese nombre antes de renombrarse a «Tabla de Venta» (justamente para evitar la colisión de siglas); no implica precios indexados.

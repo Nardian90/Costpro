@@ -1,6 +1,6 @@
 # Explicación: Por Qué la Tasa es "Inteligente"
 
-> **Lea esto cuando**: Quiere entender qué hace que la tasa de cambio en CostPro sea "inteligente" y por qué eso le ahorra dinero.
+> **Lea esto cuando**: Quiere entender qué hace que la tasa de cambio en ADNegocio sea "inteligente" y por qué eso le ahorra dinero.
 
 ## El problema de la tasa de cambio manual
 
@@ -28,7 +28,7 @@ En ambos casos, **el problema es no saber cuál es la tasa real de hoy**.
 
 ## ¿Qué hace la tasa "inteligente"?
 
-CostPro soluciona este problema con una **tasa inteligente** que:
+ADNegocio soluciona este problema con una **tasa inteligente** que:
 
 ### 1. Consulta automáticamente varias fuentes
 Cada mañana (o cuando usted lo pida), el sistema consulta:
@@ -83,7 +83,7 @@ Una vez que usted acepta la tasa recomendada, todas las operaciones de ese día 
 ### Escenario típico de una tienda
 
 **Lunes 8:00 AM**
-- El encargado entra a CostPro.
+- El encargado entra a ADNegocio.
 - Va a ANÁLISIS → Inteligencia Cambiaria.
 - Hace clic en "Actualizar tasa ahora".
 - El sistema consulta las fuentes y muestra:
@@ -125,7 +125,7 @@ A veces la tasa cambia varias veces en el día. ¿Cuál aplicar?
 - Más preciso pero más complejo.
 - Útil solo si las tasas cambian mucho en el día (ej: 10% en horas).
 
-CostPro permite ambas. Por defecto usa la opción A.
+ADNegocio permite ambas. Por defecto usa la opción A.
 
 ## ¿Y si quiero usar una tasa diferente?
 
@@ -164,7 +164,7 @@ El sistema registra esta tasa como "Personalizada" y la diferencia queda visible
 - Para monedas exóticas, puede que algunas fuentes no estén disponibles.
 
 **¿La tasa inteligente cobra dinero?**
-- No. Es una característica incluida en CostPro.
+- No. Es una característica incluida en ADNegocio.
 - Las fuentes que consulta son públicas y gratuitas.
 
 **¿Puedo agregar mis propias fuentes?**

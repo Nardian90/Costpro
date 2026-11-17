@@ -20,7 +20,7 @@
 
 ## Los 6 roles del sistema
 
-CostPro tiene **6 roles jerárquicos**. Los permisos son **acumulativos**: un rol superior puede hacer todo lo que puede hacer un rol inferior, más cosas adicionales.
+ADNegocio tiene **6 roles jerárquicos**. Los permisos son **acumulativos**: un rol superior puede hacer todo lo que puede hacer un rol inferior, más cosas adicionales.
 
 | Rol | Nivel | Descripción |
 |-----|-------|-------------|

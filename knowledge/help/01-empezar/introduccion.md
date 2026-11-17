@@ -1,16 +1,16 @@
-# Introducción a CostPro
+# Introducción a ADNegocio
 
-## Bienvenido a CostPro
+## Bienvenido a ADNegocio
 
-CostPro es una plataforma empresarial integral diseñada para la **gestión de costos, punto de venta (POS), inventario multi-tienda e índices de precios**. Construida como una aplicación web moderna progresiva (PWA), CostPro unifica en un solo sistema las operaciones de costeo de productos, la gestión comercial en sucursales, el control de inventario y el análisis de variaciones de precios.
+ADNegocio (anteriormente **CostPro**) es una plataforma empresarial integral diseñada para la **gestión de costos, punto de venta (POS), inventario multi-tienda e índices de precios**. Construida como una aplicación web moderna progresiva (PWA), ADNegocio unifica en un solo sistema las operaciones de costeo de productos, la gestión comercial en sucursales, el control de inventario y el análisis de variaciones de precios.
 
 La plataforma está orientada a empresas que requieren precisión en el cálculo de costos —con soporte para fórmulas complejas, anexos (I–X), auditoría completa y firmas digitales— y que operan bajo un modelo de **múltiples puntos de venta o sucursales** con control centralizado.
 
-CostPro combina un motor de costos con asistente IA (Darian), un POS con pago mixto multi-moneda, análisis estadístico avanzado y una tienda pública accesible desde cualquier dispositivo —todo ello con soporte offline y almacenamiento local persistente.
+ADNegocio combina un motor de costos con asistente IA (Darian), un POS con pago mixto multi-moneda, análisis estadístico avanzado y una tienda pública accesible desde cualquier dispositivo —todo ello con soporte offline y almacenamiento local persistente.
 
 ## Secciones Principales
 
-CostPro se organiza en **secciones** accesibles desde la barra lateral izquierda:
+ADNegocio se organiza en **secciones** accesibles desde la barra lateral izquierda:
 
 | Sección | Descripción |
 |---------|-------------|
@@ -19,7 +19,7 @@ CostPro se organiza en **secciones** accesibles desde la barra lateral izquierda
 | **Recursos Humanos** | La gestión del personal de la tienda: **Trabajadores y Comisiones** (trabajadores, reglas de comisión, pagos con auditoría y nóminas de salario — Modelo SC-4-06). |
 | **Análisis** | Análisis de datos (tabla dinámica de costos, márgenes y rentabilidad), Inteligencia Cambiaria (tasas oficiales vs informales, simulador), Tablón de Noticias, Reportes (generador PDF/Excel) y Análisis ABC. |
 | **Sistema** | Administración del sistema (solo administradores): Ajustes, Usuarios, Roles, Salud, Monitoreo, Gestión RSS y Cierre Fiscal. |
-| **Ayuda** | Este Centro de Ayuda: documentación funcional y técnica de CostPro. |
+| **Ayuda** | Este Centro de Ayuda: documentación funcional y técnica de ADNegocio. |
 | **En desarrollo** | Capacidades que existen pero aún no están completamente integradas (experimentales): IPV, Pick3, Billetera, Wiki Contable, Academia, Marco Legal y Conciliación Bancaria. |
 
 ## Navegación
@@ -53,7 +53,7 @@ La barra superior contiene el **selector de tienda activa**, notificaciones, el 
 
 ## Temas Visuales
 
-CostPro ofrece **5 temas visuales** que se pueden cambiar desde el botón de tema en la barra superior:
+ADNegocio ofrece **5 temas visuales** que se pueden cambiar desde el botón de tema en la barra superior:
 
 | Tema | Descripción |
 |------|-------------|
@@ -67,7 +67,7 @@ CostPro ofrece **5 temas visuales** que se pueden cambiar desde el botón de tem
 
 ### Modos de Conectividad
 
-Para optimizar la experiencia según la calidad de la conexión a Internet, CostPro dispone de dos modos de conectividad:
+Para optimizar la experiencia según la calidad de la conexión a Internet, ADNegocio dispone de dos modos de conectividad:
 
 | Modo | Descripción |
 |------|-------------|
@@ -93,7 +93,7 @@ Al iniciar sesión aterrizas en **Inicio** (puedes volver en cualquier momento c
 
 ## Herramientas Globales
 
-CostPro incluye un conjunto de herramientas disponibles desde cualquier módulo que potencian la productividad diaria:
+ADNegocio incluye un conjunto de herramientas disponibles desde cualquier módulo que potencian la productividad diaria:
 
 ### Paleta de Comandos (`Ctrl + K`)
 
@@ -107,13 +107,13 @@ Una calculadora siempre accesible que se puede abrir desde la barra superior. Pe
 
 ### ChatBot IA Global
 
-Un asistente de IA integrado accesible desde cualquier punto de la aplicación. Puede responder preguntas sobre el uso de CostPro, explicar conceptos de costeo, ayudar con la navegación y proporcionar asistencia contextual basada en el módulo activo.
+Un asistente de IA integrado accesible desde cualquier punto de la aplicación. Puede responder preguntas sobre el uso de ADNegocio, explicar conceptos de costeo, ayudar con la navegación y proporcionar asistencia contextual basada en el módulo activo.
 
 ![Chat del asistente Darian con la pregunta inicial y sugerencias rápidas de consulta](/help/capturas/asistente-darian.webp "Figura 3. Darian — Asistente IA con sugerencias de consulta rápidas")
 
 ### Soporte PWA
 
-CostPro es una **Progressive Web App (PWA)** instalable directamente desde el navegador. Una vez instalada:
+ADNegocio es una **Progressive Web App (PWA)** instalable directamente desde el navegador. Una vez instalada:
 
 - Funciona como una aplicación nativa en tu dispositivo.
 - Dispone de **soporte offline**: las operaciones esenciales siguen disponibles sin conexión a Internet.
@@ -122,7 +122,7 @@ CostPro es una **Progressive Web App (PWA)** instalable directamente desde el na
 
 ### Idiomas
 
-La interfaz de CostPro está disponible en **dos idiomas**:
+La interfaz de ADNegocio está disponible en **dos idiomas**:
 
 | Idioma | Código |
 |--------|--------|
@@ -153,13 +153,13 @@ Todos los reportes permiten filtrado por fecha, tienda, categoría y otros pará
 
 ## Tienda Pública
 
-Cada tienda configurada en CostPro dispone de una **tienda pública accesible** en la ruta `/tienda/[slug]`, donde `[slug]` es el identificador único asignado a cada sucursal durante su creación en **Gestión de Tiendas**.
+Cada tienda configurada en ADNegocio dispone de una **tienda pública accesible** en la ruta `/tienda/[slug]`, donde `[slug]` es el identificador único asignado a cada sucursal durante su creación en **Gestión de Tiendas**.
 
 Características de la tienda pública:
 
 - **Diseño personalizable**: Seleccionable entre **4 plantillas de diseño** al crear la tienda, cada una con un estilo visual distinto.
 - **Catálogo en línea**: Muestra los productos activos de la tienda con imágenes, precios y descripciones.
-- **Acceso sin autenticación**: Los clientes pueden navegar el catálogo sin necesidad de iniciar sesión en CostPro.
+- **Acceso sin autenticación**: Los clientes pueden navegar el catálogo sin necesidad de iniciar sesión en ADNegocio.
 - **Exportación de catálogo**: Desde la **Tabla de Venta**, los productos se pueden exportar para WhatsApp, Instagram y PDF con un formato profesional.
 - **Venta directa**: El catálogo permite iniciar el proceso de venta directamente desde la vista pública.
 
@@ -169,7 +169,7 @@ Características de la tienda pública:
 
 ## Requisitos del Sistema
 
-Para utilizar CostPro se requiere:
+Para utilizar ADNegocio se requiere:
 
 | Requisito | Especificación |
 |-----------|----------------|

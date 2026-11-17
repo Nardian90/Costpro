@@ -4,7 +4,7 @@
 
 ## Los 4 formatos disponibles
 
-CostPro puede generar el catálogo en **4 formatos diferentes**, cada uno pensado para un uso distinto:
+ADNegocio puede generar el catálogo en **4 formatos diferentes**, cada uno pensado para un uso distinto:
 
 | Formato | Sirve para | Tipo de archivo |
 |---------|------------|-----------------|

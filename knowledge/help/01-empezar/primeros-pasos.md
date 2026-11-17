@@ -1,4 +1,4 @@
-# Primeros Pasos en CostPro
+# Primeros Pasos en ADNegocio
 
 ## Contenido
 
@@ -25,7 +25,7 @@
 
 ## Primer Inicio de Sesión
 
-Al acceder a CostPro por primera vez, el sistema utiliza autenticación basada en **Supabase**. Ingresa tus credenciales (correo electrónico y contraseña) proporcionadas por el administrador del sistema.
+Al acceder a ADNegocio por primera vez, el sistema utiliza autenticación basada en **Supabase**. Ingresa tus credenciales (correo electrónico y contraseña) proporcionadas por el administrador del sistema.
 
 ### Selección de Tienda
 
@@ -67,7 +67,7 @@ Sugerencias que se adaptan a tu rol y al estado del negocio: revisar productos c
 
 ## Las Secciones del Sistema
 
-La barra lateral organiza CostPro en secciones. Haz clic en una sección para ver sus módulos; en móvil, usa el botón del menú en la barra superior.
+La barra lateral organiza ADNegocio en secciones. Haz clic en una sección para ver sus módulos; en móvil, usa el botón del menú en la barra superior.
 
 ### Operación
 
@@ -129,7 +129,7 @@ Capacidades que **existen** pero aún no están completamente integradas. Son ex
 
 ### ¿Qué es una Ficha de Costo?
 
-La **Ficha de Costo** es el documento central de CostPro. Representa el análisis de costos completo de un producto o servicio, desglosando cada componente que incurre en su costo final.
+La **Ficha de Costo** es el documento central de ADNegocio. Representa el análisis de costos completo de un producto o servicio, desglosando cada componente que incurre en su costo final.
 
 ### Anatomía del Editor de Fichas
 
@@ -203,7 +203,7 @@ Darian es el asistente de inteligencia artificial integrado en el módulo de cos
 
 ## Cambio de Tema
 
-CostPro ofrece 4 temas visuales accesibles desde el botón de tema en la barra superior:
+ADNegocio ofrece 4 temas visuales accesibles desde el botón de tema en la barra superior:
 
 1. Haz clic en el ícono de tema (sol/luna) en la esquina de la barra superior.
 2. Selecciona uno de los temas disponibles:
