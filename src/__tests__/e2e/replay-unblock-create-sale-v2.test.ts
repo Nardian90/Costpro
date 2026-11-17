@@ -460,9 +460,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   anti-huérfanos + reactivación gobernador + fail-closed A5/A6/A7) y
     //   20261116140100_cp_reception_import_classification (motor de
     //   clasificación/resolución del importador) = 177
-    expect(m.total_incluidos).toBe(177);
+    // CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 (2026-11-17): +1 —
+    //   20261117120000_cp_reception_import_name_authority (autoridad del nombre
+    //   del Catálogo Maestro en los escritores del importador: effective_name,
+    //   filas locales con el nombre canónico, carreras con el nombre del
+    //   ganador, CASO A4/A5 de register_reception con v_master_name) = 178
+    expect(m.total_incluidos).toBe(178);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(177);
+    expect(incluidos.length).toBe(178);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
