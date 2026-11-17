@@ -85,6 +85,7 @@ DECLARE
   v_master_id uuid;
   v_master_status text;
   v_master_name text;
+  v_master_barcode text;
   v_local record;
   v_local_found boolean := FALSE;
   v_name_candidates jsonb := '[]'::jsonb;
@@ -733,20 +734,25 @@ SET search_path TO 'public'
 AS $function$
 DECLARE
   v_receipt_id UUID := gen_random_uuid();
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
-    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-  v_user_id UUID := COALESCE(p_user_id, v_caller_uid);
+  v_caller_uid UUID := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_user_id UUID := COALESCE(v_caller_uid, '00000000-0000-0000-0000-000000000000'::uuid);
+  v_total_cost NUMERIC := 0;
   v_item JSONB;
   v_product_id UUID;
   v_quantity NUMERIC;
   v_unit_cost NUMERIC;
   v_moneda TEXT;
   v_tasa NUMERIC;
-  v_total_cost NUMERIC := 0;
+  v_unit_cost_cup NUMERIC;
+  v_variant_id UUID;
+  v_conversion_factor NUMERIC := 1;
   v_units_to_add NUMERIC;
   v_effective_date TIMESTAMP WITH TIME ZONE := COALESCE(p_reception_date, NOW());
   v_uc_base NUMERIC;
-  -- Alta transaccional de productos nuevos
+  -- MISIÓN RECEPCIONES (2026-10-27): alta transaccional de productos nuevos
   v_new_product JSONB;
   v_new_sku TEXT;
   v_new_tenant_id UUID;
@@ -1138,7 +1144,23 @@ BEGIN
   IF v_fn NOT LIKE '%name_source%, ''master_canonical%' THEN
     RAISE EXCEPTION 'CP-LOG-NAME-AUTHORITY-GUARD: register_reception sin marcador de fuente canónica';
   END IF;
-  IF v_fn LIKE '%v_new_sku, btrim(v_new_product->>%''name'')%' THEN
+  -- Las filas locales VINCULADAS (ramas A4/A5) nacen con v_master_name —
+  -- nunca con el nombre del payload. Ambas ramas comparten la fila VALUES
+  -- «p_store_id, v_new_tenant_id, v_master_id, v_new_sku, v_master_name»
+  -- (≥2 apariciones); el patrón histórico del caso B (tienda NO conectada,
+  -- «p_store_id, v_new_tenant_id, v_new_sku, btrim(v_new_product->>'name')»)
+  -- debe aparecer EXACTAMENTE UNA vez (el INSERT del caso B: la firma
+  -- «p_store_id, v_new_tenant_id, ...» distingue el INSERT de products del
+  -- INSERT legítimo del maestro nuevo en A5, que es la única vía por la que
+  -- el Excel nombra una identidad compartida). Una segunda aparición indicaría
+  -- una fila local vinculada con nombre del payload (pg_get_functiondef no
+  -- incluye comentarios, la aserción es estructural).
+  IF COALESCE((SELECT count(*) FROM regexp_matches(
+        v_fn, 'p_store_id, v_new_tenant_id, v_master_id, v_new_sku, v_master_name', 'g')), 0) < 2 THEN
+    RAISE EXCEPTION 'CP-LOG-NAME-AUTHORITY-GUARD: register_reception sin v_master_name canónico en las ramas conectadas (A4/A5)';
+  END IF;
+  IF COALESCE((SELECT count(*) FROM regexp_matches(
+        v_fn, 'p_store_id, v_new_tenant_id, v_new_sku, btrim\(v_new_product->>''name''\)', 'g')), 0) > 1 THEN
     RAISE EXCEPTION 'CP-LOG-NAME-AUTHORITY-GUARD: register_reception aún crea filas locales vinculadas con el nombre del payload';
   END IF;
 

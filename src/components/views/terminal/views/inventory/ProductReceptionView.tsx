@@ -22,6 +22,8 @@ import { useReceptionState, UNIT_OF_MEASURE_OPTIONS } from './useReceptionState'
 import type { ClassifiedRow } from './useReceptionState';
 import type { Product } from '@/types';
 import { cn, formatCurrency } from '@/lib/utils';
+// CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 §6: jerarquía del nombre oficial
+import { effectiveImportName, importNameDiffers } from '@/lib/receptions/name-authority';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter,
@@ -558,7 +560,7 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                     <div className="max-h-32 overflow-y-auto p-3 space-y-1">
                       {s.classifiedRows.filter(r => r.status === 'price_changed').map((r, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-xs">
-                          <span className="font-bold truncate max-w-[160px]" title={(r.effectiveName || r.masterName || r.name)}>{(r.effectiveName || r.masterName || r.name)}</span>
+                          <span className="font-bold truncate max-w-[160px]" title={effectiveImportName(r)}>{effectiveImportName(r)}</span>
                           <span className="text-muted-foreground">Precio actual:</span>
                           <span className="font-mono">{formatCurrency(r.existingProduct?.price || 0)}</span>
                           <span className="text-warning">→</span>
@@ -614,10 +616,10 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                                       principal y más visible; el nombre del Excel
                                       queda como referencia secundaria con la acción
                                       explicada. Si coinciden, sin advertencia. */}
-                                  <span className="block truncate" title={(r.effectiveName || r.masterName || r.name)}>
-                                    {(r.effectiveName || r.masterName || r.name)}
+                                  <span className="block truncate" title={effectiveImportName(r)}>
+                                    {effectiveImportName(r)}
                                   </span>
-                                  {r.masterName && r.masterName !== r.name && (
+                                  {importNameDiffers(r) && (
                                     <span className="block text-[9px] font-normal text-muted-foreground mt-0.5 leading-snug">
                                       Nombre recibido en Excel: «{r.name}» · Se utilizará el nombre oficial del Catálogo Maestro. No se modificará el nombre del producto.
                                     </span>

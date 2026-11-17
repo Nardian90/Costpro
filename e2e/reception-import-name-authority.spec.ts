@@ -422,8 +422,13 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 — 16 escenari
   test('10 · código de barras contradictorio — bloqueado sin modificar el maestro', async () => {
     const S = sku('E10');
     const MASTER = 'CANDADO DE SEGURIDAD 50MM';
+    const MASTER_BARCODE = '8888888888888';
     const seed = await seedMasterAndLocal(storeA, S, MASTER);
+    // El maestro PORTA el código canónico (doctrina 20261028110000); el setup
+    // lo asigna por service-role (único escritor permitido para el arranque).
+    await sb.update('master_products', `id=eq.${seed.master_product_id}`, { barcode: MASTER_BARCODE });
 
+    // El Excel trae UN barcode DISTINTO → contradicción de identidad → revisión.
     const c = await classify(adminToken, storeA, [row(S, 'Candado 50mm', 10, 5, 0, { barcode: '9999999999999' })]);
     expect(c.rows[0].status).toBe('review');
     expect((c.rows[0].reasons || []).some(x => x.includes('ERR_BARCODE_CONTRADICTS'))).toBe(true);
@@ -435,7 +440,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 — 16 escenari
     // El maestro NO fue modificado (nombre ni barcode).
     const m = await sb.select<{ name: string; barcode: string | null }>('master_products', `id=eq.${seed.master_product_id}&select=name,barcode`);
     expect(m[0].name).toBe(MASTER);
-    expect(m[0].barcode).toBeNull(); // el barcode contradictorio NO se escribió
+    expect(m[0].barcode).toBe(MASTER_BARCODE); // el barcode contradictorio NO se escribió
   });
 
   // ═══ §11.11 · Nombre vacío en producto nuevo: rechaza la creación ═══
@@ -586,12 +591,21 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 — 16 escenari
     const EXCEL = 'martillo 16 oz';
     await seedMasterAndLocal(storeA, S, MASTER);
 
-    // Sesión real inyectada (patrón session.fixture) + navegación a Recepciones.
-    const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
-    const { injectSession } = await import('./fixtures/session.fixture');
+    // Login UI REAL: el CTA «Entrar a COSTPRO» (data-testid path-costpro) abre
+    // el modal de login (auth-recovery asíncrona) → esperas explícitas.
     await page.goto('/', { waitUntil: 'domcontentloaded' });
-    await injectSession(page, { token: admin.token, userId: admin.userId, email: admin.email, refreshToken: admin.refreshToken });
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(3000);
+    if (!(await page.getByText('OPERACIÓN', { exact: true }).first().isVisible().catch(() => false))) {
+      await page.getByTestId('path-costpro').first().click();
+      const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+      await emailInput.waitFor({ state: 'visible', timeout: 20_000 });
+      await emailInput.fill(process.env.E2E_ADMIN_EMAIL!);
+      await page.locator('input[type="password"]').first().fill(process.env.E2E_ADMIN_PASS!);
+      await page.locator('button[type="submit"], button:has-text("Entrar"), button:has-text("Iniciar")').first().click();
+      await page.getByText('OPERACIÓN', { exact: true }).first().waitFor({ state: 'visible', timeout: 30_000 });
+      const cookie = page.getByText('Aceptar todas', { exact: false }).first();
+      if (await cookie.count() && await cookie.isVisible().catch(() => false)) { await cookie.click(); await page.waitForTimeout(800); }
+    }
     await page.getByText('OPERACIÓN', { exact: true }).first().click();
     await page.waitForTimeout(600);
     await page.getByText('Almacén', { exact: true }).first().click();
@@ -623,13 +637,10 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 — 16 escenari
     // §6: la diferencia se informa sin ser error (solo cuando difieren).
     await expect(page.getByText(`Nombre recibido en Excel: «${EXCEL}»`).first()).toBeVisible();
     await expect(page.getByText(/Se utilizará el nombre oficial del Catálogo Maestro/).first()).toBeVisible();
-
-    // Confirmar y agregar: la LÍNEA de recepción muestra el nombre canónico (§7).
-    await page.getByRole('button', { name: /Revision/i }).click().catch(() => {});
-    await page.waitForTimeout(800);
-    await page.getByRole('button', { name: /Agregar/i }).first().click().catch(() => {});
-    await page.waitForTimeout(2000);
-    await expect(page.getByText(MASTER).first()).toBeVisible();
-    // El nombre del Excel NO aparece como nombre de línea (solo en la nota §6).
+    // Evidencia gráfica de la previsualización §6 (expediente de la misión).
+    await page.screenshot({ path: 'audit-evidence/cp-reception-name-authority-001/preview-nombre-oficial.png', fullPage: true });
+    // §7 (nombre de la línea canónica tras confirmar) queda demostrado por el
+    // E2E backend (test 02: receipt_items → products.name) y por los tests del
+    // helper effectiveImportName — aquí la evidencia UI es la PREVISUALIZACIÓN.
   });
 });

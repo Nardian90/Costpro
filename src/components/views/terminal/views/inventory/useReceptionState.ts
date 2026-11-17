@@ -14,6 +14,8 @@ import { useGlobalOperationDate, validateOperationDate } from '@/hooks/api/useGl
 // para el default y el tope del selector — el slice UTC adelantaba el día a
 // partir de las 20:00 Habana y dejaba registrar recepciones fechadas "mañana".
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+// CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001: autoridad del nombre del maestro
+import { effectiveImportName } from '@/lib/receptions/name-authority';
 // MISIÓN FECHAS DE TRABAJO (2026-10-18): default = preferencia de trabajo
 // del usuario para recepciones (válida contra los límites vivos) o HOY.
 import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
@@ -1298,7 +1300,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         // motor: maestro canónico para existentes; nombre inicial del Excel
         // SOLO para verdaderamente nuevos). El nombre del Excel queda en la
         // previsualización como referencia, no en la línea.
-        name: r.effectiveName || r.masterName || r.name,
+        name: effectiveImportName(r),
         quantity: r.quantity,
         unit_cost: r.unitCost,
         unit_of_measure: r.unitOfMeasure || 'unidad',
