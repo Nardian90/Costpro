@@ -1,0 +1,722 @@
+{
+ "config": {
+  "argv": [
+   "/usr/bin/node",
+   "/home/z/my-project/Costpro/node_modules/.bin/playwright",
+   "test",
+   "e2e/fin-statements-origin-traceability.spec.ts",
+   "--project=core",
+   "--reporter=json",
+   "--retries=0"
+  ],
+  "configFile": "/home/z/my-project/Costpro/playwright.config.ts",
+  "rootDir": "/home/z/my-project/Costpro/e2e",
+  "failOnFlakyTests": false,
+  "forbidOnly": false,
+  "fullyParallel": false,
+  "globalSetup": "/home/z/my-project/Costpro/e2e/global-setup.ts",
+  "globalTeardown": "/home/z/my-project/Costpro/e2e/global-teardown.ts",
+  "globalTimeout": 0,
+  "grep": {},
+  "grepInvert": null,
+  "maxFailures": 0,
+  "metadata": {
+   "actualWorkers": 1
+  },
+  "preserveOutput": "always",
+  "projects": [
+   {
+    "outputDir": "/home/z/my-project/Costpro/test-results",
+    "repeatEach": 1,
+    "retries": 0,
+    "metadata": {
+     "actualWorkers": 1
+    },
+    "id": "core",
+    "name": "core",
+    "testDir": "/home/z/my-project/Costpro/e2e",
+    "testIgnore": [
+     "**/creation/**",
+     "**/data-hygiene-probe.spec.ts",
+     "**/isolation-proof.spec.ts",
+     "**/multi-store-comprehensive.spec.ts",
+     "**/security.spec.ts",
+     "**/store-create-autoswitch.spec.ts",
+     "**/store-lifecycle.spec.ts",
+     "**/store-reset.spec.ts",
+     "**/store-switching.spec.ts",
+     "**/stores-crud.spec.ts",
+     "**/workers-create.spec.ts"
+    ],
+    "testMatch": [
+     "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+    ],
+    "timeout": 60000
+   }
+  ],
+  "quiet": false,
+  "reporter": [
+   [
+    "json"
+   ]
+  ],
+  "reportSlowTests": {
+   "max": 5,
+   "threshold": 300000
+  },
+  "shard": null,
+  "tags": [],
+  "updateSnapshots": "missing",
+  "updateSourceMethod": "patch",
+  "version": "1.62.1",
+  "workers": 1,
+  "webServer": null
+ },
+ "suites": [
+  {
+   "title": "fin-statements-origin-traceability.spec.ts",
+   "file": "fin-statements-origin-traceability.spec.ts",
+   "column": 0,
+   "line": 0,
+   "specs": [],
+   "suites": [
+    {
+     "title": "CP-FIN-001 \u2014 Estados Financieros: importes, monedas, medios y trazabilidad",
+     "file": "fin-statements-origin-traceability.spec.ts",
+     "line": 82,
+     "column": 15,
+     "specs": [
+      {
+       "title": "E1 \u00b7 CUP/efectivo: ACT_EFECTIVO_CUP d\u00e9bito, sin banco, original CUP sin conversi\u00f3n",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 2429,
+           "errors": [],
+           "stdout": [
+            {
+             "text": "[fixture:reuse] createTestStore(A) \u2192 E2E PILOT A CostPro E2E-20261118-7D162C (5571bb15-1a17-45f8-8069-48cd852ed813) \u2014 NO se crea ninguna tienda (suite ordinaria, net-zero)\n"
+            },
+            {
+             "text": "[fixture:reuse] createTestStore(B) \u2192 E2E PILOT B CostPro E2E-20261118-7D162C (3b8aecf7-6b5a-4f92-996a-142cf8722076) \u2014 NO se crea ninguna tienda (suite ordinaria, net-zero)\n"
+            }
+           ],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:52:46.109Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-9e66f43eb42330fb33c7",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 118,
+       "column": 7
+      },
+      {
+       "title": "E2 \u00b7 CUP/transferencia: ACT_BANCOS d\u00e9bito (no afecta caja de efectivo)",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 1940,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:52:55.550Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-76323e6b1ef540aeccc3",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 138,
+       "column": 7
+      },
+      {
+       "title": "E3 \u00b7 USD/efectivo tasa 930: caja USD con ORIGINAL 9 USD y equivalente 8,370 CUP (una sola conversi\u00f3n)",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 2248,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:52:57.497Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-d8bdb10baf00c3fb6234",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 152,
+       "column": 7
+      },
+      {
+       "title": "E4 \u00b7 USD/transferencia: banco con original 4,50 USD; clasificaci\u00f3n banco \u2260 efectivo",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 1829,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:52:59.751Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-98c03683541e8a1d30fc",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 183,
+       "column": 7
+      },
+      {
+       "title": "E5 \u00b7 otras monedas: el riel can\u00f3nico de ventas es CUP/USD (documentado, no simulado)",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 1,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:01.586Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-0571956cec6378e2ae9f",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 205,
+       "column": 7
+      },
+      {
+       "title": "E7/E8 \u00b7 original \u2260 contable diferenciados; CUP no genera conversi\u00f3n",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 270,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:01.595Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-0b59e9cabfa6ec335b1a",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 212,
+       "column": 7
+      },
+      {
+       "title": "E9 \u00b7 SERVICIO_RECIBIDO: gasto al reconocer; el pago posterior ser\u00eda asiento separado (sin re-reconocer)",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 793,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:01.881Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-5f65ea4b789b565a6ff5",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 224,
+       "column": 7
+      },
+      {
+       "title": "E10 \u00b7 re-checkout con el mismo idempotency_key \u2192 misma venta, sin segundo asiento ni pagos",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 3064,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:02.682Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-8e2eae2fc0ece516de3e",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 242,
+       "column": 7
+      },
+      {
+       "title": "E11 \u00b7 venta mixta CUP: parte efectivo \u2192 caja, parte transferencia \u2192 banco (mismo documento)",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 1801,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:05.785Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-61b61e7c6d9c9349008d",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 275,
+       "column": 7
+      },
+      {
+       "title": "E12/E14 \u00b7 drilldown conserva document_id REAL y lo repite en todas las l\u00edneas derivadas",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 1278,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:07.594Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-b6a66d7c999c6f79a7e1",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 293,
+       "column": 7
+      },
+      {
+       "title": "E13 \u00b7 apertura (document_id NULL): fila sin identificador, sin navegaci\u00f3n inventada",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 1131,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:08.877Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-40bf41df03c21a0e6288",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 305,
+       "column": 7
+      },
+      {
+       "title": "E15 \u00b7 reversi\u00f3n de venta USD: asiento anulacion enlazado (reversal_of) y amount_origin conservado",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 3322,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:10.015Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-7688338c960b046f35ad",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 336,
+       "column": 7
+      },
+      {
+       "title": "E16 \u00b7 filtros: per\u00edodo acotado excluye; otra tienda no ve los documentos; per\u00edodo correcto incluye",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 748,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:13.346Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-e1138caffa27820a495f",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 374,
+       "column": 7
+      },
+      {
+       "title": "E17 \u00b7 ordenamiento por importe contable (CUP) en la UI: desc/asc deterministas",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 29996,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:14.102Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-8c8823d6d1889fd3f5b7",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 388,
+       "column": 7
+      },
+      {
+       "title": "E18 \u00b7 RLS: usuario sin membres\u00eda recibe ERR_UNAUTHORIZED del drilldown",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 1426,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:44.243Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-db64195795b545f713de",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 430,
+       "column": 7
+      },
+      {
+       "title": "UI1 \u00b7 badge \u00abEn desarrollo\u00bb en el men\u00fa izquierdo",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 6842,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:45.675Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-2694b9171c91c9e9713e",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 450,
+       "column": 7
+      },
+      {
+       "title": "UI2 \u00b7 drilldown muestra contable CUP + original USD y \u00abVer documento\u00bb abre el detalle de la venta",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 16842,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:53:52.524Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-ec982e1898af7446d472",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 467,
+       "column": 7
+      },
+      {
+       "title": "UI3 \u00b7 documento no localizable: \u00abDocumento de origen no disponible\u00bb, sin modal",
+       "ok": true,
+       "tags": [],
+       "tests": [
+        {
+         "timeout": 60000,
+         "annotations": [],
+         "expectedStatus": "passed",
+         "projectId": "core",
+         "projectName": "core",
+         "results": [
+          {
+           "workerIndex": 0,
+           "parallelIndex": 0,
+           "status": "passed",
+           "duration": 13487,
+           "errors": [],
+           "stdout": [],
+           "stderr": [],
+           "retry": 0,
+           "startTime": "2026-11-18T14:54:09.397Z",
+           "annotations": [],
+           "attachments": []
+          }
+         ],
+         "status": "expected"
+        }
+       ],
+       "id": "67b83a2d9352045d17b8-5ba32fbefedf1431c595",
+       "file": "fin-statements-origin-traceability.spec.ts",
+       "line": 499,
+       "column": 7
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "errors": [],
+ "stats": {
+  "startTime": "2026-11-18T14:52:31.700Z",
+  "duration": 272620.05700000003,
+  "expected": 18,
+  "skipped": 0,
+  "unexpected": 0,
+  "flaky": 0
+ }
+}

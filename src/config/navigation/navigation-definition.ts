@@ -160,6 +160,9 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         // Dashboard de la tienda: lectura ejecutiva de la operación diaria).
         // Roles: superficie financiera de consulta (admin/manager/encargado);
         // el gate REAL de acceso a la tienda lo hace cada RPC server-side.
+        // CP-FIN-001 (2026-11-19): el badge «En desarrollo» añadido el 18-11
+        // fue RETIRADO por orden del propietario — Estados Financieros se
+        // presenta como funcionalidad disponible.
         id: 'financial-statements',
         label: 'Estados Financieros',
         description: 'Situación, rendimiento y dashboard por tienda.',

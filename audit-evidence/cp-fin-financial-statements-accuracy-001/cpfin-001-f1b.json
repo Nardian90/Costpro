@@ -1,0 +1,448 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-18T13:01:28.290Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": " SELECT id, store_id, invoice_number, status, payment_method,        cash_amount, transfer_amount, zelle_amount,        ",
+      "rows": [
+        {
+          "id": "83b8e88e-ae01-413b-b6bf-159353e57856",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "invoice_number": null,
+          "status": "completed",
+          "payment_method": "transfer",
+          "cash_amount": "0",
+          "transfer_amount": "10000.00",
+          "zelle_amount": "0",
+          "sale_currency": "CUP",
+          "sale_exchange_rate": "1.0000",
+          "total_amount": "10000.00",
+          "subtotal": "10000.00",
+          "created_at": "2026-11-14 19:11:57.731263+00",
+          "completed_at": "2026-11-14 19:11:57.731263+00"
+        },
+        {
+          "id": "e2614f36-4c86-4317-b80f-6f2fb5d34648",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "invoice_number": null,
+          "status": "completed",
+          "payment_method": "zelle",
+          "cash_amount": "0",
+          "transfer_amount": "0",
+          "zelle_amount": "125550.00",
+          "sale_currency": "USD",
+          "sale_exchange_rate": "930.0000",
+          "total_amount": "125550.00",
+          "subtotal": "125550.00",
+          "created_at": "2026-11-07 18:29:03.708328+00",
+          "completed_at": "2026-11-07 18:29:03.708328+00"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT id, ref_type, ref_id, store_id, payment_method, currency,        amount, amount_cup, exchange_rate, direction,   ",
+      "rows": [
+        {
+          "id": "e1eb5e60-f883-42c2-b2a5-0545976d7460",
+          "ref_type": "sale",
+          "ref_id": "e2614f36-4c86-4317-b80f-6f2fb5d34648",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "payment_method": "zelle",
+          "currency": "USD",
+          "amount": "135.0000000000000000",
+          "amount_cup": "125550.00000000000000000000",
+          "exchange_rate": "930.0000",
+          "direction": "in",
+          "payment_date": "2026-11-07 18:29:03.708328+00",
+          "created_at": "2026-11-07 18:29:03.708328+00",
+          "notes": null
+        },
+        {
+          "id": "231d6911-541a-480f-b55b-be9ff66bf031",
+          "ref_type": "sale",
+          "ref_id": "83b8e88e-ae01-413b-b6bf-159353e57856",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "payment_method": "transfer",
+          "currency": "CUP",
+          "amount": "10000.00",
+          "amount_cup": "10000.00",
+          "exchange_rate": "1.0",
+          "direction": "in",
+          "payment_date": "2026-11-14 19:11:57.731263+00",
+          "created_at": "2026-11-14 19:11:57.731263+00",
+          "notes": null
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT m.id, m.entry_id, m.store_id, s.name AS store_name, m.category_code,        m.sense, m.amount, m.amount_cup, m.cu",
+      "rows": [
+        {
+          "id": "46bc033a-c3f0-4fe3-9699-17d65cc92c62",
+          "entry_id": "674b53ca-6d02-4e43-ad35-31e8cce4334b",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "store_name": "ENERVIDA-VITALLCONS",
+          "category_code": "ACT_EFECTIVO_CUP",
+          "sense": "credito",
+          "amount": "2400.00",
+          "amount_cup": "2400.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "economic_date": "2026-11-07",
+          "document_number": "SRV-20261107-00094",
+          "description": "Servicio recibido SRV-20261107-00094",
+          "document_type": "SERVICIO_RECIBIDO",
+          "document_id": "188a039a-e326-4973-85fd-44316a5a2b8d",
+          "event": "pago",
+          "payment_ref": "36ce35ef-d001-4a48-b340-5ff3e128945f",
+          "posted_at": "2026-11-14 01:37:14.002228+00"
+        },
+        {
+          "id": "5dbb9846-e211-4318-9dc3-88de15f4dba5",
+          "entry_id": "70276fbc-96c5-4f22-83de-59d2369dbb6d",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "store_name": "ENERVIDA-VITALLCONS",
+          "category_code": "ACT_BANCOS",
+          "sense": "debito",
+          "amount": "2400.00",
+          "amount_cup": "2400.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "economic_date": "2026-11-17",
+          "document_number": null,
+          "description": "Venta ",
+          "document_type": "VENTA",
+          "document_id": "867d9017-4e9d-41de-9a99-028296838e0a",
+          "event": "reconocimiento",
+          "payment_ref": null,
+          "posted_at": "2026-11-17 19:40:47.269842+00"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT id, document_type, store_id, version, status, effective_from,        (movements IS NOT NULL) AS tiene_movimientos",
+      "rows": [
+        {
+          "id": "b8cdb75c-5b10-4a8f-a48f-b086afb0136a",
+          "document_type": "VENTA",
+          "store_id": null,
+          "version": 2,
+          "status": "active",
+          "effective_from": "2026-11-17",
+          "tiene_movimientos": true
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT m.economic_date, m.amount, m.amount_cup, m.currency_origin,        m.document_number, e.document_id, e.posted_at,",
+      "rows": [
+        {
+          "economic_date": "2026-11-17",
+          "amount": "16200.00",
+          "amount_cup": "16200.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "abab9e20-a28a-417b-8c16-128362a3e6b8",
+          "posted_at": "2026-11-17 19:46:36.773684+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-17",
+          "amount": "7200.00",
+          "amount_cup": "7200.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "867d9017-4e9d-41de-9a99-028296838e0a",
+          "posted_at": "2026-11-17 19:40:47.269842+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-16",
+          "amount": "10000.00",
+          "amount_cup": "10000.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "92503dc6-495d-4924-a8c1-baa5f44b86f3",
+          "posted_at": "2026-11-16 18:50:15.153457+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-16",
+          "amount": "9200.00",
+          "amount_cup": "9200.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "97263a9c-054f-45a0-a6fe-bc52c155bcff",
+          "posted_at": "2026-11-16 18:08:17.618416+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-16",
+          "amount": "106750.00",
+          "amount_cup": "106750.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "9bac8945-fe6a-4c59-92d1-b37f2a1cd467",
+          "posted_at": "2026-11-16 18:05:17.811537+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-14",
+          "amount": "43400.00",
+          "amount_cup": "43400.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "9f6b39ed-da9a-4508-afcb-d1aca67c4f56",
+          "posted_at": "2026-11-14 19:13:18.551595+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-14",
+          "amount": "10000.00",
+          "amount_cup": "10000.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "83b8e88e-ae01-413b-b6bf-159353e57856",
+          "posted_at": "2026-11-14 19:11:57.731263+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-14",
+          "amount": "53400.00",
+          "amount_cup": "53400.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "3f214b0c-aa9f-4d8e-8751-78fb061a1491",
+          "posted_at": "2026-11-14 19:11:21.534664+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-14",
+          "amount": "53400.00",
+          "amount_cup": "53400.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "3f214b0c-aa9f-4d8e-8751-78fb061a1491",
+          "posted_at": "2026-11-14 19:08:47.793555+00",
+          "status": "reversed"
+        },
+        {
+          "economic_date": "2026-11-13",
+          "amount": "20800.00",
+          "amount_cup": "20800.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "ec15a9db-83cd-4bf0-8f9a-c048daa69419",
+          "posted_at": "2026-11-13 20:43:35.279022+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-12",
+          "amount": "17400.00",
+          "amount_cup": "17400.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "3f7303b2-ea71-4a0b-b158-8355269c3be9",
+          "posted_at": "2026-11-14 01:56:32.757159+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-12",
+          "amount": "6900.00",
+          "amount_cup": "6900.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "355ed50d-56b6-4741-b664-77c9254e0f97",
+          "posted_at": "2026-11-14 01:55:32.359943+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-11",
+          "amount": "20000.00",
+          "amount_cup": "20000.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "62ae3202-8236-4365-bc8c-37ec39d4858b",
+          "posted_at": "2026-11-14 01:59:10.186489+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-10",
+          "amount": "19500.00",
+          "amount_cup": "19500.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "d65b2043-e328-4c80-b8b5-1e217890c7cd",
+          "posted_at": "2026-11-14 02:08:13.482796+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-10",
+          "amount": "62500.00",
+          "amount_cup": "62500.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "716215fe-756e-4cba-a34b-72ed27e14eba",
+          "posted_at": "2026-11-14 02:00:15.863305+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-10",
+          "amount": "45800.00",
+          "amount_cup": "45800.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "2e390bb6-b2a9-43b7-b952-7f096bc2bb1b",
+          "posted_at": "2026-11-14 01:55:12.92427+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-10",
+          "amount": "29295.00",
+          "amount_cup": "29295.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "0f984d6f-aeff-435e-9fc5-9d8e50257f3f",
+          "posted_at": "2026-11-14 01:52:51.481461+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-07",
+          "amount": "125550.00",
+          "amount_cup": "125550.00",
+          "currency_origin": "USD",
+          "document_number": null,
+          "document_id": "e2614f36-4c86-4317-b80f-6f2fb5d34648",
+          "posted_at": "2026-11-14 02:15:17.700756+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-07",
+          "amount": "35500.00",
+          "amount_cup": "35500.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "c775c41a-350c-4eca-bf1e-5c0b2658f2e5",
+          "posted_at": "2026-11-14 02:07:09.584527+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-07",
+          "amount": "5800.00",
+          "amount_cup": "5800.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "bd4f4b39-09fc-42b3-9f10-2b4b5ed64ede",
+          "posted_at": "2026-11-14 02:06:25.023391+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-07",
+          "amount": "6510.00",
+          "amount_cup": "6510.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "9d1ccef8-83ab-4fca-8eb9-ab016eb98a85",
+          "posted_at": "2026-11-14 02:03:54.27208+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-07",
+          "amount": "930.00",
+          "amount_cup": "930.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "6501f8da-e759-4493-945a-5e3adc76ebb2",
+          "posted_at": "2026-11-14 01:59:27.510359+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-06",
+          "amount": "50000.00",
+          "amount_cup": "50000.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "a24588d4-2cca-4162-8e94-1d8afc54e05d",
+          "posted_at": "2026-11-14 02:04:17.731773+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-06",
+          "amount": "24000.00",
+          "amount_cup": "24000.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "5db65144-6bb1-471e-8288-2e2d8b8eb17c",
+          "posted_at": "2026-11-14 01:59:00.225654+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-05",
+          "amount": "6500.00",
+          "amount_cup": "6500.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "9a004eb6-cdaa-486a-b29e-b32ed9e7d923",
+          "posted_at": "2026-11-14 02:03:40.333983+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-05",
+          "amount": "55000.00",
+          "amount_cup": "55000.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "7598cb33-83a3-4742-9ce8-1d0a1ef0974e",
+          "posted_at": "2026-11-14 02:00:36.130094+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-05",
+          "amount": "1750.00",
+          "amount_cup": "1750.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "611be50d-b4da-4d60-9229-ca1dc8b5757c",
+          "posted_at": "2026-11-14 01:59:06.248604+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-04",
+          "amount": "24000.00",
+          "amount_cup": "24000.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "9001734c-5971-4754-9cef-6b52fa2b07d2",
+          "posted_at": "2026-11-14 02:02:56.199539+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-04",
+          "amount": "65000.00",
+          "amount_cup": "65000.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "2ed5e674-27c1-4f40-beb0-1209becfa0eb",
+          "posted_at": "2026-11-14 01:55:16.864678+00",
+          "status": "posted"
+        },
+        {
+          "economic_date": "2026-11-02",
+          "amount": "40500.00",
+          "amount_cup": "40500.00",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "document_id": "262d68f7-0e77-4f0a-ab41-0e9d07ae74ef",
+          "posted_at": "2026-11-14 01:54:31.945151+00",
+          "status": "posted"
+        }
+      ]
+    }
+  ]
+}

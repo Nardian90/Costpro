@@ -1,0 +1,57 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-18T13:07:50.939Z",
+  "functions": {
+    "fin_compute_metrics": {
+      "args": [
+        "text",
+        "uuid",
+        "text",
+        "uuid"
+      ],
+      "bytes": 19025,
+      "sha256": "96df5c7801d98f8e7dbf38e9e7ff81e7c3a1d1803fa38f573a154017ceef47cf"
+    },
+    "fin_apply_templates": {
+      "args": [
+        "jsonb",
+        "text",
+        "jsonb"
+      ],
+      "bytes": 1868,
+      "sha256": "b8b2fc3399f3a56d118bc912d2b3c080ffeda2ee7b60b5de96d5c3c48db6127c"
+    },
+    "fin_post_document": {
+      "args": [
+        "text",
+        "uuid",
+        "text",
+        "uuid",
+        "uuid"
+      ],
+      "bytes": 2950,
+      "sha256": "bce76b62a70fa78d89635da5e6a8f0191b14883afeeef337c75ea6d181753a40"
+    },
+    "fin_post_document_annulment": {
+      "args": [
+        "text",
+        "uuid"
+      ],
+      "bytes": 2959,
+      "sha256": "037305049532d4428f1221bf839d9fe1caed1ccfbdd9c1decc8ae428a80f6088"
+    },
+    "fin_get_category_detail": {
+      "args": [
+        "uuid",
+        "text",
+        "date",
+        "date",
+        "integer",
+        "integer",
+        "uuid"
+      ],
+      "bytes": 1734,
+      "sha256": "6924d9d829bf829e49901a7f06fd616b44e0c1daf6c824ef4b41b919d68c3909"
+    }
+  }
+}

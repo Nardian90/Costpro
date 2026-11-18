@@ -57,6 +57,29 @@ export async function rpcAsUser<T = any>(name: string, token: string, params: Re
   }
   return { ok: res.ok, status: res.status, data, error };
 }
+
+/**
+ * RPC con service-role (canal canónico de operaciones administrativas que NO
+ * se exponen a authenticated — p.ej. fin_rectify_sale_payment_method, patrón
+ * T12). CP-FIN-001 (2026-11-19).
+ */
+export async function rpcAsService<T = any>(name: string, params: Record<string, unknown>): Promise<{ ok: boolean; status: number; data: T | null; error: string | null }> {
+  const res = await svc('POST', `/rpc/${name}`, params);
+  const text = await res.text();
+  let data: any = null;
+  let error: string | null = null;
+  try {
+    data = JSON.parse(text);
+    if (typeof data === 'object' && data && 'message' in data && !res.ok) {
+      error = String((data as any).message);
+      data = null;
+    }
+  } catch {
+    error = text.slice(0, 200);
+  }
+  return { ok: res.ok, status: res.status, data, error };
+}
+
 export const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:3000';
 
 export const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'admin@costpro.com';

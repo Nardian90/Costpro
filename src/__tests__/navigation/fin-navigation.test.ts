@@ -73,4 +73,21 @@ describe('MISIÓN CP-FIN — navegación del sistema financiero', () => {
     expect(flat.find(l => l.id === 'document-config')).toBeDefined();
     expect(ids.length).toBeGreaterThan(3);
   });
+
+  // CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-19):
+  // orden del propietario — el badge «En desarrollo» añadido el 18-11 fue
+  // RETIRADO: Estados Financieros se presenta como funcionalidad disponible.
+  it('Estados Financieros se presenta como funcionalidad disponible (sin badge «En desarrollo»)', () => {
+    // Cast vía unknown: la marca fue retirada del tipo FlatNavItem; el test
+    // verifica por regresión que ningún nodo del catálogo la reintroduzca.
+    const flat = flattenNavigation() as unknown as Array<Record<string, unknown>>;
+    const fs = flat.find(l => l.id === 'financial-statements');
+    expect(fs).toBeDefined();
+    // Ninguna hoja del catálogo declara la marca retirada (regresión).
+    const marked = flat.filter(l => l.isInDevelopment);
+    expect(marked).toHaveLength(0);
+    // La vista sigue visible y navegable para los roles autorizados.
+    expect(isViewAllowedForRole('financial-statements', 'admin')).toBe(true);
+    expect(isViewAllowedForRole('financial-statements', 'manager')).toBe(true);
+  });
 });

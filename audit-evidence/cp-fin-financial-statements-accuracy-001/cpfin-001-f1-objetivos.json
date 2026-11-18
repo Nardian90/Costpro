@@ -1,0 +1,201 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-18T13:00:22.272Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": " SELECT id, name, tenant_id, created_at FROM public.stores WHERE upper(name) LIKE '%ENERVIDA%' OR upper(name) LIKE '%VIT",
+      "rows": [
+        {
+          "id": "8eb56fa3-7e22-408e-a44b-8f14cdd7f52f",
+          "name": "FERROCARRIL VITALLCONS",
+          "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+          "created_at": "2026-10-31 13:53:56.122054+00"
+        },
+        {
+          "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "name": "ENERVIDA-VITALLCONS",
+          "tenant_id": "5364ccf8-e6cd-4c38-aea8-b167b3b5576f",
+          "created_at": "2026-07-04 02:40:04.769372+00"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT m.id, m.entry_id, m.store_id, m.category_code, m.sense, m.amount,        m.amount_cup, m.currency, m.exchange_rat",
+      "rows": [
+        {
+          "id": "deb1f171-98c8-4e28-b264-c8061bdee9e0",
+          "entry_id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "category_code": "ING_VENTAS",
+          "sense": "credito",
+          "amount": "125550.00",
+          "amount_cup": "125550.00",
+          "currency": "CUP",
+          "exchange_rate": "1.000000",
+          "currency_origin": "USD",
+          "amount_origin": null,
+          "economic_date": "2026-11-07",
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "id": "b0337c99-2a29-4b7f-ac2e-a828b0f8fbb5",
+          "entry_id": "3b704c9a-9dd9-4c16-b117-b620cc377ac7",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "category_code": "ING_VENTAS",
+          "sense": "credito",
+          "amount": "10000.00",
+          "amount_cup": "10000.00",
+          "currency": "CUP",
+          "exchange_rate": "1.000000",
+          "currency_origin": "CUP",
+          "amount_origin": null,
+          "economic_date": "2026-11-14",
+          "document_number": null,
+          "description": "Venta "
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT e.id, e.store_id, e.document_type, e.document_id, e.document_number,        e.event, e.payment_ref, e.economic_da",
+      "rows": [
+        {
+          "id": "3b704c9a-9dd9-4c16-b117-b620cc377ac7",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "document_type": "VENTA",
+          "document_id": "83b8e88e-ae01-413b-b6bf-159353e57856",
+          "document_number": null,
+          "event": "reconocimiento",
+          "payment_ref": null,
+          "economic_date": "2026-11-14",
+          "posted_at": "2026-11-14 19:11:57.731263+00",
+          "status": "posted",
+          "reversal_of": null,
+          "description": "Venta ",
+          "created_by": null
+        },
+        {
+          "id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "document_type": "VENTA",
+          "document_id": "e2614f36-4c86-4317-b80f-6f2fb5d34648",
+          "document_number": null,
+          "event": "reconocimiento",
+          "payment_ref": null,
+          "economic_date": "2026-11-07",
+          "posted_at": "2026-11-14 02:15:17.700756+00",
+          "status": "posted",
+          "reversal_of": null,
+          "description": "Venta ",
+          "created_by": "a1111111-1111-1111-1111-111111111111"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT m.entry_id, m.category_code, m.sense, m.amount, m.amount_cup,        m.currency, m.currency_origin, m.amount_orig",
+      "rows": [
+        {
+          "entry_id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "category_code": "ACT_BANCOS",
+          "sense": "debito",
+          "amount": "125550.00",
+          "amount_cup": "125550.00",
+          "currency": "CUP",
+          "currency_origin": "USD",
+          "amount_origin": null,
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "entry_id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "category_code": "ACT_INVENTARIO",
+          "sense": "credito",
+          "amount": "25200.00",
+          "amount_cup": "25200.00",
+          "currency": "CUP",
+          "currency_origin": "USD",
+          "amount_origin": null,
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "entry_id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "category_code": "GAS_COSTO_VENTAS",
+          "sense": "debito",
+          "amount": "25200.00",
+          "amount_cup": "25200.00",
+          "currency": "CUP",
+          "currency_origin": "USD",
+          "amount_origin": null,
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "entry_id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "category_code": "ING_VENTAS",
+          "sense": "credito",
+          "amount": "125550.00",
+          "amount_cup": "125550.00",
+          "currency": "CUP",
+          "currency_origin": "USD",
+          "amount_origin": null,
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "entry_id": "3b704c9a-9dd9-4c16-b117-b620cc377ac7",
+          "category_code": "ACT_BANCOS",
+          "sense": "debito",
+          "amount": "10000.00",
+          "amount_cup": "10000.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "amount_origin": null,
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "entry_id": "3b704c9a-9dd9-4c16-b117-b620cc377ac7",
+          "category_code": "ACT_INVENTARIO",
+          "sense": "credito",
+          "amount": "10000.00",
+          "amount_cup": "10000.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "amount_origin": null,
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "entry_id": "3b704c9a-9dd9-4c16-b117-b620cc377ac7",
+          "category_code": "GAS_COSTO_VENTAS",
+          "sense": "debito",
+          "amount": "10000.00",
+          "amount_cup": "10000.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "amount_origin": null,
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "entry_id": "3b704c9a-9dd9-4c16-b117-b620cc377ac7",
+          "category_code": "ING_VENTAS",
+          "sense": "credito",
+          "amount": "10000.00",
+          "amount_cup": "10000.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "amount_origin": null,
+          "document_number": null,
+          "description": "Venta "
+        }
+      ]
+    }
+  ]
+}

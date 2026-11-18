@@ -1,8 +1,9 @@
 'use client'
 
 import { isAdminLevel } from '@/lib/roles';
-import { useState, useMemo, useCallback } from 'react';
-import { useAuthStore } from '@/store';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useAuthStore, useUIStore } from '@/store';
+import { toast } from 'sonner';
 import { useTransactionDetails } from '@/hooks/api/useTransactions';
 import { useTransactions } from '@/hooks/api/useTransactions';
 import { Transaction, TransactionItem } from '@/types';
@@ -146,6 +147,38 @@ export function useSalesHistoryView() {
     const handleCloseDetails = useCallback(() => {
         setSelectedTransactionId(null);
     }, []);
+
+    // ── CP-FIN-001 (2026-11-18): navegación «Ver documento» desde el drilldown
+    // de Estados Financieros. Consume el contexto UNA sola vez: abre el detalle
+    // de la venta indicada usando su ID real. Si tras cargar el historial la
+    // venta no está (p. ej., fuera de la ventana p_limit=1000 del RPC
+    // get_transactions), presenta explícitamente «Documento de origen no
+    // disponible» y registra el problema (misión §6: sin inventar identificadores).
+    const saleDetailNavContext = useUIStore((s) => s.saleDetailNavContext);
+    const setSaleDetailNavContext = useUIStore((s) => s.setSaleDetailNavContext);
+    const consumedSaleNavIdRef = useRef<string | null>(null);
+    useEffect(() => {
+        if (!saleDetailNavContext) return;
+        if (Date.now() - saleDetailNavContext.setAt > 30 * 60 * 1000) {
+            setSaleDetailNavContext(null);
+            return;
+        }
+        // Esperar los datos del historial antes de resolver (evita falso
+        // «no disponible» mientras la query está en vuelo).
+        if (isLoadingTransactions) return;
+        if (consumedSaleNavIdRef.current === saleDetailNavContext.transactionId) return;
+        consumedSaleNavIdRef.current = saleDetailNavContext.transactionId;
+        const targetId = saleDetailNavContext.transactionId;
+        setSaleDetailNavContext(null);
+        const exists = transactionsData.some((t) => t.id === targetId);
+        if (exists) {
+            setSelectedTransactionId(targetId);
+        } else {
+            setSelectedTransactionId(null);
+            console.warn('[CP-FIN-001] Documento de origen no disponible en el historial:', targetId);
+            toast.error('Documento de origen no disponible: la venta no está en el historial de esta tienda.');
+        }
+    }, [saleDetailNavContext, transactionsData, isLoadingTransactions, setSaleDetailNavContext]);
 
     // ── Duplicate ── V2.4.4: usa useDuplicateDocumentV2 (carga items en carrito sin setTimeout)
     const handleDuplicate = useCallback((txn: Transaction) => {
