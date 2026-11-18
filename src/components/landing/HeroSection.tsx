@@ -252,7 +252,7 @@ function HeroHeadline() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <h1 className="font-[family-name:var(--font-display)] font-black [font-stretch:125%] tracking-[-0.045em] leading-[0.94] text-[clamp(2.7rem,8vw,8.4rem)] text-white select-none">
+    <h1 className="font-[family-name:var(--font-display)] font-black [font-stretch:125%] tracking-[-0.045em] leading-[0.94] text-[clamp(2.35rem,10.5vw,7.2rem)] sm:text-[clamp(2.8rem,7.2vw,7.2rem)] text-white select-none">
       {/* Nombre accesible completo; la capa visual es decorativa (letras
           separadas por spans no se leen bien en SR). */}
       <span className="sr-only">MENOS MALABARES. MÁS NEGOCIO.</span>
@@ -270,7 +270,12 @@ function HeroHeadline() {
           >
             MENOS&nbsp;
           </motion.span>
-          <span className="block sm:inline">
+          {/* whitespace-nowrap: la palabra MALABARES. es UNA unidad — el quiebre
+              de línea solo puede ocurrir antes de la palabra (límite de
+              palabra), jamás entre letterforms (evita «MA / LABARES.» en
+              cualquier viewport; el tamaño fluido 7.2vw/cap 7.2rem mantiene la
+              línea completa «MENOS MALABARES.» dentro del contenedor). */}
+          <span className="block sm:inline whitespace-nowrap">
             {MALABARES_LETTERS.map((ch, i) => (
               <motion.span
                 key={`${ch}-${i}`}
