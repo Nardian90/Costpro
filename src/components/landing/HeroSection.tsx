@@ -22,11 +22,13 @@
  *   Frontier/Planhat  → cinta editorial (marquee) con los módulos reales.
  *   Bridgement        → microinteracciones sobrias (hover, flechas, pausas).
  *
- * CORRECCIÓN DE IDENTIDAD (misión §3):
- *   - El encabezado lleva UNA versión coherente del wordmark (AdnWordmark SVG),
- *     siempre visible, sin cambios de estado y sin iconos genéricos.
- *   - El hero YA NO repite la marca: ni isotipo «ADN» junto al nombre ni
- *     lockup duplicado («ADN ADNegocio» eliminado de raíz).
+ * CORRECCIÓN DE IDENTIDAD (ADN-LANDING-FINAL-POLISH-003 §3):
+ *   - El encabezado del landing usa el MISMO tratamiento que el menú lateral
+ *     autenticado (src/components/views/terminal/Sidebar.tsx): wordmark
+ *     tipográfico «ADNegocio» con «ADN» verde + «egocio» blanco, en una sola
+ *     línea, sin repetición ni versiones tipográficas contradictorias.
+ *   - El hero YA NO repite la marca junto al titular: ni isotipo «ADN» ni
+ *     lockup duplicado.
  *   - El símbolo ADN queda reservado a favicon/PWA/rail (AdnMonograma).
  *
  * ACCESIBILIDAD Y RENDIMIENTO:
@@ -43,12 +45,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import {
   ChevronDown, ArrowRight,
-  Search, X, Check,
+  Search, X,
   Calculator, LayoutGrid, PlayCircle,
 } from 'lucide-react';
 import { enterFichaDeCosto } from '@/lib/fcEntry';
 import { entrarACostpro } from '@/lib/auth-recovery';
-import { AdnWordmark } from '@/components/brand/AdnBrand';
+import { BrandWordmark } from '@/components/landing/BrandWordmark';
 
 /* ── Controlled immersion particles ──
    Landing version: dots + soft glows only (no streaks).
@@ -294,11 +296,18 @@ function HeroHeadline() {
             ))}
           </span>
         </span>
-        {/* Línea 2 — MÁS + negocio. (serif italic verde, máscara ascendente) */}
-        <span className="block overflow-hidden pb-[0.1em] -mb-[0.1em] md:ml-[0.08em]">
+        {/* Línea 2 — MÁS + negocio. (serif italic verde, máscara ascendente).
+            ADN-LANDING-FINAL-POLISH-003 §4: la descendente de la «g» de
+            «negocio.» (Instrument Serif) desborda la caja de línea (leading
+            0.9 < 1) — el padding inferior de la máscara debe cubrir la tinta
+            real (≈0.29em) o el overflow-hidden la recorta. El margen negativo
+            compensa el padding para no alterar el ritmo vertical, y el punto
+            de partida del reveal se recalcula (y ≥ 1 + pb/alturaDeLínea) para
+            que la línea siga oculta al inicio de la animación. */}
+        <span className="block overflow-hidden pb-[0.34em] -mb-[0.34em] md:ml-[0.08em]">
           <motion.span
             className="block"
-            initial={reduceMotion ? false : { y: '118%' }}
+            initial={reduceMotion ? false : { y: '146%' }}
             animate={{ y: '0%' }}
             transition={{ delay: 0.92, duration: 0.95, ease: [0.16, 1, 0.3, 1] }}
           >
@@ -314,69 +323,126 @@ function HeroHeadline() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   DEL CAOS AL ORDEN — pieza memorable del hero (decorativa, aria-hidden)
+   LOS CUATRO MALABARES — pieza editorial ESTÁTICA del hero (decorativa,
+   aria-hidden; lectura accesible completa vía sr-only en el bloque padre)
    ─────────────────────────────────────────────────────────────────────────
-   Los «malabares» reales del pequeño negocio (ventas en cuadernos, inventario
-   en papel, costos a ojo, deudas en chats) entran DISPERSOS alrededor del eje
-   verde y SE ALINEAN en una sola columna: disperso → un solo sistema.
-   Sin marcas de terceros, sin estadísticas inventadas — dolor real, abstracto.
+   ADN-LANDING-FINAL-POLISH-003 §5:
+   - ELIMINADO por completo el movimiento vertical cíclico (la flotación
+     `y:[0,-6,0] repeat:Infinity` del diseño anterior) y con él cualquier
+     bucle, marquee o retorno: la pieza es ESTÁTICA — sin framer-motion —
+     y se lee perfecta desde la primera pintura, con o sin movimiento.
+   - Composición asimétrica tipo mesa de edición: los cuatro problemas reales
+     conviven en una misma escena y cada uno tiene identidad gráfica propia:
+       N.01 ventas en cuadernos   → papel pautado con margen de cuaderno
+       N.02 inventario en papel   → retícula de hoja de control (celdas)
+       N.03 costos a ojo          → anotación serif con subrayado manual
+       N.04 deudas en chats       → fragmento de conversación (burbuja)
+   - Recursos sobrios: numeración editorial, hairlines, un solo acento verde.
+   - Rotaciones ligeras FIJAS (±1.5°): transmiten el desorden sin animar nada.
+   - Posiciones en % sobre un contenedor con aspect-ratio: la composición
+     escala sin solapes de 1024 a 1920 (validado en RESPONSIVE_VISUAL_VALIDATION).
    ======================================================================== */
-const CHAOS_CHIPS: ReadonlyArray<{ label: string; x: number; y: number; r: number }> = [
-  { label: 'ventas en cuadernos', x: -38, y: -104, r: -6 },
-  { label: 'inventario en papel', x: 36, y: -46, r: 5 },
-  { label: 'costos a ojo', x: -28, y: 40, r: -7 },
-  { label: 'deudas en chats', x: 32, y: 98, r: 6 },
+const SHEET_CELLS: ReadonlyArray<'tick' | 'cross' | 'blank'> = [
+  'tick', 'blank', 'blank', 'cross',
+  'blank', 'tick', 'blank', 'blank',
+  'cross', 'blank', 'blank', 'tick',
+  'blank', 'cross', 'blank', 'blank',
 ];
 
-function ChaosToOrderChips() {
-  const reduceMotion = useReducedMotion();
-
+function SceneLabel({ n, context, className = '' }: { n: string; context: string; className?: string }) {
   return (
-    <motion.div
-      aria-hidden="true"
-      className="relative hidden lg:flex flex-col justify-center pl-12"
+    <span
+      className={`absolute -top-[9px] bg-[#05070A] px-2 font-mono text-[9px] uppercase tracking-[0.28em] text-white/35 ${className}`}
     >
-      {/* Eje estructural: se dibuja ANTES de que los chips se alineen */}
-      <motion.span
-        className="absolute left-[11px] top-1/2 h-[86%] w-px -translate-y-1/2 origin-top bg-gradient-to-b from-transparent via-[#22c55e]/45 to-transparent"
-        initial={reduceMotion ? false : { scaleY: 0 }}
-        animate={{ scaleY: 1 }}
-        transition={{ delay: 1.5, duration: 1.25, ease: [0.16, 1, 0.3, 1] }}
-      />
-      <motion.div
-        animate={reduceMotion ? undefined : { y: [0, -6, 0] }}
-        transition={{ duration: 7.5, repeat: Infinity, ease: 'easeInOut' }}
-        className="flex flex-col gap-3.5 max-w-[400px]"
-      >
-        {CHAOS_CHIPS.map((chip, i) => (
-          <motion.div
-            key={chip.label}
-            className="flex items-center gap-3 rounded-xl border border-white/[0.09] bg-[#080d12]/85 px-4 py-3 backdrop-blur-sm"
-            initial={reduceMotion ? false : {
-              opacity: 0,
-              x: chip.x,
-              y: chip.y,
-              rotate: chip.r,
-            }}
-            animate={{ opacity: 1, x: 0, y: 0, rotate: 0 }}
-            transition={{ delay: 1.45 + i * 0.22, type: 'spring', stiffness: 135, damping: 15, mass: 0.9 }}
-          >
-            <Check className="w-3.5 h-3.5 shrink-0 text-[#22c55e]" strokeWidth={2.5} />
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.2em] text-white/55 line-through decoration-white/25">
-              {chip.label}
-            </span>
-          </motion.div>
-        ))}
-      </motion.div>
-      <motion.p
-        initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 2.85, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-        className="mt-5 pl-1 font-mono text-[10px] uppercase tracking-[0.26em] text-white/40"
-      >
+      {n} — {context}
+    </span>
+  );
+}
+
+function ProblemsEditorialScene() {
+  return (
+    <div
+      aria-hidden="true"
+      className="relative hidden lg:block w-full max-w-[440px] aspect-[440/400] select-none"
+    >
+      {/* Marcas de registro — la mesa de edición */}
+      <span className="absolute top-0 left-0 h-3 w-3 border-t border-l border-white/20" />
+      <span className="absolute top-0 right-0 h-3 w-3 border-t border-r border-white/20" />
+      <span className="absolute bottom-0 left-0 h-3 w-3 border-b border-l border-white/20" />
+      <span className="absolute bottom-0 right-0 h-3 w-3 border-b border-r border-white/20" />
+
+      {/* N.01 — ventas en cuadernos: papel pautado con margen rojo→verde */}
+      <div className="absolute left-[1.5%] top-[2%] w-[50%] rotate-[-1.5deg]">
+        <div
+          className="relative border border-white/[0.09] bg-white/[0.02] px-4 pb-4 pt-3"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(to bottom, transparent 0px, transparent 23px, rgba(255,255,255,0.055) 23px, rgba(255,255,255,0.055) 24px)',
+          }}
+        >
+          <span className="absolute bottom-0 top-0 left-[26px] w-px bg-[#22c55e]/35" />
+          <SceneLabel n="N.01" context="cuaderno" className="left-3" />
+          <p className="pl-7 pt-[2px] font-[family-name:var(--font-editorial)] italic text-white/85" style={{ fontSize: 'clamp(20px, 2.1vw, 27px)', lineHeight: 1.15 }}>
+            ventas en<br />cuadernos
+          </p>
+        </div>
+      </div>
+
+      {/* N.02 — inventario en papel: hoja de control con celdas */}
+      <div className="absolute right-[1%] top-[31%] w-[45%] rotate-[1.25deg]">
+        <div className="relative border border-white/[0.09] bg-white/[0.02] p-3">
+          <SceneLabel n="N.02" context="papel" className="left-3" />
+          <p className="mb-2.5 mt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
+            inventario<br />en papel
+          </p>
+          <div className="grid grid-cols-4 border border-white/[0.09]">
+            {SHEET_CELLS.map((cell, i) => (
+              <span
+                key={i}
+                className="flex h-[22px] items-center justify-center border border-white/[0.07] font-mono text-[10px]"
+              >
+                {cell === 'tick' && <span className="text-[#22c55e]">✓</span>}
+                {cell === 'cross' && <span className="text-white/30">×</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* N.03 — costos a ojo: anotación serif con subrayado manual (SVG fijo) */}
+      <div className="absolute left-[7%] top-[62%] w-[46%] rotate-[-0.75deg]">
+        <div className="relative pt-1">
+          <SceneLabel n="N.03" context="estimación" className="left-2" />
+          <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">costos</p>
+          <p className="font-[family-name:var(--font-editorial)] italic text-white/85" style={{ fontSize: 'clamp(30px, 3vw, 42px)', lineHeight: 1.05 }}>
+            a ojo
+          </p>
+          <svg viewBox="0 0 120 10" className="mt-0.5 h-[9px] w-[46%]" preserveAspectRatio="none">
+            <path d="M2 7 Q 30 2.5 60 6 T 118 4.5" fill="none" stroke="#22c55e" strokeWidth="2.4" strokeLinecap="round" opacity="0.9" />
+          </svg>
+        </div>
+      </div>
+
+      {/* N.04 — deudas en chats: fragmento de conversación (puntos estáticos) */}
+      <div className="absolute bottom-[9%] right-[2%] w-[52%] rotate-[1deg]">
+        <div className="relative rounded-2xl rounded-bl-sm border border-white/[0.11] bg-white/[0.03] px-4 py-3">
+          <SceneLabel n="N.04" context="chats" className="right-3" />
+          <p className="font-mono text-[11px] leading-relaxed text-white/65">
+            deudas <span className="text-white/40">en</span> chats
+          </p>
+          <span className="mt-2 flex gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-white/25" />
+            <span className="h-1.5 w-1.5 rounded-full bg-white/25" />
+            <span className="h-1.5 w-1.5 rounded-full bg-white/25" />
+          </span>
+        </div>
+      </div>
+
+      {/* Pie editorial — el mensaje aprobado, en la base de la mesa */}
+      <p className="absolute bottom-0 left-[7%] font-mono text-[10px] uppercase tracking-[0.26em] text-white/40">
         Lo disperso — <span className="text-[#22c55e]">un solo sistema</span>
-      </motion.p>
-    </motion.div>
+      </p>
+    </div>
   );
 }
 
@@ -492,8 +558,9 @@ export default function HeroSection({
       {/* ── Top Navigation Bar ──
           FIXED sobre toda la página (html/body llevan overflow-x:hidden, que
           rompe position:sticky en Chromium): transparente sobre el hero y
-          transformación discreta al desplazarse. Marca ÚNICA: el wordmark
-          ADNegocio (SVG vectorial, i-dot verde) es siempre la misma pieza —
+          transformación discreta al desplazarse. Marca ÚNICA con el MISMO
+          tratamiento del menú lateral autenticado (ADN-LANDING-FINAL-POLISH-003
+          §3): «ADN» verde + «egocio» blanco, tipografía bold tracking-tight —
           nunca un icono genérico ni versiones desproporcionadas. */}
       <motion.nav
         initial={{ opacity: 0, y: -10 }}
@@ -506,7 +573,8 @@ export default function HeroSection({
         }`}
         aria-label="Navegación principal"
       >
-        {/* Marca del encabezado: wordmark ADNegocio — única versión coherente */}
+        {/* Marca del encabezado: MISMO tratamiento que el sidebar autenticado
+            (Sidebar.tsx): wordmark tipográfico ADN verde + egocio blanco. */}
         <div className="flex items-center">
           <a
             href="#hero"
@@ -518,10 +586,7 @@ export default function HeroSection({
             aria-label="ADNegocio — volver al inicio"
             title="ADNegocio — volver al inicio"
           >
-            <AdnWordmark
-              height={18}
-              className="transition-opacity duration-200 hover:opacity-80"
-            />
+            <BrandWordmark className="text-lg font-bold tracking-tight leading-none font-[family-name:var(--font-space-grotesk)] transition-opacity duration-200 hover:opacity-80" />
           </a>
         </div>
 
@@ -708,9 +773,11 @@ export default function HeroSection({
                   </motion.div>
                 </div>
 
-                {/* Pieza memorable: los malabares se alinean en un solo sistema */}
-                <div className="lg:col-span-5 mt-10 lg:mt-0">
-                  <ChaosToOrderChips />
+                {/* Pieza memorable ESTÁTICA (ADN-LANDING-FINAL-POLISH-003 §5):
+                    los cuatro malabares como fragmentos editoriales sobre la
+                    mesa — sin bucles ni movimiento automático */}
+                <div className="lg:col-span-5 mt-10 lg:mt-0 flex items-center">
+                  <ProblemsEditorialScene />
                 </div>
               </div>
 
