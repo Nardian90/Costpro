@@ -98,7 +98,7 @@ export default function FAQSection({
   }, [searchQuery, activeCategory]);
 
   return (
-    <div ref={faqRef} id="faq" className="scroll-mt-[76px]">
+    <div ref={faqRef}>
       <motion.div className="max-w-2xl mx-auto w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

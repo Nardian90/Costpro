@@ -234,3 +234,90 @@ body:has(#landing-root) {
      (verificado) → no requiere réplica.
    Si en el futuro el landing consume alguna clase gated por .dark, añadir
    aquí su réplica bajo #landing-root (NO re-forzar html.dark). */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — Escenario cinematográfico
+   ───────────────────────────────────────────────────────────────────────────
+   Sistema de escenas («una experiencia, cinco actos»):
+
+   1. STICKY HABILITADO: html/body { overflow-x: hidden } rompe position:sticky
+      en Chromium (cualquier overflow ≠ visible/clip en el ancestro de scroll
+      convierte el documento en contenedor de recorte). `overflow-x: clip` NO
+      crea scroll container y conserva el recorte horizontal → sticky vuelve a
+      funcionar dentro del landing sin tocar la app interna.
+   2. BARRA NATIVA OCULTA SOLO VISUALMENTE: el scroll nativo (rueda, touch,
+      teclado, snap) queda intacto; la orientación la dan el hilo de progreso,
+      el navegador de actos y la barra superior.
+   3. ESCENAS: .act-wrap--pinned (contenedor de longitud 100svh + --act-runway)
+      + .act-scene--pinned (sticky top-0 100svh) → el acto queda fijado y el
+      acto siguiente lo cubre al desplazar (cover-stack, orden natural de
+      hermanos). El scrub de entrada/salida lo anima CinematicAct con
+      useScroll/useTransform (solo transform/opacity).
+   4. SNAP: proximity — el scroll se asienta en el inicio del acto cuando pasa
+      cerca de un borde; NUNCA secuestra la rueda ni continúa solo.
+   5. MÓVIL (<1024) y prefers-reduced-motion: sin pin, sin snap — flujo
+      nativo con reveals ligeros (los componentes ya respetan reduced-motion).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1 — sticky habilitado dentro del landing (scope: solo con el landing montado) */
+html:has(#landing-root),
+html:has(#landing-root) body {
+  overflow-x: clip;
+}
+
+/* 2 — barra de desplazamiento nativa oculta SOLO en el landing */
+html:has(#landing-root) {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* legacy Edge/IE */
+}
+html:has(#landing-root)::-webkit-scrollbar {
+  display: none;              /* Chromium / Safari / Edge */
+  width: 0;
+  height: 0;
+}
+
+/* 3 — escenas fijadas (solo escritorio con movimiento permitido).
+   NOTA ADN-005 (validación empírica, ciclo 0): se EVALUÓ el snap CSS nativo
+   sobre el scroller raíz y se DESCARTÓ — con áreas de snap de altura de acto
+   (1-9 viewports) Chromium corregía scrolls programáticos y gestos hacia
+   posiciones arbitrarias (800→2, 5000→3243): el sitio luchaba contra el
+   usuario, lo que §7 de la misión prohíbe. El ritmo de capítulos lo aportan
+   el navegador lateral (aterrizaje exacto por scrollIntoView), las teclas
+   PageUp/PageDown por acto y la coreografía de handoff — sin secuestrar
+   jamás el desplazamiento nativo. */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  #landing-root .act-wrap--pinned {
+    position: relative;
+    height: calc(100svh + var(--act-runway, 85svh));
+  }
+
+  #landing-root .act-scene--pinned {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+}
+
+/* Fallbacks sin cine (móvil / reduced-motion): los wrappers no fijan altura */
+#landing-root .act-wrap--pinned {
+  position: relative;
+}
+
+/* 5 — firma: hairline de entrada del acto (la línea ADN que conecta el
+   navegador con la escena). Se dibuja con scaleX desde el borde derecho. */
+.act-hairline {
+  position: absolute;
+  right: 0;
+  height: 1px;
+  width: min(38vw, 520px);
+  background: linear-gradient(to left, rgba(34, 197, 94, 0.85), rgba(34, 197, 94, 0.25) 55%, transparent);
+  pointer-events: none;
+  transform-origin: right center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .act-hairline {
+    transform: none;
+  }
+}

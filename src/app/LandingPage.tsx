@@ -6,12 +6,18 @@ import { toast } from 'sonner';
 import {
   Lock, Headphones, X, Cookie,
 } from 'lucide-react';
+import type { MotionValue } from 'framer-motion';
 
 // ── Shared data, animations, hooks ──
 import { sectionIds, sectionLabels } from '@/components/landing/data';
 import { BrandWordmark } from '@/components/landing/BrandWordmark';
 import SectionDivider from '@/components/landing/SectionDivider';
 import { useCookieConsent, usePromoBanner } from '@/components/landing/hooks';
+
+// ── ADN-005: sistema cinematográfico de escenas ──
+import ActStage from '@/components/landing/CinematicAct';
+import ActPager from '@/components/landing/ActPager';
+import LandingHeader from '@/components/landing/LandingHeader';
 
 // ── Extracted components ──
 import HeroSection from '@/components/landing/HeroSection';
@@ -100,6 +106,9 @@ export default function LandingPage() {
   const [sectionProgress, setSectionProgress] = useState(0);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [activeFooterModal, setActiveFooterModal] = useState<FooterLinkId | null>(null);
+  /* ADN-005 — progreso de salida del Acto 1 (lo publica ActStage al montar en
+     modo cinematográfico; alimenta la coreografía de los fragmentos del caos). */
+  const [heroExitMv, setHeroExitMv] = useState<MotionValue<number> | null>(null);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
@@ -222,30 +231,34 @@ export default function LandingPage() {
       }
 
       const numSections = sectionIds.length;
-      let totalProgress = 0;
+      /* ADN-005 — scrollspy de capítulos: el acto activo es el ÚLTIMO cuyo
+         wrapper top cruzó la línea de activación (mitad del viewport). Los
+         ids viven en los WRAPPERS de acto (bloques de flujo normal), así que
+         la geometría es determinista aunque el hero esté fijado. La
+         profundidad dentro del acto llena el hilo de la línea ADN. */
+      let activeAct = 0;
+      let depth = 0;
+      const activationLine = window.innerHeight * 0.5;
       for (let i = 0; i < numSections; i++) {
         const el = document.getElementById(sectionIds[i]);
         if (!el) continue;
         const rect = el.getBoundingClientRect();
-        if (rect.top + rect.height <= 0) {
-          totalProgress = i + 1;
-        } else if (rect.top < window.innerHeight * 0.5) {
-          const visibleRatio = Math.min(1, Math.max(0, (window.innerHeight * 0.5 - rect.top) / rect.height));
-          totalProgress = i + visibleRatio;
-          break;
+        if (rect.top <= activationLine) {
+          activeAct = i;
+          depth = Math.min(1, Math.max(0, (activationLine - rect.top) / Math.max(rect.height, 1)));
         } else {
-          totalProgress = i;
           break;
         }
       }
-      setSectionProgress(totalProgress);
+      setSectionProgress(activeAct + depth);
       // ADN-LANDING-HERO-AND-PAGER-FIX-004 §5.2 — scrollspy por posición:
       // el punto activo se deriva del mismo cálculo de progreso (posición del
       // top de cada sección respecto al viewport), determinista para secciones
       // de CUALQUIER altura. (El IntersectionObserver con threshold 0.3 nunca
       // disparaba en secciones >3× viewport — p. ej. "como-funciona" (5900px)
       // solo alcanza ~15% visible → el punto activo no sincronizaba.)
-      setActiveSection(Math.min(numSections - 1, Math.max(0, Math.floor(totalProgress))));
+      // ADN-005: ahora sobre wrappers de acto — capítulos, no secciones.
+      setActiveSection(Math.min(numSections - 1, Math.max(0, activeAct)));
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // estado correcto al montar (p. ej. carga con hash de sección)
@@ -332,11 +345,23 @@ export default function LandingPage() {
       if (e.key >= '1' && e.key <= '5') { scrollToSectionById(parseInt(e.key) - 1); }
       if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) { e.preventDefault(); setShowContactModal(true); }
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCommandPalette((prev) => !prev); }
+      /* ADN-005 §10 — teclado de capítulos: PageDown/PageUp/Home/End avanzan
+         o retroceden POR ACTO (el teclado no debe quedar a mitad de una
+         transición). Se ignora si hay un modal abierto (sin trampas de foco). */
+      const modalOpen = showShortcutsModal || showContactModal || showChat || showCommandPalette || showLoginModal || showDemoModal || showMobileNav || activeFooterModal !== null;
+      if (modalOpen) {
+        if (e.key === 'Escape') { setShowShortcutsModal(false); setShowContactModal(false); setShowChat(false); setShowCommandPalette(false); }
+        return;
+      }
+      if (e.key === 'PageDown') { e.preventDefault(); scrollToSectionById(Math.min(activeSection + 1, sectionIds.length - 1)); }
+      else if (e.key === 'PageUp') { e.preventDefault(); scrollToSectionById(Math.max(activeSection - 1, 0)); }
+      else if (e.key === 'Home') { e.preventDefault(); scrollToSectionById(0); }
+      else if (e.key === 'End') { e.preventDefault(); scrollToSectionById(sectionIds.length - 1); }
       if (e.key === 'Escape') { setShowShortcutsModal(false); setShowContactModal(false); setShowChat(false); setShowCommandPalette(false); }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [activeSection, showShortcutsModal, showContactModal, showChat, showCommandPalette, showLoginModal, showDemoModal, showMobileNav, activeFooterModal, scrollToSectionById]);
 
   return (
     <div id="landing-root" className="landing-tokens min-h-screen flex flex-col bg-[#05070A] pb-[env(safe-area-inset-bottom)]">
@@ -369,100 +394,153 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* ─── Section Navigation Dots ─── */}
-      <div className="fixed right-3 top-1/2 -translate-y-1/2 z-40 hidden lg:flex flex-col items-center">
-        <div className="relative flex flex-col items-center" style={{ minHeight: `calc(${sectionIds.length} * 28px + ${(sectionIds.length - 1)} * 16px)` }}>
-          <div className="absolute top-[7px] bottom-[7px] w-px bg-white/[0.08]" style={{ height: 'auto' }} />
-          <div
-            className="absolute top-[7px] left-0 w-px bg-gradient-to-b from-[#22c55e] to-[#22c55e]/60 rounded-full transition-[height] duration-150 ease-out"
-            style={{ height: `${Math.min(sectionProgress / (sectionIds.length - 1), 1) * 100}%` }}
-          />
-          <div className="relative flex flex-col items-center gap-4">
-            {sectionIds.map((id, idx) => (
-              <div key={id} className="relative">
-                <button
-                  type="button"
-                  onClick={() => scrollToSection(idx)}
-                  className={`group relative flex items-center justify-end gap-2 outline-none ${activeSection === idx ? 'scale-100' : 'scale-90'} transition-all duration-300`}
-                  aria-label={sectionLabels[idx]}
-                  aria-current={activeSection === idx ? 'true' : undefined}
-                >
-                  <span className={`text-[10px] font-medium whitespace-nowrap transition-all duration-300 delay-75 ${activeSection === idx ? 'opacity-100 text-[#22c55e] translate-x-0' : 'opacity-0 group-hover:opacity-70 text-white/60 translate-x-1'}`}>
-                    {sectionLabels[idx]}
-                  </span>
-                  <span className={`relative block w-2.5 h-2.5 rounded-full transition-all duration-300 ${activeSection === idx ? 'bg-[#22c55e] shadow-lg shadow-[#22c55e]/40 scale-125 spy-ring-anim scroll-dot-active' : 'bg-white/20 hover:bg-white/40'}`} />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* ─── ADN-005 — Navegador de capítulos (la línea ADN) ───
+          Los 5 puntos de la misión 004, convertidos en la firma visual:
+          hilo verde que se llena con el progreso real, nodos por acto y
+          contador discreto «01 / 05». Contrato E2E intacto: div.fixed.right-3
+          con exactamente 5 botones, aria-label y aria-current. */}
+      <ActPager
+        active={activeSection}
+        progress={sectionProgress}
+        labels={sectionLabels}
+        onSelect={scrollToSectionById}
+      />
 
-      {/* ─── HERO SECTION (left panel with dark background) ─── */}
-      <main id="main-content"><HeroSection
-        heroInView={heroInView}
+      {/* ─── Header fijo del landing (chrome persistente, fuera de las escenas:
+          un ancestro con transform convertiría su position:fixed en absoluto) ─── */}
+      <LandingHeader
         showMobileNav={showMobileNav}
-        leftPanelRef={leftPanelRef}
-        heroRef={heroRef}
-        setShowLoginModal={setShowLoginModal}
         setShowMobileNav={setShowMobileNav}
-        setShowCommandPalette={setShowCommandPalette}
+        setShowLoginModal={setShowLoginModal}
         setLoginDefaultTab={setLoginDefaultTab}
-        showPromo={showPromo}
-        handleDismissPromo={handleDismissPromo}
-        onOpenDemo={() => setShowDemoModal(true)}
-      >
-        {/* ── MULTI-STORE VISUAL — Demostración visual del ecosistema ── */}
-        <MultiStoreVisualSection />
+      />
+
+      {/* ─── PROMO BANNER — chrome global bajo el header (ADN-005: salió de la
+          escena del hero; reestilizado editorial de la misión 002). El spacer
+          de 72px reproduce el hueco del header fijo del diseño original —
+          ahora a nivel raíz, para que la escena fijada sea un 100svh limpio. ─── */}
+      <div aria-hidden="true" className="h-[72px] shrink-0" />
+      <AnimatePresence>
+        {showPromo && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 36, opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+            className="relative overflow-hidden w-full bg-[#060b09]/95 border-b border-[#22c55e]/25 shrink-0 z-30"
+          >
+            <div className="relative flex items-center justify-center px-9 h-9 gap-2.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e] shrink-0" aria-hidden="true" />
+              <span className="font-mono text-[11px] text-white/70 tracking-wide truncate">
+                Plataforma multi-tienda · Vitrina digital por tienda · Ficha de Costo gratis
+              </span>
+              <button
+                type="button"
+                onClick={handleDismissPromo}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors pointer-events-auto"
+                aria-label="Cerrar promoción"
+              >
+                <X className="w-3 h-3 text-white" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ UNA EXPERIENCIA, CINCO ACTOS (ADN-005) ═══
+          Acto 1  · Inicio           — escena FIJADA, cubierta por el Acto 2.
+          Acto 2  · Plataforma       — interludio multi-tienda + narrativa
+                                       (acto alto, handoff por profundidad).
+          Acto 3  · Funcionalidades  — handoff con repliegue tipográfico del previo.
+          Acto 4  · Precios          — handoff con disolución del previo.
+          Acto 5  · Ayuda + cierre   — handoff final hacia el epílogo (footer).
+          Los ids canónicos de la misión 004 viven en los WRAPPERS. */}
+      <main id="main-content">
+        {/* ── ACTO 1 · INICIO — el caos y la firma (escena fijada) ── */}
+        <ActStage
+          id="hero"
+          act={1}
+          mode="pin"
+          entry="drift"
+          exit="recede"
+          className="bg-[#05070A]"
+          onExitProgress={setHeroExitMv}
+        >
+          <HeroSection
+            heroInView={heroInView}
+            showMobileNav={showMobileNav}
+            leftPanelRef={leftPanelRef}
+            heroRef={heroRef}
+            setShowLoginModal={setShowLoginModal}
+            setShowMobileNav={setShowMobileNav}
+            setShowCommandPalette={setShowCommandPalette}
+            setLoginDefaultTab={setLoginDefaultTab}
+            onOpenDemo={() => setShowDemoModal(true)}
+            exitProgress={heroExitMv}
+          />
+        </ActStage>
+
+        {/* ── ACTO 2 · PLATAFORMA — del caos al sistema (acto alto, fluye) ── */}
+        <ActStage id="como-funciona" act={2} entry="rise" className="relative bg-[#020617]">
+          {/* ── MULTI-STORE VISUAL — Demostración visual del ecosistema ── */}
+          <MultiStoreVisualSection />
+
+          <SectionDivider />
+
+          {/* ── SERVICES STORY — Narrativa del producto ── */}
+          <ServicesStorySection />
+        </ActStage>
+
+        {/* ── ACTO 3 · FUNCIONALIDADES ── */}
+        <ActStage id="features" act={3} entry="rise" className="relative bg-[#05070A]">
+          <FeaturesSection
+            featuresInView={featuresInView}
+            featuresRef={featuresRef}
+          />
+        </ActStage>
 
         <SectionDivider />
 
-        {/* ── SERVICES STORY — Narrativa del producto ── */}
-        <ServicesStorySection />
+        {/* ── ACTO 4 · PRECIOS ── */}
+        <ActStage id="pricing" act={4} entry="rise" className="relative bg-[#05070A]">
+          <PricingSection
+            pricingInView={pricingInView}
+            pricingRef={pricingRef}
+            onSignup={() => {
+              setLoginDefaultTab('register');
+              setShowLoginModal(true);
+            }}
+          />
+        </ActStage>
 
         <SectionDivider />
 
-        {/* ── FEATURES SECTION ── */}
-        <FeaturesSection
-          featuresInView={featuresInView}
-          featuresRef={featuresRef}
-        />
+        {/* ── ACTO 5 · AYUDA + CIERRE — runway 0: el acto cabe en un viewport,
+            su salida se coreografía en el propio último tramo (handoff
+            integrado) y el footer (epílogo) entra sin pasillo vacío. ── */}
+        <ActStage id="faq" act={5} entry="fade" runway="0svh" hairlineTop="14%" className="relative bg-[#05070A]">
+          <FAQSection
+            faqInViewState={faqInViewState}
+            openFaq={openFaq}
+            toggleFaq={toggleFaq}
+            faqFeedback={faqFeedback}
+            setFaqFeedback={setFaqFeedback}
+            faqRef={faqRef}
+          />
 
-        <SectionDivider />
+          <SectionDivider />
 
-        {/* ── PRICING SECTION ── */}
-        <PricingSection
-          pricingInView={pricingInView}
-          pricingRef={pricingRef}
-          onSignup={() => {
-            setLoginDefaultTab('register');
-            setShowLoginModal(true);
-          }}
-        />
-
-        <SectionDivider />
-
-        {/* ── FAQ SECTION ── */}
-        <FAQSection
-          faqInViewState={faqInViewState}
-          openFaq={openFaq}
-          toggleFaq={toggleFaq}
-          faqFeedback={faqFeedback}
-          setFaqFeedback={setFaqFeedback}
-          faqRef={faqRef}
-        />
-
-        <SectionDivider />
-
-        {/* ── FINAL CTA ── */}
-        <FinalCTASection
-          onOpenDemo={() => setShowDemoModal(true)}
-          onSignup={() => {
-            setLoginDefaultTab('register');
-            setShowLoginModal(true);
-          }}
-        />
-      </HeroSection></main>
+          {/* ── FINAL CTA (compacto: convive con el FAQ en la escena del Acto 5) ── */}
+          <FinalCTASection
+            compact
+            onOpenDemo={() => setShowDemoModal(true)}
+            onSignup={() => {
+              setLoginDefaultTab('register');
+              setShowLoginModal(true);
+            }}
+          />
+        </ActStage>
+      </main>
 
       {/* ─── FOOTER ─── */}
       <FooterSection
