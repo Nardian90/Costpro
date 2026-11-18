@@ -151,7 +151,7 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
                   transition={{ delay: idx * 0.06 }}
                   className="group relative p-4 sm:p-6 rounded-2xl border-2 border-border/60 bg-card hover:border-primary/30 hover:shadow-xl transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30 text-left"
                 >
-                  {(child.isNew || child.isBeta) && (
+                  {((child.isNew || child.isBeta) || child.isInDevelopment) && (
                     <div className="absolute top-3 right-3 flex gap-1">
                       {child.isNew && (
                         <span className="text-sm font-black uppercase tracking-widest bg-success/15 text-success px-2 py-0.5 rounded-full border border-success/30">
@@ -161,6 +161,12 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
                       {child.isBeta && (
                         <span className="text-sm font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
                           Beta
+                        </span>
+                      )}
+                      {/* CP-FIN-001: badge «En desarrollo» (vista no lista). */}
+                      {child.isInDevelopment && (
+                        <span className="text-sm font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
+                          En desarrollo
                         </span>
                       )}
                     </div>
@@ -206,7 +212,7 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
                   transition={{ delay: (directItems.length + idx) * 0.06}}
                   className="group relative p-4 sm:p-6 rounded-2xl border-2 border-border/60 bg-gradient-to-br from-primary/5 to-card hover:border-primary/30 hover:shadow-xl transition-all active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary/30 text-left"
                 >
-                  {(child.isNew || child.isBeta) && (
+                  {((child.isNew || child.isBeta) || child.isInDevelopment) && (
                     <div className="absolute top-3 right-3 flex gap-1">
                       {child.isNew && (
                         <span className="text-sm font-black uppercase tracking-widest bg-success/15 text-success px-2 py-0.5 rounded-full border border-success/30">
@@ -216,6 +222,12 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
                       {child.isBeta && (
                         <span className="text-sm font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
                           Beta
+                        </span>
+                      )}
+                      {/* CP-FIN-001: badge «En desarrollo» (vista no lista). */}
+                      {child.isInDevelopment && (
+                        <span className="text-sm font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
+                          En desarrollo
                         </span>
                       )}
                     </div>

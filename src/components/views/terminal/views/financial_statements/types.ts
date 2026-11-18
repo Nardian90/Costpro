@@ -172,7 +172,16 @@ export interface MovementRow {
   sense: 'debito' | 'credito';
   amount: number;
   amount_cup: number;
+  /** Moneda contable de la línea (CUP en reconocimiento; la del saldo en aperturas). */
+  currency: string;
   currency_origin: string | null;
+  /**
+   * CP-FIN-001: importe ORIGINAL del documento en `currency_origin` (nominal
+   * registrado por el motor desde el documento de origen). `null` = dato no
+   * registrado en el histórico (deficiencia de trazabilidad que la UI muestra
+   * de forma explícita; NUNCA se reconstruye).
+   */
+  amount_origin: number | null;
   description: string | null;
   posted_at: string;
 }

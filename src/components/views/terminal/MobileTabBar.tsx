@@ -290,6 +290,12 @@ export function MobileTabBar({ currentView, onViewChange }: MobileTabBarProps) {
                         <span className="text-[10px] font-black uppercase tracking-wide text-center leading-tight">
                           {item.label}
                         </span>
+                        {/* CP-FIN-001: badge «En desarrollo» (vista no lista). */}
+                        {item.isInDevelopment && (
+                          <span className="text-[8px] font-black uppercase tracking-widest bg-warning/15 text-warning px-1.5 py-0.5 rounded-full border border-warning/30 text-center leading-none">
+                            En desarrollo
+                          </span>
+                        )}
                       </button>
                     );
                   })}

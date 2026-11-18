@@ -305,6 +305,17 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               Beta
             </span>
           )}
+          {/* CP-FIN-001: badge «En desarrollo» — la vista es visible pero NO
+              está lista (petición expresa del propietario, Estados Financieros). */}
+          {item.isInDevelopment && (
+            <span
+              className="shrink-0 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[8px] font-black uppercase tracking-widest border border-amber-500/30"
+              title="Vista en desarrollo: la información puede estar sujeta a cambios"
+              data-testid="nav-badge-en-desarrollo"
+            >
+              En desarrollo
+            </span>
+          )}
           {isActive && (
             <motion.div layoutId="active-nav-indicator" className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
           )}

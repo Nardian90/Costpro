@@ -73,4 +73,19 @@ describe('MISIÓN CP-FIN — navegación del sistema financiero', () => {
     expect(flat.find(l => l.id === 'document-config')).toBeDefined();
     expect(ids.length).toBeGreaterThan(3);
   });
+
+  // CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-18):
+  // instrucción final del propietario — el menú izquierdo marca Estados
+  // Financieros con estado «En desarrollo» mientras la vista no está lista.
+  it('Estados Financieros lleva el estado «En desarrollo» (badge del menú)', () => {
+    const flat = flattenNavigation();
+    const fs = flat.find(l => l.id === 'financial-statements');
+    expect(fs?.isInDevelopment).toBe(true);
+    // La marca es EXCLUSIVA de la vista en construcción: ninguna otra hoja
+    // del catálogo la declara (evita badges espurios).
+    const others = flat.filter(l => l.id !== 'financial-statements' && l.isInDevelopment);
+    expect(others).toHaveLength(0);
+    // La hoja sigue visible y navegable (el badge NO es un gate de permisos).
+    expect(isViewAllowedForRole('financial-statements', 'admin')).toBe(true);
+  });
 });
