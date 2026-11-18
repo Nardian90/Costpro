@@ -285,7 +285,8 @@ test.describe('CP-AUTH-RESILIENCE-003 · perfil persistente', () => {
     await pageB.goto(BASE_URL + '/', { waitUntil: 'domcontentloaded' });
     // O bien entra directamente al shell, o bien el landing permite entrar con
     // un solo click de CTA sin recargar: JAMÁS un bucle ni formulario forzado.
-    await expect(pageB.getByTestId('path-costpro').or(pageB.getByRole('heading', { name: /Todo tu negocio|ADNegocio/i }))).toBeVisible({ timeout: 30_000 });
+    // ADN-BRAND-HERO-REFINEMENT-002: titular del hero = «MENOS MALABARES. MÁS NEGOCIO.»
+    await expect(pageB.getByTestId('path-costpro').or(pageB.getByRole('heading', { name: /menos malabares|más negocio|ADNegocio/i }))).toBeVisible({ timeout: 30_000 });
     await ctxB.close();
   });
 });

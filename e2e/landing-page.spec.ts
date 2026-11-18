@@ -4,8 +4,9 @@ test.describe('Landing Page', () => {
   // Helper: wait for splash to dismiss and landing page to be visible
   async function waitForLandingPage(page: import('@playwright/test').Page) {
     await page.goto('/');
-    // ADN-BRAND-REBUILD-001: espera el titular editorial del hero (tras el splash)
-    const heroHeading = page.getByRole('heading', { name: /todo tu negocio/i });
+    // ADN-BRAND-HERO-REFINEMENT-002: espera el titular monumental del hero
+    // («MENOS MALABARES. MÁS NEGOCIO.» — tras el splash)
+    const heroHeading = page.getByRole('heading', { name: /menos malabares|más negocio/i });
     await expect(heroHeading).toBeVisible({ timeout: 15000 });
   }
 
