@@ -2,6 +2,7 @@
 ## Corrección de importes, monedas, medios de cobro y trazabilidad documental en Estados Financieros
 
 **Fecha:** 2026-11-18 · **Tienda analizada:** ENERVIDA-VITALLCONS (`5e6fe821-5465-48b1-b3f1-3aa3182edc38`, tenant `5364ccf8-e6cd-4c38-aea8-b167b3b5576f`)
+**PR:** #1652 (head final `d3873b9d7`; CI 5/5 success: CI · Test Coverage · E2E Aislado · Security CI Gate · SQL Security Gate)
 **Rama:** `fix/fin-statements-origin-traceability-20261118` · **Migración:** `20261118130000_cp_fin_fs_origin_traceability.sql` (aplicada SOLO a la BD aislada CostproE2E)
 **Reglas cumplidas:** cero escrituras en producción; cero modificaciones de asientos históricos (§11); sin migraciones aplicadas a producción sin autorización (§12).
 
@@ -76,6 +77,7 @@ El propietario informa **cobro en efectivo**; los registros originales de COSTPR
 
 ## 5. Tests y controles
 - **Vitest** 19/19 (9 del drilldown + 6 navegación + 4 vista) · **ESLint** 0 errores (repo y archivos tocados).
+- Correcciones de CI: `MovementRow.document_id: string | null` (TS2322 ×3 — el RPC devuelve NULL en aperturas) y manifiesto 179 → 180 (bump del conteo).
 - **E2E misión** `e2e/fin-statements-origin-traceability.spec.ts`: **18/18 PASS** (stats: expected=18, unexpected=0) + guardrail **net delta = 0**.
 - **tsc**: OOM en sandbox (3 GB RAM) — TypeCheck autoritativo en CI (job TypeCheck+Lint+Unit+Build).
 - **Gates**: destructive-guard OK · BOLA 5/5 · check-writers OK (147 excepciones) · contrato estático OK con **3 baselines temporales** (patrón 1616) · ledger-sync OK · replay MATCH (180 migraciones) · SQL Static/DB Security y Security Audit corren en CI del PR.
