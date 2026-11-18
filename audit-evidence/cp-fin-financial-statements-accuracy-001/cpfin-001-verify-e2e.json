@@ -1,0 +1,32 @@
+{
+  "project": "lguovmvrozxgssupkwpf",
+  "generated_at": "2026-11-18T13:31:30.997Z",
+  "checks": {
+    "marcas": {
+      "fin_compute_metrics": true,
+      "fin_apply_templates": true,
+      "fin_post_document": true,
+      "fin_post_document_annulment": true,
+      "fin_get_category_detail": true
+    },
+    "fin_compute_metrics_bytes": 20651,
+    "fin_apply_templates_bytes": 2095,
+    "fin_post_document_bytes": 2999,
+    "fin_post_document_annulment_bytes": 2998,
+    "fin_get_category_detail_bytes": 1763,
+    "columnas_fin_movements": [
+      "amount_origin",
+      "currency",
+      "currency_origin"
+    ],
+    "metricas_origin": [
+      "cob_cash_usd_origin",
+      "cob_transfer_usd_origin",
+      "cob_zelle_usd_origin",
+      "total_origin"
+    ],
+    "drilldown_keys": null,
+    "drilldown_tiene_amount_origin": false,
+    "drilldown_tiene_currency": false
+  }
+}

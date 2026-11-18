@@ -1,0 +1,338 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-18T13:02:21.770Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": " SELECT id, store_id, invoice_number, status, payment_method,        cash_amount, transfer_amount, zelle_amount,        ",
+      "rows": [
+        {
+          "id": "867d9017-4e9d-41de-9a99-028296838e0a",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "invoice_number": null,
+          "status": "completed",
+          "payment_method": "mixed",
+          "cash_amount": "4800",
+          "transfer_amount": "2400",
+          "zelle_amount": "0",
+          "sale_currency": "CUP",
+          "sale_exchange_rate": "1.0000",
+          "total_amount": "7200.00",
+          "created_at": "2026-11-17 19:40:47.269842+00",
+          "completed_at": "2026-11-17 19:40:47.269842+00"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT id, payment_method, currency, amount, amount_cup, exchange_rate,        direction, payment_date, created_at FROM ",
+      "rows": [
+        {
+          "id": "829359f6-04f4-499c-97e1-b99ff7089521",
+          "payment_method": "cash",
+          "currency": "CUP",
+          "amount": "4800",
+          "amount_cup": "4800",
+          "exchange_rate": "1.0",
+          "direction": "in",
+          "payment_date": "2026-11-17 19:40:47.269842+00",
+          "created_at": "2026-11-17 19:40:47.269842+00"
+        },
+        {
+          "id": "ec89dfe0-e357-4f65-b6be-eb42d3ca4907",
+          "payment_method": "transfer",
+          "currency": "CUP",
+          "amount": "2400",
+          "amount_cup": "2400",
+          "exchange_rate": "1.0",
+          "direction": "in",
+          "payment_date": "2026-11-17 19:40:47.269842+00",
+          "created_at": "2026-11-17 19:40:47.269842+00"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT m.category_code, m.sense, m.amount, m.amount_cup, m.currency,        m.currency_origin, m.document_number, m.desc",
+      "rows": [
+        {
+          "category_code": "ACT_BANCOS",
+          "sense": "debito",
+          "amount": "2400.00",
+          "amount_cup": "2400.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "category_code": "ACT_EFECTIVO_CUP",
+          "sense": "debito",
+          "amount": "4800.00",
+          "amount_cup": "4800.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "category_code": "ACT_INVENTARIO",
+          "sense": "credito",
+          "amount": "1603.00",
+          "amount_cup": "1603.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "category_code": "GAS_COSTO_VENTAS",
+          "sense": "debito",
+          "amount": "1603.00",
+          "amount_cup": "1603.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "category_code": "ING_VENTAS",
+          "sense": "credito",
+          "amount": "7200.00",
+          "amount_cup": "7200.00",
+          "currency": "CUP",
+          "currency_origin": "CUP",
+          "document_number": null,
+          "description": "Venta "
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT id, version, effective_from, notes, movements FROM public.fin_rule_versions WHERE document_type='VENTA' AND statu",
+      "rows": [
+        {
+          "id": "b8cdb75c-5b10-4a8f-a48f-b086afb0136a",
+          "version": 2,
+          "effective_from": "2026-11-17",
+          "notes": "M-015: líneas de diferencia de cobro (faltante/exceso aceptado por caja, documentado en payment_incidents) para que las ventas con descuadre puedan contabilizarse equilibradas. Sin cambios para ventas cuyos cobros cuadran.",
+          "movements": [
+            {
+              "id": "v-cash-cup",
+              "orden": 1,
+              "evento": "reconocimiento",
+              "origen": {
+                "tipo": "metrica",
+                "metrica": "cob_cash_cup"
+              },
+              "sentido": "debito",
+              "categoria": "ACT_EFECTIVO_CUP",
+              "condicion": {
+                "op": ">",
+                "campo": "cob_cash_cup",
+                "valor": 0
+              }
+            },
+            {
+              "id": "v-cash-usd",
+              "orden": 2,
+              "evento": "reconocimiento",
+              "origen": {
+                "tipo": "metrica",
+                "metrica": "cob_cash_usd_cup"
+              },
+              "sentido": "debito",
+              "categoria": "ACT_EFECTIVO_USD",
+              "condicion": {
+                "op": ">",
+                "campo": "cob_cash_usd_cup",
+                "valor": 0
+              }
+            },
+            {
+              "id": "v-transf-cup",
+              "orden": 3,
+              "evento": "reconocimiento",
+              "origen": {
+                "tipo": "metrica",
+                "metrica": "cob_transfer_cup"
+              },
+              "sentido": "debito",
+              "categoria": "ACT_BANCOS",
+              "condicion": {
+                "op": ">",
+                "campo": "cob_transfer_cup",
+                "valor": 0
+              }
+            },
+            {
+              "id": "v-transf-usd",
+              "orden": 4,
+              "evento": "reconocimiento",
+              "origen": {
+                "tipo": "metrica",
+                "metrica": "cob_transfer_usd_cup"
+              },
+              "sentido": "debito",
+              "categoria": "ACT_BANCOS",
+              "condicion": {
+                "op": ">",
+                "campo": "cob_transfer_usd_cup",
+                "valor": 0
+              }
+            },
+            {
+              "id": "v-zelle",
+              "orden": 5,
+              "evento": "reconocimiento",
+              "origen": {
+                "tipo": "metrica",
+                "metrica": "cob_zelle_usd_cup"
+              },
+              "sentido": "debito",
+              "categoria": "ACT_BANCOS",
+              "condicion": {
+                "op": ">",
+                "campo": "cob_zelle_usd_cup",
+                "valor": 0
+              }
+            },
+            {
+              "id": "v-ingreso",
+              "orden": 6,
+              "evento": "reconocimiento",
+              "origen": {
+                "tipo": "metrica",
+                "metrica": "total_cup"
+              },
+              "sentido": "credito",
+              "categoria": "ING_VENTAS",
+              "condicion": null
+            },
+            {
+              "id": "v-cogs-d",
+              "orden": 7,
+              "evento": "reconocimiento",
+              "origen": {
+                "tipo": "metrica",
+                "metrica": "costo_productos_cup"
+              },
+              "sentido": "debito",
+              "categoria": "GAS_COSTO_VENTAS",
+              "condicion": {
+                "op": ">",
+                "campo": "costo_productos_cup",
+                "valor": 0
+              }
+            },
+            {
+              "id": "v-cogs-c",
+              "orden": 8,
+              "evento": "reconocimiento",
+              "origen": {
+                "tipo": "metrica",
+                "metrica": "costo_productos_cup"
+              },
+              "sentido": "credito",
+              "categoria": "ACT_INVENTARIO",
+              "condicion": {
+                "op": ">",
+                "campo": "costo_productos_cup",
+                "valor": 0
+              }
+            },
+            {
+              "id": "v-diff-d",
+              "orden": 9,
+              "evento": "reconocimiento",
+              "origen": {
+                "tipo": "metrica",
+                "metrica": "diferencia_cobro_debe_cup"
+              },
+              "sentido": "debito",
+              "categoria": "ING_DESCUENTOS",
+              "condicion": {
+                "op": ">",
+                "campo": "diferencia_cobro_debe_cup",
+                "valor": 0
+              }
+            },
+            {
+              "id": "v-diff-c",
+              "orden": 10,
+              "evento": "reconocimiento",
+              "origen": {
+                "tipo": "metrica",
+                "metrica": "diferencia_cobro_haber_cup"
+              },
+              "sentido": "credito",
+              "categoria": "ING_DESCUENTOS",
+              "condicion": {
+                "op": ">",
+                "campo": "diferencia_cobro_haber_cup",
+                "valor": 0
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT   (SELECT count(*) FROM public.transactions     WHERE store_id='5e6fe821-5465-48b1-b3f1-3aa3182edc38'       AND c",
+      "rows": [
+        {
+          "enervida_nov_sin_docnum": 30,
+          "enervida_nov_total": 30,
+          "sistema_oct_nov_sin_docnum": 233,
+          "sistema_oct_nov_total": 233
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT count(*) AS movs_usd_sin_amount_origin FROM public.fin_movements WHERE currency_origin = 'USD' AND amount_origin ",
+      "rows": [
+        {
+          "movs_usd_sin_amount_origin": 538
+        }
+      ]
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT count(*) AS errores_pendientes FROM public.fin_posting_errors WHERE store_id='5e6fe821-5465-48b1-b3f1-3aa3182edc3",
+      "rows": [
+        {
+          "errores_pendientes": 0
+        }
+      ]
+    },
+    {
+      "statement": 8,
+      "sql": "SELECT ti.product_id, p.name, p.sku, ti.quantity, ti.price_at_sale,        ti.price_currency, ti.price_at_sale_cup, ti.c",
+      "rows": [
+        {
+          "product_id": "3c072e9a-1c0d-4adf-add5-b337485bc3e4",
+          "name": "Cable Solar Rojo 4mm",
+          "sku": "88",
+          "quantity": "15.0000",
+          "price_at_sale": "4.50",
+          "price_currency": "USD",
+          "price_at_sale_cup": "4185.00",
+          "cost_at_sale": "840.00000000000000000000000000000000"
+        },
+        {
+          "product_id": "f2757338-f26f-4538-945e-5da97ec10a8f",
+          "name": "Cable Solar Negro 4mm",
+          "sku": "87",
+          "quantity": "15.0000",
+          "price_at_sale": "4.50",
+          "price_currency": "USD",
+          "price_at_sale_cup": "4185.00",
+          "cost_at_sale": "840.000000000000000000000000000000000000"
+        }
+      ]
+    }
+  ]
+}
