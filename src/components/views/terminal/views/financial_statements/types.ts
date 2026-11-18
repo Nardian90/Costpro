@@ -164,7 +164,8 @@ export interface MovementRow {
   id: string;
   entry_id: string;
   document_type: string;
-  document_id: string;
+  /** ID real del documento de origen; NULL en asientos sin documento (apertura/ajuste manual). */
+  document_id: string | null;
   document_number: string | null;
   /** 'YYYY-MM-DD'. */
   economic_date: string;
