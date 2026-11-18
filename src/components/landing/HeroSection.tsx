@@ -250,11 +250,59 @@ const MALABARES_SCATTER: ReadonlyArray<{ x: number; y: number; r: number }> = [
   { x: 4, y: -19, r: 7.5 },
 ];
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADN-LANDING-HERO-AND-PAGER-FIX-004 §4.1 — LA MARCA FIRMA EL MENSAJE
+   ─────────────────────────────────────────────────────────────────────────
+   Problema (diagnóstico de la misión): el nombre ADNegocio solo existía como
+   logotipo pequeño del header; el peso visual recaía en «negocio.» del
+   eslogan — el visitante recordaba la frase, no el producto.
+
+   Composición elegida (evaluadas tres alternativas, ver expediente §HERO):
+     A1 «La marca abre»  — marca sobre el titular (clásica, menos memorable)
+     A2 «La firma»       — ELEGIDA: la marca es la pieza protagónica de la
+       columna principal, entre el titular y la promesa — ocupa la zona muerta
+       que separaba titular y subtítulo (vacío accidental → pieza intencional)
+       y queda cerca del centro óptico del hero.
+     B  «Fusión»         — «MÁS ADNegocio.» alteraba el eslogan aprobado:
+       DESCARTADA (no se modifica texto de misión 002 sin justificación).
+
+   Narrativa de la animación: el caos se ordena (MALABARES disperso se asienta)
+   → la promesa llega (MÁS negocio.) → la firma revela QUIÉN lo hace
+   (ADNegocio por máscara ascendente, 0.78s). La marca es el remate:
+   el mensaje firma el nombre. Reduced-motion: visible sin animar.
+
+   Identidad: MISMO BrandWordmark del sidebar autenticado (ADN verde +
+   egocio blanco, Space Grotesk bold) — sin segunda identidad gráfica.
+   La descendente de la «g» exige máscara con pb 0.3em (lección §4 de la
+   misión 003: el overflow-hidden recorta tinta si el padding no la cubre).
+   ======================================================================== */
+function HeroBrandSignOff() {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <div className="mt-8 sm:mt-10 flex items-center gap-5">
+      <span className="h-px w-9 sm:w-14 bg-[#22c55e]/55 shrink-0" aria-hidden="true" />
+      <span className="block overflow-hidden pb-[0.3em] -mb-[0.22em]">
+        <motion.span
+          className="block"
+          initial={reduceMotion ? false : { y: '148%' }}
+          animate={{ y: '0%' }}
+          transition={{ delay: 0.78, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <BrandWordmark
+            className="inline-block font-[family-name:var(--font-space-grotesk)] font-bold tracking-[-0.03em] leading-[1.04] text-[clamp(2.7rem,5.3vw,5.1rem)] select-none"
+          />
+        </motion.span>
+      </span>
+    </div>
+  );
+}
+
 function HeroHeadline() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <h1 className="font-[family-name:var(--font-display)] font-black [font-stretch:125%] tracking-[-0.045em] leading-[0.94] text-[clamp(2.35rem,10.5vw,7.2rem)] sm:text-[clamp(2.8rem,7.2vw,7.2rem)] text-white select-none">
+    <h1 className="font-[family-name:var(--font-display)] font-black [font-stretch:125%] tracking-[-0.045em] leading-[0.94] text-[clamp(2.35rem,10.5vw,6.5rem)] sm:text-[clamp(2.8rem,6.6vw,6.6rem)] text-white select-none">
       {/* Nombre accesible completo; la capa visual es decorativa (letras
           separadas por spans no se leen bien en SR). */}
       <span className="sr-only">MENOS MALABARES. MÁS NEGOCIO.</span>
@@ -725,15 +773,25 @@ export default function HeroSection({
               {/* Titular monumental (la animación ES la narrativa) */}
               <HeroHeadline />
 
-              {/* Propuesta + acción | pieza «del caos al orden» */}
-              <div className="mt-9 sm:mt-12 grid lg:grid-cols-12 lg:gap-10 items-center">
+              {/* Propuesta + acción | pieza «del caos al orden»
+                  ADN-LANDING-HERO-AND-PAGER-FIX-004 (ciclo 2): items-start —
+                  la pila marca→promesa→CTAs abraza el titular (items-center la
+                  centraba contra la escena alta y recreaba el vacío que la
+                  firma debía eliminar). */}
+              <div className="mt-8 sm:mt-11 grid lg:grid-cols-12 lg:gap-10 items-start">
                 <div className="lg:col-span-7">
+                  {/* ADN-LANDING-HERO-AND-PAGER-FIX-004 §4.1 — LA FIRMA:
+                      la marca ocupa el vacío entre titular y promesa (era la
+                      zona muerta de la composición anterior) y queda cerca
+                      del centro óptico. Primer pantallazo = nombre + mensaje. */}
+                  <HeroBrandSignOff />
+
                   {/* Subtítulo — la promesa concreta, sin estadísticas inventadas */}
                   <motion.p
                     initial={reduceMotion ? false : { opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="max-w-xl text-base sm:text-lg text-white/60 leading-relaxed"
+                    className="mt-7 sm:mt-8 max-w-xl text-base sm:text-lg text-white/60 leading-relaxed"
                   >
                     Las operaciones de tu empresa dejan de estar dispersas —inventario,
                     ventas, costos, documentos— y empiezan a funcionar como{' '}
