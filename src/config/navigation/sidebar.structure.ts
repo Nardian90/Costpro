@@ -21,8 +21,6 @@ export interface NavModule {
   allowedRoles?: string[];
   isBeta?: boolean;
   isNew?: boolean;
-  /** CP-FIN-001 (2026-11-18): vista visible pero aún EN DESARROLLO (badge). */
-  isInDevelopment?: boolean;
   /** Descripción REAL para tarjetas de SectionHubView / tooltips. */
   description?: string;
 }
@@ -38,7 +36,6 @@ function toNavModule(entry: NavEntry): NavModule {
     allowedRoles: entry.roles,
     isBeta: entry.isBeta,
     isNew: entry.isNew,
-    isInDevelopment: entry.isInDevelopment,
     children: entry.children?.map(toNavModule),
   };
 }

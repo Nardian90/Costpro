@@ -40,8 +40,6 @@ export interface MobileSheetItem {
   id: string;
   label: string;
   icon?: any;
-  /** CP-FIN-001: badge «En desarrollo» (vista visible pero no lista). */
-  isInDevelopment?: boolean;
 }
 
 export interface MobileSheetGroup {
@@ -122,7 +120,7 @@ export function buildMobileSheetGroups(role: string | null | undefined): MobileS
         if (e.type === 'item') {
           if (mainTabIds.includes(e.id)) continue; // ya son tabs fijos
           if (e.mobileHide) continue;              // widget/acción
-          items.push({ id: e.id, label: e.label, icon: e.icon, isInDevelopment: e.isInDevelopment });
+          items.push({ id: e.id, label: e.label, icon: e.icon });
         } else if (e.children) {
           walk(e.children);
         }

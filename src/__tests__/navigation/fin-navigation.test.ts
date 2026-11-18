@@ -74,18 +74,18 @@ describe('MISIÓN CP-FIN — navegación del sistema financiero', () => {
     expect(ids.length).toBeGreaterThan(3);
   });
 
-  // CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-18):
-  // instrucción final del propietario — el menú izquierdo marca Estados
-  // Financieros con estado «En desarrollo» mientras la vista no está lista.
-  it('Estados Financieros lleva el estado «En desarrollo» (badge del menú)', () => {
-    const flat = flattenNavigation();
+  // CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-19):
+  // orden del propietario — el badge «En desarrollo» añadido el 18-11 fue
+  // RETIRADO: Estados Financieros se presenta como funcionalidad disponible.
+  it('Estados Financieros se presenta como funcionalidad disponible (sin badge «En desarrollo»)', () => {
+    const flat = flattenNavigation() as Array<Record<string, unknown>>;
     const fs = flat.find(l => l.id === 'financial-statements');
-    expect(fs?.isInDevelopment).toBe(true);
-    // La marca es EXCLUSIVA de la vista en construcción: ninguna otra hoja
-    // del catálogo la declara (evita badges espurios).
-    const others = flat.filter(l => l.id !== 'financial-statements' && l.isInDevelopment);
-    expect(others).toHaveLength(0);
-    // La hoja sigue visible y navegable (el badge NO es un gate de permisos).
+    expect(fs).toBeDefined();
+    // Ninguna hoja del catálogo declara la marca retirada (regresión).
+    const marked = flat.filter(l => l.isInDevelopment);
+    expect(marked).toHaveLength(0);
+    // La vista sigue visible y navegable para los roles autorizados.
     expect(isViewAllowedForRole('financial-statements', 'admin')).toBe(true);
+    expect(isViewAllowedForRole('financial-statements', 'manager')).toBe(true);
   });
 });

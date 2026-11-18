@@ -93,8 +93,6 @@ export interface NavEntry {
   keywords?: string[];
   isBeta?: boolean;
   isNew?: boolean;
-  /** CP-FIN-001 (2026-11-18): vista visible pero aún EN DESARROLLO (no lista para producción). */
-  isInDevelopment?: boolean;
   navClass?: NavClass;
   /** Excluir del sheet móvil "Más" (ej: accesibles por widget/acción). */
   mobileHide?: boolean;
@@ -162,16 +160,15 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         // Dashboard de la tienda: lectura ejecutiva de la operación diaria).
         // Roles: superficie financiera de consulta (admin/manager/encargado);
         // el gate REAL de acceso a la tienda lo hace cada RPC server-side.
-        // CP-FIN-001 (2026-11-18): badge «En desarrollo» — petición del
-        // propietario (instrucción final de la misión): informa de que la
-        // vista NO está lista mientras continúa su construcción.
+        // CP-FIN-001 (2026-11-19): el badge «En desarrollo» añadido el 18-11
+        // fue RETIRADO por orden del propietario — Estados Financieros se
+        // presenta como funcionalidad disponible.
         id: 'financial-statements',
         label: 'Estados Financieros',
         description: 'Situación, rendimiento y dashboard por tienda.',
         icon: BarChart3,
         type: 'item',
         roles: ['admin', 'manager', 'encargado'],
-        isInDevelopment: true,
         keywords: ['estados financieros', 'balance', 'situación financiera', 'estado de situación', 'estado de rendimiento', 'resultado', 'utilidad', 'patrimonio', 'activos', 'pasivos', 'partida doble', 'cp-fin', 'ecuación contable', 'dashboard financiero'],
       },
       // CAMBIO 4 (HOME/SALES/PERFORMANCE DEFAULTS): grupo explícito "Ventas"
@@ -1461,8 +1458,6 @@ export interface FlatNavItem {
   roles?: string[];
   isBeta?: boolean;
   isNew?: boolean;
-  /** CP-FIN-001 (2026-11-18): vista visible pero aún EN DESARROLLO. */
-  isInDevelopment?: boolean;
   route?: NavRoute;
   navClass?: NavClass;
   keywords?: string[];
@@ -1494,7 +1489,6 @@ export function flattenNavigation(): FlatNavItem[] {
             roles: effective,
             isBeta: e.isBeta,
             isNew: e.isNew,
-            isInDevelopment: e.isInDevelopment,
             route: e.route,
             navClass: e.navClass,
             keywords: e.keywords,

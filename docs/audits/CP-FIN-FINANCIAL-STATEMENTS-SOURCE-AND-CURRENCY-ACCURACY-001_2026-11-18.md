@@ -59,8 +59,8 @@ El propietario informa **cobro en efectivo**; los registros originales de COSTPR
 - `store/index.ts`: `SaleDetailNavContext` (patrón financialOpeningNavContext, consumo único).
 - `useSalesHistoryView.ts`: consume el contexto — abre `TransactionDetailsModal` para el ID real; si la venta no está en el historial → toast «Documento de origen no disponible» + console.warn (§6).
 
-### Menú (instrucción final del propietario)
-- `NavEntry.isInDevelopment` + badge «**En desarrollo**» en: Sidebar (menú izquierdo), SectionHubView, GroupHubView, sheet móvil (MobileTabBar), FlatNavItem (⌘K) y NavModule (sidebar.structure) — con `data-testid="nav-badge-en-desarrollo"`. El badge NO es gate de permisos.
+### Menú (orden del propietario, 2026-11-19)
+- El badge «En desarrollo» añadido el 18-11 a Estados Financieros fue **RETIRADO** por orden expresa del propietario (§5 de la misión): la vista se presenta como **funcionalidad disponible**. Se retiró de Sidebar, SectionHubView, GroupHubView, sheet móvil (MobileTabBar), FlatNavItem y NavModule, junto con `NavEntry.isInDevelopment`, la captura `menu-en-desarrollo.png` y los tests que lo verificaban — sustituidos por pruebas de regresión inversas (badge ausente, vista navegable).
 
 ## 4. Importes/monedas/tasas — verificación E2E (BD aislada, escritores reales)
 | Escenario | Resultado |
@@ -94,7 +94,7 @@ Ningún cambio de saldos por esta misión (corrección de presentación/trazabil
 - `supabase/migrations/20261118130000_cp_fin_fs_origin_traceability.sql`
 - `src/components/views/terminal/views/financial_statements/{CategoryDetailPanel,types}.tsx/.ts`
 - `src/store/index.ts` · `src/components/views/terminal/views/sales/useSalesHistoryView.ts`
-- `src/config/navigation/{navigation-definition,mobile-sheet,sidebar.structure}.ts` · `src/components/views/terminal/Sidebar.tsx` · `MobileTabBar.tsx` · `section_hub/{GroupHub,SectionHub}View.tsx`
+- `src/config/navigation/{navigation-definition,mobile-sheet,sidebar.structure}.ts` · `src/components/views/terminal/Sidebar.tsx` · `MobileTabBar.tsx` · `section_hub/{GroupHub,SectionHub}View.tsx` (retiro del badge «En desarrollo», 2026-11-19)
 - `src/__tests__/components/financial-statements-category-detail.test.tsx` · `src/__tests__/navigation/fin-navigation.test.ts`
 - `e2e/fin-statements-origin-traceability.spec.ts` · `ci-gate-allowlist.json` · manifiesto replay regenerado
 - Evidencia: `audit-evidence/cp-fin-financial-statements-accuracy-001/` (producción solo lectura, verificación E2E, reporte 18/18, capturas UI) — escaneada: **0 secretos**.

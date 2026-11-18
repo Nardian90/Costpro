@@ -446,8 +446,10 @@ test.describe.serial('CP-FIN-001 — Estados Financieros: importes, monedas, med
     expect(okAdmin.ok).toBe(true);
   });
 
-  // ── UI: badge «En desarrollo» (instrucción final del propietario) ──────────
-  test('UI1 · badge «En desarrollo» en el menú izquierdo', async ({ page }) => {
+  // ── UI: Estados Financieros disponible, SIN badge «En desarrollo» ──────────
+  // (CP-FIN-001, 2026-11-19: el badge añadido el 18-11 fue RETIRADO por orden
+  //  del propietario — la vista se presenta como funcionalidad disponible.)
+  test('UI1 · Estados Financieros en el menú SIN badge «En desarrollo»', async ({ page }) => {
     const session = await signIn(ADMIN_EMAIL, ADMIN_PASS);
     await injectSession(page, session);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
@@ -458,9 +460,9 @@ test.describe.serial('CP-FIN-001 — Estados Financieros: importes, monedas, med
     await page.waitForTimeout(1200);
     const fsItem = page.getByText('Estados Financieros', { exact: true }).first();
     await fsItem.waitFor({ state: 'visible', timeout: 15_000 });
-    const badge = page.getByTestId('nav-badge-en-desarrollo').first();
-    await badge.waitFor({ state: 'visible', timeout: 10_000 });
-    expect(((await badge.textContent()) || '').trim()).toBe('En desarrollo');
+    // Regresión: el badge retirado NO debe existir en el DOM del menú.
+    const badge = page.getByTestId('nav-badge-en-desarrollo');
+    await expect(badge).toHaveCount(0);
   });
 
   // ── UI: drilldown corregido + «Ver documento» → detalle de la venta ────────
