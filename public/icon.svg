@@ -1,21 +1,10 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <filter id="neonGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="12" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
-  </defs>
-  <!-- Background -->
-  <rect x="0" y="0" width="512" height="512" rx="100" fill="#000000" />
-
-  <!-- Letter C (Green Neon) -->
-  <path d="M380 140 A 160 160 0 1 0 380 372"
-        fill="none"
-        stroke="#39FF14"
-        stroke-width="70"
-        stroke-linecap="round"
-        filter="url(#neonGlow)" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="ADNegocio — N geométrica">
+<rect width="512" height="512" rx="100" fill="#05070A"/>
+<g transform="translate(0 0) scale(1)">
+  <g fill="#22C55E">
+    <rect x="104" y="104" width="80" height="304"/>
+    <rect x="328" y="104" width="80" height="304"/>
+    <polygon points="104,104 184,104 408,408 328,408"/></g>
+  <rect x="262" y="140" width="46" height="46" fill="#FFFFFF"/>
+</g>
 </svg>

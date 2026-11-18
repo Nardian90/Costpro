@@ -18,9 +18,9 @@ export default function InteractiveDemoModal({
   return (
     <Dialog open={showDemoModal} onOpenChange={setShowDemoModal}>
       <DialogContent className="sm:max-w-5xl p-0 gap-0 overflow-hidden border-white/10 bg-[#0a0f1a]">
-        <DialogTitle className="sr-only">Demo interactiva de CostPro</DialogTitle>
+        <DialogTitle className="sr-only">Demo interactiva de ADNegocio</DialogTitle>
         <DialogDescription className="sr-only">
-          Mira cómo CostPro gestiona tiendas, inventario y ventas desde una sola plataforma
+          Mira cómo ADNegocio gestiona tiendas, inventario y ventas desde una sola plataforma
         </DialogDescription>
         {/* Close button */}
         <button
@@ -35,7 +35,7 @@ export default function InteractiveDemoModal({
         </div>
         {/* FIX-ENTRY (2026-09-20): conversión contextual al final del camino C —
             la demo ya no es un callejón sin salida: ofrece continuar hacia la
-            Ficha de Costo (camino B) o a COSTPRO (camino A), con los MISMOS
+            Ficha de Costo (camino B) o a la plataforma (camino A), con los MISMOS
             flujos del selector (sin recargas, returnTo solo navegación). */}
         <div className="border-t border-white/[0.06] bg-[#0d1420] px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-white/50 text-center sm:text-left">
@@ -58,7 +58,7 @@ export default function InteractiveDemoModal({
               }}
               className="inline-flex items-center justify-center px-4 min-h-[44px] rounded-lg border border-white/[0.12] text-white/80 hover:text-white hover:bg-white/[0.05] text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
-              Entrar a COSTPRO
+              Entrar a ADNegocio
             </button>
           </div>
         </div>

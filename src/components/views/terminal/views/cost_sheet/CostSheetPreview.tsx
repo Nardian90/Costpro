@@ -23,7 +23,7 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
     <div ref={ref} className="max-w-5xl mx-auto">
       <div className="!p-0 overflow-hidden border-none shadow-2xl bg-card dark:bg-background text-foreground dark:text-foreground rounded-3xl">
         <div className="bg-muted/80 p-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-muted-foreground">
-           <div className="font-black text-xl tracking-tighter uppercase italic">COSTPRO <span className="text-primary font-light text-sm not-italic ml-2 tracking-widest">FICHA</span></div>
+           <div className="font-black text-xl tracking-tighter uppercase italic">ADNEGOCIO <span className="text-primary font-light text-sm not-italic ml-2 tracking-widest">FICHA</span></div>
            <div className="text-xs font-bold opacity-50 uppercase tracking-widest">Documento Oficial de Costos</div>
         </div>
         <div className="p-4 sm:p-10 lg:p-12 space-y-10">
@@ -54,7 +54,7 @@ const CostSheetPreview = React.forwardRef<HTMLDivElement, CostSheetPreviewProps>
             </div>
         </div>
         <div className="bg-muted/30 dark:bg-background/50 p-4 text-xs text-center text-muted-foreground font-bold uppercase tracking-widest">
-          Fin del Documento • Generado automáticamente por COSTPRO v1.0
+          Fin del Documento • Generado automáticamente por ADNegocio v1.0
         </div>
       </div>
     </div>

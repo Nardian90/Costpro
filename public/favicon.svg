@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="ADNegocio — N geométrica">
+<rect width="512" height="512" rx="100" fill="#05070A"/>
+<g transform="translate(0 0) scale(1)">
+  <g fill="#22C55E">
+    <rect x="104" y="104" width="80" height="304"/>
+    <rect x="328" y="104" width="80" height="304"/>
+    <polygon points="104,104 184,104 408,408 328,408"/></g>
+  <rect x="262" y="140" width="46" height="46" fill="#FFFFFF"/>
+</g>
+</svg>

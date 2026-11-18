@@ -69,9 +69,9 @@ Si un cliente le dice *"¿por qué tan caro?"*, usted puede mostrarle la ficha d
 
 El cliente entiende y respeta el precio.
 
-## El método de costeo de CostPro
+## El método de costeo de ADNegocio
 
-La ficha de CostPro sigue el esquema de **costeo absorbente**: incluye materiales, mano de obra y gastos indirectos hasta llegar al costo total, más el margen. Además, el **Costeo Dinámico** recalcula el costo de reposición absorbiendo servicios, comisiones y la tasa de cambio vigente.
+La ficha de ADNegocio sigue el esquema de **costeo absorbente**: incluye materiales, mano de obra y gastos indirectos hasta llegar al costo total, más el margen. Además, el **Costeo Dinámico** recalcula el costo de reposición absorbiendo servicios, comisiones y la tasa de cambio vigente.
 
 | Componente | Qué incluye | Ejemplo |
 |-----------|-------------|---------|
@@ -81,9 +81,9 @@ La ficha de CostPro sigue el esquema de **costeo absorbente**: incluye materiale
 
 > 💡 **Para personas mayores**: No se asuste por la terminología. La ficha le va pidiendo cada componente con ejemplos; si duda, use el **modo asistido**.
 
-## El motor de cálculo de CostPro
+## El motor de cálculo de ADNegocio
 
-CostPro tiene un **motor de cálculo avanzado** que le permite:
+ADNegocio tiene un **motor de cálculo avanzado** que le permite:
 
 ### 1. Usar fórmulas
 En lugar de escribir números fijos, puede escribir fórmulas que se calculan solas dentro de la ficha.
@@ -113,7 +113,7 @@ La ficha incluye bloques de **Firmas** ("Elaborado por" / "Aprobado por", obliga
 
 ## Los modos de visualización
 
-CostPro le permite ver una ficha de costo de varias maneras, según su necesidad:
+ADNegocio le permite ver una ficha de costo de varias maneras, según su necesidad:
 
 | Modo | Para qué sirve |
 |------|----------------|
@@ -150,7 +150,7 @@ CostPro le permite ver una ficha de costo de varias maneras, según su necesidad
 - Lo que sí hace: el **Costeo Dinámico** (OPERACIÓN → Costo) recalcula el costo de reposición absorbiendo servicios, comisiones y la tasa de cambio vigente; usted simula los nuevos precios y confirma cuándo aplicarlos.
 
 **¿Las fichas de costo son obligatorias?**
-- No, son opcionales. Puede operar CostPro sin usarlas.
+- No, son opcionales. Puede operar ADNegocio sin usarlas.
 - Pero si su negocio fabrica productos, son **muy recomendables** para no perder dinero.
 
 **¿Cómo aprendo a usar el motor de fórmulas?**

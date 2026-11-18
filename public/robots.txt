@@ -1,4 +1,4 @@
-# CostPro — robots.txt
+# ADNegocio — robots.txt
 # Permite indexación completa de la landing page y páginas públicas
 # Bloquea rutas de API y panel de administración (requieren auth)
 

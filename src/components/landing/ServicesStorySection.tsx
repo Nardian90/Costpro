@@ -13,7 +13,7 @@ import FeatureVisual from './FeatureVisual';
  * ServicesStorySection — Reemplaza "EL DIFERENCIADOR" (AhaMomentSection)
  *
  * LANDING VISUAL EVIDENCE (FASE 1/3): cada historia muestra la CAPTURA REAL
- * de CostPro (public/landing/capturas/*.webp — estado demo controlado, sin
+ * de ADNegocio (public/landing/capturas/*.webp — estado demo controlado, sin
  * PII) como evidencia visual principal. El icono queda como badge de
  * contexto, no como visual principal (regla 6 del mandato).
  *
@@ -27,7 +27,7 @@ interface StorySection {
   subtitle: string;
   description: string;
   gradient: string;
-  /** Captura real de CostPro — evidencia visual (FASE 3) */
+  /** Captura real de ADNegocio — evidencia visual (FASE 3) */
   image?: string;
   /** Variante móvil de la misma pantalla (FASE 10 — art direction) */
   srcMobile?: string;
@@ -46,9 +46,9 @@ const SECTIONS: StorySection[] = [
     gradient: 'from-emerald-500/10 to-transparent',
     image: '/landing/capturas/dashboard.webp',
     srcMobile: '/landing/capturas/dashboard-movil.webp',
-    imageAlt: 'Panel central de CostPro con el anillo de KPIs de la tienda activa: ventas, costos y utilidad del día con su comparación histórica, y el selector de sucursal arriba.',
-    caption: 'Dashboard real de CostPro — datos de demostración',
-    frameLabel: 'costpro.app · panel',
+    imageAlt: 'Panel central de ADNegocio con el anillo de KPIs de la tienda activa: ventas, costos y utilidad del día con su comparación histórica, y el selector de sucursal arriba.',
+    caption: 'Dashboard real de ADNegocio — datos de demostración',
+    frameLabel: 'adnegocio.app · panel',
   },
   {
     id: 'storefront',
@@ -61,7 +61,7 @@ const SECTIONS: StorySection[] = [
     srcMobile: '/landing/capturas/tienda-publica-movil.webp',
     imageAlt: 'Vitrina digital pública de una tienda: catálogo con fotos de productos, precios en CUP y badge de disponibilidad, accesible sin instalar nada.',
     caption: 'Vitrina pública de la tienda — lo que ve tu cliente',
-    frameLabel: 'tienda.costpro.app',
+    frameLabel: 'tienda.adnegocio.app',
   },
   {
     id: 'inventory',
@@ -72,9 +72,9 @@ const SECTIONS: StorySection[] = [
     gradient: 'from-cyan-500/10 to-transparent',
     image: '/landing/capturas/inventario-stock.webp',
     srcMobile: '/landing/capturas/inventario-stock-movil.webp',
-    imageAlt: 'Vista de inventario de CostPro: tabla de stock actual por producto con SKU, existencias, costo unitario y valor total.',
+    imageAlt: 'Vista de inventario de ADNegocio: tabla de stock actual por producto con SKU, existencias, costo unitario y valor total.',
     caption: 'Inventario por tienda — stock, costos y valor',
-    frameLabel: 'costpro.app · inventario',
+    frameLabel: 'adnegocio.app · inventario',
   },
   {
     id: 'pos',
@@ -85,22 +85,22 @@ const SECTIONS: StorySection[] = [
     gradient: 'from-purple-500/10 to-transparent',
     image: '/landing/capturas/pos-terminal.webp',
     srcMobile: '/landing/capturas/pos-terminal-movil.webp',
-    imageAlt: 'Terminal de venta de CostPro: grilla de productos, carrito abierto con 4 artículos, cantidades, total a cobrar y botón COBRAR.',
+    imageAlt: 'Terminal de venta de ADNegocio: grilla de productos, carrito abierto con 4 artículos, cantidades, total a cobrar y botón COBRAR.',
     caption: 'POS real — carrito, total y cobro en una pantalla',
-    frameLabel: 'costpro.app · vender',
+    frameLabel: 'adnegocio.app · vender',
   },
   {
     id: 'costing',
     icon: Calculator,
     title: 'Fichas de costo integradas',
     subtitle: 'Resolución 148/2023 MFP, herramienta adicional.',
-    description: 'Además de gestionar tu negocio, CostPro incorpora herramientas para conocer y controlar tus costos. Transporte, arrendamiento, salarios e impuestos correctamente distribuidos según la metodología oficial.',
+    description: 'Además de gestionar tu negocio, ADNegocio incorpora herramientas para conocer y controlar tus costos. Transporte, arrendamiento, salarios e impuestos correctamente distribuidos según la metodología oficial.',
     gradient: 'from-orange-500/10 to-transparent',
     image: '/landing/capturas/estructura-costo.webp',
     srcMobile: '/landing/capturas/estructura-costo-movil.webp',
-    imageAlt: 'Estructura de costo de CostPro: tabla por producto con existencias, costo unitario y totales calculados según la metodología oficial.',
+    imageAlt: 'Estructura de costo de ADNegocio: tabla por producto con existencias, costo unitario y totales calculados según la metodología oficial.',
     caption: 'Estructura de costo — calculada, no estimada',
-    frameLabel: 'costpro.app · costos',
+    frameLabel: 'adnegocio.app · costos',
   },
   {
     id: 'reports',
@@ -111,9 +111,9 @@ const SECTIONS: StorySection[] = [
     gradient: 'from-pink-500/10 to-transparent',
     image: '/landing/capturas/reportes.webp',
     srcMobile: '/landing/capturas/reportes-movil.webp',
-    imageAlt: 'Generador de reportes de CostPro: configuración del informe y vista previa con transacciones, montos y totales del período.',
+    imageAlt: 'Generador de reportes de ADNegocio: configuración del informe y vista previa con transacciones, montos y totales del período.',
     caption: 'Reportes configurables — con vista previa en vivo',
-    frameLabel: 'costpro.app · reportes',
+    frameLabel: 'adnegocio.app · reportes',
   },
   {
     id: 'security',
@@ -156,7 +156,7 @@ function StoryCard({ section, index }: { section: StorySection; index: number })
         style={{ opacity, scale }}
         className={`relative z-10 max-w-5xl mx-auto px-6 py-16 flex flex-col ${isEven ? 'sm:flex-row' : 'sm:flex-row-reverse'} items-center gap-8 sm:gap-16`}
       >
-        {/* Visual: captura REAL de CostPro (FASE 1) o icono (sección sin captura) */}
+        {/* Visual: captura real de ADNegocio (FASE 1) o icono (sección sin captura) */}
         <motion.div
           style={{ y: iconY }}
           className="shrink-0 w-full sm:w-[58%]"
@@ -265,7 +265,7 @@ export default function ServicesStorySection() {
           transition={{ duration: 0.6 }}
           className="text-xs sm:text-sm font-bold uppercase tracking-[0.25em] text-emerald-400/60 mb-4"
         >
-          CostPro · Plataforma integral
+          ADNegocio · Plataforma integral
         </motion.p>
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
@@ -313,7 +313,7 @@ export default function ServicesStorySection() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             {/* FIX-ENTRY (2026-09-20): CTA intermedio alineado al camino B (Ficha de
-                Costo) — única conversión intermedia; «Entrar a COSTPRO» vive solo en
+                Costo) — única conversión intermedia; «Entrar a ADNegocio» vive solo en
                 el selector del hero (cada CTA con una función distinta). */}
             <a
               href="/fc/"

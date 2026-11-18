@@ -606,7 +606,7 @@ function CostSheetNarrative({ data, calculatedValues = {}, calculatedHeader = {}
             // Footer
             new Paragraph({
               spacing: { before: 400 },
-              children: [new TextRun({ text: `Informe generado automaticamente por CostPro  |  ${new Date().toLocaleString('es-CU')}  |  Basado en la Resolucion 148/2023`, font: 'Calibri', size: 16, color: '94A3B8', italics: true })],
+              children: [new TextRun({ text: `Informe generado automaticamente por ADNegocio  |  ${new Date().toLocaleString('es-CU')}  |  Basado en la Resolucion 148/2023`, font: 'Calibri', size: 16, color: '94A3B8', italics: true })],
             }),
           ],
         }],

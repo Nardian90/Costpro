@@ -116,7 +116,7 @@ export default function ExecutiveDemoView() {
             </h1>
 
             <p className="text-xl text-muted-foreground font-medium leading-relaxed">
-              Experimente cómo CostPro automatiza el procesamiento de un lote completo de 100 productos,
+              Experimente cómo ADNegocio automatiza el procesamiento de un lote completo de 100 productos,
               detectando errores y garantizando rentabilidad en segundos.
             </p>
 
@@ -340,7 +340,7 @@ export default function ExecutiveDemoView() {
 
                        <div className="space-y-2">
                           <div className="flex justify-between text-xs font-black uppercase tracking-widest text-primary">
-                             <span>CostPro Automation</span>
+                             <span>ADNegocio Automation</span>
                              <span>{elapsedTime.toFixed(1)} Segundos</span>
                           </div>
                           <div className="h-8 w-full bg-primary/10 rounded-full overflow-hidden border border-primary/20">

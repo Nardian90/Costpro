@@ -203,7 +203,7 @@ export default function NotFound() {
         transition={{ delay: 1.2, duration: 0.8 }}
         className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 text-xs tracking-wider text-slate-500"
       >
-        CostPro v5.8
+        ADNegocio v5.8
       </motion.p>
 
       {/* ---- Embedded keyframes ---- */}

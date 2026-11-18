@@ -4,7 +4,7 @@
 
 ## Qué es
 
-La vista **Clientes** es el CRM global de CostPro: registro y consulta de clientes por tienda, con alta de datos de contacto y búsqueda rápida.
+La vista **Clientes** es el CRM global de ADNegocio: registro y consulta de clientes por tienda, con alta de datos de contacto y búsqueda rápida.
 
 ## Dónde está
 

@@ -4,9 +4,10 @@ test.describe('Landing Page', () => {
   // Helper: wait for splash to dismiss and landing page to be visible
   async function waitForLandingPage(page: import('@playwright/test').Page) {
     await page.goto('/');
-    // Wait for CostPro branding heading to appear (after splash dismisses)
-    const costProHeading = page.getByRole('heading', { name: /costpro/i });
-    await expect(costProHeading).toBeVisible({ timeout: 15000 });
+    // ADN-BRAND-HERO-REFINEMENT-002: espera el titular monumental del hero
+    // («MENOS MALABARES. MÁS NEGOCIO.» — tras el splash)
+    const heroHeading = page.getByRole('heading', { name: /menos malabares|más negocio/i });
+    await expect(heroHeading).toBeVisible({ timeout: 15000 });
   }
 
   test('should display main navigation', async ({ page }) => {

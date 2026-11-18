@@ -335,10 +335,10 @@ export async function generateCostSheetPDF(body: any): Promise<jsPDF> {
       doc.setFontSize(6.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(140);
-      let footerText = `${timestamp}  |  Pag. ${i}/${pageCount}  |  CostPro`;
-      if (pdfFormat === 'bilingue') footerText = `${timestamp}  |  Pag. ${i}/${pageCount}  |  CostPro Export`;
-      else if (pdfFormat === 'exportacion') footerText = `${timestamp}  |  Pag. ${i}/${pageCount}  |  Generado por CostPro`;
-      else if (pdfFormat === 'comparativo') footerText = `${timestamp}  |  Pag. ${i}/${pageCount}  |  CostPro - Sensibilidad`;
+      let footerText = `${timestamp}  |  Pag. ${i}/${pageCount}  |  ADNegocio`;
+      if (pdfFormat === 'bilingue') footerText = `${timestamp}  |  Pag. ${i}/${pageCount}  |  ADNegocio Export`;
+      else if (pdfFormat === 'exportacion') footerText = `${timestamp}  |  Pag. ${i}/${pageCount}  |  Generado por ADNegocio`;
+      else if (pdfFormat === 'comparativo') footerText = `${timestamp}  |  Pag. ${i}/${pageCount}  |  ADNegocio - Sensibilidad`;
       doc.text(footerText, pageWidth / 2, pageHeight - 6, { align: 'center' });
     }
   }

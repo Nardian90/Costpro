@@ -23,6 +23,7 @@ import { useFilteredNavigation } from '@/hooks/ui/useFilteredNavigation';
 import { useAdaptiveNav } from '@/hooks/ui/useAdaptiveNav';
 import { usePinnedNav } from '@/hooks/ui/usePinnedNav';
 import { cn } from '@/lib/utils';
+import { AdnMonograma } from '@/components/brand/AdnBrand';
 import OnlineStatusDot from '@/components/shared/OnlineStatusDot';
 import { useIsMobile } from '@/hooks/ui/useMobile';
 import { useSidebarHoverExpand } from '@/hooks/ui/useSidebarHoverExpand';
@@ -536,24 +537,26 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             {displayState !== 'rail' ? (
               // GATE 1 §1: clic en el logo → HOME ÚNICA (dashboard). Un solo
               // concepto: Inicio → dashboard · Logo → dashboard · Ctrl+1 → dashboard.
+              // ADN-BRAND-REBUILD-001: marca ADNegocio (ADN verde + egocio).
               <button
                 type="button"
                 onClick={() => setCurrentView('dashboard')}
-                className="text-foreground font-black text-lg uppercase tracking-tighter leading-none hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded px-1 -mx-1"
-                aria-label="CostPro — Ir a Inicio"
+                className="text-foreground font-black text-lg tracking-tight leading-none hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded px-1 -mx-1"
+                aria-label="ADNegocio — Ir a Inicio"
                 title="Ir a Inicio"
               >
-                COST<span className="text-green-600 dark:text-green-400">PRO</span>
+                <span className="text-green-600 dark:text-green-400">ADN</span>egocio
               </button>
             ) : (
+              // Rail (colapsado): únicamente el símbolo compacto ADN (isotipo).
               <button
                 type="button"
                 onClick={() => setCurrentView('dashboard')}
-                className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-black text-xs hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-                aria-label="CostPro — Ir a Inicio"
+                className="w-8 h-8 rounded-lg flex items-center justify-center hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                aria-label="ADNegocio — Ir a Inicio"
                 title="Ir a Inicio"
               >
-                CP
+                <AdnMonograma height={15} className="text-green-600 dark:text-green-400" />
               </button>
             )}
 
@@ -709,7 +712,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             <button
               onClick={() => {
                 const whatsappNumber = "+53 53183215";
-                const message = encodeURIComponent("Hola, me interesa obtener el Plan Pro de CostoPro para tener acceso ilimitado.");
+                const message = encodeURIComponent("Hola, me interesa obtener el Plan Pro de ADNegocio para tener acceso ilimitado.");
                 window.open(`https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${message}`, '_blank');
               }}
               aria-label="Mejorar a Plan Pro"

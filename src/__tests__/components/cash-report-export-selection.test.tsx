@@ -386,7 +386,7 @@ describe('Excel · conceptos, selección y fórmula del esperado', () => {
     expect(est.row[2]).toBe('Diferencias explicadas por la configuración');
     // El oficial de referencia queda íntegro (10 500): no se recalcula con la
     // selección ni con los conceptos:
-    const eo = findRow(aud, 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)');
+    const eo = findRow(aud, 'Efectivo esperado OFICIAL (fórmula completa ADNegocio)');
     expect(eo.row[2]).toBe(10500);
   });
 
@@ -485,7 +485,7 @@ describe('CASO E · integridad de formatos (signos, importes, bases y estado)', 
     // Mismo estado que el PDF:
     expect(findRow(aud, 'Estado').row[2]).toBe('Diferencias explicadas por la configuración');
     // Mismos importes normativos del Caso A:
-    expect(findRow(aud, 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)').row[2]).toBe(10500);
+    expect(findRow(aud, 'Efectivo esperado OFICIAL (fórmula completa ADNegocio)').row[2]).toBe(10500);
     expect(findRow(aud, 'Efectivo esperado PERSONALIZADO (conceptos activos)').row[2]).toBe(11000);
   });
 

@@ -488,7 +488,7 @@ export default function HelpSidebar({ structure, toc, onSelect, activePath, isAc
         <div className="px-5 py-3 border-t border-border/20 bg-gradient-to-t from-muted/20 to-transparent">
           <div className="flex items-center gap-2 text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">
             <Zap className="w-3 h-3" />
-            <span>CostPro Help Engine</span>
+            <span>ADNegocio Help Engine</span>
           </div>
         </div>
       </div>

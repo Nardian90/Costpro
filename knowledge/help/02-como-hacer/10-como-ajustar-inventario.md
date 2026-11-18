@@ -4,7 +4,7 @@
 
 ## ¿Para qué sirve?
 
-CostPro ofrece **dos mecanismos de ajuste**, y elegir el correcto evita errores:
+ADNegocio ofrece **dos mecanismos de ajuste**, y elegir el correcto evita errores:
 
 1. **Ajustes Documentales** (OPERACIÓN → Almacén → Ajustes Documentales): un documento formal que corrige **varios productos a la vez**, comparando stock esperado vs. contado. Es el mecanismo que usa el **Inventario Físico** para volcar sus resultados.
 2. **Ajuste rápido por producto** (desde la pestaña Stock Actual del Inventario): corrige **un solo producto** sumando o restando unidades al momento.

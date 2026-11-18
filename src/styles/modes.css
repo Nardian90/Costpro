@@ -521,7 +521,7 @@ html.mode-performance:not(:has(#landing-root)) .perf-avatar-solid {
    contenedor .loading-branding-visible a la lista de ocultar en performance.
    Antes solo se ocultaban mesh-orbs, bg-tip-text y canvas, pero el
    contenedor Layer 2 con clase loading-branding-visible tenía display:flex
-   que pisaba el display:none, mostrando COSTPRO en performance. */
+   que pisaba el display:none, mostrando la marca en performance. */
 
 html.mode-performance:not(:has(#landing-root)) .mesh-orb {
   display: none !important;
@@ -1343,7 +1343,7 @@ html.mode-performance:not(:has(#landing-root)).dark .landing-tokens .glass-card-
   border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
-/* Isotipo CostPro (C): stops verdes del gradiente -> grises */
+/* Isotipo (C): stops verdes del gradiente -> grises */
 html.mode-performance:not(:has(#landing-root)).dark .logo-stop-start { stop-color: #d4d4d8; }
 html.mode-performance:not(:has(#landing-root)).dark .logo-stop-end { stop-color: #a1a1aa; }
 html.mode-performance:not(:has(#landing-root)).dark [fill="#39ff14"] { fill: #e4e4e7; }

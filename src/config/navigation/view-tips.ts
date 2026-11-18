@@ -97,11 +97,11 @@ export const VIEW_TIPS: Record<string, string> = {
  * Si la vista no tiene tip específico, devuelve un tip genérico.
  */
 export function getTipForView(viewId: string | undefined | null): string {
-  if (!viewId) return 'CostPro — Gestión empresarial integral';
+  if (!viewId) return 'ADNegocio — Plataforma empresarial integral';
 
   const tip = VIEW_TIPS[viewId];
   if (tip) return tip;
 
   // Fallback genérico
-  return 'CostPro — Gestión empresarial integral';
+  return 'ADNegocio — Plataforma empresarial integral';
 }

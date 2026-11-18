@@ -15,7 +15,7 @@ export const AccessibilityStatement: React.FC = () => {
         </div>
         <div>
           <h2 className="text-xl font-black uppercase tracking-tight">Declaración de Accesibilidad</h2>
-          <p className="text-sm text-muted-foreground">CostPro Enterprise v5.8.0</p>
+          <p className="text-sm text-muted-foreground">ADNegocio v5.8.0</p>
         </div>
       </div>
 
@@ -24,7 +24,7 @@ export const AccessibilityStatement: React.FC = () => {
         <section>
           <h3 className="text-sm font-black uppercase tracking-wider text-foreground mb-2">Nuestro compromiso</h3>
           <p>
-            CostPro Enterprise se compromete a garantizar la accesibilidad de su plataforma web 
+            ADNegocio se compromete a garantizar la accesibilidad de su plataforma web 
             conforme a la Norma Europea EN 301 549 y las Pautas de Accesibilidad al Contenido Web (WCAG) 2.1 nivel AA.
           </p>
         </section>

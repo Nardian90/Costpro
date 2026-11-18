@@ -1,5 +1,5 @@
 /**
- * openapi-spec.ts — Full OpenAPI 3.0.3 specification for CostPro Enterprise API.
+ * openapi-spec.ts — Full OpenAPI 3.0.3 specification for the ADNegocio API.
  *
  * Covers all 30 API routes grouped by tag:
  *   System (3), AI (2), CostSheets (6), Inventory (5),
@@ -123,9 +123,9 @@ export function createOpenAPISpec() {
   const spec: Record<string, unknown> = {
     openapi: '3.0.3',
     info: {
-      title: 'CostPro Enterprise API',
+      title: 'ADNegocio API',
       version: '1.0.0',
-      description: `Comprehensive REST API for the CostPro Enterprise cost management platform.
+      description: `Comprehensive REST API for the ADNegocio business management platform.
 
 **Rate Limits:**
 - **Standard endpoints:** 30 requests/minute
@@ -141,7 +141,7 @@ All JSON responses use a consistent format:
 - Success: \`{ ok: true, ...data }\` or \`{ success: true, ...data }\`
 - Error: \`{ error: "message" }\` or \`{ ok: false, error: "message", details: [...] }\``,
       contact: {
-        name: 'CostPro Enterprise Support',
+        name: 'ADNegocio Support',
         email: 'support@costpro.app',
       },
       license: {

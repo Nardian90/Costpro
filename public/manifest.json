@@ -1,6 +1,6 @@
 {
-  "name": "CostPro - Sistema de Gestión Integral",
-  "short_name": "CostPro",
+  "name": "ADNegocio — Plataforma Empresarial Integral",
+  "short_name": "ADNegocio",
   "description": "Plataforma completa para gestión de inventario, ventas y administración de tiendas.",
   "id": "/",
   "start_url": "/",
@@ -10,9 +10,15 @@
   "orientation": "any",
   "dir": "ltr",
   "lang": "es",
-  "categories": ["business", "finance", "productivity"],
+  "categories": [
+    "business",
+    "finance",
+    "productivity"
+  ],
   "permissions_policy": {
-    "camera": ["self"],
+    "camera": [
+      "self"
+    ],
     "microphone": [],
     "geolocation": []
   },
@@ -48,14 +54,14 @@
       "sizes": "1344x768",
       "type": "image/jpeg",
       "form_factor": "wide",
-      "label": "CostPro - Vista de escritorio"
+      "label": "ADNegocio - Vista de escritorio"
     },
     {
       "src": "/mobile-screenshot.png",
       "sizes": "720x1280",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "CostPro - Vista móvil"
+      "label": "ADNegocio - Vista móvil"
     }
   ],
   "shortcuts": [
@@ -64,14 +70,24 @@
       "short_name": "Venta",
       "description": "Iniciar una nueva venta en el POS",
       "url": "/pos",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Inventario",
       "short_name": "Inventario",
       "description": "Ver estado del inventario",
       "url": "/dashboard/inventory",
-      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ],
   "prefer_related_applications": false,
@@ -82,13 +98,19 @@
     }
   ],
   "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
-  "display_override": ["standalone", "fullscreen", "window-controls-overlay"],
+  "display_override": [
+    "standalone",
+    "fullscreen",
+    "window-controls-overlay"
+  ],
   "scope": "/",
   "file_handlers": [
     {
       "action": "/dashboard/inventory",
       "accept": {
-        "text/csv": [".csv"]
+        "text/csv": [
+          ".csv"
+        ]
       }
     }
   ],

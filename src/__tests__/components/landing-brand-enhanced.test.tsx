@@ -11,7 +11,8 @@
  *    .enhanced-layer y siempre lleva dark-only + loading-branding-*.
  * 2. Catálogo: el paso 2 «Organiza tu catálogo» debe referenciar las 4
  *    imágenes demo (demo-products) con nombres/precios/stocks originales.
- * 3. Wordmark: BrandWordmark = «Cost» verde + «Pro» blanco, sin gradiente.
+ * 3. Wordmark: BrandWordmark = «ADN» verde + «egocio» blanco, sin gradiente
+ *    (ADN-BRAND-REBUILD-001 — identidad ADNegocio).
  *
  * jsdom no computa la cascada CSS de <style jsx global> ni animaciones:
  * la prohibición de enhanced-layer y del gradiente se blinda a nivel de
@@ -142,29 +143,71 @@ describe('LANDING-CATALOG-IMAGES — «Organiza tu catálogo»', () => {
   });
 });
 
-describe('FIX-BRAND-HIERARCHY — BrandWordmark', () => {
-  it('renderiza «Cost» verde + «Pro» blanco y sin gradiente', () => {
+describe('ADN-BRAND-REBUILD-001 — BrandWordmark', () => {
+  it('renderiza «ADN» verde + «egocio» blanco y sin gradiente', () => {
     render(<BrandWordmark className="text-lg font-bold" />);
-    const cost = screen.getByText('Cost');
-    const pro = screen.getByText('Pro');
-    expect(cost.className).toContain('text-[#22c55e]');
-    expect(cost.className).not.toContain('text-white');
-    expect(pro.className).toContain('text-white');
-    expect(pro.className).not.toContain('bg-clip-text');
-    expect(pro.className).not.toContain('bg-gradient');
+    const adn = screen.getByText('ADN');
+    const egocio = screen.getByText('egocio');
+    expect(adn.className).toContain('text-[#22c55e]');
+    expect(adn.className).not.toContain('text-white');
+    expect(egocio.className).toContain('text-white');
+    expect(egocio.className).not.toContain('bg-clip-text');
+    expect(egocio.className).not.toContain('bg-gradient');
   });
 
-  it('contrato de fuente: el landing ya no duplica el wordmark con estilos independientes', () => {
+  it('contrato de fuente: identidad única — sin «ADN ADNegocio» (ADN-BRAND-HERO-REFINEMENT-002)', () => {
     const hero = read('src/components/landing/HeroSection.tsx');
     expect(hero).not.toContain('bg-clip-text'); // gradiente del hero eliminado
+    // ADN-BRAND-HERO-REFINEMENT-002: el hero NO repite la marca junto al
+    // titular — ni lockup isotipo+wordmark («ADN ADNegocio»).
+    expect(hero).not.toContain('AdnIsotipo');
+    // ADN-LANDING-FINAL-POLISH-003 §3: el encabezado del landing usa el MISMO
+    // tratamiento que el menú lateral autenticado: BrandWordmark tipográfico
+    // («ADN» verde + «egocio» blanco) — reemplaza al SVG AdnWordmark en el hero.
     expect(hero).toContain('BrandWordmark');
+    expect(hero).not.toContain('AdnWordmark');
+    // El tratamiento debe alinearse con el sidebar autenticado (bold + tight)
+    expect(hero).toContain('font-bold tracking-tight');
+    const sidebar = read('src/components/views/terminal/Sidebar.tsx');
+    expect(sidebar).toContain('>ADN</span>egocio'); // referencia del tratamiento
     const footer = read('src/components/landing/FooterSection.tsx');
     expect(footer).toContain('BrandWordmark');
     const landing = read('src/app/LandingPage.tsx');
     expect(landing).toContain('BrandWordmark');
     // El componente compartido fija la jerarquía decidida
     const brand = read('src/components/landing/BrandWordmark.tsx');
-    expect(brand).toContain("text-[#22c55e]\">Cost</span>");
-    expect(brand).toContain("text-white\">Pro</span>");
+    expect(brand).toContain("text-[#22c55e]\">ADN</span>");
+    expect(brand).toContain("text-white\">egocio</span>");
+  });
+
+  it('contrato ADN-LANDING-FINAL-POLISH-003: pieza de problemas ESTÁTICA y máscara de la «g»', () => {
+    const hero = read('src/components/landing/HeroSection.tsx');
+    // §5: sin ciclo vertical — la flotación cíclica de los chips está eliminada
+    // (el único bucle restante del hero es el micro-indicador de scroll,
+    // aprobado en 002 y ajeno a esta pieza)
+    expect(hero).not.toContain('y: [0, -6, 0]');
+    expect(hero).toContain('ProblemsEditorialScene');
+    expect(hero).not.toContain('ChaosToOrderChips');
+    // Los cuatro problemas reales siguen presentes, cada uno con identidad
+    for (const label of ['ventas en', 'inventario', 'a ojo', 'deudas']) {
+      expect(hero).toContain(label);
+    }
+    // §4: la máscara del titular cubre la descendente de la «g» (Instrument Serif)
+    expect(hero).toContain('pb-[0.34em]');
+    expect(hero).toContain("y: '146%'");
+    // §4 (raíz): el SVG AdnWordmark declara caja de tinta con descendente
+    const brand = read('src/components/brand/AdnBrand.tsx');
+    expect(brand).toContain('WORDMARK_INK_TOP');
+    expect(brand).toContain('WORDMARK_INK_BOTTOM');
+  });
+
+  it('contrato de fuente: el hero mantiene los 3 caminos de entrada (FIX-ENTRY)', () => {
+    const hero = read('src/components/landing/HeroSection.tsx');
+    expect(hero).toContain('data-testid="path-ficha-costo"');
+    expect(hero).toContain('data-testid="path-costpro"');
+    expect(hero).toContain('data-testid="path-demo"');
+    // El CTA principal conserva la recuperación real de sesión (sin recargas)
+    expect(hero).toContain('entrarACostpro');
+    expect(hero).toContain('enterFichaDeCosto');
   });
 });

@@ -287,8 +287,8 @@ export function generateComprobanteCobroPDF(data: ComprobanteCobroData): Uint8Ar
   doc.setProperties({
     title: `Comprobante ${data.comprobante_number} — ${PAYMENT_TYPE_LABELS[data.payment_type]}`,
     subject: `Comprobante de cobro OT ${data.order_number}`,
-    author: data.store_name || 'CostPro',
-    creator: 'CostPro',
+    author: data.store_name || 'ADNegocio',
+    creator: 'ADNegocio',
   });
 
   return new Uint8Array(doc.output('arraybuffer') as ArrayBuffer);

@@ -26,7 +26,7 @@ export class ReleaseGatePdfExporter {
       doc.text('REPORTE DE SALUD DEL SISTEMA', 15, 20);
 
       doc.setFontSize(10);
-      doc.text(`CostPro Terminal Enterprise v${version} | ${dateStr}`, 15, 30);
+      doc.text(`ADNegocio v${version} | ${dateStr}`, 15, 30);
 
       // Global Score Section
       doc.setTextColor(0, 0, 0);
@@ -105,7 +105,7 @@ export class ReleaseGatePdfExporter {
         doc.setFontSize(8);
         doc.setTextColor(150);
         doc.text(
-          `Documento generado automáticamente por el Motor de Observabilidad de CostPro Terminal. Confidencial - Uso Interno. Página ${i} de ${pageCount}`,
+          `Documento generado automáticamente por el Motor de Observabilidad de ADNegocio. Confidencial - Uso Interno. Página ${i} de ${pageCount}`,
           105,
           285,
           { align: 'center' }

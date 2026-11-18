@@ -1319,7 +1319,7 @@ export function ChatBot({ embedded = false, onConversationChange }: { embedded?:
                           ¿En qué puedo ayudarte?
                         </h2>
                         <p className="text-xs sm:text-sm text-muted-foreground max-w-md leading-relaxed mb-6 sm:mb-8">
-                          Soy Darian, tu asistente de CostPro. Puedo consultar costos, ventas, buscar productos y ejecutar acciones.
+                          Soy Darian, tu asistente de ADNegocio. Puedo consultar costos, ventas, buscar productos y ejecutar acciones.
                         </p>
 
                         {/* Embedded input — Z.ai style (centered, no border-t) */}

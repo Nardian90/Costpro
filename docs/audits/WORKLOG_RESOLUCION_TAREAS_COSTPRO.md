@@ -247,3 +247,28 @@ Las 18 fichas CP-RES-001..018 se mantienen **RESUELTA VERIFICADA** sin reapertur
 - **FALTAN: 72 tareas abiertas** (58 pendientes · 11 parciales · 3 no verificables) — más 3 obsoletas que no requieren acción
 - **% DE RESOLUCIÓN: 28.6% pleno · 33.8% ponderado (parciales al 50%)**
 - Trayectoria: 20.8% (16/10, 21/101) → 28.6% (21/10, 30/105)
+
+## ADN-BRAND-REBUILD-001 — Rebranding integral COSTPRO → ADNegocio (2026-11-18)
+**Estado:** COMPLETADO (PR abierto, pendiente de fusión del propietario) · Rama `feat/adnegocio-brand-rebuild-001-20261118`
+- **Identidad**: sistema ADN/NEGOCIO con letterformas reales de Space Grotesk Bold
+  (12 SVG en public/brand/, componentes React src/components/brand/, config central
+  src/config/brand.ts, favicon/PWA regenerados). Verificado visualmente a 16-1920px.
+- **Landing**: rediseño editorial (hero «Todo tu negocio. En un solo lugar.», header
+  fixed con transformación al scroll — sticky roto por overflow-x en html/body,
+  índice de 9 áreas reales, cierre de la misión). SSR/SEO/JSON-LD → ADNegocio
+  (alternateName CostPro). Sin estadísticas inventadas (deprecated eliminadas del render).
+- **Shell**: sidebar (ADNegocio / isotipo en rail), splash y loaders, auth, Darian,
+  reportes, calculadora, health, vistas de negocio, i18n es/en, páginas legales.
+- **Ayuda**: 42 md (194→12 menciones justificadas) + cabeceras UI + glosario.
+- **Documentos generados**: cash-report PDF/DOCX/XLSX, exportadores, legales
+  Res.11 (Identificador ADNegocio), monograma ADN, ticket térmico, inventario, IPV.
+- **FC sub-app**: FC.html rebrand (120) con motor byte-igual (md5 verificado),
+  release-manifest SHA256 regenerado, parcheador R23 reproducible, syntax check OK.
+- **Conservados (técnicos)**: storage keys, cachés SW, IDs plantillas,
+  costpro-enterprise en /api/health, formato backup, protocolo web+costpro,
+  dominios, Sentry, Supabase, recursos protegidos E2E, emails @costpro.app.
+- **Verificación**: tsc OK · eslint 0 errores · vitest 6166/6166 · build compilado
+  (TS interno OOM por RAM del sandbox, tsc aislado OK) · responsive 360-1920 sin
+  overflow · consola limpia · búsqueda de residuales visibles = 0.
+- **Expediente**: docs/audits/adnegocio-brand-rebuild-001/ (9 archivos + SHA256SUMS).
+

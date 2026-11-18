@@ -13,7 +13,7 @@ Un producto del catálogo maestro tiene dos mitades bien separadas:
 - **Identidad compartida** (vive en el maestro, la gobierna la organización): SKU, nombre, descripción, código de barras, unidad de medida, imagen, naturaleza del artículo (producto o servicio).
 - **Datos locales** (viven en cada tienda, son inviolables por el maestro): precio de venta, moneda, costo, existencias, stock mínimo, categoría, proveedor, recepciones, ventas, vales, ajustes y movimientos del kardex.
 
-Cuando la identidad cambia (por ejemplo, se corrige el nombre), el cambio se **propaga** a todas las tiendas conectadas y queda registrado en el historial de cambios. Cuando un dato local cambia (por ejemplo, el precio en una tienda), **ninguna otra tienda se entera**: es el modelo multitienda de COSTPRO intacto.
+Cuando la identidad cambia (por ejemplo, se corrige el nombre), el cambio se **propaga** a todas las tiendas conectadas y queda registrado en el historial de cambios. Cuando un dato local cambia (por ejemplo, el precio en una tienda), **ninguna otra tienda se entera**: es el modelo multitienda de ADNegocio intacto.
 
 ## Ejemplo práctico
 
@@ -44,4 +44,4 @@ El maestro no tiene precio ni existencias: solo identidad. Cada fila local conse
 
 ## Por qué existe
 
-Antes del catálogo maestro, cada tienda nombraba sus productos por su cuenta: el mismo artículo podía llamarse distinto en dos tiendas y compartir imágenes obligaba a subirlas dos veces. El catálogo maestro resuelve eso manteniendo la regla de oro de COSTPRO: **la identidad viaja, el dinero y el inventario no**.
+Antes del catálogo maestro, cada tienda nombraba sus productos por su cuenta: el mismo artículo podía llamarse distinto en dos tiendas y compartir imágenes obligaba a subirlas dos veces. El catálogo maestro resuelve eso manteniendo la regla de oro de ADNegocio: **la identidad viaja, el dinero y el inventario no**.

@@ -48,7 +48,7 @@ Lista completa de todos los productos de la tienda, con sus datos completos: SKU
 Ver *Arqueo de caja*.
 
 **Código de barras**
-Representación visual de un número en líneas negras y blancas. Lo lee la pistola lectora. CostPro usa formatos EAN-13 y Code 128.
+Representación visual de un número en líneas negras y blancas. Lo lee la pistola lectora. ADNegocio usa formatos EAN-13 y Code 128.
 
 **Comisión**
 Porcentaje de las ventas que se paga a un trabajador como incentivo. Ver: *Cómo pagar comisiones*.
@@ -57,13 +57,13 @@ Porcentaje de las ventas que se paga a un trabajador como incentivo. Ver: *Cómo
 Cumplimiento normativo. Sección de la ayuda con documentos legales y normativos.
 
 **Conciliación bancaria**
-Proceso de comparar los extractos del banco con los registros internos para encontrar diferencias. CostPro lo hace automáticamente con 9 reglas de matching.
+Proceso de comparar los extractos del banco con los registros internos para encontrar diferencias. ADNegocio lo hace automáticamente con 9 reglas de matching.
 
 **Costo**
 Lo que a usted le cuesta un producto o servicio. Diferente del precio de venta.
 
 **CSV**
-Formato de archivo de valores separados por comas. Se abre con Excel. CostPro puede importar y exportar en este formato.
+Formato de archivo de valores separados por comas. Se abre con Excel. ADNegocio puede importar y exportar en este formato.
 
 ---
 
@@ -92,7 +92,7 @@ Rol del sistema. Usuario que supervisa una tienda, puede ver reportes, ajustar i
 Término antiguo de la pantalla principal. Hoy se llama **Inicio**.
 
 **Extracto bancario**
-Documento del banco que lista todas las transacciones de la cuenta. CostPro puede importarlo en formato CSV o BANDEC.
+Documento del banco que lista todas las transacciones de la cuenta. ADNegocio puede importarlo en formato CSV o BANDEC.
 
 ---
 
@@ -135,7 +135,7 @@ Lista de todas las recepciones de mercancía registradas.
 Cantidad de productos que tiene la tienda en este momento. Se actualiza automáticamente con ventas, recepciones, ajustes y transferencias.
 
 **IPV**
-Índice de Precios y Variaciones. Módulo avanzado de CostPro para análisis financiero y conciliación bancaria.
+Índice de Precios y Variaciones. Módulo avanzado de ADNegocio para análisis financiero y conciliación bancaria.
 
 ---
 
@@ -165,7 +165,7 @@ Ver *Encargado*.
 Porcentaje de ganancia sobre el precio de venta. Margen = (Ganancia / Precio venta) × 100.
 
 **MVT**
-Formato de exportación contable (Movement Transaction). CostPro puede exportar en este formato para que el contador lo importe en su software.
+Formato de exportación contable (Movement Transaction). ADNegocio puede exportar en este formato para que el contador lo importe en su software.
 
 ---
 
@@ -178,7 +178,7 @@ Término antiguo del panel principal. Hoy esa pantalla se llama **Inicio**. Ver 
 Orden de Compra. Documento formal de pedido a un proveedor.
 
 **Offline**
-Modo sin conexión a Internet. CostPro sigue funcionando offline y sincroniza cuando vuelve la conexión.
+Modo sin conexión a Internet. ADNegocio sigue funcionando offline y sincroniza cuando vuelve la conexión.
 
 ---
 
@@ -194,7 +194,7 @@ Progressive Web App. Tipo de aplicación web que se puede instalar en el disposi
 Point of Sale (Punto de Venta). La terminal donde se cobra a los clientes.
 
 **Pick 3**
-Módulo opcional de CostPro para predicciones y análisis estadístico avanzado.
+Módulo opcional de ADNegocio para predicciones y análisis estadístico avanzado.
 
 ---
 
@@ -260,4 +260,8 @@ Misma producto en diferente presentación. Ej: "Refresco 250ml" y "Refresco 500m
 ## W
 
 **Wiki Contable**
-Sección de CostPro con información contable: clasificador de cuentas, catálogo de cuentas, asientos contables. Para uso del contador.
+Sección de ADNegocio con información contable: clasificador de cuentas, catálogo de cuentas, asientos contables. Para uso del contador.
+
+### ADNegocio
+
+Nombre comercial de la plataforma: una plataforma empresarial integral para administrar, controlar y comprender las operaciones de una empresa (finanzas, ventas, inventario, compras, costo y control documental). **ADNegocio, anteriormente COSTPRO** — el nombre histórico puede aparecer en documentos ya emitidos, identificadores técnicos y registros de auditoría; en esos contextos se conserva por trazabilidad.

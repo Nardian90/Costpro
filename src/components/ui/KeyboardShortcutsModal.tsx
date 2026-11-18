@@ -26,7 +26,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
             Atajos de Teclado
           </DialogTitle>
           <DialogDescription>
-            Navega rápidamente por CostPro usando el teclado.
+            Navega rápidamente por ADNegocio usando el teclado.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-1 py-2">

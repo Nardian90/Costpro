@@ -3,10 +3,11 @@ import { safeRandom } from '@/lib/safe-random';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AdnMonograma } from '@/components/brand/AdnBrand';
 
 /* ── Premium cost tips that rotate during loading ──
  * F6: Gamificación sutil — tips financieros + métricas + datos curiosos
- * que refuerzan el posicionamiento de CostPro como herramienta profesional.
+ * que refuerzan el posicionamiento de ADNegocio como plataforma integral.
  */
 const COST_TIPS = [
   'El costo total es la base para fijar precios competitivos',
@@ -49,7 +50,7 @@ interface ViewLoadingSplashProps {
 }
 
 /**
- * F6: ViewLoadingSplash — Premium loading experience for CostPro.
+ * F6: ViewLoadingSplash — Premium loading experience for ADNegocio.
  *
  * 3 niveles de carga basados en psicología UX cognitiva:
  *
@@ -65,7 +66,7 @@ interface ViewLoadingSplashProps {
  *   Objetivo: sensación de avance progresivo, mantener atención.
  *   Psicología: progress bars make waits feel shorter even when inaccurate.
  *
- * Branding: logo "CP" con gradiente primary→success, línea de progreso
+ * Branding: isotipo "ADN" con gradiente primary→success, línea de progreso
  * con gradiente, todo en paleta corporativa (verde primary + accent success).
  */
 export const ViewLoadingSplash: React.FC<ViewLoadingSplashProps> = ({
@@ -162,7 +163,7 @@ export const ViewLoadingSplash: React.FC<ViewLoadingSplashProps> = ({
         }
       `}} />
 
-      {/* F6: Animated logo — "CP" monogram with pulsing ring */}
+      {/* F6: Animated logo — isotipo ADN (monograma) con anillo pulsante */}
       {level !== 'micro' && (
         <div className={`vls-logo-${id} relative w-14 h-14 flex items-center justify-center`}>
           {/* Rotating ring */}
@@ -177,15 +178,14 @@ export const ViewLoadingSplash: React.FC<ViewLoadingSplashProps> = ({
               opacity="0.6"
             />
           </svg>
-          {/* Monogram */}
+          {/* Isotipo ADN */}
           <div
-            className="relative w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-sm tracking-tighter"
+            className="relative w-10 h-10 rounded-xl flex items-center justify-center text-white"
             style={{
               background: 'linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--success)) 100%)',
-              fontFamily: 'var(--font-space-grotesk), system-ui, sans-serif',
             }}
           >
-            CP
+            <AdnMonograma height={11} />
           </div>
         </div>
       )}

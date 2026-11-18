@@ -1530,7 +1530,7 @@ function DashboardTab({
             )}
             {/* IC-DIVIZA-002 (misión §5): trazabilidad de frescura en la tarjeta —
                 hora de actualización del PROVEEDOR (Diviza) y hora de captura de
-                CostPro, ambas convertidas a la zona horaria de Cuba. Solo cuando
+                ADNegocio, ambas convertidas a la zona horaria de Cuba. Solo cuando
                 la tasa mostrada es real del proveedor que la publicó. */}
             {informalUsd != null && informalCaptureMethod === 'real' && (
               <div className="mb-2 flex flex-col gap-0.5 text-xs text-muted-foreground">
@@ -1543,7 +1543,7 @@ function DashboardTab({
                 {informalCapturedAt && (
                   <span className="flex items-center gap-1.5" data-testid="costpro-captured">
                     <RefreshCw className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                    Captura CostPro: {formatInCubaTz(informalCapturedAt)} (Cuba)
+                    Captura ADNegocio: {formatInCubaTz(informalCapturedAt)} (Cuba)
                   </span>
                 )}
               </div>

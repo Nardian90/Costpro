@@ -1,6 +1,6 @@
 # Tutorial: Gestión Completa de Inventario
 
-Este tutorial cubre el ciclo completo de gestión de inventario en CostPro, desde la creación de productos en el catálogo hasta las operaciones logísticas de recepción, transferencia y auditoría. Aprenderás a mantener un inventario preciso y trazable en todas tus tiendas.
+Este tutorial cubre el ciclo completo de gestión de inventario en ADNegocio, desde la creación de productos en el catálogo hasta las operaciones logísticas de recepción, transferencia y auditoría. Aprenderás a mantener un inventario preciso y trazable en todas tus tiendas.
 
 ## Contenido
 
@@ -58,7 +58,7 @@ Dentro de este módulo encontrarás los siguientes sub-módulos:
 
 ## 2. Catálogo Maestro
 
-El Catálogo Maestro es el registro central de todos los productos del sistema. Aquí se definen las propiedades que se utilizan en todo CostPro: ventas, compras, costos y reportes.
+El Catálogo Maestro es el registro central de todos los productos del sistema. Aquí se definen las propiedades que se utilizan en todo ADNegocio: ventas, compras, costos y reportes.
 
 ### 2.1 Crear un Nuevo Producto
 
@@ -86,7 +86,7 @@ El **código de barras** es opcional: si el producto no trae código, el sistema
 - **Proveedor principal**: proveedor predeterminado para reórdenes
 - **Descripción extendida**: detalles adicionales del producto
 
-> ⚠️ **Importante**: El **SKU debe ser único** en todo el sistema. Si intentas usar un SKU duplicado, CostPro mostrará un error de validación. Planifica una convención de nomenclatura antes de crear productos en masa.
+> ⚠️ **Importante**: El **SKU debe ser único** en todo el sistema. Si intentas usar un SKU duplicado, ADNegocio mostrará un error de validación. Planifica una convención de nomenclatura antes de crear productos en masa.
 
 ### 2.2 Editar un Producto Existente
 
@@ -103,7 +103,7 @@ Los cambios se reflejan inmediatamente en:
 
 #### Eliminación de Productos
 
-Cuando un producto ya no forma parte de tu inventario activo, puedes eliminarlo del catálogo. Sin embargo, dado que la eliminación es una operación permanente, CostPro implementa **confirmaciones de seguridad** para evitar eliminaciones accidentales:
+Cuando un producto ya no forma parte de tu inventario activo, puedes eliminarlo del catálogo. Sin embargo, dado que la eliminación es una operación permanente, ADNegocio implementa **confirmaciones de seguridad** para evitar eliminaciones accidentales:
 
 1. Desde la ficha del producto, haz clic en **"Eliminar"**
 2. El sistema despliega un **modal de confirmación** con:
@@ -118,7 +118,7 @@ Cuando un producto ya no forma parte de tu inventario activo, puedes eliminarlo 
 
 ### 2.3 Generación de Código de Barras
 
-CostPro genera códigos de barras automáticamente desde la ficha del producto:
+ADNegocio genera códigos de barras automáticamente desde la ficha del producto:
 
 1. Abre la ficha del producto
 2. Si el producto no tiene código, usa la opción de **generación automática**: el sistema crea un **EAN-13** a partir del SKU
@@ -135,7 +135,7 @@ La sección **Etiquetas y Códigos** es una entrada propia del menú Almacén (O
 
 ### 2.4 Importación Masiva CSV
 
-Cuando necesitas incorporar una gran cantidad de productos al catálogo, CostPro permite la **importación masiva desde archivos CSV** sin necesidad de crear cada producto de forma individual.
+Cuando necesitas incorporar una gran cantidad de productos al catálogo, ADNegocio permite la **importación masiva desde archivos CSV** sin necesidad de crear cada producto de forma individual.
 
 Para importar productos desde CSV:
 
@@ -155,7 +155,7 @@ Para importar productos desde CSV:
 
 ### 2.5 Incremento Masivo de Precios
 
-Cuando necesitas ajustar los precios de múltiples productos simultáneamente, CostPro ofrece la funcionalidad de **Incremento Masivo de Precios**, accesible desde el Catálogo Maestro.
+Cuando necesitas ajustar los precios de múltiples productos simultáneamente, ADNegocio ofrece la funcionalidad de **Incremento Masivo de Precios**, accesible desde el Catálogo Maestro.
 
 Para aplicar un incremento masivo:
 
@@ -196,7 +196,7 @@ Navega a **Gestión Inventario > Stock Actual** para consultar los niveles de in
 
 #### Análisis ABC
 
-Dentro de la vista de Stock Actual, CostPro ofrece el **Análisis ABC**, una herramienta de clasificación que permite priorizar la gestión de inventario según el valor y la rotación de los productos. Al acceder a esta funcionalidad se despliega un **modal de Análisis ABC** que clasifica automáticamente el inventario en tres categorías:
+Dentro de la vista de Stock Actual, ADNegocio ofrece el **Análisis ABC**, una herramienta de clasificación que permite priorizar la gestión de inventario según el valor y la rotación de los productos. Al acceder a esta funcionalidad se despliega un **modal de Análisis ABC** que clasifica automáticamente el inventario en tres categorías:
 
 | Categoría | Descripción | Características | Política de gestión sugerida |
 |-----------|-------------|-----------------|-------------------------------|
@@ -334,7 +334,7 @@ Operación → Logística → Transferencia Stock
 
 ### 5.2 Flujo de Transferencia
 
-Las transferencias en CostPro funcionan con un **flujo de confirmación en dos pasos** para garantizar la precisión:
+Las transferencias en ADNegocio funcionan con un **flujo de confirmación en dos pasos** para garantizar la precisión:
 
 #### Paso 1: Crear la Transferencia (Tienda Origen)
 

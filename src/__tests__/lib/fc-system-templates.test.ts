@@ -84,7 +84,7 @@ describe('fc-system-templates (FC-SYS-TEMPLATES 2026-11-13)', () => {
 
   it('getSystemTemplateMeta resuelve metadata y falla con null', () => {
     const meta = getSystemTemplateMeta('costpro-reinicio');
-    expect(meta?.name).toBe('CostPro — Reinicio (General)');
+    expect(meta?.name).toBe('ADNegocio — Reinicio (General)');
     expect(getSystemTemplateMeta('no-existe')).toBeNull();
     expect(getSystemTemplateMeta(null)).toBeNull();
   });

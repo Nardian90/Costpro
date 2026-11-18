@@ -6,8 +6,8 @@ import {
 } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Centro Legal — CostPro',
-  description: 'Documentos legales de CostPro Enterprise: política de privacidad, términos y condiciones, plan de respuesta a incidentes, RGPD y más.',
+  title: 'Centro Legal — ADNegocio',
+  description: 'Documentos legales de ADNegocio: política de privacidad, términos y condiciones, plan de respuesta a incidentes, RGPD y más.',
   robots: { index: true },
 };
 
@@ -29,7 +29,7 @@ export default function LegalPage() {
         </div>
 
         <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
-          En CostPro Enterprise nos comprometemos con la transparencia y el cumplimiento normativo.
+          En ADNegocio nos comprometemos con la transparencia y el cumplimiento normativo.
           Aquí encontrará todos nuestros documentos legales y políticas de cumplimiento.
         </p>
 
@@ -47,7 +47,7 @@ export default function LegalPage() {
           <Section
             icon={<FileText className="w-5 h-5" />}
             title="Términos y Condiciones"
-            description="Condiciones de uso de los servicios y plataformas de CostPro Enterprise."
+            description="Condiciones de uso de los servicios y plataformas de ADNegocio."
             href="/terms"
             tag="Contrato de Servicio"
           />
@@ -107,7 +107,7 @@ export default function LegalPage() {
           </div>
 
           <p className="text-sm text-muted-foreground leading-relaxed">
-            CostPro Enterprise cumple con el Reglamento General de Protección de Datos (UE) 2016/679
+            ADNegocio cumple con el Reglamento General de Protección de Datos (UE) 2016/679
             y la Ley Orgánica 3/2018 de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD).
           </p>
 

@@ -230,7 +230,7 @@ export default function RegisterForm({ onBackToLogin }: RegisterFormProps) {
             Crear cuenta
           </h2>
           <p className="text-sm text-muted-foreground">
-            Únete a CostPro y empieza a gestionar tu negocio
+            Únete a ADNegocio y empieza a gestionar tu negocio
           </p>
         </motion.div>
 

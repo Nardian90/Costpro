@@ -244,7 +244,7 @@ export default function InteractiveDemo() {
 
       {/* Title */}
       <h4 className="text-white/90 text-sm sm:text-base font-semibold mb-1 font-[family-name:var(--font-space-grotesk)]">
-        Mira cómo CostPro transforma tu negocio
+        Mira cómo ADNegocio transforma tu negocio
       </h4>
 
       {/* Subtitle */}
@@ -302,7 +302,7 @@ export default function InteractiveDemo() {
                 <div className="w-full max-w-2xl rounded-xl border border-green-500/10 bg-[#111827]/60 transform scale-75">
                   <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5">
                     <div className="w-2 h-2 rounded-full bg-green-500/40" />
-                    <span className="text-[10px] text-white/20">CostPro — Ficha de Costo · Res. 148/2023</span>
+                    <span className="text-[10px] text-white/20">ADNegocio — Ficha de Costo · Res. 148/2023</span>
                   </div>
                   <div className="p-3 space-y-2">
                     <div className="h-3 w-40 bg-white/5 rounded" />

@@ -50,7 +50,7 @@ export const CostSheetBanner = ({ viewMode, setViewMode, onOpenActions }: CostSh
                 FC
               </h1>
               <p className="text-[clamp(0.6rem,3vw,0.75rem)] font-black uppercase tracking-[0.2em] text-primary/70 truncate">
-                COSTPRO
+                ADNEGOCIO
               </p>
             </div>
         </div>

@@ -180,7 +180,7 @@ export const ReportPreview = ({ config }: ReportPreviewProps) => {
               <div className={`w-10 h-10 sm:w-12 sm:h-12 ${logoBg} rounded-lg mb-3 sm:mb-4`} />
               <h2 className={`text-lg sm:text-2xl font-black ${titleText} uppercase tracking-tighter truncate`}>{config.name || 'SIN NOMBRE'}</h2>
               <p className={`text-[10px] sm:text-xs font-bold ${mutedText} uppercase tracking-widest mt-1`}>
-                CostPro Enterprise Reporting v{APP_VERSION_SHORT}
+                ADNegocio Reporting v{APP_VERSION_SHORT}
               </p>
             </div>
             <div className="text-left sm:text-right shrink-0">
@@ -321,7 +321,7 @@ export const ReportPreview = ({ config }: ReportPreviewProps) => {
           {/* Footer */}
           <div className={`mt-6 sm:mt-12 pt-4 sm:pt-8 border-t ${tableRowBorder} flex flex-col sm:flex-row justify-between items-end gap-2`}>
              <div className="space-y-1">
-                <p className={`text-xs font-bold ${footerText} uppercase tracking-[0.2em]`}>Generado por CostPro Terminal</p>
+                <p className={`text-xs font-bold ${footerText} uppercase tracking-[0.2em]`}>Generado por ADNegocio</p>
                 <p className={`text-xs font-medium ${mutedText} italic opacity-80`}>Documento de caracter informativo y contable.</p>
              </div>
              <p className={`text-xs font-black ${footerText} uppercase tracking-widest`}>Pagina 1 de 1</p>

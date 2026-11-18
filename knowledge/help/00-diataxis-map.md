@@ -20,7 +20,7 @@ Piense en ello como una biblioteca con 4 secciones:
 ## Lista completa de documentos
 
 ### 1. Tutoriales (aprender paso a paso)
-- `01-tutoriales/01-primer-inicio.md` — Mi primer día con CostPro
+- `01-tutoriales/01-primer-inicio.md` — Mi primer día con ADNegocio
 - `01-tutoriales/02-primera-venta.md` — Cómo hacer mi primera venta en la caja
 - `01-tutoriales/03-primer-producto.md` — Cómo dar de alta mi primer producto
 - `01-tutoriales/04-primer-reporte.md` — Cómo ver mi primer reporte de ventas

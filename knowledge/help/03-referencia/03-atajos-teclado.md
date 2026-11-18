@@ -49,7 +49,7 @@
 
 ## Atajos universales del navegador
 
-Estos funcionan en cualquier página web, no solo en CostPro:
+Estos funcionan en cualquier página web, no solo en ADNegocio:
 
 | Atajo | Acción |
 |-------|--------|
@@ -106,4 +106,4 @@ Estos funcionan en cualquier página web, no solo en CostPro:
 **¿Qué hago si presiono un atajo por error y pasa algo raro?**
 - Presione **Escape** primero. Cierra la mayoría de las cosas.
 - Si no funciona, presione **F5** para refrescar la página.
-- Si eso tampoco, cierre la pestaña con **Ctrl + W** y vuelva a abrir CostPro.
+- Si eso tampoco, cierre la pestaña con **Ctrl + W** y vuelva a abrir ADNegocio.

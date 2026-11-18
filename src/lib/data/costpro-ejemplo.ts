@@ -507,6 +507,6 @@ const template: CostSheetDataContract = {
     "author": "Eli - Senior Specialist",
     "description": "Ficha de costos para panadería - lote unitario de 8 bolas de pan."
   },
-  "footer": "FIN DEL DOCUMENTO • GENERADO AUTOMÁTICAMENTE POR COSTPRO "
+  "footer": "FIN DEL DOCUMENTO • GENERADO AUTOMÁTICAMENTE POR ADNEGOCIO "
 };
 export default template;

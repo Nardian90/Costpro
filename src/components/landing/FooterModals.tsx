@@ -106,7 +106,7 @@ function ControlCostosContent() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-white/50 leading-relaxed">
-        El motor de costos de CostPro te permite calcular, analizar y optimizar cada centavo de tus productos.
+        El motor de costos de ADNegocio te permite calcular, analizar y optimizar cada centavo de tus productos.
         Desde fórmulas simples hasta estructuras complejas con múltiples componentes y variables.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -270,7 +270,7 @@ function BlogContent() {
     { title: 'Cómo calcular costos reales de tus productos', category: 'Costos', date: '15 Abr 2025', color: '#22c55e', excerpt: 'Aprende a desglosar cada componente del costo de tus productos para obtener márgenes de ganancia reales y competitivos.' },
     { title: '5 errores comunes al gestionar inventario', category: 'Inventario', date: '8 Abr 2025', color: '#3b82f6', excerpt: 'Descubre los errores que más le cuestan dinero a las PYMEs y cómo evitarlos con un sistema de inventario adecuado.' },
     { title: 'Guía completa para abrir tu primer negocio', category: 'Emprendimiento', date: '1 Abr 2025', color: '#f59e0b', excerpt: 'Desde la idea hasta la apertura: licencias, costos iniciales, proveedores y herramientas digitales que necesitas.' },
-    { title: 'Novedades de CostPro v5.8: lo que debes saber', category: 'Producto', date: '25 Mar 2025', color: '#8b5cf6', excerpt: 'Motor de costos mejorado, integración con WhatsApp Business y reportes personalizados con drag & drop.' },
+    { title: 'Novedades de ADNegocio v5.8: lo que debes saber', category: 'Producto', date: '25 Mar 2025', color: '#8b5cf6', excerpt: 'Motor de costos mejorado, integración con WhatsApp Business y reportes personalizados con drag & drop.' },
   ];
   return (
     <div className="space-y-4">
@@ -372,13 +372,13 @@ function PartnersContent() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-white/50 leading-relaxed">
-        Conviértete en partner de CostPro y ayuda a PYMEs de tu región a profesionalizar su gestión.
+        Conviértete en partner de ADNegocio y ayuda a PYMEs de tu región a profesionalizar su gestión.
         Recibe comisiones recurrentes y acceso a recursos exclusivos.
       </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <FeatureCard icon={DollarSign} title="Comisiones Recurrentes" desc="Gana hasta un 20% de comisión mensual por cada cliente referido que se mantenga activo." />
         <FeatureCard icon={Award} title="Programa de Niveles" desc="Silver, Gold y Platinum. Más clientes referidos, mejores comisiones y beneficios exclusivos." />
-        <FeatureCard icon={GraduationCap} title="Capacitación Gratuita" desc="Accede a nuestro programa de certificación y aprende a implementar CostPro en cualquier negocio." />
+        <FeatureCard icon={GraduationCap} title="Capacitación Gratuita" desc="Accede a nuestro programa de certificación y aprende a implementar ADNegocio en cualquier negocio." />
         <FeatureCard icon={Headphones} title="Soporte Dedicado" desc="Canal directo con nuestro equipo técnico para resolver dudas de tus clientes de forma ágil." />
       </div>
       <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
@@ -429,10 +429,10 @@ function TerminosContent() {
     <div className="space-y-1 max-h-[60vh] overflow-y-auto pr-1">
       <p className="text-xs text-white/30 mb-3">Última actualización: Abril 2025</p>
       <LegalItem label="1. Aceptación de los términos">
-        <p>Al crear una cuenta y utilizar CostPro, aceptas estar sujeto a estos Términos de Servicio. Si no estás de acuerdo con alguno de estos términos, no deberás utilizar el servicio.</p>
+        <p>Al crear una cuenta y utilizar ADNegocio, aceptas estar sujeto a estos Términos de Servicio. Si no estás de acuerdo con alguno de estos términos, no deberás utilizar el servicio.</p>
       </LegalItem>
       <LegalItem label="2. Descripción del servicio">
-        <p>CostPro es una plataforma de gestión empresarial que incluye: control de costos, punto de venta, inventario, reportes y funciones asociadas. El servicio se proporciona &quot;tal cual&quot; y puede ser modificado o descontinuado sin previo aviso.</p>
+        <p>ADNegocio es una plataforma de gestión empresarial que incluye: control de costos, punto de venta, inventario, reportes y funciones asociadas. El servicio se proporciona &quot;tal cual&quot; y puede ser modificado o descontinuado sin previo aviso.</p>
       </LegalItem>
       <LegalItem label="3. Cuentas y responsabilidad">
         <p>Eres responsable de mantener la confidencialidad de tus credenciales de acceso y de todas las actividades realizadas bajo tu cuenta. Debes notificarnos inmediatamente de cualquier uso no autorizado.</p>
@@ -444,10 +444,10 @@ function TerminosContent() {
         <p>No deberás: utilizar el servicio para fines ilegales, intentar acceder a sistemas no autorizados, sobrecargar la infraestructura, o revender el servicio sin autorización expresa por escrito.</p>
       </LegalItem>
       <LegalItem label="6. Propiedad intelectual">
-        <p>Todo el contenido, diseño y funcionalidad de CostPro es propiedad intelectual protegida. No podrás copiar, modificar ni distribuir ninguna parte del servicio sin autorización.</p>
+        <p>Todo el contenido, diseño y funcionalidad de ADNegocio es propiedad intelectual protegida. No podrás copiar, modificar ni distribuir ninguna parte del servicio sin autorización.</p>
       </LegalItem>
       <LegalItem label="7. Limitación de responsabilidad">
-        <p>CostPro no será responsable por daños indirectos, incidentales o consecuenciales derivados del uso del servicio. Nuestra responsabilidad total no excederá el monto pagado por el usuario en los últimos 12 meses.</p>
+        <p>ADNegocio no será responsable por daños indirectos, incidentales o consecuenciales derivados del uso del servicio. Nuestra responsabilidad total no excederá el monto pagado por el usuario en los últimos 12 meses.</p>
       </LegalItem>
       <LegalItem label="8. Contacto">
         <p>Para consultas legales, escribe a <span className="text-[#22c55e] font-medium">adrianpompasantana@gmail.com</span> o llama al <span className="text-[#22c55e] font-medium">+53 53183215</span></p>
@@ -568,7 +568,7 @@ const modalConfigs: Record<ModalId, ModalConfig> = {
   },
   'sobre-nosotros': {
     title: 'Sobre Nosotros',
-    description: 'Conoce la historia y misión detrás de CostPro.',
+    description: 'Conoce la historia y misión detrás de ADNegocio.',
     icon: Users,
     maxWidth: 'sm:max-w-lg',
     content: <SobreNosotrosContent />,
@@ -603,7 +603,7 @@ const modalConfigs: Record<ModalId, ModalConfig> = {
   },
   terminos: {
     title: 'Términos de Servicio',
-    description: 'Condiciones de uso de la plataforma CostPro.',
+    description: 'Condiciones de uso de la plataforma ADNegocio.',
     icon: FileText,
     maxWidth: 'sm:max-w-lg',
     content: <TerminosContent />,

@@ -613,7 +613,7 @@ export default function ArenaFC() {
         </tr>`).join('')}
       </table>
 
-      <div class="footer"><p>Informe generado por CostPro Arena FC &bull; ${new Date().toLocaleString('es-CU')}</p></div>
+      <div class="footer"><p>Informe generado por ADNegocio Arena FC &bull; ${new Date().toLocaleString('es-CU')}</p></div>
     </body></html>`;
 
     const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
