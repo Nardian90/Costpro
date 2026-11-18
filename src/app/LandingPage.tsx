@@ -109,8 +109,19 @@ export default function LandingPage() {
   const rafRef = useRef<number>(0);
   const footerRef = useRef<HTMLElement>(null);
 
-  const ahaMomentRef = useRef<HTMLDivElement>(null);
-  const sectionRefs = [heroRef, ahaMomentRef, featuresRef, pricingRef, faqRef];
+  /* ── ADN-LANDING-HERO-AND-PAGER-FIX-004 §5.2 — fuente de verdad única ──
+     El paginador lateral, los atajos 1-5 y el drawer móvil navegan SIEMPRE por
+     los IDs reales del DOM (sectionIds). Antes usaban `sectionRefs` y su
+     posición [1] era `ahaMomentRef`, una ref NUNCA adjunta a ningún elemento
+     (AhaMomentSection no se renderiza) → el punto 2 hacía
+     `ref.current?.scrollIntoView` sobre null y fallaba en silencio.
+     Además `sectionIds[3]='pricing'` no existía en el DOM (el root de
+     PricingSection era id="precios") — alineado en esta misión. */
+  const scrollToSectionById = useCallback((idx: number) => {
+    const el = document.getElementById(sectionIds[idx]);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
 
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
@@ -190,7 +201,9 @@ export default function LandingPage() {
         if (r.top < window.innerHeight * 0.85) setFaqInViewState(true);
       }
 
-      const pricingEl = document.getElementById('pricing-section');
+      // ADN-LANDING-HERO-AND-PAGER-FIX-004: el id real del root de pricing es
+      // "pricing" (antes se consultaba "pricing-section", que nunca existió).
+      const pricingEl = document.getElementById('pricing');
       if (pricingEl) {
         const r = pricingEl.getBoundingClientRect();
         if (r.top < window.innerHeight * 0.85) setPricingInView(true);
@@ -226,25 +239,23 @@ export default function LandingPage() {
         }
       }
       setSectionProgress(totalProgress);
+      // ADN-LANDING-HERO-AND-PAGER-FIX-004 §5.2 — scrollspy por posición:
+      // el punto activo se deriva del mismo cálculo de progreso (posición del
+      // top de cada sección respecto al viewport), determinista para secciones
+      // de CUALQUIER altura. (El IntersectionObserver con threshold 0.3 nunca
+      // disparaba en secciones >3× viewport — p. ej. "como-funciona" (5900px)
+      // solo alcanza ~15% visible → el punto activo no sincronizaba.)
+      setActiveSection(Math.min(numSections - 1, Math.max(0, Math.floor(totalProgress))));
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll(); // estado correcto al montar (p. ej. carga con hash de sección)
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // IntersectionObserver for section navigation dots
-  useEffect(() => {
-    const observers: IntersectionObserver[] = [];
-    sectionRefs.forEach((ref, idx) => {
-      if (!ref.current) return;
-      const observer = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSection(idx); },
-        { threshold: 0.3 },
-      );
-      observer.observe(ref.current);
-      observers.push(observer);
-    });
-    return () => observers.forEach((obs) => obs.disconnect());
-  }, []);
+  // ADN-LANDING-HERO-AND-PAGER-FIX-004 §5.2: el punto activo se calcula por
+  // posición en el scroll handler (ver comentario en el bucle de progreso).
+  // Un IntersectionObserver por umbral es insuficiente para secciones más
+  // altas que el viewport. Estado inicial: sección 1 (hero) hasta primer scroll.
 
   const triggeredSections = useRef<Set<string>>(new Set());
 
@@ -256,7 +267,7 @@ export default function LandingPage() {
           const target = entry.target;
           const sectionMap: Array<[HTMLElement | null, string, () => void]> = [
             [heroRef.current, 'hero', () => setHeroInView(true)],
-            [ahaMomentRef.current, 'aha', () => {}],
+
             [featuresRef.current, 'features', () => setFeaturesInView(true)],
             [pricingRef.current, 'pricing', () => setPricingInView(true)],
             [faqRef.current, 'faq', () => setFaqInViewState(true)],
@@ -272,7 +283,7 @@ export default function LandingPage() {
       },
       { threshold: 0.15, rootMargin: '0px 0px -50px 0px' },
     );
-    [ahaMomentRef, heroRef, featuresRef, pricingRef, faqRef, footerRef].forEach((r) => {
+    [heroRef, featuresRef, pricingRef, faqRef, footerRef].forEach((r) => {
       if (r.current) sectionObserver.observe(r.current);
     });
     return () => sectionObserver.disconnect();
@@ -303,20 +314,22 @@ export default function LandingPage() {
     setChatInput('');
   }, [chatInput]);
 
-  const scrollToSection = useCallback((idx: number) => {
-    sectionRefs[idx]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [sectionRefs]);
+  // ADN-LANDING-HERO-AND-PAGER-FIX-004 §5.2: pager, atajos y drawer comparten
+  // la navegación por ID real (scrollToSectionById). `scrollToSection` se
+  // conserva como alias estable para el drawer móvil y usos existentes.
+  const scrollToSection = scrollToSectionById;
 
   // Demo modal uses InteractiveDemo (self-contained playback)
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      /* atajos 1-5 → navegación por ID real (fix punto 2 — ver scrollToSectionById) */
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
       if (e.key === '?') { e.preventDefault(); setShowShortcutsModal((prev) => !prev); }
       // FIX (2026-07-18): 'T' theme toggle removed — landing is always dark.
-      if (e.key >= '1' && e.key <= '5') { const idx = parseInt(e.key) - 1; sectionRefs[idx]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+      if (e.key >= '1' && e.key <= '5') { scrollToSectionById(parseInt(e.key) - 1); }
       if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) { e.preventDefault(); setShowContactModal(true); }
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setShowCommandPalette((prev) => !prev); }
       if (e.key === 'Escape') { setShowShortcutsModal(false); setShowContactModal(false); setShowChat(false); setShowCommandPalette(false); }
@@ -368,9 +381,11 @@ export default function LandingPage() {
             {sectionIds.map((id, idx) => (
               <div key={id} className="relative">
                 <button
+                  type="button"
                   onClick={() => scrollToSection(idx)}
                   className={`group relative flex items-center justify-end gap-2 outline-none ${activeSection === idx ? 'scale-100' : 'scale-90'} transition-all duration-300`}
                   aria-label={sectionLabels[idx]}
+                  aria-current={activeSection === idx ? 'true' : undefined}
                 >
                   <span className={`text-[10px] font-medium whitespace-nowrap transition-all duration-300 delay-75 ${activeSection === idx ? 'opacity-100 text-[#22c55e] translate-x-0' : 'opacity-0 group-hover:opacity-70 text-white/60 translate-x-1'}`}>
                     {sectionLabels[idx]}
