@@ -23,7 +23,6 @@
 -- presentación amount_origin cuando la fuente primaria lo determina.
 -- ============================================================================
 
-BEGIN;
 
 CREATE OR REPLACE FUNCTION public.fin_compute_metrics(
   p_doctype text, p_document_id uuid,
@@ -791,4 +790,3 @@ BEGIN
   IF v_n > 0 THEN RAISE EXCEPTION 'CP-FIN-001-B-GUARD: authenticated no debe tener INSERT directo en fin_entries'; END IF;
 END $guard$;
 
-COMMIT;

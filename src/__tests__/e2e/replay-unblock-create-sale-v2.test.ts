@@ -477,9 +477,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   (2026-11-19): +1 — 20261119120000_cp_fin001_rectificador_backfill
     //   (fin_rectify_sale_payment_method, FLUJO_CAJA importe_cup_origin,
     //   RECTIFICACION_FIN en fin_document_types, backfill amount_origin) = 181
-    expect(m.total_incluidos).toBe(181);
+    // CP-FIN-001 · PARTE B.1 (2026-11-19): +1 — 20261119130000 rectify_item
+    //   _currency (la moneda de la asignación movida prevalece) = 182
+    expect(m.total_incluidos).toBe(182);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(181);
+    expect(incluidos.length).toBe(182);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

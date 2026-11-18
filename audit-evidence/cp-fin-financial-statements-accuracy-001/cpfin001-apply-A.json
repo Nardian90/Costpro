@@ -1,0 +1,13 @@
+{
+ "script": "prod-apply-migration.mjs",
+ "file": "supabase/migrations/20261118130000_cp_fin_fs_origin_traceability.sql",
+ "sha256_aplicado": "074ef9dd03972cf4db5e03113e05693a0a74dd9ab600e3130873b4e16810fc3e",
+ "batch": "unico-atomico",
+ "resultado": "OK en 2776ms (lote unico aplicado)",
+ "notify_pgrst": 201,
+ "applied_at": "2026-11-18T20:05:39Z",
+ "pr": 1652,
+ "merge": "05f4a5466683071f80e79f0a926a61f4cefb96c4",
+ "nota": "Evidencia reconstruida del log de ejecucion: el script aborto con exit 1 ANTES de escribir el JSON de evidencia porque el registro ON CONFLICT (version) del libro fallo (production_migration_ledger no tiene constraint unica en version). La migracion SI quedo aplicada (lote unico OK, pgrst NOTIFIED) y el libro se registro manualmente (INSERT simple, ver cpfin001-ledger-A.sql). El sha256 coincide con el registrado en el libro.",
+ "verificacion_post": "scripts/out/cpfin001-postapply.json (tiene_cpfin001=true, guard_fix=true, errors=0, universo 538→305)"
+}

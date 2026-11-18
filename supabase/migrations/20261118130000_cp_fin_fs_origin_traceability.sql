@@ -47,7 +47,6 @@
 -- IDEMPOTENTE (CREATE OR REPLACE + ON CONFLICT DO NOTHING + guardas de cuerpo).
 -- ═══════════════════════════════════════════════════════════════════════════
 
-BEGIN;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 1. fin_compute_metrics — BASE = cuerpo LIVE de producción verificado
@@ -1909,7 +1908,6 @@ BEGIN
   IF v_n < 1 THEN RAISE EXCEPTION 'CP-FIN-001-GUARD: create_sale_v2 sin guard de duplicación de transferencia'; END IF;
 END $guard$;
 
-COMMIT;
 
 COMMENT ON COLUMN public.fin_movements.amount_origin IS
   'CP-FIN-001 (2026-11-18): importe ORIGINAL del documento en currency_origin (nominal documentado/cobrado). NULL = dato no registrado (deficiencia de trazabilidad visible en la UI); la aritmética contable permanece en CUP (amount/amount_cup). NUNCA se reconstruye ni inventa.';

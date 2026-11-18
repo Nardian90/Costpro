@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 596,
-  "total_incluidos": 181,
+  "total_considerados": 597,
+  "total_incluidos": 182,
   "total_excluidos": 415,
-  "digest": "88cedf4739ef3cd85453c8e136207ee3e307bfd9bf22e93d95b1217bbb96fdd2",
+  "digest": "b0be702cd864a3a56296ebdfd1d8b6dd4744d9dc1fa0585afc0ccbcb2fcddedf",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5852,25 +5852,36 @@
     },
     {
       "nombre": "20261118130000_cp_fin_fs_origin_traceability.sql",
-      "bytes": 106220,
-      "sha256_original": "c15497e3f9dccbaf02caa1059e3d5bb480c5062e1db37f8b518a9bbc6e7b2418",
+      "bytes": 106205,
+      "sha256_original": "074ef9dd03972cf4db5e03113e05693a0a74dd9ab600e3130873b4e16810fc3e",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261118",
       "observaciones": [],
       "posicion": 180,
-      "sha256_generado": "c15497e3f9dccbaf02caa1059e3d5bb480c5062e1db37f8b518a9bbc6e7b2418"
+      "sha256_generado": "074ef9dd03972cf4db5e03113e05693a0a74dd9ab600e3130873b4e16810fc3e"
     },
     {
       "nombre": "20261119120000_cp_fin001_rectificador_backfill.sql",
-      "bytes": 44882,
-      "sha256_original": "101b7e825e6a18140524b5e354030651f09d7b54755ff1ed63ba3d9153de4b4e",
+      "bytes": 44867,
+      "sha256_original": "e6056a6f5c15914da966b5ab499bd47fe55022a14e3dc7099d31af60ce3d46a5",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261119",
       "observaciones": [],
       "posicion": 181,
-      "sha256_generado": "101b7e825e6a18140524b5e354030651f09d7b54755ff1ed63ba3d9153de4b4e"
+      "sha256_generado": "e6056a6f5c15914da966b5ab499bd47fe55022a14e3dc7099d31af60ce3d46a5"
+    },
+    {
+      "nombre": "20261119130000_cp_fin001_rectify_item_currency.sql",
+      "bytes": 12736,
+      "sha256_original": "2e9d1c86614df0c577ea4d40a93cce5cd87b0f7d900563ed27dc2cf2f99e6764",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261119",
+      "observaciones": [],
+      "posicion": 182,
+      "sha256_generado": "2e9d1c86614df0c577ea4d40a93cce5cd87b0f7d900563ed27dc2cf2f99e6764"
     },
     {
       "nombre": "AUDIT_FIXES.md",

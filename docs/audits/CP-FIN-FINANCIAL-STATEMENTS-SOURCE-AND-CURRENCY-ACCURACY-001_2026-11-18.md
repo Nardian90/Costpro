@@ -1,100 +1,104 @@
-# CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 — Expediente de la misión
-## Corrección de importes, monedas, medios de cobro y trazabilidad documental en Estados Financieros
+# CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 — Expediente final
+## Corrección integral de importes, monedas, medios de cobro, contabilidad y trazabilidad documental en Estados Financieros
 
-**Fecha:** 2026-11-18 · **Tienda analizada:** ENERVIDA-VITALLCONS (`5e6fe821-5465-48b1-b3f1-3aa3182edc38`, tenant `5364ccf8-e6cd-4c38-aea8-b167b3b5576f`)
-**PR:** #1652 (head final `d3873b9d7`; CI 5/5 success: CI · Test Coverage · E2E Aislado · Security CI Gate · SQL Security Gate)
-**Rama:** `fix/fin-statements-origin-traceability-20261118` · **Migración:** `20261118130000_cp_fin_fs_origin_traceability.sql` (aplicada SOLO a la BD aislada CostproE2E)
-**Reglas cumplidas:** cero escrituras en producción; cero modificaciones de asientos históricos (§11); sin migraciones aplicadas a producción sin autorización (§12).
+**Fecha de cierre:** 2026-11-19 · **Tienda:** ENERVIDA-VITALLCONS (`5e6fe821-5465-48b1-b3f1-3aa3182edc38`, tenant `5364ccf8-e6cd-4c38-aea8-b167b3b5576f`)
+**PR principal:** #1652 (merge `05f4a5466683071f80e79f0a926a61f4cefb96c4`, 2026-11-18 20:03 UTC) · **PR complementario:** fase 3 (surface 211 + baselines retiradas + B.1)
+**Autorización:** propietario (§16 de la misión: «finalizar la misión sin otra ronda de confirmaciones»).
 
 ---
 
-## 1. Causa raíz exacta de cada uno de los tres casos
+## A. Informe ejecutivo
 
-### Caso prioritario — 2026-11-07 «125,550.00 USD»
-**Cadena real reconstruida (ventas/pagos en producción, solo lectura):**
+**Estado inicial (confirmado LIVE 2026-11-18/19, solo lectura).**
+El drilldown de Estados Financieros (`fin_get_category_detail` → `CategoryDetailPanel.tsx`) mostraba el importe CONTABLE en CUP etiquetado como importe ORIGINAL en la moneda del documento («125,550.00 USD» cuando 125,550 es el equivalente CUP de 135.00 USD); la columna Documento mostraba «—» para el 100% de las ventas (233/233 sin `invoice_number` desde octubre); la descripción era el genérico «Venta » y la columna Moneda origen «No identificada» para documentos CUP. La causa raíz era DOBLE: (1) presentación — `formatCurrency(m.amount)` etiquetado con `currency_origin`; (2) datos — `fin_movements.amount_origin` (columna del motor 20261113) JAMÁS fue escrita: 538 movimientos con `currency_origin='USD'` sin original, todos de ENERVIDA. Adicionalmente se confirmó un defecto preexistente en `create_sale_v2`: el bloque legacy de transferencia insertaba una SEGUNDA fila de pago cuando el checkout usaba `payment_components` (invariante PT011; demostrado por ablación y SQL directo en la sesión del 18-11).
+
+**Correcciones aplicadas (causa raíz, no cosméticas).**
+1. Motor (migración `20261118130000`, aplicada a producción 2026-11-18 20:05 UTC): `fin_compute_metrics` expone aditivamente `total_cup_origin` (nominal del documento desde `transaction_items`), `tasa_documento` (la REGISTRADA) y `cob_<metodo>_<moneda>_cup_origin` (nominal por método desde `payment_transactions`); `fin_apply_templates`/`fin_post_document` escriben `amount_origin` (NULL cuando no hay dato: jamás se inventa); `fin_post_document_annulment` copia el original al compensatorio; el drilldown expone original+moneda; catálogo de métricas; guard de `create_sale_v2` (`IF v_transfer_amt > 0 AND NOT v_components_ok`).
+2. Presentación (PR #1652): columna «Importe contable (CUP)» con código de moneda explícito; «Importe original» con el nominal registrado o «No registrado»; Documento con ID REAL + acción «Ver documento» (VENTA → Historial de Ventas vía `saleDetailNavContext`, consumo único, RLS de la vista destino); «Documento de origen no disponible» explícito cuando no existe; medio de pago según la CUENTA (no la moneda); ordenamiento por importe contable; descripción con fallback al ID real.
+3. Motor FLUJO_CAJA (migración `20261119120000`): `importe_cup_origin` + `tasa_documento` para documentos de caja en moneda extranjera (nominal registrado del documento).
+4. Rectificador canónico (migración `20261119120000` + parche B.1 `20261119130000`): `fin_rectify_sale_payment_method` — escritor idempotente, fail-closed, ACL solo service_role (patrón T12).
+5. Backfill autorizado (migración `20261119120000`): 233 movimientos completados con evidencia exacta (ver §E).
+6. Badge «En desarrollo»: añadido el 18-11 por instrucción previa y RETIRADO el 19-11 por orden del propietario (§5 de la misión) — Estados Financieros se presenta como funcionalidad disponible; tests de regresión inversos.
+
+**Estado final.** Producción desplegada (deployment success sobre el SHA del merge), health 200, `fin_posting_errors` = 0, la venta e2614f36 muestra Efectivo/135 USD en Historial de Ventas y 125,550 CUP + 135 USD + Efectivo en Caja en Estados Financieros; los KPIs de efectivo/banco provienen de las categorías correctas.
+
+**Limitaciones documentadas (§12).** 305 movimientos históricos quedan con `amount_origin` NULL por diseño/ausencia de fuente primaria exacta (ver §E): se muestran «No registrado». El rectificador soporta cash/transfer/zelle en CUP/USD (EUR/MLC en efectivo no tiene categoría contable: fail-closed). La etiqueta de `exchange_rate` de movimientos históricos permanece 1 (convención del motor).
+
+## B. Conciliación monetaria — caso prioritario (venta e2614f36, 2026-11-07)
+
+| Concepto | Valor verificado |
+|---|---|
+| Documento | `e2614f36-4c86-4317-b80f-6f2fb5d34648` (completed, 01:29 p. m. Havana) |
+| Ítems | Cable Solar Rojo 4mm ×15 @ 4.50 USD + Cable Solar Negro 4mm ×15 @ 4.50 USD |
+| **Importe original** | **135.00 USD** (Σ qty×price_at_sale, price_currency=USD) |
+| **Moneda original** | **USD** · **Tasa registrada: 930.0000** (venta y pago; sin reconstrucción) |
+| **Importe contable** | **125,550.00 CUP** (total_amount = Σ amount_cup del pago, EXACTO) |
+| Asiento original | `2d109ccf` (reconocimiento, posted 2026-11-14 02:15 UTC): ACT_BANCOS D 125,550 · ING_VENTAS C 125,550 · GAS_COSTO_VENTAS D 25,200 · ACT_INVENTARIO C 25,200 |
+| Pago | `e1eb5e60`: **método corregido zelle→cash**, USD 135.00, amount_cup 125,550, tasa 930 (importe y tasa INTACTOS) |
+
+Tras el backfill, las líneas ING_VENTAS y ACT_BANCOS del asiento original llevan `amount_origin=135.00 USD`; las líneas de costo permanecen NULL (semántica del motor).
+
+## C. Rectificación de la venta e2614f36 (§6 — autorizada y EJECUTADA)
+
+- **Hecho económico confirmado por el propietario:** se cobraron **135.00 USD EN EFECTIVO** (no Zelle, no transferencia).
+- **Ejecución:** `fin_rectify_sale_payment_method('e2614f36…','zelle','cash', a1111111, '<causa>')` vía Management API (postgres), 2026-11-18 20:20:07 UTC.
+- **Asiento de rectificación:** `cf781c93-5be4-496f-8297-f018ae96d77a` — `RECTIFICACION_FIN` / `ajuste_manual` / `RECT-FIN-E2614F36` / economic_date 2026-11-07 / posted:
+  - ACT_BANCOS **crédito 125,550.00 CUP** (amount_origin 135.00 USD) — «Contra-partida: retiro del cobro clasificado como zelle (asiento 2d109ccf)»
+  - ACT_EFECTIVO_USD **débito 125,550.00 CUP** (amount_origin 135.00 USD) — «Cobro real cash … reclasificado a ACT_EFECTIVO_USD»
+  - `traza` con `ref_entry` 2d109ccf, `ref_mov` f89b5424, causa y misión.
+- **Conservado íntegro:** ING_VENTAS (una sola línea), COGS 25,200, inventario, cantidad vendida, 135 USD, tasa 930, 125,550 CUP. El asiento original NO se editó (histórico intacto).
+- **Datos de la operación corregidos** (Historial de Ventas): `transactions.payment_method`='cash', `cash_amount`=125,550, `zelle_amount`=0; `payment_transactions.payment_method`='cash' (nota «Rectificado zelle → cash»; idempotency_key y tasa intactos); ítems: `cash_paid`=67.50, `cash_currency`='USD', `zelle_paid`=0 (parche B.1: la moneda de la asignación movida prevalece).
+- **Efecto en saldos (ENERVIDA):** ACT_BANCOS 25,974,520.01 → **25,848,970.01** (−125,550); ACT_EFECTIVO_USD 132,610.00 → **258,160.00** (+125,550). Activos totales sin cambio (reclasificación entre cuentas). Neto de esta venta: bancos 0,00 · caja USD +125,550.
+- **Idempotencia:** segunda ejecución → `YA_APLICADO`; exactamente 1 asiento de rectificación.
+- **Evidencia:** `scripts/out/cpfin001-rectify-{PRE,RESULT,POST}.json` (réplica en `audit-evidence/`).
+
+## D. Casos del 14 y 17 de noviembre (§11 — conciliados, SIN cambios)
+
+**Caso B — 14-11, venta `83b8e88e`:** CUP 10,000, pago `231d6911` método **transfer** CUP → asiento `3b704c9a` ACT_BANCOS débito 10,000. **Clasificación CORRECTA según los datos registrados** (transferencia bancaria real). Tras el backfill su línea ING_VENTAS lleva original NULL (documento CUP: sin conversión, la UI muestra moneda CUP sin duplicación). No se modificó.
+
+**Caso C — 17-11, venta mixta `867d9017`:** total 7,200 CUP = efectivo 4,800 (pago `829359f6` → ACT_EFECTIVO_CUP débito 4,800) + transferencia 2,400 (pago `ec89dfe0` → ACT_BANCOS débito 2,400) + ING_VENTAS crédito 7,200 + COGS 1,603. La fila «2,400 Reconocimiento» que motivó la consulta es la parte de transferencia de esta venta mixta: **componentes suman el total exacto y están en cuentas diferentes — clasificación CORRECTA**. Un único reconocimiento de ingresos. No se modificó.
+
+**Regla de conciliación cumplida (ambos casos):** cada pago vinculado a su documento, cada componente clasificado por su forma de pago real, reconocimiento único, moneda original distinta de la contable cuando aplica, sin duplicados.
+
+## E. Históricos USD — universo 538 (§12 — auditado y conciliado)
+
+Universo: 538 movimientos `currency_origin='USD'` sin `amount_origin`, **todos de ENERVIDA** (verificado por tienda). Dry-run previo con desglose exacto (`scripts/out/cpfin001-backfill-dryrun.json` + `cpfin001-dryrun2.json`); reglas = réplica EXACTA de la semántica del motor nuevo; aplicación idempotente (solo `amount_origin`, importes contables intactos).
+
+| Regla | Conjunto | Resultado |
+|---|---|---|
+| R1 — ING_VENTAS: nominal del documento (Σ qty×price_at_sale, ítems en moneda del doc) | 130 | **101 completados** (Σ 13,519.50 USD) · 29 NULL (ítems solo en CUP: no existe nominal USD; reconstruir por división de tasa está PROHIBIDO §12) |
+| R2 — ACT_BANCOS débito: nominal del grupo de pagos (método, moneda≠CUP) con Σamount_cup == amount_cup del movimiento (match ÚNICO) | 131 | **130 completados** (Σ 15,333.63 USD) · 1 NULL (transfer CUP 6,500 de d461485c: cobro en CUP, el motor no escribe original para cobs CUP) |
+| R3 — FLUJO_CAJA: nominal registrado del documento de caja | 2 | **2 completados** (IE-000002-2026, 367.00 USD × 800 = 293,600 exacto) |
+| — COGS/inventario (GAS_COSTO_VENTAS + ACT_INVENTARIO) | 260 | NULL por diseño (el motor no escribe original para líneas de costo) |
+| — Cobros CUP en ventas USD (ACT_EFECTIVO_CUP) | 15 | NULL por semántica (cob_cash_cup no tiene contraparte _origin) |
+| **Total** | **538** | **233 completados + 305 NULL documentados** |
+
+Estado final verificado en producción: 235 movimientos USD CON original (233 del backfill + 2 del asiento de rectificación RECT-FIN) y 305 NULL. La UI muestra «No registrado» para los NULL (limitación documentada, sin invención).
+
+## F. Implementación
 
 | Elemento | Valor |
 |---|---|
-| Documento de origen (venta) | `e2614f36-4c86-4317-b80f-6f2fb5d34648` (transactions, status `completed`) |
-| Productos | Cable Solar Rojo 4mm ×15 @ 4.50 USD + Cable Solar Negro 4mm ×15 @ 4.50 USD (skus 88 y 87) |
-| **Importe original** | **135.00 USD** (Σ cantidad × precio por ítem; coincide con la estimación del propietario) |
-| Tasa registrada | **930.0000** (`transactions.sale_exchange_rate`; idéntica en el pago) |
-| Equivalente contable | **125,550.00 CUP** (`total_amount`; Σ amount_cup de pagos EXACTO) |
-| Pago registrado | `e1eb5e60-f883-42c2-b2a5-0545976d7460`: method **zelle**, currency USD, amount **135.00**, amount_cup 125,550, tasa 930 |
-| Asiento contable | `2d109ccf-1e44-4217-a260-d9f80c1fa442` (reconocimiento, posted 2026-11-14 02:15 UTC): **ACT_BANCOS débito 125,550** · ING_VENTAS crédito 125,550 · GAS_COSTO_VENTAS débito 25,200 · ACT_INVENTARIO crédito 25,200 |
-| `invoice_number` | **NULL** → Documento «—» y descripción «Venta » (espacio final) |
+| PR principal | #1652 — 30 archivos · merge `05f4a5466683071f80e79f0a926a61f4cefb96c4` · CI 9/9 success en `f4657af70` |
+| Migraciones a producción (canal Management API, lote único, libro registrado) | `20261118130000` (sha 074ef9dd03972cf4…, 2026-11-18 20:05 UTC) · `20261119120000` (sha e6056a6f5c15914d…, 20:07 UTC) · `20261119130000` B.1 (sha 2e9d1c86614df0c5…, 20:20 UTC) |
+| Libro de migraciones | 3 entradas nuevas `applied` (evidencia JSON en cada una) |
+| Contract-surface | Regenerado LIVE dos veces: 211 funciones (sha `e8f1abb6cdd725ba…` final, incluye `fin_rectify_sale_payment_method`) |
+| Baselines temporales | Las 3 de la misión (`create_sale_v2/34`, `fin_post_document/5`, `fin_post_document_annulment/2`) **RETIRADAS** de `ci-gate-allowlist.json` — el contrato estático pasa sin ellas (surface = stream) |
+| Manifiesto replay | 180 → **182** migraciones (A, B, B.1); `--check` MATCH |
+| Normalización | Migraciones A y B sin control transaccional explícito (convención del canal de producción; semántica idéntica) |
+| Rectificación | `RECT-FIN-E2614F36` (`cf781c93`) — ver §C |
 
-**Causa raíz (dos capas):**
-1. **Presentación:** `CategoryDetailPanel.tsx` columna «Moneda origen» imprimía `formatCurrency(m.amount)` — el importe **contable en CUP** — etiquetado con `currency_origin` del documento → «125,550.00 USD», cuando 125,550 es el equivalente CUP y el original es 135.00 USD.
-2. **Datos del motor:** `fin_movements.amount_origin` (columna de la migración motor 20261113) **jamás fue escrito** (538 movimientos con `currency_origin='USD'` y `amount_origin` NULL en producción): el motor no computaba el nominal original ni lo propagaba a las líneas.
+## G. Cierre
 
-### 2026-11-14 «10,000.00» (moneda «No identificada»)
-Venta `83b8e88e-ae01-413b-b6bf-159353e57856`: CUP 10,000, pago `231d6911` method **transfer** CUP 10,000 → asiento `3b704c9a`: ACT_BANCOS débito 10,000 (coherente con el registro). La columna mostraba «No identificada» porque la UI ocultaba `currency_origin='CUP'` (y NULL) — no había dato que mostrar, no hay error monetario en esta fila.
-
-### 2026-11-17 «2,400.00» (moneda «No identificada»)
-Venta **MIXTA** `867d9017-4e9d-41de-9a99-028296838e0a`: total 7,200 CUP = efectivo 4,800 (pago `829359f6`) + transferencia 2,400 (pago `ec89dfe0`). El reconocimiento `674b53ca…` tiene 5 líneas: ACT_EFECTIVO_CUP débito 4,800 · **ACT_BANCOS débito 2,400** · ING_VENTAS crédito 7,200 · GAS débito 1,603 · INVENTARIO crédito 1,603. **La fila «2,400 Reconocimiento» que ve el propietario es la parte de transferencia de esa venta mixta — clasificación correcta según los pagos registrados.**
-
-**Alcance del defecto «Documento = —»:** `invoice_number` es NULL en **233/233 ventas** del sistema desde octubre (100%).
-
-## 2. Medio de pago confirmado y DISCREPANCIA documentada (7-11)
-El propietario informa **cobro en efectivo**; los registros originales de COSTPRO (payment_transactions + transactions.payment_method) registran **zelle**. La clasificación del motor (ACT_BANCOS) es coherente con los DATOS REGISTRAADOS — el defecto está en el dato capturado en el POS, no en el motor. Conforme a §11 de la misión: **no se modificó el histórico**; ver §8 (propuesta de rectificación).
-
-## 3. Correcciones implementadas (causa raíz, no solo texto)
-
-### Motor (migración `20261118130000`, cuerpos BASE = LIVE capturada byte-a-byte el 2026-11-18)
-1. `fin_compute_metrics` — VENTA expone **ADITIVAMENTE**: `total_cup_origin` (nominal del documento desde `transaction_items.price_at_sale` con `price_currency` = moneda del doc), `tasa_documento` (la REGISTRADA — nunca reconstruida) y `cob_<metodo>_<moneda>_cup_origin` (nominal por método desde `payment_transactions.amount`). Descripción con fallback al **ID real** (`'Venta <id8>'`) cuando no hay `invoice_number`.
-2. `fin_apply_templates` / `fin_post_document` — escriben `fin_movements.amount_origin` (NULL cuando no hay dato: **jamás se inventa**).
-3. `fin_post_document_annulment` — el compensatorio copia `amount_origin`.
-4. `fin_get_category_detail` — expone `amount_origin` + `currency` al drilldown.
-5. `fin_metric_catalog` — métricas de origen visibles al constructor (Vista A).
-6. **`create_sale_v2` (§5b, defecto preexistente corregido):** el bloque legacy de TRANSFERENCIA insertaba una **SEGUNDA fila de pago** cuando el cliente declaraba `payment_components` → invariante I1b reventaba `ERR_PAYMENT_INVARIANT_VIOLATED` (SUM(amount_cup) duplicaba la parte transfer; en PostgREST se manifestaba como reset 502). Demostrado en la aislada por **ablación** (falla igual con y sin los cuerpos CP-FIN-001) y por SQL directo (PT011: 8370 ≠ 4185). Corrección de UNA línea: `IF v_transfer_amt > 0 AND NOT v_components_ok THEN` (el mismo guard que el bloque zelle ya usa). Cualquier venta con componente de transferencia (CUP o USD) era **imposible** desde el riel canónico; esto bloqueaba los escenarios §10.4/§10.11 de la propia misión.
-7. Guard fail-closed de cuerpos al final de la migración.
-
-### Presentación (frontend)
-- **`CategoryDetailPanel.tsx`**: columna «Importe contable (CUP)» con código de moneda EXPLÍCITO (`formatLabeledCurrency`); columna «**Importe original**» con el nominal registrado (ej. caso 7-11 corregido: `135.00 USD` + `125,550.00 CUP` — nunca 125,550 etiquetado USD); histórico sin original → «**No registrado**» explícito (deficiencia de trazabilidad, título explicativo); moneda CUP → «—» (sin duplicación); **Documento** con número o ID REAL (prefijo del UUID con title del UUID completo); acción «**Ver documento**» para VENTA → Historial de Ventas vía `saleDetailNavContext` (ID real, consumo único, permisos de la vista destino); documento no localizable → aviso explícito «Documento de origen no disponible»; **Medio de pago** según la CUENTA del asiento (Efectivo CUP/USD · Banco/Transferencia — no por la moneda, §5); descripción sin espacio residual; **ordenamiento por importe contable** (§10.17).
-- **`types.ts`**: `MovementRow.amount_origin` + `currency`.
-- Convención Débito/Crédito §8: **intacta** (sin cambios de signos ni columnas).
-
-### Navegación
-- `store/index.ts`: `SaleDetailNavContext` (patrón financialOpeningNavContext, consumo único).
-- `useSalesHistoryView.ts`: consume el contexto — abre `TransactionDetailsModal` para el ID real; si la venta no está en el historial → toast «Documento de origen no disponible» + console.warn (§6).
-
-### Menú (orden del propietario, 2026-11-19)
-- El badge «En desarrollo» añadido el 18-11 a Estados Financieros fue **RETIRADO** por orden expresa del propietario (§5 de la misión): la vista se presenta como **funcionalidad disponible**. Se retiró de Sidebar, SectionHubView, GroupHubView, sheet móvil (MobileTabBar), FlatNavItem y NavModule, junto con `NavEntry.isInDevelopment`, la captura `menu-en-desarrollo.png` y los tests que lo verificaban — sustituidos por pruebas de regresión inversas (badge ausente, vista navegable).
-
-## 4. Importes/monedas/tasas — verificación E2E (BD aislada, escritores reales)
-| Escenario | Resultado |
+| Control | Resultado |
 |---|---|
-| CUP/efectivo 2,000 | ACT_EFECTIVO_CUP débito 2,000; banco sin línea; original NULL (sin conversión inventada) ✓ |
-| CUP/transferencia 1,000 | ACT_BANCOS débito 1,000 ✓ |
-| **USD/efectivo tasa 930 (9 USD)** | ACT_EFECTIVO_USD débito **8,370** = amount_cup de pago; **amount_origin 9.00 USD** en ingreso y cobro; pago persistido con nominal 135→9 USD y tasa 930 (UNA conversión) ✓ |
-| USD/transferencia (4.50 USD) | ACT_BANCOS débito 4,185 con original 4.50 USD ✓ (requirió el fix de create_sale_v2) |
-| Mixta CUP (1,200+800) | caja 1,200 + banco 800 en el MISMO documento ✓ |
-| Idempotencia (re-checkout) | misma venta, 1 asiento, 1 pago ✓ |
-| Apertura sin document_id | fila sin identificador, sin navegación inventada ✓ |
-| Reversión USD | anulacion enlazada (reversal_of) **copia amount_origin 4.50** ✓ |
-| Filtros período/tienda | sin fugas ✓ · **RLS**: clerk → ERR_UNAUTHORIZED ✓ |
+| CI del PR #1652 | 9/9 success (CI · Test Coverage · E2E Aislado · Security CI Gate · SQL Security Gate · TypeCheck+Lint+Unit+Build · SQL Static/DB · Security Audit · Allowlist) |
+| E2E aislada (CostproE2E) | **20/20 PASS** (batería §10 completa + caso de aceptación 7-11 + E19 rectificación/idempotencia + E20 flujo de caja USD) · guardrail **net delta = 0** · hygiene PASS |
+| Vitest | 15/15 (panel + navegación) · replay 7/7 (182) |
+| Gates locales | contract-static OK (2 warnings MEDIUM/LOW preexistentes) · SQL checks OK · BOLA OK · check-writers OK (script de aplicación aislada declarado) · replay MATCH |
+| Ledger | 3 migraciones registradas (`management_api`, `applied`) |
+| Deployment | GitHub Deployment **success** sobre `05f4a54666` (Production, 2026-11-18 20:14 UTC) |
+| Health producción | `{"status":"ok"}` HTTP 200 · drilldown LIVE verificado con `amount_origin` |
+| Worklog | Actualizado por fases (protocolo 11a) |
 
-## 5. Tests y controles
-- **Vitest** 19/19 (9 del drilldown + 6 navegación + 4 vista) · **ESLint** 0 errores (repo y archivos tocados).
-- Correcciones de CI: `MovementRow.document_id: string | null` (TS2322 ×3 — el RPC devuelve NULL en aperturas) y manifiesto 179 → 180 (bump del conteo).
-- **E2E misión** `e2e/fin-statements-origin-traceability.spec.ts`: **18/18 PASS** (stats: expected=18, unexpected=0) + guardrail **net delta = 0**.
-- **tsc**: OOM en sandbox (3 GB RAM) — TypeCheck autoritativo en CI (job TypeCheck+Lint+Unit+Build).
-- **Gates**: destructive-guard OK · BOLA 5/5 · check-writers OK (147 excepciones) · contrato estático OK con **3 baselines temporales** (patrón 1616) · ledger-sync OK · replay MATCH (180 migraciones) · SQL Static/DB Security y Security Audit corren en CI del PR.
-
-## 6. Propuesta de rectificación histórica (REQUIERE AUTORIZACIÓN — NO ejecutada)
-1. **Clasificación 7-11**: si el propietario confirma que el cobro real fue EN EFECTIVO, la rectificación (vía escritor canónico, migración con autorización expresa) sería: reversa compensatoria de la parte ACT_BANCOS 125,550 del asiento `2d109ccf` + débito equivalente en ACT_EFECTIVO_USD 125,550 (el KPI «Efectivo en caja (USD)» suma 125,550 CUP y «Bancos y transferencias» resta lo mismo; ING_VENTAS intacta). **NO se ejecuta en esta misión (§11).**
-2. **amount_origin histórico** (538 movimientos USD sin original): migración autorizada de completado de datos (UPDATE de campo de presentación nullable, sin tocar asientos/saldos) reconstruyendo desde `payment_transactions.amount` (fuente registrada; sin reconstrucciones por tasa). Mientras tanto la UI lo declara «No registrado».
-3. Tras la autorización de producción: aplicar migración → regenerar surface → retirar las 3 baselines temporales (patrón 1616/1605).
-
-## 7. Impacto sobre indicadores
-Ningún cambio de saldos por esta misión (corrección de presentación/trazabilidad; el guard de create_sale_v2 solo habilita ventas hoy imposibles). Con el dato registrado actual, el 7-11 sigue en «Bancos y transferencias» (correcto según registros); la rectificación §6.1 movería 125,550 CUP de banco a efectivo USD **solo con autorización**.
-
-## 8. Ficheros del PR
-- `supabase/migrations/20261118130000_cp_fin_fs_origin_traceability.sql`
-- `src/components/views/terminal/views/financial_statements/{CategoryDetailPanel,types}.tsx/.ts`
-- `src/store/index.ts` · `src/components/views/terminal/views/sales/useSalesHistoryView.ts`
-- `src/config/navigation/{navigation-definition,mobile-sheet,sidebar.structure}.ts` · `src/components/views/terminal/Sidebar.tsx` · `MobileTabBar.tsx` · `section_hub/{GroupHub,SectionHub}View.tsx` (retiro del badge «En desarrollo», 2026-11-19)
-- `src/__tests__/components/financial-statements-category-detail.test.tsx` · `src/__tests__/navigation/fin-navigation.test.ts`
-- `e2e/fin-statements-origin-traceability.spec.ts` · `ci-gate-allowlist.json` · manifiesto replay regenerado
-- Evidencia: `audit-evidence/cp-fin-financial-statements-accuracy-001/` (producción solo lectura, verificación E2E, reporte 18/18, capturas UI) — escaneada: **0 secretos**.
+**Declaración:** CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 — COMPLETADA Y DESPLEGADA.
