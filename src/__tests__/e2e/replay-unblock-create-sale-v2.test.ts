@@ -473,9 +473,13 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-18):
     //   +1 — 20261118130000_cp_fin_fs_origin_traceability (amount_origin /
     //   métricas de origen VENTA, drilldown, guard create_sale_v2) = 180
-    expect(m.total_incluidos).toBe(180);
+    // CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 · PARTE B
+    //   (2026-11-19): +1 — 20261119120000_cp_fin001_rectificador_backfill
+    //   (fin_rectify_sale_payment_method, FLUJO_CAJA importe_cup_origin,
+    //   RECTIFICACION_FIN en fin_document_types, backfill amount_origin) = 181
+    expect(m.total_incluidos).toBe(181);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(180);
+    expect(incluidos.length).toBe(181);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
