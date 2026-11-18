@@ -165,7 +165,7 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
                       )}
                       {/* CP-FIN-001: badge «En desarrollo» (vista no lista). */}
                       {child.isInDevelopment && (
-                        <span className="text-sm font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
+                        <span data-testid="nav-badge-en-desarrollo" className="text-sm font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
                           En desarrollo
                         </span>
                       )}
@@ -226,7 +226,7 @@ export default function GroupHubView({ groupId }: GroupHubViewProps) {
                       )}
                       {/* CP-FIN-001: badge «En desarrollo» (vista no lista). */}
                       {child.isInDevelopment && (
-                        <span className="text-sm font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
+                        <span data-testid="nav-badge-en-desarrollo" className="text-sm font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
                           En desarrollo
                         </span>
                       )}

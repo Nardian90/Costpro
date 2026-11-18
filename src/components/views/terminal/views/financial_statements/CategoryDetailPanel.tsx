@@ -114,6 +114,11 @@ export function CategoryDetailPanel({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // CP-FIN-001 §10.17: ordenamiento por importe en la moneda correspondiente.
+  // La moneda contable del drilldown es única (CUP): ordenar por amount_cup es
+  // determinista y no mezcla monedas. El orden canónico (fecha/posted) es el
+  // default del ledger.
+  const [amountSort, setAmountSort] = useState<'none' | 'desc' | 'asc'>('none');
 
   const load = useCallback(
     async (offset: number) => {
@@ -204,14 +209,38 @@ export function CategoryDetailPanel({
               <th className="px-2.5 py-2 text-left">Tipo</th>
               <th className="px-2.5 py-2 text-left">Evento</th>
               <th className="px-2.5 py-2 text-center">Débito/Crédito</th>
-              <th className="px-2.5 py-2 text-right">Importe contable (CUP)</th>
+              <th className="px-2.5 py-2 text-right">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setAmountSort((s) => (s === 'none' ? 'desc' : s === 'desc' ? 'asc' : 'none'))
+                  }
+                  className={cn(
+                    'inline-flex items-center gap-1 uppercase tracking-widest hover:text-foreground transition-colors min-h-[28px] px-1 rounded',
+                    amountSort !== 'none' && 'text-primary',
+                  )}
+                  title="Ordenar por importe contable (CUP) — la moneda única del drilldown"
+                  data-testid="sort-importe-contable"
+                >
+                  Importe contable (CUP)
+                  {amountSort === 'desc' ? ' ↓' : amountSort === 'asc' ? ' ↑' : ''}
+                </button>
+              </th>
               <th className="px-2.5 py-2 text-right hidden md:table-cell">Importe original</th>
               <th className="px-2.5 py-2 text-left hidden lg:table-cell">Medio de pago</th>
               <th className="px-2.5 py-2 text-left">Descripción</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/50">
-            {movements.map((m) => {
+            {[...movements]
+              .sort((a, b) =>
+                amountSort === 'none'
+                  ? 0
+                  : amountSort === 'desc'
+                    ? b.amount_cup - a.amount_cup
+                    : a.amount_cup - b.amount_cup,
+              )
+              .map((m) => {
               const originalCell = originalAmountCell(m);
               const hasNavigation = !!m.document_id;
               return (

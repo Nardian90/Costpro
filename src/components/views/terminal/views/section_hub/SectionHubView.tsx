@@ -211,7 +211,7 @@ export default function SectionHubView({ submenuId }: SectionHubViewProps) {
                   )}
                   {/* CP-FIN-001: badge «En desarrollo» (vista no lista). */}
                   {child.isInDevelopment && (
-                    <span className="text-[10px] font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
+                    <span data-testid="nav-badge-en-desarrollo" className="text-[10px] font-black uppercase tracking-widest bg-warning/15 text-warning px-2 py-0.5 rounded-full border border-warning/30">
                       En desarrollo
                     </span>
                   )}
