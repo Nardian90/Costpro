@@ -1,6 +1,6 @@
 # Plan de Respuesta a Incidentes de Seguridad
 
-**CostPro Enterprise**  
+**ADNegocio**  
 **Framework:** NIST SP 800-61 Rev. 2 — Computer Security Incident Handling Guide  
 **Versión:** 1.0  
 **Fecha de vigencia:** Enero 2025  
@@ -12,7 +12,7 @@
 
 ### 1.1 Propósito
 
-Este Plan de Respuesta a Incidentes establece los procedimientos, roles y responsabilidades para detectar, responder, contener, erradicar y recuperarse de incidentes de seguridad de la información que afecten a los sistemas, datos y servicios de CostPro Enterprise.
+Este Plan de Respuesta a Incidentes establece los procedimientos, roles y responsabilidades para detectar, responder, contener, erradicar y recuperarse de incidentes de seguridad de la información que afecten a los sistemas, datos y servicios de ADNegocio.
 
 El objetivo principal es:
 
@@ -25,10 +25,10 @@ El objetivo principal es:
 
 Este plan aplica a:
 
-- Todos los sistemas de producción de CostPro Enterprise (aplicación web, API, bases de datos).
+- Todos los sistemas de producción de ADNegocio (aplicación web, API, bases de datos).
 - Infraestructura alojada en **Render.com** (servicios web, workers, bases de datos).
 - Datos almacenados en **Supabase** (autenticación, base de datos PostgreSQL, almacenamiento).
-- Todo el personal con acceso a sistemas de CostPro, incluyendo empleados, contratistas y proveedores.
+- Todo el personal con acceso a sistemas de ADNegocio, incluyendo empleados, contratistas y proveedores.
 - Datos procesados tanto en entornos de producción como de staging.
 
 ### 1.3 Exclusiones
@@ -289,13 +289,13 @@ La notificación a la AEPD debe incluir, como mínimo:
 ### 5.4 Plantilla de Notificación a la AEPD
 
 ```
-ASUNTO: Notificación de violación de datos personales — CostPro Enterprise S.L.
+ASUNTO: Notificación de violación de datos personales — ADNegocio S.L. (anteriormente ADNegocio S.L.)
 
 Fecha de conocimiento: [DD/MM/AAAA, HH:MM]
 Fecha de notificación: [DD/MM/AAAA, HH:MM]
 
 1. DATOS DEL RESPONSABLE DEL TRATAMIENTO
-   - Razón social: CostPro Enterprise S.L.
+   - Razón social: ADNegocio S.L. (anteriormente ADNegocio S.L.)
    - DPO: privacy@costpro.app
    - NIF: [NIF de la empresa]
 
@@ -339,7 +339,7 @@ Fecha de notificación: [DD/MM/AAAA, HH:MM]
 
 Atentamente,
 [Nombre del DPO o representante legal]
-Delegado de Protección de Datos — CostPro Enterprise S.L.
+Delegado de Protección de Datos — ADNegocio S.L. (anteriormente ADNegocio S.L.)
 Contacto: privacy@costpro.app
 ```
 
@@ -366,18 +366,18 @@ Se debe comunicar directamente a los interesados **sin demora injustificada** cu
 ### 6.2 Canales de comunicación
 
 1. **Email directo:** Notificación individual al email registrado de cada afectado.
-2. **Notificación in-app:** Banner o modal dentro de la aplicación CostPro.
+2. **Notificación in-app:** Banner o modal dentro de la aplicación ADNegocio.
 3. **Página de estado:** Información general en una página pública de estado del servicio.
 
 ### 6.3 Plantilla de Notificación a Afectados
 
 ```
-ASUNTO: [Importante] Notificación de incidente de seguridad en CostPro
+ASUNTO: [Importante] Notificación de incidente de seguridad en ADNegocio
 
 Estimado/a [Nombre del usuario],
 
 Le contactamos para informarle de un incidente de seguridad que ha afectado 
-a los sistemas de CostPro Enterprise.
+a los sistemas de ADNegocio.
 
 ¿QUÉ HA SUCEDIDO?
 El [DD/MM/AAAA] detectamos [descripción clara y concisa del incidente]. 
@@ -393,7 +393,7 @@ QUÉ ESTAMOS HACIENDO
 
 QUÉ PUEDE HACER USTED
 Recomendamos las siguientes medidas precautorias:
-1. [Ej: Cambie su contraseña en CostPro y en otros servicios si utiliza la misma]
+1. [Ej: Cambie su contraseña en ADNegocio y en otros servicios si utiliza la misma]
 2. [Ej: Revise sus cuentas bancarias en busca de movimientos inusuales]
 3. [Ej: Active la autenticación de dos factores si no la tiene activada]
 
@@ -406,7 +406,7 @@ Lamentamos sinceramente las molestias que esto pueda ocasionar.
 La seguridad de sus datos es nuestra máxima prioridad.
 
 Atentamente,
-El equipo de CostPro Enterprise
+El equipo de ADNegocio
 ```
 
 ---

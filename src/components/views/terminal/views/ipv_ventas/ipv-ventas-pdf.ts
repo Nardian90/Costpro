@@ -304,7 +304,7 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
     doc.setFontSize(7);
     doc.setTextColor(130, 130, 130);
     doc.text(`Página ${p} de ${pageCount}`, pageW - PAGE.margin, pageH - 14, { align: 'right' });
-    doc.text('IPV — Ingresos por Ventas · COSTPRO 4', PAGE.margin, pageH - 14);
+    doc.text('IPV — Ingresos por Ventas · ADNegocio', PAGE.margin, pageH - 14);
   }
 
   return doc;

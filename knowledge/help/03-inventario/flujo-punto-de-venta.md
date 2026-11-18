@@ -1,6 +1,6 @@
 # Tutorial: Flujo Completo de Punto de Venta
 
-Este tutorial guía paso a paso por el ciclo completo de una venta en CostPro, desde el acceso a Vender hasta el cierre de caja. Cubre todas las funcionalidades del módulo POS para que puedas procesar ventas de forma eficiente y precisa.
+Este tutorial guía paso a paso por el ciclo completo de una venta en ADNegocio, desde el acceso a Vender hasta el cierre de caja. Cubre todas las funcionalidades del módulo POS para que puedas procesar ventas de forma eficiente y precisa.
 
 ## Contenido
 
@@ -32,7 +32,7 @@ Este tutorial guía paso a paso por el ciclo completo de una venta en CostPro, d
 
 ## 1. Acceder a Vender
 
-Vender es la vista de venta rápida de CostPro:
+Vender es la vista de venta rápida de ADNegocio:
 
 1. Abre el **menú lateral** de navegación
 2. Entra en la sección **Operación**
@@ -63,7 +63,7 @@ Barra Superior:  [ 🏪 Tienda Principal ▾ ]    [ 👤 Usuario ]    [ 🔔 ]
 
 ## 3. Agregar Productos al Carrito
 
-CostPro ofrece **tres métodos** para agregar productos al carrito de venta:
+ADNegocio ofrece **tres métodos** para agregar productos al carrito de venta:
 
 ### 3.1 Búsqueda por Nombre o SKU
 
@@ -134,7 +134,7 @@ Antes de procesar el pago, revisa el resumen del carrito:
 
 ### Descuentos por Ítem
 
-Además del descuento global aplicable a toda la venta, CostPro permite aplicar **descuentos individuales por cada línea de producto** en el carrito. Esta funcionalidad es útil cuando necesitas ofrecer un descuento en un artículo específico sin afectar el resto de la compra.
+Además del descuento global aplicable a toda la venta, ADNegocio permite aplicar **descuentos individuales por cada línea de producto** en el carrito. Esta funcionalidad es útil cuando necesitas ofrecer un descuento en un artículo específico sin afectar el resto de la compra.
 
 Para aplicar un descuento por ítem:
 
@@ -202,7 +202,7 @@ Si agregas al carrito un producto cuyo **precio de venta es inferior a su costo 
 
 ## 7. Post-Venta: Qué Sucede Automáticamente
 
-Al confirmar una venta, CostPro ejecuta automáticamente tres procesos:
+Al confirmar una venta, ADNegocio ejecuta automáticamente tres procesos:
 
 ### 7.1 Generación de Comprobante
 

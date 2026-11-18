@@ -1,6 +1,6 @@
 # Guía Completa: Exportación de Catálogos
 
-Tutorial detallado para generar catálogos profesionales de productos desde CostPro. Incluye las 4 plantillas disponibles, personalización de colores, avatar promocional, portada profesional y flujos de exportación por cada formato.
+Tutorial detallado para generar catálogos profesionales de productos desde ADNegocio. Incluye las 4 plantillas disponibles, personalización de colores, avatar promocional, portada profesional y flujos de exportación por cada formato.
 
 ## Contenido
 
@@ -26,7 +26,7 @@ Tutorial detallado para generar catálogos profesionales de productos desde Cost
 
 ## 1. Introducción al Sistema de Exportación
 
-CostPro incluye un **motor de exportación de catálogos integrado** que permite generar materiales profesionales de marketing directamente desde los datos de tu inventario. En lugar de diseñar catálogos desde cero en herramientas externas, el sistema toma los productos, precios, imágenes y datos de tu tienda para producir archivos listos para distribución.
+ADNegocio incluye un **motor de exportación de catálogos integrado** que permite generar materiales profesionales de marketing directamente desde los datos de tu inventario. En lugar de diseñar catálogos desde cero en herramientas externas, el sistema toma los productos, precios, imágenes y datos de tu tienda para producir archivos listos para distribución.
 
 El exportador soporta **4 plantillas** diseñadas para diferentes canales de comunicación y audiencias:
 
@@ -152,7 +152,7 @@ Para seleccionar un color, haz clic en el círculo de color correspondiente dent
 
 ### 4.2 Avatar Promocional
 
-El avatar es una **imagen de banner promocional** que se incluye en la portada del Catálogo Elegante. CostPro incluye **6 avatares predefinidos**:
+El avatar es una **imagen de banner promocional** que se incluye en la portada del Catálogo Elegante. ADNegocio incluye **6 avatares predefinidos**:
 
 | Avatar | Descripción |
 |--------|-------------|

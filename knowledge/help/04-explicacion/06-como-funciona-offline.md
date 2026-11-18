@@ -1,4 +1,4 @@
-# Explicación: Cómo Funciona CostPro Sin Internet
+# Explicación: Cómo Funciona ADNegocio Sin Internet
 
 > **Lea esto cuando**: Quiere entender cómo es posible que el sistema siga funcionando cuando se corta el Internet, y qué precauciones tomar.
 
@@ -6,7 +6,7 @@
 
 En muchos países, el Internet se corta con frecuencia. Cortes de luz, fallas del proveedor, tormentas. Si su sistema de ventas depende del Internet, cuando se corta, usted no puede vender. Y si no puede vender, pierde dinero.
 
-CostPro está diseñado para **seguir funcionando sin Internet**. Esto se llama **modo offline**.
+ADNegocio está diseñado para **seguir funcionando sin Internet**. Esto se llama **modo offline**.
 
 ## ¿Qué se puede hacer sin Internet?
 
@@ -32,7 +32,7 @@ CostPro está diseñado para **seguir funcionando sin Internet**. Esto se llama 
 ## ¿Cómo funciona técnicamente?
 
 ### 1. Almacenamiento local persistente
-CostPro guarda en su computadora (o teléfono) una **copia local** de los datos más importantes:
+ADNegocio guarda en su computadora (o teléfono) una **copia local** de los datos más importantes:
 - El catálogo de productos.
 - Los precios.
 - El stock actual.
@@ -101,23 +101,23 @@ Si el corte dura mucho (varias horas o días):
 ## ¿Qué puedo hacer para prepararme?
 
 ### 1. Mantenga la aplicación instalada como PWA
-CostPro es una **Progressive Web App (PWA)**. Si la instala en su computadora o teléfono, funciona mejor offline.
+ADNegocio es una **Progressive Web App (PWA)**. Si la instala en su computadora o teléfono, funciona mejor offline.
 
 **Para instalar en computadora:**
-1. Abra CostPro en Chrome.
+1. Abra ADNegocio en Chrome.
 2. En la barra de direcciones (arriba), verá un ícono de **"+"** o un ícono de **instalar**.
 3. Haga clic en él.
 4. Confirme la instalación.
-5. Ahora tendrá un ícono de CostPro en su escritorio. Úselo para entrar.
+5. Ahora tendrá un ícono de ADNegocio en su escritorio. Úselo para entrar.
 
 **Para instalar en celular:**
-1. Abra CostPro en Chrome del celular.
+1. Abra ADNegocio en Chrome del celular.
 2. En el menú (tres puntos arriba a la derecha), elija **"Agregar a pantalla de inicio"**.
-3. Aparecerá un ícono de CostPro en su pantalla. Úselo como una app.
+3. Aparecerá un ícono de ADNegocio en su pantalla. Úselo como una app.
 
 ### 2. Actualice los datos cuando tenga Internet
 Antes de un corte previsto (ej: apagón programado):
-1. Entre a CostPro.
+1. Entre a ADNegocio.
 2. Espere a que sincronice todo (el indicador offline no muestra avisos).
 3. Navegue por las pantallas que va a necesitar (catálogo, POS).
 4. Esto asegura que la copia local esté actualizada.
@@ -160,12 +160,12 @@ Si hay errores (algunas ventas no se sincronizaron):
 - Mismo comportamiento que sin Internet. La cola local acumula las ventas.
 - Cuando el servidor vuelve, se sincroniza todo.
 
-**¿Puedo usar CostPro en un celular con datos móviles?**
+**¿Puedo usar ADNegocio en un celular con datos móviles?**
 - Sí. Funciona igual.
 - Si los datos se acaban, entra en modo offline hasta que vuelva.
 
 **¿La app consume muchos datos?**
-- CostPro está optimizada para usar pocos datos; el consumo depende del uso (catálogo, fotos de factura, reportes).
+- ADNegocio está optimizada para usar pocos datos; el consumo depende del uso (catálogo, fotos de factura, reportes).
 
 **¿Si alguien entra a mi cuenta desde otra computadora mientras yo estoy offline, qué pasa?**
 - Las ventas offline se guardan en la computadora local, no en el servidor.

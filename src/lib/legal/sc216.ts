@@ -365,7 +365,7 @@ export async function renderSc216Pdf(model: Sc216ModelData) {
     finalY += 5.5;
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(8.5);
-    doc.text(`ESTADO DEL AJUSTE EN COSTPRO: ${model.estado}`, pageWidth - marginX, finalY, { align: 'right' });
+    doc.text(`ESTADO DEL AJUSTE EN ADNEGOCIO: ${model.estado}`, pageWidth - marginX, finalY, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
   }
@@ -403,7 +403,7 @@ export async function renderSc216Pdf(model: Sc216ModelData) {
   // ── Pie normativo ──
   drawRes11Footer(
     doc,
-    `Identificador COSTPRO del ajuste: ${model.identificadorAjuste} — No. consecutivo del modelo: ____________`,
+    `Identificador ADNegocio del ajuste: ${model.identificadorAjuste} — No. consecutivo del modelo: ____________`,
   );
 
   return doc;

@@ -84,7 +84,7 @@ export default function GlobalError({
 
             {/* Footer */}
             <p className="text-xs text-muted-foreground">
-              CostPro Enterprise — Sistema de Gestión Integral
+              ADNegocio — Plataforma Empresarial Integral
             </p>
           </div>
         </div>

@@ -88,7 +88,7 @@ export interface ScLogoBox {
 }
 
 /**
- * Identificador monocromático «CP» (recurso alternativo cuando la tienda
+ * Identificador monocromático «ADN» (recurso alternativo cuando la tienda
  * carece de logo propio): composición VECTORIAL — marco fino negro y
  * monograma en negrita, blanco y negro puro, sin gradientes, efectos ni
  * color corporativo. Imprime con nitidez a cualquier resolución y ocupa un
@@ -107,9 +107,9 @@ export function drawScMonogram(doc: jsPDF, box: ScLogoBox): void {
   doc.rect(x, y, frameW, frameH, 'FD');
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-  doc.text('CP', x + frameW / 2, y + frameH / 2 + 1.6, { align: 'center' });
+  doc.text('ADN', x + frameW / 2, y + frameH / 2 + 1.4, { align: 'center' });
 }
 
 /**

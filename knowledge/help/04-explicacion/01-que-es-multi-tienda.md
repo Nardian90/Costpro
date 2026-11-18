@@ -1,6 +1,6 @@
 # Explicación: ¿Qué Significa "Multi-Tienda"?
 
-> **Lea esto cuando**: Quiere entender qué significa que CostPro sea "multi-tienda" y por qué es diferente a un sistema normal.
+> **Lea esto cuando**: Quiere entender qué significa que ADNegocio sea "multi-tienda" y por qué es diferente a un sistema normal.
 
 ## La metáfora del centro comercial
 
@@ -18,13 +18,13 @@ Pero todas pertenecen al **mismo dueño** (usted), y desde su oficina quiere pod
 - ¿Cuál tiene cajeros que rinden bien?
 - ¿Cuál está perdiendo dinero?
 
-Esto es exactamente lo que hace **CostPro multi-tienda**. Cada tienda es como un local independiente del centro comercial, y el sistema le permite operar cada una por separado y a la vez ver el consolidado.
+Esto es exactamente lo que hace **ADNegocio multi-tienda**. Cada tienda es como un local independiente del centro comercial, y el sistema le permite operar cada una por separado y a la vez ver el consolidado.
 
 ## ¿Cómo se ve esto en el sistema?
 
 ### Cada tienda tiene su propia "burbuja"
 
-En CostPro, cuando usted está en la **Tienda A**:
+En ADNegocio, cuando usted está en la **Tienda A**:
 
 - Ve **solo** el inventario de la Tienda A.
 - Ve **solo** las ventas de la Tienda A.
@@ -72,7 +72,7 @@ Por eso el sistema es tan estricto: **cada tienda es un mundo aparte** dentro de
 
 ## ¿Cuándo se necesita multi-tienda?
 
-No todas las empresas necesitan multi-tienda. CostPro es multi-tienda desde el diseño, pero usted puede usarlo con una sola tienda perfectamente.
+No todas las empresas necesitan multi-tienda. ADNegocio es multi-tienda desde el diseño, pero usted puede usarlo con una sola tienda perfectamente.
 
 ### Multi-tienda es útil cuando:
 
@@ -86,7 +86,7 @@ No todas las empresas necesitan multi-tienda. CostPro es multi-tienda desde el d
 - Tiene un solo local.
 - Aunque venda diferentes categorías (alimentos + limpieza), todo es una sola tienda.
 
-> 💡 **Consejo**: Si empieza con una tienda y después abre otra, no se preocupe. CostPro le permite agregar tiendas después sin perder datos. La primera tienda queda intacta y la nueva empieza vacía.
+> 💡 **Consejo**: Si empieza con una tienda y después abre otra, no se preocupe. ADNegocio le permite agregar tiendas después sin perder datos. La primera tienda queda intacta y la nueva empieza vacía.
 
 ## Cómo se configura una nueva tienda
 

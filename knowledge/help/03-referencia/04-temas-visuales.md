@@ -1,12 +1,12 @@
 # Referencia: Temas Visuales Disponibles
 
-> **Use esta tabla** cuando quiera cambiar la apariencia visual de CostPro.
+> **Use esta tabla** cuando quiera cambiar la apariencia visual de ADNegocio.
 
 ## Los 5 temas
 
 | Tema | Descripción | ¿Para quién es? |
 |------|-------------|-----------------|
-| **Auto** | Se adapta a la preferencia del sistema operativo. Si su computadora está en modo oscuro, CostPro se pone oscuro. | Para usuarios que quieren que todo sea automático. |
+| **Auto** | Se adapta a la preferencia del sistema operativo. Si su computadora está en modo oscuro, ADNegocio se pone oscuro. | Para usuarios que quieren que todo sea automático. |
 | **Claro** | Tema claro con fondos blancos y colores suaves. El más fácil de leer para personas mayores. | **Recomendado para personas mayores**. |
 | **Oscuro** | Tema oscuro con fondos negros y grises. | Para trabajar de noche o en ambientes con poca luz. |
 | **Fast Light** | Tema claro optimizado para velocidad. Sin animaciones. | Para computadoras viejas o conexiones lentas. |
@@ -24,7 +24,7 @@
 
 ## Modos de conectividad
 
-Además del tema visual, CostPro tiene **2 modos de conectividad** que afectan el rendimiento:
+Además del tema visual, ADNegocio tiene **2 modos de conectividad** que afectan el rendimiento:
 
 | Modo | Descripción | ¿Para quién es? |
 |------|-------------|-----------------|
@@ -68,4 +68,4 @@ Además del tema visual, CostPro tiene **2 modos de conectividad** que afectan e
 - Simplemente seleccione el tema anterior en el mismo menú.
 
 **¿Los temas funcionan en celular?**
-- Sí. Si entra a CostPro desde el navegador del celular, puede cambiar el tema igual.
+- Sí. Si entra a ADNegocio desde el navegador del celular, puede cambiar el tema igual.

@@ -51,7 +51,7 @@ self.addEventListener('periodicsync', (event) => {
 
 self.addEventListener('push', (event) => {
   event.waitUntil(
-    self.registration.showNotification('CostPro', { body: 'New update' })
+    self.registration.showNotification('ADNegocio', { body: 'New update' })
   );
 });
 

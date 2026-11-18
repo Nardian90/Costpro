@@ -260,7 +260,7 @@ export const CostProLoader: React.FC<CostProLoaderProps> = ({
                   color: '#fff',
                 }}
               >
-                Cost<span style={{ color: 'var(--primary)' }}>Pro</span>
+                <span style={{ color: 'var(--primary)' }}>ADN</span>egocio
               </h1>
             </div>
 

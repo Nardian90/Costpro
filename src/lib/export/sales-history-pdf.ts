@@ -471,7 +471,7 @@ export async function renderSalesHistoryPdf(model: SalesHistoryPdfModel) {
     doc.setFontSize(6.5);
     doc.setTextColor(90);
     doc.text(
-      'Documento informativo generado por COSTPRO a partir del historial de ventas (solo lectura; no modifica registros).',
+      'Documento informativo generado por ADNegocio a partir del historial de ventas (solo lectura; no modifica registros).',
       marginX,
       pageHeight - 8,
       { maxWidth: contentWidth - 40 },

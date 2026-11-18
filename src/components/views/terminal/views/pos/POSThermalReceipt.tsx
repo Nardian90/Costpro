@@ -319,7 +319,7 @@ export const POSThermalReceipt: React.FC<POSThermalReceiptProps> = ({
         ¡Gracias por su preferencia!
       </div>
       <div style={{ textAlign: "center", fontSize: 8.5, marginTop: 2 }}>
-        Comprobante electrónico generado por CostPro
+        Comprobante electrónico generado por ADNegocio
       </div>
       <div style={{ textAlign: "center", fontSize: 8.5, marginTop: 3 }}>
         Verifica esta venta:

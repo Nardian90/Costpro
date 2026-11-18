@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Geist, Geist_Mono, Space_Grotesk, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, Inter, Archivo, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -41,13 +41,33 @@ const spaceGrotesk = Space_Grotesk({
   display: 'swap',
 });
 
+/* ADN-BRAND-HERO-REFINEMENT-002 — voces tipográficas del hero editorial:
+   - Archivo (variable, eje wdth): sans monumental expandida para el titular.
+   - Instrument Serif: voz editorial de acento (una palabra del titular).
+   Fallbacks: Space Grotesk / Geist — si la descarga de la fuente falla el
+   hero se degrada con elegancia (misma jerarquía, menor expresividad). */
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  display: 'swap',
+  axes: ["wdth"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: {
-    default: "CostPro — Software de Gestión, Fichas de Costo e Inventario para MIPYMES en Cuba",
-    template: "%s | CostPro",
+    default: "ADNegocio — Plataforma Empresarial Integral: Finanzas, Ventas, Inventario y Vitrina Digital",
+    template: "%s | ADNegocio",
   },
-  metadataBase: new URL("https://costpro4.vercel.app"),
-  description: "CostPro: sistema integral de gestión para MIPYMES cubanas. Fichas de costo Res. 148/2023, inventario en tiempo real, POS, vitrina online, inteligencia cambiaria y más. Prueba gratis.",
+  metadataBase: new URL("https://costpro4.vercel.app"), // dominio técnico sin cambio (misión §14)
+  description: "ADNegocio: plataforma empresarial integral para administrar, controlar y comprender las operaciones de tu empresa. Finanzas con estados financieros, ventas multi-tienda, inventario, compras, fichas de costo Res. 148/2023 y vitrina digital.",
   other: {
     google: "notranslate",
     category: 'business',
@@ -61,7 +81,8 @@ export const metadata: Metadata = {
     "POS Cuba",
     "punto de venta Cuba",
     "gestión empresarial Cuba",
-    "CostPro",
+    "ADNegocio",
+    "estados financieros",
     "ficha de costos y gastos",
     "software contable Cuba",
     "inventario en tiempo real",
@@ -69,27 +90,27 @@ export const metadata: Metadata = {
     "inteligencia cambiaria",
     "gestión multi-tienda",
   ],
-  authors: [{ name: "CostPro Team" }],
-  creator: "CostPro",
-  publisher: "CostPro",
+  authors: [{ name: "ADNegocio" }],
+  creator: "ADNegocio",
+  publisher: "ADNegocio",
   manifest: "/manifest.json",
   icons: {
     icon: '/logo.svg',
     apple: '/icons/icon-192.png',
   },
   openGraph: {
-    title: "CostPro — Software de Gestión para MIPYMES Cubanas",
-    description: "Fichas de costo Res. 148/2023, inventario, POS, vitrina online e inteligencia cambiaria en una sola plataforma. Prueba gratis.",
+    title: "ADNegocio — Plataforma Empresarial Integral",
+    description: "Administra, controla y comprende las operaciones de tu empresa: finanzas, ventas, inventario, compras y vitrina digital en una sola plataforma.",
     type: "website",
     locale: "es_ES",
-    siteName: "CostPro",
+    siteName: "ADNegocio",
     url: "https://costpro4.vercel.app",
     images: [
       {
         url: "/logo.svg",
         width: 512,
         height: 512,
-        alt: "CostPro — Software de Gestión Integral",
+        alt: "ADNegocio — Plataforma Empresarial Integral",
       },
     ],
   },
@@ -106,8 +127,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'CostPro — Software de Gestión para MIPYMES Cubanas',
-    description: 'Fichas de costo Res. 148/2023, inventario, POS, vitrina online e inteligencia cambiaria.',
+    title: 'ADNegocio — Plataforma Empresarial Integral',
+    description: 'Administra, controla y comprende las operaciones de tu empresa desde una experiencia integrada.',
     images: ["/logo.svg"],
   },
   alternates: {
@@ -165,8 +186,9 @@ export default async function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              "name": "CostPro",
-              "description": "Sistema integral de gestión para MIPYMES cubanas. Fichas de costo Res. 148/2023, inventario en tiempo real, POS, vitrina online, inteligencia cambiaria y más.",
+              "name": "ADNegocio",
+              "alternateName": "CostPro",
+              "description": "Plataforma empresarial integral para administrar, controlar y comprender las operaciones de tu empresa. Finanzas, ventas multi-tienda, inventario, compras, fichas de costo Res. 148/2023 y vitrina digital.",
               "url": "https://costpro4.vercel.app",
               "applicationCategory": "BusinessApplication",
               "applicationSubCategory": "Inventory & Cost Management",
@@ -179,9 +201,10 @@ export default async function RootLayout({
                 "description": "Prueba gratuita disponible",
               },
               "featureList": [
+                "Estados financieros con partida doble",
                 "Fichas de costo Resolución 148/2023",
                 "Gestión de inventario en tiempo real",
-                "Punto de venta (POS)",
+                "Punto de venta (POS) multi-moneda",
                 "Vitrina online pública configurable",
                 "Inteligencia cambiaria (BCC, Diviza)",
                 "Gestión multi-tienda",
@@ -189,7 +212,6 @@ export default async function RootLayout({
                 "Exportación a Excel y PDF",
                 "Bot de WhatsApp con IA",
                 "Bot de Telegram con IA",
-                "Centro de análisis dinámico de costos",
                 "Gestión de trabajadores y comisiones",
               ],
               "audience": {
@@ -203,7 +225,7 @@ export default async function RootLayout({
               "inLanguage": "es-CU",
               "publisher": {
                 "@type": "Organization",
-                "name": "CostPro",
+                "name": "ADNegocio",
                 "url": "https://costpro4.vercel.app",
               },
             }).replace(/<\/script/gi, '<\\/script'),
@@ -262,15 +284,16 @@ export default async function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "Organization",
-              "name": "CostPro",
-              "description": "Sistema de Gestión Integral para empresas",
-              "url": "https://costpro.onrender.com",
+              "name": "ADNegocio",
+              "alternateName": "CostPro",
+              "description": "Plataforma empresarial integral",
+              "url": "https://costpro4.vercel.app",
             }),
           }}
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} font-sans antialiased bg-background text-foreground min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} ${archivo.variable} ${instrumentSerif.variable} font-sans antialiased bg-background text-foreground min-h-screen`}
         suppressHydrationWarning
         translate="no"
       >

@@ -104,7 +104,7 @@ export default function FloatingElements({
                   <MessageCircle className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white">CostPro Assistant</p>
+                  <p className="text-sm font-bold text-white">Asistente ADNegocio</p>
                   <div className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                     <span className="text-[10px] text-white/80">En línea</span>
@@ -227,7 +227,7 @@ export default function FloatingElements({
             >
               {[
                 { icon: CreditCard, label: 'Plan Free', action: () => { const el = document.querySelector('#pricing'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); setShowFab(false); } },
-                { icon: Play, label: 'Ver Demo', action: () => { const el = document.querySelector('[aria-label="Ver demo de CostPro"]'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setShowFab(false); } },
+                { icon: Play, label: 'Ver Demo', action: () => { const el = document.querySelector('[aria-label="Ver demo de ADNegocio"]'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); setShowFab(false); } },
                 { icon: Phone, label: 'Contactar', action: () => { setShowContactModal(true); setShowFab(false); } },
               ].map((item, idx) => (
                 <motion.button

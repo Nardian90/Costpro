@@ -4,7 +4,7 @@
 
 ## Resumen rápido
 
-CostPro soporta **3 métodos de pago** (efectivo, transferencia, Transf. Exterior) que pueden combinarse en un mismo carrito con **4 monedas distintas** (CUP, USD, EUR, MLC); además existe el método **Mixto** como combinación explícita. Cada item del carrito puede tener **múltiples filas de pago** del mismo método en distintas monedas, con ajustes (descuento o recargo) independientes por fila.
+ADNegocio soporta **3 métodos de pago** (efectivo, transferencia, Transf. Exterior) que pueden combinarse en un mismo carrito con **4 monedas distintas** (CUP, USD, EUR, MLC); además existe el método **Mixto** como combinación explícita. Cada item del carrito puede tener **múltiples filas de pago** del mismo método en distintas monedas, con ajustes (descuento o recargo) independientes por fila.
 
 ---
 

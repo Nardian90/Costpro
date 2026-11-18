@@ -98,7 +98,7 @@ export default function MultiStoreScene({ elapsed }: MultiStoreSceneProps) {
         {/* Header */}
         <div className="flex items-center gap-2 px-3 py-1.5 border-b border-white/5 bg-white/[0.02]">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <span className="text-[10px] text-white/40 font-medium tracking-wider">CostPro — Multi-Tienda</span>
+          <span className="text-[10px] text-white/40 font-medium tracking-wider">ADNegocio — Multi-Tienda</span>
           <div className="ml-auto flex gap-1.5"><div className="w-2 h-2 rounded-full bg-white/10" /><div className="w-2 h-2 rounded-full bg-white/10" /></div>
         </div>
 

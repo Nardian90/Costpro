@@ -454,7 +454,7 @@ export function renderStandard(ctx: FormatContext): void {
       doc.setFontSize(6.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...MGR);
-      doc.text(`${timestamp}  |  Pag. ${i}/${totalPages}  |  CostPro`, pageWidth / 2, pageHeight - 14, { align: 'center' });
+      doc.text(`${timestamp}  |  Pag. ${i}/${totalPages}  |  ADNegocio`, pageWidth / 2, pageHeight - 14, { align: 'center' });
     }
   }
 }
@@ -667,7 +667,7 @@ export function renderPro(ctx: FormatContext): void {
     doc.setFontSize(6.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...MGR);
-    doc.text('Documento generado por CostPro', 14, pageHeight - 12);
+    doc.text('Documento generado por ADNegocio', 14, pageHeight - 12);
     doc.text(`Pag. ${i}/${pageCount}`, pw - 14, pageHeight - 12, { align: 'right' });
   }
 }

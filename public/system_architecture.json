@@ -1,6 +1,6 @@
 {
-  "name": "CostPro - Sistema de Gestión Integral",
-  "short_name": "CostPro",
+  "name": "ADNegocio — Plataforma Empresarial Integral",
+  "short_name": "ADNegocio",
   "description": "Plataforma completa para gestión de inventario, ventas y administración de tiendas.",
   "start_url": "/",
   "display": "standalone",

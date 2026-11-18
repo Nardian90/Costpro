@@ -1,6 +1,6 @@
 # Guía del Generador de Reportes
 
-CostPro incluye un sistema integral de generación de reportes que permite analizar, auditar y exportar datos operativos de la empresa. El Generador de Reportes ofrece **11 tipos de reportes** que cubren todas las áreas funcionales del sistema, desde ventas e inventario hasta auditoría y cierres de caja.
+ADNegocio incluye un sistema integral de generación de reportes que permite analizar, auditar y exportar datos operativos de la empresa. El Generador de Reportes ofrece **11 tipos de reportes** que cubren todas las áreas funcionales del sistema, desde ventas e inventario hasta auditoría y cierres de caja.
 
 ## Acceso al Generador de Reportes
 

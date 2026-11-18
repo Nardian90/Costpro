@@ -1,6 +1,6 @@
 # Glosario de Términos
 
-Referencia rápida de los términos técnicos utilizados en CostPro. Organizado por áreas funcionales para facilitar la consulta.
+Referencia rápida de los términos técnicos utilizados en ADNegocio. Organizado por áreas funcionales para facilitar la consulta.
 
 ---
 
@@ -14,7 +14,7 @@ Referencia rápida de los términos técnicos utilizados en CostPro. Organizado 
 
 **Coeficiente**: Factor numérico de ajuste aplicable a los anexos I y II de una ficha de costo para calibrar los valores importados desde las tablas de referencia.
 
-**Ficha de Costo**: Documento central de CostPro que detalla la estructura completa de costos de un producto, incluyendo secciones, anexos y cálculos.
+**Ficha de Costo**: Documento central de ADNegocio que detalla la estructura completa de costos de un producto, incluyendo secciones, anexos y cálculos.
 
 **Plantilla de Costo**: Modelo reutilizable que define la estructura de secciones, filas y métodos de cálculo para crear fichas de costo de productos similares.
 
@@ -26,7 +26,7 @@ Referencia rápida de los términos técnicos utilizados en CostPro. Organizado 
 
 **Fila Hija**: Fila subordinada dentro de una sección que contiene un costo individual y cuyo valor se acumula en la fila padre correspondiente.
 
-**Motor de Cálculo**: Motor interno de CostPro que procesa fórmulas y métodos de cálculo utilizando Decimal.js para garantizar precisión decimal en todas las operaciones aritméticas.
+**Motor de Cálculo**: Motor interno de ADNegocio que procesa fórmulas y métodos de cálculo utilizando Decimal.js para garantizar precisión decimal en todas las operaciones aritméticas.
 
 **Fórmula ref()**: Función del motor de cálculo que permite hacer referencia al valor de otra fila dentro de la misma ficha de costo, creando dependencias entre líneas.
 
@@ -106,7 +106,7 @@ Referencia rápida de los términos técnicos utilizados en CostPro. Organizado 
 
 **Conciliación**: Proceso de verificación y ajuste entre los registros internos de precios del sistema IPV y los datos de fuentes externas o documentos de referencia.
 
-**Regla de Matching**: Configuración que define el criterio automático para emparejar transacciones bancarias con registros internos. CostPro soporta 9 tipos: HARD_REF, EXACT_SUM, TOLERANCE, CASH_FILL, PRICE_FLEX, WILDCARDS, GOAL_WITH_TOLERANCE, STOCK_LIMIT y AUTO_SUPPLY.
+**Regla de Matching**: Configuración que define el criterio automático para emparejar transacciones bancarias con registros internos. ADNegocio soporta 9 tipos: HARD_REF, EXACT_SUM, TOLERANCE, CASH_FILL, PRICE_FLEX, WILDCARDS, GOAL_WITH_TOLERANCE, STOCK_LIMIT y AUTO_SUPPLY.
 
 **Motor de Matching Inteligente**: Sistema avanzado de conciliación que utiliza IA para mejorar la precisión del emparejamiento de transacciones más allá de las reglas manuales.
 
@@ -118,11 +118,11 @@ Referencia rápida de los términos técnicos utilizados en CostPro. Organizado 
 
 ### Reportes y Herramientas
 
-**Reporte**: Documento generado por el sistema que consolida datos de ventas, inventario, costos o finanzas en un período determinado. CostPro soporta 11 tipos: ventas, ganancias, inventario, kardex, compras, auditoría, fichas de costo, ingresos diarios, gastos diarios, transferencias y caja.
+**Reporte**: Documento generado por el sistema que consolida datos de ventas, inventario, costos o finanzas en un período determinado. ADNegocio soporta 11 tipos: ventas, ganancias, inventario, kardex, compras, auditoría, fichas de costo, ingresos diarios, gastos diarios, transferencias y caja.
 
 **Paleta de Comandos**: Herramienta de búsqueda global activada con Ctrl+K que permite acceder rápidamente a cualquier módulo, acción o documento del sistema sin usar el ratón.
 
-**PWA (Progressive Web App)**: Tecnología que permite instalar CostPro como aplicación nativa en el dispositivo, con soporte para funcionar sin conexión a internet y sincronizar automáticamente al reconectarse.
+**PWA (Progressive Web App)**: Tecnología que permite instalar ADNegocio como aplicación nativa en el dispositivo, con soporte para funcionar sin conexión a internet y sincronizar automáticamente al reconectarse.
 
 **Tienda Pública**: Catálogo en línea accesible públicamente por clientes a través de la URL /tienda/[slug], donde cada tienda tiene su propia página con sus productos y datos de contacto.
 
@@ -144,4 +144,4 @@ Referencia rápida de los términos técnicos utilizados en CostPro. Organizado 
 
 **Permiso Granular**: Flag individual del sistema que controla acceso específico a una funcionalidad (como canCreateProducts, canViewInventory, canVoidTransactions). Existen 17 permisos distribuidos en 5 categorías.
 
-**Slug**: Identificador único generado automáticamente a partir del nombre de una tienda, utilizado en la URL de la tienda pública (ejemplo: tienda-costpro para "Tienda CostPro").
+**Slug**: Identificador único generado automáticamente a partir del nombre de una tienda, utilizado en la URL de la tienda pública (ejemplo: tienda-central para "Tienda Central").

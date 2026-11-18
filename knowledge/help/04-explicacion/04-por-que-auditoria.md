@@ -1,6 +1,6 @@
 # Explicación: Por Qué el Sistema Audita Todo
 
-> **Lea esto cuando**: Quiere entender por qué CostPro guarda un registro de cada acción importante que hacen los usuarios, y por qué esto es bueno para todos (incluso para usted).
+> **Lea esto cuando**: Quiere entender por qué ADNegocio guarda un registro de cada acción importante que hacen los usuarios, y por qué esto es bueno para todos (incluso para usted).
 
 ## La metáfora de la cámara de seguridad
 
@@ -11,11 +11,11 @@ Imagine que usted tiene una joyería. ¿Pondría cámaras de seguridad? Sí. ¿P
 3. **Si alguien es acusado injustamente**, las cámaras lo defienden.
 4. **Si usted mismo se equivoca**, las cámaras le recuerdan qué hizo.
 
-La auditoría en CostPro es exactamente eso: una **cámara de seguridad** que registra las acciones importantes, no para espiar, sino para **proteger** a todos.
+La auditoría en ADNegocio es exactamente eso: una **cámara de seguridad** que registra las acciones importantes, no para espiar, sino para **proteger** a todos.
 
 ## ¿Qué se audita?
 
-CostPro registra automáticamente:
+ADNegocio registra automáticamente:
 
 ### Acciones de ventas
 - Cada venta creada (con usuario, fecha, monto).
@@ -90,7 +90,7 @@ Si siempre es el mismo usuario, hay una señal.
 Si usted es encargado y despidió a un cajero por irregularidades, la auditoría es la **evidencia** que respalda su decisión. Sin ella, sería su palabra contra la del cajero.
 
 ### 5. Cumple con la ley
-En muchos países, la ley exige llevar un registro de ciertas operaciones (sobre todo si manejan dinero o productos fiscalmente regulados). La auditoría de CostPro cumple con esos requisitos.
+En muchos países, la ley exige llevar un registro de ciertas operaciones (sobre todo si manejan dinero o productos fiscalmente regulados). La auditoría de ADNegocio cumple con esos requisitos.
 
 ## ¿Cuánto tiempo se guarda la auditoría?
 

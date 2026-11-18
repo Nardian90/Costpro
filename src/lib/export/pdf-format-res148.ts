@@ -424,7 +424,7 @@ export function renderRes148(ctx: FormatContext): void {
       doc.setFontSize(6.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(140);
-      doc.text(`${timestamp}  |  Pag. ${i}/${pageCount}  |  CostPro`, pageWidth / 2, pageHeight - 14, { align: 'center' });
+      doc.text(`${timestamp}  |  Pag. ${i}/${pageCount}  |  ADNegocio`, pageWidth / 2, pageHeight - 14, { align: 'center' });
     }
   }
 }

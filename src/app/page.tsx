@@ -19,8 +19,8 @@ import HomePageClient from './HomePageClient';
  */
 
 export const metadata: Metadata = {
-  title: 'CostPro — Plataforma Multi-Tienda: Gestión, Inventario y Vitrina Digital',
-  description: 'CostPro: administra todas tus tiendas desde un solo lugar. Inventario, ventas, recepciones y vitrina digital propia para cada tienda. Fichas de costo Res. 148/2023 integradas. Escala tu negocio sin multiplicar sistemas. Prueba gratis.',
+  title: 'ADNegocio — Plataforma Empresarial Integral: Finanzas, Ventas, Inventario y Vitrina Digital',
+  description: 'ADNegocio: administra, controla y comprende las operaciones de tu empresa desde una experiencia integrada. Gestión financiera con estados financieros, ventas multi-tienda, inventario, compras y vitrina digital propia. Fichas de costo Res. 148/2023 integradas.',
   robots: {
     index: true,
     follow: true,
@@ -36,24 +36,25 @@ export default function Page() {
           keywords principales. */}
       <noscript>
         <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto', fontFamily: 'system-ui, sans-serif' }}>
-          <h1>CostPro — Plataforma Multi-Tienda con Vitrina Digital</h1>
+          <h1>ADNegocio — Plataforma Empresarial Integral con Vitrina Digital</h1>
           <p>
-            CostPro es una plataforma integral para gestionar negocios con múltiples tiendas y presencia digital propia.
-            Administra inventario, ventas, recepciones y operaciones desde una única plataforma, mientras cada tienda
-            tiene su propia vitrina web con catálogo de productos. Incluye fichas de costo según Res. 148/2023 del MFP.
+            ADNegocio (anteriormente CostPro) es una plataforma integral para administrar, controlar y comprender
+            las operaciones de tu empresa. Gestión financiera con estados financieros, ventas multi-tienda,
+            inventario, compras y recepciones — y cada tienda con su propia vitrina web con catálogo de productos.
+            Incluye fichas de costo según Res. 148/2023 del MFP.
           </p>
-          <h2>¿Qué puedes hacer con CostPro?</h2>
+          <h2>¿Qué puedes hacer con ADNegocio?</h2>
           <ul>
+            <li><strong>Gestión financiera</strong> — Estados financieros, caja con modelo físico de efectivo e ingresos/egresos documentados.</li>
             <li><strong>Gestión multi-tienda</strong> — Administra varias tiendas desde un solo panel sin multiplicar sistemas.</li>
             <li><strong>Vitrina digital propia</strong> — Cada tienda tiene su propia web con catálogo, precios y disponibilidad.</li>
             <li><strong>Inventario en tiempo real</strong> — Controla existencias de todas tus tiendas desde un mismo lugar.</li>
-            <li><strong>Punto de venta (POS)</strong> — Terminal de venta rápida con múltiples métodos de pago.</li>
-            <li><strong>Gestión de recepciones</strong> — Registra mercancía recibida con control de costos y proveedores.</li>
+            <li><strong>Punto de venta (POS)</strong> — Terminal de venta rápida multi-moneda con múltiples métodos de pago.</li>
+            <li><strong>Compras y recepciones</strong> — Registra mercancía recibida con control de costos y proveedores.</li>
             <li><strong>Fichas de costo Res. 148/2023</strong> — Herramienta integrada para analizar y controlar costos.</li>
-            <li><strong>Escalabilidad</strong> — Crece desde 1 tienda hasta múltiples establecimientos sin cambiar de sistema.</li>
-            <li><strong>Exportación a Excel y PDF</strong> — Genera reportes profesionales en múltiples formatos.</li>
+            <li><strong>Reportes y auditoría</strong> — Reportes configurables, análisis ABC y trazabilidad completa.</li>
           </ul>
-          <h2>¿Para quién es CostPro?</h2>
+          <h2>¿Para quién es ADNegocio?</h2>
           <p>
             Dueños de pequeños y medianos negocios con varias tiendas, comercios que quieren digitalizar
             sus catálogos, y empresas que necesitan controlar inventario y ventas de diferentes establecimientos.
@@ -72,7 +73,7 @@ export default function Page() {
           <div className="min-h-screen w-full flex items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              <p className="text-xs text-muted-foreground">Cargando CostPro…</p>
+              <p className="text-xs text-muted-foreground">Cargando ADNegocio…</p>
             </div>
           </div>
         }

@@ -585,7 +585,7 @@ export function renderAuditoria(ctx: FormatContext): void {
     doc.restoreGraphicsState();
   }
 
-  addPageNumbers(doc, pw, pageHeight, 'CostPro - Auditoria');
+  addPageNumbers(doc, pw, pageHeight, 'ADNegocio - Auditoria');
 }
 
 /**

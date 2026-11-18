@@ -1,6 +1,6 @@
 # Transferencias Internacionales de Datos Personales
 
-**CostPro Enterprise — Documento de Cumplimiento**
+**ADNegocio — Documento de Cumplimiento**
 **Versión:** 1.0  
 **Fecha de vigencia:** 24 de enero de 2025  
 **Clasificación:** Interno — Confidencial  
@@ -12,13 +12,13 @@
 
 ### 1.1 Propósito
 
-El presente documento tiene como finalidad establecer el marco normativo, las garantías y los procedimientos que CostPro Enterprise (en adelante, "CostPro" o "el Responsable") aplica para las transferencias internacionales de datos personales. Este documento cumple con las obligaciones derivadas del **Reglamento General de Protección de Datos (UE) 2016/679 (RGPD)**, específicamente los **artículos 44 a 49**, así como con la **Ley Orgánica 3/2018 de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD)**.
+El presente documento tiene como finalidad establecer el marco normativo, las garantías y los procedimientos que ADNegocio (en adelante, "ADNegocio" o "el Responsable") aplica para las transferencias internacionales de datos personales. Este documento cumple con las obligaciones derivadas del **Reglamento General de Protección de Datos (UE) 2016/679 (RGPD)**, específicamente los **artículos 44 a 49**, así como con la **Ley Orgánica 3/2018 de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD)**.
 
 ### 1.2 Alcance
 
 Este documento aplica a toda transferencia de datos personales que:
 - Tenga su origen en un Estado miembro de la Unión Europea o del Espacio Económico Europeo (EEE).
-- Sea realizada por CostPro Enterprise en calidad de **Responsable del Tratamiento** (controller).
+- Sea realizada por ADNegocio en calidad de **Responsable del Tratamiento** (controller).
 - Tenga como destino un país tercero u organización internacional fuera del EEE.
 
 ### 1.3 Base Legal
@@ -36,13 +36,13 @@ Este documento aplica a toda transferencia de datos personales que:
 
 ## 2. Mapa de Transferencias
 
-CostPro utiliza servicios de infraestructura en la nube hospedados en Estados Unidos. A continuación, se detalla el mapa completo de transferencias internacionales de datos personales:
+ADNegocio utiliza servicios de infraestructura en la nube hospedados en Estados Unidos. A continuación, se detalla el mapa completo de transferencias internacionales de datos personales:
 
 | # | Responsable → Encargado | Destino | Finalidad | Categorías de datos transferidos |
 |---|---|---|---|---|
-| 1 | CostPro Team (Responsable) → Supabase Inc. | **Estados Unidos** | Hospedaje de base de datos PostgreSQL, autenticación de usuarios, almacenamiento de datos de la aplicación | Identificadores personales (nombre, email, ID de usuario), datos de transacciones (ventas, compras, inventario), registros técnicos (logs de aplicación, sesiones de usuario), datos de configuración de la cuenta |
-| 2 | CostPro Team (Responsable) → Render.com | **Estados Unidos** | Hospedaje de la aplicación web Next.js, ejecución del servidor de producción, despliegue de la infraestructura | Registros técnicos (logs de servidor, métricas de rendimiento), identificadores de sesión, metadatos de solicitudes HTTP |
-| 3 | CostPro Team (Responsable) → Upstash Inc. | **Estados Unidos** | Servicio de rate limiting distribuido (Redis), gestión de limitación de solicitudes API | Identificadores de sesión/IP (hash), contadores de tasa de solicitudes, metadatos temporales de tráfico |
+| 1 | ADNegocio Team (Responsable) → Supabase Inc. | **Estados Unidos** | Hospedaje de base de datos PostgreSQL, autenticación de usuarios, almacenamiento de datos de la aplicación | Identificadores personales (nombre, email, ID de usuario), datos de transacciones (ventas, compras, inventario), registros técnicos (logs de aplicación, sesiones de usuario), datos de configuración de la cuenta |
+| 2 | ADNegocio Team (Responsable) → Render.com | **Estados Unidos** | Hospedaje de la aplicación web Next.js, ejecución del servidor de producción, despliegue de la infraestructura | Registros técnicos (logs de servidor, métricas de rendimiento), identificadores de sesión, metadatos de solicitudes HTTP |
+| 3 | ADNegocio Team (Responsable) → Upstash Inc. | **Estados Unidos** | Servicio de rate limiting distribuido (Redis), gestión de limitación de solicitudes API | Identificadores de sesión/IP (hash), contadores de tasa de solicitudes, metadatos temporales de tráfico |
 
 ### 2.1 Tipología de datos transferidos
 
@@ -64,7 +64,7 @@ CostPro utiliza servicios de infraestructura en la nube hospedados en Estados Un
 | Norma | Descripción | Impacto en los datos transferidos |
 |---|---|---|
 | **CLOUD Act** (Clarifying Lawful Overseas Use of Data Act, 2018) | Permite a las autoridades estadounidenses solicitar datos a proveedores de servicios cloud, independientemente de dónde se almacenen los datos. | Riesgo **medio**: las autoridades US podrían solicitar acceso a datos almacenados en Supabase/Render. Supabase y Render están obligados a notificar al cliente cuando sea legalmente posible. |
-| **CCPA/CPRA** (California Consumer Privacy Act / California Privacy Rights Act) | Protege los datos de los residentes de California. Aplica a Supabase Inc. y Render.com como empresas con sede en California. | Riesgo **bajo**: la CCPA ofrece derechos complementarios a los del RGPD. No hay conflicto con las obligaciones de CostPro. |
+| **CCPA/CPRA** (California Consumer Privacy Act / California Privacy Rights Act) | Protege los datos de los residentes de California. Aplica a Supabase Inc. y Render.com como empresas con sede en California. | Riesgo **bajo**: la CCPA ofrece derechos complementarios a los del RGPD. No hay conflicto con las obligaciones de ADNegocio. |
 | **EO 12333** (Executive Order — Foreign Intelligence Surveillance) | Autoriza la vigilancia de comunicaciones extranjeras por parte de agencias de inteligencia US. | Riesgo **medio**: posible interceptación de datos en tránsito. Mitigado por cifrado TLS 1.3. |
 | **FISA Section 702** | Permite la recopilación de inteligencia de comunicaciones extranjeras. | Riesgo **medio**: renovationes periódicas del programa con supervisión del FISC (Foreign Intelligence Surveillance Court). |
 
@@ -113,7 +113,7 @@ Conforme a las directrices del CTEPD (Comité Europeo de Protección de Datos) y
 
 ### 4.1 EU-US Data Privacy Framework (DPF)
 
-CostPro opera bajo la decisión de adecuación del EU-US Data Privacy Framework. Los procesadores utilizados están certificados bajo este marco:
+ADNegocio opera bajo la decisión de adecuación del EU-US Data Privacy Framework. Los procesadores utilizados están certificados bajo este marco:
 
 | Proveedor | Certificación DPF | Enlace de verificación | Última verificación |
 |---|---|---|---|
@@ -130,15 +130,15 @@ CostPro opera bajo la decisión de adecuación del EU-US Data Privacy Framework.
 
 Las **Clausulas Contractuales Tipo** adoptadas por la **Decisión de Ejecución (UE) 2021/914** de la Comisión Europea (de 4 de junio de 2021) se incorporan como cláusulas vinculantes en los contratos con los procesadores.
 
-Se utiliza el **Módulo Dos: Responsable del Tratamiento → Encargado del Tratamiento (Controller to Processor)**, adecuado para la relación entre CostPro (controller) y Supabase/Render (processor).
+Se utiliza el **Módulo Dos: Responsable del Tratamiento → Encargado del Tratamiento (Controller to Processor)**, adecuado para la relación entre ADNegocio (controller) y Supabase/Render (processor).
 
 #### Resumen de Artículos Clave — Módulo Dos (SCCs 2021/914)
 
 **Cláusula 7 — Condiciones Esquema (Docking Clause):**
-Permite a otros responsables del tratamiento adherirse a las cláusulas utilizando el mismo encargado. CostPro no permite adherencias sin evaluación previa de la DPO.
+Permite a otros responsables del tratamiento adherirse a las cláusulas utilizando el mismo encargado. ADNegocio no permite adherencias sin evaluación previa de la DPO.
 
 **Cláusula 9 — Uso de Sub-encargados:**
-- El encargado (Supabase/Render) debe contar con autorización previa y específica de CostPro.
+- El encargado (Supabase/Render) debe contar con autorización previa y específica de ADNegocio.
 - La lista de sub-encargados está documentada y su inclusión requiere evaluación de impacto.
 - El encargado debe garantizar a los sub-encargados las mismas obligaciones de protección de datos.
 
@@ -183,7 +183,7 @@ Permite a otros responsables del tratamiento adherirse a las cláusulas utilizan
 |---|---|---|
 | **TLS 1.3** | Cifrado de extremo a extremo para todas las comunicaciones en tránsito | Todas las conexiones cliente-servidor y servidor-proveedor |
 | **AES-256** | Cifrado de datos en reposo, gestión de claves por Supabase (Vault) | Base de datos PostgreSQL, almacenamiento de archivos |
-| **CSP Headers** | Content-Security-Policy para prevenir inyección de contenido malicioso | Todas las respuestas HTTP de la aplicación CostPro |
+| **CSP Headers** | Content-Security-Policy para prevenir inyección de contenido malicioso | Todas las respuestas HTTP de la aplicación ADNegocio |
 | **RBAC (Role-Based Access Control)** | Control de acceso granular basado en roles (admin, manager, encargado, clerk, warehouse, usuario, costo) | Acceso a datos de la aplicación y API |
 | **Row Level Security (RLS)** | Políticas de seguridad a nivel de fila en PostgreSQL (Supabase) | Todas las tablas con datos personales |
 | **Rate Limiting** | Limitación de solicitudes API (30 req/min) para prevenir abuso | Todas las rutas API |
@@ -296,7 +296,7 @@ Antes de iniciar cualquier nueva transferencia internacional de datos personales
                ▼
 ┌──────────────────────────────────────────────────────────┐
 │  PASO 3: Aprobación del Responsable                      │
-│  (Gerente / Director de CostPro)                         │
+│  (Gerente / Director de ADNegocio)                         │
 │  - Revisión final del documento                          │
 │  - Firma de SCCs si es necesario                         │
 │  Tiempo máximo: 5 días hábiles                          │
@@ -329,7 +329,7 @@ Una nueva transferencia será aprobada **solo si**:
 
 Todas las transferencias internacionales deben estar registradas en el **Registro de Actividades de Tratamiento (Art. 30 RGPD)** con la siguiente información:
 
-- Nombre y datos de contacto del responsable (CostPro Team).
+- Nombre y datos de contacto del responsable (ADNegocio Team).
 - Nombre y datos de contacto del encargado (Supabase Inc., Render.com, etc.).
 - Categorías de datos personales transferidos.
 - Destino de la transferencia (país y destinatario).
@@ -354,8 +354,8 @@ Todas las transferencias internacionales deben estar registradas en el **Registr
 En caso de que se produzca una violación de datos que afecte a datos transferidos internacionalmente:
 
 1. **Detección:** Identificación inmediata por parte del encargado o del responsable.
-2. **Notificación al responsable:** El encargado debe notificar a CostPro en un plazo de **48 horas** (Cláusula 13 SCCs).
-3. **Notificación a la AEPD:** CostPro debe notificar a la Agencia Española de Protección de Datos en un plazo de **72 horas** (Art. 33 RGPD).
+2. **Notificación al responsable:** El encargado debe notificar a ADNegocio en un plazo de **48 horas** (Cláusula 13 SCCs).
+3. **Notificación a la AEPD:** ADNegocio debe notificar a la Agencia Española de Protección de Datos en un plazo de **72 horas** (Art. 33 RGPD).
 4. **Notificación a los interesados:** Si la violación implica un alto riesgo para los derechos y libertades de los interesados, se les notificará sin dilación indebida (Art. 34 RGPD).
 5. **Cooperación transfronteriza:** Si la violación afecta a interesados de múltiples Estados miembros, se coordinará con las autoridades de control correspondientes.
 
@@ -379,7 +379,7 @@ Los siguientes documentos deben estar disponibles para la supervisión de la AEP
 
 | Versión | Fecha | Descripción del cambio | Autor |
 |---|---|---|---|
-| 1.0 | 2025-01-24 | Versión inicial del documento de transferencias internacionales | DPO — CostPro Enterprise |
+| 1.0 | 2025-01-24 | Versión inicial del documento de transferencias internacionales | DPO — ADNegocio |
 
 ---
 

@@ -1,4 +1,4 @@
-# Tutorial: Mi Primer Día con CostPro
+# Tutorial: Mi Primer Día con ADNegocio
 
 > **Para quién**: Cualquier persona nueva, sin importar la edad.
 > **Tiempo**: 15 minutos.
@@ -8,7 +8,7 @@
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  1. Abrir CostPro  →  2. Iniciar sesión         │
+│  1. Abrir ADNegocio  →  2. Iniciar sesión         │
 │                         ↓                       │
 │  5. Botón "?"        3. Conocer la pantalla     │
 │       ↑                    ↓                    │
@@ -16,10 +16,10 @@
 └─────────────────────────────────────────────────┘
 ```
 
-## Paso 1 — Abrir CostPro en el navegador
+## Paso 1 — Abrir ADNegocio en el navegador
 
 1. Abra **Google Chrome** (recomendado) o Firefox o Edge.
-2. En la barra de direcciones (arriba), escriba la dirección que le dio su administrador. Por ejemplo: `costpro.midominio.com`.
+2. En la barra de direcciones (arriba), escriba la dirección que le dio su administrador. Por ejemplo: `app.adnegocio.cu` (el dominio exacto lo proporciona su administrador).
 3. Pulse la tecla **Enter** (la grande, junto a la barra espaciadora).
 4. Verá una pantalla de inicio con dos casillas: **Correo** y **Contraseña**.
 
@@ -28,7 +28,7 @@
 ```
 ┌──────────────────────────────────────┐
 │                                      │
-│        CostPro ERP                   │
+│        ADNegocio ERP                   │
 │                                      │
 │   ┌────────────────────────────┐    │
 │   │  Correo:                   │    │
@@ -42,9 +42,9 @@
 └──────────────────────────────────────┘
 ```
 
-Así se ve la pantalla real de inicio de CostPro:
+Así se ve la pantalla real de inicio de ADNegocio:
 
-![Página de inicio de CostPro con las opciones de acceso a la plataforma](/help/capturas/pagina-inicio.webp "Figura 1. Pantalla de inicio de CostPro — acceso a la plataforma")
+![Página de inicio de ADNegocio con las opciones de acceso a la plataforma](/help/capturas/pagina-inicio.webp "Figura 1. Pantalla de inicio de ADNegocio — acceso a la plataforma")
 
 > 💡 **Tip para personas mayores**: Si la letra le parece pequeña, mantenga presionada la tecla **Ctrl** (abajo a la izquierda del teclado) y pulse la tecla **+** (más) dos o tres veces. La página se hará más grande. Para hacerla más pequeña, use **Ctrl** y **-** (menos).
 
@@ -56,7 +56,7 @@ Así se ve la pantalla real de inicio de CostPro:
    - Si no la recuerda, llame al administrador. **No intente muchas veces** porque después de 5 intentos el sistema bloquea la cuenta por seguridad.
 3. Haga clic en el botón **Entrar** (es el botón verde abajo).
 
-Si todo está bien, verá la pantalla principal de CostPro. ¡Felicidades, ya está dentro!
+Si todo está bien, verá la pantalla principal de ADNegocio. ¡Felicidades, ya está dentro!
 
 ## Paso 3 — Conocer la pantalla principal
 
@@ -66,7 +66,7 @@ Cuando entre, verá tres zonas importantes. Mírelas de arriba hacia abajo:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  [☰]  CostPro    [Tienda Centro ▼]      🔔 ☀️ ? 👤  ← BARRA │
+│  [☰]  ADNegocio    [Tienda Centro ▼]      🔔 ☀️ ? 👤  ← BARRA │
 ├──────────────┬───────────────────────────────────────────────┤
 │              │                                               │
 │  INICIO      │                                               │
@@ -81,13 +81,13 @@ Cuando entre, verá tres zonas importantes. Mírelas de arriba hacia abajo:
 ```
 
 ### Arriba: la barra con el nombre de la tienda
-- A la izquierda está el botón del **menú** y el nombre de CostPro.
+- A la izquierda está el botón del **menú** y el nombre de ADNegocio.
 - Al lado está el **nombre de la tienda activa** (por ejemplo "Tienda Centro"). Si usted trabaja en varias tiendas, aquí puede cambiar de una a otra.
 - A la derecha hay íconos pequeños: **notificaciones**, **tema** (sol/luna), **ayuda** (un signo de pregunta **?**), y **su usuario**.
 
 La pantalla principal real se ve así:
 
-![Pantalla principal de CostPro con el menú lateral, la barra de tienda y el Panel de Control](/help/capturas/dashboard-command-center.webp "Figura 2. Pantalla principal — menú lateral, tienda activa y Panel de Control")
+![Pantalla principal de ADNegocio con el menú lateral, la barra de tienda y el Panel de Control](/help/capturas/dashboard-command-center.webp "Figura 2. Pantalla principal — menú lateral, tienda activa y Panel de Control")
 
 ### Izquierda: el menú de secciones
 - Es una lista con las secciones: **Inicio**, **Operación**, **Análisis**, **Sistema**, **Ayuda** y **En Desarrollo** (algunas secciones solo se ven según su rol).

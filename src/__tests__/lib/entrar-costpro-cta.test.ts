@@ -1,5 +1,5 @@
 /**
- * CP-AUTH-RESILIENCE-003 — CTA «ENTRAR A COSTPRO» (casos A-D de la misión §4)
+ * CP-AUTH-RESILIENCE-003 — CTA «ENTRAR A LA PLATAFORMA» (casos A-D; ADN-BRAND-REBUILD-001 renombra el texto visible, el contrato funcional no cambia)
  * y REGRESIÓN del incidente (§9): el escenario de token residual documentado en
  * docs/audits/INCIDENTE-AUTH-GOTRUE-20261030.md, ampliado con credenciales
  * irrecuperables.
@@ -90,7 +90,7 @@ afterEach(() => {
   window.sessionStorage.clear();
 });
 
-describe('CP-AUTH-RESILIENCE-003 · CTA «Entrar a COSTPRO» — caso A (sin sesión)', () => {
+describe('CP-AUTH-RESILIENCE-003 · CTA «Acceder a la plataforma» — caso A (sin sesión)', () => {
   it('abre el modal INMEDIATAMENTE: sin recarga, sin navigate, sin verificar nada', async () => {
     const openLogin = openLoginSpy();
     const result = await entrarACostpro({ openLogin, setLoginDefaultTab: vi.fn() });

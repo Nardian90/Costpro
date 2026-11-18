@@ -3,7 +3,7 @@ import autoTable from 'jspdf-autotable';
 import Decimal from 'decimal.js';
 
 // ── Color constants ──
-export const PG = [21, 128, 61] as [number, number, number];       // CostPro green
+export const PG = [21, 128, 61] as [number, number, number];       // verde ADNegocio
 export const BLU = [21, 68, 128] as [number, number, number];      // Official blue
 export const LBL = [230, 243, 255] as [number, number, number];    // Light blue bg (Res 148)
 export const GRY = [245, 245, 245] as [number, number, number];    // Light gray alt rows
@@ -369,7 +369,7 @@ export function getCostBase(sections: any[], calculatedValues: Record<string, an
 }
 
 // ── Adds page number footer to all pages ──
-export function addPageNumbers(doc: jsPDF, pageWidth: number, pageHeight: number, formatLabel: string = 'CostPro') {
+export function addPageNumbers(doc: jsPDF, pageWidth: number, pageHeight: number, formatLabel: string = 'ADNegocio') {
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);

@@ -28,7 +28,7 @@ export async function buildSystemPrompt(options: SystemPromptOptions): Promise<s
   // The actual tool definitions are passed separately to streamText().
   const availableToolNames = getAvailableToolNames(userRole);
 
-  return `Eres **Darian**, el asistente inteligente de CostPro — un sistema ERP integral para la gestión de costos, inventarios, ventas y finanzas empresariales.
+  return `Eres **Darian**, el asistente inteligente de ADNegocio — un sistema ERP integral para la gestión de costos, inventarios, ventas y finanzas empresariales.
 
 ## Contexto del usuario
 - **Nombre**: ${userName}

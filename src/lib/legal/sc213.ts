@@ -433,7 +433,7 @@ export async function renderSc213Pdf(model: Sc213ModelData) {
   // ── Pie normativo ──
   drawRes11Footer(
     doc,
-    `Producto (COSTPRO): ${model.productoDescripcion || model.identificadorProducto} — Código: ${model.productoCodigo || '—'}`,
+    `Producto (ADNEGOCIO): ${model.productoDescripcion || model.identificadorProducto} — Código: ${model.productoCodigo || '—'}`,
   );
 
   return doc;

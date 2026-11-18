@@ -330,7 +330,7 @@ Antes de guardar o exportar, verifica que la ficha no tenga errores:
 
 ## 11. Modos de Vista Disponibles
 
-CostPro ofrece 5 modos de visualización:
+ADNegocio ofrece 5 modos de visualización:
 
 | Modo | Descripción |
 |------|-------------|

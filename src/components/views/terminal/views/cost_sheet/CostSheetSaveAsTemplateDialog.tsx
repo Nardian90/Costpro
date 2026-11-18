@@ -181,7 +181,7 @@ export const CostSheetSaveAsTemplateDialog: React.FC<CostSheetSaveAsTemplateDial
         data: currentSheetData!,
       });
       setActiveTemplateId(created.id);
-      toast.success('Plantilla guardada correctamente en Mis plantillas privadas de COSTPRO');
+      toast.success('Plantilla guardada correctamente en Mis plantillas privadas de ADNegocio');
       onSaved?.({ action: 'created', destination: 'private' });
       onOpenChange(false);
     } catch (error) {
@@ -371,7 +371,7 @@ export const CostSheetSaveAsTemplateDialog: React.FC<CostSheetSaveAsTemplateDial
                 <span className="flex-1">
                   <span className="flex items-center gap-2 text-xs font-black uppercase tracking-widest">
                     <LockIcon className="w-4 h-4 text-primary" aria-hidden="true" />
-                    Privada — Mi cuenta en COSTPRO
+                    Privada — Mi cuenta en ADNegocio
                   </span>
                   <span className="block mt-1 text-muted-foreground text-xs font-medium normal-case tracking-normal">
                     Se guarda en el servidor, asociada a tu usuario. Solo tú podrás verla y
@@ -447,7 +447,7 @@ export const CostSheetSaveAsTemplateDialog: React.FC<CostSheetSaveAsTemplateDial
               {destination === 'private' ? (
                 <span className="flex items-start gap-2">
                   <Cloud className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden="true" />
-                  Se guardará en <strong className="text-foreground">Mis plantillas privadas de COSTPRO</strong> (servidor).
+                  Se guardará en <strong className="text-foreground">Mis plantillas privadas de ADNegocio</strong> (servidor).
                   No es un archivo local: la recuperarás al iniciar sesión desde cualquier dispositivo.
                 </span>
               ) : (

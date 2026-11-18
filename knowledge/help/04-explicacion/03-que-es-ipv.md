@@ -2,7 +2,7 @@
 
 > **Lea esto cuando**: Quiere entender el módulo **IPV** de la sección **EN DESARROLLO** (conciliación bancaria experimental, solo administradores).
 
-> ⚠️ **Atención: en CostPro hay dos vistas con las siglas IPV.** La activa es **«IPV — Ingresos por Ventas»** (OPERACIÓN → Ventas): un informe de ingresos por producto con conciliación de inventario. Este documento describe la **otra**: el módulo **IPV** de la sección **EN DESARROLLO** (visible **solo para administradores**), un banco de trabajo experimental de conciliación de transferencias bancarias que **no forma parte del flujo principal del producto**. También existe el nombre histórico «Tabla IPV» de la Tabla de Venta: la vista llevó ese nombre antes de renombrarse a «Tabla de Venta» precisamente para evitar la colisión de siglas con este módulo; no implica precios indexados.
+> ⚠️ **Atención: en ADNegocio hay dos vistas con las siglas IPV.** La activa es **«IPV — Ingresos por Ventas»** (OPERACIÓN → Ventas): un informe de ingresos por producto con conciliación de inventario. Este documento describe la **otra**: el módulo **IPV** de la sección **EN DESARROLLO** (visible **solo para administradores**), un banco de trabajo experimental de conciliación de transferencias bancarias que **no forma parte del flujo principal del producto**. También existe el nombre histórico «Tabla IPV» de la Tabla de Venta: la vista llevó ese nombre antes de renombrarse a «Tabla de Venta» precisamente para evitar la colisión de siglas con este módulo; no implica precios indexados.
 
 ## La pregunta básica: ¿cómo sé si los precios están subiendo?
 
@@ -10,11 +10,11 @@ Todos sabemos que "las cosas están más caras", pero ¿cómo medirlo de forma p
 
 Eso es exactamente lo que hace un **índice de precios**: toma una canasta de productos representativos, la sigue en el tiempo, y calcula un número que representa la variación promedio.
 
-## ¿Qué es el IPV en CostPro?
+## ¿Qué es el IPV en ADNegocio?
 
 ![Vista IPV con el índice de precios y la conciliación de transferencias bancarias](/help/capturas/ipv-conciliacion.webp "Figura 1. IPV — índice de precios y conciliación de transferencias")
 
-En CostPro, el **IPV** (módulo experimental, registrado como «Índice de Precios de Venta») es un banco de trabajo de conciliación que apunta a:
+En ADNegocio, el **IPV** (módulo experimental, registrado como «Índice de Precios de Venta») es un banco de trabajo de conciliación que apunta a:
 
 1. **Conciliar** los extractos bancarios con los productos y ventas registradas.
 2. **Calcular métricas** de sus ingresos y transferencias.
@@ -90,13 +90,13 @@ Es un módulo **experimental restringido a administradores** (sección EN DESARR
 
 ## ¿El IPV es obligatorio?
 
-No. Es un módulo experimental y opcional. Puede operar CostPro sin usarlo.
+No. Es un módulo experimental y opcional. Puede operar ADNegocio sin usarlo.
 
 ## Preguntas frecuentes
 
 **¿El IPV es lo mismo que el IPC (Índice de Precios al Consumidor)?**
 - No. El IPC lo calcula el gobierno con una canasta representativa nacional.
-- El módulo IPV de CostPro no calcula un índice de precios: es una herramienta de conciliación de transferencias bancarias (en desarrollo experimental).
+- El módulo IPV de ADNegocio no calcula un índice de precios: es una herramienta de conciliación de transferencias bancarias (en desarrollo experimental).
 
 **¿Cada cuánto debo hacer conciliación?**
 - El módulo está en desarrollo: no forma parte hoy del cierre mensual obligatorio del producto.
@@ -115,5 +115,5 @@ No. Es un módulo experimental y opcional. Puede operar CostPro sin usarlo.
 - Acepta CSV genérico y tiene un parser específico para BANDEC (Cuba). El soporte de otros bancos depende del mapeo de columnas del módulo experimental.
 
 **¿Es difícil aprender a usar el IPV?**
-- Es el módulo más complejo de CostPro y está **en desarrollo**: úselo para explorar, no como proceso crítico del negocio.
+- Es el módulo más complejo de ADNegocio y está **en desarrollo**: úselo para explorar, no como proceso crítico del negocio.
 - Para el informe activo de ingresos, vea *Cómo consultar el IPV — Ingresos por Ventas* en la sección Cómo Hacer.

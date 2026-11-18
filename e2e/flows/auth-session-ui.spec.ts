@@ -84,7 +84,7 @@ test.describe('Auth y sesión — flujo real de usuario', () => {
 
     // Resultado observable: sesión destruida → vuelve al landing público
     await expect(
-      page.locator('[aria-label*="Entrar a COSTPRO"]').first(),
+      page.locator('[aria-label*="Entrar a ADNegocio"]').first(),
       'tras logout debe mostrarse el CTA de login del landing',
     ).toBeVisible({ timeout: 30_000 });
     const hasSession = await page.evaluate(() =>

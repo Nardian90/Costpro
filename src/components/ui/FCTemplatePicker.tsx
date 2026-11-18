@@ -96,7 +96,7 @@ const TYPE_CHIP_CLASS: Record<CostSheetTemplateRecord['type'], string> = {
 const TYPE_CHIP_TITLE: Record<CostSheetTemplateRecord['type'], string> = {
   private: 'Plantilla guardada por ti — solo visible para tu cuenta',
   public: 'Plantilla compartida — disponible según permisos',
-  system: 'Plantilla incorporada por COSTPRO — catálogo oficial',
+  system: 'Plantilla incorporada por ADNegocio — catálogo oficial',
 };
 
 // ============================================

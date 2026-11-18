@@ -2,7 +2,7 @@
 
 ## La idea
 
-CostPro crece rápido. Algunas capacidades **existen y funcionan**, pero todavía no están lo bastante maduras o integradas como para formar parte del flujo principal del producto. En lugar de esconderlas o presentarlas como terminadas, CostPro las reúne en una sección propia del menú:
+ADNegocio crece rápido. Algunas capacidades **existen y funcionan**, pero todavía no están lo bastante maduras o integradas como para formar parte del flujo principal del producto. En lugar de esconderlas o presentarlas como terminadas, ADNegocio las reúne en una sección propia del menú:
 
 ```
 EN DESARROLLO (solo administradores)

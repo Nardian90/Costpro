@@ -354,7 +354,7 @@ describe('ExchangeIntelligenceView — informal Diviza + elToque', () => {
     expect(screen.getByTestId('diviza-source-updated').textContent).toMatch(/Diviza actualizó:/);
     expect(screen.getByTestId('diviza-source-updated').textContent).toMatch(/\(Cuba\)/);
     // Hora de CAPTURA de CostPro (valor diagnóstico), visible
-    expect(screen.getByTestId('costpro-captured').textContent).toMatch(/Captura CostPro:/);
+    expect(screen.getByTestId('costpro-captured').textContent).toMatch(/Captura ADNegocio:/);
     // Procedencia correcta
     expect(screen.getByText(/Real · Diviza/i)).toBeInTheDocument();
   });

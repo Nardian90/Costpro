@@ -13,7 +13,7 @@ export const features = [
   { icon: Package, title: 'Controla las existencias de todas tus tiendas desde un mismo lugar', desc: 'Gestión de stock con alertas de reorden y trazabilidad de movimientos por tienda. Recepciones automatizadas y control de inventario por sucursal.', tip: 'Alertas de stock mínimo, kardex completo por producto y transferencias entre tiendas.' },
   { icon: ShoppingCart, title: 'Vende rápido con un POS diseñado para cajeros', desc: 'Terminal de venta intuitiva con escáner de código de barras, pago mixto (efectivo + transferencia + Zelle) y desglose por denominaciones de billetes.', tip: 'Compatible con múltiples monedas, tasas de cambio dinámicas y ventas históricas con fecha personalizada.' },
   { icon: BarChart3, title: 'Ve cómo evoluciona tu negocio en cada tienda', desc: 'Ventas por período, movimientos de productos, márgenes por tienda. Dashboard con KPIs en tiempo real y exportación a Excel.', tip: 'Reportes personalizables, tabla dinámica tipo PivotTable y análisis ABC de productos.' },
-  { icon: Calculator, title: 'Fichas de costo integradas — Res. 148/2023', desc: 'Además de gestionar tu negocio, CostPro incorpora herramientas para conocer y controlar tus costos. Distribución automática de flete, salarios, depreciaciones e impuestos.', tip: 'La ficha oficial que no tienes que calcular. Todos los conceptos se distribuyen solos según la metodología del MFP cubano.' },
+  { icon: Calculator, title: 'Fichas de costo integradas — Res. 148/2023', desc: 'Además de gestionar tu negocio, ADNegocio incorpora herramientas para conocer y controlar tus costos. Distribución automática de flete, salarios, depreciaciones e impuestos.', tip: 'La ficha oficial que no tienes que calcular. Todos los conceptos se distribuyen solos según la metodología del MFP cubano.' },
 ];
 
 // DEPRECATED: will be removed in LandingPage refactor
@@ -108,12 +108,12 @@ export const pricingPlans = [
 export const faqCategories = ['General', 'Precios', 'Técnico'] as const;
 
 export const faqItems = [
-  { q: '¿Puedo administrar varias tiendas desde CostPro?', a: 'Sí. CostPro está diseñado para gestionar múltiples tiendas desde un solo panel. Cada tienda tiene su propio catálogo, inventario, ventas y operaciones independientes, mientras tú ves el negocio completo desde un dashboard central. Cambias de sucursal en 1 clic.', category: 'General' },
+  { q: '¿Puedo administrar varias tiendas desde ADNegocio?', a: 'Sí. ADNegocio está diseñado para gestionar múltiples tiendas desde un solo panel. Cada tienda tiene su propio catálogo, inventario, ventas y operaciones independientes, mientras tú ves el negocio completo desde un dashboard central. Cambias de sucursal en 1 clic.', category: 'General' },
   { q: '¿Qué es la vitrina digital de cada tienda?', a: 'Cada tienda puede tener su propia página web pública donde tus clientes ven los productos, precios y disponibilidad. No es una tienda online con checkout: es un catálogo de exhibición que da presencia digital a tu negocio. Los clientes pueden ver qué hay disponible antes de visitar la tienda o contactarte.', category: 'General' },
   { q: '¿El plan gratuito es gratis de verdad?', a: 'Sí. No pedimos tarjeta de crédito ni datos de pago. El plan gratuito incluye 1 tienda con inventario, ventas, POS completo y fichas de costo Res. 148/2023, sin fecha de expiración. Si necesitas múltiples tiendas o vitrina digital, puedes pasar a un plan de pago cuando quieras.', category: 'Precios' },
   { q: '¿Cómo funciona el pago si me interesa un plan de pago?', a: 'El precio se negocia directamente contigo por WhatsApp según lo que necesite tu negocio. No hay botón de pago automático ni suscripción forzada. Escríbenos al +53 53183215 y lo evaluamos juntos.', category: 'Precios' },
-  { q: '¿Las fichas de costo cumplen con la Resolución 148/2023?', a: 'Sí. CostPro genera fichas de costo y gastos según el formato del MFP con todos los conceptos calculados automáticamente: gasto material, salarios, depreciaciones, seguros, impuestos y contribuciones. Es una herramienta integrada dentro de la plataforma, no un producto separado.', category: 'Técnico' },
-  { q: '¿Puedo usar CostPro desde el teléfono?', a: 'Sí. Funciona desde cualquier navegador: computadora, tablet o teléfono. Está optimizado para conexiones lentas. No necesitas descargar nada.', category: 'Técnico' },
+  { q: '¿Las fichas de costo cumplen con la Resolución 148/2023?', a: 'Sí. ADNegocio genera fichas de costo y gastos según el formato del MFP con todos los conceptos calculados automáticamente: gasto material, salarios, depreciaciones, seguros, impuestos y contribuciones. Es una herramienta integrada dentro de la plataforma, no un producto separado.', category: 'Técnico' },
+  { q: '¿Puedo usar ADNegocio desde el teléfono?', a: 'Sí. Funciona desde cualquier navegador: computadora, tablet o teléfono. Está optimizado para conexiones lentas. No necesitas descargar nada.', category: 'Técnico' },
   { q: '¿Qué pasa con mis datos si pierdo conexión a internet?', a: 'Puedes seguir trabajando sin internet. Cuando recuperes conexión, los datos se sincronizan automáticamente. Tus datos están respaldados en la nube de forma segura.', category: 'Técnico' },
 ];
 
@@ -160,7 +160,7 @@ export const shortcutsList = [
 ];
 
 export const sectionIds = ['hero', 'como-funciona', 'features', 'pricing', 'faq'];
-export const sectionLabels = ['Inicio', 'Cómo Funciona', 'Funciones', 'Precios', 'FAQ'];
+export const sectionLabels = ['Inicio', 'Plataforma', 'Funcionalidades', 'Precios', 'Ayuda'];
 
 /* ── FIX #009: Feature list for v5.8 marketing badge ── */
 export const v58Features = [

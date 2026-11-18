@@ -69,6 +69,12 @@ main[data-help-scroll] {
   --font-body: var(--font-inter), var(--font-geist-sans);
   --font-label: var(--font-space-grotesk);
 
+  /* ADN-BRAND-HERO-REFINEMENT-002 — voces tipográficas del landing:
+     display = sans monumental expandida (Archivo, eje wdth 125);
+     editorial = serif de acento (Instrument Serif italic) para UNA palabra. */
+  --font-display: var(--font-archivo), var(--font-space-grotesk), var(--font-geist-sans);
+  --font-editorial: var(--font-instrument), Georgia, "Times New Roman", serif;
+
   /* CostPro Design Palette
      FIX F2 (UI-010): el primario interactivo es UNO SOLO — var(--primary)
      (#22c55e dark / #15803d light de tokens.css). El hardcode #2d8a4e creaba un
@@ -483,3 +489,73 @@ textarea:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 1px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADN-BRAND-HERO-REFINEMENT-002 — Hero editorial ADNegocio
+   --------------------------------------------------------------------------
+   Referencia de dirección de arte: docs/audits/adnegocio-brand-hero-refinement-002/
+   Recursos (cada uno con función, sin acumulación de efectos):
+   1. .hero-grid-bg        → retícula estructural visible (ref. Grids/Anduril):
+                              orden espacial detrás del titular monumental.
+   2. .hero-outline-word   → «MALABARES.» hueco (stroke): el caos se desvanece;
+                              «negocio.» serif sólido = lo que permanece.
+   3. .landing-ticker      → cinta editorial mono con los módulos REALES de la
+                              plataforma (ritmo, sin estadísticas inventadas).
+   Accesibilidad: prefers-reduced-motion detiene ticker y flotación; la retícula
+   y el stroke son estáticos por naturaleza. */
+.hero-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.033) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.024) 1px, transparent 1px);
+  background-size: 88px 88px;
+  -webkit-mask-image: radial-gradient(ellipse 95% 85% at 55% 38%, black 28%, transparent 80%);
+  mask-image: radial-gradient(ellipse 95% 85% at 55% 38%, black 28%, transparent 80%);
+}
+
+.hero-outline-word {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.44);
+  paint-order: stroke fill;
+}
+
+@supports not (-webkit-text-stroke: 1px white) {
+  .hero-outline-word {
+    color: rgba(255, 255, 255, 0.38);
+    -webkit-text-stroke: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-outline-word {
+    -webkit-text-stroke-width: 1px;
+  }
+}
+
+.landing-ticker-track {
+  animation: landing-ticker-scroll 48s linear infinite;
+  will-change: transform;
+}
+
+.landing-ticker:hover .landing-ticker-track {
+  animation-play-state: paused;
+}
+
+@keyframes landing-ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-ticker-track {
+    animation: none;
+    will-change: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-float-idle {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+/* ═══════════════ FIN ADN-BRAND-HERO-REFINEMENT-002 ═══════════════ */

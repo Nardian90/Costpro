@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "CostPro",
+    "appName": "ADNegocio",
     "loading": "Cargando...",
     "error": "Error",
     "save": "Guardar",
@@ -42,9 +42,9 @@
     "text": "Saltar al contenido principal"
   },
   "metadata": {
-    "title": "Costpro - Sistema de Gestión Integral",
+    "title": "ADNegocio - Plataforma Empresarial Integral",
     "description": "Plataforma completa para gestión de inventario, ventas y administración de tiendas.",
-    "ogTitle": "Costpro Enterprise",
+    "ogTitle": "ADNegocio — Plataforma Empresarial Integral",
     "ogDescription": "Sistema de Gestión Integral",
     "twitterDescription": "Sistema de Gestión Integral — Inventario, Ventas y Costos",
     "schemaDescription": "Sistema de Gestión Integral para empresas"
@@ -63,12 +63,12 @@
       "faq": "FAQ"
     },
     "hero": {
-      "cta": "Iniciar en COSTPRO",
+      "cta": "Acceder a ADNegocio",
       "demo": "Ver Demo",
       "subtitle": "Sin tarjeta de crédito · Configuración en 2 minutos · Cancela cuando quieras",
       "searchFunctions": "Buscar funciones"
     },
-    "whyCostPro": "¿Por qué CostPro?",
+    "whyCostPro": "¿Por qué ADNegocio?",
     "dataEstimate": "* Datos estimados",
     "trustBadges": {
       "ssl": "Encriptación SSL",
@@ -113,7 +113,7 @@
       "soon": "Próximamente",
       "madeWith": "Hecho con",
       "inCuba": "en Cuba",
-      "copyright": "© 2025 CostPro. Todos los derechos reservados.",
+      "copyright": "© 2024–2026 ADNegocio. Todos los derechos reservados.",
       "cookieConfig": "Configuración de cookies",
       "product": "Producto",
       "company": "Empresa",
@@ -996,7 +996,7 @@
       "saveAsTemplateNameLabel": "Nombre de la Plantilla",
       "saveAsTemplateDescLabel": "Descripción (Opcional)",
       "destinationLabel": "Destino de Almacenamiento",
-      "destinationPrivate": "Privada — Mi cuenta en COSTPRO",
+      "destinationPrivate": "Privada — Mi cuenta en ADNegocio",
       "destinationPrivateHint": "Se guarda en el servidor, asociada a tu usuario. Solo tú podrás verla y utilizarla, desde cualquier dispositivo.",
       "destinationPublic": "Pública — Compartida con otras tiendas",
       "destinationPublicHint": "Requiere permisos administrativos. Visible según el ámbito de publicación elegido.",
@@ -1005,12 +1005,12 @@
       "scopeOneStore": "Solo Tienda: {store}",
       "updateExisting": "Actualizar plantilla existente: «{name}»",
       "saveAsNew": "Guardar como una nueva plantilla",
-      "privateSaved": "Plantilla guardada correctamente en Mis plantillas privadas de COSTPRO",
+      "privateSaved": "Plantilla guardada correctamente en Mis plantillas privadas de ADNegocio",
       "templateUpdated": "Plantilla actualizada correctamente",
       "confirmOverwriteExisting": "¿Sobrescribir plantilla?",
-      "privateServerSection": "Mis Plantillas Guardadas en COSTPRO",
+      "privateServerSection": "Mis Plantillas Guardadas en ADNegocio",
       "privateLocalSection": "Mis Plantillas Locales (Archivos JSON)",
-      "emptyPrivateServer": "Todavía no tienes plantillas privadas guardadas en COSTPRO",
+      "emptyPrivateServer": "Todavía no tienes plantillas privadas guardadas en ADNegocio",
       "emptyPrivateServerHint": "Guarda la ficha en la que trabajas como plantilla reutilizable y estará disponible en tu cuenta desde cualquier dispositivo.",
       "saveCurrentSheetAsTemplate": "Guardar Ficha Actual como Plantilla",
       "newSheetFromTemplate": "Nueva Ficha desde Plantilla",
@@ -1024,7 +1024,7 @@
       "emptyPublic": "No hay plantillas públicas disponibles",
       "connectionError": "Error de conexión",
       "retry": "Reintentar",
-      "originServer": "COSTPRO (servidor)",
+      "originServer": "ADNegocio (servidor)",
       "originLocal": "Archivo local",
       "originSystem": "Sistema"
     },

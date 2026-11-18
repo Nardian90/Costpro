@@ -637,7 +637,7 @@ async function exportPdfHandler(req: NextRequest, session: AuthenticatedSession)
       doc.setFontSize(5.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...K.ltGray);
-      doc.text(`Generado por CostPro — ${ts}`, m, footerY);
+      doc.text(`Generado por ADNegocio — ${ts}`, m, footerY);
       doc.text(`Pág. ${i}/${totalPages}`, pw - m, footerY, { align: 'right' });
     }
 

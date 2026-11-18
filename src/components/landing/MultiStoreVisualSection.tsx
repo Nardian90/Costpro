@@ -13,7 +13,7 @@ import FeatureVisual from './FeatureVisual';
  * MultiStoreVisualSection — Demostración visual del ecosistema multi-tienda.
  *
  * LANDING VISUAL EVIDENCE (FASE 1/3): los pasos 1 y 3 usan CAPTURAS REALES de
- * CostPro (public/landing/capturas/*.webp — estado demo controlado, sin PII:
+ * ADNegocio (public/landing/capturas/*.webp — estado demo controlado, sin PII:
  * tiendas ficticias «Sucursal Habana / Vedado / Playa»). El paso 2 conserva
  * una mini-composición compacta como pegamento narrativo (FASE 7 — densidad:
  * no toda sección necesita una imagen gigante).
@@ -135,14 +135,14 @@ export function MultiStoreVisualSection() {
             <span className="w-6 h-6 rounded-full bg-[#22c55e] text-white text-xs font-black flex items-center justify-center">1</span>
             <span className="text-sm font-black text-white/70 uppercase tracking-widest">Administra</span>
           </div>
-          {/* Captura REAL: selector de sucursales de CostPro (demo controlado).
+          {/* Captura REAL: selector de sucursales de ADNegocio (demo controlado).
               FIX CALIDAD: sizes = ancho real del frame dentro de max-w-5xl. */}
           <FeatureVisual
             src="/landing/capturas/selector-tiendas.webp"
             srcMobile="/landing/capturas/selector-tiendas-movil.webp"
-            alt="Selector de sucursales de CostPro abierto sobre el panel principal, mostrando las tiendas del negocio con búsqueda y cambio de tienda en un clic."
-            caption="Panel real de CostPro — selector de sucursales (datos de demostración)"
-            frameLabel="costpro.app · cambiar sucursal"
+            alt="Selector de sucursales de ADNegocio abierto sobre el panel principal, mostrando las tiendas del negocio con búsqueda y cambio de tienda en un clic."
+            caption="Panel real de ADNegocio — selector de sucursales (datos de demostración)"
+            frameLabel="adnegocio.app · cambiar sucursal"
             sizes="(max-width: 640px) 100vw, (max-width: 1056px) calc(100vw - 3rem), 976px"
           />
         </motion.div>
@@ -207,9 +207,9 @@ export function MultiStoreVisualSection() {
           <FeatureVisual
             src="/landing/capturas/tienda-publica-productos.webp"
             srcMobile="/landing/capturas/tienda-publica-movil.webp"
-            alt="Vitrina digital pública de una tienda de CostPro: catálogo con fotos de productos, precios en CUP y badge de disponibilidad, que los clientes consultan sin instalar nada."
+            alt="Vitrina digital pública de una tienda de ADNegocio: catálogo con fotos de productos, precios en CUP y badge de disponibilidad, que los clientes consultan sin instalar nada."
             caption="Vitrina pública real — la grilla de productos que ve tu cliente"
-            frameLabel="tienda.costpro.app"
+            frameLabel="tienda.adnegocio.app"
             sizes="(max-width: 640px) 100vw, (max-width: 1056px) calc(100vw - 3rem), 976px"
           />
         </motion.div>

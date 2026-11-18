@@ -200,7 +200,7 @@ describe('MISIÓN CORRECTIVA · documento ENERVIDA 23/10/2026 (PDF + Excel)', ()
     expect(dif![2]).toBe(-8438079.98);
     // CASO F (misión P1 §6): los saldos REALES no cambian — el esperado
     // oficial sigue siendo 0,00 y el estado certifica diferencias explicadas:
-    const eo = aud.find(r => String(r[0] ?? '') === 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)');
+    const eo = aud.find(r => String(r[0] ?? '') === 'Efectivo esperado OFICIAL (fórmula completa ADNegocio)');
     expect(eo![2]).toBe(0);
     const est = aud.find(r => String(r[0] ?? '') === 'Estado');
     expect(est![2]).toBe('Diferencias explicadas por la configuración');

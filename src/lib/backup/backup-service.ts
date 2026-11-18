@@ -755,7 +755,7 @@ async function serializePdf(extracted: ExtractedData, opts: BackupOptions): Prom
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
     doc.text(
-      `Costpro - Respaldo - Pagina ${i} de ${pageCount}`,
+      `ADNegocio - Respaldo - Pagina ${i} de ${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 20,
       { align: 'center' },

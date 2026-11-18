@@ -1,6 +1,6 @@
 # Procedimientos Operativos
 
-**Importante:** Esta sección describe los flujos operativos paso a paso para las tareas más comunes en CostPro. Cada procedimiento incluye los requisitos previos, los pasos detallados y el resultado esperado.
+**Importante:** Esta sección describe los flujos operativos paso a paso para las tareas más comunes en ADNegocio. Cada procedimiento incluye los requisitos previos, los pasos detallados y el resultado esperado.
 
 ## Contenido
 
@@ -30,7 +30,7 @@
 4. El sistema ejecuta automáticamente el **parser bancario** que identifica y clasifica cada transacción del extracto.
 5. Al completar la ingesta, se genera un registro con el resumen de transacciones importadas.
 
-> **Nota:** CostPro incluye un parser específico para extractos BANDEC. Si tu banco no está soportado, los extractos deben estar en formato CSV con las columnas estándar: fecha, descripción, monto, tipo (crédito/débito).
+> **Nota:** ADNegocio incluye un parser específico para extractos BANDEC. Si tu banco no está soportado, los extractos deben estar en formato CSV con las columnas estándar: fecha, descripción, monto, tipo (crédito/débito).
 
 ### Paso 2 — Catálogo de Transacciones
 

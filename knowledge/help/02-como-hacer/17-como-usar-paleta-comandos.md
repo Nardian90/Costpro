@@ -4,7 +4,7 @@
 
 ## Qué es
 
-La **paleta de comandos** (Centro de Comando Operativo) es un buscador universal que encuentra y ejecuta acciones de CostPro: navegación a vistas, cambio de tienda y acciones rápidas. Funciona con búsqueda difusa —no necesita escribir el nombre exacto— y es la forma más rápida de navegar.
+La **paleta de comandos** (Centro de Comando Operativo) es un buscador universal que encuentra y ejecuta acciones de ADNegocio: navegación a vistas, cambio de tienda y acciones rápidas. Funciona con búsqueda difusa —no necesita escribir el nombre exacto— y es la forma más rápida de navegar.
 
 ## Dónde está
 

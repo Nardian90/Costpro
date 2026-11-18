@@ -41,7 +41,7 @@ const PRODUCT_A = process.env.E2E_TEST_PRODUCT_ID || '';
 const PRODUCT_A_NAME = 'Producto Piloto A';
 
 const SYSTEM_TEMPLATE_KEY = 'costpro-reinicio';
-const SYSTEM_TEMPLATE_NAME = 'CostPro — Reinicio (General)';
+const SYSTEM_TEMPLATE_NAME = 'ADNegocio — Reinicio (General)';
 
 // ── REST helpers (service-role para siembra/limpieza) ─────────────────────────
 
@@ -145,7 +145,7 @@ test.describe('FC-PDF-UNIFY · Vistazo y selección de formato desde ambos acces
     await expect(pk).toBeVisible({ timeout: 20_000 });
     await expect(pk.getByRole('listbox', { name: 'Plantillas disponibles' })).toBeVisible({ timeout: 30_000 });
 
-    // La plantilla de sistema «CostPro — Reinicio (General)» aparece con su
+    // La plantilla de sistema «ADNegocio — Reinicio (General)» aparece con su
     // etiqueta de procedencia «Sistema».
     const sysOption = pk.locator('[role="option"]', { hasText: SYSTEM_TEMPLATE_NAME });
     await expect(sysOption).toBeVisible({ timeout: 30_000 });
@@ -153,7 +153,7 @@ test.describe('FC-PDF-UNIFY · Vistazo y selección de formato desde ambos acces
 
     // El catálogo completo son 13 (la búsqueda «CostPro —» las filtra todas)
     const search = page.getByLabel('Buscar plantillas');
-    await search.fill('CostPro —');
+    await search.fill('ADNegocio —');
     await expect(pk.locator('[role="option"]')).toHaveCount(2, { timeout: 10_000 }); // Reinicio + Ejemplo
     await search.fill('');
 

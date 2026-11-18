@@ -416,7 +416,7 @@ export async function renderSc209Pdf(model: Sc209ModelData) {
     finalY += 5.5;
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(8.5);
-    doc.text(`ESTADO DE LA TRANSFERENCIA EN COSTPRO: ${model.estado}`, marginX, finalY);
+    doc.text(`ESTADO DE LA TRANSFERENCIA EN ADNEGOCIO: ${model.estado}`, marginX, finalY);
   }
   if (model.reversal) {
     finalY += 5;
@@ -466,7 +466,7 @@ export async function renderSc209Pdf(model: Sc209ModelData) {
   );
 
   // ── Pie normativo ──
-  drawRes11Footer(doc, `Identificador COSTPRO de la transferencia: ${model.identificadorTransferencia}`);
+  drawRes11Footer(doc, `Identificador ADNegocio de la transferencia: ${model.identificadorTransferencia}`);
 
   return doc;
 }

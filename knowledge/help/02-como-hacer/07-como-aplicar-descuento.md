@@ -4,7 +4,7 @@
 
 ## Tipos de descuento
 
-CostPro permite dos tipos de descuento:
+ADNegocio permite dos tipos de descuento:
 
 1. **Descuento por producto**: aplica a un solo producto del carrito.
 2. **Descuento global**: aplica a todo el carrito completo.

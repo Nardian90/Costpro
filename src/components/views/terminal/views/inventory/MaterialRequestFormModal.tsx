@@ -666,7 +666,7 @@ export function MaterialRequestFormModal({
           )}
         </Seccion>
 
-        <Seccion icon={ClipboardList} titulo="Notas (dato adicional de COSTPRO)">
+        <Seccion icon={ClipboardList} titulo="Notas (dato adicional de ADNegocio)">
           <div>
             <label htmlFor="sm-notas" className="sr-only">Notas</label>
             <textarea

@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "CostPro",
+    "appName": "ADNegocio",
     "loading": "Loading...",
     "error": "Error",
     "save": "Save",
@@ -42,9 +42,9 @@
     "text": "Skip to main content"
   },
   "metadata": {
-    "title": "Costpro - Comprehensive Management System",
+    "title": "ADNegocio - Comprehensive Business Platform",
     "description": "Complete platform for inventory management, sales, and store administration.",
-    "ogTitle": "Costpro Enterprise",
+    "ogTitle": "ADNegocio — Plataforma Empresarial Integral",
     "ogDescription": "Comprehensive Management System",
     "twitterDescription": "Comprehensive Management System — Inventory, Sales and Costs",
     "schemaDescription": "Comprehensive Management System for businesses"
@@ -68,7 +68,7 @@
       "subtitle": "No credit card required · Setup in 2 minutes · Cancel anytime",
       "searchFunctions": "Search features"
     },
-    "whyCostPro": "Why CostPro?",
+    "whyCostPro": "Why ADNegocio?",
     "dataEstimate": "* Estimated data",
     "trustBadges": {
       "ssl": "SSL Encryption",
@@ -113,7 +113,7 @@
       "soon": "Coming soon",
       "madeWith": "Made with",
       "inCuba": "in Cuba",
-      "copyright": "© 2025 CostPro. All rights reserved.",
+      "copyright": "© 2024–2026 ADNegocio. All rights reserved.",
       "cookieConfig": "Cookie settings",
       "product": "Product",
       "company": "Company",
@@ -995,7 +995,7 @@
       "saveAsTemplateNameLabel": "Template Name",
       "saveAsTemplateDescLabel": "Description (Optional)",
       "destinationLabel": "Storage Destination",
-      "destinationPrivate": "Private — My COSTPRO account",
+      "destinationPrivate": "Private — My ADNegocio account",
       "destinationPrivateHint": "Stored on the server, linked to your user. Only you can view and use it, from any device.",
       "destinationPublic": "Public — Shared with other stores",
       "destinationPublicHint": "Requires administrative permissions. Visible according to the chosen publishing scope.",
@@ -1004,12 +1004,12 @@
       "scopeOneStore": "Only Store: {store}",
       "updateExisting": "Update existing template: \"{name}\"",
       "saveAsNew": "Save as a new template",
-      "privateSaved": "Template saved correctly in My private COSTPRO templates",
+      "privateSaved": "Template saved correctly in My private ADNegocio templates",
       "templateUpdated": "Template updated correctly",
       "confirmOverwriteExisting": "Overwrite template?",
-      "privateServerSection": "My Templates Saved in COSTPRO",
+      "privateServerSection": "My Templates Saved in ADNegocio",
       "privateLocalSection": "My Local Templates (JSON Files)",
-      "emptyPrivateServer": "You don't have private templates saved in COSTPRO yet",
+      "emptyPrivateServer": "You don't have private templates saved in ADNegocio yet",
       "emptyPrivateServerHint": "Save the sheet you are working on as a reusable template and it will be available in your account from any device.",
       "saveCurrentSheetAsTemplate": "Save Current Sheet as Template",
       "newSheetFromTemplate": "New Sheet from Template",
@@ -1023,7 +1023,7 @@
       "emptyPublic": "No public templates available",
       "connectionError": "Connection error",
       "retry": "Retry",
-      "originServer": "COSTPRO (server)",
+      "originServer": "ADNegocio (server)",
       "originLocal": "Local file",
       "originSystem": "System"
     },

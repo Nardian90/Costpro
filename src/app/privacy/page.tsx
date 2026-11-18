@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import { Shield, Lock, Eye, FileText, Cookie, Server, Clock } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad — CostPro',
-  description: 'Política de privacidad y protección de datos personales de CostPro Enterprise.',
+  title: 'Política de Privacidad — ADNegocio',
+  description: 'Política de privacidad y protección de datos personales de ADNegocio.',
   robots: { index: true },
 };
 

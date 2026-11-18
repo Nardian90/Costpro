@@ -225,7 +225,7 @@ function downloadBlob(blob: Blob, filename: string): void {
 /** Nombre de archivo descriptivo (misma convención del Excel, extensión .docx). */
 export function cashReportWordFilename(storeName: string, startDate: string): string {
   const snFile = storeName.replace(/[^a-zA-Z0-9]+/g, '_');
-  return `COSTPRO_Reporte_Entrega_${snFile}_${startDate}.docx`
+  return `ADNegocio_Reporte_Entrega_${snFile}_${startDate}.docx`
     .replace(/[^a-zA-Z0-9._\-]+/g, '_');
 }
 
@@ -651,7 +651,7 @@ function auditReconciliationRows(
     { label: 'Ventas totales del reporte personalizado', value: fmt(rec.ventasTotalesPersonalizado) },
     { label: 'Diferencia de ventas totales (personalizado − oficial)', value: sgn(rec.diferenciaVentasTotales) },
     { label: 'Saldo inicial oficial', value: fmt(rec.saldoInicialOficial) },
-    { label: 'Efectivo esperado OFICIAL (fórmula completa COSTPRO)', value: fmt(rec.efectivoEsperadoOficial) },
+    { label: 'Efectivo esperado OFICIAL (fórmula completa ADNegocio)', value: fmt(rec.efectivoEsperadoOficial) },
     { label: 'Efectivo esperado PERSONALIZADO (conceptos activos)', value: fmt(rec.efectivoEsperadoPersonalizado) },
   ];
   if (cur === 'CUP') {
@@ -706,7 +706,7 @@ function diarioAuditAnnex(d: WordSharedData, ctx: CashReportPdfContext): (Paragr
     out.push(para([run(l, { color: C_MUTED, size: 15 })], { after: 30 }));
   }
   out.push(para([run('El reporte principal representa la configuración elegida por el usuario; los importes', { bold: true, color: C_WARN, size: 15 })], { before: 60, after: 20 }));
-  out.push(para([run('oficiales de esta auditoría representan TODOS los movimientos aplicables de COSTPRO.', { bold: true, color: C_WARN, size: 15 })], { after: 120 }));
+  out.push(para([run('oficiales de esta auditoría representan TODOS los movimientos aplicables de ADNegocio.', { bold: true, color: C_WARN, size: 15 })], { after: 120 }));
 
   for (const cur of (['CUP', 'USD'] as const)) {
     const r = d.customResults[cur];
@@ -835,7 +835,7 @@ function diarioFooter(d: WordSharedData, sectionLabel: string): Footer {
   const period = d.startDate === d.endDate
     ? d.startDate
     : `${d.startDate} → ${d.endDate}`;
-  const prefix = `CostPro — Reporte Diario (${orientLbl}) · ${d.sn} · ${sectionLabel} · Período ${period} · `;
+  const prefix = `ADNegocio — Reporte Diario (${orientLbl}) · ${d.sn} · ${sectionLabel} · Período ${period} · `;
   return new Footer({
     children: [new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -1254,7 +1254,7 @@ async function buildEstandarChildren(
     out.push(para([run(l, { color: C_MUTED, size: 15 })], { after: 30 }));
   }
   out.push(para([run('El reporte principal representa la configuración elegida por el usuario; los importes oficiales', { bold: true, color: C_WARN, size: 15 })], { before: 60, after: 20 }));
-  out.push(para([run('de esta auditoría representan TODOS los movimientos aplicables de COSTPRO.', { bold: true, color: C_WARN, size: 15 })], { after: 120 }));
+  out.push(para([run('de esta auditoría representan TODOS los movimientos aplicables de ADNegocio.', { bold: true, color: C_WARN, size: 15 })], { after: 120 }));
 
   for (const cur of (['CUP', 'USD'] as const)) {
     const r = estandarResults[cur];
@@ -1368,7 +1368,7 @@ export async function buildCashReportWordDocument(
       : options;
     const estandarD: WordSharedData = { ...d, options: effectiveOptions };
     const children = await buildEstandarChildren(estandarD, ctx, effectiveOptions, summed);
-    const prefix = `CostPro — Reporte de Caja · ${sn} · `;
+    const prefix = `ADNegocio — Reporte de Caja · ${sn} · `;
     sections = [{
       properties: {
         page: {
@@ -1401,7 +1401,7 @@ export async function buildCashReportWordDocument(
   }
 
   const doc = new Document({
-    creator: 'CostPro',
+    creator: 'ADNegocio',
     title: `Reporte de Entrega — ${sn}`,
     description: `Reporte de Caja — Entrega (${ctx.template}) del ${startDate} al ${endDate}`,
     sections,

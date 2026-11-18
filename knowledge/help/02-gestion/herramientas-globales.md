@@ -1,10 +1,10 @@
 # Herramientas Globales del Sistema
 
-CostPro incorpora un conjunto de herramientas disponibles desde cualquier punto de la aplicación, diseñadas para agilizar la operación diaria, mejorar la productividad y personalizar la experiencia del usuario. Estas herramientas operan de forma transversal a todos los módulos y no requieren navegar a una sección específica para ser utilizadas.
+ADNegocio incorpora un conjunto de herramientas disponibles desde cualquier punto de la aplicación, diseñadas para agilizar la operación diaria, mejorar la productividad y personalizar la experiencia del usuario. Estas herramientas operan de forma transversal a todos los módulos y no requieren navegar a una sección específica para ser utilizadas.
 
 ## Paleta de Comandos (Ctrl+K)
 
-La Paleta de Comandos es el centro de navegación rápida de CostPro. Permite buscar y ejecutar acciones en cualquier módulo sin necesidad de usar el ratón.
+La Paleta de Comandos es el centro de navegación rápida de ADNegocio. Permite buscar y ejecutar acciones en cualquier módulo sin necesidad de usar el ratón.
 
 ### Cómo Usarla
 
@@ -38,7 +38,7 @@ Haz clic en el icono de calculadora de la barra lateral (grupo inferior de icono
 
 ## ChatBot IA Global
 
-CostPro integra un asistente de inteligencia artificial accesible desde toda la aplicación, denominado **Darian AI**. Este chatbot puede responder preguntas sobre el sistema, asistir en la configuración y generar sugerencias operativas.
+ADNegocio integra un asistente de inteligencia artificial accesible desde toda la aplicación, denominado **Darian AI**. Este chatbot puede responder preguntas sobre el sistema, asistir en la configuración y generar sugerencias operativas.
 
 ### Proveedores de IA Configurables
 
@@ -67,7 +67,7 @@ Para gestionar las claves de API de los proveedores de IA:
 
 ## Atajos de Teclado Completos
 
-CostPro define atajos de teclado para agilizar la navegación y las acciones más frecuentes:
+ADNegocio define atajos de teclado para agilizar la navegación y las acciones más frecuentes:
 
 | Atajo | Acción |
 |-------|--------|
@@ -86,7 +86,7 @@ CostPro define atajos de teclado para agilizar la navegación y las acciones má
 
 ## Temas Visuales
 
-CostPro ofrece 5 temas visuales y 2 modos de conectividad para adaptar la interfaz al entorno de trabajo del usuario:
+ADNegocio ofrece 5 temas visuales y 2 modos de conectividad para adaptar la interfaz al entorno de trabajo del usuario:
 
 ### Temas Disponibles
 
@@ -111,21 +111,21 @@ Para cambiar el tema, haz clic en el icono de sol/luna en la barra superior. Par
 
 ## Soporte PWA (Progressive Web App)
 
-CostPro es una aplicación web progresiva (PWA), lo que permite instalarla directamente en el dispositivo del usuario como si fuera una aplicación nativa.
+ADNegocio es una aplicación web progresiva (PWA), lo que permite instalarla directamente en el dispositivo del usuario como si fuera una aplicación nativa.
 
 ### Instalación
 
-1. Abre CostPro en el navegador Chrome o Edge.
+1. Abre ADNegocio en el navegador Chrome o Edge.
 2. Si el navegador muestra el banner de instalación, haz clic en **Instalar**.
 3. Alternativamente, haz clic en el icono de instalación en la barra de direcciones del navegador.
-4. Confirma la instalación. CostPro aparecerá como un acceso directo en el escritorio y en el menú de aplicaciones.
+4. Confirma la instalación. ADNegocio aparecerá como un acceso directo en el escritorio y en el menú de aplicaciones.
 
 ### Funcionamiento Offline
 
 - **Almacenamiento local:** Los datos de la sesión actual se almacenan en caché local.
 - **Modo offline:** Si se pierde la conexión, la operativa esencial sigue funcionando: las **ventas se quedan en cola local** y se sincronizan automáticamente al reconectar.
 - **Sincronización:** Al recuperar la conexión, los cambios pendientes se envían al servidor y el inventario y la caja se actualizan con ellos.
-- **Notificaciones:** Las notificaciones de la aplicación se muestran mientras CostPro está en uso; no existe envío push externo cuando la aplicación está cerrada.
+- **Notificaciones:** Las notificaciones de la aplicación se muestran mientras ADNegocio está en uso; no existe envío push externo cuando la aplicación está cerrada.
 
 > **Importante:** La operación normal requiere conexión activa. Si se pierde, las ventas quedan en cola local esperando sincronización; consulte *Cómo funciona el modo offline* para el detalle de qué funciona y qué no.
 
@@ -139,7 +139,7 @@ Para ver los impuestos, navega a **SISTEMA > Ajustes > Gestión de Impuestos**.
 
 ## Notificaciones del Sistema
 
-CostPro genera notificaciones automáticas para mantener al usuario informado de eventos relevantes:
+ADNegocio genera notificaciones automáticas para mantener al usuario informado de eventos relevantes:
 
 | Tipo de Notificación | Descripción | Configurable |
 |---------------------|-------------|:---:|

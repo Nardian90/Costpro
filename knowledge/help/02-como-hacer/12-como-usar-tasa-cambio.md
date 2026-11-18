@@ -1,10 +1,10 @@
 # Cómo Hacer: Usar la Tasa de Cambio
 
-> **Necesita esto cuando**: vende o compra en divisas (USD, EUR, MLC) y necesita que CostPro convierta correctamente a CUP, o cuando quiere analizar el comportamiento del tipo de cambio antes de fijar precios.
+> **Necesita esto cuando**: vende o compra en divisas (USD, EUR, MLC) y necesita que ADNegocio convierta correctamente a CUP, o cuando quiere analizar el comportamiento del tipo de cambio antes de fijar precios.
 
 ## ¿Para qué sirve?
 
-CostPro tiene **dos piezas distintas** que no debe confundir:
+ADNegocio tiene **dos piezas distintas** que no debe confundir:
 
 1. **Tasas de la tienda** — las que **trabajan**: convierten precios y pagos en el punto de venta. Cada tienda define sus propias tasas USD, EUR y MLC.
 2. **Inteligencia Cambiaria** — la que **informa**: un módulo analítico con la tasa oficial del Banco Central de Cuba (BCC) y fuentes informales, con histórico, variaciones e impacto en precios. **No modifica las tasas de su tienda**: es una referencia para decidir.
@@ -68,7 +68,7 @@ CostPro tiene **dos piezas distintas** que no debe confundir:
 
 ## Preguntas frecuentes
 
-**¿CostPro toma la tasa oficial automáticamente para vender?**
+**¿ADNegocio toma la tasa oficial automáticamente para vender?**
 No. La oficial está en la Inteligencia Cambiaria como referencia. La que vale para ventas es la **tasa de su tienda**, confirmada manualmente.
 
 **¿Puedo tener una tasa distinta por producto?**

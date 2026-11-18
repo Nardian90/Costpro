@@ -146,7 +146,7 @@ export async function exportCatalogToExcel(products: Product[], storeName?: stri
 
     const timestamp = new Date().toISOString().split('T')[0];
     const fileName = isEmpty
-      ? `Plantilla_Catalogo_CostPro_${timestamp}.xlsx`
+      ? `Plantilla_Catalogo_ADNegocio_${timestamp}.xlsx`
       : `Catalogo_${storeName || 'Productos'}_${timestamp}.xlsx`;
 
     XLSX.writeFile(workbook, fileName);
@@ -571,7 +571,7 @@ export function exportCatalogToCSV(products: Product[], storeName?: string) {
     link.href = url;
     link.download = isEmpty
       ? `Plantilla_Catalogo_CSV_${dateStr}.csv`
-      : `Catalogo_${storeName || 'CostPro'}_${dateStr}.csv`;
+      : `Catalogo_${storeName || 'ADNegocio'}_${dateStr}.csv`;
     link.click();
     URL.revokeObjectURL(url);
     toast.success(isEmpty ? 'Plantilla CSV descargada' : `Catálogo CSV exportado (${products.length} productos)`);

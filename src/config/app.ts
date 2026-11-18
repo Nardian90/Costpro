@@ -8,7 +8,7 @@ export const APP_DISPLAY_VERSION = 'v5.8';
 
 export const SUPPORT_WHATSAPP = '+53 53183215';
 export const BRAND_ORIGIN = 'Cuba';
-export const BRAND_NAME = 'CostPro';
+export const BRAND_NAME = 'ADNegocio'; // ADN-BRAND-REBUILD-001 (config central: src/config/brand.ts)
 
 // ── Plan Limits ──────────────────────────────────────────────────
 /**

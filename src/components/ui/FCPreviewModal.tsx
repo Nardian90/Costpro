@@ -614,7 +614,7 @@ export function FCPreviewModal({
                 <p className="text-xs text-foreground/90 font-medium">
                   Este producto no tiene Ficha de Costo. Selecciona una plantilla
                   para conectarla: las <strong className="font-bold">Sistema</strong> (catálogo
-                  oficial de COSTPRO) están siempre disponibles, las <strong className="font-bold">Privadas</strong> son
+                  oficial de ADNegocio) están siempre disponibles, las <strong className="font-bold">Privadas</strong> son
                   tus plantillas guardadas y las <strong className="font-bold">Públicas</strong> las compartidas
                   según permisos. No necesitas una plantilla predeterminada de tienda.
                 </p>
