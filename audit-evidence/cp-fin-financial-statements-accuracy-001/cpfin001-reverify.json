@@ -1,0 +1,403 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-18T18:59:44.260Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": " SELECT 'fin_categories_schema' AS t, column_name, data_type FROM information_schema.columns WHERE table_name = 'fin_cat",
+      "rows": [
+        {
+          "t": "fin_categories_schema",
+          "column_name": "id",
+          "data_type": "uuid"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "code",
+          "data_type": "text"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "name",
+          "data_type": "text"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "description",
+          "data_type": "text"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "clase",
+          "data_type": "text"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "grupo",
+          "data_type": "text"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "parent_id",
+          "data_type": "uuid"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "is_system",
+          "data_type": "boolean"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "is_active",
+          "data_type": "boolean"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "sort_order",
+          "data_type": "integer"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "store_id",
+          "data_type": "uuid"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "created_at",
+          "data_type": "timestamp with time zone"
+        },
+        {
+          "t": "fin_categories_schema",
+          "column_name": "updated_at",
+          "data_type": "timestamp with time zone"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT 'CASO-A venta' AS k, id, status, payment_method, sale_currency, sale_exchange_rate, total_amount, invoice_number,",
+      "rows": [
+        {
+          "k": "CASO-A venta",
+          "id": "e2614f36-4c86-4317-b80f-6f2fb5d34648",
+          "status": "completed",
+          "payment_method": "zelle",
+          "sale_currency": "USD",
+          "sale_exchange_rate": "930.0000",
+          "total_amount": "125550.00",
+          "invoice_number": null,
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT 'CASO-A pago' AS k, id, transaction_id, ref_type, ref_id, payment_method, currency, amount, amount_cup, exchange_",
+      "rows": [
+        {
+          "k": "CASO-A pago",
+          "id": "e1eb5e60-f883-42c2-b2a5-0545976d7460",
+          "transaction_id": "e2614f36-4c86-4317-b80f-6f2fb5d34648",
+          "ref_type": "sale",
+          "ref_id": "e2614f36-4c86-4317-b80f-6f2fb5d34648",
+          "payment_method": "zelle",
+          "currency": "USD",
+          "amount": "135.0000000000000000",
+          "amount_cup": "125550.00000000000000000000",
+          "exchange_rate": "930.0000",
+          "direction": "in",
+          "idempotency_key": "pay-zelle-e2614f36-4c86-4317-b80f-6f2fb5d34648"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT 'CASO-A asiento' AS k, e.id AS entry_id, e.document_type, e.event, e.status, e.payment_ref, e.reversal_of, e.crea",
+      "rows": [
+        {
+          "k": "CASO-A asiento",
+          "entry_id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "document_type": "VENTA",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "reversal_of": null,
+          "created_by": "a1111111-1111-1111-1111-111111111111",
+          "mov_id": "deb1f171-98c8-4e28-b264-c8061bdee9e0",
+          "category_code": "ING_VENTAS",
+          "sense": "credito",
+          "amount": "125550.00",
+          "currency": "CUP",
+          "amount_cup": "125550.00",
+          "amount_origin": null,
+          "currency_origin": "USD",
+          "exchange_rate": "1.000000",
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "k": "CASO-A asiento",
+          "entry_id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "document_type": "VENTA",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "reversal_of": null,
+          "created_by": "a1111111-1111-1111-1111-111111111111",
+          "mov_id": "85f03f60-13b6-4c75-9619-070dee4dbde1",
+          "category_code": "ACT_INVENTARIO",
+          "sense": "credito",
+          "amount": "25200.00",
+          "currency": "CUP",
+          "amount_cup": "25200.00",
+          "amount_origin": null,
+          "currency_origin": "USD",
+          "exchange_rate": "1.000000",
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "k": "CASO-A asiento",
+          "entry_id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "document_type": "VENTA",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "reversal_of": null,
+          "created_by": "a1111111-1111-1111-1111-111111111111",
+          "mov_id": "f89b5424-5276-4dd1-9b91-c447c0f45a34",
+          "category_code": "ACT_BANCOS",
+          "sense": "debito",
+          "amount": "125550.00",
+          "currency": "CUP",
+          "amount_cup": "125550.00",
+          "amount_origin": null,
+          "currency_origin": "USD",
+          "exchange_rate": "1.000000",
+          "document_number": null,
+          "description": "Venta "
+        },
+        {
+          "k": "CASO-A asiento",
+          "entry_id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "document_type": "VENTA",
+          "event": "reconocimiento",
+          "status": "posted",
+          "payment_ref": null,
+          "reversal_of": null,
+          "created_by": "a1111111-1111-1111-1111-111111111111",
+          "mov_id": "fa8a4475-6b46-48d4-b3c0-f78807ca82af",
+          "category_code": "GAS_COSTO_VENTAS",
+          "sense": "debito",
+          "amount": "25200.00",
+          "currency": "CUP",
+          "amount_cup": "25200.00",
+          "amount_origin": null,
+          "currency_origin": "USD",
+          "exchange_rate": "1.000000",
+          "document_number": null,
+          "description": "Venta "
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT 'CASO-B venta' AS k, id, status, payment_method, sale_currency, sale_exchange_rate, total_amount, store_id FROM t",
+      "rows": [
+        {
+          "k": "CASO-B venta",
+          "id": "83b8e88e-ae01-413b-b6bf-159353e57856",
+          "status": "completed",
+          "payment_method": "transfer",
+          "sale_currency": "CUP",
+          "sale_exchange_rate": "1.0000",
+          "total_amount": "10000.00",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38"
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT 'CASO-B pagos' AS k, id, payment_method, currency, amount, amount_cup, exchange_rate FROM payment_transactions WH",
+      "rows": [
+        {
+          "k": "CASO-B pagos",
+          "id": "231d6911-541a-480f-b55b-be9ff66bf031",
+          "payment_method": "transfer",
+          "currency": "CUP",
+          "amount": "10000.00",
+          "amount_cup": "10000.00",
+          "exchange_rate": "1.0"
+        }
+      ]
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT 'CASO-B asiento' AS k, e.id AS entry_id, e.event, e.status, m.category_code, m.sense, m.amount, m.currency, m.amo",
+      "rows": []
+    },
+    {
+      "statement": 8,
+      "sql": "SELECT 'CASO-C venta' AS k, id, status, payment_method, total_amount, store_id FROM transactions WHERE id = '867d9017-4e",
+      "rows": [
+        {
+          "k": "CASO-C venta",
+          "id": "867d9017-4e9d-41de-9a99-028296838e0a",
+          "status": "completed",
+          "payment_method": "mixed",
+          "total_amount": "7200.00",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38"
+        }
+      ]
+    },
+    {
+      "statement": 9,
+      "sql": "SELECT 'CASO-C pagos' AS k, id, payment_method, currency, amount, amount_cup FROM payment_transactions WHERE transaction",
+      "rows": [
+        {
+          "k": "CASO-C pagos",
+          "id": "829359f6-04f4-499c-97e1-b99ff7089521",
+          "payment_method": "cash",
+          "currency": "CUP",
+          "amount": "4800",
+          "amount_cup": "4800"
+        },
+        {
+          "k": "CASO-C pagos",
+          "id": "ec89dfe0-e357-4f65-b6be-eb42d3ca4907",
+          "payment_method": "transfer",
+          "currency": "CUP",
+          "amount": "2400",
+          "amount_cup": "2400"
+        }
+      ]
+    },
+    {
+      "statement": 10,
+      "sql": "SELECT 'CASO-C asiento' AS k, e.id AS entry_id, e.event, e.status, m.category_code, m.sense, m.amount, m.amount_cup FROM",
+      "rows": [
+        {
+          "k": "CASO-C asiento",
+          "entry_id": "70276fbc-96c5-4f22-83de-59d2369dbb6d",
+          "event": "reconocimiento",
+          "status": "posted",
+          "category_code": "ING_VENTAS",
+          "sense": "credito",
+          "amount": "7200.00",
+          "amount_cup": "7200.00"
+        },
+        {
+          "k": "CASO-C asiento",
+          "entry_id": "70276fbc-96c5-4f22-83de-59d2369dbb6d",
+          "event": "reconocimiento",
+          "status": "posted",
+          "category_code": "ACT_INVENTARIO",
+          "sense": "credito",
+          "amount": "1603.00",
+          "amount_cup": "1603.00"
+        },
+        {
+          "k": "CASO-C asiento",
+          "entry_id": "70276fbc-96c5-4f22-83de-59d2369dbb6d",
+          "event": "reconocimiento",
+          "status": "posted",
+          "category_code": "ACT_EFECTIVO_CUP",
+          "sense": "debito",
+          "amount": "4800.00",
+          "amount_cup": "4800.00"
+        },
+        {
+          "k": "CASO-C asiento",
+          "entry_id": "70276fbc-96c5-4f22-83de-59d2369dbb6d",
+          "event": "reconocimiento",
+          "status": "posted",
+          "category_code": "ACT_BANCOS",
+          "sense": "debito",
+          "amount": "2400.00",
+          "amount_cup": "2400.00"
+        },
+        {
+          "k": "CASO-C asiento",
+          "entry_id": "70276fbc-96c5-4f22-83de-59d2369dbb6d",
+          "event": "reconocimiento",
+          "status": "posted",
+          "category_code": "GAS_COSTO_VENTAS",
+          "sense": "debito",
+          "amount": "1603.00",
+          "amount_cup": "1603.00"
+        }
+      ]
+    },
+    {
+      "statement": 11,
+      "sql": "SELECT 'universo' AS k, count(*) AS total_usd_sin_origin FROM fin_movements WHERE currency_origin = 'USD' AND amount_ori",
+      "rows": [
+        {
+          "k": "universo",
+          "total_usd_sin_origin": 538
+        }
+      ]
+    },
+    {
+      "statement": 12,
+      "sql": "SELECT 'universo_por_doctype' AS k, e.document_type, count(*) FROM fin_movements m JOIN fin_entries e ON e.id = m.entry_",
+      "rows": [
+        {
+          "k": "universo_por_doctype",
+          "document_type": "FLUJO_CAJA",
+          "count": 2
+        },
+        {
+          "k": "universo_por_doctype",
+          "document_type": "VENTA",
+          "count": 536
+        }
+      ]
+    },
+    {
+      "statement": 13,
+      "sql": "SELECT 'categorias' AS k, code, name, clase, grupo, is_active FROM fin_categories WHERE store_id = '5e6fe821-5465-48b1-b",
+      "rows": []
+    },
+    {
+      "statement": 14,
+      "sql": "SELECT 'saldos_pre' AS k, m.category_code, count(*) AS movs, sum(CASE WHEN m.sense='debit' THEN m.amount_cup ELSE -m.amo",
+      "rows": [
+        {
+          "k": "saldos_pre",
+          "category_code": "ACT_BANCOS",
+          "movs": 304,
+          "saldo_cup": "-25974520.01"
+        },
+        {
+          "k": "saldos_pre",
+          "category_code": "ACT_EFECTIVO_CUP",
+          "movs": 473,
+          "saldo_cup": "-18764939.96"
+        },
+        {
+          "k": "saldos_pre",
+          "category_code": "ACT_EFECTIVO_USD",
+          "movs": 10,
+          "saldo_cup": "-713300.00"
+        }
+      ]
+    },
+    {
+      "statement": 15,
+      "sql": "SELECT 'CASO-A entradas_doc' AS k, e.id, e.event, e.status, e.reversal_of, e.posted_at, e.created_by FROM fin_entries e ",
+      "rows": [
+        {
+          "k": "CASO-A entradas_doc",
+          "id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "event": "reconocimiento",
+          "status": "posted",
+          "reversal_of": null,
+          "posted_at": "2026-11-14 02:15:17.700756+00",
+          "created_by": "a1111111-1111-1111-1111-111111111111"
+        }
+      ]
+    }
+  ]
+}

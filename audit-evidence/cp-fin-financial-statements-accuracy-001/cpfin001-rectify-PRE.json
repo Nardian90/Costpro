@@ -1,0 +1,126 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-18T20:15:53.482Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT 'saldos' AS k, category_code,   sum(amount_cup) FILTER (WHERE sense='debito') AS debitos,   sum(amount_cup) FILTE",
+      "rows": [
+        {
+          "k": "saldos",
+          "category_code": "ACT_BANCOS",
+          "debitos": "25974520.01",
+          "creditos": null,
+          "saldo": null
+        },
+        {
+          "k": "saldos",
+          "category_code": "ACT_EFECTIVO_USD",
+          "debitos": "426210.00",
+          "creditos": "293600.00",
+          "saldo": "132610.00"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT 'venta' AS k, payment_method, cash_amount, zelle_amount, transfer_amount, total_amount, status FROM transactions ",
+      "rows": [
+        {
+          "k": "venta",
+          "payment_method": "zelle",
+          "cash_amount": "0",
+          "zelle_amount": "125550.00",
+          "transfer_amount": "0",
+          "total_amount": "125550.00",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT 'pago' AS k, payment_method, currency, amount, amount_cup, exchange_rate, notes FROM payment_transactions WHERE i",
+      "rows": [
+        {
+          "k": "pago",
+          "payment_method": "zelle",
+          "currency": "USD",
+          "amount": "135.0000000000000000",
+          "amount_cup": "125550.00000000000000000000",
+          "exchange_rate": "930.0000",
+          "notes": null
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT 'items' AS k, cash_paid, transfer_paid, zelle_paid, cash_currency, zelle_currency FROM transaction_items WHERE tr",
+      "rows": [
+        {
+          "k": "items",
+          "cash_paid": "0",
+          "transfer_paid": "0",
+          "zelle_paid": "67.5",
+          "cash_currency": "CUP",
+          "zelle_currency": "USD"
+        },
+        {
+          "k": "items",
+          "cash_paid": "0",
+          "transfer_paid": "0",
+          "zelle_paid": "67.5",
+          "cash_currency": "CUP",
+          "zelle_currency": "USD"
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT 'entradas' AS k, e.id, e.document_type, e.event, e.status, e.document_number, e.reversal_of, e.posted_at FROM fin",
+      "rows": [
+        {
+          "k": "entradas",
+          "id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "document_type": "VENTA",
+          "event": "reconocimiento",
+          "status": "posted",
+          "document_number": null,
+          "reversal_of": null,
+          "posted_at": "2026-11-14 02:15:17.700756+00"
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT 'rect_movs' AS k, m.category_code, m.sense, m.amount, m.amount_cup, m.amount_origin, m.currency_origin, m.descrip",
+      "rows": []
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT 'neto_venta' AS k, m.category_code,   sum(m.amount_cup) FILTER (WHERE m.sense='debito') - sum(m.amount_cup) FILTE",
+      "rows": [
+        {
+          "k": "neto_venta",
+          "category_code": "ACT_BANCOS",
+          "neto": null
+        },
+        {
+          "k": "neto_venta",
+          "category_code": "ACT_INVENTARIO",
+          "neto": null
+        },
+        {
+          "k": "neto_venta",
+          "category_code": "GAS_COSTO_VENTAS",
+          "neto": null
+        },
+        {
+          "k": "neto_venta",
+          "category_code": "ING_VENTAS",
+          "neto": null
+        }
+      ]
+    }
+  ]
+}

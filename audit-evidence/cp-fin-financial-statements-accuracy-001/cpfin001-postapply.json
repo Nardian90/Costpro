@@ -1,0 +1,21 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-18T20:14:46.237Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT 'pre' AS k,   (SELECT pg_get_functiondef(p.oid) LIKE '%v_fb_usd_settle%' FROM pg_proc p JOIN pg_namespace n ON n.",
+      "rows": [
+        {
+          "k": "pre",
+          "tiene_m015": true,
+          "tiene_cpfin001": true,
+          "tiene_guard_fix": true,
+          "posting_errors_abiertos": 0,
+          "universo_538": 305
+        }
+      ]
+    }
+  ]
+}

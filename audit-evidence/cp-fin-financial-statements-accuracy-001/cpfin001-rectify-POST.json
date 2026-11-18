@@ -1,0 +1,182 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-18T20:20:28.326Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT 'saldos' AS k, category_code,   sum(amount_cup) FILTER (WHERE sense='debito') AS debitos,   sum(amount_cup) FILTE",
+      "rows": [
+        {
+          "k": "saldos",
+          "category_code": "ACT_BANCOS",
+          "debitos": "25974520.01",
+          "creditos": "125550.00",
+          "saldo": "25848970.01"
+        },
+        {
+          "k": "saldos",
+          "category_code": "ACT_EFECTIVO_USD",
+          "debitos": "551760.00",
+          "creditos": "293600.00",
+          "saldo": "258160.00"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT 'venta' AS k, payment_method, cash_amount, zelle_amount, transfer_amount, total_amount, status FROM transactions ",
+      "rows": [
+        {
+          "k": "venta",
+          "payment_method": "cash",
+          "cash_amount": "125550.00000000000000000000",
+          "zelle_amount": "0.00000000000000000000",
+          "transfer_amount": "0",
+          "total_amount": "125550.00",
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT 'pago' AS k, payment_method, currency, amount, amount_cup, exchange_rate, notes FROM payment_transactions WHERE i",
+      "rows": [
+        {
+          "k": "pago",
+          "payment_method": "cash",
+          "currency": "USD",
+          "amount": "135.0000000000000000",
+          "amount_cup": "125550.00000000000000000000",
+          "exchange_rate": "930.0000",
+          "notes": "Rectificado zelle → cash"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT 'items' AS k, cash_paid, transfer_paid, zelle_paid, cash_currency, zelle_currency FROM transaction_items WHERE tr",
+      "rows": [
+        {
+          "k": "items",
+          "cash_paid": "67.5",
+          "transfer_paid": "0",
+          "zelle_paid": "0",
+          "cash_currency": "USD",
+          "zelle_currency": "USD"
+        },
+        {
+          "k": "items",
+          "cash_paid": "67.5",
+          "transfer_paid": "0",
+          "zelle_paid": "0",
+          "cash_currency": "USD",
+          "zelle_currency": "USD"
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT 'entradas' AS k, e.id, e.document_type, e.event, e.status, e.document_number, e.reversal_of, e.posted_at FROM fin",
+      "rows": [
+        {
+          "k": "entradas",
+          "id": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+          "document_type": "VENTA",
+          "event": "reconocimiento",
+          "status": "posted",
+          "document_number": null,
+          "reversal_of": null,
+          "posted_at": "2026-11-14 02:15:17.700756+00"
+        },
+        {
+          "k": "entradas",
+          "id": "cf781c93-5be4-496f-8297-f018ae96d77a",
+          "document_type": "RECTIFICACION_FIN",
+          "event": "ajuste_manual",
+          "status": "posted",
+          "document_number": "RECT-FIN-E2614F36",
+          "reversal_of": null,
+          "posted_at": "2026-11-18 20:20:07.917616+00"
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT 'rect_movs' AS k, m.category_code, m.sense, m.amount, m.amount_cup, m.amount_origin, m.currency_origin, m.descrip",
+      "rows": [
+        {
+          "k": "rect_movs",
+          "category_code": "ACT_BANCOS",
+          "sense": "credito",
+          "amount": "125550.00",
+          "amount_cup": "125550.00",
+          "amount_origin": "135.00",
+          "currency_origin": "USD",
+          "description": "Contra-partida: retiro del cobro clasificado como zelle (asiento 2d109ccf)",
+          "traza": {
+            "rect": "RECT-FIN-E2614F36",
+            "mision": "CP-FIN-001",
+            "origen": "rectificacion_medio_cobro",
+            "reason": "Propietario confirma: cobro real en EFECTIVO 135.00 USD (venta e2614f36 del 2026-11-07, Cable Solar 4mm x30 @4.50). El POS registro zelle; reclasificacion a Efectivo en Caja USD. Expediente CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 seccion 6.",
+            "ref_mov": "f89b5424-5276-4dd1-9b91-c447c0f45a34",
+            "ref_entry": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+            "to_method": "cash",
+            "from_method": "zelle"
+          }
+        },
+        {
+          "k": "rect_movs",
+          "category_code": "ACT_EFECTIVO_USD",
+          "sense": "debito",
+          "amount": "125550.00",
+          "amount_cup": "125550.00",
+          "amount_origin": "135.00",
+          "currency_origin": "USD",
+          "description": "Cobro real cash 135.0000000000000000 USD (venta e2614f36) reclasificado a ACT_EFECTIVO_USD",
+          "traza": {
+            "rect": "RECT-FIN-E2614F36",
+            "mision": "CP-FIN-001",
+            "origen": "rectificacion_medio_cobro",
+            "reason": "Propietario confirma: cobro real en EFECTIVO 135.00 USD (venta e2614f36 del 2026-11-07, Cable Solar 4mm x30 @4.50). El POS registro zelle; reclasificacion a Efectivo en Caja USD. Expediente CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 seccion 6.",
+            "ref_mov": "f89b5424-5276-4dd1-9b91-c447c0f45a34",
+            "ref_entry": "2d109ccf-1e44-4217-a260-d9f80c1fa442",
+            "to_method": "cash",
+            "from_method": "zelle"
+          }
+        }
+      ]
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT 'neto_venta' AS k, m.category_code,   sum(m.amount_cup) FILTER (WHERE m.sense='debito') - sum(m.amount_cup) FILTE",
+      "rows": [
+        {
+          "k": "neto_venta",
+          "category_code": "ACT_BANCOS",
+          "neto": "0.00"
+        },
+        {
+          "k": "neto_venta",
+          "category_code": "ACT_EFECTIVO_USD",
+          "neto": null
+        },
+        {
+          "k": "neto_venta",
+          "category_code": "ACT_INVENTARIO",
+          "neto": null
+        },
+        {
+          "k": "neto_venta",
+          "category_code": "GAS_COSTO_VENTAS",
+          "neto": null
+        },
+        {
+          "k": "neto_venta",
+          "category_code": "ING_VENTAS",
+          "neto": null
+        }
+      ]
+    }
+  ]
+}

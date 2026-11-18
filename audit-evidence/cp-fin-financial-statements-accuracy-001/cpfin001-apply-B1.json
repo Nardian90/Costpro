@@ -1,0 +1,9 @@
+{
+  "file": "/home/z/my-project/scripts/out/apply-B1-20261119130000.sql",
+  "version": "20261119130000",
+  "sha256": "2e9d1c86614df0c577ea4d40a93cce5cd87b0f7d900563ed27dc2cf2f99e6764",
+  "applied_at": "2026-11-18T20:19:40.667Z",
+  "apply_status": 201,
+  "notify_status": 201,
+  "ledger": null
+}

@@ -1,0 +1,126 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-18T19:10:09.650Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": " SELECT 'u_tiendas' AS k, m.store_id, count(*) FROM fin_movements m WHERE m.currency_origin='USD' AND m.amount_origin IS",
+      "rows": [
+        {
+          "k": "u_tiendas",
+          "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+          "count": 538
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "WITH targets AS (   SELECT m.id, m.entry_id, e.document_id, m.store_id, m.amount_cup   FROM fin_movements m JOIN fin_ent",
+      "rows": [
+        {
+          "k": "R1",
+          "candidatos": 101,
+          "reconstruibles": 101,
+          "sin_dato": 0,
+          "suma_nominal_usd": "13519.5000000"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "WITH targets AS (   SELECT m.id AS mov_id, e.document_id, m.amount_cup   FROM fin_movements m JOIN fin_entries e ON e.id",
+      "rows": [
+        {
+          "k": "R2",
+          "candidatos": 131,
+          "match_unico": 130,
+          "sin_match": 1,
+          "ambiguo": 0
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "WITH targets AS (   SELECT m.id AS mov_id, e.document_id, m.amount_cup   FROM fin_movements m JOIN fin_entries e ON e.id",
+      "rows": [
+        {
+          "k": "R2b",
+          "document_id": "d461485c-7657-4dc0-a704-8585eacd6779",
+          "amount_cup": "6500.00",
+          "n_matches": 0
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "WITH t_items AS (   SELECT sum(ti.quantity * ti.price_at_sale) AS nominal   FROM transaction_items ti WHERE ti.transacti",
+      "rows": [
+        {
+          "k": "casoA_check",
+          "r1_ing_ventas_usd": "135.00",
+          "r2_bancos_usd": "135.00",
+          "pagos_cup": "125550.00000000000000000000",
+          "total_venta": "125550.00"
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT 'R3' AS k, m.id AS mov_id, m.category_code, m.amount_cup, f.amount AS nominal_usd, f.currency, f.exchange_rate, f",
+      "rows": [
+        {
+          "k": "R3",
+          "mov_id": "300b8ae0-e3c8-4d06-98de-3185e5e32dfd",
+          "category_code": "GAS_OTROS_OPER",
+          "amount_cup": "293600.00",
+          "nominal_usd": "367",
+          "currency": "USD",
+          "exchange_rate": "800.0000",
+          "document_number": "IE-000002-2026"
+        },
+        {
+          "k": "R3",
+          "mov_id": "e441af6e-66f8-4d69-b7c2-b1132bac305c",
+          "category_code": "ACT_EFECTIVO_USD",
+          "amount_cup": "293600.00",
+          "nominal_usd": "367",
+          "currency": "USD",
+          "exchange_rate": "800.0000",
+          "document_number": "IE-000002-2026"
+        }
+      ]
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT 'resumen' AS k, 'ING_VENTAS R1' AS regla, count(*) FROM fin_movements m JOIN fin_entries e ON e.id=m.entry_id WHE",
+      "rows": [
+        {
+          "k": "resumen",
+          "regla": "ING_VENTAS R1",
+          "count": 130
+        },
+        {
+          "k": "resumen",
+          "regla": "ACT_BANCOS R2",
+          "count": 131
+        },
+        {
+          "k": "resumen",
+          "regla": "COGS/inventario NULL",
+          "count": 260
+        },
+        {
+          "k": "resumen",
+          "regla": "ACT_EFECTIVO_CUP NULL",
+          "count": 15
+        },
+        {
+          "k": "resumen",
+          "regla": "FLUJO_CAJA R3",
+          "count": 2
+        }
+      ]
+    }
+  ]
+}

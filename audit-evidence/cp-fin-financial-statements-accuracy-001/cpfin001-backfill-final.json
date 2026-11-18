@@ -1,0 +1,124 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-18T20:21:07.302Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT 'backfill_final' AS k, 'completados' AS estado, count(*) FROM fin_movements WHERE currency_origin='USD' AND amoun",
+      "rows": [
+        {
+          "k": "backfill_final",
+          "estado": "completados",
+          "count": 235
+        },
+        {
+          "k": "backfill_final",
+          "estado": "null_usd",
+          "count": 305
+        },
+        {
+          "k": "backfill_final",
+          "estado": "null_por_categoria",
+          "count": 260
+        },
+        {
+          "k": "backfill_final",
+          "estado": "null_cobros_cup",
+          "count": 15
+        },
+        {
+          "k": "backfill_final",
+          "estado": "null_ing_sin_nominal",
+          "count": 29
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT 'origen_completados' AS k, e.document_type, m.category_code, count(*), sum(m.amount_origin) AS suma_origen_usd FR",
+      "rows": [
+        {
+          "k": "origen_completados",
+          "document_type": "FLUJO_CAJA",
+          "category_code": "ACT_EFECTIVO_USD",
+          "count": 1,
+          "suma_origen_usd": "367.00"
+        },
+        {
+          "k": "origen_completados",
+          "document_type": "FLUJO_CAJA",
+          "category_code": "GAS_OTROS_OPER",
+          "count": 1,
+          "suma_origen_usd": "367.00"
+        },
+        {
+          "k": "origen_completados",
+          "document_type": "RECTIFICACION_FIN",
+          "category_code": "ACT_BANCOS",
+          "count": 1,
+          "suma_origen_usd": "135.00"
+        },
+        {
+          "k": "origen_completados",
+          "document_type": "RECTIFICACION_FIN",
+          "category_code": "ACT_EFECTIVO_USD",
+          "count": 1,
+          "suma_origen_usd": "135.00"
+        },
+        {
+          "k": "origen_completados",
+          "document_type": "VENTA",
+          "category_code": "ACT_BANCOS",
+          "count": 130,
+          "suma_origen_usd": "15333.63"
+        },
+        {
+          "k": "origen_completados",
+          "document_type": "VENTA",
+          "category_code": "ING_VENTAS",
+          "count": 101,
+          "suma_origen_usd": "13519.50"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT 'casoA_originales' AS k, m.category_code, m.sense, m.amount_cup, m.amount_origin, m.currency_origin FROM fin_move",
+      "rows": [
+        {
+          "k": "casoA_originales",
+          "category_code": "ING_VENTAS",
+          "sense": "credito",
+          "amount_cup": "125550.00",
+          "amount_origin": "135.00",
+          "currency_origin": "USD"
+        },
+        {
+          "k": "casoA_originales",
+          "category_code": "ACT_INVENTARIO",
+          "sense": "credito",
+          "amount_cup": "25200.00",
+          "amount_origin": null,
+          "currency_origin": "USD"
+        },
+        {
+          "k": "casoA_originales",
+          "category_code": "ACT_BANCOS",
+          "sense": "debito",
+          "amount_cup": "125550.00",
+          "amount_origin": "135.00",
+          "currency_origin": "USD"
+        },
+        {
+          "k": "casoA_originales",
+          "category_code": "GAS_COSTO_VENTAS",
+          "sense": "debito",
+          "amount_cup": "25200.00",
+          "amount_origin": null,
+          "currency_origin": "USD"
+        }
+      ]
+    }
+  ]
+}
