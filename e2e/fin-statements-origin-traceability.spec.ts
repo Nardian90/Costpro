@@ -22,7 +22,7 @@
  */
 import { test, expect, type Page, type APIRequestContext } from '@playwright/test';
 import {
-  signIn, apiHeaders, injectSession, sb, rpcAsUser, cleanupProducts,
+  signIn, apiHeaders, injectSession, sb, rpcAsUser, rpcAsService, cleanupProducts,
   createTestStore, seedProduct,
   ADMIN_EMAIL, ADMIN_PASS, CLERK_EMAIL, CLERK_PASS,
 } from './fixtures/session.fixture';
@@ -48,6 +48,7 @@ let pUsd = { id: '', price: 4.5, cost: 1000 };
 const RATE = 930; // tasa REGISTRADA de las ventas USD del run (la misma del caso 7-11)
 
 const saleIds: string[] = [];
+const cashFlowIds: string[] = []; // documentos de caja del E20 (cleanup explícito)
 let aperturaDocumentNumber = '';
 let freshStoreId = ''; // tienda efímera del escenario RLS (hard cleanup en afterAll)
 
@@ -527,8 +528,126 @@ test.describe.serial('CP-FIN-001 — Estados Financieros: importes, monedas, med
     expect(await page.getByText('Detalles de la Venta').count()).toBe(0);
   });
 
+  // ── §14.13/§14.14 — Rectificación histórica de clasificación + idempotencia ─
+  // Reproduce el patrón del caso 7-11 (venta USD cobrada por Zelle → banco)
+  // y rectifica al cobro real en EFECTIVO con el escritor canónico.
+  test('E19 · rectificación zelle→cash USD: compensatorio, datos corregidos, ingreso intacto, idempotente', async ({ request }) => {
+    // Venta USD 135 @930 cobrada por Zelle (como e2614f36 antes de rectificar:
+    // asignación por ítem zelle_paid, igual que el POS la registró el 7-11)
+    const sZ = await checkout(request, {
+      store_id: storeA, seller_id: adminId, payment_method: 'zelle',
+      items: [{ product_id: pUsd.id, quantity: 30, price: 4.5, cost: pUsd.cost, currency: 'USD', exchange_rate: RATE, zelle_paid: 135, zelle_currency: 'USD' }],
+      total_amount: 125550, subtotal: 125550, cash_amount: 0, transfer_amount: 0, zelle_amount: 125550,
+      sale_currency: 'USD', sale_exchange_rate: RATE,
+      payment_components: [{ method: 'zelle', currency: 'USD', amount: 135 }],
+    });
+    // Pre: el motor clasificó el cobro en BANCOS (coherente con el registro)
+    const bancosPre = await detail(adminToken, storeA, 'ACT_BANCOS');
+    const cobPre = movsOf(bancosPre, sZ).find((m) => m.sense === 'debito');
+    expect(cobPre).toBeTruthy();
+    expect(Number(cobPre!.amount_cup)).toBe(125550);
+    expect(Number(cobPre!.amount_origin)).toBeCloseTo(135, 2);
+
+    // Rectificación canónica (canal service-role, patrón T12)
+    const rect = await rpcAsService<{ status: string; to_category: string; importe_origin: number }>(
+      'fin_rectify_sale_payment_method',
+      { p_sale_id: sZ, p_from_method: 'zelle', p_to_method: 'cash', p_actor: adminId,
+        p_reason: 'E2E CP-FIN-001 §14.13: cobro real en efectivo (patrón caso 7-11)' });
+    expect(rect.ok, `rect.error=${rect.error}`).toBe(true);
+    expect(rect.data!.status).toBe('OK');
+    expect(rect.data!.to_category).toBe('ACT_EFECTIVO_USD');
+    expect(Number(rect.data!.importe_origin)).toBeCloseTo(135, 2);
+
+    // Compensatorio: crédito ACT_BANCOS + débito ACT_EFECTIVO_USD, con original
+    const bancosPost = await detail(adminToken, storeA, 'ACT_BANCOS');
+    const contra = movsOf(bancosPost, sZ).find((m) => m.sense === 'credito');
+    expect(contra).toBeTruthy();
+    expect(Number(contra!.amount_cup)).toBe(125550);
+    expect(Number(contra!.amount_origin)).toBeCloseTo(135, 2);
+    expect(contra!.currency_origin).toBe('USD');
+    const cajaUsd = await detail(adminToken, storeA, 'ACT_EFECTIVO_USD');
+    const cobCaja = movsOf(cajaUsd, sZ).find((m) => m.sense === 'debito');
+    expect(cobCaja).toBeTruthy();
+    expect(Number(cobCaja!.amount_cup)).toBe(125550);
+    expect(Number(cobCaja!.amount_origin)).toBeCloseTo(135, 2);
+
+    // Datos de la operación corregidos (Historial de Ventas: Efectivo/135 USD)
+    const pays = await sb.select<{ payment_method: string; amount: number; currency: string; exchange_rate: number }>(
+      'payment_transactions', `ref_id=eq.${sZ}&select=payment_method,amount,currency,exchange_rate`);
+    expect(pays.length).toBe(1);
+    expect(pays[0].payment_method).toBe('cash');
+    expect(Number(pays[0].amount)).toBeCloseTo(135, 2);
+    expect(pays[0].currency).toBe('USD');
+    expect(Number(pays[0].exchange_rate)).toBe(RATE);
+    const tx = await sb.select<{ payment_method: string; cash_amount: number; zelle_amount: number }>(
+      'transactions', `id=eq.${sZ}&select=payment_method,cash_amount,zelle_amount`);
+    expect(tx[0].payment_method).toBe('cash');
+    expect(Number(tx[0].cash_amount)).toBe(125550);
+    expect(Number(tx[0].zelle_amount)).toBe(0);
+    const its = await sb.select<{ cash_paid: number; zelle_paid: number; cash_currency: string | null }>(
+      'transaction_items', `transaction_id=eq.${sZ}&select=cash_paid,zelle_paid,cash_currency`);
+    expect(its.length).toBe(1);
+    expect(Number(its[0].cash_paid)).toBeCloseTo(135, 2);
+    expect(Number(its[0].zelle_paid)).toBe(0);
+    expect(its[0].cash_currency).toBe('USD');
+
+    // Ingreso intacto: UNA sola línea ING_VENTAS (sin doble contabilización)
+    const ing = await detail(adminToken, storeA, 'ING_VENTAS');
+    const ingRows = movsOf(ing, sZ).filter((m) => m.sense === 'credito');
+    expect(ingRows).toHaveLength(1);
+    expect(Number(ingRows[0].amount_cup)).toBe(125550);
+
+    // Neto por categoría para esta venta: bancos 0, caja USD +125,550
+    const netBanco = movsOf(bancosPost, sZ).reduce((acc, m) => acc + (m.sense === 'debito' ? Number(m.amount_cup) : -Number(m.amount_cup)), 0);
+    expect(netBanco).toBe(0);
+    const netCaja = movsOf(cajaUsd, sZ).reduce((acc, m) => acc + (m.sense === 'debito' ? Number(m.amount_cup) : -Number(m.amount_cup)), 0);
+    expect(netCaja).toBe(125550);
+
+    // Idempotencia: la segunda ejecución NO escribe nada
+    const rect2 = await rpcAsService<{ status: string }>(
+      'fin_rectify_sale_payment_method',
+      { p_sale_id: sZ, p_from_method: 'zelle', p_to_method: 'cash', p_actor: adminId, p_reason: 'reintento' });
+    expect(rect2.ok, `rect2.error=${rect2.error}`).toBe(true);
+    expect(rect2.data!.status).toBe('YA_APLICADO');
+    const rectEntries = await sb.select<{ id: string }>(
+      'fin_entries', `document_type=eq.RECTIFICACION_FIN&document_id=eq.${sZ}&select=id`);
+    expect(rectEntries).toHaveLength(1);
+  });
+
+  // ── §7 — FLUJO_CAJA en moneda extranjera lleva su importe original ─────────
+  test('E20 · flujo de caja USD: contable CUP + original USD + tasa registrada', async () => {
+    // Documento de caja egreso USD 10 @930 (siembra directa del documento;
+    // el trigger canónico fin_trg_cash_flow_documents lo publica al motor)
+    const cf = await sb.insert<{ id: string }>('cash_flow_documents', {
+      store_id: storeA, document_number: `IE-CPFIN1-${SFX}`, doc_type: 'egreso',
+      concept: 'otro_egreso', amount: 10, currency: 'USD', exchange_rate: RATE,
+      payment_method: 'cash', status: 'confirmado',
+      responsible_user_id: adminId, created_by: adminId, confirmed_by: adminId,
+      counterparty: 'E2E CP-FIN-001', justification: 'E2E CP-FIN-001 §7: original USD en flujo de caja',
+    });
+    const cfId = cf[0].id;
+    cashFlowIds.push(cfId);
+
+    const gas = await detail(adminToken, storeA, 'GAS_OTROS_OPER');
+    const eg = movsOf(gas, cfId).find((m) => m.sense === 'debito');
+    expect(eg).toBeTruthy();
+    expect(Number(eg!.amount_cup)).toBe(9300);
+    expect(Number(eg!.amount_origin)).toBeCloseTo(10, 2);
+    expect(eg!.currency_origin).toBe('USD');
+    const cajaUsd = await detail(adminToken, storeA, 'ACT_EFECTIVO_USD');
+    const cr = movsOf(cajaUsd, cfId).find((m) => m.sense === 'credito');
+    expect(cr).toBeTruthy();
+    expect(Number(cr!.amount_origin)).toBeCloseTo(10, 2);
+    expect(cr!.currency_origin).toBe('USD');
+  });
+
   test.afterAll(async () => {
     // ── Cleanup: delta neto cero (orden de dependencias) ──
+    if (cashFlowIds.length > 0) {
+      const cfList = cashFlowIds.map((id) => `"${id}"`).join(',');
+      await sb.delete('fin_entries', `store_id=eq.${storeA}&document_id=in.(${cfList})`).catch(() => {});
+      await sb.delete('cash_flow_documents', `id=in.(${cfList})`).catch(() => {});
+    }
     if (storeA) {
       if (saleIds.length > 0) {
         const list = saleIds.map((id) => `"${id}"`).join(',');

@@ -78,7 +78,9 @@ describe('MISIÓN CP-FIN — navegación del sistema financiero', () => {
   // orden del propietario — el badge «En desarrollo» añadido el 18-11 fue
   // RETIRADO: Estados Financieros se presenta como funcionalidad disponible.
   it('Estados Financieros se presenta como funcionalidad disponible (sin badge «En desarrollo»)', () => {
-    const flat = flattenNavigation() as Array<Record<string, unknown>>;
+    // Cast vía unknown: la marca fue retirada del tipo FlatNavItem; el test
+    // verifica por regresión que ningún nodo del catálogo la reintroduzca.
+    const flat = flattenNavigation() as unknown as Array<Record<string, unknown>>;
     const fs = flat.find(l => l.id === 'financial-statements');
     expect(fs).toBeDefined();
     // Ninguna hoja del catálogo declara la marca retirada (regresión).
