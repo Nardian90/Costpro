@@ -1,13 +1,18 @@
 /**
- * landing-pager-contract.test.tsx — ADN-LANDING-HERO-AND-PAGER-FIX-004
+ * landing-pager-contract.test.tsx — ADN-LANDING-HERO-AND-PAGER-FIX-004 + 005
  * ============================================================================
- * Contrato a nivel de fuente del navegador lateral de 5 puntos y del hero.
+ * Contrato a nivel de fuente del navegador de capítulos y del hero.
  *
- * El fallo histórico del punto 2: el paginador usaba `sectionRefs[1]` =
- * ahaMomentRef, una ref NUNCA adjunta a ningún elemento (AhaMomentSection no
- * se renderiza) → scrollIntoView sobre null, fallo silencioso. Este contrato
+ * Historia: el fallo del punto 2 (misión 004) era `sectionRefs[1]` = una ref
+ * NUNCA adjunta → scrollIntoView sobre null, fallo silencioso. Este contrato
  * impide regresar a navegación por refs huérfanas y ancla las decisiones de
  * identidad del hero (firma ADNegocio con BrandWordmark, eslogan íntegro).
+ *
+ * ADN-005: los ids canónicos viven en los WRAPPERS de acto (ActStage en
+ * LandingPage) — el paginador, el scrollspy, los anchors y los E2E resuelven
+ * posiciones estables aunque el hero esté fijado (position: sticky). El
+ * sistema cinematográfico NO puede regresar a: scroll-snap CSS en la raíz
+ * (empíricamente luchaba contra el usuario), wheel-hijack ni refs huérfanas.
  * ============================================================================
  */
 import { readFileSync } from 'node:fs';
@@ -27,8 +32,6 @@ describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — contrato del paginador lateral'
   });
 
   it('no existen refs huérfanas del paginador (la declaración de ahaMomentRef/sectionRefs está prohibida)', () => {
-    // El comentario histórico de LandingPage documenta el bug (y menciona los
-    // nombres); lo que se prohibe es la DECLARACIÓN de las refs muertas.
     expect(landing).not.toMatch(/const\s+ahaMomentRef\s*=\s*useRef/);
     expect(landing).not.toMatch(/const\s+sectionRefs\s*=\s*\[/);
   });
@@ -43,22 +46,73 @@ describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — contrato del paginador lateral'
     expect(landing).toMatch(/scrollToSectionById\(parseInt\(e\.key\) - 1\)/);
   });
 
-  it('los puntos del paginador exponen aria-current y type=button', () => {
-    expect(landing).toContain('aria-current={activeSection === idx ? \'true\' : undefined}');
+  it('los puntos del paginador exponen aria-current (ActPager, heredado de 004)', () => {
+    const pager = read('src/components/landing/ActPager.tsx');
+    expect(pager).toContain("aria-current={isActive ? 'true' : undefined}");
+    expect(pager).toContain('type="button"');
   });
 
-  it('el id canónico de pricing es "pricing" y las consultas muertas desaparecieron', () => {
-    const pricing = read('src/components/landing/PricingSection.tsx');
-    expect(pricing).toContain('id="pricing"');
-    expect(pricing).not.toContain('id="precios"');
-    expect(landing).not.toContain("'pricing-section'");
+  it('ADN-005 — los 5 ids canónicos viven en los wrappers ActStage de LandingPage', () => {
+    const ids = ['hero', 'como-funciona', 'features', 'pricing', 'faq'];
+    for (const id of ids) {
+      expect(landing).toMatch(new RegExp(`id="${id}"`));
+    }
+    // Cada acto pasa por ActStage (el sistema de escenas)
+    expect(landing.match(/<ActStage/g)?.length).toBe(5);
   });
 
-  it('las 5 secciones tienen scroll-mt para el header fijo', () => {
-    expect(read('src/components/landing/ServicesStorySection.tsx')).toMatch(/id="como-funciona"[\s\S]{0,200}scroll-mt/);
-    expect(read('src/components/landing/FeaturesSection.tsx')).toMatch(/id="features"[\s\S]{0,200}scroll-mt/);
-    expect(read('src/components/landing/PricingSection.tsx')).toMatch(/id="pricing"[\s\S]{0,200}scroll-mt/);
-    expect(read('src/components/landing/FAQSection.tsx')).toMatch(/id="faq"[\s\S]{0,200}scroll-mt/);
+  it('ADN-005 — los ids ya no viven duplicados en los componentes internos', () => {
+    expect(read('src/components/landing/PricingSection.tsx')).not.toMatch(/id="pricing"/);
+    expect(read('src/components/landing/ServicesStorySection.tsx')).not.toMatch(/id="como-funciona"/);
+    expect(read('src/components/landing/FeaturesSection.tsx')).not.toMatch(/id="features"/);
+    expect(read('src/components/landing/FAQSection.tsx')).not.toMatch(/id="faq"/);
+    // El id canónico de pricing sigue siendo "pricing" (nunca "precios")
+    expect(read('src/app/LandingPage.tsx')).not.toContain("'pricing-section'");
+  });
+});
+
+describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — contrato del sistema de escenas', () => {
+  const cinematic = read('src/components/landing/CinematicAct.tsx');
+  const shield = read('src/styles/landing-shield.css');
+  const landing = read('src/app/LandingPage.tsx');
+
+  it('las escenas fijadas usan sticky + scrub por progreso (sin dependencias nuevas)', () => {
+    expect(shield).toMatch(/\.act-scene--pinned\s*{[^}]*position:\s*sticky/);
+    expect(cinematic).toContain('useScroll');
+    expect(cinematic).toContain('useTransform');
+    // Sin GSAP/Lenis ni bibliotecas de scroll nuevas
+    const pkg = read('package.json');
+    expect(pkg).not.toMatch(/"gsap"|lenis|scrollsmoother|fullpage/i);
+  });
+
+  it('scroll-snap CSS quedó DESCARTADO (luchaba contra el usuario — ciclo 0)', () => {
+    expect(shield).not.toContain('scroll-snap-type');
+    expect(shield).not.toContain('scroll-snap-align');
+  });
+
+  it('la barra nativa se oculta solo visualmente y solo en el landing', () => {
+    expect(shield).toMatch(/html:has\(#landing-root\)[^{]*{[^}]*scrollbar-width:\s*none/);
+    expect(shield).toMatch(/::-webkit-scrollbar\s*{[^}]*display:\s*none/);
+    // El recorte horizontal no rompe sticky (hidden → clip)
+    expect(shield).toMatch(/overflow-x:\s*clip/);
+  });
+
+  it('el hero es el único acto en modo pin; los altos usan handoff', () => {
+    expect(landing).toMatch(/mode="pin"/);
+    expect(landing.match(/mode="pin"/g)?.length).toBe(1);
+  });
+
+  it('el teclado de capítulos existe (PageDown/PageUp/Home/End)', () => {
+    expect(landing).toMatch(/e\.key === 'PageDown'/);
+    expect(landing).toMatch(/e\.key === 'PageUp'/);
+    expect(landing).toMatch(/e\.key === 'Home'/);
+    expect(landing).toMatch(/e\.key === 'End'/);
+  });
+
+  it('reduced-motion desactiva el cine (flujo nativo sin pasillos ni scrub)', () => {
+    expect(cinematic).toMatch(/useReducedMotion/);
+    expect(cinematic).toMatch(/reduceMotion/);
+    expect(shield).toMatch(/prefers-reduced-motion: no-preference/);
   });
 });
 
@@ -67,7 +121,7 @@ describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — contrato de identidad del hero'
 
   it('el hero incluye la firma ADNegocio (HeroBrandSignOff) con BrandWordmark', () => {
     expect(hero).toContain('function HeroBrandSignOff');
-    expect(hero).toContain('<HeroBrandSignOff />');
+    expect(hero).toContain('<HeroBrandSignOff');
     // Identidad única: el mismo wordmark del sidebar autenticado
     const sign = hero.slice(hero.indexOf('function HeroBrandSignOff'), hero.indexOf('function HeroHeadline'));
     expect(sign).toContain('<BrandWordmark');
@@ -92,5 +146,11 @@ describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — contrato de identidad del hero'
     const sign = hero.slice(hero.indexOf('function HeroBrandSignOff'), hero.indexOf('function HeroHeadline'));
     expect(sign).toContain('useReducedMotion');
     expect(sign).toContain('reduceMotion ? false');
+  });
+
+  it('ADN-005 — la coreografía de salida recoge los fragmentos del caos', () => {
+    expect(hero).toContain('DriftFragment');
+    expect(hero).toContain('exitProgress');
+    expect(hero).toContain('ProblemsEditorialScene exitProgress={exitProgress}');
   });
 });

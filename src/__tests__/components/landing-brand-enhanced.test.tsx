@@ -166,8 +166,12 @@ describe('ADN-BRAND-REBUILD-001 — BrandWordmark', () => {
     // («ADN» verde + «egocio» blanco) — reemplaza al SVG AdnWordmark en el hero.
     expect(hero).toContain('BrandWordmark');
     expect(hero).not.toContain('AdnWordmark');
-    // El tratamiento debe alinearse con el sidebar autenticado (bold + tight)
-    expect(hero).toContain('font-bold tracking-tight');
+    // El tratamiento debe alinearse con el sidebar autenticado (bold + tight).
+    // ADN-005: el encabezado vive en LandingHeader (extraído del hero para que
+    // el position:fixed sobreviva a los transforms de la escena fijada); el
+    // drawer móvil de LandingPage comparte el mismo tratamiento.
+    expect(read('src/components/landing/LandingHeader.tsx')).toContain('font-bold tracking-tight');
+    expect(read('src/app/LandingPage.tsx')).toContain('font-bold tracking-tight');
     const sidebar = read('src/components/views/terminal/Sidebar.tsx');
     expect(sidebar).toContain('>ADN</span>egocio'); // referencia del tratamiento
     const footer = read('src/components/landing/FooterSection.tsx');
