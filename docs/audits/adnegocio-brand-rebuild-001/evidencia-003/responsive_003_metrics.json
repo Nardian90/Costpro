@@ -1,0 +1,474 @@
+{
+ "360": {
+  "hScroll": false,
+  "scrollWidth": 360,
+  "clientWidth": 360,
+  "brandFound": true,
+  "brandAdnGreen": "rgb(34, 197, 94)",
+  "brandEgocio": "rgb(255, 255, 255)",
+  "mask": {
+   "x": 24,
+   "y": 298,
+   "width": 312,
+   "height": 53.59375,
+   "top": 298,
+   "right": 336,
+   "bottom": 351.59375,
+   "left": 24
+  },
+  "maskPb": "13.6px",
+  "emRect": {
+   "x": 120.8125,
+   "y": 289,
+   "width": 153.03125,
+   "height": 56,
+   "top": 289,
+   "right": 273.84375,
+   "bottom": 345,
+   "left": 120.8125
+  },
+  "fontUsed": "italic 42.8px Geist, \"Geist Fallback\"",
+  "inkDescent": 7,
+  "inkAscent": 31,
+  "innerRect": {
+   "x": 24,
+   "y": 298,
+   "width": 312,
+   "height": 40,
+   "top": 298,
+   "right": 336,
+   "bottom": 338,
+   "left": 24
+  },
+  "fontBoundingBoxAscent": 43,
+  "fontBoundingBoxDescent": 13,
+  "sceneFragment": {
+   "rect": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0,
+    "top": 0,
+    "right": 0,
+    "bottom": 0,
+    "left": 0
+   },
+   "transform": "none",
+   "animation": "none",
+   "transition": "all"
+  },
+  "features": {
+   "left": 24,
+   "right": 24,
+   "centered": true,
+   "h2Left": 24
+  },
+  "faviconLinks": [
+   "icon|/favicon.svg",
+   "icon|/favicon.ico",
+   "icon|/icons/icon-192.png",
+   "apple-touch-icon|/apple-touch-icon.png"
+  ]
+ },
+ "390": {
+  "hScroll": false,
+  "scrollWidth": 390,
+  "clientWidth": 390,
+  "brandFound": true,
+  "brandAdnGreen": "rgb(34, 197, 94)",
+  "brandEgocio": "rgb(255, 255, 255)",
+  "mask": {
+   "x": 24,
+   "y": 294.96875,
+   "width": 342,
+   "height": 54.40625,
+   "top": 294.96875,
+   "right": 366,
+   "bottom": 349.375,
+   "left": 24
+  },
+  "maskPb": "13.923px",
+  "emRect": {
+   "x": 123.640625,
+   "y": 285.96875,
+   "width": 155.765625,
+   "height": 57,
+   "top": 285.96875,
+   "right": 279.40625,
+   "bottom": 342.96875,
+   "left": 123.640625
+  },
+  "fontUsed": "italic 43.8165px Geist, \"Geist Fallback\"",
+  "inkDescent": 8,
+  "inkAscent": 32,
+  "innerRect": {
+   "x": 24,
+   "y": 294.96875,
+   "width": 342,
+   "height": 40.484375,
+   "top": 294.96875,
+   "right": 366,
+   "bottom": 335.453125,
+   "left": 24
+  },
+  "fontBoundingBoxAscent": 44,
+  "fontBoundingBoxDescent": 13,
+  "sceneFragment": {
+   "rect": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0,
+    "top": 0,
+    "right": 0,
+    "bottom": 0,
+    "left": 0
+   },
+   "transform": "none",
+   "animation": "none",
+   "transition": "all"
+  },
+  "features": {
+   "left": 24,
+   "right": 24,
+   "centered": true,
+   "h2Left": 24
+  },
+  "faviconLinks": [
+   "icon|/favicon.svg",
+   "icon|/favicon.ico",
+   "icon|/icons/icon-192.png",
+   "apple-touch-icon|/apple-touch-icon.png"
+  ]
+ },
+ "768": {
+  "hScroll": false,
+  "scrollWidth": 768,
+  "clientWidth": 768,
+  "brandFound": true,
+  "brandAdnGreen": "rgb(34, 197, 94)",
+  "brandEgocio": "rgb(255, 255, 255)",
+  "mask": {
+   "x": 44.421875,
+   "y": 264.46875,
+   "width": 683.578125,
+   "height": 72.765625,
+   "top": 264.46875,
+   "right": 728,
+   "bottom": 337.234375,
+   "left": 44.421875
+  },
+  "maskPb": "18.8006px",
+  "emRect": {
+   "x": 175.46875,
+   "y": 252.46875,
+   "width": 214.8125,
+   "height": 76,
+   "top": 252.46875,
+   "right": 390.28125,
+   "bottom": 328.46875,
+   "left": 175.46875
+  },
+  "fontUsed": "italic 59.1667px Geist, \"Geist Fallback\"",
+  "inkDescent": 10,
+  "inkAscent": 43,
+  "innerRect": {
+   "x": 44.421875,
+   "y": 264.46875,
+   "width": 683.578125,
+   "height": 53.96875,
+   "top": 264.46875,
+   "right": 728,
+   "bottom": 318.4375,
+   "left": 44.421875
+  },
+  "fontBoundingBoxAscent": 59,
+  "fontBoundingBoxDescent": 17,
+  "sceneFragment": {
+   "rect": {
+    "x": 0,
+    "y": 0,
+    "width": 0,
+    "height": 0,
+    "top": 0,
+    "right": 0,
+    "bottom": 0,
+    "left": 0
+   },
+   "transform": "none",
+   "animation": "none",
+   "transition": "all"
+  },
+  "features": {
+   "left": 40,
+   "right": 40,
+   "centered": true,
+   "h2Left": 40
+  },
+  "faviconLinks": [
+   "icon|/favicon.svg",
+   "icon|/favicon.ico",
+   "icon|/icons/icon-192.png",
+   "apple-touch-icon|/apple-touch-icon.png"
+  ]
+ },
+ "1024": {
+  "hScroll": false,
+  "scrollWidth": 1024,
+  "clientWidth": 1024,
+  "brandFound": true,
+  "brandAdnGreen": "rgb(34, 197, 94)",
+  "brandEgocio": "rgb(255, 255, 255)",
+  "mask": {
+   "x": 69.890625,
+   "y": 281.796875,
+   "width": 890.109375,
+   "height": 97.359375,
+   "top": 281.796875,
+   "right": 960,
+   "bottom": 379.15625,
+   "left": 69.890625
+  },
+  "maskPb": "25.0675px",
+  "emRect": {
+   "x": 247.625,
+   "y": 265.796875,
+   "width": 273.765625,
+   "height": 102,
+   "top": 265.796875,
+   "right": 521.390625,
+   "bottom": 367.796875,
+   "left": 247.625
+  },
+  "fontUsed": "italic 78.889px Geist, \"Geist Fallback\"",
+  "inkDescent": 13,
+  "inkAscent": 57,
+  "innerRect": {
+   "x": 69.890625,
+   "y": 281.796875,
+   "width": 890.109375,
+   "height": 72.296875,
+   "top": 281.796875,
+   "right": 960,
+   "bottom": 354.09375,
+   "left": 69.890625
+  },
+  "fontBoundingBoxAscent": 79,
+  "fontBoundingBoxDescent": 23,
+  "sceneFragment": {
+   "rect": {
+    "x": 608.9652709960938,
+    "y": 402.8974609375,
+    "width": 184.0694580078125,
+    "height": 86.173828125,
+    "top": 402.8974609375,
+    "right": 793.0347290039062,
+    "bottom": 489.0712890625,
+    "left": 608.9652709960938
+   },
+   "transform": "none",
+   "animation": "none",
+   "transition": "all"
+  },
+  "features": {
+   "left": 64,
+   "right": 64,
+   "centered": true,
+   "h2Left": 64
+  },
+  "faviconLinks": [
+   "icon|/favicon.svg",
+   "icon|/favicon.ico",
+   "icon|/icons/icon-192.png",
+   "apple-touch-icon|/apple-touch-icon.png"
+  ]
+ },
+ "1440": {
+  "hScroll": false,
+  "scrollWidth": 1440,
+  "clientWidth": 1440,
+  "brandFound": true,
+  "brandAdnGreen": "rgb(34, 197, 94)",
+  "brandEgocio": "rgb(255, 255, 255)",
+  "mask": {
+   "x": 88.28125,
+   "y": 309.953125,
+   "width": 1271.71875,
+   "height": 135.703125,
+   "top": 309.953125,
+   "right": 1360,
+   "bottom": 445.65625,
+   "left": 88.28125
+  },
+  "maskPb": "35.2512px",
+  "emRect": {
+   "x": 335.625,
+   "y": 286.953125,
+   "width": 397.5625,
+   "height": 144,
+   "top": 286.953125,
+   "right": 733.1875,
+   "bottom": 430.953125,
+   "left": 335.625
+  },
+  "fontUsed": "italic 110.938px Geist, \"Geist Fallback\"",
+  "inkDescent": 18,
+  "inkAscent": 79,
+  "innerRect": {
+   "x": 88.28125,
+   "y": 309.953125,
+   "width": 1271.71875,
+   "height": 100.453125,
+   "top": 309.953125,
+   "right": 1360,
+   "bottom": 410.40625,
+   "left": 88.28125
+  },
+  "fontBoundingBoxAscent": 111,
+  "fontBoundingBoxDescent": 33,
+  "sceneFragment": {
+   "rect": {
+    "x": 848.8076782226562,
+    "y": 459.4277648925781,
+    "width": 231.18157958984375,
+    "height": 100.05068969726562,
+    "top": 459.4277648925781,
+    "right": 1079.9892578125,
+    "bottom": 559.4784545898438,
+    "left": 848.8076782226562
+   },
+   "transform": "none",
+   "animation": "none",
+   "transition": "all"
+  },
+  "features": {
+   "left": 80,
+   "right": 80,
+   "centered": true,
+   "h2Left": 80
+  },
+  "faviconLinks": [
+   "icon|/favicon.svg",
+   "icon|/favicon.ico",
+   "icon|/icons/icon-192.png",
+   "apple-touch-icon|/apple-touch-icon.png"
+  ]
+ },
+ "1920": {
+  "hScroll": false,
+  "scrollWidth": 1920,
+  "clientWidth": 1920,
+  "brandFound": true,
+  "brandAdnGreen": "rgb(34, 197, 94)",
+  "brandEgocio": "rgb(255, 255, 255)",
+  "mask": {
+   "x": 289.203125,
+   "y": 320.78125,
+   "width": 1350.796875,
+   "height": 151.4375,
+   "top": 320.78125,
+   "right": 1640,
+   "bottom": 472.21875,
+   "left": 289.203125
+  },
+  "maskPb": "39.168px",
+  "emRect": {
+   "x": 565.46875,
+   "y": 295.78125,
+   "width": 437.390625,
+   "height": 160,
+   "top": 295.78125,
+   "right": 1002.859375,
+   "bottom": 455.78125,
+   "left": 565.46875
+  },
+  "fontUsed": "italic 123.264px Geist, \"Geist Fallback\"",
+  "inkDescent": 20,
+  "inkAscent": 88,
+  "innerRect": {
+   "x": 289.203125,
+   "y": 320.78125,
+   "width": 1350.796875,
+   "height": 112.28125,
+   "top": 320.78125,
+   "right": 1640,
+   "bottom": 433.0625,
+   "left": 289.203125
+  },
+  "fontBoundingBoxAscent": 124,
+  "fontBoundingBoxDescent": 36,
+  "sceneFragment": {
+   "rect": {
+    "x": 1095.4638671875,
+    "y": 482.0840148925781,
+    "width": 231.181640625,
+    "height": 100.05068969726562,
+    "top": 482.0840148925781,
+    "right": 1326.6455078125,
+    "bottom": 582.1347045898438,
+    "left": 1095.4638671875
+   },
+   "transform": "none",
+   "animation": "none",
+   "transition": "all"
+  },
+  "features": {
+   "left": 280,
+   "right": 280,
+   "centered": true,
+   "h2Left": 280
+  },
+  "faviconLinks": [
+   "icon|/favicon.svg",
+   "icon|/favicon.ico",
+   "icon|/icons/icon-192.png",
+   "apple-touch-icon|/apple-touch-icon.png"
+  ]
+ },
+ "reduced-motion": {
+  "malabares": [
+   {
+    "w": 664,
+    "h": 135,
+    "opacity": "1"
+   }
+  ],
+  "negocio": {
+   "top": 287,
+   "h": 144,
+   "opacity": "1"
+  }
+ },
+ "faviconHttp": [
+  {
+   "url": "/favicon.svg",
+   "status": 200,
+   "type": "image/svg+xml",
+   "bytes": 497
+  },
+  {
+   "url": "/favicon.ico",
+   "status": 200,
+   "type": "image/x-icon",
+   "bytes": 2349
+  },
+  {
+   "url": "/icons/icon-192.png",
+   "status": 200,
+   "type": "image/png",
+   "bytes": 2973
+  },
+  {
+   "url": "/apple-touch-icon.png",
+   "status": 200,
+   "type": "image/png",
+   "bytes": 3081
+  },
+  {
+   "url": "/fc/icons/icon-192.png",
+   "status": 200,
+   "type": "image/png",
+   "bytes": 2973
+  }
+ ]
+}

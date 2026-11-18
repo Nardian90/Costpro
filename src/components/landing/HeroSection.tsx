@@ -371,8 +371,8 @@ function ProblemsEditorialScene() {
       <span className="absolute bottom-0 left-0 h-3 w-3 border-b border-l border-white/20" />
       <span className="absolute bottom-0 right-0 h-3 w-3 border-b border-r border-white/20" />
 
-      {/* N.01 — ventas en cuadernos: papel pautado con margen rojo→verde */}
-      <div className="absolute left-[1.5%] top-[2%] w-[50%] rotate-[-1.5deg]">
+      {/* N.01 — ventas en cuadernos: papel pautado con margen verde */}
+      <div className="absolute left-[0%] top-[1%] w-[52%] rotate-[-1.5deg]">
         <div
           className="relative border border-white/[0.09] bg-white/[0.02] px-4 pb-4 pt-3"
           style={{
@@ -389,7 +389,7 @@ function ProblemsEditorialScene() {
       </div>
 
       {/* N.02 — inventario en papel: hoja de control con celdas */}
-      <div className="absolute right-[1%] top-[31%] w-[45%] rotate-[1.25deg]">
+      <div className="absolute right-[1%] top-[28%] w-[45%] rotate-[1.25deg]">
         <div className="relative border border-white/[0.09] bg-white/[0.02] p-3">
           <SceneLabel n="N.02" context="papel" className="left-3" />
           <p className="mb-2.5 mt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
@@ -410,7 +410,7 @@ function ProblemsEditorialScene() {
       </div>
 
       {/* N.03 — costos a ojo: anotación serif con subrayado manual (SVG fijo) */}
-      <div className="absolute left-[7%] top-[62%] w-[46%] rotate-[-0.75deg]">
+      <div className="absolute left-[7%] top-[58%] w-[46%] rotate-[-0.75deg]">
         <div className="relative pt-1">
           <SceneLabel n="N.03" context="estimación" className="left-2" />
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">costos</p>
@@ -424,7 +424,7 @@ function ProblemsEditorialScene() {
       </div>
 
       {/* N.04 — deudas en chats: fragmento de conversación (puntos estáticos) */}
-      <div className="absolute bottom-[9%] right-[2%] w-[52%] rotate-[1deg]">
+      <div className="absolute bottom-[8%] right-[2%] w-[52%] rotate-[1deg]">
         <div className="relative rounded-2xl rounded-bl-sm border border-white/[0.11] bg-white/[0.03] px-4 py-3">
           <SceneLabel n="N.04" context="chats" className="right-3" />
           <p className="font-mono text-[11px] leading-relaxed text-white/65">
