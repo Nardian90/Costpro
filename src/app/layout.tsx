@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { Geist, Geist_Mono, Space_Grotesk, Inter } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk, Inter, Archivo, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -38,6 +38,26 @@ const geistMono = Geist_Mono({
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
   subsets: ["latin"],
+  display: 'swap',
+});
+
+/* ADN-BRAND-HERO-REFINEMENT-002 — voces tipográficas del hero editorial:
+   - Archivo (variable, eje wdth): sans monumental expandida para el titular.
+   - Instrument Serif: voz editorial de acento (una palabra del titular).
+   Fallbacks: Space Grotesk / Geist — si la descarga de la fuente falla el
+   hero se degrada con elegancia (misma jerarquía, menor expresividad). */
+const archivo = Archivo({
+  variable: "--font-archivo",
+  subsets: ["latin"],
+  display: 'swap',
+  axes: ["wdth"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
   display: 'swap',
 });
 
@@ -273,7 +293,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} font-sans antialiased bg-background text-foreground min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${inter.variable} ${archivo.variable} ${instrumentSerif.variable} font-sans antialiased bg-background text-foreground min-h-screen`}
         suppressHydrationWarning
         translate="no"
       >

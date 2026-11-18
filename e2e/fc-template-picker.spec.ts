@@ -513,7 +513,9 @@ test.describe('FC-USR-TEMPLATE — Conexión Producto ↔ Ficha de Costo (Invent
     await expect(page.getByRole('heading', { name: 'Explorador de Plantillas' })).toBeVisible({ timeout: 90_000 });
     // Pestaña «Privadas»: las plantillas guardadas del usuario en el servidor
     await page.getByRole('tab', { name: 'Privadas', exact: true }).click();
-    await expect(page.getByRole('heading', { name: 'Mis Plantillas Guardadas en COSTPRO' })).toBeVisible({ timeout: 30_000 });
+    // ADN-BRAND-REBUILD-001: el heading del explorador privado se rebrandeó
+    // (es.json privateServerSection: «Mis Plantillas Guardadas en ADNegocio»).
+    await expect(page.getByRole('heading', { name: 'Mis Plantillas Guardadas en ADNegocio' })).toBeVisible({ timeout: 30_000 });
     // Las plantillas sembradas del servidor aparecen en el explorador
     await expect(page.getByText(TEMPLATE_A_NAME).first()).toBeVisible({ timeout: 30_000 });
   });
