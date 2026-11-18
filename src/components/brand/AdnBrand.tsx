@@ -37,6 +37,18 @@ const INK_BY_VARIANT: Record<BrandVariant, { ink: string; accent: string }> = {
 };
 
 const { adnInkWidth, descriptorInkWidth, wordmarkInkWidth } = ADN_METRICS;
+
+/**
+ * ADN-LANDING-FINAL-POLISH-003 (§4) — caja de tinta REAL del wordmark.
+ * El generador (adnPaths.ts) declara baseline y=100 y cap-height 100, pero la
+ * letra «g» de «egocio» tiene descendente hasta y=128.57 y las redondas
+ * (e/o/c) desbordan hasta y=102; el punto de la «i» asciende hasta y=-2.
+ * Un viewBox de altura 100 RECORTABA la descendente de la «g» (el logotipo
+ * llegaba a leerse «ADNeaocio»). La caja vertical válida es [-4 .. 131].
+ */
+const WORDMARK_INK_TOP = -4;
+const WORDMARK_INK_BOTTOM = 131;
+const WORDMARK_VIEWBOX_HEIGHT = WORDMARK_INK_BOTTOM - WORDMARK_INK_TOP;
 /** Hueco ADN → NEGOCIO y línea base del descriptor (misma métrica del generador). */
 const DESC_GAP = 26;
 const DESC_BASELINE = 100 + DESC_GAP + 17;
@@ -92,7 +104,12 @@ type WordmarkProps = {
   title?: string;
 };
 
-/** Wordmark horizontal «ADNegocio» — punto de la «i» en verde neón. */
+/**
+ * Wordmark horizontal «ADNegocio» — punto de la «i» en verde neón.
+ * ADN-LANDING-FINAL-POLISH-003 (§4): el viewBox incluye ascendentes y
+ * descendentes (caja de tinta completa) — la «g» de «egocio» se muestra
+ * íntegra en cualquier altura de renderizado.
+ */
 export const AdnWordmark = memo(function AdnWordmark({
   variant = 'oscuro',
   height = 20,
@@ -102,7 +119,7 @@ export const AdnWordmark = memo(function AdnWordmark({
   const { ink, accent } = INK_BY_VARIANT[variant];
   return (
     <svg
-      viewBox={`0 0 ${wordmarkInkWidth} 100`}
+      viewBox={`0 ${WORDMARK_INK_TOP} ${wordmarkInkWidth} ${WORDMARK_VIEWBOX_HEIGHT}`}
       height={height}
       className={className}
       role="img"

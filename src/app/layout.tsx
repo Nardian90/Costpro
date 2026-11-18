@@ -94,9 +94,16 @@ export const metadata: Metadata = {
   creator: "ADNegocio",
   publisher: "ADNegocio",
   manifest: "/manifest.json",
+  /* ADN-LANDING-FINAL-POLISH-003 §7: favicon N geométrica original — todas
+     las variantes (SVG, ICO, PNG de manifest, apple-touch y PWA) apuntan al
+     MISMO símbolo aprobado. Antes: isotipo ADN cuyas letras se recortaban. */
   icons: {
-    icon: '/logo.svg',
-    apple: '/icons/icon-192.png',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '48x48', type: 'image/x-icon' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
   },
   openGraph: {
     title: "ADNegocio — Plataforma Empresarial Integral",
