@@ -246,7 +246,7 @@ export default function ServicesStorySection() {
     <section
       id="como-funciona"
       ref={containerRef}
-      className="relative bg-[#020617]"
+      className="relative bg-[#020617] scroll-mt-[76px]"
     >
       {/* Barra de progreso superior */}
       <div className="sticky top-0 z-20 h-0.5 bg-white/[0.04]">

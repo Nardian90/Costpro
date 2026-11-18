@@ -17,7 +17,10 @@ export default function PricingSection({
   onSignup,
 }: PricingSectionProps) {
   return (
-    <div ref={pricingRef} id="precios" className="relative">
+    <div ref={pricingRef} id="pricing" className="relative scroll-mt-[76px]">
+      {/* ADN-LANDING-HERO-AND-PAGER-FIX-004: id canónico "pricing" (antes
+          "precios", que no coincidía con sectionIds[3] ni con los anchors
+          #pricing del FAB y CostStorySection) + scroll-mt para el header fijo. */}
       <div className="max-w-5xl mx-auto w-full">
         {/* Section Header */}
         <motion.div
