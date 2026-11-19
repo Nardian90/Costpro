@@ -164,8 +164,13 @@ $$;
 DO $$
 DECLARE r record; v_gen uuid;
 BEGIN
+  -- Solo tiendas REALES (JOIN stores): la BD aislada de E2E conserva
+  -- asientos de artefactos de prueba con store_id huérfano que no deben
+  -- (ni pueden, por FK) recibir generación. Producción: 0 huérfanos
+  -- (verificado 2026-11-20: 1122 asientos, 3 tiendas).
   FOR r IN SELECT DISTINCT e.store_id, count(*) AS n
            FROM public.fin_entries e
+           JOIN public.stores s ON s.id = e.store_id
            WHERE e.generation_id IS NULL
            GROUP BY e.store_id
   LOOP
