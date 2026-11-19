@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-18T20:20:00.365Z
+-- Captured  : 2026-11-19T15:07:29.076Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 211 (SECURITY DEFINER write functions, public schema)
+-- Functions : 212 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -1786,6 +1786,43 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
+END;
+$function$
+
+
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1822,43 +1859,6 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
-END;
-$function$
-
-
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
 END;
 $function$
 
@@ -8232,6 +8232,267 @@ BEGIN
       substr(SQLERRM, 1, 80), substr(SQLERRM || ' | ' || coalesce(SQLSTATE, ''), 1, 2000));
     RETURN NULL;
   END;
+END $function$
+
+
+-- @contract-function name=fin_reclassify_sale_payment_currency args="p_sale_id uuid, p_metodo text, p_moneda_desde text, p_moneda_hacia text, p_actor uuid, p_reason text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_reclassify_sale_payment_currency(p_sale_id uuid, p_metodo text, p_moneda_desde text, p_moneda_hacia text, p_actor uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_sale public.transactions%ROWTYPE;
+  v_from_cat text; v_to_cat text;
+  v_metodo text := lower(btrim(coalesce(p_metodo, '')));
+  v_cur_from text := upper(btrim(coalesce(p_moneda_desde, '')));
+  v_cur_to   text := upper(btrim(coalesce(p_moneda_hacia, '')));
+  v_cup numeric := 0;
+  v_nom numeric := NULL;            -- nominal registrado en la moneda origen (evidencia de pagos)
+  v_rate_reg numeric := NULL;       -- tasa REGISTRADA en los pagos origen
+  v_nom_items numeric := 0;         -- Σ nominales de ítems en la moneda origen
+  v_cup_pagos_to numeric := 0;      -- Σ amount_cup de pagos del método ya en la moneda destino
+  v_r_doc numeric := NULL;          -- tasa documental reconstruida (evidencia)
+  v_orig_entry_id uuid;
+  v_orig_mov_id uuid;
+  v_new_entry_id uuid;
+  v_date date;
+  v_docnum text;
+  v_count int;
+  v_col_paid text; v_col_cur text;
+  v_stale boolean := false;
+BEGIN
+  -- a) Validaciones de entrada (fail-closed; monedas de caja soportadas por
+  --    el plan contable REAL: ACT_EFECTIVO_CUP y ACT_EFECTIVO_USD).
+  IF v_metodo NOT IN ('cash', 'transfer', 'zelle') THEN
+    RAISE EXCEPTION 'ERR_METHOD_NOT_SUPPORTED: % (cash/transfer/zelle)', v_metodo;
+  END IF;
+  IF v_cur_from NOT IN ('CUP', 'USD') OR v_cur_to NOT IN ('CUP', 'USD') THEN
+    RAISE EXCEPTION 'ERR_CURRENCY_NOT_SUPPORTED: % → % (solo CUP/USD; el plan contable no define cajas EUR/MLC)', v_cur_from, v_cur_to;
+  END IF;
+  IF v_cur_from = v_cur_to THEN
+    RAISE EXCEPTION 'ERR_SAME_CURRENCY: %', v_cur_from;
+  END IF;
+
+  v_from_cat := CASE
+    WHEN v_metodo = 'cash' AND v_cur_from = 'CUP' THEN 'ACT_EFECTIVO_CUP'
+    WHEN v_metodo = 'cash' AND v_cur_from = 'USD' THEN 'ACT_EFECTIVO_USD'
+    WHEN v_metodo IN ('transfer', 'zelle')        THEN 'ACT_BANCOS'
+  END;
+  v_to_cat := CASE
+    WHEN v_metodo = 'cash' AND v_cur_to = 'CUP' THEN 'ACT_EFECTIVO_CUP'
+    WHEN v_metodo = 'cash' AND v_cur_to = 'USD' THEN 'ACT_EFECTIVO_USD'
+    WHEN v_metodo IN ('transfer', 'zelle')      THEN 'ACT_BANCOS'
+  END;
+  IF v_from_cat IS NULL OR v_to_cat IS NULL THEN
+    RAISE EXCEPTION 'ERR_CATEGORY_UNMAPPED: % % → %', v_metodo, v_cur_from, v_cur_to;
+  END IF;
+  IF v_from_cat = v_to_cat THEN
+    RAISE EXCEPTION 'ERR_SAME_FINANCIAL_CATEGORY: % % → % ambas imputan % (sin efecto contable que rectificar)', v_metodo, v_cur_from, v_cur_to, v_to_cat;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.fin_categories
+                 WHERE code = v_to_cat AND is_active) THEN
+    RAISE EXCEPTION 'ERR_TARGET_CATEGORY_MISSING: % no existe/activa en el catálogo', v_to_cat;
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext('fin:reclassmon:' || p_sale_id::text));
+
+  -- b) Idempotencia determinista por (venta, método, moneda_origen).
+  IF EXISTS (
+    SELECT 1
+    FROM public.fin_entries e
+    JOIN public.fin_movements m ON m.entry_id = e.id
+    WHERE e.document_type = 'RECTIFICACION_FIN'
+      AND e.document_id = p_sale_id
+      AND e.status = 'posted'
+      AND m.traza ->> 'origen' = 'reclasificacion_moneda_cobro'
+      AND m.traza ->> 'metodo' = v_metodo
+      AND m.traza ->> 'moneda_desde' = v_cur_from
+  ) THEN
+    RETURN jsonb_build_object('status', 'YA_APLICADO', 'sale_id', p_sale_id,
+      'metodo', v_metodo, 'moneda_desde', v_cur_from, 'moneda_hacia', v_cur_to);
+  END IF;
+
+  SELECT * INTO v_sale FROM public.transactions WHERE id = p_sale_id;
+  IF v_sale.id IS NULL THEN
+    RAISE EXCEPTION 'ERR_SALE_NOT_FOUND: %', p_sale_id;
+  END IF;
+  IF v_sale.status <> 'completed' THEN
+    RAISE EXCEPTION 'ERR_SALE_NOT_COMPLETED: status=% (solo ventas completed son rectificables)', v_sale.status;
+  END IF;
+
+  -- c) Movimiento ORIGINAL del cobro: EXACTAMENTE un débito en la categoría
+  --    origen dentro del reconocimiento VENTA posted de la venta.
+  SELECT count(*) INTO v_count
+  FROM public.fin_movements m
+  JOIN public.fin_entries e ON e.id = m.entry_id
+  WHERE e.document_type = 'VENTA' AND e.document_id = p_sale_id
+    AND e.event = 'reconocimiento' AND e.status = 'posted'
+    AND m.category_code = v_from_cat AND m.sense = 'debito';
+  IF v_count = 0 THEN
+    RAISE EXCEPTION 'ERR_COB_MOVEMENT_NOT_FOUND: sin débito % en el reconocimiento de % (¿ya rectificado con otra moneda?)', v_from_cat, p_sale_id;
+  END IF;
+  IF v_count > 1 THEN
+    RAISE EXCEPTION 'ERR_AMBIGUOUS_COB_MOVEMENT: % débitos % en el reconocimiento de % (no desambiguable)', v_count, v_from_cat, p_sale_id;
+  END IF;
+  SELECT m.entry_id, m.id, m.amount_cup INTO v_orig_entry_id, v_orig_mov_id, v_cup
+  FROM public.fin_movements m
+  JOIN public.fin_entries e ON e.id = m.entry_id
+  WHERE e.document_type = 'VENTA' AND e.document_id = p_sale_id
+    AND e.event = 'reconocimiento' AND e.status = 'posted'
+    AND m.category_code = v_from_cat AND m.sense = 'debito';
+  IF coalesce(v_cup, 0) <= 0 THEN
+    RAISE EXCEPTION 'ERR_ZERO_AMOUNT: débito original = % CUP', v_cup;
+  END IF;
+
+  -- d) Coherencia con los pagos registrados (fuente primaria del cobro).
+  SELECT count(*), coalesce(sum(amount), 0), min(exchange_rate)
+    INTO v_count, v_nom, v_rate_reg
+  FROM public.payment_transactions
+  WHERE ref_type = 'sale' AND ref_id = p_sale_id
+    AND payment_method = v_metodo AND currency = v_cur_from
+    AND coalesce(direction, 'in') = 'in';
+  IF v_count > 0 THEN
+    -- Pagos en la moneda origen: su Σ amount_cup debe explicar EXACTAMENTE el
+    -- débito contable a reclasificar (±0.01).
+    IF abs(coalesce((SELECT sum(amount_cup) FROM public.payment_transactions
+                     WHERE ref_type = 'sale' AND ref_id = p_sale_id
+                       AND payment_method = v_metodo AND currency = v_cur_from
+                       AND coalesce(direction, 'in') = 'in'), 0) - v_cup) > 0.01 THEN
+      RAISE EXCEPTION 'ERR_INCOHERENT_PAGOS: Σ amount_cup pagos %/% (%) ≠ débito contable (%)', v_metodo, v_cur_from,
+        (SELECT sum(amount_cup) FROM public.payment_transactions
+         WHERE ref_type = 'sale' AND ref_id = p_sale_id
+           AND payment_method = v_metodo AND currency = v_cur_from
+           AND coalesce(direction, 'in') = 'in'), v_cup;
+    END IF;
+    IF coalesce(v_nom, 0) > 0 THEN
+      v_r_doc := round(v_cup / v_nom, 6);  -- tasa documental desde evidencia (pago registrado)
+    END IF;
+  ELSE
+    -- Caso «asiento obsoleto» (p. ej. 28e94349: el asiento fue publicado por
+    -- una versión anterior del motor con reparto por ítems y el pago ya está
+    -- registrado en la moneda destino): se exige que exista cobro del método
+    -- en la moneda destino y que el débito origen sea explicable por los
+    -- nominales de los ítems (tasa documental = débito / Σ nominales).
+    v_stale := true;
+    SELECT coalesce(sum(amount_cup), 0) INTO v_cup_pagos_to
+    FROM public.payment_transactions
+    WHERE ref_type = 'sale' AND ref_id = p_sale_id
+      AND payment_method = v_metodo AND currency = v_cur_to
+      AND coalesce(direction, 'in') = 'in';
+    IF v_cup_pagos_to <= 0 THEN
+      RAISE EXCEPTION 'ERR_STALE_WITHOUT_TARGET_PAYMENT: sin pagos %/% ni %/% para %', v_metodo, v_cur_from, v_metodo, v_cur_to, p_sale_id;
+    END IF;
+    v_nom := NULL;
+  END IF;
+
+  -- Nominales de ítems en la moneda origen (para normalización de datos).
+  v_col_paid := v_metodo || '_paid';
+  v_col_cur  := v_metodo || '_currency';
+  EXECUTE format(
+    'SELECT coalesce(sum(%I), 0) FROM public.transaction_items WHERE transaction_id = $1 AND %I = $2 AND coalesce(%I, 0) > 0',
+    v_col_paid, v_col_cur, v_col_paid)
+  INTO v_nom_items
+  USING p_sale_id, v_cur_from;
+
+  IF v_stale THEN
+    IF v_nom_items <= 0 THEN
+      RAISE EXCEPTION 'ERR_STALE_WITHOUT_ITEM_NOMINALS: caso asiento obsoleto sin nominales de ítems % en % (no reconstruible)', v_metodo, v_cur_from;
+    END IF;
+    v_r_doc := round(v_cup / v_nom_items, 6);
+  END IF;
+
+  -- e) Documento de rectificación (determinista por venta+método+moneda).
+  v_date   := v_sale.created_at::date;
+  v_docnum := 'RECT-MON-' || upper(substr(p_sale_id::text, 1, 8)) || '-' || v_metodo || '-' || v_cur_from;
+
+  INSERT INTO public.fin_entries (
+    store_id, document_type, document_id, document_number, event, payment_ref,
+    economic_date, posted_at, rule_version_id, movements_snapshot, description, created_by, status)
+  VALUES (
+    v_sale.store_id, 'RECTIFICACION_FIN', p_sale_id, v_docnum, 'ajuste_manual', NULL,
+    v_date, now(), NULL, NULL,
+    v_docnum || ': reclasificación de la MONEDA del cobro de la venta ' || substr(p_sale_id::text, 1, 8)
+      || ' — registrado ' || v_metodo || '/' || v_cur_from || ', moneda real ' || v_cur_to
+      || ' · venta facturada en ' || coalesce(v_sale.sale_currency, 'CUP')
+      || coalesce(' · cobro contable ' || trim(to_char(v_cup, 'FM999999999999990.00')) || ' CUP', '')
+      || coalesce(' · tasa documental ' || trim(to_char(v_r_doc, 'FM999999999999990.000000')), '')
+      || ' (moneda real del cobro según evidencia primaria y mandato del propietario).'
+      || ' Ref asiento original ' || v_orig_entry_id::text || ' · movimiento ' || v_orig_mov_id::text
+      || coalesce(' · causa: ' || p_reason, '')
+      || ' · expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001.',
+    coalesce(p_actor, v_sale.seller_id), 'posted')
+  RETURNING id INTO v_new_entry_id;
+
+  -- f) Movimientos compensatorios (equilibrados; valor económico íntegro).
+  INSERT INTO public.fin_movements (
+    entry_id, store_id, category_code, sense, amount, currency, exchange_rate,
+    economic_date, document_number, description, traza,
+    currency_origin, amount_origin)
+  VALUES (
+    v_new_entry_id, v_sale.store_id, v_from_cat, 'credito', round(v_cup, 2), 'CUP', 1,
+    v_date, v_docnum,
+    'Contrapartida: retiro del cobro clasificado en ' || v_from_cat || ' (' || v_metodo || '/' || v_cur_from || ')',
+    jsonb_build_object(
+      'rect', v_docnum, 'mision', 'CP-FIN-002',
+      'origen', 'reclasificacion_moneda_cobro',
+      'metodo', v_metodo, 'moneda_desde', v_cur_from, 'moneda_hacia', v_cur_to,
+      'tasa_documental', v_r_doc, 'caso', CASE WHEN v_stale THEN 'asiento_obsoleto' ELSE 'pagos_registrados' END,
+      'ref_entry', v_orig_entry_id, 'ref_mov', v_orig_mov_id,
+      'reason', p_reason),
+    v_cur_from, v_nom);
+
+  INSERT INTO public.fin_movements (
+    entry_id, store_id, category_code, sense, amount, currency, exchange_rate,
+    economic_date, document_number, description, traza,
+    currency_origin, amount_origin)
+  VALUES (
+    v_new_entry_id, v_sale.store_id, v_to_cat, 'debito', round(v_cup, 2), 'CUP', 1,
+    v_date, v_docnum,
+    'Cobro real en ' || v_to_cat || ' (' || v_metodo || ') reclasificado a ' || v_to_cat
+      || ' (venta ' || substr(p_sale_id::text, 1, 8) || ')',
+    jsonb_build_object(
+      'rect', v_docnum, 'mision', 'CP-FIN-002',
+      'origen', 'reclasificacion_moneda_cobro',
+      'metodo', v_metodo, 'moneda_desde', v_cur_from, 'moneda_hacia', v_cur_to,
+      'tasa_documental', v_r_doc, 'caso', CASE WHEN v_stale THEN 'asiento_obsoleto' ELSE 'pagos_registrados' END,
+      'ref_entry', v_orig_entry_id, 'ref_mov', v_orig_mov_id,
+      'reason', p_reason),
+    v_cur_to,
+    CASE WHEN v_cur_to = 'CUP' THEN round(v_cup, 2)
+         WHEN v_r_doc IS NOT NULL AND v_r_doc > 0 THEN round(v_cup / v_r_doc, 2)
+         ELSE NULL END);
+
+  -- g) Corrección de los datos de la operación (Historial de Ventas y motor).
+  IF v_count > 0 THEN
+    UPDATE public.payment_transactions
+    SET currency = v_cur_to,
+        exchange_rate = CASE WHEN v_cur_to = 'CUP' THEN 1.0 ELSE exchange_rate END,
+        amount = CASE WHEN v_cur_to = 'CUP' THEN round(amount_cup, 2) ELSE amount END,
+        notes = CASE WHEN coalesce(notes, '') = ''
+                     THEN 'Rectificado ' || v_metodo || '/' || v_cur_from || ' → ' || v_cur_to
+                     ELSE notes || ' · Rectificado ' || v_metodo || '/' || v_cur_from || ' → ' || v_cur_to END,
+        updated_at = now()
+    WHERE ref_type = 'sale' AND ref_id = p_sale_id
+      AND payment_method = v_metodo AND currency = v_cur_from
+      AND coalesce(direction, 'in') = 'in';
+  END IF;
+
+  IF v_r_doc IS NOT NULL AND v_r_doc > 0 AND v_nom_items > 0 THEN
+    EXECUTE format(
+      'UPDATE public.transaction_items SET %I = round(%I * $2, 2), %I = $3 WHERE transaction_id = $1 AND %I = $4 AND coalesce(%I, 0) > 0',
+      v_col_paid, v_col_paid, v_col_cur, v_col_cur, v_col_paid)
+    USING p_sale_id, v_r_doc, v_cur_to, v_cur_from;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'status', 'OK', 'sale_id', p_sale_id, 'entry_id', v_new_entry_id,
+    'docnum', v_docnum, 'importe_cup', round(v_cup, 2),
+    'metodo', v_metodo, 'moneda_desde', v_cur_from, 'moneda_hacia', v_cur_to,
+    'tasa_documental', v_r_doc, 'caso', CASE WHEN v_stale THEN 'asiento_obsoleto' ELSE 'pagos_registrados' END,
+    'from_category', v_from_cat, 'to_category', v_to_cat,
+    'nominal_items_normalizados', v_nom_items);
 END $function$
 
 
