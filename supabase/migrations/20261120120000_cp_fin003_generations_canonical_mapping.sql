@@ -174,15 +174,29 @@ BEGIN
            WHERE e.generation_id IS NULL
            GROUP BY e.store_id
   LOOP
-    -- Si la tienda YA tiene generación activa (re-aplicación sobre BD con
-    -- estado avanzado), los legados NULL se agrupan en ELLA; solo se crea
-    -- GEN-0 cuando no existe ninguna.
-    v_gen := public.fin_active_generation(r.store_id);
-    IF v_gen IS NULL THEN
+    -- Si la tienda YA tiene generación activa (estado avanzado por
+    -- re-aplicación o escenarios de prueba), los legados NULL se agrupan en
+    -- una GEN-0 SUPERSEDED: se conservan para auditoría y NO colisionan con
+    -- la clave de idempotencia de la activa (sus mismos documentos ya están
+    -- re-contabilizados en ella). Solo se crea GEN-0 ACTIVA cuando la tienda
+    -- no tiene ninguna (el caso de la aplicación limpia).
+    IF public.fin_active_generation(r.store_id) IS NULL THEN
       INSERT INTO public.fin_posting_generations (store_id, code, status, notes, snapshot)
       VALUES (r.store_id, 'GEN-0', 'active',
               'Generación legado: asientos existentes agrupados por la migración CP-FIN-003 (sin cambios de contenido).',
               jsonb_build_object('entries', r.n, 'origen', 'migracion-cp-fin-003'))
+      ON CONFLICT (store_id, code) DO NOTHING
+      RETURNING id INTO v_gen;
+      IF v_gen IS NULL THEN
+        SELECT id INTO v_gen FROM public.fin_posting_generations
+        WHERE store_id = r.store_id AND code = 'GEN-0' AND status = 'active';
+      END IF;
+    ELSE
+      INSERT INTO public.fin_posting_generations (store_id, code, status, notes, snapshot, superseded_at)
+      VALUES (r.store_id, 'GEN-0', 'superseded',
+              'Generación legado agrupada por re-aplicación CP-FIN-003 (la tienda ya tenía generación activa; preservada para auditoría, excluida de informes).',
+              jsonb_build_object('entries', r.n, 'origen', 'migracion-cp-fin-003-reaplicacion'),
+              now())
       ON CONFLICT (store_id, code) DO NOTHING
       RETURNING id INTO v_gen;
       IF v_gen IS NULL THEN
