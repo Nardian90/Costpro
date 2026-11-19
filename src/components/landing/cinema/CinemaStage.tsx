@@ -127,7 +127,10 @@ function addTransition(
       { clipPath: 'inset(0% 0% 0% 0%)', ease: 'power2.inOut', duration: T * 0.8 },
       seg + 0.08,
     )
-      .to(out, { scale: 0.985, autoAlpha: 0.5, ease: 'power2.out', duration: T * 0.4 }, seg)
+      /* La escena saliente se apaga COMPLETAMENTE (no 0.5): el panel entrante
+         la cubre con fondo opaco — y al terminar en 0 no quedan fantasmas
+         que se transparenten en transiciones posteriores (ciclo 1). */
+      .to(out, { scale: 0.985, autoAlpha: 0, ease: 'power2.out', duration: T * 0.55 }, seg + 0.05)
       .fromTo(
         sweep,
         { x: stageW, autoAlpha: 0 },
@@ -265,9 +268,13 @@ export default function CinemaStage({
           invalidateOnRefresh: true,
           /* Ajuste direccional a los puntos de reposo de las escenas: al
              terminar el gesto, completa hacia la escena correspondiente. Es
-             INTERRUPTIBLE — cualquier nueva interacción lo cancela. */
+             INTERRUPTIBLE — cualquier nueva interacción lo cancela.
+             inertia:false — el ajuste NO predice momentum (la experiencia no
+             se propulsa sola: §4.2 «el control permanece en manos del
+             visitante»); la dirección la da el último gesto (labelsDirectional). */
           snap: {
             snapTo: 'labelsDirectional',
+            inertia: false,
             duration: { min: 0.18, max: 0.55 },
             delay: 0.06,
             ease: 'power2.inOut',
@@ -283,6 +290,14 @@ export default function CinemaStage({
         addTransition(tl, stage, panels, sweep, i, kind);
         tl.addLabel(`s${i}`, i);
       }
+      /* CRÍTICO: la duración del timeline debe ser EXACTAMENTE (N-1) — los
+         labels de reposo deben mapear 1:1 a unidades de scroll (1 viewport
+         por escena). El último label NO extiende la duración de un timeline
+         de GSAP (la duración la marcan los tweens: (N-1)-0.75) → sin este
+         relleno, el scrub desalineaba los labels del gesto (ciclo 2: s14
+         inalcanzable, snap aterrizando entre escenas). */
+      const pad = N - 1 - tl.duration();
+      if (pad > 0.001) tl.to({}, { duration: pad });
 
       stRef.current = tl.scrollTrigger;
     }, stage);
@@ -320,6 +335,12 @@ export default function CinemaStage({
       sceneScrollY,
       refresh: () => ScrollTrigger.refresh(),
     });
+
+    /* Fuente de verdad para pruebas/support (E2E 006): posiciones exactas de
+       reposo calculadas por el propio ScrollTrigger — inmuniza los tests de
+       errores de medición de geometría (header/promo/spacer). */
+    (window as unknown as { __cinemaSceneScrollY?: (k: number) => number }).__cinemaSceneScrollY =
+      sceneScrollY;
 
     /* Deep-link (#features, #pricing…) al montar en modo cine. */
     const hash = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';

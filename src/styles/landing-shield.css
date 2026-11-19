@@ -349,6 +349,11 @@ html:has(#landing-root)::-webkit-scrollbar {
 #landing-root .cinema-scene {
   position: absolute;
   inset: 0;
+  /* FONDO OPAQUE — crítico: los paneles se SUSTITUYEN (no se mezclan).
+     Sin fondo, las capas de escenas previas se verían a través del panel
+     activo (diagnóstico ciclo 1: fantasmas de catálogo/costos tras la
+     escena de funcionalidades). */
+  background: #05070a;
   visibility: hidden;
   will-change: transform, opacity;
   backface-visibility: hidden;

@@ -17,6 +17,7 @@ import { useCookieConsent, usePromoBanner } from '@/components/landing/hooks';
 // ── ADN-006: escenario persistente (sustitución real de escenas) ──
 import CinemaStage, { type CinemaControls } from '@/components/landing/cinema/CinemaStage';
 import { buildCinemaScenes } from '@/components/landing/cinema/sceneRegistry';
+import { SceneFrame } from '@/components/landing/cinema/SceneContent';
 import ActStage from '@/components/landing/CinematicAct';
 import ActPager from '@/components/landing/ActPager';
 import LandingHeader from '@/components/landing/LandingHeader';
@@ -417,17 +418,23 @@ export default function LandingPage() {
     scenes[13] = {
       ...scenes[13],
       content: (
-        <FAQSection
-          /* En el escenario el panel está fuera de turno (visibility:hidden)
-             hasta su escena: el gate por inView nunca dispararía — la escena
-             entra ya asentada y el movimiento lo aporta la transición. */
-          faqInViewState={true}
-          openFaq={openFaq}
-          toggleFaq={toggleFaq}
-          faqFeedback={faqFeedback}
-          setFaqFeedback={setFaqFeedback}
-          faqRef={faqRef}
-        />
+        <SceneFrame className="items-center">
+          <div className="mx-auto w-full max-w-3xl">
+            <FAQSection
+              /* En el escenario el panel está fuera de turno (visibility:hidden)
+                 hasta su escena: el gate por inView nunca dispararía — la escena
+                 entra ya asentada y el movimiento lo aporta la transición.
+                 compact: 7 preguntas + tabs + búsqueda caben en 100svh. */
+              compact
+              faqInViewState={true}
+              openFaq={openFaq}
+              toggleFaq={toggleFaq}
+              faqFeedback={faqFeedback}
+              setFaqFeedback={setFaqFeedback}
+              faqRef={faqRef}
+            />
+          </div>
+        </SceneFrame>
       ),
     };
     return scenes;
