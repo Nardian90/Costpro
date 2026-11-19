@@ -709,6 +709,12 @@
       "reason": "CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-19) · Escritor canónico de rectificación de medio de cobro (patrón T12): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), sin EXECUTE para anon/authenticated/public (REVOKE explícito + GRANT service_role en la migración 20261119120000). La autorización de la rectificación es gobernada (§6 de la misión: confirmación del propietario del hecho económico); la función verifica fail-closed venta completed, pagos del método origen, moneda única, categorías del catálogo y localización EXACTA sin ambigüedad del movimiento de cobro original. Idempotente (RECTIFICACION_FIN por venta + advisory lock).",
       "added_by": "CP-FIN-001 2026-11-19",
       "expires": "2027-01-31"
+    },
+    {
+      "function": "fin_reclassify_sale_payment_currency",
+      "reason": "CP-FIN-002 (2026-11-19, migración 20261119150000 aplicada a producción) · Escritor canónico de RECLASIFICACIÓN DE MONEDA de cobro: canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), REVOKE explícito de anon/authenticated/public. Autorización gobernada por el propietario; fail-closed (venta completed, débito único del cobro en la categoría origen o caso documentado asiento_obsoleto, coherencia con pagos, categorías del catálogo). Idempotente por (venta, método, moneda_origen). Laguna detectada por CP-FIN-003: el gate de main fallaba desde la aplicación de la 20261119150000 (run 44550488760) sin esta entrada.",
+      "added_by": "CP-FIN-003 2026-11-20",
+      "expires": "2027-01-31"
     }
   ],
   "tables_without_rls": [],
@@ -922,6 +928,51 @@
       ],
       "reason": "PR #1616 (ciclo devolución en divisa): migración 20261114140000 redefine create_devolution_v2 (tasa efectiva exacta en filas de reembolso USD/AS_PAID) CON AUTORIZACIÓN PENDIENTE — producción no debe tocarse sin decisión del propietario. El replay del PR diverge del surface certificado (vivo) hasta que la migración se aplique con autorización; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/nominas). El cuerpo propuesto está validado íntegro en BD E2E aislada (37/37 PASS + net delta 0).",
       "added_by": "CP-FIN misión final 2026-11-13 (PR #1616)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "fin_post_document/5",
+      "rules": [
+        "LIVE_FUNCTION_NOT_REPRESENTED"
+      ],
+      "reason": "CP-FIN-003: firma 5-args retirada en 20261120120000 (motor consciente de generaciones, 6-args). Surface certificado PRE-migracion; baseline TEMPORAL que se retira tras aplicar a produccion y regenerar el surface (patron 1616 de CP-FIN-001).",
+      "added_by": "CP-FIN-003",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "fin_post_document_annulment/2",
+      "rules": [
+        "LIVE_FUNCTION_NOT_REPRESENTED"
+      ],
+      "reason": "CP-FIN-003: firma 2-args retirada en 20261120120000 (annulment consciente de generacion, 3-args). Baseline TEMPORAL hasta regenerar el surface de produccion.",
+      "added_by": "CP-FIN-003",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "fin_post_document_safe/4",
+      "rules": [
+        "LIVE_FUNCTION_NOT_REPRESENTED"
+      ],
+      "reason": "CP-FIN-003: firma 4-args retirada en 20261120120000 (pasa p_generation_id, 5-args). Baseline TEMPORAL hasta regenerar el surface de produccion.",
+      "added_by": "CP-FIN-003",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "fin_rectify_sale_payment_method/5",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-FIN-003: cuerpo actualizado en 20261120120000 (cuentas por mapeo canonico con fallback legado pre-v3). Baseline TEMPORAL hasta regenerar el surface.",
+      "added_by": "CP-FIN-003",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_supplier_payment/12",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-FIN-003: cuerpo actualizado en 20261120120000 (tasa obligatoria >1 para divisa con fallback a tasas de tienda, fail-closed). Baseline TEMPORAL hasta regenerar el surface.",
+      "added_by": "CP-FIN-003",
       "expires": "2026-12-31"
     }
   ]

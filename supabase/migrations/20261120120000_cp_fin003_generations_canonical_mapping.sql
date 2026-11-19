@@ -77,7 +77,11 @@ ON CONFLICT (payment_method, currency) DO UPDATE
 CREATE OR REPLACE FUNCTION public.fin_resolve_financial_account(
   p_method text, p_currency text
 ) RETURNS text
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = 'public', 'pg_temp'
+-- SECURITY INVOKER (CP-FIN-003): lookup puro sin elevación — los llamadores
+-- (fin_apply_templates y demás motor) ya son SECURITY DEFINER; sin EXECUTE
+-- para clientes (REVOKE abajo). Evita una entrada nueva en el allowlist del
+-- SQL Security Gate (secdef_no_auth).
+LANGUAGE plpgsql STABLE SET search_path = 'public', 'pg_temp'
 AS $$
 DECLARE v_cat text;
 BEGIN
@@ -150,7 +154,9 @@ CREATE UNIQUE INDEX uq_fin_entries_doc_event
 -- Generación ACTIVA de una tienda (NULL si no tiene generaciones: legado puro).
 CREATE OR REPLACE FUNCTION public.fin_active_generation(p_store_id uuid)
 RETURNS uuid
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path = 'public', 'pg_temp'
+-- SECURITY INVOKER (CP-FIN-003): lookup puro; los informes (SECDEF) la llaman
+-- en su contexto. Sin EXECUTE para clientes.
+LANGUAGE sql STABLE SET search_path = 'public', 'pg_temp'
 AS $$
   SELECT g.id FROM public.fin_posting_generations g
   WHERE g.store_id = p_store_id AND g.status = 'active'

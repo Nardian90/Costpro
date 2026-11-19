@@ -53,7 +53,9 @@ describe.skipIf(!RSV || !RDM)('Modales de pago a proveedor — contrato de auten
     it('la fecha del pago se valida antes de enviar (nunca futura) y bloquea el botón', () => {
       expect(RSV).toContain('const paymentDateValidation = useOperationDateValidation(');
       expect(RSV).toContain('if (!paymentDateValidation.valid)');
-      expect(RSV).toContain('disabled={submitting || !paymentDateValidation.valid}');
+      // CP-FIN-003: el contrato se REFUERZA — además de la fecha, el lote de
+      // componentes debe ser válido (importes > 0 y tasa > 1 para divisa).
+      expect(RSV).toContain('disabled={submitting || !paymentDateValidation.valid || !rowsValid}');
     });
 
     it('OperationDatePicker presente con tope HOY', () => {
@@ -99,7 +101,8 @@ describe.skipIf(!RSV || !RDM)('Modales de pago a proveedor — contrato de auten
     it('la fecha del pago se valida antes de enviar y bloquea el botón', () => {
       expect(RDM).toContain('const paymentDateValidation = useOperationDateValidation(');
       expect(RDM).toContain('if (!paymentDateValidation.valid)');
-      expect(RDM).toContain('disabled={submitting || !paymentDateValidation.valid}');
+      // CP-FIN-003: mismo refuerzo en recepciones (PaymentRowsEditor).
+      expect(RDM).toContain('disabled={submitting || !paymentDateValidation.valid || !rowsValid}');
     });
 
     it('OperationDatePicker presente con tope HOY', () => {
