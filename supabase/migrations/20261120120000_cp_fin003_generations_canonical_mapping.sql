@@ -1445,10 +1445,8 @@ DECLARE
   v_caller uuid := CASE WHEN auth.role() = 'service_role' THEN coalesce(p_user_id, auth.uid()) ELSE auth.uid() END;
   v_id uuid; v_active uuid; v_snap jsonb;
 BEGIN
-  IF v_caller IS NULL OR NOT (public.is_admin_check(v_caller)
-     OR public.has_store_role_as(v_caller, p_store_id, ARRAY['admin'])) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
+  -- ACL pura (patrón fin_rectify_*): ejecución SOLO por service_role
+  -- (canal canónico). v_caller queda como atribución (puede ser NULL).
   IF p_code IS NULL OR length(trim(p_code)) < 3 THEN
     RAISE EXCEPTION 'ERR_CODIGO_REQUERIDO';
   END IF;
@@ -1503,10 +1501,8 @@ DECLARE
   v_errors jsonb := '[]'::jsonb;
   v_entry uuid;
 BEGIN
-  IF v_caller IS NULL OR NOT (public.is_admin_check(v_caller)
-     OR public.has_store_role_as(v_caller, p_store_id, ARRAY['admin'])) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
+  -- ACL pura (patrón fin_rectify_*): ejecución SOLO por service_role
+  -- (canal canónico). v_caller queda como atribución (puede ser NULL).
 
   SELECT * INTO g FROM public.fin_posting_generations
   WHERE id = p_generation_id AND store_id = p_store_id;
@@ -1772,10 +1768,8 @@ DECLARE
   v_result jsonb; v_ok boolean;
   v_build_err int;
 BEGIN
-  IF v_caller IS NULL OR NOT (public.is_admin_check(v_caller)
-     OR public.has_store_role_as(v_caller, p_store_id, ARRAY['admin'])) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
+  -- ACL pura (patrón fin_rectify_*): ejecución SOLO por service_role
+  -- (canal canónico). v_caller queda como atribución (puede ser NULL).
   SELECT id, status INTO v_gen, v_status FROM public.fin_posting_generations
   WHERE id = p_generation_id AND store_id = p_store_id;
   IF v_gen IS NULL THEN RAISE EXCEPTION 'ERR_GENERACION_NO_ENCONTRADA'; END IF;
@@ -1892,10 +1886,8 @@ DECLARE
   v_caller uuid := CASE WHEN auth.role() = 'service_role' THEN coalesce(p_user_id, auth.uid()) ELSE auth.uid() END;
   g record; v_old record;
 BEGIN
-  IF v_caller IS NULL OR NOT (public.is_admin_check(v_caller)
-     OR public.has_store_role_as(v_caller, p_store_id, ARRAY['admin'])) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
+  -- ACL pura (patrón fin_rectify_*): ejecución SOLO por service_role
+  -- (canal canónico). v_caller queda como atribución (puede ser NULL).
   PERFORM pg_advisory_xact_lock(hashtext('fin-gen:' || p_store_id::text));
 
   SELECT * INTO g FROM public.fin_posting_generations
@@ -1936,10 +1928,8 @@ DECLARE
   v_caller uuid := CASE WHEN auth.role() = 'service_role' THEN coalesce(p_user_id, auth.uid()) ELSE auth.uid() END;
   v_active record; v_prev record;
 BEGIN
-  IF v_caller IS NULL OR NOT (public.is_admin_check(v_caller)
-     OR public.has_store_role_as(v_caller, p_store_id, ARRAY['admin'])) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
+  -- ACL pura (patrón fin_rectify_*): ejecución SOLO por service_role
+  -- (canal canónico). v_caller queda como atribución (puede ser NULL).
   PERFORM pg_advisory_xact_lock(hashtext('fin-gen:' || p_store_id::text));
 
   SELECT * INTO v_active FROM public.fin_posting_generations
@@ -2001,6 +1991,15 @@ REVOKE ALL ON FUNCTION
   public.fin_generation_activate(uuid, uuid, uuid),
   public.fin_generation_rollback(uuid, uuid)
 FROM PUBLIC, anon, authenticated;
+-- Ciclo de vida de generaciones: canal canónico (service_role), patrón
+-- fin_rectify_sale_payment_method (REVOKE de clientes + GRANT explícito).
+GRANT EXECUTE ON FUNCTION
+  public.fin_generation_create(uuid, text, text, uuid),
+  public.fin_generation_build(uuid, uuid, boolean, uuid),
+  public.fin_generation_validate(uuid, uuid, uuid),
+  public.fin_generation_activate(uuid, uuid, uuid),
+  public.fin_generation_rollback(uuid, uuid)
+TO service_role;
 
 -- ══════════════════════════════════════════════════════════════════════════
 -- 12. SANITY CHECK del lote (fail-closed si el mapeo quedó incompleto)
