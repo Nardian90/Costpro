@@ -174,15 +174,21 @@ BEGIN
            WHERE e.generation_id IS NULL
            GROUP BY e.store_id
   LOOP
-    INSERT INTO public.fin_posting_generations (store_id, code, status, notes, snapshot)
-    VALUES (r.store_id, 'GEN-0', 'active',
-            'Generación legado: asientos existentes agrupados por la migración CP-FIN-003 (sin cambios de contenido).',
-            jsonb_build_object('entries', r.n, 'origen', 'migracion-cp-fin-003'))
-    ON CONFLICT (store_id, code) DO NOTHING
-    RETURNING id INTO v_gen;
+    -- Si la tienda YA tiene generación activa (re-aplicación sobre BD con
+    -- estado avanzado), los legados NULL se agrupan en ELLA; solo se crea
+    -- GEN-0 cuando no existe ninguna.
+    v_gen := public.fin_active_generation(r.store_id);
     IF v_gen IS NULL THEN
-      SELECT id INTO v_gen FROM public.fin_posting_generations
-      WHERE store_id = r.store_id AND code = 'GEN-0';
+      INSERT INTO public.fin_posting_generations (store_id, code, status, notes, snapshot)
+      VALUES (r.store_id, 'GEN-0', 'active',
+              'Generación legado: asientos existentes agrupados por la migración CP-FIN-003 (sin cambios de contenido).',
+              jsonb_build_object('entries', r.n, 'origen', 'migracion-cp-fin-003'))
+      ON CONFLICT (store_id, code) DO NOTHING
+      RETURNING id INTO v_gen;
+      IF v_gen IS NULL THEN
+        SELECT id INTO v_gen FROM public.fin_posting_generations
+        WHERE store_id = r.store_id AND code = 'GEN-0';
+      END IF;
     END IF;
     UPDATE public.fin_entries SET generation_id = v_gen
     WHERE store_id = r.store_id AND generation_id IS NULL;
