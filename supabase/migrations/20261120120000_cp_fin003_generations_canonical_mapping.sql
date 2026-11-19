@@ -800,96 +800,136 @@ END $function$;
 
 -- ══════════════════════════════════════════════════════════════════════════
 -- 7. REGLAS — nueva generación de reglas con el mapeo canónico.
---    La desactivación de la versión anterior y la activación de la nueva se
---    hacen en el MISMO lote (índice uq_fin_rules_one_active exige una sola
---    activa por tipo+ámbito). Los asientos históricos conservan su
---    rule_version_id (nunca se reescriben).
+--    Patrón ROBUSTO e IDEMPOTENTE (la BD aislada conserva reglas de prueba
+--    con versiones propias: la versión se asigna dinámicamente y el guard por
+--    marcador de notas evita duplicar en re-ejecuciones):
+--      1. Si YA existe una regla CP-FIN-003 para el tipo → no hacer nada.
+--      2. Si no: desactivar la activa vigente (cualquier versión) e insertar
+--         la nueva con version = max(version)+1 del ámbito global.
+--    Los asientos históricos conservan su rule_version_id (nunca se reescriben).
 -- ══════════════════════════════════════════════════════════════════════════
 
 -- 7.1 VENTA v3 — cobros por (medio × moneda) con el mapeo canónico:
 --     zelle → ACT_TRANSF_EXTERIOR (misión §4); efectivo EUR/MLC → su caja;
 --     transferencias (cualquier moneda) → ACT_BANCOS. Diferencias de cobro
 --     M-015 conservadas. Misma estructura, cuentas del mapeo canónico.
-UPDATE public.fin_rule_versions
-  SET status = 'inactive', deactivated_at = now(),
-      notes = coalesce(notes, '') || ' | Sustituida por v3 (CP-FIN-003: mapeo canónico medio×moneda, transferencias exteriores a su propia cuenta).'
-  WHERE document_type = 'VENTA' AND version = 2 AND store_id IS NULL AND status = 'active';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.fin_rule_versions
+             WHERE document_type = 'VENTA' AND store_id IS NULL
+               AND notes LIKE '%CP-FIN-003%') THEN
+    RAISE NOTICE 'VENTA: regla CP-FIN-003 ya presente — omisión idempotente';
+  ELSE
+    UPDATE public.fin_rule_versions
+      SET status = 'inactive', deactivated_at = now(),
+          notes = coalesce(notes, '') || ' | Sustituida por la regla CP-FIN-003 (mapeo canónico medio×moneda).'
+      WHERE document_type = 'VENTA' AND store_id IS NULL AND status = 'active';
+    INSERT INTO public.fin_rule_versions (document_type, store_id, version, status, movements, effective_from, notes)
+    SELECT 'VENTA', NULL, coalesce(max(version), 0) + 1, 'active', '[
+      {"id":"v-cash-cup","evento":"reconocimiento","categoria":"ACT_EFECTIVO_CUP","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_cash_cup"},"condicion":{"campo":"cob_cash_cup","op":">","valor":0},"orden":1},
+      {"id":"v-cash-usd","evento":"reconocimiento","categoria":"ACT_EFECTIVO_USD","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_cash_usd_cup"},"condicion":{"campo":"cob_cash_usd_cup","op":">","valor":0},"orden":2},
+      {"id":"v-cash-eur","evento":"reconocimiento","categoria":"ACT_EFECTIVO_EUR","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_cash_eur_cup"},"condicion":{"campo":"cob_cash_eur_cup","op":">","valor":0},"orden":3},
+      {"id":"v-cash-mlc","evento":"reconocimiento","categoria":"ACT_EFECTIVO_MLC","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_cash_mlc_cup"},"condicion":{"campo":"cob_cash_mlc_cup","op":">","valor":0},"orden":4},
+      {"id":"v-transf-cup","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_transfer_cup"},"condicion":{"campo":"cob_transfer_cup","op":">","valor":0},"orden":5},
+      {"id":"v-transf-usd","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_transfer_usd_cup"},"condicion":{"campo":"cob_transfer_usd_cup","op":">","valor":0},"orden":6},
+      {"id":"v-transf-eur","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_transfer_eur_cup"},"condicion":{"campo":"cob_transfer_eur_cup","op":">","valor":0},"orden":7},
+      {"id":"v-transf-mlc","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_transfer_mlc_cup"},"condicion":{"campo":"cob_transfer_mlc_cup","op":">","valor":0},"orden":8},
+      {"id":"v-zelle","evento":"reconocimiento","categoria":"ACT_TRANSF_EXTERIOR","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_zelle_usd_cup"},"condicion":{"campo":"cob_zelle_usd_cup","op":">","valor":0},"orden":9},
+      {"id":"v-zelle-eur","evento":"reconocimiento","categoria":"ACT_TRANSF_EXTERIOR","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_zelle_eur_cup"},"condicion":{"campo":"cob_zelle_eur_cup","op":">","valor":0},"orden":10},
+      {"id":"v-ingreso","evento":"reconocimiento","categoria":"ING_VENTAS","sentido":"credito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":null,"orden":11},
+      {"id":"v-cogs-d","evento":"reconocimiento","categoria":"GAS_COSTO_VENTAS","sentido":"debito","origen":{"tipo":"metrica","metrica":"costo_productos_cup"},"condicion":{"campo":"costo_productos_cup","op":">","valor":0},"orden":12},
+      {"id":"v-cogs-c","evento":"reconocimiento","categoria":"ACT_INVENTARIO","sentido":"credito","origen":{"tipo":"metrica","metrica":"costo_productos_cup"},"condicion":{"campo":"costo_productos_cup","op":">","valor":0},"orden":13},
+      {"id":"v-desc-debe","evento":"reconocimiento","categoria":"ING_DESCUENTOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"diferencia_cobro_debe_cup"},"condicion":{"campo":"diferencia_cobro_debe_cup","op":">","valor":0},"orden":14},
+      {"id":"v-desc-haber","evento":"reconocimiento","categoria":"ING_DESCUENTOS","sentido":"credito","origen":{"tipo":"metrica","metrica":"diferencia_cobro_haber_cup"},"condicion":{"campo":"diferencia_cobro_haber_cup","op":">","valor":0},"orden":15}
+    ]'::jsonb, '2026-11-20',
+      'CP-FIN-003: cobros por (medio × moneda) según el mapeo canónico fin_account_mapping. Transf. Exterior (zelle) → ACT_TRANSF_EXTERIOR. Efectivo EUR/MLC → su propia caja. Diferencias de cobro M-015 conservadas.'
+    FROM public.fin_rule_versions WHERE document_type = 'VENTA' AND store_id IS NULL;
+  END IF;
+END $$;
 
-INSERT INTO public.fin_rule_versions (document_type, store_id, version, status, movements, effective_from, notes) VALUES
-('VENTA', NULL, 3, 'active', '[
-  {"id":"v-cash-cup","evento":"reconocimiento","categoria":"ACT_EFECTIVO_CUP","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_cash_cup"},"condicion":{"campo":"cob_cash_cup","op":">","valor":0},"orden":1},
-  {"id":"v-cash-usd","evento":"reconocimiento","categoria":"ACT_EFECTIVO_USD","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_cash_usd_cup"},"condicion":{"campo":"cob_cash_usd_cup","op":">","valor":0},"orden":2},
-  {"id":"v-cash-eur","evento":"reconocimiento","categoria":"ACT_EFECTIVO_EUR","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_cash_eur_cup"},"condicion":{"campo":"cob_cash_eur_cup","op":">","valor":0},"orden":3},
-  {"id":"v-cash-mlc","evento":"reconocimiento","categoria":"ACT_EFECTIVO_MLC","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_cash_mlc_cup"},"condicion":{"campo":"cob_cash_mlc_cup","op":">","valor":0},"orden":4},
-  {"id":"v-transf-cup","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_transfer_cup"},"condicion":{"campo":"cob_transfer_cup","op":">","valor":0},"orden":5},
-  {"id":"v-transf-usd","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_transfer_usd_cup"},"condicion":{"campo":"cob_transfer_usd_cup","op":">","valor":0},"orden":6},
-  {"id":"v-transf-eur","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_transfer_eur_cup"},"condicion":{"campo":"cob_transfer_eur_cup","op":">","valor":0},"orden":7},
-  {"id":"v-transf-mlc","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_transfer_mlc_cup"},"condicion":{"campo":"cob_transfer_mlc_cup","op":">","valor":0},"orden":8},
-  {"id":"v-zelle","evento":"reconocimiento","categoria":"ACT_TRANSF_EXTERIOR","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_zelle_usd_cup"},"condicion":{"campo":"cob_zelle_usd_cup","op":">","valor":0},"orden":9},
-  {"id":"v-zelle-eur","evento":"reconocimiento","categoria":"ACT_TRANSF_EXTERIOR","sentido":"debito","origen":{"tipo":"metrica","metrica":"cob_zelle_eur_cup"},"condicion":{"campo":"cob_zelle_eur_cup","op":">","valor":0},"orden":10},
-  {"id":"v-ingreso","evento":"reconocimiento","categoria":"ING_VENTAS","sentido":"credito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":null,"orden":11},
-  {"id":"v-cogs-d","evento":"reconocimiento","categoria":"GAS_COSTO_VENTAS","sentido":"debito","origen":{"tipo":"metrica","metrica":"costo_productos_cup"},"condicion":{"campo":"costo_productos_cup","op":">","valor":0},"orden":12},
-  {"id":"v-cogs-c","evento":"reconocimiento","categoria":"ACT_INVENTARIO","sentido":"credito","origen":{"tipo":"metrica","metrica":"costo_productos_cup"},"condicion":{"campo":"costo_productos_cup","op":">","valor":0},"orden":13},
-  {"id":"v-desc-debe","evento":"reconocimiento","categoria":"ING_DESCUENTOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"diferencia_cobro_debe_cup"},"condicion":{"campo":"diferencia_cobro_debe_cup","op":">","valor":0},"orden":14},
-  {"id":"v-desc-haber","evento":"reconocimiento","categoria":"ING_DESCUENTOS","sentido":"credito","origen":{"tipo":"metrica","metrica":"diferencia_cobro_haber_cup"},"condicion":{"campo":"diferencia_cobro_haber_cup","op":">","valor":0},"orden":15}
-]'::jsonb, '2026-11-20', 'CP-FIN-003: cobros por (medio × moneda) según el mapeo canónico fin_account_mapping. Transf. Exterior (zelle) → ACT_TRANSF_EXTERIOR. Efectivo EUR/MLC → su propia caja. Diferencias de cobro M-015 conservadas.')
-ON CONFLICT (document_type, store_id, version) DO NOTHING;
-
--- 7.2 SERVICIO_RECIBIDO v2 — gasto + obligación al confirmar; el PAGO usa la
+-- 7.2 SERVICIO_RECIBIDO — gasto + obligación al confirmar; el PAGO usa la
 --     cuenta financiera CANÓNICA del (medio × moneda) real del desembolso
 --     (anexo §3.2/§6): efectivo CUP → caja CUP, efectivo USD → caja USD,
 --     transferencia → bancos, exterior → cuenta exterior. El nominal original
 --     del pago se conserva (importe_pago_cup_origin).
-UPDATE public.fin_rule_versions
-  SET status = 'inactive', deactivated_at = now(),
-      notes = coalesce(notes, '') || ' | Sustituida por v2 (CP-FIN-003: pago por cuenta canónica medio×moneda).'
-  WHERE document_type = 'SERVICIO_RECIBIDO' AND version = 1 AND store_id IS NULL AND status = 'active';
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.fin_rule_versions
+             WHERE document_type = 'SERVICIO_RECIBIDO' AND store_id IS NULL
+               AND notes LIKE '%CP-FIN-003%') THEN
+    RAISE NOTICE 'SERVICIO_RECIBIDO: regla CP-FIN-003 ya presente — omisión idempotente';
+  ELSE
+    UPDATE public.fin_rule_versions
+      SET status = 'inactive', deactivated_at = now(),
+          notes = coalesce(notes, '') || ' | Sustituida por la regla CP-FIN-003 (pago por cuenta canónica medio×moneda).'
+      WHERE document_type = 'SERVICIO_RECIBIDO' AND store_id IS NULL AND status = 'active';
+    INSERT INTO public.fin_rule_versions (document_type, store_id, version, status, movements, effective_from, notes)
+    SELECT 'SERVICIO_RECIBIDO', NULL, coalesce(max(version), 0) + 1, 'active', '[
+      {"id":"s-gasto-d","evento":"reconocimiento","categoria":"GAS_SERVICIOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":{"campo":"total_cup","op":">","valor":0},"orden":1},
+      {"id":"s-cxp-c","evento":"reconocimiento","categoria":"PAS_SERV_PEND","sentido":"credito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":{"campo":"total_cup","op":">","valor":0},"orden":2},
+      {"id":"sp-fin-c","evento":"pago","categoria":"@cuenta_financiera","sentido":"credito","origen":{"tipo":"cuenta_financiera","metrica":"importe_pago_cup"},"condicion":null,"orden":3},
+      {"id":"sp-cxp-d","evento":"pago","categoria":"PAS_SERV_PEND","sentido":"debito","origen":{"tipo":"metrica","metrica":"importe_pago_cup"},"condicion":null,"orden":4}
+    ]'::jsonb, '2026-11-20',
+      'CP-FIN-003/anexo: reconocimiento = gasto + obligación (sin mover efectivo). Cada pago cancela la obligación y sale por la CUENTA CANÓNICA del (medio × moneda) real del desembolso.'
+    FROM public.fin_rule_versions WHERE document_type = 'SERVICIO_RECIBIDO' AND store_id IS NULL;
+  END IF;
+END $$;
 
-INSERT INTO public.fin_rule_versions (document_type, store_id, version, status, movements, effective_from, notes) VALUES
-('SERVICIO_RECIBIDO', NULL, 2, 'active', '[
-  {"id":"s-gasto-d","evento":"reconocimiento","categoria":"GAS_SERVICIOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":{"campo":"total_cup","op":">","valor":0},"orden":1},
-  {"id":"s-cxp-c","evento":"reconocimiento","categoria":"PAS_SERV_PEND","sentido":"credito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":{"campo":"total_cup","op":">","valor":0},"orden":2},
-  {"id":"sp-fin-c","evento":"pago","categoria":"@cuenta_financiera","sentido":"credito","origen":{"tipo":"cuenta_financiera","metrica":"importe_pago_cup"},"condicion":null,"orden":3},
-  {"id":"sp-cxp-d","evento":"pago","categoria":"PAS_SERV_PEND","sentido":"debito","origen":{"tipo":"metrica","metrica":"importe_pago_cup"},"condicion":null,"orden":4}
-]'::jsonb, '2026-11-20', 'CP-FIN-003/anexo: reconocimiento = gasto + obligación (sin mover efectivo). Cada pago cancela la obligación y sale por la CUENTA CANÓNICA del (medio × moneda) real del desembolso.')
-ON CONFLICT (document_type, store_id, version) DO NOTHING;
+-- 7.3 RECEPCION — inventario + deuda al activar; pagos por cuenta canónica.
+--     Recibir mercancía ≠ pagar al proveedor (anexo §4).
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.fin_rule_versions
+             WHERE document_type = 'RECEPCION' AND store_id IS NULL
+               AND notes LIKE '%CP-FIN-003%') THEN
+    RAISE NOTICE 'RECEPCION: regla CP-FIN-003 ya presente — omisión idempotente';
+  ELSE
+    UPDATE public.fin_rule_versions
+      SET status = 'inactive', deactivated_at = now(),
+          notes = coalesce(notes, '') || ' | Sustituida por la regla CP-FIN-003 (pago por cuenta canónica medio×moneda).'
+      WHERE document_type = 'RECEPCION' AND store_id IS NULL AND status = 'active';
+    INSERT INTO public.fin_rule_versions (document_type, store_id, version, status, movements, effective_from, notes)
+    SELECT 'RECEPCION', NULL, coalesce(max(version), 0) + 1, 'active', '[
+      {"id":"r-inv-d","evento":"reconocimiento","categoria":"ACT_INVENTARIO","sentido":"debito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":{"campo":"total_cup","op":">","valor":0},"orden":1},
+      {"id":"r-cxp-c","evento":"reconocimiento","categoria":"PAS_CXP_PROV","sentido":"credito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":{"campo":"total_cup","op":">","valor":0},"orden":2},
+      {"id":"rp-fin-c","evento":"pago","categoria":"@cuenta_financiera","sentido":"credito","origen":{"tipo":"cuenta_financiera","metrica":"importe_pago_cup"},"condicion":null,"orden":3},
+      {"id":"rp-cxp-d","evento":"pago","categoria":"PAS_CXP_PROV","sentido":"debito","origen":{"tipo":"metrica","metrica":"importe_pago_cup"},"condicion":null,"orden":4}
+    ]'::jsonb, '2026-11-20',
+      'CP-FIN-003/anexo: recibir mercancía ≠ pagar al proveedor. La deuda nace al activar; cada liquidación registra el (medio × moneda) real y sale por la cuenta canónica.'
+    FROM public.fin_rule_versions WHERE document_type = 'RECEPCION' AND store_id IS NULL;
+  END IF;
+END $$;
 
--- 7.3 RECEPCION v2 — inventario + deuda al activar; pagos por cuenta canónica.
-UPDATE public.fin_rule_versions
-  SET status = 'inactive', deactivated_at = now(),
-      notes = coalesce(notes, '') || ' | Sustituida por v2 (CP-FIN-003: pago por cuenta canónica medio×moneda).'
-  WHERE document_type = 'RECEPCION' AND version = 1 AND store_id IS NULL AND status = 'active';
-
-INSERT INTO public.fin_rule_versions (document_type, store_id, version, status, movements, effective_from, notes) VALUES
-('RECEPCION', NULL, 2, 'active', '[
-  {"id":"r-inv-d","evento":"reconocimiento","categoria":"ACT_INVENTARIO","sentido":"debito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":{"campo":"total_cup","op":">","valor":0},"orden":1},
-  {"id":"r-cxp-c","evento":"reconocimiento","categoria":"PAS_CXP_PROV","sentido":"credito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":{"campo":"total_cup","op":">","valor":0},"orden":2},
-  {"id":"rp-fin-c","evento":"pago","categoria":"@cuenta_financiera","sentido":"credito","origen":{"tipo":"cuenta_financiera","metrica":"importe_pago_cup"},"condicion":null,"orden":3},
-  {"id":"rp-cxp-d","evento":"pago","categoria":"PAS_CXP_PROV","sentido":"debito","origen":{"tipo":"metrica","metrica":"importe_pago_cup"},"condicion":null,"orden":4}
-]'::jsonb, '2026-11-20', 'CP-FIN-003/anexo: recibir mercancía ≠ pagar al proveedor. La deuda nace al activar; cada liquidación registra el (medio × moneda) real y sale por la cuenta canónica.')
-ON CONFLICT (document_type, store_id, version) DO NOTHING;
-
--- 7.4 DEVOLUCION_VENTA v2 — reembolsos con el mapeo canónico (zelle → exterior).
-UPDATE public.fin_rule_versions
-  SET status = 'inactive', deactivated_at = now(),
-      notes = coalesce(notes, '') || ' | Sustituida por v2 (CP-FIN-003: reembolso exterior a su propia cuenta).'
-  WHERE document_type = 'DEVOLUCION_VENTA' AND version = 1 AND store_id IS NULL AND status = 'active';
-
-INSERT INTO public.fin_rule_versions (document_type, store_id, version, status, movements, effective_from, notes) VALUES
-('DEVOLUCION_VENTA', NULL, 2, 'active', '[
-  {"id":"d-ref-cash-cup","evento":"reconocimiento","categoria":"ACT_EFECTIVO_CUP","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_cash_cup"},"condicion":{"campo":"reembolso_cash_cup","op":">","valor":0},"orden":1},
-  {"id":"d-ref-cash-usd","evento":"reconocimiento","categoria":"ACT_EFECTIVO_USD","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_cash_usd_cup"},"condicion":{"campo":"reembolso_cash_usd_cup","op":">","valor":0},"orden":2},
-  {"id":"d-ref-cash-eur","evento":"reconocimiento","categoria":"ACT_EFECTIVO_EUR","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_cash_eur_cup"},"condicion":{"campo":"reembolso_cash_eur_cup","op":">","valor":0},"orden":3},
-  {"id":"d-ref-cash-mlc","evento":"reconocimiento","categoria":"ACT_EFECTIVO_MLC","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_cash_mlc_cup"},"condicion":{"campo":"reembolso_cash_mlc_cup","op":">","valor":0},"orden":4},
-  {"id":"d-ref-transf-cup","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_transfer_cup"},"condicion":{"campo":"reembolso_transfer_cup","op":">","valor":0},"orden":5},
-  {"id":"d-ref-transf-usd","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_transfer_usd_cup"},"condicion":{"campo":"reembolso_transfer_usd_cup","op":">","valor":0},"orden":6},
-  {"id":"d-ref-zelle","evento":"reconocimiento","categoria":"ACT_TRANSF_EXTERIOR","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_zelle_usd_cup"},"condicion":{"campo":"reembolso_zelle_usd_cup","op":">","valor":0},"orden":7},
-  {"id":"d-store-credit","evento":"reconocimiento","categoria":"PAS_ANTICIPOS_CLI","sentido":"credito","origen":{"tipo":"metrica","metrica":"store_credit_cup"},"condicion":{"campo":"store_credit_cup","op":">","valor":0},"orden":8},
-  {"id":"d-dev-ingreso","evento":"reconocimiento","categoria":"ING_DEVOLUCIONES","sentido":"debito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":null,"orden":9},
-  {"id":"d-cogs-c","evento":"reconocimiento","categoria":"GAS_COSTO_VENTAS","sentido":"credito","origen":{"tipo":"metrica","metrica":"costo_devuelto_cup"},"condicion":{"campo":"costo_devuelto_cup","op":">","valor":0},"orden":10},
-  {"id":"d-inv-d","evento":"reconocimiento","categoria":"ACT_INVENTARIO","sentido":"debito","origen":{"tipo":"metrica","metrica":"costo_devuelto_cup"},"condicion":{"campo":"costo_devuelto_cup","op":">","valor":0},"orden":11}
-]'::jsonb, '2026-11-20', 'CP-FIN-003: reembolsos según el mapeo canónico; exterior (zelle) → ACT_TRANSF_EXTERIOR.')
-ON CONFLICT (document_type, store_id, version) DO NOTHING;
+-- 7.4 DEVOLUCION_VENTA — reembolsos con el mapeo canónico (zelle → exterior).
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.fin_rule_versions
+             WHERE document_type = 'DEVOLUCION_VENTA' AND store_id IS NULL
+               AND notes LIKE '%CP-FIN-003%') THEN
+    RAISE NOTICE 'DEVOLUCION_VENTA: regla CP-FIN-003 ya presente — omisión idempotente';
+  ELSE
+    UPDATE public.fin_rule_versions
+      SET status = 'inactive', deactivated_at = now(),
+          notes = coalesce(notes, '') || ' | Sustituida por la regla CP-FIN-003 (reembolso exterior a su propia cuenta).'
+      WHERE document_type = 'DEVOLUCION_VENTA' AND store_id IS NULL AND status = 'active';
+    INSERT INTO public.fin_rule_versions (document_type, store_id, version, status, movements, effective_from, notes)
+    SELECT 'DEVOLUCION_VENTA', NULL, coalesce(max(version), 0) + 1, 'active', '[
+      {"id":"d-ref-cash-cup","evento":"reconocimiento","categoria":"ACT_EFECTIVO_CUP","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_cash_cup"},"condicion":{"campo":"reembolso_cash_cup","op":">","valor":0},"orden":1},
+      {"id":"d-ref-cash-usd","evento":"reconocimiento","categoria":"ACT_EFECTIVO_USD","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_cash_usd_cup"},"condicion":{"campo":"reembolso_cash_usd_cup","op":">","valor":0},"orden":2},
+      {"id":"d-ref-cash-eur","evento":"reconocimiento","categoria":"ACT_EFECTIVO_EUR","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_cash_eur_cup"},"condicion":{"campo":"reembolso_cash_eur_cup","op":">","valor":0},"orden":3},
+      {"id":"d-ref-cash-mlc","evento":"reconocimiento","categoria":"ACT_EFECTIVO_MLC","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_cash_mlc_cup"},"condicion":{"campo":"reembolso_cash_mlc_cup","op":">","valor":0},"orden":4},
+      {"id":"d-ref-transf-cup","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_transfer_cup"},"condicion":{"campo":"reembolso_transfer_cup","op":">","valor":0},"orden":5},
+      {"id":"d-ref-transf-usd","evento":"reconocimiento","categoria":"ACT_BANCOS","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_transfer_usd_cup"},"condicion":{"campo":"reembolso_transfer_usd_cup","op":">","valor":0},"orden":6},
+      {"id":"d-ref-zelle","evento":"reconocimiento","categoria":"ACT_TRANSF_EXTERIOR","sentido":"credito","origen":{"tipo":"metrica","metrica":"reembolso_zelle_usd_cup"},"condicion":{"campo":"reembolso_zelle_usd_cup","op":">","valor":0},"orden":7},
+      {"id":"d-store-credit","evento":"reconocimiento","categoria":"PAS_ANTICIPOS_CLI","sentido":"credito","origen":{"tipo":"metrica","metrica":"store_credit_cup"},"condicion":{"campo":"store_credit_cup","op":">","valor":0},"orden":8},
+      {"id":"d-dev-ingreso","evento":"reconocimiento","categoria":"ING_DEVOLUCIONES","sentido":"debito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":null,"orden":9},
+      {"id":"d-cogs-c","evento":"reconocimiento","categoria":"GAS_COSTO_VENTAS","sentido":"credito","origen":{"tipo":"metrica","metrica":"costo_devuelto_cup"},"condicion":{"campo":"costo_devuelto_cup","op":">","valor":0},"orden":10},
+      {"id":"d-inv-d","evento":"reconocimiento","categoria":"ACT_INVENTARIO","sentido":"debito","origen":{"tipo":"metrica","metrica":"costo_devuelto_cup"},"condicion":{"campo":"costo_devuelto_cup","op":">","valor":0},"orden":11}
+    ]'::jsonb, '2026-11-20',
+      'CP-FIN-003: reembolsos según el mapeo canónico; exterior (zelle) → ACT_TRANSF_EXTERIOR.'
+    FROM public.fin_rule_versions WHERE document_type = 'DEVOLUCION_VENTA' AND store_id IS NULL;
+  END IF;
+END $$;
 
 -- 7.5 Catálogo de métricas nuevas (constructor Vista A + reglas v3).
 INSERT INTO public.fin_metric_catalog (document_type, metric, label, unit, for_event) VALUES
