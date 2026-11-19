@@ -63,8 +63,6 @@ const nextConfig: NextConfig = {
   // Los accesos dinámicos no siempre son resolubles por el tracer; estos
   // includes garantizan que cada ruta reciba EXACTAMENTE los directorios que
   // lee (knowledge/, docs/knowledge/, data/) — sin exclusiones globales.
-  // No se usa outputFileTracingExcludes: ningún directorio trazado resulta
-  // innecesario para la ruta que lo lee.
   outputFileTracingIncludes: {
     '/api/help-docs': ['./knowledge/help/**'],
     '/api/system-health': ['./knowledge/**', './data/**', './public/architecture_audit.json', './docs/automation/**'],
@@ -72,6 +70,33 @@ const nextConfig: NextConfig = {
     '/api/intelligence': ['./knowledge/**', './docs/architecture_audit.json'],
     '/api/bot/chat': ['./docs/knowledge/**', './knowledge/help/**'],
     '/api/legal/retention': ['./data/**'],
+  },
+  // CP-INFRA-HOBBY-003 (2026-11-19): el tracer de Turbopack no puede resolver
+  // los paths computados de src/lib/ai/vercel-provider.ts
+  // (path.join(process.cwd(), '.z-ai-config')) y, de forma conservadora, arrastra
+  // el árbol COMPLETO del repo (~7400 archivos, ~226 MiB) al trace de toda ruta
+  // que alcanza glm-orchestrator → vercel-provider (8 rutas de mensajería/bot).
+  // Con trace >= 225 MiB (presupuesto por grupo de @vercel/next), cada una se
+  // aísla como función serverless propia → 14 funciones →
+  // exceeded_serverless_functions_per_deployment en el plan Hobby (límite 12).
+  // La anotación /*turbopackIgnore: true*/ sobre path.join NO lo evita (solo
+  // aplica a import()/require(); verificado: el conteo seguía en 14).
+  // outputFileTracingExcludes actúa sobre el .nft.json final y sí lo corrige:
+  // audit-evidence/ (150 MiB de artefactos de auditoría, NUNCA leídos en
+  // runtime por estas rutas) es el componente dominante del catchall.
+  // Excluido solo para las 8 rutas afectadas: el trace cae de ~227 MiB a
+  // ~77 MiB (margen 3× bajo el presupuesto de 225 MiB) y las rutas vuelven a
+  // agruparse con sus grupos de configuración. Sin exclusión global: ninguna
+  // otra ruta traza audit-evidence y ningún include depende de ese directorio.
+  outputFileTracingExcludes: {
+    '/api/bot/chat': ['./audit-evidence/**'],
+    '/api/telegram/messages/send': ['./audit-evidence/**'],
+    '/api/telegram/test-bot': ['./audit-evidence/**'],
+    '/api/telegram/webhook': ['./audit-evidence/**'],
+    '/api/whatsapp/invitations': ['./audit-evidence/**'],
+    '/api/whatsapp/invitations/import': ['./audit-evidence/**'],
+    '/api/whatsapp/messages/send': ['./audit-evidence/**'],
+    '/api/whatsapp/test-bot': ['./audit-evidence/**'],
   },
   images: {
     // FIX CALIDAD (2026-10-06, feat/landing-product-demo): Next 16 restringe
