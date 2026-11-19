@@ -1528,7 +1528,7 @@ DECLARE
   g record; m record; r record;
   v_active uuid; v_new uuid;
   v_e record;
-  v_ok int := 0; v_err int := 0; v_ann int := 0; v_copied int := 0; v_rect_skipped jsonb := '[]'::jsonb;
+  v_ok int := 0; v_skip int := 0; v_err int := 0; v_ann int := 0; v_copied int := 0; v_rect_skipped jsonb := '[]'::jsonb;
   v_errors jsonb := '[]'::jsonb;
   v_entry uuid;
 BEGIN
@@ -1560,9 +1560,15 @@ BEGIN
       ORDER BY fe.document_type, fe.economic_date, fe.posted_at
     LOOP
       BEGIN
-        PERFORM public.fin_post_document(r.document_type, r.document_id, r.event,
-                                         r.payment_ref, v_caller, v_new);
-        v_ok := v_ok + 1;
+        -- fin_post_document devuelve NULL cuando el asiento YA existe en la
+        -- generación (idempotencia) o la regla no produce movimientos: se
+        -- cuenta aparte para poder verificar la idempotencia del build.
+        IF public.fin_post_document(r.document_type, r.document_id, r.event,
+                                    r.payment_ref, v_caller, v_new) IS NOT NULL THEN
+          v_ok := v_ok + 1;
+        ELSE
+          v_skip := v_skip + 1;
+        END IF;
       EXCEPTION WHEN others THEN
         v_err := v_err + 1;
         v_errors := v_errors || jsonb_build_object('pase', 1, 'doc', r.document_id,
@@ -1764,8 +1770,11 @@ BEGIN
                         AND e.generation_id = v_new)
   LOOP
     BEGIN
-      PERFORM public.fin_post_document(r.dt, r.doc, r.ev, r.pref, v_caller, v_new);
-      v_ok := v_ok + 1;
+      IF public.fin_post_document(r.dt, r.doc, r.ev, r.pref, v_caller, v_new) IS NOT NULL THEN
+        v_ok := v_ok + 1;
+      ELSE
+        v_skip := v_skip + 1;
+      END IF;
     EXCEPTION WHEN others THEN
       v_err := v_err + 1;
       v_errors := v_errors || jsonb_build_object('pase', 5, 'doc', r.doc,
@@ -1777,7 +1786,7 @@ BEGIN
   SET status = 'candidate',
       stats = coalesce(stats, '{}'::jsonb) || jsonb_build_object(
         'build', jsonb_build_object(
-          'repostados', v_ok, 'anulaciones', v_ann, 'copiados', v_copied,
+          'repostados', v_ok, 'ya_existentes', v_skip, 'anulaciones', v_ann, 'copiados', v_copied,
           'errores', v_err, 'detalle_errores', v_errors,
           'rectificaciones_omitidas', v_rect_skipped,
           'generacion_origen', v_active,
@@ -1785,7 +1794,7 @@ BEGIN
   WHERE id = v_new;
 
   RETURN jsonb_build_object('status', 'candidate', 'repostados', v_ok,
-    'anulaciones', v_ann, 'copiados', v_copied, 'errores', v_err,
+    'ya_existentes', v_skip, 'anulaciones', v_ann, 'copiados', v_copied, 'errores', v_err,
     'detalle_errores', v_errors, 'rectificaciones_omitidas', v_rect_skipped);
 END $function$;
 
