@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-19T15:07:29.076Z
+-- Captured  : 2026-11-19T21:10:24.484Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 212 (SECURITY DEFINER write functions, public schema)
+-- Functions : 217 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -1786,43 +1786,6 @@ BEGIN
 END $function$
 
 
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
-END;
-$function$
-
-
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1859,6 +1822,43 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
+END;
+$function$
+
+
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
 END;
 $function$
 
@@ -8050,6 +8050,544 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=fin_generation_activate args="p_store_id uuid, p_generation_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_generation_activate(p_store_id uuid, p_generation_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller uuid := CASE WHEN auth.role() = 'service_role' THEN coalesce(p_user_id, auth.uid()) ELSE auth.uid() END;
+  g record; v_old record;
+BEGIN
+  -- ACL pura (patrón fin_rectify_*): ejecución SOLO por service_role
+  -- (canal canónico). v_caller queda como atribución (puede ser NULL).
+  PERFORM pg_advisory_xact_lock(hashtext('fin-gen:' || p_store_id::text));
+
+  SELECT * INTO g FROM public.fin_posting_generations
+  WHERE id = p_generation_id AND store_id = p_store_id;
+  IF g.id IS NULL THEN RAISE EXCEPTION 'ERR_GENERACION_NO_ENCONTRADA'; END IF;
+  IF g.status <> 'candidate' THEN
+    RAISE EXCEPTION 'ERR_ESTADO_INVALIDO: se requiere candidate (estado: %)', g.status;
+  END IF;
+  IF coalesce((g.stats -> 'validacion' ->> 'ok')::boolean, false) IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'ERR_VALIDACION_REQUERIDA: active solo tras fin_generation_validate con ok=true';
+  END IF;
+
+  SELECT * INTO v_old FROM public.fin_posting_generations
+  WHERE store_id = p_store_id AND status = 'active';
+  IF v_old.id IS NOT NULL THEN
+    UPDATE public.fin_posting_generations
+    SET status = 'superseded', superseded_at = now()
+    WHERE id = v_old.id;
+  END IF;
+
+  UPDATE public.fin_posting_generations
+  SET status = 'active', activated_at = now(), activated_by = v_caller
+  WHERE id = p_generation_id;
+
+  RETURN jsonb_build_object('activada', g.code, 'id', g.id,
+    'superseded', v_old.code, 'superseded_id', v_old.id,
+    'activada_en', now());
+END $function$
+
+
+-- @contract-function name=fin_generation_build args="p_store_id uuid, p_generation_id uuid, p_include_rectifications boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_generation_build(p_store_id uuid, p_generation_id uuid, p_include_rectifications boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller uuid := CASE WHEN auth.role() = 'service_role' THEN coalesce(p_user_id, auth.uid()) ELSE auth.uid() END;
+  g record; m record; r record;
+  v_active uuid; v_new uuid;
+  v_e record;
+  v_ok int := 0; v_skip int := 0; v_err int := 0; v_ann int := 0; v_copied int := 0; v_rect_skipped jsonb := '[]'::jsonb;
+  v_errors jsonb := '[]'::jsonb;
+  v_entry uuid;
+BEGIN
+  -- ACL pura (patrón fin_rectify_*): ejecución SOLO por service_role
+  -- (canal canónico). v_caller queda como atribución (puede ser NULL).
+
+  SELECT * INTO g FROM public.fin_posting_generations
+  WHERE id = p_generation_id AND store_id = p_store_id;
+  IF g.id IS NULL THEN RAISE EXCEPTION 'ERR_GENERACION_NO_ENCONTRADA'; END IF;
+  IF g.status NOT IN ('building', 'candidate') THEN
+    RAISE EXCEPTION 'ERR_GENERACION_NO_CONSTRUIBLE (estado: %)', g.status;
+  END IF;
+
+  v_active := public.fin_active_generation(p_store_id);
+  v_new := p_generation_id;
+
+  -- PASE 1: re-contabilizar reconocimiento/pago de la generación activa
+  -- (misma cobertura documental; importes y cuentas según reglas vigentes).
+  -- IS NOT DISTINCT FROM v_active cubre TAMBIÉN el legado sin generación
+  -- (v_active NULL = asientos generation_id NULL de tiendas creadas tras la
+  -- migración): sus anulaciones y ajustes deben reproducirse igual.
+  FOR r IN
+      SELECT fe.document_type, fe.document_id, fe.event, fe.payment_ref
+      FROM public.fin_entries fe
+      WHERE fe.store_id = p_store_id
+        AND fe.generation_id IS NOT DISTINCT FROM v_active
+        AND fe.document_id IS NOT NULL
+        AND fe.event IN ('reconocimiento', 'pago')
+      ORDER BY fe.document_type, fe.economic_date, fe.posted_at
+    LOOP
+      BEGIN
+        -- fin_post_document devuelve NULL cuando el asiento YA existe en la
+        -- generación (idempotencia) o la regla no produce movimientos: se
+        -- cuenta aparte para poder verificar la idempotencia del build.
+        IF public.fin_post_document(r.document_type, r.document_id, r.event,
+                                    r.payment_ref, v_caller, v_new) IS NOT NULL THEN
+          v_ok := v_ok + 1;
+        ELSE
+          v_skip := v_skip + 1;
+        END IF;
+      EXCEPTION WHEN others THEN
+        v_err := v_err + 1;
+        v_errors := v_errors || jsonb_build_object('pase', 1, 'doc', r.document_id,
+          'tipo', r.document_type, 'evento', r.event, 'error', substr(SQLERRM, 1, 200));
+      END;
+    END LOOP;
+
+    -- PASE 2: anulaciones de la generación activa → compensar en la candidata.
+    FOR r IN
+      SELECT DISTINCT fe.document_type, fe.document_id
+      FROM public.fin_entries fe
+      WHERE fe.store_id = p_store_id
+        AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'anulacion'
+        AND fe.document_id IS NOT NULL
+    LOOP
+      BEGIN
+        v_ann := v_ann + public.fin_post_document_annulment(r.document_type, r.document_id, v_new);
+      EXCEPTION WHEN others THEN
+        v_err := v_err + 1;
+        v_errors := v_errors || jsonb_build_object('pase', 2, 'doc', r.document_id,
+          'tipo', r.document_type, 'evento', 'anulacion', 'error', substr(SQLERRM, 1, 200));
+      END;
+    END LOOP;
+
+    -- PASE 3: aperturas (saldos iniciales autorizados) → copia literal.
+    FOR v_e IN
+      SELECT fe.* FROM public.fin_entries fe
+      WHERE fe.store_id = p_store_id
+        AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'apertura'
+    LOOP
+      IF NOT EXISTS (SELECT 1 FROM public.fin_entries x
+                     WHERE x.generation_id = v_new AND x.event = 'apertura'
+                       AND x.document_type = v_e.document_type
+                       AND x.document_number IS NOT DISTINCT FROM v_e.document_number
+                       AND x.economic_date = v_e.economic_date
+                       AND x.description IS NOT DISTINCT FROM v_e.description) THEN
+        INSERT INTO public.fin_entries (
+          store_id, document_type, document_id, document_number, event, payment_ref,
+          economic_date, rule_version_id, movements_snapshot, reversal_of, status,
+          description, created_by, generation_id)
+        VALUES (v_e.store_id, v_e.document_type, v_e.document_id, v_e.document_number, v_e.event,
+                v_e.payment_ref, v_e.economic_date, v_e.rule_version_id, v_e.movements_snapshot,
+                v_e.reversal_of, v_e.status, v_e.description, v_e.created_by, v_new)
+        RETURNING id INTO v_entry;
+        FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = v_e.id LOOP
+          INSERT INTO public.fin_movements (
+            entry_id, store_id, category_code, sense, amount, currency, exchange_rate,
+            economic_date, document_number, description, currency_origin, amount_origin,
+            worker_id, product_id, customer_id, traza)
+          VALUES (v_entry, m.store_id, m.category_code, m.sense, m.amount, m.currency,
+                  m.exchange_rate, m.economic_date, m.document_number, m.description,
+                  m.currency_origin, m.amount_origin, m.worker_id, m.product_id,
+                  m.customer_id, m.traza);
+        END LOOP;
+        v_copied := v_copied + 1;
+      END IF;
+    END LOOP;
+
+    -- PASE 4: ajustes manuales no-rectificatorios → copia literal (hechos
+    -- autorizados, no derivables de documentos). RECTIFICACION_FIN se OMITE
+    -- por defecto: su efecto ya está en los DATOS corregidos que la candidata
+    -- re-deriva; duplicarla aplicaría la corrección dos veces. Quedan
+    -- registradas en stats para decisión documentada del expediente.
+    FOR v_e IN
+      SELECT fe.* FROM public.fin_entries fe
+      WHERE fe.store_id = p_store_id
+        AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'ajuste_manual'
+        AND (p_include_rectifications OR fe.document_type <> 'RECTIFICACION_FIN')
+    LOOP
+      IF NOT EXISTS (SELECT 1 FROM public.fin_entries x
+                     WHERE x.generation_id = v_new AND x.event = 'ajuste_manual'
+                       AND x.document_type = v_e.document_type
+                       AND x.document_number IS NOT DISTINCT FROM v_e.document_number
+                       AND x.economic_date = v_e.economic_date
+                       AND x.description IS NOT DISTINCT FROM v_e.description
+                       AND x.posted_at::date = v_e.posted_at::date) THEN
+        INSERT INTO public.fin_entries (
+          store_id, document_type, document_id, document_number, event, payment_ref,
+          economic_date, rule_version_id, movements_snapshot, reversal_of, status,
+          description, created_by, generation_id)
+        VALUES (v_e.store_id, v_e.document_type, v_e.document_id, v_e.document_number, v_e.event,
+                v_e.payment_ref, v_e.economic_date, v_e.rule_version_id, v_e.movements_snapshot,
+                v_e.reversal_of, v_e.status, v_e.description, v_e.created_by, v_new)
+        RETURNING id INTO v_entry;
+        FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = v_e.id LOOP
+          INSERT INTO public.fin_movements (
+            entry_id, store_id, category_code, sense, amount, currency, exchange_rate,
+            economic_date, document_number, description, currency_origin, amount_origin,
+            worker_id, product_id, customer_id, traza)
+          VALUES (v_entry, m.store_id, m.category_code, m.sense, m.amount, m.currency,
+                  m.exchange_rate, m.economic_date, m.document_number, m.description,
+                  m.currency_origin, m.amount_origin, m.worker_id, m.product_id,
+                  m.customer_id, m.traza);
+        END LOOP;
+        v_copied := v_copied + 1;
+      END IF;
+    END LOOP;
+
+    IF NOT p_include_rectifications THEN
+      SELECT coalesce(jsonb_agg(jsonb_build_object(
+               'entry_id', fe.id, 'document_number', fe.document_number,
+               'descripcion', fe.description, 'economic_date', fe.economic_date)), '[]'::jsonb)
+      INTO v_rect_skipped
+      FROM public.fin_entries fe
+      WHERE fe.store_id = p_store_id
+        AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'ajuste_manual'
+        AND fe.document_type = 'RECTIFICACION_FIN';
+    END IF;
+
+  -- PASE 5: cobertura documental COMPLETA (misión §5/§7): todo documento
+  -- operativo que deba contabilizarse y no tenga asiento en la candidata.
+  FOR r IN
+    SELECT 'VENTA' AS dt, t.id AS doc, 'reconocimiento'::text AS ev, NULL::uuid AS pref
+    FROM public.transactions t
+    WHERE t.store_id = p_store_id AND t.status = 'completed'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'VENTA' AND e.document_id = t.id
+                        AND e.event = 'reconocimiento' AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'DEVOLUCION_VENTA', d.id, 'reconocimiento', NULL
+    FROM public.devolutions d
+    WHERE d.store_id = p_store_id AND d.status = 'completed'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'DEVOLUCION_VENTA' AND e.document_id = d.id
+                        AND e.event = 'reconocimiento' AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'RECEPCION', rc.id, 'reconocimiento', NULL
+    FROM public.receipts rc
+    WHERE rc.store_id = p_store_id AND rc.status = 'active'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'RECEPCION' AND e.document_id = rc.id
+                        AND e.event = 'reconocimiento' AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'SERVICIO_RECIBIDO', s.id, 'reconocimiento', NULL
+    FROM public.received_services s
+    WHERE s.store_id = p_store_id AND s.status = 'active'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'SERVICIO_RECIBIDO' AND e.document_id = s.id
+                        AND e.event = 'reconocimiento' AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'VALE_SALIDA', i.id, 'reconocimiento', NULL
+    FROM public.issue_slips i
+    WHERE i.store_id = p_store_id AND i.status = 'completed'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'VALE_SALIDA' AND e.document_id = i.id
+                        AND e.event = 'reconocimiento' AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'AJUSTE_INVENTARIO', a.id, 'reconocimiento', NULL
+    FROM public.inventory_adjustments a
+    WHERE a.store_id = p_store_id AND a.status = 'confirmed'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'AJUSTE_INVENTARIO' AND e.document_id = a.id
+                        AND e.event = 'reconocimiento' AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'COMISION', c.id, 'pago', NULL
+    FROM public.commission_payments c
+    WHERE c.store_id = p_store_id AND c.status = 'paid'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'COMISION' AND e.document_id = c.id
+                        AND e.event = 'pago' AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'NOMINA', n.id, 'reconocimiento', NULL
+    FROM public.payrolls n
+    WHERE n.store_id = p_store_id AND n.status IN ('confirmed', 'paid')
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'NOMINA' AND e.document_id = n.id
+                        AND e.event = 'reconocimiento' AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'NOMINA', n.id, 'pago', NULL
+    FROM public.payrolls n
+    WHERE n.store_id = p_store_id AND n.status = 'paid'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'NOMINA' AND e.document_id = n.id
+                        AND e.event = 'pago' AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'FLUJO_CAJA', f.id, 'reconocimiento', NULL
+    FROM public.cash_flow_documents f
+    WHERE f.store_id = p_store_id AND f.status = 'confirmado'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'FLUJO_CAJA' AND e.document_id = f.id
+                        AND e.event = 'reconocimiento' AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'RECEPCION', pt.ref_id, 'pago', pt.id
+    FROM public.payment_transactions pt
+    WHERE pt.store_id = p_store_id AND pt.ref_type = 'receipt'
+      AND coalesce(pt.direction, 'in') = 'in'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'RECEPCION' AND e.document_id = pt.ref_id
+                        AND e.event = 'pago' AND e.payment_ref = pt.id
+                        AND e.generation_id = v_new)
+    UNION ALL
+    SELECT 'SERVICIO_RECIBIDO', pt.ref_id, 'pago', pt.id
+    FROM public.payment_transactions pt
+    WHERE pt.store_id = p_store_id AND pt.ref_type = 'service'
+      AND coalesce(pt.direction, 'in') = 'in'
+      AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
+                      WHERE e.document_type = 'SERVICIO_RECIBIDO' AND e.document_id = pt.ref_id
+                        AND e.event = 'pago' AND e.payment_ref = pt.id
+                        AND e.generation_id = v_new)
+  LOOP
+    BEGIN
+      IF public.fin_post_document(r.dt, r.doc, r.ev, r.pref, v_caller, v_new) IS NOT NULL THEN
+        v_ok := v_ok + 1;
+      ELSE
+        v_skip := v_skip + 1;
+      END IF;
+    EXCEPTION WHEN others THEN
+      v_err := v_err + 1;
+      v_errors := v_errors || jsonb_build_object('pase', 5, 'doc', r.doc,
+        'tipo', r.dt, 'evento', r.ev, 'error', substr(SQLERRM, 1, 200));
+    END;
+  END LOOP;
+
+  UPDATE public.fin_posting_generations
+  SET status = 'candidate',
+      stats = coalesce(stats, '{}'::jsonb) || jsonb_build_object(
+        'build', jsonb_build_object(
+          'repostados', v_ok, 'ya_existentes', v_skip, 'anulaciones', v_ann, 'copiados', v_copied,
+          'errores', v_err, 'detalle_errores', v_errors,
+          'rectificaciones_omitidas', v_rect_skipped,
+          'generacion_origen', v_active,
+          'construida_en', now()))
+  WHERE id = v_new;
+
+  RETURN jsonb_build_object('status', 'candidate', 'repostados', v_ok,
+    'ya_existentes', v_skip, 'anulaciones', v_ann, 'copiados', v_copied, 'errores', v_err,
+    'detalle_errores', v_errors, 'rectificaciones_omitidas', v_rect_skipped);
+END $function$
+
+
+-- @contract-function name=fin_generation_create args="p_store_id uuid, p_code text, p_notes text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_generation_create(p_store_id uuid, p_code text, p_notes text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller uuid := CASE WHEN auth.role() = 'service_role' THEN coalesce(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_id uuid; v_active uuid; v_snap jsonb;
+BEGIN
+  -- ACL pura (patrón fin_rectify_*): ejecución SOLO por service_role
+  -- (canal canónico). v_caller queda como atribución (puede ser NULL).
+  IF p_code IS NULL OR length(trim(p_code)) < 3 THEN
+    RAISE EXCEPTION 'ERR_CODIGO_REQUERIDO';
+  END IF;
+
+  -- Snapshot de la generación ACTIVA (punto de comparación, misión §11)
+  v_active := public.fin_active_generation(p_store_id);
+  IF v_active IS NOT NULL THEN
+    SELECT jsonb_build_object(
+             'generacion', g.code,
+             'entries', (SELECT count(*) FROM public.fin_entries e WHERE e.generation_id = g.id),
+             'movimientos', (SELECT count(*) FROM public.fin_movements m
+                             JOIN public.fin_entries e ON e.id = m.entry_id
+                             WHERE e.generation_id = g.id),
+             'por_categoria', (
+               SELECT coalesce(jsonb_object_agg(t.code, t.saldo), '{}'::jsonb)
+               FROM (
+                 SELECT m.category_code AS code,
+                        round(sum(CASE WHEN m.sense = 'debito' THEN m.amount_cup ELSE -m.amount_cup END), 2) AS saldo
+                 FROM public.fin_movements m
+                 JOIN public.fin_entries e ON e.id = m.entry_id
+                 WHERE e.generation_id = g.id
+                 GROUP BY 1
+               ) t))
+    INTO v_snap
+    FROM public.fin_posting_generations g WHERE g.id = v_active;
+  END IF;
+
+  INSERT INTO public.fin_posting_generations (store_id, code, status, notes, snapshot, created_by)
+  VALUES (p_store_id, trim(p_code), 'building', p_notes, v_snap, v_caller)
+  ON CONFLICT (store_id, code) DO UPDATE
+    SET notes = EXCLUDED.notes, snapshot = EXCLUDED.snapshot
+  RETURNING id INTO v_id;
+  RETURN v_id;
+END $function$
+
+
+-- @contract-function name=fin_generation_rollback args="p_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_generation_rollback(p_store_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller uuid := CASE WHEN auth.role() = 'service_role' THEN coalesce(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_active record; v_prev record;
+BEGIN
+  -- ACL pura (patrón fin_rectify_*): ejecución SOLO por service_role
+  -- (canal canónico). v_caller queda como atribución (puede ser NULL).
+  PERFORM pg_advisory_xact_lock(hashtext('fin-gen:' || p_store_id::text));
+
+  SELECT * INTO v_active FROM public.fin_posting_generations
+  WHERE store_id = p_store_id AND status = 'active';
+  IF v_active.id IS NULL THEN RAISE EXCEPTION 'ERR_SIN_GENERACION_ACTIVA'; END IF;
+
+  SELECT * INTO v_prev FROM public.fin_posting_generations
+  WHERE store_id = p_store_id AND status = 'superseded'
+  ORDER BY superseded_at DESC NULLS LAST LIMIT 1;
+  IF v_prev.id IS NULL THEN
+    RAISE EXCEPTION 'ERR_SIN_GENERACION_SUPERSEDED: no hay generación previa a la que volver';
+  END IF;
+
+  UPDATE public.fin_posting_generations
+  SET status = 'rolled_back',
+      stats = coalesce(stats, '{}'::jsonb) || jsonb_build_object('rollback_en', now())
+  WHERE id = v_active.id;
+  UPDATE public.fin_posting_generations
+  SET status = 'active',
+      stats = coalesce(stats, '{}'::jsonb) || jsonb_build_object('reactivada_en', now())
+  WHERE id = v_prev.id;
+
+  RETURN jsonb_build_object('rolled_back', v_active.code, 'id', v_active.id,
+    'reactivada', v_prev.code, 'reactivada_id', v_prev.id);
+END $function$
+
+
+-- @contract-function name=fin_generation_validate args="p_store_id uuid, p_generation_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_generation_validate(p_store_id uuid, p_generation_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller uuid := CASE WHEN auth.role() = 'service_role' THEN coalesce(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_active uuid; v_gen uuid; v_status text;
+  v_desb int; v_global numeric; v_dup int; v_identidad numeric;
+  v_coverage jsonb; v_comparacion jsonb;
+  v_result jsonb; v_ok boolean;
+  v_build_err int;
+BEGIN
+  -- ACL pura (patrón fin_rectify_*): ejecución SOLO por service_role
+  -- (canal canónico). v_caller queda como atribución (puede ser NULL).
+  SELECT id, status INTO v_gen, v_status FROM public.fin_posting_generations
+  WHERE id = p_generation_id AND store_id = p_store_id;
+  IF v_gen IS NULL THEN RAISE EXCEPTION 'ERR_GENERACION_NO_ENCONTRADA'; END IF;
+  IF v_status NOT IN ('building', 'candidate', 'active', 'superseded') THEN
+    RAISE EXCEPTION 'ERR_GENERACION_ESTADO_INVALIDO: %', v_status;
+  END IF;
+  v_active := public.fin_active_generation(p_store_id);
+
+  -- 1. Asientos desequilibrados (excluye apertura/ajuste_manual que pueden
+  --    ser unilaterales por diseño).
+  SELECT count(*) INTO v_desb
+  FROM (
+    SELECT e.id, round(sum(CASE WHEN m.sense = 'debito' THEN m.amount_cup ELSE -m.amount_cup END), 2) AS d
+    FROM public.fin_entries e
+    JOIN public.fin_movements m ON m.entry_id = e.id
+    WHERE e.generation_id = p_generation_id
+      AND e.event NOT IN ('apertura', 'ajuste_manual')
+    GROUP BY e.id
+  ) t WHERE abs(t.d) > 0.01;
+
+  -- 2. Identidad pura global (Σ débitos − Σ créditos de TODA la generación,
+  --    incluidos aperturas/ajustes).
+  SELECT coalesce(round(sum(CASE WHEN m.sense = 'debito' THEN m.amount_cup ELSE -m.amount_cup END), 2), 0)
+    INTO v_global
+  FROM public.fin_movements m
+  JOIN public.fin_entries e ON e.id = m.entry_id
+  WHERE e.generation_id = p_generation_id;
+
+  -- 3. Duplicados (documento+evento+pago repetidos dentro de la generación).
+  SELECT count(*) INTO v_dup
+  FROM (
+    SELECT document_type, document_id, event, payment_ref, count(*) AS n
+    FROM public.fin_entries
+    WHERE generation_id = p_generation_id AND document_id IS NOT NULL
+    GROUP BY 1, 2, 3, 4 HAVING count(*) > 1
+  ) d;
+
+  -- 4. Cobertura documental vs generación activa (por tipo).
+  SELECT coalesce(jsonb_object_agg(t.document_type, jsonb_build_object('activa', t.n_old, 'candidata', t.n_new)), '{}'::jsonb)
+  INTO v_coverage
+  FROM (
+    SELECT coalesce(o.document_type, n.document_type) AS document_type,
+           coalesce(o.n, 0) AS n_old, coalesce(n.n, 0) AS n_new
+    FROM (
+      SELECT document_type, count(DISTINCT document_id) AS n
+      FROM public.fin_entries
+      WHERE generation_id = v_active AND document_id IS NOT NULL
+      GROUP BY 1
+    ) o
+    FULL JOIN (
+      SELECT document_type, count(DISTINCT document_id) AS n
+      FROM public.fin_entries
+      WHERE generation_id = p_generation_id AND document_id IS NOT NULL
+      GROUP BY 1
+    ) n ON n.document_type = o.document_type
+  ) t;
+
+  -- 5. Comparación por categoría (puente viejo → nuevo).
+  SELECT coalesce(jsonb_agg(row_to_json(c) ORDER BY c.code), '[]'::jsonb)
+  INTO v_comparacion
+  FROM (
+    SELECT cat.code, cat.name,
+           coalesce(o.saldo, 0) AS generacion_anterior,
+           coalesce(n.saldo, 0) AS generacion_nueva,
+           round(coalesce(n.saldo, 0) - coalesce(o.saldo, 0), 2) AS delta
+    FROM public.fin_categories cat
+    LEFT JOIN (
+      SELECT m.category_code AS code,
+             round(sum(CASE WHEN m.sense = 'debito' THEN m.amount_cup ELSE -m.amount_cup END), 2) AS saldo
+      FROM public.fin_movements m JOIN public.fin_entries e ON e.id = m.entry_id
+      WHERE e.generation_id = v_active GROUP BY 1
+    ) o ON o.code = cat.code
+    LEFT JOIN (
+      SELECT m.category_code AS code,
+             round(sum(CASE WHEN m.sense = 'debito' THEN m.amount_cup ELSE -m.amount_cup END), 2) AS saldo
+      FROM public.fin_movements m JOIN public.fin_entries e ON e.id = m.entry_id
+      WHERE e.generation_id = p_generation_id GROUP BY 1
+    ) n ON n.code = cat.code
+    WHERE coalesce(o.saldo, 0) <> 0 OR coalesce(n.saldo, 0) <> 0
+  ) c;
+
+  -- Errores de construcción registrados por el pase build.
+  SELECT coalesce((stats -> 'build' ->> 'errores')::int, 0) INTO v_build_err
+  FROM public.fin_posting_generations WHERE id = p_generation_id;
+
+  v_ok := (v_desb = 0) AND (abs(v_global) <= 0.01) AND (v_dup = 0) AND (v_build_err = 0);
+
+  v_result := jsonb_build_object(
+    'ok', v_ok,
+    'asientos_desequilibrados', v_desb,
+    'identidad_global', v_global,
+    'duplicados', v_dup,
+    'errores_construccion', v_build_err,
+    'cobertura_documental', v_coverage,
+    'comparacion_categorias', v_comparacion,
+    'generacion_anterior', v_active,
+    'validada_en', now());
+
+  UPDATE public.fin_posting_generations
+  SET stats = coalesce(stats, '{}'::jsonb) || jsonb_build_object('validacion', v_result)
+  WHERE id = p_generation_id;
+
+  RETURN v_result;
+END $function$
+
+
 -- @contract-function name=fin_post_annulment_safe args="p_doctype text, p_document_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.fin_post_annulment_safe(p_doctype text, p_document_id uuid)
  RETURNS integer
@@ -8072,8 +8610,8 @@ BEGIN
 END $function$
 
 
--- @contract-function name=fin_post_document args="p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid, p_actor uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.fin_post_document(p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid DEFAULT NULL::uuid, p_actor uuid DEFAULT NULL::uuid)
+-- @contract-function name=fin_post_document args="p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid, p_actor uuid, p_generation_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_post_document(p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid DEFAULT NULL::uuid, p_actor uuid DEFAULT NULL::uuid, p_generation_id uuid DEFAULT NULL::uuid)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -8084,23 +8622,28 @@ DECLARE
   v_metrics jsonb; v_movs jsonb; t jsonb;
   v_entry_id uuid; v_debit numeric := 0; v_credit numeric := 0;
   v_store uuid; v_docnum text; v_date date;
+  v_gen uuid;
 BEGIN
   IF p_document_id IS NULL THEN RAISE EXCEPTION 'ERR_NO_DOCUMENT'; END IF;
   PERFORM pg_advisory_xact_lock(hashtext('fin:' || p_doctype || ':' || p_document_id::text));
-
-  -- Idempotencia (doble clic, reintento, concurrencia)
-  IF EXISTS (
-    SELECT 1 FROM public.fin_entries e
-    WHERE e.document_type = p_doctype AND e.document_id = p_document_id
-      AND e.event = p_event AND e.payment_ref IS NOT DISTINCT FROM p_payment_ref
-  ) THEN
-    RETURN NULL;
-  END IF;
 
   v_metrics := public.fin_compute_metrics(p_doctype, p_document_id, p_event, p_payment_ref);
   v_store := (v_metrics ->> 'store_id')::uuid;
   v_docnum := v_metrics ->> 'doc_number';
   v_date := (v_metrics ->> 'economic_date')::date;
+
+  -- Generación destino: explícita (construcción de candidata) o la ACTIVA.
+  v_gen := coalesce(p_generation_id, public.fin_active_generation(v_store));
+
+  -- Idempotencia (doble clic, reintento, concurrencia) DENTRO de la generación
+  IF EXISTS (
+    SELECT 1 FROM public.fin_entries e
+    WHERE e.document_type = p_doctype AND e.document_id = p_document_id
+      AND e.event = p_event AND e.payment_ref IS NOT DISTINCT FROM p_payment_ref
+      AND e.generation_id IS NOT DISTINCT FROM v_gen
+  ) THEN
+    RETURN NULL;
+  END IF;
 
   v_rule := public.fin_resolve_rule(p_doctype, v_store);
   IF v_rule.id IS NULL THEN RETURN NULL; END IF;               -- sin regla activa: no contabiliza
@@ -8120,11 +8663,12 @@ BEGIN
 
   INSERT INTO public.fin_entries (
     store_id, document_type, document_id, document_number, event, payment_ref,
-    economic_date, rule_version_id, movements_snapshot, description, created_by)
+    economic_date, rule_version_id, movements_snapshot, description, created_by,
+    generation_id)
   VALUES (
     v_store, p_doctype, p_document_id, v_docnum, p_event, p_payment_ref,
     v_date, v_rule.id, v_movs,
-    v_metrics ->> 'descripcion_documento', p_actor)
+    v_metrics ->> 'descripcion_documento', p_actor, v_gen)
   RETURNING id INTO v_entry_id;
 
   FOR t IN SELECT * FROM jsonb_array_elements(v_movs) LOOP
@@ -8141,8 +8685,8 @@ BEGIN
 END $function$
 
 
--- @contract-function name=fin_post_document_annulment args="p_doctype text, p_document_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.fin_post_document_annulment(p_doctype text, p_document_id uuid)
+-- @contract-function name=fin_post_document_annulment args="p_doctype text, p_document_id uuid, p_generation_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_post_document_annulment(p_doctype text, p_document_id uuid, p_generation_id uuid DEFAULT NULL::uuid)
  RETURNS integer
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -8151,22 +8695,26 @@ AS $function$
 DECLARE
   e record; m record; v_new uuid; v_count integer := 0;
   v_residual numeric;
+  v_store uuid; v_gen uuid;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext('fin:' || p_doctype || ':' || p_document_id::text));
+
+  v_store := (SELECT store_id FROM public.fin_entries
+              WHERE document_type = p_doctype AND document_id = p_document_id
+              ORDER BY posted_at LIMIT 1);
+  IF v_store IS NULL THEN RETURN 0; END IF;
+  v_gen := coalesce(p_generation_id, public.fin_active_generation(v_store));
+
   FOR e IN
     SELECT * FROM public.fin_entries
     WHERE document_type = p_doctype AND document_id = p_document_id
       AND status = 'posted' AND event IN ('reconocimiento', 'pago')
+      AND generation_id IS NOT DISTINCT FROM v_gen
     ORDER BY posted_at
   LOOP
-    -- ¿ya tiene anulación? (idempotencia)
+    -- ¿ya tiene anulación? (idempotencia dentro de la generación)
     IF EXISTS (SELECT 1 FROM public.fin_entries x
                WHERE x.reversal_of = e.id) THEN
-      -- T12 (CP-FIN-FINAL-CLOSE-005): distinguir cobertura TOTAL de PARCIAL.
-      -- · Reversión completa ordinaria → idempotencia intacta (se respeta el
-      --   «ya revertido» y NO se crea una segunda compensación).
-      -- · Reversión parcial/en exceso → residual contable pendiente: la
-      --   anulación automática NO puede saltar el asiento en silencio.
       v_residual := public.fin_entry_reversal_residual(e.id);
       IF v_residual <= 0.01 THEN
         CONTINUE;
@@ -8176,11 +8724,12 @@ BEGIN
     END IF;
     INSERT INTO public.fin_entries (
       store_id, document_type, document_id, document_number, event, payment_ref,
-      economic_date, rule_version_id, movements_snapshot, reversal_of, description, created_by)
+      economic_date, rule_version_id, movements_snapshot, reversal_of, description, created_by,
+      generation_id)
     VALUES (
       e.store_id, e.document_type, e.document_id, e.document_number, 'anulacion',
       e.payment_ref, e.economic_date, e.rule_version_id, e.movements_snapshot, e.id,
-      'Anulación: ' || coalesce(e.description, ''), e.created_by)
+      'Anulación: ' || coalesce(e.description, ''), e.created_by, v_gen)
     RETURNING id INTO v_new;
     FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = e.id LOOP
       INSERT INTO public.fin_movements (
@@ -8201,8 +8750,8 @@ BEGIN
 END $function$
 
 
--- @contract-function name=fin_post_document_safe args="p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.fin_post_document_safe(p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid DEFAULT NULL::uuid)
+-- @contract-function name=fin_post_document_safe args="p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid, p_generation_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_post_document_safe(p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid DEFAULT NULL::uuid, p_generation_id uuid DEFAULT NULL::uuid)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -8212,7 +8761,8 @@ DECLARE
   v_entry uuid;
 BEGIN
   BEGIN
-    v_entry := public.fin_post_document(p_doctype, p_document_id, p_event, p_payment_ref);
+    v_entry := public.fin_post_document(p_doctype, p_document_id, p_event, p_payment_ref,
+                                        NULL, p_generation_id);
     RETURN v_entry;
   EXCEPTION WHEN others THEN
     INSERT INTO public.fin_posting_errors (store_id, document_type, document_id, event, error_code, error_detail)
@@ -8568,16 +9118,27 @@ BEGIN
 
   -- Categorías contables (mapa de la regla VENTA: v-cash-cup/v-cash-usd/
   -- v-transf-*/v-zelle). EUR/MLC en efectivo sin categoría: fail-closed.
-  v_from_cat := CASE
-    WHEN p_from_method = 'cash' AND v_pay_currency = 'CUP' THEN 'ACT_EFECTIVO_CUP'
-    WHEN p_from_method = 'cash' AND v_pay_currency = 'USD' THEN 'ACT_EFECTIVO_USD'
-    WHEN p_from_method IN ('transfer', 'zelle')           THEN 'ACT_BANCOS'
-  END;
-  v_to_cat := CASE
-    WHEN p_to_method = 'cash' AND v_pay_currency = 'CUP' THEN 'ACT_EFECTIVO_CUP'
-    WHEN p_to_method = 'cash' AND v_pay_currency = 'USD' THEN 'ACT_EFECTIVO_USD'
-    WHEN p_to_method IN ('transfer', 'zelle')           THEN 'ACT_BANCOS'
-  END;
+  -- CP-FIN-003: resolución de cuentas por el MAPEO CANÓNICO
+  -- (fin_account_mapping: medio × moneda → cuenta). Fallback TRANSITORIO al
+  -- mapeo legado (zelle→ACT_BANCOS) para asientos pre-v3 que aún viven en la
+  -- generación activa: la rectificación debe encontrar el cobro donde el
+  -- motor lo clasificó EN SU MOMENTO. Tras la reconstrucción (GEN-nueva con
+  -- reglas v3) el canónico coincide con el asiento y el fallback no se usa.
+  v_from_cat := public.fin_resolve_financial_account(p_from_method, v_pay_currency);
+  v_to_cat := public.fin_resolve_financial_account(p_to_method, v_pay_currency);
+  IF NOT EXISTS (
+    SELECT 1 FROM public.fin_movements m
+    JOIN public.fin_entries e ON e.id = m.entry_id
+    WHERE e.document_type = 'VENTA' AND e.document_id = p_sale_id
+      AND e.event = 'reconocimiento' AND e.status = 'posted'
+      AND m.category_code = v_from_cat AND m.sense = 'debito'
+  ) THEN
+    v_from_cat := CASE
+      WHEN p_from_method = 'cash' AND v_pay_currency = 'CUP' THEN 'ACT_EFECTIVO_CUP'
+      WHEN p_from_method = 'cash' AND v_pay_currency = 'USD' THEN 'ACT_EFECTIVO_USD'
+      WHEN p_from_method IN ('transfer', 'zelle')           THEN 'ACT_BANCOS'
+    END;
+  END IF;
   IF v_from_cat IS NULL OR v_to_cat IS NULL THEN
     RAISE EXCEPTION 'ERR_CATEGORY_UNMAPPED: % % → % % (moneda sin categoría de caja)', p_from_method, v_pay_currency, p_to_method, v_pay_currency;
   END IF;
@@ -8700,16 +9261,11 @@ BEGIN
   v_to_paid   := p_to_method || '_paid';
   v_from_cur  := p_from_method || '_currency';
   v_to_cur    := p_to_method || '_currency';
-  -- La MONEDA del dinero movido prevalece: to_currency = coalesce(from_currency,
-  -- to_currency). Si la asignación de origen declara su moneda (p.ej. los
-  -- ítems de e2614f36 con zelle_currency='USD' y cash_currency='CUP' previo),
-  -- la asignación movida a cash debe quedar etiquetada en la moneda REAL del
-  -- cobro (USD), no en la etiqueta pre-existente de la columna destino.
   EXECUTE format(
     'UPDATE public.transaction_items SET %I = coalesce(%I, 0) + coalesce(%I, 0), %I = 0, %I = coalesce(%I, %I) WHERE transaction_id = $1 AND coalesce(%I, 0) > 0',
     v_to_paid, v_to_paid, v_from_paid,
     v_from_paid,
-    v_to_cur, v_from_cur, v_to_cur,
+    v_to_cur, v_to_cur, v_from_cur,
     v_from_paid)
   USING p_sale_id;
 
@@ -14272,6 +14828,8 @@ DECLARE
   v_doc_rate numeric;
   v_amount_in_doc_currency numeric;
   v_eff_payment_date timestamptz := COALESCE(p_payment_date, now());
+  v_rate numeric := p_exchange_rate;
+  v_store_rate numeric;
 BEGIN
   -- Idempotencia
   IF p_idempotency_key IS NOT NULL THEN
@@ -14282,6 +14840,14 @@ BEGIN
     IF v_existing_id IS NOT NULL THEN
       RETURN v_existing_id;
     END IF;
+  END IF;
+
+  -- CP-FIN-003: monedas y medios del catálogo canónico solamente.
+  IF p_currency NOT IN ('CUP', 'USD', 'EUR', 'MLC') THEN
+    RAISE EXCEPTION 'Moneda de pago no soportada: %', p_currency;
+  END IF;
+  IF p_payment_method NOT IN ('cash', 'transfer', 'zelle') THEN
+    RAISE EXCEPTION 'Medio de pago no soportado: %', p_payment_method;
   END IF;
 
   -- Validar documento y store ownership
@@ -14309,25 +14875,37 @@ BEGIN
     RAISE EXCEPTION 'El documento no pertenece a la tienda especificada';
   END IF;
 
-  -- MISIÓN POLÍTICA TEMPORAL (2026-10-18): gate canónico para la fecha
-  -- financiera del pago. Se conservan las fechas históricas (V2.12.32)
-  -- dentro del piso de 6 meses; NUNCA fechas futuras (tope HOY Habana).
-  -- v_eff_payment_date = COALESCE(p_payment_date, now()) → NOW() siempre pasa.
   PERFORM public.validate_operation_date(v_eff_payment_date, p_store_id);
 
-  -- Calcular monto en CUP (para payment_transactions.amount_cup — invariante)
+  -- CP-FIN-003 (anexo §2): tasa de conversión REAL para moneda ≠ CUP.
+  -- El equivalente contable (amount_cup) es columna GENERATED: la tasa debe
+  -- llegar correcta a la INSERT. Sin tasa del llamante → tasa manual de la
+  -- tienda; sin ninguna → fail-closed (jamás tasa 1 para divisa).
+  IF p_currency <> 'CUP' THEN
+    IF coalesce(v_rate, 0) <= 1 THEN
+      SELECT rate INTO v_store_rate
+      FROM public.store_exchange_rates
+      WHERE store_id = p_store_id AND currency = p_currency
+      ORDER BY updated_at DESC LIMIT 1;
+      IF coalesce(v_store_rate, 0) > 1 THEN
+        v_rate := v_store_rate;
+      ELSE
+        RAISE EXCEPTION
+          'ERR_TASA_NO_DISPONIBLE: el pago en % requiere tasa de conversión (> 1). Configúrela en Tasas o envíela con el pago.',
+          p_currency;
+      END IF;
+    END IF;
+  ELSE
+    v_rate := 1;
+  END IF;
+
+  -- Monto en CUP (para payment_transactions.amount_cup — invariante)
   v_amount_cup := CASE
     WHEN p_currency = 'CUP' THEN p_amount
-    ELSE p_amount * p_exchange_rate
+    ELSE round(p_amount * v_rate, 2)
   END;
 
-  -- R3: Validar overpay — FIX §17.1: todo en la MONEDA DEL DOCUMENTO.
-  --   · pagado acumulado: pagos en la misma moneda suman nominal; pagos en
-  --     otra moneda aportan amount_cup / tasa_del_documento (inverso exacto
-  --     de la normalización CP-FIN; ninguna tasa nueva).
-  --   · este pago: p_amount si es la misma moneda; si no, su CUP-equivalente
-  --     reconvertido con la tasa del doc. El pago se inserta SIEMPRE en su
-  --     moneda original (amount/amount_cup sin tocar).
+  -- R3: Validar overpay — todo en la MONEDA DEL DOCUMENTO (20261113120800).
   SELECT COALESCE(SUM(
          CASE WHEN pt.currency = v_doc_currency THEN pt.amount
               ELSE pt.amount_cup / v_doc_rate
@@ -14354,7 +14932,7 @@ BEGIN
     payment_date
   ) VALUES (
     p_store_id, p_ref_type, p_ref_id, p_amount, p_payment_method,
-    p_currency, p_exchange_rate, p_reference, p_notes, p_paid_by, p_idempotency_key,
+    p_currency, v_rate, p_reference, p_notes, p_paid_by, p_idempotency_key,
     v_eff_payment_date
   )
   RETURNING id INTO v_id;
@@ -14678,6 +15256,81 @@ END;
 $function$
 
 
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
+$function$
+
+
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -14901,81 +15554,6 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
-$function$
-
-
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
 $function$
 
 

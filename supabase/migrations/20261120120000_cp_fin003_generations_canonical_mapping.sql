@@ -2272,27 +2272,35 @@ REVOKE ALL ON public.fin_posting_generations FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.fin_posting_generations TO authenticated;
 
 -- Motor interno y ciclo de vida: NO ejecutables por clientes.
-REVOKE ALL ON FUNCTION
-  public.fin_resolve_financial_account(text, text),
-  public.fin_active_generation(uuid),
-  public.fin_post_document(text, uuid, text, uuid, uuid, uuid),
-  public.fin_post_document_safe(text, uuid, text, uuid, uuid),
-  public.fin_post_document_annulment(text, uuid, uuid),
-  public.fin_generation_create(uuid, text, text, uuid),
-  public.fin_generation_build(uuid, uuid, boolean, uuid),
-  public.fin_generation_validate(uuid, uuid, uuid),
-  public.fin_generation_activate(uuid, uuid, uuid),
-  public.fin_generation_rollback(uuid, uuid)
-FROM PUBLIC, anon, authenticated;
+-- (Sentencias UNA POR FUNCIÓN — el reproductor del contract-surface aplica
+-- GRANT/REVOKE individuales; los lotes multi-función no se repliegan.)
+REVOKE ALL ON FUNCTION public.fin_resolve_financial_account(text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_resolve_financial_account(text, text) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_active_generation(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_active_generation(uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_post_document(text, uuid, text, uuid, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_post_document(text, uuid, text, uuid, uuid, uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_post_document_safe(text, uuid, text, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_post_document_safe(text, uuid, text, uuid, uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_post_document_annulment(text, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_post_document_annulment(text, uuid, uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_generation_create(uuid, text, text, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_generation_create(uuid, text, text, uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_generation_build(uuid, uuid, boolean, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_generation_build(uuid, uuid, boolean, uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_generation_validate(uuid, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_generation_validate(uuid, uuid, uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_generation_activate(uuid, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_generation_activate(uuid, uuid, uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_generation_rollback(uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_generation_rollback(uuid, uuid) FROM anon, authenticated;
 -- Ciclo de vida de generaciones: canal canónico (service_role), patrón
 -- fin_rectify_sale_payment_method (REVOKE de clientes + GRANT explícito).
-GRANT EXECUTE ON FUNCTION
-  public.fin_generation_create(uuid, text, text, uuid),
-  public.fin_generation_build(uuid, uuid, boolean, uuid),
-  public.fin_generation_validate(uuid, uuid, uuid),
-  public.fin_generation_activate(uuid, uuid, uuid),
-  public.fin_generation_rollback(uuid, uuid)
-TO service_role;
+GRANT EXECUTE ON FUNCTION public.fin_generation_create(uuid, text, text, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.fin_generation_build(uuid, uuid, boolean, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.fin_generation_validate(uuid, uuid, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.fin_generation_activate(uuid, uuid, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.fin_generation_rollback(uuid, uuid) TO service_role;
 
 -- ══════════════════════════════════════════════════════════════════════════
 -- 12. SANITY CHECK del lote (fail-closed si el mapeo quedó incompleto)
