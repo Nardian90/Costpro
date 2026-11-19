@@ -1,0 +1,107 @@
+[
+ {
+  "code": "ACT_BANCOS",
+  "name": "Dinero en bancos y transferencias",
+  "delta": -24586160,
+  "generacion_nueva": 1264610.01,
+  "generacion_anterior": 25850770.01
+ },
+ {
+  "code": "ACT_EFECTIVO_CUP",
+  "name": "Efectivo en caja (CUP)",
+  "delta": -31330,
+  "generacion_nueva": 1233950,
+  "generacion_anterior": 1265280
+ },
+ {
+  "code": "ACT_EFECTIVO_USD",
+  "name": "Efectivo en caja (USD)",
+  "delta": 32000,
+  "generacion_nueva": 27500,
+  "generacion_anterior": -4500
+ },
+ {
+  "code": "ACT_INVENTARIO",
+  "name": "Inventario de mercancías",
+  "delta": -2952074.12,
+  "generacion_nueva": -2355603.89,
+  "generacion_anterior": 596470.23
+ },
+ {
+  "code": "ACT_OTROS_CORR",
+  "name": "Otros activos corrientes",
+  "delta": 0,
+  "generacion_nueva": 8729279.98,
+  "generacion_anterior": 8729279.98
+ },
+ {
+  "code": "ACT_TRANSF_EXTERIOR",
+  "name": "Transferencias del exterior",
+  "delta": 24606900,
+  "generacion_nueva": 24606900,
+  "generacion_anterior": 0
+ },
+ {
+  "code": "GAS_COMISIONES",
+  "name": "Gastos por comisiones",
+  "delta": 0,
+  "generacion_nueva": 300,
+  "generacion_anterior": 300
+ },
+ {
+  "code": "GAS_COSTO_VENTAS",
+  "name": "Costo de los productos vendidos",
+  "delta": 2753833.27,
+  "generacion_nueva": 4506831.73,
+  "generacion_anterior": 1752998.46
+ },
+ {
+  "code": "GAS_PERDIDA_INV",
+  "name": "Pérdidas de inventario",
+  "delta": -490446.58,
+  "generacion_nueva": 1,
+  "generacion_anterior": 490447.58
+ },
+ {
+  "code": "GAS_SERVICIOS",
+  "name": "Gastos por Servicios Recibidos",
+  "delta": 0,
+  "generacion_nueva": 60765,
+  "generacion_anterior": 60765
+ },
+ {
+  "code": "GAS_VALES",
+  "name": "Consumo interno de mercancías (vales)",
+  "delta": 688687.43,
+  "generacion_nueva": 810567.06,
+  "generacion_anterior": 121879.63
+ },
+ {
+  "code": "ING_DESCUENTOS",
+  "name": "Descuentos sobre ventas",
+  "delta": 34339.99,
+  "generacion_nueva": 30239.99,
+  "generacion_anterior": -4100
+ },
+ {
+  "code": "ING_DEVOLUCIONES",
+  "name": "Devoluciones sobre ventas",
+  "delta": 0,
+  "generacion_nueva": 239405,
+  "generacion_anterior": 239405
+ },
+ {
+  "code": "ING_VENTAS",
+  "name": "Ingresos por ventas de productos",
+  "delta": -55749.99,
+  "generacion_nueva": -36192949.98,
+  "generacion_anterior": -36137199.99
+ },
+ {
+  "code": "PAS_CXP_PROV",
+  "name": "Cuentas por pagar a proveedores",
+  "delta": 0,
+  "generacion_nueva": -2961795.9,
+  "generacion_anterior": -2961795.9
+ }
+]

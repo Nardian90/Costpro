@@ -1,0 +1,152 @@
+{
+ "as_of": "2030-12-31",
+ "ecuacion": {
+  "activos": 36437300.22,
+  "diferencia": 0,
+  "equilibrado": true,
+  "pasivos_mas_patrimonio": 36437300.22
+ },
+ "categorias": [
+  {
+   "code": "ACT_EFECTIVO_CUP",
+   "name": "Efectivo en caja (CUP)",
+   "clase": "activo",
+   "grupo": "activo_corriente",
+   "saldo": 1265280,
+   "sort_order": 10,
+   "movimientos": 487
+  },
+  {
+   "code": "ACT_EFECTIVO_USD",
+   "name": "Efectivo en caja (USD)",
+   "clase": "activo",
+   "grupo": "activo_corriente",
+   "saldo": -4500,
+   "sort_order": 11,
+   "movimientos": 21
+  },
+  {
+   "code": "ACT_BANCOS",
+   "name": "Dinero en bancos y transferencias",
+   "clase": "activo",
+   "grupo": "activo_corriente",
+   "saldo": 25850770.01,
+   "sort_order": 12,
+   "movimientos": 305
+  },
+  {
+   "code": "ACT_INVENTARIO",
+   "name": "Inventario de mercancías",
+   "clase": "activo",
+   "grupo": "activo_corriente",
+   "saldo": 596470.23,
+   "sort_order": 14,
+   "movimientos": 1011
+  },
+  {
+   "code": "ACT_OTROS_CORR",
+   "name": "Otros activos corrientes",
+   "clase": "activo",
+   "grupo": "activo_corriente",
+   "saldo": 8729279.98,
+   "sort_order": 16,
+   "movimientos": 1
+  },
+  {
+   "code": "PAS_CXP_PROV",
+   "name": "Cuentas por pagar a proveedores",
+   "clase": "pasivo",
+   "grupo": "pasivo_corriente",
+   "saldo": 2961795.9,
+   "sort_order": 30,
+   "movimientos": 91
+  },
+  {
+   "code": "ING_VENTAS",
+   "name": "Ingresos por ventas de productos",
+   "clase": "ingreso",
+   "grupo": "ingreso_operacional",
+   "saldo": 36137199.99,
+   "sort_order": 60,
+   "movimientos": 714
+  },
+  {
+   "code": "ING_DEVOLUCIONES",
+   "name": "Devoluciones sobre ventas",
+   "clase": "ingreso",
+   "grupo": "ajuste_ingreso",
+   "saldo": -239405,
+   "sort_order": 65,
+   "movimientos": 2
+  },
+  {
+   "code": "ING_DESCUENTOS",
+   "name": "Descuentos sobre ventas",
+   "clase": "ingreso",
+   "grupo": "ajuste_ingreso",
+   "saldo": 4100,
+   "sort_order": 66,
+   "movimientos": 3
+  },
+  {
+   "code": "GAS_COSTO_VENTAS",
+   "name": "Costo de los productos vendidos",
+   "clase": "gasto",
+   "grupo": "costo_venta",
+   "saldo": 1752998.46,
+   "sort_order": 70,
+   "movimientos": 721
+  },
+  {
+   "code": "GAS_SERVICIOS",
+   "name": "Gastos por Servicios Recibidos",
+   "clase": "gasto",
+   "grupo": "gasto_operacional",
+   "saldo": 60765,
+   "sort_order": 71,
+   "movimientos": 21
+  },
+  {
+   "code": "GAS_COMISIONES",
+   "name": "Gastos por comisiones",
+   "clase": "gasto",
+   "grupo": "gasto_operacional",
+   "saldo": 300,
+   "sort_order": 73,
+   "movimientos": 1
+  },
+  {
+   "code": "GAS_VALES",
+   "name": "Consumo interno de mercancías (vales)",
+   "clase": "gasto",
+   "grupo": "gasto_operacional",
+   "saldo": 121879.63,
+   "sort_order": 74,
+   "movimientos": 203
+  },
+  {
+   "code": "GAS_PERDIDA_INV",
+   "name": "Pérdidas de inventario",
+   "clase": "gasto",
+   "grupo": "gasto_operacional",
+   "saldo": 490447.58,
+   "sort_order": 75,
+   "movimientos": 6
+  }
+ ],
+ "generacion": {
+  "id": "d0b7adf7-d355-4802-8348-3daf33f290ed",
+  "code": "GEN-0"
+ },
+ "completitud": {
+  "sin_apertura": false,
+  "apertura_tardia": false,
+  "primer_documento": "2026-07-01",
+  "primera_apertura": "2026-06-30"
+ },
+ "total_activos": 36437300.22,
+ "total_pasivos": 2961795.9,
+ "patrimonio_total": 33475504.32,
+ "resultado_acumulado": 33475504.32,
+ "patrimonio_movimientos": 0
+}

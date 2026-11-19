@@ -1,0 +1,155 @@
+{
+ "status": "candidate",
+ "errores": 0,
+ "copiados": 1,
+ "repostados": 1059,
+ "anulaciones": 1,
+ "ya_existentes": 35,
+ "detalle_errores": [],
+ "no_reconstruibles": [
+  {
+   "doc": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+   "tipo": "AJUSTE_INVENTARIO",
+   "evento": "reconocimiento",
+   "motivo": "documento inexistente (ERR_DOC_NOT_FOUND) — asiento NO copiado: cuantificar en el expediente"
+  }
+ ],
+ "rectificaciones_omitidas": [
+  {
+   "importe": 0,
+   "entry_id": "7ec90009-0000-4000-8000-d0b300000001",
+   "descripcion": "Rectificación CP-FIN-VALUATION-RECTIFICATION-003/004: reversión del exceso de reconocimiento SKU 111/112 (precio de venta importado como costo USD; costo real 1 CUP/u)",
+   "document_type": "RECEPCION",
+   "economic_date": "2026-07-01",
+   "document_number": "FAC-VITALLCONS-001-RECT"
+  },
+  {
+   "importe": 0,
+   "entry_id": "7ec90009-0000-4000-8000-d0b300000002",
+   "descripcion": "Rectificación CP-FIN-VALUATION-RECTIFICATION-003/004: reconocimiento de salidas nunca contabilizadas (6 u vales VS-37/138/139 + 18 u ajustes cuadre × 1 CUP)",
+   "document_type": "AJUSTE_INVENTARIO",
+   "economic_date": "2026-11-15",
+   "document_number": "FAC-VITALLCONS-001-RECT-SAL"
+  },
+  {
+   "importe": 0,
+   "entry_id": "b2bab703-4c2b-499f-93a5-756ad2baadd3",
+   "descripcion": "RECT-MON-9D1CCEF8-cash-USD: reclasificación de la MONEDA del cobro de la venta 9d1ccef8 — registrado cash/USD, moneda real CUP · venta facturada en CUP · cobro contable 6510.00 CUP · tasa documental 930.000000 (moneda real del cobro según evidencia primaria y mandato del propietario). Ref asiento original 8f033ac4-5006-4b94-8969-1c4d019a67b3 · movimiento b16d022b-e4a2-4e5d-9a34-5ea859a7b324 · causa: Venta CUP 6,510 (catálogo 7 USD x930) cobrada en efectivo CUP; el POS registro el nominal USD 7.00 equivalente. Moneda real del cobro: CUP. Expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001 §C. · expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-11-07",
+   "document_number": "RECT-MON-9D1CCEF8-cash-USD"
+  },
+  {
+   "importe": 0,
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000001",
+   "descripcion": "Restauración valoración 5 SKU (WAC negativo → 1,00 CUP): exceso de crédito de inventario RECT-011 devuelto a las cuentas de gasto que lo originaron (autorización propietario misión 014 §1)",
+   "document_type": "AJUSTE_INVENTARIO",
+   "economic_date": "2026-11-17",
+   "document_number": "RECT-013-A-NEGWAC"
+  },
+  {
+   "importe": 0,
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000002",
+   "descripcion": "Regularización componente residual 5 SKU (misión 013 §B, autorizada misión 014 §1): elimina fantasma restante RECT-011 y re-costea el consumo neto histórico a 1 CUP/u (todas las capas de los 5 SKU son @1)",
+   "document_type": "AJUSTE_INVENTARIO",
+   "economic_date": "2026-11-17",
+   "document_number": "RECT-013-B-REGULAR"
+  },
+  {
+   "importe": 0,
+   "entry_id": "7ec9000f-0000-4000-8000-d01400000003",
+   "descripcion": "Extensión de la regularización a los otros 96 productos de FAC-VITALLCONS-001 (misión 014 §6, autorización propietario): C1 eliminación del saldo acreedor ficticio restante por canal + C2 reconocimiento del consumo infravalorado por el drift; total fijado por la conciliación inventario↔kardex (§10.7)",
+   "document_type": "AJUSTE_INVENTARIO",
+   "economic_date": "2026-11-17",
+   "document_number": "RECT-013-C-EXT96"
+  },
+  {
+   "importe": 0,
+   "entry_id": "7ec9000f-0000-4000-8000-d0150000000a",
+   "descripcion": "RECT-015-A: reclasificación de cobro físico 150 USD @805 (cajón) que el motor clasificó CUP. Ref asiento original 52c43919-2938-45b6-a16a-95139b5268c7 · venta 68e7464d · expediente M-015 §C.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-10-17",
+   "document_number": "RECT-015-A"
+  },
+  {
+   "importe": 0,
+   "entry_id": "7ec9000f-0000-4000-8000-d0150000000b",
+   "descripcion": "RECT-015-B: reclasificación de cobro físico 10 USD @560 (settlement) clasificado CUP. Ref asiento original 6c7b76df-80cf-4aca-b8e3-a816067708df · venta 23ccd04f · expediente M-015 §C.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-10-23",
+   "document_number": "RECT-015-B"
+  },
+  {
+   "importe": 0,
+   "entry_id": "7ec9000f-0000-4000-8000-d0150000000d",
+   "descripcion": "RECT-015-D: entrega_efectivo es entrega del efectivo acumulado para depósito bancario (activo pendiente de conciliar), no gasto. Ref asientos originales 267ee6f5 (IE-000002-2026, USD 367 @800 = 293.600) y 8f1644bd (IE-000001-2026, CUP 8.435.679,98) · expediente M-015 §C.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-10-23",
+   "document_number": "RECT-015-D"
+  },
+  {
+   "importe": 0,
+   "entry_id": "cf781c93-5be4-496f-8297-f018ae96d77a",
+   "descripcion": "RECT-FIN-E2614F36: reclasificación del cobro de la venta e2614f36 — método registrado zelle, método real cash · cobro 135.0000000000000000 USD (hecho económico confirmado por el propietario). Ref asiento original 2d109ccf-1e44-4217-a260-d9f80c1fa442 · movimiento f89b5424-5276-4dd1-9b91-c447c0f45a34 · causa: Propietario confirma: cobro real en EFECTIVO 135.00 USD (venta e2614f36 del 2026-11-07, Cable Solar 4mm x30 @4.50). El POS registro zelle; reclasificacion a Efectivo en Caja USD. Expediente CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 seccion 6. · expediente CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 §6.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-11-07",
+   "document_number": "RECT-FIN-E2614F36"
+  },
+  {
+   "importe": 0,
+   "entry_id": "b1cd66d6-7909-4ff7-b3a3-7b5fb88567e3",
+   "descripcion": "RECT-MON-97263A9C-cash-USD: reclasificación de la MONEDA del cobro de la venta 97263a9c — registrado cash/USD, moneda real CUP · venta facturada en CUP · cobro contable 9200.00 CUP · tasa documental 920.000000 (moneda real del cobro según evidencia primaria y mandato del propietario). Ref asiento original cb419a22-f1ff-4e12-b478-22c3f24700e9 · movimiento 024e0091-daa3-4150-a738-33dbdbb6200d · causa: Venta CUP 9,200 (catálogo 10 USD x920) cobrada en efectivo CUP; el POS registro el nominal USD 10.00 equivalente. Moneda real del cobro: CUP. Expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001 §C. · expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-11-16",
+   "document_number": "RECT-MON-97263A9C-cash-USD"
+  },
+  {
+   "importe": 0,
+   "entry_id": "d2f86b36-3000-41e9-a3bf-afe69adf2c8b",
+   "descripcion": "RECT-MON-ABAB9E20-cash-USD: reclasificación de la MONEDA del cobro de la venta abab9e20 — registrado cash/USD, moneda real CUP · venta facturada en CUP · cobro contable 16200.00 CUP · tasa documental 900.000000 (moneda real del cobro según evidencia primaria y mandato del propietario). Ref asiento original d618e5ef-1483-478f-addf-e177fd451d27 · movimiento 940dd4a5-ef6c-4506-9f7a-7ee81793ec7e · causa: Venta CUP 16,200 (catálogo 18 USD x900) cobrada en efectivo CUP; el POS registro el nominal USD 18.00 equivalente. Moneda real del cobro: CUP. Expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001 §C. · expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-11-17",
+   "document_number": "RECT-MON-ABAB9E20-cash-USD"
+  },
+  {
+   "importe": 0,
+   "entry_id": "316dd23d-431c-48ce-a5a1-fc0066a2fee7",
+   "descripcion": "RECT-MON-E825BA93-cash-USD: reclasificación de la MONEDA del cobro de la venta e825ba93 — registrado cash/USD, moneda real CUP · venta facturada en CUP · cobro contable 60840.00 CUP · tasa documental 845.000000 (moneda real del cobro según evidencia primaria y mandato del propietario). Ref asiento original ab81d466-2fc0-40f5-bd74-773601117bbd · movimiento e4677648-990b-4fde-8994-fce06a9d455d · causa: Venta CUP 60,840 (catálogo 72 USD x845) cobrada en efectivo CUP; el POS registro el nominal USD 72.00 equivalente. Moneda real del cobro: CUP. Expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001 §C. · expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-10-27",
+   "document_number": "RECT-MON-E825BA93-cash-USD"
+  },
+  {
+   "importe": 0,
+   "entry_id": "76e61d13-9c1c-4ae7-b0c9-599ddda05fa1",
+   "descripcion": "RECT-MON-8757444F-cash-USD: reclasificación de la MONEDA del cobro de la venta 8757444f — registrado cash/USD, moneda real CUP · venta facturada en CUP · cobro contable 32000.00 CUP · tasa documental 800.000000 (moneda real del cobro según evidencia primaria y mandato del propietario). Ref asiento original 1b1d8cb5-a4e2-48af-9da6-299773b1c7bf · movimiento 019f5125-562a-4647-a314-cb4d77d698a3 · causa: Venta CUP 32,000 (catálogo 40 USD x800) cobrada en efectivo CUP; el POS registro el nominal USD 40.00 equivalente. Moneda real del cobro: CUP. Expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001 §C. · expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-10-26",
+   "document_number": "RECT-MON-8757444F-cash-USD"
+  },
+  {
+   "importe": 0,
+   "entry_id": "31490604-e7fc-437e-8ba0-f968e8fd451f",
+   "descripcion": "RECT-MON-6501F8DA-cash-USD: reclasificación de la MONEDA del cobro de la venta 6501f8da — registrado cash/USD, moneda real CUP · venta facturada en CUP · cobro contable 930.00 CUP · tasa documental 930.000000 (moneda real del cobro según evidencia primaria y mandato del propietario). Ref asiento original ebf02baa-4799-407b-843b-89de3e0c62a7 · movimiento 7b60bec7-4ccd-4a85-ad98-ebcaf077bfd1 · causa: Venta CUP 930 (catálogo 1 USD x930) cobrada en efectivo CUP; el POS registro el nominal USD 1.00 equivalente. Moneda real del cobro: CUP. Expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001 §C. · expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-11-07",
+   "document_number": "RECT-MON-6501F8DA-cash-USD"
+  },
+  {
+   "importe": 0,
+   "entry_id": "175764e3-20f5-4a1c-808b-c26dc640bdcf",
+   "descripcion": "RECT-MON-7D9AD144-cash-USD: reclasificación de la MONEDA del cobro de la venta 7d9ad144 — registrado cash/USD, moneda real CUP · venta facturada en CUP · cobro contable 6510.00 CUP · tasa documental 930.000000 (moneda real del cobro según evidencia primaria y mandato del propietario). Ref asiento original 21312a30-0be9-45f1-961c-b26d3977a21f · movimiento 2d3c3c81-c0a2-4412-b38f-f3def717a7a5 · causa: Venta CUP 9,300 con cobro mixto en efectivo: componente USD 7.00 registrado como nominal equivalente de 6,510 CUP recibidos en billetes CUP (el cliente entregó CUP); componente CUP 2,790 ya correcto. Expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001 §C. · expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-11-18",
+   "document_number": "RECT-MON-7D9AD144-cash-USD"
+  },
+  {
+   "importe": 0,
+   "entry_id": "33a687d4-8b22-440a-a146-d843a4b0a894",
+   "descripcion": "RECT-MON-28E94349-cash-USD: reclasificación de la MONEDA del cobro de la venta 28e94349 — registrado cash/USD, moneda real CUP · venta facturada en CUP · cobro contable 167670.00 CUP · tasa documental 810.000000 (moneda real del cobro según evidencia primaria y mandato del propietario). Ref asiento original f5856dcd-f6e0-4740-9752-c2a2d9199cec · movimiento 87e892ce-567d-4155-8692-5e730f1b7489 · causa: Venta CUP 177,770 cobrada en efectivo CUP (recibido 169,670, pendiente 8,100 documentado). El asiento reconocimiento f5856dcd fue publicado por la versión M-015 del motor con reparto por ítems (207 USD nominal a tasa 810) a ACT_EFECTIVO_USD; el pago registrado es cash/CUP 169,670. Reclasificación del débito a ACT_EFECTIVO_CUP (tasa documental 810 reconstruida desde el propio débito). Expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001 §C. · expediente CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001.",
+   "document_type": "RECTIFICACION_FIN",
+   "economic_date": "2026-10-19",
+   "document_number": "RECT-MON-28E94349-cash-USD"
+  }
+ ]
+}
