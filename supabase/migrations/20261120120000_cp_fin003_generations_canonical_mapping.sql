@@ -1495,7 +1495,7 @@ LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public', 'pg_temp'
 AS $function$
 DECLARE
   v_caller uuid := CASE WHEN auth.role() = 'service_role' THEN coalesce(p_user_id, auth.uid()) ELSE auth.uid() END;
-  g record; e record; m record; r record;
+  g record; m record; r record;
   v_active uuid; v_new uuid;
   v_e record;
   v_ok int := 0; v_err int := 0; v_ann int := 0; v_copied int := 0; v_rect_skipped jsonb := '[]'::jsonb;
@@ -1519,12 +1519,12 @@ BEGIN
   -- (misma cobertura documental; importes y cuentas según reglas vigentes).
   IF v_active IS NOT NULL THEN
     FOR r IN
-      SELECT e.document_type, e.document_id, e.event, e.payment_ref
-      FROM public.fin_entries e
-      WHERE e.generation_id = v_active
-        AND e.document_id IS NOT NULL
-        AND e.event IN ('reconocimiento', 'pago')
-      ORDER BY e.document_type, e.economic_date, e.posted_at
+      SELECT fe.document_type, fe.document_id, fe.event, fe.payment_ref
+      FROM public.fin_entries fe
+      WHERE fe.generation_id = v_active
+        AND fe.document_id IS NOT NULL
+        AND fe.event IN ('reconocimiento', 'pago')
+      ORDER BY fe.document_type, fe.economic_date, fe.posted_at
     LOOP
       BEGIN
         PERFORM public.fin_post_document(r.document_type, r.document_id, r.event,
