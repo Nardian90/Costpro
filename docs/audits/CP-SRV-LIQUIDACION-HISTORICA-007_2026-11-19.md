@@ -68,6 +68,44 @@ Cada fila conserva: número, fecha de servicio, tipo Comisión, proveedor («No 
 - Nada destructivo: sin DELETE, sin ALTER, sin tocar restricciones de fecha globales, sin modificar asientos (reversal solo existente por diseño), sin tocar cierres de caja (los snapshots de `cash_closures` quedan como fueron cerrados; los pagos históricos entran al ledger de caja por `payment_transactions` con su fecha real).
 - Sin secretos en diffs; `.env` intocado; producción tocada UNA sola vez por registro (regla de oro).
 
-## 6. Resultados de ejecución y conciliación
 
-(Se completa tras la ejecución — ver sección al final del expediente y `scripts/out/007-liquidacion/`)
+## 6. Resultados de ejecución (2026-11-19, ventana 18:51:34–18:53:05 UTC)
+
+Ejecución controlada en producción (`scripts/m007-ejecutar-produccion.mjs`, doble flag CP-INFRA-019, retries anti-deadlock). Pre-verificación: 21/21 OK (0 bloqueados). Errores de escritura: **0**.
+
+### 6.1 Conciliación por identificador — 20 liquidaciones
+
+| Servicio | Fecha servicio | Importe CUP | Medio | payment_transactions.id (pago insertado) | paid_at / payment_date final |
+|---|---|---:|---|---|---|
+%s
+
+**TOTAL liquidado: 74.240,00 CUP** (20 pagos; importes exactos; sin conversiones).
+Nota horaria: las horas 16:00/17:00 UTC corresponden a 12:00 America/Havana del MISMO día (Cuba CDT/CST) — la fecha de negocio Habana es exactamente la fecha del servicio en los 20 casos.
+
+### 6.2 Corrección especial SRV-20261116-00139
+
+- Pago EXISTENTE actualizado (`1a909646-0c07-417a-bea2-31b480c4dd26`): `payment_date` 2026-11-16 17:00 UTC → **2026-11-17 17:00 UTC (12:00 Habana, 17/11)**. Sin pagos nuevos (n_pagos=1 antes y después).
+- `received_services.paid_at` → **2026-11-17 12:00 Habana** (fecha de liquidación correcta).
+- Observación final (previa preservada): «Pago de comisión 16/11/2026\nPago de comisión del día 16/11/2026, que no se pagó ese día. Liquidado el 17/11/2026.»
+- Asientos CP-FIN NO tocados: reconocimiento+pago permanecen `posted` (el asiento 'pago' conserva eco 16/11 = semántica del motor, sin `reversal_of`); importe/proveedor/fecha de servicio intactos.
+
+### 6.3 Contabilización generada (CP-FIN)
+
+- 20 asientos evento `pago` nuevos (uno por servicio), `posted`, con `payment_ref` → cada pago, `economic_date` = fecha del servicio (semántica del motor), **débito PAS_SERV_PEND + crédito ACT_EFECTIVO_CUP** (regla corregida por `20261113120500_cp_fin_fix_sentidos_pago.sql` — contablemente correcta: obligación cancelada y efectivo saliendo), balance débito=crédito en los 42 asientos implicados (21 reconocimiento + 21 pago, incl. 00139).
+- Obligación PAS_SERV_PEND de cada servicio: saldo neto **0,00** (reconocimiento crédito = pago débito).
+- `fin_posting_errors`: **0** pendientes.
+
+### 6.4 Conciliación obligatoria §5 — RESULTADO: 14/14 PASS
+
+Ejecutada con `scripts/m007-conciliacion.mjs` (read-only, repetible; evidencia `scripts/out/007-liquidacion/conciliacion.json`):
+
+1. ✓ 20 de 20 procesados (paid) · 2. ✓ 20 de 20 con exactamente 1 pago y 1 asiento pago · 3. ✓ 20 de 20 fecha de liquidación (Habana) = fecha de servicio · 4. ✓ pago con fecha (Habana) = fecha de servicio · 5. ✓ suma 20 = 74.240,00 · 6. ✓ sin duplicaciones (pagos/asientos/gastos) · 7. ✓ balance contable por asiento y PAS cancelada · 8. ✓ sentidos contables correctos · 9-11. ✓ 00139: paid + 17/11 + observación + 1 pago + asiento intacto · 12. ✓ 0 documentos fuera de alcance escritos tras el inicio de ejecución · 13. ✓ 0 errores de contabilización · 14. ✓ 0 cierres de caja en la tienda (sin impacto).
+
+Nota del control 12: los servicios SRV-20261107-00129…SRV-20261113-00138 muestran `updated_at` de la MAÑANA del 19/11 (08:09–12:45 Habana), ANTERIOR a la ventana de la misión — actividad propia del propietario (pagos registrados desde la app), no alteraciones de la misión.
+
+### 6.5 Actor y trazabilidad
+
+- Actor de los pagos: `admin@demo.com` (a1111111-1111-1111-1111-111111111111), cuenta operativa del propietario; `reference='M007 liquidación histórica'`; `notes='Liquidación histórica — fecha de pago = fecha del servicio (misión 007)'`; `idempotency_key='M007-<service_number>'` (re-ejecución segura).
+- Auditoría: `audit_logs` (SUPPLIER_PAYMENT_REGISTERED ×20 + PAYMENT_TRANSACTION_UPDATED del 00139), `service_audit_log` intacto, expediente en esta rama.
+- Scripts reproducibles (re-verificación sin riesgo): `scripts/m007-inspeccion-readonly.mjs`, `m007-validacion-aislada.mjs`, `m007-ejecutar-produccion.mjs` (idempotente), `m007-conciliacion.mjs`.
+
