@@ -84,3 +84,44 @@ SQL de ejecución: `audit-evidence/cp-fin-enervida-cash-bank-001/RECTIFICACIONES
 - Saldo caja USD post-rectificación negativo (−41,700 CUP) por las colecciones USD físicas de octubre registradas como CUP: solo 2 casos fueron confirmados por el propietario (RECT-015-A/B); el resto queda como incidencia de datos documentada, sin reconstrucción estimada.
 - `invoice_number` NULL en el 100% de las ventas desde octubre (heredado de CP-FIN-001): la navegación usa el ID interno real.
 - Sin riel de venta EUR/MLC en el escritor canónico de ventas (documentado; el plan contable real no define cajas EUR/MLC).
+
+---
+
+## I. EJECUCIÓN FINAL (Fase 7-8 — 2026-11-19, misma sesión)
+
+| Paso | Resultado | Evidencia |
+|---|---|---|
+| PR #1659 (CI 9/9 sobre ff7a99878) | **MERGEADO** | merge commit `1f75164a73c151a14313a2623a362e1aef1bbe13` |
+| Migración 20261119150000 aplicada a producción | OK 2,429 ms, lote único, pgrst NOTIFIED | sha256 `0593c2a3307eedc531b2082f7f7cf81d85bbd0c5e55cc1b0c8c892b37d2cb2dc`; `prod-apply-evidence.json` |
+| Libro de migraciones | Registrado (INSERT idempotente, patrón CP-FIN-001) | `production_migration_ledger` version 20261119150000 |
+| Rectificaciones R1–R8 + P1/P2 | **EJECUTADAS (lote atómico HTTP 201)** | 8 asientos `RECT-MON-*` + 2 reconocimientos VENTA |
+| Re-ejecución (idempotencia) | R1–R8 → YA_APLICADO (implícito: sin nuevos asientos; total RECT-MON sigue 8); P1/P2 → NULL (idempotencia del escritor) | `rectificaciones-reintento.json`; count verificado |
+| Estado post-rectificación | caja USD −41,700.00 (residual documentado §E); caja CUP 1,264,880.00; bancos 25,848,970.01 (intacto); pagos cash/USD 11→4 (3 anuladas + e2614f36 genuina) | `cpfin002-postverificacion.sql` |
+| **Identidad del libro** | **Σ débitos = Σ créditos → 0.00** | post-verificación |
+| **Dashboard LIVE** | `desequilibrio_monto: 0.0` · `desequilibrio_balance: false` · resultado_neto 33,436,107.32 | `fin_get_dashboard` LIVE 2026-11-19 |
+| Vista caja USD | 20 movimientos: 8 pares VENTA/RECT-MON (neto 0 por venta), RECT-FIN-E2614F36 débito 125,550 (135 USD), RECT-015-A/B, egreso cd07fc7d 293,600 (367 USD) | `cpfin002-caja-usd-view.sql` |
+| Traza R8 | caso `asiento_obsoleto`, ref asiento f5856dcd + movimiento original, tasa documental 810, causa completa | `traza RECT-MON-28E94349-cash-USD` |
+| PR #1660 (surface 212 funciones, CI 5/5) | **MERGEADO** | merge commit `73ba7876b51b` |
+| Contrato estático tras surface | 212/212 representadas, 0 divergencias | `security-contract-test-static.cjs` |
+| Vercel Production (1f75164a7) | **Deployment completed success**; health 200 | GitHub commit status `Vercel → success` |
+| Vercel Production (73ba7876b5) | Deployment en curso al cierre (sin error; el delta es docs-only) | GitHub commit status `Vercel → pending` |
+
+### Criterios de cierre (§15) — verificación final
+
+1. **Mapeo del carrito distingue forma y moneda** — demostrado en código (POSCartItem/usePOSCheckout/create_sale_v2) y probado en E2E (E1–E8). ✓
+2. **Efectivo contabiliza en caja** (CUP y USD según el cobro real) ✓ (E1, E2, E15, R1–R8)
+3. **Transferencia contabiliza en bancos** ✓ (E4, E5)
+4. **Transferencia exterior usa su cuenta** (ACT_BANCOS, plan contable real; alias zelle demostrado) ✓ (E6)
+5. **Ventas históricas inequívocamente mal clasificadas rectificadas** — 8 reclasificaciones + 2 reconocimientos con evidencia primaria; sin ambigüedades inventadas ✓
+6. **Efectivo USD presenta los movimientos genuinos del propietario** — RECT-FIN-E2614F36 (135 USD = 125,550) + cd07fc7d (367 USD = 293,600) + RECT-015-A/B como reclasificaciones identificadas; el resto del conjunto salió con contrapartidas RECT-MON claramente etiquetadas ✓
+7. **Saldos de caja y banco coinciden con sus movimientos** — drilldown = Σ movimientos verificado (E16/E17 en aislada; producción post-rectificación) ✓
+8. **Sin pagos ni ingresos duplicados** — 0; idempotencia de escritores verificada (E12, re-ejecución en producción) ✓
+9. **Estado de Situación conciliado** — desequilibrio 0.00; residual caja USD (−41,700 CUP) documentado con causa (§E/H) ✓
+10. **Sin asientos desequilibrados sin identificar** — 1,056/1,056 + 10 nuevos = equilibrados ✓
+11. **Trazabilidad histórica conservada** — asientos originales intactos; RECT-MON con ref_entry/ref_mov/tasa/causa ✓
+12. **Tests, CI y gates pasan** — CI 9/9 (PR #1659) y 5/5 (PR #1660); E2E 21/21 + net delta 0 ✓
+13. **Migraciones y libro conciliados** — 20261119150000 aplicada y registrada; surface 212/212 ✓
+14. **Deployment final operativo** — Vercel success + health 200 ✓
+15. **Expediente y worklog completos** — este documento + worklog.md actualizado en la misma sesión ✓
+
+**CP-FIN-ENERVIDA-CASH-BANK-CLASSIFICATION-AND-BALANCE-RECONCILIATION-001 — COMPLETADA Y DESPLEGADA.**
