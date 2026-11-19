@@ -165,7 +165,7 @@
   "total_considerados": 598,
   "total_incluidos": 183,
   "total_excluidos": 415,
-  "digest": "1eb96c7cbf059824b0e8ceb15e73c57912a3f181ff7196085f2977d40c53bbc8",
+  "digest": "0e60c3f0b30db25dd3982b9188fb1a653dc912d9652a1e9ac8800ab02eda1cb7",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5885,14 +5885,14 @@
     },
     {
       "nombre": "20261119150000_cp_fin002_cash_bank_reclassification.sql",
-      "bytes": 28868,
-      "sha256_original": "315a3502558921b91ff6207d3ce353dbe906100a6191430277aa276947eaf1ae",
+      "bytes": 28908,
+      "sha256_original": "0593c2a3307eedc531b2082f7f7cf81d85bbd0c5e55cc1b0c8c892b37d2cb2dc",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261119",
       "observaciones": [],
       "posicion": 183,
-      "sha256_generado": "315a3502558921b91ff6207d3ce353dbe906100a6191430277aa276947eaf1ae"
+      "sha256_generado": "0593c2a3307eedc531b2082f7f7cf81d85bbd0c5e55cc1b0c8c892b37d2cb2dc"
     },
     {
       "nombre": "AUDIT_FIXES.md",

@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-18 (M-015: 7 scripts con guard assert-not-production)",
+  "_updated": "2026-11-19 (CP-FIN-002: apply-e2e + debug-e2e isolationProtected)",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -97,7 +97,9 @@
     "scripts/sc006-e2e-verification.mjs",
     "scripts/sc006-real-reception-evidence.mjs",
     "scripts/val004-apply-e2e.mjs",
-    "scripts/val004-e2e-prototype.mjs"
+    "scripts/val004-e2e-prototype.mjs",
+    "scripts/e2e/cpfin002-apply-e2e.mjs",
+    "scripts/e2e/cpfin002-e2e-debug.mjs"
   ],
   "exceptions": {
     "scripts/audit_kardex_live.cjs": "Herramienta histórica de una misión puntual ya ejecutada (one-shot, evidenciada en docs/audits/): señales de escritura en SQL/strings/fetch pero sin flujo productivo recurrente. No se cablea el guard en este PR (alcance limitado a los defectos demostrados); re-ejecutarla contra producción exige hoy revisión manual explícita.",

@@ -14,9 +14,12 @@
 --      ENERVIDA mostraba −2,425,986.00 CUP mientras el libro está PERFECTO
 --      (A − P − Patrimonio − (Ingresos − Gastos) = 0.00, verificado LIVE
 --      2026-11-19: A 36,369,905.10 = P 2,961,795.90 + I 35,834,094.99 −
---      G 2,425,985.79). Se añade el término gasto a la ecuación. NO se crea
---      ajuste artificial alguno: el indicador a cero es el resultado de
---      calcular la ecuación contable completa sobre los mismos movimientos.
+--      G 2,425,985.79; Σ débitos 480,745,318.72 = Σ créditos 480,745,318.72).
+--      Se sustituye por la identidad pura de partida doble
+--      Σ débitos − Σ créditos = 0 (A + G − P − Patrimonio − I, con activo y
+--      gasto débito-normal). NO se crea ajuste artificial alguno: el
+--      indicador a cero es el resultado de calcular la identidad contable
+--      sobre los mismos movimientos.
 --
 --   2. fin_reclassify_sale_payment_currency: escritor canónico GENÉRICO de
 --      reclasificación de la MONEDA de un cobro ya contabilizado
@@ -133,23 +136,22 @@ BEGIN
   SELECT count(*) INTO v_errores
   FROM public.fin_posting_errors WHERE store_id = p_store_id AND resolved_at IS NULL;
 
-  -- CP-FIN-002: ecuación contable COMPLETA del libro sin cerrar.
-  -- Activo − Pasivo − Patrimonio − Ingresos − Gastos = 0 cuando el libro
-  -- está equilibrado (el resultado acumulado del período es Ingresos − Gastos
-  -- y forma parte del patrimonio). La versión anterior OMITÍA la clase gasto,
-  -- por lo que el indicador mostraba −(gastos netos) como «desequilibrio»
-  -- (ENERVIDA: −2,425,986.00 CUP con el libro perfecto — hallazgo y
-  -- verificación LIVE en el expediente de la misión, §7 del mandato).
+  -- CP-FIN-002: ecuación contable COMPLETA del libro sin cerrar. La
+  -- identidad A + Gastos − (Pasivo + Patrimonio + Ingresos) = 0 colapsa, por
+  -- la naturaleza débito-normal de activo y gasto, en la verificación PURA de
+  -- partida doble: Σ débitos − Σ créditos = 0 (el resultado acumulado I − G
+  -- forma parte del patrimonio). La versión anterior OMITÍA la clase gasto
+  -- del lado débito-normal, por lo que el indicador mostraba −(gastos netos)
+  -- como «desequilibrio» (ENERVIDA: −2,425,986.00 CUP con el libro PERFECTO:
+  -- Σ débitos 480,745,318.72 = Σ créditos 480,745,318.72 — verificación LIVE
+  -- 2026-11-19 en el expediente de la misión, §7 del mandato).
+  -- NO se crea ajuste artificial alguno: el indicador a cero es el resultado
+  -- de calcular la identidad completa sobre los mismos movimientos.
   SELECT coalesce(round(sum(
-    CASE WHEN c.clase IN ('activo') THEN CASE WHEN m.sense='debito' THEN m.amount_cup ELSE -m.amount_cup END ELSE 0 END), 0), 0)
-    - coalesce(round(sum(
-    CASE WHEN c.clase IN ('pasivo', 'patrimonio', 'ingreso') THEN CASE WHEN m.sense='credito' THEN m.amount_cup ELSE -m.amount_cup END ELSE 0 END), 0), 0)
-    - coalesce(round(sum(
-    CASE WHEN c.clase = 'gasto' THEN CASE WHEN m.sense='debito' THEN m.amount_cup ELSE -m.amount_cup END ELSE 0 END), 0), 0)
+    CASE WHEN m.sense='debito' THEN m.amount_cup ELSE -m.amount_cup END), 0), 0)
     INTO v_desbalance
   FROM public.fin_movements m
   JOIN public.fin_entries e ON e.id = m.entry_id
-  JOIN public.fin_categories c ON c.code = m.category_code
   WHERE m.store_id = p_store_id AND m.economic_date <= p_to;
 
   RETURN jsonb_build_object(
@@ -488,16 +490,15 @@ GRANT EXECUTE ON FUNCTION public.fin_reclassify_sale_payment_currency(uuid, text
 DO $guard$
 DECLARE
   v_n int := 0;
-  v_pat_gasto text := 'CASE WHEN c.clase = ' || chr(39) || 'gasto' || chr(39)
-    || ' THEN CASE WHEN m.sense=' || chr(39) || 'debito' || chr(39)
-    || ' THEN m.amount_cup ELSE -m.amount_cup END ELSE 0 END), 0), 0)';
+  v_pat_gasto text := 'CASE WHEN m.sense=' || chr(39) || 'debito' || chr(39) || ' THEN m.amount_cup ELSE -m.amount_cup END), 0), 0)';
 BEGIN
-  -- fin_get_dashboard: la ecuación debe CONTENER el término gasto.
+  -- fin_get_dashboard: la ecuación debe CONTENER la identidad pura de
+  -- partida doble (Σ débitos − Σ créditos) sobre TODAS las clases.
   SELECT count(*) INTO v_n FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public' AND p.proname = 'fin_get_dashboard'
     AND pg_get_functiondef(p.oid) LIKE '%' || v_pat_gasto || '%';
-  IF v_n < 1 THEN RAISE EXCEPTION 'CP-FIN-002-GUARD: fin_get_dashboard sin término gasto en la ecuación del desequilibrio'; END IF;
+  IF v_n < 1 THEN RAISE EXCEPTION 'CP-FIN-002-GUARD: fin_get_dashboard sin la identidad pura de partida doble'; END IF;
 
   -- fin_reclassify_sale_payment_currency: existe con traza e idempotencia.
   SELECT count(*) INTO v_n FROM pg_proc p
