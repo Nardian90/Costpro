@@ -359,8 +359,14 @@ html:has(#landing-root)::-webkit-scrollbar {
   backface-visibility: hidden;
 }
 
-/* Primera escena visible antes de la hidratación (evita flash vacío). */
-#landing-root .cinema-scene:first-child {
+/* Primera escena visible antes del primer frame del escenario (evita el
+   flash vacío entre el commit de React y el efecto de GSAP, y deja un
+   respaldo de CSS si el efecto no llegara a ejecutarse).
+   POR data-scene-index y NO :first-child: .cinema-sweepline es el PRIMER
+   hijo del escenario (se renderiza antes que los paneles), así que
+   :first-child jamás matchea una escena y TODAS quedarían ocultas
+   (hallazgo Codex, PR #1658). */
+#landing-root .cinema-scene[data-scene-index='0'] {
   visibility: visible;
 }
 

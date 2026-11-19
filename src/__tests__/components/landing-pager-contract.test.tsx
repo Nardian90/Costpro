@@ -108,8 +108,14 @@ describe('ADN-LANDING-TRUE-FULLPAGE-EXPERIENCE-006 — contrato del escenario pe
   it('los paneles de escena son opacos (las escenas se SUSTITUYEN, no se mezclan)', () => {
     expect(shield).toMatch(/\.cinema-scene\s*{[^}]*background:\s*#05070a/);
     expect(shield).toMatch(/\.cinema-scene\s*{[^}]*visibility:\s*hidden/);
-    // La primera escena es visible antes de hidratar (sin flash vacío)
-    expect(shield).toMatch(/\.cinema-scene:first-child\s*{[^}]*visibility:\s*visible/);
+    // La primera escena es visible ANTES del efecto GSAP (sin flash vacío).
+    // POR data-scene-index y NUNCA :first-child: la sweepline es el primer
+    // hijo del escenario, así que :first-child no matchea ninguna escena
+    // (hallazgo Codex, PR #1658).
+    expect(shield).toMatch(
+      /\.cinema-scene\[data-scene-index=['"]0['"]\]\s*{[^}]*visibility:\s*visible/,
+    );
+    expect(shield).not.toMatch(/\.cinema-scene:first-child/);
   });
 
   it('solo transform/opacity/clip-path en las transiciones (§11 rendimiento)', () => {
