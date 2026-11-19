@@ -24,7 +24,7 @@
  *    la línea), no inferencia por moneda.
  */
 import React, { useCallback, useEffect, useState } from 'react';
-import { ChevronRight, ExternalLink, Loader2, RefreshCw } from 'lucide-react';
+import { ChevronRight, ExternalLink, Loader2, RefreshCw, Settings2 } from 'lucide-react';
 import { cn, formatLabeledCurrency } from '@/lib/utils';
 import { useAuthStore, useUIStore } from '@/store';
 import { toast } from 'sonner';
@@ -109,6 +109,11 @@ export function CategoryDetailPanel({
   const token = useAuthStore((s) => s.token);
   const setCurrentView = useUIStore((s) => s.setCurrentView);
   const setSaleDetailNavContext = useUIStore((s) => s.setSaleDetailNavContext);
+  // CP-FIN-003 (misión §6.2): acceso contextual «Ver configuración contable»
+  // desde cada movimiento → abre la Configuración de Documentos preseleccionada
+  // en el tipo documental que generó el asiento (regla, cuentas, criterios).
+  const setFinancialOpeningNavContext = useUIStore((s) => s.setFinancialOpeningNavContext);
+  const canConfigure = useAuthStore((s) => ['admin', 'manager'].includes(s.user?.role ?? ''));
   const [movements, setMovements] = useState<MovementRow[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -164,6 +169,24 @@ export function CategoryDetailPanel({
       toast.info('Documento de origen no disponible para navegación directa en este tipo documental.');
     },
     [setCurrentView, setSaleDetailNavContext],
+  );
+
+  /**
+   * CP-FIN-003 §6.2: abre la configuración contable del tipo documental que
+   * generó el movimiento (regla activa, débito/crédito, métricas, vigencia).
+   * Conserva contexto: tipo + código + evento (misión §6.2).
+   */
+  const openAccountingConfig = useCallback(
+    (m: MovementRow) => {
+      if (!m.document_type) return;
+      setFinancialOpeningNavContext({
+        openOpeningBalances: false,
+        focusDocumentType: m.document_type,
+        setAt: Date.now(),
+      });
+      setCurrentView('document-config');
+    },
+    [setCurrentView, setFinancialOpeningNavContext],
   );
 
   if (loading) {
@@ -277,7 +300,20 @@ export function CategoryDetailPanel({
                       )}
                     </div>
                   </td>
-                  <td className="px-2.5 py-2 whitespace-nowrap">{m.document_type}</td>
+                  <td className="px-2.5 py-2 whitespace-nowrap">
+                    {m.document_type}
+                    {canConfigure && m.document_type && (
+                      <button
+                        type="button"
+                        onClick={() => openAccountingConfig(m)}
+                        className="inline-flex items-center gap-1 ml-1.5 rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors min-h-[28px]"
+                        title={`Ver la regla contable de ${m.document_type}: cuentas de débito/crédito, métricas, criterios y vigencia`}
+                        data-testid={`ver-config-contable-${m.id}`}
+                      >
+                        <Settings2 className="w-3 h-3" /> Config. contable
+                      </button>
+                    )}
+                  </td>
                   <td className="px-2.5 py-2 whitespace-nowrap">{eventLabel(m.event)}</td>
                   <td className="px-2.5 py-2 text-center">
                     <span

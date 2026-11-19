@@ -29,11 +29,17 @@ const conditionSchema = z.object({
 const movementTemplateSchema = z.object({
   id: z.string().min(1).max(60).optional(),
   evento: z.enum(['reconocimiento', 'pago']),
+  // CP-FIN-003: '@cuenta_financiera' = la categoría NO es fija: el motor la
+  // resuelve por el MAPEO CANÓNICO (medio × moneda del pago) al contabilizar.
   categoria: z.string().min(2).max(40),
   sentido: z.enum(['debito', 'credito']),
   origen: z.union([
     z.object({ tipo: z.literal('metrica'), metrica: z.string().min(2).max(60) }),
     z.object({ tipo: z.literal('constante'), valor: z.number().positive() }),
+    z.object({
+      tipo: z.literal('cuenta_financiera'),
+      metrica: z.string().min(2).max(60),
+    }),
   ]),
   condicion: z.union([conditionSchema, z.array(conditionSchema).min(1)]).nullable().optional(),
   orden: z.number().int().min(1).max(99).optional(),
@@ -55,7 +61,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const supabase = getSupabaseForSession(session);
-  const [categories, metrics, rules, doctypes] = await Promise.all([
+  const [categories, metrics, rules, doctypes, accountMapping] = await Promise.all([
     supabase
       .from('fin_categories')
       .select('code, name, description, clase, grupo, is_system, is_active, sort_order, store_id')
@@ -74,6 +80,14 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       .or(`store_id.is.null,store_id.eq.${storeId}`)
       .order('created_at', { ascending: false }),
     supabase.rpc('fin_get_document_types_status', { p_store_id: storeId, p_user_id: session.user.id }),
+    // CP-FIN-003: matriz de mapeo canónico (medio × moneda → cuenta) — la
+    // misma que consume el motor, visible en la configuración contable.
+    supabase
+      .from('fin_account_mapping')
+      .select('payment_method, currency, category_code, is_active, notes')
+      .eq('is_active', true)
+      .order('payment_method')
+      .order('currency'),
   ]);
 
   if (doctypes.error) {
@@ -85,6 +99,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     categories: categories.data ?? [],
     metrics: metrics.data ?? [],
     rules: rules.data ?? [],
+    account_mapping: accountMapping.data ?? [],
   });
 }
 

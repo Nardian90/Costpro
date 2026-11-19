@@ -11,6 +11,11 @@ import { useTranslations } from 'next-intl';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { useServiceTypes, type ServiceType } from '@/hooks/useServiceTypes';
+import { useStoreRates } from '@/hooks/useStoreRates';
+import PaymentRowsEditor, {
+  newPaymentRow, rowsCupTotal, rowsToPayload, rowsAreValid,
+  type PaymentEditorRow,
+} from '@/components/payments/PaymentRowsEditor';
 import { ServiceTypesManagerModal } from './ServiceTypesManagerModal';
 // MISIÓN POLÍTICA TEMPORAL (2026-10-18): fecha del servicio seleccionable —
 // el RPC create_received_service_v2 ya aceptaba/validaba p_service_date,
@@ -142,6 +147,31 @@ export default function ReceivedServicesView() {
           toast.warning('Servicio creado en Borrador. Actívalo desde la tabla (botón Activar).');
         } else {
           toast.success('Servicio creado correctamente');
+          // CP-FIN-003 (anexo §3.1/§3.2): liquidación inmediata al confirmar —
+          // el pago viaja por el canal canónico (/api/payments → RPC
+          // register_supplier_payment → motor: cuenta según medio×moneda).
+          // Cada componente conserva SU forma de pago, moneda, tasa e importe.
+          const payments = rowsToPayload(data.paymentRows || []);
+          if (payments.length > 0) {
+            const pay = await fetch('/api/payments', {
+              method: 'POST',
+              headers: authHeaders,
+              body: JSON.stringify({
+                ref_type: 'service',
+                ref_id: newId,
+                payments,
+                payment_date: data.payment_date || undefined,
+                idempotency_key: crypto.randomUUID(),
+              }),
+            });
+            if (pay.ok) {
+              const n = payments.length;
+              toast.success(`Servicio confirmado y pago registrado (${n} componente${n === 1 ? '' : 's'}).`);
+            } else {
+              const err = await pay.json().catch(() => ({}));
+              toast.warning(`Servicio creado, pero el pago no se registró: ${err.error || err.message || 'error'} — regístralo desde el detalle.`);
+            }
+          }
         }
       } else {
         toast.success('Servicio creado correctamente');
@@ -422,10 +452,13 @@ function ServiceDetailModal({
   const [payments, setPayments] = useState<any[]>([]);
   const [loadingPayments, setLoadingPayments] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState<'cash' | 'transfer' | 'zelle'>('cash');
-  const [reference, setReference] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // CP-FIN-003 (anexo §2): componente unificado de pago — mismas opciones,
+  // validaciones y semántica del carrito de Ventas (medio × moneda × importe
+  // × tasa). Sustituye al formulario fijo (moneda CUP / tasa 1 / una fila).
+  const { rates: storeRates } = useStoreRates();
+  const [payRows, setPayRows] = useState<PaymentEditorRow[]>([newPaymentRow({})]);
+  const [rowsValid, setRowsValid] = useState(false);
   // V2.12.32 (paridad con OT): fecha financiera del pago. Default HOY (día de
   // negocio Habana); tope HOY — nunca futura. Backdating legítimo visible y
   // validado (piso real: 6 meses, lo impone validate_operation_date en BD).
@@ -475,12 +508,23 @@ function ServiceDetailModal({
   const paymentStatus = balance <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
 
   const handleSubmit = async () => {
-    const amt = parseFloat(amount);
-    if (!amt || amt <= 0) { toast.error('Monto inválido'); return; }
-    // MISIÓN SERVICIOS RECIBIDOS: la fecha del pago se valida ANTES de enviar
-    // (misma convención que CreateServiceModal) — nunca futura.
+    // MISIÓN SERVICIOS RECIBIDOS + CP-FIN-003: el lote se valida ANTES de
+    // enviar (importe > 0, tasa > 1 para divisa, sin exceder el saldo en CUP).
     if (!paymentDateValidation.valid) {
       toast.error(paymentDateValidation.error || 'Fecha del pago no válida');
+      return;
+    }
+    const payloadRows = rowsToPayload(payRows);
+    if (payloadRows.length === 0) {
+      toast.error('Monto inválido');
+      return;
+    }
+    if (!rowsAreValid(payRows)) {
+      toast.error('Revisa los componentes: importes > 0 y tasa > 1 para moneda extranjera.');
+      return;
+    }
+    if (rowsCupTotal(payRows) > balance + 0.005) {
+      toast.error(`El pago (${rowsCupTotal(payRows).toFixed(2)} CUP) excede el saldo pendiente (${balance.toFixed(2)} CUP).`);
       return;
     }
     setSubmitting(true);
@@ -491,27 +535,21 @@ function ServiceDetailModal({
         body: JSON.stringify({
           ref_type: 'service',
           ref_id: service.id,
-          amount: amt,
-          payment_method: method,
-          currency: 'CUP',
-          exchange_rate: 1.0,
-          reference: reference || null,
-          // V2.12.32: fecha financiera (mediodía, misma convención del
-          // proyecto). Idempotencia por envío: un reintento de red no duplica.
+          // Pago mixto multi-moneda: cada componente viaja con SU forma de
+          // pago, moneda, tasa e importe (anexo §3.2 — varios componentes).
+          payments: payloadRows,
           payment_date: formatOperationDateForRPC(paymentDate),
           idempotency_key: crypto.randomUUID(),
         }),
       });
       if (res.ok) {
-        toast.success('Pago registrado');
-        setAmount(''); setReference(''); setShowForm(false);
+        toast.success(`Pago registrado (${payloadRows.length} componente${payloadRows.length === 1 ? '' : 's'})`);
+        setPayRows([newPaymentRow(storeRates)]);
+        setShowForm(false);
         setPaymentDate(todayBusinessDay());
         fetchPayments();
         onUpdate();
       } else {
-        // MISIÓN SERVICIOS RECIBIDOS: mostrar el error REAL del backend
-        // (422 de fecha, 400 de saldo, etc.) — antes era un genérico que
-        // ocultaba el 401 de la causa raíz.
         const err = await res.json().catch(() => ({}));
         toast.error(err.error || err.message || 'Error al registrar pago');
       }
@@ -625,15 +663,16 @@ function ServiceDetailModal({
 
             {showForm && (
               <div className="rounded-xl border border-border/30 p-3 space-y-2 bg-muted/10">
-                <div className="grid grid-cols-2 gap-2">
-                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={String(balance.toFixed(2))} className="h-10 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums" />
-                  <select value={method} onChange={(e) => setMethod(e.target.value as any)} className="h-10 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold">
-                    <option value="cash">💵 Efectivo</option>
-                    <option value="transfer">📱 Transferencia</option>
-                    <option value="zelle">💳 Zelle</option>
-                  </select>
-                </div>
-                <input type="text" value={reference} onChange={(e) => setReference(e.target.value)} placeholder="Referencia (opcional)" className="w-full h-10 bg-background border border-border/50 rounded-lg px-3 text-sm" />
+                {/* CP-FIN-003: mismo componente del carrito — medio × moneda ×
+                    importe × tasa, varios componentes (pago mixto), original y
+                    equivalente contable siempre visibles (anexo §9). */}
+                <PaymentRowsEditor
+                  rows={payRows}
+                  onChange={setPayRows}
+                  storeRates={storeRates}
+                  maxCupTotal={balance}
+                  onValidityChange={(v) => setRowsValid(v)}
+                />
                 {/* V2.12.32: fecha financiera del pago — never future, backdating legítimo */}
                 <OperationDatePicker
                   label="Fecha del pago"
@@ -645,7 +684,7 @@ function ServiceDetailModal({
                 />
                 <div className="flex gap-2">
                   <button onClick={() => setShowForm(false)} className="flex-1 h-10 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted">Cancelar</button>
-                  <button onClick={handleSubmit} disabled={submitting || !paymentDateValidation.valid} className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50">{submitting ? '...' : 'Confirmar'}</button>
+                  <button onClick={handleSubmit} disabled={submitting || !paymentDateValidation.valid || !rowsValid} className="flex-1 h-10 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50">{submitting ? '...' : 'Confirmar'}</button>
                 </div>
               </div>
             )}
@@ -717,6 +756,13 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
   const [method, setMethod] = useState<'amount' | 'quantity' | 'manual'>('amount');
   const [observations, setObservations] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // CP-FIN-003 (anexo §3.1): sección «Información del pago» en la creación.
+  // Por defecto el servicio se registra PENDIENTE (sin egreso ficticio); el
+  // operador puede liquidar al confirmar con el MISMO componente del carrito
+  // (default Efectivo + CUP — valor por defecto de ENERVIDA-VITALLCONS).
+  const { rates: storeRates } = useStoreRates();
+  const [payNow, setPayNow] = useState(false);
+  const [payRows, setPayRows] = useState<PaymentEditorRow[]>([newPaymentRow({})]);
   // MISIÓN POLÍTICA TEMPORAL: fecha del servicio. Default HOY (día de negocio
   // America/Havana) o la preferencia de trabajo del usuario para servicios
   // si es válida (MISIÓN FECHAS DE TRABAJO). Tope = HOY (nunca futura);
@@ -857,6 +903,19 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
       toast.error(serviceDateValidation.error || 'La fecha del servicio no es válida.', { duration: 8000 });
       return;
     }
+    // CP-FIN-003 (anexo §3.2): la liquidación al confirmar no puede exceder
+    // el importe del servicio ni llevar componentes inválidos.
+    const totalNum = parseFloat(amount) || 0;
+    if (payNow) {
+      if (!rowsAreValid(payRows)) {
+        toast.error('Revisa el pago: importes > 0 y tasa > 1 para moneda extranjera.');
+        return;
+      }
+      if (rowsCupTotal(payRows) > totalNum + 0.005) {
+        toast.error(`El pago (${rowsCupTotal(payRows).toFixed(2)} CUP) excede el importe del servicio (${totalNum.toFixed(2)} CUP).`);
+        return;
+      }
+    }
     setSubmitting(true);
     onCreate({
       // MISIÓN 2026-10-15: identidad (service_type_id) + snapshot del nombre.
@@ -876,11 +935,16 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
       // v2.18.0 — Vinculación operativa (opcional, ambas pueden coexistir)
       receipt_ids: rcptSelected.map(r => r.id),
       production_order_ids: otSelected.map(o => o.id),
+      // CP-FIN-003 (anexo §3.2): liquidación al confirmar (si el operador la
+      // registra aquí). Pendiente → sin filas → la obligación queda pendiente
+      // y NO se genera ningún egreso ficticio.
+      paymentRows: payNow ? payRows : [],
     });
     setSubmitting(false);
     // Reset
     setSupplier(''); setAmount(''); setReferenceDoc(''); setObservations('');
     setServiceDate(todayBusinessDay());
+    setPayNow(false); setPayRows([newPaymentRow(storeRates)]);
     setOtSelected([]); setRcptSelected([]); setOtSearch(''); setRcptSearch('');
   };
 
@@ -967,6 +1031,48 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
           max={maxServiceDate}
           inputId="received-service-date"
         />
+
+        {/* ─── CP-FIN-003 (anexo §3.1): Información del pago ───
+            Mismo componente/validaciones/semántica del carrito de Ventas.
+            Pendiente por defecto (obligación sin egreso ficticio); liquidación
+            al confirmar opcional con medio×moneda×importe×tasa reales. */}
+        <div className="rounded-xl border border-border/40 bg-muted/10 p-3 space-y-3" data-testid="service-payment-section">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs font-black uppercase tracking-widest text-foreground">Información del pago</span>
+            <label className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={payNow}
+                onChange={(e) => {
+                  setPayNow(e.target.checked);
+                  if (e.target.checked) {
+                    // Default del operador: Efectivo + CUP por el importe total
+                    // (perfil por defecto de ENERVIDA; editable libremente).
+                    const total = parseFloat(amount) || 0;
+                    setPayRows([newPaymentRow(storeRates, { amount: total })]);
+                  }
+                }}
+                className="w-4 h-4 accent-primary"
+                data-testid="pay-now-toggle"
+              />
+              Liquidar al confirmar
+            </label>
+          </div>
+          {!payNow ? (
+            <p className="text-[11px] text-muted-foreground">
+              El servicio quedará <span className="font-bold">pendiente de pago</span>: se registra la obligación y
+              podrá liquidarse después desde el detalle (Pago → Pagos), por cualquier medio y moneda, en un pago o
+              en varios. No se genera ningún egreso inexistente.
+            </p>
+          ) : (
+            <PaymentRowsEditor
+              rows={payRows}
+              onChange={setPayRows}
+              storeRates={storeRates}
+              maxCupTotal={parseFloat(amount) || undefined}
+            />
+          )}
+        </div>
 
         {/* ─── v2.18.0: Vinculación operativa ─── */}
         <div className="rounded-xl border border-primary/25 bg-primary/[0.03] p-3 sm:p-4 space-y-3">
