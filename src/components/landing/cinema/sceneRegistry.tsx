@@ -7,7 +7,7 @@
  *
  * NARRATIVA (misión 006 §7): «Del caos del negocio al control de una empresa
  * conectada». El capítulo 2 (Plataforma) despliega la historia completa del
- * producto en subescenas — TODO el contenido real del landing (los mismos
+ * producto en subescenas — todo el contenido real del landing (los mismos
  * textos y capturas de las secciones de flujo) está coreografiado; nada se
  * recorta y nada se inventa.
  *

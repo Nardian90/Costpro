@@ -151,11 +151,11 @@ function addTransition(
       )
       .fromTo(
         sweep,
-        { x: stageW * 0.42, autoAlpha: 0 },
+        { x: () => stageW() * 0.42, autoAlpha: 0 },
         { autoAlpha: 1, duration: 0.08, ease: 'none' },
         seg + 0.06,
       )
-      .to(sweep, { x: -stageW * 0.18, ease: 'power2.inOut', duration: T * 0.72 }, seg + 0.14)
+      .to(sweep, { x: () => -stageW() * 0.18, ease: 'power2.inOut', duration: T * 0.72 }, seg + 0.14)
       .to(sweep, { autoAlpha: 0, duration: 0.1 }, seg + T * 0.92);
   } else {
     /* typo — cambio de CAPÍTULO: la escena saliente surge hacia la cámara y
@@ -299,7 +299,7 @@ export default function CinemaStage({
       const pad = N - 1 - tl.duration();
       if (pad > 0.001) tl.to({}, { duration: pad });
 
-      stRef.current = tl.scrollTrigger;
+      stRef.current = tl.scrollTrigger ?? null;
     }, stage);
 
     /* Controles del propietario (paginador, teclado, paleta de comandos). */

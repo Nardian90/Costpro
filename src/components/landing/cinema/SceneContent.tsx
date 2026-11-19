@@ -97,8 +97,10 @@ export interface StorySceneData {
   title: string;
   subtitle: string;
   description: string;
-  /** Visual de la escena (captura real / catálogo / icono). */
-  visual: ReactNode;
+  /** Visual de la escena (captura real / catálogo / icono). Opcional: las
+   *  composiciones que no lo usan directamente (p. ej. SceneSecurityCta
+   *  renderiza su propio IconTileVisual) no lo necesitan. */
+  visual?: ReactNode;
   /** El visual se coloca a la derecha (texto a la izquierda). */
   flip?: boolean;
 }
