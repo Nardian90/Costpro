@@ -1497,6 +1497,7 @@ DECLARE
   v_caller uuid := CASE WHEN auth.role() = 'service_role' THEN coalesce(p_user_id, auth.uid()) ELSE auth.uid() END;
   g record; e record; m record; r record;
   v_active uuid; v_new uuid;
+  v_e record;
   v_ok int := 0; v_err int := 0; v_ann int := 0; v_copied int := 0; v_rect_skipped jsonb := '[]'::jsonb;
   v_errors jsonb := '[]'::jsonb;
   v_entry uuid;
@@ -1538,10 +1539,10 @@ BEGIN
 
     -- PASE 2: anulaciones de la generación activa → compensar en la candidata.
     FOR r IN
-      SELECT DISTINCT e.document_type, e.document_id
-      FROM public.fin_entries e
-      WHERE e.generation_id = v_active AND e.event = 'anulacion'
-        AND e.document_id IS NOT NULL
+      SELECT DISTINCT fe.document_type, fe.document_id
+      FROM public.fin_entries fe
+      WHERE fe.generation_id = v_active AND fe.event = 'anulacion'
+        AND fe.document_id IS NOT NULL
     LOOP
       BEGIN
         v_ann := v_ann + public.fin_post_document_annulment(r.document_type, r.document_id, v_new);
@@ -1553,25 +1554,25 @@ BEGIN
     END LOOP;
 
     -- PASE 3: aperturas (saldos iniciales autorizados) → copia literal.
-    FOR e IN
-      SELECT * FROM public.fin_entries
-      WHERE e.generation_id = v_active AND e.event = 'apertura'
+    FOR v_e IN
+      SELECT fe.* FROM public.fin_entries fe
+      WHERE fe.generation_id = v_active AND fe.event = 'apertura'
     LOOP
       IF NOT EXISTS (SELECT 1 FROM public.fin_entries x
                      WHERE x.generation_id = v_new AND x.event = 'apertura'
-                       AND x.document_type = e.document_type
-                       AND x.document_number IS NOT DISTINCT FROM e.document_number
-                       AND x.economic_date = e.economic_date
-                       AND x.description IS NOT DISTINCT FROM e.description) THEN
+                       AND x.document_type = v_e.document_type
+                       AND x.document_number IS NOT DISTINCT FROM v_e.document_number
+                       AND x.economic_date = v_e.economic_date
+                       AND x.description IS NOT DISTINCT FROM v_e.description) THEN
         INSERT INTO public.fin_entries (
           store_id, document_type, document_id, document_number, event, payment_ref,
           economic_date, rule_version_id, movements_snapshot, reversal_of, status,
           description, created_by, generation_id)
-        VALUES (e.store_id, e.document_type, e.document_id, e.document_number, e.event,
-                e.payment_ref, e.economic_date, e.rule_version_id, e.movements_snapshot,
-                e.reversal_of, e.status, e.description, e.created_by, v_new)
+        VALUES (v_e.store_id, v_e.document_type, v_e.document_id, v_e.document_number, v_e.event,
+                v_e.payment_ref, v_e.economic_date, v_e.rule_version_id, v_e.movements_snapshot,
+                v_e.reversal_of, v_e.status, v_e.description, v_e.created_by, v_new)
         RETURNING id INTO v_entry;
-        FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = e.id LOOP
+        FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = v_e.id LOOP
           INSERT INTO public.fin_movements (
             entry_id, store_id, category_code, sense, amount, currency, exchange_rate,
             economic_date, document_number, description, currency_origin, amount_origin,
@@ -1590,27 +1591,27 @@ BEGIN
     -- por defecto: su efecto ya está en los DATOS corregidos que la candidata
     -- re-deriva; duplicarla aplicaría la corrección dos veces. Quedan
     -- registradas en stats para decisión documentada del expediente.
-    FOR e IN
-      SELECT * FROM public.fin_entries
-      WHERE e.generation_id = v_active AND e.event = 'ajuste_manual'
-        AND (p_include_rectifications OR e.document_type <> 'RECTIFICACION_FIN')
+    FOR v_e IN
+      SELECT fe.* FROM public.fin_entries fe
+      WHERE fe.generation_id = v_active AND fe.event = 'ajuste_manual'
+        AND (p_include_rectifications OR fe.document_type <> 'RECTIFICACION_FIN')
     LOOP
       IF NOT EXISTS (SELECT 1 FROM public.fin_entries x
                      WHERE x.generation_id = v_new AND x.event = 'ajuste_manual'
-                       AND x.document_type = e.document_type
-                       AND x.document_number IS NOT DISTINCT FROM e.document_number
-                       AND x.economic_date = e.economic_date
-                       AND x.description IS NOT DISTINCT FROM e.description
-                       AND x.posted_at::date = e.posted_at::date) THEN
+                       AND x.document_type = v_e.document_type
+                       AND x.document_number IS NOT DISTINCT FROM v_e.document_number
+                       AND x.economic_date = v_e.economic_date
+                       AND x.description IS NOT DISTINCT FROM v_e.description
+                       AND x.posted_at::date = v_e.posted_at::date) THEN
         INSERT INTO public.fin_entries (
           store_id, document_type, document_id, document_number, event, payment_ref,
           economic_date, rule_version_id, movements_snapshot, reversal_of, status,
           description, created_by, generation_id)
-        VALUES (e.store_id, e.document_type, e.document_id, e.document_number, e.event,
-                e.payment_ref, e.economic_date, e.rule_version_id, e.movements_snapshot,
-                e.reversal_of, e.status, e.description, e.created_by, v_new)
+        VALUES (v_e.store_id, v_e.document_type, v_e.document_id, v_e.document_number, v_e.event,
+                v_e.payment_ref, v_e.economic_date, v_e.rule_version_id, v_e.movements_snapshot,
+                v_e.reversal_of, v_e.status, v_e.description, v_e.created_by, v_new)
         RETURNING id INTO v_entry;
-        FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = e.id LOOP
+        FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = v_e.id LOOP
           INSERT INTO public.fin_movements (
             entry_id, store_id, category_code, sense, amount, currency, exchange_rate,
             economic_date, document_number, description, currency_origin, amount_origin,
@@ -1626,12 +1627,12 @@ BEGIN
 
     IF NOT p_include_rectifications THEN
       SELECT coalesce(jsonb_agg(jsonb_build_object(
-               'entry_id', e.id, 'document_number', e.document_number,
-               'descripcion', e.description, 'economic_date', e.economic_date)), '[]'::jsonb)
+               'entry_id', fe.id, 'document_number', fe.document_number,
+               'descripcion', fe.description, 'economic_date', fe.economic_date)), '[]'::jsonb)
       INTO v_rect_skipped
-      FROM public.fin_entries e
-      WHERE e.generation_id = v_active AND e.event = 'ajuste_manual'
-        AND e.document_type = 'RECTIFICACION_FIN';
+      FROM public.fin_entries fe
+      WHERE fe.generation_id = v_active AND fe.event = 'ajuste_manual'
+        AND fe.document_type = 'RECTIFICACION_FIN';
     END IF;
   END IF;
 
