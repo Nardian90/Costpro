@@ -851,7 +851,7 @@ BEGIN
       {"id":"v-cogs-c","evento":"reconocimiento","categoria":"ACT_INVENTARIO","sentido":"credito","origen":{"tipo":"metrica","metrica":"costo_productos_cup"},"condicion":{"campo":"costo_productos_cup","op":">","valor":0},"orden":13},
       {"id":"v-desc-debe","evento":"reconocimiento","categoria":"ING_DESCUENTOS","sentido":"debito","origen":{"tipo":"metrica","metrica":"diferencia_cobro_debe_cup"},"condicion":{"campo":"diferencia_cobro_debe_cup","op":">","valor":0},"orden":14},
       {"id":"v-desc-haber","evento":"reconocimiento","categoria":"ING_DESCUENTOS","sentido":"credito","origen":{"tipo":"metrica","metrica":"diferencia_cobro_haber_cup"},"condicion":{"campo":"diferencia_cobro_haber_cup","op":">","valor":0},"orden":15}
-    ]'::jsonb, '2026-11-20',
+    ]'::jsonb, CURRENT_DATE,
       'CP-FIN-003: cobros por (medio × moneda) según el mapeo canónico fin_account_mapping. Transf. Exterior (zelle) → ACT_TRANSF_EXTERIOR. Efectivo EUR/MLC → su propia caja. Diferencias de cobro M-015 conservadas.'
     FROM public.fin_rule_versions WHERE document_type = 'VENTA' AND store_id IS NULL;
   END IF;
@@ -879,7 +879,7 @@ BEGIN
       {"id":"s-cxp-c","evento":"reconocimiento","categoria":"PAS_SERV_PEND","sentido":"credito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":{"campo":"total_cup","op":">","valor":0},"orden":2},
       {"id":"sp-fin-c","evento":"pago","categoria":"@cuenta_financiera","sentido":"credito","origen":{"tipo":"cuenta_financiera","metrica":"importe_pago_cup"},"condicion":null,"orden":3},
       {"id":"sp-cxp-d","evento":"pago","categoria":"PAS_SERV_PEND","sentido":"debito","origen":{"tipo":"metrica","metrica":"importe_pago_cup"},"condicion":null,"orden":4}
-    ]'::jsonb, '2026-11-20',
+    ]'::jsonb, CURRENT_DATE,
       'CP-FIN-003/anexo: reconocimiento = gasto + obligación (sin mover efectivo). Cada pago cancela la obligación y sale por la CUENTA CANÓNICA del (medio × moneda) real del desembolso.'
     FROM public.fin_rule_versions WHERE document_type = 'SERVICIO_RECIBIDO' AND store_id IS NULL;
   END IF;
@@ -904,7 +904,7 @@ BEGIN
       {"id":"r-cxp-c","evento":"reconocimiento","categoria":"PAS_CXP_PROV","sentido":"credito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":{"campo":"total_cup","op":">","valor":0},"orden":2},
       {"id":"rp-fin-c","evento":"pago","categoria":"@cuenta_financiera","sentido":"credito","origen":{"tipo":"cuenta_financiera","metrica":"importe_pago_cup"},"condicion":null,"orden":3},
       {"id":"rp-cxp-d","evento":"pago","categoria":"PAS_CXP_PROV","sentido":"debito","origen":{"tipo":"metrica","metrica":"importe_pago_cup"},"condicion":null,"orden":4}
-    ]'::jsonb, '2026-11-20',
+    ]'::jsonb, CURRENT_DATE,
       'CP-FIN-003/anexo: recibir mercancía ≠ pagar al proveedor. La deuda nace al activar; cada liquidación registra el (medio × moneda) real y sale por la cuenta canónica.'
     FROM public.fin_rule_versions WHERE document_type = 'RECEPCION' AND store_id IS NULL;
   END IF;
@@ -935,7 +935,7 @@ BEGIN
       {"id":"d-dev-ingreso","evento":"reconocimiento","categoria":"ING_DEVOLUCIONES","sentido":"debito","origen":{"tipo":"metrica","metrica":"total_cup"},"condicion":null,"orden":9},
       {"id":"d-cogs-c","evento":"reconocimiento","categoria":"GAS_COSTO_VENTAS","sentido":"credito","origen":{"tipo":"metrica","metrica":"costo_devuelto_cup"},"condicion":{"campo":"costo_devuelto_cup","op":">","valor":0},"orden":10},
       {"id":"d-inv-d","evento":"reconocimiento","categoria":"ACT_INVENTARIO","sentido":"debito","origen":{"tipo":"metrica","metrica":"costo_devuelto_cup"},"condicion":{"campo":"costo_devuelto_cup","op":">","valor":0},"orden":11}
-    ]'::jsonb, '2026-11-20',
+    ]'::jsonb, CURRENT_DATE,
       'CP-FIN-003: reembolsos según el mapeo canónico; exterior (zelle) → ACT_TRANSF_EXTERIOR.'
     FROM public.fin_rule_versions WHERE document_type = 'DEVOLUCION_VENTA' AND store_id IS NULL;
   END IF;
