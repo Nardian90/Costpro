@@ -1,38 +1,45 @@
 /**
- * e2e/landing-pager.spec.ts — ADN-LANDING-HERO-AND-PAGER-FIX-004 §8
+ * e2e/landing-pager.spec.ts — ADN-LANDING-HERO-AND-PAGER-FIX-004 §8 + 006
  * ============================================================================
- * Navegador lateral de cinco puntos: navegación por IDs reales + scrollspy.
+ * Navegador lateral de cinco puntos + ESCENARIO PERSISTENTE (ADN-006).
  *
- * Cobertura mínima exigida por la misión:
+ * Cobertura mínima exigida:
  *   1. Carga correcta del landing.
- *   2. Clic en cada uno de los 5 puntos → desplazamiento a su sección exacta.
- *   3. Actualización del punto activo al hacer scroll manual.
+ *   2. Clic en cada uno de los 5 puntos → aterrizaje en el CAPÍTULO exacto
+ *      (posición de reposo de la primera escena del capítulo, calculada por el
+ *      propio ScrollTrigger: window.__cinemaSceneScrollY).
+ *   3. Actualización del punto activo al hacer scroll manual (rueda real).
  *   4. Repetición en móvil (drawer) y escritorio.
  *   5. Guard anti-drift: los 5 IDs de sectionIds existen en el DOM.
+ *   6. ADN-006: el escenario se mantiene fijado y las escenas se SUSTITUYEN
+ *      (el stage no se desplaza durante el recorrido; un único panel activo).
  *
  * El fallo histórico del punto 2 (misión 004): sectionRefs[1] era una ref
- * nunca adjunta (ahaMomentRef, AhaMomentSection no renderizado) → el clic no
- * hacía nada en silencio. Este spec falla si algún punto deja de desplazar.
+ * nunca adjunta → el clic no hacía nada en silencio. Este spec falla si algún
+ * punto deja de desplazar.
  * ============================================================================
  */
 import { test, expect, type Page } from '@playwright/test';
 
 const SECTION_IDS = ['hero', 'como-funciona', 'features', 'pricing', 'faq'] as const;
 const LABELS = ['Inicio', 'Plataforma', 'Funcionalidades', 'Precios', 'Ayuda'] as const;
-/** Margen del header fijo + tolerancia de aterrizaje (scroll-mt-[76px]). */
-const SCROLL_MT = 76;
-const LANDING_TOLERANCE = 140;
+/** Tolerancia de aterrizaje (escenas: el snap completa al reposo exacto). */
+const LANDING_TOLERANCE = 60;
 
 async function openLanding(page: Page): Promise<void> {
   await page.goto('/');
   // Espera el splash → titular del hero (patrón de landing-page.spec.ts)
   await expect(page.getByRole('heading', { name: /menos malabares/i })).toBeVisible({ timeout: 20000 });
   await page.evaluate(() => {
-    try { localStorage.setItem('cookie-consent', JSON.stringify({ essential: true })); } catch { /* noop */ }
+    try {
+      localStorage.setItem('cookie-consent', JSON.stringify({ essential: true }));
+      localStorage.setItem('costpro-promo-dismissed', 'true');
+    } catch { /* noop */ }
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await expect(page.locator('div.fixed.right-3 button')).toHaveCount(5, { timeout: 15000 });
   await page.locator('button:has-text("Aceptar todas")').click({ timeout: 5000 }).catch(() => { /* ya consentido */ });
+  await page.waitForTimeout(600);
 }
 
 const pagerDots = (page: Page) => page.locator('div.fixed.right-3 button');
@@ -42,14 +49,12 @@ const activeDotIndex = async (page: Page): Promise<number> =>
     return btns.findIndex((b) => b.getAttribute('aria-current') === 'true');
   });
 
-async function sectionTop(page: Page, id: string): Promise<number> {
-  return page.evaluate((sectionId) => {
-    const el = document.getElementById(sectionId);
-    return el ? el.getBoundingClientRect().top + window.scrollY : -1;
-  }, id);
+/** Posición de reposo de una escena según el propio ScrollTrigger (ADN-006). */
+async function sceneScrollY(page: Page, sceneIdx: number): Promise<number> {
+  return page.evaluate((k) => window.__cinemaSceneScrollY(k), sceneIdx);
 }
 
-test.describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — paginador lateral (escritorio)', () => {
+test.describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — paginador lateral (escritorio, escenario ADN-006)', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
   test('1. el landing carga y el paginador presenta 5 puntos accesibles', async ({ page }) => {
@@ -68,74 +73,70 @@ test.describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — paginador lateral (escrito
   });
 
   for (let idx = 0; idx < SECTION_IDS.length; idx++) {
-    test(`3.${idx + 1} clic en el punto ${idx + 1} (${LABELS[idx]}) desplaza a su sección exacta`, async ({ page }) => {
+    test(`3.${idx + 1} clic en el punto ${idx + 1} (${LABELS[idx]}) aterriza en su capítulo exacto`, async ({ page }) => {
       await openLanding(page);
       // Parte del final para que el desplazamiento hacia atrás/adelante sea medible
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-      await page.waitForTimeout(700);
-      const target = await sectionTop(page, SECTION_IDS[idx]);
-      // ADN-005: el hero es el PRIMER acto — su wrapper arranca en top=0 exacto
-      // (antes el elemento #hero tenía un spacer de header encima). El destino
-      // del punto 1 es el tope del documento.
-      expect(target, `la sección #${SECTION_IDS[idx]} debe existir`).toBeGreaterThanOrEqual(0);
+      await page.waitForTimeout(800);
+      const expectedY = await sceneScrollY(page, idx === 0 ? 0 : [1, 10, 11, 13][idx - 1]);
+      expect(expectedY, `posición de reposo del capítulo ${idx + 1}`).toBeGreaterThan(0);
 
       await pagerDots(page).nth(idx).click();
-      // Espera a que el smooth scroll ATERRICE cerca del objetivo
-      // (target - scroll-mt del header fijo). Poll por proximidad: el valor
-      // absoluto de scrollY no sirve de condición (desde el fondo, >0 es
-      // trivialmente cierto mientras el smooth scroll aún viaja).
-      const expectedY = Math.max(0, target - SCROLL_MT);
+      // El goto del escenario desplaza por ScrollToPlugin y el snap completa
+      // al reposo EXACTO del capítulo
       await expect
-        .poll(
-          async () => {
-            const y = await page.evaluate(() => window.scrollY);
-            return Math.abs(y - expectedY);
-          },
-          { timeout: 12000, intervals: [250, 400, 600] },
-        )
-        .toBeLessThan(LANDING_TOLERANCE);
+        .poll(async () => page.evaluate(() => window.scrollY), { timeout: 12000, intervals: [250, 400, 600] })
+        .toBeLessThan(expectedY + LANDING_TOLERANCE + 1);
+      const finalY = await page.evaluate(() => window.scrollY);
+      expect(Math.abs(finalY - expectedY), `aterrizaje en ${expectedY}`).toBeLessThan(LANDING_TOLERANCE);
 
-      const topInView = await page.evaluate(
-        ({ sectionId }) => {
-          const el = document.getElementById(sectionId);
-          if (!el) return Number.NaN;
-          return el.getBoundingClientRect().top;
-        },
-        { sectionId: SECTION_IDS[idx] },
-      );
-      // El inicio de la sección queda visible bajo el header fijo (no tapado)
-      expect(topInView).toBeGreaterThanOrEqual(-LANDING_TOLERANCE);
-      expect(topInView).toBeLessThanOrEqual(SCROLL_MT + LANDING_TOLERANCE);
+      // El capítulo aterrizado queda activo en el navegador
+      await expect
+        .poll(() => activeDotIndex(page), { timeout: 8000 })
+        .toBe(idx);
     });
   }
 
-  test('4. el punto activo se sincroniza al hacer scroll manual', async ({ page }) => {
+  test('4. el punto activo se sincroniza al hacer scroll manual (rueda real)', async ({ page }) => {
     await openLanding(page);
     expect(await activeDotIndex(page)).toBe(0);
-    for (let idx = 1; idx < SECTION_IDS.length; idx++) {
-      await page.evaluate(
-        ({ sectionId, mt }) => {
-          const el = document.getElementById(sectionId);
-          window.scrollTo(0, el!.getBoundingClientRect().top + window.scrollY - mt + 4);
-        },
-        { sectionId: SECTION_IDS[idx], mt: SCROLL_MT },
-      );
+    await page.mouse.move(720, 450);
+    /* Primeras escenas de cada capítulo (registro ADN-006):
+       cap 2 → s1 · cap 3 → s10 · cap 4 → s11 · cap 5 → s13.
+       En cada capítulo: aterrizar en su reposo (snap exacto) y golpear la
+       rueda alrededor del reposo — el ajuste devuelve al mismo reposo y el
+       dot debe permanecer sincronizado con la escena real. */
+    const chapterFirstScene = [1, 10, 11, 13];
+    for (let idx = 1; idx <= 4; idx++) {
+      const target = await sceneScrollY(page, chapterFirstScene[idx - 1]);
+      await page.evaluate((y) => window.scrollTo(0, y), target);
+      await page.waitForTimeout(1100);
+      await page.mouse.wheel(0, -140);
+      await page.waitForTimeout(500);
+      await page.mouse.wheel(0, 140);
+      await page.waitForTimeout(1400);
       await expect
-        .poll(() => activeDotIndex(page), { timeout: 8000, intervals: [200, 300, 500] })
+        .poll(() => activeDotIndex(page), { timeout: 8000 })
         .toBe(idx);
     }
+    // Regreso: rueda hacia arriba desde el último capítulo
+    for (let i = 0; i < 8; i++) { await page.mouse.wheel(0, -110); await page.waitForTimeout(30); }
+    await page.waitForTimeout(1300);
+    const back = await activeDotIndex(page);
+    expect(back, 'el retroceso por rueda activa un capítulo anterior').toBeLessThan(4);
   });
 
-  test('5. navegación con teclado: teclas 1-5 desplazan a las secciones', async ({ page }) => {
+  test('5. navegación con teclado: teclas 1-5 desplazan a los capítulos', async ({ page }) => {
     await openLanding(page);
     await page.keyboard.press('2');
-    const landed = await expect
+    await expect
       .poll(async () => page.evaluate(() => window.scrollY), { timeout: 8000 })
       .toBeGreaterThan(500);
-    void landed;
-    expect(await activeDotIndex(page)).toBe(1);
+    await expect.poll(() => activeDotIndex(page), { timeout: 8000 }).toBe(1);
     await page.keyboard.press('5');
-    await expect.poll(async () => activeDotIndex(page), { timeout: 8000 }).toBe(4);
+    await expect.poll(() => activeDotIndex(page), { timeout: 8000 }).toBe(4);
+    await page.keyboard.press('1');
+    await expect.poll(() => activeDotIndex(page), { timeout: 8000 }).toBe(0);
   });
 });
 
@@ -182,19 +183,18 @@ test.describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — identidad del hero', () =>
   });
 });
 
-test.describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — experiencia por actos', () => {
+test.describe('ADN-LANDING-TRUE-FULLPAGE-EXPERIENCE-006 — escenario persistente', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
 
-  test('8. el navegador muestra el contador 01/05 y el nombre del acto activo', async ({ page }) => {
+  test('8. el navegador muestra el contador 01/05 y el nombre del capítulo activo', async ({ page }) => {
     await openLanding(page);
     const counter = page.locator('[data-testid="act-pager"]');
     await expect(counter).toContainText('01');
     await expect(counter).toContainText('05');
-    // El nodo activo coincide con el capítulo Inicio
     await expect(page.locator('[data-testid="act-dot-1"]')).toHaveAttribute('aria-current', 'true');
   });
 
-  test('9. los 5 dots son clicables y el contador avanza acto a acto', async ({ page }) => {
+  test('9. los 5 dots son clicables y el contador avanza capítulo a capítulo', async ({ page }) => {
     await openLanding(page);
     for (let idx = 1; idx < 5; idx++) {
       await page.locator('div.fixed.right-3 button').nth(idx).click();
@@ -205,7 +205,7 @@ test.describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — experiencia por
     }
   });
 
-  test('10. teclado de capítulos: PageDown/PageUp avanzan y retroceden POR ACTO', async ({ page }) => {
+  test('10. teclado de capítulos: PageDown/PageUp avanzan y retroceden POR CAPÍTULO', async ({ page }) => {
     await openLanding(page);
     await page.keyboard.press('PageDown');
     await expect.poll(() => activeDotIndex(page), { timeout: 10000 }).toBe(1);
@@ -229,31 +229,95 @@ test.describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — experiencia por
     // El desplazamiento nativo (rueda) sigue funcionando
     await page.mouse.move(720, 450);
     await page.mouse.wheel(0, 1200);
-    await page.waitForTimeout(600);
+    await page.waitForTimeout(900);
     const y = await page.evaluate(() => window.scrollY);
     expect(y, 'la rueda sigue desplazando el documento').toBeGreaterThan(400);
   });
 
-  test('12. reduced-motion: sin escenas fijadas (sticky desactivado) y todo alcanzable', async ({ page }) => {
+  test('12. reduced-motion: sin escenario cinematográfico (flujo nativo) y todo alcanzable', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openLanding(page);
-    const pinned = await page.evaluate(() => {
-      const scene = document.querySelector('#hero .act-scene--pinned');
-      return scene ? getComputedStyle(scene).position : 'absent';
-    });
-    expect(pinned, 'sin prefers-reduced-motion la escena NO se fija').not.toBe('sticky');
-    // El contenido del acto 1 sigue presente y accesible
+    const cinema = await page.evaluate(() => !!document.getElementById('cinema-stage'));
+    expect(cinema, 'con prefers-reduced-motion el escenario NO se monta').toBe(false);
+    // El contenido del capítulo 1 sigue presente y accesible
     await expect(page.getByRole('heading', { name: /menos malabares/i })).toBeVisible();
   });
 
-  test('13. la firma visual (hairline ADN) existe en los cinco actos', async ({ page }) => {
+  test('13. el escenario persiste fijado y las escenas se SUSTITUYEN (no hay página que baje)', async ({ page }) => {
     await openLanding(page);
-    const hairlines = await page.evaluate(() => document.querySelectorAll('.act-hairline').length);
-    expect(hairlines).toBe(5);
+    const probe = await page.evaluate(() => {
+      const stage = document.getElementById('cinema-stage')!;
+      const stageTop = stage.getBoundingClientRect().top;
+      const scenes = stage.querySelectorAll('.cinema-scene');
+      const sw = document.querySelector('.cinema-sweepline');
+      return {
+        stageTop,
+        sceneCount: scenes.length,
+        dataScenes: stage.dataset.scenes,
+        sweepPresent: !!sw,
+        stageRect: { w: stage.offsetWidth, h: stage.offsetHeight },
+      };
+    });
+    expect(probe.sceneCount, '15 escenas (5 capítulos con subescenas)').toBe(15);
+    expect(probe.dataScenes).toBe('15');
+    expect(probe.stageRect.h, 'el escenario ocupa el viewport completo').toBe(900);
+
+    // Recorrer DOS transiciones con rueda: el stage permanece pegado al tope
+    // del viewport (fijado) — lo que cambia es el contenido dentro.
+    const tops: number[] = [];
+    for (let i = 0; i < 2; i++) {
+      await page.mouse.move(720, 450);
+      for (let k = 0; k < 12; k++) { await page.mouse.wheel(0, 120); await page.waitForTimeout(35); }
+      await page.waitForTimeout(1300);
+      tops.push(await page.evaluate(() => document.getElementById('cinema-stage')!.getBoundingClientRect().top));
+    }
+    for (const t of tops) {
+      expect(Math.abs(t), 'el escenario queda pegado al tope del viewport (persistente)').toBeLessThan(40);
+    }
+
+    // En reposo, una única escena PINTA el escenario: visibilidad + opacidad +
+    // geometría + sin recorte de cortina (los enter por máscara mantienen
+    // autoAlpha 1 con clipPath 100% — su ocultación vive en el clip).
+    const onStage = await page.evaluate(() => {
+      const clipHides = (clip: string): boolean => {
+        const m = clip.match(/inset\(([-\d.]+)%\s+([-\d.]+)%\s+([-\d.]+)%\s+([-\d.]+)%\)/);
+        if (!m) return false;
+        const [, t, rgt, b, l] = m.map(Number);
+        return l >= 100 || rgt >= 100 || t >= 100 || b >= 100;
+      };
+      return [...document.querySelectorAll('.cinema-scene')].filter((p) => {
+        const cs = getComputedStyle(p);
+        const r = p.getBoundingClientRect();
+        return (
+          cs.visibility === 'visible' &&
+          +cs.opacity > 0.9 &&
+          !clipHides(p.style.clipPath || '') &&
+          // cubre el CENTRO del escenario (los push futuros están debajo:
+          // top ≥ vh; los push pasados arriba: bottom ≤ 0)
+          r.top < window.innerHeight * 0.5 &&
+          r.bottom > window.innerHeight * 0.5
+        );
+      }).length;
+    });
+    expect(onStage, 'exactamente una escena ocupa el escenario en reposo').toBe(1);
+    void probe.sweepPresent;
+  });
+
+  test('14. el snap ajusta al reposo exacto de la escena (labels del ScrollTrigger)', async ({ page }) => {
+    await openLanding(page);
+    // Scroll intermedio (a mitad de una transición) → el snap completa al label
+    const midY = await page.evaluate(() => window.__cinemaSceneScrollY(0) + window.innerHeight * 0.5);
+    await page.evaluate((y) => window.scrollTo(0, y), midY);
+    await page.waitForTimeout(1400);
+    const finalY = await page.evaluate(() => window.scrollY);
+    const s1 = await page.evaluate(() => window.__cinemaSceneScrollY(1));
+    expect(Math.abs(finalY - s1), 'el snap lleva al reposo exacto de la escena 1').toBeLessThan(LANDING_TOLERANCE);
+    const dot = await activeDotIndex(page);
+    expect(dot).toBe(1);
   });
 });
 
-test.describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — responsive', () => {
+test.describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005/006 — responsive', () => {
   const viewports = [
     { width: 360, height: 740, label: '360px' },
     { width: 390, height: 844, label: '390px' },
@@ -264,7 +328,7 @@ test.describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — responsive', ()
   ];
 
   for (const vp of viewports) {
-    test(`14. ${vp.label}: sin overflow horizontal y las 5 secciones alcanzables`, async ({ page }) => {
+    test(`15. ${vp.label}: sin overflow horizontal y las 5 secciones alcanzables`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await openLanding(page);
       const overflow = await page.evaluate(() => {
@@ -272,14 +336,27 @@ test.describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — responsive', ()
         return doc.scrollWidth - doc.clientWidth;
       });
       expect(overflow, `sin scroll horizontal a ${vp.label}`).toBeLessThanOrEqual(0);
-      for (const id of SECTION_IDS) {
-        const found = await page.evaluate((sectionId) => {
-          const el = document.getElementById(sectionId);
-          if (!el) return false;
-          el.scrollIntoView({ block: 'start', behavior: 'instant' });
-          return el.getBoundingClientRect().top < window.innerHeight;
-        }, id);
-        expect(found, `#${id} alcanzable a ${vp.label}`).toBe(true);
+
+      const cinema = vp.width >= 1024 && vp.height >= 700;
+      if (cinema) {
+        // Escenario: los 5 ids existen y el recorrido por posiciones funciona
+        for (const id of SECTION_IDS) {
+          const found = await page.evaluate((sectionId) => !!document.getElementById(sectionId), id);
+          expect(found, `#${id} presente a ${vp.label}`).toBe(true);
+        }
+        const last = await page.evaluate(() => window.__cinemaSceneScrollY(14));
+        expect(last, 'escena final alcanzable por scroll').toBeGreaterThan(0);
+      } else {
+        // Flujo: scrollIntoView alcanza cada área
+        for (const id of SECTION_IDS) {
+          const found = await page.evaluate((sectionId) => {
+            const el = document.getElementById(sectionId);
+            if (!el) return false;
+            el.scrollIntoView({ block: 'start', behavior: 'instant' });
+            return el.getBoundingClientRect().top < window.innerHeight;
+          }, id);
+          expect(found, `#${id} alcanzable a ${vp.label}`).toBe(true);
+        }
       }
     });
   }

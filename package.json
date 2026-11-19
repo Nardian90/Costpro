@@ -112,6 +112,7 @@
     "fflate": "^0.8.2",
     "framer-motion": "^12.23.2",
     "fuse.js": "^7.3.0",
+    "gsap": "^3.15.1",
     "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "immer": "^11.1.4",

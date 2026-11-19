@@ -13,6 +13,9 @@ export interface FAQSectionProps {
   faqFeedback: Record<number, 'up' | 'down' | null>;
   setFaqFeedback: React.Dispatch<React.SetStateAction<Record<number, 'up' | 'down' | null>>>;
   faqRef: React.RefObject<HTMLDivElement | null>;
+  /** ADN-006: variante compacta para la escena del escenario (7 preguntas,
+   *  tabs y búsqueda deben caber en 100svh junto al header fijo). */
+  compact?: boolean;
 }
 
 function HighlightedText({ text, query }: { text: string; query: string }) {
@@ -64,6 +67,7 @@ export default function FAQSection({
   faqFeedback,
   setFaqFeedback,
   faqRef,
+  compact = false,
 }: FAQSectionProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('General');
@@ -99,19 +103,19 @@ export default function FAQSection({
 
   return (
     <div ref={faqRef}>
-      <motion.div className="max-w-2xl mx-auto w-full">
+      <motion.div className={compact ? 'w-full' : 'max-w-2xl mx-auto w-full'}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={faqInViewState ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-xl sm:text-2xl font-bold text-white text-center font-[family-name:var(--font-space-grotesk)] mb-2">
+          <h2 className={`${compact ? 'text-lg mb-1.5 text-left' : 'text-xl sm:text-2xl mb-2 text-center'} font-bold text-white font-[family-name:var(--font-space-grotesk)]`}>
             Preguntas frecuentes
           </h2>
-          <div className="glow-line mx-auto mb-6" />
+          <div className={`glow-line ${compact ? 'mb-3' : 'mx-auto mb-6'}`} />
 
           {/* FAQ Category Tabs */}
-          <div className="flex items-center gap-1.5 mb-5">
+          <div className={`flex items-center gap-1.5 ${compact ? 'mb-3' : 'mb-5'}`}>
             {faqCategories.map((cat) => {
               const isActive = activeCategory === cat;
               const count = categoryCounts[cat] || 0;
@@ -149,7 +153,7 @@ export default function FAQSection({
             initial={{ opacity: 0, y: 8 }}
             animate={faqInViewState ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="relative mb-4"
+            className={`relative ${compact ? 'mb-2.5' : 'mb-4'}`}
           >
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/30" />
             <input
@@ -171,7 +175,7 @@ export default function FAQSection({
           )}
 
           {/* FAQ Items — NO layout prop, NO popLayout, stable rendering */}
-          <div className="space-y-2">
+          <div className={compact ? 'space-y-1.5' : 'space-y-2'}>
             {filteredFaqs.map((item) => {
               const i = item.originalIndex;
               const FaqIcon = faqIcons[i] || HelpCircle;
@@ -189,7 +193,7 @@ export default function FAQSection({
                   {/* Question header */}
                   <button
                     onClick={() => toggleFaq(i)}
-                    className="flex items-center justify-between w-full p-4 text-left gap-3 group/faq cursor-pointer"
+                    className={`flex items-center justify-between w-full text-left gap-3 group/faq cursor-pointer ${compact ? 'p-3' : 'p-4'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className={`w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-mono font-bold shrink-0 transition-all duration-300 ${
@@ -223,8 +227,8 @@ export default function FAQSection({
                         exit="collapsed"
                         className="overflow-hidden"
                       >
-                        <div className="px-4 pb-4 pl-[4.5rem]">
-                          <p className="text-xs text-white/50 leading-relaxed mb-3">
+                        <div className={`pb-3 pl-[4.5rem] ${compact ? 'px-3' : 'px-4'}`}>
+                          <p className="text-xs text-white/50 leading-relaxed mb-2">
                             <HighlightedText text={item.a} query={searchQuery} />
                           </p>
                           <div className="flex items-center gap-3">

@@ -31,8 +31,10 @@ import FeatureVisual from './FeatureVisual';
  * originales intactos.
  */
 
-/** Productos de demostración — datos originales sin cambios (mock estático). */
-const DEMO_CATALOG = [
+/** Productos de demostración — datos originales sin cambios (mock estático).
+ *  ADN-006: exportado — la escena «catálogo» del escenario cinematográfico
+ *  reutiliza exactamente estos productos. */
+export const DEMO_CATALOG = [
   {
     name: 'Arroz Grano Largo 5kg',
     price: 320,

@@ -41,6 +41,11 @@ interface FeatureVisualProps {
   caption?: string;
   /** Prioridad de carga — SOLO para el visual crítico del hero (FASE 8) */
   priority?: boolean;
+  /** ADN-006: carga ansiosa + render estático (sin whileInView) — escenas del
+   *  escenario cinematográfico: los paneles están visibility:hidden fuera de
+   *  su turno, así que la imagen debe precargarse y el visual aparecer
+   *  asentado cuando la escena entra en el escenario. */
+  eager?: boolean;
   /** Ancho máximo del frame (clases tailwind de max-w) */
   className?: string;
   /** id para deep-links */
@@ -64,6 +69,7 @@ export default function FeatureVisual({
   frameLabel = 'adnegocio.app',
   caption,
   priority = false,
+  eager = false,
   className = '',
   id,
   sizes = DEFAULT_SIZES,
@@ -71,8 +77,8 @@ export default function FeatureVisual({
   return (
     <motion.figure
       id={id}
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={eager ? false : { opacity: 0, y: 24 }}
+      whileInView={eager ? undefined : { opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-60px' }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className={`group relative w-full ${className}`}
@@ -119,7 +125,7 @@ export default function FeatureVisual({
                 alt={alt}
                 fill
                 priority={priority}
-                loading={priority ? undefined : 'lazy'}
+                loading={priority || eager ? 'eager' : 'lazy'}
                 decoding={priority ? 'sync' : 'async'}
                 sizes={sizes}
                 quality={90}
@@ -132,7 +138,7 @@ export default function FeatureVisual({
                 alt={altMobile || alt}
                 fill
                 priority={priority}
-                loading={priority ? undefined : 'lazy'}
+                loading={priority || eager ? 'eager' : 'lazy'}
                 decoding={priority ? 'sync' : 'async'}
                 sizes="100vw"
                 quality={90}

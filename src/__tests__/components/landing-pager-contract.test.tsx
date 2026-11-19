@@ -1,18 +1,22 @@
 /**
- * landing-pager-contract.test.tsx — ADN-LANDING-HERO-AND-PAGER-FIX-004 + 005
+ * landing-pager-contract.test.tsx — ADN-LANDING-HERO-AND-PAGER-FIX-004 + 005 + 006
  * ============================================================================
- * Contrato a nivel de fuente del navegador de capítulos y del hero.
+ * Contrato a nivel de fuente del navegador de capítulos, del escenario
+ * cinematográfico y del hero.
  *
  * Historia: el fallo del punto 2 (misión 004) era `sectionRefs[1]` = una ref
  * NUNCA adjunta → scrollIntoView sobre null, fallo silencioso. Este contrato
  * impide regresar a navegación por refs huérfanas y ancla las decisiones de
  * identidad del hero (firma ADNegocio con BrandWordmark, eslogan íntegro).
  *
- * ADN-005: los ids canónicos viven en los WRAPPERS de acto (ActStage en
- * LandingPage) — el paginador, el scrollspy, los anchors y los E2E resuelven
- * posiciones estables aunque el hero esté fijado (position: sticky). El
- * sistema cinematográfico NO puede regresar a: scroll-snap CSS en la raíz
- * (empíricamente luchaba contra el usuario), wheel-hijack ni refs huérfanas.
+ * ADN-005: los ids canónicos viven en los wrappers de acto.
+ * ADN-006 (corrección de rumbo): el sistema de la 005 (hero pineado + handoffs
+ * que el propietario rechazó — «solo un efecto al inicio, era mejor el scroll
+ * de antes») queda SUSTITUIDO por el escenario persistente CinemaStage con
+ * GSAP ScrollTrigger: un escenario fijado donde las 15 escenas se SUSTITUYEN
+ * realmente unas a otras (scrub lineal al gesto + snap direccional
+ * interrumpible + inertia:false). El contrato prohíbe regresar a: wheel-hijack,
+ * timers de escena, scroll-snap CSS en la raíz y refs huérfanas.
  * ============================================================================
  */
 import { readFileSync } from 'node:fs';
@@ -36,10 +40,15 @@ describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — contrato del paginador lateral'
     expect(landing).not.toMatch(/const\s+sectionRefs\s*=\s*\[/);
   });
 
-  it('el scrollspy deriva el punto activo del progreso por posición (no por umbral IO)', () => {
+  it('el scrollspy de flujo deriva el punto activo del progreso por posición (no por umbral IO)', () => {
     expect(landing).toContain('setActiveSection(Math.min(numSections - 1');
     // El cálculo se ejecuta también al montar (carga con hash de sección)
     expect(landing).toMatch(/handleScroll\(\);\s*\/\/\s*estado correcto al montar/);
+  });
+
+  it('ADN-006: en modo cine el scrollspy por posición NO aplica (lo publica el escenario)', () => {
+    // El spy de posición queda acotado al modo flujo (bloque if !cinemaModeRef)
+    expect(landing).toMatch(/if \(!cinemaModeRef\.current\) \{[\s\S]*?setActiveSection\(Math\.min\(numSections - 1/);
   });
 
   it('los atajos 1-5 usan la misma navegación por ID', () => {
@@ -52,16 +61,18 @@ describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — contrato del paginador lateral'
     expect(pager).toContain('type="button"');
   });
 
-  it('ADN-005 — los 5 ids canónicos viven en los wrappers ActStage de LandingPage', () => {
+  it('ADN-006 — los 5 ids canónicos existen en las ramas cine y flujo', () => {
     const ids = ['hero', 'como-funciona', 'features', 'pricing', 'faq'];
     for (const id of ids) {
       expect(landing).toMatch(new RegExp(`id="${id}"`));
     }
-    // Cada acto pasa por ActStage (el sistema de escenas)
+    // El cine usa el registro de escenas; el flujo pasa por ActStage
+    expect(landing).toContain('buildCinemaScenes');
+    expect(landing).toContain('<CinemaStage');
     expect(landing.match(/<ActStage/g)?.length).toBe(5);
   });
 
-  it('ADN-005 — los ids ya no viven duplicados en los componentes internos', () => {
+  it('ADN-005/006 — los ids ya no viven duplicados en los componentes internos', () => {
     expect(read('src/components/landing/PricingSection.tsx')).not.toMatch(/id="pricing"/);
     expect(read('src/components/landing/ServicesStorySection.tsx')).not.toMatch(/id="como-funciona"/);
     expect(read('src/components/landing/FeaturesSection.tsx')).not.toMatch(/id="features"/);
@@ -71,35 +82,46 @@ describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — contrato del paginador lateral'
   });
 });
 
-describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — contrato del sistema de escenas', () => {
-  const cinematic = read('src/components/landing/CinematicAct.tsx');
+describe('ADN-LANDING-TRUE-FULLPAGE-EXPERIENCE-006 — contrato del escenario persistente', () => {
+  const cinema = read('src/components/landing/cinema/CinemaStage.tsx');
   const shield = read('src/styles/landing-shield.css');
   const landing = read('src/app/LandingPage.tsx');
 
-  it('las escenas fijadas usan sticky + scrub por progreso (sin dependencias nuevas)', () => {
-    expect(shield).toMatch(/\.act-scene--pinned\s*{[^}]*position:\s*sticky/);
-    expect(cinematic).toContain('useScroll');
-    expect(cinematic).toContain('useTransform');
-    // Sin GSAP/Lenis ni bibliotecas de scroll nuevas
-    const pkg = read('package.json');
-    expect(pkg).not.toMatch(/"gsap"|lenis|scrollsmoother|fullpage/i);
+  it('GSAP ScrollTrigger es el motor del escenario (pin + scrub + snap direccional)', () => {
+    expect(cinema).toContain("gsap.registerPlugin(ScrollTrigger, ScrollToPlugin)");
+    expect(cinema).toMatch(/pin:\s*true/);
+    expect(cinema).toMatch(/scrub:\s*true/);
+    expect(cinema).toMatch(/snapTo:\s*'labelsDirectional'/);
   });
 
-  it('scroll-snap CSS quedó DESCARTADO (luchaba contra el usuario — ciclo 0)', () => {
-    expect(shield).not.toContain('scroll-snap-type');
-    expect(shield).not.toContain('scroll-snap-align');
+  it('el snap NO se propulsa solo (inertia:false — §4.2: el control es del visitante)', () => {
+    expect(cinema).toMatch(/inertia:\s*false/);
   });
 
-  it('la barra nativa se oculta solo visualmente y solo en el landing', () => {
-    expect(shield).toMatch(/html:has\(#landing-root\)[^{]*{[^}]*scrollbar-width:\s*none/);
-    expect(shield).toMatch(/::-webkit-scrollbar\s*{[^}]*display:\s*none/);
-    // El recorte horizontal no rompe sticky (hidden → clip)
-    expect(shield).toMatch(/overflow-x:\s*clip/);
+  it('sin wheel-hijack ni secuencias de timers (el scroll nativo es el único controlador)', () => {
+    expect(cinema).not.toMatch(/addEventListener\('wheel'/);
+    expect(cinema).not.toMatch(/wheelDelta/);
+    expect(cinema).not.toMatch(/setInterval/);
+    expect(cinema).not.toMatch(/preventDefault\(\)\s*;\s*\/\/\s*wheel/);
   });
 
-  it('el hero es el único acto en modo pin; los altos usan handoff', () => {
-    expect(landing).toMatch(/mode="pin"/);
-    expect(landing.match(/mode="pin"/g)?.length).toBe(1);
+  it('los paneles de escena son opacos (las escenas se SUSTITUYEN, no se mezclan)', () => {
+    expect(shield).toMatch(/\.cinema-scene\s*{[^}]*background:\s*#05070a/);
+    expect(shield).toMatch(/\.cinema-scene\s*{[^}]*visibility:\s*hidden/);
+    // La primera escena es visible ANTES del efecto GSAP (sin flash vacío).
+    // POR data-scene-index y NUNCA :first-child: la sweepline es el primer
+    // hijo del escenario, así que :first-child no matchea ninguna escena
+    // (hallazgo Codex, PR #1658).
+    expect(shield).toMatch(
+      /\.cinema-scene\[data-scene-index=['"]0['"]\]\s*{[^}]*visibility:\s*visible/,
+    );
+    expect(shield).not.toMatch(/\.cinema-scene:first-child/);
+  });
+
+  it('solo transform/opacity/clip-path en las transiciones (§11 rendimiento)', () => {
+    // El vocabulario de transiciones no anima propiedades de layout
+    expect(cinema).toMatch(/yPercent|xPercent|scale|autoAlpha|clipPath/);
+    expect(cinema).not.toMatch(/width:\s*\d|height:\s*\d|top:\s*\d|left:\s*\d/);
   });
 
   it('el teclado de capítulos existe (PageDown/PageUp/Home/End)', () => {
@@ -109,10 +131,43 @@ describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — contrato del sistema
     expect(landing).toMatch(/e\.key === 'End'/);
   });
 
-  it('reduced-motion desactiva el cine (flujo nativo sin pasillos ni scrub)', () => {
-    expect(cinematic).toMatch(/useReducedMotion/);
-    expect(cinematic).toMatch(/reduceMotion/);
-    expect(shield).toMatch(/prefers-reduced-motion: no-preference/);
+  it('reduced-motion / móvil / tablet desactivan el cine (flujo nativo íntegro)', () => {
+    // La decisión de modo exige ancho, alto y movimiento
+    expect(landing).toMatch(/'\(min-width: 1024px\)'/);
+    expect(landing).toMatch(/'\(min-height: 700px\)'/);
+    expect(landing).toMatch(/'\(prefers-reduced-motion: reduce\)'/);
+    // ActStage queda como capa de flujo (sin pin)
+    const act = read('src/components/landing/CinematicAct.tsx');
+    expect(act).not.toMatch(/position:\s*sticky|useScroll/);
+  });
+
+  it('la barra nativa se oculta solo visualmente y solo en el landing', () => {
+    expect(shield).toMatch(/html:has\(#landing-root\)[^{]*{[^}]*scrollbar-width:\s*none/);
+    expect(shield).toMatch(/::-webkit-scrollbar\s*{[^}]*display:\s*none/);
+    expect(shield).toMatch(/overflow-x:\s*clip/);
+  });
+
+  it('scroll-snap CSS sigue DESCARTADO (luchaba contra el usuario — evidencia 005)', () => {
+    expect(shield).not.toContain('scroll-snap-type');
+    expect(shield).not.toContain('scroll-snap-align');
+  });
+
+  it('gotoChapter navega por posición de scroll del escenario (no scrollIntoView sobre el stage pineado)', () => {
+    expect(cinema).toMatch(/scrollTo:\s*\{\s*y:\s*to,\s*autoKill:\s*true\s*\}/);
+  });
+
+  it('las 15 escenas / 5 capítulos del registro conservan el contenido real', () => {
+    const registry = read('src/components/landing/cinema/sceneRegistry.tsx');
+    // El registro consume las 7 historias REALES (SECTIONS de ServicesStorySection)
+    expect(registry).toContain("SECTIONS as STORY");
+    expect(registry).toMatch(/const s = STORY;/);
+    // …y las composiciones de escena usan EXACTAMENTE esos textos
+    const scenes = read('src/components/landing/cinema/SceneContent.tsx');
+    expect(scenes).toContain('{data.title}');
+    expect(scenes).toContain('{data.description}');
+    expect(scenes).toContain('{data.subtitle}');
+    // Contenido real, no placeholders (marcadores convencionales en mayúscula)
+    expect(registry).not.toMatch(/\bTODO\b|FIXME|placeholder/);
   });
 });
 
@@ -148,9 +203,11 @@ describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — contrato de identidad del hero'
     expect(sign).toContain('reduceMotion ? false');
   });
 
-  it('ADN-005 — la coreografía de salida recoge los fragmentos del caos', () => {
+  it('ADN-006 — la coreografía de salida del hero sigue conectada al escenario', () => {
     expect(hero).toContain('DriftFragment');
     expect(hero).toContain('exitProgress');
     expect(hero).toContain('ProblemsEditorialScene exitProgress={exitProgress}');
+    // El puente lo alimenta CinemaStage (MotionValue estable en LandingPage)
+    expect(read('src/app/LandingPage.tsx')).toContain('heroExitMv={heroExitMv}');
   });
 });

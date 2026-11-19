@@ -1,0 +1,111 @@
+[
+  {
+    "vp": "360x740",
+    "cinema": false,
+    "overflowH": 0,
+    "reach": [
+      {
+        "id": "hero",
+        "ok": true
+      },
+      {
+        "id": "como-funciona",
+        "ok": true
+      },
+      {
+        "id": "features",
+        "ok": true
+      },
+      {
+        "id": "pricing",
+        "ok": true
+      },
+      {
+        "id": "faq",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "vp": "390x844",
+    "cinema": false,
+    "overflowH": 0,
+    "reach": [
+      {
+        "id": "hero",
+        "ok": true
+      },
+      {
+        "id": "como-funciona",
+        "ok": true
+      },
+      {
+        "id": "features",
+        "ok": true
+      },
+      {
+        "id": "pricing",
+        "ok": true
+      },
+      {
+        "id": "faq",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "vp": "768x1024",
+    "cinema": false,
+    "overflowH": 0,
+    "reach": [
+      {
+        "id": "hero",
+        "ok": true
+      },
+      {
+        "id": "como-funciona",
+        "ok": true
+      },
+      {
+        "id": "features",
+        "ok": true
+      },
+      {
+        "id": "pricing",
+        "ok": true
+      },
+      {
+        "id": "faq",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "vp": "1024x768",
+    "cinema": true,
+    "overflowH": 0,
+    "scenes": 15,
+    "bad": []
+  },
+  {
+    "vp": "1440x900",
+    "cinema": true,
+    "overflowH": 0,
+    "scenes": 15,
+    "bad": []
+  },
+  {
+    "vp": "1648x924",
+    "cinema": true,
+    "overflowH": 0,
+    "scenes": 15,
+    "bad": []
+  },
+  {
+    "vp": "1920x1080",
+    "cinema": true,
+    "overflowH": 0,
+    "scenes": 15,
+    "bad": []
+  }
+]

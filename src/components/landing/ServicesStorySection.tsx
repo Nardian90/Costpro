@@ -20,7 +20,7 @@ import FeatureVisual from './FeatureVisual';
  * El landing SIEMPRE es dark + enhanced — no depende de theme.
  */
 
-interface StorySection {
+export interface StorySection {
   id: string;
   icon: typeof Package;
   title: string;
@@ -36,7 +36,9 @@ interface StorySection {
   frameLabel?: string;
 }
 
-const SECTIONS: StorySection[] = [
+/* ADN-006: exportado — el sistema de escenas cinematicas reutiliza ESTOS
+   textos reales (misma narrativa, cero contenido inventado). */
+export const SECTIONS: StorySection[] = [
   {
     id: 'multi-store',
     icon: Store,
@@ -124,6 +126,9 @@ const SECTIONS: StorySection[] = [
     gradient: 'from-red-500/10 to-transparent',
   },
 ];
+
+/** Historias CON captura real (para escenas cinematográficas ADN-006). */
+export const STORY_SECTIONS: StorySection[] = SECTIONS;
 
 function StoryCard({ section, index }: { section: StorySection; index: number }) {
   const ref = useRef<HTMLDivElement>(null);

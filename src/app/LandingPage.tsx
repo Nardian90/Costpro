@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 import { toast } from 'sonner';
 import {
   Lock, Headphones, X, Cookie,
@@ -14,7 +14,10 @@ import { BrandWordmark } from '@/components/landing/BrandWordmark';
 import SectionDivider from '@/components/landing/SectionDivider';
 import { useCookieConsent, usePromoBanner } from '@/components/landing/hooks';
 
-// ── ADN-005: sistema cinematográfico de escenas ──
+// ── ADN-006: escenario persistente (sustitución real de escenas) ──
+import CinemaStage, { type CinemaControls } from '@/components/landing/cinema/CinemaStage';
+import { buildCinemaScenes } from '@/components/landing/cinema/sceneRegistry';
+import { SceneFrame } from '@/components/landing/cinema/SceneContent';
 import ActStage from '@/components/landing/CinematicAct';
 import ActPager from '@/components/landing/ActPager';
 import LandingHeader from '@/components/landing/LandingHeader';
@@ -106,9 +109,54 @@ export default function LandingPage() {
   const [sectionProgress, setSectionProgress] = useState(0);
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [activeFooterModal, setActiveFooterModal] = useState<FooterLinkId | null>(null);
-  /* ADN-005 — progreso de salida del Acto 1 (lo publica ActStage al montar en
-     modo cinematográfico; alimenta la coreografía de los fragmentos del caos). */
-  const [heroExitMv, setHeroExitMv] = useState<MotionValue<number> | null>(null);
+  /* ADN-006 — progreso de salida del Acto 1 (MotionValue estable que alimenta
+     la coreografía de los fragmentos del caos; lo actualiza CinemaStage con
+     el progreso del primer segmento del timeline maestro). */
+  const heroExitMv = useMotionValue(0);
+
+  /* ADN-006 — MODO CINE: escritorio (≥1024px) con altura suficiente (≥700px)
+     y sin prefers-reduced-motion → escenario persistente con sustitución de
+     escenas. Móvil / tablet / reduced-motion → flujo nativo (ActStage). */
+  const [cinemaMode, setCinemaMode] = useState(false);
+  const cinemaModeRef = useRef(false);
+  useEffect(() => {
+    const mqWidth = window.matchMedia('(min-width: 1024px)');
+    const mqHeight = window.matchMedia('(min-height: 700px)');
+    const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => {
+      const active = mqWidth.matches && mqHeight.matches && !mqReduce.matches;
+      setCinemaMode(active);
+      cinemaModeRef.current = active;
+    };
+    update();
+    mqWidth.addEventListener('change', update);
+    mqHeight.addEventListener('change', update);
+    mqReduce.addEventListener('change', update);
+    return () => {
+      mqWidth.removeEventListener('change', update);
+      mqHeight.removeEventListener('change', update);
+      mqReduce.removeEventListener('change', update);
+    };
+  }, []);
+
+  /* Controles del escenario (gotoChapter…) — los consume la navegación por ID. */
+  const cinemaControlsRef = useRef<CinemaControls | null>(null);
+  const handleRegisterControls = useCallback((c: CinemaControls | null) => {
+    cinemaControlsRef.current = c;
+  }, []);
+  const handleChapterProgress = useCallback((chapter: number, chapterUnits: number) => {
+    setActiveSection(chapter);
+    const rounded = Math.round(chapterUnits * 100) / 100;
+    setSectionProgress((prev) => (prev === rounded ? prev : rounded));
+  }, []);
+
+  /* ADN-006 — el cambio del promo banner (altura 0↔36px sobre el escenario)
+     desplaza el inicio del pin → re-medición del ScrollTrigger. */
+  useEffect(() => {
+    if (!cinemaMode) return;
+    const t = setTimeout(() => cinemaControlsRef.current?.refresh(), 450);
+    return () => clearTimeout(t);
+  }, [showPromo, cinemaMode]);
 
   const heroRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
@@ -120,13 +168,17 @@ export default function LandingPage() {
 
   /* ── ADN-LANDING-HERO-AND-PAGER-FIX-004 §5.2 — fuente de verdad única ──
      El paginador lateral, los atajos 1-5 y el drawer móvil navegan SIEMPRE por
-     los IDs reales del DOM (sectionIds). Antes usaban `sectionRefs` y su
-     posición [1] era `ahaMomentRef`, una ref NUNCA adjunta a ningún elemento
-     (AhaMomentSection no se renderiza) → el punto 2 hacía
-     `ref.current?.scrollIntoView` sobre null y fallaba en silencio.
-     Además `sectionIds[3]='pricing'` no existía en el DOM (el root de
-     PricingSection era id="precios") — alineado en esta misión. */
+     los IDs reales (sectionIds). ADN-006: en modo cine los ids viven en las
+     PRIMERAS escenas de cada capítulo dentro del escenario fijado — el
+     scrollIntoView no aplica sobre el escenario pineado, así que la
+     navegación la ejecuta el controlador del escenario (gotoChapter, por
+     posición de scroll del timeline). El fallback por ID (flujo) se conserva. */
   const scrollToSectionById = useCallback((idx: number) => {
+    const controls = cinemaControlsRef.current;
+    if (controls && cinemaModeRef.current) {
+      controls.gotoChapter(idx);
+      return;
+    }
     const el = document.getElementById(sectionIds[idx]);
     if (!el) return;
     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -219,7 +271,7 @@ export default function LandingPage() {
       }
 
       const featuresEl = document.getElementById('features');
-      if (featuresEl) {
+      if (featuresEl && !cinemaModeRef.current) {
         const r = featuresEl.getBoundingClientRect();
         setShowBackToFeatures(r.bottom < 0);
       }
@@ -231,34 +283,36 @@ export default function LandingPage() {
       }
 
       const numSections = sectionIds.length;
-      /* ADN-005 — scrollspy de capítulos: el acto activo es el ÚLTIMO cuyo
-         wrapper top cruzó la línea de activación (mitad del viewport). Los
-         ids viven en los WRAPPERS de acto (bloques de flujo normal), así que
-         la geometría es determinista aunque el hero esté fijado. La
-         profundidad dentro del acto llena el hilo de la línea ADN. */
-      let activeAct = 0;
-      let depth = 0;
-      const activationLine = window.innerHeight * 0.5;
-      for (let i = 0; i < numSections; i++) {
-        const el = document.getElementById(sectionIds[i]);
-        if (!el) continue;
-        const rect = el.getBoundingClientRect();
-        if (rect.top <= activationLine) {
-          activeAct = i;
-          depth = Math.min(1, Math.max(0, (activationLine - rect.top) / Math.max(rect.height, 1)));
-        } else {
-          break;
+      /* ADN-006: en modo cine el scrollspy por posición NO aplica — los ids
+         viven en las escenas del escenario fijado (geometría constante
+         respecto al viewport, no posición de página). El capítulo activo y
+         la profundidad los publica CinemaStage (onChapterProgress) desde el
+         progreso real del timeline maestro. */
+      if (!cinemaModeRef.current) {
+        let activeAct = 0;
+        let depth = 0;
+        const activationLine = window.innerHeight * 0.5;
+        for (let i = 0; i < numSections; i++) {
+          const el = document.getElementById(sectionIds[i]);
+          if (!el) continue;
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= activationLine) {
+            activeAct = i;
+            depth = Math.min(1, Math.max(0, (activationLine - rect.top) / Math.max(rect.height, 1)));
+          } else {
+            break;
+          }
         }
+        setSectionProgress(activeAct + depth);
+        // ADN-LANDING-HERO-AND-PAGER-FIX-004 §5.2 — scrollspy por posición:
+        // el punto activo se deriva del mismo cálculo de progreso (posición del
+        // top de cada sección respecto al viewport), determinista para secciones
+        // de CUALQUIER altura. (El IntersectionObserver con threshold 0.3 nunca
+        // disparaba en secciones >3× viewport — p. ej. "como-funciona" (5900px)
+        // solo alcanza ~15% visible → el punto activo no sincronizaba.)
+        // ADN-005: ahora sobre wrappers de acto — capítulos, no secciones.
+        setActiveSection(Math.min(numSections - 1, Math.max(0, activeAct)));
       }
-      setSectionProgress(activeAct + depth);
-      // ADN-LANDING-HERO-AND-PAGER-FIX-004 §5.2 — scrollspy por posición:
-      // el punto activo se deriva del mismo cálculo de progreso (posición del
-      // top de cada sección respecto al viewport), determinista para secciones
-      // de CUALQUIER altura. (El IntersectionObserver con threshold 0.3 nunca
-      // disparaba en secciones >3× viewport — p. ej. "como-funciona" (5900px)
-      // solo alcanza ~15% visible → el punto activo no sincronizaba.)
-      // ADN-005: ahora sobre wrappers de acto — capítulos, no secciones.
-      setActiveSection(Math.min(numSections - 1, Math.max(0, activeAct)));
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll(); // estado correcto al montar (p. ej. carga con hash de sección)
@@ -331,6 +385,64 @@ export default function LandingPage() {
   // la navegación por ID real (scrollToSectionById). `scrollToSection` se
   // conserva como alias estable para el drawer móvil y usos existentes.
   const scrollToSection = scrollToSectionById;
+
+  /* ADN-006 — Registro de escenas del escenario persistente (solo se construye
+     una vez; el hero y el FAQ se inyectan con su contenido vivo — props y
+     estado del propietario). Índices según sceneRegistry: 0=hero, 13=faq. */
+  const cinemaScenes = useMemo(() => {
+    const scenes = buildCinemaScenes({
+      onSignup: () => {
+        setLoginDefaultTab('register');
+        setShowLoginModal(true);
+      },
+      onOpenDemo: () => setShowDemoModal(true),
+      onSeeFeatures: () => scrollToSectionById(2),
+    });
+    scenes[0] = {
+      ...scenes[0],
+      content: (
+        <HeroSection
+          heroInView={heroInView}
+          showMobileNav={showMobileNav}
+          leftPanelRef={leftPanelRef}
+          heroRef={heroRef}
+          setShowLoginModal={setShowLoginModal}
+          setShowMobileNav={setShowMobileNav}
+          setShowCommandPalette={setShowCommandPalette}
+          setLoginDefaultTab={setLoginDefaultTab}
+          onOpenDemo={() => setShowDemoModal(true)}
+          exitProgress={heroExitMv}
+        />
+      ),
+    };
+    scenes[13] = {
+      ...scenes[13],
+      content: (
+        <SceneFrame className="items-center">
+          <div className="mx-auto w-full max-w-3xl">
+            <FAQSection
+              /* En el escenario el panel está fuera de turno (visibility:hidden)
+                 hasta su escena: el gate por inView nunca dispararía — la escena
+                 entra ya asentada y el movimiento lo aporta la transición.
+                 compact: 7 preguntas + tabs + búsqueda caben en 100svh. */
+              compact
+              faqInViewState={true}
+              openFaq={openFaq}
+              toggleFaq={toggleFaq}
+              faqFeedback={faqFeedback}
+              setFaqFeedback={setFaqFeedback}
+              faqRef={faqRef}
+            />
+          </div>
+        </SceneFrame>
+      ),
+    };
+    return scenes;
+    /* openFaq/faqFeedback/toggleFaq SÍ van en deps: el acordeón del FAQ es
+       estado vivo y el re-render reusa los mismos nodos de panel (las keys
+       del escenario son estables), así que el timeline de GSAP sigue
+       apuntando a los mismos elementos. */
+  }, [scrollToSectionById, heroExitMv, faqRef, heroRef, leftPanelRef, openFaq, faqFeedback, toggleFaq]);
 
   // Demo modal uses InteractiveDemo (self-contained playback)
 
@@ -447,25 +559,27 @@ export default function LandingPage() {
         )}
       </AnimatePresence>
 
-      {/* ═══ UNA EXPERIENCIA, CINCO ACTOS (ADN-005) ═══
-          Acto 1  · Inicio           — escena FIJADA, cubierta por el Acto 2.
-          Acto 2  · Plataforma       — interludio multi-tienda + narrativa
-                                       (acto alto, handoff por profundidad).
-          Acto 3  · Funcionalidades  — handoff con repliegue tipográfico del previo.
-          Acto 4  · Precios          — handoff con disolución del previo.
-          Acto 5  · Ayuda + cierre   — handoff final hacia el epílogo (footer).
-          Los ids canónicos de la misión 004 viven en los WRAPPERS. */}
+      {/* ═══ UNA EXPERIENCIA, CINCO CAPÍTULOS (ADN-006) ═══
+          MODO CINE (escritorio ≥1024px × ≥700px, sin reduced-motion):
+          ESCENARIO PERSISTENTE — un stage fijado de 100svh donde las 15
+          escenas se SUSTITUYEN unas a otras con transiciones coreografiadas
+          (GSAP ScrollTrigger: scrub lineal al gesto + snap direccional
+          interrumpible). El visitante NO baja por una página: pasa de una
+          escena completa a la siguiente.
+
+          MODO FLUJO (móvil / tablet / alturas cortas / reduced-motion):
+          las mismas cinco áreas en flujo nativo con sus ids canónicos. */}
+      {cinemaMode ? (
+        <CinemaStage
+          scenes={cinemaScenes}
+          registerControls={handleRegisterControls}
+          onChapterProgress={handleChapterProgress}
+          heroExitMv={heroExitMv}
+        />
+      ) : (
       <main id="main-content">
-        {/* ── ACTO 1 · INICIO — el caos y la firma (escena fijada) ── */}
-        <ActStage
-          id="hero"
-          act={1}
-          mode="pin"
-          entry="drift"
-          exit="recede"
-          className="bg-[#05070A]"
-          onExitProgress={setHeroExitMv}
-        >
+        {/* ── CAPÍTULO 1 · INICIO (flujo nativo) ── */}
+        <ActStage id="hero" act={1} className="bg-[#05070A]">
           <HeroSection
             heroInView={heroInView}
             showMobileNav={showMobileNav}
@@ -476,12 +590,11 @@ export default function LandingPage() {
             setShowCommandPalette={setShowCommandPalette}
             setLoginDefaultTab={setLoginDefaultTab}
             onOpenDemo={() => setShowDemoModal(true)}
-            exitProgress={heroExitMv}
           />
         </ActStage>
 
-        {/* ── ACTO 2 · PLATAFORMA — del caos al sistema (acto alto, fluye) ── */}
-        <ActStage id="como-funciona" act={2} entry="rise" className="relative bg-[#020617]">
+        {/* ── CAPÍTULO 2 · PLATAFORMA (flujo nativo) ── */}
+        <ActStage id="como-funciona" act={2} className="relative bg-[#020617]">
           {/* ── MULTI-STORE VISUAL — Demostración visual del ecosistema ── */}
           <MultiStoreVisualSection />
 
@@ -491,8 +604,8 @@ export default function LandingPage() {
           <ServicesStorySection />
         </ActStage>
 
-        {/* ── ACTO 3 · FUNCIONALIDADES ── */}
-        <ActStage id="features" act={3} entry="rise" className="relative bg-[#05070A]">
+        {/* ── CAPÍTULO 3 · FUNCIONALIDADES ── */}
+        <ActStage id="features" act={3} className="relative bg-[#05070A]">
           <FeaturesSection
             featuresInView={featuresInView}
             featuresRef={featuresRef}
@@ -501,8 +614,8 @@ export default function LandingPage() {
 
         <SectionDivider />
 
-        {/* ── ACTO 4 · PRECIOS ── */}
-        <ActStage id="pricing" act={4} entry="rise" className="relative bg-[#05070A]">
+        {/* ── CAPÍTULO 4 · PRECIOS ── */}
+        <ActStage id="pricing" act={4} className="relative bg-[#05070A]">
           <PricingSection
             pricingInView={pricingInView}
             pricingRef={pricingRef}
@@ -515,10 +628,8 @@ export default function LandingPage() {
 
         <SectionDivider />
 
-        {/* ── ACTO 5 · AYUDA + CIERRE — runway 0: el acto cabe en un viewport,
-            su salida se coreografía en el propio último tramo (handoff
-            integrado) y el footer (epílogo) entra sin pasillo vacío. ── */}
-        <ActStage id="faq" act={5} entry="fade" runway="0svh" hairlineTop="14%" className="relative bg-[#05070A]">
+        {/* ── CAPÍTULO 5 · AYUDA + CIERRE ── */}
+        <ActStage id="faq" act={5} className="relative bg-[#05070A]">
           <FAQSection
             faqInViewState={faqInViewState}
             openFaq={openFaq}
@@ -530,7 +641,7 @@ export default function LandingPage() {
 
           <SectionDivider />
 
-          {/* ── FINAL CTA (compacto: convive con el FAQ en la escena del Acto 5) ── */}
+          {/* ── FINAL CTA (compacto: convive con el FAQ en el capítulo 5) ── */}
           <FinalCTASection
             compact
             onOpenDemo={() => setShowDemoModal(true)}
@@ -541,6 +652,7 @@ export default function LandingPage() {
           />
         </ActStage>
       </main>
+      )}
 
       {/* ─── FOOTER ─── */}
       <FooterSection
@@ -599,6 +711,13 @@ export default function LandingPage() {
         isOpen={showCommandPalette}
         onClose={() => setShowCommandPalette(false)}
         onNavigate={(sectionId) => {
+          /* ADN-006: en modo cine la navegación pasa por el controlador del
+             escenario (gotoChapter); en flujo, scrollIntoView por ID. */
+          const idx = sectionIds.indexOf(sectionId);
+          if (idx >= 0) {
+            scrollToSectionById(idx);
+            return;
+          }
           document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }}
         onLogin={() => setShowLoginModal(true)}
