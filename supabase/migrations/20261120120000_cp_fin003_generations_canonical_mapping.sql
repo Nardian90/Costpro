@@ -1553,7 +1553,8 @@ BEGIN
   FOR r IN
       SELECT fe.document_type, fe.document_id, fe.event, fe.payment_ref
       FROM public.fin_entries fe
-      WHERE fe.generation_id IS NOT DISTINCT FROM v_active
+      WHERE fe.store_id = p_store_id
+        AND fe.generation_id IS NOT DISTINCT FROM v_active
         AND fe.document_id IS NOT NULL
         AND fe.event IN ('reconocimiento', 'pago')
       ORDER BY fe.document_type, fe.economic_date, fe.posted_at
@@ -1573,7 +1574,8 @@ BEGIN
     FOR r IN
       SELECT DISTINCT fe.document_type, fe.document_id
       FROM public.fin_entries fe
-      WHERE fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'anulacion'
+      WHERE fe.store_id = p_store_id
+        AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'anulacion'
         AND fe.document_id IS NOT NULL
     LOOP
       BEGIN
@@ -1588,7 +1590,8 @@ BEGIN
     -- PASE 3: aperturas (saldos iniciales autorizados) → copia literal.
     FOR v_e IN
       SELECT fe.* FROM public.fin_entries fe
-      WHERE fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'apertura'
+      WHERE fe.store_id = p_store_id
+        AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'apertura'
     LOOP
       IF NOT EXISTS (SELECT 1 FROM public.fin_entries x
                      WHERE x.generation_id = v_new AND x.event = 'apertura'
@@ -1625,7 +1628,8 @@ BEGIN
     -- registradas en stats para decisión documentada del expediente.
     FOR v_e IN
       SELECT fe.* FROM public.fin_entries fe
-      WHERE fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'ajuste_manual'
+      WHERE fe.store_id = p_store_id
+        AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'ajuste_manual'
         AND (p_include_rectifications OR fe.document_type <> 'RECTIFICACION_FIN')
     LOOP
       IF NOT EXISTS (SELECT 1 FROM public.fin_entries x
@@ -1663,7 +1667,8 @@ BEGIN
                'descripcion', fe.description, 'economic_date', fe.economic_date)), '[]'::jsonb)
       INTO v_rect_skipped
       FROM public.fin_entries fe
-      WHERE fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'ajuste_manual'
+      WHERE fe.store_id = p_store_id
+        AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'ajuste_manual'
         AND fe.document_type = 'RECTIFICACION_FIN';
     END IF;
 
