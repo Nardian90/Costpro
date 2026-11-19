@@ -321,3 +321,62 @@ html:has(#landing-root)::-webkit-scrollbar {
     transform: none;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADN-LANDING-TRUE-FULLPAGE-EXPERIENCE-006 — ESCENARIO PERSISTENTE
+   ═══════════════════════════════════════════════════════════════════════════
+   Un escenario (100svh) fijado por ScrollTrigger durante TODA la experiencia;
+   las escenas son paneles apilados que se SUSTITUYEN dentro de él. El motor
+   (timeline maestro + scrub + snap labelsDirectional) vive en CinemaStage.tsx.
+
+   Reglas:
+   1. .cinema-scene oculta por defecto (visibility) — escena 0 visible en el
+      HTML inicial (SSR/hidratación sin flash) y autoAlpha de GSAP sincroniza
+      el resto según el progreso del timeline.
+   2. Solo transform / opacity / clip-path en las transiciones (§11 rendimiento).
+   3. La barra nativa sigue oculta SOLO visualmente (regla 2, intacta) y el
+      scroll nativo es el único controlador (sin wheel-hijack).
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#landing-root .cinema-stage {
+  position: relative;
+  height: 100svh;
+  overflow: hidden;
+  background: #05070a;
+  will-change: transform;
+}
+
+#landing-root .cinema-scene {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
+
+/* Primera escena visible antes de la hidratación (evita flash vacío). */
+#landing-root .cinema-scene:first-child {
+  visibility: visible;
+}
+
+/* La línea ADN que barre el escenario en mask / sweep / typo. */
+#landing-root .cinema-sweepline {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  z-index: 30;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(34, 197, 94, 0.15) 18%,
+    rgba(34, 197, 94, 0.95) 50%,
+    rgba(34, 197, 94, 0.15) 82%,
+    transparent 100%
+  );
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.5);
+  opacity: 0;
+  pointer-events: none;
+}
+
