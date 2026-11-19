@@ -97,8 +97,7 @@ export default function FeaturesSection({
   return (
     <div
       ref={featuresRef}
-      id="features"
-      className="px-6 sm:px-10 lg:px-16 xl:px-20 scroll-mt-[76px]"
+      className="px-6 sm:px-10 lg:px-16 xl:px-20"
     >
       <div className="w-full max-w-[1360px] mx-auto">
 

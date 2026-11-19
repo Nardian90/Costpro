@@ -244,10 +244,12 @@ export default function ServicesStorySection() {
 
   return (
     <section
-      id="como-funciona"
       ref={containerRef}
-      className="relative bg-[#020617] scroll-mt-[76px]"
+      className="relative bg-[#020617]"
     >
+      {/* ADN-005: el id "como-funciona" vive ahora en el WRAPPER del acto 2
+          (ActStage en LandingPage), que también contiene el interludio
+          multi-tienda. */}
       {/* Barra de progreso superior */}
       <div className="sticky top-0 z-20 h-0.5 bg-white/[0.04]">
         <motion.div

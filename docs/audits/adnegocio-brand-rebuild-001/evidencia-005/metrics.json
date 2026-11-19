@@ -1,0 +1,102 @@
+{
+  "url": "http://localhost:3000",
+  "tag": "after-final",
+  "viewports": {
+    "1648x924": {
+      "docHeight": 14782,
+      "viewport": {
+        "w": 1648,
+        "h": 924
+      },
+      "stickyProbe": {
+        "topAfter600Scroll": 14782,
+        "sticks": false
+      },
+      "sections": {
+        "hero": {
+          "top": 108,
+          "height": 1709,
+          "viewports": 1.85
+        },
+        "como-funciona": {
+          "top": 1817,
+          "height": 8854,
+          "viewports": 9.58
+        },
+        "features": {
+          "top": 10672,
+          "height": 1149,
+          "viewports": 1.24
+        },
+        "pricing": {
+          "top": 11917,
+          "height": 1415,
+          "viewports": 1.53
+        },
+        "faq": {
+          "top": 13427,
+          "height": 880,
+          "viewports": 0.95
+        },
+        "plataforma": {
+          "top": 1901,
+          "height": 2497,
+          "viewports": 2.7
+        },
+        "footer-section": {
+          "top": 14307,
+          "height": 475,
+          "viewports": 0.51
+        }
+      }
+    },
+    "390x844": {
+      "docHeight": 17746,
+      "viewport": {
+        "w": 390,
+        "h": 844
+      },
+      "stickyProbe": {
+        "topAfter600Scroll": 17746,
+        "sticks": false
+      },
+      "sections": {
+        "hero": {
+          "top": 108,
+          "height": 1202,
+          "viewports": 1.42
+        },
+        "como-funciona": {
+          "top": 1310,
+          "height": 10858,
+          "viewports": 12.86
+        },
+        "features": {
+          "top": 12168,
+          "height": 1475,
+          "viewports": 1.75
+        },
+        "pricing": {
+          "top": 13739,
+          "height": 1821,
+          "viewports": 2.16
+        },
+        "faq": {
+          "top": 15656,
+          "height": 905,
+          "viewports": 1.07
+        },
+        "plataforma": {
+          "top": 1310,
+          "height": 2579,
+          "viewports": 3.06
+        },
+        "footer-section": {
+          "top": 16561,
+          "height": 1185,
+          "viewports": 1.4
+        }
+      }
+    }
+  }
+}

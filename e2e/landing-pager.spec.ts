@@ -74,7 +74,10 @@ test.describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — paginador lateral (escrito
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
       await page.waitForTimeout(700);
       const target = await sectionTop(page, SECTION_IDS[idx]);
-      expect(target, `la sección #${SECTION_IDS[idx]} debe existir`).toBeGreaterThan(0);
+      // ADN-005: el hero es el PRIMER acto — su wrapper arranca en top=0 exacto
+      // (antes el elemento #hero tenía un spacer de header encima). El destino
+      // del punto 1 es el tope del documento.
+      expect(target, `la sección #${SECTION_IDS[idx]} debe existir`).toBeGreaterThanOrEqual(0);
 
       await pagerDots(page).nth(idx).click();
       // Espera a que el smooth scroll ATERRICE cerca del objetivo
@@ -177,4 +180,107 @@ test.describe('ADN-LANDING-HERO-AND-PAGER-FIX-004 — identidad del hero', () =>
     });
     expect(inFirstScreen, 'la firma ADNegocio debe estar íntegra en el primer pantallazo').toBe(true);
   });
+});
+
+test.describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — experiencia por actos', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('8. el navegador muestra el contador 01/05 y el nombre del acto activo', async ({ page }) => {
+    await openLanding(page);
+    const counter = page.locator('[data-testid="act-pager"]');
+    await expect(counter).toContainText('01');
+    await expect(counter).toContainText('05');
+    // El nodo activo coincide con el capítulo Inicio
+    await expect(page.locator('[data-testid="act-dot-1"]')).toHaveAttribute('aria-current', 'true');
+  });
+
+  test('9. los 5 dots son clicables y el contador avanza acto a acto', async ({ page }) => {
+    await openLanding(page);
+    for (let idx = 1; idx < 5; idx++) {
+      await page.locator('div.fixed.right-3 button').nth(idx).click();
+      await expect
+        .poll(() => activeDotIndex(page), { timeout: 10000, intervals: [250, 400, 600] })
+        .toBe(idx);
+      await expect(page.locator('[data-testid="act-pager"]')).toContainText(`0${idx + 1}`);
+    }
+  });
+
+  test('10. teclado de capítulos: PageDown/PageUp avanzan y retroceden POR ACTO', async ({ page }) => {
+    await openLanding(page);
+    await page.keyboard.press('PageDown');
+    await expect.poll(() => activeDotIndex(page), { timeout: 10000 }).toBe(1);
+    await page.keyboard.press('PageDown');
+    await expect.poll(() => activeDotIndex(page), { timeout: 10000 }).toBe(2);
+    await page.keyboard.press('PageUp');
+    await expect.poll(() => activeDotIndex(page), { timeout: 10000 }).toBe(1);
+    await page.keyboard.press('End');
+    await expect.poll(() => activeDotIndex(page), { timeout: 10000 }).toBe(4);
+    await page.keyboard.press('Home');
+    await expect.poll(() => activeDotIndex(page), { timeout: 10000 }).toBe(0);
+  });
+
+  test('11. la barra nativa está oculta visualmente y el scroll nativo sigue vivo', async ({ page }) => {
+    await openLanding(page);
+    const hidden = await page.evaluate(() => {
+      const cs = getComputedStyle(document.documentElement);
+      return cs.scrollbarWidth === 'none';
+    });
+    expect(hidden, 'scrollbar-width: none en html:has(#landing-root)').toBe(true);
+    // El desplazamiento nativo (rueda) sigue funcionando
+    await page.mouse.move(720, 450);
+    await page.mouse.wheel(0, 1200);
+    await page.waitForTimeout(600);
+    const y = await page.evaluate(() => window.scrollY);
+    expect(y, 'la rueda sigue desplazando el documento').toBeGreaterThan(400);
+  });
+
+  test('12. reduced-motion: sin escenas fijadas (sticky desactivado) y todo alcanzable', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await openLanding(page);
+    const pinned = await page.evaluate(() => {
+      const scene = document.querySelector('#hero .act-scene--pinned');
+      return scene ? getComputedStyle(scene).position : 'absent';
+    });
+    expect(pinned, 'sin prefers-reduced-motion la escena NO se fija').not.toBe('sticky');
+    // El contenido del acto 1 sigue presente y accesible
+    await expect(page.getByRole('heading', { name: /menos malabares/i })).toBeVisible();
+  });
+
+  test('13. la firma visual (hairline ADN) existe en los cinco actos', async ({ page }) => {
+    await openLanding(page);
+    const hairlines = await page.evaluate(() => document.querySelectorAll('.act-hairline').length);
+    expect(hairlines).toBe(5);
+  });
+});
+
+test.describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005 — responsive', () => {
+  const viewports = [
+    { width: 360, height: 740, label: '360px' },
+    { width: 390, height: 844, label: '390px' },
+    { width: 768, height: 1024, label: '768px' },
+    { width: 1024, height: 768, label: '1024px' },
+    { width: 1440, height: 900, label: '1440px' },
+    { width: 1920, height: 1080, label: '1920px' },
+  ];
+
+  for (const vp of viewports) {
+    test(`14. ${vp.label}: sin overflow horizontal y las 5 secciones alcanzables`, async ({ page }) => {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await openLanding(page);
+      const overflow = await page.evaluate(() => {
+        const doc = document.documentElement;
+        return doc.scrollWidth - doc.clientWidth;
+      });
+      expect(overflow, `sin scroll horizontal a ${vp.label}`).toBeLessThanOrEqual(0);
+      for (const id of SECTION_IDS) {
+        const found = await page.evaluate((sectionId) => {
+          const el = document.getElementById(sectionId);
+          if (!el) return false;
+          el.scrollIntoView({ block: 'start', behavior: 'instant' });
+          return el.getBoundingClientRect().top < window.innerHeight;
+        }, id);
+        expect(found, `#${id} alcanzable a ${vp.label}`).toBe(true);
+      }
+    });
+  }
 });

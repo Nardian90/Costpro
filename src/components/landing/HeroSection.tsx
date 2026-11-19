@@ -42,7 +42,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, useReducedMotion, useTransform, useMotionValue, type MotionValue } from 'framer-motion';
 import {
   ChevronDown, ArrowRight,
   Search, X,
@@ -280,7 +280,7 @@ function HeroBrandSignOff() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className="mt-8 sm:mt-10 flex items-center gap-5">
+    <div className="mt-[clamp(12px,2.2svh,32px)] flex items-center gap-5 [@media(max-height:950px)]:mt-[clamp(6px,1.2svh,18px)]">
       <span className="h-px w-9 sm:w-14 bg-[#22c55e]/55 shrink-0" aria-hidden="true" />
       <span className="block overflow-hidden pb-[0.3em] -mb-[0.22em]">
         <motion.span
@@ -290,7 +290,7 @@ function HeroBrandSignOff() {
           transition={{ delay: 0.78, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         >
           <BrandWordmark
-            className="inline-block font-[family-name:var(--font-space-grotesk)] font-bold tracking-[-0.03em] leading-[1.04] text-[clamp(2.7rem,5.3vw,5.1rem)] select-none"
+            className="inline-block font-[family-name:var(--font-space-grotesk)] font-bold tracking-[-0.03em] leading-[1.04] text-[clamp(2.7rem,5vw,4.9rem)] [@media(max-height:920px)]:text-[clamp(2.5rem,4.6vw,4.5rem)] select-none"
           />
         </motion.span>
       </span>
@@ -302,7 +302,7 @@ function HeroHeadline() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <h1 className="font-[family-name:var(--font-display)] font-black [font-stretch:125%] tracking-[-0.045em] leading-[0.94] text-[clamp(2.35rem,10.5vw,6.5rem)] sm:text-[clamp(2.8rem,6.6vw,6.6rem)] text-white select-none">
+    <h1 className="font-[family-name:var(--font-display)] font-black [font-stretch:125%] tracking-[-0.045em] leading-[0.94] text-[clamp(2.35rem,10.5vw,6.5rem)] sm:text-[clamp(2.8rem,6.6vw,6.6rem)] [@media(min-width:640px)_and_(max-height:950px)]:text-[clamp(2.5rem,5.4vw,5.4rem)] [@media(min-width:640px)_and_(max-height:820px)]:text-[clamp(2.3rem,4.9vw,4.9rem)] text-white select-none">
       {/* Nombre accesible completo; la capa visual es decorativa (letras
           separadas por spans no se leen bien en SR). */}
       <span className="sr-only">MENOS MALABARES. MÁS NEGOCIO.</span>
@@ -407,11 +407,15 @@ function SceneLabel({ n, context, className = '' }: { n: string; context: string
   );
 }
 
-function ProblemsEditorialScene() {
+function ProblemsEditorialScene({ exitProgress }: { exitProgress?: MotionValue<number> | null }) {
+  /* ADN-005 — coreografía de salida: al consumirse el pasillo del Acto 1, los
+     cuatro fragmentos del caos SE RECOGEN hacia la línea ADN (borde derecho)
+     — «lo disperso → un solo sistema». Sin progreso de salida (móvil,
+     reduced-motion, flujo) la pieza permanece ESTÁTICA (misión 003 §5). */
   return (
     <div
       aria-hidden="true"
-      className="relative hidden lg:block w-full max-w-[440px] aspect-[440/400] select-none"
+      className="relative hidden lg:block w-full max-w-[440px] aspect-[440/330] select-none"
     >
       {/* Marcas de registro — la mesa de edición */}
       <span className="absolute top-0 left-0 h-3 w-3 border-t border-l border-white/20" />
@@ -420,7 +424,13 @@ function ProblemsEditorialScene() {
       <span className="absolute bottom-0 right-0 h-3 w-3 border-b border-r border-white/20" />
 
       {/* N.01 — ventas en cuadernos: papel pautado con margen verde */}
-      <div className="absolute left-[0%] top-[1%] w-[52%] rotate-[-1.5deg]">
+      <DriftFragment
+        mv={exitProgress}
+        className="absolute left-[0%] top-[1%] w-[52%] rotate-[-1.5deg]"
+        base={-1.5}
+        x={70} y={-44} r={-2}
+        range={[0.05, 0.62]}
+      >
         <div
           className="relative border border-white/[0.09] bg-white/[0.02] px-4 pb-4 pt-3"
           style={{
@@ -434,10 +444,16 @@ function ProblemsEditorialScene() {
             ventas en<br />cuadernos
           </p>
         </div>
-      </div>
+      </DriftFragment>
 
       {/* N.02 — inventario en papel: hoja de control con celdas */}
-      <div className="absolute right-[1%] top-[28%] w-[45%] rotate-[1.25deg]">
+      <DriftFragment
+        mv={exitProgress}
+        className="absolute right-[1%] top-[28%] w-[45%] rotate-[1.25deg]"
+        base={1.25}
+        x={120} y={-12} r={1.5}
+        range={[0.16, 0.72]}
+      >
         <div className="relative border border-white/[0.09] bg-white/[0.02] p-3">
           <SceneLabel n="N.02" context="papel" className="left-3" />
           <p className="mb-2.5 mt-1 font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">
@@ -455,10 +471,16 @@ function ProblemsEditorialScene() {
             ))}
           </div>
         </div>
-      </div>
+      </DriftFragment>
 
       {/* N.03 — costos a ojo: anotación serif con subrayado manual (SVG fijo) */}
-      <div className="absolute left-[7%] top-[58%] w-[46%] rotate-[-0.75deg]">
+      <DriftFragment
+        mv={exitProgress}
+        className="absolute left-[7%] top-[58%] w-[46%] rotate-[-0.75deg]"
+        base={-0.75}
+        x={150} y={-72} r={-2.5}
+        range={[0.28, 0.86]}
+      >
         <div className="relative pt-1">
           <SceneLabel n="N.03" context="estimación" className="left-2" />
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/55">costos</p>
@@ -469,10 +491,16 @@ function ProblemsEditorialScene() {
             <path d="M2 7 Q 30 2.5 60 6 T 118 4.5" fill="none" stroke="#22c55e" strokeWidth="2.4" strokeLinecap="round" opacity="0.9" />
           </svg>
         </div>
-      </div>
+      </DriftFragment>
 
       {/* N.04 — deudas en chats: fragmento de conversación (puntos estáticos) */}
-      <div className="absolute bottom-[8%] right-[2%] w-[52%] rotate-[1deg]">
+      <DriftFragment
+        mv={exitProgress}
+        className="absolute bottom-[8%] right-[2%] w-[52%] rotate-[1deg]"
+        base={1}
+        x={190} y={30} r={2}
+        range={[0.34, 0.95]}
+      >
         <div className="relative rounded-2xl rounded-bl-sm border border-white/[0.11] bg-white/[0.03] px-4 py-3">
           <SceneLabel n="N.04" context="chats" className="right-3" />
           <p className="font-mono text-[11px] leading-relaxed text-white/65">
@@ -484,13 +512,60 @@ function ProblemsEditorialScene() {
             <span className="h-1.5 w-1.5 rounded-full bg-white/25" />
           </span>
         </div>
-      </div>
+      </DriftFragment>
 
       {/* Pie editorial — el mensaje aprobado, en la base de la mesa */}
-      <p className="absolute bottom-0 left-[7%] font-mono text-[10px] uppercase tracking-[0.26em] text-white/40">
+      <DriftFragment
+        mv={exitProgress}
+        className="absolute bottom-0 left-[7%] font-mono text-[10px] uppercase tracking-[0.26em] text-white/40"
+        fadeOnly
+        range={[0.1, 0.55]}
+      >
         Lo disperso — <span className="text-[#22c55e]">un solo sistema</span>
-      </p>
+      </DriftFragment>
     </div>
+  );
+}
+
+/* Fragmento del caos que SE RECOGE hacia la línea ADN durante la salida del
+   Acto 1 (solo escritorio con movimiento). Sin `mv` (móvil / reduced-motion)
+   renderiza el div estático ORIGINAL — píxel-idéntico a la misión 003.
+   El motion.div hereda el className completo: la rotación base viaja en el
+   transform inline (mismo ángulo que la clase en reposo → píxel-idéntico). */
+function DriftFragment({
+  mv, className, base = 0, x = 0, y = 0, r = 0, range, fadeOnly = false,
+  children,
+}: {
+  mv?: MotionValue<number> | null;
+  className: string;
+  base?: number;
+  x?: number;
+  y?: number;
+  r?: number;
+  range: [number, number];
+  fadeOnly?: boolean;
+  children: React.ReactNode;
+}) {
+  /* Hooks estables: si no hay progreso se usa un MotionValue neutro. */
+  const neutral = useMotionValue(0);
+  const source = mv ?? neutral;
+  const translate = useTransform(
+    source,
+    range,
+    [`rotate(${base}deg)`, `translate3d(${x}px, ${y}px, 0px) rotate(${base + r}deg)`],
+  );
+  const opacity = useTransform(source, range, [1, 0.06]);
+
+  if (!mv) return <div className={className}>{children}</div>;
+
+  return (
+    <motion.div
+      aria-hidden="true"
+      className={className}
+      style={fadeOnly ? { opacity } : { transform: translate, opacity }}
+    >
+      {children}
+    </motion.div>
   );
 }
 
@@ -514,7 +589,7 @@ const TICKER_ITEMS: ReadonlyArray<string> = [
 
 function LandingTicker() {
   return (
-    <div aria-hidden="true" className="landing-ticker relative overflow-hidden border-t border-white/[0.06] py-3.5">
+    <div aria-hidden="true" className="landing-ticker relative overflow-hidden border-t border-white/[0.06] py-2">
       <div className="landing-ticker-track flex w-max">
         {[0, 1].map((half) => (
           <div key={half} className="flex items-center">
@@ -547,12 +622,11 @@ export interface HeroSectionProps {
   setShowMobileNav: (v: boolean) => void;
   setShowCommandPalette?: (v: boolean) => void;
   setLoginDefaultTab?: (tab: 'login' | 'register') => void;
-  children?: React.ReactNode;
-  bottomContent?: React.ReactNode;
-  socialProofPopup?: React.ReactNode;
-  showPromo?: boolean;
-  handleDismissPromo?: () => void;
   onOpenDemo?: () => void;
+  /* ADN-005 — progreso de salida del Acto 1 (0→1 durante el pasillo fijado).
+     Solo presente en escritorio con movimiento permitido; los fragmentos del
+     caos se recogen hacia la línea ADN con este valor. */
+  exitProgress?: MotionValue<number> | null;
 }
 
 export default function HeroSection({
@@ -565,26 +639,11 @@ export default function HeroSection({
   setShowMobileNav,
   setShowCommandPalette,
   setLoginDefaultTab,
-  children,
-  bottomContent,
-  socialProofPopup,
-  showPromo,
-  handleDismissPromo,
   onOpenDemo,
+  exitProgress,
 }: HeroSectionProps) {
   const [searchFocused, setSearchFocused] = React.useState(false);
-  /* ADN-BRAND-HERO-REFINEMENT-002: header transparente sobre el hero que se
-     transforma al desplazarse. La marca es SIEMPRE el mismo wordmark (una
-     única identidad, sin cambio de estado, sin iconos genéricos). */
-  const [navScrolled, setNavScrolled] = React.useState(false);
   const reduceMotion = useReducedMotion();
-
-  React.useEffect(() => {
-    const onScroll = () => setNavScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   // FIX #006: Search input connected to Command Palette via prop
   const handleSearchFocus = () => {
@@ -595,105 +654,21 @@ export default function HeroSection({
 
   const handleSearchBlur = () => setSearchFocused(false);
 
-  const navLinks = [
-    { label: 'Funcionalidades', href: '#features' },
-    { label: 'Plataforma', href: '#como-funciona' },
-    { label: 'Ayuda', href: '#faq' },
-  ];
-
+  /* ADN-005: este componente ES la escena del Acto 1 — llena la caja fijada
+     (h-full dentro de .act-scene--pinned). El header fijo ya no vive aquí:
+     un ancestro con transform convierte position:fixed en absoluto, así que
+     LandingHeader se renderiza en la raíz de LandingPage (chrome
+     persistente de todo el recorrido). El espacio del header se compensa
+     con el padding superior del contenido. */
   return (
-    <div ref={leftPanelRef} className="relative flex-1 bg-[#05070A]">
-      {/* ── Top Navigation Bar ──
-          FIXED sobre toda la página (html/body llevan overflow-x:hidden, que
-          rompe position:sticky en Chromium): transparente sobre el hero y
-          transformación discreta al desplazarse. Marca ÚNICA con el MISMO
-          tratamiento del menú lateral autenticado (ADN-LANDING-FINAL-POLISH-003
-          §3): «ADN» verde + «egocio» blanco, tipografía bold tracking-tight —
-          nunca un icono genérico ni versiones desproporcionadas. */}
-      <motion.nav
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className={`fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 sm:px-10 lg:px-16 xl:px-20 py-4 transition-all duration-300 ${
-          navScrolled
-            ? 'bg-[#05070A]/85 backdrop-blur-md border-b border-white/[0.06] shadow-[0_1px_0_rgba(255,255,255,0.02)]'
-            : 'bg-transparent border-b border-transparent'
-        }`}
-        aria-label="Navegación principal"
-      >
-        {/* Marca del encabezado: MISMO tratamiento que el sidebar autenticado
-            (Sidebar.tsx): wordmark tipográfico ADN verde + egocio blanco. */}
-        <div className="flex items-center">
-          <a
-            href="#hero"
-            onClick={(e) => {
-              e.preventDefault();
-              window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
-            }}
-            className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
-            aria-label="ADNegocio — volver al inicio"
-            title="ADNegocio — volver al inicio"
-          >
-            <BrandWordmark className="text-lg font-bold tracking-tight leading-none font-[family-name:var(--font-space-grotesk)] transition-opacity duration-200 hover:opacity-80" />
-          </a>
-        </div>
-
-        {/* Center nav links — desktop (Funcionalidades · Plataforma · Ayuda) */}
-        <div className="hidden md:flex items-center gap-1">
-          {navLinks.map((link, idx) => (
-            <a
-              key={`${link.href}-${idx}`}
-              href={link.href}
-              onClick={(e) => { e.preventDefault(); document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' }); }}
-              className="nav-link-hover px-4 py-2.5 text-[13px] font-medium text-white/60 hover:text-white/80 transition-colors duration-200" /* FIX-ACC-014 */
-            >
-              {link.label}
-            </a>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Acceder — CTA del header (solo ≥ sm; en móvil vive en el drawer).
-              Verde sólido de marca: misma familia que el CTA primario del hero. */}
-          <button
-            type="button"
-            onClick={() => {
-              void entrarACostpro({
-                openLogin: () => {
-                  if (setLoginDefaultTab) setLoginDefaultTab('login');
-                  setShowLoginModal(true);
-                },
-                setLoginDefaultTab,
-              });
-            }}
-            className="hidden sm:inline-flex items-center min-h-[40px] px-5 rounded-lg bg-[#22c55e] text-[#05070A] text-[13px] font-bold transition-all hover:bg-[#4ade80] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
-            aria-label="Acceder a ADNegocio"
-          >
-            Acceder
-          </button>
-          {/* Mobile hamburger (abre el drawer de navegación único) */}
-          <button
-            onClick={() => setShowMobileNav(!showMobileNav)}
-            className="flex md:hidden items-center justify-center w-11 h-11 rounded-lg hover:bg-white/[0.06] transition-colors"
-            aria-label="Abrir menú"
-          >
-            <div className={`hamburger-icon ${showMobileNav ? 'open' : ''}`}>
-              <span />
-              <span />
-              <span />
-            </div>
-          </button>
-        </div>
-      </motion.nav>
-      {/* Espaciador del header fijo (conserva el flujo del documento) */}
-      <div aria-hidden="true" className="h-[72px]" />
-
-      {/* ── Hero viewport ──
-          FIX-ENTRY (2026-09-20): minHeight 100vh (no height fijo) — el selector
-          de 3 caminos puede exceder el viewport en pantallas cortas.
-          overflow-hidden contiene la dispersión tipográfica/chips sin generar
-          scroll horizontal (validado 360→1920 en RESPONSIVE_VALIDATION). */}
-      <div className="relative w-full overflow-hidden" style={{ minHeight: '100vh' }}>
+    <div ref={leftPanelRef} className="relative w-full min-h-[100svh] bg-[#05070A]">
+      {/* ── Hero viewport (escena del Acto 1) ──
+          La caja fijada es 100svh (ActStage); el contenido se organiza dentro
+          con ritmo basado en svh para caber completo sin recortes en alturas
+          de escritorio 700–1100px (el selector de caminos comprime su paso
+          vertical antes que desaparecer contenido). overflow-hidden contiene
+          la dispersión tipográfica/chips sin generar scroll horizontal. */}
+      <div className="relative w-full min-h-[100svh] overflow-hidden">
 
         {/* ── Layer 1: retícula estructural (ref. Grids/Anduril) — el orden
               espacial es el fondo del mensaje: nada de fotos de stock. ── */}
@@ -722,39 +697,19 @@ export default function HeroSection({
           <ParticleRain />
         </div>
 
-        {/* ── Content layer ── */}
-        <div className="relative z-10 flex flex-col min-h-screen">
-          {/* ── PROMO BANNER (reestilizado editorial: superficie oscura + acento) ── */}
-          <AnimatePresence>
-            {showPromo && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 36, opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                className="relative overflow-hidden w-full bg-[#060b09]/95 border-b border-[#22c55e]/25 shrink-0"
-              >
-                <div className="relative flex items-center justify-center px-9 h-9 gap-2.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#22c55e] shrink-0" aria-hidden="true" />
-                  <span className="font-mono text-[11px] text-white/70 tracking-wide truncate">
-                    Plataforma multi-tienda · Vitrina digital por tienda · Ficha de Costo gratis
-                  </span>
-                  <button
-                    onClick={handleDismissPromo}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors pointer-events-auto"
-                    aria-label="Cerrar promoción"
-                  >
-                    <X className="w-3 h-3 text-white" />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
+        {/* ── Content layer ──
+            ADN-005: el PROMO BANNER salió de la escena — es chrome global del
+            landing y ahora vive en la raíz (LandingPage), justo bajo el header.
+            Dentro de la escena fijada quedaba solapado con el header y además
+            consumía 36px del presupuesto de 100svh. */}
+        <div className="relative z-10 flex flex-col min-h-[100svh]">
           {/* FIX-ENTRY B1 (2026-09-20): menú móvil único = drawer de LandingPage. */}
 
           {/* ── HERO EDITORIAL (asimétrico, alineado a la izquierda) ── */}
-          <div ref={heroRef} id="hero" className="flex-1 flex flex-col justify-center px-6 sm:px-10 lg:px-16 xl:px-20 pt-12 pb-10">
+          {/* ADN-005: el id "hero" vive ahora en el WRAPPER del acto (ActStage)
+              — posiciones estables para pager/scrollspy/E2E aunque la escena
+              esté fijada. heroRef se conserva para el IntersectionObserver. */}
+          <div ref={heroRef} className="flex-1 flex flex-col justify-center px-6 sm:px-10 lg:px-16 xl:px-20 pt-[0.6svh] pb-[0.4svh]">
             <div className="w-full max-w-[1360px] mx-auto">
 
               {/* Eyebrow mono — declaración de categoría (ref. North) */}
@@ -762,7 +717,7 @@ export default function HeroSection({
                 initial={reduceMotion ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="flex items-center gap-3.5 mb-8 sm:mb-10"
+                className="flex items-center gap-3.5 mb-[clamp(8px,1.6svh,28px)]"
               >
                 <span className="h-2 w-2 rounded-full bg-[#22c55e] shadow-[0_0_14px_rgba(34,197,94,0.85)] shrink-0" aria-hidden="true" />
                 <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.32em] text-white/50">
@@ -778,7 +733,7 @@ export default function HeroSection({
                   la pila marca→promesa→CTAs abraza el titular (items-center la
                   centraba contra la escena alta y recreaba el vacío que la
                   firma debía eliminar). */}
-              <div className="mt-8 sm:mt-11 grid lg:grid-cols-12 lg:gap-10 items-start">
+              <div className="mt-[clamp(14px,2.6svh,40px)] grid lg:grid-cols-12 lg:gap-10 items-start [@media(max-height:950px)]:mt-[clamp(6px,1.4svh,22px)]">
                 <div className="lg:col-span-7">
                   {/* ADN-LANDING-HERO-AND-PAGER-FIX-004 §4.1 — LA FIRMA:
                       la marca ocupa el vacío entre titular y promesa (era la
@@ -791,7 +746,7 @@ export default function HeroSection({
                     initial={reduceMotion ? false : { opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="mt-7 sm:mt-8 max-w-xl text-base sm:text-lg text-white/60 leading-relaxed"
+                    className="mt-[clamp(12px,2.2svh,30px)] max-w-xl text-base sm:text-lg text-white/60 leading-relaxed [@media(max-height:950px)]:max-w-2xl [@media(max-height:950px)]:text-base"
                   >
                     Las operaciones de tu empresa dejan de estar dispersas —inventario,
                     ventas, costos, documentos— y empiezan a funcionar como{' '}
@@ -803,7 +758,7 @@ export default function HeroSection({
                     initial={reduceMotion ? false : { opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.22, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="mt-8 flex flex-col sm:flex-row sm:items-center gap-3.5"
+                    className="mt-[clamp(12px,2.4svh,32px)] flex flex-col sm:flex-row sm:items-center gap-3.5 [@media(max-height:950px)]:mt-[clamp(6px,1.4svh,20px)]"
                   >
                     <button
                       type="button"
@@ -835,7 +790,7 @@ export default function HeroSection({
                     los cuatro malabares como fragmentos editoriales sobre la
                     mesa — sin bucles ni movimiento automático */}
                 <div className="lg:col-span-5 mt-10 lg:mt-0 flex items-center">
-                  <ProblemsEditorialScene />
+                  <ProblemsEditorialScene exitProgress={exitProgress} />
                 </div>
               </div>
 
@@ -852,13 +807,54 @@ export default function HeroSection({
                 initial={reduceMotion ? false : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.42, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-14 sm:mt-16 w-full"
+                className="mt-[clamp(14px,2.6svh,44px)] w-full [@media(max-height:950px)]:mt-[clamp(6px,1.4svh,22px)]"
               >
-                <div className="flex items-center gap-5 mb-5">
+                {/* ADN-005: cabecera del selector fusionada con la navegación
+                    secundaria (búsqueda ⌘K + explorar) — una sola fila, la
+                    búsqueda abre la misma paleta que antes. */}
+                <div className="flex items-center gap-4 sm:gap-5 mb-4 [@media(max-height:1100px)]:mb-2 [@media(max-height:950px)]:mb-2">
                   <h2 className="text-base sm:text-lg font-semibold text-white/85 tracking-tight whitespace-nowrap">
                     ¿Qué quieres hacer?
                   </h2>
                   <span className="h-px flex-1 bg-white/[0.08]" aria-hidden="true" />
+                  <div
+                    className={`relative hidden sm:flex items-center gap-2.5 px-3.5 py-2 rounded-lg border transition-all duration-300 w-64 ${
+                      searchFocused
+                        ? 'bg-white/[0.05] border-[#22c55e]/40 shadow-[0_0_24px_rgba(34,197,94,0.07)]'
+                        : 'bg-white/[0.03] border-white/[0.08] hover:border-white/[0.16]'
+                    }`}
+                  >
+                    <Search className="w-3.5 h-3.5 text-white/30 shrink-0" />
+                    <input
+                      type="text"
+                      placeholder="Buscar en la plataforma…"
+                      className="flex-1 min-w-0 bg-transparent font-mono text-[11px] text-white/70 placeholder-white/30 outline-none"
+                      onFocus={handleSearchFocus}
+                      onBlur={handleSearchBlur}
+                      readOnly
+                      aria-label="Buscar funciones"
+                    />
+                    <kbd className="flex items-center px-1.5 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.08] text-[9px] text-white/35 font-mono">
+                      ⌘K
+                    </kbd>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' })}
+                    className="group hidden md:flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-md"
+                    aria-label="Explorar funcionalidades"
+                  >
+                    <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/40 group-hover:text-white/70 transition-colors">
+                      Explorar
+                    </span>
+                    <motion.span
+                      animate={reduceMotion ? undefined : { y: [0, 5, 0] }}
+                      transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+                      className="inline-flex"
+                    >
+                      <ChevronDown className="w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" />
+                    </motion.span>
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 text-left">
@@ -872,9 +868,9 @@ export default function HeroSection({
                       e.preventDefault();
                       void enterFichaDeCosto(() => { if (setLoginDefaultTab) setLoginDefaultTab('login'); setShowLoginModal(true); });
                     }}
-                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
+                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 [@media(max-height:1100px)]:py-3 [@media(max-height:950px)]:py-2.5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
                   >
-                    <span className="flex items-center justify-between mb-5" aria-hidden="true">
+                    <span className="flex items-center justify-between mb-5 [@media(max-height:1100px)]:mb-2.5" aria-hidden="true">
                       <span className="w-9 h-9 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center">
                         <Calculator className="w-[18px] h-[18px] text-[#22c55e]" strokeWidth={1.5} />
                       </span>
@@ -885,10 +881,10 @@ export default function HeroSection({
                     <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40 mb-2" aria-hidden="true">
                       01 — Ficha de Costo · Res. 148/2023
                     </span>
-                    <span className="text-lg font-bold text-white tracking-tight mb-1.5">
+                    <span className="text-lg font-bold text-white tracking-tight mb-1.5 [@media(max-height:1100px)]:text-base">
                       Ficha de Costo gratis
                     </span>
-                    <span className="text-[13px] leading-relaxed text-white/55 mb-6">
+                    <span className="text-[13px] leading-relaxed text-white/55 mb-6 [@media(max-height:1100px)]:mb-2.5 [@media(max-height:1100px)]:line-clamp-2">
                       Crea y calcula fichas conforme a la Res. 148/2023. Con tu cuenta de Google o como invitado — sin instalar nada.
                     </span>
                     <span className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-[#22c55e]" aria-hidden="true">
@@ -922,9 +918,9 @@ export default function HeroSection({
                         setLoginDefaultTab,
                       });
                     }}
-                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
+                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 [@media(max-height:1100px)]:py-3 [@media(max-height:950px)]:py-2.5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
                   >
-                    <span className="flex items-center justify-between mb-5" aria-hidden="true">
+                    <span className="flex items-center justify-between mb-5 [@media(max-height:1100px)]:mb-2.5" aria-hidden="true">
                       <span className="w-9 h-9 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center">
                         <LayoutGrid className="w-[18px] h-[18px] text-white/65" strokeWidth={1.5} />
                       </span>
@@ -932,10 +928,10 @@ export default function HeroSection({
                     <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40 mb-2" aria-hidden="true">
                       02 — Plataforma completa
                     </span>
-                    <span className="text-lg font-bold text-white tracking-tight mb-1.5">
+                    <span className="text-lg font-bold text-white tracking-tight mb-1.5 [@media(max-height:1100px)]:text-base">
                       Entrar a ADNegocio
                     </span>
-                    <span className="text-[13px] leading-relaxed text-white/55 mb-6">
+                    <span className="text-[13px] leading-relaxed text-white/55 mb-6 [@media(max-height:1100px)]:mb-2.5 [@media(max-height:1100px)]:line-clamp-2">
                       Gestiona todas tus tiendas: inventario, punto de venta, reportes y vitrina digital en un solo lugar.
                     </span>
                     <span className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-[#22c55e]" aria-hidden="true">
@@ -950,9 +946,9 @@ export default function HeroSection({
                     data-testid="path-demo"
                     aria-label="Ver demostración de ADNegocio: recorre la plataforma en dos minutos, sin registro."
                     onClick={onOpenDemo}
-                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A] text-left cursor-pointer"
+                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 [@media(max-height:1100px)]:py-3 [@media(max-height:950px)]:py-2.5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A] text-left cursor-pointer"
                   >
-                    <span className="flex items-center justify-between mb-5" aria-hidden="true">
+                    <span className="flex items-center justify-between mb-5 [@media(max-height:1100px)]:mb-2.5" aria-hidden="true">
                       <span className="w-9 h-9 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center">
                         <PlayCircle className="w-[18px] h-[18px] text-white/65" strokeWidth={1.5} />
                       </span>
@@ -960,10 +956,10 @@ export default function HeroSection({
                     <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40 mb-2" aria-hidden="true">
                       03 — Sin registro
                     </span>
-                    <span className="text-lg font-bold text-white tracking-tight mb-1.5">
+                    <span className="text-lg font-bold text-white tracking-tight mb-1.5 [@media(max-height:1100px)]:text-base">
                       Ver demostración
                     </span>
-                    <span className="text-[13px] leading-relaxed text-white/55 mb-6">
+                    <span className="text-[13px] leading-relaxed text-white/55 mb-6 [@media(max-height:1100px)]:mb-2.5 [@media(max-height:1100px)]:line-clamp-2">
                       Recorre la plataforma en 2 minutos y descubre cómo automatiza tus fichas de costo.
                     </span>
                     <span className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-white/85 group-hover:text-white transition-colors" aria-hidden="true">
@@ -974,53 +970,9 @@ export default function HeroSection({
                 </div>
               </motion.div>
 
-              {/* ── Fila inferior: búsqueda (⌘K → paleta) + indicador de scroll ── */}
-              <motion.div
-                initial={reduceMotion ? false : { opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.62, duration: 0.6 }}
-                className="mt-10 flex flex-col sm:flex-row sm:items-center gap-5 sm:justify-between"
-              >
-                <div
-                  className={`relative flex items-center gap-3 px-5 py-3.5 rounded-xl border transition-all duration-300 w-full max-w-md ${
-                    searchFocused
-                      ? 'bg-white/[0.05] border-[#22c55e]/40 shadow-[0_0_24px_rgba(34,197,94,0.07)]'
-                      : 'bg-white/[0.03] border-white/[0.08] hover:border-white/[0.16]'
-                  }`}
-                >
-                  <Search className="w-4 h-4 text-white/30 shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="Buscar en la plataforma…"
-                    className="flex-1 bg-transparent font-mono text-[12px] text-white/70 placeholder-white/30 outline-none"
-                    onFocus={handleSearchFocus}
-                    onBlur={handleSearchBlur}
-                    readOnly
-                    aria-label="Buscar funciones"
-                  />
-                  <kbd className="hidden sm:flex items-center px-2 py-0.5 rounded-md bg-white/[0.05] border border-white/[0.08] text-[10px] text-white/35 font-mono">
-                    ⌘K
-                  </kbd>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' })}
-                  className="group flex items-center gap-2.5 self-start sm:self-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-md"
-                  aria-label="Explorar funcionalidades"
-                >
-                  <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-white/40 group-hover:text-white/70 transition-colors">
-                    Explorar
-                  </span>
-                  <motion.span
-                    animate={reduceMotion ? undefined : { y: [0, 5, 0] }}
-                    transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-                    className="inline-flex"
-                  >
-                    <ChevronDown className="w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" />
-                  </motion.span>
-                </button>
-              </motion.div>
+              {/* ADN-005: la búsqueda (⌘K) y «Explorar» viven ahora en la
+                  cabecera del selector de caminos (una sola fila editorial).
+                  La cinta inferior conserva el ritmo al pie de la escena. */}
 
             </div>
           </div>
@@ -1040,14 +992,9 @@ export default function HeroSection({
         />
       </div>{/* end hero viewport */}
 
-      {/* ── All other landing sections below (seamless dark continuation) ── */}
-      <div className="relative z-10">
-        {children}
-      </div>
-
-      {/* Bottom content */}
-      {bottomContent}
-      {socialProofPopup}
+      {/* ADN-005: las secciones restantes ya no cuelgan del hero — cada una es
+          su propio acto (ActStage en LandingPage). La escena del Acto 1 es
+          EXACTAMENTE un viewport. */}
     </div>
   );
 }

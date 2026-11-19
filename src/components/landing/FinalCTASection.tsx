@@ -18,22 +18,26 @@ interface FinalCTASectionProps {
   onOpenDemo?: () => void;
   /** Acceso a la plataforma (abre el modal de acceso con pestaña de registro). */
   onSignup?: () => void;
+  /** ADN-005: dentro de la escena del Acto 5 el cierre comprime su paso
+     vertical (mismo contenido, menos aire) para convivir con el FAQ en un
+     viewport sin recortes. */
+  compact?: boolean;
 }
 
-export default function FinalCTASection({ onOpenDemo, onSignup }: FinalCTASectionProps) {
+export default function FinalCTASection({ onOpenDemo, onSignup, compact = false }: FinalCTASectionProps) {
   const prefersReduced = useReducedMotion();
   const noAnim = prefersReduced;
 
   return (
-    <section className="py-28 px-4">
-      <div className="max-w-2xl mx-auto text-center">
+    <section className={`${compact ? 'py-12 sm:py-14' : 'py-28'} px-4`}>
+      <div className={`max-w-2xl mx-auto text-center ${compact ? 'space-y-3' : ''}`}>
         {/* Cierre — titular editorial */}
         <motion.h2
           initial={noAnim ? false : { opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-3xl md:text-5xl font-black tracking-tight mb-6 leading-[1.08] text-white font-[family-name:var(--font-space-grotesk)]"
+          className={`text-3xl md:text-5xl font-black tracking-tight ${compact ? 'mb-4' : 'mb-6'} leading-[1.08] text-white font-[family-name:var(--font-space-grotesk)]`}
         >
           Tu negocio merece
           <br />
@@ -46,7 +50,7 @@ export default function FinalCTASection({ onOpenDemo, onSignup }: FinalCTASectio
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mb-10"
+          className={`${compact ? 'mb-6' : 'mb-10'}`}
         >
           <BrandWordmark className="text-xl sm:text-2xl font-bold tracking-tight font-[family-name:var(--font-space-grotesk)]" />
         </motion.div>

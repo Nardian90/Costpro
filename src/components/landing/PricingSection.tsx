@@ -17,10 +17,10 @@ export default function PricingSection({
   onSignup,
 }: PricingSectionProps) {
   return (
-    <div ref={pricingRef} id="pricing" className="relative scroll-mt-[76px]">
-      {/* ADN-LANDING-HERO-AND-PAGER-FIX-004: id canónico "pricing" (antes
-          "precios", que no coincidía con sectionIds[3] ni con los anchors
-          #pricing del FAB y CostStorySection) + scroll-mt para el header fijo. */}
+    <div ref={pricingRef} className="relative">
+      {/* ADN-005: el id canónico "pricing" (misión 004) vive ahora en el
+          WRAPPER del acto (ActStage en LandingPage) — el acto es el destino
+          del paginador, del anchor #pricing y de los tests E2E. */}
       <div className="max-w-5xl mx-auto w-full">
         {/* Section Header */}
         <motion.div
