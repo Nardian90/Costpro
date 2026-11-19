@@ -290,6 +290,12 @@ BEGIN
   RETURN v_entry_id;
 END $function$;
 
+-- CP-FIN-003: la firma ampliada (6 params) NO sustituye la vieja (5 params):
+-- CREATE OR REPLACE con distinto número de parámetros crea una SOBRECARGA y
+-- las llamadas de los triggers (3 args implícitos) quedan ambiguas. Se elimina
+-- la firma anterior explícitamente.
+DROP FUNCTION IF EXISTS public.fin_post_document(text, uuid, text, uuid, uuid);
+
 CREATE OR REPLACE FUNCTION public.fin_post_document_safe(
   p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid DEFAULT NULL,
   p_generation_id uuid DEFAULT NULL
@@ -322,6 +328,8 @@ BEGIN
     RETURN NULL;
   END;
 END $function$;
+
+DROP FUNCTION IF EXISTS public.fin_post_document_safe(text, uuid, text, uuid);
 
 -- Anulación compensatoria consciente de generación.
 -- BASE = cuerpo LIVE (20261118130000 §4, guard T12 de reversión parcial).
@@ -389,6 +397,8 @@ BEGIN
   END LOOP;
   RETURN v_count;
 END $function$;
+
+DROP FUNCTION IF EXISTS public.fin_post_document_annulment(text, uuid);
 
 -- ══════════════════════════════════════════════════════════════════════════
 -- 5. MÉTRICAS v4 — BASE = cuerpo LIVE (migración 20261119120000, verificado
