@@ -1,0 +1,90 @@
+{
+ "kpis": {
+  "bancos": 25850770.01,
+  "gastos": 673392.21,
+  "ingresos": 35901894.99,
+  "costo_ventas": 1752998.46,
+  "efectivo_cup": 1265280,
+  "efectivo_usd": -4500,
+  "resultado_neto": 33475504.32,
+  "utilidad_bruta": 34148896.53,
+  "inventario_valor": 594771.44,
+  "nomina_pendiente": 0,
+  "cuentas_por_pagar": 2961795.9,
+  "transfer_exterior": 0,
+  "cuentas_por_cobrar": 0,
+  "retenciones_pendientes": 0
+ },
+ "desde": "2026-01-01",
+ "hasta": "2030-12-31",
+ "alertas": {
+  "desequilibrio_monto": 0,
+  "tipos_sin_configurar": 4,
+  "desequilibrio_balance": false,
+  "errores_contabilizacion": 0,
+  "gastos_mayores_que_ingresos": false
+ },
+ "generacion": {
+  "id": "d0b7adf7-d355-4802-8348-3daf33f290ed",
+  "code": "GEN-0"
+ },
+ "top_gastos": [
+  {
+   "code": "GAS_COSTO_VENTAS",
+   "name": "Costo de los productos vendidos",
+   "total": 23221574
+  },
+  {
+   "code": "GAS_PERDIDA_INV",
+   "name": "Pérdidas de inventario",
+   "total": 10181477.58
+  },
+  {
+   "code": "GAS_OTROS_OPER",
+   "name": "Otros gastos operacionales",
+   "total": 8729279.98
+  },
+  {
+   "code": "GAS_VALES",
+   "name": "Consumo interno de mercancías (vales)",
+   "total": 6035827.13
+  },
+  {
+   "code": "GAS_SERVICIOS",
+   "name": "Gastos por Servicios Recibidos",
+   "total": 60765
+  },
+  {
+   "code": "GAS_COMISIONES",
+   "name": "Gastos por comisiones",
+   "total": 300
+  }
+ ],
+ "series_mensuales": [
+  {
+   "mes": "2026-07",
+   "gastos": -35567829.39,
+   "ingresos": 14447030
+  },
+  {
+   "mes": "2026-08",
+   "gastos": 2453083.49,
+   "ingresos": 9014225
+  },
+  {
+   "mes": "2026-09",
+   "gastos": 545999.47,
+   "ingresos": 7770184.99
+  },
+  {
+   "mes": "2026-10",
+   "gastos": 842021.94,
+   "ingresos": 3727370
+  },
+  {
+   "mes": "2026-11",
+   "gastos": 34153115.16,
+   "ingresos": 943085
+  }
+ ]
+}

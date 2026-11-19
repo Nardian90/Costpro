@@ -426,6 +426,12 @@ END $function$;
 
 DROP FUNCTION IF EXISTS public.fin_post_document_annulment(text, uuid);
 
+-- Firmas intermedias retiradas: la escalar (p_include_ajuste_ids uuid) y la
+-- original de 4 args (sin lista de ajustes) — la canónica es la de 5 args
+-- con uuid[] (política de ajustes por lista explícita).
+DROP FUNCTION IF EXISTS public.fin_generation_build(uuid, uuid, boolean, uuid, uuid);
+DROP FUNCTION IF EXISTS public.fin_generation_build(uuid, uuid, boolean, uuid);
+
 -- ══════════════════════════════════════════════════════════════════════════
 -- 5. MÉTRICAS v4 — BASE = cuerpo LIVE (migración 20261119120000, verificado
 --    por contract-surface 212). Únicos cambios (anexo §2/§8): el evento pago
@@ -523,7 +529,10 @@ BEGIN
       WHERE ti.transaction_id = p_document_id
         AND ti.cash_currency = 'USD' AND ti.currency = 'USD'
         AND coalesce(ti.cash_paid, 0) > 0;
-      IF coalesce(v_fb_usd_settle, 0) > 0 THEN
+      -- CP-FIN-003 (hallazgo de la reconstrucción de ENERVIDA): settle CUP
+      -- NEGATIVO (vuelto entregado sin recepción CUP registrada) = dato
+      -- inconsistente → NO aplicar el carve; manda el pago REGISTRADO.
+      IF coalesce(v_fb_usd_settle, 0) > 0 AND coalesce(v_fb_settle_cup, 0) >= 0 THEN
         v_fb_usd_nom := v_fb_usd_settle;
         v_fb_otras_cob := round(coalesce((v ->> 'cob_transfer_cup')::numeric, 0)
                               + coalesce((v ->> 'cob_transfer_usd_cup')::numeric, 0)
@@ -545,11 +554,21 @@ BEGIN
       END IF;
     END IF;
 
+    -- CP-FIN-003: la suma de cobros cubre TODAS las combinaciones de la regla
+    -- v3 (EUR/MLC de efectivo/transferencia y zelle EUR). Sin ellas, una venta
+    -- cobrada en EUR quedaba descuadrada: débitos > créditos y la línea
+    -- diferencia_cobro_haber computaba 0 (hallazgo de la reconstrucción real
+    -- de ENERVIDA: 23ccd04f y abab9e20).
     v_total_cob := round(coalesce((v ->> 'cob_cash_cup')::numeric, 0)
                        + coalesce((v ->> 'cob_cash_usd_cup')::numeric, 0)
+                       + coalesce((v ->> 'cob_cash_eur_cup')::numeric, 0)
+                       + coalesce((v ->> 'cob_cash_mlc_cup')::numeric, 0)
                        + coalesce((v ->> 'cob_transfer_cup')::numeric, 0)
                        + coalesce((v ->> 'cob_transfer_usd_cup')::numeric, 0)
-                       + coalesce((v ->> 'cob_zelle_usd_cup')::numeric, 0), 2);
+                       + coalesce((v ->> 'cob_transfer_eur_cup')::numeric, 0)
+                       + coalesce((v ->> 'cob_transfer_mlc_cup')::numeric, 0)
+                       + coalesce((v ->> 'cob_zelle_usd_cup')::numeric, 0)
+                       + coalesce((v ->> 'cob_zelle_eur_cup')::numeric, 0), 2);
     v := v || jsonb_build_object(
       'cob_total_cup', v_total_cob,
       'diferencia_cobro_debe_cup', round(greatest(v_total_cup - v_total_cob, 0), 2),
@@ -1766,6 +1785,7 @@ END $function$;
 CREATE OR REPLACE FUNCTION public.fin_generation_build(
   p_store_id uuid, p_generation_id uuid,
   p_include_rectifications boolean DEFAULT false,
+  p_include_ajuste_ids uuid[] DEFAULT NULL,
   p_user_id uuid DEFAULT NULL
 ) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = 'public', 'pg_temp'
@@ -1775,7 +1795,9 @@ DECLARE
   g record; m record; r record;
   v_active uuid; v_new uuid;
   v_e record;
-  v_ok int := 0; v_skip int := 0; v_err int := 0; v_ann int := 0; v_copied int := 0; v_rect_skipped jsonb := '[]'::jsonb;
+  v_ok int := 0; v_skip int := 0; v_err int := 0; v_ann int := 0; v_copied int := 0;
+  v_no_recon jsonb := '[]'::jsonb; v_rect_skipped jsonb := '[]'::jsonb;
+  v_ajuste_ids uuid[] := p_include_ajuste_ids;
   v_errors jsonb := '[]'::jsonb;
   v_entry uuid;
 BEGIN
@@ -1817,9 +1839,22 @@ BEGIN
           v_skip := v_skip + 1;
         END IF;
       EXCEPTION WHEN others THEN
-        v_err := v_err + 1;
-        v_errors := v_errors || jsonb_build_object('pase', 1, 'doc', r.document_id,
-          'tipo', r.document_type, 'evento', r.event, 'error', substr(SQLERRM, 1, 200));
+        IF SQLERRM LIKE 'ERR_DOC_NOT_FOUND%' THEN
+          -- Documento ya inexistente (energía: fd9d6c88). Por defecto NO se
+          -- copia: los ajustes históricos sobre datos YA CORREGIDOS quedan
+          -- incorporados en la re-derivación (copiarlos duplicaría la
+          -- corrección — hallazgo real de EnerVida: reversión 151.3M y C1
+          -- 40.7M). Se REGISTRAN como no reconstruibles con su cuantía para
+          -- el expediente (misión §2/§15).
+          v_no_recon := v_no_recon || jsonb_build_object('doc', r.document_id,
+            'tipo', r.document_type, 'evento', r.event, 'motivo',
+            'documento inexistente (ERR_DOC_NOT_FOUND) — asiento NO copiado: cuantificar en el expediente');
+          v_skip := v_skip + 1;
+        ELSE
+          v_err := v_err + 1;
+          v_errors := v_errors || jsonb_build_object('pase', 1, 'doc', r.document_id,
+            'tipo', r.document_type, 'evento', r.event, 'error', substr(SQLERRM, 1, 200));
+        END IF;
       END;
     END LOOP;
 
@@ -1851,14 +1886,16 @@ BEGIN
                        AND x.document_type = v_e.document_type
                        AND x.document_number IS NOT DISTINCT FROM v_e.document_number
                        AND x.economic_date = v_e.economic_date
-                       AND x.description IS NOT DISTINCT FROM v_e.description) THEN
+                       AND x.description IS NOT DISTINCT FROM v_e.description
+                       AND x.reversal_of IS NOT DISTINCT FROM v_e.reversal_of) THEN
         INSERT INTO public.fin_entries (
           store_id, document_type, document_id, document_number, event, payment_ref,
           economic_date, rule_version_id, movements_snapshot, reversal_of, status,
-          description, created_by, generation_id)
+          description, created_by, generation_id, posted_at)
         VALUES (v_e.store_id, v_e.document_type, v_e.document_id, v_e.document_number, v_e.event,
                 v_e.payment_ref, v_e.economic_date, v_e.rule_version_id, v_e.movements_snapshot,
-                v_e.reversal_of, v_e.status, v_e.description, v_e.created_by, v_new)
+                v_e.reversal_of, v_e.status, v_e.description, v_e.created_by, v_new,
+                v_e.posted_at)
         RETURNING id INTO v_entry;
         FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = v_e.id LOOP
           INSERT INTO public.fin_movements (
@@ -1874,16 +1911,24 @@ BEGIN
       END IF;
     END LOOP;
 
-    -- PASE 4: ajustes manuales no-rectificatorios → copia literal (hechos
-    -- autorizados, no derivables de documentos). RECTIFICACION_FIN se OMITE
-    -- por defecto: su efecto ya está en los DATOS corregidos que la candidata
-    -- re-deriva; duplicarla aplicaría la corrección dos veces. Quedan
-    -- registradas en stats para decisión documentada del expediente.
+    -- PASE 4: ajustes manuales → política de LISTA EXPLÍCITA (misión §2:
+    -- clasificación por asiento, nunca una regla única para hechos distintos):
+    -- · RECTIFICACION_FIN: omitidas (efecto incorporado en los datos
+    --   corregidos que la candidata re-deriva — CP-FIN-001/002).
+    -- · Ajustes que revierten reconocimientos SOBRE DATOS YA CORREGIDOS
+    --   (hallazgo EnerVida: reversión 151,299,851 de FAC-VITALLCONS SKU
+    --   111/112 y C1 40,733,723.50): omitidos — la re-derivación ya produce
+    --   el valor correcto.
+    -- · Regularizaciones de VALORACIÓN históricas autorizadas NO derivables
+    --   (misiones 013/014: WAC drift, re-costeo): se copian SOLO si su id
+    --   está en p_include_ajuste_ids (decisión documentada por asiento).
+    -- Todas quedan registradas en stats (omitidas y copiadas).
     FOR v_e IN
       SELECT fe.* FROM public.fin_entries fe
       WHERE fe.store_id = p_store_id
         AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'ajuste_manual'
-        AND (p_include_rectifications OR fe.document_type <> 'RECTIFICACION_FIN')
+        AND fe.document_type <> 'RECTIFICACION_FIN'
+        AND (v_ajuste_ids IS NOT NULL AND fe.id = ANY (v_ajuste_ids))
     LOOP
       IF NOT EXISTS (SELECT 1 FROM public.fin_entries x
                      WHERE x.generation_id = v_new AND x.event = 'ajuste_manual'
@@ -1891,14 +1936,15 @@ BEGIN
                        AND x.document_number IS NOT DISTINCT FROM v_e.document_number
                        AND x.economic_date = v_e.economic_date
                        AND x.description IS NOT DISTINCT FROM v_e.description
-                       AND x.posted_at::date = v_e.posted_at::date) THEN
+                       AND x.reversal_of IS NOT DISTINCT FROM v_e.reversal_of) THEN
         INSERT INTO public.fin_entries (
           store_id, document_type, document_id, document_number, event, payment_ref,
           economic_date, rule_version_id, movements_snapshot, reversal_of, status,
-          description, created_by, generation_id)
+          description, created_by, generation_id, posted_at)
         VALUES (v_e.store_id, v_e.document_type, v_e.document_id, v_e.document_number, v_e.event,
                 v_e.payment_ref, v_e.economic_date, v_e.rule_version_id, v_e.movements_snapshot,
-                v_e.reversal_of, v_e.status, v_e.description, v_e.created_by, v_new)
+                v_e.reversal_of, v_e.status, v_e.description, v_e.created_by, v_new,
+                v_e.posted_at)
         RETURNING id INTO v_entry;
         FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = v_e.id LOOP
           INSERT INTO public.fin_movements (
@@ -1914,16 +1960,19 @@ BEGIN
       END IF;
     END LOOP;
 
-    IF NOT p_include_rectifications THEN
-      SELECT coalesce(jsonb_agg(jsonb_build_object(
-               'entry_id', fe.id, 'document_number', fe.document_number,
-               'descripcion', fe.description, 'economic_date', fe.economic_date)), '[]'::jsonb)
-      INTO v_rect_skipped
-      FROM public.fin_entries fe
-      WHERE fe.store_id = p_store_id
-        AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'ajuste_manual'
-        AND fe.document_type = 'RECTIFICACION_FIN';
-    END IF;
+    -- Registro completo de ajuste_manual omitidos (RECTIFICACION_FIN y el
+    -- resto) para el expediente: identificación + cuantía (misión §15).
+    SELECT coalesce(jsonb_agg(jsonb_build_object(
+             'entry_id', fe.id, 'document_type', fe.document_type,
+             'document_number', fe.document_number,
+             'descripcion', fe.description, 'economic_date', fe.economic_date,
+             'importe', (SELECT round(sum(CASE WHEN fm.sense = 'debito' THEN fm.amount_cup ELSE -fm.amount_cup END), 2)
+                         FROM public.fin_movements fm WHERE fm.entry_id = fe.id))), '[]'::jsonb)
+    INTO v_rect_skipped
+    FROM public.fin_entries fe
+    WHERE fe.store_id = p_store_id
+      AND fe.generation_id IS NOT DISTINCT FROM v_active AND fe.event = 'ajuste_manual'
+      AND NOT (v_ajuste_ids IS NOT NULL AND fe.id = ANY (v_ajuste_ids));
 
   -- PASE 5: cobertura documental COMPLETA (misión §5/§7): todo documento
   -- operativo que deba contabilizarse y no tenga asiento en la candidata.
@@ -2035,6 +2084,7 @@ BEGIN
         'build', jsonb_build_object(
           'repostados', v_ok, 'ya_existentes', v_skip, 'anulaciones', v_ann, 'copiados', v_copied,
           'errores', v_err, 'detalle_errores', v_errors,
+          'no_reconstruibles', v_no_recon,
           'rectificaciones_omitidas', v_rect_skipped,
           'generacion_origen', v_active,
           'construida_en', now()))
@@ -2042,7 +2092,8 @@ BEGIN
 
   RETURN jsonb_build_object('status', 'candidate', 'repostados', v_ok,
     'ya_existentes', v_skip, 'anulaciones', v_ann, 'copiados', v_copied, 'errores', v_err,
-    'detalle_errores', v_errors, 'rectificaciones_omitidas', v_rect_skipped);
+    'detalle_errores', v_errors, 'no_reconstruibles', v_no_recon,
+    'rectificaciones_omitidas', v_rect_skipped);
 END $function$;
 
 -- Validación de la candidata (misión §11): equilibrio por asiento y global,
@@ -2272,27 +2323,41 @@ REVOKE ALL ON public.fin_posting_generations FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.fin_posting_generations TO authenticated;
 
 -- Motor interno y ciclo de vida: NO ejecutables por clientes.
-REVOKE ALL ON FUNCTION
-  public.fin_resolve_financial_account(text, text),
-  public.fin_active_generation(uuid),
-  public.fin_post_document(text, uuid, text, uuid, uuid, uuid),
-  public.fin_post_document_safe(text, uuid, text, uuid, uuid),
-  public.fin_post_document_annulment(text, uuid, uuid),
-  public.fin_generation_create(uuid, text, text, uuid),
-  public.fin_generation_build(uuid, uuid, boolean, uuid),
-  public.fin_generation_validate(uuid, uuid, uuid),
-  public.fin_generation_activate(uuid, uuid, uuid),
-  public.fin_generation_rollback(uuid, uuid)
-FROM PUBLIC, anon, authenticated;
+-- (Sentencias UNA POR FUNCIÓN — el reproductor del contract-surface aplica
+-- GRANT/REVOKE individuales; los lotes multi-función no se repliegan.)
+REVOKE ALL ON FUNCTION public.fin_resolve_financial_account(text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_resolve_financial_account(text, text) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_active_generation(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_active_generation(uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_post_document(text, uuid, text, uuid, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_post_document(text, uuid, text, uuid, uuid, uuid) FROM anon, authenticated;
+-- service_role conserva EXECUTE (canal canónico del motor — igual que la
+-- firma viva anterior; la BD aislada/provisión de plataforma lo otorga y el
+-- surface LIVE lo certifica en ambas generaciones de la firma).
+GRANT EXECUTE ON FUNCTION public.fin_post_document(text, uuid, text, uuid, uuid, uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.fin_post_document_safe(text, uuid, text, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_post_document_safe(text, uuid, text, uuid, uuid) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.fin_post_document_safe(text, uuid, text, uuid, uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.fin_post_document_annulment(text, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_post_document_annulment(text, uuid, uuid) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.fin_post_document_annulment(text, uuid, uuid) TO service_role;
+REVOKE ALL ON FUNCTION public.fin_generation_create(uuid, text, text, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_generation_create(uuid, text, text, uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_generation_build(uuid, uuid, boolean, uuid[], uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_generation_build(uuid, uuid, boolean, uuid[], uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_generation_validate(uuid, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_generation_validate(uuid, uuid, uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_generation_activate(uuid, uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_generation_activate(uuid, uuid, uuid) FROM anon, authenticated;
+REVOKE ALL ON FUNCTION public.fin_generation_rollback(uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.fin_generation_rollback(uuid, uuid) FROM anon, authenticated;
 -- Ciclo de vida de generaciones: canal canónico (service_role), patrón
 -- fin_rectify_sale_payment_method (REVOKE de clientes + GRANT explícito).
-GRANT EXECUTE ON FUNCTION
-  public.fin_generation_create(uuid, text, text, uuid),
-  public.fin_generation_build(uuid, uuid, boolean, uuid),
-  public.fin_generation_validate(uuid, uuid, uuid),
-  public.fin_generation_activate(uuid, uuid, uuid),
-  public.fin_generation_rollback(uuid, uuid)
-TO service_role;
+GRANT EXECUTE ON FUNCTION public.fin_generation_create(uuid, text, text, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.fin_generation_build(uuid, uuid, boolean, uuid[], uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.fin_generation_validate(uuid, uuid, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.fin_generation_activate(uuid, uuid, uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.fin_generation_rollback(uuid, uuid) TO service_role;
 
 -- ══════════════════════════════════════════════════════════════════════════
 -- 12. SANITY CHECK del lote (fail-closed si el mapeo quedó incompleto)
