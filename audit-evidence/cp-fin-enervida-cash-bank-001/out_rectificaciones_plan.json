@@ -1,0 +1,115 @@
+{
+ "reclasificaciones_moneda": [
+  {
+   "venta": "9d1ccef8",
+   "importe_cup": 6510.0,
+   "escritor": "fin_reclassify_sale_payment_currency",
+   "metodo": "cash",
+   "desde": "USD",
+   "hacia": "CUP"
+  },
+  {
+   "venta": "97263a9c",
+   "importe_cup": 9200.0,
+   "escritor": "fin_reclassify_sale_payment_currency",
+   "metodo": "cash",
+   "desde": "USD",
+   "hacia": "CUP"
+  },
+  {
+   "venta": "abab9e20",
+   "importe_cup": 16200.0,
+   "escritor": "fin_reclassify_sale_payment_currency",
+   "metodo": "cash",
+   "desde": "USD",
+   "hacia": "CUP"
+  },
+  {
+   "venta": "e825ba93",
+   "importe_cup": 60840.0,
+   "escritor": "fin_reclassify_sale_payment_currency",
+   "metodo": "cash",
+   "desde": "USD",
+   "hacia": "CUP"
+  },
+  {
+   "venta": "8757444f",
+   "importe_cup": 32000.0,
+   "escritor": "fin_reclassify_sale_payment_currency",
+   "metodo": "cash",
+   "desde": "USD",
+   "hacia": "CUP"
+  },
+  {
+   "venta": "6501f8da",
+   "importe_cup": 930.0,
+   "escritor": "fin_reclassify_sale_payment_currency",
+   "metodo": "cash",
+   "desde": "USD",
+   "hacia": "CUP"
+  },
+  {
+   "venta": "7d9ad144",
+   "importe_cup": 6510.0,
+   "escritor": "fin_reclassify_sale_payment_currency",
+   "metodo": "cash",
+   "desde": "USD",
+   "hacia": "CUP"
+  }
+ ],
+ "reclasificaciones_moneda_caso_obsoleto": [
+  {
+   "venta": "28e94349",
+   "importe_cup": 167670.0,
+   "escritor": "fin_reclassify_sale_payment_currency",
+   "metodo": "cash",
+   "desde": "USD",
+   "hacia": "CUP",
+   "caso": "asiento_obsoleto"
+  }
+ ],
+ "reconocimientos_ausentes": [
+  {
+   "venta": "8ab7becf",
+   "escritor": "fin_post_document",
+   "evento": "reconocimiento"
+  },
+  {
+   "venta": "1df5d727",
+   "escritor": "fin_post_document",
+   "evento": "reconocimiento"
+  }
+ ],
+ "conservadas_sin_cambio": [
+  {
+   "documento": "RECT-FIN-E2614F36 (cf781c93)",
+   "motivo": "rectificación FIN-001 ejecutada e idempotente"
+  },
+  {
+   "documento": "RECT-015-A / RECT-015-B / RECT-015-D",
+   "motivo": "reclasificaciones M-015 §C con confirmación del propietario (cobro físico USD / entrega banco)"
+  },
+  {
+   "documento": "cd07fc7d (IE-000002-2026) + f158d156 (IE-000001-2026)",
+   "motivo": "FLUJO_CAJA entrega_efectivo genuinos"
+  }
+ ],
+ "impacto_saldos": {
+  "ACT_EFECTIVO_USD": {
+   "antes": 258160.0,
+   "delta": -299860,
+   "despues": -41700.0
+  },
+  "ACT_EFECTIVO_CUP": {
+   "antes": 937019.9999999995,
+   "delta": 299860,
+   "despues": 1236880.0
+  },
+  "ACT_BANCOS": {
+   "antes": 25848970.01,
+   "delta": 0,
+   "despues": 25848970.01
+  }
+ },
+ "nota_caja_usd_negativa": "Tras la reclasificación, ACT_EFECTIVO_USD queda en 251,900 débitos − 293,600 egreso = −41,700 CUP (−52.13 USD @800): el egreso cd07fc7d (367 USD «entrega para ingresar al banco») drenó USD cuyo ingreso físico a la caja no quedó registrado en esta cuenta (las colecciones USD físicas de octubre están registradas como CUP — el defecto mismo que RECT-015-A/B corrigieron para 2 casos confirmados). Diferencia residual documentada, sin invención de valores (mandato §7.4)."
+}

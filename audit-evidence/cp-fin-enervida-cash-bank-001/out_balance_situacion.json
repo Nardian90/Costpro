@@ -1,0 +1,16 @@
+{
+ "libro": {
+  "total_debitos": 480745318.72,
+  "total_creditos": 480745318.72,
+  "identidad_desequilibrio": 0.0
+ },
+ "formula_anterior": {
+  "descripcion": "A(d−c) − (P+Pat+I)(c−d) — omitía gasto",
+  "valor_enervida": -2425986.0
+ },
+ "formula_corregida": {
+  "descripcion": "Σ débitos − Σ créditos (= A + G − P − Pat − I)",
+  "valor_enervida": 0.0
+ },
+ "impacto_rectificaciones_en_ecuacion": 0.0
+}

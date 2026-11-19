@@ -1,0 +1,579 @@
+[
+ {
+  "venta": "867d9017",
+  "fecha": "2026-11-17",
+  "total_cup": 7200.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "cash",
+    "moneda": "CUP",
+    "importe": 4800.0,
+    "cup": 4800.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   },
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 2400.0,
+    "cup": 2400.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_EFECTIVO_CUP": 4800.0,
+   "ACT_BANCOS": 2400.0
+  },
+  "asientos": [
+   {
+    "id": "70276fbc",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "83b8e88e",
+  "fecha": "2026-11-14",
+  "total_cup": 10000.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 10000.0,
+    "cup": 10000.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 10000.0
+  },
+  "asientos": [
+   {
+    "id": "3b704c9a",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "e2614f36",
+  "fecha": "2026-11-07",
+  "total_cup": 125550.0,
+  "moneda_venta": "USD",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "cash",
+    "moneda": "USD",
+    "importe": 135.0,
+    "cup": 125550.0,
+    "tasa": 930.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 125550.0
+  },
+  "asientos": [
+   {
+    "id": "2d109ccf",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "RECTIFICACION_FIN001 (pareja compensada, neto 0)"
+ },
+ {
+  "venta": "bd4f4b39",
+  "fecha": "2026-11-07",
+  "total_cup": 5800.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 5800.0,
+    "cup": 5800.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 5800.0
+  },
+  "asientos": [
+   {
+    "id": "e8b6367b",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "cef4524f",
+  "fecha": "2026-10-22",
+  "total_cup": 26000.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 26000.0,
+    "cup": 26000.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 26000.0
+  },
+  "asientos": [
+   {
+    "id": "fee629ab",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "27f4aa8f",
+  "fecha": "2026-10-22",
+  "total_cup": 40000.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "cash",
+    "moneda": "CUP",
+    "importe": 20000.0,
+    "cup": 20000.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   },
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 20000.0,
+    "cup": 20000.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_EFECTIVO_CUP": 20000.0,
+   "ACT_BANCOS": 20000.0
+  },
+  "asientos": [
+   {
+    "id": "7d3638e2",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "e8daad47",
+  "fecha": "2026-10-19",
+  "total_cup": 100000.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 40000.0,
+    "cup": 40000.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   },
+   {
+    "metodo": "cash",
+    "moneda": "CUP",
+    "importe": 60000.0,
+    "cup": 60000.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_EFECTIVO_CUP": 60000.0,
+   "ACT_BANCOS": 40000.0
+  },
+  "asientos": [
+   {
+    "id": "a458c4c2",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "fa1943c6",
+  "fecha": "2026-10-16",
+  "total_cup": 800.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 800.0,
+    "cup": 800.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 800.0
+  },
+  "asientos": [
+   {
+    "id": "abb90e45",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "725b0f96",
+  "fecha": "2026-10-16",
+  "total_cup": 800.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 800.0,
+    "cup": 800.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 800.0
+  },
+  "asientos": [
+   {
+    "id": "159a0b5d",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "2e1b7f1d",
+  "fecha": "2026-10-16",
+  "total_cup": 800.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 800.0,
+    "cup": 800.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 800.0
+  },
+  "asientos": [
+   {
+    "id": "56d16dcf",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "9fb91131",
+  "fecha": "2026-10-14",
+  "total_cup": 165900.0,
+  "moneda_venta": "USD",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "zelle",
+    "moneda": "USD",
+    "importe": 210.0,
+    "cup": 165900.0,
+    "tasa": 790.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 165900.0
+  },
+  "asientos": [
+   {
+    "id": "50d86e51",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "e794db77",
+  "fecha": "2026-10-14",
+  "total_cup": 200000.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 200000.0,
+    "cup": 200000.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 200000.0
+  },
+  "asientos": [
+   {
+    "id": "bc77d446",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "7038beaf",
+  "fecha": "2026-10-14",
+  "total_cup": 301500.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 100000.0,
+    "cup": 100000.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   },
+   {
+    "metodo": "cash",
+    "moneda": "CUP",
+    "importe": 201500.0,
+    "cup": 201500.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_EFECTIVO_CUP": 201500.0,
+   "ACT_BANCOS": 100000.0
+  },
+  "asientos": [
+   {
+    "id": "8783c7f1",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "6b2623ca",
+  "fecha": "2026-10-10",
+  "total_cup": 210.0,
+  "moneda_venta": "USD",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "zelle",
+    "moneda": "USD",
+    "importe": 0.302158273381295,
+    "cup": 210.0,
+    "tasa": 695.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 210.0
+  },
+  "asientos": [
+   {
+    "id": "d00d6dad",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "82426c82",
+  "fecha": "2026-10-09",
+  "total_cup": 800.0,
+  "moneda_venta": "CUP",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "transfer",
+    "moneda": "CUP",
+    "importe": 800.0,
+    "cup": 800.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 800.0
+  },
+  "asientos": [
+   {
+    "id": "be9488b2",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "ef8bd997",
+  "fecha": "2026-10-08",
+  "total_cup": 15750.0,
+  "moneda_venta": "USD",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "cash",
+    "moneda": "CUP",
+    "importe": 3850.0,
+    "cup": 3850.0,
+    "tasa": 1.0,
+    "direccion": "in"
+   },
+   {
+    "metodo": "zelle",
+    "moneda": "USD",
+    "importe": 17.5,
+    "cup": 11900.0,
+    "tasa": 680.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_EFECTIVO_CUP": 3850.0,
+   "ACT_BANCOS": 11900.0
+  },
+  "asientos": [
+   {
+    "id": "f8e21cef",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "e63ffc78",
+  "fecha": "2026-10-08",
+  "total_cup": 15300.0,
+  "moneda_venta": "USD",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "zelle",
+    "moneda": "USD",
+    "importe": 22.5,
+    "cup": 15300.0,
+    "tasa": 680.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 15300.0
+  },
+  "asientos": [
+   {
+    "id": "21b7f5d4",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "d9acbcc4",
+  "fecha": "2026-10-08",
+  "total_cup": 4760.0,
+  "moneda_venta": "USD",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "zelle",
+    "moneda": "USD",
+    "importe": 7.0,
+    "cup": 4760.0,
+    "tasa": 680.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 4760.0
+  },
+  "asientos": [
+   {
+    "id": "8b918046",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ },
+ {
+  "venta": "c96d3a09",
+  "fecha": "2026-10-08",
+  "total_cup": 3400.0,
+  "moneda_venta": "USD",
+  "status": "completed",
+  "pagos": [
+   {
+    "metodo": "zelle",
+    "moneda": "USD",
+    "importe": 5.0,
+    "cup": 3400.0,
+    "tasa": 680.0,
+    "direccion": "in"
+   }
+  ],
+  "debitos_asiento": {
+   "ACT_BANCOS": 3400.0
+  },
+  "asientos": [
+   {
+    "id": "4b1225c4",
+    "evento": "reconocimiento",
+    "status": "posted"
+   }
+  ],
+  "veredicto": "CORRECTO (transferencia/exterior → ACT_BANCOS; mixtas con caja CUP correcta)"
+ }
+]

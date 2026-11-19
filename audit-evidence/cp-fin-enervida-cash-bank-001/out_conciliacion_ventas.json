@@ -1,0 +1,3252 @@
+[
+ {
+  "venta": "fd89dd11",
+  "fecha": "2026-09-25",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 20400.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 20400.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 20400.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "ddbd6c32",
+  "fecha": "2026-09-25",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 40800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 40800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 40800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "2937be33",
+  "fecha": "2026-09-25",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 142800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 142800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 142800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "8aff99ad",
+  "fecha": "2026-09-25",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 20599.98,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_BANCOS": 17000.0,
+   "ACT_EFECTIVO_CUP": 3599.98
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 17000.0,
+   "ACT_EFECTIVO_CUP": 3599.98
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "8262c353",
+  "fecha": "2026-09-25",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 18900.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 18900.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 18900.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "babea1b7",
+  "fecha": "2026-09-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 22000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 22000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 22000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "f9edb700",
+  "fecha": "2026-09-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 40800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 40800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 40800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "b99f8771",
+  "fecha": "2026-09-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 142800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 142800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 142800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "a88d3b01",
+  "fecha": "2026-09-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 23000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 23000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 23000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "4aebb3d9",
+  "fecha": "2026-09-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 18000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 18000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 18000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "a6bed0a5",
+  "fecha": "2026-09-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 680.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 680.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 680.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "8932c4a7",
+  "fecha": "2026-09-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 680.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 680.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 680.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "c63f714c",
+  "fecha": "2026-09-28",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 180000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 160000.0,
+   "ACT_BANCOS": 20000.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 20000.0,
+   "ACT_EFECTIVO_CUP": 160000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "355f65b9",
+  "fecha": "2026-09-28",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 160000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 160000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 160000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "fb13f07b",
+  "fecha": "2026-09-29",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 20000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 20000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 20000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "d0d39bb9",
+  "fecha": "2026-09-29",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 20400.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 20400.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 20400.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "7a830133",
+  "fecha": "2026-09-29",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 142800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 142800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 142800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "5e240cc3",
+  "fecha": "2026-09-29",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 40800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 40800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 40800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "71b65a08",
+  "fecha": "2026-09-29",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 5000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 5000.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 5000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "3f95d1d2",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 90000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 90000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 90000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "772ced97",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 6800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 6800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 6800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "49673964",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 4000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_BANCOS": 2000.0,
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 2000.0,
+   "ACT_BANCOS": 2000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "3da3185f",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 30600.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 30600.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 30600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "23117cd8",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 30600.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 30600.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 30600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "802e08a4",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 4760.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 4760.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 4760.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "3e7c1bb7",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 680.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 680.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 680.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "7afa1962",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 94120.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 84600.0,
+   "ACT_BANCOS": 9520.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 9520.0,
+   "ACT_EFECTIVO_CUP": 84600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "df0cc044",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 8840.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 8840.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 8840.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "f3bd82df",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 27200.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 27200.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 27200.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "3041a9c4",
+  "fecha": "2026-09-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 6800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 6800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 6800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "11f2f96d",
+  "fecha": "2026-10-01",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 50000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 50000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 50000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "d55770c3",
+  "fecha": "2026-10-01",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 760.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 760.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 760.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "987d3e56",
+  "fecha": "2026-10-01",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 5000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 5000.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 5000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "e3214231",
+  "fecha": "2026-10-01",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 9520.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 9520.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 9520.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "b4e7d323",
+  "fecha": "2026-10-01",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 142800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 142800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 142800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "c5d0118f",
+  "fecha": "2026-10-01",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 18360.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 18360.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 18360.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "0f8db05f",
+  "fecha": "2026-10-01",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 38000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 38000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 38000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "1574b07c",
+  "fecha": "2026-10-01",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 18360.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 18360.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 18360.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "e9d25b65",
+  "fecha": "2026-10-02",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 2000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "591ce312",
+  "fecha": "2026-10-02",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 38000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 38000.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 38000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "650021ef",
+  "fecha": "2026-10-02",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 20000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 10000.0,
+   "ACT_BANCOS": 10000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 10000.0,
+   "ACT_BANCOS": 10000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "272953d0",
+  "fecha": "2026-10-02",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 600.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 600.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "07adf9dd",
+  "fecha": "2026-10-03",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 22000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 22000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 22000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "0ecd3160",
+  "fecha": "2026-10-03",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 38000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 38000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 38000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "d2d7594b",
+  "fecha": "2026-10-03",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 13600.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 13600.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 13600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "d939ea06",
+  "fecha": "2026-10-04",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 2000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "2753440f",
+  "fecha": "2026-10-04",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 33320.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 33320.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 33320.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "c733e193",
+  "fecha": "2026-10-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 40000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 40000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 40000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "800de7ca",
+  "fecha": "2026-10-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 29900.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 29900.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 29900.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "59a87d0f",
+  "fecha": "2026-10-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 400.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 400.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 400.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "b80665d8",
+  "fecha": "2026-10-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "996f0253",
+  "fecha": "2026-10-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 20000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 20000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 20000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "8e255a12",
+  "fecha": "2026-10-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 5460.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 5460.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 5460.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "dc038979",
+  "fecha": "2026-10-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 60000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 60000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 60000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "1533040b",
+  "fecha": "2026-10-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 19000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 19000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 19000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "1680f409",
+  "fecha": "2026-10-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 250.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 250.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 250.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "acc2b470",
+  "fecha": "2026-10-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 4500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 4500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 4500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "0f265be5",
+  "fecha": "2026-10-06",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 140000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 140000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 140000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "bcc29a3b",
+  "fecha": "2026-10-06",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 44000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 44000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 44000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "f160645c",
+  "fecha": "2026-10-06",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 10000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 10000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 10000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "42d9b3f1",
+  "fecha": "2026-10-07",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 60000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 41000.0,
+   "ACT_BANCOS": 19000.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 19000.0,
+   "ACT_EFECTIVO_CUP": 41000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "f988eb7b",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 40000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 40000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 40000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "6ad5b9a3",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 40800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 40800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 40800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "ef8bd997",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 15750.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 3850.0,
+   "ACT_BANCOS": 11900.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 3850.0,
+   "ACT_BANCOS": 11900.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "d9acbcc4",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 4760.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 4760.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 4760.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "33550933",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 6800.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 6800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 6800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "6023fa07",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 13600.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 13600.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 13600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "c96d3a09",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 3400.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 3400.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 3400.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "191abd4f",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 5000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 5000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 5000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "4222d638",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 4000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 4000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 4000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "ab291dcd",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 30600.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 30600.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 30600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "748f94a6",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "e63ffc78",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 15300.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 15300.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 15300.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "834e3b09",
+  "fecha": "2026-10-08",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 30600.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 680.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 30600.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 30600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "82426c82",
+  "fecha": "2026-10-09",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "64f95fb2",
+  "fecha": "2026-10-09",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 15400.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 15400.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 15400.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "657d60a5",
+  "fecha": "2026-10-09",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 600.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 600.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "1071fc60",
+  "fecha": "2026-10-09",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 780.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 780.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 780.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "6b2623ca",
+  "fecha": "2026-10-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 210.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 695.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 210.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 210.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "cf3bd691",
+  "fecha": "2026-10-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 200.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 200.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 200.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "27f223fc",
+  "fecha": "2026-10-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 10462.5,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 10462.5
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 10462.5
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "15f8e4fb",
+  "fecha": "2026-10-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 10462.5,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 10462.5
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 10462.5
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "a07765af",
+  "fecha": "2026-10-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 2000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "f4a87aa4",
+  "fecha": "2026-10-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 40000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 40000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 40000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "ba3d30c7",
+  "fecha": "2026-10-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 13000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 13000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 13000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "36cb6d59",
+  "fecha": "2026-10-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 10000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 10000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 10000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "99c75a38",
+  "fecha": "2026-10-12",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 100000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 100000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 100000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "b09d2114",
+  "fecha": "2026-10-12",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 37500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 37500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 37500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "413806af",
+  "fecha": "2026-10-12",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 40000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 40000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 40000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "c35fc4b7",
+  "fecha": "2026-10-12",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "6ae6127a",
+  "fecha": "2026-10-12",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 3000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 3000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 3000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "b269bef3",
+  "fecha": "2026-10-12",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 8000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 8000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 8000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "7038beaf",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 301500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 201500.0,
+   "ACT_BANCOS": 100000.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 100000.0,
+   "ACT_EFECTIVO_CUP": 201500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "b300e38b",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 94800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 94800.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 94800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "3c8b8e68",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 2100.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 2100.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 2100.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "4c76a1a1",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 2000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "17b963ac",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 10000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 10000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 10000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "1a7f2d8d",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 47400.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 47400.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 47400.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "4665a581",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "83c89198",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 39000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 39000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 39000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "4f09258d",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 15800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 15800.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 15800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "762f7283",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 69900.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 69900.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 69900.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "cdad1534",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 5000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 5000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 5000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "9fb91131",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 165900.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 790.0,
+  "medio_registrado": "zelle",
+  "cuentas_debito": {
+   "ACT_BANCOS": 165900.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 165900.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "e794db77",
+  "fecha": "2026-10-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 200000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 200000.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 200000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "f4aacc6a",
+  "fecha": "2026-10-15",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 4000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 4000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 4000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "4b9ea4c6",
+  "fecha": "2026-10-15",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 20000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 20000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 20000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "143854e4",
+  "fecha": "2026-10-15",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 8000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 8000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 8000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "fa1943c6",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "8ab7becf",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "COBRO_SIN_RECONOCIMIENTO",
+  "total_cup": 15800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {},
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 16000.0
+  },
+  "n_reconocimientos": 0
+ },
+ {
+  "venta": "2e1b7f1d",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "f44d7775",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 100.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 100.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 100.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "725b0f96",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "89771be2",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "d5d188e0",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6250.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6250.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6250.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "1df5d727",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "COBRO_SIN_RECONOCIMIENTO",
+  "total_cup": 0.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {},
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 12000.0
+  },
+  "n_reconocimientos": 0
+ },
+ {
+  "venta": "d7c8ef72",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 31600.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 31600.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 31600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "9a678987",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 20000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 20000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 20000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "be8ab140",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 10000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 10000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 10000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "a8621e02",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 2500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 2500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 2500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "a1622a80",
+  "fecha": "2026-10-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 80000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 80000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 80000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "ea3e44d7",
+  "fecha": "2026-10-17",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 800.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "68e7464d",
+  "fecha": "2026-10-17",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 289750.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 289750.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 289750.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "28e94349",
+  "fecha": "2026-10-19",
+  "estado_venta": "completed",
+  "clasificacion": "INCORRECTO_MONEDA_CAJA_USD",
+  "total_cup": 177770.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_USD": 167670.0,
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 169670.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "0764d532",
+  "fecha": "2026-10-19",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 750.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 750.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 750.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "389fff50",
+  "fecha": "2026-10-19",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 24300.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 24300.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 24300.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "e8daad47",
+  "fecha": "2026-10-19",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 100000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 60000.0,
+   "ACT_BANCOS": 40000.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 40000.0,
+   "ACT_EFECTIVO_CUP": 60000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "445ef046",
+  "fecha": "2026-10-19",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 1600.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 1600.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 1600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "4338caa9",
+  "fecha": "2026-10-21",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 5670.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 5670.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 5670.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "a0d9f44d",
+  "fecha": "2026-10-22",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 2000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "cef4524f",
+  "fecha": "2026-10-22",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 26000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 26000.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 26000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "a52656d2",
+  "fecha": "2026-10-22",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 2000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 2000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "62d142dc",
+  "fecha": "2026-10-22",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 40000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 40000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 40000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "51bf5048",
+  "fecha": "2026-10-22",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 26000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 26000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 26000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "1a1844f2",
+  "fecha": "2026-10-22",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 21000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 21000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 21000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "27f4aa8f",
+  "fecha": "2026-10-22",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 40000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 20000.0,
+   "ACT_BANCOS": 20000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 20000.0,
+   "ACT_BANCOS": 20000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "8951bc3e",
+  "fecha": "2026-10-22",
+  "estado_venta": "voided",
+  "clasificacion": "ANULADA_SIN_RECONOCIMIENTO",
+  "total_cup": 3750.0,
+  "moneda_venta": "CUP",
+  "cuentas_debito": {},
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 3750.0
+  }
+ },
+ {
+  "venta": "2084b17b",
+  "fecha": "2026-10-23",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 5050.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 5050.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 5050.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "23ccd04f",
+  "fecha": "2026-10-23",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 5600.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 5600.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 5600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "f7e2b240",
+  "fecha": "2026-10-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "193090f2",
+  "fecha": "2026-10-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 10250.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 10250.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 10250.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "78406b16",
+  "fecha": "2026-10-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 80995.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 80995.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 80995.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "2acc95c0",
+  "fecha": "2026-10-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 835.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 835.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 835.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "cd70f126",
+  "fecha": "2026-10-26",
+  "estado_venta": "voided",
+  "clasificacion": "ANULADA_SIN_RECONOCIMIENTO",
+  "total_cup": 32000.0,
+  "moneda_venta": "CUP",
+  "cuentas_debito": {},
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 32000.0
+  }
+ },
+ {
+  "venta": "a1eb46a3",
+  "fecha": "2026-10-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "7737ede3",
+  "fecha": "2026-10-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 2500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 2500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 2500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "85951636",
+  "fecha": "2026-10-26",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 3200.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 3200.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 3200.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "8757444f",
+  "fecha": "2026-10-26",
+  "estado_venta": "completed",
+  "clasificacion": "INCORRECTO_MONEDA_CAJA_USD",
+  "total_cup": 32000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_USD": 32000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 32000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "a531d4f6",
+  "fecha": "2026-10-27",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 13415.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 13415.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 13415.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "e825ba93",
+  "fecha": "2026-10-27",
+  "estado_venta": "completed",
+  "clasificacion": "INCORRECTO_MONEDA_CAJA_USD",
+  "total_cup": 60840.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_USD": 60840.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 60840.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "e269020c",
+  "fecha": "2026-10-27",
+  "estado_venta": "voided",
+  "clasificacion": "ANULADA_SIN_RECONOCIMIENTO",
+  "total_cup": 845.0,
+  "moneda_venta": "CUP",
+  "cuentas_debito": {},
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 845.0
+  }
+ },
+ {
+  "venta": "65d649bf",
+  "fecha": "2026-10-27",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 845.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 845.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 845.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "3f15e7ee",
+  "fecha": "2026-10-29",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "3c3e81c4",
+  "fecha": "2026-10-29",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 5000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 5000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 5000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "ca410073",
+  "fecha": "2026-10-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 330000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 330000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 330000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "acefe25f",
+  "fecha": "2026-10-30",
+  "estado_venta": "voided",
+  "clasificacion": "ANULADA_SIN_RECONOCIMIENTO",
+  "total_cup": 200000.0,
+  "moneda_venta": "CUP",
+  "cuentas_debito": {},
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 200000.0
+  }
+ },
+ {
+  "venta": "a7411d68",
+  "fecha": "2026-10-30",
+  "estado_venta": "voided",
+  "clasificacion": "ANULADA_SIN_RECONOCIMIENTO",
+  "total_cup": 13000.0,
+  "moneda_venta": "CUP",
+  "cuentas_debito": {},
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 13000.0
+  }
+ },
+ {
+  "venta": "59d6e313",
+  "fecha": "2026-10-30",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 600.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 600.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 600.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "1a41aaf7",
+  "fecha": "2026-10-31",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 60000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 60000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 60000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "8e836afa",
+  "fecha": "2026-10-31",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "262d68f7",
+  "fecha": "2026-11-02",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 40500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 40500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 40500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "9001734c",
+  "fecha": "2026-11-04",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 24000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 24000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 24000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "2ed5e674",
+  "fecha": "2026-11-04",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 65000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 65000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 65000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "7598cb33",
+  "fecha": "2026-11-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 55000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 55000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 55000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "611be50d",
+  "fecha": "2026-11-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 1750.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 1750.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 1750.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "9a004eb6",
+  "fecha": "2026-11-05",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "5db65144",
+  "fecha": "2026-11-06",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 24000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 24000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 24000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "a24588d4",
+  "fecha": "2026-11-06",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 50000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 50000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 50000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "a64f9aa3",
+  "fecha": "2026-11-07",
+  "estado_venta": "voided",
+  "clasificacion": "ANULADA_SIN_RECONOCIMIENTO",
+  "total_cup": 6510.0,
+  "moneda_venta": "CUP",
+  "cuentas_debito": {},
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 6510.0
+  }
+ },
+ {
+  "venta": "6501f8da",
+  "fecha": "2026-11-07",
+  "estado_venta": "completed",
+  "clasificacion": "INCORRECTO_MONEDA_CAJA_USD",
+  "total_cup": 930.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_USD": 930.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 930.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "c775c41a",
+  "fecha": "2026-11-07",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 35500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 35500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 35500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "bd4f4b39",
+  "fecha": "2026-11-07",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 5800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 5800.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 5800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "e2614f36",
+  "fecha": "2026-11-07",
+  "estado_venta": "completed",
+  "clasificacion": "RECTIFICADA_FIN001",
+  "total_cup": 125550.0,
+  "moneda_venta": "USD",
+  "tasa_venta": 930.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_BANCOS": 125550.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 125550.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "9d1ccef8",
+  "fecha": "2026-11-07",
+  "estado_venta": "completed",
+  "clasificacion": "INCORRECTO_MONEDA_CAJA_USD",
+  "total_cup": 6510.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_USD": 6510.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 6510.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "d65b2043",
+  "fecha": "2026-11-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 19500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 19500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 19500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "2e390bb6",
+  "fecha": "2026-11-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 45800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 45800.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 45800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "0f984d6f",
+  "fecha": "2026-11-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 29295.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 29295.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 29295.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "716215fe",
+  "fecha": "2026-11-10",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 62500.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 62500.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 62500.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "62ae3202",
+  "fecha": "2026-11-11",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 20000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 20000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 20000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "3f7303b2",
+  "fecha": "2026-11-12",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 17400.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 17400.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 17400.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "355ed50d",
+  "fecha": "2026-11-12",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 6900.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 6900.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 6900.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "ec15a9db",
+  "fecha": "2026-11-13",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 20800.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 20800.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 20800.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "3f214b0c",
+  "fecha": "2026-11-14",
+  "estado_venta": "voided",
+  "clasificacion": "ANULADA_SIN_RECONOCIMIENTO",
+  "total_cup": 53400.0,
+  "moneda_venta": "CUP",
+  "cuentas_debito": {},
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 53400.0
+  }
+ },
+ {
+  "venta": "83b8e88e",
+  "fecha": "2026-11-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_TRANSFERENCIA",
+  "total_cup": 10000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "transfer",
+  "cuentas_debito": {
+   "ACT_BANCOS": 10000.0
+  },
+  "pagos_esperados": {
+   "ACT_BANCOS": 10000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "9f6b39ed",
+  "fecha": "2026-11-14",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 43400.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 43400.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 43400.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "9bac8945",
+  "fecha": "2026-11-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 106750.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 106750.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 106750.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "97263a9c",
+  "fecha": "2026-11-16",
+  "estado_venta": "completed",
+  "clasificacion": "INCORRECTO_MONEDA_CAJA_USD",
+  "total_cup": 9200.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_USD": 9200.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 9200.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "92503dc6",
+  "fecha": "2026-11-16",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 10000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 10000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 10000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "867d9017",
+  "fecha": "2026-11-17",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_MIXTA",
+  "total_cup": 7200.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "mixed",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 4800.0,
+   "ACT_BANCOS": 2400.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 4800.0,
+   "ACT_BANCOS": 2400.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "abab9e20",
+  "fecha": "2026-11-17",
+  "estado_venta": "completed",
+  "clasificacion": "INCORRECTO_MONEDA_CAJA_USD",
+  "total_cup": 16200.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_USD": 16200.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 16200.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "aaf2611a",
+  "fecha": "2026-11-18",
+  "estado_venta": "completed",
+  "clasificacion": "CORRECTO_EFECTIVO",
+  "total_cup": 28000.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 28000.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_CUP": 28000.0
+  },
+  "n_reconocimientos": 1
+ },
+ {
+  "venta": "7d9ad144",
+  "fecha": "2026-11-18",
+  "estado_venta": "completed",
+  "clasificacion": "INCORRECTO_MONEDA_CAJA_USD",
+  "total_cup": 9300.0,
+  "moneda_venta": "CUP",
+  "tasa_venta": 1.0,
+  "medio_registrado": "cash",
+  "cuentas_debito": {
+   "ACT_EFECTIVO_CUP": 2790.0,
+   "ACT_EFECTIVO_USD": 6510.0
+  },
+  "pagos_esperados": {
+   "ACT_EFECTIVO_USD": 6510.0,
+   "ACT_EFECTIVO_CUP": 2790.0
+  },
+  "n_reconocimientos": 1
+ }
+]
