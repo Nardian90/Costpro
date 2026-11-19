@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 597,
-  "total_incluidos": 182,
+  "total_considerados": 598,
+  "total_incluidos": 183,
   "total_excluidos": 415,
-  "digest": "b0be702cd864a3a56296ebdfd1d8b6dd4744d9dc1fa0585afc0ccbcb2fcddedf",
+  "digest": "1eb96c7cbf059824b0e8ceb15e73c57912a3f181ff7196085f2977d40c53bbc8",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5882,6 +5882,17 @@
       "observaciones": [],
       "posicion": 182,
       "sha256_generado": "2e9d1c86614df0c577ea4d40a93cce5cd87b0f7d900563ed27dc2cf2f99e6764"
+    },
+    {
+      "nombre": "20261119150000_cp_fin002_cash_bank_reclassification.sql",
+      "bytes": 28868,
+      "sha256_original": "315a3502558921b91ff6207d3ce353dbe906100a6191430277aa276947eaf1ae",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261119",
+      "observaciones": [],
+      "posicion": 183,
+      "sha256_generado": "315a3502558921b91ff6207d3ce353dbe906100a6191430277aa276947eaf1ae"
     },
     {
       "nombre": "AUDIT_FIXES.md",
