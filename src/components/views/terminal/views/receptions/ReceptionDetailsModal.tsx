@@ -17,6 +17,11 @@ import { useAuthStore } from '@/store';
 // nunca futura, validada en ambas capas.
 import { OperationDatePicker, useOperationDateValidation, formatOperationDateForRPC } from '@/components/ui/OperationDatePicker';
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+import { useStoreRates } from '@/hooks/useStoreRates';
+import PaymentRowsEditor, {
+  newPaymentRow, rowsCupTotal, rowsToPayload, rowsAreValid,
+  type PaymentEditorRow,
+} from '@/components/payments/PaymentRowsEditor';
 
 interface ReceptionDetailsModalProps {
   receipt: Receipt | null;
@@ -1131,10 +1136,16 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState<'cash' | 'transfer' | 'zelle'>('cash');
-  const [reference, setReference] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // CP-FIN-003 (anexo §4/§2): componente UNIFICADO de pago — mismo diseño,
+  // opciones, validaciones y semántica del carrito de Ventas: medio × moneda
+  // × importe × tasa, varios componentes (pago mixto). Sustituye al
+  // formulario fijo (moneda CUP / tasa 1 / una fila). Recibir mercancía ≠
+  // pagar al proveedor: la deuda nace en la recepción y cada liquidación
+  // registra el (medio × moneda) REAL del desembolso.
+  const { rates: storeRates } = useStoreRates();
+  const [payRows, setPayRows] = useState<PaymentEditorRow[]>([newPaymentRow({})]);
+  const [rowsValid, setRowsValid] = useState(false);
   // V2.12.32 (paridad con OT/Servicios): fecha financiera del pago, default
   // HOY (día de negocio Habana), tope HOY, backdating legítimo validado.
   const [paymentDate, setPaymentDate] = useState<string>(todayBusinessDay());
@@ -1168,12 +1179,23 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
   const paymentStatus = balance <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
 
   const handleSubmit = async () => {
-    const amt = parseFloat(amount);
-    if (!amt || amt <= 0) { toast.error('Monto inválido'); return; }
-    // MISIÓN SERVICIOS RECIBIDOS: la fecha del pago se valida ANTES de enviar
-    // (misma convención que el resto de los formularios) — nunca futura.
+    // CP-FIN-003: el lote se valida ANTES de enviar (importe > 0, tasa > 1
+    // para divisa, sin exceder el saldo pendiente en CUP).
     if (!paymentDateValidation.valid) {
       toast.error(paymentDateValidation.error || 'Fecha del pago no válida');
+      return;
+    }
+    const payloadRows = rowsToPayload(payRows);
+    if (payloadRows.length === 0) {
+      toast.error('Monto inválido');
+      return;
+    }
+    if (!rowsAreValid(payRows)) {
+      toast.error('Revisa los componentes: importes > 0 y tasa > 1 para moneda extranjera.');
+      return;
+    }
+    if (rowsCupTotal(payRows) > balance + 0.005) {
+      toast.error(`El pago (${rowsCupTotal(payRows).toFixed(2)} CUP) excede el saldo pendiente (${balance.toFixed(2)} CUP).`);
       return;
     }
     setSubmitting(true);
@@ -1184,19 +1206,18 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
         body: JSON.stringify({
           ref_type: 'receipt',
           ref_id: receiptId,
-          amount: amt,
-          payment_method: method,
-          currency: 'CUP',
-          exchange_rate: 1.0,
-          reference: reference || null,
-          // V2.12.32: fecha financiera (mediodía) + idempotencia por envío.
+          // Anexo §4C: pagos parciales/mixtos — cada componente con SU medio,
+          // moneda, tasa e importe; la recepción queda vinculada a la deuda y
+          // sus liquidaciones hasta completar el importe.
+          payments: payloadRows,
           payment_date: formatOperationDateForRPC(paymentDate),
           idempotency_key: crypto.randomUUID(),
         }),
       });
       if (res.ok) {
-        toast.success('Pago registrado');
-        setAmount(''); setReference(''); setShowForm(false);
+        toast.success(`Pago registrado (${payloadRows.length} componente${payloadRows.length === 1 ? '' : 's'})`);
+        setPayRows([newPaymentRow(storeRates)]);
+        setShowForm(false);
         setPaymentDate(todayBusinessDay());
         fetchPayments();
       } else {
@@ -1248,44 +1269,16 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
         </button>
       </div>
 
-      {/* Formulario de pago */}
+      {/* Formulario de pago — CP-FIN-003: componente unificado del carrito */}
       {showForm && (
         <div className="rounded-xl border border-border/30 p-4 space-y-3 bg-muted/10">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Monto (CUP)</label>
-              <input
-                type="number"
-                inputMode="numeric"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder={String(balance.toFixed(2))}
-                className="w-full h-12 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold tabular-nums"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Método</label>
-              <select
-                value={method}
-                onChange={(e) => setMethod(e.target.value as any)}
-                className="w-full h-12 bg-background border border-border/50 rounded-lg px-3 text-sm font-bold"
-              >
-                <option value="cash">💵 Efectivo</option>
-                <option value="transfer">📱 Transferencia</option>
-                <option value="zelle">💳 Zelle</option>
-              </select>
-            </div>
-          </div>
-          <div>
-            <label className="text-[10px] font-black uppercase text-muted-foreground block mb-1">Referencia (opcional)</label>
-            <input
-              type="text"
-              value={reference}
-              onChange={(e) => setReference(e.target.value)}
-              placeholder="N° de transferencia, etc."
-              className="w-full h-12 bg-background border border-border/50 rounded-lg px-3 text-sm"
-            />
-          </div>
+          <PaymentRowsEditor
+            rows={payRows}
+            onChange={setPayRows}
+            storeRates={storeRates}
+            maxCupTotal={balance}
+            onValidityChange={(v) => setRowsValid(v)}
+          />
           {/* V2.12.32: fecha financiera del pago — nunca futura, backdating legítimo */}
           <OperationDatePicker
             label="Fecha del pago"
@@ -1306,7 +1299,7 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting || !paymentDateValidation.valid}
+              disabled={submitting || !paymentDateValidation.valid || !rowsValid}
               className="flex-1 h-12 min-h-[44px] rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 disabled:opacity-50"
             >
               {submitting ? 'Guardando...' : 'Confirmar Pago'}

@@ -25,6 +25,7 @@ import {
   Settings2, RefreshCw, Search, ChevronUp, ChevronDown, Pencil, Trash2, Plus,
   Landmark, FileText, History, Play, Save, Zap, Ban, RotateCcw, Scale,
   ArrowUpRight, ArrowDownRight, Minus, AlertTriangle, Info, ArrowLeftRight,
+  Wallet,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
@@ -76,6 +77,9 @@ export default function DocumentConfigView() {
   const storeId = user?.activeStoreId;
 
   // ── Catálogo (GET /api/fin/config) ──
+  // CP-FIN-003: matriz de mapeo canónico (medio × moneda → cuenta financiera).
+  // La MISMA tabla que consulta el motor al contabilizar (fin_account_mapping).
+  const [accountMapping, setAccountMapping] = useState<{ payment_method: string; currency: string; category_code: string; notes: string | null }[]>([]);
   const [documentTypes, setDocumentTypes] = useState<DocumentTypeStatus[]>([]);
   const [categories, setCategories] = useState<FinCategory[]>([]);
   const [metrics, setMetrics] = useState<MetricCatalogItem[]>([]);
@@ -124,6 +128,10 @@ export default function DocumentConfigView() {
   const setCurrentView = useUIStore((s) => s.setCurrentView);
   const [cameFromStatements, setCameFromStatements] = useState(false);
   const consumedNavRef = useRef(false);
+  // CP-FIN-003 §6.2: tipo documental traído por el contexto (acción «Ver
+  // configuración contable» del drilldown). Se guarda en un ref porque el
+  // catálogo carga async: fetchConfig lo aplica al llegar los datos.
+  const focusTypeRef = useRef<string | null>(null);
   useEffect(() => {
     if (consumedNavRef.current) return;
     const ctx: FinancialOpeningNavContext | null = financialOpeningNav;
@@ -131,6 +139,7 @@ export default function DocumentConfigView() {
       consumedNavRef.current = true;
       setCameFromStatements(true);
       if (ctx.openOpeningBalances) setOpeningOpen(true);
+      if (ctx.focusDocumentType) focusTypeRef.current = ctx.focusDocumentType;
       setFinancialOpeningNavContext(null);
     }
   }, [financialOpeningNav, setFinancialOpeningNavContext]);
@@ -161,7 +170,13 @@ export default function DocumentConfigView() {
       setCategories(data.categories ?? []);
       setMetrics(data.metrics ?? []);
       setRules(rls);
-      if (reselect) applySelection(reselect, dts, rls);
+      // CP-FIN-003: mapeo canónico para la sección «Cuentas financieras».
+      setAccountMapping(data.account_mapping ?? []);
+      // §6.2: llegada contextual con tipo enfocado (drilldown) o re-selección.
+      const focus = focusTypeRef.current ?? (reselect ?? null);
+      focusTypeRef.current = null;
+      if (focus && dts.some((d) => d.code === focus)) applySelection(focus, dts, rls);
+      else if (reselect) applySelection(reselect, dts, rls);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : 'Error de conexión');
     } finally {
@@ -595,6 +610,59 @@ export default function DocumentConfigView() {
         onOpening={() => setOpeningOpen(true)}
         onBack={cameFromStatements ? backToStatements : undefined}
       />
+
+      {/* ══════════ CP-FIN-003: Mapeo canónico de cuentas financieras ══════════
+          La MISMA matriz que consume el motor (fin_account_mapping): el medio
+          de pago determina la cuenta financiera; la moneda determina la
+          denominación. Origen 'Cuenta canónica' en las reglas v3/v2 de
+          VENTA/SERVICIO_RECIBIDO/RECEPCIÓN la resuelve al contabilizar. */}
+      {accountMapping.length > 0 && (
+        <details className="bg-card rounded-2xl border border-border overflow-hidden" data-testid="account-mapping-panel">
+          <summary className="px-4 py-3 cursor-pointer select-none flex items-center gap-2 text-xs font-black uppercase tracking-widest text-foreground hover:bg-muted/40">
+            <Wallet className="w-4 h-4 text-primary shrink-0" />
+            Cuentas financieras por medio de pago y moneda
+            <span className="ml-auto text-[10px] font-bold text-muted-foreground normal-case tracking-normal">
+              mapeo canónico del motor · {accountMapping.length} combinaciones
+            </span>
+          </summary>
+          <div className="px-4 pb-4 overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-border text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <th className="py-2 pr-3 text-left font-black">Forma de pago</th>
+                  <th className="py-2 pr-3 text-left font-black">Moneda</th>
+                  <th className="py-2 pr-3 text-left font-black">Cuenta financiera</th>
+                  <th className="py-2 text-left font-black hidden sm:table-cell">Nota</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {accountMapping.map((m) => (
+                  <tr key={`${m.payment_method}-${m.currency}`} className="hover:bg-muted/30">
+                    <td className="py-2 pr-3 font-bold whitespace-nowrap">
+                      {m.payment_method === 'cash' ? '💵 Efectivo' : m.payment_method === 'transfer' ? '📱 Transf.' : '💳 Transf. Exterior'}
+                      <span className="text-muted-foreground font-mono text-[10px] ml-1">{m.payment_method}</span>
+                    </td>
+                    <td className="py-2 pr-3 font-mono font-bold">{m.currency}</td>
+                    <td className="py-2 pr-3">
+                      <span className="font-mono font-bold text-primary">{m.category_code}</span>
+                      <span className="text-muted-foreground ml-1.5 hidden md:inline">
+                        {categories.find((c) => c.code === m.category_code)?.name ?? ''}
+                      </span>
+                    </td>
+                    <td className="py-2 text-muted-foreground hidden sm:table-cell">{m.notes ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Fuente única de verdad: tabla <span className="font-mono">fin_account_mapping</span>. Las reglas con origen
+              «Cuenta canónica» (p. ej. pago de SERVICIO_RECIBIDO/RECEPCIÓN) consultan esta matriz con el
+              (medio × moneda) real de cada desembolso. La moneda nunca sustituye al medio: USD en efectivo va a caja USD,
+              no a transferencias.
+            </p>
+          </div>
+        </details>
+      )}
 
       {loading && documentTypes.length === 0 ? (
         <div className="bg-card rounded-2xl border border-border p-12 text-center">

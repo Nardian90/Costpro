@@ -483,9 +483,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261119150000_cp_fin002_cash_bank_reclassification (ecuación del
     //   desequilibrio con identidad pura de partida doble + escritor canónico
     //   fin_reclassify_sale_payment_currency) = 183
-    expect(m.total_incluidos).toBe(183);
+    //   CP-FIN-003 (2026-11-20): +1 con 20261120120000 (generaciones contables
+    //   + mapeo canónico) = 184
+    expect(m.total_incluidos).toBe(184);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(183);
+    expect(incluidos.length).toBe(184);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

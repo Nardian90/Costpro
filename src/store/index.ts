@@ -69,6 +69,12 @@ export interface PendingAuditFilter {
 export interface FinancialOpeningNavContext {
   /** true = abrir el diálogo de Saldos Iniciales al llegar a la vista. */
   openOpeningBalances: boolean;
+  /**
+   * CP-FIN-003 (2026-11-20): tipo documental a preseleccionar al llegar a la
+   * vista (acción «Ver configuración contable» del drilldown de Estados
+   * Financieros). Opcional: solo se usa cuando viene informado.
+   */
+  focusDocumentType?: string;
   setAt: number;
 }
 

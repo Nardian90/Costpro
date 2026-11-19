@@ -225,7 +225,11 @@ test.describe.serial('CP-FIN-002 — clasificación efectivo/bancos por método 
   });
 
   // ── §10.7 — Transferencia exterior USD (zelle) ────────────────────────────
-  test('E6 · Transf. Exterior (zelle) USD: banco débito con original (el alias zelle = Transf. Exterior del carrito)', async ({ request }) => {
+  test('E6 · Transf. Exterior (zelle) USD: CUENTA EXTERIOR débito con original (CP-FIN-003 §4: cuenta propia)', async ({ request }) => {
+    // ACTUALIZADO por CP-FIN-003 (regla VENTA v3 + mapeo canónico): Transf.
+    // Exterior (zelle) imputa ACT_TRANSF_EXTERIOR — misión REBUILD §4 tabla
+    // vinculante («Cuenta de transferencia exterior»). Con las reglas v2 se
+    // imputaba ACT_BANCOS.
     sZelle = await checkout(request, {
       store_id: storeA, seller_id: adminId, payment_method: 'zelle',
       items: [{ product_id: pUsd.id, quantity: 2, price: 4.5, cost: pUsd.cost, currency: 'USD', exchange_rate: RATE, zelle_paid: 9, zelle_currency: 'USD' }],
@@ -233,11 +237,13 @@ test.describe.serial('CP-FIN-002 — clasificación efectivo/bancos por método 
       sale_currency: 'USD', sale_exchange_rate: RATE,
       payment_components: [{ method: 'zelle', currency: 'USD', amount: 9 }],
     });
-    const bancos = await detail(adminToken, storeA, 'ACT_BANCOS');
-    const row = movsOf(bancos, sZelle).find((m) => m.sense === 'debito');
+    const exterior = await detail(adminToken, storeA, 'ACT_TRANSF_EXTERIOR');
+    const row = movsOf(exterior, sZelle).find((m) => m.sense === 'debito');
     expect(row).toBeTruthy();
     expect(Number(row!.amount_cup)).toBe(8370);
     expect(Number(row!.amount_origin)).toBeCloseTo(9, 2);
+    const bancos = await detail(adminToken, storeA, 'ACT_BANCOS');
+    expect(movsOf(bancos, sZelle)).toHaveLength(0);
     const cajaUsd = await detail(adminToken, storeA, 'ACT_EFECTIVO_USD');
     expect(movsOf(cajaUsd, sZelle)).toHaveLength(0);
   });
@@ -334,8 +340,9 @@ test.describe.serial('CP-FIN-002 — clasificación efectivo/bancos por método 
       sale_currency: 'USD', sale_exchange_rate: RATE,
       payment_components: [{ method: 'zelle', currency: 'USD', amount: 135 }],
     });
-    const bancosPre = await detail(adminToken, storeA, 'ACT_BANCOS');
-    const cobPre = movsOf(bancosPre, sZelleRect).find((m) => m.sense === 'debito');
+    // CP-FIN-003 v3: el cobro zelle nace en ACT_TRANSF_EXTERIOR (cuenta propia)
+    const extPre = await detail(adminToken, storeA, 'ACT_TRANSF_EXTERIOR');
+    const cobPre = movsOf(extPre, sZelleRect).find((m) => m.sense === 'debito');
     expect(cobPre).toBeTruthy();
     expect(Number(cobPre!.amount_cup)).toBe(125550);
 
@@ -348,6 +355,9 @@ test.describe.serial('CP-FIN-002 — clasificación efectivo/bancos por método 
     expect(rect.data!.to_category).toBe('ACT_EFECTIVO_USD');
     expect(Number(rect.data!.importe_origin)).toBeCloseTo(135, 2);
 
+    const extPost = await detail(adminToken, storeA, 'ACT_TRANSF_EXTERIOR');
+    const netoExterior = movsOf(extPost, sZelleRect).reduce((acc, m) => acc + (m.sense === 'debito' ? Number(m.amount_cup) : -Number(m.amount_cup)), 0);
+    expect(netoExterior).toBe(0);
     const bancosPost = await detail(adminToken, storeA, 'ACT_BANCOS');
     const netoBanco = movsOf(bancosPost, sZelleRect).reduce((acc, m) => acc + (m.sense === 'debito' ? Number(m.amount_cup) : -Number(m.amount_cup)), 0);
     expect(netoBanco).toBe(0);
