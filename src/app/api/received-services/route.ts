@@ -12,6 +12,8 @@ import { canManageStore, canViewStore } from '@/lib/roles';
 // servidor Postgres), que tras las 20:00 Habana fechaba el servicio «mañana».
 import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
+// CP-SEC-019: validador UUID permisivo canónico (prohibido el validador uuid estricto en api).
+import { uuidLoose } from '@/validation/api-schemas';
 
 /**
  * GET /api/received-services?store_id=...&status=...&type=...
@@ -101,8 +103,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       // ─── ADN-008 ───
       // Identidad del proveedor (SupplierSelector): id local de la tienda y/o
       // tercero del Clasificador Maestro + snapshot de identificación.
-      supplier_id: z.string().uuid().nullable().optional(),
-      supplier_master_party_id: z.string().uuid().nullable().optional(),
+      supplier_id: uuidLoose.nullable().optional(),
+      supplier_master_party_id: uuidLoose.nullable().optional(),
       supplier_meta: z.object({
         code: z.string().nullable().optional(),
         tax_id: z.string().nullable().optional(),
@@ -330,15 +332,15 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     if (action === 'update-draft') {
       const DraftSchema = z.object({
         supplier: z.string().nullable().optional(),
-        supplier_id: z.string().uuid().nullable().optional(),
-        supplier_master_party_id: z.string().uuid().nullable().optional(),
+        supplier_id: uuidLoose.nullable().optional(),
+        supplier_master_party_id: uuidLoose.nullable().optional(),
         supplier_meta: z.object({
           code: z.string().nullable().optional(),
           tax_id: z.string().nullable().optional(),
           phone: z.string().nullable().optional(),
           address: z.string().nullable().optional(),
         }).nullable().optional(),
-        service_type_id: z.string().uuid().nullable().optional(),
+        service_type_id: uuidLoose.nullable().optional(),
         service_type_name: z.string().nullable().optional(),
         total_amount: z.union([z.number(), z.string()]).nullable().optional(),
         service_date: z.string().nullable().optional(),

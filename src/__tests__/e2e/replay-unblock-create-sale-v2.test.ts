@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 180 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 185 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -485,9 +485,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   fin_reclassify_sale_payment_currency) = 183
     //   CP-FIN-003 (2026-11-20): +1 con 20261120120000 (generaciones contables
     //   + mapeo canónico) = 184
-    expect(m.total_incluidos).toBe(184);
+    // ADN-SERVICES-RECEIVED-CREATION-WORKFLOW-008 (2026-11-20): +1 —
+    //   20261121120000_adn008_sr_drafts_supplier_multipago (borradores de
+    //   servicios con cero efecto financiero, identidad de proveedor del
+    //   Catálogo Maestro y liquidación multipago/multimoneda atómica
+    //   register_supplier_payment_batch) = 185
+    expect(m.total_incluidos).toBe(185);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(184);
+    expect(incluidos.length).toBe(185);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
