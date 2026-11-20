@@ -391,7 +391,7 @@ BEGIN
     RAISE EXCEPTION 'ERR_METRICS_INCOMPLETE: % %', p_doctype, p_document_id;
   END IF;
   RETURN v;
-END $function$
+END $function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 2. create_sale_v2
@@ -1597,7 +1597,7 @@ BEGIN
     'calculated_tax', v_calculated_tax,
     'discount_amount', v_discount_amount
   );
-END $function$
+END $function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 3. fin_rectify_sale_payment_method
@@ -1838,7 +1838,7 @@ BEGIN
     'docnum', v_docnum, 'importe_cup', round(v_cup, 2),
     'importe_origin', v_nom, 'moneda_cobro', v_pay_currency,
     'from_category', v_from_cat, 'to_category', v_to_cat);
-END $function$
+END $function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 4. fin_reclassify_sale_payment_currency
@@ -2102,7 +2102,7 @@ BEGIN
     'tasa_documental', v_r_doc, 'caso', CASE WHEN v_stale THEN 'asiento_obsoleto' ELSE 'pagos_registrados' END,
     'from_category', v_from_cat, 'to_category', v_to_cat,
     'nominal_items_normalizados', v_nom_items);
-END $function$
+END $function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 5. validate_pt_invariants
@@ -2112,7 +2112,7 @@ CREATE OR REPLACE FUNCTION public.validate_payment_transactions_invariants()
  RETURNS trigger
  LANGUAGE plpgsql
  SET search_path TO 'public', 'pg_temp'
-AS $function$ BEGIN IF current_setting('app.restore_mode', true) = 'true' AND current_user IN ('costpro_snapshot_restorer', 'postgres') THEN RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END; END IF; IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'ERR_PAYMENT_DELETE_FORBIDDEN' USING ERRCODE = 'PT007'; END IF; IF NEW.currency = 'CUP' AND NEW.exchange_rate != 1 THEN RAISE EXCEPTION 'ERR_PAYMENT_CUP_RATE_MUST_BE_1' USING ERRCODE = 'PT003'; END IF; IF NEW.currency != 'CUP' AND NEW.exchange_rate <= 1 THEN RAISE EXCEPTION 'ERR_PAYMENT_FOREIGN_RATE_MUST_EXCEED_1' USING ERRCODE = 'PT004'; END IF; IF NEW.payment_method IN ('zelle', 'external_transfer') AND NEW.currency = 'CUP' THEN RAISE EXCEPTION 'ERR_ZELLE_NOT_FOR_CUP' USING ERRCODE = 'PT005'; END IF; IF TG_OP = 'UPDATE' AND OLD.transaction_id IS DISTINCT FROM NEW.transaction_id THEN PERFORM pg_advisory_xact_lock(hashtextextended(COALESCE(OLD.transaction_id::text, ''), 0)); PERFORM pg_advisory_xact_lock(hashtextextended(COALESCE(NEW.transaction_id::text, ''), 0)); ELSIF NEW.transaction_id IS NOT NULL THEN PERFORM pg_advisory_xact_lock(hashtextextended(NEW.transaction_id::text, 0)); END IF; /* DF-03: los refunds (direction='refund') son contra-asientos de trazabilidad — NO se suman como pago hacia el total del documento. MISIÓN DE CIERRE 2026-10-24: las RECUPERACIONES (direction='recovery') de reembolsos revertidos son contra-asientos simétricos — tampoco se suman como pago (PT001) ni participan de la consistencia de tasa del pago (PT006). */ IF NEW.transaction_id IS NOT NULL AND NEW.direction NOT IN ('refund', 'recovery') THEN DECLARE v_total_amount numeric; v_sum_payments numeric; v_existing_rate numeric; BEGIN SELECT total_amount INTO v_total_amount FROM public.transactions WHERE id = NEW.transaction_id; SELECT COALESCE(SUM(amount_cup), 0) INTO v_sum_payments FROM public.payment_transactions WHERE transaction_id = NEW.transaction_id AND id != NEW.id AND direction NOT IN ('refund', 'recovery'); IF v_sum_payments + NEW.amount_cup > v_total_amount + 0.01 THEN RAISE EXCEPTION 'ERR_PAYMENT_EXCEEDS_TOTAL' USING ERRCODE = 'PT001'; END IF; SELECT exchange_rate INTO v_existing_rate FROM public.payment_transactions WHERE transaction_id = NEW.transaction_id AND payment_method = NEW.payment_method AND currency = NEW.currency AND id != NEW.id AND direction NOT IN ('refund', 'recovery') LIMIT 1; IF FOUND AND ABS(v_existing_rate - NEW.exchange_rate) > 0.000001 THEN RAISE EXCEPTION 'ERR_MULTIPLE_EXCHANGE_RATES' USING ERRCODE = 'PT006'; END IF; END; END IF; RETURN NEW; END $function$
+AS $function$ BEGIN IF current_setting('app.restore_mode', true) = 'true' AND current_user IN ('costpro_snapshot_restorer', 'postgres') THEN RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END; END IF; IF TG_OP = 'DELETE' THEN RAISE EXCEPTION 'ERR_PAYMENT_DELETE_FORBIDDEN' USING ERRCODE = 'PT007'; END IF; IF NEW.currency = 'CUP' AND NEW.exchange_rate != 1 THEN RAISE EXCEPTION 'ERR_PAYMENT_CUP_RATE_MUST_BE_1' USING ERRCODE = 'PT003'; END IF; IF NEW.currency != 'CUP' AND NEW.exchange_rate <= 1 THEN RAISE EXCEPTION 'ERR_PAYMENT_FOREIGN_RATE_MUST_EXCEED_1' USING ERRCODE = 'PT004'; END IF; IF NEW.payment_method IN ('zelle', 'external_transfer') AND NEW.currency = 'CUP' THEN RAISE EXCEPTION 'ERR_ZELLE_NOT_FOR_CUP' USING ERRCODE = 'PT005'; END IF; IF TG_OP = 'UPDATE' AND OLD.transaction_id IS DISTINCT FROM NEW.transaction_id THEN PERFORM pg_advisory_xact_lock(hashtextextended(COALESCE(OLD.transaction_id::text, ''), 0)); PERFORM pg_advisory_xact_lock(hashtextextended(COALESCE(NEW.transaction_id::text, ''), 0)); ELSIF NEW.transaction_id IS NOT NULL THEN PERFORM pg_advisory_xact_lock(hashtextextended(NEW.transaction_id::text, 0)); END IF; /* DF-03: los refunds (direction='refund') son contra-asientos de trazabilidad — NO se suman como pago hacia el total del documento. MISIÓN DE CIERRE 2026-10-24: las RECUPERACIONES (direction='recovery') de reembolsos revertidos son contra-asientos simétricos — tampoco se suman como pago (PT001) ni participan de la consistencia de tasa del pago (PT006). */ IF NEW.transaction_id IS NOT NULL AND NEW.direction NOT IN ('refund', 'recovery') THEN DECLARE v_total_amount numeric; v_sum_payments numeric; v_existing_rate numeric; BEGIN SELECT total_amount INTO v_total_amount FROM public.transactions WHERE id = NEW.transaction_id; SELECT COALESCE(SUM(amount_cup), 0) INTO v_sum_payments FROM public.payment_transactions WHERE transaction_id = NEW.transaction_id AND id != NEW.id AND direction NOT IN ('refund', 'recovery'); IF v_sum_payments + NEW.amount_cup > v_total_amount + 0.01 THEN RAISE EXCEPTION 'ERR_PAYMENT_EXCEEDS_TOTAL' USING ERRCODE = 'PT001'; END IF; SELECT exchange_rate INTO v_existing_rate FROM public.payment_transactions WHERE transaction_id = NEW.transaction_id AND payment_method = NEW.payment_method AND currency = NEW.currency AND id != NEW.id AND direction NOT IN ('refund', 'recovery') LIMIT 1; IF FOUND AND ABS(v_existing_rate - NEW.exchange_rate) > 0.000001 THEN RAISE EXCEPTION 'ERR_MULTIPLE_EXCHANGE_RATES' USING ERRCODE = 'PT006'; END IF; END; END IF; RETURN NEW; END $function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 6. register_supplier_payment
@@ -2249,7 +2249,7 @@ BEGIN
 
   RETURN v_id;
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 7. pay_commission
@@ -2353,7 +2353,7 @@ BEGIN
 
   RETURN jsonb_build_object('payment', to_jsonb(v_comm), 'idempotent_replay', false);
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 8. create_devolution_v2
@@ -2939,7 +2939,7 @@ BEGIN
     'rate_sale', v_rate_sale,
     'financial_effect', CASE WHEN p_payment_method = 'store_credit' THEN 'store_credit_ledger' ELSE 'cash_out_and_refund' END
   );
-END $function$
+END $function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 9. reverse_devolution
@@ -3181,7 +3181,7 @@ BEGIN
   RETURN jsonb_build_object('status', 'success', 'items_reversed', v_count,
     'devolution_id', p_devolution_id, 'recovered', v_recovered);
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 10. close_production_order_v2
@@ -3381,7 +3381,7 @@ BEGIN
     'order_id', p_order_id,
     'transaction_id', v_transaction_id
   );
-END $function$
+END $function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 11. close_service_order_as_sale
@@ -3494,7 +3494,7 @@ BEGIN
 
   RETURN jsonb_build_object('status', 'success', 'transaction_id', v_transaction_id);
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 12. adjust_sale_payment
@@ -3757,7 +3757,7 @@ BEGIN
     'audit_logged', TRUE
   );
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 13. regularize_sale_payment
@@ -3911,7 +3911,7 @@ BEGIN
         'new_cash', v_cash, 'new_zelle', v_zelle, 'new_external_transfer', v_zelle
     );
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 14. close_cash_shift
@@ -4188,7 +4188,7 @@ BEGIN
     'zelle_sales', v_zelle_sales
   );
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 15. get_cash_shift_expected
@@ -4406,7 +4406,7 @@ BEGIN
   );
   RETURN v_result;
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 16. get_cash_flow_summary
@@ -4656,7 +4656,7 @@ BEGIN
   );
   RETURN v_result;
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 17. get_cash_report
@@ -4860,7 +4860,7 @@ BEGIN
   );
   RETURN v_result;
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 18. get_tenant_cash_report
@@ -4936,11 +4936,15 @@ BEGIN
 
   RETURN v_result;
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 19. get_transactions
 -- ═══════════════════════════════════════════════════════════════════════════
+
+-- CP-FIN-004: el RETURNS TABLE gana la columna external_transfer_amount;
+-- el cambio de row type exige DROP + CREATE (atómico en este lote).
+DROP FUNCTION IF EXISTS public.get_transactions(uuid, text, timestamp without time zone, timestamp without time zone, integer);
 
 CREATE OR REPLACE FUNCTION public.get_transactions(p_store_id uuid DEFAULT NULL::uuid, p_search_term text DEFAULT NULL::text, p_date_from timestamp without time zone DEFAULT NULL::timestamp without time zone, p_date_to timestamp without time zone DEFAULT NULL::timestamp without time zone, p_limit integer DEFAULT 1000)
  RETURNS TABLE(id uuid, created_at timestamp with time zone, total_amount numeric, status text, payment_method text, subtotal numeric, discount_value numeric, store_id uuid, seller_id uuid, seller_name text, cash_amount numeric, transfer_amount numeric, zelle_amount numeric, external_transfer_amount numeric, sale_currency text, sale_exchange_rate numeric, completed_at timestamp with time zone, customer_name text, customer_code text, customer_address text, invoice_number text)
@@ -4998,7 +5002,7 @@ BEGIN
     ORDER BY t.created_at DESC
     LIMIT p_limit;
 END;
-$function$
+$function$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 20. get_sales_dashboard_analytics
@@ -5573,7 +5577,7 @@ BEGIN
 
   RETURN v_result;
 END;
-$function$
+$function$;
 
 
 -- ═══════════════════════════════════════════════════════════════════════════

@@ -165,7 +165,7 @@
   "total_considerados": 601,
   "total_incluidos": 186,
   "total_excluidos": 415,
-  "digest": "5f0d53178483951d549526b6da63f7365cea70be3b9ab5b922b8aca42a6725cc",
+  "digest": "c6d45a4d235334cce3c67a8eb65f1f77e25f117872c06ec8db3c398f037c7692",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5918,14 +5918,14 @@
     },
     {
       "nombre": "20261120210000_cp_fin004_engine_rules_normalization.sql",
-      "bytes": 300208,
-      "sha256_original": "6a286ac5625b3774f73e66622971268f15b9de535e22728300b463fb90ccf84e",
+      "bytes": 300501,
+      "sha256_original": "e20a943998bf8f0f089c4e6a5c86e5fbfbf1d1681edcd4b0401348954b8c44cf",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261120",
       "observaciones": [],
       "posicion": 186,
-      "sha256_generado": "6a286ac5625b3774f73e66622971268f15b9de535e22728300b463fb90ccf84e"
+      "sha256_generado": "e20a943998bf8f0f089c4e6a5c86e5fbfbf1d1681edcd4b0401348954b8c44cf"
     },
     {
       "nombre": "AUDIT_FIXES.md",
