@@ -1,0 +1,996 @@
+{
+  "generatedAt": "2026-11-20T02:35:01.900Z",
+  "results": [
+    {
+      "kind": "viewport",
+      "label": "1920×1080",
+      "expect": "Cinematográfico",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "viewport",
+      "label": "1600×900",
+      "expect": "Cinematográfico",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "viewport",
+      "label": "1440×900",
+      "expect": "Cinematográfico",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "viewport",
+      "label": "1366×768",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "viewport",
+      "label": "1280×720",
+      "expect": "Adaptación comprobada",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "viewport",
+      "label": "1024×768",
+      "expect": "Adaptación comprobada",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "viewport",
+      "label": "1024×600",
+      "expect": "Fallback o adaptación segura",
+      "mode": "flujo",
+      "scenes": 0,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "viewport",
+      "label": "768×1024 (tablet)",
+      "expect": "Tablet — flujo",
+      "mode": "flujo",
+      "scenes": 0,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "viewport",
+      "label": "390×844 (móvil)",
+      "expect": "Móvil — flujo",
+      "mode": "flujo",
+      "scenes": 0,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "zoom 80% (CSS 2400×1350)",
+      "label": "zoom-80",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "zoom 90% (CSS 2133×1200)",
+      "label": "zoom-90",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "zoom 100% (CSS 1920×1080)",
+      "label": "zoom-100",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "zoom 110% (CSS 1745×982)",
+      "label": "zoom-110",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "zoom 125% (CSS 1536×864)",
+      "label": "zoom-125",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "zoom 80% sobre 1366×768 (CSS 1708×960)",
+      "label": "zoom1366-80",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "zoom 90% sobre 1366×768 (CSS 1518×853)",
+      "label": "zoom1366-90",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "zoom 100% sobre 1366×768 (CSS 1366×768)",
+      "label": "zoom1366-100",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "zoom 110% sobre 1366×768 (CSS 1242×698)",
+      "label": "zoom1366-110",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": 15,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "zoom 125% sobre 1366×768 (CSS 1093×614)",
+      "label": "zoom1366-125",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "flujo",
+      "scenes": 0,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    },
+    {
+      "kind": "resize durante presentación",
+      "label": "resize",
+      "expect": "el modo sigue al viewport sin quedarse obsoleto",
+      "before": {
+        "mode": "cine",
+        "scenes": 15,
+        "ids": [
+          {
+            "id": "hero",
+            "present": true
+          },
+          {
+            "id": "como-funciona",
+            "present": true
+          },
+          {
+            "id": "features",
+            "present": true
+          },
+          {
+            "id": "pricing",
+            "present": true
+          },
+          {
+            "id": "faq",
+            "present": true
+          }
+        ],
+        "docOverflow": 0,
+        "pagerDots": 5,
+        "worstOverflow": null
+      },
+      "afterShrink": {
+        "mode": "flujo",
+        "scenes": 0,
+        "ids": [
+          {
+            "id": "hero",
+            "present": true
+          },
+          {
+            "id": "como-funciona",
+            "present": true
+          },
+          {
+            "id": "features",
+            "present": true
+          },
+          {
+            "id": "pricing",
+            "present": true
+          },
+          {
+            "id": "faq",
+            "present": true
+          }
+        ],
+        "docOverflow": 0,
+        "pagerDots": 5,
+        "worstOverflow": null
+      },
+      "afterGrow": {
+        "mode": "cine",
+        "scenes": 15,
+        "ids": [
+          {
+            "id": "hero",
+            "present": true
+          },
+          {
+            "id": "como-funciona",
+            "present": true
+          },
+          {
+            "id": "features",
+            "present": true
+          },
+          {
+            "id": "pricing",
+            "present": true
+          },
+          {
+            "id": "faq",
+            "present": true
+          }
+        ],
+        "docOverflow": 0,
+        "pagerDots": 5,
+        "worstOverflow": null
+      }
+    },
+    {
+      "kind": "navegación",
+      "label": "nav-reload",
+      "expect": "recarga directa conserva el modo y las 15 escenas",
+      "lastSceneReachable": true,
+      "afterReload": {
+        "mode": "cine",
+        "scenes": 15,
+        "ids": [
+          {
+            "id": "hero",
+            "present": true
+          },
+          {
+            "id": "como-funciona",
+            "present": true
+          },
+          {
+            "id": "features",
+            "present": true
+          },
+          {
+            "id": "pricing",
+            "present": true
+          },
+          {
+            "id": "faq",
+            "present": true
+          }
+        ],
+        "docOverflow": 0,
+        "pagerDots": 5,
+        "worstOverflow": null
+      }
+    },
+    {
+      "kind": "prefers-reduced-motion",
+      "label": "reduced-motion",
+      "expect": "Flujo nativo (sin animaciones forzadas)",
+      "mode": "flujo",
+      "scenes": 0,
+      "ids": [
+        {
+          "id": "hero",
+          "present": true
+        },
+        {
+          "id": "como-funciona",
+          "present": true
+        },
+        {
+          "id": "features",
+          "present": true
+        },
+        {
+          "id": "pricing",
+          "present": true
+        },
+        {
+          "id": "faq",
+          "present": true
+        }
+      ],
+      "docOverflow": 0,
+      "pagerDots": 5,
+      "worstOverflow": null
+    }
+  ],
+  "rows": [
+    {
+      "kind": "viewport",
+      "expect": "Cinematográfico",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "viewport",
+      "expect": "Cinematográfico",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "viewport",
+      "expect": "Cinematográfico",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "viewport",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "viewport",
+      "expect": "Adaptación comprobada",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "viewport",
+      "expect": "Adaptación comprobada",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "viewport",
+      "expect": "Fallback o adaptación segura",
+      "mode": "flujo",
+      "scenes": "0",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "viewport",
+      "expect": "Tablet — flujo",
+      "mode": "flujo",
+      "scenes": "0",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "viewport",
+      "expect": "Móvil — flujo",
+      "mode": "flujo",
+      "scenes": "0",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "zoom 80% (CSS 2400×1350)",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "zoom 90% (CSS 2133×1200)",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "zoom 100% (CSS 1920×1080)",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "zoom 110% (CSS 1745×982)",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "zoom 125% (CSS 1536×864)",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "zoom 80% sobre 1366×768 (CSS 1708×960)",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "zoom 90% sobre 1366×768 (CSS 1518×853)",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "zoom 100% sobre 1366×768 (CSS 1366×768)",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "zoom 110% sobre 1366×768 (CSS 1242×698)",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "zoom 125% sobre 1366×768 (CSS 1093×614)",
+      "expect": "Cinematográfico si el contenido cabe",
+      "mode": "flujo",
+      "scenes": "0",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    },
+    {
+      "kind": "resize durante presentación",
+      "expect": "el modo sigue al viewport sin quedarse obsoleto",
+      "mode": "cine→flujo→cine",
+      "scenes": "15/15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "el modo sigue al viewport en vivo",
+      "ok": true
+    },
+    {
+      "kind": "navegación",
+      "expect": "recarga directa conserva el modo y las 15 escenas",
+      "mode": "cine",
+      "scenes": "15",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "última escena alcanzable=true",
+      "ok": true
+    },
+    {
+      "kind": "prefers-reduced-motion",
+      "expect": "Flujo nativo (sin animaciones forzadas)",
+      "mode": "flujo",
+      "scenes": "0",
+      "idsOk": true,
+      "docOverflow": 0,
+      "note": "",
+      "ok": true
+    }
+  ],
+  "pass": 22,
+  "fail": 0
+}
