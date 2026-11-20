@@ -727,6 +727,11 @@
       "reason": "ADN-009 (2026-11-21, PR post-merge hardening) · RPC de lote de pagos a proveedor (1-20 componentes, idempotente por bloque, delega CADA componente al canónico register_supplier_payment). ACL service_role EXCLUSIVA (REVOKE authenticated, declarada en la migración 20261121190000 — alineada a CP-FIN-004 y al canal exclusivo del motor que envuelve): /api/payments autoriza con canManageStore y ejecuta la llamada privilegiada por el cliente service_role. Contrato canónico CP-FIN-004 en el cuerpo (external_transfer; zelle heredado normalizado, jamás persistido) + SELECT ... FOR UPDATE del documento compartido con el camino individual. El gate de identidad NO aplica al cuerpo por diseño service_role-only (la identidad del actor la aporta el endpoint desde la sesión; p_paid_by nunca es parámetro libre del cliente).",
       "added_by": "ADN-008 (PR #1670, agente)",
       "expires": "2026-12-31"
+    },
+    {
+      "function": "can_manage_store_as",
+      "reason": "ADN-009 (2026-11-21, PR #1672 post-merge hardening) · Helper de GESTIÓN por tienda (espejo DB de canManageStore en src/lib/roles.ts: is_admin_check transversal O membresía activa admin/manager/encargado). Patrón idéntico a can_manage_payroll_as y has_store_access_as: helper booleano STABLE SECURITY DEFINER de consulta que NO toca datos y cuya firma recibe el actor por parámetro — la identidad real la resuelve el llamador con el patrón v2.12.9 (los RPC de borradores pasan auth.uid()); ACL service_role-only para invocación directa. Consumidores: create_received_service_draft, update_received_service_draft (20261121190000).",
+      "expires": "2027-12-31"
     }
   ],
   "tables_without_rls": [],
