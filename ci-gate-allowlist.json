@@ -604,7 +604,7 @@
     },
     {
       "function": "register_supplier_payment",
-      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=4. Clasificación viva 2026-10-20.",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=4. Clasificación viva 2026-10-20. · ADN-009: serialización FOR UPDATE del documento + estado del servicio tras el lock + pre-check combinación (cuerpo certificado en migración 20261121190000).",
       "added_by": "cp-sec-027-f7",
       "expires": "2027-06-30"
     },
@@ -724,7 +724,7 @@
     },
     {
       "function": "register_supplier_payment_batch",
-      "reason": "ADN-008 (PR #1670, 2026-11-20) · RPC canónica de liquidación multipago/multimoneda ATÓMICA: envuelve register_supplier_payment (ya en allowlist, mismo modelo de canal) y NO re-autentica por diseño — la identidad llega por /api/payments (withAuth + getSupabaseForSession) y la propiedad documento↔tienda se valida dentro (store mismatch → rechazo). ACL idéntica al motor: REVOKE PUBLIC/anon + GRANT authenticated,service_role (migración 20261121120000). El actor viaja por p_paid_by derivado server-side de la sesión. [CP-FIN-004 2026-11-20: ACL de producción verificada tras el merge — {postgres, authenticated, service_role}, coherente con este diseño.]",
+      "reason": "ADN-009 (2026-11-21, PR post-merge hardening) · RPC de lote de pagos a proveedor (1-20 componentes, idempotente por bloque, delega CADA componente al canónico register_supplier_payment). ACL service_role EXCLUSIVA (REVOKE authenticated, declarada en la migración 20261121190000 — alineada a CP-FIN-004 y al canal exclusivo del motor que envuelve): /api/payments autoriza con canManageStore y ejecuta la llamada privilegiada por el cliente service_role. Contrato canónico CP-FIN-004 en el cuerpo (external_transfer; zelle heredado normalizado, jamás persistido) + SELECT ... FOR UPDATE del documento compartido con el camino individual. El gate de identidad NO aplica al cuerpo por diseño service_role-only (la identidad del actor la aporta el endpoint desde la sesión; p_paid_by nunca es parámetro libre del cliente).",
       "added_by": "ADN-008 (PR #1670, agente)",
       "expires": "2026-12-31"
     }
