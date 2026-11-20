@@ -1,0 +1,17 @@
+{
+  "fecha": "2026-11-16T20:02:50.240Z",
+  "net_delta_cero": true,
+  "detalle": {
+    "stores": "77→77",
+    "products": "30→30",
+    "receipts": "1→1",
+    "receipt_items": "3→3",
+    "stock_movements": "4→4",
+    "fin_entries": "156→156",
+    "fin_movements": "313→313",
+    "audit_logs": "3104→3104",
+    "wac_change_log": "696→696",
+    "fin_posting_errors": "1→1",
+    "audit_events": "0→0"
+  }
+}

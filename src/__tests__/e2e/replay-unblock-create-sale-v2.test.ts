@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 188 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 189 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -489,9 +489,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   transfer (20261120200000), M2 motor+reglas+normalizador
     //   (20261120210000), M3 ACL get_transactions (20261120215000) y M4
     //   normalizador v2 headers sin cobros (20261120220000) = 188
-    expect(m.total_incluidos).toBe(188);
+    // ADN-SERVICES-RECEIVED-CREATION-WORKFLOW-008 (PR #1670, 2026-11-20): +1 —
+    //   20261121120000_adn008_sr_drafts_supplier_multipago (borradores de
+    //   servicios con cero efecto financiero, identidad de proveedor del
+    //   Catálogo Maestro y liquidación multipago/multimoneda atómica
+    //   register_supplier_payment_batch) = 189
+    expect(m.total_incluidos).toBe(189);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(188);
+    expect(incluidos.length).toBe(189);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -537,6 +542,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261120210000_cp_fin004_engine_rules_normalization.sql')).toBe(186);
     expect(pos('20261120215000_cp_fin004_get_transactions_acl_restore.sql')).toBe(187);
     expect(pos('20261120220000_cp_fin004_normalizer_headers_sin_cobros.sql')).toBe(188);
+    expect(pos('20261121120000_adn008_sr_drafts_supplier_multipago.sql')).toBe(189);
     expect(pos('20261105130000_cp_clasificador_maestro_base.sql')).toBe(123);
     expect(pos('20261105130100_cp_clasificador_maestro_rpcs.sql')).toBe(124);
     expect(pos('20261105140000_cp_clasificador_fase4_snapshots.sql')).toBe(125);

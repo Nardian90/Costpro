@@ -1,0 +1,47 @@
+{
+ "mision": "CP-FIN-RECEIPT-UNIT-COST-1-CUP-011",
+ "segmento": "7ec9000c-0000-4000-8000",
+ "receipt_id": "0e11b000-0000-4000-8000-000000000001",
+ "entry_id": "7ec9000c-0000-4000-8000-d11300000001",
+ "lotes": {
+  "A": {
+   "arch": "loteA_lineas.sql",
+   "estado_post": {
+    "lineas": 101,
+    "ya_ok": 101,
+    "subtotal_total": "27.0000",
+    "total_cost": "27.0000"
+   }
+  },
+  "B": {
+   "arch": "loteB_capas.sql",
+   "estado_post": {
+    "capas": 101,
+    "sucias": 0,
+    "valor_total": "27.0000"
+   }
+  },
+  "C": {
+   "arch": "loteC_wac.sql",
+   "estado_post": {
+    "wac_conformes": 2,
+    "wcl": 2
+   }
+  },
+  "D": {
+   "arch": "loteD_asiento.sql",
+   "estado_post": {
+    "balance": "0",
+    "cxp_neta": "27.0000",
+    "movimientos": 5
+   }
+  }
+ },
+ "importes": {
+  "total": "208482.00000000",
+  "inv": "69994.00",
+  "cogs": "137690.00",
+  "vales": "399.00",
+  "perdida": "399.00"
+ }
+}

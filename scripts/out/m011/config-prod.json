@@ -1,0 +1,20 @@
+{
+  "receipt_id": "fd9d6c88-5db8-49ea-b185-8bc96cc93e63",
+  "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+  "orig_entry_id": "93bb5da9-0afd-4325-baad-a275710062c5",
+  "segment": "7ec9000b-0000-4000-8000",
+  "entry_suffix": "d11300000001",
+  "fm_cxp": "f11300000001",
+  "fm_inv": "f11300000002",
+  "fm_cogs": "f11300000003",
+  "fm_vales": "f11300000004",
+  "fm_perd": "f11300000005",
+  "aud_total": "e11300000001",
+  "aud_entry": "e11300000002",
+  "trace": "RECT011-PROD",
+  "mision": "CP-FIN-RECEIPT-UNIT-COST-1-CUP-011",
+  "economic_date": "2026-07-01",
+  "doc_number": "FAC-VITALLCONS-001-VAL1CUP",
+  "entry_document_type": "AJUSTE_INVENTARIO",
+  "entry_event": "reconocimiento"
+}

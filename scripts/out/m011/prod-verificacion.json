@@ -1,0 +1,101 @@
+{
+  "fecha_utc": "2026-11-16T20:06:29.142Z",
+  "modo": "--verify",
+  "checks": [
+    {
+      "id": "V1_101_lineas_1CUP",
+      "resultado": "PASS",
+      "detalle": "{\"n\":101,\"ok\":101,\"total\":\"5861.50000000\",\"subtotales_mal\":0}"
+    },
+    {
+      "id": "V2_cabecera_5861_50",
+      "resultado": "PASS",
+      "detalle": "{\"total_cost\":\"5861.5000\",\"payment_status\":\"unpaid\",\"paid\":\"0\",\"status\":\"active\"}"
+    },
+    {
+      "id": "V3_capas_a_1",
+      "resultado": "PASS",
+      "detalle": "{\"n\":101,\"sucias\":0,\"total\":\"5861.50000000\"}"
+    },
+    {
+      "id": "V4_wac_25_conformes",
+      "resultado": "PASS",
+      "detalle": "conformes=25/25"
+    },
+    {
+      "id": "V5_precios_intactos",
+      "resultado": "PASS",
+      "detalle": "precios divergentes=0"
+    },
+    {
+      "id": "V6_asiento_balance",
+      "resultado": "PASS",
+      "detalle": "{\"d\":\"0.00\",\"n\":5}"
+    },
+    {
+      "id": "V7_importes_exactos",
+      "resultado": "PASS",
+      "detalle": "{\"ACT_INVENTARIO\":3678375.5,\"GAS_COSTO_VENTAS\":21450370.5,\"GAS_PERDIDA_INV\":9691030,\"GAS_VALES\":5913947.5,\"PAS_CXP_PROV\":40733723.5}"
+    },
+    {
+      "id": "V8_cxp_neta_5861_50",
+      "resultado": "PASS",
+      "detalle": "cxp_neta=5861.50"
+    },
+    {
+      "id": "V9_asientos_4_intactos",
+      "resultado": "PASS",
+      "detalle": "[\"reconocimiento\",\"ajuste_manual\",\"ajuste_manual\",\"reconocimiento\"]"
+    },
+    {
+      "id": "V10_T12_activo",
+      "resultado": "PASS",
+      "detalle": "[{\"tgenabled\":\"O\"}]"
+    },
+    {
+      "id": "V11_posting_errors_0",
+      "resultado": "PASS",
+      "detalle": "errores FVC recientes=0"
+    },
+    {
+      "id": "V12_otras_recepciones_0",
+      "resultado": "PASS",
+      "detalle": "líneas ajenas tocadas=0"
+    },
+    {
+      "id": "V13_movimientos_ajenos_intactos",
+      "resultado": "PASS",
+      "detalle": "md5 5400c0f8… vs 5400c0f8… (965 movs)"
+    },
+    {
+      "id": "V14_otros_productos_0",
+      "resultado": "PASS",
+      "detalle": "productos ajenos tocados desde 2026-11-16T19:42:56.855Z=0"
+    },
+    {
+      "id": "V15_otras_cabeceras_0",
+      "resultado": "PASS",
+      "detalle": "cabeceras ajenas tocadas=0"
+    },
+    {
+      "id": "V16_protegidos_111_112_999",
+      "resultado": "PASS",
+      "detalle": "[\"111:1/1/2000\",\"112:1/1/1000\",\"999:1/443.82608695652173910435/1\"]"
+    },
+    {
+      "id": "V17_auditoria_completa",
+      "resultado": "PASS",
+      "detalle": "{\"SYSTEM_RECT011_ENTRY\":1,\"SYSTEM_RECT011_MOV_UC\":78,\"SYSTEM_RECT011_TOTAL\":1,\"SYSTEM_RECT011_VALUATION\":78,\"SYSTEM_RECT011_WAC\":25}"
+    },
+    {
+      "id": "V18_idempotencia_cero",
+      "resultado": "PASS",
+      "detalle": "{\"s1\":0,\"s2\":0,\"s3\":0,\"s4\":25,\"s5\":1}"
+    }
+  ],
+  "total": {
+    "pass": 18,
+    "fail": 0
+  },
+  "veredicto": "RECT-011 VERIFICADA — misión cumplida (§13)"
+}
