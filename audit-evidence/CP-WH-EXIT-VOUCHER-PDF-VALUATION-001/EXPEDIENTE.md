@@ -97,7 +97,7 @@ Protección anti-negativos: CHECK `balance_after >= 0` en `stock_movements` + tr
 | ESLint (ficheros tocados + repo) | **0 incidencias** |
 | `next build` | **Compiled successfully** (60 s; fase TS de build OOM en sandbox — cubierta por tsc completo y CI) |
 | E2E real en navegador (Playwright, app con código de la rama, producción read-only) | **18/18 PASS** — login → vista → detalle → checkbox → descargas reales de AMBOS PDF → verificación de bytes → móvil 375 px → 0 errores de consola (`ui/resultados.json`) |
-| CI del PR | TypeScript/ESLint/vitest/SQL-Security-Gate/E2E Aislado — se ejecuta al abrir el PR |
+| CI del PR (head a2700a9b9) | **5/5 SUCCESS**: TypeCheck + Lint + Unit Tests + Build · Unit & Integration Tests · Security Audit · Vercel Preview · E2E Aislado (re-ejecución SUCCESS; el fallo inicial 1/52 fue un flake en `fc-template-picker.spec.ts:330` — esperaba 404, recibió 401, ajeno al diff: sin cambios de backend ni auth) |
 
 ## 5. Evidencia empaquetada
 
