@@ -36,9 +36,11 @@ import {
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
-import { exportSc208ForVale } from '@/lib/legal/sc208';
+import { exportSc208ForVale, type Sc208ExportOptions } from '@/lib/legal/sc208';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { DocumentStatusBadge } from '@/components/ui/DocumentStatusBadge';
 import {
@@ -153,6 +155,14 @@ export function ValeSalidaDetalleModal({
   const { user } = useAuthStore();
   const [isExportingSc208, setIsExportingSc208] = useState(false);
 
+  // MISIÓN CP-WH-EXIT-VOUCHER-PDF-VALUATION-001 (2026-11-20): control de
+  // valorización de la exportación. Default MARCADO = comportamiento vigente
+  // (PDF valorizado) — sin sorpresas para el usuario existente. La elección
+  // aplica EXCLUSIVAMENTE a la exportación solicitada: no modifica el
+  // documento almacenado, sus datos, el movimiento de inventario ni su
+  // contabilización (la generación del PDF es 100% lectura).
+  const [incluirValoresPdf, setIncluirValoresPdf] = useState(true);
+
   const handleExportSc208 = async () => {
     // El modelo oficial SC-2-08 ampara un despacho real: un vale 'pending'
     // (En Revisión) no ha despachado nada — no se exporta (guard de tipo).
@@ -161,11 +171,17 @@ export function ValeSalidaDetalleModal({
     try {
       // Narrowing explícito: el guard superior ya excluyó 'pending'; el modelo
       // oficial SC-2-08 solo cubre estados con despacho real.
+      const opciones: Sc208ExportOptions = { incluirValores: incluirValoresPdf };
       await exportSc208ForVale(
         { ...vale, status: vale.status as 'completed' | 'voided' | 'reversed' },
         user?.activeStoreId,
+        opciones,
       );
-      toast.success(`Modelo SC-2-08 generado (${vale.slip_number})`);
+      toast.success(
+        incluirValoresPdf
+          ? `Modelo SC-2-08 valorizado generado (${vale.slip_number})`
+          : `Modelo SC-2-08 sin valorar (físico) generado (${vale.slip_number})`,
+      );
     } catch {
       toast.error('No se pudo generar el PDF SC-2-08. Intente nuevamente.');
     } finally {
@@ -208,27 +224,50 @@ export function ValeSalidaDetalleModal({
               ? 'Vale en revisión: el stock se descontará al confirmarlo.'
               : 'El stock ya fue descontado al emitir el documento.'}
           </p>
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex items-center gap-2 ml-auto flex-wrap justify-end">
             {/* MISIÓN RES. 11 (2026-10-31): el modelo oficial SC-2-08 ampara un
                 despacho REAL — un vale En Revisión todavía no despachó nada, por
                 lo que la exportación se ofrece solo cuando el vale tiene efectos
                 (completado/devuelto/anulado). */}
             {vale && vale.status !== 'pending' && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleExportSc208}
-                disabled={isExportingSc208}
-                className="h-9 px-4 rounded-lg gap-1.5 font-bold"
-                aria-label="Exportar el vale como modelo oficial SC-2-08 Vale de Entrega o Devolución en PDF"
-              >
-                {isExportingSc208 ? (
-                  <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-                ) : (
-                  <FileDown className="w-4 h-4" aria-hidden="true" />
-                )}
-                {isExportingSc208 ? 'Generando…' : 'Exportar SC-2-08 (PDF)'}
-              </Button>
+              <>
+                {/* MISIÓN CP-WH-EXIT-VOUCHER-PDF-VALUATION-001: control de
+                    valorización del PDF. Marcado = valorizado (comportamiento
+                    vigente); desmarcado = solo físico, sin importes. */}
+                <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-1.5">
+                  <Checkbox
+                    id="vale-salida-pdf-incluir-valores"
+                    checked={incluirValoresPdf}
+                    onCheckedChange={(v: boolean | 'indeterminate') => setIncluirValoresPdf(v === true)}
+                    disabled={isExportingSc208}
+                    aria-label="Incluir valores en el PDF (Vale de Salida valorizado)"
+                  />
+                  <Label
+                    htmlFor="vale-salida-pdf-incluir-valores"
+                    className="text-[11px] font-bold leading-tight cursor-pointer select-none"
+                  >
+                    Incluir valores en el PDF
+                    <span className="hidden md:inline font-normal text-muted-foreground">
+                      {' '}(Vale de Salida valorizado)
+                    </span>
+                  </Label>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleExportSc208}
+                  disabled={isExportingSc208}
+                  className="h-9 px-4 rounded-lg gap-1.5 font-bold"
+                  aria-label="Exportar el vale como modelo oficial SC-2-08 Vale de Entrega o Devolución en PDF"
+                >
+                  {isExportingSc208 ? (
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <FileDown className="w-4 h-4" aria-hidden="true" />
+                  )}
+                  {isExportingSc208 ? 'Generando…' : 'Exportar SC-2-08 (PDF)'}
+                </Button>
+              </>
             )}
             {vale && vale.status === 'completed' && canReverse && (
               <Button
