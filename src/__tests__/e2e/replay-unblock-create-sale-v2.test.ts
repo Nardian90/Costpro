@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 180 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 188 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -485,9 +485,13 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   fin_reclassify_sale_payment_currency) = 183
     //   CP-FIN-003 (2026-11-20): +1 con 20261120120000 (generaciones contables
     //   + mapeo canónico) = 184
-    expect(m.total_incluidos).toBe(184);
+    // CP-FIN-004 ANEXO POS-BACKEND (2026-11-20): +4 — M1 contrato external_
+    //   transfer (20261120200000), M2 motor+reglas+normalizador
+    //   (20261120210000), M3 ACL get_transactions (20261120215000) y M4
+    //   normalizador v2 headers sin cobros (20261120220000) = 188
+    expect(m.total_incluidos).toBe(188);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(184);
+    expect(incluidos.length).toBe(188);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -528,6 +532,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261103120000_user_mgmt_delete_001_managed_hard_delete.sql')).toBe(121);
     // MISIÓN CLASIFICADOR MAESTRO (FASE 2/3/4): posiciones 121-124
     expect(pos('20261105120000_cp_stores_bank_branch.sql')).toBe(122);
+    // CP-FIN-004 (2026-11-20): las 4 migraciones del anexo POS-backend.
+    expect(pos('20261120200000_cp_fin004_external_transfer_contract.sql')).toBe(185);
+    expect(pos('20261120210000_cp_fin004_engine_rules_normalization.sql')).toBe(186);
+    expect(pos('20261120215000_cp_fin004_get_transactions_acl_restore.sql')).toBe(187);
+    expect(pos('20261120220000_cp_fin004_normalizer_headers_sin_cobros.sql')).toBe(188);
     expect(pos('20261105130000_cp_clasificador_maestro_base.sql')).toBe(123);
     expect(pos('20261105130100_cp_clasificador_maestro_rpcs.sql')).toBe(124);
     expect(pos('20261105140000_cp_clasificador_fase4_snapshots.sql')).toBe(125);

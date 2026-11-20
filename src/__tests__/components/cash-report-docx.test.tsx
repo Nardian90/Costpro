@@ -195,7 +195,7 @@ describe('MISIÓN WORD — plantilla DIARIO: estructura espejo del PDF', () => {
     expect(text).toContain('TOTALES');
     // Reporte USD (hoja propia por defecto) con SU formato en-US.
     expect(text).toContain('Reporte de Venta USD');
-    expect(text).toContain('Venta por Zelle');
+    expect(text).toContain('Venta por Transf. Exterior');
     // Anexo de auditoría.
     expect(text).toContain('Anexo de Auditoría — Reporte Entrega');
     expect(text).toContain('Hoja CUP — comparación por concepto');

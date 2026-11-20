@@ -307,7 +307,7 @@ describe('MISIÓN DE SEGUIMIENTO v2.23.0 · PDF Diario — reembolsos por vouche
     await buildCashReportPdf(ctx, summaries());
     const p1 = textsOf(1);
     // Fila informativa del lado vouchers (brutos documentados; neto en arqueo)
-    expect(p1).toContain('Reembolsos por voucher (transfer/Zelle)');
+    expect(p1).toContain('Reembolsos por voucher (transfer/exterior)');
     expect(p1.some(t => /^500[.,]00$/.test(t))).toBe(true); // 300 + 200
     // El efectivo esperado NO se reduce por refunds de voucher: 169.000,00 intacto
     expect(p1.some(t => /^169[.,]000[.,]00$/.test(t))).toBe(true);
@@ -327,7 +327,7 @@ describe('MISIÓN DE SEGUIMIENTO v2.23.0 · PDF Diario — reembolsos por vouche
     await buildCashReportPdf(ctx, summaries());
     const p1 = textsOf(1);
     expect(p1).toContain('Reembolsos de devoluciones (efectivo)');
-    expect(p1).toContain('Reembolsos por voucher (transfer/Zelle)');
+    expect(p1).toContain('Reembolsos por voucher (transfer/exterior)');
     // Esperado = 169.000 − 100 (solo el tramo cash): 168.900,00
     expect(p1.some(t => /^168[.,]900[.,]00$/.test(t))).toBe(true);
   });
@@ -335,7 +335,7 @@ describe('MISIÓN DE SEGUIMIENTO v2.23.0 · PDF Diario — reembolsos por vouche
   it('sin refunds de voucher: la fila NO se imprime (regresión de presentación)', async () => {
     await buildCashReportPdf(buildContext({ usdSeparatePage: false }), summaries());
     const p1 = textsOf(1);
-    expect(p1).not.toContain('Reembolsos por voucher (transfer/Zelle)');
+    expect(p1).not.toContain('Reembolsos por voucher (transfer/exterior)');
     expect(p1).not.toContain('Reembolsos de devoluciones (efectivo)');
   });
 });
