@@ -121,7 +121,7 @@ describe('POST /api/payments — fecha financiera del pago (V2.12.32)', () => {
     expect(rpcCalls.length).toBe(0);
   });
 
-  it('payment_date legítima (pasada) → p_payment_date llega al RPC', async () => {
+  it('payment_date legítima (pasada) → p_payment_date llega al RPC (ADN-008: batch)', async () => {
     const yesterday = isoDaysAgo(1);
     const res = await POST(makeRequest(baseBody({ payment_date: yesterday })));
     expect(res.status).toBe(201);
@@ -129,7 +129,8 @@ describe('POST /api/payments — fecha financiera del pago (V2.12.32)', () => {
     expect(rpcCalls[0].p_payment_date).toBe(yesterday);
     expect(rpcCalls[0].p_ref_type).toBe('service');
     expect(rpcCalls[0].p_ref_id).toBe(REF_ID);
-    expect(rpcCalls[0].p_amount).toBe(100);
+    // ADN-008: el lote viaja como register_supplier_payment_batch (atómico).
+    expect(((rpcCalls[0].p_payments as Array<Record<string, unknown>>)[0]).amount).toBe(100);
   });
 
   it('sin payment_date → NO se pasa p_payment_date (backward compatible, RPC usa NOW())', async () => {
@@ -182,7 +183,7 @@ describe('POST /api/payments — fecha financiera del pago (V2.12.32)', () => {
     expect(rpcCalls.length).toBe(0);
   });
 
-  it('pago mixto: payment_date aplica a todas las filas (misma fecha del dinero)', async () => {
+  it('pago mixto: payment_date aplica al LOTE (misma fecha del dinero, ADN-008 atómico)', async () => {
     const yesterday = isoDaysAgo(2);
     const res = await POST(
       makeRequest(
@@ -198,9 +199,11 @@ describe('POST /api/payments — fecha financiera del pago (V2.12.32)', () => {
       )
     );
     expect(res.status).toBe(201);
-    expect(rpcCalls.length).toBe(2);
+    // ADN-008: UNA llamada transaccional para todo el lote.
+    expect(rpcCalls.length).toBe(1);
     expect(rpcCalls[0].p_payment_date).toBe(yesterday);
-    expect(rpcCalls[1].p_payment_date).toBe(yesterday);
+    expect(rpcCalls[0].p_payments as Array<Record<string, unknown>>).toHaveLength(2);
+    expect(((rpcCalls[0].p_payments as Array<Record<string, unknown>>)[1]).reference).toBe('TR-1');
   });
 
   it('cuerpo sin amount ni payments → 400 (refine del schema intacto)', async () => {

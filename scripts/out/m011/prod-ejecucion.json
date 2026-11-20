@@ -1,0 +1,91 @@
+{
+  "mision": "CP-FIN-RECEIPT-UNIT-COST-1-CUP-011",
+  "operacion": "RECT-011 lotes A–D",
+  "fecha_inicio_utc": "2026-11-16T20:02:56.855Z",
+  "canal": "Management API /database/query (1 llamada = 1 transacción atómica)",
+  "proyecto": "wthkddeleylijmonclxg (producción)",
+  "autorizacion": "Propietario — misión 011 §1/§11 (regla 1,00 CUP/u)",
+  "lotes": [
+    {
+      "lote": "loteA_lineas.sql",
+      "ms": 2232,
+      "resultado": [
+        {
+          "paso": "S1_post",
+          "payload": {
+            "ya_ok": 101,
+            "lineas": 101,
+            "subtotal_total": 5861.5
+          }
+        },
+        {
+          "paso": "S1_previas",
+          "payload": 0
+        },
+        {
+          "paso": "S2_post",
+          "payload": {
+            "total_cost": 5861.5
+          }
+        }
+      ]
+    },
+    {
+      "lote": "loteB_capas.sql",
+      "ms": 2183,
+      "resultado": [
+        {
+          "paso": "S1_post",
+          "payload": {
+            "capas": 101,
+            "sucias": 0,
+            "valor_total": 5861.5
+          }
+        },
+        {
+          "paso": "S1_previas",
+          "payload": 0
+        }
+      ]
+    },
+    {
+      "lote": "loteC_wac.sql",
+      "ms": 2424,
+      "resultado": [
+        {
+          "paso": "S1_post",
+          "payload": {
+            "wac_conformes": 25
+          }
+        },
+        {
+          "paso": "S2_wcl",
+          "payload": 25
+        }
+      ]
+    },
+    {
+      "lote": "loteD_asiento.sql",
+      "ms": 2174,
+      "resultado": [
+        {
+          "paso": "post",
+          "payload": {
+            "balance": 0,
+            "cxp_neta": 5861.5,
+            "movimientos": 5
+          }
+        },
+        {
+          "paso": "preflight",
+          "payload": {
+            "cxp_neta": 40739585,
+            "entry_existe": 0
+          }
+        }
+      ]
+    }
+  ],
+  "fecha_fin_utc": "2026-11-16T20:03:05.869Z",
+  "resultado": "LOTES A–D APLICADOS — verificar con --verify (§13)"
+}
