@@ -99,6 +99,10 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "cp_fin004_normalize_enervida_payments",
+      "reason": "CP-FIN-004 (2026-11-20, migraciones 20261120200000/20261120210000) · Normalizador histórico idempotente del contrato external_transfer para ENERVIDA (declaración del propietario: 3 ventas Transf. Exterior, demás ventas USD en efectivo): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado con fixtures), REVOKE explícito de anon/authenticated/PUBLIC y GRANT a service_role en la migración; guardas por tienda/venta, idempotencia por auditoría (CP_FIN004_NORMALIZE) y post-condición fail-closed sin zelle residual."
+    },
+    {
       "function": "create_pre_restore_snapshot",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
@@ -175,6 +179,18 @@
       "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
       "added_by": "cp-fin-auditoria-final",
       "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_reclassify_sale_payment_currency",
+      "reason": "CP-FIN-002 (2026-11-19, migración 20261119150000 aplicada a producción) · Escritor canónico de RECLASIFICACIÓN DE MONEDA de cobro: canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), REVOKE explícito de anon/authenticated/public. Autorización gobernada por el propietario; fail-closed (venta completed, débito único del cobro en la categoría origen o caso documentado asiento_obsoleto, coherencia con pagos, categorías del catálogo). Idempotente por (venta, método, moneda_origen). Laguna detectada por CP-FIN-003: el gate de main fallaba desde la aplicación de la 20261119150000 (run 44550488760) sin esta entrada.",
+      "added_by": "CP-FIN-003 2026-11-20",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "fin_rectify_sale_payment_method",
+      "reason": "CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-19) · Escritor canónico de rectificación de medio de cobro (patrón T12): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), sin EXECUTE para anon/authenticated/public (REVOKE explícito + GRANT service_role en la migración 20261119120000). La autorización de la rectificación es gobernada (§6 de la misión: confirmación del propietario del hecho económico); la función verifica fail-closed venta completed, pagos del método origen, moneda única, categorías del catálogo y localización EXACTA sin ambigüedad del movimiento de cobro original. Idempotente (RECTIFICACION_FIN por venta + advisory lock).",
+      "added_by": "CP-FIN-001 2026-11-19",
+      "expires": "2027-01-31"
     },
     {
       "function": "fin_resolve_rule",
@@ -703,18 +719,6 @@
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
       "expires": "2027-06-30"
-    },
-    {
-      "function": "fin_rectify_sale_payment_method",
-      "reason": "CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-19) · Escritor canónico de rectificación de medio de cobro (patrón T12): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), sin EXECUTE para anon/authenticated/public (REVOKE explícito + GRANT service_role en la migración 20261119120000). La autorización de la rectificación es gobernada (§6 de la misión: confirmación del propietario del hecho económico); la función verifica fail-closed venta completed, pagos del método origen, moneda única, categorías del catálogo y localización EXACTA sin ambigüedad del movimiento de cobro original. Idempotente (RECTIFICACION_FIN por venta + advisory lock).",
-      "added_by": "CP-FIN-001 2026-11-19",
-      "expires": "2027-01-31"
-    },
-    {
-      "function": "fin_reclassify_sale_payment_currency",
-      "reason": "CP-FIN-002 (2026-11-19, migración 20261119150000 aplicada a producción) · Escritor canónico de RECLASIFICACIÓN DE MONEDA de cobro: canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), REVOKE explícito de anon/authenticated/public. Autorización gobernada por el propietario; fail-closed (venta completed, débito único del cobro en la categoría origen o caso documentado asiento_obsoleto, coherencia con pagos, categorías del catálogo). Idempotente por (venta, método, moneda_origen). Laguna detectada por CP-FIN-003: el gate de main fallaba desde la aplicación de la 20261119150000 (run 44550488760) sin esta entrada.",
-      "added_by": "CP-FIN-003 2026-11-20",
-      "expires": "2027-01-31"
     }
   ],
   "tables_without_rls": [],
