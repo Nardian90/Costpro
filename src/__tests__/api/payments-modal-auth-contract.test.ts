@@ -45,9 +45,15 @@ describe.skipIf(!RSV || !RDM)('Modales de pago a proveedor — contrato de auten
       expect(postBlock).toContain('headers: authHeaders');
     });
 
-    it('el POST envía payment_date (formatOperationDateForRPC) + idempotencia', () => {
+    it('el POST envía payment_date (formatOperationDateForRPC) + idempotencia ESTABLE (ADN-009 §8)', () => {
       expect(RSV).toContain('payment_date: formatOperationDateForRPC(paymentDate)');
-      expect(RSV).toContain('idempotency_key: crypto.randomUUID()');
+      // ADN-009 (§8): la clave de idempotencia es ESTABLE por intento (ref
+      // regenerada al abrir/cambiar el lote; el reintento tras respuesta
+      // perdida REUTILIZA la clave — replay completo, sin componentes extra).
+      expect(RSV).toContain('idempotency_key: payAttemptKeyRef.current || crypto.randomUUID()');
+      // y el mecanismo de estabilidad existe (fingerprint del lote + ref)
+      expect(RSV).toContain('const payAttemptKeyRef = useRef<string>(\'\');');
+      expect(RSV).toContain('payAttemptKeyRef.current = crypto.randomUUID();');
     });
 
     it('la fecha del pago se valida antes de enviar (nunca futura) y bloquea el botón', () => {

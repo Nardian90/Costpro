@@ -20,11 +20,22 @@ import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
  *    de los límites) → 422, no 500 opaco.
  * 5. payment_date mal formada (no ISO 8601 datetime) → 400 de schema.
  *
+ * ADN-009 (§5): ref_type='service' llega a la RPC batch por el cliente
+ * service_role (getSupabaseAdminSafe) y la ruta exige canManageStore sobre la
+ * tienda activa ANTES de cualquier operación privilegiada → el usuario mock
+ * lleva role 'manager' + membership activa en la tienda de profiles.
+ *
  * checkNotFutureOperationDate NO se mockea: la aserción cubre la semántica
  * real del gate (mismo criterio que received-services-authz con roles).
  */
 
-const sessionUser = { id: 'u1111111-1111-4111-8111-111111111111' };
+// ADN-009: usuario plano con membership de gestión — el gate canManageStore
+// afecta a TODOS los POST de /api/payments.
+const sessionUser = {
+  id: 'u1111111-1111-4111-8111-111111111111',
+  role: 'manager',
+  memberships: [{ store_id: 'a1111111-1111-4111-8111-111111111111', role: 'manager', status: 'active' }],
+};
 
 vi.mock('@/lib/auth-middleware', () => ({
   withAuth: (fn: any) => async (req: any) => fn(req, { token: 't', user: sessionUser }),
@@ -35,6 +46,17 @@ vi.mock('@/lib/with-security', () => ({
 }));
 vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ allowed: true }),
+}));
+
+// ADN-009 (§5): la RPC batch de 'service' viaja por el cliente service_role.
+// Mismo captador de llamadas/resultado que el rpc del cliente de sesión.
+vi.mock('@/lib/supabase-admin', () => ({
+  getSupabaseAdminSafe: () => ({
+    rpc: async (_name: string, params: Record<string, unknown>) => {
+      rpcCalls.push(params);
+      return rpcResult;
+    },
+  }),
 }));
 
 // Mock del cliente de sesión: profiles.active_store_id + rpc capturado.

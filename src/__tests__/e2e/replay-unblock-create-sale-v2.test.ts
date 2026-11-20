@@ -494,9 +494,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   servicios con cero efecto financiero, identidad de proveedor del
     //   Catálogo Maestro y liquidación multipago/multimoneda atómica
     //   register_supplier_payment_batch) = 189
-    expect(m.total_incluidos).toBe(189);
+    // ADN-SERVICES-RECEIVED-POSTMERGE-HARDENING-009 (2026-11-21): +1 —
+    //   20261121190000_adn009_sr_postmerge_hardening (contrato canónico
+    //   external_transfer en el batch, serialización FOR UPDATE compartida,
+    //   gate de gestión en los RPC de borradores, idempotencia real de
+    //   creación y firma patch tri-state) = 190
+    expect(m.total_incluidos).toBe(190);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(189);
+    expect(incluidos.length).toBe(190);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
