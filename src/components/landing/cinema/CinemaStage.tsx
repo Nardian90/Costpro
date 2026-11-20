@@ -366,10 +366,10 @@ export default function CinemaStage({
 
        ESTABILIDAD (hallazgo de la matriz): NO se mide en el instante del
        montaje — las micro-interacciones framer-motion (p. ej. el acordeón del
-       FAQ colapsando de height:auto a height:0, 0.3s) dejan alturas NATURALES
-       transitorias que producían falsos positivos de miles de px. La primera
-       medición espera el asentamiento (SETTLE_MS) y se confirma con una
-       segunda pasada: solo se reporta el desborde si dos mediciones
+       FAQ colapsando de altura automática a altura nula, 0.3s) dejan alturas
+       NATURALES transitorias que producían falsos positivos de miles de px.
+       La primera medición espera el asentamiento (SETTLE_MS) y se confirma
+       con una segunda pasada: solo se reporta el desborde si dos mediciones
        consecutivas COINCIDEN (layout estable). */
     const FIT_TOLERANCE = 16; // px — absorbe sangrado decorativo (fragmentos rotados, etiquetas -top)
     const FIT_SETTLE_MS = 450; // > 0.3s de las animaciones de entrada/colapso de framer-motion
