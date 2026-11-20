@@ -805,8 +805,10 @@ test.describe.serial('CP-FIN-003 — generaciones contables + pagos universales 
     const data = await res.json();
     const map: Array<{ payment_method: string; currency: string; category_code: string }> = data.account_mapping ?? [];
     expect(map.length).toBeGreaterThanOrEqual(10);
-    const zelleUsd = map.find((m) => m.payment_method === 'zelle' && m.currency === 'USD');
-    expect(zelleUsd?.category_code).toBe('ACT_TRANSF_EXTERIOR');
+    // CP-FIN-004: el medio canónico del exterior es external_transfer (la fila
+    // zelle queda como heredada desactivada en fin_account_mapping).
+    const extUsd = map.find((m) => m.payment_method === 'external_transfer' && m.currency === 'USD');
+    expect(extUsd?.category_code).toBe('ACT_TRANSF_EXTERIOR');
     const cashUsd = map.find((m) => m.payment_method === 'cash' && m.currency === 'USD');
     expect(cashUsd?.category_code).toBe('ACT_EFECTIVO_USD');
     const transfCup = map.find((m) => m.payment_method === 'transfer' && m.currency === 'CUP');

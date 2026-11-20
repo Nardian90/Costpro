@@ -42,6 +42,49 @@
 -- ============================================================================
 
 
+
+-- ═══════════════════════════════════════════════════════════════════════════
+-- 0. Constraints de medio de pago — el contrato canónico external_transfer
+--    (inventario LIVE 2026-11-20: los CHECK de tablas restringen el valor
+--    del medio; sin esta sección el INSERT de cobros exteriores falla).
+-- ═══════════════════════════════════════════════════════════════════════════
+
+-- 0.1 payment_transactions: fuente autoritativa de cobros.
+ALTER TABLE public.payment_transactions DROP CONSTRAINT IF EXISTS payment_transactions_payment_method_check;
+ALTER TABLE public.payment_transactions ADD CONSTRAINT payment_transactions_payment_method_check
+  CHECK (payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'external_transfer'::text, 'zelle'::text]));
+
+-- 0.2 devolutions: reembolsos por el medio canónico del exterior.
+ALTER TABLE public.devolutions DROP CONSTRAINT IF EXISTS devolutions_payment_method_check;
+ALTER TABLE public.devolutions ADD CONSTRAINT devolutions_payment_method_check
+  CHECK (payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'external_transfer'::text, 'zelle'::text, 'store_credit'::text]));
+
+-- 0.3 commission_payments: pagos de comisión por el medio canónico.
+ALTER TABLE public.commission_payments DROP CONSTRAINT IF EXISTS commission_payments_payment_method_check;
+ALTER TABLE public.commission_payments ADD CONSTRAINT commission_payments_payment_method_check
+  CHECK ((payment_method IS NULL) OR (payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'external_transfer'::text, 'zelle'::text, 'mixed'::text])));
+
+-- 0.3b received_services / receipts: los pagos de servicios y recepciones
+--     admiten el medio canónico del exterior (PaymentRowsEditor 3x4).
+ALTER TABLE public.received_services DROP CONSTRAINT IF EXISTS received_services_payment_method_check;
+ALTER TABLE public.received_services ADD CONSTRAINT received_services_payment_method_check
+  CHECK ((payment_method IS NULL) OR (payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'external_transfer'::text, 'zelle'::text])));
+
+ALTER TABLE public.receipts DROP CONSTRAINT IF EXISTS receipts_payment_method_check;
+ALTER TABLE public.receipts ADD CONSTRAINT receipts_payment_method_check
+  CHECK ((payment_method IS NULL) OR (payment_method = ANY (ARRAY['cash'::text, 'transfer'::text, 'external_transfer'::text, 'zelle'::text])));
+
+-- 0.4 chk_mixed_payment_consistency: la suma de pools cubre el pool canónico
+--     del exterior (external_transfer_amount) junto al heredado (zelle_amount).
+ALTER TABLE public.transactions DROP CONSTRAINT IF EXISTS chk_mixed_payment_consistency;
+ALTER TABLE public.transactions ADD CONSTRAINT chk_mixed_payment_consistency
+  CHECK (
+    payment_method <> 'mixed'
+    OR ABS((cash_amount + transfer_amount + COALESCE(zelle_amount, 0) + COALESCE(external_transfer_amount, 0)) - total_amount) <= 1.00
+    OR payment_incidents IS NOT NULL
+  );
+
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 1. fin_compute_metrics
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -1414,6 +1457,10 @@ BEGIN
       v_comp_method := lower(btrim(COALESCE(v_comp->>'method', '')));
       v_comp_cur := upper(btrim(COALESCE(v_comp->>'currency', '')));
       v_comp_amt := COALESCE(NULLIF(v_comp->>'amount', '')::numeric, NULL);
+      -- CP-FIN-004: normalización del heredado en el MISMO punto único que
+      -- §13.7 (este bucle re-parsea v_comp_method: sin esta línea, un
+      -- componente 'zelle' de cliente cachado se persistiría tal cual).
+      v_comp_method := CASE WHEN v_comp_method = 'zelle' THEN 'external_transfer' ELSE v_comp_method END;
       IF v_comp_method = 'external_transfer' THEN
         -- Transf. Exterior: mismas reglas canónicas del flujo previo (riel de
         -- divisa, tasa > 1, moneda de venta USD/EUR/MLC). Código de error
@@ -5757,7 +5804,9 @@ BEGIN
       AND pt.payment_method = 'zelle' AND coalesce(pt.direction, 'in') = 'in'
       AND NOT (pt.ref_id = ANY (p_exterior_sales))
   LOOP
-    SELECT coalesce(sum(pt.amount), 0) INTO v_usd_cash
+    -- CP-FIN-004: ACUMULA el nominal USD reclasificado por venta (el resumen
+    -- final reporta la suma del universo, no la última venta procesada).
+    SELECT v_usd_cash + coalesce(sum(pt.amount), 0) INTO v_usd_cash
     FROM public.payment_transactions pt
     WHERE pt.ref_id = v_sale.sale_id AND pt.payment_method = 'zelle'
       AND pt.ref_type = 'sale' AND coalesce(pt.direction, 'in') = 'in';
