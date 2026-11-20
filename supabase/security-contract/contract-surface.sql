@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-19T21:31:57.901Z
+-- Captured  : 2026-11-20T17:10:21.523Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 217 (SECURITY DEFINER write functions, public schema)
+-- Functions : 220 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -328,7 +328,7 @@ BEGIN
     'payment_method', v_tx.payment_method,
     'cash_amount', v_tx.cash_amount,
     'transfer_amount', v_tx.transfer_amount,
-    'zelle_amount', v_tx.zelle_amount,
+    'zelle_amount', v_tx.zelle_amount, 'external_transfer_amount', v_tx.external_transfer_amount,
     'sale_currency', v_tx.sale_currency,
     'sale_exchange_rate', v_tx.sale_exchange_rate,
     'discount_type', v_tx.discount_type,
@@ -368,9 +368,11 @@ BEGIN
     v_payment_changed := TRUE;
     v_changes := array_append(v_changes, 'transfer_amount');
   END IF;
-  IF p_zelle_amount IS NOT NULL AND p_zelle_amount <> COALESCE(v_tx.zelle_amount, 0) THEN
+  -- CP-FIN-004: pool exterior canónico (external_transfer_amount); la lectura
+  -- dual cubre ventas de la era heredada (zelle_amount) sin normalizar.
+  IF p_zelle_amount IS NOT NULL AND p_zelle_amount <> COALESCE(v_tx.external_transfer_amount, v_tx.zelle_amount, 0) THEN
     v_payment_changed := TRUE;
-    v_changes := array_append(v_changes, 'zelle_amount');
+    v_changes := array_append(v_changes, 'external_transfer_amount');
   END IF;
   IF p_sale_currency IS NOT NULL AND p_sale_currency <> v_tx.sale_currency THEN
     v_payment_changed := TRUE;
@@ -455,10 +457,11 @@ BEGIN
   IF v_payment_changed OR v_items_changed OR p_discount_type IS NOT NULL OR p_discount_value IS NOT NULL THEN
     UPDATE public.transactions
       SET
-        payment_method = COALESCE(p_payment_method::public.payment_method_enum, payment_method),
+        payment_method = COALESCE((CASE WHEN lower(btrim(COALESCE(p_payment_method, ''))) = 'zelle'
+                                         THEN 'external_transfer' ELSE p_payment_method END)::public.payment_method_enum, payment_method),
         cash_amount = COALESCE(p_cash_amount, cash_amount),
         transfer_amount = COALESCE(p_transfer_amount, transfer_amount),
-        zelle_amount = COALESCE(p_zelle_amount, zelle_amount),
+        external_transfer_amount = COALESCE(p_zelle_amount, external_transfer_amount),
         sale_currency = COALESCE(p_sale_currency, sale_currency),
         sale_exchange_rate = COALESCE(p_sale_exchange_rate, sale_exchange_rate),
         discount_type = COALESCE(p_discount_type::public.discount_type_enum, discount_type),
@@ -477,6 +480,7 @@ BEGIN
     'cash_amount', COALESCE(p_cash_amount, v_tx.cash_amount),
     'transfer_amount', COALESCE(p_transfer_amount, v_tx.transfer_amount),
     'zelle_amount', COALESCE(p_zelle_amount, v_tx.zelle_amount),
+    'external_transfer_amount', COALESCE(p_zelle_amount, v_tx.external_transfer_amount),
     'sale_currency', COALESCE(p_sale_currency, v_tx.sale_currency),
     'sale_exchange_rate', COALESCE(p_sale_exchange_rate, v_tx.sale_exchange_rate),
     'discount_type', COALESCE(p_discount_type, v_tx.discount_type::text),
@@ -2040,7 +2044,7 @@ BEGIN
       AND created_at > v_closure.created_at
       AND created_at <= 'infinity'::timestamptz;
 
-  SELECT COALESCE(SUM(zelle_amount), 0) INTO v_zelle_sales
+  SELECT COALESCE(SUM(COALESCE(zelle_amount, 0) + COALESCE(external_transfer_amount, 0)), 0) INTO v_zelle_sales
     FROM public.transactions
     WHERE store_id = v_closure.store_id
       AND status = 'completed'
@@ -2109,7 +2113,7 @@ BEGIN
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_voucher_refunds
     FROM public.payment_transactions
     WHERE store_id = v_closure.store_id
-      AND payment_method IN ('transfer', 'zelle')
+      AND payment_method IN ('transfer', 'zelle', 'external_transfer')
       AND ref_type = 'devolution'
       AND direction = 'refund'
       AND payment_date > v_closure.created_at
@@ -2130,7 +2134,7 @@ BEGIN
   SELECT COALESCE(SUM(amount_cup), 0) INTO v_voucher_recoveries
     FROM public.payment_transactions
     WHERE store_id = v_closure.store_id
-      AND payment_method IN ('transfer', 'zelle')
+      AND payment_method IN ('transfer', 'zelle', 'external_transfer')
       AND ref_type = 'devolution'
       AND direction = 'recovery'
       AND payment_date > v_closure.created_at
@@ -2405,7 +2409,7 @@ BEGIN
     SELECT
       COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN amount_cup ELSE 0 END), 0),
       COALESCE(SUM(CASE WHEN payment_method = 'transfer' THEN amount_cup ELSE 0 END), 0),
-      COALESCE(SUM(CASE WHEN payment_method = 'zelle' THEN amount_cup ELSE 0 END), 0)
+      COALESCE(SUM(CASE WHEN payment_method IN ('zelle', 'external_transfer') THEN amount_cup ELSE 0 END), 0)
     INTO v_cash_amount, v_transfer_amount, v_zelle_amount
     FROM payment_transactions
     WHERE ref_type IN ('production_order', 'work') AND ref_id = p_order_id;
@@ -2420,14 +2424,14 @@ BEGIN
     ELSIF v_transfer_amount > 0 THEN
       v_effective_method := 'transfer';
     ELSIF v_zelle_amount > 0 THEN
-      v_effective_method := 'zelle';
+      v_effective_method := 'external_transfer';
     END IF;
 
     INSERT INTO transactions (
       store_id, seller_id, total_amount, payment_method,
       sale_currency, sale_exchange_rate, status, created_at, completed_at,
       customer_name, customer_phone, customer_ci, customer_address,
-      subtotal, cash_amount, transfer_amount, zelle_amount
+      subtotal, cash_amount, transfer_amount, external_transfer_amount
     ) VALUES (
       v_order.store_id, p_seller_id, v_order.budget_total,
       v_effective_method::public.payment_method_enum,
@@ -2540,7 +2544,7 @@ BEGIN
   SELECT
     COALESCE(SUM(CASE WHEN payment_method = 'cash' THEN amount_cup ELSE 0 END), 0),
     COALESCE(SUM(CASE WHEN payment_method = 'transfer' THEN amount_cup ELSE 0 END), 0),
-    COALESCE(SUM(CASE WHEN payment_method = 'zelle' THEN amount_cup ELSE 0 END), 0)
+    COALESCE(SUM(CASE WHEN payment_method IN ('zelle', 'external_transfer') THEN amount_cup ELSE 0 END), 0)
   INTO v_cash_amount, v_transfer_amount, v_zelle_amount
   FROM payment_transactions
   WHERE ref_type IN ('production_order', 'work') AND ref_id = p_order_id;
@@ -2555,7 +2559,7 @@ BEGIN
   ELSIF v_transfer_amount > 0 THEN
     v_effective_method := 'transfer';
   ELSIF v_zelle_amount > 0 THEN
-    v_effective_method := 'zelle';
+    v_effective_method := 'external_transfer';
   END IF;
 
   -- ─── 5. Crear venta ───
@@ -2563,7 +2567,7 @@ BEGIN
     store_id, seller_id, total_amount, payment_method,
     sale_currency, sale_exchange_rate, status, created_at, completed_at,
     customer_name, customer_phone, customer_ci, customer_address,
-    subtotal, cash_amount, transfer_amount, zelle_amount
+    subtotal, cash_amount, transfer_amount, external_transfer_amount
   ) VALUES (
     p_store_id, p_seller_id, v_order.budget_total,
     v_effective_method::public.payment_method_enum,
@@ -3225,6 +3229,243 @@ END;
 $function$
 
 
+-- @contract-function name=cp_fin004_normalize_enervida_payments args="p_store_id uuid, p_exterior_sales uuid[], p_actor uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cp_fin004_normalize_enervida_payments(p_store_id uuid DEFAULT '5e6fe821-5465-48b1-b3f1-3aa3182edc38'::uuid, p_exterior_sales uuid[] DEFAULT ARRAY['9033864b-2c13-4aa3-b2b8-2fd645a190db'::uuid, '3d19e5e7-2080-4eb1-8eca-cf7e391f30b9'::uuid, '1a03c37f-3a9b-4c5a-912c-3958ebbaf91c'::uuid], p_actor uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_store_exists boolean;
+  v_sale_id uuid;
+  v_hdr_id uuid;
+  v_method text;
+  v_n_ext int := 0;
+  v_n_cash int := 0;
+  v_n_hdr int := 0;
+  v_n_works int := 0;
+  v_usd_ext numeric := 0;
+  v_usd_cash numeric := 0;
+  v_residual int;
+  v_residual_hdr int;
+  v_sale record;
+BEGIN
+  SELECT EXISTS (SELECT 1 FROM public.stores WHERE id = p_store_id) INTO v_store_exists;
+  IF NOT v_store_exists THEN
+    RETURN jsonb_build_object('status', 'SKIP_STORE_NOT_FOUND', 'store_id', p_store_id);
+  END IF;
+
+  -- Idempotencia global (auditoría de la normalización ya registrada)
+  IF EXISTS (SELECT 1 FROM public.audit_logs
+             WHERE action = 'CP_FIN004_NORMALIZE' AND record_id = p_store_id) THEN
+    RETURN jsonb_build_object('status', 'YA_APLICADO', 'store_id', p_store_id);
+  END IF;
+
+  -- ── A. Las 3 ventas declaradas Transf. Exterior (Zelle): zelle → external_transfer ──
+  FOREACH v_sale_id IN ARRAY p_exterior_sales LOOP
+    IF EXISTS (SELECT 1 FROM public.transactions WHERE id = v_sale_id AND store_id = p_store_id) THEN
+      UPDATE public.payment_transactions
+        SET payment_method = 'external_transfer',
+            notes = CASE WHEN coalesce(notes, '') = ''
+                         THEN 'CP-FIN-004: rectificado zelle → external_transfer (Transf. Exterior — declaración del propietario)'
+                         ELSE notes || ' · CP-FIN-004: rectificado zelle → external_transfer' END,
+            updated_at = now()
+        WHERE ref_type = 'sale' AND ref_id = v_sale_id
+          AND payment_method = 'zelle' AND coalesce(direction, 'in') = 'in';
+
+      UPDATE public.transactions
+        SET external_transfer_amount = coalesce(external_transfer_amount, 0) + coalesce(zelle_amount, 0),
+            zelle_amount = 0,
+            updated_at = now()
+        WHERE id = v_sale_id;
+
+      SELECT CASE WHEN count(DISTINCT pt.payment_method) = 1 THEN min(pt.payment_method) ELSE 'mixed' END
+        INTO v_method
+      FROM public.payment_transactions pt
+      WHERE pt.ref_type = 'sale' AND pt.ref_id = v_sale_id AND coalesce(pt.direction, 'in') = 'in';
+      IF v_method IS NOT NULL AND v_method <> '' THEN
+        UPDATE public.transactions
+          SET payment_method = v_method::public.payment_method_enum, updated_at = now()
+        WHERE id = v_sale_id;
+      END IF;
+
+      UPDATE public.transaction_items
+        SET external_transfer_paid = coalesce(external_transfer_paid, 0) + coalesce(zelle_paid, 0),
+            external_transfer_currency = coalesce(external_transfer_currency, zelle_currency),
+            external_transfer_discount_type = coalesce(external_transfer_discount_type, zelle_discount_type),
+            external_transfer_discount_value = coalesce(external_transfer_discount_value, zelle_discount_value),
+            external_transfer_discount_currency = coalesce(external_transfer_discount_currency, zelle_discount_currency),
+            zelle_paid = 0, zelle_currency = NULL,
+            zelle_discount_type = NULL, zelle_discount_value = NULL, zelle_discount_currency = NULL
+      WHERE transaction_id = v_sale_id AND coalesce(zelle_paid, 0) > 0;
+
+      v_n_ext := v_n_ext + 1;
+    END IF;
+  END LOOP;
+
+  -- ── B. Todas las demás ventas con cobros zelle → cash (efectivo USD) ──
+  FOR v_sale IN
+    SELECT DISTINCT pt.ref_id AS sale_id
+    FROM public.payment_transactions pt
+    WHERE pt.store_id = p_store_id AND pt.ref_type = 'sale'
+      AND pt.payment_method = 'zelle' AND coalesce(pt.direction, 'in') = 'in'
+      AND NOT (pt.ref_id = ANY (p_exterior_sales))
+  LOOP
+    -- CP-FIN-004: ACUMULA el nominal USD reclasificado por venta (el resumen
+    -- final reporta la suma del universo, no la última venta procesada).
+    SELECT v_usd_cash + coalesce(sum(pt.amount), 0) INTO v_usd_cash
+    FROM public.payment_transactions pt
+    WHERE pt.ref_id = v_sale.sale_id AND pt.payment_method = 'zelle'
+      AND pt.ref_type = 'sale' AND coalesce(pt.direction, 'in') = 'in';
+
+    UPDATE public.payment_transactions
+      SET payment_method = 'cash',
+          notes = CASE WHEN coalesce(notes, '') = ''
+                       THEN 'CP-FIN-004: rectificado zelle → cash (efectivo USD — declaración del propietario)'
+                       ELSE notes || ' · CP-FIN-004: rectificado zelle → cash (efectivo USD)' END,
+          updated_at = now()
+      WHERE ref_type = 'sale' AND ref_id = v_sale.sale_id
+        AND payment_method = 'zelle' AND coalesce(direction, 'in') = 'in';
+
+    UPDATE public.transactions
+      SET cash_amount = coalesce(cash_amount, 0) + coalesce(zelle_amount, 0),
+          zelle_amount = 0,
+          updated_at = now()
+      WHERE id = v_sale.sale_id;
+
+    SELECT CASE WHEN count(DISTINCT pt.payment_method) = 1 THEN min(pt.payment_method) ELSE 'mixed' END
+      INTO v_method
+    FROM public.payment_transactions pt
+    WHERE pt.ref_type = 'sale' AND pt.ref_id = v_sale.sale_id AND coalesce(pt.direction, 'in') = 'in';
+    IF v_method IS NOT NULL AND v_method <> '' THEN
+      UPDATE public.transactions
+        SET payment_method = v_method::public.payment_method_enum, updated_at = now()
+      WHERE id = v_sale.sale_id;
+    END IF;
+
+    UPDATE public.transaction_items
+      SET cash_paid = coalesce(cash_paid, 0) + coalesce(zelle_paid, 0),
+          cash_currency = coalesce(cash_currency, zelle_currency),
+          zelle_paid = 0, zelle_currency = NULL
+    WHERE transaction_id = v_sale.sale_id AND coalesce(zelle_paid, 0) > 0;
+
+    v_n_cash := v_n_cash + 1;
+  END LOOP;
+
+  -- ── B2. Headers 'zelle' SIN cobros zelle (M4): ventas pre-corte con
+  --        sustancia USD físico registradas CUP@680 en el bucket zelle.
+  --        Sin filas de pago → el método del header NO es derivable de
+  --        cobros: se fija a 'cash' (efectivo) conforme a la declaración
+  --        del propietario (todo cobro USD fue efectivo salvo las 3
+  --        declaradas). NO se crean payment_transactions (§5/§6: sin
+  --        pagos ni movimientos nuevos; contabilidad invariante — sin
+  --        cobros, la re-derivación mantiene ING_VENTAS + diferencia_cobro).
+  --        Los pools heredados se mueven al canónico de efectivo. ──
+  FOR v_hdr_id IN
+    SELECT t.id
+    FROM public.transactions t
+    WHERE t.store_id = p_store_id
+      AND t.payment_method = 'zelle'
+      AND NOT (t.id = ANY (p_exterior_sales))
+      AND NOT EXISTS (
+        SELECT 1 FROM public.payment_transactions pt
+        WHERE pt.ref_type = 'sale' AND pt.ref_id = t.id
+          AND pt.payment_method = 'zelle' AND coalesce(pt.direction, 'in') = 'in'
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM public.payment_transactions pt2
+        WHERE pt2.ref_type = 'sale' AND pt2.ref_id = t.id
+          AND pt2.payment_method = 'external_transfer'
+          AND coalesce(pt2.direction, 'in') = 'in'
+      )
+  LOOP
+    UPDATE public.transactions
+      SET cash_amount = coalesce(cash_amount, 0) + coalesce(zelle_amount, 0),
+          zelle_amount = 0,
+          updated_at = now()
+      WHERE id = v_hdr_id;
+
+    -- Método del header: si la venta tuviera cobros de otro medio, se
+    -- re-deriva de ellos; sin cobros → efectivo (declaración del propietario).
+    SELECT CASE count(DISTINCT pt.payment_method)
+             WHEN 1 THEN min(pt.payment_method)
+             WHEN 0 THEN 'cash'
+             ELSE 'mixed' END
+      INTO v_method
+    FROM public.payment_transactions pt
+    WHERE pt.ref_type = 'sale' AND pt.ref_id = v_hdr_id AND coalesce(pt.direction, 'in') = 'in';
+
+    UPDATE public.transactions
+      SET payment_method = v_method::public.payment_method_enum, updated_at = now()
+      WHERE id = v_hdr_id;
+
+    UPDATE public.transaction_items
+      SET cash_paid = coalesce(cash_paid, 0) + coalesce(zelle_paid, 0),
+          cash_currency = coalesce(cash_currency, zelle_currency),
+          zelle_paid = 0, zelle_currency = NULL
+    WHERE transaction_id = v_hdr_id AND coalesce(zelle_paid, 0) > 0;
+
+    v_n_hdr := v_n_hdr + 1;
+  END LOOP;
+
+  -- ── C. Cobros de trabajos (ref_type='work'): SOLO normalización de
+  --      representación zelle → external_transfer (misma cuenta exterior;
+  --      los works no generan asientos y están FUERA del alcance declarado,
+  --      que cubre ventas). Sin cambio de clasificación contable. ──
+  UPDATE public.payment_transactions
+    SET payment_method = 'external_transfer',
+        notes = CASE WHEN coalesce(notes, '') = ''
+                     THEN 'CP-FIN-004: normalización de representación zelle → external_transfer (cobro de trabajo; no es venta)'
+                     ELSE notes || ' · CP-FIN-004: representación normalizada a external_transfer' END,
+        updated_at = now()
+  WHERE store_id = p_store_id AND ref_type = 'work' AND payment_method = 'zelle';
+  GET DIAGNOSTICS v_n_works = ROW_COUNT;
+
+  -- ── D. Post-condición fail-closed: cero zelle residual en la tienda ──
+  SELECT count(*) INTO v_residual
+  FROM public.payment_transactions WHERE store_id = p_store_id AND payment_method = 'zelle';
+  SELECT count(*) INTO v_residual_hdr
+  FROM public.transactions WHERE store_id = p_store_id AND payment_method = 'zelle';
+  IF v_residual > 0 OR v_residual_hdr > 0 THEN
+    RAISE EXCEPTION 'ERR_NORMALIZACION_INCOMPLETA: cobros zelle residuales=%, headers residuales=%', v_residual, v_residual_hdr;
+  END IF;
+
+  -- ── E. Importes conciliados (nominales USD de la reclasificación) ──
+  SELECT coalesce(sum(pt.amount), 0) INTO v_usd_ext
+  FROM public.payment_transactions pt
+  WHERE pt.store_id = p_store_id AND pt.ref_type = 'sale'
+    AND pt.payment_method = 'external_transfer' AND pt.currency = 'USD'
+    AND coalesce(pt.direction, 'in') = 'in';
+
+  -- ── F. Auditoría ──
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES ('CP_FIN004_NORMALIZE', 'payment_transactions', p_store_id, p_store_id, p_actor,
+    jsonb_build_object(
+      'mision', 'CP-FIN-004 (anexo vinculante POS-backend)',
+      'evidencia', 'Declaración del propietario: las únicas 3 ventas Zelle identificadas; demás ventas USD en efectivo',
+      'exterior_sales', p_exterior_sales,
+      'n_ventas_exterior', v_n_ext,
+      'n_ventas_efectivo', v_n_cash,
+      'n_headers_efectivo_sin_cobros', v_n_hdr,
+      'evidencia_headers_sin_cobros', 'headers pre-corte CUP@680 con sustancia USD físico (15.300=22,50 USD; 4.760=7,00 USD @680) — bucket «USD físico → zelle» del importador; sin filas de pago, contabilidad invariante',
+      'n_works_representacion', v_n_works,
+      'usd_exterior_final', round(v_usd_ext, 2),
+      'usd_reclasificados_efectivo', round(v_usd_cash, 2),
+      'residual_zelle', v_residual));
+
+  RETURN jsonb_build_object(
+    'status', 'OK', 'store_id', p_store_id,
+    'n_ventas_exterior', v_n_ext,
+    'n_ventas_efectivo', v_n_cash,
+    'n_headers_efectivo_sin_cobros', v_n_hdr,
+    'n_works_representacion', v_n_works,
+    'usd_exterior_final', round(v_usd_ext, 2),
+    'usd_reclasificados_efectivo', round(v_usd_cash, 2),
+    'residual_zelle', v_residual);
+END $function$
+
+
 -- @contract-function name=create_cash_flow_document args="p_store_id uuid, p_doc_type text, p_concept text, p_amount numeric, p_currency text, p_exchange_rate numeric, p_operation_date timestamp with time zone, p_counterparty text, p_justification text, p_notes text, p_related_document_id uuid, p_idempotency_key text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_cash_flow_document(p_store_id uuid, p_doc_type text, p_concept text, p_amount numeric, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT NULL::numeric, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_counterparty text DEFAULT NULL::text, p_justification text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_related_document_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -3766,7 +4007,9 @@ BEGIN
   END LOOP;
 
   -- Método permitido
-  IF p_payment_method NOT IN ('cash','transfer','zelle','store_credit') THEN
+  -- CP-FIN-004: normalización del heredado 'zelle' al canónico
+  IF lower(btrim(COALESCE(p_payment_method, ''))) = 'zelle' THEN p_payment_method := 'external_transfer'; END IF;
+  IF p_payment_method NOT IN ('cash','transfer','external_transfer','store_credit') THEN
     RAISE EXCEPTION 'ERR_DEVOLUTION_INVALID_METHOD: %', p_payment_method;
   END IF;
 
@@ -3781,8 +4024,8 @@ BEGIN
   IF v_refund_currency = 'AS_PAID' AND p_payment_method <> 'cash' THEN
     RAISE EXCEPTION 'ERR_DEVOLUTION_AS_PAID_CASH_ONLY: el reembolso según lo pagado (multi-moneda) exige entrega en efectivo (ambas monedas simultáneamente)';
   END IF;
-  IF p_payment_method = 'zelle' AND v_refund_currency = 'CUP' THEN
-    RAISE EXCEPTION 'ERR_DEVOLUTION_ZELLE_CURRENCY: zelle opera en USD (riel del exterior) — un reembolso por zelle no puede emitirse en CUP';
+  IF p_payment_method = 'external_transfer' AND v_refund_currency = 'CUP' THEN
+    RAISE EXCEPTION 'ERR_DEVOLUTION_ZELLE_CURRENCY: Transf. Exterior (external_transfer) opera en divisa — un reembolso exterior no puede emitirse en CUP';
   END IF;
   -- MISIÓN DE CIERRE (Fase E §7): el importe USD del reembolso NO usa la
   -- tasa VIGENTE de la tienda (jerarquía retirada): se ancla a la TASA
@@ -3868,7 +4111,7 @@ BEGIN
     RAISE EXCEPTION 'ERR_DEVOLUTION_AMOUNT_POSITIVE';
   END IF;
 
-  IF p_payment_method IN ('cash','transfer','zelle') THEN
+  IF p_payment_method IN ('cash','transfer','external_transfer','zelle') THEN
     -- sesión de caja abierta de la tienda (find-or-create para que el out nunca se pierda)
     SELECT id INTO v_session_id FROM public.cash_register_sessions
       WHERE store_id = p_store_id AND status = 'open'
@@ -3929,8 +4172,8 @@ BEGIN
     SELECT COUNT(*),
            COALESCE(SUM(CASE WHEN pt.payment_method = 'cash'     AND pt.currency = 'CUP' THEN pt.amount END), 0),
            COALESCE(SUM(CASE WHEN pt.payment_method = 'cash'     AND pt.currency = 'USD' THEN pt.amount END), 0),
-           COALESCE(SUM(CASE WHEN pt.payment_method IN ('transfer','zelle') AND pt.currency = 'CUP' THEN pt.amount END), 0),
-           COALESCE(SUM(CASE WHEN pt.payment_method IN ('transfer','zelle') AND pt.currency = 'USD' THEN pt.amount END), 0)
+           COALESCE(SUM(CASE WHEN pt.payment_method IN ('transfer','external_transfer','zelle') AND pt.currency = 'CUP' THEN pt.amount END), 0),
+           COALESCE(SUM(CASE WHEN pt.payment_method IN ('transfer','external_transfer','zelle') AND pt.currency = 'USD' THEN pt.amount END), 0)
       INTO v_paid_rows, v_row_cash_cup, v_row_cash_usd, v_row_bank_cup, v_row_bank_usd
       FROM public.payment_transactions pt
       WHERE pt.transaction_id = p_original_transaction_id
@@ -5228,6 +5471,168 @@ END;
 $function$
 
 
+-- @contract-function name=create_received_service_draft args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_production_order_ids jsonb, p_created_by uuid, p_supplier_id uuid, p_supplier_master_party_id uuid, p_supplier_meta jsonb, p_creation_key text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_received_service_draft(p_store_id uuid, p_supplier text DEFAULT NULL::text, p_total_amount numeric DEFAULT NULL::numeric, p_service_type_id uuid DEFAULT NULL::uuid, p_service_type_name text DEFAULT 'Otro'::text, p_service_date date DEFAULT NULL::date, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_payment_terms_days integer DEFAULT 30, p_distribution_method text DEFAULT 'amount'::text, p_reference_doc text DEFAULT NULL::text, p_observations text DEFAULT NULL::text, p_receipt_ids jsonb DEFAULT '[]'::jsonb, p_production_order_ids jsonb DEFAULT '[]'::jsonb, p_created_by uuid DEFAULT NULL::uuid, p_supplier_id uuid DEFAULT NULL::uuid, p_supplier_master_party_id uuid DEFAULT NULL::uuid, p_supplier_meta jsonb DEFAULT NULL::jsonb, p_creation_key text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE
+  v_service_id uuid;
+  v_service_number text;
+  v_receipt_id uuid;
+  v_order_id uuid;
+  v_count integer;
+  v_allocated_per_receipt numeric;
+  v_link_count integer;
+  v_ot_count integer := 0;
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_created_by, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_supplier text := NULLIF(btrim(COALESCE(p_supplier, '')), '');
+  v_meta jsonb := COALESCE(p_supplier_meta, '{}'::jsonb);
+BEGIN
+  -- Idempotencia de creación: si la creation_key ya produjo un borrador en
+  -- esta tienda, devolver ese servicio (anti doble-clic / reintento).
+  IF p_creation_key IS NOT NULL AND btrim(p_creation_key) <> '' THEN
+    SELECT al.record_id INTO v_service_id
+    FROM audit_logs al
+    WHERE al.action = 'SERVICE_DRAFT_CREATED'
+      AND al.store_id = p_store_id
+      AND al.table_name = 'received_services'
+      AND al.metadata->>'creation_key' = btrim(p_creation_key)
+    ORDER BY al.created_at DESC
+    LIMIT 1;
+    IF v_service_id IS NOT NULL THEN
+      SELECT service_number INTO v_service_number
+      FROM received_services WHERE id = v_service_id;
+      RETURN jsonb_build_object(
+        'status', 'success', 'service_id', v_service_id,
+        'service_number', v_service_number, 'draft', true, 'duplicate', true
+      );
+    END IF;
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
+  -- Actor-explícito (doctrina create_sale_v2 / create_received_service_v2).
+  IF v_caller_uid IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- Borrador: el proveedor es OPCIONAL (se completa antes de confirmar).
+  -- La identidad, si llega, se valida fail-closed (sin inventar datos).
+  IF p_supplier_id IS NOT NULL AND NOT public.adn008_supplier_belongs_to_store(p_supplier_id, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_SUPPLIER_INVALID: % no pertenece a la tienda', p_supplier_id;
+  END IF;
+  IF p_supplier_master_party_id IS NOT NULL AND NOT public.adn008_master_party_valid_for_store(p_supplier_master_party_id, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_SUPPLIER_MASTER_INVALID: % no pertenece al tenant de la tienda o no está activo', p_supplier_master_party_id;
+  END IF;
+
+  -- Requisito estructural mínimo del documento (identificable y almacenable).
+  IF p_total_amount IS NULL OR p_total_amount <= 0 THEN
+    RAISE EXCEPTION 'ERR_INVALID_AMOUNT: total_amount must be > 0';
+  END IF;
+  IF p_exchange_rate < 0.01 OR p_exchange_rate > 10000 THEN
+    RAISE EXCEPTION 'ERR_INVALID_EXCHANGE_RATE: % out of range [0.01, 10000]', p_exchange_rate;
+  END IF;
+  IF p_payment_terms_days < 1 OR p_payment_terms_days > 365 THEN
+    RAISE EXCEPTION 'ERR_INVALID_PAYMENT_TERMS: % out of range [1, 365]', p_payment_terms_days;
+  END IF;
+  IF p_distribution_method NOT IN ('amount', 'quantity', 'manual') THEN
+    RAISE EXCEPTION 'ERR_INVALID_DISTRIBUTION_METHOD';
+  END IF;
+  IF p_service_type_id IS NOT NULL THEN
+    SELECT COUNT(*) INTO v_count FROM service_types
+    WHERE id = p_service_type_id
+      AND (store_id = p_store_id OR store_id IS NULL)
+      AND is_active = true;
+    IF v_count = 0 THEN
+      RAISE EXCEPTION 'ERR_SERVICE_TYPE_NOT_FOUND';
+    END IF;
+  END IF;
+
+  PERFORM public.validate_operation_date(COALESCE(p_service_date, CURRENT_DATE)::timestamp with time zone, p_store_id);
+
+  SELECT 'SRV-' || to_char(COALESCE(p_service_date, CURRENT_DATE), 'YYYYMMDD') || '-' ||
+         LPAD(nextval('service_number_seq')::text, 5, '0')
+  INTO v_service_number;
+
+  INSERT INTO received_services (
+    store_id, service_number, service_date, service_type_id, service_type_name,
+    supplier, reference_doc, currency, exchange_rate, total_amount,
+    observations, status, distribution_method, created_by,
+    payment_terms_days, due_date,
+    supplier_id, supplier_master_party_id,
+    supplier_code, supplier_tax_id, supplier_phone, supplier_address
+  ) VALUES (
+    p_store_id, v_service_number, COALESCE(p_service_date, CURRENT_DATE),
+    p_service_type_id, p_service_type_name, v_supplier, p_reference_doc,
+    p_currency, p_exchange_rate, p_total_amount, p_observations,
+    'draft', p_distribution_method, v_caller_uid,
+    p_payment_terms_days, (COALESCE(p_service_date, CURRENT_DATE) + p_payment_terms_days)::date,
+    p_supplier_id, p_supplier_master_party_id,
+    NULLIF(btrim(COALESCE(v_meta->>'code', '')), ''),
+    NULLIF(btrim(COALESCE(v_meta->>'tax_id', '')), ''),
+    NULLIF(btrim(COALESCE(v_meta->>'phone', '')), ''),
+    NULLIF(btrim(COALESCE(v_meta->>'address', '')), '')
+  ) RETURNING id INTO v_service_id;
+
+  -- Vínculos documentales (misma validación que create_received_service_v2:
+  -- misma tienda, recepción activa, OT no anulada/cerrada). NO distribuyen
+  -- costos, NO tocan inventario, NO contabilizan.
+  v_link_count := jsonb_array_length(COALESCE(p_receipt_ids, '[]'::jsonb));
+  IF v_link_count > 0 THEN
+    v_allocated_per_receipt := p_total_amount / v_link_count;
+    FOR v_receipt_id IN SELECT value::uuid FROM jsonb_array_elements_text(COALESCE(p_receipt_ids, '[]'::jsonb)) LOOP
+      IF NOT EXISTS (SELECT 1 FROM receipts WHERE id = v_receipt_id AND store_id = p_store_id AND status = 'active') THEN
+        RAISE EXCEPTION 'ERR_RECEIPT_INVALID: % no pertenece a la store o no esta activo', v_receipt_id;
+      END IF;
+      INSERT INTO service_reception_links (service_id, receipt_id, allocation_percentage, allocated_amount)
+      VALUES (v_service_id, v_receipt_id, 100.0 / v_link_count, v_allocated_per_receipt);
+    END LOOP;
+  END IF;
+
+  IF jsonb_array_length(COALESCE(p_production_order_ids, '[]'::jsonb)) > 0 THEN
+    FOR v_order_id IN SELECT value::uuid FROM jsonb_array_elements_text(COALESCE(p_production_order_ids, '[]'::jsonb)) LOOP
+      IF NOT EXISTS (
+        SELECT 1 FROM production_orders
+        WHERE id = v_order_id AND store_id = p_store_id
+          AND status NOT IN ('voided', 'closed')
+      ) THEN
+        RAISE EXCEPTION 'ERR_PRODUCTION_ORDER_INVALID: % no pertenece a la tienda o su estado no admite vinculación', v_order_id;
+      END IF;
+      INSERT INTO service_production_order_links (service_id, production_order_id)
+      VALUES (v_service_id, v_order_id)
+      ON CONFLICT (service_id, production_order_id) DO NOTHING;
+      v_ot_count := v_ot_count + 1;
+    END LOOP;
+  END IF;
+
+  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (v_caller_uid, p_store_id, 'SERVICE_DRAFT_CREATED', 'received_services', v_service_id,
+    jsonb_build_object(
+      'service_number', v_service_number, 'supplier', v_supplier,
+      'supplier_id', p_supplier_id, 'supplier_master_party_id', p_supplier_master_party_id,
+      'total_amount', p_total_amount, 'currency', p_currency,
+      'receipt_ids_linked', v_link_count, 'production_order_ids_linked', v_ot_count,
+      'creation_key', NULLIF(btrim(COALESCE(p_creation_key, '')), '')
+    ));
+
+  RETURN jsonb_build_object(
+    'status', 'success', 'service_id', v_service_id,
+    'service_number', v_service_number, 'link_count', v_link_count,
+    'production_order_link_count', v_ot_count, 'draft', true
+  );
+END;
+$function$
+
+
 -- @contract-function name=create_received_service_v2 args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid, p_production_order_ids jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid DEFAULT NULL::uuid, p_service_type_name text DEFAULT 'Otro'::text, p_service_date date DEFAULT NULL::date, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_payment_terms_days integer DEFAULT 30, p_distribution_method text DEFAULT 'amount'::text, p_reference_doc text DEFAULT NULL::text, p_observations text DEFAULT NULL::text, p_receipt_ids jsonb DEFAULT '[]'::jsonb, p_created_by uuid DEFAULT NULL::uuid, p_production_order_ids jsonb DEFAULT '[]'::jsonb)
  RETURNS jsonb
@@ -5391,7 +5796,14 @@ DECLARE
   v_item_currency text;
   v_stock numeric;
   v_existing uuid;
-  v_effective_method text := p_payment_method;
+  -- CP-FIN-004: normalización canónica del medio de pago en el PUNTO ÚNICO
+  -- de ingreso del RPC. 'zelle' es un VALOR HEREDADO de clientes previos al
+  -- contrato external_transfer (Transf. Exterior): se acepta y se normaliza;
+  -- JAMÁS se persiste. El identificador canónico del POS de 3 opciones es
+  -- cash | transfer | external_transfer (+ mixed como agregado).
+  v_effective_method text := CASE lower(btrim(COALESCE(p_payment_method, 'cash')))
+                               WHEN 'zelle' THEN 'external_transfer'
+                               ELSE COALESCE(p_payment_method, 'cash') END;
   v_product_price numeric;
   v_calculated_subtotal numeric := 0;
   v_discount_amount numeric := 0;
@@ -5590,16 +6002,25 @@ BEGIN
     END IF;
   END IF;
 
-  -- 6. Auto-promote to mixed — sin cambio
-  IF p_cash_amount > 0 AND p_transfer_amount > 0 AND p_payment_method <> 'mixed' THEN
+  -- CP-FIN-004: whitelist del contrato de 3 opciones del POS (tras la
+  -- normalización zelle→external_transfer). Fail-closed temprano: un medio
+  -- desconocido NO debe llegar al cast del enum tras mover inventario.
+  IF v_effective_method NOT IN ('cash', 'transfer', 'external_transfer', 'mixed') THEN
+    RAISE EXCEPTION 'ERR_PAYMENT_METHOD_INVALID: % (cash|transfer|external_transfer|mixed)', p_payment_method;
+  END IF;
+
+  -- 6. Auto-promote to mixed — sin cambio (CP-FIN-004: evalúa el método ya
+  --     normalizado; p_zelle_amount conserva su nombre de parámetro por
+  --     estabilidad del contrato PostgREST y del hash de idempotencia).
+  IF p_cash_amount > 0 AND p_transfer_amount > 0 AND v_effective_method <> 'mixed' THEN
     v_effective_method := 'mixed';
   END IF;
-  IF p_zelle_amount > 0 AND p_payment_method <> 'mixed' AND (p_cash_amount > 0 OR p_transfer_amount > 0) THEN
+  IF p_zelle_amount > 0 AND v_effective_method <> 'mixed' AND (p_cash_amount > 0 OR p_transfer_amount > 0) THEN
     v_effective_method := 'mixed';
   END IF;
-  -- MISIÓN-FLEX: con incidencias de pago NO se infla el importe Zelle al total
-  -- (un Transf. Exterior parcial debe registrarse como lo reportado).
-  IF p_payment_incidents IS NULL AND p_payment_method = 'zelle' AND p_zelle_amount = 0 AND p_cash_amount = 0 AND p_transfer_amount = 0 THEN
+  -- MISIÓN-FLEX: con incidencias de pago NO se infla el importe del exterior
+  -- al total (un Transf. Exterior parcial debe registrarse como lo reportado).
+  IF p_payment_incidents IS NULL AND v_effective_method = 'external_transfer' AND p_zelle_amount = 0 AND p_cash_amount = 0 AND p_transfer_amount = 0 THEN
     v_zelle_amt := p_total_amount;
   END IF;
 
@@ -5972,14 +6393,16 @@ BEGIN
       v_comp_method := lower(btrim(COALESCE(v_comp->>'method', '')));
       v_comp_cur := upper(btrim(COALESCE(v_comp->>'currency', '')));
       v_comp_amt := COALESCE(NULLIF(v_comp->>'amount', '')::numeric, NULL);
-      IF v_comp_method NOT IN ('cash', 'transfer', 'zelle')
+      -- CP-FIN-004: 'zelle' heredado se normaliza al canónico external_transfer
+      v_comp_method := CASE WHEN v_comp_method = 'zelle' THEN 'external_transfer' ELSE v_comp_method END;
+      IF v_comp_method NOT IN ('cash', 'transfer', 'external_transfer')
          OR v_comp_cur NOT IN ('CUP', 'USD')
          OR v_comp_amt IS NULL OR v_comp_amt <= 0 THEN
         RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componente inválido (method=%, currency=%, amount=%)',
           v_comp_method, v_comp_cur, COALESCE(v_comp->>'amount', 'NULL');
       END IF;
-      IF v_comp_method = 'zelle' AND v_comp_cur <> 'USD' THEN
-        RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: zelle es un riel USD (currency=%)', v_comp_cur;
+      IF v_comp_method = 'external_transfer' AND v_comp_cur <> 'USD' THEN
+        RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: Transf. Exterior (external_transfer) es un riel de divisa (currency=%)', v_comp_cur;
       END IF;
       IF v_comp_method = 'cash' THEN
         IF v_comp_cur = 'CUP' THEN
@@ -5994,6 +6417,7 @@ BEGIN
           v_comp_transfer_usd := v_comp_transfer_usd + v_comp_amt;
         END IF;
       ELSE
+        -- CP-FIN-004: acumulador del pool exterior (nombre interno heredado)
         v_comp_zelle_usd := v_comp_zelle_usd + v_comp_amt;
       END IF;
     END LOOP;
@@ -6090,7 +6514,7 @@ BEGIN
     ELSE
       v_transfer_amt := v_calculated_total;
     END IF;
-  ELSIF v_effective_method = 'zelle' THEN
+  ELSIF v_effective_method = 'external_transfer' THEN
     IF v_incidents IS NOT NULL AND p_zelle_amount IS NOT NULL AND p_zelle_amount >= 0 THEN
       v_zelle_amt := p_zelle_amount;
     ELSE
@@ -6217,7 +6641,7 @@ BEGIN
     id, store_id, seller_id, total_amount, status, payment_method,
     discount_type, discount_value, subtotal, tax_amount, applied_taxes,
     sale_currency, sale_exchange_rate, completed_at, idempotency_key, created_at,
-    cash_amount, transfer_amount, zelle_amount,
+    cash_amount, transfer_amount, external_transfer_amount,
     customer_id, customer_name,
     -- CLASIFICATOR-PARTIES (2026-11-04): snapshot histórico del comprador
     customer_code, customer_address,
@@ -6312,32 +6736,34 @@ BEGIN
 
     INSERT INTO public.transaction_items (
       transaction_id, product_id, variant_id, quantity, price_at_sale, cost_at_sale, created_at,
-      cash_paid, transfer_paid, zelle_paid, currency, exchange_rate,
-      cash_currency, transfer_currency, zelle_currency,
+      cash_paid, transfer_paid, external_transfer_paid, currency, exchange_rate,
+      cash_currency, transfer_currency, external_transfer_currency,
       cash_discount_type, cash_discount_value, cash_discount_currency,
       transfer_discount_type, transfer_discount_value, transfer_discount_currency,
-      zelle_discount_type, zelle_discount_value, zelle_discount_currency,
+      external_transfer_discount_type, external_transfer_discount_value, external_transfer_discount_currency,
       discount_type, discount_value, price_currency, price_at_sale_cup,
       catalog_price_at_sale, item_discount_value, item_discount_pct
     ) VALUES (
       v_tx_id, v_pid, v_variant_id, v_qty, v_price, v_cost, v_eff,
       COALESCE(NULLIF(v_item->>'cash_paid','')::numeric, NULL),
       COALESCE(NULLIF(v_item->>'transfer_paid','')::numeric, NULL),
-      COALESCE(NULLIF(v_item->>'zelle_paid','')::numeric, NULL),
+      COALESCE(NULLIF(v_item->>'external_transfer_paid','')::numeric,
+               NULLIF(v_item->>'zelle_paid','')::numeric, NULL),
       v_item->>'currency',
       COALESCE(NULLIF(v_item->>'exchange_rate','')::numeric, NULL),
       v_item->>'cash_currency',
       v_item->>'transfer_currency',
-      v_item->>'zelle_currency',
+      COALESCE(v_item->>'external_transfer_currency', v_item->>'zelle_currency'),
       v_item->>'cash_discount_type',
       COALESCE(NULLIF(v_item->>'cash_discount_value','')::numeric, NULL),
       v_item->>'cash_discount_currency',
       v_item->>'transfer_discount_type',
       COALESCE(NULLIF(v_item->>'transfer_discount_value','')::numeric, NULL),
       v_item->>'transfer_discount_currency',
-      v_item->>'zelle_discount_type',
-      COALESCE(NULLIF(v_item->>'zelle_discount_value','')::numeric, NULL),
-      v_item->>'zelle_discount_currency',
+      COALESCE(v_item->>'external_transfer_discount_type', v_item->>'zelle_discount_type'),
+      COALESCE(NULLIF(v_item->>'external_transfer_discount_value','')::numeric,
+               NULLIF(v_item->>'zelle_discount_value','')::numeric, NULL),
+      COALESCE(v_item->>'external_transfer_discount_currency', v_item->>'zelle_discount_currency'),
       p_discount_type::public.discount_type_enum,
       v_discount_amount,
       p_sale_currency,
@@ -6364,9 +6790,14 @@ BEGIN
       v_comp_method := lower(btrim(COALESCE(v_comp->>'method', '')));
       v_comp_cur := upper(btrim(COALESCE(v_comp->>'currency', '')));
       v_comp_amt := COALESCE(NULLIF(v_comp->>'amount', '')::numeric, NULL);
-      IF v_comp_method = 'zelle' THEN
-        -- Zelle: mismas reglas canónicas del flujo previo (riel USD, tasa > 1,
-        -- moneda de venta USD/EUR/MLC).
+      -- CP-FIN-004: normalización del heredado en el MISMO punto único que
+      -- §13.7 (este bucle re-parsea v_comp_method: sin esta línea, un
+      -- componente 'zelle' de cliente cachado se persistiría tal cual).
+      v_comp_method := CASE WHEN v_comp_method = 'zelle' THEN 'external_transfer' ELSE v_comp_method END;
+      IF v_comp_method = 'external_transfer' THEN
+        -- Transf. Exterior: mismas reglas canónicas del flujo previo (riel de
+        -- divisa, tasa > 1, moneda de venta USD/EUR/MLC). Código de error
+        -- ERR_ZELLE_REQUIRES_RATE conservado por compatibilidad de clientes.
         IF p_sale_currency = 'CUP' OR v_usd_rate IS NULL OR v_usd_rate <= 1 THEN
           RAISE EXCEPTION 'ERR_ZELLE_REQUIRES_RATE: zelle payment requires p_sale_currency != CUP and server_exchange_rate > 1. Got: currency=%, rate=%',
             p_sale_currency, v_usd_rate USING ERRCODE = 'PT009';
@@ -6436,8 +6867,8 @@ BEGIN
       payment_date, paid_by, idempotency_key
     ) VALUES (
       p_store_id, 'sale', v_tx_id, v_tx_id,
-      v_zelle_original_amount, 'zelle', p_sale_currency, v_server_rate,
-      v_eff, v_uid, 'pay-zelle-' || v_tx_id::text
+      v_zelle_original_amount, 'external_transfer', p_sale_currency, v_server_rate,
+      v_eff, v_uid, 'pay-external_transfer-' || v_tx_id::text
     ) RETURNING id INTO v_pt_id;
   END IF;
 
@@ -8846,8 +9277,9 @@ DECLARE
 BEGIN
   -- a) Validaciones de entrada (fail-closed; monedas de caja soportadas por
   --    el plan contable REAL: ACT_EFECTIVO_CUP y ACT_EFECTIVO_USD).
-  IF v_metodo NOT IN ('cash', 'transfer', 'zelle') THEN
-    RAISE EXCEPTION 'ERR_METHOD_NOT_SUPPORTED: % (cash/transfer/zelle)', v_metodo;
+  IF lower(btrim(COALESCE(v_metodo, ''))) = 'zelle' THEN v_metodo := 'external_transfer'; END IF;
+  IF v_metodo NOT IN ('cash', 'transfer', 'external_transfer') THEN
+    RAISE EXCEPTION 'ERR_METHOD_NOT_SUPPORTED: % (cash/transfer/external_transfer)', v_metodo;
   END IF;
   IF v_cur_from NOT IN ('CUP', 'USD') OR v_cur_to NOT IN ('CUP', 'USD') THEN
     RAISE EXCEPTION 'ERR_CURRENCY_NOT_SUPPORTED: % → % (solo CUP/USD; el plan contable no define cajas EUR/MLC)', v_cur_from, v_cur_to;
@@ -8859,12 +9291,12 @@ BEGIN
   v_from_cat := CASE
     WHEN v_metodo = 'cash' AND v_cur_from = 'CUP' THEN 'ACT_EFECTIVO_CUP'
     WHEN v_metodo = 'cash' AND v_cur_from = 'USD' THEN 'ACT_EFECTIVO_USD'
-    WHEN v_metodo IN ('transfer', 'zelle')        THEN 'ACT_BANCOS'
+    WHEN v_metodo IN ('transfer', 'zelle', 'external_transfer')        THEN 'ACT_BANCOS'
   END;
   v_to_cat := CASE
     WHEN v_metodo = 'cash' AND v_cur_to = 'CUP' THEN 'ACT_EFECTIVO_CUP'
     WHEN v_metodo = 'cash' AND v_cur_to = 'USD' THEN 'ACT_EFECTIVO_USD'
-    WHEN v_metodo IN ('transfer', 'zelle')      THEN 'ACT_BANCOS'
+    WHEN v_metodo IN ('transfer', 'zelle', 'external_transfer')      THEN 'ACT_BANCOS'
   END;
   IF v_from_cat IS NULL OR v_to_cat IS NULL THEN
     RAISE EXCEPTION 'ERR_CATEGORY_UNMAPPED: % % → %', v_metodo, v_cur_from, v_cur_to;
@@ -9102,9 +9534,14 @@ DECLARE
   v_from_cur text; v_to_cur text;
   v_count int;
 BEGIN
-  IF p_from_method NOT IN ('cash', 'transfer', 'zelle')
-     OR p_to_method NOT IN ('cash', 'transfer', 'zelle') THEN
-    RAISE EXCEPTION 'ERR_METHOD_NOT_SUPPORTED: from=% to=% (cash/transfer/zelle)', p_from_method, p_to_method;
+  -- CP-FIN-004: 'zelle' es entrada HEREDADA y se normaliza al canónico
+  -- external_transfer (los registros históricos pre-normalización también
+  -- pueden rectificarse: el rectificador opera sobre el valor REAL almacenado).
+  IF lower(btrim(COALESCE(p_from_method, ''))) = 'zelle' THEN p_from_method := 'external_transfer'; END IF;
+  IF lower(btrim(COALESCE(p_to_method, ''))) = 'zelle' THEN p_to_method := 'external_transfer'; END IF;
+  IF p_from_method NOT IN ('cash', 'transfer', 'external_transfer')
+     OR p_to_method NOT IN ('cash', 'transfer', 'external_transfer') THEN
+    RAISE EXCEPTION 'ERR_METHOD_NOT_SUPPORTED: from=% to=% (cash/transfer/external_transfer)', p_from_method, p_to_method;
   END IF;
   IF p_from_method = p_to_method THEN
     RAISE EXCEPTION 'ERR_SAME_METHOD: from == to (%)', p_from_method;
@@ -9167,7 +9604,8 @@ BEGIN
     v_from_cat := CASE
       WHEN p_from_method = 'cash' AND v_pay_currency = 'CUP' THEN 'ACT_EFECTIVO_CUP'
       WHEN p_from_method = 'cash' AND v_pay_currency = 'USD' THEN 'ACT_EFECTIVO_USD'
-      WHEN p_from_method IN ('transfer', 'zelle')           THEN 'ACT_BANCOS'
+      WHEN p_from_method IN ('transfer', 'zelle', 'external_transfer')
+                                                   THEN 'ACT_BANCOS'
     END;
   END IF;
   IF v_from_cat IS NULL OR v_to_cat IS NULL THEN
@@ -9277,8 +9715,10 @@ BEGIN
   WHERE ref_type = 'sale' AND ref_id = p_sale_id
     AND coalesce(direction, 'in') = 'in';
 
-  v_from_col := CASE p_from_method WHEN 'cash' THEN 'cash_amount' WHEN 'transfer' THEN 'transfer_amount' WHEN 'zelle' THEN 'zelle_amount' END;
-  v_to_col   := CASE p_to_method   WHEN 'cash' THEN 'cash_amount' WHEN 'transfer' THEN 'transfer_amount' WHEN 'zelle' THEN 'zelle_amount' END;
+  v_from_col := CASE p_from_method WHEN 'cash' THEN 'cash_amount' WHEN 'transfer' THEN 'transfer_amount'
+                                   WHEN 'external_transfer' THEN 'external_transfer_amount' WHEN 'zelle' THEN 'zelle_amount' END;
+  v_to_col   := CASE p_to_method   WHEN 'cash' THEN 'cash_amount' WHEN 'transfer' THEN 'transfer_amount'
+                                   WHEN 'external_transfer' THEN 'external_transfer_amount' WHEN 'zelle' THEN 'zelle_amount' END;
   -- transactions.payment_method es payment_method_enum: cast explícito
   -- (v_tx_method proviene de payment_transactions.payment_method validado
   -- por los invariantes PT; un valor no enumerable aborta la transacción).
@@ -12867,7 +13307,9 @@ BEGIN
   IF v_comm.status NOT IN ('approved', 'draft') THEN
     RAISE EXCEPTION 'ERR_INVALID_COMMISSION_STATUS: no se puede pagar una comisión con estado "%"', v_comm.status;
   END IF;
-  IF lower(trim(p_payment_method)) NOT IN ('cash', 'transfer', 'zelle', 'mixed') THEN
+  -- CP-FIN-004: normalización del heredado 'zelle' al canónico
+  IF lower(trim(COALESCE(p_payment_method, ''))) = 'zelle' THEN p_payment_method := 'external_transfer'; END IF;
+  IF lower(trim(p_payment_method)) NOT IN ('cash', 'transfer', 'external_transfer', 'mixed') THEN
     RAISE EXCEPTION 'ERR_INVALID_PAYMENT_METHOD: %', p_payment_method;
   END IF;
   IF p_currency IS NOT NULL AND upper(trim(p_currency)) NOT IN ('CUP', 'USD') THEN
@@ -14877,7 +15319,9 @@ BEGIN
   IF p_currency NOT IN ('CUP', 'USD', 'EUR', 'MLC') THEN
     RAISE EXCEPTION 'Moneda de pago no soportada: %', p_currency;
   END IF;
-  IF p_payment_method NOT IN ('cash', 'transfer', 'zelle') THEN
+  -- CP-FIN-004: normalización del heredado 'zelle' al canónico
+  IF lower(btrim(COALESCE(p_payment_method, ''))) = 'zelle' THEN p_payment_method := 'external_transfer'; END IF;
+  IF p_payment_method NOT IN ('cash', 'transfer', 'external_transfer') THEN
     RAISE EXCEPTION 'Medio de pago no soportado: %', p_payment_method;
   END IF;
 
@@ -15043,7 +15487,7 @@ BEGIN
 
     -- 6) Montos nuevos (NULL = mantener actual)
     v_cash     := COALESCE(p_new_cash, v_tx.cash_amount, 0);
-    v_zelle    := COALESCE(p_new_zelle_cup, v_tx.zelle_amount, 0);
+    v_zelle    := COALESCE(p_new_zelle_cup, v_tx.external_transfer_amount, v_tx.zelle_amount, 0);
     v_transfer := COALESCE(p_new_transfer, v_tx.transfer_amount, 0);
     IF v_cash < 0 OR v_zelle < 0 OR v_transfer < 0 THEN
         RAISE EXCEPTION 'ERR_INVALID_AMOUNTS' USING ERRCODE = 'PT012';
@@ -15055,7 +15499,8 @@ BEGIN
     SELECT jsonb_build_object(
         'total_amount', v_tx.total_amount, 'subtotal', v_tx.subtotal,
         'cash_amount', v_tx.cash_amount, 'transfer_amount', v_tx.transfer_amount,
-        'zelle_amount', v_tx.zelle_amount, 'sale_currency', v_tx.sale_currency,
+        'zelle_amount', v_tx.zelle_amount, 'external_transfer_amount', v_tx.external_transfer_amount,
+        'sale_currency', v_tx.sale_currency,
         'sale_exchange_rate', v_tx.sale_exchange_rate
     ) INTO v_old_tx;
     SELECT COALESCE(jsonb_agg(to_jsonb(pt) - 'amount_cup' ORDER BY pt.payment_method), '[]'::jsonb)
@@ -15066,7 +15511,7 @@ BEGIN
     -- 8) UPDATE transactions — primero el total (invariante ERR_PAYMENT_EXCEEDS_TOTAL)
     UPDATE public.transactions
        SET cash_amount = v_cash,
-           zelle_amount = v_zelle,
+           external_transfer_amount = v_zelle,
            transfer_amount = v_transfer,
            total_amount = v_new_total,
            subtotal = v_subtotal,
@@ -15081,9 +15526,10 @@ BEGIN
     IF p_new_zelle_usd IS NOT NULL THEN
         UPDATE public.payment_transactions
            SET amount = p_new_zelle_usd,
+               payment_method = 'external_transfer',
                exchange_rate = COALESCE(p_new_zelle_rate, exchange_rate),
                updated_at = now()
-         WHERE transaction_id = p_transaction_id AND payment_method = 'zelle';
+         WHERE transaction_id = p_transaction_id AND payment_method IN ('zelle', 'external_transfer');
     END IF;
 
     -- 10) Post-condición: Σ pagos (no refund) = total
@@ -15108,7 +15554,8 @@ BEGIN
         jsonb_build_object('transaction', v_old_tx, 'payment_rows', v_old_pays),
         jsonb_build_object('transaction', jsonb_build_object(
             'total_amount', v_new_total, 'subtotal', v_subtotal,
-            'cash_amount', v_cash, 'transfer_amount', v_transfer, 'zelle_amount', v_zelle),
+            'cash_amount', v_cash, 'transfer_amount', v_transfer, 'zelle_amount', v_zelle,
+            'external_transfer_amount', v_zelle),
             'payment_rows', v_new_pays),
         jsonb_build_object('reason', p_reason, 'idempotency_key', btrim(p_idempotency_key))
     );
@@ -15116,7 +15563,7 @@ BEGIN
     RETURN jsonb_build_object(
         'status', 'success', 'transaction_id', p_transaction_id,
         'old_total', v_old_tx->>'total_amount', 'new_total', v_new_total,
-        'new_cash', v_cash, 'new_zelle', v_zelle
+        'new_cash', v_cash, 'new_zelle', v_zelle, 'new_external_transfer', v_zelle
     );
 END;
 $function$
@@ -15283,81 +15730,6 @@ BEGIN
 
   RETURN jsonb_build_object('status', 'success', 'request_id', p_request_id,
     'request_number', v_req.request_number, 'to', 'draft');
-END;
-$function$
-
-
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
 END;
 $function$
 
@@ -15585,6 +15957,81 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
+$function$
+
+
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
 $function$
 
 
@@ -16825,13 +17272,14 @@ BEGIN
         RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: moneda de recuperación % no reconocida (CUP|USD)',
           COALESCE(v_rec->>'currency', '');
       END IF;
-      IF v_rec_method NOT IN ('cash', 'transfer', 'zelle') THEN
-        RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: método de cobro % no reconocido (cash|transfer|zelle)',
+      IF lower(btrim(COALESCE(v_rec_method, ''))) = 'zelle' THEN v_rec_method := 'external_transfer'; END IF;
+      IF v_rec_method NOT IN ('cash', 'transfer', 'external_transfer') THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: método de cobro % no reconocido (cash|transfer|external_transfer)',
           COALESCE(v_rec->>'method', '');
       END IF;
       -- espejo del invariante PT005 de payment_transactions (fail-closed limpio)
-      IF v_rec_method = 'zelle' AND upper(btrim(v_rec->>'currency')) = 'CUP' THEN
-        RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: zelle no opera en CUP (riel USD)';
+      IF v_rec_method = 'external_transfer' AND upper(btrim(v_rec->>'currency')) = 'CUP' THEN
+        RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: Transf. Exterior no opera en CUP (riel de divisa)';
       END IF;
       IF length(COALESCE(v_rec->>'notes', '')) > 500 THEN
         RAISE EXCEPTION 'ERR_DEVOLUTION_RECOVERY_INVALID: notes > 500 caracteres';
@@ -17953,6 +18401,8 @@ DECLARE
   v_store_id uuid;
   v_current text;
   v_service_number text;
+  v_supplier text;
+  v_total numeric;
   v_allowed text[];
   v_caller_uid uuid := CASE
     WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
@@ -17961,8 +18411,8 @@ DECLARE
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext(p_service_id::text));
 
-  SELECT store_id, status, service_number
-  INTO v_store_id, v_current, v_service_number
+  SELECT store_id, status, service_number, supplier, total_amount
+  INTO v_store_id, v_current, v_service_number, v_supplier, v_total
   FROM received_services WHERE id = p_service_id FOR UPDATE;
 
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_SERVICE_NOT_FOUND'; END IF;
@@ -17985,6 +18435,17 @@ BEGIN
   IF NOT (p_new_status = ANY(v_allowed)) THEN
     RAISE EXCEPTION 'ERR_INVALID_TRANSITION: % → % not allowed (allowed: %)',
       v_current, p_new_status, array_to_string(v_allowed, ', ');
+  END IF;
+
+  -- ADN-008: la CONFIRMACIÓN (draft→active) exige los datos obligatorios del
+  -- documento operativo. El borrador pudo guardarse incompleto a propósito.
+  IF v_current = 'draft' AND p_new_status = 'active' THEN
+    IF COALESCE(btrim(COALESCE(v_supplier, '')), '') = '' THEN
+      RAISE EXCEPTION 'ERR_SUPPLIER_REQUIRED: completa el proveedor antes de confirmar el servicio';
+    END IF;
+    IF v_total IS NULL OR v_total <= 0 THEN
+      RAISE EXCEPTION 'ERR_INVALID_AMOUNT: el importe del servicio debe ser > 0 para confirmar';
+    END IF;
   END IF;
 
   PERFORM set_config('app.is_status_change_rpc', 'true', true);
@@ -19118,6 +19579,162 @@ BEGIN
     'moneda_anterior', v_old_moneda,
     'moneda_nueva', COALESCE(p_new_moneda_recepcion, v_old_moneda),
     'new_total_cost', v_new_total
+  );
+END;
+$function$
+
+
+-- @contract-function name=update_received_service_draft args="p_service_id uuid, p_user_id uuid, p_supplier text, p_supplier_id uuid, p_supplier_master_party_id uuid, p_supplier_meta jsonb, p_service_type_id uuid, p_service_type_name text, p_total_amount numeric, p_service_date date, p_reference_doc text, p_observations text, p_distribution_method text, p_receipt_ids jsonb, p_production_order_ids jsonb" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.update_received_service_draft(p_service_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_supplier text DEFAULT NULL::text, p_supplier_id uuid DEFAULT NULL::uuid, p_supplier_master_party_id uuid DEFAULT NULL::uuid, p_supplier_meta jsonb DEFAULT NULL::jsonb, p_service_type_id uuid DEFAULT NULL::uuid, p_service_type_name text DEFAULT NULL::text, p_total_amount numeric DEFAULT NULL::numeric, p_service_date date DEFAULT NULL::date, p_reference_doc text DEFAULT NULL::text, p_observations text DEFAULT NULL::text, p_distribution_method text DEFAULT NULL::text, p_receipt_ids jsonb DEFAULT NULL::jsonb, p_production_order_ids jsonb DEFAULT NULL::jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE
+  v_store_id uuid;
+  v_status text;
+  v_service_number text;
+  v_supplier text;
+  v_meta jsonb := p_supplier_meta; -- REEMPLAZO COMPLETO del snapshot (NULL limpia)
+  v_receipt_id uuid;
+  v_order_id uuid;
+  v_count integer;
+  v_link_count integer := 0;
+  v_ot_count integer := 0;
+  v_alloc numeric;
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext(p_service_id::text));
+
+  SELECT store_id, status, service_number, supplier
+  INTO v_store_id, v_status, v_service_number, v_supplier
+  FROM received_services WHERE id = p_service_id FOR UPDATE;
+
+  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_SERVICE_NOT_FOUND'; END IF;
+  IF v_status <> 'draft' THEN
+    RAISE EXCEPTION 'ERR_NOT_DRAFT: solo los borradores pueden editarse aquí (estado actual: %)', v_status;
+  END IF;
+
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- Fail-closed: un borrador con pagos o distribuciones ya no es editable
+  -- por este canal (integridad — nada debería existir, pero se verifica).
+  IF EXISTS (SELECT 1 FROM payment_transactions pt WHERE pt.ref_type = 'service' AND pt.ref_id = p_service_id) THEN
+    RAISE EXCEPTION 'ERR_HAS_PAYMENTS: el borrador tiene pagos registrados';
+  END IF;
+  IF EXISTS (SELECT 1 FROM service_cost_distributions scd WHERE scd.service_id = p_service_id) THEN
+    RAISE EXCEPTION 'ERR_HAS_DISTRIBUTIONS: el borrador tiene distribuciones de costo';
+  END IF;
+
+  -- Identidad de proveedor: REEMPLAZO COMPLETO (el cliente envía el estado
+  -- completo deseado; NULL/ausente limpia). Validación fail-closed.
+  IF p_supplier_id IS NOT NULL AND NOT public.adn008_supplier_belongs_to_store(p_supplier_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_SUPPLIER_INVALID: % no pertenece a la tienda', p_supplier_id;
+  END IF;
+  IF p_supplier_master_party_id IS NOT NULL AND NOT public.adn008_master_party_valid_for_store(p_supplier_master_party_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_SUPPLIER_MASTER_INVALID: % no pertenece al tenant de la tienda o no está activo', p_supplier_master_party_id;
+  END IF;
+
+  IF p_supplier IS NOT NULL THEN
+    v_supplier := NULLIF(btrim(p_supplier), '');
+  END IF;
+  IF p_total_amount IS NOT NULL AND p_total_amount <= 0 THEN
+    RAISE EXCEPTION 'ERR_INVALID_AMOUNT: total_amount must be > 0';
+  END IF;
+  IF p_distribution_method IS NOT NULL AND p_distribution_method NOT IN ('amount', 'quantity', 'manual') THEN
+    RAISE EXCEPTION 'ERR_INVALID_DISTRIBUTION_METHOD';
+  END IF;
+  IF p_service_type_id IS NOT NULL THEN
+    SELECT COUNT(*) INTO v_count FROM service_types
+    WHERE id = p_service_type_id
+      AND (store_id = v_store_id OR store_id IS NULL)
+      AND is_active = true;
+    IF v_count = 0 THEN
+      RAISE EXCEPTION 'ERR_SERVICE_TYPE_NOT_FOUND';
+    END IF;
+  END IF;
+  IF p_service_date IS NOT NULL THEN
+    PERFORM public.validate_operation_date(p_service_date::timestamp with time zone, v_store_id);
+  END IF;
+
+  UPDATE received_services SET
+    -- p_supplier NULL = no cambiar el nombre; '' = limpiarlo (NULL).
+    -- La identidad (supplier_id / master / snapshot) es REEMPLAZO COMPLETO.
+    supplier = CASE WHEN p_supplier IS NULL THEN supplier ELSE v_supplier END,
+    supplier_id = p_supplier_id,
+    supplier_master_party_id = p_supplier_master_party_id,
+    supplier_code = CASE WHEN v_meta IS NULL THEN NULL ELSE NULLIF(btrim(COALESCE(v_meta->>'code', '')), '') END,
+    supplier_tax_id = CASE WHEN v_meta IS NULL THEN NULL ELSE NULLIF(btrim(COALESCE(v_meta->>'tax_id', '')), '') END,
+    supplier_phone = CASE WHEN v_meta IS NULL THEN NULL ELSE NULLIF(btrim(COALESCE(v_meta->>'phone', '')), '') END,
+    supplier_address = CASE WHEN v_meta IS NULL THEN NULL ELSE NULLIF(btrim(COALESCE(v_meta->>'address', '')), '') END,
+    service_type_id = COALESCE(p_service_type_id, service_type_id),
+    service_type_name = COALESCE(p_service_type_name, service_type_name),
+    total_amount = COALESCE(p_total_amount, total_amount),
+    service_date = COALESCE(p_service_date, service_date),
+    reference_doc = COALESCE(p_reference_doc, reference_doc),
+    observations = COALESCE(p_observations, observations),
+    distribution_method = COALESCE(p_distribution_method, distribution_method),
+    due_date = CASE
+      WHEN p_service_date IS NOT NULL THEN (p_service_date + payment_terms_days)::date
+      ELSE due_date
+    END,
+    updated_at = NOW()
+  WHERE id = p_service_id;
+
+  -- Vínculos: NULL = no cambiar; array = reemplazar el conjunto completo.
+  IF p_receipt_ids IS NOT NULL THEN
+    DELETE FROM service_reception_links WHERE service_id = p_service_id;
+    v_link_count := jsonb_array_length(p_receipt_ids);
+    IF v_link_count > 0 THEN
+      SELECT COALESCE(p_total_amount, total_amount) / v_link_count INTO v_alloc
+      FROM received_services WHERE id = p_service_id;
+      FOR v_receipt_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_receipt_ids) LOOP
+        IF NOT EXISTS (SELECT 1 FROM receipts WHERE id = v_receipt_id AND store_id = v_store_id AND status = 'active') THEN
+          RAISE EXCEPTION 'ERR_RECEIPT_INVALID: % no pertenece a la store o no esta activo', v_receipt_id;
+        END IF;
+        INSERT INTO service_reception_links (service_id, receipt_id, allocation_percentage, allocated_amount)
+        VALUES (p_service_id, v_receipt_id, 100.0 / v_link_count, v_alloc);
+      END LOOP;
+    END IF;
+  END IF;
+
+  IF p_production_order_ids IS NOT NULL THEN
+    DELETE FROM service_production_order_links WHERE service_id = p_service_id;
+    IF jsonb_array_length(p_production_order_ids) > 0 THEN
+      FOR v_order_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_production_order_ids) LOOP
+        IF NOT EXISTS (
+          SELECT 1 FROM production_orders
+          WHERE id = v_order_id AND store_id = v_store_id
+            AND status NOT IN ('voided', 'closed')
+        ) THEN
+          RAISE EXCEPTION 'ERR_PRODUCTION_ORDER_INVALID: % no pertenece a la tienda o su estado no admite vinculación', v_order_id;
+        END IF;
+        INSERT INTO service_production_order_links (service_id, production_order_id)
+        VALUES (p_service_id, v_order_id)
+        ON CONFLICT (service_id, production_order_id) DO NOTHING;
+        v_ot_count := v_ot_count + 1;
+      END LOOP;
+    END IF;
+  END IF;
+
+  INSERT INTO service_audit_log (service_id, user_id, action, details)
+  VALUES (p_service_id, v_caller_uid, 'draft_updated', jsonb_build_object(
+    'by_rpc', 'update_received_service_draft',
+    'supplier', v_supplier, 'supplier_id', p_supplier_id,
+    'supplier_master_party_id', p_supplier_master_party_id,
+    'receipt_ids_replaced', (p_receipt_ids IS NOT NULL),
+    'production_order_ids_replaced', (p_production_order_ids IS NOT NULL)
+  ));
+
+  RETURN jsonb_build_object(
+    'status', 'success', 'service_id', p_service_id,
+    'service_number', v_service_number, 'draft', true
   );
 END;
 $function$

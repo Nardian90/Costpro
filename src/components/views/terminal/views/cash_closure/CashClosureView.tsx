@@ -175,8 +175,8 @@ export default function CashClosureView() {
     ...(cashFlowOut > 0 ? [{ label: 'Egresos de Caja (Devolución y Otros)', value: -cashFlowOut, color: 'text-destructive' }] : []),
     ...(cashRefunds > 0 ? [{ label: 'Reembolsos de Devoluciones (Efectivo)', value: -cashRefunds, color: 'text-destructive' }] : []),
     { label: 'Efectivo Esperado', value: systemCash, color: 'text-success' },
-    { label: 'Transferencias/Zelle (Sistema)', value: systemVouchers + voucherRefunds, color: 'text-primary' },
-    ...(voucherRefunds > 0 ? [{ label: 'Reembolsos por Voucher (Transfer/Zelle)', value: -voucherRefunds, color: 'text-destructive' }] : []),
+    { label: 'Transferencias/Transf. Exterior (Sistema)', value: systemVouchers + voucherRefunds, color: 'text-primary' },
+    ...(voucherRefunds > 0 ? [{ label: 'Reembolsos por Voucher (Transfer/Exterior)', value: -voucherRefunds, color: 'text-destructive' }] : []),
   ] : [];
 
   // Restore pending closure state
@@ -1270,7 +1270,7 @@ export default function CashClosureView() {
               <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 tabular-nums">{formatCurrency(expectedCashUsd, 'USD')}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-muted-foreground uppercase">Transferencias/Zelle (Sistema)</span>
+              <span className="text-xs font-bold text-muted-foreground uppercase">Transferencias/Transf. Exterior (Sistema)</span>
               <span className="text-xs font-black tabular-nums">{formatCurrency(arqueo.expected_vouchers)}</span>
             </div>
             <div className="flex justify-between items-center">

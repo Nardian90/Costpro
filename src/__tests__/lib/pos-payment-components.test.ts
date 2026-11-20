@@ -64,7 +64,7 @@ describe('buildPaymentComponents — desglose real por moneda', () => {
     expect(comps).toContainEqual({ method: 'cash', currency: 'USD', amount: 5 });
     expect(comps).toContainEqual({ method: 'cash', currency: 'CUP', amount: 15000 });
     expect(comps).toContainEqual({ method: 'transfer', currency: 'CUP', amount: 10000 });
-    expect(comps).toContainEqual({ method: 'zelle', currency: 'USD', amount: 8 });
+    expect(comps).toContainEqual({ method: 'external_transfer', currency: 'USD', amount: 8 });
     expect(comps).toHaveLength(4);
   });
 
@@ -100,9 +100,10 @@ describe('buildPaymentComponents — desglose real por moneda', () => {
   });
 
   it('7. Regla de envío: zelle USD puro NO dispara componentes (flujo previo intacto)', () => {
+    // CP-FIN-004: fila HEREDADA 'zelle' → se normaliza al canónico external_transfer
     const items: PaymentSourceItem[] = [{ payments: [row('zelle', 20, 'USD')] }];
     const comps = buildPaymentComponents(items);
-    expect(comps).toEqual([{ method: 'zelle', currency: 'USD', amount: 20 }]);
+    expect(comps).toEqual([{ method: 'external_transfer', currency: 'USD', amount: 20 }]);
     expect(requiresPaymentComponents(comps)).toBe(false);
   });
 

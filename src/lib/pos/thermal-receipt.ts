@@ -240,7 +240,9 @@ export function buildThermalPrintCss(
 const PAYMENT_LABELS: Record<string, string> = {
   cash: 'EFECTIVO',
   transfer: 'TRANSFERENCIA',
-  zelle: 'ZELLE (USD)',
+  // CP-FIN-004: etiqueta canónica del exterior (la misma para el heredado).
+  external_transfer: 'TRANSF. EXTERIOR',
+  zelle: 'TRANSF. EXTERIOR',
   card: 'TARJETA',
   wallet: 'BILLETERA',
   mixed: 'MIXTO',
@@ -272,14 +274,21 @@ export interface PaymentSourceItem {
  * Prioriza payments[] (fuente actual); si el ítem no tiene filas, usa los
  * campos legacy sincronizados del store. Suma IMPORTES YA COBRADOS en su
  * moneda original — misma información que viaja al RPC. Orden estable:
- * efectivo → transferencia → zelle → otros.
+ * efectivo → transferencia → transf. exterior → otros.
+ *
+ * CP-FIN-004: el exterior canónico es 'external_transfer' (el heredado
+ * 'zelle' de carritos persistidos se normaliza aquí; ambos se imprimen con
+ * la misma etiqueta «Transf. Exterior» en el comprobante).
  */
 export function aggregateItemPayments(items: PaymentSourceItem[]): ThermalReceiptPayment[] {
-  const order = ['cash', 'transfer', 'zelle'];
+  const order = ['cash', 'transfer', 'external_transfer', 'zelle'];
   const acc = new Map<string, ThermalReceiptPayment>();
   const add = (method: string, amount: number, currency: string) => {
     if (!Number.isFinite(amount) || amount <= 0) return;
-    const norm = (method || 'other').toLowerCase();
+    // CP-FIN-004: normaliza el heredado al canónico para agrupar en una sola
+    // fila del comprobante.
+    const norm0 = (method || 'other').toLowerCase();
+    const norm = norm0 === 'zelle' ? 'external_transfer' : norm0;
     const cur = (currency || 'CUP').toUpperCase();
     const key = `${norm}:${cur}`;
     const prev = acc.get(key);
@@ -292,7 +301,7 @@ export function aggregateItemPayments(items: PaymentSourceItem[]): ThermalReceip
     } else {
       add('cash', i.cash_paid || 0, i.cash_currency || 'CUP');
       add('transfer', i.transfer_paid || 0, i.transfer_currency || 'CUP');
-      add('zelle', i.zelle_paid || 0, i.zelle_currency || 'USD');
+      add('external_transfer', i.zelle_paid || 0, i.zelle_currency || 'USD');
     }
   }
   return Array.from(acc.values()).sort((a, b) => {
@@ -427,11 +436,13 @@ export function buildReceiptDataFromTransaction(
   if (payments.cashPaid > 0) receiptPayments.push({ method: 'cash', amount: payments.cashPaid, currency: 'CUP' });
   if (payments.transferPaid > 0) receiptPayments.push({ method: 'transfer', amount: payments.transferPaid, currency: 'CUP' });
   if (payments.zellePaidUSD !== null && payments.zellePaidUSD > 0) {
-    receiptPayments.push({ method: 'zelle', amount: payments.zellePaidUSD, currency: 'USD' });
+    // CP-FIN-004: etiqueta canónica del exterior (los campos de origen
+    // zellePaid* son históricos — resolveSalePayments ya reconoce ambos valores).
+    receiptPayments.push({ method: 'external_transfer', amount: payments.zellePaidUSD, currency: 'USD' });
   } else if ((payments.zellePaidCUP ?? 0) > 0) {
     // Tasa no persistida (venta histórica): se imprime el equivalente CUP
     // etiquetado como tal — nunca se inventa un importe USD sin tasa real.
-    receiptPayments.push({ method: 'zelle', amount: payments.zellePaidCUP as number, currency: 'CUP' });
+    receiptPayments.push({ method: 'external_transfer', amount: payments.zellePaidCUP as number, currency: 'CUP' });
   }
   return {
     saleId: transaction.id,

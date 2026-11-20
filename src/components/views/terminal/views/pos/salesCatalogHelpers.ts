@@ -65,9 +65,9 @@ export const hasPaymentMismatch = (row: SalesCatalogRow): boolean => {
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string; icon: null }[] = [
   { value: 'cash', label: 'Efectivo', icon: null },
   { value: 'transfer', label: 'Transf.', icon: null },
-  // FIX-TRANSF-EXTERIOR (2026-10-16): etiqueta renombrada; el VALUE 'zelle'
-  // se conserva (contrato de datos: ventas, reportes y columna 'Zelle' de Excel).
-  { value: 'zelle', label: 'Transf. Exterior', icon: null },
+  // CP-FIN-004 (2026-11-20): value canónico external_transfer (heredado 'zelle'
+  // normalizado por el backend en el punto único de ingestión).
+  { value: 'external_transfer', label: 'Transf. Exterior', icon: null },
   { value: 'mixed', label: 'Mixto', icon: null },
 ];
 
@@ -92,7 +92,7 @@ export const autoAssignPayment = (r: SalesCatalogRow): SalesCatalogRow => {
       return { ...r, cashPaid: sub, transferPaid: 0, zellePaid: 0 };
     case 'transfer':
       return { ...r, cashPaid: 0, transferPaid: sub, zellePaid: 0 };
-    case 'zelle':
+    case 'external_transfer':
       return { ...r, cashPaid: 0, transferPaid: 0, zellePaid: sub };
     case 'mixed':
     default:

@@ -2085,11 +2085,11 @@ function VentasSeleccionables(p: {
                       <tbody>
                         {visibleRows.map(row => {
                           const excluded = p.excludedSales.has(row.id);
-                          const bucket = row.buckets.find(b => (b.method === 'transfer' || b.method === 'zelle' ? b.method : 'cash') === g.method && String(b.currency).toUpperCase() === g.currency);
+                          const bucket = row.buckets.find(b => (b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || b.method === 'external_transfer') ? 'zelle' : 'cash') === g.method && String(b.currency).toUpperCase() === g.currency);
                           const amount = bucket ? Number(bucket.amount) : 0;
                           const date = String(row.created_at || '').slice(0, 16).replace('T', ' ') || '—';
                           const composition = row.buckets
-                            .map(b => `${selectionMethodLabel((b.method === 'transfer' || b.method === 'zelle') ? b.method : 'cash')} ${fmtNative(Math.abs(Number(b.amount)), String(b.currency).toUpperCase())}`)
+                            .map(b => `${selectionMethodLabel(b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || b.method === 'external_transfer') ? 'zelle' : 'cash')} ${fmtNative(Math.abs(Number(b.amount)), String(b.currency).toUpperCase())}`)
                             .join(' + ');
                           return (
                             <tr key={row.id} className={cn('border-b border-border/10 hover:bg-muted/20', excluded && 'opacity-50')} data-testid={`venta-fila-${row.id}`} data-excluded={excluded}>
@@ -2508,7 +2508,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           {p.concepts.resumenDia && <SummaryRow label="Ventas totales (efectivo + transferencia)" value={p.customResult?.ventasTotalesPersonalizado ?? s.ventasTotales} strong />}
           {p.concepts.ventasEfectivo && <SummaryRow label="Ventas en efectivo" value={s.ventasCash} />}
           {p.concepts.ventasTransferencia && <SummaryRow label="Ventas por transferencia" value={s.ventasTransfer} />}
-          {p.concepts.ventasZelle && s.ventasZelle > 0 && <SummaryRow label="Ventas por Zelle" value={s.ventasZelle} />}
+          {p.concepts.ventasZelle && s.ventasZelle > 0 && <SummaryRow label="Ventas por Transf. Exterior" value={s.ventasZelle} />}
           {/* MISIÓN DEFINITIVA 2026-10-24: la equivalencia canónica NO es una
               segunda venta — línea propia de consolidación (contrato único §2).
               MISIÓN CORRECTIVA 2026-10-25: consolidación de PRESENTACIÓN —
@@ -2541,7 +2541,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           {p.concepts.ingresosCaja && s.ingresosCaja > 0 && <SummaryRow label="Ingresos de caja (fondo y otros)" value={s.ingresosCaja} />}
           {p.concepts.egresosCaja && s.egresosCaja > 0 && <SummaryRow label="Egresos de caja (fondo y otros)" value={-s.egresosCaja} negative />}
           {p.concepts.reembolsos && s.reembolsosCash > 0 && <SummaryRow label="Reembolsos de devoluciones (efectivo)" value={-s.reembolsosCash} negative />}
-          {p.concepts.reembolsos && s.reembolsosVoucher > 0 && <SummaryRow label="Reembolsos por voucher (transfer/Zelle)" value={-s.reembolsosVoucher} negative note="informativo — no reduce el efectivo físico" />}
+          {p.concepts.reembolsos && s.reembolsosVoucher > 0 && <SummaryRow label="Reembolsos por voucher (transfer/exterior)" value={-s.reembolsosVoucher} negative note="informativo — no reduce el efectivo físico" />}
           {/* MISIÓN CORRECTIVA 2026-10-25: liquidación de billetes (vuelto
               cruzado de cobros con liquidación explícita) — partida contable
               de la conciliación física; siempre visible cuando ≠ 0. */}
@@ -2631,7 +2631,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           <option value="">Todos los métodos</option>
           <option value="cash">Efectivo</option>
           <option value="transfer">Transferencia</option>
-          <option value="zelle">Zelle</option>
+          <option value="zelle">Transf. Exterior</option>
         </select>
       </div>
 

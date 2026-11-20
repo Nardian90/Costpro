@@ -28,7 +28,7 @@ interface PaymentModalProps {
 const PAYMENT_METHODS = [
   { id: 'cash', label: 'Efectivo', icon: Banknote },
   { id: 'transfer', label: 'Transferencia', icon: Smartphone },
-  { id: 'zelle', label: 'Zelle', icon: DollarSign },
+  { id: 'zelle', label: 'Transf. Exterior', icon: DollarSign },
 ] as const;
 
 const CURRENCIES = ['CUP', 'USD', 'MLC'] as const;

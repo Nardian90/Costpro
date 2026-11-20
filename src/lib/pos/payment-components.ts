@@ -4,7 +4,7 @@
  * Construye el desglose REAL por moneda de los pagos de una venta a partir
  * de las filas de pago del carrito (payments[] por ítem):
  *
- *   [{ method: 'cash'|'transfer'|'zelle', currency: 'CUP'|'USD', amount }]
+ *   [{ method: 'cash'|'transfer'|'external_transfer', currency: 'CUP'|'USD', amount }]
  *
  * Los importes son ORIGINALES (sin convertir): 5 USD + 15 000 CUP viajan
  * como DOS componentes, no como un pool canónico CUP. El servidor
@@ -15,20 +15,24 @@
  * Regla de envío (usePOSCheckout): los componentes viajan SIEMPRE que la
  * venta tiene al menos un componente en USD de método cash/transfer —
  * exactamente los cobros mixtos que el pool canónico CUP no puede
- * representar. Las ventas CUP puras y las ventas Zelle puras conservan el
- * flujo previo (blast radius mínimo).
+ * representar. Las ventas CUP puras y las ventas de Transf. Exterior puras
+ * conservan el flujo previo (blast radius mínimo).
  *
  * Normalización:
  *   - Las filas se agrupan por (método, moneda) y se suman (2 filas cash USD
  *     → un componente).
  *   - Importes ≤ 0.005 se descartan (filas en edición).
  *   - Redondeo a 2 decimales (regla de redondeo única del módulo).
- *   - Zelle se declara en su moneda de fila (riel USD por diseño); si una
- *     fila legada declara otra moneda se reporta tal cual y el servidor la
- *     rechaza (fail-closed ERR_PAYMENT_COMPONENTS_INVALID).
+ *   - La Transf. Exterior se declara en su moneda de fila (riel de divisa
+ *     por diseño); si una fila legada declara otra moneda se reporta tal
+ *     cual y el servidor la rechaza (fail-closed ERR_PAYMENT_COMPONENTS_INVALID).
+ *
+ * CP-FIN-004 (2026-11-20): el método canónico del exterior es
+ * 'external_transfer' (contrato del POS de 3 opciones; el backend normaliza
+ * el heredado 'zelle' y jamás lo persiste).
  */
 
-export type ComponentMethod = 'cash' | 'transfer' | 'zelle';
+export type ComponentMethod = 'cash' | 'transfer' | 'external_transfer';
 export type ComponentCurrency = 'CUP' | 'USD';
 
 export interface PaymentComponent {
@@ -39,7 +43,9 @@ export interface PaymentComponent {
 
 /** Fila de pago mínima que este módulo consume (PaymentRow del carrito). */
 export interface PaymentRowLike {
-  method: ComponentMethod;
+  // CP-FIN-004: se admite el heredado 'zelle' porque los carritos persistidos
+  // previos al contrato pueden traerlo — se normaliza al canónico.
+  method: ComponentMethod | 'zelle';
   amount: number;
   currency: string;
 }
@@ -83,14 +89,21 @@ export function buildPaymentComponents(items: PaymentSourceItem[]): PaymentCompo
   for (const item of items) {
     if (item.payments && item.payments.length > 0) {
       for (const p of item.payments) {
-        push(p.method, p.currency, Number(p.amount) || 0);
+        // CP-FIN-004: normaliza filas heredadas ('zelle' de carritos
+        // persistidos) al canónico del exterior.
+        push(
+          p.method === 'zelle' ? 'external_transfer' : p.method,
+          p.currency,
+          Number(p.amount) || 0,
+        );
       }
       continue;
     }
-    // Legado: campos por método (una moneda por método).
+    // Legado: campos por método (una moneda por método). El exterior legado
+    // (zelle_paid) alimenta el componente canónico external_transfer.
     if ((item.cash_paid || 0) > EPS) push('cash', item.cash_currency || 'CUP', item.cash_paid || 0);
     if ((item.transfer_paid || 0) > EPS) push('transfer', item.transfer_currency || 'CUP', item.transfer_paid || 0);
-    if ((item.zelle_paid || 0) > EPS) push('zelle', item.zelle_currency || 'USD', item.zelle_paid || 0);
+    if ((item.zelle_paid || 0) > EPS) push('external_transfer', item.zelle_currency || 'USD', item.zelle_paid || 0);
   }
 
   // Descartar componentes que quedaron por debajo del umbral tras el redondeo.
@@ -103,7 +116,8 @@ export function buildPaymentComponents(items: PaymentSourceItem[]): PaymentCompo
 /**
  * ¿La venta necesita componentes? Regla de envío: al menos un componente
  * USD de método cash/transfer (el cobro mixto que el pool canónico CUP no
- * representa). Las ventas CUP puras y Zelle puras conservan el flujo previo.
+ * representa). Las ventas CUP puras y de Transf. Exterior puras conservan el
+ * flujo previo.
  */
 export function requiresPaymentComponents(components: PaymentComponent[]): boolean {
   return components.some(c => c.currency === 'USD' && (c.method === 'cash' || c.method === 'transfer'));

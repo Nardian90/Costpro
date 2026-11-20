@@ -126,7 +126,7 @@ describe('MISIÓN IMPRESIÓN TÉRMICA — aggregateItemPayments (suma de filas r
       {
         payments: [
           { method: 'cash', amount: 16000, currency: 'CUP' },
-          { method: 'zelle', amount: 40, currency: 'USD' },
+          { method: 'external_transfer', amount: 40, currency: 'USD' },
         ],
       },
       {
@@ -137,7 +137,7 @@ describe('MISIÓN IMPRESIÓN TÉRMICA — aggregateItemPayments (suma de filas r
     ]);
     expect(rows).toEqual([
       { method: 'cash', amount: 20000, currency: 'CUP' },
-      { method: 'zelle', amount: 40, currency: 'USD' },
+      { method: 'external_transfer', amount: 40, currency: 'USD' },
     ]);
   });
 
@@ -178,13 +178,13 @@ describe('MISIÓN IMPRESIÓN TÉRMICA — aggregateItemPayments (suma de filas r
     const rows = aggregateItemPayments([
       {
         payments: [
-          { method: 'zelle', amount: 10, currency: 'USD' },
+          { method: 'external_transfer', amount: 10, currency: 'USD' },
           { method: 'transfer', amount: 500, currency: 'CUP' },
           { method: 'cash', amount: 100, currency: 'CUP' },
         ],
       },
     ]);
-    expect(rows.map((r) => r.method)).toEqual(['cash', 'transfer', 'zelle']);
+    expect(rows.map((r) => r.method)).toEqual(['cash', 'transfer', 'external_transfer']);
   });
 
   it('redondea a 2 decimales al sumar (sin drift de coma flotante)', () => {
@@ -227,7 +227,7 @@ describe('MISIÓN IMPRESIÓN TÉRMICA — buildReceiptDataFromLastSale (venta co
     paymentMethod: 'mixed',
     payments: [
       { method: 'cash', amount: 31600, currency: 'CUP' },
-      { method: 'zelle', amount: 40, currency: 'USD' },
+      { method: 'external_transfer', amount: 40, currency: 'USD' },
     ],
     cashReceived: 32000,
     change: 400,
@@ -320,7 +320,7 @@ describe('MISIÓN IMPRESIÓN TÉRMICA — buildReceiptDataFromTransaction (reimp
       lineTotal: 31600,
     });
     // Zelle con tasa conocida → USD original
-    expect(data.payments).toEqual([{ method: 'zelle', amount: 40, currency: 'USD' }]);
+    expect(data.payments).toEqual([{ method: 'external_transfer', amount: 40, currency: 'USD' }]);
   });
 
   it('Zelle SIN tasa persistida → equivalente CUP etiquetado (nunca USD inventado)', () => {
@@ -332,7 +332,7 @@ describe('MISIÓN IMPRESIÓN TÉRMICA — buildReceiptDataFromTransaction (reimp
     expect(data.payments).toEqual([
       { method: 'cash', amount: 16000, currency: 'CUP' },
       { method: 'transfer', amount: 2400, currency: 'CUP' },
-      { method: 'zelle', amount: 13200, currency: 'CUP' },
+      { method: 'external_transfer', amount: 13200, currency: 'CUP' },
     ]);
   });
 
@@ -350,7 +350,7 @@ describe('MISIÓN IMPRESIÓN TÉRMICA — etiquetas y formato', () => {
   it('paymentMethodLabel usa la convención de la app', () => {
     expect(paymentMethodLabel('cash')).toBe('EFECTIVO');
     expect(paymentMethodLabel('transfer')).toBe('TRANSFERENCIA');
-    expect(paymentMethodLabel('zelle')).toBe('ZELLE (USD)');
+    expect(paymentMethodLabel('zelle')).toBe('TRANSF. EXTERIOR');
     expect(paymentMethodLabel('mixed')).toBe('MIXTO');
     expect(paymentMethodLabel('')).toBe('OTRO');
     expect(paymentMethodLabel(null)).toBe('OTRO');

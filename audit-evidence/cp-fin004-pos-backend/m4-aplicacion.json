@@ -1,0 +1,9 @@
+{
+  "file": "Costpro/supabase/migrations/20261120220000_cp_fin004_normalizer_headers_sin_cobros.sql",
+  "version": "20261120220000",
+  "sha256": "a36bf2f607df3e185f764f42c8fe21e92693398801b01d951e8df8829f1ebcf9",
+  "applied_at": "2026-11-20T16:22:00.794Z",
+  "apply_status": 201,
+  "notify_status": 201,
+  "ledger": null
+}

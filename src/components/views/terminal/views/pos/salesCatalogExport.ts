@@ -41,7 +41,7 @@ export function exportSalesCatalogExcel(params: ExportExcelParams): void {
   const HEADERS = [
     'Producto', 'SKU', 'UM', 'Stock', 'Costo', 'Cantidad',
     'Precio Venta', 'Tipo Desc.', 'Descuento', 'Forma Pago',
-    'Efectivo', 'Transferencia', 'USD', 'Tasa USD', 'Zelle', 'Valor Venta',
+    'Efectivo', 'Transferencia', 'USD', 'Tasa USD', 'Transf. Exterior', 'Valor Venta',
     'Fecha', 'Documento',
     '--- NO EDITAR DEBAJO ---', '_product_id', '_variant_id',
   ];

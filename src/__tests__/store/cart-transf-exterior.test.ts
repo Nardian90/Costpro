@@ -55,58 +55,58 @@ function primeraFila(item: ReturnType<typeof useCartStore.getState>['items'][num
   return item.payments![0];
 }
 
-describe('FIX-TRANSF-EXTERIOR — la fila zelle solo admite USD/EUR (regla del store)', () => {
+describe('FIX-TRANSF-EXTERIOR — la fila Transf. Exterior solo admite USD/EUR (regla del store)', () => {
   beforeEach(resetCart);
 
-  it('fila en CUP que pasa a zelle → corregida a USD (y discount_currency sincronizada)', () => {
+  it('fila en CUP que pasa a Transf. Exterior → corregida a USD (y discount_currency sincronizada)', () => {
     const item = setupItem();
     const fila = primeraFila(item);
     expect(fila.currency).toBe('CUP');
 
     useCartStore.getState().updateItemPaymentRow(
-      item.product_id, null, fila.id, { method: 'zelle' },
+      item.product_id, null, fila.id, { method: 'external_transfer' },
     );
 
     const row = useCartStore.getState().items[0].payments![0];
-    expect(row.method).toBe('zelle');
+    expect(row.method).toBe('external_transfer');
     expect(row.currency).toBe('USD'); // ← regla del store: CUP no aplica a Transf. Exterior
     expect(row.discount_currency).toBe('USD');
   });
 
-  it('fila zelle con MLC → corregida a USD', () => {
+  it('fila Transf. Exterior con MLC → corregida a USD', () => {
     const item = setupItem();
     const fila = primeraFila(item);
     useCartStore.getState().updateItemPaymentRow(
-      item.product_id, null, fila.id, { method: 'zelle', currency: 'MLC' },
+      item.product_id, null, fila.id, { method: 'external_transfer', currency: 'MLC' },
     );
     const row = useCartStore.getState().items[0].payments![0];
     expect(row.currency).toBe('USD');
     expect(row.discount_currency).toBe('USD');
   });
 
-  it('fila zelle con EUR se respeta (EUR sí es divisa del exterior)', () => {
+  it('fila Transf. Exterior con EUR se respeta (EUR sí es divisa del exterior)', () => {
     const item = setupItem();
     const fila = primeraFila(item);
     useCartStore.getState().updateItemPaymentRow(
-      item.product_id, null, fila.id, { method: 'zelle', currency: 'EUR' },
+      item.product_id, null, fila.id, { method: 'external_transfer', currency: 'EUR' },
     );
     const row = useCartStore.getState().items[0].payments![0];
-    expect(row.method).toBe('zelle');
+    expect(row.method).toBe('external_transfer');
     expect(row.currency).toBe('EUR');
     expect(row.discount_currency).toBe('EUR');
   });
 
-  it('fila zelle con USD se respeta (default correcto)', () => {
+  it('fila Transf. Exterior con USD se respeta (default correcto)', () => {
     const item = setupItem();
     const fila = primeraFila(item);
     useCartStore.getState().updateItemPaymentRow(
-      item.product_id, null, fila.id, { method: 'zelle', currency: 'USD' },
+      item.product_id, null, fila.id, { method: 'external_transfer', currency: 'USD' },
     );
     const row = useCartStore.getState().items[0].payments![0];
     expect(row.currency).toBe('USD');
   });
 
-  it('filas NO-zelle no se ven afectadas: cash con USD y cash con CUP siguen válidas', () => {
+  it('filas NO-exterior no se ven afectadas: cash con USD y cash con CUP siguen válidas', () => {
     const item = setupItem();
     const fila = primeraFila(item);
     useCartStore.getState().updateItemPaymentRow(
@@ -125,20 +125,20 @@ describe('FIX-TRANSF-EXTERIOR — la fila zelle solo admite USD/EUR (regla del s
     expect(useCartStore.getState().items[0].payments![0]).toMatchObject({ method: 'transfer', currency: 'MLC' });
   });
 
-  it('addItemPayment con zelle crea la fila en USD por defecto', () => {
+  it('addItemPayment con Transf. Exterior crea la fila en USD por defecto', () => {
     const item = setupItem();
-    useCartStore.getState().addItemPayment(item.product_id, null, 'zelle');
+    useCartStore.getState().addItemPayment(item.product_id, null, 'external_transfer');
     const pagos = useCartStore.getState().items[0].payments!;
-    const zelle = pagos.find(p => p.method === 'zelle');
-    expect(zelle).toBeDefined();
-    expect(zelle!.currency).toBe('USD');
+    const exterior = pagos.find(p => p.method === 'external_transfer');
+    expect(exterior).toBeDefined();
+    expect(exterior!.currency).toBe('USD');
   });
 
   it('syncLegacyFields refleja la moneda corregida en zelle_currency', () => {
     const item = setupItem();
     const fila = primeraFila(item);
     useCartStore.getState().updateItemPaymentRow(
-      item.product_id, null, fila.id, { method: 'zelle', currency: 'CUP' },
+      item.product_id, null, fila.id, { method: 'external_transfer', currency: 'CUP' },
     );
     const legacy = useCartStore.getState().items[0];
     expect(legacy.zelle_currency).toBe('USD');

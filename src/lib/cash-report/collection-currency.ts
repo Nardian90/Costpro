@@ -159,8 +159,9 @@ export function ledgerIsAuthoritative(payments: LedgerPayment[]): boolean {
     p => (p.payment_method === 'cash' || p.payment_method === 'transfer') && normCur(p.currency) === 'USD',
   );
   if (hasCashOrTransferUsd) return true;
-  const nonZelle = payments.filter(p => p.payment_method !== 'zelle');
-  return nonZelle.length === 0 && payments.every(p => normCur(p.currency) === 'USD');
+  // CP-FIN-004: exterior en cualquiera de sus dos identificadores.
+  const nonExterior = payments.filter(p => !isExteriorPayMethod(p.payment_method));
+  return nonExterior.length === 0 && payments.every(p => normCur(p.currency) === 'USD');
 }
 
 export interface CollectionTx {
@@ -168,6 +169,8 @@ export interface CollectionTx {
   cash_amount?: number | string | null;
   transfer_amount?: number | string | null;
   zelle_amount?: number | string | null;
+  /** CP-FIN-004: pool canónico de Transf. Exterior (suma con zelle_amount heredada). */
+  external_transfer_amount?: number | string | null;
   sale_currency?: string | null;
   sale_exchange_rate?: number | string | null;
 }
@@ -190,10 +193,31 @@ export interface CollectionItem {
   transfer_currency?: string | null;
   zelle_paid?: number | string | null;
   zelle_currency?: string | null;
+  /** CP-FIN-004: atribución canónica del exterior (suma con zelle_paid heredada). */
+  external_transfer_paid?: number | string | null;
+  external_transfer_currency?: string | null;
 }
+
+/** CP-FIN-004: lectura DUAL del pool/atribución del exterior (heredado + canónico). */
+const exteriorPoolOf = (tx: CollectionTx): number =>
+  num(tx.zelle_amount) + num(tx.external_transfer_amount);
+const exteriorPaidOf = (it: CollectionItem): number =>
+  num(it.zelle_paid) + num(it.external_transfer_paid);
 
 export type PayMethod = 'cash' | 'transfer' | 'zelle';
 export const PAY_METHODS: PayMethod[] = ['cash', 'transfer', 'zelle'];
+
+// CP-FIN-004: el bucket interno 'zelle' agrega el medio «Transf. Exterior»
+// en CUALQUIERA de sus dos identificadores (canónico 'external_transfer' +
+// heredado 'zelle'). Normalización de INGESTA en un solo punto.
+export function toPayMethod(raw: string | null | undefined): PayMethod {
+  const m = (raw || 'cash') as string;
+  if (m === 'external_transfer' || m === 'zelle') return 'zelle';
+  if (m === 'transfer') return 'transfer';
+  return 'cash';
+}
+export const isExteriorPayMethod = (raw: string | null | undefined): boolean =>
+  raw === 'external_transfer' || raw === 'zelle';
 
 export interface MethodAmounts { cash: number; transfer: number; zelle: number }
 export interface ItemCollections {
@@ -329,7 +353,8 @@ export function reconstructTxCollections(
   if (payments && payments.length > 0 && ledgerIsAuthoritative(payments)) {
     const byKey = new Map<string, CollectionBucket & { amountCupRaw: number }>();
     for (const p of payments) {
-      const method = (p.payment_method as PayMethod) || 'cash';
+      // CP-FIN-004: normalización dual del exterior al bucket interno.
+      const method = toPayMethod(p.payment_method);
       if (!PAY_METHODS.includes(method)) continue;
       const cur = normCur(p.currency);
       const amount = num(p.amount);
@@ -359,10 +384,12 @@ export function reconstructTxCollections(
     const explicitItems = new Set<number>();
     const explicitSum = new Map<string, number>(); // `${method}|${currency}` → Σ filas explícitas
     for (const method of PAY_METHODS) {
-      const paidField = `${method}_paid` as keyof CollectionItem;
+      // CP-FIN-004: atribución dual del exterior (heredado + canónico).
+      const paidOf = (it: CollectionItem): number =>
+        method === 'zelle' ? exteriorPaidOf(it) : num(it[`${method}_paid` as keyof CollectionItem]);
       const curField = `${method}_currency` as keyof CollectionItem;
       items.forEach((it, idx) => {
-        const amt = num(it[paidField]);
+        const amt = paidOf(it);
         if (amt <= 0) return; // sin fila explícita de este método (escoba cash_paid=0 no es fila)
         explicitItems.add(idx);
         const cur = normCur(it[curField]);
@@ -451,15 +478,18 @@ export function reconstructTxCollections(
   };
 
   for (const method of PAY_METHODS) {
-    const pool = num(tx[`${method}_amount` as keyof CollectionTx]);
-    const paidField = `${method}_paid` as keyof CollectionItem;
+    // CP-FIN-004: pool dual del exterior (zelle_amount heredada +
+    // external_transfer_amount canónica) y atribución dual por ítem.
+    const pool = method === 'zelle' ? exteriorPoolOf(tx) : num(tx[`${method}_amount` as keyof CollectionTx]);
+    const paidOf = (it: CollectionItem): number =>
+      method === 'zelle' ? exteriorPaidOf(it) : num(it[`${method}_paid` as keyof CollectionItem]);
     const curField = `${method}_currency` as keyof CollectionItem;
 
     // ── 1. Filas de pago explícitas a nivel ítem (ventas V2): verdad del cobro ──
     const explicitIdx = new Set<number>();
     let explicitEquivCup = 0;
     items.forEach((it, idx) => {
-      const amt = num(it[paidField]);
+      const amt = paidOf(it);
       if (amt > 0) {
         explicitIdx.add(idx);
         heuristicExplicit.add(idx);

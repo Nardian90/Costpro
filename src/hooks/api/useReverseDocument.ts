@@ -36,7 +36,8 @@ export type ReversibleDocType =
  * desde las filas refund — aquí solo se declara el riel real de cobro. */
 export interface RecoveryComponent {
   currency: 'CUP' | 'USD';
-  method: 'cash' | 'transfer' | 'zelle';
+  // CP-FIN-004: canónico + heredado 'zelle' (solo lectura de datos previos).
+  method: 'cash' | 'transfer' | 'external_transfer' | 'zelle';
   operation_date?: string;
   notes?: string;
 }

@@ -1099,7 +1099,7 @@ async function buildEstandarChildren(
       fmtStd(Number(w.cash_paid)), fmtStd(Number(w.transfer_paid)), fmtStd(Number(w.zelle_paid)), fmtStd(Number(w.total_amount_cup)),
     ]);
     out.push(estandarTable(d, {
-      headers: ['Trabajador', 'CI', 'Pagos', 'Periodo', 'Efectivo', 'Transfer', 'Zelle', 'Total CUP'],
+      headers: ['Trabajador', 'CI', 'Pagos', 'Periodo', 'Efectivo', 'Transfer', 'Transf. Exterior', 'Total CUP'],
       rows: workerRows,
       colWidths: widthsFrom([40, 22, 12, 35, 22, 22, 18, 26].map(v => v / 197), d.contentW),
       align: ['left', 'left', 'center', 'left', 'right', 'right', 'right', 'right'],

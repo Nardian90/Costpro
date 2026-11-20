@@ -24,7 +24,10 @@ import React from 'react';
 import { Plus, Copy, X, DollarSign, Send, CreditCard } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 
-export type PaymentMethodValue = 'cash' | 'transfer' | 'zelle';
+// CP-FIN-004: canónico de «Transf. Exterior» = 'external_transfer' (mismo
+// contrato de 3 opciones que el POS). El heredado 'zelle' se admite como
+// VALOR DE LECTURA en filas cargadas de pagos previos (etiqueta dual).
+export type PaymentMethodValue = 'cash' | 'transfer' | 'external_transfer' | 'zelle';
 export type PaymentCurrencyValue = 'CUP' | 'USD' | 'EUR' | 'MLC';
 
 /** Fila de pago editable (una por componente del desembolso). */
@@ -49,15 +52,20 @@ export interface PaymentPayloadRow {
 const METHOD_LABELS: Record<PaymentMethodValue, string> = {
   cash: '💵 Efectivo',
   transfer: '📱 Transf.',
-  zelle: '💳 Transf. Exterior',
+  external_transfer: '💳 Transf. Exterior',
+  zelle: '💳 Transf. Exterior', // heredado (solo lectura)
 };
 
 const CURRENCIES_BY_METHOD: Record<PaymentMethodValue, PaymentCurrencyValue[]> = {
   // Igual que el carrito: Transf. Exterior solo moneda extranjera.
-  zelle: ['USD', 'EUR'],
+  external_transfer: ['USD', 'EUR'],
+  zelle: ['USD', 'EUR'], // heredado (solo lectura)
   cash: ['CUP', 'USD', 'EUR', 'MLC'],
   transfer: ['CUP', 'USD', 'EUR', 'MLC'],
 };
+
+// ¿El valor es el medio «Transf. Exterior» (canónico o heredado)?
+const isExterior = (m: PaymentMethodValue): boolean => m === 'external_transfer' || m === 'zelle';
 
 const round2 = (n: number): number => Math.round((n + Number.EPSILON) * 100) / 100;
 
@@ -151,13 +159,15 @@ export default function PaymentRowsEditor({
   const setMethod = (row: PaymentEditorRow, method: PaymentMethodValue) => {
     // Igual que el carrito: pasar a Transf. Exterior desde CUP/MLC convierte
     // la fila a USD (a la tasa de la tienda) para no falsear el equivalente.
-    if (method === 'zelle' && row.currency !== 'USD' && row.currency !== 'EUR') {
+    // CP-FIN-004: normaliza el heredado al canónico antes de guardar.
+    const canonical: PaymentMethodValue = method === 'zelle' ? 'external_transfer' : method;
+    if (isExterior(canonical) && row.currency !== 'USD' && row.currency !== 'EUR') {
       const rate = storeRates['USD'] && storeRates['USD'] > 1 ? storeRates['USD'] : 0;
       const converted = rate > 0 && row.amount > 0 ? round2(row.amount / rate) : row.amount;
-      update(row.id, { method, currency: 'USD', amount: converted, exchange_rate: rate > 0 ? rate : 1 });
+      update(row.id, { method: canonical, currency: 'USD', amount: converted, exchange_rate: rate > 0 ? rate : 1 });
       return;
     }
-    update(row.id, { method });
+    update(row.id, { method: canonical });
   };
 
   const setCurrency = (row: PaymentEditorRow, currency: PaymentCurrencyValue) => {

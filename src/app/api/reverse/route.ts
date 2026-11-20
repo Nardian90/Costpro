@@ -41,7 +41,8 @@ const reverseSchema = z.object({
   // reversión documental liberaba el tope como si el dinero hubiera vuelto.
   recovery: z.array(z.object({
     currency: z.enum(['CUP', 'USD']),
-    method: z.enum(['cash', 'transfer', 'zelle']),
+    // CP-FIN-004: canónico + heredado (el RPC normaliza).
+    method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']),
     operation_date: z.string().datetime().optional(),
     notes: z.string().max(500).optional(),
   })).max(2).optional(),

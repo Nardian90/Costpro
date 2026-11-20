@@ -122,7 +122,7 @@ describe('AUDITORÍA 2026-10-19 · PDF Diario «Entrega en tienda» — estructu
     // La hoja USD conserva el detalle en USD con sus medios
     const p2 = textsOf(2);
     expect(p2).toContain('Efectivo (USD)');
-    expect(p2).toContain('Zelle');
+    expect(p2).toContain('Transf. Exterior');
     expect(p2).toContain('40.00');
   });
 

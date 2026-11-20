@@ -36,7 +36,8 @@ const uuidLooseRegex = z.string().regex(
 const querySchema = z.object({
   store_id: uuidLooseRegex,
   tab: z.enum(['all', 'overdue', '30', '60', '90', '120', 'paid']).default('all'),
-  method: z.enum(['cash', 'transfer', 'zelle']).optional(),
+  // CP-FIN-004: canónico external_transfer + heredado zelle.
+  method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']).optional(),
   currency: z.string().optional(),
   search: z.string().optional(),
   mode: z.enum(['list', 'grouped']).default('list'),
@@ -87,6 +88,10 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     const { store_id, tab, method, currency, search, mode, limit, offset } = parsed.data;
+    // CP-FIN-004: el filtro de Transf. Exterior cubre ambos identificadores.
+    const methodFilter = method === 'zelle' || method === 'external_transfer'
+      ? ['zelle', 'external_transfer']
+      : method;
     const supabase = getSupabaseForSession(session);
 
     // ── Fecha de hoy en zona horaria del servidor (UTC) ──
@@ -337,12 +342,17 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // Para comisiones, payment_method puede ser 'mixed' — incluir si filtra por cash o transfer
     let filtered = payables;
     if (method) {
+      // CP-FIN-004: methodFilter ya cubre el exterior dual (zelle + external_transfer).
       filtered = filtered.filter(p => {
+        const matches = (pm: string | null): boolean =>
+          Array.isArray(methodFilter)
+            ? methodFilter.includes(pm ?? '')
+            : pm === methodFilter;
         if (p.ref_type === 'commission') {
           // Comisiones: 'mixed' contiene ambos métodos
-          return p.payment_method === method || p.payment_method === 'mixed';
+          return matches(p.payment_method) || p.payment_method === 'mixed';
         }
-        return p.payment_method === method;
+        return matches(p.payment_method);
       });
     }
 

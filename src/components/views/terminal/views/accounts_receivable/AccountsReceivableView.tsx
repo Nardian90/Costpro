@@ -21,7 +21,7 @@ const METHOD_FILTERS = [
   { id: '', label: 'Todos los métodos' },
   { id: 'cash', label: 'Efectivo' },
   { id: 'transfer', label: 'Transferencia' },
-  { id: 'zelle', label: 'Zelle' },
+  { id: 'zelle', label: 'Transf. Exterior' },
 ];
 
 const CURRENCY_FILTERS = [

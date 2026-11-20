@@ -2,6 +2,9 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { produce } from "immer";
 import type { Product, ProductVariant, TaxConfiguration, PaymentMethod } from "@/types";
+// CP-FIN-004: reconocedor dual del medio «Transf. Exterior» (canónico
+// 'external_transfer' + heredado 'zelle' de carritos persistidos).
+import { isExteriorMethod } from "@/lib/payments/methods";
 
 // ── Notification callback (injected by UI layer) ────────────────
 let _onCartNotification: ((type: "warning" | "error", message: string) => void) | null = null;
@@ -29,7 +32,10 @@ export type CartOperationType = 'sale' | 'issue_slip';
 // tener 2 efectivos en distintas monedas.
 export interface PaymentRow {
   id: string;  // único dentro del item
-  method: 'cash' | 'transfer' | 'zelle';
+  // CP-FIN-004: canónico del contrato de 3 opciones del POS. 'zelle' ya no se
+  // crea (persistencias antiguas del carrito se normalizan al leer — véase
+  // syncLegacyFields/getConsolidatedPayments con isExteriorMethod).
+  method: 'cash' | 'transfer' | 'external_transfer';
   amount: number;
   currency: string;
   // FIX-B3 (2026-07-10): unificado — positivo=recargo, negativo=descuento
@@ -208,7 +214,7 @@ interface CartState {
   getItemSubtotalCup: (item: CartItem) => number;
   getItemPaidCup: (item: CartItem) => number;
   // FIX-DISCOUNT-PER-METHOD: subtotal ajustado con descuento del método específico
-  getItemSubtotalWithMethodDiscountCup: (item: CartItem, method: 'cash' | 'transfer' | 'zelle') => number;
+  getItemSubtotalWithMethodDiscountCup: (item: CartItem, method: 'cash' | 'transfer' | 'external_transfer' | 'zelle') => number;
   // FIX-CONSISTENCY (2026-07-10): total esperado considerando ajustes por método.
   // Suma getItemSubtotalWithMethodDiscountCup por cada item eligiendo el método
   // activo (con pago + ajuste). Esto reemplaza el cálculo antiguo que solo
@@ -216,7 +222,7 @@ interface CartState {
   // por método, causando descuadre entre tab Items y tab Pago.
   getExpectedTotalCup: () => number;
   // FIX-PAYMENT-ROWS (2026-07-10): acciones para gestionar filas de pago dinámicas
-  addItemPayment: (productId: string, variantId: string | null, method?: 'cash' | 'transfer' | 'zelle') => void;
+  addItemPayment: (productId: string, variantId: string | null, method?: 'cash' | 'transfer' | 'external_transfer') => void;
   removeItemPayment: (productId: string, variantId: string | null, paymentId: string) => void;
   duplicateItemPayment: (productId: string, variantId: string | null, paymentId: string) => void;
   updateItemPaymentRow: (productId: string, variantId: string | null, paymentId: string, updates: Partial<PaymentRow>) => void;
@@ -381,7 +387,7 @@ function syncLegacyFields(item: CartItem, rates?: Record<string, number>): void 
   const methodAcc: Record<string, { cup: number; usdLike: number; foreign: number; lastCur: string }> = {
     cash: { cup: 0, usdLike: 0, foreign: 0, lastCur: 'CUP' },
     transfer: { cup: 0, usdLike: 0, foreign: 0, lastCur: 'CUP' },
-    zelle: { cup: 0, usdLike: 0, foreign: 0, lastCur: 'USD' },
+    external_transfer: { cup: 0, usdLike: 0, foreign: 0, lastCur: 'USD' },
   };
   const rateOf = (p: { currency: string }): number => {
     if (p.currency === 'CUP') return 1;
@@ -391,7 +397,10 @@ function syncLegacyFields(item: CartItem, rates?: Record<string, number>): void 
   };
 
   for (const p of item.payments) {
-    const acc = methodAcc[p.method];
+    // CP-FIN-004: normaliza filas heredadas ('zelle' de carritos persistidos
+    // pre-contrato) al acumulador canónico del exterior.
+    const methodKey = isExteriorMethod(p.method) ? 'external_transfer' : p.method;
+    const acc = methodAcc[methodKey];
     if (!acc) continue;
     acc.cup += (p.amount || 0) * rateOf(p);
     if (p.currency === 'CUP') acc.usdLike += p.amount || 0;
@@ -399,9 +408,13 @@ function syncLegacyFields(item: CartItem, rates?: Record<string, number>): void 
     acc.lastCur = p.currency;
     // Si la fila tiene ajuste, reflejarlo en legacy (última fila con ajuste gana)
     if (p.discount_type && p.discount_value) {
-      const typeKey = `${p.method}_discount_type` as 'cash_discount_type';
-      const valueKey = `${p.method}_discount_value` as 'cash_discount_value';
-      const curKey = `${p.method}_discount_currency` as 'cash_discount_currency';
+      // CP-FIN-004: el prefijo legacy del exterior conserva su nombre histórico
+      // (zelle_discount_* — columnas heredadas); el payload lo traduce a los
+      // campos canónicos external_transfer_discount_*.
+      const legacyPrefix = methodKey === 'external_transfer' ? 'zelle' : methodKey;
+      const typeKey = `${legacyPrefix}_discount_type` as 'cash_discount_type';
+      const valueKey = `${legacyPrefix}_discount_value` as 'cash_discount_value';
+      const curKey = `${legacyPrefix}_discount_currency` as 'cash_discount_currency';
       (item as unknown as Record<string, unknown>)[typeKey] = p.discount_type;
       (item as unknown as Record<string, unknown>)[valueKey] = p.discount_value;
       (item as unknown as Record<string, unknown>)[curKey] = p.discount_currency;
@@ -409,10 +422,15 @@ function syncLegacyFields(item: CartItem, rates?: Record<string, number>): void 
   }
 
   // Volcado a los campos legacy con la regla de moneda única vs multi-moneda.
-  const flush = (method: 'cash' | 'transfer' | 'zelle'): void => {
+  // CP-FIN-004: los campos legacy del exterior conservan el nombre histórico
+  // (zelle_paid/zelle_currency) — son las columnas heredadas de
+  // transaction_items y el input fallback del RPC; el payload del checkout
+  // los traduce a los campos canónicos external_transfer_*.
+  const flush = (method: 'cash' | 'transfer' | 'external_transfer'): void => {
     const acc = methodAcc[method];
-    const paidKey = `${method}_paid` as 'cash_paid';
-    const curKey = `${method}_currency` as 'cash_currency';
+    const legacyPrefix = method === 'external_transfer' ? 'zelle' : method;
+    const paidKey = `${legacyPrefix}_paid` as 'cash_paid';
+    const curKey = `${legacyPrefix}_currency` as 'cash_currency';
     const singleCurrency = acc.foreign === 0 || acc.usdLike === 0;
     if (singleCurrency) {
       // Una sola moneda: importe real + esa moneda (comportamiento previo).
@@ -426,7 +444,7 @@ function syncLegacyFields(item: CartItem, rates?: Record<string, number>): void 
   };
   flush('cash');
   flush('transfer');
-  flush('zelle');
+  flush('external_transfer');
 }
 
 // FIX-MULTI-CURRENCY-CORE (2026-07-07): función auxiliar para obtener la tasa
@@ -587,7 +605,7 @@ export const useCartStore = create<CartState>()(
                 item.payments[0].amount = item.subtotal;
                 item.cash_paid = item.payments.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0);
                 item.transfer_paid = item.payments.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0);
-                item.zelle_paid = item.payments.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0);
+                item.zelle_paid = item.payments.filter(p => isExteriorMethod(p.method)).reduce((s, p) => s + p.amount, 0);
               }
             }
             state.lastUpdated = Date.now();
@@ -663,7 +681,7 @@ export const useCartStore = create<CartState>()(
               if (p.amount > 0) {
                 const c = p.currency || 'CUP';
                 if (!result[c]) result[c] = { cash: 0, transfer: 0, zelle: 0 };
-                result[c][p.method] += p.amount;
+                result[c][isExteriorMethod(p.method) ? 'zelle' : (p.method as 'cash' | 'transfer')] += p.amount;
               }
             }
           } else {
@@ -745,8 +763,10 @@ export const useCartStore = create<CartState>()(
       },
 
       // FIX-B3 (2026-07-10): descuento/recargo unificado — positivo=recargo, negativo=descuento
-      getItemSubtotalWithMethodDiscountCup: (item: CartItem, method: 'cash' | 'transfer' | 'zelle') => {
+      getItemSubtotalWithMethodDiscountCup: (item: CartItem, method: 'cash' | 'transfer' | 'external_transfer' | 'zelle') => {
         const baseSubtotalCup = get().getItemSubtotalCup(item);
+        // CP-FIN-004: 'external_transfer' y el heredado 'zelle' leen los mismos
+        // campos legacy (zelle_discount_*).
         const dtype = method === 'cash' ? item.cash_discount_type
           : method === 'transfer' ? item.transfer_discount_type
           : item.zelle_discount_type;
@@ -1270,14 +1290,19 @@ export const useCartStore = create<CartState>()(
               // Asegurar que payments[] exista
               if (!item.payments) item.payments = [];
               // Función helper para upsert la primera fila de un método
-              const upsertMethodRow = (method: 'cash' | 'transfer' | 'zelle', amount: number, currency: string) => {
+              const upsertMethodRow = (method: 'cash' | 'transfer' | 'external_transfer', amount: number, currency: string) => {
+                // CP-FIN-004: matching dual para el exterior (canónico + heredado
+                // de carritos persistidos) y normalización al canónico al reusar fila.
+                const sameMethod = (p: PaymentRow) =>
+                  method === 'external_transfer' ? isExteriorMethod(p.method) : p.method === method;
                 if (amount <= 0) {
                   // Remover filas de este método
-                  item.payments = item.payments.filter(p => p.method !== method);
+                  item.payments = item.payments.filter(p => !sameMethod(p));
                   return;
                 }
-                let row = item.payments.find(p => p.method === method);
+                let row = item.payments.find(sameMethod);
                 if (row) {
+                  row.method = method;
                   row.amount = amount;
                   row.currency = currency;
                 } else {
@@ -1294,7 +1319,7 @@ export const useCartStore = create<CartState>()(
               };
               upsertMethodRow('cash', cashPaid, cur.cash);
               upsertMethodRow('transfer', transferPaid, cur.transfer);
-              upsertMethodRow('zelle', zellePaid, cur.zelle);
+              upsertMethodRow('external_transfer', zellePaid, cur.zelle);
               // Si payments quedó vacío (todos en 0), agregar 1 fila cash default
               if (item.payments.length === 0) {
                 item.payments.push({
@@ -1325,7 +1350,7 @@ export const useCartStore = create<CartState>()(
             );
             if (item) {
               if (!item.payments) item.payments = [];
-              const currency = method === 'zelle' ? 'USD' : (item.currency || 'CUP');
+              const currency = isExteriorMethod(method) ? 'USD' : (item.currency || 'CUP');
               item.payments.push({
                 id: generatePaymentId(),
                 method,
@@ -1410,7 +1435,7 @@ export const useCartStore = create<CartState>()(
                 // si la fila queda zelle con otra moneda, se corrige a USD y se
                 // sincroniza la moneda del ajuste. Protege a todo consumidor
                 // presente o futuro del store, no solo a este selector.
-                if (row.method === 'zelle' && row.currency !== 'USD' && row.currency !== 'EUR') {
+                if (isExteriorMethod(row.method) && row.currency !== 'USD' && row.currency !== 'EUR') {
                   row.currency = 'USD';
                   row.discount_currency = 'USD';
                 }
@@ -1505,7 +1530,7 @@ export const useCartStore = create<CartState>()(
               if (itemZelle > 0) {
                 item.payments.push({
                   id: generatePaymentId(),
-                  method: 'zelle',
+                  method: 'external_transfer',
                   amount: itemZelle,
                   currency: item.zelle_currency || 'USD',
                   discount_type: null,
@@ -1718,7 +1743,7 @@ export const useCartStore = create<CartState>()(
               if (item.zelle_paid > 0) {
                 item.payments.push({
                   id: `pay_legacy_zelle_${item.product_id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-                  method: 'zelle',
+                  method: 'external_transfer',
                   amount: item.zelle_paid,
                   currency: item.zelle_currency || 'USD',
                   discount_type: item.zelle_discount_type || null,

@@ -168,7 +168,9 @@ export function paymentMethodLabel(m: string): string {
     case 'transfer': return 'Transferencia';
     case 'mixed': return 'Mixto';
     case 'wallet': return 'Billetera';
-    case 'zelle': return 'Zelle (USD)';
+    // CP-FIN-004: etiqueta del exterior (canónico o heredado).
+    case 'zelle':
+    case 'external_transfer': return 'Transf. Exterior (USD)';
     case 'other': return 'Otro';
     default: return 'Sin especificar';
   }

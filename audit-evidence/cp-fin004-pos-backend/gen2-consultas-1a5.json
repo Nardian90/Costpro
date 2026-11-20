@@ -1,0 +1,127 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-20T16:26:03.289Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT code, status, created_at::date FROM fin_posting_generations WHERE store_id='5e6fe821-5465-48b1-b3f1-3aa3182edc38'",
+      "rows": [
+        {
+          "code": "GEN-1",
+          "status": "superseded",
+          "created_at": "2026-11-19"
+        },
+        {
+          "code": "GEN-0",
+          "status": "superseded",
+          "created_at": "2026-11-19"
+        },
+        {
+          "code": "GEN-2",
+          "status": "active",
+          "created_at": "2026-11-20"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT round(sum(CASE WHEN fm.category_code LIKE 'ACT%' THEN (CASE WHEN fm.sense='debito' THEN fm.amount_cup ELSE -fm.am",
+      "rows": [
+        {
+          "identidad": "77770201.78"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT fm.category_code, round(sum(CASE WHEN fm.sense='debito' THEN fm.amount_cup ELSE -fm.amount_cup END)::numeric,2) s",
+      "rows": [
+        {
+          "category_code": "ACT_BANCOS",
+          "saldo": "1264610.01"
+        },
+        {
+          "category_code": "ACT_EFECTIVO_CUP",
+          "saldo": "1233950.00"
+        },
+        {
+          "category_code": "ACT_EFECTIVO_USD",
+          "saldo": "24042800.00"
+        },
+        {
+          "category_code": "ACT_TRANSF_EXTERIOR",
+          "saldo": "591600.00"
+        },
+        {
+          "category_code": "GAS_COSTO_VENTAS",
+          "saldo": "4506831.73"
+        },
+        {
+          "category_code": "ING_VENTAS",
+          "saldo": "-35953544.98"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT fe.document_id, fm.amount_cup, fm.amount_origin, fm.currency_origin FROM fin_movements fm JOIN fin_entries fe ON ",
+      "rows": [
+        {
+          "document_id": "1a03c37f-3a9b-4c5a-912c-3958ebbaf91c",
+          "amount_cup": "142800.00",
+          "amount_origin": "210.00",
+          "currency_origin": "USD"
+        },
+        {
+          "document_id": "3d19e5e7-2080-4eb1-8eca-cf7e391f30b9",
+          "amount_cup": "224400.00",
+          "amount_origin": "330.00",
+          "currency_origin": "USD"
+        },
+        {
+          "document_id": "9033864b-2c13-4aa3-b2b8-2fd645a190db",
+          "amount_cup": "224400.00",
+          "amount_origin": "330.00",
+          "currency_origin": "USD"
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT fe.document_id, fm.amount_cup, fm.amount_origin, fm.currency_origin FROM fin_movements fm JOIN fin_entries fe ON ",
+      "rows": [
+        {
+          "document_id": "1dc55aca-4641-4236-bd69-79165b35e69f",
+          "amount_cup": "3522400.00",
+          "amount_origin": "5180.00",
+          "currency_origin": "CUP"
+        },
+        {
+          "document_id": "80952075-5c72-4e79-bcbe-6ce784970b95",
+          "amount_cup": "2210000.00",
+          "amount_origin": "3250.00",
+          "currency_origin": "USD"
+        },
+        {
+          "document_id": "e38ad0cc-1ba1-4f5e-bb76-7066ac322904",
+          "amount_cup": "2176000.00",
+          "amount_origin": "3200.00",
+          "currency_origin": "CUP"
+        },
+        {
+          "document_id": "670723f3-60d5-4e83-ae69-6962d9b87110",
+          "amount_cup": "1509600.00",
+          "amount_origin": "2220.00",
+          "currency_origin": "CUP"
+        },
+        {
+          "document_id": "dbff3625-96d1-419e-9a80-08f61b4a55c8",
+          "amount_cup": "1496000.00",
+          "amount_origin": "2200.00",
+          "currency_origin": "USD"
+        }
+      ]
+    }
+  ]
+}

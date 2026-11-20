@@ -20,6 +20,7 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCartStore, type CartItem, roundQty, floorQty, QTY_EPSILON } from "@/store/cart";
+import { isExteriorMethod } from "@/lib/payments/methods";
 import type { POSCartItemProps } from "./POSCart.types";
 import StoreRatesModal from "./StoreRatesModal";
 import { POSCartItemEditModal } from "./POSCartItemEditModal";
@@ -434,7 +435,7 @@ export const POSCartItem = ({
                       }
                       ui.cash_paid = ui.payments?.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0) || 0;
                       ui.transfer_paid = ui.payments?.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0) || 0;
-                      ui.zelle_paid = ui.payments?.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0) || 0;
+                      ui.zelle_paid = ui.payments?.filter(p => isExteriorMethod(p.method)).reduce((s, p) => s + p.amount, 0) || 0;
                       return ui;
                     }
                     return it;
@@ -485,17 +486,17 @@ export const POSCartItem = ({
           return (
             <div key={p.id} className="border border-border/30 rounded-lg p-2 space-y-1">
               <div className="flex flex-wrap gap-1 items-center">
-                {/* Selector de método — FIX-TRANSF-EXTERIOR (2026-10-16):
-                    «Zelle» pasa a «Transf. Exterior» (el valor de BD sigue siendo
-                    'zelle' por compatibilidad de datos). Al elegir Transf.
-                    Exterior en una fila que estaba en CUP/MLC, la fila pasa a USD
-                    convirtiendo el monto a la tasa vigente → el equivalente en
-                    CUP se mantiene y no aparece un descuadre falso. */}
+                {/* Selector de método — CP-FIN-004 (anexo POS-backend): el
+                    value canónico de «Transf. Exterior» es 'external_transfer'
+                    (contrato del backend; el heredado 'zelle' solo se lee).
+                    Al elegir Transf. Exterior en una fila que estaba en CUP/MLC,
+                    la fila pasa a USD convirtiendo el monto a la tasa vigente →
+                    el equivalente en CUP se mantiene y no aparece descuadre. */}
                 <select
-                  value={p.method}
+                  value={isExteriorMethod(p.method) ? 'external_transfer' : p.method}
                   onChange={(e) => {
-                    const method = e.target.value as 'cash' | 'transfer' | 'zelle';
-                    if (method === 'zelle' && p.currency !== 'USD' && p.currency !== 'EUR') {
+                    const method = e.target.value as 'cash' | 'transfer' | 'external_transfer';
+                    if (method === 'external_transfer' && p.currency !== 'USD' && p.currency !== 'EUR') {
                       const storeRate = useCartStore.getState().globalRates['USD'];
                       const validRate = typeof storeRate === 'number' && storeRate > 1 ? storeRate : 0;
                       const converted = validRate > 0
@@ -522,7 +523,7 @@ export const POSCartItem = ({
                 >
                   <option value="cash">💵 Efect.</option>
                   <option value="transfer">📱 Transf.</option>
-                  <option value="zelle">💳 Transf. Exterior</option>
+                  <option value="external_transfer">💳 Transf. Exterior</option>
                 </select>
 
                 {/* Monto */}
@@ -554,7 +555,8 @@ export const POSCartItem = ({
                   className="bg-background border border-border/50 rounded-lg px-1 py-2 min-h-[36px] text-[10px] font-bold shrink-0"
                   aria-label={`Moneda de pago fila ${idx + 1}`}
                 >
-                  {(p.method === 'zelle' ? ['USD', 'EUR'] : ['CUP', 'USD', 'EUR', 'MLC']).map((c) => (
+                  {/* CP-FIN-004: reconocedor dual del exterior (heredado de carritos persistidos). */}
+                  {(isExteriorMethod(p.method) ? ['USD', 'EUR'] : ['CUP', 'USD', 'EUR', 'MLC']).map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>

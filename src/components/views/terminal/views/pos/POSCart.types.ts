@@ -125,6 +125,8 @@ export interface POSCartProps {
   prorateGlobalPayment?: (totalCash: number, totalTransfer: number, totalZelle?: number) => void;
   // FIX-PAYMENT-MODE (2026-07-06): props para detección de modo
   isPaymentModeByProduct?: () => boolean;
+  // CP-FIN-004: la clave 'zelle' del consolidado es el bucket histórico del
+  // medio «Transf. Exterior» — el store normaliza canónico y heredado a ese bucket.
   getConsolidatedPayments?: () => Record<string, { cash: number; transfer: number; zelle: number }>;
   // MISIÓN CARRITO-VENTAS (2026-10-23): panel redimensionable en escritorio.
   // POSView posee el hook useCartPanelResize y comparte el estado para que el

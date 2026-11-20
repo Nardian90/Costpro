@@ -12,16 +12,19 @@ interface PaymentHistoryRowProps {
   paidAmount: number;
 }
 
-const METHOD_ICONS = {
+// CP-FIN-004: canónico external_transfer + heredado zelle (ambos = Transf. Exterior).
+const METHOD_ICONS: Record<'cash' | 'transfer' | 'zelle' | 'external_transfer', typeof Banknote> = {
   cash: Banknote,
   transfer: Smartphone,
   zelle: DollarSign,
+  external_transfer: DollarSign,
 };
 
-const METHOD_LABELS = {
+const METHOD_LABELS: Record<'cash' | 'transfer' | 'zelle' | 'external_transfer', string> = {
   cash: 'Efectivo',
   transfer: 'Transferencia',
-  zelle: 'Zelle',
+  zelle: 'Transf. Exterior',
+  external_transfer: 'Transf. Exterior',
 };
 
 export default function PaymentHistoryRow({ refType, refId, paidAmount }: PaymentHistoryRowProps) {

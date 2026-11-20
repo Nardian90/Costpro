@@ -237,7 +237,7 @@ const DEFAULT_USD_RATE = USD_CUP_RATE; // CUP/USD
           } else if (formPagoLabel.includes('mixto') || formPagoLabel === 'mixed' || paymentCount >= 2) {
             paymentMethod = 'mixed';
           } else if (formPagoLabel.toLowerCase().includes('zelle') || formPagoLabel.toLowerCase().includes('exterior') || (zellePaid > 0 && paymentCount === 1)) {
-            paymentMethod = 'zelle';
+            paymentMethod = 'external_transfer';
           } else if (formPagoLabel.includes('trans') || (transferPaid > 0 && paymentCount === 1)) {
             paymentMethod = 'transfer';
           } else if (formPagoLabel.includes('efectivo') || (cashPaid > 0 && paymentCount === 1)) {
@@ -300,7 +300,7 @@ const DEFAULT_USD_RATE = USD_CUP_RATE; // CUP/USD
               resolvedCashPaid = 0;
               resolvedTransferPaid = sub;
               resolvedZellePaid = 0;
-            } else if (paymentMethod === 'zelle') {
+            } else if (paymentMethod === 'external_transfer') {
               resolvedCashPaid = 0;
               resolvedTransferPaid = 0;
               resolvedZellePaid = sub;

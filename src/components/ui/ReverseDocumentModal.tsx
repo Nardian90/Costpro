@@ -73,7 +73,8 @@ interface RefundRow {
 const METHOD_LABELS: Record<RecoveryComponent['method'], string> = {
   cash: 'Efectivo',
   transfer: 'Transferencia',
-  zelle: 'Zelle (USD)',
+  external_transfer: 'Transf. Exterior (USD)',
+  zelle: 'Transf. Exterior (USD)', // heredado (solo lectura)
 };
 
 export function ReverseDocumentModal({
@@ -133,8 +134,10 @@ export function ReverseDocumentModal({
           // default: mismo riel del reembolso
           const defaults: Record<string, RecoveryComponent['method']> = {};
           for (const r of rows) {
-            defaults[r.currency] = (r.payment_method === 'cash' || r.payment_method === 'transfer' || r.payment_method === 'zelle')
-              ? (r.payment_method as RecoveryComponent['method'])
+            // CP-FIN-004: el heredado 'zelle' se normaliza al canónico del exterior.
+            const pm = r.payment_method === 'zelle' ? 'external_transfer' : r.payment_method;
+            defaults[r.currency] = (pm === 'cash' || pm === 'transfer' || pm === 'external_transfer')
+              ? (pm as RecoveryComponent['method'])
               : 'cash';
           }
           setRecoveryMethods(defaults);
@@ -279,7 +282,7 @@ export function ReverseDocumentModal({
                     >
                       <option value="">Seleccionar…</option>
                       {Object.entries(METHOD_LABELS)
-                        .filter(([m]) => !(m === 'zelle' && r.currency === 'CUP'))
+                        .filter(([m]) => !((m === 'zelle' || m === 'external_transfer') && r.currency === 'CUP'))
                         .map(([m, l]) => (
                           <option key={m} value={m}>{l}</option>
                         ))}

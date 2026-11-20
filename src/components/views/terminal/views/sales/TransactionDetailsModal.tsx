@@ -62,7 +62,8 @@ function getPaymentMethodLabel(method: string | null | undefined): string {
   if (m === 'transfer') return 'Transferencia';
   if (m === 'mixed') return 'Mixto';
   if (m === 'wallet') return 'Billetera';
-  if (m === 'zelle') return 'USD/Zelle';
+  // CP-FIN-004: «Transf. Exterior» para el exterior (canónico o heredado).
+  if (m === 'zelle' || m === 'external_transfer') return 'USD/Transf. Exterior';
   if (m === 'other') return 'Otro';
   return 'Sin especificar';
 }

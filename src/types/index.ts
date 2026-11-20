@@ -11,7 +11,40 @@
 // validación de cliente (antes userRoleSchema hacía .catch('clerk')).
 export type UserRole = 'admin' | 'superadmin' | 'encargado' | 'usuario' | 'manager' | 'clerk' | 'warehouse' | 'costo' | 'tenant_admin';
 
-export type PaymentMethod = 'cash' | 'transfer' | 'zelle' | 'other' | 'mixed';
+// CP-FIN-004 (anexo vinculante POS-backend, 2026-11-20): el POS presenta
+// exactamente TRES medios de pago (+ Mixto como agregado). El identificador
+// canónico de «Transf. Exterior» es 'external_transfer'; 'zelle' es un VALOR
+// HEREDADO que el backend ya no persiste (se normaliza en el RPC) y que la UI
+// solo tolera al LEER datos previos a la normalización. Zelle es el CANAL de
+// la transferencia exterior en ENERVIDA, nunca el medio de pago.
+export type PaymentMethod =
+  | 'cash'
+  | 'transfer'
+  | 'external_transfer'
+  | 'other'
+  | 'mixed';
+
+// Valor heredado tolerado SOLO en lecturas de datos históricos (migración
+// CP-FIN-004 normalizó los vivos). Nunca enviarlo ni persistirlo.
+export type LegacyPaymentMethodValue = 'zelle';
+
+// Etiqueta de presentación por medio (UI del POS SIN cambios de presentación).
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod | LegacyPaymentMethodValue, string> = {
+  cash: 'Efectivo',
+  transfer: 'Transferencia',
+  external_transfer: 'Transf. Exterior',
+  zelle: 'Transf. Exterior',
+  other: 'Otro',
+  mixed: 'Mixto',
+};
+
+// ¿El medio/valor representa una transferencia del exterior (incluye el
+// heredado 'zelle' leído de datos pre-normalización)?
+export function isExternalTransferMethod(
+  method: PaymentMethod | LegacyPaymentMethodValue | string | null | undefined,
+): boolean {
+  return method === 'external_transfer' || method === 'zelle';
+}
 
 export type DiscountType = 'fixed' | 'percentage';
 
@@ -418,7 +451,9 @@ export interface Transaction {
   completed_at?: string | null;
   cancelled_at?: string | null;
   void_reason?: string | null;
-  payment_method?: PaymentMethod | null;
+  // CP-FIN-004: se tolera el heredado 'zelle' en LECTURAS de datos previos a
+  // la normalización (el backend jamás lo persiste en registros nuevos).
+  payment_method?: PaymentMethod | LegacyPaymentMethodValue | null;
   discount_type?: DiscountType | null;
   discount_value?: number | null;
   subtotal?: number | null;

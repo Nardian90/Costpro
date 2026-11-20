@@ -15,6 +15,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
+import { isExteriorMethod } from "@/lib/payments/methods";
 import { useCartStore, type CartItem } from "@/store/cart";
 
 // FIX-G5: helper local para recalcular subtotal al re-tasar (idéntico a POSCartItem)
@@ -141,7 +142,7 @@ export default function StoreRatesModal({ open, onClose, onSaved }: StoreRatesMo
             }
             updatedItem.cash_paid = updatedItem.payments?.filter(p => p.method === "cash").reduce((s, p) => s + p.amount, 0) || 0;
             updatedItem.transfer_paid = updatedItem.payments?.filter(p => p.method === "transfer").reduce((s, p) => s + p.amount, 0) || 0;
-            updatedItem.zelle_paid = updatedItem.payments?.filter(p => p.method === "zelle").reduce((s, p) => s + p.amount, 0) || 0;
+            updatedItem.zelle_paid = updatedItem.payments?.filter(p => isExteriorMethod(p.method)).reduce((s, p) => s + p.amount, 0) || 0;
             return updatedItem;
           }
           return it;
