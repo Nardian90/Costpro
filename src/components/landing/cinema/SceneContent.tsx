@@ -39,7 +39,11 @@ export function ChapterChip({ chapter, label }: { chapter: string; label: string
   );
 }
 
-/** Marco interior estándar de una escena: respeta el header fijo (76px). */
+/** Marco interior estándar de una escena: respeta el header fijo (76px).
+ * `data-scene-frame` marca el CONTENIDO EN FLUJO de la escena: es la
+ * referencia que mide la sonda de ajuste de CinemaStage (CP-FIX responsive
+ * 2026-11-20 — desbordamiento real del contenido, sin el sangrado
+ * decorativo de los fragmentos absolutos del hero). */
 export function SceneFrame({
   children,
   className = '',
@@ -49,6 +53,7 @@ export function SceneFrame({
 }) {
   return (
     <div
+      data-scene-frame=""
       className={`relative mx-auto flex h-full w-full max-w-[1360px] flex-col justify-center px-6 pb-6 pt-[76px] sm:px-10 lg:px-16 xl:px-20 ${className}`}
     >
       {children}

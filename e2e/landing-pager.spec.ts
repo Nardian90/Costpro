@@ -337,7 +337,11 @@ test.describe('ADN-LANDING-CINEMATIC-SCROLL-STORYTELLING-005/006 — responsive'
       });
       expect(overflow, `sin scroll horizontal a ${vp.label}`).toBeLessThanOrEqual(0);
 
-      const cinema = vp.width >= 1024 && vp.height >= 700;
+      // CP-FIX-LANDING-RESPONSIVE (2026-11-20): umbral de altura 700→620px
+      // (viewport CSS efectivo). El viewport de Playwright NO tiene barra de
+      // navegador: 1024×768 y 1440×900 entran al cine por altura; si el
+      // CONTENIDO no cabe, la sonda del escenario cae a flujo por sí misma.
+      const cinema = vp.width >= 1024 && vp.height >= 620;
       if (cinema) {
         // Escenario: los 5 ids existen y el recorrido por posiciones funciona
         for (const id of SECTION_IDS) {

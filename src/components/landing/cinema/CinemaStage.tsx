@@ -74,6 +74,16 @@ interface CinemaStageProps {
   /** MotionValue del progreso de salida del hero (0→1) — coreografía interna
    *  de los fragmentos del caos (contrato HeroSection intacto). */
   heroExitMv?: MotionValue<number> | null;
+  /**
+   * CP-FIX-LANDING-RESPONSIVE (2026-11-20 §4.2): sonda de ajuste de contenido.
+   * Se invoca tras el montaje (y tras fonts.ready / resize debounced) con la
+   * PEOR escena que desborda el escenario (scrollHeight/scrollWidth contra el
+   * panel) — null cuando TODAS las escenas caben. El propietario usa el
+   * veredicto para caer al MODO FLUJO: nunca se fuerza el cine por encima de
+   * la legibilidad (misión: «no forzar el modo cine por encima de la
+   * legibilidad o usabilidad»).
+   */
+  onContentOverflow?: (worst: { sceneIndex: number; overflowY: number; overflowX: number } | null) => void;
 }
 
 /* Duración del segmento de transición dentro de cada unidad de scroll.
@@ -194,14 +204,17 @@ export default function CinemaStage({
   registerControls,
   onChapterProgress,
   heroExitMv,
+  onContentOverflow,
 }: CinemaStageProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   /* Refs de estabilidad para callbacks de ScrollTrigger (sin re-crear el
      timeline cuando el propietario re-renderiza). */
   const progressCbRef = useRef(onChapterProgress);
   const heroMvRef = useRef(heroExitMv);
+  const overflowCbRef = useRef(onContentOverflow);
   progressCbRef.current = onChapterProgress;
   heroMvRef.current = heroExitMv;
+  overflowCbRef.current = onContentOverflow;
   const stRef = useRef<ScrollTrigger | null>(null);
   const nRef = useRef(scenes.length);
   const chapterOfRef = useRef<number[]>(scenes.map((s) => s.chapter));
@@ -342,6 +355,67 @@ export default function CinemaStage({
     (window as unknown as { __cinemaSceneScrollY?: (k: number) => number }).__cinemaSceneScrollY =
       sceneScrollY;
 
+    /* ── SONDA DE AJUSTE (CP-FIX-LANDING-RESPONSIVE 2026-11-20 §4.2) ──
+       Mide si el CONTENIDO de cada escena (data-scene-frame: el flujo real,
+       sin el sangrado decorativo absoluto) cabe en el escenario. Si la peor
+       escena desborda más allá de la tolerancia, el propietario recibe el
+       veredicto y cae al modo flujo — nunca se fuerza el cine por encima de
+       la legibilidad. Se re-mide tras cargar las fuentes (el font-swap cambia
+       el layout) y en cada resize (debounced). Las transiciones no afectan la
+       medición: transform/clip-path son visuales, no layout.
+
+       ESTABILIDAD (hallazgo de la matriz): NO se mide en el instante del
+       montaje — las micro-interacciones framer-motion (p. ej. el acordeón del
+       FAQ colapsando de altura automática a altura nula, 0.3s) dejan alturas
+       NATURALES transitorias que producían falsos positivos de miles de px.
+       La primera medición espera el asentamiento (SETTLE_MS) y se confirma
+       con una segunda pasada: solo se reporta el desborde si dos mediciones
+       consecutivas COINCIDEN (layout estable). */
+    const FIT_TOLERANCE = 16; // px — absorbe sangrado decorativo (fragmentos rotados, etiquetas -top)
+    const FIT_SETTLE_MS = 450; // > 0.3s de las animaciones de entrada/colapso de framer-motion
+    const measureFit = (): { sceneIndex: number; overflowY: number; overflowX: number } | null => {
+      let worst: { sceneIndex: number; overflowY: number; overflowX: number } | null = null;
+      panels.forEach((panel, i) => {
+        const frame = panel.querySelector<HTMLElement>('[data-scene-frame]') ?? panel;
+        const overflowY = frame.scrollHeight - frame.clientHeight;
+        const overflowX = frame.scrollWidth - frame.clientWidth;
+        if ((overflowY > FIT_TOLERANCE || overflowX > FIT_TOLERANCE)
+            && (!worst || overflowY + overflowX > worst.overflowY + worst.overflowX)) {
+          worst = { sceneIndex: i, overflowY: Math.max(0, overflowY), overflowX: Math.max(0, overflowX) };
+        }
+      });
+      return worst;
+    };
+    /* Doble pasada con confirmación: reporta solo veredictos ESTABLES (dos
+       mediciones consecutivas idénticas). Mientras las alturas sigan cambiando
+       (animación en curso) reintenta; al estabilizar, reporta el veredicto —
+       incluido null (= todo cabe), que desbloquea el modo cine. */
+    type FitVerdict = { sceneIndex: number; overflowY: number; overflowX: number } | null;
+    const sameVerdict = (a: FitVerdict, b: FitVerdict): boolean =>
+      (a === null && b === null)
+      || (!!a && !!b && a.sceneIndex === b.sceneIndex && Math.abs(a.overflowY - b.overflowY) <= 1 && Math.abs(a.overflowX - b.overflowX) <= 1);
+    let lastVerdict: FitVerdict | undefined; // undefined = sin pasada previa
+    let confirmTimer = 0;
+    const confirmAndReport = () => {
+      const verdict = measureFit();
+      const stable = lastVerdict !== undefined && sameVerdict(verdict, lastVerdict);
+      lastVerdict = verdict;
+      if (stable) { overflowCbRef.current?.(verdict); return; }
+      confirmTimer = window.setTimeout(confirmAndReport, FIT_SETTLE_MS);
+    };
+    let fitResizeTimer = 0;
+    const onFitResize = () => {
+      window.clearTimeout(fitResizeTimer);
+      fitResizeTimer = window.setTimeout(() => { lastVerdict = undefined; confirmAndReport(); }, 250);
+    };
+    confirmTimer = window.setTimeout(confirmAndReport, FIT_SETTLE_MS);
+    window.addEventListener('resize', onFitResize);
+    let fontsChecked = false;
+    const onFontsReady = () => { if (!fontsChecked) { fontsChecked = true; window.setTimeout(() => { lastVerdict = undefined; confirmAndReport(); }, FIT_SETTLE_MS); } };
+    if (typeof document !== 'undefined' && (document as Document & { fonts?: FontFaceSet }).fonts) {
+      (document as Document & { fonts?: FontFaceSet }).fonts?.ready.then(onFontsReady).catch(() => {});
+    }
+
     /* Deep-link (#features, #pricing…) al montar en modo cine. */
     const hash = typeof window !== 'undefined' ? window.location.hash.replace('#', '') : '';
     if (hash) {
@@ -359,6 +433,9 @@ export default function CinemaStage({
       gsap.killTweensOf(window);
       ctx.revert();
       stRef.current = null;
+      window.removeEventListener('resize', onFitResize);
+      window.clearTimeout(fitResizeTimer);
+      window.clearTimeout(confirmTimer);
     };
   }, []);
 

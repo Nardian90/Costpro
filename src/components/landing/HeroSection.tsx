@@ -280,7 +280,7 @@ function HeroBrandSignOff() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <div className="mt-[clamp(12px,2.2svh,32px)] flex items-center gap-5 [@media(max-height:950px)]:mt-[clamp(6px,1.2svh,18px)]">
+    <div className="mt-[clamp(12px,2.2svh,32px)] flex items-center gap-5 [@media(max-height:950px)]:mt-[clamp(6px,1.2svh,18px)] [@media(max-height:760px)]:mt-1!">
       <span className="h-px w-9 sm:w-14 bg-[#22c55e]/55 shrink-0" aria-hidden="true" />
       <span className="block overflow-hidden pb-[0.3em] -mb-[0.22em]">
         <motion.span
@@ -302,7 +302,7 @@ function HeroHeadline() {
   const reduceMotion = useReducedMotion();
 
   return (
-    <h1 className="font-[family-name:var(--font-display)] font-black [font-stretch:125%] tracking-[-0.045em] leading-[0.94] text-[clamp(2.35rem,10.5vw,6.5rem)] sm:text-[clamp(2.8rem,6.6vw,6.6rem)] [@media(min-width:640px)_and_(max-height:950px)]:text-[clamp(2.5rem,5.4vw,5.4rem)] [@media(min-width:640px)_and_(max-height:820px)]:text-[clamp(2.3rem,4.9vw,4.9rem)] text-white select-none">
+    <h1 className="font-[family-name:var(--font-display)] font-black [font-stretch:125%] tracking-[-0.045em] leading-[0.94] text-[clamp(2.35rem,10.5vw,6.5rem)] sm:text-[clamp(2.8rem,6.6vw,6.6rem)] [@media(min-width:640px)_and_(max-height:950px)]:text-[clamp(2.5rem,5.4vw,5.4rem)] [@media(min-width:640px)_and_(max-height:820px)]:text-[clamp(2.3rem,4.9vw,4.9rem)] [@media(min-width:640px)_and_(max-height:760px)]:text-[clamp(2.05rem,4.35vw,4.35rem)]! text-white select-none">
       {/* Nombre accesible completo; la capa visual es decorativa (letras
           separadas por spans no se leen bien en SR). */}
       <span className="sr-only">MENOS MALABARES. MÁS NEGOCIO.</span>
@@ -415,7 +415,7 @@ function ProblemsEditorialScene({ exitProgress }: { exitProgress?: MotionValue<n
   return (
     <div
       aria-hidden="true"
-      className="relative hidden lg:block w-full max-w-[440px] aspect-[440/330] select-none"
+      className="relative hidden lg:block w-full max-w-[440px] aspect-[440/330] select-none [@media(max-height:800px)_and_(min-height:761px)]:max-w-[390px]! [@media(max-height:760px)_and_(min-height:661px)]:max-w-[340px]! [@media(max-height:660px)]:max-w-[300px]!"
     >
       {/* Marcas de registro — la mesa de edición */}
       <span className="absolute top-0 left-0 h-3 w-3 border-t border-l border-white/20" />
@@ -717,7 +717,7 @@ export default function HeroSection({
                 initial={reduceMotion ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="flex items-center gap-3.5 mb-[clamp(8px,1.6svh,28px)]"
+                className="flex items-center gap-3.5 mb-[clamp(8px,1.6svh,28px)] [@media(max-height:760px)]:mb-1.5!"
               >
                 <span className="h-2 w-2 rounded-full bg-[#22c55e] shadow-[0_0_14px_rgba(34,197,94,0.85)] shrink-0" aria-hidden="true" />
                 <span className="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.32em] text-white/50">
@@ -733,7 +733,7 @@ export default function HeroSection({
                   la pila marca→promesa→CTAs abraza el titular (items-center la
                   centraba contra la escena alta y recreaba el vacío que la
                   firma debía eliminar). */}
-              <div className="mt-[clamp(14px,2.6svh,40px)] grid lg:grid-cols-12 lg:gap-10 items-start [@media(max-height:950px)]:mt-[clamp(6px,1.4svh,22px)]">
+              <div className="mt-[clamp(14px,2.6svh,40px)] grid lg:grid-cols-12 lg:gap-10 items-start [@media(max-height:950px)]:mt-[clamp(6px,1.4svh,22px)] [@media(max-height:760px)]:mt-[clamp(4px,0.9svh,12px)]!">
                 <div className="lg:col-span-7">
                   {/* ADN-LANDING-HERO-AND-PAGER-FIX-004 §4.1 — LA FIRMA:
                       la marca ocupa el vacío entre titular y promesa (era la
@@ -746,7 +746,7 @@ export default function HeroSection({
                     initial={reduceMotion ? false : { opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.08, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="mt-[clamp(12px,2.2svh,30px)] max-w-xl text-base sm:text-lg text-white/60 leading-relaxed [@media(max-height:950px)]:max-w-2xl [@media(max-height:950px)]:text-base"
+                    className="mt-[clamp(12px,2.2svh,30px)] max-w-xl text-base sm:text-lg text-white/60 leading-relaxed [@media(max-height:950px)]:max-w-2xl [@media(max-height:950px)]:text-base [@media(max-height:760px)]:mt-[clamp(6px,1.1svh,14px)]! [@media(max-height:760px)]:text-sm!"
                   >
                     Las operaciones de tu empresa dejan de estar dispersas —inventario,
                     ventas, costos, documentos— y empiezan a funcionar como{' '}
@@ -758,7 +758,7 @@ export default function HeroSection({
                     initial={reduceMotion ? false : { opacity: 0, y: 14 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 1.22, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                    className="mt-[clamp(12px,2.4svh,32px)] flex flex-col sm:flex-row sm:items-center gap-3.5 [@media(max-height:950px)]:mt-[clamp(6px,1.4svh,20px)]"
+                    className="mt-[clamp(12px,2.4svh,32px)] flex flex-col sm:flex-row sm:items-center gap-3.5 [@media(max-height:950px)]:mt-[clamp(6px,1.4svh,20px)] [@media(max-height:760px)]:mt-[clamp(4px,0.9svh,12px)]! [@media(max-height:760px)]:gap-2.5!"
                   >
                     <button
                       type="button"
@@ -771,7 +771,7 @@ export default function HeroSection({
                           setLoginDefaultTab,
                         });
                       }}
-                      className="group inline-flex items-center justify-center gap-2.5 min-h-[50px] px-8 rounded-xl bg-[#22c55e] text-[#05070A] text-sm font-bold transition-all hover:bg-[#4ade80] hover:-translate-y-0.5 motion-reduce:transform-none shadow-[0_10px_36px_rgba(34,197,94,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
+                      className="group inline-flex items-center justify-center gap-2.5 min-h-[50px] [@media(max-height:760px)]:min-h-[44px]! px-8 rounded-xl bg-[#22c55e] text-[#05070A] text-sm font-bold transition-all hover:bg-[#4ade80] hover:-translate-y-0.5 motion-reduce:transform-none shadow-[0_10px_36px_rgba(34,197,94,0.22)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
                     >
                       Entrar a la plataforma
                       <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transform-none" aria-hidden="true" />
@@ -779,7 +779,7 @@ export default function HeroSection({
                     <button
                       type="button"
                       onClick={() => document.querySelector('#features')?.scrollIntoView({ behavior: 'smooth' })}
-                      className="inline-flex items-center justify-center gap-2 min-h-[50px] px-8 rounded-xl border border-white/[0.14] text-white/85 text-sm font-semibold transition-all hover:bg-white/[0.05] hover:border-white/25 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
+                      className="inline-flex items-center justify-center gap-2 min-h-[50px] [@media(max-height:760px)]:min-h-[44px]! px-8 rounded-xl border border-white/[0.14] text-white/85 text-sm font-semibold transition-all hover:bg-white/[0.05] hover:border-white/25 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
                     >
                       Conocer las funcionalidades
                     </button>
@@ -807,7 +807,7 @@ export default function HeroSection({
                 initial={reduceMotion ? false : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.42, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-[clamp(14px,2.6svh,44px)] w-full [@media(max-height:950px)]:mt-[clamp(6px,1.4svh,22px)]"
+                className="mt-[clamp(14px,2.6svh,44px)] w-full [@media(max-height:950px)]:mt-[clamp(6px,1.4svh,22px)] [@media(max-height:760px)]:mt-[clamp(4px,0.9svh,12px)]!"
               >
                 {/* ADN-005: cabecera del selector fusionada con la navegación
                     secundaria (búsqueda ⌘K + explorar) — una sola fila, la
@@ -868,7 +868,7 @@ export default function HeroSection({
                       e.preventDefault();
                       void enterFichaDeCosto(() => { if (setLoginDefaultTab) setLoginDefaultTab('login'); setShowLoginModal(true); });
                     }}
-                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 [@media(max-height:1100px)]:py-3 [@media(max-height:950px)]:py-2.5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
+                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 [@media(max-height:1100px)]:py-3 [@media(max-height:950px)]:py-2.5 [@media(max-height:760px)]:py-2! transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
                   >
                     <span className="flex items-center justify-between mb-5 [@media(max-height:1100px)]:mb-2.5" aria-hidden="true">
                       <span className="w-9 h-9 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center">
@@ -881,13 +881,13 @@ export default function HeroSection({
                     <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40 mb-2" aria-hidden="true">
                       01 — Ficha de Costo · Res. 148/2023
                     </span>
-                    <span className="text-lg font-bold text-white tracking-tight mb-1.5 [@media(max-height:1100px)]:text-base">
+                    <span className="text-lg font-bold text-white tracking-tight mb-1.5 [@media(max-height:1100px)]:text-base [@media(max-height:660px)]:text-sm!">
                       Ficha de Costo gratis
                     </span>
-                    <span className="text-[13px] leading-relaxed text-white/55 mb-6 [@media(max-height:1100px)]:mb-2.5 [@media(max-height:1100px)]:line-clamp-2">
+                    <span className="text-[13px] leading-relaxed text-white/55 mb-6 [@media(max-height:1100px)]:mb-2.5 [@media(max-height:1100px)]:line-clamp-2 [@media(max-height:760px)_and_(min-height:661px)]:text-xs! [@media(max-height:660px)]:text-[11px]!">
                       Crea y calcula fichas conforme a la Res. 148/2023. Con tu cuenta de Google o como invitado — sin instalar nada.
                     </span>
-                    <span className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-[#22c55e]" aria-hidden="true">
+                    <span className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-[#22c55e] [@media(max-height:760px)_and_(min-height:661px)]:text-xs! [@media(max-height:660px)]:text-[11px]!" aria-hidden="true">
                       Crear ficha gratis
                       <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transform-none" />
                     </span>
@@ -918,7 +918,7 @@ export default function HeroSection({
                         setLoginDefaultTab,
                       });
                     }}
-                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 [@media(max-height:1100px)]:py-3 [@media(max-height:950px)]:py-2.5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
+                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 [@media(max-height:1100px)]:py-3 [@media(max-height:950px)]:py-2.5 [@media(max-height:760px)]:py-2! transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A]"
                   >
                     <span className="flex items-center justify-between mb-5 [@media(max-height:1100px)]:mb-2.5" aria-hidden="true">
                       <span className="w-9 h-9 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center">
@@ -928,13 +928,13 @@ export default function HeroSection({
                     <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40 mb-2" aria-hidden="true">
                       02 — Plataforma completa
                     </span>
-                    <span className="text-lg font-bold text-white tracking-tight mb-1.5 [@media(max-height:1100px)]:text-base">
+                    <span className="text-lg font-bold text-white tracking-tight mb-1.5 [@media(max-height:1100px)]:text-base [@media(max-height:660px)]:text-sm!">
                       Entrar a ADNegocio
                     </span>
-                    <span className="text-[13px] leading-relaxed text-white/55 mb-6 [@media(max-height:1100px)]:mb-2.5 [@media(max-height:1100px)]:line-clamp-2">
+                    <span className="text-[13px] leading-relaxed text-white/55 mb-6 [@media(max-height:1100px)]:mb-2.5 [@media(max-height:1100px)]:line-clamp-2 [@media(max-height:760px)_and_(min-height:661px)]:text-xs! [@media(max-height:660px)]:text-[11px]!">
                       Gestiona todas tus tiendas: inventario, punto de venta, reportes y vitrina digital en un solo lugar.
                     </span>
-                    <span className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-[#22c55e]" aria-hidden="true">
+                    <span className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-[#22c55e] [@media(max-height:760px)_and_(min-height:661px)]:text-xs! [@media(max-height:660px)]:text-[11px]!" aria-hidden="true">
                       Entrar
                       <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transform-none" />
                     </span>
@@ -946,7 +946,7 @@ export default function HeroSection({
                     data-testid="path-demo"
                     aria-label="Ver demostración de ADNegocio: recorre la plataforma en dos minutos, sin registro."
                     onClick={onOpenDemo}
-                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 [@media(max-height:1100px)]:py-3 [@media(max-height:950px)]:py-2.5 transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A] text-left cursor-pointer"
+                    className="group relative flex flex-col rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 [@media(max-height:1100px)]:py-3 [@media(max-height:950px)]:py-2.5 [@media(max-height:760px)]:py-2! transition-all duration-300 hover:border-[#22c55e]/45 hover:bg-white/[0.045] hover:-translate-y-0.5 motion-reduce:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05070A] text-left cursor-pointer"
                   >
                     <span className="flex items-center justify-between mb-5 [@media(max-height:1100px)]:mb-2.5" aria-hidden="true">
                       <span className="w-9 h-9 rounded-lg border border-white/10 bg-white/[0.04] flex items-center justify-center">
@@ -956,10 +956,10 @@ export default function HeroSection({
                     <span className="font-mono text-[10px] uppercase tracking-[0.22em] text-white/40 mb-2" aria-hidden="true">
                       03 — Sin registro
                     </span>
-                    <span className="text-lg font-bold text-white tracking-tight mb-1.5 [@media(max-height:1100px)]:text-base">
+                    <span className="text-lg font-bold text-white tracking-tight mb-1.5 [@media(max-height:1100px)]:text-base [@media(max-height:660px)]:text-sm!">
                       Ver demostración
                     </span>
-                    <span className="text-[13px] leading-relaxed text-white/55 mb-6 [@media(max-height:1100px)]:mb-2.5 [@media(max-height:1100px)]:line-clamp-2">
+                    <span className="text-[13px] leading-relaxed text-white/55 mb-6 [@media(max-height:1100px)]:mb-2.5 [@media(max-height:1100px)]:line-clamp-2 [@media(max-height:760px)_and_(min-height:661px)]:text-xs! [@media(max-height:660px)]:text-[11px]!">
                       Recorre la plataforma en 2 minutos y descubre cómo automatiza tus fichas de costo.
                     </span>
                     <span className="mt-auto inline-flex items-center gap-2 text-sm font-bold text-white/85 group-hover:text-white transition-colors" aria-hidden="true">
