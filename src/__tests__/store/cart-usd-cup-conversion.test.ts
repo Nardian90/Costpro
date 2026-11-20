@@ -64,7 +64,7 @@ function setupCartWithProduct(product: any) {
 }
 
 /** Cambia la primera fila de pago (como el usuario: moneda + importe). */
-function setPaymentRow(amount: number, currency: string, method: 'cash' | 'transfer' | 'zelle' = 'cash') {
+function setPaymentRow(amount: number, currency: string, method: 'cash' | 'transfer' | 'external_transfer' = 'cash') {
   const st = useCartStore.getState();
   const item = st.items[0];
   st.updateItemPaymentRow(item.product_id, null, item.payments![0].id, { amount, currency, method });

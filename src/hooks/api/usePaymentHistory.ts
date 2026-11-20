@@ -8,7 +8,7 @@ export interface PaymentRecord {
   id: string;
   amount: number;
   amount_cup: number;
-  payment_method: 'cash' | 'transfer' | 'zelle';
+  payment_method: 'cash' | 'transfer' | 'zelle' | 'external_transfer';
   currency: string;
   exchange_rate: number;
   payment_date: string;

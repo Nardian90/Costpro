@@ -44,7 +44,7 @@ export interface AccountsPayableSummary {
 
 interface UseAccountsPayableParams {
   tab?: AgingTab;
-  method?: 'cash' | 'transfer' | 'zelle';
+  method?: 'cash' | 'transfer' | 'zelle' | 'external_transfer';
   currency?: string;
   search?: string;
   mode?: 'list' | 'grouped';

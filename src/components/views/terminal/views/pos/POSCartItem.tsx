@@ -20,6 +20,7 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCartStore, type CartItem, roundQty, floorQty, QTY_EPSILON } from "@/store/cart";
+import { isExteriorMethod } from "@/lib/payments/methods";
 import type { POSCartItemProps } from "./POSCart.types";
 import StoreRatesModal from "./StoreRatesModal";
 import { POSCartItemEditModal } from "./POSCartItemEditModal";
@@ -434,7 +435,7 @@ export const POSCartItem = ({
                       }
                       ui.cash_paid = ui.payments?.filter(p => p.method === 'cash').reduce((s, p) => s + p.amount, 0) || 0;
                       ui.transfer_paid = ui.payments?.filter(p => p.method === 'transfer').reduce((s, p) => s + p.amount, 0) || 0;
-                      ui.zelle_paid = ui.payments?.filter(p => p.method === 'zelle').reduce((s, p) => s + p.amount, 0) || 0;
+                      ui.zelle_paid = ui.payments?.filter(p => isExteriorMethod(p.method)).reduce((s, p) => s + p.amount, 0) || 0;
                       return ui;
                     }
                     return it;
@@ -492,7 +493,7 @@ export const POSCartItem = ({
                     la fila pasa a USD convirtiendo el monto a la tasa vigente →
                     el equivalente en CUP se mantiene y no aparece descuadre. */}
                 <select
-                  value={p.method === 'zelle' ? 'external_transfer' : p.method}
+                  value={isExteriorMethod(p.method) ? 'external_transfer' : p.method}
                   onChange={(e) => {
                     const method = e.target.value as 'cash' | 'transfer' | 'external_transfer';
                     if (method === 'external_transfer' && p.currency !== 'USD' && p.currency !== 'EUR') {
@@ -555,7 +556,7 @@ export const POSCartItem = ({
                   aria-label={`Moneda de pago fila ${idx + 1}`}
                 >
                   {/* CP-FIN-004: reconocedor dual del exterior (heredado de carritos persistidos). */}
-                  {(p.method === 'zelle' || p.method === 'external_transfer' ? ['USD', 'EUR'] : ['CUP', 'USD', 'EUR', 'MLC']).map((c) => (
+                  {(isExteriorMethod(p.method) ? ['USD', 'EUR'] : ['CUP', 'USD', 'EUR', 'MLC']).map((c) => (
                     <option key={c} value={c}>{c}</option>
                   ))}
                 </select>

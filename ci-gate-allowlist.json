@@ -100,7 +100,9 @@
     },
     {
       "function": "cp_fin004_normalize_enervida_payments",
-      "reason": "CP-FIN-004 (2026-11-20, migraciones 20261120200000/20261120210000) · Normalizador histórico idempotente del contrato external_transfer para ENERVIDA (declaración del propietario: 3 ventas Transf. Exterior, demás ventas USD en efectivo): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado con fixtures), REVOKE explícito de anon/authenticated/PUBLIC y GRANT a service_role en la migración; guardas por tienda/venta, idempotencia por auditoría (CP_FIN004_NORMALIZE) y post-condición fail-closed sin zelle residual."
+      "reason": "CP-FIN-004 (2026-11-20, migraciones 20261120200000/20261120210000/20261120220000) · Normalizador histórico idempotente del contrato external_transfer para ENERVIDA (declaración del propietario: 3 ventas Transf. Exterior, demás ventas USD en efectivo): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado con fixtures), REVOKE explícito de anon/authenticated/PUBLIC y GRANT a service_role en la migración; guardas por tienda/venta, idempotencia por auditoría (CP_FIN004_NORMALIZE) y post-condición fail-closed sin zelle residual.",
+      "added_by": "CP-FIN-004 2026-11-20",
+      "expires": "2027-01-31"
     },
     {
       "function": "create_pre_restore_snapshot",

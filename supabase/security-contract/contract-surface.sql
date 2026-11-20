@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-20T15:33:14.104Z
+-- Captured  : 2026-11-20T16:22:15.003Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 218 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -3239,9 +3239,11 @@ AS $function$
 DECLARE
   v_store_exists boolean;
   v_sale_id uuid;
+  v_hdr_id uuid;
   v_method text;
   v_n_ext int := 0;
   v_n_cash int := 0;
+  v_n_hdr int := 0;
   v_n_works int := 0;
   v_usd_ext numeric := 0;
   v_usd_cash numeric := 0;
@@ -3282,7 +3284,7 @@ BEGIN
         INTO v_method
       FROM public.payment_transactions pt
       WHERE pt.ref_type = 'sale' AND pt.ref_id = v_sale_id AND coalesce(pt.direction, 'in') = 'in';
-      IF v_method IS NOT NULL THEN
+      IF v_method IS NOT NULL AND v_method <> '' THEN
         UPDATE public.transactions
           SET payment_method = v_method::public.payment_method_enum, updated_at = now()
         WHERE id = v_sale_id;
@@ -3336,7 +3338,7 @@ BEGIN
       INTO v_method
     FROM public.payment_transactions pt
     WHERE pt.ref_type = 'sale' AND pt.ref_id = v_sale.sale_id AND coalesce(pt.direction, 'in') = 'in';
-    IF v_method IS NOT NULL THEN
+    IF v_method IS NOT NULL AND v_method <> '' THEN
       UPDATE public.transactions
         SET payment_method = v_method::public.payment_method_enum, updated_at = now()
       WHERE id = v_sale.sale_id;
@@ -3349,6 +3351,62 @@ BEGIN
     WHERE transaction_id = v_sale.sale_id AND coalesce(zelle_paid, 0) > 0;
 
     v_n_cash := v_n_cash + 1;
+  END LOOP;
+
+  -- ── B2. Headers 'zelle' SIN cobros zelle (M4): ventas pre-corte con
+  --        sustancia USD físico registradas CUP@680 en el bucket zelle.
+  --        Sin filas de pago → el método del header NO es derivable de
+  --        cobros: se fija a 'cash' (efectivo) conforme a la declaración
+  --        del propietario (todo cobro USD fue efectivo salvo las 3
+  --        declaradas). NO se crean payment_transactions (§5/§6: sin
+  --        pagos ni movimientos nuevos; contabilidad invariante — sin
+  --        cobros, la re-derivación mantiene ING_VENTAS + diferencia_cobro).
+  --        Los pools heredados se mueven al canónico de efectivo. ──
+  FOR v_hdr_id IN
+    SELECT t.id
+    FROM public.transactions t
+    WHERE t.store_id = p_store_id
+      AND t.payment_method = 'zelle'
+      AND NOT (t.id = ANY (p_exterior_sales))
+      AND NOT EXISTS (
+        SELECT 1 FROM public.payment_transactions pt
+        WHERE pt.ref_type = 'sale' AND pt.ref_id = t.id
+          AND pt.payment_method = 'zelle' AND coalesce(pt.direction, 'in') = 'in'
+      )
+      AND NOT EXISTS (
+        SELECT 1 FROM public.payment_transactions pt2
+        WHERE pt2.ref_type = 'sale' AND pt2.ref_id = t.id
+          AND pt2.payment_method = 'external_transfer'
+          AND coalesce(pt2.direction, 'in') = 'in'
+      )
+  LOOP
+    UPDATE public.transactions
+      SET cash_amount = coalesce(cash_amount, 0) + coalesce(zelle_amount, 0),
+          zelle_amount = 0,
+          updated_at = now()
+      WHERE id = v_hdr_id;
+
+    -- Método del header: si la venta tuviera cobros de otro medio, se
+    -- re-deriva de ellos; sin cobros → efectivo (declaración del propietario).
+    SELECT CASE count(DISTINCT pt.payment_method)
+             WHEN 1 THEN min(pt.payment_method)
+             WHEN 0 THEN 'cash'
+             ELSE 'mixed' END
+      INTO v_method
+    FROM public.payment_transactions pt
+    WHERE pt.ref_type = 'sale' AND pt.ref_id = v_hdr_id AND coalesce(pt.direction, 'in') = 'in';
+
+    UPDATE public.transactions
+      SET payment_method = v_method::public.payment_method_enum, updated_at = now()
+      WHERE id = v_hdr_id;
+
+    UPDATE public.transaction_items
+      SET cash_paid = coalesce(cash_paid, 0) + coalesce(zelle_paid, 0),
+          cash_currency = coalesce(cash_currency, zelle_currency),
+          zelle_paid = 0, zelle_currency = NULL
+    WHERE transaction_id = v_hdr_id AND coalesce(zelle_paid, 0) > 0;
+
+    v_n_hdr := v_n_hdr + 1;
   END LOOP;
 
   -- ── C. Cobros de trabajos (ref_type='work'): SOLO normalización de
@@ -3389,6 +3447,8 @@ BEGIN
       'exterior_sales', p_exterior_sales,
       'n_ventas_exterior', v_n_ext,
       'n_ventas_efectivo', v_n_cash,
+      'n_headers_efectivo_sin_cobros', v_n_hdr,
+      'evidencia_headers_sin_cobros', 'headers pre-corte CUP@680 con sustancia USD físico (15.300=22,50 USD; 4.760=7,00 USD @680) — bucket «USD físico → zelle» del importador; sin filas de pago, contabilidad invariante',
       'n_works_representacion', v_n_works,
       'usd_exterior_final', round(v_usd_ext, 2),
       'usd_reclasificados_efectivo', round(v_usd_cash, 2),
@@ -3398,6 +3458,7 @@ BEGIN
     'status', 'OK', 'store_id', p_store_id,
     'n_ventas_exterior', v_n_ext,
     'n_ventas_efectivo', v_n_cash,
+    'n_headers_efectivo_sin_cobros', v_n_hdr,
     'n_works_representacion', v_n_works,
     'usd_exterior_final', round(v_usd_ext, 2),
     'usd_reclasificados_efectivo', round(v_usd_cash, 2),

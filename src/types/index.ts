@@ -451,7 +451,9 @@ export interface Transaction {
   completed_at?: string | null;
   cancelled_at?: string | null;
   void_reason?: string | null;
-  payment_method?: PaymentMethod | null;
+  // CP-FIN-004: se tolera el heredado 'zelle' en LECTURAS de datos previos a
+  // la normalización (el backend jamás lo persiste en registros nuevos).
+  payment_method?: PaymentMethod | LegacyPaymentMethodValue | null;
   discount_type?: DiscountType | null;
   discount_value?: number | null;
   subtotal?: number | null;

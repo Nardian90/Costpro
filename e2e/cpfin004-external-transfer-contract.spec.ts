@@ -379,6 +379,18 @@ test('E2 · normalizador canónico: 3 ventas exterior + demás USD → efectivo 
   const z4 = await mkLegacyZelle(50);  // demás → efectivo USD
   const z5 = await mkLegacyZelle(45);  // demás → efectivo USD
 
+  // Fixture M4: header 'zelle' SIN cobros — patrón pre-corte del propietario
+  // (venta CUP@680 con sustancia USD físico: 15.300 ÷ 680 = 22,50 USD exactos).
+  // Inserción directa: PT007 prohíbe borrar payment_transactions, así que se
+  // crea la fila legacy SIN filas de pago (como las 3 reales de producción:
+  // c5965c77/cb3052c3/119a4f5e, facturas FAC-004273/004302/004311-2026).
+  const [hdrNoPay] = await sb.insert<{ id: string }>('transactions', [{
+    store_id: storeA, seller_id: adminId, total_amount: 15300,
+    payment_method: 'zelle', zelle_amount: 15300, cash_amount: 0,
+    sale_currency: 'CUP', sale_exchange_rate: 680, status: 'completed',
+  }]);
+  saleIds.push(hdrNoPay.id);
+
   const cupId = await checkout(request, {
     store_id: storeA, seller_id: adminId, payment_method: 'cash',
     items: [{ product_id: pCup.id, quantity: 2, price: pCup.price, cost: pCup.cost, currency: 'CUP', exchange_rate: 1, cash_paid: 4000, cash_currency: 'CUP' }],
@@ -387,7 +399,7 @@ test('E2 · normalizador canónico: 3 ventas exterior + demás USD → efectivo 
   });
 
   // ── Ejecutar el NORMALIZADOR canónico con el universo del fixture ──
-  const norm = await rpcAsService<{ status: string; n_ventas_exterior: number; n_ventas_efectivo: number; usd_exterior_final: number; usd_reclasificados_efectivo: number; residual_zelle: number }>(
+  const norm = await rpcAsService<{ status: string; n_ventas_exterior: number; n_ventas_efectivo: number; n_headers_efectivo_sin_cobros: number; usd_exterior_final: number; usd_reclasificados_efectivo: number; residual_zelle: number }>(
     'cp_fin004_normalize_enervida_payments',
     { p_store_id: storeA, p_exterior_sales: [z1, z2, z3] });
   expect(norm.ok).toBe(true);
@@ -395,6 +407,7 @@ test('E2 · normalizador canónico: 3 ventas exterior + demás USD → efectivo 
   expect(r.status).toBe('OK');
   expect(r.n_ventas_exterior).toBe(3);
   expect(r.n_ventas_efectivo).toBe(2);
+  expect(r.n_headers_efectivo_sin_cobros).toBeGreaterThanOrEqual(1);
   // La tienda acumula también las ventas exterior de las pruebas B/B2/D
   // (el normalizador resume TODA la tienda): el piso es el universo del
   // fixture y la exactitud se verifica por venta abajo.
@@ -430,6 +443,15 @@ test('E2 · normalizador canónico: 3 ventas exterior + demás USD → efectivo 
   const cupRows = await payRows(cupId);
   expect(cupRows[0].payment_method).toBe('cash');
   expect(cupRows[0].currency).toBe('CUP');
+
+  // ── M4: header zelle sin cobros → efectivo, pools movidos, SIN cobros inventados ──
+  const hdrAfter = await saleHeader(hdrNoPay.id);
+  expect(hdrAfter.payment_method).toBe('cash');
+  expect(Number(hdrAfter.cash_amount)).toBe(15300);
+  expect(Number(hdrAfter.zelle_amount)).toBe(0);
+  expect(Number(hdrAfter.external_transfer_amount)).toBe(0);
+  const hdrPays = await payRows(hdrNoPay.id);
+  expect(hdrPays).toHaveLength(0); // §5/§6: no se generan pagos nuevos
 
   // ── Cero zelle residual en la tienda ──
   const residualPay = await sb.select<{ id: string }>('payment_transactions', `store_id=eq.${storeA}&payment_method=eq.zelle&select=id`);

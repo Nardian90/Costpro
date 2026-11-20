@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
  * cpfin004-apply-e2e.mjs — Aplica las migraciones de CP-FIN-004
- * (20261120200000 + 20261120210000 + 20261120215000) a la BD AISLADA
- * CostproE2E (Management API + guard canónico de aislamiento).
+ * (20261120200000 + 20261120210000 + 20261120215000 + 20261120220000) a la
+ * BD AISLADA CostproE2E (Management API + guard canónico de aislamiento).
  *
  * M1 y M2 se aplican en TRANSACCIONES SEPARADAS (POST distintos): M2 usa el
  * valor de enum añadido por M1 (ALTER TYPE ADD VALUE) y PostgreSQL exige que
  * la alteración esté comprometida antes de su uso. M3 (corrección de ACL de
- * get_transactions tras el DROP+CREATE de M2) es idempotente y va en su
- * propio lote.
+ * get_transactions tras el DROP+CREATE de M2) y M4 (normalizador v2 con el
+ * caso «header zelle sin cobros») son idempotentes y van en lotes propios.
  *
  * Uso: node scripts/e2e/cpfin004-apply-e2e.mjs [--check]
  *   --check: solo verifica marcas (sin aplicar).
@@ -33,6 +33,7 @@ await assertIsolatedDb();
 const M1 = 'supabase/migrations/20261120200000_cp_fin004_external_transfer_contract.sql';
 const M2 = 'supabase/migrations/20261120210000_cp_fin004_engine_rules_normalization.sql';
 const M3 = 'supabase/migrations/20261120215000_cp_fin004_get_transactions_acl_restore.sql';
+const M4 = 'supabase/migrations/20261120220000_cp_fin004_normalizer_headers_sin_cobros.sql';
 
 async function runSql(query) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${E2E_REF}/database/query`, {
@@ -51,6 +52,7 @@ const CHECK_QUERIES = {
   'regla VENTA v4 con métrica canónica': `SELECT count(*)::int n FROM public.fin_rule_versions WHERE document_type='VENTA' AND status='active' AND movements::text LIKE '%cob_external_transfer_usd_cup%'`,
   'normalizador cp_fin004 presente': `SELECT count(*)::int n FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='cp_fin004_normalize_enervida_payments'`,
   'ACL get_transactions sin PUBLIC/anon (M3)': `SELECT count(*)::int n FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='get_transactions' AND p.prosecdef AND NOT EXISTS (SELECT 1 FROM aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) a WHERE a.privilege_type='EXECUTE' AND (a.grantee=0 OR a.grantee=(SELECT oid FROM pg_roles WHERE rolname='anon')))`,
+  'normalizador v2 con caso headers sin cobros (M4)': `SELECT count(*)::int n FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='cp_fin004_normalize_enervida_payments' AND position('n_headers_efectivo_sin_cobros' in pg_get_functiondef(p.oid)) > 0`,
 };
 
 if (process.argv.includes('--check')) {
@@ -64,7 +66,7 @@ if (process.argv.includes('--check')) {
   process.exit(ok ? 0 : 1);
 }
 
-for (const file of [M1, M2, M3]) {
+for (const file of [M1, M2, M3, M4]) {
   const sql = readFileSync(join(REPO, file), 'utf8');
   console.log(`[cpfin004-apply-e2e] Aplicando ${file} (lote único transaccional separado)...`);
   await runSql(sql);

@@ -42,7 +42,8 @@ import type { SalesSplit } from './summary';
 
 /** Componente de cobro de UNA venta (método × moneda real). */
 export interface SalePaymentBucket {
-  method: 'cash' | 'transfer' | 'zelle';
+  // CP-FIN-004: canónico external_transfer + heredado zelle (lecturas).
+  method: 'cash' | 'transfer' | 'zelle' | 'external_transfer';
   /** Moneda REAL del cobro (CUP/USD/…, ya normalizada). */
   currency: string;
   /** Importe nativo en la moneda del cobro (sin convertir). */
@@ -510,7 +511,7 @@ export function computeSelectedSalesTotals(
       if (!(Math.abs(amount) > 0.005) && !(Math.abs(amountCup) > 0.005)) continue;
       if (!split[cur]) split[cur] = { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 };
       // CP-FIN-004: exterior (canónico o heredado) al bucket interno 'zelle'.
-      const method = b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || (b.method as string) === 'external_transfer') ? 'zelle' : 'cash';
+      const method = b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || b.method === 'external_transfer') ? 'zelle' : 'cash';
       split[cur][method] += amount;
       split[cur].total += amount;
       const gKey = `${method}|${cur}`;
@@ -673,7 +674,7 @@ export function buildSalesMethodGroups(
   for (const row of rows) {
     for (const b of row.buckets || []) {
       // CP-FIN-004: exterior (canónico o heredado) al bucket interno 'zelle'.
-      const method = b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || (b.method as string) === 'external_transfer') ? 'zelle' : 'cash';
+      const method = b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || b.method === 'external_transfer') ? 'zelle' : 'cash';
       const currency = normCur(b.currency);
       const key = `${method}|${currency}`;
       let g = map.get(key);
@@ -700,7 +701,7 @@ export function buildSalesMethodGroups(
       g.includedCount += 1;
       for (const b of row.buckets || []) {
         // CP-FIN-004: exterior (canónico o heredado) al bucket interno 'zelle'.
-      const method = b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || (b.method as string) === 'external_transfer') ? 'zelle' : 'cash';
+      const method = b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || b.method === 'external_transfer') ? 'zelle' : 'cash';
         const currency = normCur(b.currency);
         if (method !== g.method || currency !== g.currency) continue;
         const amount = num(b.amount);

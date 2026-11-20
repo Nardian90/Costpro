@@ -2085,11 +2085,11 @@ function VentasSeleccionables(p: {
                       <tbody>
                         {visibleRows.map(row => {
                           const excluded = p.excludedSales.has(row.id);
-                          const bucket = row.buckets.find(b => (b.method === 'transfer' || b.method === 'zelle' || b.method === 'external_transfer' ? (b.method === 'transfer' ? 'transfer' : 'zelle') : 'cash') === g.method && String(b.currency).toUpperCase() === g.currency);
+                          const bucket = row.buckets.find(b => (b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || b.method === 'external_transfer') ? 'zelle' : 'cash') === g.method && String(b.currency).toUpperCase() === g.currency);
                           const amount = bucket ? Number(bucket.amount) : 0;
                           const date = String(row.created_at || '').slice(0, 16).replace('T', ' ') || '—';
                           const composition = row.buckets
-                            .map(b => `${selectionMethodLabel((b.method === 'transfer' || b.method === 'zelle' || b.method === 'external_transfer') ? (b.method === 'transfer' ? 'transfer' : 'zelle') : 'cash')} ${fmtNative(Math.abs(Number(b.amount)), String(b.currency).toUpperCase())}`)
+                            .map(b => `${selectionMethodLabel(b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || b.method === 'external_transfer') ? 'zelle' : 'cash')} ${fmtNative(Math.abs(Number(b.amount)), String(b.currency).toUpperCase())}`)
                             .join(' + ');
                           return (
                             <tr key={row.id} className={cn('border-b border-border/10 hover:bg-muted/20', excluded && 'opacity-50')} data-testid={`venta-fila-${row.id}`} data-excluded={excluded}>
