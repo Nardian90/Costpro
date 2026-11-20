@@ -39,7 +39,8 @@ import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
  * Mismo ViewType 'received-services' — sin cambio de rutas ni APIs.
  */
 
-interface ReceivedService {
+// Exportado para pruebas de componentes consumidores.
+export interface ReceivedService {
   id: string;
   service_number: string;
   service_date: string;
@@ -1033,7 +1034,8 @@ function ServiceTypeCombobox({
   );
 }
 
-function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, editService, activeTypes, typesLoading, onOpenManager, preselectTypeId }: CreateServiceModalProps) {
+// Exportado para pruebas (misma pantalla en modo creación y edición).
+export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, editService, activeTypes, typesLoading, onOpenManager, preselectTypeId }: CreateServiceModalProps) {
   const { user } = useAuthStore();
   const isEdit = !!editService;
   // Selección por IDENTIDAD (id del catálogo), no por texto: renombrar un tipo
@@ -1189,6 +1191,24 @@ function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, editService
       setLinksOpen(false);
     }
   }, [isOpen, editService]);
+
+  // MISIÓN 2026-10-15: sincronizar la selección de tipo con el catálogo.
+  // 1) Al abrir (creación): si no hay selección válida, toma el primer tipo activo.
+  // 2) Si la gestión acaba de crear un tipo (preselectTypeId), se selecciona
+  //    inmediatamente — sin cerrar la operación ni volver a empezar.
+  // 3) En edición: el tipo llega del borrador (prefill); solo respeta preselección.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (preselectTypeId && activeTypes.some(t => t.id === preselectTypeId)) {
+      setTypeId(preselectTypeId);
+      return;
+    }
+    if (editService) return; // prefill ya colocó el tipo del borrador
+    if (!typeId || !activeTypes.some(t => t.id === typeId)) {
+      setTypeId(activeTypes[0]?.id || '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, preselectTypeId, activeTypes]);
 
   // Búsqueda con debounce
   useEffect(() => {
@@ -1403,12 +1423,12 @@ function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, editService
         {/* Importe */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Importe total</label>
-            <input type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-bold min-h-[44px]" placeholder="0.00" required />
+            <label htmlFor="received-service-amount" className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Importe total</label>
+            <input id="received-service-amount" type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-bold min-h-[44px]" placeholder="0.00" required />
           </div>
           <div>
-            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Documento ref.</label>
-            <input type="text" value={referenceDoc} onChange={e => setReferenceDoc(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-medium min-h-[44px]" placeholder="Factura N°" />
+            <label htmlFor="received-service-ref" className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Documento ref.</label>
+            <input id="received-service-ref" type="text" value={referenceDoc} onChange={e => setReferenceDoc(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-medium min-h-[44px]" placeholder="Factura N°" />
           </div>
         </div>
 
@@ -1643,8 +1663,8 @@ function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, editService
 
         {/* Observaciones */}
         <div>
-          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Observaciones</label>
-          <textarea value={observations} onChange={e => setObservations(e.target.value)} rows={2} className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm min-h-[44px]" placeholder="Notas adicionales..." />
+          <label htmlFor="received-service-observations" className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Observaciones</label>
+          <textarea id="received-service-observations" value={observations} onChange={e => setObservations(e.target.value)} rows={2} className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm min-h-[44px]" placeholder="Notas adicionales..." />
         </div>
 
         {/* ─── ADN-008 §6.1: las TRES salidas claramente diferenciadas ─── */}

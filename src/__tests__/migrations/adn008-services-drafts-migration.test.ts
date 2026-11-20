@@ -149,10 +149,13 @@ describe('ADN-008 · migración 20261121120000 — contrato estático', () => {
       expect(body).toContain('store_exchange_rates');
     });
 
-    it('replay idempotente: lote completo ya existente → devuelve ids sin escribir', () => {
+    it('replay idempotente: lote completo ya existente → devuelve ids sin escribir, ANTES del overpay', () => {
       const body = MigrationHelper.functionBody('register_supplier_payment_batch');
       expect(body).toContain('v_replay_complete');
       expect(body).toContain("'replayed', true");
+      // El replay DEBE preceder al pre-check de overpay (un lote ya aplicado
+      // deja saldo 0: el reenvío idéntico es un replay, no un overpay).
+      expect(body.indexOf('v_replay_complete')).toBeLessThan(body.indexOf('ERR_BATCH_OVERPAY'));
     });
 
     it('ACL al patrón del repo', () => {

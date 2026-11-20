@@ -666,12 +666,11 @@ BEGIN
   WHERE pt.ref_type = p_ref_type AND pt.ref_id = p_ref_id;
 
   v_balance := v_doc_total - v_paid;
-  IF v_sum_in_doc > v_balance THEN
-    RAISE EXCEPTION 'ERR_BATCH_OVERPAY: el lote (%) excede el saldo pendiente (%). Overpay no permitido.', v_sum_in_doc, v_balance;
-  END IF;
 
   -- Fast path de replay: si TODOS los componentes del bloque ya existen,
-  -- devolver sus ids sin escribir nada (reintento idempotente).
+  -- devolver sus ids sin escribir nada (reintento idempotente). DEBE preceder
+  -- al pre-check de overpay: un lote ya aplicado deja saldo 0 y el reenvío
+  -- idéntico no es un overpay — es un replay (lección E2E ADN-008/P1).
   IF v_block_key IS NOT NULL THEN
     FOR v_idx IN 0 .. v_comp_count - 1 LOOP
       IF NOT EXISTS (
@@ -698,6 +697,11 @@ BEGIN
       END LOOP;
       RETURN jsonb_build_object('payments', v_ids, 'count', v_comp_count, 'replayed', true);
     END IF;
+  END IF;
+
+  -- Pre-check de overpay (SOLO tras descartar replay completo).
+  IF v_sum_in_doc > v_balance THEN
+    RAISE EXCEPTION 'ERR_BATCH_OVERPAY: el lote (%) excede el saldo pendiente (%). Overpay no permitido.', v_sum_in_doc, v_balance;
   END IF;
 
   -- ── Inserción por componente (misma transacción ⇒ ATÓMICO) ──
@@ -740,3 +744,20 @@ COMMENT ON FUNCTION public.adn008_supplier_belongs_to_store(uuid, uuid) IS
   'ADN-008: ownership fail-closed del proveedor local (suppliers.store_id).';
 COMMENT ON FUNCTION public.adn008_master_party_valid_for_store(uuid, uuid) IS
   'ADN-008: ownership fail-closed del tercero maestro (tenant de la tienda + status active).';
+
+-- ---------------------------------------------------------------------------
+-- 8) Proveedor opcional EN BORRADOR (misión §3.2): el CHECK vigente
+--    (20260809000001, recibido de la sync de esquema) exige supplier NOT NULL
+--    y no vacío para TODO documento. El borrador puede guardarse incompleto
+--    a propósito (sin inventar datos); la obligación estructural se conserva
+--    para TODO documento no-borrador (activo/anulado) — defensa en profundidad
+--    detrás del gate de confirmación de set_received_service_status.
+--    Pre-verificado en aislado (2026-11-20): 0 filas no-draft con supplier
+--    NULL/vacío → la nueva constraint valida sin conflicto.
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.received_services DROP CONSTRAINT IF EXISTS received_services_supplier_not_null;
+ALTER TABLE public.received_services ADD CONSTRAINT received_services_supplier_not_null
+  CHECK ((status = 'draft') OR (supplier IS NOT NULL AND btrim(supplier) <> ''));
+
+COMMENT ON CONSTRAINT received_services_supplier_not_null ON public.received_services IS
+  'ADN-008: proveedor obligatorio en documentos operativos (active/voided); opcional en borrador — la confirmación lo exige vía set_received_service_status.';
