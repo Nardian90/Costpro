@@ -731,7 +731,8 @@
     {
       "function": "can_manage_store_as",
       "reason": "ADN-009 (2026-11-21, PR #1672 post-merge hardening) · Helper de GESTIÓN por tienda (espejo DB de canManageStore en src/lib/roles.ts: is_admin_check transversal O membresía activa admin/manager/encargado). Patrón idéntico a can_manage_payroll_as y has_store_access_as: helper booleano STABLE SECURITY DEFINER de consulta que NO toca datos y cuya firma recibe el actor por parámetro — la identidad real la resuelve el llamador con el patrón v2.12.9 (los RPC de borradores pasan auth.uid()); ACL service_role-only para invocación directa. Consumidores: create_received_service_draft, update_received_service_draft (20261121190000).",
-      "expires": "2027-12-31"
+      "expires": "2027-12-31",
+      "added_by": "ADN-SR-POSTMERGE-HARDENING-009 (PR #1672, 2026-11-21) — misión post-merge hardening"
     }
   ],
   "tables_without_rls": [],
