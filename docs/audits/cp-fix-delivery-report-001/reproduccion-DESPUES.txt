@@ -1,0 +1,24 @@
+{"timestamp":"2026-11-20T01:30:16.139Z","level":"warn","category":"DATABASE","event":"SUPABASE_CLIENT_CONFIG_MISSING","data":{"url":false,"key":false}}
+══ CASO 1 · Venta 19/11/2026 (40 USD @930 + 1.800 CUP + 800 CUP = 39.800 CUP) ══
+source=ledger  ledgerIsAuthoritative=true (fila cash USD)
+Buckets (método|moneda, importe, equivCUP):
+  cash|CUP  800  equiv=800
+  transfer|CUP  1800  equiv=1800
+  cash|USD  40  equiv=37.200
+
+Atribución por artículo (perItem):
+  Barilla: cash_cup=0 transfer_cup=0 cash_usd=40 transfer_usd=0 zelle_usd=0
+  Escoba: cash_cup=0 transfer_cup=1800 cash_usd=0 transfer_usd=0 zelle_usd=0
+  Detergente: cash_cup=800 transfer_cup=0 cash_usd=0 transfer_usd=0 zelle_usd=0
+
+Tabla por producto (items-summary):
+  Barilla de Aterramientos: qty_cup=0 qty_usd=1 cash_cup=0 transfer_cup=0 cash_usd=40 usd_total=40 incidencia(*)=no | hojaCUP=no hojaUSD=SÍ cant.CUP=0 cant.USD=1
+  Escoba: qty_cup=1 qty_usd=0 cash_cup=0 transfer_cup=1800 cash_usd=0 usd_total=0 incidencia(*)=no | hojaCUP=SÍ hojaUSD=no cant.CUP=1 cant.USD=0
+  Detergente líquido: qty_cup=1 qty_usd=0 cash_cup=800 transfer_cup=0 cash_usd=0 usd_total=0 incidencia(*)=no | hojaCUP=SÍ hojaUSD=no cant.CUP=1 cant.USD=0
+
+Predominante venta: USD (CUP=2600 USD=40 equiv=37.200)
+Totales: {"total_quantity":3,"qty_cup":2,"qty_usd":1,"total_cup":39800,"cash_cup":800,"transfer_cup":1800,"zelle_cup":0,"cash_usd":40,"transfer_usd":0,"zelle_usd":0,"usd_total":40}
+Grupos sales (ledger intacto): [{"payment_method":"cash","currency":"CUP","transaction_count":1,"total":800,"total_cup":800},{"payment_method":"cash","currency":"USD","transaction_count":1,"total":40,"total_cup":37200},{"payment_method":"transfer","currency":"CUP","transaction_count":1,"total":1800,"total_cup":1800}]
+
+CONCILIACIÓN: hoja CUP=Escoba, Detergente líquido | hoja USD=Barilla de Aterramientos
+¿Escoba conserva sus 1.800 CUP sin USD ni asterisco? SÍ ✔
