@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { rateLimit } from '@/lib/rate-limit';
 import { createApiError } from '@/lib/api-errors';
@@ -42,6 +43,114 @@ const USE_V2 = process.env.USE_V2_RECEIVED_SERVICES === 'true';
  * ──────────────────────────────────────────────────────────────────────── */
 function forbidden() {
   return NextResponse.json(createApiError('FORBIDDEN'), { status: 403 });
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * ADN-009 (§6): resolución de la IDENTIDAD del proveedor desde la FUENTE
+ * AUTORIZADA. Los IDs que envía el cliente NO son confianza: el snapshot
+ * (code/tax_id/phone/address) y el nombre canónico salen de las filas de la
+ * BD (suppliers de la tienda / master_parties del tenant activo). Rechaza
+ * fail-closed: proveedor de otra tienda, tercero de otro tenant, maestro
+ * inactivo o identidad local↔maestro incoherente. La compatibilidad con
+ * proveedores históricos sin identidad estructurada se conserva (sin IDs →
+ * solo texto libre + meta de visualización).
+ * ────────────────────────────────────────────────────────────────────────── */
+type ResolvedSupplierIdentity = {
+  supplierId: string | null;
+  masterPartyId: string | null;
+  snapshot: { code: string | null; tax_id: string | null; phone: string | null; address: string | null } | null;
+  name: string | null;
+};
+
+type IdentityResolverResult =
+  | { ok: true; identity: ResolvedSupplierIdentity }
+  | { ok: false; status: number; error: string; code: string };
+
+async function resolveSupplierIdentity(
+  admin: SupabaseClient,
+  storeId: string,
+  input: {
+    supplier_id?: string | null;
+    supplier_master_party_id?: string | null;
+    supplier_meta?: { code?: string | null; tax_id?: string | null; phone?: string | null; address?: string | null } | null;
+    supplier?: string | null;
+  },
+): Promise<IdentityResolverResult> {
+  const clientMeta = input.supplier_meta
+    ? { code: input.supplier_meta.code ?? null, tax_id: input.supplier_meta.tax_id ?? null, phone: input.supplier_meta.phone ?? null, address: input.supplier_meta.address ?? null }
+    : null;
+  const sentSupplierId = input.supplier_id || null;
+  const sentMasterId = input.supplier_master_party_id || null;
+
+  // Sin identidad estructurada → histórico de texto libre: se conservan el
+  // nombre y la meta de visualización tal cual (sin IDs que validar).
+  if (!sentSupplierId && !sentMasterId) {
+    return { ok: true, identity: { supplierId: null, masterPartyId: null, snapshot: clientMeta, name: input.supplier ?? null } };
+  }
+
+  // 1) Proveedor LOCAL: debe pertenecer a la tienda del documento.
+  let supplierRow: { id: string; name: string; code: string | null; tax_id: string | null; phone: string | null; address: string | null; master_party_id: string | null } | null = null;
+  if (sentSupplierId) {
+    const { data, error } = await admin
+      .from('suppliers')
+      .select('id, name, code, tax_id, phone, address, master_party_id')
+      .eq('id', sentSupplierId)
+      .eq('store_id', storeId)
+      .maybeSingle();
+    if (error || !data) {
+      return { ok: false, status: 400, error: 'El proveedor seleccionado no pertenece a la tienda activa', code: 'ERR_SUPPLIER_INVALID' };
+    }
+    supplierRow = data;
+  }
+
+  // 2) Coherencia local↔maestro cuando llegan ambas identidades (§6).
+  let effectiveMaster = sentMasterId;
+  if (supplierRow?.master_party_id && sentMasterId && supplierRow.master_party_id !== sentMasterId) {
+    return { ok: false, status: 400, error: 'La identidad del proveedor local y el tercero maestro no coinciden', code: 'ERR_SUPPLIER_IDENTITY_MISMATCH' };
+  }
+  if (!effectiveMaster && supplierRow?.master_party_id) {
+    effectiveMaster = supplierRow.master_party_id;
+  }
+
+  // 3) Tercero maestro: tenant de la tienda + estado activo.
+  let masterRow: { id: string; name: string; code: string | null; tax_id: string | null; phone: string | null; address: string | null } | null = null;
+  if (effectiveMaster) {
+    const { data, error } = await admin
+      .from('master_parties')
+      .select('id, name, code, tax_id, phone, address, status, tenant_id')
+      .eq('id', effectiveMaster)
+      .maybeSingle();
+    if (error || !data || data.status !== 'active') {
+      return { ok: false, status: 400, error: 'El tercero maestro no pertenece al tenant de la tienda o no está activo', code: 'ERR_SUPPLIER_MASTER_INVALID' };
+    }
+    const { data: storeRow, error: storeErr } = await admin
+      .from('stores')
+      .select('tenant_id')
+      .eq('id', storeId)
+      .maybeSingle();
+    if (storeErr || !storeRow?.tenant_id || storeRow.tenant_id !== data.tenant_id) {
+      return { ok: false, status: 400, error: 'El tercero maestro no pertenece al tenant de la tienda o no está activo', code: 'ERR_SUPPLIER_MASTER_INVALID' };
+    }
+    masterRow = { id: data.id, name: data.name, code: data.code, tax_id: data.tax_id, phone: data.phone, address: data.address };
+  }
+
+  // 4) Snapshot + nombre desde la fuente autorizada (nunca del cliente).
+  const snapshot = supplierRow
+    ? { code: supplierRow.code, tax_id: supplierRow.tax_id, phone: supplierRow.phone, address: supplierRow.address }
+    : masterRow
+      ? { code: masterRow.code, tax_id: masterRow.tax_id, phone: masterRow.phone, address: masterRow.address }
+      : clientMeta;
+  const name = supplierRow?.name ?? masterRow?.name ?? input.supplier ?? null;
+
+  return {
+    ok: true,
+    identity: {
+      supplierId: sentSupplierId,
+      masterPartyId: effectiveMaster,
+      snapshot,
+      name,
+    },
+  };
 }
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -178,10 +287,22 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       // contabiliza borradores), NO activa y NO registra pagos. Idempotente por
       // creation_key. La confirmación posterior exige proveedor + importe > 0
       // (gate en set_received_service_status).
+      // ADN-009 (§6/§7): identidad resuelta desde la fuente autorizada y
+      // ownership re-validado dentro del RPC (gate de gestión con
+      // can_manage_store_as; re-consulta de creation_key tras el advisory lock).
       if (body.save_as_draft === true) {
+        const identity = await resolveSupplierIdentity(admin, storeId, {
+          supplier_id: body.supplier_id || null,
+          supplier_master_party_id: body.supplier_master_party_id || null,
+          supplier_meta: supplierMeta,
+          supplier: body.supplier ?? null,
+        });
+        if (!identity.ok) {
+          return NextResponse.json({ error: identity.error, code: identity.code }, { status: identity.status });
+        }
         const { data: rpcResult, error: rpcErr } = await admin.rpc('create_received_service_draft', {
           p_store_id: storeId,
-          p_supplier: body.supplier ?? null,
+          p_supplier: identity.identity.name ?? body.supplier ?? null,
           p_total_amount: body.total_amount,
           p_service_type_id: body.service_type_id || null,
           p_service_type_name: body.service_type_name || 'Otro',
@@ -195,9 +316,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
           p_receipt_ids: body.receipt_ids || [],
           p_production_order_ids: body.production_order_ids || [],
           p_created_by: userId,
-          p_supplier_id: body.supplier_id || null,
-          p_supplier_master_party_id: body.supplier_master_party_id || null,
-          p_supplier_meta: supplierMeta,
+          p_supplier_id: identity.identity.supplierId,
+          p_supplier_master_party_id: identity.identity.masterPartyId,
+          p_supplier_meta: identity.identity.snapshot,
           p_creation_key: body.creation_key || null,
         });
 
@@ -239,24 +360,36 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         return mapCreateServiceRpcError(rpcErr.message);
       }
 
-      // ADN-008 §4.3: al confirmar con un proveedor del catálogo, su IDENTIDAD
-      // real (id local / tercero maestro + snapshot) se congela en el registro
-      // — patrón receipts. create_received_service_v2 NO se toca (cero riesgo
-      // de overloads en el app vivo): el enriquecimiento es un UPDATE por PK
-      // justo tras la creación. Si fallara (infra), el servicio ya existe con
-      // su nombre → se devuelve 201 con warning en vez de 500 (un reintento
-      // duplicaría el servicio).
+      // ADN-008 §4.3 + ADN-009 §6: al confirmar con un proveedor del catálogo,
+      // su IDENTIDAD real (id local / tercero maestro + snapshot) se congela en
+      // el registro — patrón receipts. create_received_service_v2 NO se toca
+      // (cero riesgo de overloads en el app vivo): el enriquecimiento es un
+      // UPDATE por PK justo tras la creación. ADN-009: los IDs del cliente se
+      // VALIDAN contra la fuente autorizada ANTES del UPDATE privilegiado
+      // (tienda local / tenant del maestro / estado activo / coherencia) y el
+      // snapshot sale de la fila de la BD — nunca de metadatos manipulables.
+      // Si fallara (infra), el servicio ya existe con su nombre → se devuelve
+      // 201 con warning en vez de 500 (un reintento duplicaría el servicio).
       let identityWarning: string | null = null;
       if (body.supplier_id || body.supplier_master_party_id) {
+        const identity = await resolveSupplierIdentity(admin, storeId, {
+          supplier_id: body.supplier_id || null,
+          supplier_master_party_id: body.supplier_master_party_id || null,
+          supplier_meta: supplierMeta,
+          supplier: body.supplier ?? null,
+        });
+        if (!identity.ok) {
+          return NextResponse.json({ error: identity.error, code: identity.code }, { status: identity.status });
+        }
         const { error: idErr } = await admin
           .from('received_services')
           .update({
-            supplier_id: body.supplier_id || null,
-            supplier_master_party_id: body.supplier_master_party_id || null,
-            supplier_code: supplierMeta?.code ?? null,
-            supplier_tax_id: supplierMeta?.tax_id ?? null,
-            supplier_phone: supplierMeta?.phone ?? null,
-            supplier_address: supplierMeta?.address ?? null,
+            supplier_id: identity.identity.supplierId,
+            supplier_master_party_id: identity.identity.masterPartyId,
+            supplier_code: identity.identity.snapshot?.code ?? null,
+            supplier_tax_id: identity.identity.snapshot?.tax_id ?? null,
+            supplier_phone: identity.identity.snapshot?.phone ?? null,
+            supplier_address: identity.identity.snapshot?.address ?? null,
           })
           .eq('id', rpcResult.service_id);
         if (idErr) {
@@ -328,7 +461,15 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     // ─── ADN-008 §3.3: editar BORRADOR (campos + vínculos + identidad) ───
     // Siempre vía RPC de dominio (independiente del flag USE_V2): el RPC es
     // fail-closed (solo status='draft', sin pagos ni distribuciones) y audita
-    // en service_audit_log. La identidad del proveedor es REEMPLAZO COMPLETO.
+    // en service_audit_log.
+    // ADN-009 (§9): CONTRATO PATCH TRI-STATE — el cuerpo se convierte en un
+    // objeto p_patch que SOLO contiene las claves que el cliente envió:
+    //   clave ausente        → conservar el valor anterior;
+    //   clave con null / ''  → limpiar (NULL persistido);
+    //   service_date: null   → restablecer al día operativo actual;
+    //   clave con valor      → aplicar (validado).
+    // La firma /15 con COALESCE se retiró (sin overloads ambiguos de
+    // PostgREST). La identidad es un bloque atómico resuelto server-side.
     if (action === 'update-draft') {
       const DraftSchema = z.object({
         supplier: z.string().nullable().optional(),
@@ -355,33 +496,61 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
         return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedDraft.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
       }
       const d = parsedDraft.data;
-      // Fecha del borrador: revalidar tope HOY (Habana) si el cliente la envía.
-      let draftDate: string | null = null;
-      if (typeof d.service_date === 'string' && d.service_date.trim()) {
-        const dateCheck = checkNotFutureOperationDate(d.service_date);
-        if (!dateCheck.ok) {
-          return NextResponse.json({ error: 'Fecha del servicio no admisible', message: dateCheck.error, code: 'ERR_FUTURE_OPERATION_DATE' }, { status: 422 });
+      const patch: Record<string, unknown> = {};
+
+      // Identidad: bloque atómico (cualquier clave presente = reemplazo).
+      // Resolución server-side (§6): IDs validados + snapshot desde la BD.
+      if ('supplier_id' in d || 'supplier_master_party_id' in d || 'supplier_meta' in d) {
+        const identity = await resolveSupplierIdentity(admin, svcRow.store_id, {
+          supplier_id: d.supplier_id ?? null,
+          supplier_master_party_id: d.supplier_master_party_id ?? null,
+          supplier_meta: d.supplier_meta ?? null,
+          supplier: d.supplier ?? null,
+        });
+        if (!identity.ok) {
+          return NextResponse.json({ error: identity.error, code: identity.code }, { status: identity.status });
         }
-        draftDate = d.service_date;
+        patch.supplier_id = identity.identity.supplierId;
+        patch.supplier_master_party_id = identity.identity.masterPartyId;
+        patch.supplier_meta = identity.identity.snapshot ?? null;
       }
+      if ('supplier' in d) patch.supplier = d.supplier ?? null;
+      if ('total_amount' in d && d.total_amount !== null && d.total_amount !== undefined) {
+        patch.total_amount = Number(d.total_amount);
+      }
+      // Fecha (§9): string válida = aplicar; null/'' = RESTABLECER al día
+      // operativo actual (semántica del formulario). Revalidar tope HOY (Habana).
+      if ('service_date' in d) {
+        if (typeof d.service_date === 'string' && d.service_date.trim()) {
+          const dateCheck = checkNotFutureOperationDate(d.service_date);
+          if (!dateCheck.ok) {
+            return NextResponse.json({ error: 'Fecha del servicio no admisible', message: dateCheck.error, code: 'ERR_FUTURE_OPERATION_DATE' }, { status: 422 });
+          }
+          patch.service_date = d.service_date;
+        } else {
+          patch.service_date = null;
+        }
+      }
+      if ('reference_doc' in d) patch.reference_doc = d.reference_doc ?? null;
+      if ('observations' in d) patch.observations = d.observations ?? null;
+      // Tipo de servicio: bloque atómico (si el cliente envía cualquiera de
+      // las dos claves, se reemplaza el par completo).
+      if ('service_type_id' in d || 'service_type_name' in d) {
+        patch.service_type_id = d.service_type_id ?? null;
+        patch.service_type_name = d.service_type_name ?? null;
+      }
+      if ('distribution_method' in d && d.distribution_method !== null && d.distribution_method !== undefined) {
+        patch.distribution_method = d.distribution_method;
+      }
+      // Vínculos (§9): array = reemplazar el conjunto; null = borrar todos;
+      // clave ausente = conservar. El formulario siempre envía los arrays.
+      if ('receipt_ids' in d) patch.receipt_ids = d.receipt_ids ?? null;
+      if ('production_order_ids' in d) patch.production_order_ids = d.production_order_ids ?? null;
+
       const { data: rpcResult, error: rpcErr } = await admin.rpc('update_received_service_draft', {
         p_service_id: service_id,
-        p_user_id: userId,
-        p_supplier: d.supplier ?? null,
-        p_supplier_id: d.supplier_id ?? null,
-        p_supplier_master_party_id: d.supplier_master_party_id ?? null,
-        p_supplier_meta: d.supplier_meta
-          ? { code: d.supplier_meta.code ?? null, tax_id: d.supplier_meta.tax_id ?? null, phone: d.supplier_meta.phone ?? null, address: d.supplier_meta.address ?? null }
-          : null,
-        p_service_type_id: d.service_type_id ?? null,
-        p_service_type_name: d.service_type_name ?? null,
-        p_total_amount: d.total_amount !== undefined && d.total_amount !== null ? Number(d.total_amount) : null,
-        p_service_date: draftDate,
-        p_reference_doc: d.reference_doc ?? null,
-        p_observations: d.observations ?? null,
-        p_distribution_method: d.distribution_method ?? null,
-        p_receipt_ids: d.receipt_ids ?? null,
-        p_production_order_ids: d.production_order_ids ?? null,
+        p_actor_id: userId,
+        p_patch: patch,
       });
       if (rpcErr) {
         const msg = rpcErr.message;
@@ -389,7 +558,7 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
         if (msg.includes('ERR_NOT_DRAFT')) return NextResponse.json({ error: 'Solo los borradores pueden editarse aquí' }, { status: 409 });
         if (msg.includes('ERR_HAS_PAYMENTS') || msg.includes('ERR_HAS_DISTRIBUTIONS')) return NextResponse.json({ error: msg }, { status: 409 });
         if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-        if (msg.includes('ERR_SUPPLIER_INVALID') || msg.includes('ERR_SUPPLIER_MASTER_INVALID')) return NextResponse.json({ error: 'El proveedor seleccionado no pertenece a la tienda activa' }, { status: 400 });
+        if (msg.includes('ERR_SUPPLIER_INVALID') || msg.includes('ERR_SUPPLIER_MASTER_INVALID') || msg.includes('ERR_SUPPLIER_IDENTITY_MISMATCH')) return NextResponse.json({ error: 'El proveedor seleccionado no pertenece a la tienda activa' }, { status: 400 });
         if (msg.includes('ERR_FUTURE_DATED_DOCUMENT') || msg.includes('ERR_BACKDATED_DOCUMENT')) return NextResponse.json({ error: 'Fecha del servicio no admisible', message: msg, code: 'ERR_FUTURE_DATED_DOCUMENT' }, { status: 422 });
         return NextResponse.json({ error: msg }, { status: 500 });
       }
