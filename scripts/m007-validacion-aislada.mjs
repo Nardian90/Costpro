@@ -79,16 +79,21 @@ log('tienda aislada:', store[0].name, storeId);
 
 /* ── 1) PRE-LIMPIEZA de réplicas M007 anteriores (idempotencia de la validación) ── */
 const pat = "SRV-20261119-990%";
-await mgmt(`SELECT set_config('app.restore_mode', 'true', false);`);
-await mgmt(`DELETE FROM payment_transactions WHERE ref_type='service' AND ref_id IN
-  (SELECT id FROM received_services WHERE service_number LIKE '${pat}');`);
-await mgmt(`DELETE FROM fin_movements WHERE entry_id IN (
+// Lección v1 (PT007): set_config es transaction-scoped y la API Management no
+// garantiza la misma conexión entre llamadas → set_config + DELETE en el MISMO
+// request (un solo lote, una sola transacción).
+await mgmt([
+  `SELECT set_config('app.restore_mode', 'true', false);`,
+  `DELETE FROM payment_transactions WHERE ref_type='service' AND ref_id IN
+  (SELECT id FROM received_services WHERE service_number LIKE '${pat}');`,
+  `DELETE FROM fin_movements WHERE entry_id IN (
   SELECT e.id FROM fin_entries e WHERE e.document_type='SERVICIO_RECIBIDO'
-  AND e.document_id IN (SELECT id FROM received_services WHERE service_number LIKE '${pat}'));`);
-await mgmt(`DELETE FROM fin_entries WHERE document_type='SERVICIO_RECIBIDO'
-  AND document_id IN (SELECT id FROM received_services WHERE service_number LIKE '${pat}');`);
-await mgmt(`DELETE FROM received_services WHERE service_number LIKE '${pat}';`);
-await mgmt(`SELECT set_config('app.restore_mode', 'false', false);`);
+  AND e.document_id IN (SELECT id FROM received_services WHERE service_number LIKE '${pat}'));`,
+  `DELETE FROM fin_entries WHERE document_type='SERVICIO_RECIBIDO'
+  AND document_id IN (SELECT id FROM received_services WHERE service_number LIKE '${pat}');`,
+  `DELETE FROM received_services WHERE service_number LIKE '${pat}';`,
+  `SELECT set_config('app.restore_mode', 'false', false);`,
+].join('\n'));
 
 const countsBefore = await mgmt(`SELECT
   (SELECT count(*) FROM received_services) AS srv,
@@ -196,16 +201,19 @@ log('BALANCE asientos réplicas:');
 for (const b of bal) log(JSON.stringify(b));
 
 /* ── 6) Limpieza + delta=0 ── */
-await mgmt(`SELECT set_config('app.restore_mode', 'true', false);`);
-await mgmt(`DELETE FROM payment_transactions WHERE ref_type='service' AND ref_id IN
-  (SELECT id FROM received_services WHERE service_number LIKE 'SRV-20261119-990%');`);
-await mgmt(`DELETE FROM fin_movements WHERE entry_id IN (
+// Mismo lote único (lección v1 PT007 — ver pre-limpieza).
+await mgmt([
+  `SELECT set_config('app.restore_mode', 'true', false);`,
+  `DELETE FROM payment_transactions WHERE ref_type='service' AND ref_id IN
+  (SELECT id FROM received_services WHERE service_number LIKE 'SRV-20261119-990%');`,
+  `DELETE FROM fin_movements WHERE entry_id IN (
   SELECT e.id FROM fin_entries e WHERE e.document_type='SERVICIO_RECIBIDO'
-  AND e.document_id IN (SELECT id FROM received_services WHERE service_number LIKE 'SRV-20261119-990%'));`);
-await mgmt(`DELETE FROM fin_entries WHERE document_type='SERVICIO_RECIBIDO'
-  AND document_id IN (SELECT id FROM received_services WHERE service_number LIKE 'SRV-20261119-990%');`);
-await mgmt(`DELETE FROM received_services WHERE service_number LIKE 'SRV-20261119-990%';`);
-await mgmt(`SELECT set_config('app.restore_mode', 'false', false);`);
+  AND e.document_id IN (SELECT id FROM received_services WHERE service_number LIKE 'SRV-20261119-990%'));`,
+  `DELETE FROM fin_entries WHERE document_type='SERVICIO_RECIBIDO'
+  AND document_id IN (SELECT id FROM received_services WHERE service_number LIKE 'SRV-20261119-990%');`,
+  `DELETE FROM received_services WHERE service_number LIKE 'SRV-20261119-990%';`,
+  `SELECT set_config('app.restore_mode', 'false', false);`,
+].join('\n'));
 
 const countsAfter = await mgmt(`SELECT
   (SELECT count(*) FROM received_services) AS srv,
