@@ -67,6 +67,60 @@
  * reporte de la moneda secundaria refleja SOLO su componente monetario
  * cobrado, con cantidad CERO (sin duplicar unidades ni ingreso — misión §4).
  *
+ * ══════════════════════════════════════════════════════════════════════════
+ * MISIÓN CP-FIX-DELIVERY-REPORT-AND-LANDING-RESPONSIVE-001 (2026-11-20) —
+ * SEPARACIÓN NIVEL ÍTEM / NIVEL TRANSACCIÓN (incidente ENERVIDA 19/11/2026):
+ *
+ *   Incidente: venta 40 USD @930 (barilla, cobro efectivo USD) + 1.800 CUP
+ *   (escoba, transferencia) + 800 CUP (detergente, efectivo) = 39.800 CUP.
+ *   Con componentes (§13.7) el ledger es autoritativo y la rama ledger-directo
+ *   repartía CADA bucket proporcionalmente entre TODOS los artículos,
+ *   ignorando las filas de pago explícitas por ítem → la escoba recibía
+ *   cash_usd ≈ 1,81 USD artificial (hoja USD + asterisco falso).
+ *
+ *   NIVEL 1 — ARTÍCULO (atribución por ítem): cuando el ítem registró su fila
+ *   de pago (cash_paid/cash_currency, transfer_paid/…, zelle_paid/…), esa fila
+ *   es la verdad documental de SU cobro y se usa TAL CUAL. La moneda de
+ *   clasificación del artículo procede de SU moneda de venta registrada
+ *   (currency), no de la moneda predominante de la transacción.
+ *   NIVEL 2 — TRANSACCIÓN (totales): el ledger (payment_transactions) sigue
+ *   siendo la autoridad de los BUCKETS por (método, moneda), de sales_split,
+ *   de los grupos `sales` y de la conciliación total. No se sacrifica el
+ *   ledger para corregir la presentación individual.
+ *
+ *   Residual controlado: si el bucket (método, moneda) excede lo declarado en
+ *   filas explícitas, el residual se prorratea SOLO entre los ítems SIN fila
+ *   explícita de ese método, proporcional al valor CUP de línea (Σ=0 → partes
+ *   iguales), y queda MARCADO como estimado (cupEstimated/usdEstimated +
+ *   attribution.proratedBuckets). Si las filas explícitas contradicen al
+ *   ledger (exceden el bucket, o declaran un bucket inexistente), se conserva
+ *   el desglose documental, el bucket del ledger y se señala
+ *   attribution.ledgerMismatch — jamás se silencia ni se convierte en una
+ *   asignación aparentemente exacta.
+ *
+ *   CANTIDADES (§2.5): la cantidad de cada artículo se atribuye por SU cobro:
+ *   ítem cobrado en UNA moneda → esa moneda (= su moneda de venta en el caso
+ *   normal); ítem con cobro mixto → moneda predominante DEL ÍTEM (peso
+ *   económico, empate ⇒ CUP); ítem sin cobro atribuido → SU moneda de venta.
+ *   Invariante: qty_cup + qty_usd = total_quantity por ítem.
+ *   DISCREPANCIA DOCUMENTADA con la regla histórica: la misión 2026-10-24
+ *   atribuía TODAS las unidades de la venta a la moneda predominante de la
+ *   TRANSACCIÓN (tests mixed-payments-predominant G1) y la auditoría
+ *   2026-10-19 atribuía la cantidad por moneda de COBRO por línea (SKU 128:
+ *   1u CUP + 2u USD — regla de negocio exigida que SE CONSERVA para cobros
+ *   cruzados). La regla actual sigue el criterio de la misión 2026-11-20
+ *   (§2.5): la clasificación por artículo, no por venta.
+ *
+ *   INCIDENCIAS (§2.4 — has_payment_incident): comparación NATIVA cuando el
+ *   ítem se cobró íntegramente en SU moneda (USD cobrado vs valor USD de la
+ *   línea — las diferencias de TASA entre la línea y el cobro no son
+ *   incidencia, son conversión); comparación en equivalente CUP a la TASA DEL
+ *   COBRO cuando el cobro es cruzado o mixto; la incidencia a nivel venta
+ *   (Σcobrado ≠ Σvalor de líneas) sigue marcando sus líneas (trazabilidad).
+ *   Los prorrateos estimados NO son incidencia por sí mismos (se auditan por
+ *   attribution), pero sus diferencias monetarias reales sí se señalan.
+ * ══════════════════════════════════════════════════════════════════════════
+ *
  * Consumidores:
  *   - /api/cash-report           → sales_split + grupos `sales` por (método, moneda)
  *   - /api/cash-report/items-summary → tabla por producto + clasificación por venta
@@ -142,7 +196,21 @@ export type PayMethod = 'cash' | 'transfer' | 'zelle';
 export const PAY_METHODS: PayMethod[] = ['cash', 'transfer', 'zelle'];
 
 export interface MethodAmounts { cash: number; transfer: number; zelle: number }
-export interface ItemCollections { cup: MethodAmounts; usd: MethodAmounts }
+export interface ItemCollections {
+  cup: MethodAmounts;
+  usd: MethodAmounts;
+  /**
+   * Equivalente CUP del lado USD atribuido a ESTE ítem, calculado con la tasa
+   * DEL COBRO (tasa persistida del bucket del ledger, o la tasa de la línea en
+   * filas explícitas) — nunca la tasa global vigente. Base de la conciliación
+   * por artículo y de la regla de incidencias §2.4 (CP-FIX 2026-11-20).
+   */
+  usdCupEquiv?: number;
+  /** Porción del cobro CUP atribuida por PRORRATEO estimado (no documental). */
+  cupEstimated?: MethodAmounts;
+  /** Porción del cobro USD atribuida por PRORRATEO estimado (no documental). */
+  usdEstimated?: MethodAmounts;
+}
 
 export interface CollectionBucket {
   method: PayMethod;
@@ -165,6 +233,22 @@ export interface TxCollectionResult {
    * payment_transactions (flujo con componentes); 'reconstruction' para el
    * análisis heurístico previo (ventas históricas). */
   source: 'ledger' | 'reconstruction';
+  /**
+   * CP-FIX 2026-11-20 (§2.3): evidencia auditable de la atribución por ítem —
+   * distingue cobros EXPLÍCITOS (filas del ítem, Nivel 1) de cobros ESTIMADOS
+   * (prorrateo de residual, fallback controlado) y señala contradicciones
+   * entre el desglose individual y el ledger sin silenciarlas.
+   */
+  attribution: TxAttributionInfo;
+}
+
+export interface TxAttributionInfo {
+  /** Ítems con ≥1 fila de pago explícita usada tal cual (Nivel 1). */
+  explicitItems: number;
+  /** Buckets cuyo residual se prorrateó entre ítems sin fila (estimado). */
+  proratedBuckets: number;
+  /** Filas explícitas que contradicen al ledger (auditable — no se silencia). */
+  ledgerMismatch: boolean;
 }
 
 const num = (v: unknown): number => {
@@ -265,22 +349,106 @@ export function reconstructTxCollections(
         buckets.push({ method: b.method, currency: b.currency, amount: b.amount, amountCup: b.amountCup, origin: 'explicit-row' });
       }
     }
-    // Reparto por ítem: cada moneda se reparte proporcional al valor CUP de la
-    // línea (Σ=0 → partes iguales). Distribución derivada y documentada: la
-    // verdad documental por moneda vive a nivel VENTA (ledger).
-    const lineCup = items.map(lineCupOf);
-    const sumLineCup = lineCup.reduce((s, v) => s + v, 0);
-    for (const b of buckets) {
-      const side = b.currency === 'USD' ? 'usd' : 'cup';
-      distribute(perItem, items.map((_, idx) => idx), b.method, side, b.amount, lineCup, sumLineCup);
+
+    // ── NIVEL 1 (CP-FIX 2026-11-20): atribución por artículo ──
+    // Las filas de pago explícitas del ítem (cash_paid/cash_currency, …) son
+    // la verdad documental de SU cobro y se usan TAL CUAL. El bucket del
+    // ledger (Nivel 2) NO se toca: sigue siendo la autoridad de los totales.
+    const lineCupLed = items.map(lineCupOf);
+    const lineRateLed = items.map(it => (num(it.exchange_rate) > 0 ? num(it.exchange_rate) : 1));
+    const explicitItems = new Set<number>();
+    const explicitSum = new Map<string, number>(); // `${method}|${currency}` → Σ filas explícitas
+    for (const method of PAY_METHODS) {
+      const paidField = `${method}_paid` as keyof CollectionItem;
+      const curField = `${method}_currency` as keyof CollectionItem;
+      items.forEach((it, idx) => {
+        const amt = num(it[paidField]);
+        if (amt <= 0) return; // sin fila explícita de este método (escoba cash_paid=0 no es fila)
+        explicitItems.add(idx);
+        const cur = normCur(it[curField]);
+        const key = `${method}|${cur}`;
+        explicitSum.set(key, (explicitSum.get(key) ?? 0) + amt);
+        // Tasa del cobro: la del bucket del ledger (tasa persistida de la
+        // operación); si el bucket no existe (contradicción), la tasa de la línea.
+        const bucket = byKey.get(key);
+        const rate = bucket && bucket.amount > COLLECTION_EPS && bucket.amountCup > 0
+          ? bucket.amountCup / bucket.amount
+          : (cur === 'USD' ? lineRateLed[idx] : 1);
+        if (cur === 'USD') {
+          perItem[idx].usd[method] += amt;
+          perItem[idx].usdCupEquiv = (perItem[idx].usdCupEquiv ?? 0) + amt * rate;
+        } else {
+          perItem[idx].cup[method] += amt;
+        }
+      });
     }
-    return { buckets, perItem, mixedUnresolved: false, source: 'ledger' };
+
+    // ── Fallback controlado: residual del bucket (ledger − explícito) ──
+    // Se prorratea SOLO entre los ítems SIN fila explícita de ese método,
+    // proporcional al valor CUP de línea (Σ=0 → partes iguales), y queda
+    // marcado como ESTIMADO. Con filas explícitas completas (caso 19/11) el
+    // residual es 0 y NO hay prorrateo: atribución exacta y documental.
+    let proratedBuckets = 0;
+    let ledgerMismatch = false;
+    for (const b of buckets) {
+      const key = `${b.method}|${b.currency}`;
+      const residual = b.amount - (explicitSum.get(key) ?? 0);
+      if (Math.abs(residual) <= COLLECTION_EPS) continue; // desglose exacto — sin prorrateo
+      if (residual < 0) {
+        // Las filas explícitas EXCEDEN el ledger: contradicción documental.
+        // Se conserva el desglose del ítem (Nivel 1) y el bucket (Nivel 2);
+        // la diferencia queda señalada para auditoría (no se silencia).
+        ledgerMismatch = true;
+        continue;
+      }
+      const paidField = `${b.method}_paid` as keyof CollectionItem;
+      const candidates = items.map((_, idx) => idx).filter(idx => num(items[idx][paidField]) <= 0);
+      const target = candidates.length > 0 ? candidates : items.map((_, idx) => idx);
+      proratedBuckets++;
+      const sumTargetCup = target.reduce((s, idx) => s + lineCupLed[idx], 0);
+      const rate = b.amount > COLLECTION_EPS && b.amountCup > 0 ? b.amountCup / b.amount : 1;
+      for (const idx of target) {
+        const share = sumTargetCup > 0 ? residual * (lineCupLed[idx] / sumTargetCup) : residual / target.length;
+        if (b.currency === 'USD') {
+          perItem[idx].usd[b.method] += share;
+          perItem[idx].usdCupEquiv = (perItem[idx].usdCupEquiv ?? 0) + share * rate;
+          perItem[idx].usdEstimated = perItem[idx].usdEstimated ?? emptyAmounts();
+          perItem[idx].usdEstimated![b.method] += share;
+        } else {
+          perItem[idx].cup[b.method] += share;
+          perItem[idx].cupEstimated = perItem[idx].cupEstimated ?? emptyAmounts();
+          perItem[idx].cupEstimated![b.method] += share;
+        }
+      }
+    }
+    // Contradicción documento↔ledger: filas explícitas en (método, moneda)
+    // para los que el ledger NO tiene bucket. Se conservan (verdad documental
+    // del ítem) y se señalan — condiciones inciertas auditables (§2.3).
+    for (const [key, sum] of explicitSum) {
+      if (sum > COLLECTION_EPS && !byKey.has(key)) ledgerMismatch = true;
+    }
+    return {
+      buckets, perItem, mixedUnresolved: false, source: 'ledger',
+      attribution: { explicitItems: explicitItems.size, proratedBuckets, ledgerMismatch },
+    };
   }
 
   const lineCup = items.map(lineCupOf);
   const lineUsd = items.map(lineUsdOf);
   const lineRate = items.map(it => (num(it.exchange_rate) > 0 ? num(it.exchange_rate) : 1));
   const origCurs = items.map(it => normCur(it.currency));
+  // CP-FIX 2026-11-20: evidencia de atribución (§2.3) también en la vía histórica.
+  const heuristicExplicit = new Set<number>();
+  let heuristicProrated = 0;
+  const markEstimated = (idx: number, side: 'cup' | 'usd', method: PayMethod, share: number): void => {
+    if (side === 'cup') {
+      perItem[idx].cupEstimated = perItem[idx].cupEstimated ?? emptyAmounts();
+      perItem[idx].cupEstimated![method] += share;
+    } else {
+      perItem[idx].usdEstimated = perItem[idx].usdEstimated ?? emptyAmounts();
+      perItem[idx].usdEstimated![method] += share;
+    }
+  };
 
   for (const method of PAY_METHODS) {
     const pool = num(tx[`${method}_amount` as keyof CollectionTx]);
@@ -294,9 +462,11 @@ export function reconstructTxCollections(
       const amt = num(it[paidField]);
       if (amt > 0) {
         explicitIdx.add(idx);
+        heuristicExplicit.add(idx);
         const cur = normCur(it[curField]);
         if (cur === 'USD') {
           perItem[idx].usd[method] += amt;
+          perItem[idx].usdCupEquiv = (perItem[idx].usdCupEquiv ?? 0) + amt * lineRate[idx];
           addBucket(buckets, method, 'USD', amt, amt * lineRate[idx], 'explicit-row');
           explicitEquivCup += amt * lineRate[idx];
         } else {
@@ -317,12 +487,19 @@ export function reconstructTxCollections(
       // se atribuye como CUP a nivel transacción, repartido por valor de línea.
       const sumLineCup = lineCup.reduce((s, v) => s + v, 0);
       addBucket(buckets, method, 'CUP', residual, residual, 'legacy-cup');
+      heuristicProrated++;
       if (sumLineCup > 0) {
         items.forEach((_, idx) => {
-          perItem[idx].cup[method] += residual * (lineCup[idx] / sumLineCup);
+          const share = residual * (lineCup[idx] / sumLineCup);
+          perItem[idx].cup[method] += share;
+          markEstimated(idx, 'cup', method, share);
         });
       } else if (items.length > 0) {
-        items.forEach((_, idx) => { perItem[idx].cup[method] += residual / items.length; });
+        items.forEach((_, idx) => {
+          const share = residual / items.length;
+          perItem[idx].cup[method] += share;
+          markEstimated(idx, 'cup', method, share);
+        });
       }
       continue;
     }
@@ -340,27 +517,34 @@ export function reconstructTxCollections(
       if (rate > 1) {
         const usdAmt = residual / rate;
         addBucket(buckets, method, 'USD', usdAmt, residual, 'zelle-usd');
-        distribute(perItem, legacyIdx, method, 'usd', usdAmt, lineCup, sumLineCup);
+        heuristicProrated++;
+        distribute(perItem, legacyIdx, method, 'usd', usdAmt, lineCup, sumLineCup, { estimated: true, cupEquivTotal: residual });
       } else {
         // Sin tasa válida en el contexto: NO se inventa conversión → CUP canónico.
         addBucket(buckets, method, 'CUP', residual, residual, 'zelle-no-rate-cup');
-        distribute(perItem, legacyIdx, method, 'cup', residual, lineCup, sumLineCup);
+        heuristicProrated++;
+        distribute(perItem, legacyIdx, method, 'cup', residual, lineCup, sumLineCup, { estimated: true });
       }
     } else if (allUsd && sumLineCup > 0 && Math.abs(residual - sumLineCup) <= COLLECTION_EPS) {
       // Conversión exacta del RPC: el cobro se hizo en USD (monto original de las líneas).
       const usdAmt = sumLineUsd > 0 ? sumLineUsd : residual / (lineRate[legacyIdx[0]] || 1);
       addBucket(buckets, method, 'USD', usdAmt, residual, 'legacy-exact-usd');
-      distribute(perItem, legacyIdx, method, 'usd', usdAmt, lineCup, sumLineCup);
+      heuristicProrated++;
+      distribute(perItem, legacyIdx, method, 'usd', usdAmt, lineCup, sumLineCup, { estimated: true, cupEquivTotal: residual });
     } else {
       // Cobro en CUP (incluye sobrepagos documentados en CUP y el caso línea 0
       // con cobro real — SKU 108). Monedas originales mezcladas: limitación.
       if (anyUsd && !allUsd) mixedUnresolved = true;
       addBucket(buckets, method, 'CUP', residual, residual, 'legacy-cup');
-      distribute(perItem, legacyIdx, method, 'cup', residual, lineCup, sumLineCup);
+      heuristicProrated++;
+      distribute(perItem, legacyIdx, method, 'cup', residual, lineCup, sumLineCup, { estimated: true });
     }
   }
 
-  return { buckets, perItem, mixedUnresolved, source: 'reconstruction' };
+  return {
+    buckets, perItem, mixedUnresolved, source: 'reconstruction',
+    attribution: { explicitItems: heuristicExplicit.size, proratedBuckets: heuristicProrated, ledgerMismatch: false },
+  };
 }
 
 // ── REGLA DE MONEDA PREDOMINANTE (misión §2 — 2026-10-24) ─────────────────────
@@ -403,7 +587,11 @@ export function resolvePredominantCurrency(result: TxCollectionResult): Predomin
   return { currency, cupCollected, usdCollected, usdCollectedCup, rate, tie };
 }
 
-/** Reparto por ítem: proporcional al valor de línea; si Σlínea=0, partes iguales. */
+/** Reparto por ítem: proporcional al valor de línea; si Σlínea=0, partes iguales.
+ * CP-FIX 2026-11-20: `opts.estimated` marca la porción como PRORRATEO estimado
+ * (fallback controlado — distinto del cobro explícito documental) y
+ * `opts.cupEquivTotal` acumula el equivalente CUP del lado USD a la tasa del
+ * cobro (base de la conciliación e incidencias por artículo). */
 function distribute(
   perItem: ItemCollections[],
   idxs: number[],
@@ -412,12 +600,26 @@ function distribute(
   amount: number,
   lineCup: number[],
   sumLineCup: number,
+  opts?: { estimated?: boolean; cupEquivTotal?: number },
 ): void {
   if (idxs.length === 0 || amount === 0) return;
-  if (sumLineCup > 0) {
-    for (const idx of idxs) perItem[idx][side][method] += amount * (lineCup[idx] / sumLineCup);
-  } else {
-    for (const idx of idxs) perItem[idx][side][method] += amount / idxs.length;
+  const share = (total: number, idx: number): number =>
+    sumLineCup > 0 ? total * (lineCup[idx] / sumLineCup) : total / idxs.length;
+  for (const idx of idxs) {
+    const part = share(amount, idx);
+    perItem[idx][side][method] += part;
+    if (opts?.estimated) {
+      if (side === 'cup') {
+        perItem[idx].cupEstimated = perItem[idx].cupEstimated ?? emptyAmounts();
+        perItem[idx].cupEstimated![method] += part;
+      } else {
+        perItem[idx].usdEstimated = perItem[idx].usdEstimated ?? emptyAmounts();
+        perItem[idx].usdEstimated![method] += part;
+      }
+    }
+    if (side === 'usd' && opts?.cupEquivTotal != null) {
+      perItem[idx].usdCupEquiv = (perItem[idx].usdCupEquiv ?? 0) + share(opts.cupEquivTotal, idx);
+    }
   }
 }
 
@@ -467,16 +669,16 @@ export interface ProductCollectionRow {
   /** Cantidad FÍSICA total (Σ quantity de todas las líneas, ambas monedas). */
   total_quantity: number;
   /**
-   * Cantidad atribuida a la moneda PREDOMINANTE de cada venta (MISIÓN PAGOS
-   * MIXTOS 2026-10-24 — reemplaza el reparto por línea del 2026-10-19): la
-   * venta completa se clasifica por peso económico con la tasa persistida
-   * (misión §2) y TODAS sus unidades van al reporte de la moneda
-   * predominante; el reporte de la moneda secundaria muestra su componente
-   * monetario con cantidad CERO. Invariante: qty_cup + qty_usd =
-   * total_quantity (nunca se duplica la cantidad física — misión §4).
+   * Cantidad atribuida a la sección CUP de la tabla por producto. CP-FIX
+   * 2026-11-20 (§2.5): atribución POR ÍTEM según su cobro — ítem cobrado en
+   * una sola moneda → esa moneda; cobro mixto → predominante del ÍTEM; sin
+   * cobro → moneda de venta del artículo. Sustituye la regla de moneda
+   * predominante de la VENTA (2026-10-24) que clasificaba TODAS las unidades
+   * de la venta en una sola sección. Invariante: qty_cup + qty_usd =
+   * total_quantity (nunca se duplica la cantidad física).
    */
   qty_cup: number;
-  /** Cantidad atribuible a ventas clasificadas como USD (mismas reglas). */
+  /** Cantidad atribuible a la sección USD (mismas reglas que qty_cup). */
   qty_usd: number;
   /** Total histórico CUP de las líneas (precio de venta histórico — NUNCA recalculado). */
   total_cup: number;
@@ -525,6 +727,8 @@ export interface ItemsSummaryResult {
     tie: boolean;
     source: 'ledger' | 'reconstruction';
     total_cup: number;
+    /** CP-FIX 2026-11-20: evidencia de la atribución por artículo (§2.3). */
+    attribution: TxAttributionInfo;
   }>;
 }
 
@@ -533,28 +737,43 @@ interface AggState extends Omit<ProductCollectionRow, 'transactions_count' | 'us
 }
 
 /**
- * Atribución de la CANTIDAD de una venta a su moneda PREDOMINANTE (MISIÓN
- * PAGOS MIXTOS 2026-10-24 — sustituye al reparto por línea de la auditoría
- * 2026-10-19): TODAS las unidades de la venta van a la moneda predominante
- * (misión §2: peso económico con la tasa persistida); la moneda secundaria
- * recibe cantidad CERO y solo su componente monetario. Determinista y sin
- * duplicar: qty_cup + qty_usd = total_quantity en todo momento.
+ * Atribución de la CANTIDAD de un artículo a las secciones CUP/USD por SU
+ * COBRO (CP-FIX 2026-11-20 §2.5 — sustituye la atribución por moneda
+ * PREDOMINANTE DE LA VENTA de la misión 2026-10-24):
+ *   · ítem cobrado en UNA moneda → esa moneda (en el caso normal coincide con
+ *     la moneda de VENTA del artículo; en cobros cruzados preserva la regla de
+ *     negocio 2026-10-19 «cantidad por moneda de cobro», p. ej. SKU 128:
+ *     1u cobrada en CUP + 2u cobradas en USD);
+ *   · ítem con cobro MIXTO → moneda predominante DEL ÍTEM (peso económico en
+ *     CUP con la tasa del cobro; empate ⇒ CUP — misma política determinista
+ *     documentada para la venta);
+ *   · ítem SIN cobro atribuido (líneas 0 sin pago) → SU moneda de venta.
+ * Determinista y sin duplicar: qtyCup + qtyUsd = cantidad física del ítem.
  */
-function attributeQuantityByPredominant(
-  qty: number,
-  predominant: 'CUP' | 'USD',
+function attributeQuantityByItemCollections(
+  item: CollectionItem,
+  col: ItemCollections,
 ): { qtyCup: number; qtyUsd: number } {
-  return predominant === 'USD' ? { qtyCup: 0, qtyUsd: qty } : { qtyCup: qty, qtyUsd: 0 };
+  const qty = num(item.quantity);
+  const cupVal = col.cup.cash + col.cup.transfer + col.cup.zelle;
+  const usdVal = col.usdCupEquiv ?? 0; // equivalente CUP del USD cobrado (tasa del cobro)
+  if (cupVal <= COLLECTION_EPS && usdVal <= COLLECTION_EPS) {
+    return normCur(item.currency) === 'USD' ? { qtyCup: 0, qtyUsd: qty } : { qtyCup: qty, qtyUsd: 0 };
+  }
+  if (usdVal <= COLLECTION_EPS) return { qtyCup: qty, qtyUsd: 0 }; // cobrado todo en CUP
+  if (cupVal <= COLLECTION_EPS) return { qtyCup: 0, qtyUsd: qty }; // cobrado todo en USD
+  return usdVal > cupVal + COLLECTION_EPS ? { qtyCup: 0, qtyUsd: qty } : { qtyCup: qty, qtyUsd: 0 };
 }
 
 /**
  * Agrega filas (transaction_items ⨝ transactions ⨝ products) a UNA fila por
- * producto con los cobros por moneda y las CANTIDADES atribuidas por MONEDA
- * PREDOMINANTE de cada venta (qty_cup/qty_usd — MISIÓN PAGOS MIXTOS
- * 2026-10-24). La cantidad física (total_quantity) y los importes NO cambian.
- * `rows` puede llevar las filas de payment_transactions (ref_type='sale') de
- * cada venta — cuando son autoritativas (ledgerIsAuthoritative) la moneda
- * real de cobro y la tasa se leen DIRECTO del ledger.
+ * producto con los cobros por moneda y las CANTIDADES atribuidas por COBRO DE
+ * CADA ÍTEM (qty_cup/qty_usd — CP-FIX 2026-11-20 §2.5). La cantidad física
+ * (total_quantity) y los importes NO cambian. `rows` puede llevar las filas de
+ * payment_transactions (ref_type='sale') de cada venta — cuando son
+ * autoritativas (ledgerIsAuthoritative) los BUCKETS se leen directo del ledger
+ * (Nivel 2) y la atribución POR ÍTEM usa las filas explícitas de cada
+ * transaction_item (Nivel 1), con prorrateo solo como fallback controlado.
  */
 export function buildItemsSummary(
   rows: Array<{ item: CollectionItem; tx: CollectionTx; txId: string; payments?: LedgerPayment[] }>,
@@ -582,6 +801,7 @@ export function buildItemsSummary(
       tie: predominant.tie,
       source: result.source,
       total_cup: items.reduce((s, it) => s + lineCupOf(it), 0),
+      attribution: result.attribution,
     });
     // Incidencia a nivel VENTA: el cobro total (a tasa de la operación)
     // difiere del total histórico CUP de las líneas.
@@ -611,14 +831,32 @@ export function buildItemsSummary(
       }
       const cupCollected = col.cup.cash + col.cup.transfer + col.cup.zelle;
       const usdCollected = col.usd.cash + col.usd.transfer + col.usd.zelle;
-      // CANTIDAD por moneda predominante de la VENTA (misión §2) — ya no por línea.
-      const { qtyCup, qtyUsd } = attributeQuantityByPredominant(num(item.quantity), predominant.currency);
-      // Incidencia por ítem: cobro atribuido (convertido a tasa de la línea)
-      // vs valor CUP de la línea; además la incidencia a nivel venta marca
-      // todas sus líneas (misión §7: trazabilidad de diferencias documentadas).
-      const itemRate = num(item.exchange_rate) > 0 ? num(item.exchange_rate) : 1;
-      const itemCupEquiv = cupCollected + usdCollected * itemRate;
-      const incident = saleIncident || Math.abs(itemCupEquiv - lineCupOf(item)) > COLLECTION_EPS;
+      // CANTIDAD por cobro del ÍTEM (CP-FIX §2.5) — ya no por moneda
+      // predominante de la venta (ver discrepancia documentada en el encabezado).
+      const { qtyCup, qtyUsd } = attributeQuantityByItemCollections(item, col);
+      // Incidencia por ítem (CP-FIX §2.4 — regla documentada): comparación
+      // NATIVA cuando el ítem se cobró íntegramente en SU moneda (una
+      // diferencia de TASA entre línea y cobro es conversión, no incidencia);
+      // comparación en equivalente CUP a la TASA DEL COBRO cuando el cobro es
+      // cruzado o mixto. El prorrateo estimado NO es incidencia por sí mismo:
+      // solo lo es su diferencia monetaria real. La incidencia a nivel venta
+      // sigue marcando sus líneas (trazabilidad de diferencias documentadas).
+      const itemCur = normCur(item.currency);
+      const itemLineCup = lineCupOf(item);
+      const itemLineUsd = lineUsdOf(item);
+      const usdEquiv = col.usdCupEquiv ?? usdCollected * (num(item.exchange_rate) > 0 ? num(item.exchange_rate) : 1);
+      let itemIncident: boolean;
+      if (usdCollected > COLLECTION_EPS && cupCollected > COLLECTION_EPS) {
+        // cobro mixto: conciliación en base común CUP a la tasa del cobro
+        itemIncident = Math.abs(cupCollected + usdEquiv - itemLineCup) > COLLECTION_EPS;
+      } else if (usdCollected > COLLECTION_EPS) {
+        itemIncident = itemCur === 'USD'
+          ? Math.abs(usdCollected - itemLineUsd) > COLLECTION_EPS // nativo USD vs USD
+          : Math.abs(usdEquiv - itemLineCup) > COLLECTION_EPS;    // cruzado: equiv CUP
+      } else {
+        itemIncident = Math.abs(cupCollected - itemLineCup) > COLLECTION_EPS; // CUP (nativo o cruzado)
+      }
+      const incident = saleIncident || itemIncident;
       a.total_quantity += num(item.quantity);
       a.qty_cup += qtyCup;
       a.qty_usd += qtyUsd;

@@ -9,13 +9,17 @@ import { fetchSalePaymentsByTx } from '@/lib/cash-report/fetch-sale-payments';
  *
  * Devuelve los items vendidos en el periodo, consolidados por producto
  * (UNA fila por producto) con los COBROS en su moneda real:
- *   - total_quantity (física) y qty_cup/qty_usd (AUDITORÍA 2026-10-19: cantidad
- *     atribuible por moneda de cobro — la hoja CUP del PDF usa qty_cup y la
- *     hoja USD usa qty_usd; invariante qty_cup + qty_usd = total_quantity)
+ *   - total_quantity (física) y qty_cup/qty_usd (CP-FIX 2026-11-20 §2.5:
+ *     cantidad atribuible por el COBRO DE CADA ÍTEM — ítem cobrado en una
+ *     moneda → esa moneda; cobro mixto → predominante del ítem; sin cobro →
+ *     su moneda de venta. La hoja CUP del PDF usa qty_cup y la hoja USD usa
+ *     qty_usd; invariante qty_cup + qty_usd = total_quantity)
  *   - unit_price (promedio CUP), total_cup (total histórico CUP)
  *   - cash_cup / transfer_cup / zelle_cup  → cobros en CUP por método
  *   - cash_usd / transfer_usd / zelle_usd / usd_total → cobros en USD (original)
- *   - has_payment_incident → el cobro difiere del total histórico (incidencia)
+ *   - has_payment_incident → incidencia REAL de cobro (regla §2.4 CP-FIX:
+ *     comparación nativa en la moneda del ítem; la diferencia explicable por
+ *     conversión de tasa NO es incidencia)
  * Compatibilidad: cash_paid/transfer_paid/zelle_paid siguen expuestos con los
  * importes CUP (columnas CUP del reporte).
  *

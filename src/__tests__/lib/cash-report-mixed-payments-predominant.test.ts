@@ -304,7 +304,7 @@ describe('MISIÓN PAGOS MIXTOS — Escenario F: devoluciones/anulaciones', () =>
 // ── Venta multi-producto y multi-componente ─────────────────────────────────
 
 describe('MISIÓN PAGOS MIXTOS — multi-producto y multi-componente', () => {
-  it('G1. Venta de 2 productos pagada 5 USD + 15 000 CUP: TODAS las unidades al reporte predominante; el dinero se reparte por valor de línea', () => {
+  it('G1. Venta de 2 productos pagada 5 USD + 15 000 CUP: el dinero se reparte por valor de línea; la cantidad sigue el COBRO de cada ítem (CP-FIX 2026-11-20 §2.5)', () => {
     const tx = txOf('tx-g1', 20000);
     const itemX: CollectionItem = { ...productoX('tx-g1'), product_id: 'px', sku: 'X', quantity: 2 };
     const itemY: CollectionItem = {
@@ -331,11 +331,16 @@ describe('MISIÓN PAGOS MIXTOS — multi-producto y multi-componente', () => {
     // Cantidad física TOTAL intacta y sin duplicar
     expect(summary.totals.total_quantity).toBe(3);
     expect(summary.totals.qty_cup + summary.totals.qty_usd).toBe(3);
-    // Ambas líneas clasificadas CUP (venta predominante CUP)
+    // CP-FIX 2026-11-20 (§2.5 — DISCREPANCIA DOCUMENTADA con la regla de la
+    // misión 2026-10-24): la cantidad ya NO sigue la moneda predominante de la
+    // VENTA, sino el COBRO DE CADA ÍTEM. X (cobro mixto 15 000 CUP vs 5 000 CUP
+    // equivalentes) → predominante DEL ÍTEM = CUP → 2 unidades al reporte CUP.
+    // Y (precio 0, SIN cobro atribuido) → SU moneda de venta (USD) → 1 unidad
+    // al reporte USD. Antes: ambas líneas a CUP por predominante de la venta.
     expect(rowX.qty_cup).toBe(2);
-    expect(rowY.qty_cup).toBe(1);
     expect(rowX.qty_usd).toBe(0);
-    expect(rowY.qty_usd).toBe(0);
+    expect(rowY.qty_cup).toBe(0);
+    expect(rowY.qty_usd).toBe(1);
     // Dinero por moneda: el valor de línea de Y es 0 → todo el cobro a X
     expect(rowX.cash_cup).toBeCloseTo(15000, 2);
     expect(rowX.cash_usd).toBeCloseTo(5, 2);
