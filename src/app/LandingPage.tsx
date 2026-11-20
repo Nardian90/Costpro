@@ -16,6 +16,7 @@ import { useCookieConsent, usePromoBanner } from '@/components/landing/hooks';
 
 // ── ADN-006: escenario persistente (sustitución real de escenas) ──
 import CinemaStage, { type CinemaControls } from '@/components/landing/cinema/CinemaStage';
+import CinemaModeBoundary from '@/components/landing/cinema/CinemaModeBoundary';
 import { buildCinemaScenes } from '@/components/landing/cinema/sceneRegistry';
 import { SceneFrame } from '@/components/landing/cinema/SceneContent';
 import ActStage from '@/components/landing/CinematicAct';
@@ -114,30 +115,77 @@ export default function LandingPage() {
      el progreso del primer segmento del timeline maestro). */
   const heroExitMv = useMotionValue(0);
 
-  /* ADN-006 — MODO CINE: escritorio (≥1024px) con altura suficiente (≥700px)
+  /* ADN-006 — MODO CINE: escritorio (≥1024px) con altura suficiente (≥620px)
      y sin prefers-reduced-motion → escenario persistente con sustitución de
-     escenas. Móvil / tablet / reduced-motion → flujo nativo (ActStage). */
-  const [cinemaMode, setCinemaMode] = useState(false);
+     escenas. Móvil / tablet / reduced-motion → flujo nativo (ActStage).
+     ─────────────────────────────────────────────────────────────────────────
+     CP-FIX-LANDING-RESPONSIVE (2026-11-20 §4.1/§4.2):
+     · Umbral de altura 700→620px: la decisión usa el VIEWPORT CSS EFECTIVO
+       (matchMedia), no la resolución física — con la barra de pestañas y
+       dirección del navegador, un 1366×768 real deja ~630-670px CSS de alto y
+       el cine quedaba desactivado al 100 % de zoom (el propietario lo
+       recuperaba cambiando el zoom). 620px mantiene el flujo seguro en
+       1024×600 y deja entrar a los portátiles comunes.
+     · SONDA DE AJUSTE: CinemaStage mide si el contenido de cada escena cabe
+       en el escenario; si la peor escena desborda (texto/CTA cortado), el
+       modo cae a flujo — no se fuerza el cine por encima de la legibilidad.
+       `cinemaBlocked` se re-evalúa al CRECER la ventana (resize debounced):
+       matchMedia solo dispara al cambiar el RESULTADO de la query, no en
+       cada píxel de crecimiento.
+     · RED DE SEGURIDAD: si GSAP/ScrollTrigger falla en runtime
+       (CinemaModeBoundary), el flujo nativo queda como alternativa
+       funcional — sin reintentos en la sesión. */
+  const [cinemaAllowed, setCinemaAllowed] = useState(false);
+  const [cinemaBlocked, setCinemaBlocked] = useState(false);
+  const [cinemaFailed, setCinemaFailed] = useState(false);
+  const cinemaMode = cinemaAllowed && !cinemaBlocked && !cinemaFailed;
   const cinemaModeRef = useRef(false);
   useEffect(() => {
     const mqWidth = window.matchMedia('(min-width: 1024px)');
-    const mqHeight = window.matchMedia('(min-height: 700px)');
+    const mqHeight = window.matchMedia('(min-height: 620px)');
     const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const allowsCinema = () => mqWidth.matches && mqHeight.matches && !mqReduce.matches;
     const update = () => {
-      const active = mqWidth.matches && mqHeight.matches && !mqReduce.matches;
-      setCinemaMode(active);
-      cinemaModeRef.current = active;
+      const active = allowsCinema();
+      setCinemaAllowed(active);
+      if (!active) setCinemaBlocked(false); // fuera de rango: veredicto limpio
     };
     update();
     mqWidth.addEventListener('change', update);
     mqHeight.addEventListener('change', update);
     mqReduce.addEventListener('change', update);
+    /* Reintento del bloqueo por contenido al cambiar el tamaño de la ventana:
+       crecer la ventana debe volver a intentar el cine (la sonda vuelve a
+       medir). Debounced: una sola re-medición al final del gesto. Determinista
+       por tamaño — no oscila. */
+    let retryTimer = 0;
+    const onResizeRetry = () => {
+      window.clearTimeout(retryTimer);
+      retryTimer = window.setTimeout(() => {
+        if (allowsCinema()) setCinemaBlocked(false);
+      }, 300);
+    };
+    window.addEventListener('resize', onResizeRetry);
     return () => {
       mqWidth.removeEventListener('change', update);
       mqHeight.removeEventListener('change', update);
       mqReduce.removeEventListener('change', update);
+      window.removeEventListener('resize', onResizeRetry);
+      window.clearTimeout(retryTimer);
     };
   }, []);
+  /* Ref sincronizada para los handlers de scroll (sin re-suscripciones). */
+  useEffect(() => { cinemaModeRef.current = cinemaMode; }, [cinemaMode]);
+  const handleCinemaOverflow = useCallback(
+    (worst: { sceneIndex: number; overflowY: number; overflowX: number } | null) => {
+      setCinemaBlocked(worst !== null);
+      if (worst) {
+        console.warn(`[landing] modo cine desactivado: la escena ${worst.sceneIndex} desborda el escenario (Δy=${worst.overflowY}px, Δx=${worst.overflowX}px) — cayendo al flujo nativo`);
+      }
+    },
+    [],
+  );
+  const handleCinemaError = useCallback(() => { setCinemaFailed(true); }, []);
 
   /* Controles del escenario (gotoChapter…) — los consume la navegación por ID. */
   const cinemaControlsRef = useRef<CinemaControls | null>(null);
@@ -560,22 +608,27 @@ export default function LandingPage() {
       </AnimatePresence>
 
       {/* ═══ UNA EXPERIENCIA, CINCO CAPÍTULOS (ADN-006) ═══
-          MODO CINE (escritorio ≥1024px × ≥700px, sin reduced-motion):
+          MODO CINE (escritorio ≥1024px × ≥620px, sin reduced-motion, con
+          contenido que cabe — sonda de ajuste; CP-FIX responsive 2026-11-20):
           ESCENARIO PERSISTENTE — un stage fijado de 100svh donde las 15
           escenas se SUSTITUYEN unas a otras con transiciones coreografiadas
           (GSAP ScrollTrigger: scrub lineal al gesto + snap direccional
           interrumpible). El visitante NO baja por una página: pasa de una
           escena completa a la siguiente.
 
-          MODO FLUJO (móvil / tablet / alturas cortas / reduced-motion):
-          las mismas cinco áreas en flujo nativo con sus ids canónicos. */}
+          MODO FLUJO (móvil / tablet / alturas cortas / reduced-motion /
+          contenido que desborda / fallo del motor): las mismas cinco áreas
+          en flujo nativo con sus ids canónicos. */}
       {cinemaMode ? (
-        <CinemaStage
-          scenes={cinemaScenes}
-          registerControls={handleRegisterControls}
-          onChapterProgress={handleChapterProgress}
-          heroExitMv={heroExitMv}
-        />
+        <CinemaModeBoundary onError={handleCinemaError}>
+          <CinemaStage
+            scenes={cinemaScenes}
+            registerControls={handleRegisterControls}
+            onChapterProgress={handleChapterProgress}
+            heroExitMv={heroExitMv}
+            onContentOverflow={handleCinemaOverflow}
+          />
+        </CinemaModeBoundary>
       ) : (
       <main id="main-content">
         {/* ── CAPÍTULO 1 · INICIO (flujo nativo) ── */}

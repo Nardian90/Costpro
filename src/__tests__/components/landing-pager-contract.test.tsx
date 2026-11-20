@@ -132,13 +132,32 @@ describe('ADN-LANDING-TRUE-FULLPAGE-EXPERIENCE-006 — contrato del escenario pe
   });
 
   it('reduced-motion / móvil / tablet desactivan el cine (flujo nativo íntegro)', () => {
-    // La decisión de modo exige ancho, alto y movimiento
+    // La decisión de modo exige ancho, alto y movimiento. CP-FIX-LANDING-
+    // RESPONSIVE (2026-11-20): umbral de altura 700→620px — la decisión usa el
+    // VIEWPORT CSS EFECTIVO (matchMedia): con la barra del navegador, un
+    // 1366×768 real deja ~630-670px CSS y el cine quedaba fuera al 100% de
+    // zoom. 1024×600 sigue en flujo. Además: sonda de ajuste de contenido
+    // (onContentOverflow → caída a flujo si una escena desborda) y red de
+    // seguridad del motor (CinemaModeBoundary → flujo si GSAP falla).
     expect(landing).toMatch(/'\(min-width: 1024px\)'/);
-    expect(landing).toMatch(/'\(min-height: 700px\)'/);
+    expect(landing).toMatch(/'\(min-height: 620px\)'/);
     expect(landing).toMatch(/'\(prefers-reduced-motion: reduce\)'/);
+    expect(landing).toMatch(/onContentOverflow=\{handleCinemaOverflow\}/);
+    expect(landing).toMatch(/<CinemaModeBoundary onError=\{handleCinemaError\}>/);
     // ActStage queda como capa de flujo (sin pin)
     const act = read('src/components/landing/CinematicAct.tsx');
     expect(act).not.toMatch(/position:\s*sticky|useScroll/);
+  });
+
+  it('CP-FIX responsive: la sonda de ajuste mide el contenido EN FLUJO de cada escena y el fallback es el flujo nativo', () => {
+    const cinema = read('src/components/landing/cinema/CinemaStage.tsx');
+    // La sonda vive en el escenario: mide data-scene-frame (contenido real,
+    // sin el sangrado decorativo absoluto del hero) y reporta la peor escena.
+    expect(cinema).toMatch(/data-scene-frame/);
+    expect(cinema).toMatch(/onContentOverflow\?: \(worst: \{ sceneIndex: number; overflowY: number; overflowX: number \} \| null\) => void/);
+    expect(cinema).toMatch(/window\.addEventListener\('resize', onFitResize\)/);
+    // El bloqueo por desbordamiento se reintenta al crecer la ventana.
+    expect(landing).toMatch(/onResizeRetry/);
   });
 
   it('la barra nativa se oculta solo visualmente y solo en el landing', () => {
