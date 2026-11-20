@@ -1,0 +1,85 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-20T15:31:22.126Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT fm.category_code,        round(sum(CASE WHEN fm.sense='debito' THEN fm.amount_cup ELSE -fm.amount_cup END)::numer",
+      "rows": [
+        {
+          "category_code": "ACT_BANCOS",
+          "saldo": "1264610.01"
+        },
+        {
+          "category_code": "ACT_EFECTIVO_CUP",
+          "saldo": "1233950.00"
+        },
+        {
+          "category_code": "ACT_EFECTIVO_USD",
+          "saldo": "27500.00"
+        },
+        {
+          "category_code": "ACT_TRANSF_EXTERIOR",
+          "saldo": "24606900.00"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT id, code, status FROM fin_posting_generations WHERE store_id='5e6fe821-5465-48b1-b3f1-3aa3182edc38' ORDER BY crea",
+      "rows": [
+        {
+          "id": "d0b7adf7-d355-4802-8348-3daf33f290ed",
+          "code": "GEN-0",
+          "status": "superseded"
+        },
+        {
+          "id": "9f1d7d75-b4e7-47ba-a3a4-66f3c8bfa670",
+          "code": "GEN-1",
+          "status": "active"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT t.status, count(DISTINCT t.id) ventas, round(sum(pt.amount)::numeric,2) usd FROM payment_transactions pt JOIN tra",
+      "rows": [
+        {
+          "status": "completed",
+          "ventas": 238,
+          "usd": "36152.64"
+        },
+        {
+          "status": "voided",
+          "ventas": 3,
+          "usd": "2732.00"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT t.id, t.status, t.payment_method, t.total_amount FROM transactions t WHERE t.id IN ('9033864b-2c13-4aa3-b2b8-2fd6",
+      "rows": [
+        {
+          "id": "1a03c37f-3a9b-4c5a-912c-3958ebbaf91c",
+          "status": "completed",
+          "payment_method": "zelle",
+          "total_amount": "142800.00"
+        },
+        {
+          "id": "3d19e5e7-2080-4eb1-8eca-cf7e391f30b9",
+          "status": "completed",
+          "payment_method": "zelle",
+          "total_amount": "224400.00"
+        },
+        {
+          "id": "9033864b-2c13-4aa3-b2b8-2fd645a190db",
+          "status": "completed",
+          "payment_method": "zelle",
+          "total_amount": "224400.00"
+        }
+      ]
+    }
+  ]
+}

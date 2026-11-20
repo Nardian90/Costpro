@@ -1,0 +1,633 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-20T15:36:58.727Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": " SELECT 'secdef_no_auth' AS check_id, p.proname, pg_get_function_arguments(p.oid) AS args FROM pg_proc p JOIN pg_namespa",
+      "rows": [
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "adjust_total_amount",
+          "args": "p_transaction_id uuid, p_new_total numeric, p_reason text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "bulk_update_products",
+          "args": "_products jsonb"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "calculate_receipt_total_cup",
+          "args": "p_receipt_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "calculate_service_distribution",
+          "args": "p_service_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "can_admin_reverse_transaction",
+          "args": "p_actor uuid, p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "can_create_user_with_role",
+          "args": "p_creator_id uuid, p_role_name text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "can_manage_payroll_as",
+          "args": "p_user_id uuid, p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "can_pos_undo_transaction",
+          "args": "p_transaction_id uuid, p_actor uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "can_reverse_document",
+          "args": "p_actor uuid, p_store_id uuid, p_operation text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "can_safely_delete_user",
+          "args": "p_user_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "can_void_receipt",
+          "args": "p_receipt_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "check_bulk_ops_hourly_limit",
+          "args": "p_user_id uuid, p_plan text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "check_idempotency",
+          "args": "p_key text, p_operation text, p_record_id uuid, p_param_hash text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "check_tenant_store_quota",
+          "args": "p_tenant_id uuid, p_plan plan_t DEFAULT NULL::plan_t"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "cleanup_expired_idempotency_keys",
+          "args": ""
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "cleanup_old_aggregates",
+          "args": "p_days integer DEFAULT 30"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "cp_fin004_normalize_enervida_payments",
+          "args": "p_store_id uuid DEFAULT '5e6fe821-5465-48b1-b3f1-3aa3182edc38'::uuid, p_exterior_sales uuid[] DEFAULT ARRAY['9033864b-2c13-4aa3-b2b8-2fd645a190db'::uuid, '3d19e5e7-2080-4eb1-8eca-cf7e391f30b9'::uuid, '1a03c37f-3a9b-4c5a-912c-3958ebbaf91c'::uuid], p_actor uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "create_pre_restore_snapshot",
+          "args": "p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "create_purchase_order",
+          "args": "p_store_id uuid, p_supplier_name text, p_supplier_id uuid DEFAULT NULL::uuid, p_po_number text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_expected_date date DEFAULT NULL::date, p_created_by uuid DEFAULT NULL::uuid, p_items jsonb DEFAULT '[]'::jsonb"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "detect_orphan_users",
+          "args": ""
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "discover_backup_tables",
+          "args": ""
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "ensure_fiscal_period",
+          "args": "p_store_id uuid, p_year integer, p_month integer"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_apply_templates",
+          "args": "p_templates jsonb, p_event text, p_metrics jsonb"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_compute_metrics",
+          "args": "p_doctype text, p_document_id uuid, p_event text DEFAULT 'reconocimiento'::text, p_payment_ref uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_entry_reversal_residual",
+          "args": "p_entry_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_eval_condition",
+          "args": "p_cond jsonb, p_metrics jsonb"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_post_annulment_safe",
+          "args": "p_doctype text, p_document_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_post_document",
+          "args": "p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid DEFAULT NULL::uuid, p_actor uuid DEFAULT NULL::uuid, p_generation_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_post_document_annulment",
+          "args": "p_doctype text, p_document_id uuid, p_generation_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_post_document_safe",
+          "args": "p_doctype text, p_document_id uuid, p_event text, p_payment_ref uuid DEFAULT NULL::uuid, p_generation_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_reclassify_sale_payment_currency",
+          "args": "p_sale_id uuid, p_metodo text, p_moneda_desde text, p_moneda_hacia text, p_actor uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_rectify_sale_payment_method",
+          "args": "p_sale_id uuid, p_from_method text, p_to_method text, p_actor uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_resolve_rule",
+          "args": "p_doctype text, p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fin_validate_rule_movements",
+          "args": "p_movements jsonb"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fn_classify_reception_import_row",
+          "args": "p_tenant_id uuid, p_store_id uuid, p_connected boolean, p_row jsonb, p_caller_uid uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fn_log_system_health",
+          "args": "p_payload jsonb"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fn_master_apply_identity_changes",
+          "args": "p_master_id uuid, p_changes jsonb, p_actor uuid, p_origin_store_id uuid DEFAULT NULL::uuid, p_proposal_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "fn_void_receipt",
+          "args": "p_receipt_id uuid, p_user_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "generate_confirmation_token",
+          "args": "p_session_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "generate_internal_barcode",
+          "args": ""
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "generate_inventory_snapshot",
+          "args": "p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_available_stock",
+          "args": "p_store_id uuid, p_product_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_backup_table_list",
+          "args": "p_include_excluded boolean DEFAULT false"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_batch_store_daily_kpis",
+          "args": "p_store_ids uuid[], p_date date DEFAULT CURRENT_DATE"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_cash_balances_by_currency",
+          "args": "p_store_id uuid, p_as_of timestamp with time zone DEFAULT NULL::timestamp with time zone"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_cash_closures",
+          "args": "p_store_id uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_limit integer DEFAULT 1000"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_cash_currency_summary",
+          "args": "p_store_id uuid, p_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_to timestamp with time zone DEFAULT NULL::timestamp with time zone"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_cash_flow_summary",
+          "args": "p_store_id uuid, p_date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_date_to timestamp with time zone DEFAULT NULL::timestamp with time zone"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_cash_ledger",
+          "args": "p_store_id uuid, p_date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_date_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_currency text DEFAULT NULL::text, p_kind text DEFAULT NULL::text, p_limit integer DEFAULT 200, p_offset integer DEFAULT 0"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_cash_shift_expected",
+          "args": "p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_current_user_store_id",
+          "args": ""
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_daily_expenses_aggregated",
+          "args": "p_store_id uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date, p_limit integer DEFAULT 1000"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_daily_income_aggregated",
+          "args": "p_store_id uuid, p_date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_date_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_limit integer DEFAULT 10000"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_global_max_operation_date",
+          "args": "p_store_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_inventory_report",
+          "args": "p_from_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_to_date timestamp with time zone DEFAULT NULL::timestamp with time zone"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_inventory_report",
+          "args": "p_store_id uuid DEFAULT NULL::uuid, p_from_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_to_date timestamp with time zone DEFAULT NULL::timestamp with time zone"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_inventory_with_costs",
+          "args": "p_store_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_low_stock_count",
+          "args": "p_store_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_new_academy_cards",
+          "args": "p_user_id uuid, p_limit integer"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_or_create_product_cost_sheet",
+          "args": "p_product_id uuid, p_store_id uuid, p_template_id text DEFAULT NULL::text, p_modalidad text DEFAULT NULL::text, p_pdf_format text DEFAULT 'res148'::text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_paginated_products",
+          "args": "p_store_id uuid, p_search_term text DEFAULT ''::text, p_category text DEFAULT ''::text, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_product_cost_analysis",
+          "args": "p_product_id uuid, p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_product_stock_ledger",
+          "args": "p_product_id uuid, p_store_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_product_stock_ledger_paginated",
+          "args": "p_product_id uuid, p_store_id uuid DEFAULT NULL::uuid, p_limit integer DEFAULT 20, p_offset integer DEFAULT 0"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_product_variants_counts",
+          "args": ""
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_products_for_reception",
+          "args": "p_store_id uuid, p_search_term text DEFAULT ''::text, p_page integer DEFAULT 1, p_page_size integer DEFAULT 50"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_profit_report",
+          "args": "p_store_id uuid, p_date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_date_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_limit integer DEFAULT 10000"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_purchases_book",
+          "args": "p_store_id uuid, p_year integer, p_month integer"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_sales_book",
+          "args": "p_store_id uuid, p_year integer, p_month integer"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_sales_since_last_closure",
+          "args": "p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_store_analytics_advanced",
+          "args": "p_store_id uuid, p_start_date date DEFAULT NULL::date, p_end_date date DEFAULT NULL::date, p_days integer DEFAULT 30"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_table_writable_columns",
+          "args": "p_table_name text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_tax_report",
+          "args": "p_store_id uuid, p_year integer, p_month integer"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_transfers",
+          "args": "p_store_id uuid, p_date_from timestamp with time zone DEFAULT NULL::timestamp with time zone, p_date_to timestamp with time zone DEFAULT NULL::timestamp with time zone, p_status text DEFAULT NULL::text, p_limit integer DEFAULT 1000"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_usage_forecast",
+          "args": ""
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_usage_summary",
+          "args": "p_hours integer DEFAULT 24"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_user_audit_history",
+          "args": "p_user_id uuid, p_limit integer DEFAULT 100, p_offset integer DEFAULT 0"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "get_worker_commission_summary",
+          "args": "p_store_id uuid, p_date_from date DEFAULT NULL::date, p_date_to date DEFAULT NULL::date"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "has_management_access_as",
+          "args": "p_user_id uuid, p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "has_role",
+          "args": "p_user_id uuid, p_required_role user_role"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "has_store_access_as",
+          "args": "p_user_id uuid, p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "has_store_role_as",
+          "args": "p_user_id uuid, p_store_id uuid, p_roles text[]"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "increment_user_usage",
+          "args": "p_user_id uuid, p_action_type text, p_limit integer"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "is_admin_check",
+          "args": "p_user_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "is_admin_with_access",
+          "args": "p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "is_catalog_governor",
+          "args": "p_tenant_id uuid, p_user_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "is_catalog_store_connected",
+          "args": "p_tenant_id uuid, p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "is_role_not_changed",
+          "args": "p_user_id uuid, p_new_role user_role, p_new_role_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "is_tenant_member",
+          "args": "p_tenant_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "mark_expired_lots",
+          "args": "p_store_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "next_document_number",
+          "args": "p_store_id uuid, p_document_type text, p_user_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "process_inventory_adjustment",
+          "args": "p_store_id uuid, p_cashier_id uuid, p_items adjustment_item[], p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "process_pick3_transaction",
+          "args": "p_user_id uuid, p_type text, p_amount bigint, p_reference_draw_id uuid DEFAULT NULL::uuid, p_reference_play_id uuid DEFAULT NULL::uuid, p_notes text DEFAULT NULL::text, p_metadata jsonb DEFAULT '{}'::jsonb"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "process_stock_adjustment",
+          "args": "p_store_id uuid, p_product_id uuid, p_quantity_delta numeric, p_reason text, p_user_id uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "purge_old_reset_snapshots",
+          "args": "p_days integer DEFAULT 30"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "rate_limit_take",
+          "args": "p_bucket_key text, p_limit integer, p_window_seconds integer"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "receive_against_po",
+          "args": "p_po_id uuid, p_received_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid, p_reception_date timestamp with time zone DEFAULT now(), p_invoice_number text DEFAULT NULL::text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "receive_production_output_deprecated_4arg",
+          "args": "p_order_id uuid, p_product_id uuid, p_quantity numeric, p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "register_idempotency",
+          "args": "p_key text, p_operation text, p_record_id uuid, p_param_hash text, p_result jsonb"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "register_stock_movement",
+          "args": "p_product_id uuid, p_store_id uuid, p_quantity numeric, p_movement_type text DEFAULT NULL::text, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid, p_variant_id uuid DEFAULT NULL::uuid, p_sale_id uuid DEFAULT NULL::uuid, p_unit_cost numeric DEFAULT NULL::numeric, p_notes text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_skip_access_check boolean DEFAULT false"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "register_supplier_payment",
+          "args": "p_store_id uuid, p_ref_type text, p_ref_id uuid, p_amount numeric, p_payment_method text, p_paid_by uuid, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_reference text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_payment_date timestamp with time zone DEFAULT NULL::timestamp with time zone"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "regularize_sale_payment",
+          "args": "p_transaction_id uuid, p_reason text, p_user_id uuid, p_idempotency_key text, p_new_cash numeric DEFAULT NULL::numeric, p_new_zelle_cup numeric DEFAULT NULL::numeric, p_new_zelle_usd numeric DEFAULT NULL::numeric, p_new_zelle_rate numeric DEFAULT NULL::numeric, p_new_transfer numeric DEFAULT NULL::numeric, p_new_subtotal numeric DEFAULT NULL::numeric"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "release_expired_reservations",
+          "args": ""
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "restore_transaction_snapshot",
+          "args": "p_migration_id text, p_tx_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "save_product_cost_sheet",
+          "args": "p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_calculated_data jsonb, p_cost_price numeric"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "sync_inventory_from_products",
+          "args": "p_store_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "transfer_requires_approval",
+          "args": "p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "update_transaction_taxes",
+          "args": "p_transaction_id uuid, p_applied_taxes jsonb, p_reason text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "upsert_manual_exchange_rate_with_audit",
+          "args": "p_actor_id uuid, p_currency text, p_rate numeric, p_rate_date date DEFAULT NULL::date, p_source text DEFAULT 'elToque'::text, p_capture_method text DEFAULT 'real'::text, p_source_ip text DEFAULT NULL::text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "upsert_store_cost_template",
+          "args": "p_store_id uuid, p_template_id text, p_template_data jsonb, p_modalidad text, p_pdf_format text DEFAULT 'res148'::text, p_created_by uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "upsert_usage_aggregate",
+          "args": "p_bucket_start timestamp with time zone, p_bucket_end timestamp with time zone, p_metric_type text, p_service text DEFAULT 'api'::text, p_endpoint text DEFAULT NULL::text, p_count integer DEFAULT 1, p_sum_value double precision DEFAULT 0"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "validate_backup_registry_drift",
+          "args": ""
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "validate_operation_date",
+          "args": "p_new_date timestamp with time zone, p_store_id uuid DEFAULT NULL::uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "validate_post_restore",
+          "args": "p_store_id uuid, p_backup_payload jsonb DEFAULT NULL::jsonb"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "validate_pre_restore_fk_integrity",
+          "args": "p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "validate_store_can_be_modified",
+          "args": "p_store_id uuid, p_check_type text DEFAULT 'soft_delete'::text"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "validate_tenant_access",
+          "args": "p_user_id uuid, p_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "validate_transfer_operation_date",
+          "args": "p_new_date timestamp with time zone, p_origin_store_id uuid, p_destination_store_id uuid"
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "verify_audit_chain",
+          "args": ""
+        },
+        {
+          "check_id": "secdef_no_auth",
+          "proname": "void_reception_with_reversal",
+          "args": "p_receipt_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT 'Anulacion con reversion'::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": " SELECT 'secdef_public_grant' AS check_id, p.proname FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid WHERE ",
+      "rows": []
+    },
+    {
+      "statement": 3,
+      "sql": " SELECT 'tables_no_rls' AS check_id, c.relname FROM pg_class c JOIN pg_namespace n ON c.relnamespace = n.oid WHERE n.nsp",
+      "rows": []
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT '__canary__' AS check_id, 'checks_completed' AS marker",
+      "rows": [
+        {
+          "check_id": "__canary__",
+          "marker": "checks_completed"
+        }
+      ]
+    }
+  ]
+}

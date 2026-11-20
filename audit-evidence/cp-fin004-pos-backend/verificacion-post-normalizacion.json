@@ -1,0 +1,134 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-20T16:23:23.872Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT t.id, t.payment_method, round(t.external_transfer_amount,2) ext_amt, round(t.zelle_amount,2) zelle_amt, pt.paymen",
+      "rows": [
+        {
+          "id": "1a03c37f-3a9b-4c5a-912c-3958ebbaf91c",
+          "payment_method": "external_transfer",
+          "ext_amt": "142800.00",
+          "zelle_amt": "0.00",
+          "pay_method": "external_transfer",
+          "currency": "USD",
+          "usd": "210.00"
+        },
+        {
+          "id": "3d19e5e7-2080-4eb1-8eca-cf7e391f30b9",
+          "payment_method": "external_transfer",
+          "ext_amt": "224400.00",
+          "zelle_amt": "0.00",
+          "pay_method": "external_transfer",
+          "currency": "USD",
+          "usd": "330.00"
+        },
+        {
+          "id": "9033864b-2c13-4aa3-b2b8-2fd645a190db",
+          "payment_method": "external_transfer",
+          "ext_amt": "224400.00",
+          "zelle_amt": "0.00",
+          "pay_method": "external_transfer",
+          "currency": "USD",
+          "usd": "330.00"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT (SELECT count(*) FROM payment_transactions WHERE store_id='5e6fe821-5465-48b1-b3f1-3aa3182edc38' AND payment_meth",
+      "rows": [
+        {
+          "cobros_zelle": 0,
+          "headers_zelle": 0,
+          "works_ext": 31
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT id, payment_method, round(cash_amount,2) cash_amt, round(zelle_amount,2) zelle_amt, sale_currency,   (SELECT coun",
+      "rows": [
+        {
+          "id": "119a4f5e-bfa1-45c1-9784-cb2ff88bb0ce",
+          "payment_method": "cash",
+          "cash_amt": "4760.00",
+          "zelle_amt": "0.00",
+          "sale_currency": "CUP",
+          "n_pagos": 0
+        },
+        {
+          "id": "c5965c77-1025-4f3f-9f9c-7298108d8ad7",
+          "payment_method": "cash",
+          "cash_amt": "15300.00",
+          "zelle_amt": "0.00",
+          "sale_currency": "CUP",
+          "n_pagos": 0
+        },
+        {
+          "id": "cb3052c3-a4b3-4a65-8bbb-62e2340c7da0",
+          "payment_method": "cash",
+          "cash_amt": "4760.00",
+          "zelle_amt": "0.00",
+          "sale_currency": "CUP",
+          "n_pagos": 0
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT payment_method, currency, count(*) n, round(sum(amount),2) total FROM payment_transactions WHERE store_id='5e6fe8",
+      "rows": [
+        {
+          "payment_method": "cash",
+          "currency": "CUP",
+          "n": 463,
+          "total": "10430399.98"
+        },
+        {
+          "payment_method": "cash",
+          "currency": "USD",
+          "n": 243,
+          "total": "38237.64"
+        },
+        {
+          "payment_method": "external_transfer",
+          "currency": "USD",
+          "n": 3,
+          "total": "870.00"
+        },
+        {
+          "payment_method": "transfer",
+          "currency": "CUP",
+          "n": 67,
+          "total": "1264610.01"
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT count(*) movimientos_gen1 FROM fin_movements fm JOIN fin_entries fe ON fe.id=fm.entry_id JOIN fin_posting_generat",
+      "rows": [
+        {
+          "movimientos_gen1": 3618
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT action, created_at, metadata->>'n_ventas_exterior' ext, metadata->>'n_ventas_efectivo' efectivo, metadata->>'n_he",
+      "rows": [
+        {
+          "action": "CP_FIN004_NORMALIZE",
+          "created_at": "2026-11-20 16:22:46.076085+00",
+          "ext": "3",
+          "efectivo": "238",
+          "hdrs": "3",
+          "usd_ext": "870.00"
+        }
+      ]
+    }
+  ]
+}

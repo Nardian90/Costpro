@@ -102,3 +102,153 @@
   (`fin_generation_create/build/validate/activate`), conservando GEN-1 superseded íntegra.
 - **Frontend**: contrato de datos (value `external_transfer`) sin alterar presentación.
 - **Pruebas A–F** del anexo §7 como spec E2E dedicada + pruebas de contrato/Integración.
+
+---
+
+# EJECUCIÓN (2026-11-20, misma sesión — cierre completo del ciclo)
+
+## 5. Migraciones aplicadas a producción (canal canónico + libro)
+
+| Migración | SHA-256 (prefijo) | Aplicada | Libro |
+|---|---|---|---|
+| M1 `20261120200000` | `84d6ea46…` | 15:26:24 UTC | registrada |
+| M2 `20261120210000` | `cfcaafa1…` | 15:26:24 UTC | registrada |
+| M3 `20261120215000` | `af5cf99d…` | 15:36:42 UTC | registrada |
+| M4 `20261120220000` | `a36bf2f6…` | 16:14 UTC | registrada |
+
+- Orden sin ventana de peligro: M1/M2 ANTES del merge (el backend acepta ambos
+  valores — canónico y heredado — desde el primer momento).
+- Todas aplicadas en lote único transaccional vía Management API (doble guard
+  `--authorize` + `ALLOW_PROD_WRITE`), NOTIFY pgrst, evidencia JSON persistida
+  (`scripts/out/cpfin004/m*-aplicacion.json`).
+- `production_migration_ledger`: 4 filas con sha256 = archivos del repo (verificado).
+
+## 6. Hallazgos y correcciones durante la ejecución
+
+### 6.1 M3 — regresión de ACL de `get_transactions` (hallazgo del SQL Security Gate LIVE)
+- El DROP + CREATE de M2 §19 (cambio de row type por `external_transfer_amount`)
+  restableció la ACL por defecto de PostgreSQL (EXECUTE a PUBLIC) y perdió el
+  REVOKE de `20261020000002_sec_definer_hardening`.
+- Detectado ANTES del merge ejecutando el gate LIVE localmente
+  (`secdef_public_grant`, sin allowlist): 1 hallazgo → FALLO.
+- M3 restaura el REVOKE con verificación fail-closed en lote. Post: ACL =
+  `{postgres, authenticated, service_role}`; gate LIVE re-ejecutado: **TODO PASS**.
+
+### 6.2 M4 — caso «header zelle SIN cobros» (hallazgo de la 1ª ejecución del normalizador)
+- La primera ejecución abortó **atómicamente** por la post-condición fail-closed:
+  `ERR_NORMALIZACION_INCOMPLETA: cobros zelle residuales=0, headers residuales=3`.
+- Universo exacto: 3 ventas pre-corte del propietario con `payment_method='zelle'`
+  en el header, `zelle_amount` = total CUP y CERO filas de pago:
+  `c5965c77` (FAC-004273-2026, Cable Solar Negro 4mm ×5 = 15.300 CUP),
+  `cb3052c3` (FAC-004302-2026, Conectores MC4 ×1 = 4.760 CUP),
+  `119a4f5e` (FAC-004311-2026, Conectores MC4 ×1 = 4.760 CUP).
+- **Evidencia económica (sustancia USD físico):** 15.300÷680 = 22,50 USD exactos
+  (= 5 × 4,50 USD, el MISMO precio unitario USD del Cable Solar 4mm de la venta
+  e2614f36 del 07-11) · 4.760÷680 = 7,00 USD exactos. Patrón del bucket
+  «USD físico → zelle @680» (decisión 2 del importador, usada ya en los datos
+  pre-corte del propio propietario). Conforme a la declaración del anexo §4
+  (todo cobro USD fue EFECTIVO salvo las 3 declaradas — que NO son estas).
+- M4 añade la sección B2 al normalizador: header → `cash`, pools
+  `zelle_amount` → `cash_amount`, **SIN crear payment_transactions** (§5/§6:
+  sin pagos ni movimientos nuevos; contabilidad invariante — sin cobros, la
+  re-derivación mantiene ING_VENTAS + diferencia_cobro sin movimiento de
+  destino, exactamente como GEN-1). Queda documentado para veto/ajuste
+  documental del propietario (canal: rectificador idempotente).
+
+## 7. Normalización ejecutada (16:22:46 UTC) — resultado
+
+```json
+{"status":"OK","residual_zelle":0,"n_ventas_efectivo":238,"n_ventas_exterior":3,
+ "usd_exterior_final":870.00,"n_works_representacion":31,
+ "usd_reclasificados_efectivo":38014.64,"n_headers_efectivo_sin_cobros":3}
+```
+
+- **Las 3 declaradas** → `external_transfer` + USD: cobros 330/330/210 USD
+  (Σ=870,00 exacto = declaración) con pools CUP 224.400/224.400/142.800 (@680).
+- **238 ventas** con cobros zelle → `cash` (235 completas + 3 anuladas que
+  conservan su estado): 38.014,64 USD nominales reclasificados a efectivo.
+  Reconciliación del universo FASE 0: 241 filas zelle de venta = 3 + 238 ✓.
+- **3 headers CUP@680 sin cobros** → `cash` (sección B2, contabilidad invariante).
+- **31 cobros de trabajos** → `external_transfer` (solo representación; los
+  works no generan asientos y están fuera del alcance declarado).
+- **Post-condición**: 0 zelle residual (cobros y headers) ✓ · idempotencia
+  re-ejecutada → `YA_APLICADO` ✓ · auditoría `CP_FIN004_NORMALIZE` con conteos ✓.
+- Distribución final de cobros de venta ENERVIDA (sin zelle):
+  cash CUP 463/10.430.399,98 · cash USD 243/38.237,64 · external_transfer USD
+  3/870,00 · transfer CUP 67/1.264.610,01.
+- GEN-1 intacta tras la normalización (3.618 movimientos sin cambios).
+
+## 8. GEN-2 — reconstrucción activada (16:24:27 UTC)
+
+| Fase | Resultado |
+|---|---|
+| create | `7db60abf-401c-4ec9-ae36-4d49b8e94d42` (GEN-2, snapshot de GEN-1) |
+| build | candidate · 1.059 asientos re-derivados · 1 copiado · 1 anulación · 34 existentes · **0 errores · 0 no-reconstruibles** |
+| validate | **ok=true** · identidad global **0,00** · 0 duplicados · cobertura documental COMPLETA (VENTA 719/719, RECEPCION 89/89, VALE_SALIDA 203/203, SERVICIO 21/21, COMISION 1/1, FLUJO_CAJA 2/2, DEVOLUCION 2/2, AJUSTE 1/1) |
+| activate | GEN-2 **active** · GEN-1 superseded (conservada íntegra) · GEN-0 superseded |
+
+### Puente GEN-1 → GEN-2 (única diferencia entre generaciones)
+| Categoría | GEN-1 | GEN-2 | Δ |
+|---|---|---|---|
+| ACT_TRANSF_EXTERIOR | 24.606.900,00 | **591.600,00** | −24.015.300,00 |
+| ACT_EFECTIVO_USD | 27.500,00 | **24.042.800,00** | +24.015.300,00 |
+| Todas las demás | — | — | **0,00** |
+
+- El espejo es EXACTO: 24.015.300 CUP salen de la cuenta exterior y entran a la
+  caja USD; 591.600 CUP restantes en exterior = 870 USD × 680 (las 3 declaradas).
+- **Ingresos, COGS, inventario, bancos, caja CUP y CxP: intactos** (Δ=0) — la
+  reclasificación solo corrige el DESTINO del cobro, jamás el hecho económico.
+
+### Informes LIVE (generación activa GEN-2)
+- Dashboard: **desequilibrio_monto 0 · desequilibrio_balance false** · errores 0.
+- KPIs: efectivo_usd 24.042.800 · transfer_exterior 591.600 · bancos
+  1.264.610,01 · efectivo_cup 1.233.950 · resultado_neto 30.544.840,20
+  (= ingresos 35.923.304,99 − costo_ventas 4.506.831,73 − gastos 871.633,06 ✓).
+- Las 3 declaradas visibles en ACT_TRANSF_EXTERIOR con `amount_origin`
+  330/330/210 USD (trazabilidad a la moneda original).
+- Nota de semántica preexistente (documentada, NO regresión): para ventas
+  importadas denominadas en CUP con cobro USD@680, el par
+  (`currency_origin`=moneda del documento, `amount_origin`=nominal del cobro)
+  es idéntico en GEN-1 y GEN-2 (verificado venta a venta, p. ej. 1dc55aca).
+
+## 9. Verificación de la UI/contrato (E2E BD aislada, código definitivo)
+
+- **Spec de misión 10/10 PASS** (Pruebas A–F del anexo §7 + contrato +
+  normalizador con fixtures de las 3 declaradas + demás USD + header sin cobros
+  M4 + idempotencia YA_APLICADO) + guardrail **net delta = 0**.
+- **pos-checkout (smoke del CI) 9/9 PASS** + net delta = 0 (UI con contrato
+  `external_transfer`, presentación sin cambios).
+- Unitarios de los módulos tocados 107/107 · tsc 0 errores · ESLint 0 errores.
+- Contrato estático: 218/218 representadas, 0 divergencias (surface re-certificado
+  dos veces: tras M2 y tras M4) · check-writers OK · manifiesto replay 188 MATCH.
+
+## 10. Criterios de aceptación del anexo (§9) — verificación
+
+1. ✅ POS conserva las 3 opciones (UI sin cambios; solo el value de datos).
+2. ✅ Backend sin `zelle` como método canónico: 0 zelle residual en ENERVIDA;
+   ingestión normaliza; `zelle` queda como heredado legible.
+3. ✅ Las 3 ventas Zelle reales clasificadas `external_transfer` + USD
+   (870,00 USD exactos) con cuenta exterior propia.
+4. ✅ Demás ventas USD → `cash` + USD (238; incluidas las 3 anuladas que
+   conservan estado) — ninguna conserva zelle/exterior por la moneda (Prueba D).
+5. ✅ Transferencia (nacional) diferenciada de Transf. Exterior (cuentas y
+   columnas separadas; 67 cobros transfer CUP intactos).
+6. ✅ Moneda y medio independientes (Prueba D en E2E: USD ≠ exterior).
+7. ✅ Regresión histórica (Prueba E): informes y re-derivación no reproducen
+   zelle (GEN-2 re-derivada 100% desde fuentes normalizadas).
+8. ✅ Venta mixta (Prueba F): cada componente conserva medio/moneda/importe/cuenta.
+9. ✅ Sin doble contabilidad: GEN-2 re-deriva (no duplica); GEN-1 conservada;
+   cobertura documental exacta; identidad 0,00.
+10. ✅ Montos/monedas/fechas/tasas históricas intactos (Δ=0 en todas las
+    categorías excepto el espejo exterior↔caja USD).
+11. ✅ Migraciones inmutables aplicadas por canal canónico y registradas
+    (M1-M4); datos legados compatibles sin contaminar registros nuevos.
+12. ✅ Evidencia completa (este expediente + JSONs de ejecución + XLSX).
+
+## 11. Entregables
+
+- Migraciones M1-M4 (repo = producción, shas verificados) · spec E2E de misión ·
+  normalizador v2 con sección B2 · M3 de seguridad (ACL).
+- Evidencia de ejecución: `scripts/out/cpfin004/` (aplicaciones M3/M4,
+  normalización, GEN-2 create/build/validate/activate, verificaciones).
+- XLSX de conciliación para el propietario: `download/CP-FIN-004-CONCILIACION-POS-BACKEND.xlsx`.

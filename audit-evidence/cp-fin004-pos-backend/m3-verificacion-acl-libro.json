@@ -1,0 +1,28 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-20T15:36:46.779Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT version, status, applied_at FROM production_migration_ledger WHERE version='20261120215000'",
+      "rows": [
+        {
+          "version": "20261120215000",
+          "status": "applied",
+          "applied_at": "2026-11-20 15:36:42.735729+00"
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT p.proname, COALESCE(p.proacl::text,'NULL') acl FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n",
+      "rows": [
+        {
+          "proname": "get_transactions",
+          "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}"
+        }
+      ]
+    }
+  ]
+}
