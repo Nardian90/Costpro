@@ -109,8 +109,70 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const storeId = userData.active_store_id;
 
+    // ─── ADN-008 §5: liquidación multipago ATÓMICA para servicios ───
+    // register_supplier_payment_batch inserta TODOS los componentes en UNA
+    // transacción (pre-check de la suma contra el saldo pendiente en la moneda
+    // del documento + idempotencia de bloque '<key>:<i>' + reuso íntegro del
+    // motor register_supplier_payment: tasas fail-closed, overpay, asientos
+    // 'pago' por componente vía fin_trg_payment_transactions).
+    // El loop no transaccional permanece SOLO para los demás ref_types
+    // (receipt / production_order / work) — fuera del alcance de la misión 008.
+    if (ref_type === 'service') {
+      const { data: batchResult, error: batchErr } = await supabase.rpc('register_supplier_payment_batch', {
+        p_store_id: storeId,
+        p_ref_type: ref_type,
+        p_ref_id: ref_id,
+        p_payments: payments.map((p) => ({
+          payment_method: p.payment_method,
+          amount: p.amount,
+          currency: p.currency,
+          exchange_rate: p.exchange_rate,
+          reference: p.reference || null,
+          notes: p.notes || null,
+        })),
+        p_paid_by: session.user.id,
+        ...(payment_date ? { p_payment_date: payment_date } : {}),
+        p_idempotency_key: idempotency_key || null,
+      });
+
+      if (batchErr) {
+        const msg = batchErr.message || '';
+        // Rechazos del gate de fechas de la BD → 422 accionable.
+        if (batchErr.code === 'P0001' && (msg.includes('ERR_FUTURE_DATED_DOCUMENT') || msg.includes('ERR_BACKDATED_DOCUMENT'))) {
+          return NextResponse.json(
+            { error: 'Fecha del pago no admisible', message: msg, code: msg.includes('ERR_FUTURE') ? 'ERR_FUTURE_DATED_DOCUMENT' : 'ERR_BACKDATED_DOCUMENT' },
+            { status: 422 }
+          );
+        }
+        // Tasa ausente para divisa → 422 accionable (configurable en Tasas).
+        if (msg.includes('ERR_TASA_NO_DISPONIBLE')) {
+          return NextResponse.json({ error: msg, code: 'ERR_TASA_NO_DISPONIBLE' }, { status: 422 });
+        }
+        // Overpay (pre-check del lote o del componente) → 400.
+        if (msg.includes('excede el saldo') || msg.includes('ERR_BATCH_OVERPAY')) {
+          return NextResponse.json({ error: msg, code: 'ERR_BATCH_OVERPAY' }, { status: 400 });
+        }
+        // Componentes inválidos (medio/moneda/importe) o tamaño del lote → 400.
+        if (msg.includes('ERR_COMPONENT_INVALID') || msg.includes('ERR_BATCH_SIZE')) {
+          return NextResponse.json({ error: msg, code: 'ERR_BATCH_INVALID' }, { status: 400 });
+        }
+        console.error('[payments] Error RPC batch:', batchErr);
+        return NextResponse.json({ error: msg || 'Error al registrar el pago' }, { status: 500 });
+      }
+
+      const rows = (batchResult?.payments ?? []) as { id: string; index: number; payment_method: string; currency: string; amount: number; replayed?: boolean }[];
+      return NextResponse.json({
+        success: true,
+        payments: rows.map((r) => ({ id: r.id, method: r.payment_method, amount: r.amount, currency: r.currency })),
+        count: batchResult?.count ?? rows.length,
+        replayed: batchResult?.replayed === true,
+      }, { status: 201 });
+    }
+
     // Registrar cada pago dentro de la misma idempotency key (con sufijo por índice)
     // Esto permite que un pago mixto de 3 filas sea idempotente como bloque.
+    // NOTA ADN-008: para ref_type='service' este loop fue sustituido por el RPC
+    // transaccional register_supplier_payment_batch (arriba).
     const results: { id: string; method: string; amount: number; currency: string }[] = [];
 
     for (let i = 0; i < payments.length; i++) {
