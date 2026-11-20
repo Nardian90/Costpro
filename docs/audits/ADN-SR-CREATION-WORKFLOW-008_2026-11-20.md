@@ -63,13 +63,16 @@ Pruebas nuevas: contrato estático de la migración (18), rutas draft/batch (20)
 | Destino | Cuándo | Método | Evidencia |
 |---|---|---|---|
 | BD AISLADA (`lguovmvrozxgssupkwpf`) | 2026-11-20 14:36 UTC (v1) y 15:0x UTC (v2 constraint + replay-first, re-aplicación idempotente) | `scripts/m008-apply-migration-e2e.mjs` (Management API + guard CP-INFRA-011) | 7/7 marcas OK; verificación re-ejecutable con `--check` |
-| **PRODUCCIÓN** (`wthkddeleylijmonclxg`) | 2026-11-20 (tras CI verde; UNA sola vez — ver §6) | Management API con doble flag CP-INFRA-019 (`ALLOW_PROD=read-only` + `ALLOW_PROD_WRITE=I_UNDERSTAND`) y guard | (anotado tras la aplicación) |
+| **PRODUCCIÓN** (`wthkddeleylijmonclxg`) | **2026-11-20 16:34 UTC** (aplicación única) + `--check` 16:35 UTC | `scripts/m008-apply-migration-prod.mjs` (guard CP-INFRA-019 + doble flag; Management API) | **8/8 marcas OK** — ver §6 |
 
-## 6. Registro de aplicación en producción (RELLENO TRAS APLICAR)
+## 6. Registro de aplicación en producción
 
-- SHA de la migración aplicada: `81a35979e` (cabeza del PR en el momento de aplicar).
-- Fecha/hora UTC: **PENDIENTE** (se rellena en la aplicación).
-- Marcas verificadas post-aplicación: (PENDIENTE)
+- **SHA de la migración aplicada:** `81a35979e` → expediente en commit posterior (contenido idéntico de la migración; `git log` de `20261121120000_adn008_sr_drafts_supplier_multipago.sql`).
+- **Fecha/hora UTC:** **2026-11-20 16:35 UTC** (aplicada 16:34, verificada 16:35).
+- **Canal:** `scripts/m008-apply-migration-prod.mjs` — guard CP-INFRA-019 con destino REAL (producción) + doble flag explícito del operador (`ALLOW_PROD=read-only` + `ALLOW_PROD_WRITE=I_UNDERSTAND`); Management API; UNA sola aplicación + `--check` re-ejecutable.
+- **Marcas post-aplicación (8/8 OK):** cols · f_draft · f_update · f_batch · gate_status · batch_uses_motor · v2_untouched · constraint_condicional.
+- **Motivo de aplicar antes del merge:** el gate Capa C (reconciliación source-of-truth, REM-INV-6) exige cuerpo LIVE ≡ replay de migraciones — con la migración pendiente, `set_received_service_status` divergía (BODY_DRIFT_FROM_MIGRATION) y bloqueaba el CI. Pre-autorización §12 del propietario; validación íntegra previa en BD aislada (E2E 10/10).
+- **Compatibilidad durante el despliegue:** todas las firmas existentes se conservan; `create_received_service_v2` intacto; el único cambio observable pre-merge es el gate draft→active (el flujo legacy no lo invoca) y la constraint condicional (pre-verificada: 0 filas históricas violándola).
 
 ## 7. Residuos y limpieza
 

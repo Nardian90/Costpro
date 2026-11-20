@@ -130,7 +130,7 @@ describe('POST /api/payments — fecha financiera del pago (V2.12.32)', () => {
     expect(rpcCalls[0].p_ref_type).toBe('service');
     expect(rpcCalls[0].p_ref_id).toBe(REF_ID);
     // ADN-008: el lote viaja como register_supplier_payment_batch (atómico).
-    expect(rpcCalls[0].p_payments[0].amount).toBe(100);
+    expect(((rpcCalls[0].p_payments as Array<Record<string, unknown>>)[0]).amount).toBe(100);
   });
 
   it('sin payment_date → NO se pasa p_payment_date (backward compatible, RPC usa NOW())', async () => {
@@ -202,8 +202,8 @@ describe('POST /api/payments — fecha financiera del pago (V2.12.32)', () => {
     // ADN-008: UNA llamada transaccional para todo el lote.
     expect(rpcCalls.length).toBe(1);
     expect(rpcCalls[0].p_payment_date).toBe(yesterday);
-    expect(rpcCalls[0].p_payments).toHaveLength(2);
-    expect(rpcCalls[0].p_payments[1].reference).toBe('TR-1');
+    expect(rpcCalls[0].p_payments as Array<Record<string, unknown>>).toHaveLength(2);
+    expect(((rpcCalls[0].p_payments as Array<Record<string, unknown>>)[1]).reference).toBe('TR-1');
   });
 
   it('cuerpo sin amount ni payments → 400 (refine del schema intacto)', async () => {

@@ -1,0 +1,95 @@
+{
+ "mision": "CP-FIN-NEGATIVE-WAC-REMEDIATION-013",
+ "fases": [
+  {
+   "fase": "setup_estado_inicial_negativo",
+   "ok": true,
+   "detalle": "5 WAC negativos (SKU117, 37, 40, 83, 90) · 6 productos"
+  },
+  {
+   "fase": "setup_existencias_conservadas",
+   "ok": true,
+   "detalle": "stock_current tras kardex replicado = producción"
+  },
+  {
+   "fase": "execute_wac_no_negativos",
+   "ok": true,
+   "detalle": "0 negativos · 6 productos a 1,00"
+  },
+  {
+   "fase": "V1_wac_no_negativos",
+   "ok": true,
+   "detalle": "0 negativos · 6 productos a 1,00"
+  },
+  {
+   "fase": "V2_existencias_intactas",
+   "ok": true,
+   "detalle": "stock_current idéntico al pre-misión"
+  },
+  {
+   "fase": "V3_movs_conteo",
+   "ok": true,
+   "detalle": "55 movimientos · hash 43d36842"
+  },
+  {
+   "fase": "V5_act_inventario_delta",
+   "ok": true,
+   "detalle": "Δ ACT_INVENTARIO = −2.657.379,32 exacto (saldo 8704218.14)"
+  },
+  {
+   "fase": "V6_cxp_intacta",
+   "ok": true,
+   "detalle": "PAS_CXP_PROV sin cambios (-505.00) — economía recepción intacta"
+  },
+  {
+   "fase": "V7_gastos_según_propuesta",
+   "ok": true,
+   "detalle": "COGS +566.546,45 · VALES +1.072.918,27 · PÉRDIDA +1.017.914,60 (deshace parte del ingreso fantasma)"
+  },
+  {
+   "fase": "V8_asiento_unico_balanceado",
+   "ok": true,
+   "detalle": "1 entrada AJUSTE_INVENTARIO/ajuste_manual · D−C = 0.00"
+  },
+  {
+   "fase": "V9_trazabilidad",
+   "ok": true,
+   "detalle": "wac_change_log +5 · auditoría WAC +5 · auditoría entrada +1 (trace RECT013-E2E)"
+  },
+  {
+   "fase": "V10_capas_ajenas_intactas",
+   "ok": true,
+   "detalle": "capa ajena P3: 1 capa(s) · valor 100.00 intacto"
+  },
+  {
+   "fase": "idem_reejecucion_0_cambios",
+   "ok": true,
+   "detalle": "guard YA_APLICADO activo · estado idéntico pre/post re-ejecución (hash-igual)"
+  },
+  {
+   "fase": "rollback_aborto_sin_persistencia",
+   "ok": true,
+   "detalle": "excepción → ROLLBACK atómico · estado idéntico (hash-igual)"
+  },
+  {
+   "fase": "reapply_tras_aborto_exitosa",
+   "ok": true,
+   "detalle": "0 negativos tras reaplicar (reanudación segura)"
+  },
+  {
+   "fase": "cleanup_net_delta_cero",
+   "ok": true,
+   "detalle": "NET DELTA = 0 (p=0 inv=0 sm=0 fe=0 fm=0 wcl=0 aud=0)"
+  }
+ ],
+ "ultima_fase": "cleanup",
+ "generado": "2026-11-17T13:37:35.820Z",
+ "saldos_post": {
+  "inv": "8704218.14",
+  "cxp": "-505.00",
+  "cogs": "-1855647.00",
+  "vales": "-3514022.74",
+  "perd": "-3334043.40"
+ },
+ "hash_movs_post": "43d3684217fea38acb7d29f418e9b93b"
+}

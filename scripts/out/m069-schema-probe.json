@@ -1,0 +1,1032 @@
+{
+  "fecha_utc": "2026-11-16T18:20:56.050Z",
+  "guard_ref": "wthkddeleylijmonclxg",
+  "metodo": "Management API SELECT-only",
+  "tablas_transaccionales": [
+    {
+      "table_name": "payment_transactions"
+    },
+    {
+      "table_name": "payment_transactions_purga_20261026_archive"
+    },
+    {
+      "table_name": "sale_items"
+    },
+    {
+      "table_name": "sales"
+    },
+    {
+      "table_name": "sales_transactions"
+    },
+    {
+      "table_name": "transaction_item_lots"
+    },
+    {
+      "table_name": "transaction_items"
+    },
+    {
+      "table_name": "transaction_recovery_ledger"
+    },
+    {
+      "table_name": "transactions"
+    },
+    {
+      "table_name": "wallet_transactions"
+    }
+  ],
+  "columnas": {
+    "receipts": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "user_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "status",
+        "data_type": "text"
+      },
+      {
+        "column_name": "total_cost",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "reference_doc",
+        "data_type": "text"
+      },
+      {
+        "column_name": "notes",
+        "data_type": "text"
+      },
+      {
+        "column_name": "store_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "supplier",
+        "data_type": "text"
+      },
+      {
+        "column_name": "reception_date",
+        "data_type": "date"
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "tenant_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "payment_status",
+        "data_type": "text"
+      },
+      {
+        "column_name": "payment_method",
+        "data_type": "text"
+      },
+      {
+        "column_name": "paid_amount",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "due_date",
+        "data_type": "date"
+      },
+      {
+        "column_name": "paid_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "payment_terms_days",
+        "data_type": "integer"
+      },
+      {
+        "column_name": "confirmed_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "confirmed_by",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "reversed_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "reversed_by",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "reversal_reason",
+        "data_type": "text"
+      },
+      {
+        "column_name": "original_receipt_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "po_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "supplier_code",
+        "data_type": "text"
+      },
+      {
+        "column_name": "supplier_address",
+        "data_type": "text"
+      },
+      {
+        "column_name": "supplier_phone",
+        "data_type": "text"
+      },
+      {
+        "column_name": "supplier_tax_id",
+        "data_type": "text"
+      },
+      {
+        "column_name": "document_number",
+        "data_type": "text"
+      }
+    ],
+    "receipt_items": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "receipt_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "product_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "quantity",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "unit_cost",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "moneda_recepcion",
+        "data_type": "text"
+      },
+      {
+        "column_name": "tasa_cambio_recepcion",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "variant_id",
+        "data_type": "uuid"
+      }
+    ],
+    "products": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "name",
+        "data_type": "text"
+      },
+      {
+        "column_name": "description",
+        "data_type": "text"
+      },
+      {
+        "column_name": "sku",
+        "data_type": "text"
+      },
+      {
+        "column_name": "price",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "cost_price",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "image_url",
+        "data_type": "text"
+      },
+      {
+        "column_name": "category",
+        "data_type": "text"
+      },
+      {
+        "column_name": "unit_of_measure",
+        "data_type": "text"
+      },
+      {
+        "column_name": "supplier",
+        "data_type": "text"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "stock_current",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "cost_average",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "min_stock",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "store_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "is_active",
+        "data_type": "boolean"
+      },
+      {
+        "column_name": "public_image_url",
+        "data_type": "text"
+      },
+      {
+        "column_name": "category_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "status",
+        "data_type": "USER-DEFINED"
+      },
+      {
+        "column_name": "tenant_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "barcode",
+        "data_type": "text"
+      },
+      {
+        "column_name": "barcode_type",
+        "data_type": "text"
+      },
+      {
+        "column_name": "is_complete",
+        "data_type": "boolean"
+      },
+      {
+        "column_name": "visible_en_tienda",
+        "data_type": "boolean"
+      },
+      {
+        "column_name": "precio_empresa",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "has_movements",
+        "data_type": "boolean"
+      },
+      {
+        "column_name": "cost_sheet_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "fc_auto_enabled",
+        "data_type": "boolean"
+      },
+      {
+        "column_name": "search_vector",
+        "data_type": "tsvector"
+      },
+      {
+        "column_name": "price_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "price_visible",
+        "data_type": "boolean"
+      },
+      {
+        "column_name": "stock_visible",
+        "data_type": "boolean"
+      },
+      {
+        "column_name": "on_promotion",
+        "data_type": "boolean"
+      },
+      {
+        "column_name": "is_service",
+        "data_type": "boolean"
+      },
+      {
+        "column_name": "precio_empresa_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "master_product_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "operational_class",
+        "data_type": "USER-DEFINED"
+      }
+    ],
+    "stock_movements": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "store_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "product_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "variant_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "quantity_change",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "movement_type",
+        "data_type": "USER-DEFINED"
+      },
+      {
+        "column_name": "reference_id",
+        "data_type": "text"
+      },
+      {
+        "column_name": "reference_doc",
+        "data_type": "text"
+      },
+      {
+        "column_name": "movement_date",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "created_by",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "unit_cost",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "unit_price",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "cost_value_change",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "balance_after",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "notes",
+        "data_type": "text"
+      },
+      {
+        "column_name": "tenant_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "unit_cost_derived",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "unit_cost_derived_source",
+        "data_type": "text"
+      },
+      {
+        "column_name": "unit_cost_derived_evidence_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "unit_cost_derived_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "cogs_derivation_status",
+        "data_type": "text"
+      }
+    ],
+    "sale_items": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "sale_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "product_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "quantity",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "unit_price_sold",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "cost_at_sale",
+        "data_type": "numeric"
+      }
+    ],
+    "sales": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "cashier_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "payment_method",
+        "data_type": "text"
+      },
+      {
+        "column_name": "total_amount",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "status",
+        "data_type": "text"
+      }
+    ],
+    "transactions": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "store_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "seller_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "total_amount",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "status",
+        "data_type": "USER-DEFINED"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "completed_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "cancelled_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "void_reason",
+        "data_type": "text"
+      },
+      {
+        "column_name": "payment_method",
+        "data_type": "USER-DEFINED"
+      },
+      {
+        "column_name": "discount_type",
+        "data_type": "USER-DEFINED"
+      },
+      {
+        "column_name": "discount_value",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "subtotal",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "idempotency_key",
+        "data_type": "text"
+      },
+      {
+        "column_name": "tax_amount",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "applied_taxes",
+        "data_type": "jsonb"
+      },
+      {
+        "column_name": "tenant_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "cash_amount",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "transfer_amount",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "customer_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "customer_name",
+        "data_type": "text"
+      },
+      {
+        "column_name": "sale_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "sale_exchange_rate",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "zelle_amount",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "reversed_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "reversed_by",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "reversal_reason",
+        "data_type": "text"
+      },
+      {
+        "column_name": "original_transaction_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "customer_phone",
+        "data_type": "text"
+      },
+      {
+        "column_name": "customer_ci",
+        "data_type": "text"
+      },
+      {
+        "column_name": "customer_address",
+        "data_type": "text"
+      },
+      {
+        "column_name": "invoice_number",
+        "data_type": "text"
+      },
+      {
+        "column_name": "notes",
+        "data_type": "text"
+      },
+      {
+        "column_name": "payment_incidents",
+        "data_type": "jsonb"
+      },
+      {
+        "column_name": "cash_received_cup",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "cash_received_usd",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "change_given_cup",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "change_given_usd",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "change_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "change_exchange_rate",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "change_rate_source",
+        "data_type": "text"
+      },
+      {
+        "column_name": "customer_code",
+        "data_type": "text"
+      }
+    ],
+    "transaction_items": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "transaction_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "product_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "variant_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "quantity",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "price_at_sale",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "cost_at_sale",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "discount_type",
+        "data_type": "USER-DEFINED"
+      },
+      {
+        "column_name": "discount_value",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "cash_paid",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "transfer_paid",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "price_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "price_at_sale_cup",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "zelle_paid",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "exchange_rate",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "cash_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "transfer_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "zelle_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "cash_discount_type",
+        "data_type": "text"
+      },
+      {
+        "column_name": "cash_discount_value",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "cash_discount_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "transfer_discount_type",
+        "data_type": "text"
+      },
+      {
+        "column_name": "transfer_discount_value",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "transfer_discount_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "zelle_discount_type",
+        "data_type": "text"
+      },
+      {
+        "column_name": "zelle_discount_value",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "zelle_discount_currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "catalog_price_at_sale",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "item_discount_value",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "item_discount_pct",
+        "data_type": "numeric"
+      }
+    ],
+    "transaction_item_lots": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "transaction_item_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "lot_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "quantity",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      }
+    ],
+    "sales_transactions": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "store_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "worker_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "transaction_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "amount_total",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "payment_cash",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "payment_transfer",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "sale_date",
+        "data_type": "date"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "created_by",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "tenant_id",
+        "data_type": "uuid"
+      }
+    ],
+    "issue_slip_items": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "slip_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "product_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "variant_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "production_order_item_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "quantity",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "unit_cost",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "total_cost",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      }
+    ],
+    "wac_change_log": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "store_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "product_id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "wac_before",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "wac_after",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "event",
+        "data_type": "text"
+      },
+      {
+        "column_name": "qty_in",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "uc_in",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "source_ref",
+        "data_type": "jsonb"
+      },
+      {
+        "column_name": "changed_by",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      }
+    ],
+    "exchange_rates": [
+      {
+        "column_name": "id",
+        "data_type": "uuid"
+      },
+      {
+        "column_name": "rate_date",
+        "data_type": "date"
+      },
+      {
+        "column_name": "captured_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "currency",
+        "data_type": "text"
+      },
+      {
+        "column_name": "source",
+        "data_type": "text"
+      },
+      {
+        "column_name": "rate",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "variation_daily",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "variation_weekly",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "variation_monthly",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "variation_yearly",
+        "data_type": "numeric"
+      },
+      {
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone"
+      },
+      {
+        "column_name": "segment",
+        "data_type": "text"
+      },
+      {
+        "column_name": "capture_method",
+        "data_type": "text"
+      },
+      {
+        "column_name": "source_updated_at",
+        "data_type": "timestamp with time zone"
+      }
+    ]
+  },
+  "receipt_items_tipos": [
+    {
+      "n_lineas": 101,
+      "n_skus": 101,
+      "n_monedas": 2
+    }
+  ],
+  "movement_types_fvc": [
+    {
+      "movement_type": "purchase",
+      "n": 101
+    }
+  ],
+  "exchange_rates_cols_ok": 14,
+  "veredicto": "ESQUEMA SONDEADO — columnas verificadas para m070"
+}

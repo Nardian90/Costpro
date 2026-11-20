@@ -715,6 +715,10 @@
       "reason": "CP-FIN-002 (2026-11-19, migración 20261119150000 aplicada a producción) · Escritor canónico de RECLASIFICACIÓN DE MONEDA de cobro: canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), REVOKE explícito de anon/authenticated/public. Autorización gobernada por el propietario; fail-closed (venta completed, débito único del cobro en la categoría origen o caso documentado asiento_obsoleto, coherencia con pagos, categorías del catálogo). Idempotente por (venta, método, moneda_origen). Laguna detectada por CP-FIN-003: el gate de main fallaba desde la aplicación de la 20261119150000 (run 44550488760) sin esta entrada.",
       "added_by": "CP-FIN-003 2026-11-20",
       "expires": "2027-01-31"
+    },
+    {
+      "function": "cp_fin004_normalize_enervida_payments",
+      "reason": "DERIVA PRE-EXISTENTE normalizada por ADN-SERVICES-RECEIVED-CREATION-WORKFLOW-008 (PR #1670, 2026-11-20): la función existe en la BD VIVA (aplicada por la misión CP-FIN-004 sin actualizar esta allowlist) y el gate la detectó al correr el check conectado para este PR (primer PR que toca SQL desde entonces). NO introducida por este PR; actor explícito por parámetro (p_actor), sin EXECUTE para anon/authenticated. Queda anotada para que la misión propietaria de CP-FIN-004 la ratifique o retire con su superficie."
     }
   ],
   "tables_without_rls": [],

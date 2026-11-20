@@ -1,0 +1,1047 @@
+{
+ "mision": "CP-FIN-NEGATIVE-WAC-REMEDIATION-013",
+ "control_aritmetico": {
+  "cifras_informe_012": {
+   "117": "-2175998.00",
+   "83": "-122398.00",
+   "90": "-78176.25",
+   "40": "-665.86",
+   "37": "-1.00"
+  },
+  "naturaleza_cifras_012": "COSTO UNITARIO PROMEDIO (products.cost_average), NO valor total",
+  "suma_cifras_012": "-2377239.11",
+  "suma_cifras_012_q2": "-2377239.11",
+  "total_declarado_012": "-2657345.32",
+  "diferencia_segun_mision": "-280106.21",
+  "diferencia_segun_mision_q2": "-280106.21",
+  "valor_total_real_hoy_q2": "-2657345.32",
+  "diferencia_real_vs_suma_unitarios_q2": "-280106.21",
+  "explicacion": "Las cinco cifras del informe 012 son WAC unitarios (cost_average); el total declarado (−2.657.345,32) es Σ(wac × cantidad kardex). La diferencia de 280.106,21 proviene de multiplicar cada WAC por su cantidad (2, 3, 3 y 25 u para SKU83/90/40/37; SKU117 qty=1 no aporta). Redondeos a centavos de los WAC de SKU90 (−78.176,248120…→−78.176,25) y SKU40 (−665,857142…→−665,86) explican los céntimos.",
+  "desglose_por_sku": [
+   {
+    "sku": "117",
+    "qty": "1.0000",
+    "wac_exacto": "-2175998.000000000000",
+    "cifra_012_wac_redondeado": "-2175998.00",
+    "valor_total_real_q2": "-2175998.00",
+    "aporte_diferencia_q2": "0.00",
+    "nota": "aporte = (qty−1) × wac_unitario; SKU117 qty=1 → aporte 0"
+   },
+   {
+    "sku": "83",
+    "qty": "2.0000",
+    "wac_exacto": "-122398.000000000000",
+    "cifra_012_wac_redondeado": "-122398.00",
+    "valor_total_real_q2": "-244796.00",
+    "aporte_diferencia_q2": "-122398.00",
+    "nota": "aporte = (qty−1) × wac_unitario; SKU117 qty=1 → aporte 0"
+   },
+   {
+    "sku": "90",
+    "qty": "3.0000",
+    "wac_exacto": "-78176.248120300752",
+    "cifra_012_wac_redondeado": "-78176.25",
+    "valor_total_real_q2": "-234528.74",
+    "aporte_diferencia_q2": "-156352.50",
+    "nota": "aporte = (qty−1) × wac_unitario; SKU117 qty=1 → aporte 0"
+   },
+   {
+    "sku": "40",
+    "qty": "3.0000",
+    "wac_exacto": "-665.857142857143",
+    "cifra_012_wac_redondeado": "-665.86",
+    "valor_total_real_q2": "-1997.57",
+    "aporte_diferencia_q2": "-1331.72",
+    "nota": "aporte = (qty−1) × wac_unitario; SKU117 qty=1 → aporte 0"
+   },
+   {
+    "sku": "37",
+    "qty": "25.0000",
+    "wac_exacto": "-1.000000000000",
+    "cifra_012_wac_redondeado": "-1.00",
+    "valor_total_real_q2": "-25.00",
+    "aporte_diferencia_q2": "-24.00",
+    "nota": "aporte = (qty−1) × wac_unitario; SKU117 qty=1 → aporte 0"
+   }
+  ],
+  "verificacion_wac_hoy": [
+   {
+    "sku": "117",
+    "nombre": "Inversor",
+    "product_id": "680c132e-b328-4390-926e-18b1368f6444",
+    "stock": "1.0000",
+    "wac": "-2175998.000000000000",
+    "valor_total": "-2175998.0000000000000000",
+    "valor_total_q2": "-2175998.00"
+   },
+   {
+    "sku": "83",
+    "nombre": "Cripiadora Roja con 6 dabas rojas",
+    "product_id": "8b05170d-4b3d-4cc4-937e-b4d7daa2a6fd",
+    "stock": "2.0000",
+    "wac": "-122398.000000000000",
+    "valor_total": "-244796.0000000000000000",
+    "valor_total_q2": "-244796.00"
+   },
+   {
+    "sku": "90",
+    "nombre": "Cable Solar Rojo 6mm",
+    "product_id": "1b0d19fd-e0fe-4ac1-972c-3a1361d61263",
+    "stock": "3.0000",
+    "wac": "-78176.248120300752",
+    "valor_total": "-234528.7443609022560000",
+    "valor_total_q2": "-234528.74"
+   },
+   {
+    "sku": "40",
+    "nombre": "Latiguillo de media por 3/8",
+    "product_id": "fcadebcd-1f99-4736-973d-cea194902399",
+    "stock": "3.0000",
+    "wac": "-665.857142857143",
+    "valor_total": "-1997.5714285714290000",
+    "valor_total_q2": "-1997.57"
+   },
+   {
+    "sku": "37",
+    "nombre": "J de techo",
+    "product_id": "6862a061-50d0-4c8d-96d4-7b6d6ed082cd",
+    "stock": "25.0000",
+    "wac": "-1.000000000000",
+    "valor_total": "-25.0000000000000000",
+    "valor_total_q2": "-25.00"
+   }
+  ],
+  "veredicto": "EXPLICADA"
+ },
+ "reconstruccion": {
+  "117": {
+   "product_id": "680c132e-b328-4390-926e-18b1368f6444",
+   "nombre": "Inversor",
+   "movimientos": 5,
+   "neto_kardex": "1.0000",
+   "stock_current": "1.0000",
+   "drift": "0.0000",
+   "wac_hoy": "-2175998.000000000000",
+   "valor_hoy": "-2175998.0000000000000000",
+   "capas_fvc": [
+    {
+     "fecha": "2026-07-01",
+     "qty": "6.0000",
+     "uc": "1",
+     "uc_actual": "1",
+     "recepcion": "fd9d6c88",
+     "doc": "Confirmacion recepcion",
+     "id": "8fbb8846-84bf-4724-8c18-7241c5986048",
+     "product_id": "680c132e-b328-4390-926e-18b1368f6444"
+    }
+   ],
+   "capas_ajenas": [],
+   "qty_linea_fvc": "6.0000",
+   "uc_linea_fvc_hoy": "1",
+   "flujos_netos": {
+    "venta": {
+     "n": 1,
+     "unidades": "1.0000",
+     "costo_registrado": "0.0000"
+    },
+    "perdida": {
+     "n": 1,
+     "unidades": "2.0000",
+     "costo_registrado": "0.0000"
+    },
+    "vale": {
+     "n": 2,
+     "unidades": "2.0000",
+     "costo_registrado": "2.0000"
+    }
+   },
+   "consumo_neto_total": "5.0000",
+   "modelo_m074": {
+    "qty": "6.0000",
+    "uc_cup_old": "2176000.00000",
+    "fvc_restante": "1.0000",
+    "cons_venta": "1.0000",
+    "cons_vale": "2.0000",
+    "cons_perdida": "2.0000",
+    "inv_credito": "2175999.000000000",
+    "cogs_credito": "2175999.000000000",
+    "vales_credito": "4351998.000000000",
+    "perdida_credito": "4351998.000000000",
+    "stock_actual": "1.0000",
+    "wac_old": "1",
+    "wac_new": "-2175998.00000"
+   },
+   "identidad_cantidades": {
+    "entradas_fvc": "6.0000",
+    "entradas_ajenas": "0",
+    "ajustes_plus": "0",
+    "consumo_neto": "5.0000",
+    "existencia_final": "1.0000",
+    "cuadra": "1.0000",
+    "ok": true
+   }
+  },
+  "83": {
+   "product_id": "8b05170d-4b3d-4cc4-937e-b4d7daa2a6fd",
+   "nombre": "Cripiadora Roja con 6 dabas rojas",
+   "movimientos": 2,
+   "neto_kardex": "2.0000",
+   "stock_current": "2.0000",
+   "drift": "0.0000",
+   "wac_hoy": "-122398.000000000000",
+   "valor_hoy": "-244796.0000000000000000",
+   "capas_fvc": [
+    {
+     "fecha": "2026-07-01",
+     "qty": "3.0000",
+     "uc": "1",
+     "uc_actual": "1",
+     "recepcion": "fd9d6c88",
+     "doc": "Confirmacion recepcion",
+     "id": "7d2794ca-847c-4f88-af63-498376fd1fd6",
+     "product_id": "8b05170d-4b3d-4cc4-937e-b4d7daa2a6fd"
+    }
+   ],
+   "capas_ajenas": [],
+   "qty_linea_fvc": "3.0000",
+   "uc_linea_fvc_hoy": "1",
+   "flujos_netos": {
+    "vale": {
+     "n": 1,
+     "unidades": "1.0000",
+     "costo_registrado": "1.0000"
+    }
+   },
+   "consumo_neto_total": "1.0000",
+   "modelo_m074": {
+    "qty": "3.0000",
+    "uc_cup_old": "122400.00000",
+    "fvc_restante": "2.0000",
+    "cons_venta": "0",
+    "cons_vale": "1.0000",
+    "cons_perdida": "0",
+    "inv_credito": "244798.000000000",
+    "cogs_credito": "0.00000",
+    "vales_credito": "122399.000000000",
+    "perdida_credito": "0.00000",
+    "stock_actual": "2.0000",
+    "wac_old": "1",
+    "wac_new": "-122398.00000"
+   },
+   "identidad_cantidades": {
+    "entradas_fvc": "3.0000",
+    "entradas_ajenas": "0",
+    "ajustes_plus": "0",
+    "consumo_neto": "1.0000",
+    "existencia_final": "2.0000",
+    "cuadra": "2.0000",
+    "ok": true
+   }
+  },
+  "90": {
+   "product_id": "1b0d19fd-e0fe-4ac1-972c-3a1361d61263",
+   "nombre": "Cable Solar Rojo 6mm",
+   "movimientos": 27,
+   "neto_kardex": "3.0000",
+   "stock_current": "3.0000",
+   "drift": "0.0000",
+   "wac_hoy": "-78176.248120300752",
+   "valor_hoy": "-234528.7443609022560000",
+   "capas_fvc": [
+    {
+     "fecha": "2026-07-01",
+     "qty": "173.0000",
+     "uc": "1",
+     "uc_actual": "1",
+     "recepcion": "fd9d6c88",
+     "doc": "Confirmacion recepcion",
+     "id": "a11c4ec0-97fe-432e-aadd-df17bb203e16",
+     "product_id": "1b0d19fd-e0fe-4ac1-972c-3a1361d61263"
+    }
+   ],
+   "capas_ajenas": [
+    {
+     "fecha": "2026-09-22",
+     "qty": "100.0000",
+     "uc": "1",
+     "uc_actual": "1",
+     "recepcion": "30538c95",
+     "doc": "Recepción de mercancía",
+     "id": "2aba2ece-44bb-407c-bac6-a04989f77b21",
+     "product_id": "1b0d19fd-e0fe-4ac1-972c-3a1361d61263"
+    }
+   ],
+   "qty_linea_fvc": "173.0000",
+   "uc_linea_fvc_hoy": "1",
+   "flujos_netos": {
+    "venta": {
+     "n": 22,
+     "unidades": "123.0000",
+     "costo_registrado": "27.0676691729323308270720000"
+    },
+    "vale": {
+     "n": 2,
+     "unidades": "126.0000",
+     "costo_registrado": "94.7368421052631578947520000"
+    },
+    "perdida": {
+     "n": 1,
+     "unidades": "21.0000",
+     "costo_registrado": "0.0000"
+    }
+   },
+   "consumo_neto_total": "270.0000",
+   "modelo_m074": {
+    "qty": "173.0000",
+    "uc_cup_old": "3400.00000",
+    "fvc_restante": "69.0000",
+    "cons_venta": "72.0000",
+    "cons_vale": "32.0000",
+    "cons_perdida": "0",
+    "inv_credito": "234531.000000000",
+    "cogs_credito": "244728.000000000",
+    "vales_credito": "108768.000000000",
+    "perdida_credito": "0.00000",
+    "stock_actual": "3.0000",
+    "wac_old": "0.751879699248120300752",
+    "wac_new": "-78176.248120300751879699248"
+   },
+   "identidad_cantidades": {
+    "entradas_fvc": "173.0000",
+    "entradas_ajenas": "100.0000",
+    "ajustes_plus": "0",
+    "consumo_neto": "270.0000",
+    "existencia_final": "3.0000",
+    "cuadra": "3.0000",
+    "ok": true
+   }
+  },
+  "40": {
+   "product_id": "fcadebcd-1f99-4736-973d-cea194902399",
+   "nombre": "Latiguillo de media por 3/8",
+   "movimientos": 4,
+   "neto_kardex": "3.0000",
+   "stock_current": "3.0000",
+   "drift": "0.0000",
+   "wac_hoy": "-665.857142857143",
+   "valor_hoy": "-1997.5714285714290000",
+   "capas_fvc": [
+    {
+     "fecha": "2026-07-01",
+     "qty": "7.0000",
+     "uc": "1",
+     "uc_actual": "1",
+     "recepcion": "fd9d6c88",
+     "doc": "Confirmacion recepcion",
+     "id": "2cb6ce08-8811-403e-b993-3cbb8a9f1203",
+     "product_id": "fcadebcd-1f99-4736-973d-cea194902399"
+    }
+   ],
+   "capas_ajenas": [],
+   "qty_linea_fvc": "7.0000",
+   "uc_linea_fvc_hoy": "1",
+   "flujos_netos": {
+    "venta": {
+     "n": 1,
+     "unidades": "1.0000",
+     "costo_registrado": "0.0000"
+    },
+    "ajuste_plus": {
+     "n": 1,
+     "unidades": "1.0000",
+     "costo_registrado": "1.0000"
+    },
+    "vale": {
+     "n": 1,
+     "unidades": "4.0000",
+     "costo_registrado": "0.571428571428571428560000"
+    }
+   },
+   "consumo_neto_total": "6.0000",
+   "modelo_m074": {
+    "qty": "7.0000",
+    "uc_cup_old": "1000.00000",
+    "fvc_restante": "2.0000",
+    "cons_venta": "1.0000",
+    "cons_vale": "4.0000",
+    "cons_perdida": "0",
+    "inv_credito": "1998.000000000",
+    "cogs_credito": "999.000000000",
+    "vales_credito": "3996.000000000",
+    "perdida_credito": "0.00000",
+    "stock_actual": "3.0000",
+    "wac_old": "0.14285714285714285714",
+    "wac_new": "-665.85714285714285714286"
+   },
+   "identidad_cantidades": {
+    "entradas_fvc": "7.0000",
+    "entradas_ajenas": "0",
+    "ajustes_plus": "1.0000",
+    "consumo_neto": "5.0000",
+    "existencia_final": "3.0000",
+    "cuadra": "3.0000",
+    "ok": true
+   }
+  },
+  "37": {
+   "product_id": "6862a061-50d0-4c8d-96d4-7b6d6ed082cd",
+   "nombre": "J de techo",
+   "movimientos": 3,
+   "neto_kardex": "25.0000",
+   "stock_current": "25.0000",
+   "drift": "0.0000",
+   "wac_hoy": "-1.000000000000",
+   "valor_hoy": "-25.0000000000000000",
+   "capas_fvc": [
+    {
+     "fecha": "2026-07-01",
+     "qty": "11.0000",
+     "uc": "1",
+     "uc_actual": "1",
+     "recepcion": "fd9d6c88",
+     "doc": "Confirmacion recepcion",
+     "id": "6233fd1e-1f7a-45de-ac3d-b677e91d0406",
+     "product_id": "6862a061-50d0-4c8d-96d4-7b6d6ed082cd"
+    }
+   ],
+   "capas_ajenas": [],
+   "qty_linea_fvc": "11.0000",
+   "uc_linea_fvc_hoy": "1",
+   "flujos_netos": {
+    "venta": {
+     "n": 1,
+     "unidades": "10.0000",
+     "costo_registrado": "0.0000"
+    },
+    "ajuste_plus": {
+     "n": 1,
+     "unidades": "24.0000",
+     "costo_registrado": "24.0000"
+    }
+   },
+   "consumo_neto_total": "34.0000",
+   "modelo_m074": {
+    "qty": "11.0000",
+    "uc_cup_old": "50.00000",
+    "fvc_restante": "1.0000",
+    "cons_venta": "10.0000",
+    "cons_vale": "0",
+    "cons_perdida": "0",
+    "inv_credito": "49.000000000",
+    "cogs_credito": "490.000000000",
+    "vales_credito": "0.00000",
+    "perdida_credito": "0.00000",
+    "stock_actual": "25.0000",
+    "wac_old": "0.96000000000000000000",
+    "wac_new": "-1.00000000000000000000"
+   },
+   "identidad_cantidades": {
+    "entradas_fvc": "11.0000",
+    "entradas_ajenas": "0",
+    "ajustes_plus": "24.0000",
+    "consumo_neto": "10.0000",
+    "existencia_final": "25.0000",
+    "cuadra": "25.0000",
+    "ok": true
+   }
+  },
+  "31": {
+   "product_id": "8859ef67-f829-4543-8bf8-6bb7e970e92d",
+   "nombre": "Expansiones con tornillos M8",
+   "movimientos": 14,
+   "neto_kardex": "111.0000",
+   "stock_current": "111.0000",
+   "drift": "0.0000",
+   "wac_hoy": "1.000000000000",
+   "valor_hoy": "111.0000000000000000",
+   "capas_fvc": [
+    {
+     "fecha": "2026-07-01",
+     "qty": "95.0000",
+     "uc": "1",
+     "uc_actual": "1",
+     "recepcion": "fd9d6c88",
+     "doc": "Confirmacion recepcion",
+     "id": "146a7f89-1d75-4afe-9e7d-a30ec4139e57",
+     "product_id": "8859ef67-f829-4543-8bf8-6bb7e970e92d"
+    }
+   ],
+   "capas_ajenas": [
+    {
+     "fecha": "2026-10-14",
+     "qty": "10.0000",
+     "uc": "1.0",
+     "uc_actual": "1.0",
+     "recepcion": "0fab1e37",
+     "doc": "Recepción de mercancía",
+     "id": "88016ed4-61c7-4d73-ade3-29d4ca589d99",
+     "product_id": "8859ef67-f829-4543-8bf8-6bb7e970e92d"
+    },
+    {
+     "fecha": "2026-11-06",
+     "qty": "100.0000",
+     "uc": "1",
+     "uc_actual": "1",
+     "recepcion": "55ed12df",
+     "doc": "Recepción de mercancía",
+     "id": "b6a45e20-ca17-4760-b6f4-5b54c6f5d0e4",
+     "product_id": "8859ef67-f829-4543-8bf8-6bb7e970e92d"
+    }
+   ],
+   "qty_linea_fvc": "95.0000",
+   "uc_linea_fvc_hoy": "1",
+   "flujos_netos": {
+    "venta": {
+     "n": 1,
+     "unidades": "3.0000",
+     "costo_registrado": "0.0000"
+    },
+    "perdida": {
+     "n": 1,
+     "unidades": "40.0000",
+     "costo_registrado": "0.0000"
+    },
+    "vale": {
+     "n": 9,
+     "unidades": "51.0000",
+     "costo_registrado": "0.0000"
+    }
+   },
+   "consumo_neto_total": "94.0000",
+   "modelo_m074": {
+    "qty": "95.0000",
+    "uc_cup_old": "350.00000",
+    "fvc_restante": "1.0000",
+    "cons_venta": "3.0000",
+    "cons_vale": "51.0000",
+    "cons_perdida": "40.0000",
+    "inv_credito": "349.000000000",
+    "cogs_credito": "1047.000000000",
+    "vales_credito": "17799.000000000",
+    "perdida_credito": "13960.000000000",
+    "stock_actual": "111.0000",
+    "wac_old": "4.1441441441441441441441171",
+    "wac_new": "0.999999999999999999999972955855855855855855855855855855855856"
+   },
+   "identidad_cantidades": {
+    "entradas_fvc": "95.0000",
+    "entradas_ajenas": "110.0000",
+    "ajustes_plus": "0",
+    "consumo_neto": "94.0000",
+    "existencia_final": "111.0000",
+    "cuadra": "111.0000",
+    "ok": true
+   }
+  }
+ },
+ "instante_negativo": {
+  "accion": "SYSTEM_RECT011_WAC",
+  "trace": "RECT011-PROD",
+  "lote": "C (m076) · pasada 1 de RECT-011",
+  "created_at": "2026-11-16 19:59:14.38156+00",
+  "filas": 6,
+  "detalle": [
+   {
+    "old_wac": 4.1441441441441444,
+    "new_wac": 1,
+    "stock": 111
+   },
+   {
+    "old_wac": 0.96,
+    "new_wac": -1,
+    "stock": 25
+   },
+   {
+    "old_wac": 0.14285714285714285,
+    "new_wac": -665.857142857143,
+    "stock": 3
+   },
+   {
+    "old_wac": 1,
+    "new_wac": -122398,
+    "stock": 2
+   },
+   {
+    "old_wac": 0.7518796992481203,
+    "new_wac": -78176.24812030075,
+    "stock": 3
+   },
+   {
+    "old_wac": 1,
+    "new_wac": -2175998,
+    "stock": 1
+   }
+  ],
+  "wacs_previos_positivos": true,
+  "conclusion": "Los 5 WAC eran POSITIVOS hasta el 2026-11-16 19:59:14.381561+00 (lote C, pasada 1). La negatividad fue PRODUCIDA por RECT-011 (no preexistente a la misión 011)."
+ },
+ "historia_wac": {
+  "90": [
+   {
+    "fecha": "2026-10-04 04:53:42",
+    "evento": "reception_in",
+    "antes": "0",
+    "despues": "0.751879699248120300752",
+    "qty_in": "100.0",
+    "uc_in": "1.00000000000000000000"
+   },
+   {
+    "fecha": "2026-11-07 15:49:56",
+    "evento": "reception_in",
+    "antes": "0",
+    "despues": "1.000000000000000000000",
+    "qty_in": "100.0",
+    "uc_in": "1.00000000000000000000"
+   },
+   {
+    "fecha": "2026-11-16 19:59:14",
+    "evento": "rectificacion",
+    "antes": "0.751879699248120300752",
+    "despues": "-78176.248120300752",
+    "qty_in": "69.0000",
+    "uc_in": "1"
+   }
+  ],
+  "117": [
+   {
+    "fecha": "2026-10-07 11:39:45",
+    "evento": "wac_correction",
+    "antes": "0",
+    "despues": "1",
+    "qty_in": "None",
+    "uc_in": "None"
+   },
+   {
+    "fecha": "2026-11-07 15:33:16",
+    "evento": "reception_in",
+    "antes": "0",
+    "despues": "1.000000000000000000000",
+    "qty_in": "1.0",
+    "uc_in": "1.00000000000000000000"
+   },
+   {
+    "fecha": "2026-11-16 19:59:14",
+    "evento": "rectificacion",
+    "antes": "1",
+    "despues": "-2175998.000000000000",
+    "qty_in": "1.0000",
+    "uc_in": "1"
+   }
+  ],
+  "37": [
+   {
+    "fecha": "2026-10-04 04:52:29",
+    "evento": "adjustment_plus",
+    "antes": "0",
+    "despues": "0.96000000000000000000",
+    "qty_in": "24",
+    "uc_in": "1"
+   },
+   {
+    "fecha": "2026-11-16 19:59:14",
+    "evento": "rectificacion",
+    "antes": "0.96000000000000000000",
+    "despues": "-1.000000000000",
+    "qty_in": "1.0000",
+    "uc_in": "1"
+   }
+  ],
+  "31": [
+   {
+    "fecha": "2026-10-06 11:19:17",
+    "evento": "wac_correction",
+    "antes": "0",
+    "despues": "350.0",
+    "qty_in": "None",
+    "uc_in": "None"
+   },
+   {
+    "fecha": "2026-10-16 12:16:34",
+    "evento": "reception_in",
+    "antes": "350.0",
+    "despues": "32.727272727272727272727",
+    "qty_in": "10.0",
+    "uc_in": "1.00000000000000000000"
+   },
+   {
+    "fecha": "2026-11-06 14:45:36",
+    "evento": "reception_in",
+    "antes": "32.727272727272727272727",
+    "despues": "4.1441441441441441441441171",
+    "qty_in": "100.0",
+    "uc_in": "1.00000000000000000000"
+   },
+   {
+    "fecha": "2026-11-16 19:59:14",
+    "evento": "rectificacion",
+    "antes": "4.1441441441441441441441171",
+    "despues": "1.000000000000",
+    "qty_in": "1.0000",
+    "uc_in": "1"
+   }
+  ],
+  "83": [
+   {
+    "fecha": "2026-10-07 11:39:04",
+    "evento": "wac_correction",
+    "antes": "0",
+    "despues": "1",
+    "qty_in": "None",
+    "uc_in": "None"
+   },
+   {
+    "fecha": "2026-11-16 19:59:14",
+    "evento": "rectificacion",
+    "antes": "1",
+    "despues": "-122398.000000000000",
+    "qty_in": "2.0000",
+    "uc_in": "1"
+   }
+  ],
+  "40": [
+   {
+    "fecha": "2026-10-04 04:52:31",
+    "evento": "adjustment_plus",
+    "antes": "0",
+    "despues": "0.14285714285714285714",
+    "qty_in": "1",
+    "uc_in": "1"
+   },
+   {
+    "fecha": "2026-11-16 19:59:14",
+    "evento": "rectificacion",
+    "antes": "0.14285714285714285714",
+    "despues": "-665.857142857143",
+    "qty_in": "2.0000",
+    "uc_in": "1"
+   }
+  ]
+ },
+ "causa_raiz": [
+  {
+   "sku": "117",
+   "wac_old": "1",
+   "stock": "1.0000",
+   "valor_libro_pre": "1.0000",
+   "uc_fvc_old": "2176000.00000",
+   "fvc_rem_modelo": "1.0000",
+   "inv_credito_aplicado": "2175999.000000000",
+   "exceso_credito_sobre_valor_libro": "2175998.000000000",
+   "wac_new_modelo": "-2175998.00000",
+   "formula": "wac_new = (wac_old×stock − (uc_old−1)×fvc_rem) / stock",
+   "origen_wac_old": "wac_correction 2026-10-07 (0→1)",
+   "clasificacion": "G — combinación: (B) historial de salidas a costo ≈0 [el WAC preexistente nunca absorbió la recepción FVC] ejecutado mediante (A) fórmula del lote C sin cota sobre el valor libro"
+  },
+  {
+   "sku": "83",
+   "wac_old": "1",
+   "stock": "2.0000",
+   "valor_libro_pre": "2.0000",
+   "uc_fvc_old": "122400.00000",
+   "fvc_rem_modelo": "2.0000",
+   "inv_credito_aplicado": "244798.000000000",
+   "exceso_credito_sobre_valor_libro": "244796.000000000",
+   "wac_new_modelo": "-122398.00000",
+   "formula": "wac_new = (wac_old×stock − (uc_old−1)×fvc_rem) / stock",
+   "origen_wac_old": "wac_correction 2026-10-07 (0→1)",
+   "clasificacion": "G — combinación: (B) historial de salidas a costo ≈0 [el WAC preexistente nunca absorbió la recepción FVC] ejecutado mediante (A) fórmula del lote C sin cota sobre el valor libro"
+  },
+  {
+   "sku": "90",
+   "wac_old": "0.751879699248120300752",
+   "stock": "3.0000",
+   "valor_libro_pre": "2.2556390977443609022560000",
+   "uc_fvc_old": "3400.00000",
+   "fvc_rem_modelo": "69.0000",
+   "inv_credito_aplicado": "234531.000000000",
+   "exceso_credito_sobre_valor_libro": "234528.7443609022556390977440000",
+   "wac_new_modelo": "-78176.248120300751879699248",
+   "formula": "wac_new = (wac_old×stock − (uc_old−1)×fvc_rem) / stock",
+   "origen_wac_old": "reception_in blend 2026-10-04 (100u@1 sobre ca=0)",
+   "clasificacion": "G — combinación: (B) historial de salidas a costo ≈0 [el WAC preexistente nunca absorbió la recepción FVC] ejecutado mediante (A) fórmula del lote C sin cota sobre el valor libro"
+  },
+  {
+   "sku": "40",
+   "wac_old": "0.14285714285714285714",
+   "stock": "3.0000",
+   "valor_libro_pre": "0.428571428571428571420000",
+   "uc_fvc_old": "1000.00000",
+   "fvc_rem_modelo": "2.0000",
+   "inv_credito_aplicado": "1998.000000000",
+   "exceso_credito_sobre_valor_libro": "1997.571428571428571428580000",
+   "wac_new_modelo": "-665.85714285714285714286",
+   "formula": "wac_new = (wac_old×stock − (uc_old−1)×fvc_rem) / stock",
+   "origen_wac_old": "adjustment_plus blend 2026-10-04",
+   "clasificacion": "G — combinación: (B) historial de salidas a costo ≈0 [el WAC preexistente nunca absorbió la recepción FVC] ejecutado mediante (A) fórmula del lote C sin cota sobre el valor libro"
+  },
+  {
+   "sku": "37",
+   "wac_old": "0.96000000000000000000",
+   "stock": "25.0000",
+   "valor_libro_pre": "24.000000000000000000000000",
+   "uc_fvc_old": "50.00000",
+   "fvc_rem_modelo": "1.0000",
+   "inv_credito_aplicado": "49.000000000",
+   "exceso_credito_sobre_valor_libro": "25.000000000000000000000000",
+   "wac_new_modelo": "-1.00000000000000000000",
+   "formula": "wac_new = (wac_old×stock − (uc_old−1)×fvc_rem) / stock",
+   "origen_wac_old": "adjustment_plus blend 2026-10-04",
+   "clasificacion": "G — combinación: (B) historial de salidas a costo ≈0 [el WAC preexistente nunca absorbió la recepción FVC] ejecutado mediante (A) fórmula del lote C sin cota sobre el valor libro"
+  }
+ ],
+ "universo_recalculado": {
+  "total_wac_updates": 25,
+  "negativos": [
+   "37",
+   "40",
+   "83",
+   "90",
+   "117"
+  ],
+  "positivos": 20
+ },
+ "restauracion": {
+  "por_sku": [
+   {
+    "sku": "117",
+    "stock": "1.0000",
+    "wac_hoy": "-2175998.000000000000",
+    "valor_hoy": "-2175998.0000000000000000",
+    "valor_hoy_q2": "-2175998.00",
+    "wac_objetivo": "1.00",
+    "valor_verdadero": "1.0000",
+    "delta_restauracion": "2175999.0000000000000000",
+    "delta_restauracion_q2": "2175999.00"
+   },
+   {
+    "sku": "83",
+    "stock": "2.0000",
+    "wac_hoy": "-122398.000000000000",
+    "valor_hoy": "-244796.0000000000000000",
+    "valor_hoy_q2": "-244796.00",
+    "wac_objetivo": "1.00",
+    "valor_verdadero": "2.0000",
+    "delta_restauracion": "244798.0000000000000000",
+    "delta_restauracion_q2": "244798.00"
+   },
+   {
+    "sku": "90",
+    "stock": "3.0000",
+    "wac_hoy": "-78176.248120300752",
+    "valor_hoy": "-234528.7443609022560000",
+    "valor_hoy_q2": "-234528.74",
+    "wac_objetivo": "1.00",
+    "valor_verdadero": "3.0000",
+    "delta_restauracion": "234531.7443609022560000",
+    "delta_restauracion_q2": "234531.74"
+   },
+   {
+    "sku": "40",
+    "stock": "3.0000",
+    "wac_hoy": "-665.857142857143",
+    "valor_hoy": "-1997.5714285714290000",
+    "valor_hoy_q2": "-1997.57",
+    "wac_objetivo": "1.00",
+    "valor_verdadero": "3.0000",
+    "delta_restauracion": "2000.5714285714290000",
+    "delta_restauracion_q2": "2000.57"
+   },
+   {
+    "sku": "37",
+    "stock": "25.0000",
+    "wac_hoy": "-1.000000000000",
+    "valor_hoy": "-25.0000000000000000",
+    "valor_hoy_q2": "-25.00",
+    "wac_objetivo": "1.00",
+    "valor_verdadero": "25.0000",
+    "delta_restauracion": "50.0000000000000000",
+    "delta_restauracion_q2": "50.00"
+   }
+  ],
+  "delta_total": "2657379.3157894736850000",
+  "delta_total_q2": "2657379.32",
+  "regla_valor_verdadero": "stock × 1,00 CUP (capa FVC ya a 1 CUP por RECT-011; capas ajenas de estos SKU ya a 1 CUP: SKU90 rec 30538c95 100u@1 — consumida; ajustes de cuadre @1)"
+ },
+ "impacto_contable": {
+  "saldos_enervida": {
+   "ACT_INVENTARIO": {
+    "debe": "195013575.44",
+    "haber": "160578514.20",
+    "saldo_natural": "34435061.24",
+    "movs": 1000
+   },
+   "GAS_COSTO_VENTAS": {
+    "debe": "4791399.59",
+    "haber": "21468575.54",
+    "saldo_natural": "-16677175.95",
+    "movs": 710
+   },
+   "GAS_PERDIDA_INV": {
+    "debe": "19.00",
+    "haber": "9691030.00",
+    "saldo_natural": "-9691011.00",
+    "movs": 3
+   },
+   "GAS_VALES": {
+    "debe": "808869.11",
+    "haber": "5913947.50",
+    "saldo_natural": "-5105078.39",
+    "movs": 200
+   },
+   "PAS_CXP_PROV": {
+    "debe": "192033574.50",
+    "haber": "194995370.40",
+    "saldo_natural": "-2961795.90",
+    "movs": 91
+   }
+  },
+  "cuentas_gasto_acreedoras": {
+   "GAS_COSTO_VENTAS": "-16677175.95",
+   "GAS_VALES": "-5105078.39",
+   "GAS_PERDIDA_INV": "-9691011.00",
+   "nota": "Saldos acreedores (negativos) en cuentas de gasto = créditos de RECT-011 sin débitos históricos que los sustenten (ingreso fantasma). Creados por la misma entrada RECT-011."
+  },
+  "creditos_rect011_5sku": {
+   "inv": "2657375.000000000",
+   "cogs": "2422216.000000000",
+   "vales": "4587161.000000000",
+   "perdida": "4351998.000000000",
+   "delta": "14018750.000000000"
+  },
+  "creditos_rect011_global": {
+   "inv": "3678375.50",
+   "cogs": "21450370.50",
+   "vales": "5913947.50",
+   "perdida": "9691030.00",
+   "cxp_debito": "40733723.50"
+  }
+ },
+ "propuesta_rect013_a": {
+  "entrada": "DR GAS_COSTO_VENTAS + DR GAS_VALES + DR GAS_PERDIDA_INV / CR ACT_INVENTARIO",
+  "importe_total": "2657379.32",
+  "reparto_base": "proporcional a los créditos de RECT-011 de los 5 SKU por canal de gasto",
+  "base_reparto": "11361375.000000000",
+  "dr_gas_costo_ventas": "566546.45",
+  "dr_gas_vales": "1072918.27",
+  "dr_gas_perdida_inv": "1017914.60",
+  "cr_act_inventario": "2657379.32",
+  "balance": "0.00",
+  "wac_updates": [
+   {
+    "sku": "117",
+    "product_id": "680c132e-b328-4390-926e-18b1368f6444",
+    "wac_hoy": "-2175998.000000000000",
+    "wac_nuevo": "1.00",
+    "stock": "1.0000"
+   },
+   {
+    "sku": "83",
+    "product_id": "8b05170d-4b3d-4cc4-937e-b4d7daa2a6fd",
+    "wac_hoy": "-122398.000000000000",
+    "wac_nuevo": "1.00",
+    "stock": "2.0000"
+   },
+   {
+    "sku": "90",
+    "product_id": "1b0d19fd-e0fe-4ac1-972c-3a1361d61263",
+    "wac_hoy": "-78176.248120300752",
+    "wac_nuevo": "1.00",
+    "stock": "3.0000"
+   },
+   {
+    "sku": "40",
+    "product_id": "fcadebcd-1f99-4736-973d-cea194902399",
+    "wac_hoy": "-665.857142857143",
+    "wac_nuevo": "1.00",
+    "stock": "3.0000"
+   },
+   {
+    "sku": "37",
+    "product_id": "6862a061-50d0-4c8d-96d4-7b6d6ed082cd",
+    "wac_hoy": "-1.000000000000",
+    "wac_nuevo": "1.00",
+    "stock": "25.0000"
+   }
+  ],
+  "semantica": "El importe es el exceso de crédito de inventario de RECT-011 sobre el valor libro de los 5 productos (más el ajuste a valor verdadero). La contrapartida debita las cuentas de gasto que RECT-011 acreditó sin sustento (deshace parte del ingreso fantasma) y acredita ACT_INVENTARIO liberando la atribución ficticia. La valoración de producto queda en stock × 1,00 CUP (economía autorizada). No toca PAS_CXP_PROV (economía FAC-VITALLCONS-001 intacta), ni capas, ni movimientos históricos.",
+  "alternativa_documentada": "Concentrar la contrapartida íntegra en GAS_PERDIDA_INV (sugerencia del informe 012): DR GAS_PERDIDA_INV 2.657.379,32 / CR ACT_INVENTARIO 2.657.379,32."
+ },
+ "componente_b_regularizacion": {
+  "alcance": "SOLO los 5 SKU · NO ejecutar sin autorización específica del propietario (§10)",
+  "costos_historicos_registrados": {
+   "cogs": "27.0676691729323308270720000",
+   "vales": "98.3082706766917293233120000",
+   "perdida": "0.0000",
+   "total": "125.3759398496240601503840000"
+  },
+  "consumo_neto_unidades": {
+   "venta": "135.0000",
+   "vale": "133.0000",
+   "perdida": "23.0000"
+  },
+  "costo_verdadero_1cup": {
+   "venta": "135.0000",
+   "vale": "133.0000",
+   "perdida": "23.0000"
+  },
+  "recosteo_pendiente": {
+   "venta": "107.9323308270676691729280000",
+   "vale": "34.6917293233082706766880000",
+   "perdida": "23.0000"
+  },
+  "fantasma_rect011_5sku": {
+   "cogs": "2422216.000000000",
+   "vales": "4587161.000000000",
+   "perdida": "4351998.000000000",
+   "inv": "2657375.000000000",
+   "delta": "14018750.000000000"
+  },
+  "nota": "La regularización completa de la asignación contable de RECT-011 (liberar el residuo obsoleto de los 5 SKU en ACT_INVENTARIO ≈ 8,7M adicional tras A, re-costear consumos a 1 CUP/u ≈ 165,62 neto y extender el tratamiento a los otros 96 productos) requiere decisión específica del propietario: afecta el resultado acumulado y las bases F-012-3."
+ },
+ "integridad": {
+  "productos_fuera_de_enervida": [
+   {
+    "sku": "117",
+    "tienda": "PUERTO PADRE",
+    "stock": "1.0000",
+    "wac": "1.000000000000000000000",
+    "updated_at": "2026-10-10 16:00:00+00"
+   },
+   {
+    "sku": "90",
+    "tienda": "PUERTO PADRE",
+    "stock": "100.0000",
+    "wac": "1.000000000000000000000",
+    "updated_at": "2026-10-10 16:00:00+00"
+   }
+  ],
+  "capas_ajenas_5sku": {
+   "117": [],
+   "83": [],
+   "90": [
+    {
+     "fecha": "2026-09-22",
+     "qty": "100.0000",
+     "uc": "1",
+     "uc_actual": "1",
+     "recepcion": "30538c95",
+     "doc": "Recepción de mercancía",
+     "id": "2aba2ece-44bb-407c-bac6-a04989f77b21",
+     "product_id": "1b0d19fd-e0fe-4ac1-972c-3a1361d61263"
+    }
+   ],
+   "40": [],
+   "37": []
+  },
+  "capas_fvc_a_1cup": true,
+  "wac_negativos_en_tienda": 5,
+  "drift_101": "0 (verificado misión 012; re-verificado en esta extracción: drift_campo_vs_kardex=0)",
+  "valor_campo_tienda": "-2055851.5110633662062616697725295469128750000000",
+  "saldos_otras_tiendas": {
+   "ACT_INVENTARIO@43a4dabc": "12258163.67",
+   "ACT_INVENTARIO@899d2503": "1616.50",
+   "PAS_CXP_PROV@43a4dabc": "-12258163.67",
+   "PAS_CXP_PROV@899d2503": "-1616.50"
+  }
+ }
+}

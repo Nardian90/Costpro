@@ -1,0 +1,86 @@
+{
+  "modo": "--execute",
+  "bd": "lguovmvrozxgssupkwpf (E2E AISLADA)",
+  "fecha": "2026-11-16T20:01:33.216Z",
+  "lotes": [
+    {
+      "lote": "loteA_lineas.sql",
+      "ms": 1951,
+      "filas": [
+        {
+          "paso": "S1_post",
+          "payload": {
+            "ya_ok": 5,
+            "lineas": 5,
+            "subtotal_total": 27
+          }
+        },
+        {
+          "paso": "S1_previas",
+          "payload": 3
+        },
+        {
+          "paso": "S2_post",
+          "payload": {
+            "total_cost": 27
+          }
+        }
+      ]
+    },
+    {
+      "lote": "loteB_capas.sql",
+      "ms": 1908,
+      "filas": [
+        {
+          "paso": "S1_post",
+          "payload": {
+            "capas": 5,
+            "sucias": 0,
+            "valor_total": 27
+          }
+        },
+        {
+          "paso": "S1_previas",
+          "payload": 3
+        }
+      ]
+    },
+    {
+      "lote": "loteC_wac.sql",
+      "ms": 1874,
+      "filas": [
+        {
+          "paso": "S1_post",
+          "payload": {
+            "wac_conformes": 2
+          }
+        },
+        {
+          "paso": "S2_wcl",
+          "payload": 2
+        }
+      ]
+    },
+    {
+      "lote": "loteD_asiento.sql",
+      "ms": 2137,
+      "filas": [
+        {
+          "paso": "post",
+          "payload": {
+            "balance": 0,
+            "cxp_neta": 27,
+            "movimientos": 5
+          }
+        },
+        {
+          "paso": "preflight",
+          "payload": {
+            "cxp_neta": 208509,
+            "entry_existe": 0
+          }
+        }
+      ]
+    }
+  ]
+}

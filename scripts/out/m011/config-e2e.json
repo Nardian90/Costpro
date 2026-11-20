@@ -1,0 +1,20 @@
+{
+  "receipt_id": "0e11b000-0000-4000-8000-000000000001",
+  "store_id": "9635e633-387f-411d-bc15-7d2b6179aae4",
+  "orig_entry_id": "7113f450-7326-4407-b1dc-0dd31c3dcda1",
+  "segment": "7ec9000c-0000-4000-8000",
+  "entry_suffix": "d11300000001",
+  "fm_cxp": "f11300000001",
+  "fm_inv": "f11300000002",
+  "fm_cogs": "f11300000003",
+  "fm_vales": "f11300000004",
+  "fm_perd": "f11300000005",
+  "aud_total": "e11300000001",
+  "aud_entry": "e11300000002",
+  "trace": "RECT011-E2E",
+  "mision": "CP-FIN-RECEIPT-UNIT-COST-1-CUP-011",
+  "entry_document_type": "AJUSTE_INVENTARIO",
+  "entry_event": "reconocimiento",
+  "economic_date": "2026-07-01",
+  "doc_number": "TEST-FAC-011-VAL1CUP"
+}
