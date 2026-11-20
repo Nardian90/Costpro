@@ -180,7 +180,7 @@ describe('CORRECCIÓN IPV 2026-11-11 — Escenario 3: pagos combinados CUP + USD
 });
 
 describe('CORRECCIÓN IPV 2026-11-11 — Escenario 4: varios productos, monedas de cobro distintas', () => {
-  it('venta mixta (cash CUP a producto CUP + cash USD con componentes): USD repartido proporcional al valor CUP de línea (regla documentada)', () => {
+  it('venta mixta (cash CUP a producto CUP + cash USD con componentes): filas explícitas respetadas; el USD del ledger va al producto sin fila (CP-FIX 2026-11-20)', () => {
     // P99 (CUP): 2 × 500 = 1.000 CUP de línea. P88 (USD-ref): 7 × 4.185 = 29.295 CUP de línea.
     // Cobro con componentes: cash|CUP|1000 + cash|USD|31.5@930 → Σ amount_cup = 30.295 = total.
     const lines: IpvSalesLineRow[] = [
@@ -206,14 +206,15 @@ describe('CORRECCIÓN IPV 2026-11-11 — Escenario 4: varios productos, monedas 
     // Contable CUP por producto: sin cambio.
     expect(p99!.ventasImporteCup).toBe(1000);
     expect(p88!.ventasImporteCup).toBe(29295);
-    // La verdad documental por moneda vive a nivel VENTA (ledger); el reparto por
-    // producto es proporcional al valor CUP de la línea (documentado en
-    // collection-currency.ts): 31.5 × (líneaCUP / Σ líneaCUP), redondeado a 2
-    // decimales como el resto de importes del reporte.
-    const total = 1000 + 29295;
-    expect(p88!.ventasImporteUsd).toBeCloseTo(31.5 * (29295 / total), 2);
-    expect(p99!.ventasImporteUsd).toBeCloseTo(31.5 * (1000 / total), 2);
-    // La SUMA de lo repartido coincide con el USD realmente cobrado (±redondeo).
+    // CP-FIX 2026-11-20 (Nivel 1 — atribución por artículo): la fila explícita
+    // de P99 (cash_paid 1.000 CUP) cubre EXACTO el bucket cash|CUP del ledger,
+    // y el residual del bucket cash|USD (31.5, sin fila explícita de nadie) se
+    // prorratea SOLO entre los ítems sin fila de cash → P88 único → 31.5 USD.
+    // P99 (producto CUP pagado en CUP) ya NO recibe USD artificiales (antes
+    // 31.5 × 1000/30295 ≈ 1,04 USD por prorrateo proporcional de la venta).
+    expect(p88!.ventasImporteUsd).toBeCloseTo(31.5, 2);
+    expect(p99!.ventasImporteUsd).toBeCloseTo(0, 2);
+    // La SUMA de lo atribuido coincide con el USD realmente cobrado (±redondeo).
     expect(p88!.ventasImporteUsd + p99!.ventasImporteUsd).toBeCloseTo(31.5, 2);
     expect(r.totals.ventasImporteUsd).toBeCloseTo(31.5, 2);
   });

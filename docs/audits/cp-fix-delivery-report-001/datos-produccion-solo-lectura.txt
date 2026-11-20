@@ -1,0 +1,101 @@
+NOTE: ids de tienda/tx mostrados truncados por anonimizacion; cifras integras.
+
+== Tiendas ENERVIDA ==
+  5e6fe821-5465-48b1-b3f1-3aa3182edc38  ENERVIDA-VITALLCONS
+
+===== VENTAS 19/11/2026 (incidencia) [2026-11-19] =====
+
+-- TX 025f7b6b-f9c4-44ac-833e-f7fe52814d5b 2026-11-19T20:45:41 status=completed method=mixed sale_cur=CUP rate=1.0 pools(cash=38000.0, transfer=1800.0, zelle=0.0)
+   item 204981f9 prod=4f88cb41 qty=1.0 price=40.0 price_cup=37200.0 cur=USD price_cur=CUP rate=930 cash_paid=40/USD transfer_paid=0/CUP zelle_paid=0/USD
+   item 8fd53e44 prod=ff5145c8 qty=1.0 price=1800.0 price_cup=1800.0 cur=CUP price_cur=CUP rate=1 cash_paid=0/CUP transfer_paid=1800/CUP zelle_paid=0/USD
+   item dd26e89a prod=da7bb624 qty=1.0 price=800.0 price_cup=800.0 cur=CUP price_cur=CUP rate=1 cash_paid=800/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   pay  3f66a4df cash CUP amount=800 rate=1.0 dir=in
+   pay  699590c0 transfer CUP amount=1800 rate=1.0 dir=in
+   pay  e3936c1b cash USD amount=40 rate=930.0 dir=in
+
+===== VENTAS 18/11/2026 (mixta anterior) [2026-11-18] =====
+
+-- TX aaf2611a-9f9f-470b-a81e-e88bc3a20ba1 2026-11-18T18:58:08 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=28000.0, transfer=0, zelle=0)
+   item db6e95ed prod=f3d0f5a3 qty=1.0 price=5000.0 price_cup=5000.0 cur=CUP price_cur=CUP rate=1 cash_paid=5000/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item ec39b625 prod=d28f0432 qty=1.0 price=25.0 price_cup=23000.0 cur=USD price_cur=CUP rate=920 cash_paid=23000/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   pay  83953755 cash CUP amount=28000.0 rate=1.0 dir=in
+
+-- TX 7d9ad144-e86d-4c09-9e00-74aad400169d 2026-11-18T19:03:06 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=9300.0, transfer=0.0, zelle=0.0)
+   item 0c62f456 prod=3a04318b qty=2.0 price=5.0 price_cup=4650.0 cur=USD price_cur=CUP rate=930 cash_paid=9300/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   pay  171216c6 cash CUP amount=2790 rate=1.0 dir=in
+   pay  8c723c23 cash CUP amount=6510.0 rate=1.0 dir=in
+
+===== VENTAS 17/10/2026 [2026-10-17] =====
+
+-- TX ea3e44d7-b1c0-4836-9a5e-c079b55e9262 2026-10-17T16:00:00 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=800.0, transfer=0, zelle=0)
+   item fe63e68a prod=34f49170 qty=1.0 price=1.0 price_cup=800.0 cur=USD price_cur=CUP rate=800 cash_paid=800/CUP transfer_paid=0/USD zelle_paid=0/USD
+   pay  542d9d5b cash CUP amount=800.0 rate=1.0 dir=in
+
+-- TX 68e7464d-c50d-426f-a8ff-cbe701e9d1a5 2026-10-17T16:00:00 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=289750.0, transfer=0, zelle=0)
+   item 3e5e9b4d prod=d9650919 qty=1.0 price=22000.0 price_cup=22000.0 cur=CUP price_cur=CUP rate=1 cash_paid=22000/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item 5e99ef53 prod=25d97c33 qty=1.0 price=150.0 price_cup=120750.0 cur=USD price_cur=CUP rate=805 cash_paid=150/USD transfer_paid=0/USD zelle_paid=0/USD
+   item 8dae3d9c prod=d1afd532 qty=7.0 price=20000.0 price_cup=20000.0 cur=CUP price_cur=CUP rate=1 cash_paid=140000/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item babaa1ca prod=f3d0f5a3 qty=1.0 price=5000.0 price_cup=5000.0 cur=CUP price_cur=CUP rate=1 cash_paid=5000/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item eedd60a7 prod=504b9b78 qty=1.0 price=2000.0 price_cup=2000.0 cur=CUP price_cur=CUP rate=1 cash_paid=2000/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   pay  6f0d40ad cash CUP amount=289750.0 rate=1.0 dir=in
+
+===== VENTAS 19/10/2026 [2026-10-19] =====
+
+-- TX 28e94349-0a3e-499c-935f-c4a25c9db3fe 2026-10-19T16:00:00 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=169670, transfer=0, zelle=0)
+   item 55d1320f prod=8436ffa6 qty=1.0 price=210.0 price_cup=170100.0 cur=USD price_cur=CUP rate=810 cash_paid=162000.0/CUP transfer_paid=0/USD zelle_paid=0/USD
+   item a591cc74 prod=504b9b78 qty=1.0 price=2000.0 price_cup=2000.0 cur=CUP price_cur=CUP rate=1 cash_paid=2000/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item d367a2ea prod=0012bb78 qty=1.0 price=7.0 price_cup=5670.0 cur=USD price_cur=CUP rate=810 cash_paid=5670.0/CUP transfer_paid=0/USD zelle_paid=0/USD
+   pay  e3de378c cash CUP amount=169670 rate=1.0 dir=in
+
+-- TX 0764d532-acbf-46f3-9c73-aa99f4e24dcc 2026-10-19T16:00:00 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=750.0, transfer=0, zelle=0)
+   item 67fcbd3b prod=04ee0798 qty=1.0 price=250.0 price_cup=250.0 cur=CUP price_cur=CUP rate=1 cash_paid=250/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item 874a1e6f prod=ebcde03e qty=1.0 price=500.0 price_cup=500.0 cur=CUP price_cur=CUP rate=1 cash_paid=500/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   pay  7b0c17a3 cash CUP amount=750.0 rate=1.0 dir=in
+
+-- TX 389fff50-c0c2-4f63-b0df-94cbe742b33b 2026-10-19T16:00:00 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=24300.0, transfer=0, zelle=0)
+   item 80d3a934 prod=a38829be qty=1.0 price=30.0 price_cup=24300.0 cur=USD price_cur=CUP rate=810 cash_paid=24300/CUP transfer_paid=0/USD zelle_paid=0/USD
+   pay  8c106201 cash CUP amount=24300.0 rate=1.0 dir=in
+
+-- TX e8daad47-6285-43ad-b290-09a02f7b8776 2026-10-19T16:00:00 status=completed method=mixed sale_cur=CUP rate=1.0 pools(cash=60000, transfer=40000, zelle=0)
+   item 12fe0186 prod=d1afd532 qty=5.0 price=20000.0 price_cup=20000.0 cur=CUP price_cur=CUP rate=1 cash_paid=60000/CUP transfer_paid=40000/CUP zelle_paid=0/USD
+   pay  4ca489b8 cash CUP amount=60000 rate=1.0 dir=in
+   pay  a0aa532c transfer CUP amount=40000 rate=1.0 dir=in
+
+-- TX 445ef046-bcde-4063-99d9-83ba1fc721b3 2026-10-19T16:00:00 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=1600.0, transfer=0, zelle=0)
+   item 8a2e7571 prod=da7bb624 qty=2.0 price=800.0 price_cup=800.0 cur=CUP price_cur=CUP rate=1 cash_paid=1600/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   pay  30e55bdd cash CUP amount=1600.0 rate=1.0 dir=in
+
+===== VENTAS 23/10/2026 [2026-10-23] =====
+
+-- TX 2084b17b-fdf5-42c9-b22e-afbbd82d8a92 2026-10-23T03:40:54 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=5050.0, transfer=0, zelle=0)
+   item 209044ca prod=d0cab976 qty=1.0 price=600.0 price_cup=600.0 cur=CUP price_cur=CUP rate=1 cash_paid=600/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item 20c1ad5f prod=6fb35013 qty=2.0 price=250.0 price_cup=250.0 cur=CUP price_cur=CUP rate=1 cash_paid=500/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item a8f38169 prod=c0ca7553 qty=1.0 price=200.0 price_cup=200.0 cur=CUP price_cur=CUP rate=1 cash_paid=200/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item bdadbae1 prod=e6fefdbe qty=1.5 price=2500.0 price_cup=2500.0 cur=CUP price_cur=CUP rate=1 cash_paid=3750/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   pay  8182e0a8 cash CUP amount=5050.0 rate=1.0 dir=in
+
+-- TX 23ccd04f-db81-4537-a3db-2dabf40e31a8 2026-10-23T22:15:24 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=5600.0, transfer=0, zelle=0)
+   item 50c3d428 prod=0012bb78 qty=1.0 price=7.0 price_cup=5600.0 cur=USD price_cur=CUP rate=800 cash_paid=7/USD transfer_paid=0/USD zelle_paid=0/USD
+   pay  cb2081d4 cash CUP amount=5600.0 rate=1.0 dir=in
+
+===== VENTAS 27/10/2026 [2026-10-27] =====
+
+-- TX a531d4f6-69d2-44b3-9d7c-c680f5347173 2026-10-27T20:35:47 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=13415.0, transfer=0, zelle=0)
+   item 8c3f0aef prod=e6fefdbe qty=3.0 price=2500.0 price_cup=2500.0 cur=CUP price_cur=CUP rate=1 cash_paid=7500/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item 98af3f85 prod=0012bb78 qty=1.0 price=7.0 price_cup=5915.0 cur=USD price_cur=CUP rate=845 cash_paid=5915/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   pay  ac7195fa cash CUP amount=13415.0 rate=1.0 dir=in
+
+-- TX e825ba93-e752-4c0e-87f8-f38fbf80c57c 2026-10-27T20:43:05 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=60840.0, transfer=0.0, zelle=0.0)
+   item 2ef0b68c prod=0012bb78 qty=1.0 price=7.0 price_cup=5915.0 cur=USD price_cur=CUP rate=845 cash_paid=5915.0/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item 42a60967 prod=2e7b4157 qty=1.0 price=20.0 price_cup=16900.0 cur=USD price_cur=CUP rate=845 cash_paid=16900.0/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item 932ded1a prod=3c072e9a qty=5.0 price=4.5 price_cup=3802.5 cur=USD price_cur=CUP rate=845 cash_paid=19012.5/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   item fd96b7b2 prod=f2757338 qty=5.0 price=4.5 price_cup=3802.5 cur=USD price_cur=CUP rate=845 cash_paid=19012.5/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   pay  349ace4c cash CUP amount=60840.0 rate=1.0 dir=in
+
+-- TX e269020c-ebfb-49d5-b64e-56d69acaa92c 2026-10-27T20:49:04 status=voided method=cash sale_cur=CUP rate=1.0 pools(cash=845.0, transfer=0.0, zelle=0.0)
+   item fac04213 prod=34f49170 qty=1.0 price=1.0 price_cup=845.0 cur=USD price_cur=CUP rate=845 cash_paid=1/USD transfer_paid=0/CUP zelle_paid=0/USD
+   pay  c2c62f21 cash USD amount=1 rate=845.0 dir=in
+
+-- TX 65d649bf-d562-441e-a678-53bae478fe7f 2026-10-27T20:52:00 status=completed method=cash sale_cur=CUP rate=1.0 pools(cash=845.0, transfer=0, zelle=0)
+   item e97098ca prod=34f49170 qty=1.0 price=1.0 price_cup=845.0 cur=USD price_cur=CUP rate=845 cash_paid=845/CUP transfer_paid=0/CUP zelle_paid=0/USD
+   pay  dcb04a29 cash CUP amount=845.0 rate=1.0 dir=in
