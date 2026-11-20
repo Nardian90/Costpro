@@ -48,7 +48,7 @@ const MASTER_ID = '22222222-2222-4222-8222-222222222222';
 let mockSuppliersRow: any = {
   id: SUPPLIER_ID,
   name: 'TransCaribe S.A.',
-  code: 'TC-BD',
+  // NOTA: suppliers NO tiene columna `code` (concepto del Clasificador Maestro).
   tax_id: 'NIT-BD',
   phone: '55-BD',
   address: 'calle-BD',
@@ -130,7 +130,6 @@ beforeEach(() => {
   mockSuppliersRow = {
     id: SUPPLIER_ID,
     name: 'TransCaribe S.A.',
-    code: 'TC-BD',
     tax_id: 'NIT-BD',
     phone: '55-BD',
     address: 'calle-BD',
@@ -196,7 +195,7 @@ describe('POST /api/received-services · ADN-008 borradores', () => {
     expect(args.p_supplier_master_party_id).toBeNull(); // resuelto: sin maestro en la fila local
     // ADN-009: p_supplier_meta = SNAPSHOT DE LA BD (mockSuppliersRow), no la meta del cliente.
     expect(args.p_supplier_meta).toEqual({
-      code: 'TC-BD',
+      code: null,   // suppliers sin columna code → code solo desde el maestro
       tax_id: 'NIT-BD',
       phone: '55-BD',
       address: 'calle-BD',
@@ -224,7 +223,7 @@ describe('POST /api/received-services · ADN-008 borradores', () => {
     expect(updateMock).toHaveBeenCalledWith(expect.objectContaining({
       supplier_id: SUPPLIER_ID,
       supplier_master_party_id: null, // resuelto: la fila local no tiene maestro
-      supplier_code: 'TC-BD',         // snapshot DE LA BD, no la meta del cliente
+      supplier_code: null,            // snapshot DE LA BD (code solo desde el maestro)
       supplier_tax_id: 'NIT-BD',
       supplier_phone: '55-BD',
       supplier_address: 'calle-BD',
@@ -310,7 +309,7 @@ describe('PATCH /api/received-services · ADN-008 (ADN-009: contrato tri-state)'
     expect(args.p_patch).toEqual({
       supplier_id: SUPPLIER_ID,
       supplier_master_party_id: null, // resuelto — el proveedor mockeado no tiene maestro
-      supplier_meta: { code: 'TC-BD', tax_id: 'NIT-BD', phone: '55-BD', address: 'calle-BD' }, // snapshot BD
+      supplier_meta: { code: null, tax_id: 'NIT-BD', phone: '55-BD', address: 'calle-BD' }, // snapshot BD (code solo desde el maestro)
       supplier: 'TransCaribe S.A.',
       total_amount: 500,
       service_type_id: '11111111-1111-4111-8111-111111111102',

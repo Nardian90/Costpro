@@ -30,9 +30,9 @@ import { test, expect, type APIRequestContext } from '@playwright/test';
 import { Client } from 'pg';
 import {
   signIn, apiHeaders, sb, createTestStore, requireIsolatedCreation, rpcAsService, rpcAsUser,
-  SUPABASE_URL, ADMIN_EMAIL,
+  SUPABASE_REST_URL, ADMIN_EMAIL,
 } from '../fixtures/session.fixture';
-import { hardDeleteTestStore } from '../fixtures/hard-cleanup';
+import { hardDeleteTestStore, hardDeleteRunUser } from '../fixtures/hard-cleanup';
 
 requireIsolatedCreation();
 
@@ -70,7 +70,7 @@ async function openPgSession(actorId: string, role = 'authenticated') {
 }
 
 async function createTestUser(email: string, password: string, membershipRole: string, storeId: string) {
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+  const res = await fetch(`${SUPABASE_REST_URL}/auth/v1/admin/users`, {
     method: 'POST',
     headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password, email_confirm: true }),
@@ -79,6 +79,9 @@ async function createTestUser(email: string, password: string, membershipRole: s
   const { id: userId } = (await res.json()) as { id: string };
   createdUserIds.push(userId);
   await sb.insert('user_store_memberships', [{ user_id: userId, store_id: storeId, role: membershipRole, status: 'active' }]);
+  // Patrón cpfin003 L209: la tienda ACTIVA del usuario alineada con la tienda
+  // efímera — /api/payments resuelve la tienda desde profiles.active_store_id.
+  await sb.update('profiles', `id=eq.${userId}`, { active_store_id: storeId });
   const session = await signIn(email, password);
   expect(session.token).toBeTruthy();
   return { id: userId, token: session.token };
@@ -94,9 +97,9 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
     storeA = a.id; storeB = b.id;
     createdStoreIds.push(storeA, storeB);
     await sb.update('profiles', `id=eq.${adminUserId}`, { active_store_id: storeA });
-    managerA = await createTestUser(`m009-mgr-a-${RUN_ID}@e2e.costpro.local`, 'M009-pass-1!', 'manager', storeA);
-    clerkA = await createTestUser(`m009-clk-a-${RUN_ID}@e2e.costpro.local`, 'M009-pass-2!', 'clerk', storeA);
-    managerB = await createTestUser(`m009-mgr-b-${RUN_ID}@e2e.costpro.local`, 'M009-pass-3!', 'manager', storeB);
+    managerA = await createTestUser(`m009-mgr-a-${RUN_ID}@costpro.local`, 'M009-pass-1!', 'manager', storeA);
+    clerkA = await createTestUser(`m009-clk-a-${RUN_ID}@costpro.local`, 'M009-pass-2!', 'clerk', storeA);
+    managerB = await createTestUser(`m009-mgr-b-${RUN_ID}@costpro.local`, 'M009-pass-3!', 'manager', storeB);
   });
 
   test.afterAll(async () => {
@@ -104,16 +107,17 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
       await hardDeleteTestStore(storeId).catch(() => {});
     }
     for (const userId of createdUserIds) {
-      await sb.delete('user_store_memberships', `user_id=eq.${userId}`).catch(() => {});
-      await sb.delete('profiles', `id=eq.${userId}`).catch(() => {});
-      await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
-        method: 'DELETE', headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}` },
-      }).catch(() => {});
+      // Mecanismo canónico (hard-cleanup): RPC e2e_hard_delete_user (SECURITY
+      // DEFINER) — el DELETE directo de GoTrue choca con el pitfall 500 de las
+      // columnas de token y el guard de dominio exige @costpro.* canónicos
+      // (por eso los emails del spec son <prefijo>-<run>@costpro.local).
+      await hardDeleteRunUser(userId).catch(() => {});
     }
   });
 
-  /** POST con backoff del rate limit (10/min en /api/payments). */
-  async function withRlBackoff(fn: () => Promise<{ status: number; text: () => Promise<string> }>) {
+  /** POST con backoff del rate limit (10/min en /api/payments). fetch Response:
+   *  `status` es PROPIEDAD (no método, a diferencia de APIRequestContext). */
+  async function withRlBackoff(fn: () => Promise<Response>) {
     let res = await fn();
     if (res.status === 429) {
       await new Promise((r) => setTimeout(r, 65_000));
@@ -142,7 +146,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
       method: 'PATCH', headers: apiHeaders(managerA.token),
       body: JSON.stringify({ service_id: serviceId, status: 'active', reason: 'ADN-009' }),
     });
-    expect(res.status()).toBe(200);
+    expect(res.status).toBe(200);
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -158,7 +162,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         currency: 'CUP', exchange_rate: 1, service_date: HAVANA_TODAY(),
       }),
     }));
-    expect(res.status()).toBe(201);
+    expect(res.status).toBe(201);
     const { data: created } = await res.json();
     serviceIds.push(created.id);
     await confirmService(created.id);
@@ -171,7 +175,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         idempotency_key: `m009-ext-usd-${RUN_ID}`,
       }),
     }));
-    expect(pay.status()).toBe(201);
+    expect(pay.status, await pay.text()).toBe(201);
 
     const rows = await paymentsOf(created.id);
     expect(rows).toHaveLength(1);
@@ -204,7 +208,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         currency: 'CUP', exchange_rate: 1, service_date: HAVANA_TODAY(),
       }),
     }));
-    expect(res.status()).toBe(201);
+    expect(res.status).toBe(201);
     const { data: created } = await res.json();
     serviceIds.push(created.id);
     await confirmService(created.id);
@@ -218,14 +222,14 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
       }),
     }));
     if (eurPermitida) {
-      expect(pay.status()).toBe(201);
+      expect(pay.status).toBe(201);
       const rows = await paymentsOf(created.id);
       expect(rows[0].payment_method).toBe('external_transfer');
       const entries = await finEntriesOf(created.id);
       const movs = await movementsOf(entries.map((e) => e.id));
       expect(new Set(movs.map((m) => m.category_code)).has('ACT_TRANSF_EXTERIOR')).toBe(true);
     } else {
-      expect(pay.status()).toBe(400);  // catálogo cerrado → rechazo, jamás escritura
+      expect(pay.status).toBe(400);  // catálogo cerrado → rechazo, jamás escritura
     }
   });
 
@@ -250,7 +254,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         idempotency_key: `m009-zelle-${RUN_ID}`,
       }),
     }));
-    expect(pay.status()).toBe(201);  // compat de ingesta: se acepta y se normaliza
+    expect(pay.status).toBe(201);  // compat de ingesta: se acepta y se normaliza
 
     const rows = await paymentsOf(created.id);
     expect(rows).toHaveLength(1);
@@ -279,7 +283,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         payments: [{ payment_method: 'external_transfer', amount: 10, currency: 'CUP', exchange_rate: 1 }],
       }),
     }));
-    expect(pay.status()).toBe(400);
+    expect(pay.status).toBe(400);
     const body = await pay.json();
     expect(body.error).toContain('ERR_COMPONENT_INVALID');
     expect((await paymentsOf(created.id)).length).toBe(0);      // cero escrituras
@@ -313,9 +317,9 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
       const ok = outcomes.filter((o) => o === 'ok').length;
       // 60 + 60 > 100: con la serialización compartida EXACTAMENTE uno confirma;
       // el otro lee el saldo ya actualizado y muere con ERR_BATCH_OVERPAY.
-      expect(ok).toBe(1);
+      expect(ok, `outcomes=[${outcomes.join(' | ')}]`).toBe(1);
       const failed = outcomes.find((o) => o !== 'ok') as string;
-      expect(failed).toContain('ERR_BATCH_OVERPAY');
+      expect(failed, `outcomes=[${outcomes.join(' | ')}]`).toContain('ERR_BATCH_OVERPAY');
 
       // Conciliado: el total de pagos JAMÁS supera el importe exigible.
       const rows = await paymentsOf(created.id);
@@ -324,7 +328,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
       expect(rows).toHaveLength(1);
       // Sin asientos huérfanos ni duplicados: 1 pago → 1 asiento equilibrado.
       const entries = await finEntriesOf(created.id);
-      expect(entries.filter((e) => (e as any).entry_type === 'pago').length).toBe(1);
+      expect(entries.filter((e) => (e as any).event === 'pago').length).toBe(1);
       const movs = await movementsOf(entries.map((e) => e.id));
       const deb = movs.filter((m) => m.sense === 'debito').reduce((s, m) => s + Number(m.amount_cup), 0);
       const cred = movs.filter((m) => m.sense === 'credito').reduce((s, m) => s + Number(m.amount_cup), 0);
@@ -356,12 +360,13 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         pg2.query('SELECT public.register_supplier_payment_batch($1, \'service\', $2, $3::jsonb, $4::uuid, NULL, $5)', [storeA, created.id, JSON.stringify([{ payment_method: 'cash', amount: 60, currency: 'CUP', exchange_rate: 1 }]), managerB.id, `m009-conc-ib-2-${RUN_ID}`]),
       ]);
       const ok = [r1, r2].filter((r) => r.status === 'fulfilled').length;
-      expect(ok).toBe(1);   // uno confirma; el otro ve el saldo actualizado → overpay
+      const outcomes = [r1, r2].map((r) => (r.status === 'fulfilled' ? 'ok' : String((r as PromiseRejectedResult).reason).slice(0, 400)));
+      expect(ok, `outcomes=[${outcomes.join(' | ')}]`).toBe(1);   // uno confirma; el otro ve el saldo actualizado → overpay
       const rows = await paymentsOf(created.id);
       const total = rows.reduce((s, r) => s + Number(r.amount), 0);
       expect(total).toBeLessThanOrEqual(100 + 1e-6);
       const entries = await finEntriesOf(created.id);
-      expect(entries.filter((e) => (e as any).entry_type === 'pago').length).toBe(1);
+      expect(entries.filter((e) => (e as any).event === 'pago').length).toBe(1);
     } finally {
       await pg1.end().catch(() => {});
       await pg2.end().catch(() => {});
@@ -380,15 +385,15 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
       p_store_id: storeA, p_supplier: null, p_total_amount: 77, p_service_type_id: null,
       p_service_type_name: 'Otro', p_service_date: HAVANA_TODAY(), p_currency: 'CUP',
       p_exchange_rate: 1, p_payment_terms_days: 30, p_distribution_method: 'amount',
-      p_reference_doc: null, p_observations: null, p_receipt_ids: [], p_production_order_ids: [],
+      p_reference_doc: null, p_observations: null, p_receipt_ids: JSON.stringify([]), p_production_order_ids: JSON.stringify([]),
       p_created_by: managerA.id, p_supplier_id: null, p_supplier_master_party_id: null,
       p_supplier_meta: null, p_creation_key: key,
     };
     try {
       const [r1, r2] = await Promise.allSettled([
-        pg1.query('SELECT public.create_received_service_draft($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)',
+        pg1.query('SELECT public.create_received_service_draft($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) AS out',
           Object.values(args)),
-        pg2.query('SELECT public.create_received_service_draft($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)',
+        pg2.query('SELECT public.create_received_service_draft($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19) AS out',
           Object.values(args)),
       ]);
       const results = [r1, r2]
@@ -436,7 +441,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
   // P0 §5 — CONTROL DE ACCESO A LAS RPC (llamadas DIRECTAS por PostgREST)
   // ══════════════════════════════════════════════════════════════════════════
   test('T9 · RPC directa sin identidad (anon) → rechazada', async () => {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_received_service_draft`, {
+    const res = await fetch(`${SUPABASE_REST_URL}/rest/v1/rpc/create_received_service_draft`, {
       method: 'POST', headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' },
       body: JSON.stringify({ p_store_id: storeA, p_total_amount: 10 }),
     });
@@ -479,7 +484,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
   });
 
   test('T13 · RPC de pagos por lote → service_role EXCLUSIVO: authenticated directo, RECHAZADO', async () => {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/register_supplier_payment_batch`, {
+    const res = await fetch(`${SUPABASE_REST_URL}/rest/v1/rpc/register_supplier_payment_batch`, {
       method: 'POST',
       headers: { apikey: ANON_KEY, Authorization: `Bearer ${managerA.token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -512,17 +517,19 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         supplier_id: supBId, service_date: HAVANA_TODAY(),
       }),
     });
-    expect(viaApi.status()).toBe(400);
+    expect(viaApi.status).toBe(400);
     const body = await viaApi.json();
     expect(body.code === 'ERR_SUPPLIER_INVALID' || body.error?.code === 'ERR_SUPPLIER_INVALID').toBe(true);
   });
 
   test('T15 · Tercero maestro de OTRO tenant (o inexistente en el tenant) → rechazado', async () => {
-    // master_parties con tenant ajeno al de la tienda A (row efímera, se limpia)
+    // master_parties con tenant ajeno al de la tienda A (row efímera, se limpia):
+    // tenant efímero REAL (FK de master_parties → tenants) + maestro ajeno.
     const foreignTenant = crypto.randomUUID();
+    await sb.insert('tenants', [{ id: foreignTenant, name: `ADN009 Ajeno ${RUN_ID}`, branding: '{}' }]);
     const mp = await sb.insert('master_parties', [{
       tenant_id: foreignTenant, code: `M009-${RUN_ID}`, name: 'Maestro Ajeno',
-      party_type: 'supplier', is_supplier: true, status: 'active',
+      party_type: 'juridica', is_supplier: true, status: 'active',
     }]);
     const mpId = mp[0].id;
     try {
@@ -534,13 +541,14 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
       expect(direct.error).toContain('ERR_SUPPLIER_MASTER_INVALID');
     } finally {
       await sb.delete('master_parties', `id=eq.${mpId}`).catch(() => {});
+      await sb.delete('tenants', `id=eq.${foreignTenant}`).catch(() => {});
     }
   });
 
   test('T16 · Identidad VÁLIDA: snapshot congelado desde la fuente autorizada (coherente)', async () => {
     const mp = await sb.insert('master_parties', [{
       tenant_id: (await sb.select<Record<string, any>>('stores', `id=eq.${storeA}&select=tenant_id`))[0].tenant_id,
-      code: `M009OK-${RUN_ID}`, name: 'Maestro Válido ADN009', party_type: 'supplier',
+      code: `M009OK-${RUN_ID}`, name: 'Maestro Válido ADN009', party_type: 'juridica',
       is_supplier: true, status: 'active', tax_id: 'NIT-OK', phone: '53-OK',
     }]);
     const mpId = mp[0].id;
@@ -554,7 +562,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
           service_date: HAVANA_TODAY(),
         }),
       });
-      expect(res.status()).toBe(201);
+      expect(res.status).toBe(201);
       const { data: created } = await res.json();
       serviceIds.push(created.id);
       const row = await serviceRow(created.id);
@@ -587,7 +595,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         observations: null, reference_doc: null,
       }),
     });
-    expect(res.status()).toBe(200);
+    expect(res.status).toBe(200);
     const row = await serviceRow(draft.data.service_id);
     expect(row.observations).toBeNull();
     expect(row.reference_doc).toBeNull();
@@ -606,14 +614,14 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
       method: 'PATCH', headers: apiHeaders(managerA.token),
       body: JSON.stringify({ service_id: draft.data.service_id, action: 'update-draft', service_date: old }),
     });
-    expect(move.status()).toBe(200);
+    expect(move.status).toBe(200);
     expect((await serviceRow(draft.data.service_id)).service_date).toBe(old);
     // …y NULL la RESTABLECE al día operativo actual (semántica del formulario)
     const reset = await fetch('http://localhost:3000/api/received-services', {
       method: 'PATCH', headers: apiHeaders(managerA.token),
       body: JSON.stringify({ service_id: draft.data.service_id, action: 'update-draft', service_date: null }),
     });
-    expect(reset.status()).toBe(200);
+    expect(reset.status).toBe(200);
     expect((await serviceRow(draft.data.service_id)).service_date).toBe(HAVANA_TODAY());
   });
 
@@ -629,7 +637,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
       method: 'PATCH', headers: apiHeaders(managerA.token),
       body: JSON.stringify({ service_id: draft.data.service_id, action: 'update-draft', total_amount: 222 }),
     });
-    expect(res.status()).toBe(200);
+    expect(res.status).toBe(200);
     const row = await serviceRow(draft.data.service_id);
     expect(row.observations).toBe('OBS-KEEP');     // conservado
     expect(row.reference_doc).toBe('REF-KEEP');    // conservado
@@ -667,7 +675,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
     const rows = await paymentsOf(created.id);
     expect(rows).toHaveLength(1);                 // NUNCA componentes adicionales
     const entries = await finEntriesOf(created.id);
-    expect(entries.filter((e) => (e as any).entry_type === 'pago').length).toBe(1);  // un solo asiento
+    expect(entries.filter((e) => (e as any).event === 'pago').length).toBe(1);  // un solo asiento
   });
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -693,11 +701,11 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         idempotency_key: `m009-reg-cash-${RUN_ID}`,
       }),
     }));
-    expect(pay.status()).toBe(201);
+    expect(pay.status).toBe(201);
     const entries = await finEntriesOf(created.id);
     const movs = await movementsOf(entries.map((e) => e.id));
     const cuentas = new Set(movs.map((m) => m.category_code));
-    expect(cuentas.has('ACT_CAJA')).toBe(true);    // caja CUP (mismo motor)
+    expect(cuentas.has('ACT_EFECTIVO_CUP')).toBe(true);  // caja CUP canónica (fin_account_mapping cash/CUP)
     const pasNet = movs.filter((m) => m.category_code === 'PAS_SERV_PEND')
       .reduce((s, m) => s + (m.sense === 'credito' ? Number(m.amount_cup) : -Number(m.amount_cup)), 0);
     expect(Math.abs(pasNet)).toBeLessThan(0.01);
@@ -714,7 +722,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         service_date: HAVANA_TODAY(),
       }),
     });
-    expect(draft.status()).toBe(201);
+    expect(draft.status).toBe(201);
     const { data: d } = await draft.json();
     serviceIds.push(d.id);
     let row = await serviceRow(d.id);
@@ -731,7 +739,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
         supplier: 'Proveedor Regresión 008', total_amount: 950, observations: 'reg008-editada',
       }),
     });
-    expect(upd.status()).toBe(200);
+    expect(upd.status).toBe(200);
     row = await serviceRow(d.id);
     expect(row.supplier).toBe('Proveedor Regresión 008');
     expect(Number(row.total_amount)).toBe(950);
@@ -743,7 +751,7 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
     expect(row.status).toBe('active');
     const entries = await finEntriesOf(d.id);
     expect(entries.length).toBeGreaterThanOrEqual(1);
-    const reconocimiento = entries.filter((e) => (e as any).entry_type === 'reconocimiento');
+    const reconocimiento = entries.filter((e) => (e as any).event === 'reconocimiento');
     expect(reconocimiento.length).toBe(1);
 
     // 4) confirmación DUPLICADA → no_change; sin segundo asiento
@@ -751,10 +759,10 @@ test.describe.serial('ADN-009 · endurecimiento post-merge Servicios Recibidos',
       method: 'PATCH', headers: apiHeaders(managerA.token),
       body: JSON.stringify({ service_id: d.id, status: 'active', reason: 'duplicada' }),
     });
-    expect(dup.status()).toBe(200);
+    expect(dup.status).toBe(200);
     const json = await dup.json();
     expect(json.data.status === 'no_change' || json.data.service_status === 'active').toBeTruthy();
     const entriesAfter = await finEntriesOf(d.id);
-    expect(entriesAfter.filter((e) => (e as any).entry_type === 'reconocimiento').length).toBe(1);
+    expect(entriesAfter.filter((e) => (e as any).event === 'reconocimiento').length).toBe(1);
   });
 });

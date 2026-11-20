@@ -50,6 +50,12 @@ async function runSql(query) {
 
 // Marcas re-ejecutables (--check): firmas, contratos y ACL objetivo.
 const MARKS = {
+  supplier_master_column: `(SELECT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='suppliers' AND column_name='master_party_id'))`,
+  supplier_master_fk: `(SELECT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid='public.suppliers'::regclass AND conname='suppliers_master_party_id_fkey'))`,
   helper: `(SELECT EXISTS (
     SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname='public' AND p.proname='can_manage_store_as'

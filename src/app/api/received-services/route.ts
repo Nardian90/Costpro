@@ -89,11 +89,14 @@ async function resolveSupplierIdentity(
   }
 
   // 1) Proveedor LOCAL: debe pertenecer a la tienda del documento.
-  let supplierRow: { id: string; name: string; code: string | null; tax_id: string | null; phone: string | null; address: string | null; master_party_id: string | null } | null = null;
+  let supplierRow: { id: string; name: string; tax_id: string | null; phone: string | null; address: string | null; master_party_id: string | null } | null = null;
   if (sentSupplierId) {
+    // NOTA (ADN-009): `suppliers` NO tiene columna `code` (el código es un
+    // concepto del Clasificador Maestro) — el snapshot de code sale del
+    // maestro o queda NULL para proveedores locales.
     const { data, error } = await admin
       .from('suppliers')
-      .select('id, name, code, tax_id, phone, address, master_party_id')
+      .select('id, name, tax_id, phone, address, master_party_id')
       .eq('id', sentSupplierId)
       .eq('store_id', storeId)
       .maybeSingle();
@@ -136,7 +139,7 @@ async function resolveSupplierIdentity(
 
   // 4) Snapshot + nombre desde la fuente autorizada (nunca del cliente).
   const snapshot = supplierRow
-    ? { code: supplierRow.code, tax_id: supplierRow.tax_id, phone: supplierRow.phone, address: supplierRow.address }
+    ? { code: null, tax_id: supplierRow.tax_id, phone: supplierRow.phone, address: supplierRow.address }
     : masterRow
       ? { code: masterRow.code, tax_id: masterRow.tax_id, phone: masterRow.phone, address: masterRow.address }
       : clientMeta;

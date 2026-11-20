@@ -68,6 +68,34 @@
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
+-- 0) RECONCILIACIÓN de una deriva PRE-existente descubierta por esta misión:
+--    `suppliers.master_party_id` existe en producción (aplicada fuera de banda
+--    por la misión del Clasificador Maestro, sin migración en el stream —
+--    verificada live 2026-11-21: uuid NULL-able + FK
+--    suppliers_master_party_id_fkey → master_parties(id)) pero AUSENTE del
+--    stream de migraciones: el replay no podía reproducir el live. Se
+--    incorpora VERBATIM (IF NOT EXISTS + IF NOT EXISTS FK → idempotente;
+--    en producción ambas sentencias son no-ops). El ownership/coherencia de
+--    identidad (F4/§6) la consume; sin ella el replay rompe.
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.suppliers
+  ADD COLUMN IF NOT EXISTS master_party_id uuid;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint
+                 WHERE conrelid = 'public.suppliers'::regclass
+                   AND conname = 'suppliers_master_party_id_fkey') THEN
+    ALTER TABLE public.suppliers
+      ADD CONSTRAINT suppliers_master_party_id_fkey
+      FOREIGN KEY (master_party_id) REFERENCES public.master_parties(id);
+  END IF;
+END $$;
+
+COMMENT ON COLUMN public.suppliers.master_party_id IS
+  'Clasificador Maestro: tercero del tenant al que está ligado el proveedor local (reconciliación ADN-009 — columna live de producción incorporada al stream; FK a master_parties).';
+
+-- ---------------------------------------------------------------------------
 -- 1) Helper canónico de GESTIÓN por tienda — espejo DB exacto de
 --    canManageStore (src/lib/roles.ts): admin/superadmin de plataforma
 --    transversal (is_admin_check — misma fuente que is_admin()/RLS) O
@@ -620,7 +648,7 @@ BEGIN
   --    valida y se congela desde la BD — nunca desde metadatos manipulables.
   IF v_supplier_id IS NOT NULL THEN
     SELECT s.name, s.master_party_id,
-           jsonb_build_object('code', s.code, 'tax_id', s.tax_id,
+           jsonb_build_object('tax_id', s.tax_id,
                               'phone', s.phone, 'address', s.address)
       INTO v_supplier, v_mp_live, v_meta
     FROM suppliers s
@@ -905,7 +933,7 @@ BEGIN
 
     IF v_sid IS NOT NULL THEN
       SELECT s.name, s.master_party_id,
-             jsonb_build_object('code', s.code, 'tax_id', s.tax_id,
+             jsonb_build_object('tax_id', s.tax_id,
                                 'phone', s.phone, 'address', s.address)
         INTO v_s_name, v_mp_live, v_meta
       FROM suppliers s
