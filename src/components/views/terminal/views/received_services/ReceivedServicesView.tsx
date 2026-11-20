@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Truck, Package, Shield, Link2, Calculator, Eye, RefreshCw, Ban, FileText, Search, CheckCircle2, Settings2 } from 'lucide-react';
+import { Plus, Truck, Package, Shield, Link2, Eye, RefreshCw, Ban, FileText, Search, CheckCircle2, Settings2, Pencil, ChevronDown } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -10,12 +10,17 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useServiceTypes, type ServiceType } from '@/hooks/useServiceTypes';
 import { useStoreRates } from '@/hooks/useStoreRates';
 import PaymentRowsEditor, {
   newPaymentRow, rowsCupTotal, rowsToPayload, rowsAreValid,
   type PaymentEditorRow,
 } from '@/components/payments/PaymentRowsEditor';
+// ADN-008 §4: mismo selector de proveedores del formulario de Recepciones —
+// misma fuente (Clasificador Maestro + suppliers de la tienda), misma
+// búsqueda, misma alta al vuelo y mismo snapshot de identificación.
+import { SupplierSelector, type SupplierSelection } from '@/components/views/terminal/views/inventory/SupplierSelector';
 import { ServiceTypesManagerModal } from './ServiceTypesManagerModal';
 // MISIÓN POLÍTICA TEMPORAL (2026-10-18): fecha del servicio seleccionable —
 // el RPC create_received_service_v2 ya aceptaba/validaba p_service_date,
@@ -53,6 +58,13 @@ interface ReceivedService {
   paid_amount?: number;
   due_date?: string | null;
   paid_at?: string | null;
+  // ADN-008: identidad del proveedor (reutilización del selector de Recepciones)
+  supplier_id?: string | null;
+  supplier_master_party_id?: string | null;
+  supplier_code?: string | null;
+  supplier_tax_id?: string | null;
+  supplier_phone?: string | null;
+  supplier_address?: string | null;
 }
 
 const SERVICE_ICONS: Record<string, any> = {
@@ -78,8 +90,11 @@ export default function ReceivedServicesView() {
   const [services, setServices] = useState<ReceivedService[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'voided'>('all');
+  // ADN-008 §3.3: los borradores se filtran y se recuperan desde el listado.
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'active' | 'voided'>('all');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  // ADN-008 §3.3: edición/confirmación de un borrador existente.
+  const [editService, setEditService] = useState<ReceivedService | null>(null);
   // MISIÓN 2026-10-15: catálogo de tipos de servicio desde la fuente oficial
   // (tabla service_types) + acceso «Gestionar tipos de servicio».
   const { types, activeTypes, loading: typesLoading, error: typesError, refetch: refetchTypes } = useServiceTypes();
@@ -120,6 +135,11 @@ export default function ReceivedServicesView() {
     return true;
   });
 
+  // ADN-008 §3: dos modos de guardar diferenciados.
+  //  · save_as_draft=true → POST create_received_service_draft (sin activar,
+  //    sin pagos, CERO efectos financieros; idempotente por creation_key).
+  //  · confirmar → flujo existente: POST (draft) → PATCH active (gate: proveedor
+  //    + importe) → pagos del desglose si «Liquidar al confirmar».
   const handleCreate = async (data: any) => {
     try {
       const res = await fetch('/api/received-services', {
@@ -132,6 +152,17 @@ export default function ReceivedServicesView() {
         throw new Error(err.error || err.message || 'Error al crear servicio');
       }
       const created = await res.json().catch(() => null);
+
+      // ── Modo BORRADOR: sin activación, sin pagos, sin efectos financieros ──
+      if (data.save_as_draft === true) {
+        toast.success(created?.data?.duplicate
+          ? `Borrador ya existente (${created.data.service_number}) — no se duplicó.`
+          : `Borrador guardado (${created?.data?.service_number || ''}). Sin efectos financieros hasta confirmarlo.`);
+        setCreateModalOpen(false);
+        fetchServices();
+        return;
+      }
+
       // v2.18.0: el RPC crea el servicio en estado 'draft' (documento completo,
       // vínculos incluidos). Se activa de inmediato para preservar el flujo
       // anterior (la fila aparece Activa). Si la activación falla, el servicio
@@ -177,6 +208,89 @@ export default function ReceivedServicesView() {
         toast.success('Servicio creado correctamente');
       }
       setCreateModalOpen(false);
+      fetchServices();
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+  };
+
+  // ADN-008 §3.3: recuperar un borrador → guardar cambios o CONFIRMAR.
+  //  · mode='draft' → PATCH update-draft (sin efectos financieros).
+  //  · mode='confirm' → PATCH update-draft → PATCH status active (gate:
+  //    proveedor + importe; el trigger CP-FIN contabiliza el reconocimiento
+  //    UNA sola vez) → pagos del desglose si «Liquidar al confirmar».
+  //    La transición es única (advisory lock + guard no_change en la BD):
+  //    una segunda confirmación no re-contabiliza ni duplica nada.
+  const handleSaveDraftService = async (serviceId: string, data: any, mode: 'draft' | 'confirm') => {
+    try {
+      const upd = await fetch('/api/received-services', {
+        method: 'PATCH',
+        headers: authHeaders,
+        body: JSON.stringify({
+          service_id: serviceId,
+          action: 'update-draft',
+          supplier: data.supplier ?? null,
+          supplier_id: data.supplier_id ?? null,
+          supplier_master_party_id: data.supplier_master_party_id ?? null,
+          supplier_meta: data.supplier_meta ?? null,
+          service_type_id: data.service_type_id,
+          service_type_name: data.service_type_name,
+          total_amount: data.total_amount,
+          service_date: data.service_date,
+          reference_doc: data.reference_doc,
+          observations: data.observations,
+          distribution_method: data.distribution_method,
+          receipt_ids: data.receipt_ids || [],
+          production_order_ids: data.production_order_ids || [],
+        }),
+      });
+      if (!upd.ok) {
+        const err = await upd.json().catch(() => ({}));
+        throw new Error(err.error || 'Error al guardar el borrador');
+      }
+
+      if (mode === 'draft') {
+        toast.success('Cambios del borrador guardados. Sin efectos financieros.');
+        setEditService(null);
+        fetchServices();
+        return;
+      }
+
+      const act = await fetch('/api/received-services', {
+        method: 'PATCH',
+        headers: authHeaders,
+        body: JSON.stringify({ service_id: serviceId, status: 'active', reason: 'Confirmación de borrador' }),
+      });
+      if (!act.ok) {
+        const err = await act.json().catch(() => ({}));
+        throw new Error(err.error || 'No se pudo confirmar el servicio (revisa proveedor e importe).');
+      }
+      toast.success('Servicio confirmado correctamente');
+
+      // Liquidación al confirmar (mismo canal canónico del detalle).
+      const payments = rowsToPayload(data.paymentRows || []);
+      if (payments.length > 0) {
+        const pay = await fetch('/api/payments', {
+          method: 'POST',
+          headers: authHeaders,
+          body: JSON.stringify({
+            ref_type: 'service',
+            ref_id: serviceId,
+            payments,
+            payment_date: data.payment_date || undefined,
+            idempotency_key: crypto.randomUUID(),
+          }),
+        });
+        if (pay.ok) {
+          const n = payments.length;
+          toast.success(`Liquidación registrada (${n} componente${n === 1 ? '' : 's'}).`);
+        } else {
+          const err = await pay.json().catch(() => ({}));
+          toast.warning(`Servicio confirmado, pero el pago no se registró: ${err.error || 'error'} — regístralo desde el detalle.`);
+        }
+      }
+
+      setEditService(null);
       fetchServices();
     } catch (e: any) {
       toast.error(e.message);
@@ -274,7 +388,7 @@ export default function ReceivedServicesView() {
           />
         </div>
         <div className="flex gap-1 bg-muted p-0.5 rounded-lg border border-border">
-          {(['all', 'active', 'voided'] as const).map(s => (
+          {(['all', 'draft', 'active', 'voided'] as const).map(s => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
@@ -283,7 +397,7 @@ export default function ReceivedServicesView() {
                 statusFilter === s ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {s === 'all' ? 'Todos' : s === 'active' ? 'Activos' : 'Anulados'}
+              {s === 'all' ? 'Todos' : s === 'draft' ? 'Borradores' : s === 'active' ? 'Activos' : 'Anulados'}
             </button>
           ))}
         </div>
@@ -362,15 +476,25 @@ export default function ReceivedServicesView() {
                           <button onClick={() => setDetailService(svc)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]" aria-label="Ver detalle" title="Ver detalle y pagos">
                             <Eye className="w-4 h-4" />
                           </button>
-                          {/* v2.18.0: activar borradores (transición draft→active) */}
+                          {/* ADN-008 §3.3: recuperar el borrador para continuar editándolo */}
                           {svc.status === 'draft' && (
-                            <button onClick={() => handleActivate(svc.id)} className="p-2 rounded-lg hover:bg-success/10 text-success transition-colors min-h-[44px] min-w-[44px]" aria-label="Activar" title="Activar servicio">
+                            <button onClick={() => setEditService(svc)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]" aria-label="Continuar borrador" title="Continuar edición del borrador">
+                              <Pencil className="w-4 h-4" />
+                            </button>
+                          )}
+                          {/* v2.18.0: activar borradores (transición draft→active; gate: proveedor + importe) */}
+                          {svc.status === 'draft' && (
+                            <button onClick={() => handleActivate(svc.id)} className="p-2 rounded-lg hover:bg-success/10 text-success transition-colors min-h-[44px] min-w-[44px]" aria-label="Activar" title="Confirmar servicio">
                               <CheckCircle2 className="w-4 h-4" />
                             </button>
                           )}
-                          <button onClick={() => handleRecalculate(svc.id)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]" aria-label="Recalcular distribución" title="Recalcular">
-                            <RefreshCw className="w-4 h-4" />
-                          </button>
+                          {/* ADN-008 (complemento §1): Recalcular SOLO tiene efecto en
+                              servicios activos con recepción vinculada — oculto en borradores. */}
+                          {svc.status !== 'draft' && (
+                            <button onClick={() => handleRecalculate(svc.id)} className="p-2 rounded-lg hover:bg-primary/10 text-primary transition-colors min-h-[44px] min-w-[44px]" aria-label="Recalcular distribución" title="Recalcular">
+                              <RefreshCw className="w-4 h-4" />
+                            </button>
+                          )}
                           {svc.status === 'active' && (
                             <button onClick={() => handleVoid(svc.id)} className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors min-h-[44px] min-w-[44px]" aria-label="Anular" title="Anular">
                               <Ban className="w-4 h-4" />
@@ -398,6 +522,22 @@ export default function ReceivedServicesView() {
         preselectTypeId={preselectedTypeId}
       />
 
+      {/* ADN-008 §3.3: mismo formulario en modo EDICIÓN de borrador.
+          Guardar cambios (sin efectos) o Confirmar (activación + pagos). */}
+      {editService && (
+        <CreateServiceModal
+          isOpen={!!editService}
+          onClose={() => setEditService(null)}
+          onCreate={handleCreate}
+          onSaveEdit={handleSaveDraftService}
+          editService={editService}
+          activeTypes={activeTypes}
+          typesLoading={typesLoading}
+          onOpenManager={() => setManagerOpen(true)}
+          preselectTypeId={preselectedTypeId}
+        />
+      )}
+
       {/* MISIÓN 2026-10-15: gestión del catálogo de tipos de servicio.
           Se abre sobre el formulario sin cerrar la operación en curso; al
           crear un tipo, el selector lo recarga y lo preselecciona. */}
@@ -417,6 +557,7 @@ export default function ReceivedServicesView() {
           service={detailService}
           onClose={() => setDetailService(null)}
           onUpdate={() => { fetchServices(); }}
+          onEditDraft={(svc) => { setDetailService(null); setEditService(svc); }}
         />
       )}
     </div>
@@ -430,10 +571,13 @@ function ServiceDetailModal({
   service,
   onClose,
   onUpdate,
+  onEditDraft,
 }: {
   service: ReceivedService;
   onClose: () => void;
   onUpdate: () => void;
+  /** ADN-008: continuar la edición de un borrador desde el detalle. */
+  onEditDraft?: (svc: ReceivedService) => void;
 }) {
   const { user } = useAuthStore();
   // MISIÓN SERVICIOS RECIBIDOS (2026-10-23), causa raíz del «Error al
@@ -588,6 +732,23 @@ function ServiceDetailModal({
 
         {activeTab === 'info' && (
           <div className="p-4 space-y-2">
+            {/* ADN-008 §3.4: el borrador no tiene efectos financieros — se informa
+                de forma explícita y se ofrece continuar la edición. */}
+            {service.status === 'draft' && (
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2" data-testid="draft-banner">
+                <p className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">Borrador — sin efectos financieros</p>
+                <p className="text-[11px] text-muted-foreground">Este servicio no genera obligación, gasto ni movimiento de caja hasta confirmarse.</p>
+                {onEditDraft && (
+                  <button
+                    onClick={() => onEditDraft(service)}
+                    className="w-full h-10 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase tracking-widest hover:opacity-90 flex items-center justify-center gap-1.5 min-h-[44px]"
+                    data-testid="draft-continue-button"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Continuar edición
+                  </button>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div><span className="text-muted-foreground">Fecha:</span> <span className="font-bold">{service.service_date}</span></div>
               <div><span className="text-muted-foreground">Moneda:</span> <span className="font-bold">{service.currency}</span></div>
@@ -656,9 +817,15 @@ function ServiceDetailModal({
 
             <div className="flex items-center justify-between">
               <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase border", statusBadge.color)}>{statusBadge.label}</span>
-              <button onClick={() => setShowForm(!showForm)} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1">
-                <Plus className="w-3 h-3" /> Registrar Pago
-              </button>
+              {/* ADN-008 §7.3: los pagos existen SOLO tras la confirmación —
+                  un borrador no admite registros de pago (no hay obligación). */}
+              {service.status === 'draft' ? (
+                <span className="text-[10px] font-bold text-muted-foreground">Confirma el servicio para registrar pagos</span>
+              ) : (
+                <button onClick={() => setShowForm(!showForm)} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1">
+                  <Plus className="w-3 h-3" /> Registrar Pago
+                </button>
+              )}
             </div>
 
             {showForm && (
@@ -726,16 +893,24 @@ function ServiceDetailModal({
   );
 }
 
-// ── Modal de Creación Rápida ──
-// v2.18.0: sección "Vinculación operativa" — asocia el servicio a Órdenes de
-// Trabajo/Producción y/o Recepciones de almacén DESDE la creación. La relación
-// es DOCUMENTAL (service_production_order_links / service_reception_links):
-// no genera movimientos de inventario ni contabilidad; la DISTRIBUCIÓN de
-// costos sigue siendo una operación separada (botón Recalcular).
+// ── Modal de Creación / Edición de Servicio Recibido ──
+// ADN-008 (2026-11-20): misma pantalla para crear y para CONTINUAR un borrador.
+// Tres salidas diferenciadas (misión §6.1):
+//   · Guardar borrador        → sin confirmar; CERO efectos financieros.
+//   · Confirmar pendiente     → activa el servicio y registra la obligación.
+//   · Confirmar con liquidación → activa y registra los pagos del desglose.
+// §4: el proveedor usa el MISMO selector de Recepciones (Clasificador Maestro
+// + suppliers de la tienda + alta al vuelo) y se guarda su IDENTIDAD real.
+// Complemento §2: «Tipo de servicio» = combobox con búsqueda (compacto).
+// Complemento §1: «Vinculación operativa» = acordeón contraído por defecto.
 interface CreateServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCreate: (data: any) => void;
+  /** ADN-008 §3.3: guardar cambios / confirmar un borrador existente. */
+  onSaveEdit?: (serviceId: string, data: any, mode: 'draft' | 'confirm') => void;
+  /** ADN-008 §3.3: borrador en edición (null/ausente = modo creación). */
+  editService?: ReceivedService | null;
   /** MISIÓN 2026-10-15: tipos activos del catálogo oficial (tabla service_types). */
   activeTypes: ServiceType[];
   typesLoading: boolean;
@@ -745,12 +920,129 @@ interface CreateServiceModalProps {
   preselectTypeId: string | null;
 }
 
-function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoading, onOpenManager, preselectTypeId }: CreateServiceModalProps) {
+// ── Complemento §2: combobox de TIPO DE SERVICIO con búsqueda ──
+// Una sola línea cerrado; teclado completo (↑ ↓ Enter Esc); móvil (targets
+// 44px, sin desbordes). Mantiene TODAS las opciones del catálogo y sus ids
+// sin alterarlos; la búsqueda filtra por nombre.
+function ServiceTypeCombobox({
+  types, value, onChange, disabled,
+}: {
+  types: ServiceType[];
+  value: string;
+  onChange: (id: string) => void;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [activeIdx, setActiveIdx] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selected = types.find(t => t.id === value) || null;
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return types;
+    return types.filter(t => t.name.toLowerCase().includes(q));
+  }, [types, query]);
+
+  // Cerrar al clic fuera (mismo patrón que SupplierSelector).
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery('');
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
+  useEffect(() => { setActiveIdx(0); }, [query]);
+
+  const commit = (tp: ServiceType) => {
+    onChange(tp.id);
+    setOpen(false);
+    setQuery('');
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') { setOpen(true); e.preventDefault(); }
+      return;
+    }
+    if (e.key === 'ArrowDown') { setActiveIdx(i => Math.min(i + 1, Math.max(filtered.length - 1, 0))); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { setActiveIdx(i => Math.max(i - 1, 0)); e.preventDefault(); }
+    else if (e.key === 'Enter') { if (filtered[activeIdx]) commit(filtered[activeIdx]); e.preventDefault(); }
+    else if (e.key === 'Escape') { setOpen(false); setQuery(''); e.preventDefault(); }
+  };
+
+  return (
+    <div ref={containerRef} className="relative" data-testid="service-type-combobox">
+      <div className="relative">
+        <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary/60 pointer-events-none" aria-hidden="true" />
+        <input
+          type="text"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls="service-type-listbox"
+          aria-autocomplete="list"
+          aria-label="Tipo de servicio"
+          disabled={disabled}
+          value={open ? query : (selected?.name || '')}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={onKeyDown}
+          placeholder="Buscar tipo de servicio..."
+          className="w-full h-11 pl-9 pr-8 rounded-xl border border-border bg-background text-sm font-bold min-h-[44px]"
+        />
+        <ChevronDown className={cn("absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground transition-transform pointer-events-none", open && "rotate-180")} aria-hidden="true" />
+      </div>
+      {open && (
+        <div id="service-type-listbox" role="listbox" aria-label="Opciones de tipo de servicio" className="absolute z-50 mt-1 w-full bg-card border border-border rounded-xl shadow-2xl overflow-hidden max-h-64 flex flex-col">
+          {filtered.length === 0 ? (
+            <p className="p-3 text-xs text-muted-foreground text-center">Sin tipos que coincidan con «{query}»</p>
+          ) : (
+            <div className="overflow-y-auto">
+              {filtered.map((tp, idx) => {
+                const Icon = SERVICE_ICONS[tp.name] || SERVICE_ICONS.default;
+                const isActive = idx === activeIdx;
+                return (
+                  <button
+                    key={tp.id}
+                    type="button"
+                    role="option"
+                    aria-selected={tp.id === value}
+                    onMouseEnter={() => setActiveIdx(idx)}
+                    onClick={() => commit(tp)}
+                    className={cn(
+                      "w-full text-left px-3 py-2.5 flex items-center gap-2 min-h-[44px] transition-colors",
+                      isActive ? "bg-primary/10" : "hover:bg-primary/5",
+                      tp.id === value && "text-primary font-black",
+                    )}
+                  >
+                    <Icon className="w-4 h-4 text-primary/60 shrink-0" aria-hidden="true" />
+                    <span className="text-xs font-bold truncate flex-1">{tp.name}</span>
+                    {tp.id === value && <CheckCircle2 className="w-4 h-4 text-primary shrink-0" aria-hidden="true" />}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, editService, activeTypes, typesLoading, onOpenManager, preselectTypeId }: CreateServiceModalProps) {
   const { user } = useAuthStore();
+  const isEdit = !!editService;
   // Selección por IDENTIDAD (id del catálogo), no por texto: renombrar un tipo
   // no rompe lo que el usuario tiene en la mano al crear el servicio.
   const [typeId, setTypeId] = useState('');
   const [supplier, setSupplier] = useState('');
+  // ADN-008 §4: identidad del proveedor (SupplierSelection del selector de
+  // Recepciones — id local de la tienda y/o tercero del Clasificador Maestro).
+  const [supplierSelection, setSupplierSelection] = useState<SupplierSelection | null>(null);
   const [amount, setAmount] = useState('');
   const [referenceDoc, setReferenceDoc] = useState('');
   const [method, setMethod] = useState<'amount' | 'quantity' | 'manual'>('amount');
@@ -773,7 +1065,8 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
   const maxServiceDate = todayBusinessDay();
   const serviceDateValidation = useOperationDateValidation(serviceDate, user?.activeStoreId, maxServiceDate);
 
-  // ── Vinculación operativa ──
+  // ── Vinculación operativa (complemento §1: acordeón CONTRAÍDO por defecto) ──
+  const [linksOpen, setLinksOpen] = useState(false);
   const [otSearch, setOtSearch] = useState('');
   const [otResults, setOtResults] = useState<any[]>([]);
   const [otSelected, setOtSelected] = useState<any[]>([]);
@@ -836,29 +1129,66 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
     }
   }, [storeId]);
 
-  // Abrir la sección → primera carga
-  useEffect(() => {
-    if (isOpen) {
-      searchOTs('');
-      searchReceipts('');
-    }
-  }, [isOpen]);
+  // ADN-008 §3.3 (complemento §1.3): recuperar los vínculos guardados del
+  // borrador para rehidratar el acordeón. El panel NO se abre solo — el
+  // badge «Configurado» comunica el estado (complemento §1).
+  const loadDraftLinks = useCallback(async (serviceId: string) => {
+    try {
+      const [rcpt, ots] = await Promise.all([
+        supabase.from('service_reception_links').select('receipt_id').eq('service_id', serviceId),
+        supabase.from('service_production_order_links').select('production_order_id').eq('service_id', serviceId),
+      ]);
+      const receiptIds = (rcpt.data || []).map((r: any) => r.receipt_id);
+      const otIds = (ots.data || []).map((o: any) => o.production_order_id);
+      if (receiptIds.length > 0) {
+        const { data } = await supabase.from('receipts').select('id, reference_doc, supplier, total_cost, status, created_at').in('id', receiptIds);
+        setRcptSelected(data || []);
+      } else setRcptSelected([]);
+      if (otIds.length > 0) {
+        const { data } = await supabase.from('production_orders').select('id, order_number, order_type, status, customer_name, order_date, budget_total, budget_currency').in('id', otIds);
+        setOtSelected(data || []);
+      } else setOtSelected([]);
+    } catch { /* best-effort: el borrador sigue editable sin vínculos */ }
+  }, []);
 
-  // MISIÓN 2026-10-15: sincronizar la selección de tipo con el catálogo.
-  // 1) Al abrir: si no hay selección válida, toma el primer tipo activo.
-  // 2) Si la gestión acaba de crear un tipo (preselectTypeId), se selecciona
-  //    inmediatamente — sin cerrar la operación ni volver a empezar.
+  // Abrir la sección → primera carga (creación) o prefill del borrador (edición)
   useEffect(() => {
     if (!isOpen) return;
-    if (preselectTypeId && activeTypes.some(t => t.id === preselectTypeId)) {
-      setTypeId(preselectTypeId);
-      return;
+    if (editService) {
+      setTypeId(editService.service_type_id || '');
+      setSupplier(editService.supplier || '');
+      setSupplierSelection(
+        editService.supplier_id || editService.supplier_master_party_id
+          ? {
+              supplierId: editService.supplier_id || null,
+              masterPartyId: editService.supplier_master_party_id || null,
+              code: editService.supplier_code || null,
+              tax_id: editService.supplier_tax_id || null,
+              phone: editService.supplier_phone || null,
+              address: editService.supplier_address || null,
+              source: editService.supplier_master_party_id ? 'master' : 'local',
+            }
+          : null,
+      );
+      setAmount(editService.total_amount !== undefined && editService.total_amount !== null ? String(editService.total_amount) : '');
+      setReferenceDoc(editService.reference_doc || '');
+      setMethod((editService.distribution_method as 'amount' | 'quantity' | 'manual') || 'amount');
+      setObservations(editService.observations || '');
+      setServiceDate(editService.service_date || todayBusinessDay());
+      setServiceDateTouched(true); // no sobreescribir la fecha guardada
+      setPayNow(false);
+      setPayRows([newPaymentRow({})]);
+      setOtSearch(''); setRcptSearch('');
+      setLinksOpen(false); // contraído por defecto; badge «Configurado» si aplica
+      loadDraftLinks(editService.id);
+    } else {
+      setSupplier(''); setSupplierSelection(null); setAmount(''); setReferenceDoc(''); setObservations('');
+      setServiceDate(todayBusinessDay()); setServiceDateTouched(false);
+      setPayNow(false); setPayRows([newPaymentRow({})]);
+      setOtSelected([]); setRcptSelected([]); setOtSearch(''); setRcptSearch('');
+      setLinksOpen(false);
     }
-    if (!typeId || !activeTypes.some(t => t.id === typeId)) {
-      setTypeId(activeTypes[0]?.id || '');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, preselectTypeId, activeTypes]);
+  }, [isOpen, editService]);
 
   // Búsqueda con debounce
   useEffect(() => {
@@ -885,45 +1215,39 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
     paused: 'Pausada', completed: 'Completada',
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting) return; // doble envío bloqueado
+  /** ADN-008: construye el payload; valida lo mínimo según el modo. */
+  const buildPayload = (saveAsDraft: boolean) => {
     const selectedType = activeTypes.find(t => t.id === typeId);
     if (!selectedType) {
       toast.error('Selecciona un tipo de servicio del catálogo');
-      return;
+      return null;
     }
     if (!amount || parseFloat(amount) <= 0) {
       toast.error('El importe debe ser mayor a 0');
-      return;
+      return null;
     }
     // MISIÓN POLÍTICA TEMPORAL: la fecha del servicio debe ser válida antes
     // de enviar (min per-store inclusivo por día + tope HOY Habana).
     if (!serviceDateValidation.valid) {
       toast.error(serviceDateValidation.error || 'La fecha del servicio no es válida.', { duration: 8000 });
-      return;
+      return null;
     }
-    // CP-FIN-003 (anexo §3.2): la liquidación al confirmar no puede exceder
-    // el importe del servicio ni llevar componentes inválidos.
-    const totalNum = parseFloat(amount) || 0;
-    if (payNow) {
-      if (!rowsAreValid(payRows)) {
-        toast.error('Revisa el pago: importes > 0 y tasa > 1 para moneda extranjera.');
-        return;
-      }
-      if (rowsCupTotal(payRows) > totalNum + 0.005) {
-        toast.error(`El pago (${rowsCupTotal(payRows).toFixed(2)} CUP) excede el importe del servicio (${totalNum.toFixed(2)} CUP).`);
-        return;
-      }
-    }
-    setSubmitting(true);
-    onCreate({
+    const supplierMeta = supplierSelection ? {
+      code: supplierSelection.code ?? null,
+      tax_id: supplierSelection.tax_id ?? null,
+      phone: supplierSelection.phone ?? null,
+      address: supplierSelection.address ?? null,
+    } : null;
+
+    const payload: any = {
       // MISIÓN 2026-10-15: identidad (service_type_id) + snapshot del nombre.
-      // El id referencia el catálogo oficial; el nombre se congela en el
-      // registro histórico (renombrar/desactivar tipos no altera el pasado).
       service_type_id: selectedType.id,
       service_type_name: selectedType.name,
+      // ADN-008 §4.3: identidad REAL del proveedor (no solo el nombre).
       supplier: supplier || null,
+      supplier_id: supplierSelection?.supplierId ?? null,
+      supplier_master_party_id: supplierSelection?.masterPartyId ?? null,
+      supplier_meta: supplierMeta,
       total_amount: parseFloat(amount),
       reference_doc: referenceDoc || null,
       distribution_method: method,
@@ -935,25 +1259,98 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
       // v2.18.0 — Vinculación operativa (opcional, ambas pueden coexistir)
       receipt_ids: rcptSelected.map(r => r.id),
       production_order_ids: otSelected.map(o => o.id),
+    };
+
+    if (saveAsDraft) {
+      // Borrador: CERO efectos financieros. Sin filas de pago; el desglose
+      // se configura al confirmar. Idempotencia anti doble-clic.
+      payload.save_as_draft = true;
+      payload.creation_key = crypto.randomUUID();
+      payload.paymentRows = [];
+    } else {
       // CP-FIN-003 (anexo §3.2): liquidación al confirmar (si el operador la
       // registra aquí). Pendiente → sin filas → la obligación queda pendiente
       // y NO se genera ningún egreso ficticio.
-      paymentRows: payNow ? payRows : [],
-    });
-    setSubmitting(false);
-    // Reset
-    setSupplier(''); setAmount(''); setReferenceDoc(''); setObservations('');
-    setServiceDate(todayBusinessDay());
-    setPayNow(false); setPayRows([newPaymentRow(storeRates)]);
-    setOtSelected([]); setRcptSelected([]); setOtSearch(''); setRcptSearch('');
+      const totalNum = parseFloat(amount) || 0;
+      if (payNow) {
+        if (!rowsAreValid(payRows)) {
+          toast.error('Revisa el pago: importes > 0 y tasa > 1 para moneda extranjera.');
+          return null;
+        }
+        if (rowsCupTotal(payRows) > totalNum + 0.005) {
+          toast.error(`El pago (${rowsCupTotal(payRows).toFixed(2)} CUP) excede el importe del servicio (${totalNum.toFixed(2)} CUP).`);
+          return null;
+        }
+      }
+      payload.paymentRows = payNow ? payRows : [];
+    }
+    return payload;
   };
 
+  /** Guardar BORRADOR (creación o edición) — sin confirmar, sin efectos. */
+  const handleSaveDraft = () => {
+    if (submitting) return;
+    const payload = buildPayload(true);
+    if (!payload) return;
+    const message = isEdit
+      ? '¿Guardar los cambios del BORRADOR? Sin confirmar el servicio y sin efectos financieros.'
+      : '¿Guardar como BORRADOR? No se confirmará el servicio ni se generarán efectos financieros (obligación, gasto o pagos).';
+    if (!window.confirm(message)) return;
+    setSubmitting(true);
+    try {
+      if (isEdit && editService && onSaveEdit) {
+        onSaveEdit(editService.id, payload, 'draft');
+      } else {
+        onCreate(payload);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return; // doble envío bloqueado
+    // La CONFIRMACIÓN exige proveedor (misión §4.2/§7): el borrador pudo
+    // guardarse sin él, pero el servicio operativo no puede quedar sin tercero.
+    if (!supplier || !supplier.trim()) {
+      toast.error('El proveedor es obligatorio para confirmar el servicio');
+      return;
+    }
+    const payload = buildPayload(false);
+    if (!payload) return;
+    const nComp = (payload.paymentRows || []).length;
+    const message = nComp > 0
+      ? `¿CONFIRMAR el servicio y LIQUIDAR al confirmar (${nComp} componente${nComp === 1 ? '' : 's'} de pago)? Se registrará la obligación y sus pagos.`
+      : '¿CONFIRMAR el servicio? Quedará pendiente de pago: se registra la obligación y NO se genera ningún egreso de caja o banco.';
+    if (!window.confirm(message)) return;
+    setSubmitting(true);
+    try {
+      if (isEdit && editService && onSaveEdit) {
+        // ADN-008 §3.3: fecha financiera del pago al confirmar el borrador.
+        onSaveEdit(editService.id, { ...payload, payment_date: formatOperationDateForRPC(todayBusinessDay()) }, 'confirm');
+      } else {
+        onCreate(payload);
+      }
+    } finally {
+      setSubmitting(false);
+    }
+    // Reset (solo modo creación: la edición se cierra desde el padre)
+    if (!isEdit) {
+      setSupplier(''); setSupplierSelection(null); setAmount(''); setReferenceDoc(''); setObservations('');
+      setServiceDate(todayBusinessDay());
+      setPayNow(false); setPayRows([newPaymentRow(storeRates)]);
+      setOtSelected([]); setRcptSelected([]); setOtSearch(''); setRcptSearch('');
+      setLinksOpen(false);
+    }
+  };
+
+  const linksConfigured = otSelected.length > 0 || rcptSelected.length > 0;
+
   return (
-    <BaseModal open={isOpen} onOpenChange={(o) => !o && onClose()} title={<span className="flex items-center gap-2"><Plus className="w-5 h-5" /> Nuevo Servicio Recibido</span>} maxWidth="sm:max-w-2xl">
+    <BaseModal open={isOpen} onOpenChange={(o) => !o && onClose()} title={<span className="flex items-center gap-2">{isEdit ? <Pencil className="w-5 h-5" /> : <Plus className="w-5 h-5" />} {isEdit ? `Continuar Borrador ${editService?.service_number || ''}` : 'Nuevo Servicio Recibido'}</span>} maxWidth="sm:max-w-2xl">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Tipo de servicio — catálogo oficial (tabla service_types).
-            MISIÓN 2026-10-15: la lista estática quickTypes se sustituye por el
-            catálogo gestionable; acceso «Gestionar tipos de servicio». */}
+        {/* ─── Complemento §2: Tipo de servicio = combobox con búsqueda ─── */}
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
             <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
@@ -983,28 +1380,24 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
               </p>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Tipo de servicio">
-              {activeTypes.map(tp => {
-                const Icon = SERVICE_ICONS[tp.name] || SERVICE_ICONS.default;
-                const selected = typeId === tp.id;
-                return (
-                  <button key={tp.id} type="button" role="radio" aria-checked={selected}
-                    onClick={() => setTypeId(tp.id)}
-                    className={cn("inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all min-h-[44px]",
-                      selected ? "bg-primary text-primary-foreground shadow-lg" : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary")}>
-                    <Icon className="w-3.5 h-3.5" aria-hidden="true" />
-                    {tp.name}
-                  </button>
-                );
-              })}
-            </div>
+            <ServiceTypeCombobox types={activeTypes} value={typeId} onChange={setTypeId} />
           )}
         </div>
 
-        {/* Proveedor */}
+        {/* ─── ADN-008 §4: Proveedor = MISMO selector de Recepciones ─── */}
         <div>
-          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Proveedor *</label>
-          <input type="text" value={supplier} onChange={e => setSupplier(e.target.value)} className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-medium min-h-[44px]" placeholder="Ej: TransCaribe S.A." />
+          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">
+            Proveedor <span aria-hidden="true" className="text-destructive">*</span>
+            <span className="ml-2 text-[10px] font-bold normal-case tracking-normal text-muted-foreground">
+              obligatorio para confirmar — opcional en el borrador
+            </span>
+          </label>
+          <div data-testid="supplier-selector">
+            <SupplierSelector
+              value={supplier}
+              onChange={(name, detail) => { setSupplier(name); setSupplierSelection(detail ?? null); }}
+            />
+          </div>
         </div>
 
         {/* Importe */}
@@ -1032,10 +1425,7 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
           inputId="received-service-date"
         />
 
-        {/* ─── CP-FIN-003 (anexo §3.1): Información del pago ───
-            Mismo componente/validaciones/semántica del carrito de Ventas.
-            Pendiente por defecto (obligación sin egreso ficticio); liquidación
-            al confirmar opcional con medio×moneda×importe×tasa reales. */}
+        {/* ─── ADN-008 §5/§6: Información del pago con los DOS modos claros ─── */}
         <div className="rounded-xl border border-border/40 bg-muted/10 p-3 space-y-3" data-testid="service-payment-section">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-black uppercase tracking-widest text-foreground">Información del pago</span>
@@ -1046,8 +1436,8 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
                 onChange={(e) => {
                   setPayNow(e.target.checked);
                   if (e.target.checked) {
-                    // Default del operador: Efectivo + CUP por el importe total
-                    // (perfil por defecto de ENERVIDA; editable libremente).
+                    // Default del operador (§5.1): Efectivo + CUP por el importe
+                    // total del servicio — editable libremente en el editor.
                     const total = parseFloat(amount) || 0;
                     setPayRows([newPaymentRow(storeRates, { amount: total })]);
                   }
@@ -1059,146 +1449,197 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
             </label>
           </div>
           {!payNow ? (
-            <p className="text-[11px] text-muted-foreground">
-              El servicio quedará <span className="font-bold">pendiente de pago</span>: se registra la obligación y
-              podrá liquidarse después desde el detalle (Pago → Pagos), por cualquier medio y moneda, en un pago o
-              en varios. No se genera ningún egreso inexistente.
+            /* ─── Modo B: Dejar pendiente de pago ─── */
+            <p className="text-[11px] text-muted-foreground leading-relaxed" data-testid="payment-mode-pending-text">
+              <span className="font-black uppercase tracking-wide text-foreground">Dejar pendiente de pago.</span>{' '}
+              El servicio se confirmará y se registrará la obligación correspondiente. No se generará ningún egreso de caja o banco.
+              Podrás liquidarlo posteriormente desde el detalle, utilizando uno o varios pagos, diferentes monedas y formas de pago.
             </p>
           ) : (
-            <PaymentRowsEditor
-              rows={payRows}
-              onChange={setPayRows}
-              storeRates={storeRates}
-              maxCupTotal={parseFloat(amount) || undefined}
-            />
+            /* ─── Modo A: Liquidar al confirmar (editor multipago del sistema) ─── */
+            <div className="space-y-2" data-testid="payment-mode-paynow-text">
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                <span className="font-black uppercase tracking-wide text-foreground">Liquidar al confirmar.</span>{' '}
+                El servicio se registrará como pagado al confirmar. Puedes utilizar efectivo, transferencia u otros medios disponibles,
+                combinar monedas y distribuir el importe en varios pagos. Por defecto se utiliza Efectivo en CUP.
+              </p>
+              <PaymentRowsEditor
+                rows={payRows}
+                onChange={setPayRows}
+                storeRates={storeRates}
+                maxCupTotal={parseFloat(amount) || undefined}
+              />
+              {(() => {
+                const totalNum = parseFloat(amount) || 0;
+                const covered = rowsCupTotal(payRows);
+                const pending = Math.max(0, totalNum - covered);
+                return (
+                  <p className="text-[10px] font-bold text-muted-foreground text-right" data-testid="payment-coverage-hint">
+                    {pending > 0.005
+                      ? `Saldo pendiente tras la liquidación: ${formatCurrency(pending)} CUP (el servicio quedará Parcial)`
+                      : 'Liquidación completa del servicio'}
+                  </p>
+                );
+              })()}
+            </div>
           )}
         </div>
 
-        {/* ─── v2.18.0: Vinculación operativa ─── */}
-        <div className="rounded-xl border border-primary/25 bg-primary/[0.03] p-3 sm:p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Link2 className="w-4 h-4 text-primary" />
-            <span className="text-xs font-black uppercase tracking-widest text-foreground">Vinculación operativa</span>
-            <span className="text-[10px] font-bold text-muted-foreground normal-case tracking-normal">(opcional)</span>
-          </div>
-
-          {/* Orden de Trabajo */}
-          <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block">Orden de Trabajo / Producción (OT)</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                value={otSearch}
-                onChange={e => { setOtSearch(e.target.value); setShowOtList(true); }}
-                onFocus={() => setShowOtList(true)}
-                placeholder="Buscar por número, cliente o descripción..."
-                className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-background text-sm min-h-[44px]"
-              />
-            </div>
-            {showOtList && (
-              <div className="max-h-40 overflow-y-auto rounded-lg border border-border divide-y divide-border/50 bg-background">
-                {otSearching ? (
-                  <p className="text-xs text-muted-foreground text-center py-3">Buscando...</p>
-                ) : otResults.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-3">Sin órdenes disponibles</p>
-                ) : otResults.map(ot => {
-                  const selected = otSelected.some(x => x.id === ot.id);
-                  return (
-                    <button
-                      type="button"
-                      key={ot.id}
-                      onClick={() => toggleOT(ot)}
-                      className={cn("w-full text-left px-3 py-2 hover:bg-primary/5 transition-colors flex items-center justify-between gap-2 min-h-[44px]", selected && "bg-primary/10")}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold font-mono truncate">{ot.order_number} <span className="text-muted-foreground font-sans font-medium">· {ot.customer_name || 'Sin cliente'}</span></p>
-                        <p className="text-[10px] text-muted-foreground">{ot.order_type === 'production' ? 'Producción' : 'Trabajo'} · {OT_STATUS_LABELS[ot.status] || ot.status} · {ot.order_date}</p>
-                      </div>
-                      {selected && <span className="text-[10px] font-black uppercase text-primary shrink-0">✓ Vinculada</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            {otSelected.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {otSelected.map(ot => (
-                  <span key={ot.id} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-[10px] font-bold">
-                    {ot.order_number}
-                    <button type="button" onClick={() => toggleOT(ot)} className="hover:text-destructive" aria-label={`Quitar ${ot.order_number}`}>✕</button>
+        {/* ─── Complemento §1: Vinculación operativa — acordeón contraído ─── */}
+        <Collapsible open={linksOpen} onOpenChange={setLinksOpen} data-testid="operational-links-collapsible">
+          <div className="rounded-xl border border-primary/25 bg-primary/[0.03]">
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="w-full flex items-center justify-between gap-2 px-3 py-3 text-left min-h-[44px] hover:bg-primary/5 transition-colors rounded-xl"
+                aria-expanded={linksOpen}
+                data-testid="operational-links-trigger"
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  <Link2 className="w-4 h-4 text-primary shrink-0" />
+                  <span className="min-w-0">
+                    <span className="text-xs font-black uppercase tracking-widest text-foreground block">Vinculación operativa <span className="text-[10px] font-bold text-muted-foreground normal-case tracking-normal">(opcional)</span></span>
+                    <span className="text-[10px] text-muted-foreground block normal-case tracking-normal">Configurar OT, recepción y distribución de costos</span>
                   </span>
-                ))}
+                </span>
+                <span className="flex items-center gap-2 shrink-0">
+                  {linksConfigured && (
+                    <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[9px] font-black uppercase" data-testid="links-configured-badge">Configurado</span>
+                  )}
+                  <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", linksOpen && "rotate-180")} aria-hidden="true" />
+                </span>
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <div className="px-3 pb-3 space-y-3">
+                {/* Orden de Trabajo */}
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block">Orden de Trabajo / Producción (OT)</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={otSearch}
+                      onChange={e => { setOtSearch(e.target.value); setShowOtList(true); }}
+                      onFocus={() => setShowOtList(true)}
+                      placeholder="Buscar por número, cliente o descripción..."
+                      className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-background text-sm min-h-[44px]"
+                    />
+                  </div>
+                  {showOtList && (
+                    <div className="max-h-40 overflow-y-auto rounded-lg border border-border divide-y divide-border/50 bg-background">
+                      {otSearching ? (
+                        <p className="text-xs text-muted-foreground text-center py-3">Buscando...</p>
+                      ) : otResults.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-3">Sin órdenes disponibles</p>
+                      ) : otResults.map(ot => {
+                        const selected = otSelected.some(x => x.id === ot.id);
+                        return (
+                          <button
+                            type="button"
+                            key={ot.id}
+                            onClick={() => toggleOT(ot)}
+                            className={cn("w-full text-left px-3 py-2 hover:bg-primary/5 transition-colors flex items-center justify-between gap-2 min-h-[44px]", selected && "bg-primary/10")}
+                          >
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold font-mono truncate">{ot.order_number} <span className="text-muted-foreground font-sans font-medium">· {ot.customer_name || 'Sin cliente'}</span></p>
+                              <p className="text-[10px] text-muted-foreground">{ot.order_type === 'production' ? 'Producción' : 'Trabajo'} · {OT_STATUS_LABELS[ot.status] || ot.status} · {ot.order_date}</p>
+                            </div>
+                            {selected && <span className="text-[10px] font-black uppercase text-primary shrink-0">✓ Vinculada</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {otSelected.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {otSelected.map(ot => (
+                        <span key={ot.id} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-[10px] font-bold">
+                          {ot.order_number}
+                          <button type="button" onClick={() => toggleOT(ot)} className="hover:text-destructive" aria-label={`Quitar ${ot.order_number}`}>✕</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Recepción de almacén */}
+                <div className="space-y-2">
+                  <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block">Recepción de almacén</label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <input
+                      type="text"
+                      value={rcptSearch}
+                      onChange={e => { setRcptSearch(e.target.value); setShowRcptList(true); }}
+                      onFocus={() => setShowRcptList(true)}
+                      placeholder="Buscar por factura o proveedor..."
+                      className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-background text-sm min-h-[44px]"
+                    />
+                  </div>
+                  {showRcptList && (
+                    <div className="max-h-40 overflow-y-auto rounded-lg border border-border divide-y divide-border/50 bg-background">
+                      {rcptSearching ? (
+                        <p className="text-xs text-muted-foreground text-center py-3">Buscando...</p>
+                      ) : rcptResults.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-3">Sin recepciones activas</p>
+                      ) : rcptResults.map(rc => {
+                        const selected = rcptSelected.some(x => x.id === rc.id);
+                        return (
+                          <button
+                            type="button"
+                            key={rc.id}
+                            onClick={() => toggleRcpt(rc)}
+                            className={cn("w-full text-left px-3 py-2 hover:bg-primary/5 transition-colors flex items-center justify-between gap-2 min-h-[44px]", selected && "bg-primary/10")}
+                          >
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold truncate">{rc.reference_doc || 'Sin factura'} <span className="text-muted-foreground font-medium">· {rc.supplier || 'Sin proveedor'}</span></p>
+                              <p className="text-[10px] text-muted-foreground">Activa · {String(rc.created_at).slice(0, 10)}</p>
+                            </div>
+                            {selected && <span className="text-[10px] font-black uppercase text-primary shrink-0">✓ Vinculada</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {rcptSelected.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5">
+                      {rcptSelected.map(rc => (
+                        <span key={rc.id} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-[10px] font-bold">
+                          {rc.reference_doc || rc.id.slice(0, 8)}
+                          <button type="button" onClick={() => toggleRcpt(rc)} className="hover:text-destructive" aria-label="Quitar recepción">✕</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Complemento §1.2: método de distribución — SOLO con recepción
+                    vinculada (sin efecto operativo si no la hay). Tres
+                    modalidades intactas; se aplica después con «Recalcular». */}
+                {rcptSelected.length > 0 ? (
+                  <div>
+                    <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block mb-2">Método de distribución</label>
+                    <select value={method} onChange={e => setMethod(e.target.value as any)} className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-bold min-h-[44px]" data-testid="distribution-method-select">
+                      <option value="amount">Por importe (proporcional al valor)</option>
+                      <option value="quantity">Por cantidad (proporcional a unidades)</option>
+                      <option value="manual">Manual (definir porcentajes)</option>
+                    </select>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">
+                    Vincula una Recepción de almacén para configurar la distribución del costo (por importe, por cantidad o manual).
+                  </p>
+                )}
+
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  La vinculación es <span className="font-bold">documental</span>: no genera movimientos de almacén ni contabilidad.
+                  La distribución del costo sobre la recepción se ejecuta después con «Recalcular» y el pago se registra en la pestaña Pagos del servicio.
+                </p>
               </div>
-            )}
+            </CollapsibleContent>
           </div>
-
-          {/* Recepción de almacén */}
-          <div className="space-y-2">
-            <label className="text-[11px] font-black uppercase tracking-widest text-muted-foreground block">Recepción de almacén</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <input
-                type="text"
-                value={rcptSearch}
-                onChange={e => { setRcptSearch(e.target.value); setShowRcptList(true); }}
-                onFocus={() => setShowRcptList(true)}
-                placeholder="Buscar por factura o proveedor..."
-                className="w-full h-10 pl-9 pr-3 rounded-lg border border-border bg-background text-sm min-h-[44px]"
-              />
-            </div>
-            {showRcptList && (
-              <div className="max-h-40 overflow-y-auto rounded-lg border border-border divide-y divide-border/50 bg-background">
-                {rcptSearching ? (
-                  <p className="text-xs text-muted-foreground text-center py-3">Buscando...</p>
-                ) : rcptResults.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-3">Sin recepciones activas</p>
-                ) : rcptResults.map(rc => {
-                  const selected = rcptSelected.some(x => x.id === rc.id);
-                  return (
-                    <button
-                      type="button"
-                      key={rc.id}
-                      onClick={() => toggleRcpt(rc)}
-                      className={cn("w-full text-left px-3 py-2 hover:bg-primary/5 transition-colors flex items-center justify-between gap-2 min-h-[44px]", selected && "bg-primary/10")}
-                    >
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold truncate">{rc.reference_doc || 'Sin factura'} <span className="text-muted-foreground font-medium">· {rc.supplier || 'Sin proveedor'}</span></p>
-                        <p className="text-[10px] text-muted-foreground">Activa · {String(rc.created_at).slice(0, 10)}</p>
-                      </div>
-                      {selected && <span className="text-[10px] font-black uppercase text-primary shrink-0">✓ Vinculada</span>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-            {rcptSelected.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {rcptSelected.map(rc => (
-                  <span key={rc.id} className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-primary/10 text-primary text-[10px] font-bold">
-                    {rc.reference_doc || rc.id.slice(0, 8)}
-                    <button type="button" onClick={() => toggleRcpt(rc)} className="hover:text-destructive" aria-label="Quitar recepción">✕</button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <p className="text-[10px] text-muted-foreground leading-relaxed">
-            La vinculación es <span className="font-bold">documental</span>: no genera movimientos de almacén ni contabilidad.
-            La distribución del costo sobre la recepción se ejecuta después con «Recalcular» y el pago se registra en la pestaña Pagos del servicio.
-          </p>
-        </div>
-
-        {/* Método de distribución */}
-        <div>
-          <label className="text-xs font-black uppercase tracking-widest text-muted-foreground block mb-2">Método de distribución</label>
-          <select value={method} onChange={e => setMethod(e.target.value as any)} className="w-full h-11 px-3 rounded-xl border border-border bg-background text-sm font-bold min-h-[44px]">
-            <option value="amount">Por importe (proporcional al valor)</option>
-            <option value="quantity">Por cantidad (proporcional a unidades)</option>
-            <option value="manual">Manual (definir porcentajes)</option>
-          </select>
-        </div>
+        </Collapsible>
 
         {/* Observaciones */}
         <div>
@@ -1206,11 +1647,23 @@ function CreateServiceModal({ isOpen, onClose, onCreate, activeTypes, typesLoadi
           <textarea value={observations} onChange={e => setObservations(e.target.value)} rows={2} className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm min-h-[44px]" placeholder="Notas adicionales..." />
         </div>
 
+        {/* ─── ADN-008 §6.1: las TRES salidas claramente diferenciadas ─── */}
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="outline" onClick={onClose} className="flex-1 h-11 min-h-[44px] rounded-xl font-black uppercase tracking-widest text-xs">Cancelar</Button>
-          <Button type="submit" disabled={submitting} className="flex-1 h-11 min-h-[44px] rounded-xl font-black uppercase tracking-widest text-xs gap-2">
-            {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            Crear Servicio
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleSaveDraft}
+            disabled={submitting}
+            className="flex-1 h-11 min-h-[44px] rounded-xl font-black uppercase tracking-widest text-xs gap-2 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+            data-testid="save-draft-button"
+          >
+            {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}
+            {isEdit ? 'Guardar cambios' : 'Guardar borrador'}
+          </Button>
+          <Button type="submit" disabled={submitting} className="flex-1 h-11 min-h-[44px] rounded-xl font-black uppercase tracking-widest text-xs gap-2" data-testid="confirm-service-button">
+            {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+            {isEdit ? 'Confirmar servicio' : (payNow ? 'Confirmar y liquidar' : 'Confirmar servicio')}
           </Button>
         </div>
       </form>
