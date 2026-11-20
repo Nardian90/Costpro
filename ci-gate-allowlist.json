@@ -609,6 +609,12 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "register_supplier_payment_batch",
+      "reason": "CP-FIN-004 (2026-11-20, EXTERNA al repo) · RPC de lote de pagos a proveedor (1-20 componentes, idempotente por bloque, delega CADA componente al canónico register_supplier_payment) creada DIRECTAMENTE en producción (~16:40 UTC 2026-11-20) por trabajo paralelo del propietario — NO existe en el stream de migraciones ni en ramas GitHub. Hallada por el SQL Security Gate LIVE (secdef_no_auth, 121 vs 120). Su ACL concedía EXECUTE a authenticated SIN verificación de identidad en el cuerpo (solo pertenencia del documento al store_id suministrado por el llamador) → ruta de escalada sobre el canal EXCLUSIVO service_role de register_supplier_payment. ACCIÓN TOMADA (mínima, no destructiva, documentada): REVOKE EXECUTE from PUBLIC/anon/authenticated — ahora service_role-only, EXACTAMENTE el patrón de la función que envuelve. FLAG AL PROPIETARIO: su cuerpo usa el contrato heredado ('zelle', sin external_transfer) y debe integrarse al contrato canónico CP-FIN-004 + representarse en el stream de migraciones en su PR.",
+      "added_by": "CP-FIN-004 2026-11-20 (hallazgo externo)",
+      "expires": "2026-12-31"
+    },
+    {
       "function": "regularize_sale_payment",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",

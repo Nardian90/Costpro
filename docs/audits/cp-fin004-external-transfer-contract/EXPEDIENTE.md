@@ -155,6 +155,26 @@
   destino, exactamente como GEN-1). Queda documentado para veto/ajuste
   documental del propietario (canal: rectificador idempotente).
 
+### 6.3 Hallazgo EXTERNO — `register_supplier_payment_batch` (trabajo paralelo del propietario)
+- Función NUEVA creada DIRECTAMENTE en producción (~16:40 UTC, entre dos runs del
+  CI del PR #1669), sin migración ni rama GitHub. RPC de lote de pagos a
+  proveedor (1-20 componentes, idempotente por bloque) que delega cada
+  componente al canónico `register_supplier_payment`.
+- Detectada por el SQL Security Gate LIVE (secdef_no_auth: 121 vs 120). Su ACL
+  concedía EXECUTE a `authenticated` SIN verificación de identidad en el cuerpo
+  (solo pertenencia del documento al store_id suministrado por el llamador)
+  → ruta de escalada sobre el canal EXCLUSIVO service_role de la función que
+  envuelve.
+- **Acción tomada (mínima, no destructiva):** REVOKE EXECUTE from
+  PUBLIC/anon/authenticated — ahora service_role-only, el EXACTO patrón de su
+  función hermana. El trabajo del propietario continúa intacto por el canal
+  service_role. Entrada de allowlist añadida con documentación completa y
+  expiración 2026-12-31.
+- **FLAG al propietario:** el cuerpo usa el contrato heredado
+  (`'cash','transfer','zelle'` — rechaza `external_transfer`) y debe integrarse
+  al contrato canónico CP-FIN-004 + representarse en el stream de migraciones
+  cuando su PR llegue.
+
 ## 7. Normalización ejecutada (16:22:46 UTC) — resultado
 
 ```json
