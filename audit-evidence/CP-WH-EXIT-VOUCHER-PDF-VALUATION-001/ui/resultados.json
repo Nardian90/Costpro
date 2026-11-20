@@ -1,0 +1,95 @@
+{
+  "results": [
+    {
+      "name": "banner de cookies no mostrado (consentimiento previo)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "login",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "vista Vales de Salida cargada",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tarjetas/filas con botón Visualizar vale",
+      "ok": true,
+      "detail": "50 botones"
+    },
+    {
+      "name": "checkbox «Incluir valores en el PDF» visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "estado por defecto = MARCADO (comportamiento vigente)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "descarga PDF valorizado",
+      "ok": true,
+      "detail": "/home/z/my-project/Costpro/audit-evidence/CP-WH-EXIT-VOUCHER-PDF-VALUATION-001/ui/descargas/SC-2-08_Vale_de_Salida_VS-000240-2026_valorizado.pdf"
+    },
+    {
+      "name": "checkbox desmarcado aplica a la exportación",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "descarga PDF físico",
+      "ok": true,
+      "detail": "/home/z/my-project/Costpro/audit-evidence/CP-WH-EXIT-VOUCHER-PDF-VALUATION-001/ui/descargas/SC-2-08_Vale_de_Salida_VS-000240-2026_sin_valorar_fisico.pdf"
+    },
+    {
+      "name": "PDF valorizado contiene Importe Total",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "PDF valorizado contiene moneda CUP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "PDF físico SIN Importe",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "PDF físico SIN CUP",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "PDF físico conserva identidad (consecutivo y firmas)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "mismo documento en ambos (mismo consecutivo)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "móvil: checkbox visible y con área táctil",
+      "ok": true,
+      "detail": "20x20 @ y=524"
+    },
+    {
+      "name": "móvil: control de valorización dentro del viewport (sin corte)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sin errores de consola/pageerror",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "consoleErrors": []
+}

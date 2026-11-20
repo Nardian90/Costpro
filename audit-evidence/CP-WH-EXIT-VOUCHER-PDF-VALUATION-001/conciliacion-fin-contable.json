@@ -1,0 +1,87 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-20T19:39:29.501Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT e.event, count(*) AS entradas, count(DISTINCT e.document_id) AS documentos_distintos FROM public.fin_entries e WH",
+      "rows": [
+        {
+          "event": "reconocimiento",
+          "entradas": 604,
+          "documentos_distintos": 203
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT s.name AS tienda, min(i.created_at::date) AS desde, max(i.created_at::date) AS hasta,        count(*) AS vales, s",
+      "rows": [
+        {
+          "tienda": "ENERVIDA-VITALLCONS",
+          "desde": "2026-09-08",
+          "hasta": "2026-10-05",
+          "vales": 34,
+          "costo_total_cup": "0.00"
+        },
+        {
+          "tienda": "COSTPRO (Prueba)",
+          "desde": "2026-10-09",
+          "hasta": "2026-11-13",
+          "vales": 2,
+          "costo_total_cup": "69644.76"
+        },
+        {
+          "tienda": "PUERTO PADRE",
+          "desde": "2026-11-07",
+          "hasta": "2026-11-07",
+          "vales": 1,
+          "costo_total_cup": "45.00"
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT date_trunc('month', i.created_at)::date AS mes, count(*) AS vales, sum(i.total_cost) AS costo FROM public.issue_s",
+      "rows": [
+        {
+          "mes": "2026-09-01",
+          "vales": 27,
+          "costo": "0.00"
+        },
+        {
+          "mes": "2026-10-01",
+          "vales": 8,
+          "costo": "60000.00"
+        },
+        {
+          "mes": "2026-11-01",
+          "vales": 2,
+          "costo": "9689.76"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT e.event, count(*) AS entradas FROM public.fin_entries e WHERE e.document_type='VALE_SALIDA' GROUP BY e.event",
+      "rows": [
+        {
+          "event": "reconocimiento",
+          "entradas": 604
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT i.status, e.event, count(*) AS entradas FROM public.fin_entries e JOIN public.issue_slips i ON i.id = e.document_",
+      "rows": [
+        {
+          "status": "completed",
+          "event": "reconocimiento",
+          "entradas": 604
+        }
+      ]
+    }
+  ]
+}
