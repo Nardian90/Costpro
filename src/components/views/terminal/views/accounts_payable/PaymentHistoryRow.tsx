@@ -21,7 +21,7 @@ const METHOD_ICONS = {
 const METHOD_LABELS = {
   cash: 'Efectivo',
   transfer: 'Transferencia',
-  zelle: 'Zelle',
+  zelle: 'Transf. Exterior',
 };
 
 export default function PaymentHistoryRow({ refType, refId, paidAmount }: PaymentHistoryRowProps) {

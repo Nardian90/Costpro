@@ -944,7 +944,7 @@ export function POSCartCheckoutPanel({
                   <span className="text-muted-foreground w-8">{cur}</span>
                   {c.cash > 0 && <span className="text-success">💵{c.cash.toFixed(2)}</span>}
                   {c.transfer > 0 && <span className="text-primary">📱{c.transfer.toFixed(2)}</span>}
-                  {c.zelle > 0 && <span className="text-primary">💳{c.zelle.toFixed(2)}</span>}
+                  {c.zelle > 0 && <span className="text-primary" title="Transf. Exterior">💳{c.zelle.toFixed(2)}</span>}
                 </div>
               );
             })}
@@ -1040,7 +1040,8 @@ export function POSCartCheckoutPanel({
       {(() => {
         const items = useCartStore.getState().items;
         // Construir lista plana de ajustes: {itemName, methodIcon, method, value, type, isDiscount}
-        type Adj = { itemKey: string; itemName: string; method: 'cash' | 'transfer' | 'zelle'; value: number; dtype: 'percentage' | 'fixed' };
+        // CP-FIN-004: método canónico del exterior (+ heredado por datos persistidos).
+        type Adj = { itemKey: string; itemName: string; method: 'cash' | 'transfer' | 'external_transfer' | 'zelle'; value: number; dtype: 'percentage' | 'fixed' };
         const discounts: Adj[] = [];
         const surcharges: Adj[] = [];
         for (const item of items) {

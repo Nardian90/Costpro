@@ -29,7 +29,7 @@ const METHOD_FILTERS = [
   { id: '', label: 'Todos los métodos' },
   { id: 'cash', label: 'Efectivo' },
   { id: 'transfer', label: 'Transferencia' },
-  { id: 'zelle', label: 'Zelle' },
+  { id: 'zelle', label: 'Transf. Exterior' },
 ];
 
 const CURRENCY_FILTERS = [
@@ -55,7 +55,9 @@ export default function AccountsPayableView() {
 
   const { data, totals, kpis, summary, count, loading, error, refetch } = useAccountsPayable({
     tab,
-    method: (methodFilter || undefined) as 'cash' | 'transfer' | 'zelle' | undefined,
+    // CP-FIN-004: el filtro 'zelle' (Transf. Exterior) consulta ambos valores
+    // (canónico external_transfer + heredado) — el hook expande el alias.
+    method: (methodFilter || undefined) as 'cash' | 'transfer' | 'zelle' | 'external_transfer' | undefined,
     currency: currencyFilter || undefined,
     search: searchQuery || undefined,
     mode: viewMode,

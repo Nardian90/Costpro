@@ -4,7 +4,8 @@ import { useState, useCallback } from 'react';
 import { apiFetch } from '@/lib/api-fetch';
 
 export interface PaymentRowInput {
-  payment_method: 'cash' | 'transfer' | 'zelle';
+  // CP-FIN-004: canónico + heredado 'zelle' (solo lectura de datos previos).
+  payment_method: 'cash' | 'transfer' | 'external_transfer' | 'zelle';
   amount: number;
   currency: string;
   exchange_rate: number;

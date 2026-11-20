@@ -1509,7 +1509,7 @@ function PaymentsTab({ order, payments, loading, onRefresh }: {
   const balanceCup = Math.max(0, budgetCup - totalPaidCup);
 
   const methodIcon = (m: string) => m === 'cash' ? '💵' : m === 'transfer' ? '📱' : '💳';
-  const methodLabel = (m: string) => m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Zelle';
+  const methodLabel = (m: string) => m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Transf. Exterior';
 
   const typeBadge: Record<string, { label: string; color: string }> = {
     advance: { label: 'Anticipo', color: 'bg-blue-500/15 text-blue-500 border-blue-500/30' },

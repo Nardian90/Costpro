@@ -284,8 +284,9 @@ export const POSThermalReceipt: React.FC<POSThermalReceiptProps> = ({
             <Row
               key={`${p.method}-${p.currency}`}
               label={
-                p.method === 'zelle' && p.currency !== 'USD'
-                  ? 'ZELLE (equiv. CUP)'
+                // CP-FIN-004: reconocedor dual del exterior (canónico + heredado).
+                (p.method === 'zelle' || p.method === 'external_transfer') && p.currency !== 'USD'
+                  ? 'TRANSF. EXTERIOR (equiv. CUP)'
                   : paymentMethodLabel(p.method)
               }
               value={formatLabeledCurrency(p.amount, p.currency)}

@@ -246,8 +246,8 @@ describe('AUDITORÍA 2026-10-19 · helpers de la tabla del PDF (defectos A y B)'
   });
 
   it('A. La hoja USD conserva el detalle en USD con sus medios: Efectivo (USD) y Zelle', () => {
-    expect(salesTableColumns('USD', false)).toEqual(['Código', 'Descripción', 'Cant.', 'Efectivo (USD)', 'Zelle']);
-    expect(salesTableColumns('USD', true)).toEqual(['Código', 'Descripción', 'Cant.', 'Efectivo (USD)', 'Zelle']);
+    expect(salesTableColumns('USD', false)).toEqual(['Código', 'Descripción', 'Cant.', 'Efectivo (USD)', 'Transf. Exterior']);
+    expect(salesTableColumns('USD', true)).toEqual(['Código', 'Descripción', 'Cant.', 'Efectivo (USD)', 'Transf. Exterior']);
   });
 
   it('A. Pertenencia: el producto SOLO-USD vive únicamente en la hoja USD; el mixto en ambas; el CUP-only solo en CUP', () => {

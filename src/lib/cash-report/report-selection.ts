@@ -509,7 +509,8 @@ export function computeSelectedSalesTotals(
       const amountCup = num(b.amount_cup);
       if (!(Math.abs(amount) > 0.005) && !(Math.abs(amountCup) > 0.005)) continue;
       if (!split[cur]) split[cur] = { cash: 0, transfer: 0, zelle: 0, mixedUnsplit: 0, total: 0 };
-      const method = (b.method === 'transfer' || b.method === 'zelle') ? b.method : 'cash';
+      // CP-FIN-004: exterior (canónico o heredado) al bucket interno 'zelle'.
+      const method = b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || (b.method as string) === 'external_transfer') ? 'zelle' : 'cash';
       split[cur][method] += amount;
       split[cur].total += amount;
       const gKey = `${method}|${cur}`;
@@ -671,7 +672,8 @@ export function buildSalesMethodGroups(
   const map = new Map<string, SalesMethodGroup & { selectedByBucket: Map<string, number> }>();
   for (const row of rows) {
     for (const b of row.buckets || []) {
-      const method = (b.method === 'transfer' || b.method === 'zelle') ? b.method : 'cash';
+      // CP-FIN-004: exterior (canónico o heredado) al bucket interno 'zelle'.
+      const method = b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || (b.method as string) === 'external_transfer') ? 'zelle' : 'cash';
       const currency = normCur(b.currency);
       const key = `${method}|${currency}`;
       let g = map.get(key);
@@ -697,7 +699,8 @@ export function buildSalesMethodGroups(
       if (excluded.has(row.id)) continue;
       g.includedCount += 1;
       for (const b of row.buckets || []) {
-        const method = (b.method === 'transfer' || b.method === 'zelle') ? b.method : 'cash';
+        // CP-FIN-004: exterior (canónico o heredado) al bucket interno 'zelle'.
+      const method = b.method === 'transfer' ? 'transfer' : (b.method === 'zelle' || (b.method as string) === 'external_transfer') ? 'zelle' : 'cash';
         const currency = normCur(b.currency);
         if (method !== g.method || currency !== g.currency) continue;
         const amount = num(b.amount);
@@ -719,5 +722,6 @@ export function buildSalesMethodGroups(
 
 /** Etiqueta legible de un método (espeja methodLabel del módulo PDF). */
 export function selectionMethodLabel(m: string): string {
-  return m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Zelle';
+  // CP-FIN-004: «Transf. Exterior» para el bucket exterior (canónico o heredado).
+  return m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Transf. Exterior';
 }

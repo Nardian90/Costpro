@@ -46,6 +46,9 @@ export const optionalResilientUuid = resilientUuid.catch(null);
 export const paymentMethodSchema = z.enum([
   "cash",
   "transfer",
+  // CP-FIN-004: canónico de «Transf. Exterior»; 'zelle' se acepta como
+  // heredado de clientes en caché (el backend lo normaliza y jamás lo persiste).
+  "external_transfer",
   "zelle",
   "other",
   "mixed",
@@ -446,9 +449,10 @@ export const transactionSchema = z.object({
   tax_amount: z.coerce.number().catch(0).default(0),
   applied_taxes: z.array(z.any()).catch([]).optional(),
   idempotency_key: z.string().nullable().optional(),
-  // PR-4.4G: payment amount fields for USD/Zelle display
+  // PR-4.4G: payment amount fields for USD/exterior display
   cash_amount: z.coerce.number().catch(0).default(0).optional(),
   transfer_amount: z.coerce.number().catch(0).default(0).optional(),
+  external_transfer_amount: z.coerce.number().catch(0).default(0).optional(),
   zelle_amount: z.coerce.number().catch(0).default(0).optional(),
   sale_currency: z.string().catch("CUP").default("CUP").optional(),
   sale_exchange_rate: z.coerce.number().catch(1).default(1).optional(),
@@ -587,11 +591,13 @@ export const transactionItemSchema = z.object({
   price_at_sale_cup: z.coerce.number().nullable().optional(),
   cash_paid: z.coerce.number().nullable().optional(),
   transfer_paid: z.coerce.number().nullable().optional(),
+  external_transfer_paid: z.coerce.number().nullable().optional(),
   zelle_paid: z.coerce.number().nullable().optional(),
   currency: z.string().nullable().optional(),
   exchange_rate: z.coerce.number().nullable().optional(),
   cash_currency: z.string().nullable().optional(),
   transfer_currency: z.string().nullable().optional(),
+  external_transfer_currency: z.string().nullable().optional(),
   zelle_currency: z.string().nullable().optional(),
 });
 
@@ -643,6 +649,7 @@ export const createSaleParamsSchema = z.object({
       discount_value: z.number().optional(),
       cash_paid: z.number().optional(),
       transfer_paid: z.number().optional(),
+      external_transfer_paid: z.number().optional(),
       zelle_paid: z.number().optional(),
       cost: z.number().min(0),
       // FIX-MULTI-MONEDA: moneda y tasa por item
@@ -651,6 +658,7 @@ export const createSaleParamsSchema = z.object({
       // FIX-PAYMENT-METHOD-CURRENCY (2026-07-06): moneda por método de pago del item
       cash_currency: z.string().optional(),
       transfer_currency: z.string().optional(),
+      external_transfer_currency: z.string().optional(),
       zelle_currency: z.string().optional(),
       // FIX-B5 (2026-07-10): persistir descuentos por método de pago
       cash_discount_type: z.string().nullable().optional(),
@@ -659,6 +667,9 @@ export const createSaleParamsSchema = z.object({
       transfer_discount_type: z.string().nullable().optional(),
       transfer_discount_value: z.number().optional(),
       transfer_discount_currency: z.string().optional(),
+      external_transfer_discount_type: z.string().nullable().optional(),
+      external_transfer_discount_value: z.number().optional(),
+      external_transfer_discount_currency: z.string().optional(),
       zelle_discount_type: z.string().nullable().optional(),
       zelle_discount_value: z.number().optional(),
       zelle_discount_currency: z.string().optional(),
@@ -668,6 +679,9 @@ export const createSaleParamsSchema = z.object({
   p_tax_amount: z.number().optional(),
   p_cash_amount: z.number().optional(),
   p_transfer_amount: z.number().optional(),
+  // CP-FIN-004: el pool exterior viaja como p_zelle_amount (nombre de
+  // parámetro estable del RPC; el RPC persiste en la columna canónica
+  // external_transfer_amount).
   p_zelle_amount: z.number().optional(),
   p_transaction_id: z.string().regex(uuidRegex).optional(),
   p_idempotency_key: z.string().optional(),
@@ -690,7 +704,8 @@ export const createSaleParamsSchema = z.object({
   p_payment_components: z
     .array(
       z.object({
-        method: z.enum(['cash', 'transfer', 'zelle']),
+        // CP-FIN-004: canónico + heredado (el RPC normaliza 'zelle').
+        method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']),
         currency: z.enum(['CUP', 'USD']),
         amount: z.number().positive().finite(),
       }),

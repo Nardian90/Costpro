@@ -30,6 +30,9 @@ import { resolvePosOperationDate, checkNotFutureOperationDate } from "@/lib/pos/
 import type { CashSettlement } from "@/lib/pos/cash-settlement";
 // MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): desglose real por moneda
 import { buildPaymentComponents, requiresPaymentComponents } from "@/lib/pos/payment-components";
+// CP-FIN-004: reconocedor dual del medio «Transf. Exterior» (canónico
+// 'external_transfer' + heredado 'zelle').
+import { isExteriorMethod } from "@/lib/payments/methods";
 // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): agregación de medios de pago para el
 // comprobante POS — suma las filas YA cobradas (misma fuente que viaja al RPC),
 // sin recálculo de importes.
@@ -228,7 +231,7 @@ export function usePOSCheckout() {
         const zelleRowsCup = items.reduce((s, i) => {
           if (i.payments && i.payments.length > 0) {
             return s + i.payments
-              .filter(p => p.method === 'zelle')
+              .filter(p => isExteriorMethod(p.method))
               .reduce((ps, p) => {
                 const rate = cartState.globalRates[p.currency || 'USD'] || cartState.globalRates['USD'] || (i.exchange_rate || 1);
                 return ps + (p.amount || 0) * (p.currency === 'CUP' ? 1 : rate);
@@ -244,7 +247,7 @@ export function usePOSCheckout() {
         const transferAmountCup = paymentMethod === 'transfer'
           ? (hasFlexIncidents ? transferRowsCup : totalAmountCup)
           : paymentMethod === 'mixed' ? transferRowsCup : 0;
-        const zelleAmountCup = paymentMethod === 'zelle'
+        const zelleAmountCup = paymentMethod === 'external_transfer'
           ? (hasFlexIncidents ? zelleRowsCup : totalAmountCup)
           : paymentMethod === 'mixed' ? zelleRowsCup : 0;
 
@@ -314,8 +317,11 @@ export function usePOSCheckout() {
               subtotal: useCartStore.getState().getSubtotalCup(),
               cash_amount: cashAmount,
               transfer_amount: transferAmount,
-              zelle_amount: zelleAmount,
-              // PR-4.4I: Zelle currency + rate (USD with rate, or CUP if no Zelle)
+              // CP-FIN-004: pool de Transf. Exterior en campo canónico del
+              // body (el RPC conserva el parámetro p_zelle_amount por
+              // estabilidad del contrato PostgREST; la ruta lo mapea).
+              external_transfer_amount: zelleAmount,
+              // PR-4.4I: moneda + tasa del exterior (USD con tasa, o CUP si no hay)
               sale_currency: zelleAmount > 0 ? 'USD' : 'CUP',
               sale_exchange_rate: zelleAmount > 0 ? (useCartStore.getState().saleExchangeRate > 1 ? useCartStore.getState().saleExchangeRate : USD_CUP_RATE) : 1.0,
               customer_id: safeCustomerId,
@@ -373,21 +379,23 @@ export function usePOSCheckout() {
                 cost: i.cost,
                 cash_paid: i.cash_paid,
                 transfer_paid: i.transfer_paid,
-                zelle_paid: i.zelle_paid || 0,
+                // CP-FIN-004: atribución por ítem del exterior en campos
+                // canónicos (el RPC acepta también los heredados zelle_*).
+                external_transfer_paid: i.zelle_paid || 0,
                 currency: i.currency || 'CUP',
                 exchange_rate: i.exchange_rate || 1.0,
                 cash_currency: i.cash_currency || 'CUP',
                 transfer_currency: i.transfer_currency || 'CUP',
-                zelle_currency: i.zelle_currency || 'USD',
+                external_transfer_currency: i.zelle_currency || 'USD',
                 cash_discount_type: i.cash_discount_type || null,
                 cash_discount_value: i.cash_discount_value || 0,
                 cash_discount_currency: i.cash_discount_currency || 'CUP',
                 transfer_discount_type: i.transfer_discount_type || null,
                 transfer_discount_value: i.transfer_discount_value || 0,
                 transfer_discount_currency: i.transfer_discount_currency || 'CUP',
-                zelle_discount_type: i.zelle_discount_type || null,
-                zelle_discount_value: i.zelle_discount_value || 0,
-                zelle_discount_currency: i.zelle_discount_currency || 'USD',
+                external_transfer_discount_type: i.zelle_discount_type || null,
+                external_transfer_discount_value: i.zelle_discount_value || 0,
+                external_transfer_discount_currency: i.zelle_discount_currency || 'USD',
               })),
           });
 
@@ -726,7 +734,7 @@ export function usePOSCheckout() {
         || items.some(i => i.zelle_paid && i.zelle_paid > 0)
         || items.some(i => i.cash_currency && i.cash_currency !== 'CUP' && i.cash_paid > 0)
         || items.some(i => i.transfer_currency && i.transfer_currency !== 'CUP' && i.transfer_paid > 0)
-        || paymentMethod === 'zelle';
+        || isExteriorMethod(paymentMethod);
 
       if (hasMultiCurrency) {
         try {

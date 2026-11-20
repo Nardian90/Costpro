@@ -239,7 +239,7 @@ export default function SalesHistoryView() {
     // Default: detalle tab
     if (!transactions || transactions.length === 0) return;
 
-    const headers = ['Ref', 'Fecha', 'Hora', 'Método', 'Moneda', 'Total CUP', 'USD Original', 'Subtotal CUP', 'Descuento', 'Impuestos', 'Estado', 'Efectivo CUP', 'Transferencia CUP', 'Zelle (CUP equiv.)'];
+    const headers = ['Ref', 'Fecha', 'Hora', 'Método', 'Moneda', 'Total CUP', 'USD Original', 'Subtotal CUP', 'Descuento', 'Impuestos', 'Estado', 'Efectivo CUP', 'Transferencia CUP', 'Transf. Exterior (CUP equiv.)'];
     const rows = transactions.map(t => {
       const zelleAmt = Number((t as any).zelle_amount || 0);
       const rate = Number((t as any).sale_exchange_rate || 1);

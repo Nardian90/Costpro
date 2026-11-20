@@ -9,7 +9,8 @@
  */
 
 export interface SalePaymentComponent {
-  method: 'cash' | 'transfer' | 'zelle';
+  // CP-FIN-004: 'external_transfer' canónico + 'zelle' heredado (lectura).
+  method: 'cash' | 'transfer' | 'zelle' | 'external_transfer';
   amountOriginal: number;
   currency: 'CUP' | 'USD' | 'EUR' | 'MLC';
   exchangeRate: number;
@@ -75,7 +76,9 @@ export function resolveSalePayments(
   }
 
   const components: SalePaymentComponent[] = paymentTransactions.map(p => ({
-    method: p.payment_method as 'cash' | 'transfer' | 'zelle',
+    // CP-FIN-004: el tipo admite el canónico 'external_transfer' y el heredado
+    // 'zelle' (lectura de datos pre-normalización).
+    method: p.payment_method as 'cash' | 'transfer' | 'zelle' | 'external_transfer',
     amountOriginal: Number(p.amount),
     currency: p.currency as 'CUP' | 'USD' | 'EUR' | 'MLC',
     exchangeRate: Number(p.exchange_rate),
@@ -84,7 +87,9 @@ export function resolveSalePayments(
 
   const cashPaid = components.filter(c => c.method === 'cash').reduce((s, c) => s + c.amountCUP, 0);
   const transferPaid = components.filter(c => c.method === 'transfer').reduce((s, c) => s + c.amountCUP, 0);
-  const zelleComponents = components.filter(c => c.method === 'zelle');
+  // CP-FIN-004: reconocedor dual del exterior (canónico + heredado). Los
+  // campos de salida conservan sus nombres históricos (zellePaid*).
+  const zelleComponents = components.filter(c => c.method === 'zelle' || c.method === 'external_transfer');
   const zellePaidCUP = zelleComponents.reduce((s, c) => s + c.amountCUP, 0);
   const zellePaidUSD = zelleComponents.length > 0
     ? zelleComponents.reduce((s, c) => s + c.amountOriginal, 0)

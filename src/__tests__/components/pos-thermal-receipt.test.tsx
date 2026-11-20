@@ -140,7 +140,7 @@ const RECEIPT_FIXTURE: ThermalReceiptData = {
   total: 35000,
   payments: [
     { method: 'cash', amount: 31600, currency: 'CUP' },
-    { method: 'zelle', amount: 40, currency: 'USD' },
+    { method: 'external_transfer', amount: 40, currency: 'USD' },
   ],
   paymentMethod: 'mixed',
   cashReceived: 32000,
@@ -207,7 +207,7 @@ describe('POSThermalReceipt — comprobante térmico (presentación monocromáti
     // Filas de pago: etiqueta + importe en la MISMA fila (scope por etiqueta)
     const cashRow = screen.getByText('EFECTIVO').closest('div');
     expect(cashRow?.textContent).toContain('$31,600.00 CUP');
-    const zelleRow = screen.getByText('ZELLE (USD)').closest('div');
+    const zelleRow = screen.getByText('TRANSF. EXTERIOR').closest('div');
     expect(zelleRow?.textContent).toContain('US$40.00 USD');
     // Tildes y signos de exclamación españoles intactos (UTF-8)
     expect(screen.getByText('¡Gracias por su preferencia!')).toBeInTheDocument();

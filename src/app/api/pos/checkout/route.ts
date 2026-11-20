@@ -55,11 +55,16 @@ const itemSchema = z.object({
   cost: z.number().min(0),
   cash_paid: z.number().optional(),
   transfer_paid: z.number().optional(),
+  // CP-FIN-004: atribución por ítem del exterior — campo canónico
+  // external_transfer_paid con fallback heredado zelle_paid (clientes en
+  // caché); el RPC normaliza y persiste SOLO el canónico.
+  external_transfer_paid: z.number().optional(),
   zelle_paid: z.number().optional(),
   currency: z.string().optional(),
   exchange_rate: z.number().optional(),
   cash_currency: z.string().optional(),
   transfer_currency: z.string().optional(),
+  external_transfer_currency: z.string().optional(),
   zelle_currency: z.string().optional(),
   cash_discount_type: z.string().nullable().optional(),
   cash_discount_value: z.number().optional(),
@@ -67,6 +72,9 @@ const itemSchema = z.object({
   transfer_discount_type: z.string().nullable().optional(),
   transfer_discount_value: z.number().optional(),
   transfer_discount_currency: z.string().optional(),
+  external_transfer_discount_type: z.string().nullable().optional(),
+  external_transfer_discount_value: z.number().optional(),
+  external_transfer_discount_currency: z.string().optional(),
   zelle_discount_type: z.string().nullable().optional(),
   zelle_discount_value: z.number().optional(),
   zelle_discount_currency: z.string().optional(),
@@ -75,7 +83,11 @@ const itemSchema = z.object({
 const checkoutSchema = z.object({
   store_id: z.string().regex(uuidRegex),
   seller_id: z.string().regex(uuidRegex),
-  payment_method: z.enum(['cash', 'transfer', 'zelle', 'mixed']),
+  // CP-FIN-004 (anexo POS-backend): contrato canónico de 3 opciones del POS.
+  // 'external_transfer' = Transf. Exterior. El heredado 'zelle' se ACEPTA
+  // como entrada de clientes en caché y se normaliza (aquí y en el RPC) —
+  // jamás se persiste.
+  payment_method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle', 'mixed']),
   discount_type: z.enum(['fixed', 'percentage']).default('fixed'),
   discount_value: z.number().min(0).default(0),
   // H0-R §10: applied_taxes es una PROPUESTA de ids de tax_configurations —
@@ -87,6 +99,10 @@ const checkoutSchema = z.object({
   subtotal: z.number().min(0).default(0),
   cash_amount: z.number().min(0).default(0),
   transfer_amount: z.number().min(0).default(0),
+  // CP-FIN-004: pool exterior canónico (external_transfer_amount) con
+  // fallback heredado zelle_amount — viaja al RPC como p_zelle_amount
+  // (nombre de parámetro estable del contrato PostgREST).
+  external_transfer_amount: z.number().min(0).default(0).optional(),
   zelle_amount: z.number().min(0).default(0),
   sale_currency: z.string().default('CUP'),
   sale_exchange_rate: z.number().default(1),
@@ -142,7 +158,9 @@ const checkoutSchema = z.object({
   payment_components: z
     .array(
       z.object({
-        method: z.enum(['cash', 'transfer', 'zelle']),
+        // CP-FIN-004: 'external_transfer' canónico; 'zelle' heredado aceptado
+        // (el RPC lo normaliza y persiste SOLO el canónico).
+        method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']),
         currency: z.enum(['CUP', 'USD']),
         amount: z.number().positive().finite(),
       }),
@@ -230,6 +248,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   // Map items to JSONB for RPC (rename price→price_at_sale, cost→cost_at_sale)
+  // CP-FIN-004: la atribución exterior viaja en el campo canónico
+  // external_transfer_* (con fallback del heredado zelle_* para clientes en
+  // caché); el RPC lee el canónico y usa el heredado como fallback de entrada.
   const itemsJsonb = d.items.map(i => ({
     product_id: i.product_id,
     variant_id: i.variant_id ?? null,
@@ -238,11 +259,13 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     cost_at_sale: i.cost,
     cash_paid: i.cash_paid,
     transfer_paid: i.transfer_paid,
+    external_transfer_paid: i.external_transfer_paid ?? i.zelle_paid,
     zelle_paid: i.zelle_paid,
     currency: i.currency,
     exchange_rate: i.exchange_rate,
     cash_currency: i.cash_currency,
     transfer_currency: i.transfer_currency,
+    external_transfer_currency: i.external_transfer_currency ?? i.zelle_currency,
     zelle_currency: i.zelle_currency,
     cash_discount_type: i.cash_discount_type,
     cash_discount_value: i.cash_discount_value,
@@ -250,6 +273,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     transfer_discount_type: i.transfer_discount_type,
     transfer_discount_value: i.transfer_discount_value,
     transfer_discount_currency: i.transfer_discount_currency,
+    external_transfer_discount_type: i.external_transfer_discount_type ?? i.zelle_discount_type,
+    external_transfer_discount_value: i.external_transfer_discount_value ?? i.zelle_discount_value,
+    external_transfer_discount_currency: i.external_transfer_discount_currency ?? i.zelle_discount_currency,
     zelle_discount_type: i.zelle_discount_type,
     zelle_discount_value: i.zelle_discount_value,
     zelle_discount_currency: i.zelle_discount_currency,
@@ -271,7 +297,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_subtotal: d.subtotal,
     p_cash_amount: d.cash_amount,
     p_transfer_amount: d.transfer_amount,
-    p_zelle_amount: d.zelle_amount,
+    // CP-FIN-004: pool exterior — canónico external_transfer_amount con
+    // fallback heredado zelle_amount; el parámetro del RPC conserva su nombre
+    // por estabilidad del contrato PostgREST (el RPC persiste en la columna
+    // canónica external_transfer_amount).
+    p_zelle_amount: d.external_transfer_amount ?? d.zelle_amount,
     p_sale_currency: d.sale_currency,
     p_sale_exchange_rate: d.sale_exchange_rate,
     p_customer_id: d.customer_id ?? null,
@@ -409,7 +439,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
     // MISIÓN PAGOS MIXTOS (2026-10-24): componente de pago inválido.
     if (msg.includes('ERR_PAYMENT_COMPONENTS_INVALID')) {
-      return NextResponse.json({ error: 'Desglose de pago por moneda inválido: cada componente debe tener método (efectivo/transferencia/zelle), moneda (CUP/USD) e importe positivo. Zelle solo admite USD.' }, { status: 422 });
+      return NextResponse.json({ error: 'Desglose de pago por moneda inválido: cada componente debe tener método (efectivo/transferencia/transf. exterior), moneda (CUP/USD) e importe positivo. La transferencia exterior solo admite USD.' }, { status: 422 });
     }
     // CP-MONEY-002 (D1): la BD no acepta la firma esperada — migración pendiente
     // (20261024150000 + companion 20261025120000) o desalineada con el código

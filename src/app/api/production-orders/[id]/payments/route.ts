@@ -35,7 +35,7 @@ import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
  */
 const paymentSchema = z.object({
   amount: z.number().positive('El monto debe ser mayor a 0'),
-  payment_method: z.enum(['cash', 'transfer', 'zelle']),
+  payment_method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']),
   currency: z.string().default('CUP'),
   exchange_rate: z.number().positive().default(1.0),
   payment_type: z.enum(['advance', 'partial', 'settlement']),

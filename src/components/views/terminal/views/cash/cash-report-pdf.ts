@@ -363,13 +363,13 @@ export function buildDiarioIncomeRows(
         { label: 'Ventas por transferencia', amount: s.ventasTransfer, concept: 'ventasTransferencia' },
       ]
     : [
-        { label: 'Resumen del día (efectivo + Zelle)', amount: curResult.ventasTotalesPersonalizado, isTotal: true, concept: 'resumenDia' },
+        { label: 'Resumen del día (efectivo + Transf. Exterior)', amount: curResult.ventasTotalesPersonalizado, isTotal: true, concept: 'resumenDia' },
         { label: 'Ventas en efectivo', amount: s.ventasCash, concept: 'ventasEfectivo' },
-        { label: 'Venta por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' },
+        { label: 'Venta por Transf. Exterior', amount: s.ventasZelle, concept: 'ventasZelle' },
       ]),
   ] as ConceptTaggedRow[]), concepts ?? undefined);
   if (currency === 'CUP') {
-    if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, concept: 'ventasZelle' });
+    if (s.ventasZelle > 0) incomeRows.push({ label: 'Ventas por Transf. Exterior', amount: s.ventasZelle, concept: 'ventasZelle' });
     if (s.ventasMixed > 0) incomeRows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, isSubtotal: true, concept: 'ventasEfectivo' });
     // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
     // (contrato único §2) — jamás sumada a las filas de venta (no es una
@@ -410,7 +410,7 @@ export function buildDiarioIncomeRows(
     // v2.23.0 (decisión del propietario 2026-10-21): reembolsos por voucher —
     // INFORMATIVO (nota 'info', igual que comisiones por transferencia): no
     // tocan el efectivo esperado; documenta el neto del lado vouchers.
-    if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, note: 'info', concept: 'reembolsos' });
+    if (s.reembolsosVoucher > 0) incomeRows.push({ label: 'Reembolsos por voucher (transfer/exterior)', amount: s.reembolsosVoucher, note: 'info', concept: 'reembolsos' });
   } else {
     if (s.comisionesCash > 0) incomeRows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, note: 'expense', concept: 'otrosEgresos' });
     // MISIÓN DESGLOSE SERVICIOS: la hoja USD recibe el MISMO desglose (sus
@@ -464,7 +464,8 @@ export function buildEstandarSummaryRows(
 
   const cupCashSales = sales.filter((s: any) => s.payment_method === 'cash' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
   const cupTransferSales = sales.filter((s: any) => s.payment_method === 'transfer' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
-  const cupZelleSales = sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
+  // CP-FIN-004: exterior en cualquiera de sus dos identificadores.
+  const cupZelleSales = sales.filter((s: any) => (s.payment_method === 'zelle' || s.payment_method === 'external_transfer') && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
   const cupCashPayments = payments.filter((p: any) => p.payment_method === 'cash' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
   const cupTransferPayments = payments.filter((p: any) => p.payment_method === 'transfer' && p.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
   const cupCashCommissions = commissions.filter((c: any) => c.payment_method === 'cash' && c.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.total), 0);
@@ -498,7 +499,7 @@ export function buildEstandarSummaryRows(
       '',
       fmt(cupTransferSales),
     ]] : []),
-    ...(showVentasZelle && cupZelleSales > 0 ? [['  Ventas por Zelle', `${sales.filter((s: any) => s.payment_method === 'zelle' && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`, '', fmt(cupZelleSales)]] : []),
+    ...(showVentasZelle && cupZelleSales > 0 ? [['  Ventas por Transf. Exterior', `${sales.filter((s: any) => (s.payment_method === 'zelle' || s.payment_method === 'external_transfer') && s.currency === 'CUP').reduce((s: number, x: any) => s + Number(x.transaction_count), 0)} txs`, '', fmt(cupZelleSales)]] : []),
     ['  Anticipos/Liquidaciones de Órdenes', `${production.reduce((s: number, x: any) => s + Number(x.payment_count), 0)} pagos`, '', fmt(cupCashProduction + cupTransferProduction)],
     ['SUBTOTAL INGRESOS', '', '', fmt(ventasRowsVisible + cupCashProduction + cupTransferProduction)],
     ['', '', '', ''],
@@ -748,7 +749,7 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
       fmt(Number(w.cash_paid)), fmt(Number(w.transfer_paid)), fmt(Number(w.zelle_paid)), fmt(Number(w.total_amount_cup)),
     ]);
     renderTable(
-      ['Trabajador', 'CI', 'Pagos', 'Periodo', 'Efectivo', 'Transfer', 'Zelle', 'Total CUP'],
+      ['Trabajador', 'CI', 'Pagos', 'Periodo', 'Efectivo', 'Transfer', 'Transf. Exterior', 'Total CUP'],
       workerRows,
       [40, 22, 12, 35, 22, 22, 18, 26],
       {
@@ -1004,7 +1005,7 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
 }
 
 // ── helpers compartidos ─────────────────────────────────────────────────────
-export const methodLabel = (m: string) => m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Zelle';
+export const methodLabel = (m: string) => m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Transf. Exterior';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // AUDITORÍA 2026-10-19 — «Entrega en tienda» (defectos A y B):
@@ -1028,7 +1029,7 @@ export function salesTableColumns(currency: SalesTableCurrency, includeCommissio
       ? ['Código', 'Descripción', 'Cant.', 'Efectivo (CUP)', 'Transfer. (CUP)', 'Comisión']
       : ['Código', 'Descripción', 'Cant.', 'Efectivo (CUP)', 'Transfer. (CUP)'];
   }
-  return ['Código', 'Descripción', 'Cant.', 'Efectivo (USD)', 'Zelle'];
+  return ['Código', 'Descripción', 'Cant.', 'Efectivo (USD)', 'Transf. Exterior'];
 }
 
 /**

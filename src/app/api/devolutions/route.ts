@@ -27,7 +27,8 @@ const createSchema = z.object({
   })).min(1),
   reason: z.string().min(1),
   original_transaction_id: z.string().min(1).optional(),
-  payment_method: z.enum(['cash', 'transfer', 'zelle', 'store_credit']).default('cash'),
+  // CP-FIN-004: canónico external_transfer + heredado zelle (el RPC normaliza).
+  payment_method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle', 'store_credit']).default('cash'),
   // MISIÓN CAJA v2.24.0: moneda REAL por la que sale el dinero del reembolso
   // (v2.24 añade p_refund_currency al RPC; el reembolso en USD registra la
   // fila PT en USD con tasa servidor — ya no hardcodeada CUP×1.0).

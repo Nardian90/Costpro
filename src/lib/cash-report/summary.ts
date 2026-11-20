@@ -346,7 +346,8 @@ export function computeDailySummary(
         if (s.currency === currency) ventasCash += t;
       } else if (s.currency === currency) {
         if (s.payment_method === 'transfer') ventasTransfer += t;
-        else if (s.payment_method === 'zelle') ventasZelle += t;
+        // CP-FIN-004: exterior en cualquiera de sus dos identificadores.
+        else if (s.payment_method === 'zelle' || s.payment_method === 'external_transfer') ventasZelle += t;
         else ventasMixed += t; // mixed sin split: al total, no al efectivo
       }
     }
@@ -421,7 +422,8 @@ export function computeDailySummary(
     // Moneda nativa, misma convención que cash_flows (cada hoja cuenta sus
     // propios movimientos; amount == amount_cup en CUP).
     if (rf.payment_method === 'cash') reembolsosCash += Math.abs(n(rf.amount));
-    else if (rf.payment_method === 'transfer' || rf.payment_method === 'zelle') reembolsosVoucher += Math.abs(n(rf.amount));
+    // CP-FIN-004: exterior en cualquiera de sus dos identificadores.
+    else if (rf.payment_method === 'transfer' || rf.payment_method === 'zelle' || rf.payment_method === 'external_transfer') reembolsosVoucher += Math.abs(n(rf.amount));
   }
 
   const ventasTotales = ventasCash + ventasTransfer + ventasZelle + ventasMixed;

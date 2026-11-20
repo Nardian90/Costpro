@@ -172,13 +172,13 @@ function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD', concepts?: Summ
           { label: 'Ventas por transferencia', amount: s.ventasTransfer, kind: 'normal', concept: 'ventasTransferencia' },
         ]
       : [
-          { label: 'Resumen del día (efectivo + Zelle)', amount: totalDia, kind: 'total', concept: 'resumenDia' },
+          { label: 'Resumen del día (efectivo + Transf. Exterior)', amount: totalDia, kind: 'total', concept: 'resumenDia' },
           { label: 'Ventas en efectivo', amount: s.ventasCash, kind: 'normal', concept: 'ventasEfectivo' },
-          { label: 'Venta por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' },
+          { label: 'Venta por Transf. Exterior', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' },
         ]) as IncomeRow[]),
   ];
   if (currency === 'CUP') {
-    if (s.ventasZelle > 0) rows.push({ label: 'Ventas por Zelle', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' });
+    if (s.ventasZelle > 0) rows.push({ label: 'Ventas por Transf. Exterior', amount: s.ventasZelle, kind: 'normal', concept: 'ventasZelle' });
     if (s.ventasMixed > 0) rows.push({ label: 'Ventas mixtas sin desglosar', amount: s.ventasMixed, kind: 'info', concept: 'ventasEfectivo' });
     // MISIÓN DEFINITIVA 2026-10-24: equivalencia canónica en LÍNEA PROPIA
     // (contrato único §2) — no es una segunda venta. MISIÓN CORRECTIVA
@@ -196,7 +196,7 @@ function incomeRowsFor(s: DailySummary, currency: 'CUP' | 'USD', concepts?: Summ
     if (s.ingresosCaja > 0) rows.push({ label: 'Ingresos de caja (fondo y otros)', amount: s.ingresosCaja, kind: 'normal', concept: 'ingresosCaja' });
     if (s.egresosCaja > 0) rows.push({ label: 'Egresos de caja (fondo y otros)', amount: s.egresosCaja, kind: 'expense', concept: 'egresosCaja' });
     if (s.reembolsosCash > 0) rows.push({ label: 'Reembolsos de devoluciones (efectivo)', amount: s.reembolsosCash, kind: 'expense', concept: 'reembolsos' });
-    if (s.reembolsosVoucher > 0) rows.push({ label: 'Reembolsos por voucher (transfer/Zelle)', amount: s.reembolsosVoucher, kind: 'info', concept: 'reembolsos' });
+    if (s.reembolsosVoucher > 0) rows.push({ label: 'Reembolsos por voucher (transfer/exterior)', amount: s.reembolsosVoucher, kind: 'info', concept: 'reembolsos' });
   } else {
     if (s.comisionesCash > 0) rows.push({ label: 'Comisiones pagadas en efectivo', amount: s.comisionesCash, kind: 'expense', concept: 'otrosEgresos' });
     if (s.serviciosRecibidosCash > 0) rows.push({ label: 'Servicios recibidos pagados en efectivo', amount: s.serviciosRecibidosCash, kind: 'expense', concept: 'otrosEgresos' });
@@ -429,8 +429,8 @@ export async function buildCashReportExcelWorkbook(
     const components = [
       rowsByLabel.get('Ventas en efectivo'),
       rowsByLabel.get('Ventas por transferencia'),
-      rowsByLabel.get('Ventas por Zelle'),
-      rowsByLabel.get('Venta por Zelle'),
+      rowsByLabel.get('Ventas por Transf. Exterior'),
+      rowsByLabel.get('Venta por Transf. Exterior'),
       rowsByLabel.get('Ventas mixtas sin desglosar'),
     ].filter((v): v is number => v !== undefined);
     const totalTerms = components.map((row) => `D${row + 1}`);

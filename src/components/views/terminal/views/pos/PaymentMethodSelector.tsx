@@ -23,13 +23,19 @@ import type { PaymentMethod } from '@/types';
  * Métodos de pago válidos (alineados con payment_method_enum de PostgreSQL):
  *   - cash (Efectivo)
  *   - transfer (Transferencia)
- *   - zelle (Transf. Exterior — antes «Zelle»; el VALUE de BD sigue siendo
- *     'zelle' por compatibilidad de datos: ventas, reportes y Excel)
+ *   - external_transfer (Transf. Exterior — canal Zelle en ENERVIDA)
  *   - mixed (Mixto — efectivo + transferencia)
+ *
+ * CP-FIN-004 (anexo vinculante POS-backend, 2026-11-20): el identificador
+ * CANÓNICO de «Transf. Exterior» es 'external_transfer', alineado con el
+ * contrato del backend (enum, mapeo canónico, métricas
+ * cob_external_transfer_*). El valor histórico 'zelle' queda como herencia
+ * SOLO-LECTURA de datos previos a la normalización (isExternalTransferMethod
+ * en @/types). La PRESENTACIÓN no cambia: mismas etiquetas e iconos.
  *
  * FIX-TRANSF-EXTERIOR (2026-10-16): «Zelle» es una marca específica; el
  * concepto real del negocio es una TRANSFERENCIA DEL EXTERIOR (divisa
- * extranjera). Solo cambia la etiqueta visible — nunca el valor de datos.
+ * extranjera).
  */
 
 export interface PaymentMethodOption {
@@ -59,7 +65,7 @@ const PAYMENT_OPTIONS: PaymentMethodOption[] = [
     bgColor: 'bg-primary/10 border-primary/30',
   },
   {
-    value: 'zelle',
+    value: 'external_transfer',
     label: 'Transf. Exterior',
     shortLabel: 'Transf. Exterior',
     icon: DollarSign,

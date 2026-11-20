@@ -49,7 +49,7 @@ const createOrderSchema = z.object({
   budget_total: z.number().positive().default(0),
   budget_currency: z.string().max(10).default('CUP'),
   advance_amount: z.number().min(0).default(0),
-  advance_method: z.enum(['cash', 'transfer', 'zelle']).optional(),
+  advance_method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']).optional(),
   advance_currency: z.string().max(10).default('CUP'),
   description: z.string().max(1000).optional(),
   notes: z.string().max(1000).optional(),

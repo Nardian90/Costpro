@@ -140,7 +140,8 @@ describe('usePOSCheckout — venta 120 USD cobrada en 94 800 CUP (tasa de tienda
     expect(body.subtotal).toBe(94800);
     expect(body.cash_amount).toBe(94800);         // la fila CUP completa
     expect(body.transfer_amount).toBe(0);
-    expect(body.zelle_amount).toBe(0);
+    // CP-FIN-004: pool exterior en campo canónico del body.
+    expect(body.external_transfer_amount).toBe(0);
     // El item conserva su precio NATIVO + tasa como trazabilidad
     expect(body.items[0].price).toBe(120);        // USD (sin conversión duplicada)
     expect(body.items[0].currency).toBe('USD');

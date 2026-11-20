@@ -15,7 +15,7 @@ import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 
 // ── Schema de validación para un pago individual ──
 const paymentRowSchema = z.object({
-  payment_method: z.enum(['cash', 'transfer', 'zelle']),
+  payment_method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']),
   amount: z.number().positive(),
   currency: z.string().default('CUP'),
   exchange_rate: z.number().positive().default(1.0),
@@ -31,7 +31,7 @@ const registerPaymentSchema = z.object({
   ref_type: z.enum(['receipt', 'service', 'production_order', 'work']),
   ref_id: uuidLoose,
   // Opción A: pago simple (1 fila)
-  payment_method: z.enum(['cash', 'transfer', 'zelle']).optional(),
+  payment_method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']).optional(),
   amount: z.number().positive().optional(),
   currency: z.string().default('CUP'),
   exchange_rate: z.number().positive().default(1.0),

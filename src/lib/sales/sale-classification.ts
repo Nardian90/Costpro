@@ -46,7 +46,10 @@ export interface SaleClassification {
   isTransfer: boolean;
 }
 
-const TRANSFER_METHODS = new Set(['transfer', 'zelle']);
+// CP-FIN-004: 'external_transfer' canónico + 'zelle' heredado (lectura de
+// datos pre-normalización). Ambos identifican el mismo bucket «exterior».
+const TRANSFER_METHODS = new Set(['transfer', 'zelle', 'external_transfer']);
+const EXTERIOR_METHODS = new Set(['zelle', 'external_transfer']);
 
 /** Umbral de redondeo monetario (centavos). */
 const EPS = 0.005;
