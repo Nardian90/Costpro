@@ -345,5 +345,5 @@ export async function exportCategoryMovementsPdf(
     doc.setTextColor(0, 0, 0);
   }
 
-  doc.save(`mayor_${ctx.categoryCode}_${ctx.from}_${ctx.to}`.toLowerCase());
+  doc.save(`mayor_${ctx.categoryCode}_${ctx.from}_${ctx.to}`.toLowerCase() + '.pdf');
 }

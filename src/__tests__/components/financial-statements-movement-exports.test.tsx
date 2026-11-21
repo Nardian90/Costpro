@@ -28,6 +28,28 @@ import {
   fetchAllCategoryMovements,
 } from '@/components/views/terminal/views/financial_statements/movement-exporters';
 
+// Higiene de pruebas: el clic en «Generar PDF» ejercita la ruta real de
+// exportación; se mockean lazy-pdf y autoTable para NO escribir archivos en
+// disco durante la suite (el objetivo del test es verificar el rango y la
+// paginación consultados al servidor, no el render del PDF).
+vi.mock('@/lib/export/lazy-pdf', () => ({
+  createPDFDocument: vi.fn(async () => ({
+    internal: { pageSize: { getWidth: () => 842, getHeight: () => 595 } },
+    setFont: vi.fn(),
+    setFontSize: vi.fn(),
+    text: vi.fn(),
+    setDrawColor: vi.fn(),
+    setLineWidth: vi.fn(),
+    line: vi.fn(),
+    setTextColor: vi.fn(),
+    addPage: vi.fn(),
+    setPage: vi.fn(),
+    getNumberOfPages: () => 1,
+    save: vi.fn(),
+  })),
+}));
+vi.mock('jspdf-autotable', () => ({ default: vi.fn() }));
+
 const fetchMock = vi.fn();
 global.fetch = fetchMock as unknown as typeof fetch;
 
