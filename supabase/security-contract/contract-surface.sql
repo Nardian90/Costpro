@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-20T17:10:21.523Z
+-- Captured  : 2026-11-20T20:34:10.790Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 220 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -1790,6 +1790,43 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
+END;
+$function$
+
+
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -1826,43 +1863,6 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
-END;
-$function$
-
-
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
 END;
 $function$
 
@@ -5492,17 +5492,26 @@ DECLARE
     ELSE auth.uid()
   END;
   v_supplier text := NULLIF(btrim(COALESCE(p_supplier, '')), '');
+  v_supplier_id uuid := p_supplier_id;
+  v_master_party_id uuid := p_supplier_master_party_id;
+  v_mp_live uuid;           -- master_party_id VIVO del proveedor local (BD)
+  v_mp_name text;           -- nombre autorizado del tercero maestro
   v_meta jsonb := COALESCE(p_supplier_meta, '{}'::jsonb);
+  v_key text := NULLIF(btrim(COALESCE(p_creation_key, '')), '');
 BEGIN
-  -- Idempotencia de creación: si la creation_key ya produjo un borrador en
-  -- esta tienda, devolver ese servicio (anti doble-clic / reintento).
-  IF p_creation_key IS NOT NULL AND btrim(p_creation_key) <> '' THEN
+  -- ── (F5/§7) BLOQUEO DE IDEMPOTENCIA PRIMERO (misma granularidad por tienda
+  --    que el resto del flujo) y RE-CONSULTA de la clave después del lock.
+  --    Antes: la clave se consultaba ANTES de adquirir el lock y dos
+  --    solicitudes simultáneas con la misma clave creaban DOS borradores.
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
+  IF v_key IS NOT NULL THEN
     SELECT al.record_id INTO v_service_id
     FROM audit_logs al
     WHERE al.action = 'SERVICE_DRAFT_CREATED'
       AND al.store_id = p_store_id
       AND al.table_name = 'received_services'
-      AND al.metadata->>'creation_key' = btrim(p_creation_key)
+      AND al.metadata->>'creation_key' = v_key
     ORDER BY al.created_at DESC
     LIMIT 1;
     IF v_service_id IS NOT NULL THEN
@@ -5515,23 +5524,64 @@ BEGIN
     END IF;
   END IF;
 
-  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
-
-  -- Actor-explícito (doctrina create_sale_v2 / create_received_service_v2).
+  -- ── (F3/§5) Actor-explícito + gate de GESTIÓN (Alternativa B). El actor es
+  --    auth.uid() para sesiones autenticadas (p_created_by NO es fuente de
+  --    identidad — anti-spoofing); la gestión se exige en la tienda objetivo.
   IF v_caller_uid IS NULL THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
-  IF NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+  IF NOT public.can_manage_store_as(v_caller_uid, p_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
-  -- Borrador: el proveedor es OPCIONAL (se completa antes de confirmar).
-  -- La identidad, si llega, se valida fail-closed (sin inventar datos).
-  IF p_supplier_id IS NOT NULL AND NOT public.adn008_supplier_belongs_to_store(p_supplier_id, p_store_id) THEN
-    RAISE EXCEPTION 'ERR_SUPPLIER_INVALID: % no pertenece a la tienda', p_supplier_id;
+  -- ── (F4/§6) Identidad del proveedor: ownership fail-closed + SNAPSHOT DESDE
+  --    LA FUENTE AUTORIZADA. El borrador sigue permitiendo proveedor vacío
+  --    (se completa antes de confirmar); pero si llega una identidad, se
+  --    valida y se congela desde la BD — nunca desde metadatos manipulables.
+  IF v_supplier_id IS NOT NULL THEN
+    SELECT s.name, s.master_party_id,
+           jsonb_build_object('tax_id', s.tax_id,
+                              'phone', s.phone, 'address', s.address)
+      INTO v_supplier, v_mp_live, v_meta
+    FROM suppliers s
+    WHERE s.id = v_supplier_id AND s.store_id = p_store_id;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'ERR_SUPPLIER_INVALID: % no pertenece a la tienda', v_supplier_id;
+    END IF;
+    -- Nombre: el del registro autorizado, salvo que el cliente envíe uno
+    -- explícito (texto libre del formulario sobre el catálogo).
+    v_supplier := COALESCE(NULLIF(btrim(COALESCE(p_supplier, '')), ''), v_supplier);
+    -- Coherencia local↔maestro (§6): si el proveedor local está ligado a un
+    -- tercero maestro, el maestro enviado (si llega) debe coincidir.
+    IF v_mp_live IS NOT NULL AND v_master_party_id IS NOT NULL
+       AND v_mp_live <> v_master_party_id THEN
+      RAISE EXCEPTION 'ERR_SUPPLIER_IDENTITY_MISMATCH: el proveedor local % está ligado al tercero %, no a %',
+        v_supplier_id, v_mp_live, v_master_party_id;
+    END IF;
+    -- Si el proveedor local está ligado a un maestro y no se envió maestro,
+    -- la identidad maestra autorizada es la del propio registro.
+    IF v_mp_live IS NOT NULL AND v_master_party_id IS NULL THEN
+      v_master_party_id := v_mp_live;
+    END IF;
   END IF;
-  IF p_supplier_master_party_id IS NOT NULL AND NOT public.adn008_master_party_valid_for_store(p_supplier_master_party_id, p_store_id) THEN
-    RAISE EXCEPTION 'ERR_SUPPLIER_MASTER_INVALID: % no pertenece al tenant de la tienda o no está activo', p_supplier_master_party_id;
+
+  IF v_master_party_id IS NOT NULL THEN
+    IF NOT public.adn008_master_party_valid_for_store(v_master_party_id, p_store_id) THEN
+      RAISE EXCEPTION 'ERR_SUPPLIER_MASTER_INVALID: % no pertenece al tenant de la tienda o no está activo', v_master_party_id;
+    END IF;
+  END IF;
+
+  -- (F4/§6) Snapshot del maestro cuando la identidad es SOLO-MAESTRO (alta al
+  -- vuelo desde el Clasificador, sin proveedor local): nombre y snapshot
+  -- (code/tax_id/phone/address) desde la fila autorizada; el texto explícito
+  -- del cliente prevalece si llegó.
+  IF v_supplier_id IS NULL AND v_master_party_id IS NOT NULL THEN
+    SELECT mp.name,
+           jsonb_build_object('code', mp.code, 'tax_id', mp.tax_id,
+                              'phone', mp.phone, 'address', mp.address)
+      INTO v_mp_name, v_meta
+    FROM master_parties mp WHERE mp.id = v_master_party_id;
+    v_supplier := COALESCE(v_supplier, v_mp_name);
   END IF;
 
   -- Requisito estructural mínimo del documento (identificable y almacenable).
@@ -5563,66 +5613,93 @@ BEGIN
          LPAD(nextval('service_number_seq')::text, 5, '0')
   INTO v_service_number;
 
-  INSERT INTO received_services (
-    store_id, service_number, service_date, service_type_id, service_type_name,
-    supplier, reference_doc, currency, exchange_rate, total_amount,
-    observations, status, distribution_method, created_by,
-    payment_terms_days, due_date,
-    supplier_id, supplier_master_party_id,
-    supplier_code, supplier_tax_id, supplier_phone, supplier_address
-  ) VALUES (
-    p_store_id, v_service_number, COALESCE(p_service_date, CURRENT_DATE),
-    p_service_type_id, p_service_type_name, v_supplier, p_reference_doc,
-    p_currency, p_exchange_rate, p_total_amount, p_observations,
-    'draft', p_distribution_method, v_caller_uid,
-    p_payment_terms_days, (COALESCE(p_service_date, CURRENT_DATE) + p_payment_terms_days)::date,
-    p_supplier_id, p_supplier_master_party_id,
-    NULLIF(btrim(COALESCE(v_meta->>'code', '')), ''),
-    NULLIF(btrim(COALESCE(v_meta->>'tax_id', '')), ''),
-    NULLIF(btrim(COALESCE(v_meta->>'phone', '')), ''),
-    NULLIF(btrim(COALESCE(v_meta->>'address', '')), '')
-  ) RETURNING id INTO v_service_id;
+  -- ── (F5/§7) Defensa en profundidad: si el índice único de creation_key
+  --    detecta una carrera que esquivó el advisory lock, SE REVIERTE LA
+  --    CREACIÓN COMPLETA (subtransacción) y se devuelve el borrador ganador —
+  --    nunca dos borradores ni una respuesta duplicada con fila huérfana.
+  BEGIN
+    INSERT INTO received_services (
+      store_id, service_number, service_date, service_type_id, service_type_name,
+      supplier, reference_doc, currency, exchange_rate, total_amount,
+      observations, status, distribution_method, created_by,
+      payment_terms_days, due_date,
+      supplier_id, supplier_master_party_id,
+      supplier_code, supplier_tax_id, supplier_phone, supplier_address
+    ) VALUES (
+      p_store_id, v_service_number, COALESCE(p_service_date, CURRENT_DATE),
+      p_service_type_id, p_service_type_name, v_supplier, p_reference_doc,
+      p_currency, p_exchange_rate, p_total_amount, p_observations,
+      'draft', p_distribution_method, v_caller_uid,
+      p_payment_terms_days, (COALESCE(p_service_date, CURRENT_DATE) + p_payment_terms_days)::date,
+      v_supplier_id, v_master_party_id,
+      NULLIF(btrim(COALESCE(v_meta->>'code', '')), ''),
+      NULLIF(btrim(COALESCE(v_meta->>'tax_id', '')), ''),
+      NULLIF(btrim(COALESCE(v_meta->>'phone', '')), ''),
+      NULLIF(btrim(COALESCE(v_meta->>'address', '')), '')
+    ) RETURNING id INTO v_service_id;
 
-  -- Vínculos documentales (misma validación que create_received_service_v2:
-  -- misma tienda, recepción activa, OT no anulada/cerrada). NO distribuyen
-  -- costos, NO tocan inventario, NO contabilizan.
-  v_link_count := jsonb_array_length(COALESCE(p_receipt_ids, '[]'::jsonb));
-  IF v_link_count > 0 THEN
-    v_allocated_per_receipt := p_total_amount / v_link_count;
-    FOR v_receipt_id IN SELECT value::uuid FROM jsonb_array_elements_text(COALESCE(p_receipt_ids, '[]'::jsonb)) LOOP
-      IF NOT EXISTS (SELECT 1 FROM receipts WHERE id = v_receipt_id AND store_id = p_store_id AND status = 'active') THEN
-        RAISE EXCEPTION 'ERR_RECEIPT_INVALID: % no pertenece a la store o no esta activo', v_receipt_id;
+    -- Vínculos documentales (misma validación que create_received_service_v2:
+    -- misma tienda, recepción activa, OT no anulada/cerrada). NO distribuyen
+    -- costos, NO tocan inventario, NO contabilizan.
+    v_link_count := jsonb_array_length(COALESCE(p_receipt_ids, '[]'::jsonb));
+    IF v_link_count > 0 THEN
+      v_allocated_per_receipt := p_total_amount / v_link_count;
+      FOR v_receipt_id IN SELECT value::uuid FROM jsonb_array_elements_text(COALESCE(p_receipt_ids, '[]'::jsonb)) LOOP
+        IF NOT EXISTS (SELECT 1 FROM receipts WHERE id = v_receipt_id AND store_id = p_store_id AND status = 'active') THEN
+          RAISE EXCEPTION 'ERR_RECEIPT_INVALID: % no pertenece a la store o no esta activo', v_receipt_id;
+        END IF;
+        INSERT INTO service_reception_links (service_id, receipt_id, allocation_percentage, allocated_amount)
+        VALUES (v_service_id, v_receipt_id, 100.0 / v_link_count, v_allocated_per_receipt);
+      END LOOP;
+    END IF;
+
+    IF jsonb_array_length(COALESCE(p_production_order_ids, '[]'::jsonb)) > 0 THEN
+      FOR v_order_id IN SELECT value::uuid FROM jsonb_array_elements_text(COALESCE(p_production_order_ids, '[]'::jsonb)) LOOP
+        IF NOT EXISTS (
+          SELECT 1 FROM production_orders
+          WHERE id = v_order_id AND store_id = p_store_id
+            AND status NOT IN ('voided', 'closed')
+        ) THEN
+          RAISE EXCEPTION 'ERR_PRODUCTION_ORDER_INVALID: % no pertenece a la tienda o su estado no admite vinculación', v_order_id;
+        END IF;
+        INSERT INTO service_production_order_links (service_id, production_order_id)
+        VALUES (v_service_id, v_order_id)
+        ON CONFLICT (service_id, production_order_id) DO NOTHING;
+        v_ot_count := v_ot_count + 1;
+      END LOOP;
+    END IF;
+
+    INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+    VALUES (v_caller_uid, p_store_id, 'SERVICE_DRAFT_CREATED', 'received_services', v_service_id,
+      jsonb_build_object(
+        'service_number', v_service_number, 'supplier', v_supplier,
+        'supplier_id', v_supplier_id, 'supplier_master_party_id', v_master_party_id,
+        'total_amount', p_total_amount, 'currency', p_currency,
+        'receipt_ids_linked', v_link_count, 'production_order_ids_linked', v_ot_count,
+        'creation_key', v_key
+      ));
+  EXCEPTION
+    WHEN unique_violation THEN
+      IF v_key IS NOT NULL THEN
+        SELECT al.record_id INTO v_service_id
+        FROM audit_logs al
+        WHERE al.action = 'SERVICE_DRAFT_CREATED'
+          AND al.store_id = p_store_id
+          AND al.table_name = 'received_services'
+          AND al.metadata->>'creation_key' = v_key
+        ORDER BY al.created_at DESC
+        LIMIT 1;
+        IF v_service_id IS NOT NULL THEN
+          SELECT service_number INTO v_service_number
+          FROM received_services WHERE id = v_service_id;
+          RETURN jsonb_build_object(
+            'status', 'success', 'service_id', v_service_id,
+            'service_number', v_service_number, 'draft', true, 'duplicate', true
+          );
+        END IF;
       END IF;
-      INSERT INTO service_reception_links (service_id, receipt_id, allocation_percentage, allocated_amount)
-      VALUES (v_service_id, v_receipt_id, 100.0 / v_link_count, v_allocated_per_receipt);
-    END LOOP;
-  END IF;
-
-  IF jsonb_array_length(COALESCE(p_production_order_ids, '[]'::jsonb)) > 0 THEN
-    FOR v_order_id IN SELECT value::uuid FROM jsonb_array_elements_text(COALESCE(p_production_order_ids, '[]'::jsonb)) LOOP
-      IF NOT EXISTS (
-        SELECT 1 FROM production_orders
-        WHERE id = v_order_id AND store_id = p_store_id
-          AND status NOT IN ('voided', 'closed')
-      ) THEN
-        RAISE EXCEPTION 'ERR_PRODUCTION_ORDER_INVALID: % no pertenece a la tienda o su estado no admite vinculación', v_order_id;
-      END IF;
-      INSERT INTO service_production_order_links (service_id, production_order_id)
-      VALUES (v_service_id, v_order_id)
-      ON CONFLICT (service_id, production_order_id) DO NOTHING;
-      v_ot_count := v_ot_count + 1;
-    END LOOP;
-  END IF;
-
-  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
-  VALUES (v_caller_uid, p_store_id, 'SERVICE_DRAFT_CREATED', 'received_services', v_service_id,
-    jsonb_build_object(
-      'service_number', v_service_number, 'supplier', v_supplier,
-      'supplier_id', p_supplier_id, 'supplier_master_party_id', p_supplier_master_party_id,
-      'total_amount', p_total_amount, 'currency', p_currency,
-      'receipt_ids_linked', v_link_count, 'production_order_ids_linked', v_ot_count,
-      'creation_key', NULLIF(btrim(COALESCE(p_creation_key, '')), '')
-    ));
+      RAISE;  -- unique_violation ajeno a la creation_key: no se normaliza.
+  END;
 
   RETURN jsonb_build_object(
     'status', 'success', 'service_id', v_service_id,
@@ -15299,12 +15376,47 @@ DECLARE
   v_doc_store_id uuid;
   v_doc_currency text;
   v_doc_rate numeric;
+  v_doc_status text;
   v_amount_in_doc_currency numeric;
   v_eff_payment_date timestamptz := COALESCE(p_payment_date, now());
   v_rate numeric := p_exchange_rate;
   v_store_rate numeric;
 BEGIN
-  -- Idempotencia
+  -- ── ADN-009 (F2/§4): BLOQUEO COMPARTIDO — la fila del documento se bloquea
+  --    SIEMPRE antes de consultar saldo o idempotencia. Mismo mecanismo que
+  --    register_supplier_payment_batch (que además invoca esta función dentro
+  --    de su propia transacción: el re-bloqueo es un no-op). Orden de
+  --    adquisición documentado: UNA sola fila de documento por transacción
+  --    (receipts | received_services | production_orders); el camino de pagos
+  --    NO toma advisory locks → sin ciclos advisory↔row ni deadlocks entre
+  --    caminos. Las liquidaciones concurrentes del mismo documento quedan
+  --    SERIALIZADAS: la segunda lee el saldo ya actualizado.
+  IF p_ref_type = 'receipt' THEN
+    SELECT store_id, total_cost, 'CUP', 1
+      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
+    FROM public.receipts WHERE id = p_ref_id FOR UPDATE;
+  ELSIF p_ref_type = 'service' THEN
+    SELECT store_id, total_amount, currency, COALESCE(exchange_rate, 1), status
+      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate, v_doc_status
+    FROM public.received_services WHERE id = p_ref_id FOR UPDATE;
+  ELSIF p_ref_type IN ('production_order', 'work') THEN
+    SELECT store_id, budget_total, 'CUP', 1
+      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
+    FROM public.production_orders WHERE id = p_ref_id;
+  ELSE
+    RAISE EXCEPTION 'ref_type no soportado: %', p_ref_type;
+  END IF;
+
+  IF v_doc_store_id IS NULL THEN
+    RAISE EXCEPTION 'Documento no encontrado (ref_type=%, ref_id=%)', p_ref_type, p_ref_id;
+  END IF;
+
+  IF v_doc_store_id != p_store_id THEN
+    RAISE EXCEPTION 'El documento no pertenece a la tienda especificada';
+  END IF;
+
+  -- Idempotencia (DESPUÉS del lock: dos envíos con la misma clave quedan
+  -- serializados y el segundo encuentra el pago del primero).
   IF p_idempotency_key IS NOT NULL THEN
     SELECT id INTO v_existing_id
     FROM public.payment_transactions
@@ -15325,29 +15437,24 @@ BEGIN
     RAISE EXCEPTION 'Medio de pago no soportado: %', p_payment_method;
   END IF;
 
-  -- Validar documento y store ownership
-  IF p_ref_type = 'receipt' THEN
-    SELECT store_id, total_cost, 'CUP', 1
-      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
-    FROM public.receipts WHERE id = p_ref_id;
-  ELSIF p_ref_type = 'service' THEN
-    SELECT store_id, total_amount, currency, COALESCE(exchange_rate, 1)
-      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
-    FROM public.received_services WHERE id = p_ref_id;
-  ELSIF p_ref_type IN ('production_order', 'work') THEN
-    SELECT store_id, budget_total, 'CUP', 1
-      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
-    FROM public.production_orders WHERE id = p_ref_id;
-  ELSE
-    RAISE EXCEPTION 'ref_type no soportado: %', p_ref_type;
+  -- ADN-009 (F11/§3): restricción de moneda de Transferencia Exterior, en
+  -- espejo del POS (create_sale_v2: riel de divisa) y de fin_account_mapping
+  -- (filas activas USD/EUR → ACT_TRANSF_EXTERIOR; CUP/MLC inactivas). Rechazo
+  -- TEMPRANO y accionable; fin_resolve_financial_account queda como backstop.
+  IF p_payment_method = 'external_transfer' AND p_currency NOT IN ('USD', 'EUR') THEN
+    RAISE EXCEPTION
+      'ERR_COMBINACION_NO_SOPORTADA: Transf. Exterior (external_transfer) es un riel de divisa (USD/EUR); combinación con % no soportada',
+      p_currency;
   END IF;
 
-  IF v_doc_store_id IS NULL THEN
-    RAISE EXCEPTION 'Documento no encontrado (ref_type=%, ref_id=%)', p_ref_type, p_ref_id;
-  END IF;
-
-  IF v_doc_store_id != p_store_id THEN
-    RAISE EXCEPTION 'El documento no pertenece a la tienda especificada';
+  -- ADN-009 (F12/§4): estado comprobado DESPUÉS de adquirir el bloqueo. Solo
+  -- un servicio ACTIVO admite pagos (un borrador no genera obligación; un
+  -- anulado no admite liquidación). receipts/production_orders: fuera del
+  -- alcance de la misión — sin cambio de semántica.
+  IF p_ref_type = 'service' AND COALESCE(v_doc_status, 'active') <> 'active' THEN
+    RAISE EXCEPTION
+      'ERR_SERVICE_NOT_ACTIVE: solo un servicio ACTIVO admite pagos (estado actual: %)',
+      v_doc_status;
   END IF;
 
   PERFORM public.validate_operation_date(v_eff_payment_date, p_store_id);
@@ -15381,6 +15488,8 @@ BEGIN
   END;
 
   -- R3: Validar overpay — todo en la MONEDA DEL DOCUMENTO (20261113120800).
+  -- Lectura DESPUÉS del lock (ADN-009): el saldo incluye los pagos de
+  -- cualquier liquidación concurrente que ya confirmó.
   SELECT COALESCE(SUM(
          CASE WHEN pt.currency = v_doc_currency THEN pt.amount
               ELSE pt.amount_cup / v_doc_rate
@@ -15734,6 +15843,81 @@ END;
 $function$
 
 
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
+$function$
+
+
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -15957,81 +16141,6 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
-$function$
-
-
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
 $function$
 
 
@@ -19584,8 +19693,8 @@ END;
 $function$
 
 
--- @contract-function name=update_received_service_draft args="p_service_id uuid, p_user_id uuid, p_supplier text, p_supplier_id uuid, p_supplier_master_party_id uuid, p_supplier_meta jsonb, p_service_type_id uuid, p_service_type_name text, p_total_amount numeric, p_service_date date, p_reference_doc text, p_observations text, p_distribution_method text, p_receipt_ids jsonb, p_production_order_ids jsonb" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.update_received_service_draft(p_service_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_supplier text DEFAULT NULL::text, p_supplier_id uuid DEFAULT NULL::uuid, p_supplier_master_party_id uuid DEFAULT NULL::uuid, p_supplier_meta jsonb DEFAULT NULL::jsonb, p_service_type_id uuid DEFAULT NULL::uuid, p_service_type_name text DEFAULT NULL::text, p_total_amount numeric DEFAULT NULL::numeric, p_service_date date DEFAULT NULL::date, p_reference_doc text DEFAULT NULL::text, p_observations text DEFAULT NULL::text, p_distribution_method text DEFAULT NULL::text, p_receipt_ids jsonb DEFAULT NULL::jsonb, p_production_order_ids jsonb DEFAULT NULL::jsonb)
+-- @contract-function name=update_received_service_draft args="p_service_id uuid, p_actor_id uuid, p_patch jsonb" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.update_received_service_draft(p_service_id uuid, p_actor_id uuid DEFAULT NULL::uuid, p_patch jsonb DEFAULT '{}'::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -19596,22 +19705,42 @@ DECLARE
   v_status text;
   v_service_number text;
   v_supplier text;
-  v_meta jsonb := p_supplier_meta; -- REEMPLAZO COMPLETO del snapshot (NULL limpia)
+  v_service_type_id uuid;
+  v_service_type_name text;
+  v_total numeric;
+  v_service_date date;
+  v_due_date date;
+  v_terms integer;
+  v_reference_doc text;
+  v_observations text;
+  v_distribution_method text;
   v_receipt_id uuid;
   v_order_id uuid;
-  v_count integer;
   v_link_count integer := 0;
   v_ot_count integer := 0;
   v_alloc numeric;
+  v_count integer;
   v_caller_uid uuid := CASE
-    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_actor_id, auth.uid())
     ELSE auth.uid()
   END;
+  v_patch jsonb := COALESCE(p_patch, '{}'::jsonb);
+  v_id_present boolean :=
+    (v_patch ? 'supplier_id') OR (v_patch ? 'supplier_master_party_id') OR (v_patch ? 'supplier_meta');
+  v_type_present boolean :=
+    (v_patch ? 'service_type_id') OR (v_patch ? 'service_type_name');
+  v_sid uuid;
+  v_mid uuid;
+  v_s_name text;
+  v_mp_live uuid;
+  v_meta jsonb;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext(p_service_id::text));
 
-  SELECT store_id, status, service_number, supplier
-  INTO v_store_id, v_status, v_service_number, v_supplier
+  SELECT store_id, status, service_number, supplier, total_amount, service_date,
+         payment_terms_days, service_type_id, service_type_name
+  INTO v_store_id, v_status, v_service_number, v_supplier, v_total, v_service_date,
+       v_terms, v_service_type_id, v_service_type_name
   FROM received_services WHERE id = p_service_id FOR UPDATE;
 
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_SERVICE_NOT_FOUND'; END IF;
@@ -19619,7 +19748,8 @@ BEGIN
     RAISE EXCEPTION 'ERR_NOT_DRAFT: solo los borradores pueden editarse aquí (estado actual: %)', v_status;
   END IF;
 
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
+  -- (F3/§5) Gate de gestión (Alternativa B) — identidad anti-spoofing.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_store_as(v_caller_uid, v_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
@@ -19632,69 +19762,162 @@ BEGIN
     RAISE EXCEPTION 'ERR_HAS_DISTRIBUTIONS: el borrador tiene distribuciones de costo';
   END IF;
 
-  -- Identidad de proveedor: REEMPLAZO COMPLETO (el cliente envía el estado
-  -- completo deseado; NULL/ausente limpia). Validación fail-closed.
-  IF p_supplier_id IS NOT NULL AND NOT public.adn008_supplier_belongs_to_store(p_supplier_id, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_SUPPLIER_INVALID: % no pertenece a la tienda', p_supplier_id;
-  END IF;
-  IF p_supplier_master_party_id IS NOT NULL AND NOT public.adn008_master_party_valid_for_store(p_supplier_master_party_id, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_SUPPLIER_MASTER_INVALID: % no pertenece al tenant de la tienda o no está activo', p_supplier_master_party_id;
-  END IF;
+  -- ── (F4/§6 + F7/§9) Identidad del proveedor: BLOQUE ATÓMICO con snapshot
+  --    desde la fuente autorizada. Cualquier clave de identidad presente =
+  --    reemplazo completo del bloque (IDs + snapshot); limpiar IDs limpia el
+  --    snapshot; el nombre se refresca desde la fila autorizada cuando se
+  --    fijan IDs y no llega 'supplier' — jamás un nombre nuevo con ID antiguo.
+  IF v_id_present THEN
+    v_sid := CASE WHEN v_patch ? 'supplier_id' AND jsonb_typeof(v_patch->'supplier_id') <> 'null'
+                  THEN NULLIF(btrim(v_patch->>'supplier_id'), '')::uuid END;
+    v_mid := CASE WHEN v_patch ? 'supplier_master_party_id' AND jsonb_typeof(v_patch->'supplier_master_party_id') <> 'null'
+                  THEN NULLIF(btrim(v_patch->>'supplier_master_party_id'), '')::uuid END;
 
-  IF p_supplier IS NOT NULL THEN
-    v_supplier := NULLIF(btrim(p_supplier), '');
-  END IF;
-  IF p_total_amount IS NOT NULL AND p_total_amount <= 0 THEN
-    RAISE EXCEPTION 'ERR_INVALID_AMOUNT: total_amount must be > 0';
-  END IF;
-  IF p_distribution_method IS NOT NULL AND p_distribution_method NOT IN ('amount', 'quantity', 'manual') THEN
-    RAISE EXCEPTION 'ERR_INVALID_DISTRIBUTION_METHOD';
-  END IF;
-  IF p_service_type_id IS NOT NULL THEN
-    SELECT COUNT(*) INTO v_count FROM service_types
-    WHERE id = p_service_type_id
-      AND (store_id = v_store_id OR store_id IS NULL)
-      AND is_active = true;
-    IF v_count = 0 THEN
-      RAISE EXCEPTION 'ERR_SERVICE_TYPE_NOT_FOUND';
+    IF v_sid IS NOT NULL THEN
+      SELECT s.name, s.master_party_id,
+             jsonb_build_object('tax_id', s.tax_id,
+                                'phone', s.phone, 'address', s.address)
+        INTO v_s_name, v_mp_live, v_meta
+      FROM suppliers s
+      WHERE s.id = v_sid AND s.store_id = v_store_id;
+      IF NOT FOUND THEN
+        RAISE EXCEPTION 'ERR_SUPPLIER_INVALID: % no pertenece a la tienda', v_sid;
+      END IF;
+      -- coherencia local↔maestro cuando llegan ambas identidades
+      IF v_mid IS NOT NULL AND v_mp_live IS NOT NULL AND v_mp_live <> v_mid THEN
+        RAISE EXCEPTION 'ERR_SUPPLIER_IDENTITY_MISMATCH: el proveedor local % está ligado al tercero %, no a %',
+          v_sid, v_mp_live, v_mid;
+      END IF;
+    END IF;
+
+    IF v_mid IS NOT NULL THEN
+      IF NOT public.adn008_master_party_valid_for_store(v_mid, v_store_id) THEN
+        RAISE EXCEPTION 'ERR_SUPPLIER_MASTER_INVALID: % no pertenece al tenant de la tienda o no está activo', v_mid;
+      END IF;
+    END IF;
+
+    -- Nombre coherente con la identidad final:
+    IF v_patch ? 'supplier' AND jsonb_typeof(v_patch->'supplier') <> 'null' THEN
+      v_supplier := NULLIF(btrim(v_patch->>'supplier'), '');
+    ELSIF v_sid IS NOT NULL THEN
+      v_supplier := v_s_name;
+    ELSIF v_mid IS NOT NULL THEN
+      SELECT mp.name INTO v_supplier FROM master_parties mp WHERE mp.id = v_mid;
+    ELSE
+      -- Identidad limpiada sin nombre enviado: el nombre pasa a texto libre
+      -- vacío (nunca queda un nombre nuevo asociado a un ID antiguo). El
+      -- formulario envía siempre el nombre junto con la identidad; este es el
+      -- caso de API directa con limpieza explícita.
+      v_supplier := NULL;
+    END IF;
+
+    -- Snapshot final: de la fila autorizada si hay identidad; NULL si no.
+    IF v_sid IS NULL AND v_mid IS NOT NULL THEN
+      SELECT jsonb_build_object('code', mp.code, 'tax_id', mp.tax_id,
+                                'phone', mp.phone, 'address', mp.address)
+        INTO v_meta FROM master_parties mp WHERE mp.id = v_mid;
+    ELSIF v_sid IS NULL AND v_mid IS NULL THEN
+      v_meta := NULL;
+    END IF;
+  ELSE
+    IF v_patch ? 'supplier' THEN
+      v_supplier := NULLIF(btrim(COALESCE(v_patch->>'supplier', '')), '');
     END IF;
   END IF;
-  IF p_service_date IS NOT NULL THEN
-    PERFORM public.validate_operation_date(p_service_date::timestamp with time zone, v_store_id);
+
+  -- ── Escalares tri-state ──
+  IF v_patch ? 'total_amount' THEN
+    v_total := NULLIF(v_patch->>'total_amount', '')::numeric;
+    IF v_total IS NULL OR v_total <= 0 THEN
+      RAISE EXCEPTION 'ERR_INVALID_AMOUNT: total_amount must be > 0';
+    END IF;
   END IF;
 
+  IF v_patch ? 'service_date' THEN
+    IF jsonb_typeof(v_patch->'service_date') = 'null' THEN
+      -- (§9) Fecha enviada como NULL → RESTABLECER al día operativo actual.
+      -- Día de NEGOCIO America/Havana (canon CP-FIN-004 / todayBusinessDay):
+      -- CURRENT_DATE correría en UTC y tras las 20:00 Habana fechaba mañana
+      -- → ERR_FUTURE_DATED_DOCUMENT.
+      v_service_date := (now() AT TIME ZONE 'America/Havana')::date;
+    ELSE
+      v_service_date := NULLIF(btrim(v_patch->>'service_date'), '')::date;
+      IF v_service_date IS NULL THEN
+        RAISE EXCEPTION 'ERR_INVALID_SERVICE_DATE: fecha no interpretable';
+      END IF;
+    END IF;
+    PERFORM public.validate_operation_date(v_service_date::timestamp with time zone, v_store_id);
+    v_due_date := (v_service_date + v_terms)::date;
+  END IF;
+
+  IF v_patch ? 'reference_doc' THEN
+    v_reference_doc := NULLIF(btrim(COALESCE(v_patch->>'reference_doc', '')), '');
+  END IF;
+  IF v_patch ? 'observations' THEN
+    v_observations := NULLIF(btrim(COALESCE(v_patch->>'observations', '')), '');
+  END IF;
+
+  IF v_type_present THEN
+    v_service_type_id := CASE
+      WHEN v_patch ? 'service_type_id' AND jsonb_typeof(v_patch->'service_type_id') <> 'null'
+        THEN NULLIF(btrim(v_patch->>'service_type_id'), '')::uuid
+      WHEN v_patch ? 'service_type_id' THEN NULL
+      ELSE v_service_type_id
+    END;
+    v_service_type_name := CASE
+      WHEN v_patch ? 'service_type_name' AND jsonb_typeof(v_patch->'service_type_name') <> 'null'
+        THEN NULLIF(btrim(v_patch->>'service_type_name'), '')
+      WHEN v_patch ? 'service_type_name' THEN NULL
+      ELSE v_service_type_name
+    END;
+    IF v_service_type_id IS NOT NULL THEN
+      SELECT COUNT(*) INTO v_count FROM service_types
+      WHERE id = v_service_type_id
+        AND (store_id = v_store_id OR store_id IS NULL)
+        AND is_active = true;
+      IF v_count = 0 THEN
+        RAISE EXCEPTION 'ERR_SERVICE_TYPE_NOT_FOUND';
+      END IF;
+    END IF;
+  END IF;
+
+  IF v_patch ? 'distribution_method' AND jsonb_typeof(v_patch->'distribution_method') <> 'null' THEN
+    v_distribution_method := btrim(v_patch->>'distribution_method');
+    IF v_distribution_method NOT IN ('amount', 'quantity', 'manual') THEN
+      RAISE EXCEPTION 'ERR_INVALID_DISTRIBUTION_METHOD';
+    END IF;
+  END IF;
+
+  -- ── Persistencia: cada campo usa el valor resuelto de su clave; los campos
+  --    sin clave conservan el valor leído de la fila (variables cargadas). ──
   UPDATE received_services SET
-    -- p_supplier NULL = no cambiar el nombre; '' = limpiarlo (NULL).
-    -- La identidad (supplier_id / master / snapshot) es REEMPLAZO COMPLETO.
-    supplier = CASE WHEN p_supplier IS NULL THEN supplier ELSE v_supplier END,
-    supplier_id = p_supplier_id,
-    supplier_master_party_id = p_supplier_master_party_id,
-    supplier_code = CASE WHEN v_meta IS NULL THEN NULL ELSE NULLIF(btrim(COALESCE(v_meta->>'code', '')), '') END,
-    supplier_tax_id = CASE WHEN v_meta IS NULL THEN NULL ELSE NULLIF(btrim(COALESCE(v_meta->>'tax_id', '')), '') END,
-    supplier_phone = CASE WHEN v_meta IS NULL THEN NULL ELSE NULLIF(btrim(COALESCE(v_meta->>'phone', '')), '') END,
-    supplier_address = CASE WHEN v_meta IS NULL THEN NULL ELSE NULLIF(btrim(COALESCE(v_meta->>'address', '')), '') END,
-    service_type_id = COALESCE(p_service_type_id, service_type_id),
-    service_type_name = COALESCE(p_service_type_name, service_type_name),
-    total_amount = COALESCE(p_total_amount, total_amount),
-    service_date = COALESCE(p_service_date, service_date),
-    reference_doc = COALESCE(p_reference_doc, reference_doc),
-    observations = COALESCE(p_observations, observations),
-    distribution_method = COALESCE(p_distribution_method, distribution_method),
-    due_date = CASE
-      WHEN p_service_date IS NOT NULL THEN (p_service_date + payment_terms_days)::date
-      ELSE due_date
-    END,
-    updated_at = NOW()
+    supplier                = v_supplier,
+    supplier_id             = CASE WHEN v_id_present THEN v_sid ELSE supplier_id END,
+    supplier_master_party_id = CASE WHEN v_id_present THEN v_mid ELSE supplier_master_party_id END,
+    supplier_code           = CASE WHEN v_id_present THEN NULLIF(btrim(COALESCE(v_meta->>'code', '')), '') ELSE supplier_code END,
+    supplier_tax_id         = CASE WHEN v_id_present THEN NULLIF(btrim(COALESCE(v_meta->>'tax_id', '')), '') ELSE supplier_tax_id END,
+    supplier_phone          = CASE WHEN v_id_present THEN NULLIF(btrim(COALESCE(v_meta->>'phone', '')), '') ELSE supplier_phone END,
+    supplier_address        = CASE WHEN v_id_present THEN NULLIF(btrim(COALESCE(v_meta->>'address', '')), '') ELSE supplier_address END,
+    service_type_id         = v_service_type_id,
+    service_type_name       = v_service_type_name,
+    total_amount            = v_total,
+    service_date            = v_service_date,
+    due_date                = COALESCE(v_due_date, due_date),
+    reference_doc           = CASE WHEN v_patch ? 'reference_doc' THEN v_reference_doc ELSE reference_doc END,
+    observations            = CASE WHEN v_patch ? 'observations' THEN v_observations ELSE observations END,
+    distribution_method     = COALESCE(v_distribution_method, distribution_method),
+    updated_at              = NOW()
   WHERE id = p_service_id;
 
-  -- Vínculos: NULL = no cambiar; array = reemplazar el conjunto completo.
-  IF p_receipt_ids IS NOT NULL THEN
+  -- ── Vínculos (§9): clave presente + array = REEMPLAZAR el conjunto;
+  --    clave presente + null = BORRAR todos; clave ausente = conservar. ──
+  IF v_patch ? 'receipt_ids' THEN
     DELETE FROM service_reception_links WHERE service_id = p_service_id;
-    v_link_count := jsonb_array_length(p_receipt_ids);
-    IF v_link_count > 0 THEN
-      SELECT COALESCE(p_total_amount, total_amount) / v_link_count INTO v_alloc
-      FROM received_services WHERE id = p_service_id;
-      FOR v_receipt_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_receipt_ids) LOOP
+    IF jsonb_typeof(v_patch->'receipt_ids') = 'array'
+       AND jsonb_array_length(v_patch->'receipt_ids') > 0 THEN
+      v_link_count := jsonb_array_length(v_patch->'receipt_ids');
+      v_alloc := v_total / v_link_count;
+      FOR v_receipt_id IN SELECT value::uuid FROM jsonb_array_elements_text(v_patch->'receipt_ids') LOOP
         IF NOT EXISTS (SELECT 1 FROM receipts WHERE id = v_receipt_id AND store_id = v_store_id AND status = 'active') THEN
           RAISE EXCEPTION 'ERR_RECEIPT_INVALID: % no pertenece a la store o no esta activo', v_receipt_id;
         END IF;
@@ -19704,10 +19927,11 @@ BEGIN
     END IF;
   END IF;
 
-  IF p_production_order_ids IS NOT NULL THEN
+  IF v_patch ? 'production_order_ids' THEN
     DELETE FROM service_production_order_links WHERE service_id = p_service_id;
-    IF jsonb_array_length(p_production_order_ids) > 0 THEN
-      FOR v_order_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_production_order_ids) LOOP
+    IF jsonb_typeof(v_patch->'production_order_ids') = 'array'
+       AND jsonb_array_length(v_patch->'production_order_ids') > 0 THEN
+      FOR v_order_id IN SELECT value::uuid FROM jsonb_array_elements_text(v_patch->'production_order_ids') LOOP
         IF NOT EXISTS (
           SELECT 1 FROM production_orders
           WHERE id = v_order_id AND store_id = v_store_id
@@ -19725,11 +19949,12 @@ BEGIN
 
   INSERT INTO service_audit_log (service_id, user_id, action, details)
   VALUES (p_service_id, v_caller_uid, 'draft_updated', jsonb_build_object(
-    'by_rpc', 'update_received_service_draft',
-    'supplier', v_supplier, 'supplier_id', p_supplier_id,
-    'supplier_master_party_id', p_supplier_master_party_id,
-    'receipt_ids_replaced', (p_receipt_ids IS NOT NULL),
-    'production_order_ids_replaced', (p_production_order_ids IS NOT NULL)
+    'by_rpc', 'update_received_service_draft/3 (patch ADN-009)',
+    'patch_keys', (SELECT COALESCE(jsonb_agg(x.key), '[]'::jsonb) FROM jsonb_object_keys(v_patch) AS x(key)),
+    'supplier', v_supplier,
+    'identity_replaced', v_id_present,
+    'receipt_ids_replaced', (v_patch ? 'receipt_ids'),
+    'production_order_ids_replaced', (v_patch ? 'production_order_ids')
   ));
 
   RETURN jsonb_build_object(

@@ -141,7 +141,7 @@ export default function ReceivedServicesView() {
   //    sin pagos, CERO efectos financieros; idempotente por creation_key).
   //  · confirmar → flujo existente: POST (draft) → PATCH active (gate: proveedor
   //    + importe) → pagos del desglose si «Liquidar al confirmar».
-  const handleCreate = async (data: any) => {
+  const handleCreate = async (data: any): Promise<boolean> => {
     try {
       const res = await fetch('/api/received-services', {
         method: 'POST',
@@ -161,7 +161,7 @@ export default function ReceivedServicesView() {
           : `Borrador guardado (${created?.data?.service_number || ''}). Sin efectos financieros hasta confirmarlo.`);
         setCreateModalOpen(false);
         fetchServices();
-        return;
+        return true;
       }
 
       // v2.18.0: el RPC crea el servicio en estado 'draft' (documento completo,
@@ -193,7 +193,12 @@ export default function ReceivedServicesView() {
                 ref_id: newId,
                 payments,
                 payment_date: data.payment_date || undefined,
-                idempotency_key: crypto.randomUUID(),
+                // ADN-009 (§8): clave de idempotencia ESTABLE del intento de
+                // liquidación (generada por el modal al abrir/cambiar el lote;
+                // se reutiliza en reintentos tras respuesta perdida/incierta).
+                // Un reintento de la MISMA operación no crea componentes extra:
+                // el RPC devuelve el lote aplicado (replay completo).
+                idempotency_key: data.payment_idempotency_key || crypto.randomUUID(),
               }),
             });
             if (pay.ok) {
@@ -210,8 +215,10 @@ export default function ReceivedServicesView() {
       }
       setCreateModalOpen(false);
       fetchServices();
+      return true;
     } catch (e: any) {
       toast.error(e.message);
+      return false;
     }
   };
 
@@ -222,7 +229,7 @@ export default function ReceivedServicesView() {
   //    UNA sola vez) → pagos del desglose si «Liquidar al confirmar».
   //    La transición es única (advisory lock + guard no_change en la BD):
   //    una segunda confirmación no re-contabiliza ni duplica nada.
-  const handleSaveDraftService = async (serviceId: string, data: any, mode: 'draft' | 'confirm') => {
+  const handleSaveDraftService = async (serviceId: string, data: any, mode: 'draft' | 'confirm'): Promise<boolean> => {
     try {
       const upd = await fetch('/api/received-services', {
         method: 'PATCH',
@@ -254,7 +261,7 @@ export default function ReceivedServicesView() {
         toast.success('Cambios del borrador guardados. Sin efectos financieros.');
         setEditService(null);
         fetchServices();
-        return;
+        return true;
       }
 
       const act = await fetch('/api/received-services', {
@@ -279,7 +286,8 @@ export default function ReceivedServicesView() {
             ref_id: serviceId,
             payments,
             payment_date: data.payment_date || undefined,
-            idempotency_key: crypto.randomUUID(),
+            // ADN-009 (§8): idempotencia estable del intento (ver handleCreate).
+            idempotency_key: data.payment_idempotency_key || crypto.randomUUID(),
           }),
         });
         if (pay.ok) {
@@ -293,8 +301,10 @@ export default function ReceivedServicesView() {
 
       setEditService(null);
       fetchServices();
+      return true;
     } catch (e: any) {
       toast.error(e.message);
+      return false;
     }
   };
 
@@ -604,6 +614,21 @@ function ServiceDetailModal({
   const { rates: storeRates } = useStoreRates();
   const [payRows, setPayRows] = useState<PaymentEditorRow[]>([newPaymentRow({})]);
   const [rowsValid, setRowsValid] = useState(false);
+  // ─── ADN-009 (§8): identificador de idempotencia del pago ESTABLE ───
+  // Nace al abrir el formulario de pago y se RENUEVA solo cuando el CONTENIDO
+  // del lote cambia (misma operación → misma clave; lote distinto → nueva
+  // clave con validación actualizada del saldo). Un reintento tras respuesta
+  // perdida/incierta reutiliza la clave → el RPC devuelve el lote aplicado
+  // (replay completo) y NUNCA crea componentes adicionales. Antes:
+  // crypto.randomUUID() por envío → reintento duplicaba el lote financiero.
+  const detailPayFingerprint = useMemo(
+    () => JSON.stringify(payRows.map((r) => [r.method, r.currency, r.amount, r.exchange_rate, r.reference])),
+    [payRows],
+  );
+  const payAttemptKeyRef = useRef<string>('');
+  useEffect(() => {
+    payAttemptKeyRef.current = crypto.randomUUID();
+  }, [detailPayFingerprint, showForm]);
   // V2.12.32 (paridad con OT): fecha financiera del pago. Default HOY (día de
   // negocio Habana); tope HOY — nunca futura. Backdating legítimo visible y
   // validado (piso real: 6 meses, lo impone validate_operation_date en BD).
@@ -682,9 +707,10 @@ function ServiceDetailModal({
           ref_id: service.id,
           // Pago mixto multi-moneda: cada componente viaja con SU forma de
           // pago, moneda, tasa e importe (anexo §3.2 — varios componentes).
+          // ADN-009 (§8): clave estable del intento (reintento = replay).
           payments: payloadRows,
           payment_date: formatOperationDateForRPC(paymentDate),
-          idempotency_key: crypto.randomUUID(),
+          idempotency_key: payAttemptKeyRef.current || crypto.randomUUID(),
         }),
       });
       if (res.ok) {
@@ -907,9 +933,12 @@ function ServiceDetailModal({
 interface CreateServiceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: any) => void;
+  /** ADN-009 (§7): devuelve true cuando la operación TERMINÓ con éxito — el
+   *  modal espera la promesa (bloqueo visual real) y renueva la creation_key
+   *  solo tras el éxito (un fallo/reintento conserva la misma clave). */
+  onCreate: (data: any) => void | Promise<boolean>;
   /** ADN-008 §3.3: guardar cambios / confirmar un borrador existente. */
-  onSaveEdit?: (serviceId: string, data: any, mode: 'draft' | 'confirm') => void;
+  onSaveEdit?: (serviceId: string, data: any, mode: 'draft' | 'confirm') => void | Promise<boolean>;
   /** ADN-008 §3.3: borrador en edición (null/ausente = modo creación). */
   editService?: ReceivedService | null;
   /** MISIÓN 2026-10-15: tipos activos del catálogo oficial (tabla service_types). */
@@ -1050,6 +1079,16 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
   const [method, setMethod] = useState<'amount' | 'quantity' | 'manual'>('amount');
   const [observations, setObservations] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  // ─── ADN-009 (§7): IDEMPOTENCIA DE CREACIÓN ESTABLE POR OPERACIÓN ───
+  // La creation_key nace al abrir el modal (operación nueva) y se RENUEVA
+  // solo tras un guardado EXITOSO; ante fallo, timeout o respuesta incierta
+  // el reintento REUTILIZA la misma clave → la BD devuelve el mismo borrador
+  // (anti doble-clic / anti duplicado). Antes: clave nueva por intento.
+  const [creationKey, setCreationKey] = useState<string>(() => crypto.randomUUID());
+  useEffect(() => {
+    if (isOpen && !isEdit) setCreationKey(crypto.randomUUID());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, isEdit]);
   // CP-FIN-003 (anexo §3.1): sección «Información del pago» en la creación.
   // Por defecto el servicio se registra PENDIENTE (sin egreso ficticio); el
   // operador puede liquidar al confirmar con el MISMO componente del carrito
@@ -1057,6 +1096,20 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
   const { rates: storeRates } = useStoreRates();
   const [payNow, setPayNow] = useState(false);
   const [payRows, setPayRows] = useState<PaymentEditorRow[]>([newPaymentRow({})]);
+  // ─── ADN-009 (§8): IDENTIFICADOR DE IDEMPOTENCIA DEL PAGO ESTABLE ───
+  // Estable durante un mismo intento de liquidación (incl. reintentos tras
+  // respuesta perdida/incierta); se regenera cuando el CONTENIDO del lote
+  // cambia (misma operación → misma clave; lote distinto → nueva clave con
+  // validación actualizada del saldo). Antes: crypto.randomUUID() por envío.
+  const payRowsFingerprint = useMemo(
+    () => JSON.stringify(payRows.map((r) => [r.method, r.currency, r.amount, r.exchange_rate, r.reference])),
+    [payRows],
+  );
+  const payAttemptKeyRef = useRef<string>('');
+  useEffect(() => {
+    payAttemptKeyRef.current = crypto.randomUUID();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payRowsFingerprint, payNow, isOpen]);
   // MISIÓN POLÍTICA TEMPORAL: fecha del servicio. Default HOY (día de negocio
   // America/Havana) o la preferencia de trabajo del usuario para servicios
   // si es válida (MISIÓN FECHAS DE TRABAJO). Tope = HOY (nunca futura);
@@ -1283,9 +1336,10 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
 
     if (saveAsDraft) {
       // Borrador: CERO efectos financieros. Sin filas de pago; el desglose
-      // se configura al confirmar. Idempotencia anti doble-clic.
+      // se configura al confirmar. Idempotencia anti doble-clic: la clave es
+      // ESTABLE por operación (§7) — el reintento devuelve el mismo borrador.
       payload.save_as_draft = true;
-      payload.creation_key = crypto.randomUUID();
+      payload.creation_key = creationKey;
       payload.paymentRows = [];
     } else {
       // CP-FIN-003 (anexo §3.2): liquidación al confirmar (si el operador la
@@ -1301,14 +1355,20 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
           toast.error(`El pago (${rowsCupTotal(payRows).toFixed(2)} CUP) excede el importe del servicio (${totalNum.toFixed(2)} CUP).`);
           return null;
         }
+        // ADN-009 (§8): clave estable del intento de liquidación.
+        payload.payment_idempotency_key = payAttemptKeyRef.current || crypto.randomUUID();
       }
       payload.paymentRows = payNow ? payRows : [];
     }
     return payload;
   };
 
-  /** Guardar BORRADOR (creación o edición) — sin confirmar, sin efectos. */
-  const handleSaveDraft = () => {
+  /** Guardar BORRADOR (creación o edición) — sin confirmar, sin efectos.
+   *  ADN-009 (§7): asíncrono — ESPERA la promesa del handler antes de liberar
+   *  el bloqueo visual (el finally ya no suelta submitting inmediatamente);
+   *  tras un guardado EXITOSO renueva la creation_key (operación nueva); ante
+   *  fallo la CONSERVA para que el reintento devuelva el mismo borrador. */
+  const handleSaveDraft = async () => {
     if (submitting) return;
     const payload = buildPayload(true);
     if (!payload) return;
@@ -1319,18 +1379,22 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
     setSubmitting(true);
     try {
       if (isEdit && editService && onSaveEdit) {
-        onSaveEdit(editService.id, payload, 'draft');
+        await onSaveEdit(editService.id, payload, 'draft');
       } else {
-        onCreate(payload);
+        const ok = await onCreate(payload);
+        // ADN-009 (§7): éxito → operación nueva (clave nueva); fallo/reintento
+        // → MISMA clave (la BD devuelve el mismo borrador, nunca duplicados).
+        if (ok !== false) setCreationKey(crypto.randomUUID());
       }
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (submitting) return; // doble envío bloqueado
+    if (submitting) return; // doble envío bloqueado (submitting se mantiene
+    // HASTA que la operación asíncrona completa termina — ADN-009 §7).
     // La CONFIRMACIÓN exige proveedor (misión §4.2/§7): el borrador pudo
     // guardarse sin él, pero el servicio operativo no puede quedar sin tercero.
     if (!supplier || !supplier.trim()) {
@@ -1345,18 +1409,20 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
       : '¿CONFIRMAR el servicio? Quedará pendiente de pago: se registra la obligación y NO se genera ningún egreso de caja o banco.';
     if (!window.confirm(message)) return;
     setSubmitting(true);
+    let confirmOk = false;
     try {
       if (isEdit && editService && onSaveEdit) {
         // ADN-008 §3.3: fecha financiera del pago al confirmar el borrador.
-        onSaveEdit(editService.id, { ...payload, payment_date: formatOperationDateForRPC(todayBusinessDay()) }, 'confirm');
+        confirmOk = (await onSaveEdit(editService.id, { ...payload, payment_date: formatOperationDateForRPC(todayBusinessDay()) }, 'confirm')) !== false;
       } else {
-        onCreate(payload);
+        confirmOk = (await onCreate(payload)) !== false;
       }
     } finally {
       setSubmitting(false);
     }
-    // Reset (solo modo creación: la edición se cierra desde el padre)
-    if (!isEdit) {
+    // Reset SOLO tras éxito (solo modo creación: la edición se cierra desde el
+    // padre). Con fallo el formulario conserva los datos para el reintento.
+    if (!isEdit && confirmOk) {
       setSupplier(''); setSupplierSelection(null); setAmount(''); setReferenceDoc(''); setObservations('');
       setServiceDate(todayBusinessDay());
       setPayNow(false); setPayRows([newPaymentRow(storeRates)]);

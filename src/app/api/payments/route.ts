@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
+import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
+import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
 import { uuidLoose } from '@/validation/api-schemas';
 import { randomUUID } from 'crypto';
@@ -109,6 +111,15 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
     const storeId = userData.active_store_id;
 
+    // ─── ADN-009 (§5): autorización de GESTIÓN en la tienda activa ANTES de
+    // cualquier operación privilegiada. El store_id activo no es autorización
+    // por sí mismo (canon roles.ts: canManageStore para toda ruta que escriba
+    // recursos scoped por tienda). Deny por defecto: clerk/warehouse/usuario/
+    // costo registran pagos solo si su módulo lo permite vía su propia ruta.
+    if (!canManageStore(session.user, storeId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     // ─── ADN-008 §5: liquidación multipago ATÓMICA para servicios ───
     // register_supplier_payment_batch inserta TODOS los componentes en UNA
     // transacción (pre-check de la suma contra el saldo pendiente en la moneda
@@ -117,8 +128,20 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // 'pago' por componente vía fin_trg_payment_transactions).
     // El loop no transaccional permanece SOLO para los demás ref_types
     // (receipt / production_order / work) — fuera del alcance de la misión 008.
+    //
+    // ─── ADN-009 (§5, Alternativa A): la RPC batch es service_role EXCLUSIVA
+    // (REVOKE authenticated — alineado a CP-FIN-004 y al canal exclusivo del
+    // motor que envuelve). Toda la autorización ocurre AQUÍ antes de la
+    // llamada privilegiada: canManageStore (gate de gestión arriba) + actor
+    // validado de la sesión server-side (p_paid_by = session.user.id — NUNCA
+    // un parámetro del cliente). La llamada privilegiada usa el cliente
+    // service_role; el resto de la ruta no cambia.
     if (ref_type === 'service') {
-      const { data: batchResult, error: batchErr } = await supabase.rpc('register_supplier_payment_batch', {
+      const admin = getSupabaseAdminSafe();
+      if (!admin) {
+        return NextResponse.json({ error: 'CONFIG_ERROR' }, { status: 500 });
+      }
+      const { data: batchResult, error: batchErr } = await admin.rpc('register_supplier_payment_batch', {
         p_store_id: storeId,
         p_ref_type: ref_type,
         p_ref_id: ref_id,
@@ -155,6 +178,16 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         // Componentes inválidos (medio/moneda/importe) o tamaño del lote → 400.
         if (msg.includes('ERR_COMPONENT_INVALID') || msg.includes('ERR_BATCH_SIZE')) {
           return NextResponse.json({ error: msg, code: 'ERR_BATCH_INVALID' }, { status: 400 });
+        }
+        // ADN-009: combinación medio×moneda no soportada (Transf. Exterior solo
+        // USD/EUR) → 400 accionable (espejo POS CP-FIN-004).
+        if (msg.includes('ERR_COMBINACION_NO_SOPORTADA')) {
+          return NextResponse.json({ error: msg, code: 'ERR_COMBINACION_NO_SOPORTADA' }, { status: 400 });
+        }
+        // ADN-009: estado del documento tras el lock — solo un servicio ACTIVO
+        // admite pagos (borrador sin obligación / anulado sin liquidación).
+        if (msg.includes('ERR_SERVICE_NOT_ACTIVE')) {
+          return NextResponse.json({ error: msg, code: 'ERR_SERVICE_NOT_ACTIVE' }, { status: 409 });
         }
         console.error('[payments] Error RPC batch:', batchErr);
         return NextResponse.json({ error: msg || 'Error al registrar el pago' }, { status: 500 });
