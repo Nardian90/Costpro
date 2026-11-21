@@ -287,6 +287,19 @@ export default function POSView() {
 
   // ── Add to cart with stock validation & price<cost audit ────
   const onAddToCart = (product: Product) => {
+    // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§5/§9): fila del
+    // Catálogo Maestro SIN fila local en esta tienda (tienda conectada). No
+    // es vendible: sin precio local ni existencias (operativos en cero por
+    // diseño — el maestro solo porta identidad). El vendedor ve el catálogo
+    // completo de la organización; para vender: activar en Catálogo o
+    // recibir en Recepciones (ambos crean la fila local con datos reales).
+    if (product.source === 'master') {
+      toast.info(
+        `"${product.name}" es del catálogo de la organización y aún no está activo en esta tienda. Recíbelo en Recepciones (o actívalo en Catálogo) para venderlo.`,
+        { duration: 7000 },
+      );
+      return;
+    }
     // MISIÓN TIPO-DE-ARTÍCULO (2026-10-19): los servicios (is_service) no tienen
     // existencias propias — el servidor (create_sale_v2) ya los exime del check
     // de stock; el pre-check del POS replica la misma regla. Los productos
@@ -317,6 +330,14 @@ export default function POSView() {
   };
 
   const handleAddItem = (product: Product, variant: ProductVariant | null) => {
+    // CP-LOG-UNIFICATION-001: filas solo-maestro no vendibles (ver onAddToCart).
+    if (product.source === 'master') {
+      toast.info(
+        `"${product.name}" es del catálogo de la organización y aún no está activo en esta tienda. Recíbelo en Recepciones (o actívalo en Catálogo) para venderlo.`,
+        { duration: 7000 },
+      );
+      return;
+    }
     // MISIÓN TIPO-DE-ARTÍCULO: los servicios se agregan sin exigir existencias.
     if (!variant && product.is_service !== true && (product.stock_current ?? 0) <= 0) {
       toast.error(`${product.name} no tiene stock disponible`);

@@ -568,6 +568,12 @@ export type AuditLog = z.infer<typeof auditLogSchema> & {
 
 export const getProductsForPosResponseSchema = productSchema.extend({
   product_variants: z.array(productVariantSchema).nullable(),
+  // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001: procedencia de la fila
+  // para tiendas conectadas al Catálogo Maestro ('master' = sin fila local,
+  // operativos en cero — vistazo del catálogo organizacional, NO vendible
+  // hasta activarlo en Catálogo o recibirlo en Recepciones).
+  source: z.enum(['local', 'master']).optional().default('local'),
+  master_product_id: z.string().regex(uuidRegex).nullable().optional(),
 });
 
 export const transactionItemSchema = z.object({

@@ -263,8 +263,12 @@ export const ProductCard: React.FC<any> = ({
   // "agotado" — no tiene existencias propias y siempre es vendible. El badge
   // muestra su naturaleza en lugar del stock numérico.
   const isService = product.is_service === true;
-  const isOutOfStock = !isService && product.stock_current <= 0;
-  const isLowStock = !isService && product.stock_current <= (product.min_stock || 0);
+  // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001: fila del Catálogo Maestro
+  // de la organización sin fila local (tienda conectada) — vistazo del
+  // catálogo; NO vendible hasta activarlo (Catálogo) o recibirlo (Recepciones).
+  const isMasterRow = product.source === 'master';
+  const isOutOfStock = !isService && !isMasterRow && product.stock_current <= 0;
+  const isLowStock = !isService && !isMasterRow && product.stock_current <= (product.min_stock || 0);
   const hasImage = !!(product.public_image_url || product.image_url);
   const variantCount = product.product_variants?.length || 0;
 
@@ -284,9 +288,10 @@ export const ProductCard: React.FC<any> = ({
       <button
         type="button"
         onClick={() => !isOutOfStock && onClick?.(product)}
-        aria-label={`Agregar ${product.name} al carrito. ${isService ? 'Servicio' : `Precio: ${formatCurrency(product.price)}. Stock: ${product.stock_current}`}`}
+        aria-label={`Agregar ${product.name} al carrito. ${isMasterRow ? 'Producto del catálogo de la organización (requiere activación)' : isService ? 'Servicio' : `Precio: ${formatCurrency(product.price)}. Stock: ${product.stock_current}`}`}
         className={cn(
-          "flex flex-row items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border border-border bg-card transition-all w-full text-left relative overflow-hidden",
+          "flex flex-row items-center gap-3 sm:gap-4 p-2.5 sm:p-3 rounded-xl sm:rounded-2xl border bg-card transition-all w-full text-left relative overflow-hidden",
+          isMasterRow ? "border-amber-300/60 dark:border-amber-700/50" : "border-border",
           isOutOfStock ? "opacity-60 cursor-not-allowed" : "hover:shadow-md active:scale-[0.98]",
           className
         )}
@@ -297,12 +302,21 @@ export const ProductCard: React.FC<any> = ({
         <div className="flex-1 min-w-0">
           <h4 className="font-black text-xs sm:text-xs uppercase truncate mb-0.5 sm:mb-1">{product.name}</h4>
           <div className="flex items-center justify-between gap-2">
-            <div className="text-[clamp(0.875rem,4vw,1.125rem)] font-black text-primary leading-none">{formatCurrency(product.price)}</div>
+            {isMasterRow ? (
+              /* CP-LOG-UNIFICATION-001: fila solo-maestro — el precio y el stock
+                 locales no existen (operativos en cero por diseño); el badge
+                 informa la naturaleza y la acción para habilitar la venta. */
+              <div className="text-[10px] sm:text-xs font-black uppercase tracking-tight px-1.5 py-0.5 rounded border shrink-0 bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700/50" title="Recíbelo en Recepciones o actívalo en Catálogo para venderlo">
+                Catálogo · sin activar
+              </div>
+            ) : (
+              <div className="text-[clamp(0.875rem,4vw,1.125rem)] font-black text-primary leading-none">{formatCurrency(product.price)}</div>
+            )}
             {isService ? (
               <div className="text-[10px] sm:text-xs font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0 bg-primary/10 text-primary border-primary/20">
                 Servicio
               </div>
-            ) : (
+            ) : !isMasterRow ? (
               <div className={cn(
                 "text-[10px] sm:text-xs font-black uppercase tracking-tighter px-1.5 py-0.5 rounded border shrink-0",
                 isOutOfStock ? "bg-danger/10 text-danger border-danger/20" :
@@ -311,7 +325,7 @@ export const ProductCard: React.FC<any> = ({
               )}>
                 Stock: {product.stock_current}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
         {isOutOfStock && (
