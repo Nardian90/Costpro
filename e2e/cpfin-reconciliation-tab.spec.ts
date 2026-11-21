@@ -3,7 +3,7 @@
  * Pestaña «Conciliación» + exportaciones del mayor.
  *
  * PRECONDICIONES (entorno E2E, JAMÁS producción — e2e-isolated.yml):
- *   · BD aislada con la capa de replay (193 migraciones) aplicada;
+ *   · BD aislada con la capa de replay (baseline + tramo completo) aplicada;
  *   · sesión real (localStorage de Supabase) + tienda fixture con una venta
  *     completada (genera movimientos ACT_INVENTARIO vía trigger del motor);
  *   · usuario admin/manager con membresía en la tienda.
@@ -22,19 +22,43 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
   let adminId: string;
   let storeId: string;
   let authStorage: string;
+  // P1-5 (hardening 111): ámbito EXACTO del run — nada de comodines por nombre.
+  // La tienda es la del propio run (E2E_PILOT_STORE_A, exportado por
+  // run-env/global-setup); el beforeAll y el afterAll usan el MISMO scope.
+  const PILOT_A = process.env.E2E_PILOT_STORE_A || '';
+  const PILOT_A_NAME = process.env.E2E_PILOT_A_NAME || '';
+  let preCounts: { productos: number; ventas: number; pagos: number };
   const SUPA_REF = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').match(
     /https?:\/\/([a-z0-9]+)\.supabase\.co/,
   )?.[1] as string;
 
   test.beforeAll(async () => {
+    // Fail-closed: sin piloto del run CON NOMBRE del run no se escribe NADA
+    // (aborta antes de crear producto/venta). En modo legacy compartido
+    // (E2E_ISOLATION=0) global-setup exporta el ID del piloto persistente PERO
+    // no E2E_PILOT_A_NAME — sin nombre no puede verificarse la pertenencia al
+    // run actual (hallazgo P2 de revisión 111): se exige modo aislado.
+    if (!PILOT_A || !PILOT_A_NAME) {
+      throw new Error('[cpfin-reconciliation-tab] aborta: requiere el piloto del run aislado (E2E_PILOT_STORE_A + E2E_PILOT_A_NAME) — no se puede determinar la tienda del run actual');
+    }
     const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
     adminToken = admin.token;
     adminId = admin.userId;
-    // Tienda piloto persistente del entorno E2E (crear/eliminar destruiría
-    // datos de otros specs; el run-env garantiza net-zero a nivel de run).
-    const stores = await sb.select('stores', 'select=id,name&name=ilike.*PILOT*');
-    if (!stores.length) throw new Error('Sin tienda piloto disponible (run-env debe crearla)');
-    storeId = stores[0].id;
+    // La tienda del run por ID EXPLÍCITO (nunca name ILIKE '*PILOT*', que
+    // puede seleccionar pilotos persistentes de la BD compartida de E2E).
+    const storeRows = await sb.select('stores', `select=id,name&id=eq.${PILOT_A}&limit=1`);
+    if (!storeRows.length) {
+      throw new Error(`[cpfin-reconciliation-tab] aborta: la tienda del run (${PILOT_A}) no existe`);
+    }
+    const storeName = (storeRows[0] as { id: string; name: string }).name;
+    // Pertenencia al run actual: en modo aislado el nombre del piloto A lleva
+    // el runId (run-env: 'E2E PILOT A CostPro ${runId}').
+    if (PILOT_A_NAME && storeName !== PILOT_A_NAME) {
+      throw new Error(
+        `[cpfin-reconciliation-tab] aborta: la tienda ${storeName} no es el piloto del run (${PILOT_A_NAME})`,
+      );
+    }
+    storeId = PILOT_A;
     await sb.update('profiles', `id=eq.${adminId}`, { active_store_id: storeId });
     // Membresía admin del run en la tienda piloto (has_store_access_as la exige
     // para fin_get_reconciliation — sin ella la ejecución da ERR_UNAUTHORIZED).
@@ -51,6 +75,13 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
       refresh_token: 'mock-refresh',
       user: { id: admin.userId, email: ADMIN_EMAIL },
     });
+
+    // Línea base del run (para verificar en afterAll que TODO lo creado por
+    // este spec vive en la tienda del run y que el cleanup la retira).
+    const p0 = await sb.select('products', `select=id&store_id=eq.${storeId}`);
+    const t0 = await sb.select('transactions', `select=id&store_id=eq.${storeId}`);
+    const pt0 = await sb.select('payment_transactions', `select=id&store_id=eq.${storeId}`);
+    preCounts = { productos: p0.length, ventas: t0.length, pagos: pt0.length };
 
     // Fixture mínima: producto + venta completada con costo → el trigger del
     // motor contabiliza (ING_VENTAS/ACT_EFECTIVO/ACT_INVENTARIO con
@@ -84,6 +115,30 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
         direction: 'in', payment_date: new Date().toISOString(),
       }]);
     }
+  });
+
+  // P1-5: mismo ámbito que el beforeAll — verificación de aislamiento del run.
+  // · Todo documento creado por el fixture pertenece a la tienda del run;
+  // · el teardown del run (hard delete de PILOT A/B del run) retira los
+  //   recursos de esta ejecución — aquí se verifica que nada escapó;
+  // · los pilotos persistentes (compartidos) NO recibieron escrituras.
+  test.afterAll(async () => {
+    if (!PILOT_A || !storeId) return;
+    const p = await sb.select('products', `select=id&store_id=eq.${storeId}`);
+    const t = await sb.select('transactions', `select=id&store_id=eq.${storeId}`);
+    const pt = await sb.select('payment_transactions', `select=id&store_id=eq.${storeId}`);
+    const counts = { productos: p.length, ventas: t.length, pagos: pt.length };
+    // Los recursos del run viven SOLO en la tienda del run (nunca menos que la
+    // línea base: el fixture añade, nunca resta).
+    expect(counts.productos).toBeGreaterThanOrEqual(preCounts.productos);
+    expect(counts.ventas).toBeGreaterThanOrEqual(preCounts.ventas);
+    expect(counts.pagos).toBeGreaterThanOrEqual(preCounts.pagos);
+    // Sanidad: cada venta/pago del alcance verificado es de la tienda del run.
+    const saleRows = (await sb.select('transactions', `select=id,store_id&store_id=eq.${storeId}`)) as Array<{ id: string; store_id: string }>;
+    for (const s of saleRows) expect(s.store_id).toBe(storeId);
+    // Restaurar el active_store del admin al piloto del run (misma pertenencia
+    // de ámbito que el beforeAll; el run-env restaura el suyo en teardown).
+    await sb.update('profiles', `id=eq.${adminId}`, { active_store_id: PILOT_A }).catch(() => {});
   });
 
   test('la pestaña existe, ejecuta bajo demanda y muestra la matriz con estados', async ({ page }) => {
