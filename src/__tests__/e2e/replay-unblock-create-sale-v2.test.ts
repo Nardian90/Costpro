@@ -498,16 +498,27 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261121190000_adn009_sr_postmerge_hardening (contrato canónico
     //   external_transfer en el batch, serialización FOR UPDATE compartida,
     //   gate de gestión en los RPC de borradores, idempotencia real de
-    //   creación y firma patch tri-state)
+    //   creación y firma patch tri-state) = 190
+    // CP-FIN-REC-001 (2026-11-21): +2 — 20261121230000 reconciliación
+    //   operativa-contable y 20261121230100 exportación del mayor por
+    //   categoría = 192 (tras la unión: desplazadas a 193/194)
     // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (2026-11-21): +2 —
     //   20261121200000 (unión maestra en get_products_for_pos/reception +
     //   gate ERR_RECEIPT_NOT_PAYABLE en el motor de pagos) y 20261121200100
     //   (referencia de transferencia por componente en create_sale_v2) —
-    //   intercaladas por orden lexicográfico ANTES de ADN-009 (13:00/13:01 <
-    //   19:00) = 194
-    expect(m.total_incluidos).toBe(194);
+    //   intercaladas por orden lexicográfico (20261121 20:00/20:01 > 19:00
+    //   ADN-009; renombrado canónico desde 20261121130000/130100) = 194
+    // CP-NOMINA-SUPERADMIN-TRANSVERSAL (PR #1681, 2026-11-21): +1 —
+    //   20261121240000_cp_nomina_superadmin_transversal (bypass RLS del
+    //   superadmin de plataforma en trabajadores/comisiones; policies
+    //   recreadas por nombre con is_admin()) = 195
+    // CP-FIN-AUDITORÍA-FORENSE-ENERVIDA-110 (2026-11-21): +1 —
+    //   20261122120000_cp_fin110_enervida_reconciliation_fix (riel-primacía
+    //   VENTA, reglas ORDEN_TRABAJO anticipos/reconocimiento, CP-FIN-REC-001/v2
+    //   y pase 5 de cobertura de órdenes) = 196
+    expect(m.total_incluidos).toBe(196);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(194);
+    expect(incluidos.length).toBe(196);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -562,6 +573,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261121190000_adn009_sr_postmerge_hardening.sql')).toBe(190);
     expect(pos('20261121200000_cp_log_unification_master_visibility.sql')).toBe(191);
     expect(pos('20261121200100_cp_log_unification_pos_transfer_reference.sql')).toBe(192);
+    // CP-NOMINA-SUPERADMIN-TRANSVERSAL (PR #1681, 2026-11-21) + CP-FIN-110
+    //   (2026-11-21): las dos últimas posiciones del tramo, orden lexicográfico.
+    expect(pos('20261121240000_cp_nomina_superadmin_transversal.sql')).toBe(195);
+    expect(pos('20261122120000_cp_fin110_enervida_reconciliation_fix.sql')).toBe(196);
     expect(pos('20261105130000_cp_clasificador_maestro_base.sql')).toBe(123);
     expect(pos('20261105130100_cp_clasificador_maestro_rpcs.sql')).toBe(124);
     expect(pos('20261105140000_cp_clasificador_fase4_snapshots.sql')).toBe(125);

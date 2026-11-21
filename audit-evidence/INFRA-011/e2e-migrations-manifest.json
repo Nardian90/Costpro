@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 609,
-  "total_incluidos": 194,
+  "total_considerados": 611,
+  "total_incluidos": 196,
   "total_excluidos": 415,
-  "digest": "18ed29d60bf8b392fc60700d164e30e41777f1de5ffc8c0c1b7807b43c68156c",
+  "digest": "6da34cc2f47528a8991226f13a898295c08017a132fddc59a5448d7b5fd444a5",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6014,6 +6014,28 @@
       "observaciones": [],
       "posicion": 194,
       "sha256_generado": "945b2a0cb3e141e86c4e3690add3adc5246dccd835ff9fc8eb330e0938c46326"
+    },
+    {
+      "nombre": "20261121240000_cp_nomina_superadmin_transversal.sql",
+      "bytes": 13986,
+      "sha256_original": "32e6b9e55354b59b0217ed33c87e3b039ad7acceb48b13e94ae25d4f2ae23f16",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261121",
+      "observaciones": [],
+      "posicion": 195,
+      "sha256_generado": "32e6b9e55354b59b0217ed33c87e3b039ad7acceb48b13e94ae25d4f2ae23f16"
+    },
+    {
+      "nombre": "20261122120000_cp_fin110_enervida_reconciliation_fix.sql",
+      "bytes": 113704,
+      "sha256_original": "182b7ecec491942adf219f7c0fb9fca551b2786f8fa53fed2b59073df1969e7b",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261122",
+      "observaciones": [],
+      "posicion": 196,
+      "sha256_generado": "182b7ecec491942adf219f7c0fb9fca551b2786f8fa53fed2b59073df1969e7b"
     },
     {
       "nombre": "AUDIT_FIXES.md",
