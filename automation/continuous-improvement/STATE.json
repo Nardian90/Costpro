@@ -15,20 +15,27 @@
     "baseline_sha": "6485e17",
     "baseline_branch": "feat/cp-agent-foundation-001-20261121",
     "baseline_note": "Mediciones BASELINE/ESLINT tomadas sobre la infra CP-AGENT-FOUNDATION-001 (6485e17), en base main@281d1df. last_validated_sha se actualiza al cerrar cada ciclo con el SHA del PR validado.",
-    "last_validated_sha": null
+    "last_validated_sha": "5ef4cc13f7062dd0a95b8ac8581d06ebde420e2d"
   },
   "current_cycle": {
-    "number": 1,
+    "number": 2,
     "status": "queued",
     "mission_id": null,
     "started_at": null,
-    "note": "null cuando no hay ejecución activa. status solo puede ser queued|in_progress aquí."
+    "note": "Ciclo 1 cerrado (U1 de CP-CI-001): informe cycles/cycle-001-CP-CI-001.md. Status queued = sin ejecución activa.",
+    "last_completed": {
+      "number": 1,
+      "mission_id": "CP-CI-001",
+      "unit": "U1",
+      "started_at": "2026-11-21T16:58:00Z",
+      "completed_at": "2026-11-21T17:22:00Z"
+    }
   },
-  "cycles_completed": 0,
+  "cycles_completed": 1,
   "last_run": {
-    "at": null,
-    "outcome": null,
-    "cycle_report": null
+    "at": "2026-11-21T17:22:00Z",
+    "outcome": "APROBADA CON OBSERVACIONES",
+    "cycle_report": "automation/continuous-improvement/cycles/cycle-001-CP-CI-001.md"
   },
   "agent_lock": {
     "locked": false,
@@ -37,7 +44,7 @@
     "doc": "Antes de ejecutar: si locked=true y locked_at <24h sin informe de ciclo correspondiente → detener como blocked. Al iniciar misión: locked=true, locked_by=<id ejecución>, locked_at=ISO. Al cerrar (éxito o bloqueo): locked=false SIEMPRE."
   },
   "missions": [
-    { "id": "CP-CI-001", "title": "Deuda técnica ESLint: migración incremental <button> crudo → <Button> y limpieza de disables muertos", "area": "deuda-tecnica", "priority": 5, "status": "queued", "file": "backlog/CP-CI-001-eslint-technical-debt.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "Baseline: 1595 advertencias; 1571 = regla V2.12.25 (no-restricted-syntax), 24 = disables sin uso. Unidades pequeñas (U1..U6)." },
+    { "id": "CP-CI-001", "title": "Deuda técnica ESLint: migración incremental <button> crudo → <Button> y limpieza de disables muertos", "area": "deuda-tecnica", "priority": 5, "status": "in_progress", "file": "backlog/CP-CI-001-eslint-technical-debt.md", "attempts": 1, "last_run_at": "2026-11-21T17:22:00Z", "pr": { "url": "https://github.com/Nardian90/Costpro/pull/1684", "number": 1684, "note": "Ciclo 1 — unidad U1 (disables muertos): 22 eliminadas en 17 archivos; saldo 1612→1590" }, "certificate": "APROBADA CON OBSERVACIONES (ciclo 1, unidad U1)", "notes": "Baseline: 1595 advertencias; 1571 = regla V2.12.25 (no-restricted-syntax), 24 = disables sin uso. Unidades pequeñas (U1..U6). U1 ejecutada en ciclo 1: 22 disables muertos eliminados (causa raíz: reglas apagadas en eslint.config.mjs — exhaustive-deps L29, no-console L39, no-require-imports L37/62, no-explicit-any L55; no-var-requires inexistente en ts-eslint v8). 5 disables muertos PENDIENTES en PaymentRowsEditor.tsx:152 y ReceivedServicesView.tsx:1090/1111/1263 (PR #1683) y ReconciliationTab.tsx:160 (PR #1682) — excluir hasta resolver conflictos. Siguiente unidad: U2a (ProductionOrdersView.tsx, 58 avisos V2.12.25) — no en el ciclo inmediato por regla §3.4 (evitar dos ciclos consecutivos en la misma área)." },
     { "id": "CP-CI-002", "title": "Calidad de componentes reutilizables (responsabilidades, duplicaciones, estados, a11y)", "area": "componentes", "priority": 5, "status": "queued", "file": "backlog/CP-CI-002-component-quality.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "Candidatos por lista de vigilancia del design system: 2 ViewSwitcher, botones paralelos atomic sin cva, IconButton variante primary." },
     { "id": "CP-CI-003", "title": "Consistencia del design system en vistas (tokens vs hardcodes, jerarquía, light/dark)", "area": "design-system", "priority": 4, "status": "queued", "file": "backlog/CP-CI-003-design-system-consistency.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "Hardcodes conocidos: PageHeader.badgeVariantMap, atomic/ProductCard (border-white/5 decisión consciente — no tocar sin decisión)." },
     { "id": "CP-CI-004", "title": "Accesibilidad: auditoría con herramientas reales y corrección de bloqueantes", "area": "accesibilidad", "priority": 3, "status": "queued", "file": "backlog/CP-CI-004-accessibility.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "axe-core ya instalado; specs e2e/accessibility.spec.ts y fc-accessibility.spec.ts existentes." },
@@ -47,10 +54,10 @@
     { "id": "CP-CI-008", "title": "Fiabilidad funcional: auditoría de flujos y regresiones (preservando reglas financieras)", "area": "fiabilidad", "priority": 2, "status": "queued", "file": "backlog/CP-CI-008-functional-reliability.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "priority=2 corresponde al ÁREA (flujos de negocio), no a un hallazgo crítico activo: al baseline no hay defecto P1/P2 identificado. Sin hallazgo crítico nuevo, se ejecuta según orden del programa (primero next_recommended)." }
   ],
   "next_recommended": {
-    "mission_id": "CP-CI-001",
-    "justification": "Primera misión: reduce deuda estructurada conocida y de paso libera la señal de lint para ciclos futuros (un saldo limpio de la regla V2.12.25 hace visibles otras categorías). Área deuda-tecnica (P5) sin evidencia de críticos abiertos al baseline. Unidad U1 acotada y verificable.",
+    "mission_id": "CP-CI-006",
+    "justification": "Regla PROGRAM.md §3.4: evitar dos ciclos consecutivos en la misma área (ciclo 1 = deuda-tecnica) si hay otras de importancia comparable. CP-CI-006 (área interaccion, P3 > P5) es comparable o superior: StateRenderer cubre 22/57 vistas — primera unidad = cobertura de estados (vacío/error/carga) en vistas de datos, sin tocar reglas financieras. Tras ese ciclo, continuar CP-CI-001 con U2a (ProductionOrdersView) y luego los 5 disables muertos remanentes cuando #1682/#1683 se resuelvan. Nota: U1 excluyó 5 disables por conflicto con PRs abiertos; verificar su estado al iniciar cualquier unidad futura que los toque.",
     "set_at": "2026-11-21",
-    "set_by": "CP-CONTINUOUS-IMPROVEMENT-001"
+    "set_by": "ciclo-001-CP-CI-001"
   },
   "priorities_reference": {
     "P1": "Crítico: seguridad, multi-tenant, integridad financiera, corrupción de datos",
