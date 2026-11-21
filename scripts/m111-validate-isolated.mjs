@@ -364,6 +364,17 @@ async function main() {
   const c45 = await runSql(`SELECT count(*)::int AS n FROM public.fin_entries WHERE store_id='${store}' AND document_number='RECT-111-TEST';`);
   check('P0-4.5 sigue habiendo 1 asiento', Number(c45[0].n) === 1, `n=${c45[0].n}`);
 
+  // 4.5b P2-review: misma firma de importes pero DISTINTA moneda/tasa → NO ya_completa
+  // (el saldo CUP real difiere; la coherencia debe exigir moneda+tasa idénticas)
+  const MOV_MONEDA = JSON.stringify([
+    { categoria: 'ACT_EFECTIVO_CUP', sentido: 'debito', amount: 123.45, currency: 'USD', exchange_rate: 800, description: 'P0-4 test Dr' },
+    { categoria: 'GAS_OTROS_OPER', sentido: 'credito', amount: 123.45, currency: 'USD', exchange_rate: 800, description: 'P0-4 test Cr' },
+  ]).replace(/'/g, "''");
+  await expectError('P0-4.5b moneda/tasa distintas → ERR_RECTIFICACION_PARCIAL (NO falso ya_completa)',
+    call(MOV_MONEDA, false, DOC), 'ERR_RECTIFICACION_PARCIAL');
+  const c45b = await runSql(`SELECT count(*)::int AS n FROM public.fin_entries WHERE store_id='${store}' AND document_number='RECT-111-TEST';`);
+  check('P0-4.5b sin asiento nuevo ni reparación silenciosa', Number(c45b[0].n) === 1, `n=${c45b[0].n}`);
+
   // 4.6 registro PARCIAL (patrón del hallazgo): asiento con 1 movimiento → error explícito
   const partial = await runSql(`
     INSERT INTO public.fin_entries (store_id, document_type, document_number, event, economic_date, description, generation_id)

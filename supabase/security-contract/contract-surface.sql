@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-21T19:31:44.538Z
+-- Captured  : 2026-11-21T20:54:51.889Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 222 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -9755,16 +9755,21 @@ BEGIN
     FROM public.fin_movements m WHERE m.entry_id = v_entry_id;
     v_antes := v_n_mov;
 
-    -- Coherencia EXACTA: multiconjunto de movimientos (categoría|sentido|importe,
+    -- Coherencia EXACTA: multiconjunto de movimientos (categoría|sentido|moneda|tasa|importe,
     -- serializado y ordenado) idéntico al esperado. NOTA: paréntesis explícitos —
     -- en PostgreSQL || enlaza más fuerte que ->>, y la cadena sin paréntesis
     -- se parsea como ((... || x) ->> 'sentido') → error text ->> unknown.
+    -- P2-review 111: la moneda y la tasa ENTRAN en la firma — un reintento con
+    -- mismos importes nominales pero distinta moneda/tasa NO es ya_completa
+    -- (el saldo CUP real difiere; sin esto un par equilibrado conservaría el
+    -- valor CUP equivocado sin reparación).
     SELECT
-      (SELECT string_agg(m.category_code || '|' || m.sense || '|' || round(m.amount, 2)::text, ';' ORDER BY m.category_code, m.sense, round(m.amount, 2))
+      (SELECT string_agg(m.category_code || '|' || m.sense || '|' || m.currency || '|' || round(m.exchange_rate, 6)::text || '|' || round(m.amount, 2)::text, ';'
+               ORDER BY m.category_code, m.sense, m.currency, round(m.exchange_rate, 6), round(m.amount, 2))
          FROM public.fin_movements m WHERE m.entry_id = v_entry_id)
       =
-      (SELECT string_agg((x ->> 'categoria') || '|' || (x ->> 'sentido') || '|' || round((x ->> 'amount')::numeric, 2)::text, ';'
-               ORDER BY x ->> 'categoria', x ->> 'sentido', round((x ->> 'amount')::numeric, 2))
+      (SELECT string_agg((x ->> 'categoria') || '|' || (x ->> 'sentido') || '|' || coalesce(x ->> 'currency', 'CUP') || '|' || round(coalesce((x ->> 'exchange_rate')::numeric, 1), 6)::text || '|' || round((x ->> 'amount')::numeric, 2)::text, ';'
+               ORDER BY x ->> 'categoria', x ->> 'sentido', coalesce(x ->> 'currency', 'CUP'), round(coalesce((x ->> 'exchange_rate')::numeric, 1), 6), round((x ->> 'amount')::numeric, 2))
          FROM jsonb_array_elements(p_movements) AS je(x))
     INTO v_coherente;
 

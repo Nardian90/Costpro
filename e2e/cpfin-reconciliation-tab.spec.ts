@@ -33,10 +33,13 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
   )?.[1] as string;
 
   test.beforeAll(async () => {
-    // Fail-closed: sin piloto del run no se escribe NADA (aborta antes de
-    // crear producto/venta) — evita escribir en pilotos persistentes ajenos.
-    if (!PILOT_A) {
-      throw new Error('[cpfin-reconciliation-tab] aborta: E2E_PILOT_STORE_A no disponible — no se puede determinar el piloto del run');
+    // Fail-closed: sin piloto del run CON NOMBRE del run no se escribe NADA
+    // (aborta antes de crear producto/venta). En modo legacy compartido
+    // (E2E_ISOLATION=0) global-setup exporta el ID del piloto persistente PERO
+    // no E2E_PILOT_A_NAME — sin nombre no puede verificarse la pertenencia al
+    // run actual (hallazgo P2 de revisión 111): se exige modo aislado.
+    if (!PILOT_A || !PILOT_A_NAME) {
+      throw new Error('[cpfin-reconciliation-tab] aborta: requiere el piloto del run aislado (E2E_PILOT_STORE_A + E2E_PILOT_A_NAME) — no se puede determinar la tienda del run actual');
     }
     const admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
     adminToken = admin.token;

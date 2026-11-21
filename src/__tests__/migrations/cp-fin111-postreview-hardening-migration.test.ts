@@ -122,6 +122,10 @@ describe('migración CP-FIN-111 (postreview hardening)', () => {
     // Reparación controlada SOLO con p_repair=true; sin ella, error explícito.
     expect(rpc).toMatch(/IF NOT coalesce\(p_repair, false\) THEN[\s\S]*?ERR_RECTIFICACION_PARCIAL/);
     expect(rpc).toContain('DELETE FROM public.fin_movements WHERE entry_id');
+    // P2-review: moneda y tasa ENTRAN en la firma de coherencia (un reintento
+    // con mismos importes nominales pero distinta moneda/tasa NO es ya_completa).
+    expect(rpc).toContain("m.currency || '|' || round(m.exchange_rate, 6)::text");
+    expect(rpc).toContain("coalesce(x ->> 'currency', 'CUP')");
   });
 
   it('P0-4 — ACL pura del canal de rectificaciones (service_role exclusivo)', () => {

@@ -93,7 +93,7 @@ Ninguna tienda en clases 3 (closed faltantes) / 4 (diferencias CxC por moneda) /
 ## J. Rama, SHA, PR, CI y evidencia
 
 - Rama: `fix/cp-fin-110-postreview-hardening-111-20261122` (desde `origin/main` 58d550d15).
-- Commits por fases: `d50525e6a` (implementación + pruebas) → `69ee775fb` (producción + surface) → expediente/PR.
+- Commits por fases: `d50525e6a` (implementación + pruebas) → `69ee775fb` (producción + surface) → `64c3e6f34` (expediente) → `2e277ba27` (merge #1683 + regeneración) → `0ccd18c0d` (restauración evidencia ajena) → `245fb4209` (allowlist gate SQL en vivo) → commit final P2 (moneda/tasa + spec fail-closed legacy).
 - PR: ver descripción del PR (referencia los 5 ids de comentarios de #1682).
 - Evidencia local: `scripts/out/m111-audit/` (pre-backup, recovery-findings, impact-global, drift-check, prod-pre/post, recon-enervida-post, e2e check/post).
 - Batería: tsc exit 0 · ESLint 0 errores (1.612 warnings pre-existentes) · Vitest 6.400+ PASS (corrida final en el PR) · Build compilado (TS interno OOM por RAM del sandbox [MEDIDO 4GB]; CI con 4096 heap) · SQL Static Gate 0 bloqueos (2 warnings pre-existentes documentados) · E2E aislado smoke 43+20 PASS + net-zero.
@@ -104,6 +104,15 @@ Ninguna tienda en clases 3 (closed faltantes) / 4 (diferencias CxC por moneda) /
 - Diferencia fecha-de-archivo vs fecha-de-aplicación (documentada, sin renombrar objetos desplegados): 110 lleva nombre 22-11-2026 y se aplicó el 2026-11-21 (Etapa 6 de su expediente); 111 lleva nombre 22-11-2026 (versión posterior lexicográfica 130000 > 120000) y se aplicó el 2026-11-21 ~18:29 UTC. El stream de producción se aplica por canal gobernado (Management API); `supabase_migrations.schema_migrations` solo registra las 12 migraciones tempranas (documentado desde ADN-009) — sin impacto en secuencia.
 - Replay del manifiesto regenerado (195 migraciones en el tramo; --check MATCH).
 - RLS/ACL/permisos conservados; superficie re-certificada (222 funciones, sha a27f1763) con guardas CP-INFRA-019 y check-writers OK.
+
+## M. Segunda ronda de revisión Codex (PR #1685) — 2 hallazgos P2 resueltos
+
+| Hallazgo | Resolución | Prueba |
+|---|---|---|
+| P2 (línea 1419): la comparación de coherencia ignora moneda y tasa — un reintento con mismos importes nominales pero distinta moneda/tasa quedaba `ya_completa` con saldo CUP erróneo | La firma de coherencia del RPC incluye moneda y tasa: `categoria|sentido|moneda|tasa|importe` (tasa normalizada a 6 decimales) en ambos multiconjuntos | m111-validate-isolated **54/54**: escenario 4.5b — misma firma de importes con currency USD/tasa 800 → `ERR_RECTIFICACION_PARCIAL` explícito (NO falso ya_completa, sin asiento nuevo ni reparación silenciosa) |
+| P2 (spec línea 53): en modo legacy compartido `E2E_PILOT_A_NAME` no existe → la verificación de nombre se salta y el spec mutaría el piloto persistente compartido | Fail-closed estricto: `beforeAll` exige `E2E_PILOT_STORE_A` **Y** `E2E_PILOT_A_NAME` (modo aislado); sin nombre del run aborta antes de escribir | La spec no se ejecuta en modo legacy; en aislado 3/3 PASS + net-zero |
+
+Segunda aplicación a producción del RPC corregido (idempotente, doble flag): 12/12 marcas — GEN-3 y RECT-110-A intactas. Surface re-certificado: 222 funciones sha 6e1ed585. Nota de tienda VIVA: tras el cierre de CP-FIN-110 la tienda siguió operando (ventas nuevas movieron caja CUP/USD; activos 52.752.813,86 → 53.203.260,86) — la conciliación v3 mantiene **0 diferencias / 0 alertas / 0 pendientes / ecuación equilibrada** con los valores vivos; los 3 checks del verificador m110-recon-final anclados a los valores de cierre 110 (caja CUP/USD y activos) reflejan esa actividad nueva, no defectos de lógica (sus diferencias siguen en 0).
 
 ## L. Derivas pre-existentes EXTERNAS detectadas (no normalizadas)
 
