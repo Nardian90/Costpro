@@ -1067,7 +1067,7 @@ BEGIN
                           ORDER BY tipo) FROM docs_pend WHERE n > 0), '[]'::jsonb),
       'movimientos_sin_respaldo', coalesce((SELECT jsonb_agg(jsonb_build_object('tipo', tipo, 'n', n)
                           ORDER BY tipo) FROM sin_resp), '[]'::jsonb),
-      'ventas_con_fallback_usd', fb.n),
+      'ventas_con_fallback_usd', max(fb.n)),
     'cuentas', coalesce(jsonb_agg(row_to_json(r) ORDER BY r.orden), '[]'::jsonb))
   INTO v_res
   FROM final_rows r, fb;
