@@ -7,21 +7,26 @@
  *     (desde/hasta) y moneda.
  *   · Datos de pago: modalidad (efectivo|tarjeta), cheque nominativo
  *     (número+fecha) cuando procede, reintegro bancario cuando exista.
- *   · Tabla principal por trabajador CON ENCABEZADOS REPETIDOS en cada
- *     página (margin.top + didDrawPage + decoratePageOnce — patrón probado
- *     del Inventario/IPV): expediente, nombres y apellidos, categoría
- *     ocupacional, salario básico (tarifa horaria o diaria), horas o días,
- *     horas extras + importe, complementos, otros haberes (sigla),
- *     obligaciones estatales sociales, total devengado, deducciones, neto
- *     a cobrar y acumulación de vacaciones (días+importe — informativa,
- *     FUERA del devengado, conforme al modelo).
- *   · Totales de documento (foot de la tabla) — calculados por el SERVIDOR
- *     (única fuente de verdad; el PDF solo presenta).
+ *   · Tabla por trabajador CON ENCABEZADOS REPETIDOS en cada página
+ *     (margin.top + didDrawPage + decoratePageOnce — patrón probado del
+ *     Inventario/IPV) y FILAS INDIVISIBLES (rowPageBreak: 'avoid') para no
+ *     cortar nunca una línea de trabajador (ni su espacio de firma).
+ *   · CONFIGURACIÓN DE COLUMNAS (presentación — misión 2026-11-21): el caller
+ *     decide qué columnas aparecen (PayrollPdfOptions.visibleColumns); ocultar
+ *     una columna NO modifica importes, fórmulas ni totales almacenados.
+ *     Bloqueadas siempre: Nombres, Neto a Cobrar y RECIBÍ CONFORME.
+ *   · SELECCIÓN DE TRABAJADORES (PayrollPdfOptions.includedWorkerIds): el PDF
+ *     incluye EXCLUSIVAMENTE los workers indicados; los totales del pie se
+ *     obtienen sumando los valores ya calculados por el SERVIDOR por línea
+ *     (aggregateSubsetTotals — sin fórmulas nuevas) y el documento anota
+ *     «Impresión parcial: N de M» para trazabilidad.
+ *   · RECIBÍ CONFORME por fila: última columna de cada trabajador con espacio
+ *     para firma manuscrita (alto de fila ampliado); la fila de totales NO
+ *     genera firma ficticia. Sustituye al bloque único de recepción al pie
+ *     (decisión del propietario; el bloque Elabora/Revisa/Contabiliza del
+ *     modelo SC-4-06 se conserva).
  *   · Desglose de conceptos con sigla (clase + sigla + descripción +
  *     importe por línea de trabajador).
- *   · Firmas del modelo: Elabora / Revisa y aprueba / Contabiliza. La firma
- *     de RECEPCIÓN solo aparece con pago en EFECTIVO (con pago por tarjetas
- *     magnéticas el modelo NO la incluye — regla textual de la Res. 13/07).
  *   · Pie: numeración «Página X de Y» + branding en todas las hojas.
  *
  * El caller decide: vista previa = doc.output('bloburl') (iframe), descarga
@@ -35,8 +40,30 @@ import type { jsPDF } from 'jspdf';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { pdfWinAnsi, splitToWidthVerified } from '@/components/views/terminal/views/ipv_ventas/ipv-ventas-pdf';
 import type { Payroll, PayrollItem } from '@/lib/payrolls/types';
+import {
+  aggregateSubsetTotals,
+  normalizeColumnConfig,
+  PAYROLL_COLUMNS_DEFAULT,
+  type PayrollColumnId,
+} from '@/lib/payrolls/columns';
 
 const MARGIN = 42;
+
+/** Opciones de PRESENTACIÓN del documento (no afectan datos almacenados). */
+export interface PayrollPdfOptions {
+  /** Columnas lógicas visibles (normalizadas; null/undefined = todas). */
+  visibleColumns?: PayrollColumnId[] | null;
+  /** worker_id a imprimir (null/undefined = todos los del documento). */
+  includedWorkerIds?: string[] | null;
+}
+
+export interface PayrollPdfPayload {
+  payroll: Payroll;
+  /** Nombre de quien firma «Elabora» (created_by) — opcional para el pie. */
+  elaboraNombre?: string;
+  /** Configuración de columnas + selección de trabajadores (opcional). */
+  options?: PayrollPdfOptions;
+}
 
 function money(n: number | null | undefined): string {
   const v = Number(n ?? 0);
@@ -69,11 +96,46 @@ function dateTimeLabel(iso: string): string {
   }
 }
 
-export interface PayrollPdfPayload {
-  payroll: Payroll;
-  /** Nombre de quien firma «Elabora» (created_by) — opcional para el pie. */
-  elaboraNombre?: string;
+// ─────────────────────────────────────────────────────────────────────────────
+// Definición de columna física de la tabla (una columna lógica «tiempo» se
+// despliega en Horas y/o Días según la composición de los trabajadores
+// incluidos — corrige P-1: en nóminas mixtas ambas magnitudes se imprimen y
+// el pie suma cada una en su unidad).
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface PhysCol {
+  key: string;
+  head: string;
+  width: number;
+  align: 'left' | 'right' | 'center';
+  cell: (it: PayrollItem) => string;
+  foot: (t: FootTotals) => string;
+  boldCell?: boolean;
 }
+
+/** Totales que alimentan el pie (servidor para el documento completo). */
+interface FootTotals {
+  total_workers: number;
+  total_regular_hours: number;
+  total_accrued_days: number;
+  total_overtime_hours: number;
+  total_overtime: number;
+  total_complementos: number;
+  total_other_earnings: number;
+  total_social_security: number;
+  total_gross: number;
+  total_deductions: number;
+  total_net: number;
+  total_vacation_days: number;
+  total_vacation_amount: number;
+}
+
+const siglaList = (it: PayrollItem): string => {
+  const cs = it.concepts ?? [];
+  const otros = cs.filter((c) => c.kind === 'otro_haber').map((c) => c.sigla);
+  if (otros.length) return otros.join(', ');
+  return '—';
+};
 
 /**
  * Construye el documento de la nómina (A4 apaisado). Paginado con
@@ -82,7 +144,39 @@ export interface PayrollPdfPayload {
  */
 export async function buildPayrollPdf(payload: PayrollPdfPayload): Promise<jsPDF> {
   const { payroll, elaboraNombre } = payload;
-  const items = payroll.items ?? [];
+  const allItems = payroll.items ?? [];
+
+  // SELECCIÓN DE TRABAJADORES (configuración de impresión — jamás altera el
+  // documento almacenado): filtra las líneas por worker_id incluido.
+  const includedIds = payload.options?.includedWorkerIds;
+  const items = Array.isArray(includedIds)
+    ? allItems.filter((it) => includedIds.includes(it.worker_id))
+    : allItems;
+  if (items.length === 0) {
+    throw new Error('No hay trabajadores incluidos para generar el PDF.');
+  }
+  const isSubset = Array.isArray(includedIds) && items.length < allItems.length;
+
+  // Totales del PIE: documento completo = encabezado del SERVIDOR (fuente de
+  // verdad); subconjunto = suma de los valores servidos por línea.
+  const totals: FootTotals = isSubset
+    ? aggregateSubsetTotals(items)
+    : {
+      total_workers: payroll.total_workers,
+      total_regular_hours: payroll.total_regular_hours,
+      total_accrued_days: payroll.total_accrued_days,
+      total_overtime_hours: payroll.total_overtime_hours,
+      total_overtime: payroll.total_overtime,
+      total_complementos: payroll.total_complementos,
+      total_other_earnings: payroll.total_other_earnings,
+      total_social_security: payroll.total_social_security,
+      total_gross: payroll.total_gross,
+      total_deductions: payroll.total_deductions,
+      total_net: payroll.total_net,
+      total_vacation_days: payroll.total_vacation_days,
+      total_vacation_amount: payroll.total_vacation_amount,
+    };
+
   const doc = await createPDFDocument('l', 'pt', 'a4');
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
@@ -116,7 +210,19 @@ export async function buildPayrollPdf(payload: PayrollPdfPayload): Promise<jsPDF
     return y0 + (compact ? 54 : 68);
   };
 
-  const startY = drawHeader(false);
+  let startY = drawHeader(false);
+
+  // Trazabilidad de la impresión parcial (subconjunto de trabajadores).
+  if (isSubset) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.5);
+    doc.setTextColor(90, 90, 90);
+    doc.text(
+      pdfWinAnsi(`Impresión parcial: ${items.length} de ${allItems.length} trabajador(es) del documento — los totales corresponden a los incluidos.`),
+      MARGIN, startY + 8,
+    );
+    startY += 14;
+  }
 
   // ANTI-SOLAPE: cada página se decora UNA sola vez (patrón IPV).
   const decoratedPages = new Set<number>();
@@ -129,116 +235,243 @@ export async function buildPayrollPdf(payload: PayrollPdfPayload): Promise<jsPDF
   };
 
   // ─────────────────────────────────────────────────────────────────────
-  // Tabla principal por trabajador (columnas del SC-4-06)
+  // Columnas físicas según configuración (REQUERIMIENTO 1) + composición
+  // de tarifas de los trabajadores incluidos (P-1).
   // ─────────────────────────────────────────────────────────────────────
-  const isHourly = items.every((it) => it.rate_type !== 'daily');
-  const timeHead = isHourly ? 'Horas\nRegulares' : 'Días\nDevengados';
-  const rateHead = isHourly ? 'Salario Básico\n(hora)' : 'Salario Básico\n(día)';
+  const visible = normalizeColumnConfig(payload.options?.visibleColumns ?? [...PAYROLL_COLUMNS_DEFAULT]);
+  const has = (c: PayrollColumnId) => visible.includes(c);
+  const hasHourly = items.some((it) => it.rate_type !== 'daily');
+  const hasDaily = items.some((it) => it.rate_type === 'daily');
 
-  const head = [[
-    'Exp. Lab.',
-    'Nombres y Apellidos',
-    'Categoría\nOcupacional',
-    rateHead,
-    timeHead,
-    'H. Extras\n(h)',
-    'Importe\nExtras',
-    'Compl.\nSalario',
-    'Otros Hab.\n(sigla)',
-    'Oblig.\nSocial',
-    'Total\nDevengado',
-    'Deduc-\nciones',
-    'Neto a\nCobrar',
-    'Vacac.\n(días)',
-    'Vacac.\nImporte',
-  ]];
+  const rateHead = hasHourly && hasDaily
+    ? 'Salario Básico\n(hora/día)'
+    : hasDaily ? 'Salario Básico\n(día)' : 'Salario Básico\n(hora)';
 
-  const siglaList = (it: PayrollItem): string => {
-    const cs = it.concepts ?? [];
-    const otros = cs.filter((c) => c.kind === 'otro_haber').map((c) => c.sigla);
-    if (otros.length) return otros.join(', ');
-    return '—';
+  const cols: PhysCol[] = [];
+  if (has('expediente')) cols.push({
+    key: 'expediente', head: 'Exp. Lab.', width: 44, align: 'left',
+    cell: (it) => pdfWinAnsi(it.expediente_laboral || '—'),
+    foot: () => '',
+  });
+  if (has('nombres')) cols.push({
+    key: 'nombres', head: 'Nombres y Apellidos', width: 108, align: 'left',
+    cell: (it) => pdfWinAnsi(it.worker_names),
+    foot: () => '',
+  });
+  if (has('categoria')) cols.push({
+    key: 'categoria', head: 'Categoría\nOcupacional', width: 74, align: 'left',
+    cell: (it) => pdfWinAnsi(it.categoria_ocupacional || '—'),
+    foot: () => '',
+  });
+  if (has('salario_basico')) cols.push({
+    key: 'salario_basico', head: pdfWinAnsi(rateHead), width: 54, align: 'right',
+    cell: (it) => (it.rate_amount != null ? money(it.rate_amount) : '—'),
+    foot: () => '', // no-aditiva: la tarifa NO se suma (regla contable)
+  });
+  if (has('tiempo')) {
+    if (hasHourly) cols.push({
+      key: 'tiempo_h', head: 'Horas\nRegulares', width: 38, align: 'right',
+      cell: (it) => qty(it.regular_hours),
+      foot: (t) => `${qty(t.total_regular_hours)} h`,
+    });
+    if (hasDaily) cols.push({
+      key: 'tiempo_d', head: 'Días\nDevengados', width: 38, align: 'right',
+      cell: (it) => qty(it.accrued_days),
+      foot: (t) => `${qty(t.total_accrued_days)} d`,
+    });
+  }
+  if (has('h_extras')) cols.push({
+    key: 'h_extras', head: 'H. Extras\n(h)', width: 36, align: 'right',
+    cell: (it) => qty(it.overtime_hours),
+    foot: (t) => qty(t.total_overtime_hours),
+  });
+  if (has('importe_extras')) cols.push({
+    key: 'importe_extras', head: 'Importe\nExtras', width: 50, align: 'right',
+    cell: (it) => money(it.overtime_amount),
+    foot: (t) => money(t.total_overtime),
+  });
+  if (has('compl_salario')) cols.push({
+    key: 'compl_salario', head: 'Compl.\nSalario', width: 46, align: 'right',
+    cell: (it) => money(it.total_complementos),
+    foot: (t) => money(t.total_complementos),
+  });
+  if (has('otros_haberes')) cols.push({
+    key: 'otros_haberes', head: 'Otros Hab.\n(sigla)', width: 54, align: 'left',
+    cell: (it) => pdfWinAnsi(siglaList(it)),
+    foot: (t) => money(t.total_other_earnings),
+  });
+  if (has('oblig_social')) cols.push({
+    key: 'oblig_social', head: 'Oblig.\nSocial', width: 46, align: 'right',
+    cell: (it) => money(it.total_social_security),
+    foot: (t) => money(t.total_social_security),
+  });
+  if (has('total_devengado')) cols.push({
+    key: 'total_devengado', head: 'Total\nDevengado', width: 58, align: 'right',
+    cell: (it) => money(it.total_gross),
+    foot: (t) => money(t.total_gross),
+  });
+  if (has('deducciones')) cols.push({
+    key: 'deducciones', head: 'Deduc-\nciones', width: 48, align: 'right',
+    cell: (it) => money(it.total_deductions),
+    foot: (t) => money(t.total_deductions),
+  });
+  if (has('neto')) cols.push({
+    key: 'neto', head: 'Neto a\nCobrar', width: 58, align: 'right',
+    cell: (it) => money(it.total_net), boldCell: true,
+    foot: (t) => money(t.total_net),
+  });
+  if (has('vacac_dias')) cols.push({
+    key: 'vacac_dias', head: 'Vacac.\n(días)', width: 34, align: 'right',
+    cell: (it) => qty(it.vacation_days),
+    foot: (t) => qty(t.total_vacation_days),
+  });
+  if (has('vacac_importe')) cols.push({
+    key: 'vacac_importe', head: 'Vacac.\nImporte', width: 50, align: 'right',
+    cell: (it) => money(it.vacation_amount),
+    foot: (t) => money(t.total_vacation_amount),
+  });
+  // RECIBÍ CONFORME: SIEMPRE la última columna (requisito del propietario).
+  // Celda vacía con alto ampliado: espacio real para firma manuscrita.
+  if (has('recibi_conforme')) cols.push({
+    key: 'recibi_conforme', head: pdfWinAnsi('RECIBÍ\nCONFORME'), width: 92, align: 'left',
+    cell: () => '',
+    foot: () => '', // la fila de totales NO genera firma ficticia
+  });
+  if (cols.length === 0) {
+    throw new Error('Configuración de columnas vacía: active al menos una columna.');
+  }
+
+  // ─ Normalización de anchos (P-3 + REQ4 «ancho según el contenido»):
+  // 1) Las columnas de CIFRAS se miden con el propio motor (getTextWidth,
+  //    pie en negrita incluido) para que importes como «139,300.00» NUNCA
+  //    se envuelvan ni pierdan dígitos.
+  // 2) Las columnas de TEXTO (expediente/nombres/categoría/otros/firma)
+  //    absorben el ajuste: se escalan solo si el total excede el área.
+  // 3) Si SOBRA espacio (columnas ocultas o configuración mínima), el extra
+  //    va primero a RECIBÍ CONFORME (espacio real de firma — REQ3) y luego
+  //    a Nombres y Apellidos.
+  // De las columnas de TEXTO se mide su contenido (identificadores y cifras
+  // nunca se parten); solo las de texto libre (nombres, categoría, siglas y
+  // la propia firma) pueden envolver. Con colSpan y anchos medidos, el pie y
+  // el encabezado se alinean con el cuerpo (verificado con pdftotext -bbox).
+  const TEXT_FREE_COLS = new Set(['nombres', 'categoria', 'otros_haberes', 'recibi_conforme']);
+  const CELL_PAD = 7; // cellPadding 3×2 + holgura de líneas
+  // getTextWidth NO distingue la negrita de las fuentes estándar (métrica
+  // idéntica a la normal): el render real de bold es ~5-12% más ancho — se
+  // aplica factor de seguridad a toda cifra/encabezado en negrita.
+  const BOLD_FACTOR = 1.12;
+  doc.setFontSize(7.4);
+  const measure = (s: string, bold = false): number => {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal');
+    return doc.getTextWidth(pdfWinAnsi(s)) * (bold ? BOLD_FACTOR : 1);
   };
+  const widths = cols.map((c) => {
+    if (TEXT_FREE_COLS.has(c.key)) return c.width;
+    let w = 0;
+    for (const it of items) w = Math.max(w, measure(c.cell(it)));
+    w = Math.max(w, measure(c.foot(totals), true));
+    // Encabezado en negrita: cada línea sin partir palabra.
+    for (const line of c.head.split('\n')) w = Math.max(w, measure(line, true));
+    // Los ENCABEZADOS llevan \n y envuelven por diseño; la cifra manda.
+    return Math.min(Math.max(30, w + CELL_PAD), 110);
+  });
+  const availW = pageW - 2 * MARGIN;
+  const sumNeeded = widths.reduce((s, w) => s + w, 0);
+  if (sumNeeded > availW) {
+    // Recortan primero las columnas de texto (mínimo legible 24 pt); las
+    // cifras conservan su ancho medido mientras sea físicamente posible.
+    const numericSum = widths.reduce((s, w, i) => s + (TEXT_FREE_COLS.has(cols[i].key) ? 0 : w), 0);
+    const textBudget = Math.max(0, availW - numericSum);
+    const textSum = widths.reduce((s, w, i) => s + (TEXT_FREE_COLS.has(cols[i].key) ? w : 0), 0);
+    const shrink = textSum > 0 && textBudget > 0 ? Math.min(1, textBudget / textSum) : 0;
+    let scaled = widths.map((w, i) => (TEXT_FREE_COLS.has(cols[i].key) ? Math.max(24, w * (shrink || 0.6)) : w));
+    const totalScaled = scaled.reduce((s, w) => s + w, 0);
+    if (totalScaled > availW) {
+      const f = availW / totalScaled;
+      scaled = scaled.map((w) => w * f);
+    }
+    widths.splice(0, widths.length, ...scaled);
+  }
+  // Excedente → espacio de firma y nombres (con topes razonables).
+  const surplus = availW - widths.reduce((s, w) => s + w, 0);
+  if (surplus > 0.5) {
+    const idxSig = cols.findIndex((c) => c.key === 'recibi_conforme');
+    const idxNom = cols.findIndex((c) => c.key === 'nombres');
+    let rest = surplus;
+    const give = (idx: number, cap: number): void => {
+      const add = Math.min(cap, rest);
+      widths[idx] += add;
+      rest -= add;
+    };
+    if (idxSig >= 0) give(idxSig, 80);
+    if (idxNom >= 0 && rest > 0.5) give(idxNom, 120);
+    if (rest > 0.5) {
+      const textIdx = cols.map((_c, i) => i).filter((i) => TEXT_FREE_COLS.has(cols[i].key));
+      const tSum = textIdx.reduce((s, i) => s + widths[i], 0) || 1;
+      for (const i of textIdx) widths[i] += Math.max(0, Math.min(240 - widths[i], rest * (widths[i] / tSum)));
+    }
+    // Igualación final: cualquier resto (redondeos/topes) se reparte entre
+    // TODAS las columnas — la tabla ocupa exactamente el área imprimible.
+    const diff = availW - widths.reduce((s, w) => s + w, 0);
+    if (diff > 0.1) {
+      const per = diff / cols.length;
+      for (let i = 0; i < widths.length; i++) widths[i] += per;
+    }
+  }
 
-  const body = items.map((it) => ([
-    { content: pdfWinAnsi(it.expediente_laboral || '—') },
-    { content: pdfWinAnsi(it.worker_names) },
-    { content: pdfWinAnsi(it.categoria_ocupacional || '—') },
-    { content: it.rate_amount != null ? `${money(it.rate_amount)}` : '—' },
-    { content: isHourly ? qty(it.regular_hours) : qty(it.accrued_days) },
-    { content: qty(it.overtime_hours) },
-    { content: money(it.overtime_amount) },
-    { content: money(it.total_complementos) },
-    { content: pdfWinAnsi(siglaList(it)) },
-    { content: money(it.total_social_security) },
-    { content: money(it.total_gross) },
-    { content: money(it.total_deductions) },
-    { content: money(it.total_net), styles: { fontStyle: 'bold' as const } },
-    { content: qty(it.vacation_days) },
-    { content: money(it.vacation_amount) },
-  ]));
+  const body = items.map((it) => cols.map((c) => ({ content: c.cell(it), styles: c.boldCell ? { fontStyle: 'bold' as const } : undefined })));
 
-  const foot = [[
-    {
-      content: pdfWinAnsi(`TOTALES · ${payroll.total_workers} trabajador(es)`),
-      colSpan: 2,
-      styles: { halign: 'left' as const, fontStyle: 'bold' as const },
-    },
-    { content: '' },
-    { content: '' },
-    {
-      content: isHourly
-        ? `${qty(payroll.total_regular_hours)} h`
-        : `${qty(payroll.total_accrued_days)} d`,
-      styles: { fontStyle: 'bold' as const },
-    },
-    { content: qty(payroll.total_overtime_hours), styles: { fontStyle: 'bold' as const } },
-    { content: money(payroll.total_overtime), styles: { fontStyle: 'bold' as const } },
-    { content: money(payroll.total_complementos), styles: { fontStyle: 'bold' as const } },
-    { content: money(payroll.total_other_earnings), styles: { fontStyle: 'bold' as const } },
-    { content: money(payroll.total_social_security), styles: { fontStyle: 'bold' as const } },
-    { content: money(payroll.total_gross), styles: { fontStyle: 'bold' as const } },
-    { content: money(payroll.total_deductions), styles: { fontStyle: 'bold' as const } },
-    { content: money(payroll.total_net), styles: { fontStyle: 'bold' as const } },
-    { content: qty(payroll.total_vacation_days), styles: { fontStyle: 'bold' as const } },
-    { content: money(payroll.total_vacation_amount), styles: { fontStyle: 'bold' as const } },
-  ]];
+  // Pie: TOTALES en la primera columna de identidad disponible (colSpan hasta
+  // Nombres) — IMPORTANTE: con colSpan=2 la celda consumida NO se incluye en
+  // el arreglo (autotable ubica las siguientes en el siguiente hueco de la
+  // cuadrícula; un filler duplicado desplazaría TODO el pie una columna).
+  // Sin firma ficticia al final.
+  const TOTALES_LABEL = pdfWinAnsi(`TOTALES · ${totals.total_workers} trabajador(es)`);
+  const TOTALES_STYLES = { halign: 'left' as const, fontStyle: 'bold' as const };
+  const footRow: Array<Record<string, unknown>> = [];
+  let labelPlaced = false;
+  for (let i = 0; i < cols.length; i++) {
+    const c = cols[i];
+    if (!labelPlaced && c.key === 'expediente' && i + 1 < cols.length && cols[i + 1].key === 'nombres') {
+      footRow.push({ content: TOTALES_LABEL, colSpan: 2, styles: TOTALES_STYLES });
+      i += 1; // la celda de Nombres queda consumida por el colSpan
+      labelPlaced = true;
+      continue;
+    }
+    if (!labelPlaced && (c.key === 'nombres' || c.key === 'expediente')) {
+      footRow.push({ content: TOTALES_LABEL, styles: TOTALES_STYLES });
+      labelPlaced = true;
+      continue;
+    }
+    const v = c.foot(totals);
+    footRow.push(
+      v !== '' && c.key !== 'recibi_conforme'
+        ? { content: v, styles: { fontStyle: 'bold' as const } }
+        : { content: '' },
+    );
+  }
 
   const autoTable = (await import('jspdf-autotable')).default;
 
   autoTable(doc, {
-    head,
+    head: [cols.map((c) => c.head)],
     body,
-    foot,
+    foot: [footRow],
     startY,
     margin: { left: MARGIN, right: MARGIN, top: MARGIN + 54 },
     styles: {
       font: 'helvetica', fontSize: 7.4, cellPadding: 3,
       lineColor: [214, 214, 214], lineWidth: 0.35, textColor: [30, 30, 30],
       overflow: 'linebreak',
+      minCellHeight: has('recibi_conforme') ? 26 : 12, // espacio real de firma
     },
     headStyles: {
       fillColor: [238, 240, 243], textColor: [20, 20, 20],
-      fontStyle: 'bold', halign: 'center', fontSize: 7,
+      fontStyle: 'bold', halign: 'center', fontSize: 7, minCellHeight: 20,
     },
     footStyles: { fillColor: [228, 231, 235], fontStyle: 'bold' },
-    columnStyles: {
-      0: { cellWidth: 44, halign: 'left' },
-      1: { cellWidth: 108, halign: 'left' },
-      2: { cellWidth: 74, halign: 'left' },
-      3: { cellWidth: 54, halign: 'right' },
-      4: { cellWidth: 38, halign: 'right' },
-      5: { cellWidth: 36, halign: 'right' },
-      6: { cellWidth: 50, halign: 'right' },
-      7: { cellWidth: 46, halign: 'right' },
-      8: { cellWidth: 54, halign: 'left' },
-      9: { cellWidth: 46, halign: 'right' },
-      10: { cellWidth: 58, halign: 'right' },
-      11: { cellWidth: 48, halign: 'right' },
-      12: { cellWidth: 58, halign: 'right' },
-      13: { cellWidth: 34, halign: 'right' },
-      14: { cellWidth: 50, halign: 'right' },
-    },
+    columnStyles: Object.fromEntries(cols.map((c, i) => [i, { cellWidth: widths[i], halign: c.align }])),
+    rowPageBreak: 'avoid', // P-4: una fila de trabajador nunca se divide
     didDrawPage: () => {
       if (doc.getNumberOfPages() > 1) decoratePageOnce(true);
     },
@@ -291,9 +524,12 @@ export async function buildPayrollPdf(payload: PayrollPdfPayload): Promise<jsPDF
         0: { cellWidth: 150, halign: 'left' },
         1: { cellWidth: 90, halign: 'left' },
         2: { cellWidth: 46, halign: 'left' },
-        3: { cellWidth: 330, halign: 'left' },
+        // Descripción flexible: ocupa el ancho imprimible restante (evita la
+        // tabla estrecha con margen muerto a la derecha).
+        3: { cellWidth: Math.max(330, availW - (150 + 90 + 46 + 60)), halign: 'left' },
         4: { cellWidth: 60, halign: 'right' },
       },
+      rowPageBreak: 'avoid',
       didDrawPage: () => {
         if (doc.getNumberOfPages() > 1) decoratePageOnce(true);
       },
@@ -332,17 +568,17 @@ export async function buildPayrollPdf(payload: PayrollPdfPayload): Promise<jsPDF
 
   // ─────────────────────────────────────────────────────────────────────
   // Firmas del modelo SC-4-06: elabora / revisa y aprueba / contabiliza.
-  // Firma de RECEPCIÓN solo con pago en EFECTIVO (regla textual: con pago
-  // por tarjetas magnéticas NO aparece firma de recepción).
+  // La RECEPCIÓN del importe es la columna RECIBÍ CONFORME por fila
+  // (requisito del propietario 2026-11-21): cada trabajador firma su propia
+  // línea; ya no se imprime un bloque único de recepción al pie.
   // ─────────────────────────────────────────────────────────────────────
   if (cursor > pageH - 120) {
     doc.addPage();
     cursor = drawHeader(true) + 6;
   }
   const sigY = Math.max(cursor + 10, pageH - 96);
-  const colW = (pageW - 2 * MARGIN) / (payroll.payment_method === 'efectivo' ? 4 : 3);
+  const colW = (pageW - 2 * MARGIN) / 3;
   const labels = ['Elabora', 'Revisa y aprueba', 'Contabiliza'];
-  if (payroll.payment_method === 'efectivo') labels.push('Recibí conforme (Recepción)');
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);

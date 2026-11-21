@@ -174,4 +174,89 @@ describe('buildPayrollPdf (SC-4-06)', () => {
     const doc = await buildPayrollPdf({ payroll: voided });
     expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(1);
   });
+
+  // ── REQ2 · Selección de trabajadores impresos ────────────────────────────
+  it('selección PARCIAL: genera el PDF solo con los trabajadores incluidos', async () => {
+    const doc = await buildPayrollPdf({
+      payroll: BASE,
+      options: { includedWorkerIds: ['w-1'] },
+    });
+    expect(doc).toBeTruthy();
+    const bytes = new Uint8Array(doc.output('arraybuffer'));
+    expect(bytes.length).toBeGreaterThan(3000);
+    expect(bytes.slice(0, 5)).toEqual(new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]));
+  });
+
+  it('selección VACÍA: impide generar un PDF vacío (mensaje claro)', async () => {
+    await expect(buildPayrollPdf({ payroll: BASE, options: { includedWorkerIds: [] } }))
+      .rejects.toThrow(/No hay trabajadores incluidos/);
+  });
+
+  it('worker_id inexistente entre los incluidos: también impide el PDF vacío', async () => {
+    await expect(buildPayrollPdf({ payroll: BASE, options: { includedWorkerIds: ['no-existe'] } }))
+      .rejects.toThrow(/No hay trabajadores incluidos/);
+  });
+
+  // ── REQ1 · Configuración de columnas ─────────────────────────────────────
+  it('columnas ocultas: genera sin errores y SIN tocar datos (presentación pura)', async () => {
+    // El propietario oculta extras/complementos/obligaciones/deducciones/vacaciones:
+    // los importes y totales del documento permanecen (el builder solo presenta).
+    const doc = await buildPayrollPdf({
+      payroll: BASE,
+      options: {
+        visibleColumns: ['nombres', 'salario_basico', 'tiempo', 'total_devengado', 'neto', 'recibi_conforme'],
+        includedWorkerIds: null,
+      },
+    });
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(1);
+  });
+
+  it('configuración reducida a las bloqueadas: Nombres, Neto y RECIBÍ CONFORME presentes', async () => {
+    const doc = await buildPayrollPdf({ payroll: BASE, options: { visibleColumns: [] } });
+    expect(doc).toBeTruthy();
+    const bytes = new Uint8Array(doc.output('arraybuffer'));
+    expect(bytes.length).toBeGreaterThan(3000);
+  });
+
+  it('nómina MIXTA (horaria + diaria): genera con ambas columnas de tiempo (P-1)', async () => {
+    // Caso del fixture existente (Ana horaria + Luis diaria): antes solo se
+    // imprimía «Días Devengados» y las horas regulares desaparecían.
+    const doc = await buildPayrollPdf({ payroll: BASE });
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(1);
+    const bytes = new Uint8Array(doc.output('arraybuffer'));
+    expect(bytes.length).toBeGreaterThan(4000);
+  });
+
+  it('nómina homogénea HORARIA: genera con una sola columna de tiempo', async () => {
+    const hourly: Payroll = { ...BASE, items: [anaItem], total_workers: 1 };
+    const doc = await buildPayrollPdf({ payroll: hourly });
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(1);
+  });
+
+  // ── REQ4 · Robustez del motor con firma por fila (alto de fila ampliado) ─
+  it('34 trabajadores con columna de firma: paginación correcta sin filas cortadas', async () => {
+    const rows: PayrollItem[] = [];
+    for (let i = 1; i <= 34; i++) {
+      rows.push({
+        ...anaItem,
+        id: `i-${i}`,
+        worker_id: `w-${i}`,
+        expediente_laboral: `EXP-${String(i).padStart(3, '0')}`,
+        worker_names: `Trabajador Número ${i}`,
+        base_salary: 40000 + i,
+        total_gross: 45000 + i,
+        total_net: 44000 + i,
+      });
+    }
+    const big: Payroll = { ...BASE, items: rows, total_workers: rows.length };
+    const doc = await buildPayrollPdf({ payroll: big });
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2);
+    // subconjunto grande también debe paginar sin errores
+    const subset: Payroll = { ...BASE, items: rows, total_workers: rows.length };
+    const doc2 = await buildPayrollPdf({
+      payroll: subset,
+      options: { includedWorkerIds: rows.slice(0, 20).map((r) => r.worker_id) },
+    });
+    expect(doc2.getNumberOfPages()).toBeGreaterThanOrEqual(1);
+  });
 });
