@@ -43,6 +43,21 @@ import {
   evaluateWorkerEligibility,
   type SelectableWorker,
 } from './WorkerSearchSelect';
+// CONFIGURACIÓN DE PRESENTACIÓN DEL PDF (misión 2026-11-21): columnas visibles
+// + selección de trabajadores impresos. Preferencia de presentación (localStorage
+// validado) — JAMÁS datos contables: los importes/totales siguen siendo del
+// servidor y ocultar una columna no altera ningún cálculo almacenado.
+import {
+  detectEmptyColumns,
+  factsFromEditorLine,
+  loadColumnConfig,
+  normalizeColumnConfig,
+  saveColumnConfig,
+  PAYROLL_COLUMN_LABELS,
+  PAYROLL_COLUMN_LOCKED,
+  PAYROLL_COLUMNS_DEFAULT,
+  type PayrollColumnId,
+} from '@/lib/payrolls/columns';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilidades de presentación
@@ -383,10 +398,87 @@ function PayrollEditor({
   const buildingRef = useRef(false);
   const [previewNonce, setPreviewNonce] = useState(0);
 
+  // ── REQ2: TRABAJADORES INCLUIDOS EN EL PDF (configuración de impresión).
+  // La selección NO modifica la nómina ni los registros: solo decide qué
+  // líneas se imprimen. Los nuevos trabajadores se incluyen por defecto.
+  const [includedIds, setIncludedIds] = useState<Set<string>>(() => new Set(lines.map((l) => l.worker_id)));
+  useEffect(() => {
+    setIncludedIds((prev) => {
+      let changed = false;
+      const next = new Set(prev);
+      for (const l of lines) {
+        if (!next.has(l.worker_id)) { next.add(l.worker_id); changed = true; }
+      }
+      return changed ? next : prev;
+    });
+  }, [lines]);
+  const toggleWorkerIncluded = (workerId: string) =>
+    setIncludedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(workerId)) next.delete(workerId);
+      else next.add(workerId);
+      return next;
+    });
+  const includeAllWorkers = () => setIncludedIds(new Set(lines.map((l) => l.worker_id)));
+  const excludeAllWorkers = () => setIncludedIds(new Set<string>());
+
+  // Líneas que se IMPRIMEN (intersección incluidos × editor): para la detección
+  // de columnas sin datos y para el PDF. Recalcula al cambiar la selección.
+  const includedLines = useMemo(
+    () => lines.filter((l) => includedIds.has(l.worker_id)),
+    [lines, includedIds],
+  );
+
+  // ── REQ1: CONFIGURACIÓN DE COLUMNAS DEL DOCUMENTO (preferencia de
+  // presentación persistida; el botón «Restablecer» recupera las ocultas).
+  const [visibleColumns, setVisibleColumns] = useState<PayrollColumnId[]>(
+    () => loadColumnConfig(typeof window !== 'undefined' ? window.localStorage : null),
+  );
+  const applyColumns = (next: PayrollColumnId[]) => {
+    const norm = normalizeColumnConfig(next);
+    setVisibleColumns(norm);
+    saveColumnConfig(typeof window !== 'undefined' ? window.localStorage : null, norm);
+  };
+  const toggleColumn = (c: PayrollColumnId) => {
+    if (PAYROLL_COLUMN_LOCKED.includes(c)) return;
+    applyColumns(visibleColumns.includes(c) ? visibleColumns.filter((x) => x !== c) : [...visibleColumns, c]);
+  };
+  // Candidatas SIN datos para los trabajadores incluidos (evaluación numérica
+  // real sobre la confección actual — se recalcula con la selección).
+  const emptyCandidates = useMemo(
+    () => detectEmptyColumns(includedLines.map(factsFromEditorLine)),
+    [includedLines],
+  );
+  const hiddenEmpty = useMemo(
+    () => emptyCandidates.filter((c) => visibleColumns.includes(c)),
+    [emptyCandidates, visibleColumns],
+  );
+  const hideEmptyColumns = () => {
+    if (hiddenEmpty.length === 0) {
+      toast.info('Ninguna columna sin datos entre los trabajadores incluidos');
+      return;
+    }
+    applyColumns(visibleColumns.filter((c) => !hiddenEmpty.includes(c)));
+    toast.success(`Columnas ocultas sin datos: ${hiddenEmpty.length} — los importes y totales permanecen intactos`);
+  };
+  const resetColumns = () => {
+    applyColumns([...PAYROLL_COLUMNS_DEFAULT]);
+    toast.success('Configuración restablecida: todas las columnas visibles');
+  };
+
+  // Opciones que la vista previa y la descarga pasan al MISMO builder.
+  const printOptions = useMemo(
+    () => ({ visibleColumns, includedWorkerIds: includedLines.map((l) => l.worker_id) }),
+    [visibleColumns, includedLines],
+  );
+
   const previewSignature = useMemo(() => {
     if (!savedPayroll) return null;
-    return JSON.stringify([savedPayroll.id, savedPayroll.updated_at, savedPayroll.status, previewNonce]);
-  }, [savedPayroll, previewNonce]);
+    return JSON.stringify([
+      savedPayroll.id, savedPayroll.updated_at, savedPayroll.status, previewNonce,
+      visibleColumns, [...includedIds],
+    ]);
+  }, [savedPayroll, previewNonce, visibleColumns, includedIds]);
 
   useEffect(() => () => {
     if (previewUrlRef.current) { try { URL.revokeObjectURL(String(previewUrlRef.current)); } catch {} }
@@ -394,6 +486,12 @@ function PayrollEditor({
 
   const buildPreview = useCallback(async (force = false) => {
     if (!savedPayroll) return;
+    // REQ2: con la selección vacía NO se genera un PDF vacío (mensaje claro).
+    if (includedLines.length === 0) {
+      setPreviewError('No hay trabajadores incluidos en el PDF: marca al menos uno en «Trabajadores incluidos en el PDF» (pestaña Confección).');
+      setPreviewUrl(null);
+      return;
+    }
     if (buildingRef.current) return;
     if (!force && previewUrlRef.current && previewSigRef.current === previewSignature) return;
     buildingRef.current = true;
@@ -403,7 +501,9 @@ function PayrollEditor({
       // Detalle completo (líneas + conceptos + totales del SERVIDOR)
       const data = await apiFetch(`/api/payrolls/${savedPayroll.id}`);
       const detail: Payroll = data.payroll;
-      const doc = await buildPayrollPdf({ payroll: detail });
+      // El MISMO builder con la MISMA configuración que la descarga: columnas
+      // visibles + trabajadores incluidos (configuración de presentación).
+      const doc = await buildPayrollPdf({ payroll: detail, options: printOptions });
       const url = doc.output('bloburl');
       const old = previewUrlRef.current;
       previewUrlRef.current = String(url);
@@ -416,7 +516,7 @@ function PayrollEditor({
       buildingRef.current = false;
       setPreviewLoading(false);
     }
-  }, [savedPayroll, previewSignature]);
+  }, [savedPayroll, previewSignature, printOptions, includedLines.length]);
 
   useEffect(() => {
     if (tab === 'preview') void buildPreview(false);
@@ -541,9 +641,14 @@ function PayrollEditor({
 
   const handleDownload = async () => {
     if (!savedPayroll) { toast.info('Guarda el borrador primero: la vista previa usa los totales del servidor.'); return; }
+    // REQ2: impedir generar/descargar un PDF sin trabajadores incluidos.
+    if (includedLines.length === 0) {
+      toast.error('No hay trabajadores incluidos en el PDF: marca al menos uno en la pestaña Confección');
+      return;
+    }
     try {
       const data = await apiFetch(`/api/payrolls/${savedPayroll.id}`);
-      const doc = await buildPayrollPdf({ payroll: data.payroll });
+      const doc = await buildPayrollPdf({ payroll: data.payroll, options: printOptions });
       doc.save(`nomina-${savedPayroll.payroll_number}.pdf`);
     } catch (e) {
       toast.error((e as { message?: string }).message || 'No se pudo generar el PDF');
@@ -682,18 +787,67 @@ function PayrollEditor({
               )}
             </section>
 
-            {/* Líneas por trabajador */}
+            {/* REQ2 · Trabajadores incluidos en el PDF (configuración de
+                impresión; los controles NO aparecen en el documento) */}
             {lines.length === 0 ? (
               <p className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
                 Sin líneas todavía. Añade trabajadores para confeccionar la nómina.
               </p>
             ) : (
-              <div className="space-y-3">
+              <section aria-label="Trabajadores incluidos en el PDF" className="rounded-xl border border-border/60 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                    <Users className="w-3 h-3" aria-hidden="true" />
+                    Trabajadores incluidos en el PDF
+                  </h3>
+                  <span className={cn(
+                    'rounded-full border px-2 py-0.5 text-[10px] font-bold',
+                    includedLines.length === 0
+                      ? 'border-destructive/40 bg-destructive/10 text-destructive'
+                      : 'border-border/60 bg-muted/40 text-muted-foreground',
+                  )}>
+                    {includedLines.length} de {lines.length} incluidos
+                  </span>
+                  {includedLines.length === 0 && (
+                    <span className="text-[10px] font-semibold text-destructive" role="alert">
+                      Marca al menos un trabajador: con la selección vacía no se genera el PDF
+                    </span>
+                  )}
+                  <div className="flex-1" />
+                  <button type="button" onClick={includeAllWorkers}
+                    className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[10px] font-semibold hover:bg-muted/40">
+                    <Check className="w-3 h-3" /> Todos
+                  </button>
+                  <button type="button" onClick={excludeAllWorkers}
+                    className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[10px] font-semibold hover:bg-muted/40">
+                    Ninguno
+                  </button>
+                </div>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  La selección es SOLO de impresión: la nómina guardada y sus importes no cambian;
+                  los totales del PDF corresponden a los trabajadores incluidos.
+                </p>
+                <div className="mt-3 space-y-3">
                 {lines.map((l) => (
-                  <article key={l.worker_id} className="rounded-xl border border-border/60 bg-background p-3">
+                  <article key={l.worker_id} className={cn(
+                    'rounded-xl border bg-background p-3',
+                    includedIds.has(l.worker_id) ? 'border-border/60' : 'border-border/30 opacity-60',
+                  )}>
                     <div className="flex flex-wrap items-center gap-2">
+                      <label className="flex shrink-0 cursor-pointer items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={includedIds.has(l.worker_id)}
+                          onChange={() => toggleWorkerIncluded(l.worker_id)}
+                          aria-label={`Incluir a ${l.worker_names} en el PDF`}
+                          className="h-4 w-4 rounded border-border accent-primary"
+                        />
+                      </label>
                       <Users className="w-4 h-4 shrink-0 text-primary" />
                       <h4 className="flex-1 min-w-[140px] text-xs font-bold">{l.worker_names}</h4>
+                      <span className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground">
+                        {includedIds.has(l.worker_id) ? 'En el PDF' : 'Fuera del PDF'}
+                      </span>
                       <span className="rounded-full border border-border/60 bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground">
                         {l.rate_type === 'daily' ? 'Jornal' : 'Horario'} · {money(l.rate_amount)} {l.rate_currency ?? 'CUP'}/{l.rate_type === 'daily' ? 'día' : 'hora'}
                       </span>
@@ -772,8 +926,78 @@ function PayrollEditor({
                     </div>
                   </article>
                 ))}
-              </div>
+                </div>
+              </section>
             )}
+
+            {/* REQ1 · Configuración de columnas del documento (presentación
+                pura: ocultar una columna NO altera importes ni totales) */}
+            <section aria-label="Configuración de columnas del documento" className="rounded-xl border border-border/60 p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                  <FileText className="w-3 h-3" aria-hidden="true" />
+                  Configuración de columnas del documento
+                </h3>
+                <div className="flex-1" />
+                <button type="button" onClick={hideEmptyColumns}
+                  className={cn(
+                    'flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-[10px] font-semibold',
+                    hiddenEmpty.length > 0
+                      ? 'border-primary/40 bg-primary/10 text-primary hover:bg-primary/20'
+                      : 'border-border text-muted-foreground',
+                  )}
+                  title="Detecta columnas sin datos entre los trabajadores incluidos y las oculta (los importes y totales no cambian)">
+                  Ocultar columnas sin datos{hiddenEmpty.length > 0 ? ` (${hiddenEmpty.length})` : ''}
+                </button>
+                <button type="button" onClick={resetColumns}
+                  className="flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[10px] font-semibold hover:bg-muted/40"
+                  title="Recupera todas las columnas ocultas y vuelve a la configuración original">
+                  <RefreshCw className="w-3 h-3" /> Restablecer
+                </button>
+              </div>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Elige qué columnas aparecerán en el PDF ({visibleColumns.length} de {PAYROLL_COLUMNS_DEFAULT.length} activas).
+                Ocultar es solo presentación: los importes, los totales y los cálculos guardados permanecen intactos.
+                «RECIBÍ CONFORME» es siempre la última columna con espacio de firma por trabajador.
+              </p>
+              <fieldset className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 sm:grid-cols-3 lg:grid-cols-4">
+                <legend className="sr-only">Columnas visibles en el PDF</legend>
+                {PAYROLL_COLUMNS_DEFAULT.map((c) => {
+                  const locked = PAYROLL_COLUMN_LOCKED.includes(c);
+                  const active = visibleColumns.includes(c);
+                  const empty = emptyCandidates.includes(c);
+                  return (
+                    <label key={c} className={cn(
+                      'flex items-center gap-2 rounded-lg border px-2 py-1.5 text-[11px]',
+                      active ? 'border-border/60 bg-background' : 'border-dashed border-border/40 bg-muted/20 text-muted-foreground',
+                      locked && 'opacity-80',
+                    )}>
+                      <input
+                        type="checkbox"
+                        checked={active}
+                        disabled={locked}
+                        onChange={() => toggleColumn(c)}
+                        aria-label={`Columna ${PAYROLL_COLUMN_LABELS[c]}${locked ? ' (siempre visible)' : ''}`}
+                        className="h-3.5 w-3.5 rounded border-border accent-primary"
+                      />
+                      <span className="truncate" title={locked ? 'Siempre visible (identidad, resultado o firma)' : PAYROLL_COLUMN_LABELS[c]}>
+                        {PAYROLL_COLUMN_LABELS[c]}
+                        {locked && ' · siempre'}
+                      </span>
+                      {empty && (
+                        <span className="ml-auto shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-bold text-amber-700 dark:text-amber-400" title="Sin datos entre los trabajadores incluidos">
+                          sin datos
+                        </span>
+                      )}
+                    </label>
+                  );
+                })}
+              </fieldset>
+              <p className="mt-2 text-[10px] text-muted-foreground">
+                <span className="font-bold">Resumen del documento:</span>{' '}
+                {visibleColumns.map((c) => PAYROLL_COLUMN_LABELS[c]).join(' → ')}
+              </p>
+            </section>
           </div>
         )}
 
@@ -807,6 +1031,7 @@ function PayrollEditor({
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[10px] text-muted-foreground">
                     Documento SC-4-06 · {savedPayroll.payroll_number} · {PAYROLL_STATUS_LABELS[savedPayroll.status]}
+                    {' · '}{includedLines.length} de {lines.length} trabajadores · {visibleColumns.length}/{PAYROLL_COLUMNS_DEFAULT.length} columnas
                     {previewStale && <span className="text-amber-600"> · desactualizada</span>}
                   </p>
                   <button type="button" onClick={handleDownload}
