@@ -1,0 +1,217 @@
+{
+  "$schema": "Esquema estable para comparar ejecuciones futuras. Claves: meta / summary / warnings.byRule / warnings.byFile / errors.byRule / errors.byFile / topFiles / samples. Una nueva medición debe escribirse como ESLINT_SNAPSHOT.json con el mismo esquema y compararse contra este archivo.",
+  "meta": {
+    "generatedAt": "2026-11-21T03:31:51+00:00",
+    "mission": "CP-CONTINUOUS-IMPROVEMENT-001 (fase de construcción)",
+    "repository": "Nardian90/Costpro",
+    "branch": "feat/cp-agent-foundation-001-20261121",
+    "sha": "6485e1711dff7e3876b4537c6d0717f6b9467e2e",
+    "command": "bunx eslint . -f json -o eslint-raw.json (equivale a `bun run lint` = `eslint .` con salida JSON)",
+    "eslintVersion": "9.39.5",
+    "filesLinted": 1902,
+    "note": "Solo-lectura: esta medición NO modificó código. No se usaron --fix ni disables."
+  },
+  "summary": {
+    "totalErrors": 0,
+    "totalWarnings": 1595,
+    "totalProblems": 1595,
+    "filesWithProblems": 324,
+    "concentration": {
+      "topFile": "src/components/views/terminal/views/production_orders/ProductionOrdersView.tsx",
+      "topFileProblems": 58,
+      "topFileSharePct": 3.6,
+      "top5SharePct": 13.2,
+      "filesConcentrating80pct": 136
+    }
+  },
+  "warnings": {
+    "byRule": [
+      {
+        "target": "no-restricted-syntax",
+        "count": 1571
+      },
+      {
+        "target": "(sin regla — parse error)",
+        "count": 24
+      }
+    ],
+    "byFile": [
+      {
+        "target": "src/components/views/terminal/views/production_orders/ProductionOrdersView.tsx",
+        "count": 58
+      },
+      {
+        "target": "src/components/views/terminal/views/workers/WorkersView.tsx",
+        "count": 50
+      },
+      {
+        "target": "src/components/views/terminal/views/cash/CashReportView.tsx",
+        "count": 46
+      },
+      {
+        "target": "src/components/ui/ChatBot.tsx",
+        "count": 29
+      },
+      {
+        "target": "src/app/tienda/[slug]/StorefrontPage.tsx",
+        "count": 28
+      },
+      {
+        "target": "src/components/views/terminal/views/dashboard/StoreDashboardView.tsx",
+        "count": 28
+      },
+      {
+        "target": "src/components/ui/FloatingCalculator.tsx",
+        "count": 27
+      },
+      {
+        "target": "src/components/views/terminal/views/pos/SalesCatalogView.tsx",
+        "count": 26
+      },
+      {
+        "target": "src/components/views/terminal/views/received_services/ReceivedServicesView.tsx",
+        "count": 24
+      },
+      {
+        "target": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+        "count": 23
+      },
+      {
+        "target": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
+        "count": 23
+      },
+      {
+        "target": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+        "count": 22
+      },
+      {
+        "target": "src/components/views/terminal/views/classifier/ClientesProveedoresView.tsx",
+        "count": 21
+      },
+      {
+        "target": "src/components/views/terminal/views/pos/POSCartCheckoutPanel.tsx",
+        "count": 21
+      },
+      {
+        "target": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+        "count": 21
+      },
+      {
+        "target": "src/components/views/terminal/views/catalog/EditProductModal.tsx",
+        "count": 20
+      },
+      {
+        "target": "src/components/views/terminal/views/workers/nominas/NominasTab.tsx",
+        "count": 19
+      },
+      {
+        "target": "src/components/views/terminal/Sidebar.tsx",
+        "count": 18
+      },
+      {
+        "target": "src/components/views/terminal/views/exchange_intelligence/ExchangeIntelligenceView.tsx",
+        "count": 18
+      },
+      {
+        "target": "src/components/views/terminal/views/pos/POSExpressMode.tsx",
+        "count": 17
+      }
+    ],
+    "totalByRule": 1595,
+    "distinctRules": 2
+  },
+  "errors": {
+    "byRule": [],
+    "byFile": [],
+    "totalByRule": 0,
+    "distinctRules": 0
+  },
+  "topFiles": [
+    {
+      "target": "src/components/views/terminal/views/production_orders/ProductionOrdersView.tsx",
+      "count": 58
+    },
+    {
+      "target": "src/components/views/terminal/views/workers/WorkersView.tsx",
+      "count": 50
+    },
+    {
+      "target": "src/components/views/terminal/views/cash/CashReportView.tsx",
+      "count": 46
+    },
+    {
+      "target": "src/components/ui/ChatBot.tsx",
+      "count": 29
+    },
+    {
+      "target": "src/app/tienda/[slug]/StorefrontPage.tsx",
+      "count": 28
+    },
+    {
+      "target": "src/components/views/terminal/views/dashboard/StoreDashboardView.tsx",
+      "count": 28
+    },
+    {
+      "target": "src/components/ui/FloatingCalculator.tsx",
+      "count": 27
+    },
+    {
+      "target": "src/components/views/terminal/views/pos/SalesCatalogView.tsx",
+      "count": 26
+    },
+    {
+      "target": "src/components/views/terminal/views/received_services/ReceivedServicesView.tsx",
+      "count": 24
+    },
+    {
+      "target": "src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx",
+      "count": 23
+    },
+    {
+      "target": "src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx",
+      "count": 23
+    },
+    {
+      "target": "src/components/views/terminal/views/inventory/InventoryView.tsx",
+      "count": 22
+    },
+    {
+      "target": "src/components/views/terminal/views/classifier/ClientesProveedoresView.tsx",
+      "count": 21
+    },
+    {
+      "target": "src/components/views/terminal/views/pos/POSCartCheckoutPanel.tsx",
+      "count": 21
+    },
+    {
+      "target": "src/components/views/terminal/views/sales/SalesHistoryView.tsx",
+      "count": 21
+    }
+  ],
+  "samples": {
+    "no-restricted-syntax": [
+      {
+        "file": "src/__tests__/components/adn008-create-service-modal.test.tsx",
+        "line": 89,
+        "message": "V2.12.25: Considera usar <Button> de @/components/ui/button en vez de <button> crudo. Refactor incremental recomendado."
+      },
+      {
+        "file": "src/__tests__/components/adn008-create-service-modal.test.tsx",
+        "line": 92,
+        "message": "V2.12.25: Considera usar <Button> de @/components/ui/button en vez de <button> crudo. Refactor incremental recomendado."
+      }
+    ],
+    "(sin regla — parse error)": [
+      {
+        "file": "src/__tests__/components/sales-dashboard-tab.test.tsx",
+        "line": 315,
+        "message": "Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-explicit-any')."
+      },
+      {
+        "file": "src/__tests__/integration/null-trap-sql-scenarios.test.ts",
+        "line": 348,
+        "message": "Unused eslint-disable directive (no problems were reported from 'no-console')."
+      }
+    ]
+  }
+}
