@@ -21,7 +21,13 @@
 --      único uniq_payment_txn_idempotency. Las claves son internas de cada
 --      venta nueva (v_tx_id fresco): cero dependencias del formato anterior
 --      (verificado: sin referencias en src/ ni e2e/).
---   3. El frontend deja de AGREGAR filas de transferencia con referencia:
+--   3. La regla fail-closed de componentes DUPLICADOS (Fase B 2026-10-24)
+--      incorpora la referencia al GROUP BY: dos transferencias del mismo
+--      medio+moneda con referencias DISTINTAS son dos pagos bancarios
+--      legítimos; el duplicado real (misma referencia o sin referencia)
+--      sigue rechazado — el bug de agregación que la regla cerró permanece
+--      cerrado.
+--   4. El frontend deja de AGREGAR filas de transferencia con referencia:
 --      cada pago con SU importe y SU referencia → UNA fila de
 --      payment_transactions por pago (trazabilidad banco a banco).
 --
@@ -693,13 +699,19 @@ BEGIN
     -- PK) → filas duplicadas en la fuente autoritativa del Reporte Entrega.
     -- Fail-closed coherente con la regla de la misión (Fase B: «Rechaza
     -- componentes duplicados») y con la agregación previa de pools (§13.7).
+    -- CP-LOG-UNIFICATION-001 (§5.1): la referencia entra al GROUP BY — dos
+    -- transferencias del mismo medio y moneda con referencias DISTINTAS son
+    -- DOS pagos bancarios legítimos (cada una con SU número de operación y
+    -- SU fila de payment_transactions). El duplicado real (mismo método+
+    -- moneda con la MISMA o sin referencia) sigue rechazado: es el bug de
+    -- agregación que esta regla cerró (Fase B 2026-10-24).
     IF EXISTS (
       SELECT 1
       FROM jsonb_array_elements(p_payment_components) c
-      GROUP BY lower(btrim(c->>'method')), upper(btrim(c->>'currency'))
+      GROUP BY lower(btrim(c->>'method')), upper(btrim(c->>'currency')), NULLIF(btrim(COALESCE(c->>'reference', '')), '')
       HAVING count(*) > 1
     ) THEN
-      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componentes duplicados — agrupa los importes del mismo método y moneda en un solo componente [{method, currency, amount}]';
+      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componentes duplicados — agrupa los importes del mismo método y moneda (y misma referencia) en un solo componente [{method, currency, amount, reference?}]';
     END IF;
 
     -- Tasa USD de la operación (jerarquía §6.1 — misma fuente que v_server_rate)
@@ -1251,4 +1263,4 @@ BEGIN
   );
 END $function$;
 
-COMMENT ON FUNCTION public.create_sale_v2 IS 'Camino único de venta POS. §5.1 CP-LOG-UNIFICATION: payment_components acepta reference por componente (número de transferencia) y se persiste en payment_transactions.reference; clave de componente con índice.';
+COMMENT ON FUNCTION public.create_sale_v2 IS 'Camino único de venta POS. §5.1 CP-LOG-UNIFICATION: payment_components acepta reference por componente (número de transferencia) y se persiste en payment_transactions.reference; clave de componente con índice; duplicados agrupados por (método, moneda, referencia).';

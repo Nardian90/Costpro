@@ -50,6 +50,7 @@ const CHECKS = {
   'unión maestra en get_products_for_reception': `SELECT count(*)::int n FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace WHERE ns.nspname='public' AND p.proname='get_products_for_reception' AND position('is_catalog_store_connected' in p.prosrc) > 0`,
   'unión maestra en get_products_for_pos': `SELECT count(*)::int n FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace WHERE ns.nspname='public' AND p.proname='get_products_for_pos' AND position('is_catalog_store_connected' in p.prosrc) > 0`,
   'referencia por componente en create_sale_v2': `SELECT count(*)::int n FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace WHERE ns.nspname='public' AND p.proname='create_sale_v2' AND position('v_comp->>''reference''' in p.prosrc) > 0`,
+  'duplicados agrupados por (método, moneda, referencia)': `SELECT count(*)::int n FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace WHERE ns.nspname='public' AND p.proname='create_sale_v2' AND position('NULLIF(btrim(COALESCE(c->>''reference'', '''')), '''')' in p.prosrc) > 0`,
 };
 
 const onlyCheck = process.argv.includes('--check');
@@ -70,9 +71,10 @@ const marks = await runSql(`SELECT
   (SELECT count(*) FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace WHERE ns.nspname='public' AND p.proname='register_supplier_payment' AND position('ERR_RECEIPT_NOT_PAYABLE' in p.prosrc) > 0)::int AS gate_ok,
   (SELECT count(*) FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace WHERE ns.nspname='public' AND p.proname='get_products_for_reception' AND position('is_catalog_store_connected' in p.prosrc) > 0)::int AS reception_ok,
   (SELECT count(*) FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace WHERE ns.nspname='public' AND p.proname='get_products_for_pos' AND position('is_catalog_store_connected' in p.prosrc) > 0)::int AS pos_ok,
-  (SELECT count(*) FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace WHERE ns.nspname='public' AND p.proname='create_sale_v2' AND position('v_comp_idx' in p.prosrc) > 0)::int AS ref_ok`);
+  (SELECT count(*) FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace WHERE ns.nspname='public' AND p.proname='create_sale_v2' AND position('v_comp_idx' in p.prosrc) > 0)::int AS ref_ok,
+  (SELECT count(*) FROM pg_proc p JOIN pg_namespace ns ON ns.oid=p.pronamespace WHERE ns.nspname='public' AND p.proname='create_sale_v2' AND position('NULLIF(btrim(COALESCE(c->>''reference'', '''')), '''')' in p.prosrc) > 0)::int AS dupref_ok`);
 const m = marks[0] || {};
-const alreadyApplied = m.gate_ok === 1 && m.reception_ok === 1 && m.pos_ok === 1 && m.ref_ok === 1;
+const alreadyApplied = m.gate_ok === 1 && m.reception_ok === 1 && m.pos_ok === 1 && m.ref_ok === 1 && m.dupref_ok === 1;
 
 if (onlyCheck || alreadyApplied) {
   for (const [label, q] of Object.entries(CHECKS)) {

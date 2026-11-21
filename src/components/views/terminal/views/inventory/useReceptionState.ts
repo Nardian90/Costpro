@@ -749,6 +749,10 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           sku: selected.sku || '',
           barcode: selected.barcode || '',
           unit_of_measure: selected.unit_of_measure || '',
+          // El clasificador exige cantidad >= 1 (ERR_INVALID_QUANTITY): la
+          // activación es de la IDENTIDAD; la cantidad real la registra la
+          // recepción con su costo real.
+          quantity: 1,
           ...(unitCost > 0 ? { unit_cost: unitCost } : {}),
           ...(salePrice && salePrice > 0 ? { sale_price: salePrice } : {}),
         }],

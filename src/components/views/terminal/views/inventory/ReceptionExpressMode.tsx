@@ -170,6 +170,10 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
           sku: product.sku || '',
           barcode: product.barcode || '',
           unit_of_measure: product.unit_of_measure || '',
+          // El clasificador exige cantidad >= 1 (ERR_INVALID_QUANTITY): la
+          // activación es de la IDENTIDAD; la cantidad real la registra la
+          // recepción con su costo real.
+          quantity: 1,
         }],
         p_confirm_reactivation: [],
       });
