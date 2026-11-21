@@ -158,7 +158,7 @@ export function ReverseDocumentModal({
       setRecoveryTouched(false);
       reverseMutation.reset();
     }
-  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

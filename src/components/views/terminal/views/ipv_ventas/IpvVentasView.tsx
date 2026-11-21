@@ -282,7 +282,6 @@ export default function IpvVentasView() {
   // si está vigente no se regenera). Se define tras handlePreview.
   useEffect(() => {
     if (resultTab === 'pdf' && applied) void handlePreview();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resultTab, applied]);
 
   const handleDownloadPdf = useCallback(async () => {

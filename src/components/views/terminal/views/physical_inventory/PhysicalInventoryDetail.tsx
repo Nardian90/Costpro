@@ -202,7 +202,6 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
     if (conf) {
       setConfirmAction({ action, ...conf });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading || !pi) {

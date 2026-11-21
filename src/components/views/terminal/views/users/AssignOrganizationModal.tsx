@@ -40,7 +40,6 @@ export function AssignOrganizationModal({ user, isSuperAdmin, onOpenChange }: As
       setPendingRemovals(null);
       assignMutation.reset();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   if (!user) return null;

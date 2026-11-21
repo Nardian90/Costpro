@@ -172,7 +172,6 @@ export function ValeSalidaPanel({
         setItemProductionOrderLine(item.product_id, item.variant_id, null);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productionOrderId, poItems]);
 
   // Preview de costo (read-only) — suma item.cost * qty
