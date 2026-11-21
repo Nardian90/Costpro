@@ -1,0 +1,13 @@
+{
+  "respuesta": [],
+  "log": [
+    "[sha] 20261121130000_cp_log_unification_master_visibility.sql: blob==working-tree OK · sha256=45cd5d63490c743019553b1863852b8e773f04acd79c7686d9638bac6ed8ba95",
+    "[sha] 20261121130100_cp_log_unification_pos_transfer_reference.sql: blob==working-tree OK · sha256=a60ab0a036f95a65c536f07410294e4eb6356de6607ac27f7678145fb7dda444",
+    "[libro] última fila: 20261120220000 20261120220000_cp_fin004_normalizer_headers_sin_cobros.sql (applied)",
+    "[pre] 20261121130000: no registrada en schema_migrations ni ledger OK",
+    "[pre] 20261121130100: no registrada en schema_migrations ni ledger OK",
+    "[pre] batch ADN-009: OK · create_sale_v2 33p: OK",
+    "[pre] marcas actuales: {\"unión maestra en get_products_for_reception\":0,\"unión maestra en get_products_for_pos\":0,\"gate receipts (ERR_RECEIPT_NOT_PAYABLE)\":0,\"referencia por componente en create_sale_v2\":0,\"duplicados por (método, moneda, referencia)\":0}",
+    "[apply] 20261121130000 (38667 chars)…"
+  ]
+}
