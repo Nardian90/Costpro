@@ -47,8 +47,8 @@ Unificación funcional y visual de **Recepciones**, **Servicios Recibidos** y **
 
 ### 4.1 Migraciones (aplicadas a BD aislada CostproE2E y a producción — ver §7)
 
-- **20261121130000** — unión maestra: `get_products_for_reception` y `get_products_for_pos` devuelven filas locales ∪ maestros activos del tenant sin fila local (`source='master'`, operativos en cero, stock 0, sin datos comerciales — el maestro solo porta identidad). `register_supplier_payment(_batch)`: estado de la receipt en el lock `FOR UPDATE` + gate `ERR_RECEIPT_NOT_PAYABLE` (voided/reversed no admiten pagos nuevos). Semántica ADN-009 conservada íntegra.
-- **20261121130100** — `create_sale_v2`: `payment_components` acepta `reference` por componente (número de transferencia) y la persiste en `payment_transactions.reference` por PAGO; regla de duplicados agrupa por **(método, moneda, referencia)** — dos transferencias del mismo medio/moneda con referencias distintas son dos pagos legítimos; el duplicado real sigue rechazado.
+- **20261121200000** (renombrada desde 20261121130000; ver nota de orden más abajo) — unión maestra: `get_products_for_reception` y `get_products_for_pos` devuelven filas locales ∪ maestros activos del tenant sin fila local (`source='master'`, operativos en cero, stock 0, sin datos comerciales — el maestro solo porta identidad). `register_supplier_payment(_batch)`: estado de la receipt en el lock `FOR UPDATE` + gate `ERR_RECEIPT_NOT_PAYABLE` (voided/reversed no admiten pagos nuevos). Semántica ADN-009 conservada íntegra.
+- **20261121200100** (renombrada desde 20261121130100) — `create_sale_v2`: `payment_components` acepta `reference` por componente (número de transferencia) y la persiste en `payment_transactions.reference` por PAGO; regla de duplicados agrupa por **(método, moneda, referencia)** — dos transferencias del mismo medio/moneda con referencias distintas son dos pagos legítimos; el duplicado real sigue rechazado.
 
 ### 4.2 Recepciones
 
@@ -80,10 +80,16 @@ Unificación funcional y visual de **Recepciones**, **Servicios Recibidos** y **
 - **Verificación UI read-only (navegador real, producción):** `scripts/verificacion-ui-cp-log-unif-001.mjs` — **9/9 OK** + 4 capturas (`download/cp-log-unif-001/evidencia-ui/`).
 - **Gates de CI:** TypeCheck/Lint/Unit/Build/E2E Aislado corren en el PR; el build local compila (✓ Compiled successfully ×3) y muere en el hook post-compilación por memoria del sandbox (4 GB) — limitación de entorno, no de código (ver §8).
 
+### 4.5 Orden de replay (lección del CI Capa C, PR #1683)
+
+La primera versión de las migraciones (13:00/13:01) quedaba ANTES de ADN-009 (20261121190000) en el orden lexicográfico: un replay fresco terminaba con el cuerpo de ADN-009 de `register_supplier_payment` SIN el gate `ERR_RECEIPT_NOT_PAYABLE`, divergiendo del LIVE. Renombradas a **20261121200000/20261121200100** para ser la ÚLTIMA definición de las funciones que reemiten (contenido idéntico). Re-aplicadas en producción bajo sus nombres canónicos (ledger con ambos registros históricos).
+
+**Hallazgo heredado (no de esta misión):** `fin_generation_build/5` presenta divergencia producción↔replay — aplicada a producción con SHA `e1469184…` (2026-11-19) y el archivo editado después en main (múltiples commits CP-FIN-003). El surface re-certificado de esta misión restaura el bloque de main para no bloquear el PR; la divergencia queda documentada para decisión del propietario (re-aplicar el archivo actual a producción o congelar el archivo).
+
 ## 6. Aplicación en producción (una sola vez)
 
 - `scripts/cp-log-unif-001-apply-prod.mjs` (runbook m055 / m-log-reception-apply): guard CP-INFRA-019 + doble flag, SHA-256 working-tree == blob del commit aprobado, pre-chequeo (libro, schema_migrations, prerrequisitos ADN-009), un único POST por migración, NOTIFY pgrst, registro en `production_migration_ledger`.
-- **2026-11-21:** 20261121130000 + 20261121130100 **aplicadas y verificadas** — post-marcas 5/5 = 1 (`docs/audits/CP-LOG-UNIFICATION-001/aplicacion-prod/`).
+- **2026-11-21:** 20261121200000 + 20261121200100 (y su primera aplicación como 20261121130000/20261121130100) **aplicadas y verificadas** — post-marcas 5/5 = 1 (`docs/audits/CP-LOG-UNIFICATION-001/aplicacion-prod/`).
 - **Verificación LIVE del fix (read-only, post-aplicación):** `scripts/test-rpc-as-user.mjs` — FERROCARRIL y SHADDAI pasan de **0 → 259 filas** en `get_products_for_pos` y `get_products_for_reception` (antes veían 0). ENERVIDA/PUERTO PADRE sin regresión (259/259). Los maestros sin fila local son vista del catálogo organizacional, NO vendibles en POS (guard + badge; el filtro por defecto de POS los oculta por diseño).
 - Compatibilidad retroactiva: firmas intactas, columnas aditivas, `reference` opcional — los payloads históricos siguen válidos; el gate `ERR_RECEIPT_NOT_PAYABLE` solo cierra pagos sobre receipts voided/reversed (fail-closed protectorio).
 

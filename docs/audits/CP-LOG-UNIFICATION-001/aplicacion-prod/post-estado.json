@@ -7,19 +7,20 @@
     "duplicados por (método, moneda, referencia)": 1
   },
   "log": [
-    "[sha] 20261121130000_cp_log_unification_master_visibility.sql: blob==working-tree OK · sha256=45cd5d63490c743019553b1863852b8e773f04acd79c7686d9638bac6ed8ba95",
-    "[sha] 20261121130100_cp_log_unification_pos_transfer_reference.sql: blob==working-tree OK · sha256=a60ab0a036f95a65c536f07410294e4eb6356de6607ac27f7678145fb7dda444",
-    "[libro] última fila: 20261120220000 20261120220000_cp_fin004_normalizer_headers_sin_cobros.sql (applied)",
-    "[pre] 20261121130000: no registrada en schema_migrations ni ledger OK",
-    "[pre] 20261121130100: no registrada en schema_migrations ni ledger OK",
+    "[sha] 20261121200000_cp_log_unification_master_visibility.sql: blob==working-tree OK · sha256=45cd5d63490c743019553b1863852b8e773f04acd79c7686d9638bac6ed8ba95",
+    "[sha] 20261121200100_cp_log_unification_pos_transfer_reference.sql: blob==working-tree OK · sha256=a60ab0a036f95a65c536f07410294e4eb6356de6607ac27f7678145fb7dda444",
+    "[libro] última fila: 20261121130100 20261121130100_cp_log_unification_pos_transfer_reference.sql (applied)",
+    "[libro] AVISO: la última fila no es 20261120220000 — revisar antes de continuar.",
+    "[pre] 20261121200000: no registrada en schema_migrations ni ledger OK",
+    "[pre] 20261121200100: no registrada en schema_migrations ni ledger OK",
     "[pre] batch ADN-009: OK · create_sale_v2 33p: OK",
-    "[pre] marcas actuales: {\"unión maestra en get_products_for_reception\":0,\"unión maestra en get_products_for_pos\":0,\"gate receipts (ERR_RECEIPT_NOT_PAYABLE)\":0,\"referencia por componente en create_sale_v2\":0,\"duplicados por (método, moneda, referencia)\":0}",
-    "[apply] 20261121130000 (38667 chars)…",
-    "[apply] 20261121130000 OK",
-    "[apply] 20261121130100 (67309 chars)…",
-    "[apply] 20261121130100 OK",
-    "[ledger] 20261121130000 registrada",
-    "[ledger] 20261121130100 registrada",
+    "[pre] marcas actuales: {\"unión maestra en get_products_for_reception\":1,\"unión maestra en get_products_for_pos\":1,\"gate receipts (ERR_RECEIPT_NOT_PAYABLE)\":1,\"referencia por componente en create_sale_v2\":1,\"duplicados por (método, moneda, referencia)\":1}",
+    "[apply] 20261121200000 (38667 chars)…",
+    "[apply] 20261121200000 OK",
+    "[apply] 20261121200100 (67309 chars)…",
+    "[apply] 20261121200100 OK",
+    "[ledger] 20261121200000 registrada",
+    "[ledger] 20261121200100 registrada",
     "[post] marcas: {\"unión maestra en get_products_for_reception\":1,\"unión maestra en get_products_for_pos\":1,\"gate receipts (ERR_RECEIPT_NOT_PAYABLE)\":1,\"referencia por componente en create_sale_v2\":1,\"duplicados por (método, moneda, referencia)\":1}"
   ]
 }
