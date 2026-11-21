@@ -159,7 +159,6 @@ export function CategoryDetailPanel({
     } finally {
       setExportingExcel(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId, categoryCode, from, to, token, exportingExcel, categoryName]);
 
   /** PDF: se genera SOLO tras confirmar el período en el diálogo (misión §7.1). */
@@ -176,7 +175,6 @@ export function CategoryDetailPanel({
     } finally {
       setExportingPdf(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId, categoryCode, token, exportingPdf, categoryName]);
 
   const load = useCallback(

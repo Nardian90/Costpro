@@ -54,7 +54,6 @@ describe('MISIÓN CP-FIN — navegación del sistema financiero', () => {
   });
 
   it('TerminalShell renderiza ambas vistas (dynamic import + case)', () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const shell = require('fs').readFileSync(
       require('path').resolve(process.cwd(), 'src/components/views/TerminalShell.tsx'),
       'utf8',

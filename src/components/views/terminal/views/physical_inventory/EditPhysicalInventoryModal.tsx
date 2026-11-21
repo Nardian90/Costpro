@@ -89,7 +89,6 @@ export const EditPhysicalInventoryModal: React.FC<Props> = ({ open, onOpenChange
           });
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, pi.id]);
 
   // Categorías de la tienda (products.category — texto)

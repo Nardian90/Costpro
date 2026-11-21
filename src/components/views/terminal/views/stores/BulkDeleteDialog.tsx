@@ -85,7 +85,7 @@ export function BulkDeleteDialog({
         }
       );
     }
-  }, [open, storeIds, action]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, storeIds, action]);
 
   // Reset state when dialog closes
   const handleOpenChange = (newOpen: boolean) => {

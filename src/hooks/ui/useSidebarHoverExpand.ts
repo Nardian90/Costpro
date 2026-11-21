@@ -99,7 +99,6 @@ export function useSidebarHoverExpand({
 
   // Si deja de aplicar (pin del usuario, resize a móvil, dispositivo sin hover)
   // se cancela cualquier transición pendiente y se vuelve al estado colapsado.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!active) {
       clearTimers();

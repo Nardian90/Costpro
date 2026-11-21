@@ -182,7 +182,6 @@ export default function DocumentConfigView() {
     } finally {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId, authToken]);
 
   useEffect(() => { fetchConfig(); }, [fetchConfig]);
@@ -240,7 +239,6 @@ export default function DocumentConfigView() {
         .catch(() => setDocuments([]))
         .finally(() => setDocsLoading(false));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [documentTypes, rules, storeId, authToken, applySelection, resetSimulator]);
 
   const fetchPostingErrors = useCallback(async (code: string) => {
@@ -1624,7 +1622,6 @@ function MovementDialog({ open, editIndex, movements, metrics, categories, onClo
       setOrden(String(nextOrden));
     }
     setSubmitting(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editIndex]);
 
   // Métricas sugeridas cuando cambia el evento (solo etiqueta visual; el usuario elige)

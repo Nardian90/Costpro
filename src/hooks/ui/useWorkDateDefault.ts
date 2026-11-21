@@ -99,6 +99,5 @@ export function useApplyWorkDateDefault(
     if (resolved === null) return; // sin preferencia válida
     if (!isUntouched) return; // el usuario/borrador ya fijó fecha
     apply(resolved);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolved]); // solo al resolver la preferencia (una vez)
 }
