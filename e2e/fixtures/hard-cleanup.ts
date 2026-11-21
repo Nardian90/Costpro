@@ -122,16 +122,33 @@ async function authAdminDelete(userId: string): Promise<boolean> {
 
 /** RPC con service-role (para e2e_hard_delete_store — FASE 11/12). */
 async function rpcService(name: string, params: Record<string, unknown>): Promise<unknown | null> {
-  if (!SERVICE_KEY) return null;
+  if (!SERVICE_KEY) {
+    console.error(`[hard-cleanup] ${name}: SUPABASE_SERVICE_ROLE_KEY ausente — RPC omitida (se usará el fallback REST).`);
+    return null;
+  }
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
       method: 'POST',
       headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
+    if (!res.ok) {
+      // CP-LOG-UNIFICATION-001 (lección 2026-11-21): el null silencioso obligó
+      // a depurar a ciegas un residuo de tienda. El fallo de la RPC primaria
+      // SIEMPRE se imprime — el fallback REST puede fallar por FKs que la
+      // RPC sí cubre, y sin este log la causa queda invisible.
+      console.error(`[hard-cleanup] RPC ${name} HTTP ${res.status}: ${(await res.text()).slice(0, 500)}`);
+      return null;
+    }
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      // 200 con cuerpo vacío/no-JSON (p. ej. void): no es un fallo.
+      return null;
+    }
+  } catch (e) {
+    console.error(`[hard-cleanup] RPC ${name} error de red:`, e);
     return null;
   }
 }
@@ -190,6 +207,12 @@ export async function hardDeleteTestStore(storeId: string): Promise<void> {
     ['inventory_batches', `store_id=eq.${storeId}`],
     ['inventory_adjustments', `store_id=eq.${storeId}`],
     ['receipt_items', `receipt_id=in.(select id from receipts where store_id=eq.${storeId})`],
+    // CP-LOG-UNIFICATION-001 (lección 20261121-111511): receipts (FK NO ACTION
+    // hacia stores vía receipts_store_id_fkey) y catalog_store_links
+    // (catalog_store_links_store_id_fkey) faltaban en el fallback — el DELETE
+    // de stores moría con 409 aunque la RPC primaria no estuviera disponible.
+    ['receipts', `store_id=eq.${storeId}`],
+    ['catalog_store_links', `store_id=eq.${storeId}`],
     ['payment_transactions', `store_id=eq.${storeId}`],
     ['transfers', `origin_store_id=eq.${storeId}`],
     ['transfers', `destination_store_id=eq.${storeId}`],

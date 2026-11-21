@@ -45,6 +45,9 @@ import { hardDeleteTestStore } from '../fixtures/hard-cleanup';
 requireIsolatedCreation();
 
 const SFX = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+// Ancla al run (diagnóstico de residuos): el sweep del run-env y cualquier
+// investigación posterior identifican la tienda del run sin adivinar SFX.
+const RUN_SLUG = (process.env.E2E_RUN_ID || 'E2E-RUN').toLowerCase().replace(/[^a-z0-9]+/g, '');
 
 const MASTER_A = { sku: `CPLOG-A-${SFX}`, name: `Tornillo Maestro A ${SFX}`, uom: 'unidad' };
 const MASTER_B = { sku: `CPLOG-B-${SFX}`, name: `Losa Maestra B ${SFX}`, uom: 'm2' };
@@ -69,10 +72,10 @@ test.describe.serial('CP-LOG-UNIFICATION-001 · carga maestra, liquidación de r
     // Tenant + tienda efímeros (patrón master-catalog-multistore): tienda con
     // tenant y CERO productos locales — la precondición exacta del bug.
     // owner_id = admin → gobernador del catálogo (is_catalog_governor).
-    const [tenant] = await sb.insert('tenants', [{ name: `E2E TENANT CPLOG ${SFX}`, plan: 'free', is_active: true, owner_id: adminUserId }]);
+    const [tenant] = await sb.insert('tenants', [{ name: `E2E TENANT CPLOG ${RUN_SLUG} ${SFX}`, plan: 'free', is_active: true, owner_id: adminUserId }]);
     tenantId = String(tenant.id);
     const [store] = await sb.insert('stores', [{
-      name: `E2E STORE CPLOG ${SFX}`,
+      name: `E2E STORE CPLOG ${RUN_SLUG} ${SFX}`,
       tenant_id: tenantId,
       is_active: true,
       address: `Calle CPLOG ${SFX}`,
@@ -109,9 +112,29 @@ test.describe.serial('CP-LOG-UNIFICATION-001 · carga maestra, liquidación de r
     // los maestros (FK) — después links → change-logs → maestros (por ID y
     // por created_by: el FK master_products.created_by BLOQUEA el teardown de
     // usuarios del run si queda uno) → tenant. Siempre best-effort.
-    try { if (storeId) await hardDeleteTestStore(storeId); } catch { /* best-effort */ }
-    try { if (storeId) await sb.delete('catalog_store_links', `store_id=eq.${storeId}`); } catch { /* best-effort */ }
-    try { if (adminUserId) await sb.delete('catalog_store_links', `created_by=eq.${adminUserId}`); } catch { /* best-effort */ }
+    //
+    // CP-LOG-UNIFICATION-001 (lección 2026-11-21): un fallo SILENCIADO del
+    // hard-delete dejó la tienda del run viva (el guardrail la detectó como
+    // contaminación). El intento se REPITE y el error se IMPRIME — el fallo
+    // visible vale más que el residuo mudo.
+    // ORDEN REAL (lección corrida 20261121-111511): catalog_store_links
+    // ANTES de la tienda — la RPC e2e_hard_delete_store NO limpia esa tabla
+    // y el FK catalog_store_links_store_id_fkey bloquea el hard-delete con
+    // 409 (que a su vez dejaba vivos maestros/tenant/usuario en cadena).
+    try { if (storeId) await sb.delete('catalog_store_links', `store_id=eq.${storeId}`); } catch (e) { console.error('[afterAll] catalog_store_links (pre):', e); }
+    try { if (adminUserId) await sb.delete('catalog_store_links', `created_by=eq.${adminUserId}`); } catch (e) { console.error('[afterAll] catalog_store_links (created_by):', e); }
+    if (storeId) {
+      let borrada = false;
+      for (let intento = 1; intento <= 2 && !borrada; intento++) {
+        try {
+          await hardDeleteTestStore(storeId);
+          borrada = true;
+        } catch (e) {
+          console.error(`[afterAll] hardDeleteTestStore intento ${intento} falló:`, e);
+        }
+      }
+      if (!borrada) console.error(`[afterAll] RESIDUO: la tienda ${storeId} sobrevivió al hard-delete — el guardrail debe detectarla.`);
+    }
     try {
       // Barredo por created_by: maestros del run aunque el spec abortara antes
       // de capturar los ids; los products locales ya no existen (tienda borrada).
@@ -119,11 +142,11 @@ test.describe.serial('CP-LOG-UNIFICATION-001 · carga maestra, liquidación de r
       const ids = [...mine.map((x) => x.id), ...[masterAId, masterBId].filter(Boolean)];
       const uniq = [...new Set(ids)];
       if (uniq.length) {
-        await sb.delete('master_change_log', `master_product_id=in.(${uniq.join(',')})`).catch(() => {});
-        await sb.delete('master_products', `id=in.(${uniq.join(',')})`).catch(() => {});
+        await sb.delete('master_change_log', `master_product_id=in.(${uniq.join(',')})`).catch((e) => console.error('[afterAll] master_change_log:', e));
+        await sb.delete('master_products', `id=in.(${uniq.join(',')})`).catch((e) => console.error('[afterAll] master_products:', e));
       }
-    } catch { /* best-effort */ }
-    try { if (tenantId) await sb.delete('tenants', `id=eq.${tenantId}`); } catch { /* best-effort */ }
+    } catch (e) { console.error('[afterAll] barre maestros:', e); }
+    try { if (tenantId) await sb.delete('tenants', `id=eq.${tenantId}`); } catch (e) { console.error('[afterAll] tenants:', e); }
   });
 
   // ────────────────────────────────────────────────────────────────────────
