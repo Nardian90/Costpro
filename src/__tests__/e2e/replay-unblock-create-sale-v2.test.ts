@@ -499,9 +499,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   external_transfer en el batch, serialización FOR UPDATE compartida,
     //   gate de gestión en los RPC de borradores, idempotencia real de
     //   creación y firma patch tri-state) = 190
-    expect(m.total_incluidos).toBe(191);
+    expect(m.total_incluidos).toBe(192);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(191);
+    expect(incluidos.length).toBe(192);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
