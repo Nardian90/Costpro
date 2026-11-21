@@ -266,6 +266,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 onClick={() => handleNavClick(item.id as ViewType)}
                 onMouseEnter={() => onPrefetchView(item.id as ViewType)}
                 aria-current={isActive ? 'page' : undefined}
+                aria-label={item.label}
                 className={cn(
                   "w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2",
                   isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-sidebar-foreground/80 hover:bg-primary/10 hover:text-primary"

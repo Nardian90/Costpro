@@ -99,6 +99,15 @@ const getHelpAside = (container: HTMLElement) => container.querySelector('#help-
 const advance = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
 
 const FIRST_MODULE_LABEL = SIDEBAR_STRUCTURE[0].label;
+// CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001 (2026-11-22): la
+// PRIMERA entrada del sidebar es ahora un ÍTEM directo de primer nivel
+// («Estados Financieros» — mismo patrón que «Inicio»). Los tests del
+// COMPORTAMIENTO DE MÓDULO RAÍZ (focus mode + MODULE_DEFAULT_VIEW + pin
+// expandido) usan el primer módulo GRUPO (OPERACIÓN); el ítem directo se
+// cubre aparte (F15.1/F15.7-bis): su clic navega a SU vista sin focus mode.
+const FIRST_GROUP_MODULE_LABEL =
+  (SIDEBAR_STRUCTURE.find(m => m.type !== 'item') ?? SIDEBAR_STRUCTURE[0]).label;
+const FIRST_GROUP_DEFAULT_VIEW = 'pos'; // MODULE_DEFAULT_VIEW.operacion
 
 // ─────────────────────────── Sidebar principal ───────────────────────────
 
@@ -129,8 +138,13 @@ describe('Sidebar principal — hover expand (rail → expandido temporal)', () 
     const aside = getAside(container);
     expect(aside.className).toContain('w-20');
     // Rail: botones con aria-label pero SIN spans de texto con la etiqueta.
+    // El ítem directo de primer nivel («Estados Financieros») también es un
+    // botón de icono accesible en rail (aria-label añadido por la misión
+    // CP-NAV — paridad a11y con los botones de módulo raíz).
     expect(screen.getByRole('button', { name: FIRST_MODULE_LABEL })).toBeTruthy();
     expect(screen.queryByText(FIRST_MODULE_LABEL)).toBeNull();
+    expect(screen.getByRole('button', { name: FIRST_GROUP_MODULE_LABEL })).toBeTruthy();
+    expect(screen.queryByText(FIRST_GROUP_MODULE_LABEL)).toBeNull();
   });
 
   it('F15.2 hover sobre el aside → expande tras el delay, SIN clic; store intacto', () => {
@@ -196,10 +210,23 @@ describe('Sidebar principal — hover expand (rail → expandido temporal)', () 
 
     hoverIn(aside);
     advance(100);
+    fireEvent.click(screen.getByRole('button', { name: FIRST_GROUP_MODULE_LABEL }));
+
+    expect(view.onViewChange).toHaveBeenCalledWith(FIRST_GROUP_DEFAULT_VIEW); // MODULE_DEFAULT_VIEW.operacion
+    expect(useUIStore.getState().sidebarState).toBe('expanded'); // enterFocusMode fija
+  });
+
+  it('F15.6-bis clic en el ítem directo de primer nivel (hover-expandido) navega a su vista sin focus mode', () => {
+    const { container } = render(<Sidebar {...view} />);
+    const aside = getAside(container);
+
+    hoverIn(aside);
+    advance(100);
     fireEvent.click(screen.getByRole('button', { name: FIRST_MODULE_LABEL }));
 
-    expect(view.onViewChange).toHaveBeenCalledWith('pos'); // MODULE_DEFAULT_VIEW.operacion
-    expect(useUIStore.getState().sidebarState).toBe('expanded'); // enterFocusMode fija
+    // CP-NAV: «Estados Financieros» navega DIRECTO (sin desplegar OPERACIÓN
+    // ni entrar en focus mode) — mismo patrón de acceso directo que «Inicio».
+    expect(view.onViewChange).toHaveBeenCalledWith('financial-statements');
   });
 
   it('F15.7 teclado: Enter/click en icono de rail funciona sin hover (accesible)', () => {
@@ -207,10 +234,22 @@ describe('Sidebar principal — hover expand (rail → expandido temporal)', () 
     const aside = getAside(container);
     expect(aside.className).toContain('w-20');
 
-    // Usuario de teclado: focus + activación directa sobre el icono del rail.
-    fireEvent.click(screen.getByRole('button', { name: FIRST_MODULE_LABEL }));
-    expect(view.onViewChange).toHaveBeenCalledWith('pos');
+    // Usuario de teclado: focus + activación directa sobre el icono del rail
+    // de un módulo RAÍZ (grupo): navega a su vista por defecto y fija expandido.
+    fireEvent.click(screen.getByRole('button', { name: FIRST_GROUP_MODULE_LABEL }));
+    expect(view.onViewChange).toHaveBeenCalledWith(FIRST_GROUP_DEFAULT_VIEW);
     expect(useUIStore.getState().sidebarState).toBe('expanded');
+  });
+
+  it('F15.7-bis teclado: el icono de rail del ítem directo de primer nivel es accesible y navega (CP-NAV)', () => {
+    const { container } = render(<Sidebar {...view} />);
+    const aside = getAside(container);
+    expect(aside.className).toContain('w-20');
+
+    // Usuario de teclado sobre «Estados Financieros» (ítem directo): el botón
+    // es alcanzable POR NOMBRE (aria-label) y navega a la vista financiera.
+    fireEvent.click(screen.getByRole('button', { name: FIRST_MODULE_LABEL }));
+    expect(view.onViewChange).toHaveBeenCalledWith('financial-statements');
   });
 
   it('F15.8 móvil/touch: hover NO expande (patrón drawer intacto)', () => {
