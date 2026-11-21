@@ -120,14 +120,20 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // ─── ADN-008 §5: liquidación multipago ATÓMICA para servicios ───
+    // ─── ADN-008 §5 + CP-LOG-UNIFICATION-001 (§3): liquidación multipago
+    // ATÓMICA para servicios Y RECEPCIONES ──
     // register_supplier_payment_batch inserta TODOS los componentes en UNA
     // transacción (pre-check de la suma contra el saldo pendiente en la moneda
     // del documento + idempotencia de bloque '<key>:<i>' + reuso íntegro del
     // motor register_supplier_payment: tasas fail-closed, overpay, asientos
     // 'pago' por componente vía fin_trg_payment_transactions).
-    // El loop no transaccional permanece SOLO para los demás ref_types
-    // (receipt / production_order / work) — fuera del alcance de la misión 008.
+    // CP-LOG-UNIFICATION-001: Recepciones se incorpora al camino atómico (antes
+    // iba por el loop no transaccional — deuda técnica documentada en ADN-008;
+    // un fallo a mitad de lote dejaba el pago parcialmente aplicado y sin
+    // replay). El batch ya soporta ref_type='receipt' (ADN-009: rama receipts
+    // con FOR UPDATE sobre receipts.total_cost, CUP, tasa 1) y ahora también
+    // su gate de estado (ERR_RECEIPT_NOT_PAYABLE para voided/reversed).
+    // El loop no transaccional permanece SOLO para production_order/work.
     //
     // ─── ADN-009 (§5, Alternativa A): la RPC batch es service_role EXCLUSIVA
     // (REVOKE authenticated — alineado a CP-FIN-004 y al canal exclusivo del
@@ -136,7 +142,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // validado de la sesión server-side (p_paid_by = session.user.id — NUNCA
     // un parámetro del cliente). La llamada privilegiada usa el cliente
     // service_role; el resto de la ruta no cambia.
-    if (ref_type === 'service') {
+    if (ref_type === 'service' || ref_type === 'receipt') {
       const admin = getSupabaseAdminSafe();
       if (!admin) {
         return NextResponse.json({ error: 'CONFIG_ERROR' }, { status: 500 });
@@ -188,6 +194,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         // admite pagos (borrador sin obligación / anulado sin liquidación).
         if (msg.includes('ERR_SERVICE_NOT_ACTIVE')) {
           return NextResponse.json({ error: msg, code: 'ERR_SERVICE_NOT_ACTIVE' }, { status: 409 });
+        }
+        // CP-LOG-UNIFICATION-001: estado de la recepción — una recepción
+        // anulada/revertida no admite pagos nuevos.
+        if (msg.includes('ERR_RECEIPT_NOT_PAYABLE')) {
+          return NextResponse.json({ error: msg, code: 'ERR_RECEIPT_NOT_PAYABLE' }, { status: 409 });
         }
         console.error('[payments] Error RPC batch:', batchErr);
         return NextResponse.json({ error: msg || 'Error al registrar el pago' }, { status: 500 });

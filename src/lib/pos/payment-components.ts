@@ -39,6 +39,14 @@ export interface PaymentComponent {
   method: ComponentMethod;
   currency: ComponentCurrency;
   amount: number;
+  /**
+   * CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§5.1): número/referencia
+   * de la transferencia bancaria de ESTE pago. Opcional; solo las filas
+   * transfer/external_transfer la portan. El servidor la persiste en
+   * payment_transactions.reference — una referencia POR PAGO (nunca global:
+   * dos transferencias con referencias distintas viajan como DOS componentes).
+   */
+  reference?: string | null;
 }
 
 /** Fila de pago mínima que este módulo consume (PaymentRow del carrito). */
@@ -48,6 +56,8 @@ export interface PaymentRowLike {
   method: ComponentMethod | 'zelle';
   amount: number;
   currency: string;
+  /** CP-LOG-UNIFICATION-001 §5.1: referencia de transferencia (opcional). */
+  reference?: string | null;
 }
 
 /** Ítem del carrito mínimo: filas de pago explícitas o campos legado. */
@@ -74,15 +84,31 @@ const normCur = (c: unknown): string => String(c || '').trim().toUpperCase();
 export function buildPaymentComponents(items: PaymentSourceItem[]): PaymentComponent[] {
   const acc = new Map<string, PaymentComponent>();
 
-  const push = (method: ComponentMethod, currencyRaw: string, amount: number): void => {
+  const push = (
+    method: ComponentMethod,
+    currencyRaw: string,
+    amount: number,
+    reference?: string | null,
+  ): void => {
     const currency = normCur(currencyRaw) || 'CUP';
     if (amount <= EPS) return; // fila en cero / negativa: no es un cobro
-    const key = `${method}|${currency}`;
+    // CP-LOG-UNIFICATION-001 (§5.1): una fila de transferencia CON referencia
+    // NUNCA se agrega con otra — cada pago conserva SU referencia (misión:
+    // «no una referencia global que termine sustituyendo las anteriores»).
+    // El servidor crea una fila de payment_transactions POR componente, así
+    // que cada transferencia queda trazada a su número de operación.
+    const ref = reference && reference.trim() ? reference.trim().slice(0, 400) : null;
+    const key = ref ? `${method}|${currency}|ref:${ref}` : `${method}|${currency}`;
     const existing = acc.get(key);
     if (existing) {
       existing.amount = round2(existing.amount + amount);
     } else {
-      acc.set(key, { method, currency: currency as ComponentCurrency, amount: round2(amount) });
+      acc.set(key, {
+        method,
+        currency: currency as ComponentCurrency,
+        amount: round2(amount),
+        ...(ref ? { reference: ref } : {}),
+      });
     }
   };
 
@@ -91,11 +117,13 @@ export function buildPaymentComponents(items: PaymentSourceItem[]): PaymentCompo
       for (const p of item.payments) {
         // CP-FIN-004: normaliza filas heredadas ('zelle' de carritos
         // persistidos) al canónico del exterior.
-        push(
-          p.method === 'zelle' ? 'external_transfer' : p.method,
-          p.currency,
-          Number(p.amount) || 0,
-        );
+        const method = p.method === 'zelle' ? 'external_transfer' : p.method;
+        // CP-LOG-UNIFICATION-001 (§5.1): la referencia viaja SOLO en filas de
+        // transferencia (transfer/external_transfer) — en efectivo se ignora.
+        const ref = method === 'transfer' || method === 'external_transfer'
+          ? p.reference
+          : null;
+        push(method, p.currency, Number(p.amount) || 0, ref);
       }
       continue;
     }
@@ -109,16 +137,24 @@ export function buildPaymentComponents(items: PaymentSourceItem[]): PaymentCompo
   // Descartar componentes que quedaron por debajo del umbral tras el redondeo.
   const out = [...acc.values()].filter(c => c.amount > EPS);
   // Orden determinista (idempotencia estable del payload).
-  out.sort((a, b) => a.method.localeCompare(b.method) || a.currency.localeCompare(b.currency));
+  out.sort((a, b) => a.method.localeCompare(b.method) || a.currency.localeCompare(b.currency) || (a.reference || '').localeCompare(b.reference || ''));
   return out;
 }
 
 /**
- * ¿La venta necesita componentes? Regla de envío: al menos un componente
- * USD de método cash/transfer (el cobro mixto que el pool canónico CUP no
- * representa). Las ventas CUP puras y de Transf. Exterior puras conservan el
- * flujo previo.
+ * ¿La venta necesita componentes? Regla de envío:
+ *  a) al menos un componente USD de método cash/transfer (el cobro mixto que
+ *     el pool canónico CUP no representa), O
+ *  b) CP-LOG-UNIFICATION-001 (§5.1): al menos un componente con referencia de
+ *     transferencia — el camino de componentes es el ÚNICO que persiste la
+ *     referencia por pago (payment_transactions.reference); sin él, la venta
+ *     caería en el pool legacy y la referencia se perdería.
+ * Las ventas CUP puras sin transferencias y las de Transf. Exterior puras sin
+ * referencia conservan el flujo previo.
  */
 export function requiresPaymentComponents(components: PaymentComponent[]): boolean {
-  return components.some(c => c.currency === 'USD' && (c.method === 'cash' || c.method === 'transfer'));
+  return components.some(
+    c => (c.currency === 'USD' && (c.method === 'cash' || c.method === 'transfer'))
+      || (c.reference != null && c.reference !== ''),
+  );
 }

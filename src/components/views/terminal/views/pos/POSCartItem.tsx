@@ -622,6 +622,30 @@ export const POSCartItem = ({
                   </button>
                 )}
               </div>
+              {/* CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§5.1): número
+                  de transferencia de ESTE pago — visible SOLO en filas
+                  transfer/external_transfer (en Efectivo no se muestra).
+                  Obligatorio al confirmar la venta (validado en el panel de
+                  cobro); se persiste por pago en payment_transactions.reference. */}
+              {(p.method === 'transfer' || p.method === 'external_transfer') && (
+                <input
+                  type="text"
+                  value={p.reference || ''}
+                  onChange={(e) => useCartStore.getState().updateItemPaymentRow(
+                    item.product_id, item.variant_id, p.id,
+                    { reference: e.target.value || null }
+                  )}
+                  className={cn(
+                    "w-full bg-background border rounded-lg px-2 py-2 min-h-[36px] text-[10px] font-mono font-bold",
+                    (p.amount || 0) > 0 && !(p.reference || '').trim()
+                      ? "border-amber-500/60"
+                      : "border-border/50",
+                  )}
+                  placeholder="N.º de transferencia (obligatorio)"
+                  aria-label={`Número de transferencia fila ${idx + 1} para ${item.product.name}`}
+                  maxLength={400}
+                />
+              )}
               {/* Equivalente en CUP si la moneda no es CUP */}
               {p.amount > 0 && p.currency !== 'CUP' && (
                 <p className="text-[8px] text-muted-foreground ml-1">

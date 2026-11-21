@@ -163,6 +163,12 @@ const checkoutSchema = z.object({
         method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']),
         currency: z.enum(['CUP', 'USD']),
         amount: z.number().positive().finite(),
+        // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§5.1): número de
+        // transferencia de ESTE pago — se persiste por componente en
+        // payment_transactions.reference (create_sale_v2 §13.7). Un pago por
+        // referencia: dos transferencias con referencias distintas viajan
+        // como dos componentes (nunca una referencia global).
+        reference: z.string().max(400).nullable().optional(),
       }),
     )
     .max(20)

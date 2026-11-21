@@ -17,6 +17,7 @@ import {
   ChevronRight,
   CalendarClock,
   Trash2,
+  StickyNote,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
@@ -140,6 +141,11 @@ export function POSCartCheckoutPanel({
   // Gobierna el gate del botón Confirmar y se muestra en el modal de cobro.
   const { value: saleDateValue, validation: saleDateValidation } = usePosSaleDate();
   const [showCheckoutConfirm, setShowCheckoutConfirm] = useState(false);
+  // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§5.2): nota general de la
+  // venta — observación opcional de toda la operación (no por línea). Viaja
+  // al payload como sale_notes → p_notes → transactions.notes; no altera
+  // importes ni cálculos del carrito.
+  const [saleNotes, setSaleNotes] = useState("");
   const [cashReceived, setCashReceived] = useState("");
   // MISIÓN MULTIMONEDA (2026-10-23): moneda del BILLETE RECIBIDO — el cliente
   // puede entregar efectivo físico en USD (p.ej. billete de $10) aunque la
@@ -382,8 +388,10 @@ export function POSCartCheckoutPanel({
             changeCurrency,
             changeUsd: changeCurrency === "USD" ? (settlement?.settlement?.change_given_usd ?? undefined) : undefined,
             settlement: settlement?.settlement ?? undefined,
+            // CP-LOG-UNIFICATION-001 (§5.2): nota general de la venta.
+            saleNotes: saleNotes.trim() || null,
           }
-        : null;
+        : (saleNotes.trim() ? { saleNotes: saleNotes.trim() } : null);
     onCheckout(
       derivedPaymentMethod,
       discount && discount.value > 0 ? discount : null,
@@ -466,7 +474,21 @@ export function POSCartCheckoutPanel({
     const received = its.reduce((s, i) => s + (st.getItemPaidCup ? st.getItemPaidCup(i) : 0), 0);
     return received - st.getExpectedTotalCup() > 0.01;
   })();
-  const confirmBlocked = Boolean(settlementError) || noSettlementOverpay;
+  // CP-LOG-UNIFICATION-001 (§5.1): TODA fila de transferencia (transfer o
+  // Transf. Exterior) con importe > 0 debe llevar SU número de operación.
+  // Bloquea la confirmación con mensaje accionable (la referencia se persiste
+  // por pago en payment_transactions.reference — es parte del comprobante).
+  const missingTransferReferences = (() => {
+    const its = useCartStore.getState().items;
+    return its.some(i =>
+      (i.payments || []).some(p =>
+        (p.method === 'transfer' || p.method === 'external_transfer' || (p as any).method === 'zelle')
+        && (p.amount || 0) > 0
+        && !(p.reference || '').trim(),
+      ),
+    );
+  })();
+  const confirmBlocked = Boolean(settlementError) || noSettlementOverpay || missingTransferReferences;
 
   // Auto-sync store's selectedPayment with derived method (for backward compat with usePOSCheckout)
   // This ensures the store always reflects the real payment state.
@@ -1175,6 +1197,39 @@ export function POSCartCheckoutPanel({
                 </p>
               </div>
             )}
+            {/* CP-LOG-UNIFICATION-001 (§5.1): aviso de referencias de
+                transferencia pendientes — bloquea la confirmación hasta que
+                cada pago por transferencia tenga SU número de operación. */}
+            {missingTransferReferences && (
+              <div role="alert" className="mt-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-left">
+                <p className="text-[11px] font-black text-amber-600 dark:text-amber-400">
+                  Falta el número de transferencia
+                </p>
+                <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+                  Cada pago por Transferencia (incl. Transf. Exterior) requiere su número de operación. Edita el pago en el carrito (pestaña Items) y completa la referencia — quedará vinculada a ese pago y a la venta.
+                </p>
+              </div>
+            )}
+            {/* CP-LOG-UNIFICATION-001 (§5.2): nota general de la venta —
+                observación opcional de toda la operación (cliente, entrega,
+                aclaraciones del vendedor). Persiste con el documento. */}
+            <div className="mt-3 text-left">
+              <label htmlFor="pos-sale-notes" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+                <StickyNote className="w-3 h-3" /> Nota
+              </label>
+              <textarea
+                id="pos-sale-notes"
+                value={saleNotes}
+                onChange={(e) => setSaleNotes(e.target.value.slice(0, 1000))}
+                rows={2}
+                maxLength={1000}
+                placeholder="Observación general de la venta (opcional): referencias de entrega, aclaraciones del cliente o del vendedor…"
+                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-xs resize-y focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <p className="text-[9px] text-muted-foreground mt-0.5">
+                {saleNotes.length}/1000 · Se guarda con la venta y puede consultarse en su detalle
+              </p>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
