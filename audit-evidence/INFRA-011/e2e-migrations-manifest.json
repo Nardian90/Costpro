@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 608,
-  "total_incluidos": 193,
+  "total_considerados": 609,
+  "total_incluidos": 194,
   "total_excluidos": 415,
-  "digest": "e2be90a589e3d9111ed687e924f306f41bee8e5eae1d3e580c780f7706c0257d",
+  "digest": "f4c1e932b8f047ca514c00dc57417266bcd9bd8041a1d254810a4e17098e9754",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6003,6 +6003,17 @@
       "observaciones": [],
       "posicion": 193,
       "sha256_generado": "32e6b9e55354b59b0217ed33c87e3b039ad7acceb48b13e94ae25d4f2ae23f16"
+    },
+    {
+      "nombre": "20261122120000_cp_fin110_enervida_reconciliation_fix.sql",
+      "bytes": 113704,
+      "sha256_original": "182b7ecec491942adf219f7c0fb9fca551b2786f8fa53fed2b59073df1969e7b",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261122",
+      "observaciones": [],
+      "posicion": 194,
+      "sha256_generado": "182b7ecec491942adf219f7c0fb9fca551b2786f8fa53fed2b59073df1969e7b"
     },
     {
       "nombre": "AUDIT_FIXES.md",
