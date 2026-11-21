@@ -1,0 +1,149 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-20T19:38:51.127Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": " SELECT s.name AS tienda, i.status, count(*) AS vales FROM public.issue_slips i JOIN public.stores s ON s.id = i.store_i",
+      "rows": [
+        {
+          "tienda": "COSTPRO (Prueba)",
+          "status": "completed",
+          "vales": 2
+        },
+        {
+          "tienda": "COSTPRO (Prueba)",
+          "status": "reversed",
+          "vales": 2
+        },
+        {
+          "tienda": "ENERVIDA-VITALLCONS",
+          "status": "completed",
+          "vales": 237
+        },
+        {
+          "tienda": "ENERVIDA-VITALLCONS",
+          "status": "reversed",
+          "vales": 3
+        },
+        {
+          "tienda": "PUERTO PADRE",
+          "status": "completed",
+          "vales": 1
+        },
+        {
+          "tienda": "PUERTO PADRE",
+          "status": "voided",
+          "vales": 1
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT i.slip_number, i.status, s.name AS tienda, i.created_at::date FROM public.issue_slips i JOIN public.stores s ON s",
+      "rows": []
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT i.slip_number, i.status, s.name AS tienda,        (SELECT count(*) FROM public.stock_movements m WHERE m.referenc",
+      "rows": []
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT i.slip_number, s.name AS tienda FROM public.issue_slips i JOIN public.stores s ON s.id = i.store_id WHERE i.statu",
+      "rows": []
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT m.reference_id, i.slip_number, m.product_id, count(*) AS salidas,        sum(m.quantity_change) AS total_cambiado",
+      "rows": []
+    },
+    {
+      "statement": 6,
+      "sql": "WITH salida AS (   SELECT m.reference_id, m.product_id, sum(ABS(m.quantity_change)) AS descontado   FROM public.stock_mo",
+      "rows": []
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT m.id, m.reference_id, m.movement_type, m.created_at::date FROM public.stock_movements m WHERE m.movement_type IN ",
+      "rows": []
+    },
+    {
+      "statement": 8,
+      "sql": "SELECT p.id, p.name, p.store_id, p.stock_current FROM public.products p WHERE p.stock_current < 0 LIMIT 50",
+      "rows": []
+    },
+    {
+      "statement": 9,
+      "sql": "SELECT m.id, m.store_id AS store_movimiento, i.store_id AS store_vale, i.slip_number FROM public.stock_movements m JOIN ",
+      "rows": []
+    },
+    {
+      "statement": 10,
+      "sql": "SELECT i.status,        count(*) FILTER (WHERE i.confirmed_at IS NOT NULL) AS confirmados,        count(*) FILTER (WHERE",
+      "rows": [
+        {
+          "status": "voided",
+          "confirmados": 0,
+          "anulados_devueltos": 1,
+          "primero": "2026-11-02",
+          "ultimo": "2026-11-02"
+        },
+        {
+          "status": "completed",
+          "confirmados": 0,
+          "anulados_devueltos": 0,
+          "primero": "2026-08-03",
+          "ultimo": "2026-11-19"
+        },
+        {
+          "status": "reversed",
+          "confirmados": 0,
+          "anulados_devueltos": 5,
+          "primero": "2026-10-05",
+          "ultimo": "2026-11-07"
+        }
+      ]
+    },
+    {
+      "statement": 11,
+      "sql": "SELECT e.document_type, count(*) AS asientos,        sum(CASE WHEN em.sense='debito' THEN em.amount ELSE 0 END) AS total",
+      "rows": [
+        {
+          "document_type": "VALE_SALIDA",
+          "asientos": 1208,
+          "total_debito": "2429997.23",
+          "total_credito": "2429997.23"
+        }
+      ]
+    },
+    {
+      "statement": 12,
+      "sql": "SELECT count(*) AS vales_sin_asiento FROM public.issue_slips i WHERE i.status = 'completed'   AND NOT EXISTS (SELECT 1 F",
+      "rows": [
+        {
+          "vales_sin_asiento": 37
+        }
+      ]
+    },
+    {
+      "statement": 13,
+      "sql": "SELECT em.category_code, em.sense, count(*) AS movimientos, sum(em.amount) AS total FROM public.fin_entries e JOIN publi",
+      "rows": [
+        {
+          "category_code": "ACT_INVENTARIO",
+          "sense": "credito",
+          "movimientos": 604,
+          "total": "2429997.23"
+        },
+        {
+          "category_code": "GAS_VALES",
+          "sense": "debito",
+          "movimientos": 604,
+          "total": "2429997.23"
+        }
+      ]
+    }
+  ]
+}

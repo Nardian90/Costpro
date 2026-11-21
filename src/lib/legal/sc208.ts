@@ -51,6 +51,20 @@
  *  - El PDF se genera SOLO LECTURA: no muta el vale, el inventario ni ningún
  *    registro. Las lecturas usan el cliente Supabase del usuario (RLS activa)
  *    y siempre en el contexto de la tienda activa — sin cruce entre tiendas.
+ *
+ * MISIÓN CP-WH-EXIT-VOUCHER-PDF-VALUATION-001 (2026-11-20) — DOS MODALIDADES:
+ *  La exportación admite el control «Incluir valores en el PDF»:
+ *   - VALORIZADO (default, comportamiento vigente): conserva la matriz
+ *     normativa completa — precio unitario (costo promedio almacenado),
+ *     importe por línea e Importe Total del Vale (CUP).
+ *   - SIN VALORAR (solo físico): elimina COMPLETAMENTE las columnas
+ *     económicas («Precio unitario total», «Importe»), el importe total y
+ *     toda moneda/importe del documento. No se oculta visualmente: los datos
+ *     económicos NO llegan al constructor del PDF (fetchSc208SourceData no
+ *     los selecciona ni los transmite) — el documento físico queda realmente
+ *     desprovisto de importes. Ambos formatos conservan la identidad
+ *     documental (consecutivo, fecha, almacén, concepto, OT, cantidades,
+ *     firmas, estado y devolución).
  */
 
 import { format } from 'date-fns';
@@ -68,6 +82,7 @@ import {
   RES11_BLANK_LINE,
   res11FileName,
   estadoDocumentoLabel,
+  type Res11TableOptions,
 } from './res11-shared';
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -76,13 +91,34 @@ import {
 
 export interface Sc208SourceItem {
   quantity: number;
-  unit_cost: number;
-  total_cost: number;
+  /**
+   * Costo unitario almacenado por el servidor (products.cost_average en el
+   * momento de la operación). Opcional: la modalidad SIN VALORAR no solicita
+   * ni transmite datos económicos (misión CP-WH-EXIT-VOUCHER-PDF-VALUATION-001).
+   */
+  unit_cost?: number | null;
+  /** Importe de línea almacenado por el servidor. Opcional en modo físico. */
+  total_cost?: number | null;
   products?: {
     name?: string | null;
     sku?: string | null;
     unit_of_measure?: string | null;
   } | null;
+}
+
+/**
+ * Opciones de exportación del SC-2-08 (misión CP-WH-EXIT-VOUCHER-PDF-VALUATION-001).
+ * La elección aplica SOLO a la exportación solicitada: nunca modifica el
+ * documento almacenado, sus datos originales, el movimiento de inventario ni
+ * su contabilización.
+ */
+export interface Sc208ExportOptions {
+  /**
+   * true (default, comportamiento vigente): PDF valorizado con costos,
+   * importes y total general. false: PDF exclusivamente físico — sin precios,
+   * importes, totales ni moneda.
+   */
+  incluirValores?: boolean;
 }
 
 export interface Sc208SourceData {
@@ -133,12 +169,22 @@ export interface Sc208ModelData {
     descripcion: string;
     unidadMedida: string;
     cantidad: string;
+    /** Costo unitario almacenado; '' en la modalidad sin valorar. */
     precioUnitario: string;
+    /** Importe de línea almacenado; '' en la modalidad sin valorar. */
     importe: string;
     /** Dato 5: saldo en existencia — no gestionado por línea → ''. */
     saldoExistencia: string;
   }>;
+  /** Importe Total del Vale (CUP); '' en la modalidad sin valorar. */
   importeTotal: string;
+  /**
+   * Modalidad de la exportación (misión CP-WH-EXIT-VOUCHER-PDF-VALUATION-001):
+   * true = valorizado (comportamiento vigente); false = solo físico.
+   * El renderer elimina las columnas económicas cuando es false — y los datos
+   * económicos nunca llegan al modelo (ver fetchSc208SourceData).
+   */
+  valorizado: boolean;
   entregadoPor: string; // nombre real (creator) o ''
   estado: string; // Completado / Anulado / Devuelto
   devolucion: {
@@ -161,7 +207,13 @@ function formatDateRes11(value: string | null | undefined): string {
   return format(d, 'dd/MM/yyyy');
 }
 
-export function buildSc208ModelData(source: Sc208SourceData): Sc208ModelData {
+export function buildSc208ModelData(
+  source: Sc208SourceData,
+  options?: Sc208ExportOptions,
+): Sc208ModelData {
+  // Default TRUE: conserva el comportamiento vigente (PDF valorizado) — sin
+  // sorpresas para el usuario existente.
+  const incluirValores = options?.incluirValores !== false;
   const { vale, entidadNombre } = source;
   // CP-DOC-SC-DATA-MAPPING-006: código documental de la tienda emisora.
   // El almacén que entrega/recibe se identifica con la tienda emisora
@@ -173,15 +225,18 @@ export function buildSc208ModelData(source: Sc208SourceData): Sc208ModelData {
     descripcion: item.products?.name || '',
     unidadMedida: item.products?.unit_of_measure || '',
     cantidad: formatRes11Quantity(item.quantity),
-    precioUnitario: formatRes11Money(item.unit_cost),
-    // Importe almacenado por el servidor (no se recalcula).
-    importe: formatRes11Money(item.total_cost),
+    // Costo unitario ALMACENADO por el servidor (no se recalcula); '' en
+    // modo físico (el dato económico ni siquiera se representa).
+    precioUnitario: incluirValores ? formatRes11Money(item.unit_cost ?? NaN) : '',
+    // Importe almacenado por el servidor (no se recalcula); '' en modo físico.
+    importe: incluirValores ? formatRes11Money(item.total_cost ?? NaN) : '',
     saldoExistencia: '',
   }));
 
   // Dato 6: Importe Total del Vale — el almacenado por el servidor.
-  // (costos en CUP: convención del sistema para el almacén)
-  const importeTotal = formatRes11Money(vale.total_cost);
+  // (costos en CUP: convención del sistema para el almacén). En modo físico
+  // NO se representa ningún importe total.
+  const importeTotal = incluirValores ? formatRes11Money(vale.total_cost) : '';
 
   const esReversado = vale.status === 'reversed';
   return {
@@ -199,6 +254,7 @@ export function buildSc208ModelData(source: Sc208SourceData): Sc208ModelData {
       : '',
     lineas,
     importeTotal,
+    valorizado: incluirValores,
     entregadoPor: vale.creator?.full_name || '',
     estado: estadoDocumentoLabel(vale.status),
     devolucion: esReversado
@@ -230,12 +286,20 @@ export function sc208FileName(vale: Pick<Sc208SourceData['vale'], 'slip_number' 
 export async function fetchSc208SourceData(
   vale: Sc208SourceData['vale'],
   activeStoreId?: string | null,
+  options?: Sc208ExportOptions,
 ): Promise<Sc208SourceData> {
+  const incluirValores = options?.incluirValores !== false;
   let items = vale.items;
   if (!items || items.length === 0) {
+    // Misión CP-WH-EXIT-VOUCHER-PDF-VALUATION-001: en modo físico la lectura
+    // NO solicita columnas económicas a la base de datos (mínimo dato — el PDF
+    // físico no puede filtrar costos porque nunca los recibe).
+    const columnas = incluirValores
+      ? 'quantity, unit_cost, total_cost, products(name, sku, unit_of_measure)'
+      : 'quantity, products(name, sku, unit_of_measure)';
     const { data, error } = await supabase
       .from('issue_slip_items')
-      .select('quantity, unit_cost, total_cost, products(name, sku, unit_of_measure)')
+      .select(columnas)
       .eq('slip_id', vale.id)
       .order('created_at', { ascending: true });
     if (error) {
@@ -243,6 +307,11 @@ export async function fetchSc208SourceData(
     } else {
       items = (data as unknown as Sc208SourceItem[]) || [];
     }
+  } else if (!incluirValores) {
+    // Defensa en profundidad: el modal ya trae los ítems con costos de la
+    // vista (RLS). El PDF físico se construye SIN esos datos económicos —
+    // no se ocultan columnas con costos presentes por debajo.
+    items = items.map(({ unit_cost: _unitCost, total_cost: _totalCost, ...rest }) => rest);
   }
 
   let entidadNombre = '';
@@ -334,36 +403,54 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
   doc.text(model.concepto || RES11_BLANK_LINE, marginX + 26, y, { maxWidth: 170 });
 
   // ── Dato 5: tabla de productos ──
+  // Misión CP-WH-EXIT-VOUCHER-PDF-VALUATION-001: en modo físico las columnas
+  // económicas («Precio unitario total» e «Importe») NO EXISTEN en el modelo
+  // del documento — no se ocultan visualmente con datos presentes.
   y += 5;
+  const cabezas = model.valorizado
+    ? [
+        'Código',
+        'Descripción',
+        'U.M.',
+        'Cantidad despachada o devuelta',
+        'Precio unitario total',
+        'Importe',
+        'Saldo en existencia según almacén',
+      ]
+    : [
+        'Código',
+        'Descripción',
+        'U.M.',
+        'Cantidad despachada o devuelta',
+        'Saldo en existencia según almacén',
+      ];
+  const cuerpo = model.lineas.map((l) =>
+    model.valorizado
+      ? [l.codigo, l.descripcion, l.unidadMedida, l.cantidad, l.precioUnitario, l.importe, l.saldoExistencia]
+      : [l.codigo, l.descripcion, l.unidadMedida, l.cantidad, l.saldoExistencia],
+  );
+  const estilosColumna: Res11TableOptions['columnStyles'] = model.valorizado
+    ? {
+        0: { cellWidth: 24, halign: 'center' as const },
+        1: { cellWidth: 'auto' as const },
+        2: { cellWidth: 14, halign: 'center' as const },
+        3: { cellWidth: 24, halign: 'right' as const },
+        4: { cellWidth: 22, halign: 'right' as const },
+        5: { cellWidth: 22, halign: 'right' as const },
+        6: { cellWidth: 26, halign: 'center' as const },
+      }
+    : {
+        0: { cellWidth: 24, halign: 'center' as const },
+        1: { cellWidth: 'auto' as const },
+        2: { cellWidth: 14, halign: 'center' as const },
+        3: { cellWidth: 24, halign: 'right' as const },
+        4: { cellWidth: 30, halign: 'center' as const },
+      };
   await drawRes11Table(doc, {
     startY: y,
-    head: [
-      'Código',
-      'Descripción',
-      'U.M.',
-      'Cantidad despachada o devuelta',
-      'Precio unitario total',
-      'Importe',
-      'Saldo en existencia según almacén',
-    ],
-    body: model.lineas.map((l) => [
-      l.codigo,
-      l.descripcion,
-      l.unidadMedida,
-      l.cantidad,
-      l.precioUnitario,
-      l.importe,
-      l.saldoExistencia,
-    ]),
-    columnStyles: {
-      0: { cellWidth: 24, halign: 'center' },
-      1: { cellWidth: 'auto' },
-      2: { cellWidth: 14, halign: 'center' },
-      3: { cellWidth: 24, halign: 'right' },
-      4: { cellWidth: 22, halign: 'right' },
-      5: { cellWidth: 22, halign: 'right' },
-      6: { cellWidth: 26, halign: 'center' },
-    },
+    head: cabezas,
+    body: cuerpo,
+    columnStyles: estilosColumna,
     marginX,
   });
 
@@ -371,13 +458,28 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
   let finalY = docAny.lastAutoTable?.finalY || y;
   finalY += 6;
 
-  // ── Dato 6: Importe Total del Vale ──
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.setTextColor(0, 0, 0);
-  doc.text(`Importe Total del Vale (CUP): ${model.importeTotal || RES11_BLANK_LINE}`, pageWidth - marginX, finalY, {
-    align: 'right',
-  });
+  if (model.valorizado) {
+    // ── Dato 6: Importe Total del Vale ──
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Importe Total del Vale (CUP): ${model.importeTotal || RES11_BLANK_LINE}`, pageWidth - marginX, finalY, {
+      align: 'right',
+    });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+  } else {
+    // Modalidad sin valorar: nota documental sobria — ningún importe, moneda
+    // ni espacio de total económico en el documento.
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Documento emitido sin valoración económica (información física).', pageWidth - marginX, finalY, {
+      align: 'right',
+    });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+  }
 
   // Estado documental (dato real de COSTPRO, anotación sobria)
   if (model.estado && model.estado !== 'Completado') {
@@ -460,9 +562,10 @@ export async function generateSc208Pdf(model: Sc208ModelData): Promise<void> {
 export async function exportSc208ForVale(
   vale: Sc208SourceData['vale'],
   activeStoreId?: string | null,
+  options?: Sc208ExportOptions,
 ): Promise<void> {
-  const source = await fetchSc208SourceData(vale, activeStoreId);
-  const model = buildSc208ModelData(source);
+  const source = await fetchSc208SourceData(vale, activeStoreId, options);
+  const model = buildSc208ModelData(source, options);
   try {
     await generateSc208Pdf(model);
   } catch (error) {

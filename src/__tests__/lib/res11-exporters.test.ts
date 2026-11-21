@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   buildSc208ModelData,
   sc208FileName,
   renderSc208Pdf,
+  fetchSc208SourceData,
   type Sc208SourceData,
 } from '@/lib/legal/sc208';
 import {
@@ -181,6 +182,212 @@ describe('SC-2-08 — modelo según Resolución 11/2007', () => {
     expect(sc208FileName({ slip_number: 'VS-000123-2026', id: 'bbbbbbbb' })).toBe(
       'SC-2-08_Vale_de_Salida_VS-000123-2026.pdf',
     );
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// SC-2-08 — MISIÓN CP-WH-EXIT-VOUCHER-PDF-VALUATION-001: dos modalidades de
+// exportación (valorizado / sin valorar — solo físico)
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('SC-2-08 — modalidad valorizada (comportamiento vigente)', () => {
+  it('el default (sin opciones) es VALORIZADO — sin sorpresas para el usuario', () => {
+    const model = buildSc208ModelData({ entidadNombre: 'Tienda QA', vale: mkVale() });
+    expect(model.valorizado).toBe(true);
+    expect(model.lineas[0].precioUnitario).toBe('320.18'); // costo almacenado
+    expect(model.lineas[0].importe).toBe('1,600.90');      // importe almacenado
+    expect(model.importeTotal).toBe('4,210.90');           // total almacenado
+  });
+
+  it('incluirValores:true explícito produce el mismo modelo valorizado', () => {
+    const model = buildSc208ModelData(
+      { entidadNombre: 'Tienda QA', vale: mkVale() },
+      { incluirValores: true },
+    );
+    expect(model.valorizado).toBe(true);
+    expect(model.importeTotal).toBe('4,210.90');
+  });
+
+  it('el PDF valorizado contiene las columnas económicas y el total (regresión)', async () => {
+    const model = buildSc208ModelData({ entidadNombre: 'Tienda QA', vale: mkVale() });
+    const text = decodePdf((await renderSc208Pdf(model)).output('arraybuffer'));
+    // La celda de cabecera se ajusta por línea en la columna estrecha:
+    expect(text).toContain('Precio unitario');
+    expect(text).toContain('Importe');
+    expect(text).toContain('Importe Total del Vale'); // el paréntesis se escapa en el stream
+    expect(text).toContain('320.18');
+    expect(text).toContain('1,600.90');
+    expect(text).toContain('4,210.90');
+  }, 30_000);
+});
+
+describe('SC-2-08 — modalidad SIN VALORAR (solo físico)', () => {
+  const fisico = (overrides: Partial<Sc208SourceData['vale']> = {}) =>
+    buildSc208ModelData(
+      { entidadNombre: 'Tienda QA', vale: mkVale(overrides) },
+      { incluirValores: false },
+    );
+
+  it('el modelo físico no contiene precio unitario, importe ni total', () => {
+    const model = fisico();
+    expect(model.valorizado).toBe(false);
+    expect(model.lineas[0].precioUnitario).toBe('');
+    expect(model.lineas[0].importe).toBe('');
+    expect(model.importeTotal).toBe('');
+  });
+
+  it('conserva la identidad documental COMPLETA del vale', () => {
+    const model = fisico({
+      production_orders: { order_number: 'OT-2026-45', order_type: 'PRODUCCION' },
+    });
+    expect(model.numeroConsecutivo).toBe('VS-000123-2026');   // No. consecutivo
+    expect(model.fechaEmision).toBe('22/10/2026');            // fecha
+    expect(model.entidadNombre).toBe('Tienda QA');            // entidad
+    expect(model.almacenNombre).toBe('Tienda QA');            // almacén
+    expect(model.concepto).toBe('Consumo cafetería');         // notas (Nota)
+    expect(model.ordenProduccion).toBe('OT-2026-45 (PRODUCCION)'); // OT
+    expect(model.lineas[0].codigo).toBe('AZU-1K');            // SKU
+    expect(model.lineas[0].descripcion).toBe('Azúcar 1 kg');  // descripción
+    expect(model.lineas[0].unidadMedida).toBe('unidades');    // U.M.
+    expect(model.lineas[0].cantidad).toBe('5');               // cantidad entregada
+    expect(model.lineas[0].saldoExistencia).toBe('');         // dato 5 (manual)
+    expect(model.entregadoPor).toBe('Marta Rodríguez');       // responsable
+    expect(model.estado).toBe('Completado');
+  });
+
+  it('el vale devuelto conserva el bloque DEVOLUCIÓN en modo físico', () => {
+    const model = fisico({
+      status: 'reversed',
+      voided_at: '2026-10-24T16:40:00Z',
+      void_reason: 'No se consumió el material',
+      voider: { full_name: 'Luis Gómez' },
+    });
+    expect(model.devolucion?.fecha).toBe('24/10/2026');
+    expect(model.devolucion?.responsable).toBe('Luis Gómez');
+    expect(model.devolucion?.motivo).toBe('No se consumió el material');
+  });
+
+  it('el PDF físico NO contiene NINGÚN importe económico a nivel de bytes', async () => {
+    const model = fisico();
+    const text = decodePdf((await renderSc208Pdf(model)).output('arraybuffer'));
+    // Sin columnas económicas ni total ni moneda:
+    expect(text).not.toContain('Precio unitario');
+    expect(text).not.toContain('Importe');
+    expect(text).not.toContain('CUP');
+    // Sin los importes del fixture (ni recortados):
+    expect(text).not.toContain('320.18');
+    expect(text).not.toContain('1,600.90');
+    expect(text).not.toContain('4,210.90');
+    expect(text).not.toContain('1,600');
+    // Identidad física presente:
+    expect(text).toContain('VALE DE ENTREGA O DEVOLUCIÓN');
+    expect(text).toContain('VS-000123-2026');
+    expect(text).toContain('AZU-1K');
+    expect(text).toContain('Azúcar 1 kg');
+    expect(text).toContain('unidades');
+    expect(text).toContain('Consumo cafetería');
+    expect(text).toContain('Documento emitido sin valoración económica');
+    // Firmas (datos 7–10) presentes — los cargos se imprimen en MAYÚSCULAS:
+    expect(text).toContain('ENTREGA POR EL ALMACÉN');
+    expect(text).toContain('RECIBE');
+    expect(text).toContain('CONTABILIZA');
+    expect(countDarkFilledRects(text)).toBe(0);
+  }, 30_000);
+
+  it('ambos formatos son el MISMO documento: mismas cantidades e identidad', async () => {
+    const valorizado = buildSc208ModelData({ entidadNombre: 'Tienda QA', vale: mkVale() });
+    const fisicoModel = fisico();
+    expect(fisicoModel.numeroConsecutivo).toBe(valorizado.numeroConsecutivo);
+    expect(fisicoModel.fechaEmision).toBe(valorizado.fechaEmision);
+    expect(fisicoModel.entidadNombre).toBe(valorizado.entidadNombre);
+    expect(fisicoModel.concepto).toBe(valorizado.concepto);
+    expect(fisicoModel.lineas.length).toBe(valorizado.lineas.length);
+    expect(fisicoModel.lineas[0].cantidad).toBe(valorizado.lineas[0].cantidad);
+    expect(fisicoModel.lineas[0].codigo).toBe(valorizado.lineas[0].codigo);
+    expect(fisicoModel.entregadoPor).toBe(valorizado.entregadoPor);
+  });
+
+  it('paginación: 30 líneas físicas — sin cortes de fila, todas las líneas y firmas presentes', async () => {
+    const muchas = Array.from({ length: 30 }, (_, i) => ({
+      quantity: i + 1,
+      unit_cost: 10 + i,
+      total_cost: (10 + i) * (i + 1),
+      products: { name: `Producto línea ${i + 1}`, sku: `SKU-${String(i + 1).padStart(3, '0')}`, unit_of_measure: 'unidades' },
+    }));
+    const model = buildSc208ModelData(
+      { entidadNombre: 'Tienda QA', vale: mkVale({ items: muchas }) },
+      { incluirValores: false },
+    );
+    const doc = await renderSc208Pdf(model);
+    const text = decodePdf(doc.output('arraybuffer'));
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(2); // paginó de verdad
+    for (let i = 1; i <= 30; i++) {
+      expect(text).toContain(`SKU-${String(i).padStart(3, '0')}`);
+      expect(text).toContain(`Producto línea ${i}`);
+    }
+    expect(text).toContain('CONTABILIZA'); // firmas al final del documento
+    expect(text).not.toContain('Importe');
+    expect(countDarkFilledRects(text)).toBe(0);
+  }, 30_000);
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// SC-2-08 — fetchSc208SourceData: el modo físico NO solicita ni transmite
+// datos económicos (misión CP-WH-EXIT-VOUCHER-PDF-VALUATION-001 §4)
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('SC-2-08 — fetchSc208SourceData sin valores económicos en modo físico', () => {
+  // vi.hoisted: la factory de vi.mock corre en la primera importación de
+  // sc208.ts (antes de que existan las const del describe).
+  const supabaseMock = vi.hoisted(() => ({ from: vi.fn() }));
+  vi.mock('@/lib/supabaseClient', () => ({ supabase: supabaseMock }));
+
+  function chain(result: { data: unknown; error: unknown | null }) {
+    const c: Record<string, unknown> = {};
+    for (const m of ['select', 'eq', 'order']) c[m] = vi.fn(() => c);
+    for (const m of ['maybeSingle']) c[m] = vi.fn(() => Promise.resolve(result));
+    c.then = (res?: (v: unknown) => unknown) => Promise.resolve(result).then(res);
+    return c;
+  }
+
+  beforeEach(() => supabaseMock.from.mockReset());
+
+  it('el SELECT físico no incluye unit_cost ni total_cost', async () => {
+    supabaseMock.from.mockImplementation(() => chain({ data: [], error: null }));
+    await fetchSc208SourceData(
+      mkVale({ items: [] }),
+      'store-1',
+      { incluirValores: false },
+    );
+    expect(supabaseMock.from).toHaveBeenCalledWith('issue_slip_items');
+    const itemsChain = supabaseMock.from.mock.results[0].value as { select: ReturnType<typeof vi.fn> };
+    expect(itemsChain.select).toHaveBeenCalledWith('quantity, products(name, sku, unit_of_measure)');
+  });
+
+  it('el SELECT valorizado conserva la lectura actual de costos', async () => {
+    supabaseMock.from.mockImplementation(() => chain({ data: [], error: null }));
+    await fetchSc208SourceData(mkVale({ items: [] }), 'store-1');
+    expect(supabaseMock.from).toHaveBeenCalledWith('issue_slip_items');
+    const itemsChain = supabaseMock.from.mock.results[0].value as { select: ReturnType<typeof vi.fn> };
+    expect(itemsChain.select).toHaveBeenCalledWith(
+      'quantity, unit_cost, total_cost, products(name, sku, unit_of_measure)',
+    );
+  });
+
+  it('ítems precargados: en modo físico se eliminan unit_cost/total_cost antes de construir el PDF', async () => {
+    supabaseMock.from.mockImplementation(() => chain({ data: [], error: null }));
+    const source = await fetchSc208SourceData(
+      mkVale(), // items con unit_cost/total_cost del modal
+      'store-1',
+      { incluirValores: false },
+    );
+    expect(source.vale.items?.[0]).not.toHaveProperty('unit_cost');
+    expect(source.vale.items?.[0]).not.toHaveProperty('total_cost');
+    expect(source.vale.items?.[0]?.quantity).toBe(5);
+    // y el modelo construido desde esa fuente no puede mostrar importes:
+    const model = buildSc208ModelData(source, { incluirValores: false });
+    expect(model.importeTotal).toBe('');
+    expect(model.lineas[0].importe).toBe('');
   });
 });
 

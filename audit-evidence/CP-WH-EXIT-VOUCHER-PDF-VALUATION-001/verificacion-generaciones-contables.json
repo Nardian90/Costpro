@@ -1,0 +1,268 @@
+{
+  "project": "wthkddeleylijmonclxg",
+  "generated_at": "2026-11-20T19:40:49.727Z",
+  "mode": "read-only",
+  "results": [
+    {
+      "statement": 1,
+      "sql": "SELECT entradas_por_doc, count(*) AS documentos FROM (   SELECT e.document_id, count(*) AS entradas_por_doc   FROM publi",
+      "rows": [
+        {
+          "entradas_por_doc": 2,
+          "documentos": 5
+        },
+        {
+          "entradas_por_doc": 3,
+          "documentos": 198
+        }
+      ]
+    },
+    {
+      "statement": 2,
+      "sql": "SELECT i.slip_number, i.created_at::date AS fecha_vale, e.posted_at AS fecha_entrada,        em.amount, em.economic_date",
+      "rows": [
+        {
+          "slip_number": "VS-000001-2026",
+          "fecha_vale": "2026-08-15",
+          "fecha_entrada": "2026-11-14 01:45:25.336919+00",
+          "amount": "0.60",
+          "economic_date": "2026-08-15",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000001-2026",
+          "fecha_vale": "2026-08-15",
+          "fecha_entrada": "2026-11-19 21:30:00.698209+00",
+          "amount": "0.60",
+          "economic_date": "2026-08-15",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000001-2026",
+          "fecha_vale": "2026-08-15",
+          "fecha_entrada": "2026-11-20 16:24:00.867962+00",
+          "amount": "0.60",
+          "economic_date": "2026-08-15",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000002-2026",
+          "fecha_vale": "2026-08-15",
+          "fecha_entrada": "2026-11-14 01:46:17.788108+00",
+          "amount": "0.90",
+          "economic_date": "2026-08-15",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000002-2026",
+          "fecha_vale": "2026-08-15",
+          "fecha_entrada": "2026-11-19 21:30:00.698209+00",
+          "amount": "0.90",
+          "economic_date": "2026-08-15",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000002-2026",
+          "fecha_vale": "2026-08-15",
+          "fecha_entrada": "2026-11-20 16:24:00.867962+00",
+          "amount": "0.90",
+          "economic_date": "2026-08-15",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000003-2026",
+          "fecha_vale": "2026-09-02",
+          "fecha_entrada": "2026-11-14 01:42:46.647821+00",
+          "amount": "50.00",
+          "economic_date": "2026-09-02",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000003-2026",
+          "fecha_vale": "2026-09-02",
+          "fecha_entrada": "2026-11-19 21:30:00.698209+00",
+          "amount": "50.00",
+          "economic_date": "2026-09-02",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000003-2026",
+          "fecha_vale": "2026-09-02",
+          "fecha_entrada": "2026-11-20 16:24:00.867962+00",
+          "amount": "50.00",
+          "economic_date": "2026-09-02",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000004-2026",
+          "fecha_vale": "2026-09-05",
+          "fecha_entrada": "2026-11-14 01:45:37.126291+00",
+          "amount": "59.00",
+          "economic_date": "2026-09-05",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000004-2026",
+          "fecha_vale": "2026-09-05",
+          "fecha_entrada": "2026-11-19 21:30:00.698209+00",
+          "amount": "59.00",
+          "economic_date": "2026-09-05",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        },
+        {
+          "slip_number": "VS-000004-2026",
+          "fecha_vale": "2026-09-05",
+          "fecha_entrada": "2026-11-20 16:24:00.867962+00",
+          "amount": "59.00",
+          "economic_date": "2026-09-05",
+          "event": "reconocimiento",
+          "traza": {
+            "regla": "motor-cp-fin",
+            "metrica": "costo_cup",
+            "template": "vs-gasto-d"
+          }
+        }
+      ]
+    },
+    {
+      "statement": 3,
+      "sql": "SELECT indexname, indexdef FROM pg_indexes WHERE tablename = 'fin_entries'",
+      "rows": [
+        {
+          "indexname": "fin_entries_pkey",
+          "indexdef": "CREATE UNIQUE INDEX fin_entries_pkey ON public.fin_entries USING btree (id)"
+        },
+        {
+          "indexname": "idx_fin_entries_store_date",
+          "indexdef": "CREATE INDEX idx_fin_entries_store_date ON public.fin_entries USING btree (store_id, economic_date DESC)"
+        },
+        {
+          "indexname": "idx_fin_entries_reversal",
+          "indexdef": "CREATE INDEX idx_fin_entries_reversal ON public.fin_entries USING btree (reversal_of) WHERE (reversal_of IS NOT NULL)"
+        },
+        {
+          "indexname": "idx_fin_entries_payment",
+          "indexdef": "CREATE INDEX idx_fin_entries_payment ON public.fin_entries USING btree (payment_ref) WHERE (payment_ref IS NOT NULL)"
+        },
+        {
+          "indexname": "idx_fin_entries_generation",
+          "indexdef": "CREATE INDEX idx_fin_entries_generation ON public.fin_entries USING btree (generation_id) WHERE (generation_id IS NOT NULL)"
+        },
+        {
+          "indexname": "uq_fin_entries_doc_event",
+          "indexdef": "CREATE UNIQUE INDEX uq_fin_entries_doc_event ON public.fin_entries USING btree (document_type, document_id, event, COALESCE(payment_ref, '00000000-0000-0000-0000-000000000000'::uuid), COALESCE(generation_id, 'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid)) WHERE (document_id IS NOT NULL)"
+        }
+      ]
+    },
+    {
+      "statement": 4,
+      "sql": "SELECT date_trunc('day', e.posted_at) AS dia, count(*) AS entradas,        count(DISTINCT e.document_id) AS documentos F",
+      "rows": [
+        {
+          "dia": "2026-11-14 00:00:00+00",
+          "entradas": 198,
+          "documentos": 198
+        },
+        {
+          "dia": "2026-11-19 00:00:00+00",
+          "entradas": 203,
+          "documentos": 203
+        },
+        {
+          "dia": "2026-11-20 00:00:00+00",
+          "entradas": 203,
+          "documentos": 203
+        }
+      ]
+    },
+    {
+      "statement": 5,
+      "sql": "SELECT sum(i.total_cost) AS costo_real_203_vales,        (SELECT sum(em.amount) FROM public.fin_entries e         JOIN p",
+      "rows": [
+        {
+          "costo_real_203_vales": "810567.06",
+          "debito_contabilizado": "2429997.23"
+        }
+      ]
+    },
+    {
+      "statement": 6,
+      "sql": "SELECT count(*) AS entradas_huerfanas, count(DISTINCT e.document_id) AS docs_huerfanos FROM public.fin_entries e WHERE e",
+      "rows": [
+        {
+          "entradas_huerfanas": 0,
+          "docs_huerfanos": 0
+        }
+      ]
+    },
+    {
+      "statement": 7,
+      "sql": "SELECT entradas_por_doc, count(*) AS documentos FROM (   SELECT e.document_id, count(*) AS entradas_por_doc   FROM publi",
+      "rows": [
+        {
+          "entradas_por_doc": 2,
+          "documentos": 5
+        },
+        {
+          "entradas_por_doc": 3,
+          "documentos": 198
+        }
+      ]
+    }
+  ]
+}
