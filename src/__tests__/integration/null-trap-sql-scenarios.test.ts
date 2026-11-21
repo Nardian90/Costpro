@@ -345,7 +345,6 @@ describe('batería de nulidad — documentación de gating', () => {
   it('declara explícitamente las condiciones de ejecución aislada', () => {
     expect(SHOULD_RUN || !SHOULD_RUN).toBe(true); // siempre verde: documentación
     if (!SHOULD_RUN) {
-      // eslint-disable-next-line no-console
       console.info('[null-trap-sql-scenarios] SKIP: requiere NULL_TRAP_INTEGRATION_DB=1 y NULL_TRAP_TEST_DB_URL (BD AISLADA, nunca producción). Evidencia de la auditoría: 41/41 en PG 18 aislado.');
     }
   });

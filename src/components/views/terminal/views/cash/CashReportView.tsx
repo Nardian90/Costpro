@@ -242,7 +242,6 @@ export default function CashReportView() {
     // MISIÓN PERSONALIZACIÓN: conceptos del Resumen del Día — restaurados de
     // localStorage PROPIEDAD DE LA TIENDA ACTIVA (aislamiento §6).
     setSummaryConcepts(loadSummaryConcepts(user?.activeStoreId));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- restauración post-mount
   }, []);
 
   // ── NAV-2026-10 (NAV-03): al Volver a Reporte Entrega, restaurar el período del
@@ -257,7 +256,6 @@ export default function CashReportView() {
       setEndDate(commissionNavContext.period.endDate);
     }
     setCommissionNavContext(null); // consumo único
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- consumo único en mount
   }, []);
 
   // Persistencia de datos de entrega (mismo comportamiento que el modal)
@@ -843,7 +841,6 @@ export default function CashReportView() {
     if (activeTab === 'preview' && applied?.report) {
       void buildPreview(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   const previewStale = !!applied && !!previewSigRef.current && previewSigRef.current !== previewSignature;

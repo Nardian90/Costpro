@@ -268,7 +268,6 @@ export function WorkersView() {
       setCameFromReport(true);
     }
     setCommissionNavContext(null); // consumo único
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- consumo único en mount
   }, []);
 
   // Modal de cobro por período (CommissionsManageModal — propuesta del motor)

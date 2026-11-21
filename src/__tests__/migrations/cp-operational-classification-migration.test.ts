@@ -29,7 +29,6 @@ const sql = readFileSync(migrationPath, 'utf8');
 const allMigrations = readdirSyncSorted();
 
 function readdirSyncSorted(): string[] {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   return (require('node:fs') as typeof import('node:fs')).readdirSync(join(process.cwd(), 'supabase', 'migrations')).sort();
 }
 
