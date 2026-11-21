@@ -733,6 +733,12 @@
       "reason": "ADN-009 (2026-11-21, PR #1672 post-merge hardening) · Helper de GESTIÓN por tienda (espejo DB de canManageStore en src/lib/roles.ts: is_admin_check transversal O membresía activa admin/manager/encargado). Patrón idéntico a can_manage_payroll_as y has_store_access_as: helper booleano STABLE SECURITY DEFINER de consulta que NO toca datos y cuya firma recibe el actor por parámetro — la identidad real la resuelve el llamador con el patrón v2.12.9 (los RPC de borradores pasan auth.uid()); ACL service_role-only para invocación directa. Consumidores: create_received_service_draft, update_received_service_draft (20261121190000).",
       "expires": "2027-12-31",
       "added_by": "ADN-SR-POSTMERGE-HARDENING-009 (PR #1672, 2026-11-21) — misión post-merge hardening"
+    },
+    {
+      "function": "fin_rectification_apply",
+      "reason": "CP-FIN-111-POSTREVIEW-HARDENING (2026-11-21) · RPC-motor · fin_rectification_apply: ejecución ATÓMICA de rectificaciones (asiento + movimientos + partida doble pre/post + documento de auditoría en UNA transacción; idempotencia completa por generación; registro parcial → ERR_RECTIFICACION_PARCIAL o reparación controlada con traza). Sin verificación de identidad PROPIA por diseño — ACL pura (patrón fin_generation_build/fin_rectify_*): REVOKE EXECUTE a PUBLIC/anon/authenticated + GRANT EXCLUSIVO a service_role (migración 20261122130000 §3, verificado 0 grants a anon/authenticated). Canal gobernado: scripts m110/m111 con guard CP-INFRA-019 (doble flag) + writers manifest; escritura de datos SOLO vía asientos de rectificación autorizados en expediente. Validada en BD aislada: 8 escenarios P0-4 (52/52 PASS m111-validate-isolated) incl. atomicidad y concurrencia; auditoría de impacto global read-only (solo ENERVIDA tiene órdenes service/work — 0 efectos sobre saldos vigentes).",
+      "added_by": "CP-FIN-111-POSTREVIEW-HARDENING",
+      "expires": "2027-06-30"
     }
   ],
   "tables_without_rls": [],

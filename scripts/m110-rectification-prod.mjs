@@ -83,13 +83,18 @@ async function main() {
   console.log('Respaldo PRE escrito: entradas=', backupMeta[0].entradas_total,
               'movimientos=', backupMeta[0].movimientos_total);
 
-  // 1) Existencia previa (idempotencia)
+  // 1) Existencia previa (informativa; la idempotencia REAL la decide el RPC
+  //     atómico fin_rectification_apply — P0-4 hardening 111: una rectificación
+  //     solo está completa con asiento + TODOS los movimientos coherentes y
+  //     equilibrados; un registro parcial genera error explícito o reparación
+  //     controlada, nunca un falso éxito).
   const exists = await runSql(`
-    SELECT e.id, e.economic_date FROM public.fin_entries e
-    WHERE e.store_id='${STORE}' AND e.document_number='${DOC_NUMBER}' AND e.event='ajuste_manual' LIMIT 1;`);
+    SELECT e.id, e.economic_date, g.code AS generacion FROM public.fin_entries e
+    LEFT JOIN public.fin_posting_generations g ON g.id = e.generation_id
+    WHERE e.store_id='${STORE}' AND e.document_number='${DOC_NUMBER}' AND e.event='ajuste_manual'
+    ORDER BY g.created_at;`);
   if (exists.length) {
-    console.log('RECT-110-A YA EXISTE (idempotente):', JSON.stringify(exists[0]));
-    return;
+    console.log('RECT-110-A ya existe en:', JSON.stringify(exists), '→ el RPC decidirá si está completa');
   }
 
   if (mode === 'write') {
@@ -98,31 +103,30 @@ async function main() {
     if (Math.abs(expected - 2950375.33) > 0.005) {
       throw new Error(`GUARDA: el puente vivo (${expected}) diverge de la constante certificada 2950375.33 — ABORTAR y re-diagnosticar`);
     }
+    // 2b) Ejecución ATÓMICA vía RPC (hardening 111 P0-4): asiento + movimientos
+    //     + partida doble + documento de auditoría en UNA transacción. Idempotente:
+    //     'ya_completa' si ya está íntegra; ERR_RECTIFICACION_PARCIAL si hay un
+    //     registro parcial (reparación solo con p_repair). NUNCA duplica.
+    const movs = JSON.stringify([
+      { categoria: 'ACT_INVENTARIO', sentido: 'debito', amount: 2950375.33, currency: 'CUP', exchange_rate: 1,
+        description: 'Rectificación sobrecosto histórico COGS — Dr inventario',
+        traza: { regla: 'rectificacion-cp-fin-110', motivo: 'sobrecosto histórico de ventas (FAC-VITALLCONS-001 + COGS congelado DF-02) — medido al céntimo contra la fuente viva', puente: 'WAC vivo − mayor GEN activa', expediente: 'docs/audits/cp-fin-auditoria-enervida-110' } },
+      { categoria: 'GAS_COSTO_VENTAS', sentido: 'credito', amount: 2950375.33, currency: 'CUP', exchange_rate: 1,
+        description: 'Rectificación sobrecosto histórico COGS — Cr costo de ventas',
+        traza: { regla: 'rectificacion-cp-fin-110' } },
+    ]).replace(/'/g, "''");
+    const desc = 'Rectificación CP-FIN-110 D4: sobrecosto histórico de COGS (2.950.375,33) — Dr ACT_INVENTARIO / Cr GAS_COSTO_VENTAS. Puente: recepciones 2.961.795,90 ✓, vales 810.567,06 ✓, ajustes 1,00 ✓, devoluciones 2,00 ✓, apertura 0 ✓ → residuo 100% COGS.'.replace(/'/g, "''");
     const res = await runSql(`
-      INSERT INTO public.fin_entries (
-        store_id, document_type, document_id, document_number, event, payment_ref,
-        economic_date, rule_version_id, movements_snapshot, description, created_by, generation_id)
-      SELECT '${STORE}', 'AJUSTE_INVENTARIO', NULL, '${DOC_NUMBER}', 'ajuste_manual', NULL,
-             DATE '2026-10-31', NULL,
-             $J$[{"traza":{"regla":"rectificacion-cp-fin-110","motivo":"sobrecosto histórico de ventas (FAC-VITALLCONS-001 + COGS congelado DF-02) — medido al céntimo contra la fuente viva","puente":"WAC vivo − mayor GEN activa","expediente":"docs/audits/cp-fin-auditoria-enervida-110"},"amount": 2950375.33, "sentido": "debito", "categoria": "ACT_INVENTARIO"},
-                 {"traza":{"regla":"rectificacion-cp-fin-110"},"amount": 2950375.33, "sentido": "credito", "categoria": "GAS_COSTO_VENTAS"}]$J$::jsonb,
-             'Rectificación CP-FIN-110 D4: sobrecosto histórico de COGS (2.950.375,33) — Dr ACT_INVENTARIO / Cr GAS_COSTO_VENTAS. Puente: recepciones 2.961.795,90 ✓, vales 810.567,06 ✓, ajustes 1,00 ✓, devoluciones 2,00 ✓, apertura 0 ✓ → residuo 100% COGS.',
-             NULL, public.fin_active_generation('${STORE}')
-      RETURNING id;`);
-    const entryId = res[0].id;
-    await runSql(`
-      INSERT INTO public.fin_movements (entry_id, store_id, category_code, sense, amount, currency, exchange_rate, economic_date, document_number, description)
-      VALUES ('${entryId}', '${STORE}', 'ACT_INVENTARIO', 'debito', 2950375.33, 'CUP', 1, DATE '2026-10-31', '${DOC_NUMBER}', 'Rectificación sobrecosto histórico COGS — Dr inventario'),
-             ('${entryId}', '${STORE}', 'GAS_COSTO_VENTAS', 'credito', 2950375.33, 'CUP', 1, DATE '2026-10-31', '${DOC_NUMBER}', 'Rectificación sobrecosto histórico COGS — Cr costo de ventas');`);
-    console.log('RECT-110-A INSERTADA en GEN activa. entry_id =', entryId);
-    // Auditoría del expediente (patrón RECT-013/014: audit_logs SYSTEM_RECT...)
-    await runSql(`
-      INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data, store_id)
-      VALUES (NULL, 'SYSTEM_RECT110_ENTRY', 'fin_entries', '${entryId}',
-              jsonb_build_object('entrada', null),
-              jsonb_build_object('entry_id', '${entryId}', 'importe', 2950375.33,
-                                 'documento', '${DOC_NUMBER}', 'puente', 'WAC vivo − mayor GEN activa'),
-              '${STORE}');`);
+      SELECT public.fin_rectification_apply(
+        '${STORE}', '${DOC_NUMBER}', 'AJUSTE_INVENTARIO', DATE '2026-10-31',
+        '${desc}', '${movs}', NULL, NULL, false) AS r;`);
+    const rj = res[0].r;
+    console.log('RPC fin_rectification_apply:', JSON.stringify(rj));
+    if (rj.status === 'ya_completa') {
+      console.log('RECT-110-A ya está COMPLETA e íntegra (idempotente):', rj.entry_id);
+    } else if (rj.status !== 'creada') {
+      throw new Error(`RPC devolvió estado inesperado: ${rj.status}`);
+    }
   }
 
   // 3) Verificación final (read-only, re-ejecutable)

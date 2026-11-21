@@ -516,9 +516,17 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261122120000_cp_fin110_enervida_reconciliation_fix (riel-primacía
     //   VENTA, reglas ORDEN_TRABAJO anticipos/reconocimiento, CP-FIN-REC-001/v2
     //   y pase 5 de cobertura de órdenes) = 196
-    expect(m.total_incluidos).toBe(196);
+    // CP-LOG-UNIFICATION-001 (PR #1683, 2026-11-21): +2 —
+    //   20261121200000_cp_log_unification_master_visibility y
+    //   20261121200100_cp_log_unification_pos_transfer_reference = 191/192
+    //   (entre adn009 190 y recon operativa 193; nómina pasa a 195, 110 a 196)
+    // CP-FIN-110-POSTREVIEW-HARDENING-111 (2026-11-21): +1 —
+    //   20261122130000_cp_fin111_postreview_hardening (órdenes RECONOCIBLES
+    //   closed-con-evidencia, CxC multimoneda, detector fallback cash,
+    //   RPC fin_rectification_apply, CP-FIN-REC-001/v3) = 197
+    expect(m.total_incluidos).toBe(197);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(196);
+    expect(incluidos.length).toBe(197);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -574,9 +582,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261121200000_cp_log_unification_master_visibility.sql')).toBe(191);
     expect(pos('20261121200100_cp_log_unification_pos_transfer_reference.sql')).toBe(192);
     // CP-NOMINA-SUPERADMIN-TRANSVERSAL (PR #1681, 2026-11-21) + CP-FIN-110
-    //   (2026-11-21): las dos últimas posiciones del tramo, orden lexicográfico.
+    //   (2026-11-21) + CP-FIN-111: posiciones finales del tramo, orden lexicográfico.
     expect(pos('20261121240000_cp_nomina_superadmin_transversal.sql')).toBe(195);
     expect(pos('20261122120000_cp_fin110_enervida_reconciliation_fix.sql')).toBe(196);
+    expect(pos('20261122130000_cp_fin111_postreview_hardening.sql')).toBe(197);
     expect(pos('20261105130000_cp_clasificador_maestro_base.sql')).toBe(123);
     expect(pos('20261105130100_cp_clasificador_maestro_rpcs.sql')).toBe(124);
     expect(pos('20261105140000_cp_clasificador_fase4_snapshots.sql')).toBe(125);
