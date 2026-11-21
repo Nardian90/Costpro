@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-21 — CP-FIN-110 (auditoría forense ENERVIDA): extractores read-only + aplicación/rectificación/GEN-3/conciliación en producción (guardProtected, assert-not-production); aplicación y validación E2E (isolationProtected, assert-isolated-db).",
+  "_updated": "2026-11-21 — POSTREVIEW-HARDENING-111 (resolución de los 5 hallazgos de revisión del PR #1682): extractores read-only (recuperación de producción + mapa de impacto global) y aplicador/validador en BD aislada de la migración 20261122130000_cp_fin111_postreview_hardening.sql. m110-rectification-prod.mjs REESTRUCTURADO: delega en el RPC atómico fin_rectification_apply (P0-4).",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -80,7 +80,9 @@
     "scripts/m110-apply-migration-prod.mjs",
     "scripts/m110-rectification-prod.mjs",
     "scripts/m110-build-gen3-prod.mjs",
-    "scripts/m110-recon-final.mjs"
+    "scripts/m110-recon-final.mjs",
+    "scripts/m111-impact-global-extract.mjs",
+    "scripts/m111-prod-recovery-check.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
@@ -119,7 +121,9 @@
     "scripts/e2e/cpfin002-e2e-debug.mjs",
     "scripts/m008-apply-migration-e2e.mjs",
     "scripts/m110-apply-migration-e2e.mjs",
-    "scripts/m110-validate-isolated.mjs"
+    "scripts/m110-validate-isolated.mjs",
+    "scripts/m111-apply-migration-e2e.mjs",
+    "scripts/m111-validate-isolated.mjs"
   ],
   "exceptions": {
     "scripts/audit_kardex_live.cjs": "Herramienta histórica de una misión puntual ya ejecutada (one-shot, evidenciada en docs/audits/): señales de escritura en SQL/strings/fetch pero sin flujo productivo recurrente. No se cablea el guard en este PR (alcance limitado a los defectos demostrados); re-ejecutarla contra producción exige hoy revisión manual explícita.",
