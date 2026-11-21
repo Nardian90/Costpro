@@ -1,0 +1,26 @@
+CONTENIDO EXACTO PARA EL CAMPO DE CONTENIDO DE Z.ai SCHEDULE
+=============================================================
+
+Schedule es SOLO el disparador. Pega exactamente este texto (nada más):
+
+----------------------------------------------------------------
+Lee íntegramente el archivo
+/home/z/my-project/Costpro/automation/continuous-improvement/SCHEDULER_ENTRYPOINT.txt
+y ejecútalo como tus instrucciones operativas completas del programa CP-CI.
+Si no puedes acceder al archivo, detente e informa; no improvises
+instrucciones alternativas.
+----------------------------------------------------------------
+
+Notas para el propietario:
+- No añadas reglas, misiones ni credenciales al campo de Schedule: el
+  SCHEDULER_ENTRYPOINT.txt es el cerebro operativo y PROGRAM.md el método.
+- Al mejorar el programa, se editan los archivos del repo; el texto de
+  Schedule NO vuelve a cambiarse.
+- Un único job programado activo del programa a la vez (el lock de STATE.json
+  es la segunda barrera).
+- Frecuencia sugerida: 1 ciclo/día o 1 por sesión de trabajo (una misión por
+  ejecución).
+- El agente necesita acceso al workspace /home/z/my-project/Costpro y, para
+  publicar PRs, autenticación GitHub PREVIA en el entorno (GitHub CLI `gh`
+  autenticado u OAuth). Sin ella, el agente deja commits + patch y documenta
+  la limitación (nunca simula un PR).
