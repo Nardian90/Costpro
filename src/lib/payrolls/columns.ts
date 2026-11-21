@@ -160,16 +160,18 @@ export interface ConceptLike {
 /**
  * Adapter desde la LÍNEA DEL EDITOR (confección). Los agregados por clase se
  * suman SOLO para decidir si la columna tiene contenido — no se presentan ni
- * sustituyen a los totales del servidor.
+ * sustituyen a los totales del servidor. Los campos numéricos aceptan null y
+ * texto numérico (inputs/patchs del editor pueden enviarlos — toNumber normaliza
+ * «0.00», null y vacío a cero: requisito «evaluar valores numéricos reales»).
  */
 export function factsFromEditorLine(
   line: {
-    regular_hours?: number;
-    accrued_days?: number;
-    overtime_hours?: number;
-    overtime_amount?: number;
-    vacation_days?: number;
-    vacation_amount?: number;
+    regular_hours?: number | string | null;
+    accrued_days?: number | string | null;
+    overtime_hours?: number | string | null;
+    overtime_amount?: number | string | null;
+    vacation_days?: number | string | null;
+    vacation_amount?: number | string | null;
     expediente_laboral?: string | null;
     categoria_ocupacional?: string | null;
     concepts?: ConceptLike[];
@@ -192,12 +194,13 @@ export function factsFromEditorLine(
   return {
     expediente: line.expediente_laboral,
     categoria: line.categoria_ocupacional,
-    regular_hours: line.regular_hours,
-    accrued_days: line.accrued_days,
-    overtime_hours: line.overtime_hours,
-    overtime_amount: line.overtime_amount,
-    vacation_days: line.vacation_days,
-    vacation_amount: line.vacation_amount,
+    // Normaliza texto numérico/null/vacío a número (solo detección).
+    regular_hours: toNumber(line.regular_hours),
+    accrued_days: toNumber(line.accrued_days),
+    overtime_hours: toNumber(line.overtime_hours),
+    overtime_amount: toNumber(line.overtime_amount),
+    vacation_days: toNumber(line.vacation_days),
+    vacation_amount: toNumber(line.vacation_amount),
     total_complementos: compl,
     total_other_earnings: otros,
     other_siglas: siglas,

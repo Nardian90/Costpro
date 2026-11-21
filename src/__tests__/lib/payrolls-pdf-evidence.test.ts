@@ -13,6 +13,7 @@
 import { describe, it } from 'vitest';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import type { jsPDF } from 'jspdf';
 import { buildPayrollPdf } from '@/lib/payrolls/pdf';
 import type { Payroll, PayrollItem } from '@/lib/payrolls/types';
 
@@ -66,9 +67,11 @@ const BASE: Payroll = {
   items: [ana, luis],
 };
 
-const save = (doc: { output: (t: string) => ArrayBuffer }, name: string) => {
+// jsPDF.output() devuelve una unión (string para algunos tipos); con
+// 'arraybuffer' el resultado es ArrayBuffer — se acota explícitamente.
+const save = (doc: jsPDF, name: string) => {
   mkdirSync(OUT, { recursive: true });
-  writeFileSync(`${OUT}/${name}`, new Uint8Array(doc.output('arraybuffer')));
+  writeFileSync(`${OUT}/${name}`, new Uint8Array(doc.output('arraybuffer') as ArrayBuffer));
 };
 
 describe('evidencia visual del PDF de nóminas (solo generación)', () => {
