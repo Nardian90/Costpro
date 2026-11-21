@@ -120,6 +120,37 @@ export const HOME_ITEM: NavEntry = {
 // ────────────────────────────────────────────────────────────────────
 
 export const NAVIGATION_SECTIONS: NavEntry[] = [
+  // ═════════════ ESTADOS FINANCIEROS (módulo de primer nivel) ═════════════
+  // MISIÓN CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001 (2026-11-22):
+  // Estados Financieros deja de ser hoja del grupo OPERACIÓN y pasa a ser
+  // SECCIÓN PRINCIPAL independiente, primera del menú, al mismo nivel
+  // jerárquico que OPERACIÓN / RECURSOS HUMANOS. Es un NavEntry type 'item'
+  // de primer nivel (mismo patrón de acceso directo que «Inicio»): el
+  // Sidebar la renderiza con su icono, resaltado activo en todas sus
+  // subrutas (isSidebarItemActive: igualdad exacta del ViewType) y acceso
+  // directo con un clic — sin desplegar OPERACIÓN ni entrar en focus mode.
+  // NO es duplicación: la entrada se RETIRA del grupo operacion (ver
+  // comentario allí) y sigue siendo LA MISMA vista ViewType
+  // 'financial-statements' — misma ruta (/?view=financial-statements),
+  // mismos roles, mismas keywords, mismo icono. Los derivados (paleta,
+  // sheet móvil, breadcrumbs, guard) se adaptan a ítems de primer nivel
+  // en sus propios walk — sin listas paralelas.
+  {
+    // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros, generados
+    // automáticamente por el motor de partida doble.
+    // Roles: superficie financiera de consulta (admin/manager/encargado);
+    // el gate REAL de acceso a la tienda lo hace cada RPC server-side.
+    // CP-FIN-001 (2026-11-19): el badge «En desarrollo» añadido el 18-11
+    // fue RETIRADO por orden del propietario — Estados Financieros se
+    // presenta como funcionalidad disponible.
+    id: 'financial-statements',
+    label: 'Estados Financieros',
+    description: 'Situación, rendimiento y dashboard por tienda.',
+    icon: BarChart3,
+    type: 'item',
+    roles: ['admin', 'manager', 'encargado'],
+    keywords: ['estados financieros', 'balance', 'situación financiera', 'estado de situación', 'estado de rendimiento', 'resultado', 'utilidad', 'patrimonio', 'activos', 'pasivos', 'partida doble', 'cp-fin', 'ecuación contable', 'dashboard financiero'],
+  },
   // ═══════════════════════ OPERACIÓN ═══════════════════════
   {
     id: 'operacion',
@@ -154,23 +185,12 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         navClass: 'primary',
         keywords: ['dashboard', 'tienda', 'kpi', 'indicadores', 'consolidado', 'resumen', 'inicio', 'productos', 'comportamiento', 'insights', 'orden de compra'],
       },
-      {
-        // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros, generados
-        // automáticamente por el motor de partida doble (misma sección que el
-        // Dashboard de la tienda: lectura ejecutiva de la operación diaria).
-        // Roles: superficie financiera de consulta (admin/manager/encargado);
-        // el gate REAL de acceso a la tienda lo hace cada RPC server-side.
-        // CP-FIN-001 (2026-11-19): el badge «En desarrollo» añadido el 18-11
-        // fue RETIRADO por orden del propietario — Estados Financieros se
-        // presenta como funcionalidad disponible.
-        id: 'financial-statements',
-        label: 'Estados Financieros',
-        description: 'Situación, rendimiento y dashboard por tienda.',
-        icon: BarChart3,
-        type: 'item',
-        roles: ['admin', 'manager', 'encargado'],
-        keywords: ['estados financieros', 'balance', 'situación financiera', 'estado de situación', 'estado de rendimiento', 'resultado', 'utilidad', 'patrimonio', 'activos', 'pasivos', 'partida doble', 'cp-fin', 'ecuación contable', 'dashboard financiero'],
-      },
+      // MISIÓN CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001
+      // (2026-11-22): la hoja «Estados Financieros» (CP-FIN, Vista B) fue
+      // trasladada a SECCIÓN PROPIA de primer nivel — primera del menú. NO
+      // se duplica aquí: la única definición vive ahora como NavEntry
+      // type 'item' al inicio de NAVIGATION_SECTIONS (misma vista, mismos
+      // roles, mismo icono, misma ruta).
       // CAMBIO 4 (HOME/SALES/PERFORMANCE DEFAULTS): grupo explícito "Ventas"
       // con la acción de vender + las opciones administrativas. La antigua
       // entrada plana "Ventas" (sales-hub) pasa a llamarse "Opciones" para
@@ -1485,7 +1505,7 @@ export function flattenNavigation(): FlatNavItem[] {
             label: e.label,
             description: e.description,
             icon: e.icon,
-            category: section.label,
+            category: e === section ? e.label : section.label,
             roles: effective,
             isBeta: e.isBeta,
             isNew: e.isNew,
@@ -1498,7 +1518,13 @@ export function flattenNavigation(): FlatNavItem[] {
         }
       }
     };
-    walk(section.children || [], sectionRoles);
+    // CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001 (2026-11-22):
+    // la sección puede ser un NavEntry type 'item' de primer nivel (módulo
+    // directo, p. ej. «Estados Financieros»). Se incluye la sección misma
+    // en el walk: para grupos/submenús el flujo es IDÉNTICO al previo (el
+    // nodo sección no es hoja → cae a walk(children)); para ítems de primer
+    // nivel se emiten con categoría propia, sin listas paralelas.
+    walk([section], sectionRoles);
   }
   return out;
 }
@@ -1615,8 +1641,9 @@ export const VALID_VIEWS: Set<string> = new Set([
   // SectionHubView) + vista canónica del documento Ingreso/Egreso.
   'caja', 'ingresos_egresos',
   'operacion', 'recursos-humanos', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
-  // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros (OPERACIÓN,
-  // junto al Dashboard de la tienda: Situación / Rendimiento / Dashboard).
+  // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros.
+  // CP-NAV-...-001 (2026-11-22): sección PROPIA de primer nivel (primera del
+  // menú); misma vista, misma ruta, mismos roles.
   'financial-statements',
   // MISIÓN CP-FIN (2026-11-13): Vista A — Configuración de Documentos
   // (ANÁLISIS: reglas de partida doble del motor financiero).

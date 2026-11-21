@@ -148,8 +148,8 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
     ]);
     await page.goto('/');
     await expect(page.locator('[aria-label="Cerrar sesión"]').first()).toBeVisible({ timeout: 45_000 });
-    await page.getByText('OPERACIÓN', { exact: true }).first().click();
-    await page.waitForTimeout(1200);
+    // CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001: «Estados Financieros»
+    // es módulo de primer nivel — acceso DIRECTO sin desplegar OPERACIÓN.
     await page.getByText('Estados Financieros', { exact: true }).first().click();
     await page.getByTestId('financial-statements-view').waitFor({ state: 'visible', timeout: 25_000 });
     await page.getByTestId('tab-conciliacion').click();
@@ -170,8 +170,8 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
     ]);
     await page.goto('/');
     await expect(page.locator('[aria-label="Cerrar sesión"]').first()).toBeVisible({ timeout: 45_000 });
-    await page.getByText('OPERACIÓN', { exact: true }).first().click();
-    await page.waitForTimeout(1200);
+    // CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001: «Estados Financieros»
+    // es módulo de primer nivel — acceso DIRECTO sin desplegar OPERACIÓN.
     await page.getByText('Estados Financieros', { exact: true }).first().click();
     await page.getByTestId('financial-statements-view').waitFor({ state: 'visible', timeout: 25_000 });
     await page.getByTestId('tab-conciliacion').click();
@@ -188,8 +188,8 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
     ]);
     await page.goto('/');
     await expect(page.locator('[aria-label="Cerrar sesión"]').first()).toBeVisible({ timeout: 45_000 });
-    await page.getByText('OPERACIÓN', { exact: true }).first().click();
-    await page.waitForTimeout(1200);
+    // CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001: «Estados Financieros»
+    // es módulo de primer nivel — acceso DIRECTO sin desplegar OPERACIÓN.
     await page.getByText('Estados Financieros', { exact: true }).first().click();
     await page.getByTestId('financial-statements-view').waitFor({ state: 'visible', timeout: 25_000 });
     await page.getByTestId('tab-rendimiento').click();

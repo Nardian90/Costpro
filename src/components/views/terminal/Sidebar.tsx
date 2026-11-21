@@ -266,6 +266,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 onClick={() => handleNavClick(item.id as ViewType)}
                 onMouseEnter={() => onPrefetchView(item.id as ViewType)}
                 aria-current={isActive ? 'page' : undefined}
+                aria-label={item.label}
                 className={cn(
                   "w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2",
                   isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "text-sidebar-foreground/80 hover:bg-primary/10 hover:text-primary"
@@ -461,8 +462,12 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     if (focusModuleId) return; // Don't override manual focus
     // COSTPRO 4: el auto-focus SOLO considera módulos visibles para el rol —
     // nunca enfoca secciones que el filtro de permisos eliminó.
+    // CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001 (2026-11-22):
+    // los módulos de primer nivel type 'item' (p. ej. «Estados Financieros»)
+    // NO entran en focus mode: son hojas directas con resaltado propio
+    // (renderNavItem) y sin hijos — el focus UI quedaría vacío.
     for (const mod of allNavigation) {
-      if (hasViewInModule(mod, currentView)) {
+      if (mod.type !== 'item' && hasViewInModule(mod, currentView)) {
         queueMicrotask(() => enterFocusMode(mod.id));
         return;
       }

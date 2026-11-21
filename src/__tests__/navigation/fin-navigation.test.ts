@@ -73,6 +73,26 @@ describe('MISIÓN CP-FIN — navegación del sistema financiero', () => {
     expect(ids.length).toBeGreaterThan(3);
   });
 
+  // MISIÓN CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001 (2026-11-22):
+  // Estados Financieros es SECCIÓN PROPIA de primer nivel — primera del menú.
+  it('Estados Financieros es módulo de primer nivel: primera sección, fuera de OPERACIÓN, sin duplicados', () => {
+    // 1) Primera sección del menú (al mismo nivel que OPERACIÓN).
+    expect(NAVIGATION_SECTIONS[0].id).toBe('financial-statements');
+    expect(NAVIGATION_SECTIONS[0].label).toBe('Estados Financieros');
+    expect(NAVIGATION_SECTIONS[0].type).toBe('item');
+    // 2) Ya NO es hoja del grupo OPERACIÓN (no duplicación).
+    const operacion = NAVIGATION_SECTIONS.find(s => s.id === 'operacion');
+    const operacionIds = JSON.stringify(operacion?.children?.map(c => c.id) ?? []);
+    expect(operacionIds).not.toContain('financial-statements');
+    // 3) UNA sola aparición en todo el árbol aplanado (paleta/sheet/header).
+    const flat = flattenNavigation();
+    expect(flat.filter(l => l.id === 'financial-statements')).toHaveLength(1);
+    // 4) Icono conservado (BarChart3) y roles intactos.
+    const fs = NAVIGATION_SECTIONS[0];
+    expect(fs.icon).toBeDefined();
+    expect(fs.roles).toEqual(['admin', 'manager', 'encargado']);
+  });
+
   // CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-19):
   // orden del propietario — el badge «En desarrollo» añadido el 18-11 fue
   // RETIRADO: Estados Financieros se presenta como funcionalidad disponible.
