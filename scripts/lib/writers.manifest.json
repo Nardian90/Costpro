@@ -82,7 +82,8 @@
     "scripts/m110-build-gen3-prod.mjs",
     "scripts/m110-recon-final.mjs",
     "scripts/m111-impact-global-extract.mjs",
-    "scripts/m111-prod-recovery-check.mjs"
+    "scripts/m111-prod-recovery-check.mjs",
+    "scripts/m111-apply-migration-prod.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",

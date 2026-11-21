@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-21T12:58:07.990Z
+-- Captured  : 2026-11-21T18:31:53.452Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 221 (SECURITY DEFINER write functions, public schema)
+-- Functions : 222 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -5904,6 +5904,12 @@ DECLARE
   -- MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): componentes de pago por
   -- moneda REAL — importe efectivamente cobrado en CUP y en USD por método.
   v_comp jsonb;
+  -- CP-LOG-UNIFICATION-001 (§5.1): referencia de la transferencia por
+  -- componente (número de operación bancaria) + índice del componente
+  -- para la clave de idempotencia (dos transferencias con referencias
+  -- distintas ya no colisionan: cada pago conserva SU referencia).
+  v_comp_ref text;
+  v_comp_idx integer;
   v_comp_method text;
   v_comp_cur text;
   v_comp_amt numeric;
@@ -6508,13 +6514,19 @@ BEGIN
     -- PK) → filas duplicadas en la fuente autoritativa del Reporte Entrega.
     -- Fail-closed coherente con la regla de la misión (Fase B: «Rechaza
     -- componentes duplicados») y con la agregación previa de pools (§13.7).
+    -- CP-LOG-UNIFICATION-001 (§5.1): la referencia entra al GROUP BY — dos
+    -- transferencias del mismo medio y moneda con referencias DISTINTAS son
+    -- DOS pagos bancarios legítimos (cada una con SU número de operación y
+    -- SU fila de payment_transactions). El duplicado real (mismo método+
+    -- moneda con la MISMA o sin referencia) sigue rechazado: es el bug de
+    -- agregación que esta regla cerró (Fase B 2026-10-24).
     IF EXISTS (
       SELECT 1
       FROM jsonb_array_elements(p_payment_components) c
-      GROUP BY lower(btrim(c->>'method')), upper(btrim(c->>'currency'))
+      GROUP BY lower(btrim(c->>'method')), upper(btrim(c->>'currency')), NULLIF(btrim(COALESCE(c->>'reference', '')), '')
       HAVING count(*) > 1
     ) THEN
-      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componentes duplicados — agrupa los importes del mismo método y moneda en un solo componente [{method, currency, amount}]';
+      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componentes duplicados — agrupa los importes del mismo método y moneda (y misma referencia) en un solo componente [{method, currency, amount, reference?}]';
     END IF;
 
     -- Tasa USD de la operación (jerarquía §6.1 — misma fuente que v_server_rate)
@@ -6863,10 +6875,15 @@ BEGIN
   -- pools del INSERT de la venta se derivaron de estos mismos componentes a
   -- esta misma tasa. Sin componentes: flujo previo (pool canónico CUP).
   IF v_components_ok THEN
+    v_comp_idx := 0;
     FOR v_comp IN SELECT * FROM jsonb_array_elements(p_payment_components) LOOP
+      v_comp_idx := v_comp_idx + 1;
       v_comp_method := lower(btrim(COALESCE(v_comp->>'method', '')));
       v_comp_cur := upper(btrim(COALESCE(v_comp->>'currency', '')));
       v_comp_amt := COALESCE(NULLIF(v_comp->>'amount', '')::numeric, NULL);
+      -- CP-LOG-UNIFICATION-001 (§5.1): referencia de la transferencia (opcional,
+      -- 400 chars máx; NULL para componentes sin referencia).
+      v_comp_ref := left(NULLIF(btrim(COALESCE(v_comp->>'reference', '')), ''), 400);
       -- CP-FIN-004: normalización del heredado en el MISMO punto único que
       -- §13.7 (este bucle re-parsea v_comp_method: sin esta línea, un
       -- componente 'zelle' de cliente cachado se persistiría tal cual).
@@ -6887,12 +6904,17 @@ BEGIN
       INSERT INTO public.payment_transactions (
         store_id, ref_type, ref_id, transaction_id,
         amount, payment_method, currency, exchange_rate,
-        payment_date, paid_by, idempotency_key
+        payment_date, paid_by, idempotency_key, reference
       ) VALUES (
         p_store_id, 'sale', v_tx_id, v_tx_id,
         v_comp_amt, v_comp_method, v_comp_cur,
         CASE WHEN v_comp_cur = 'USD' THEN v_usd_rate ELSE 1.0 END,
-        v_eff, v_uid, 'pay-' || v_comp_method || '-' || v_comp_cur || '-' || v_tx_id::text
+        v_eff, v_uid,
+        -- CP-LOG-UNIFICATION-001 (§5.1): índice en la clave — dos componentes
+        -- del mismo medio+moneda (p. ej. dos transferencias con referencias
+        -- distintas) ya no colisionan en el índice único de idempotencia.
+        'pay-' || v_comp_method || '-' || v_comp_cur || '-' || v_comp_idx::text || '-' || v_tx_id::text,
+        v_comp_ref
       ) RETURNING id INTO v_pt_id;
     END LOOP;
   ELSIF v_cash_amt > 0 THEN
@@ -8895,11 +8917,17 @@ BEGIN
                         AND e.event = 'pago' AND e.payment_ref = pt.id
                         AND e.generation_id = v_new)
     UNION ALL
-    -- CP-FIN-110: reconocimiento de órdenes completadas (revenue + consumo del anticipo).
+    -- CP-FIN-111 (P0-1): reconocimiento de órdenes RECONOCIBLES — status
+    -- 'completed', o 'closed' CON evidencia documental de finalización real
+    -- (completion_date, fijada por el RPC de cierre completed→closed). Las
+    -- órdenes voided/reversed y las closed SIN evidencia de ejecución NO se
+    -- convierten en ingresos (misión §3: nunca todas las closed por defecto).
+    -- El trigger fin_trg_production_orders no puede dispararse retroactivamente:
+    -- el pase 5 cubre las órdenes closed-completadas históricas.
     SELECT 'ORDEN_TRABAJO', o.id, 'reconocimiento', NULL
     FROM public.production_orders o
     WHERE o.store_id = p_store_id AND o.order_type IN ('service', 'work')
-      AND o.status = 'completed'
+      AND (o.status = 'completed' OR (o.status = 'closed' AND o.completion_date IS NOT NULL))
       AND NOT EXISTS (SELECT 1 FROM public.fin_entries e
                       WHERE e.document_type = 'ORDEN_TRABAJO' AND e.document_id = o.id
                         AND e.event = 'reconocimiento' AND e.generation_id = v_new)
@@ -9639,6 +9667,192 @@ BEGIN
 
   RETURN jsonb_build_object('run_id', v_id, 'ejecutado_en', now(),
                             'resumen', v_res -> 'resumen');
+END $function$
+
+
+-- @contract-function name=fin_rectification_apply args="p_store_id uuid, p_document_number text, p_document_type text, p_economic_date date, p_description text, p_movements jsonb, p_generation_id uuid, p_user_id uuid, p_repair boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_rectification_apply(p_store_id uuid, p_document_number text, p_document_type text, p_economic_date date, p_description text, p_movements jsonb, p_generation_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid, p_repair boolean DEFAULT false)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_gen uuid := coalesce(p_generation_id, public.fin_active_generation(p_store_id));
+  v_entry_id uuid;
+  v_expected int := jsonb_array_length(p_movements);
+  v_debit numeric := 0; v_credit numeric := 0;
+  v_n_mov int := 0; v_saldo numeric := 0;
+  v_m jsonb; t jsonb; r record;
+  v_audit uuid;
+  v_count int;
+  v_coherente boolean;
+  v_antes int := 0;
+BEGIN
+  -- ACL pura (patrón fin_generation_build / fin_rectify_*): el canal de
+  -- ejecución se restringe por GRANT a service_role (§4); sin chequeo interno
+  -- de auth.role() — mismo diseño que el resto del motor.
+  IF p_store_id IS NULL OR p_document_number IS NULL OR p_document_type IS NULL
+     OR p_economic_date IS NULL OR p_movements IS NULL
+     OR jsonb_typeof(p_movements) <> 'array' OR v_expected = 0 THEN
+    RAISE EXCEPTION 'ERR_RECT_PARAMS_INVALIDOS: store/document_number/type/date/movements[] no vacíos';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.stores s WHERE s.id = p_store_id) THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: tienda %', p_store_id;
+  END IF;
+  IF v_gen IS NULL OR NOT EXISTS (
+       SELECT 1 FROM public.fin_posting_generations g
+       WHERE g.id = v_gen AND g.store_id = p_store_id
+         AND g.status IN ('active', 'building', 'candidate')) THEN
+    RAISE EXCEPTION 'ERR_GENERACION_NO_ENCONTRADA: generación destino % inválida para la tienda', v_gen;
+  END IF;
+
+  -- Serialización por (tienda, documento): idempotencia bajo concurrencia.
+  PERFORM pg_advisory_xact_lock(hashtext('fin_rect:' || p_store_id::text || ':' || p_document_number));
+
+  -- Validación estructural de movements — fail-closed ANTES de escribir nada.
+  FOR v_m IN SELECT * FROM jsonb_array_elements(p_movements) LOOP
+    IF v_m ->> 'categoria' IS NULL OR NOT EXISTS (
+         SELECT 1 FROM public.fin_categories c
+         WHERE c.code = v_m ->> 'categoria' AND c.is_active) THEN
+      RAISE EXCEPTION 'ERR_CATEGORIA_INVALIDA: %', v_m ->> 'categoria';
+    END IF;
+    IF (v_m ->> 'sentido') NOT IN ('debito', 'credito') THEN
+      RAISE EXCEPTION 'ERR_SENTIDO_INVALIDO: %', v_m ->> 'sentido';
+    END IF;
+    IF coalesce((v_m ->> 'amount')::numeric, 0) <= 0 THEN
+      RAISE EXCEPTION 'ERR_MONTO_INVALIDO: % (el motor prohíbe movimientos <= 0)', v_m ->> 'amount';
+    END IF;
+  END LOOP;
+
+  -- Partida doble EXIGIDA para toda rectificación (validación previa).
+  SELECT coalesce(sum(CASE WHEN m ->> 'sentido' = 'debito'  THEN round((m ->> 'amount')::numeric, 2) ELSE 0 END), 0),
+         coalesce(sum(CASE WHEN m ->> 'sentido' = 'credito' THEN round((m ->> 'amount')::numeric, 2) ELSE 0 END), 0)
+    INTO v_debit, v_credit
+  FROM jsonb_array_elements(p_movements) m;
+  IF abs(v_debit - v_credit) > 0.005 THEN
+    RAISE EXCEPTION 'ERR_RECTIFICACION_DESQUILIBRADA: débitos=% créditos=%', v_debit, v_credit;
+  END IF;
+
+  -- Idempotencia completa: asiento previo en la generación destino.
+  SELECT count(*) INTO v_count
+  FROM public.fin_entries e
+  WHERE e.store_id = p_store_id AND e.generation_id = v_gen
+    AND e.document_number = p_document_number AND e.event = 'ajuste_manual';
+  IF v_count > 1 THEN
+    RAISE EXCEPTION 'ERR_RECTIFICACION_AMBIGUA: % asientos % en la generación %', v_count, p_document_number, v_gen;
+  END IF;
+
+  IF v_count = 1 THEN
+    SELECT e.id INTO v_entry_id
+    FROM public.fin_entries e
+    WHERE e.store_id = p_store_id AND e.generation_id = v_gen
+      AND e.document_number = p_document_number AND e.event = 'ajuste_manual';
+
+    SELECT count(*),
+           coalesce(round(sum(CASE WHEN m.sense = 'debito' THEN m.amount_cup ELSE -m.amount_cup END), 2), 0)
+      INTO v_n_mov, v_saldo
+    FROM public.fin_movements m WHERE m.entry_id = v_entry_id;
+    v_antes := v_n_mov;
+
+    -- Coherencia EXACTA: multiconjunto de movimientos (categoría|sentido|importe,
+    -- serializado y ordenado) idéntico al esperado. NOTA: paréntesis explícitos —
+    -- en PostgreSQL || enlaza más fuerte que ->>, y la cadena sin paréntesis
+    -- se parsea como ((... || x) ->> 'sentido') → error text ->> unknown.
+    SELECT
+      (SELECT string_agg(m.category_code || '|' || m.sense || '|' || round(m.amount, 2)::text, ';' ORDER BY m.category_code, m.sense, round(m.amount, 2))
+         FROM public.fin_movements m WHERE m.entry_id = v_entry_id)
+      =
+      (SELECT string_agg((x ->> 'categoria') || '|' || (x ->> 'sentido') || '|' || round((x ->> 'amount')::numeric, 2)::text, ';'
+               ORDER BY x ->> 'categoria', x ->> 'sentido', round((x ->> 'amount')::numeric, 2))
+         FROM jsonb_array_elements(p_movements) AS je(x))
+    INTO v_coherente;
+
+    IF v_n_mov >= 1 AND v_coherente AND abs(v_saldo) <= 0.005 THEN
+      RETURN jsonb_build_object('status', 'ya_completa', 'entry_id', v_entry_id,
+        'generation_id', v_gen, 'movimientos', v_n_mov, 'saldo', v_saldo);
+    END IF;
+
+    IF NOT coalesce(p_repair, false) THEN
+      RAISE EXCEPTION 'ERR_RECTIFICACION_PARCIAL: asiento % con % movimientos (esperados %, saldo %) — complete o repare con p_repair = true', v_entry_id, v_n_mov, v_expected, v_saldo;
+    END IF;
+
+    -- Reparación CONTROLADA (misma transacción): movimientos reemplazados por
+    -- los esperados; snapshot actualizado; traza de auditoría obligatoria.
+    DELETE FROM public.fin_movements WHERE entry_id = v_entry_id;
+    UPDATE public.fin_entries
+       SET movements_snapshot = p_movements, description = coalesce(p_description, description)
+     WHERE id = v_entry_id;
+    FOR t IN SELECT * FROM jsonb_array_elements(p_movements) LOOP
+      INSERT INTO public.fin_movements (
+        entry_id, store_id, category_code, sense, amount, currency, exchange_rate,
+        economic_date, document_number, description, currency_origin, amount_origin, traza)
+      VALUES (
+        v_entry_id, p_store_id, t ->> 'categoria', t ->> 'sentido', (t ->> 'amount')::numeric,
+        coalesce(t ->> 'currency', 'CUP'), coalesce((t ->> 'exchange_rate')::numeric, 1),
+        p_economic_date, p_document_number, coalesce(t ->> 'description', p_description),
+        t ->> 'currency_origin', (t ->> 'amount_origin')::numeric, coalesce(t -> 'traza', '{}'::jsonb));
+    END LOOP;
+    SELECT count(*),
+           coalesce(round(sum(CASE WHEN m.sense = 'debito' THEN m.amount_cup ELSE -m.amount_cup END), 2), 0)
+      INTO v_n_mov, v_saldo
+    FROM public.fin_movements m WHERE m.entry_id = v_entry_id;
+    IF v_n_mov <> v_expected OR abs(v_saldo) > 0.005 THEN
+      RAISE EXCEPTION 'ERR_RECTIFICACION_VERIFICACION: tras reparar quedan %/% movimientos (saldo %)', v_n_mov, v_expected, v_saldo;
+    END IF;
+    INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data, store_id)
+    VALUES (p_user_id, 'SYSTEM_RECTIFICATION_REPAIRED', 'fin_entries', v_entry_id,
+            jsonb_build_object('entrada', v_entry_id, 'movimientos_antes', v_antes),
+            jsonb_build_object('entry_id', v_entry_id, 'documento', p_document_number,
+                               'movimientos', v_expected, 'saldo', v_saldo),
+            p_store_id) RETURNING id INTO v_audit;
+    RETURN jsonb_build_object('status', 'reparada', 'entry_id', v_entry_id,
+      'generation_id', v_gen, 'movimientos', v_n_mov, 'saldo', v_saldo, 'audit_id', v_audit);
+  END IF;
+
+  -- Creación ATÓMICA: asiento + TODOS los movimientos en la misma transacción.
+  INSERT INTO public.fin_entries (
+    store_id, document_type, document_id, document_number, event, payment_ref,
+    economic_date, rule_version_id, movements_snapshot, description, created_by, generation_id)
+  VALUES (
+    p_store_id, p_document_type, NULL, p_document_number, 'ajuste_manual', NULL,
+    p_economic_date, NULL, p_movements, p_description, p_user_id, v_gen)
+  RETURNING id INTO v_entry_id;
+
+  FOR t IN SELECT * FROM jsonb_array_elements(p_movements) LOOP
+    INSERT INTO public.fin_movements (
+      entry_id, store_id, category_code, sense, amount, currency, exchange_rate,
+      economic_date, document_number, description, currency_origin, amount_origin, traza)
+    VALUES (
+      v_entry_id, p_store_id, t ->> 'categoria', t ->> 'sentido', (t ->> 'amount')::numeric,
+      coalesce(t ->> 'currency', 'CUP'), coalesce((t ->> 'exchange_rate')::numeric, 1),
+      p_economic_date, p_document_number, coalesce(t ->> 'description', p_description),
+      t ->> 'currency_origin', (t ->> 'amount_origin')::numeric, coalesce(t -> 'traza', '{}'::jsonb));
+  END LOOP;
+
+  -- Verificación de partida doble POST-inserción (fallo → revierte TODO).
+  SELECT count(*),
+         coalesce(round(sum(CASE WHEN m.sense = 'debito' THEN m.amount_cup ELSE -m.amount_cup END), 2), 0)
+    INTO v_n_mov, v_saldo
+  FROM public.fin_movements m WHERE m.entry_id = v_entry_id;
+  IF v_n_mov <> v_expected OR abs(v_saldo) > 0.005 THEN
+    RAISE EXCEPTION 'ERR_RECTIFICACION_VERIFICACION: %/% movimientos (saldo %) — transacción revertida', v_n_mov, v_expected, v_saldo;
+  END IF;
+
+  -- Documento de auditoría + verificación (misma transacción).
+  INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data, store_id)
+  VALUES (p_user_id, 'SYSTEM_RECTIFICATION_APPLIED', 'fin_entries', v_entry_id,
+          jsonb_build_object('entrada', NULL),
+          jsonb_build_object('entry_id', v_entry_id, 'documento', p_document_number,
+                             'tipo', p_document_type, 'fecha_economica', p_economic_date,
+                             'movimientos', v_expected, 'debitos', v_debit, 'creditos', v_credit),
+          p_store_id) RETURNING id INTO v_audit;
+  IF v_audit IS NULL THEN
+    RAISE EXCEPTION 'ERR_AUDITORIA_FALTANTE: documento de auditoría no insertado';
+  END IF;
+
+  RETURN jsonb_build_object('status', 'creada', 'entry_id', v_entry_id,
+    'generation_id', v_gen, 'movimientos', v_n_mov, 'saldo', v_saldo, 'audit_id', v_audit);
 END $function$
 
 
@@ -15448,8 +15662,9 @@ BEGIN
   --    caminos. Las liquidaciones concurrentes del mismo documento quedan
   --    SERIALIZADAS: la segunda lee el saldo ya actualizado.
   IF p_ref_type = 'receipt' THEN
-    SELECT store_id, total_cost, 'CUP', 1
-      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
+    -- CP-LOG-UNIFICATION-001 (§3): el estado de la recepción entra al lock.
+    SELECT store_id, total_cost, 'CUP', 1, status
+      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate, v_doc_status
     FROM public.receipts WHERE id = p_ref_id FOR UPDATE;
   ELSIF p_ref_type = 'service' THEN
     SELECT store_id, total_amount, currency, COALESCE(exchange_rate, 1), status
@@ -15469,6 +15684,16 @@ BEGIN
 
   IF v_doc_store_id != p_store_id THEN
     RAISE EXCEPTION 'El documento no pertenece a la tienda especificada';
+  END IF;
+
+  -- CP-LOG-UNIFICATION-001 (§3): gate de estado de recepciones (espejo del
+  -- batch): una recepción ANULADA o REVERTIDA no admite pagos nuevos (la
+  -- reversión ya revirtió sus pagos). Pending/confirmed/active/partial
+  -- siguen admitidos — comportamiento histórico intacto.
+  IF p_ref_type = 'receipt' AND COALESCE(v_doc_status, 'active') IN ('voided', 'reversed') THEN
+    RAISE EXCEPTION
+      'ERR_RECEIPT_NOT_PAYABLE: la recepción está % y no admite pagos nuevos',
+      v_doc_status;
   END IF;
 
   -- Idempotencia (DESPUÉS del lock: dos envíos con la misma clave quedan
