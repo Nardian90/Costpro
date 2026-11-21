@@ -24,11 +24,18 @@
  *    la línea), no inferencia por moneda.
  */
 import React, { useCallback, useEffect, useState } from 'react';
-import { ChevronRight, ExternalLink, Loader2, RefreshCw, Settings2 } from 'lucide-react';
+import { ChevronRight, ExternalLink, FileSpreadsheet, FileText, Loader2, RefreshCw, Settings2 } from 'lucide-react';
 import { cn, formatLabeledCurrency } from '@/lib/utils';
 import { useAuthStore, useUIStore } from '@/store';
 import { toast } from 'sonner';
 import { fetchCategoryDetail } from './fin-api';
+import {
+  exportCategoryMovementsExcel,
+  exportCategoryMovementsPdf,
+  fetchAllCategoryMovements,
+} from './movement-exporters';
+import { ExportPeriodDialog } from './ExportPeriodDialog';
+import { havanaNow, toDateInputValue } from '@/lib/sales-dashboard/periods';
 import type { MovementRow } from './types';
 
 const PAGE_SIZE = 20;
@@ -124,6 +131,53 @@ export function CategoryDetailPanel({
   // determinista y no mezcla monedas. El orden canónico (fecha/posted) es el
   // default del ledger.
   const [amountSort, setAmountSort] = useState<'none' | 'desc' | 'asc'>('none');
+  // CP-FIN-REC-001/PR B: exportación documental del mayor completo.
+  const [exportingExcel, setExportingExcel] = useState(false);
+  const [pdfDialogOpen, setPdfDialogOpen] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const TODAY = () => toDateInputValue(havanaNow());
+
+  const exportCtx = {
+    storeName: categoryCode, // el nombre real de la tienda lo aporta la vista contenedora vía contexto de usuario si existe; se usa el código como fallback identificable
+    categoryName,
+    categoryCode,
+    from,
+    to,
+    esCorte: from === '1900-01-01',
+  };
+
+  /** Excel: TODOS los movimientos del servidor (no solo los cargados). */
+  const handleExportExcel = useCallback(async () => {
+    if (exportingExcel) return;
+    setExportingExcel(true);
+    try {
+      const result = await fetchAllCategoryMovements(storeId, categoryCode, from, to, token);
+      await exportCategoryMovementsExcel(result, exportCtx);
+      toast.success(`Excel generado: ${result.movimientos.length} de ${result.total} movimientos (hojas Movimientos + Resumen)`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error al exportar a Excel');
+    } finally {
+      setExportingExcel(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeId, categoryCode, from, to, token, exportingExcel, categoryName]);
+
+  /** PDF: se genera SOLO tras confirmar el período en el diálogo (misión §7.1). */
+  const handleGeneratePdf = useCallback(async (pdfFrom: string, pdfTo: string) => {
+    if (exportingPdf) return;
+    setExportingPdf(true);
+    try {
+      const result = await fetchAllCategoryMovements(storeId, categoryCode, pdfFrom, pdfTo, token);
+      await exportCategoryMovementsPdf(result, { ...exportCtx, from: pdfFrom, to: pdfTo });
+      setPdfDialogOpen(false);
+      toast.success(`PDF generado: ${result.movimientos.length} movimientos (${pdfFrom} — ${pdfTo})`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Error al generar el PDF');
+    } finally {
+      setExportingPdf(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeId, categoryCode, token, exportingPdf, categoryName]);
 
   const load = useCallback(
     async (offset: number) => {
@@ -362,26 +416,60 @@ export function CategoryDetailPanel({
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-[11px] text-muted-foreground tabular-nums">
           {movements.length} de {total} movimiento{total !== 1 ? 's' : ''}
         </span>
-        {movements.length < total && (
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
-            onClick={() => load(movements.length)}
-            disabled={loadingMore}
-            className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-widest text-primary hover:underline disabled:opacity-50 min-h-[36px]"
+            onClick={() => void handleExportExcel()}
+            disabled={exportingExcel || total === 0}
+            title="Exportar TODOS los movimientos del servidor a Excel (hojas Movimientos + Resumen)"
+            className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-muted-foreground hover:bg-muted transition-colors min-h-[36px] disabled:opacity-50"
+            data-testid="btn-export-excel-movimientos"
           >
-            {loadingMore ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <ChevronRight className="w-3 h-3" />
-            )}
-            Ver más
+            {exportingExcel ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileSpreadsheet className="w-3 h-3" />}
+            Exportar movimientos a Excel
           </button>
-        )}
+          <button
+            type="button"
+            onClick={() => setPdfDialogOpen(true)}
+            disabled={exportingPdf}
+            title="Exportar los movimientos de un período a PDF (solicita fechas)"
+            className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-muted-foreground hover:bg-muted transition-colors min-h-[36px] disabled:opacity-50"
+            data-testid="btn-export-pdf-movimientos"
+          >
+            {exportingPdf ? <Loader2 className="w-3 h-3 animate-spin" /> : <FileText className="w-3 h-3" />}
+            Exportar movimientos a PDF
+          </button>
+          {movements.length < total && (
+            <button
+              type="button"
+              onClick={() => load(movements.length)}
+              disabled={loadingMore}
+              className="inline-flex items-center gap-1 text-xs font-black uppercase tracking-widest text-primary hover:underline disabled:opacity-50 min-h-[36px]"
+            >
+              {loadingMore ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <ChevronRight className="w-3 h-3" />
+              )}
+              Ver más
+            </button>
+          )}
+        </div>
       </div>
+      <ExportPeriodDialog
+        open={pdfDialogOpen}
+        defaultFrom={from === '1900-01-01' ? '2026-01-01' : from}
+        defaultTo={to}
+        maxTo={TODAY()}
+        categoryLabel={`${categoryCode} · ${categoryName}`}
+        onClose={() => setPdfDialogOpen(false)}
+        onGenerate={(f, t) => void handleGeneratePdf(f, t)}
+        busy={exportingPdf}
+      />
     </div>
   );
 }
