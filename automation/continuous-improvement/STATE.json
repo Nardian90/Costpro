@@ -1,0 +1,63 @@
+{
+  "$schema_doc": "Esquema estable v1 (definido en PROGRAM.md §7). Cambiar el esquema exige misión propia. Estados por misión: queued | in_progress | completed | blocked | rejected. agent_lock evita ejecuciones simultáneas (PROGRAM.md §7.5). Nunca guardar secretos en este archivo.",
+  "schema_version": 1,
+  "program": {
+    "id": "CP-CI",
+    "name": "Programa de Mejora Continua COSTPRO",
+    "charter": "automation/continuous-improvement/PROGRAM.md",
+    "entrypoint": "automation/continuous-improvement/SCHEDULER_ENTRYPOINT.txt",
+    "baseline": "automation/continuous-improvement/BASELINE.md",
+    "eslint_baseline": "automation/continuous-improvement/ESLINT_BASELINE.json"
+  },
+  "git": {
+    "repository": "Nardian90/Costpro",
+    "base_branch": "main",
+    "baseline_sha": "6485e17",
+    "baseline_branch": "feat/cp-agent-foundation-001-20261121",
+    "baseline_note": "Mediciones BASELINE/ESLINT tomadas sobre la infra CP-AGENT-FOUNDATION-001 (6485e17), en base main@281d1df. last_validated_sha se actualiza al cerrar cada ciclo con el SHA del PR validado.",
+    "last_validated_sha": null
+  },
+  "current_cycle": {
+    "number": 1,
+    "status": "queued",
+    "mission_id": null,
+    "started_at": null,
+    "note": "null cuando no hay ejecución activa. status solo puede ser queued|in_progress aquí."
+  },
+  "cycles_completed": 0,
+  "last_run": {
+    "at": null,
+    "outcome": null,
+    "cycle_report": null
+  },
+  "agent_lock": {
+    "locked": false,
+    "locked_by": null,
+    "locked_at": null,
+    "doc": "Antes de ejecutar: si locked=true y locked_at <24h sin informe de ciclo correspondiente → detener como blocked. Al iniciar misión: locked=true, locked_by=<id ejecución>, locked_at=ISO. Al cerrar (éxito o bloqueo): locked=false SIEMPRE."
+  },
+  "missions": [
+    { "id": "CP-CI-001", "title": "Deuda técnica ESLint: migración incremental <button> crudo → <Button> y limpieza de disables muertos", "area": "deuda-tecnica", "priority": 5, "status": "queued", "file": "backlog/CP-CI-001-eslint-technical-debt.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "Baseline: 1595 advertencias; 1571 = regla V2.12.25 (no-restricted-syntax), 24 = disables sin uso. Unidades pequeñas (U1..U6)." },
+    { "id": "CP-CI-002", "title": "Calidad de componentes reutilizables (responsabilidades, duplicaciones, estados, a11y)", "area": "componentes", "priority": 5, "status": "queued", "file": "backlog/CP-CI-002-component-quality.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "Candidatos por lista de vigilancia del design system: 2 ViewSwitcher, botones paralelos atomic sin cva, IconButton variante primary." },
+    { "id": "CP-CI-003", "title": "Consistencia del design system en vistas (tokens vs hardcodes, jerarquía, light/dark)", "area": "design-system", "priority": 4, "status": "queued", "file": "backlog/CP-CI-003-design-system-consistency.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "Hardcodes conocidos: PageHeader.badgeVariantMap, atomic/ProductCard (border-white/5 decisión consciente — no tocar sin decisión)." },
+    { "id": "CP-CI-004", "title": "Accesibilidad: auditoría con herramientas reales y corrección de bloqueantes", "area": "accesibilidad", "priority": 3, "status": "queued", "file": "backlog/CP-CI-004-accessibility.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "axe-core ya instalado; specs e2e/accessibility.spec.ts y fc-accessibility.spec.ts existentes." },
+    { "id": "CP-CI-005", "title": "Responsive: auditoría multi-viewport y desbordamientos", "area": "responsive", "priority": 4, "status": "queued", "file": "backlog/CP-CI-005-responsive-design.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "e2e/mobile-viewport-audit.spec.ts (375/390/360/768) como regla base; hardening CSS ≤375/≤420 existente." },
+    { "id": "CP-CI-006", "title": "Calidad de interacción: estados de carga/vacío/error, feedback, confirmaciones", "area": "interaccion", "priority": 3, "status": "queued", "file": "backlog/CP-CI-006-interaction-quality.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "StateRenderer solo en 22/57 vistas: primera unidad = cobertura de estados en vistas de datos." },
+    { "id": "CP-CI-007", "title": "Rendimiento: oportunidades medidas, no especulativas", "area": "rendimiento", "priority": 6, "status": "queued", "file": "backlog/CP-CI-007-performance.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "gate:bundle + analyze disponibles; reglas react-best-practices async-*/bundle-*/rerender-*. Prohibido optimizar sin medición." },
+    { "id": "CP-CI-008", "title": "Fiabilidad funcional: auditoría de flujos y regresiones (preservando reglas financieras)", "area": "fiabilidad", "priority": 2, "status": "queued", "file": "backlog/CP-CI-008-functional-reliability.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "priority=2 corresponde al ÁREA (flujos de negocio), no a un hallazgo crítico activo: al baseline no hay defecto P1/P2 identificado. Sin hallazgo crítico nuevo, se ejecuta según orden del programa (primero next_recommended)." }
+  ],
+  "next_recommended": {
+    "mission_id": "CP-CI-001",
+    "justification": "Primera misión: reduce deuda estructurada conocida y de paso libera la señal de lint para ciclos futuros (un saldo limpio de la regla V2.12.25 hace visibles otras categorías). Área deuda-tecnica (P5) sin evidencia de críticos abiertos al baseline. Unidad U1 acotada y verificable.",
+    "set_at": "2026-11-21",
+    "set_by": "CP-CONTINUOUS-IMPROVEMENT-001"
+  },
+  "priorities_reference": {
+    "P1": "Crítico: seguridad, multi-tenant, integridad financiera, corrupción de datos",
+    "P2": "Errores funcionales / pérdida de información",
+    "P3": "UX, accesibilidad, fiabilidad importantes",
+    "P4": "Consistencia design system y responsive",
+    "P5": "Deuda técnica, calidad de componentes, ESLint",
+    "P6": "Rendimiento y mantenibilidad"
+  }
+}

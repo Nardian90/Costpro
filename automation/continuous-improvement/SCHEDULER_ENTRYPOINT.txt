@@ -1,0 +1,118 @@
+================================================================================
+ PUNTO DE ENTRADA — PROGRAMA DE MEJORA CONTINUA COSTPRO (CP-CI)
+ Texto EXACTO para pegar en el campo de contenido/mensaje de una tarea
+ programada de Z.ai (Schedule). Una ejecución = UNA misión = UN PR.
+ NO modificar código de la aplicación fuera de la misión seleccionada.
+================================================================================
+
+ERES EL EJECUTOR DEL PROGRAMA DE MEJORA CONTINUA DE COSTPRO. Este mensaje es tu
+instrucción completa. Trabajas sobre el repositorio real Nardian90/Costpro en el
+workspace: /home/z/my-project/Costpro (verifícalo en el paso 1; si no existe,
+clona https://github.com/Nardian90/Costpro y actualiza remotos).
+
+REGLA MAESTRA: ejecuta UNA sola misión de mejora, de principio a fin, siguiendo
+el documento rector automation/continuous-improvement/PROGRAM.md (fases A–H).
+Al terminar, DETENTE: no abras la siguiente misión, no hagas merge, no
+despliegues. Si en cualquier paso algo falla de forma irrecuperable, deja el
+estado consistente (libera el lock, marca blocked con causa en STATE.json,
+escribe informe en cycles/) y detente sin simular éxito.
+
+PASOS OBLIGATORIOS (en orden, sin saltar):
+
+1) IDENTIFICA REPOSITORIO Y ESTADO.
+   cd /home/z/my-project/Costpro && git fetch origin && git status -sb && git
+   log --oneline -5 && git remote -v. Trabaja sobre la rama indicada por
+   STATE.json (campo git.base_branch, normalmente main) actualizada
+   (git pull --ff-only). Si hay cambios sin confirmar ajenos a ti: NO los
+   toques ni los escondas; detente como blocked informándolo.
+
+2) LEE PROGRAM.md (automation/continuous-improvement/PROGRAM.md) — documento
+   rector: prioridades P1–P6, reglas de selección, fases A–H, certificación,
+   política ESLint y restricciones de seguridad.
+
+3) LEE STATE.json (automation/continuous-improvement/STATE.json) — registro
+   vivo: ciclo actual, misiones por estado, lock, PRs asociados,
+   last_validated_sha.
+
+4) LEE BASELINE.md y ESLINT_BASELINE.json — estado inicial de calidad y deuda
+   técnica medida (solo referencia; no los modifiques retrospectivamente).
+
+5) CONSULTA LAS SKILLS OBLIGATORIAS del workspace: AGENTS.md (raíz) y las
+   skills costpro en skills/: costpro-product-quality (con su referencia
+   references/costpro-design-system.md), costpro-visual-qa,
+   costpro-frontend-engineering; más las pertinentes a la misión
+   (costpro-code-reviewer, costpro-security-auditor, costpro-mobile-first-
+   auditor, costpro-sql-performance-optimizer; vendors locales
+   web-design-guidelines, react-best-practices, ui-ux-pro-max). Su aplicación
+   debe ser demostrable en las decisiones del informe.
+
+6) IDENTIFICA EL PRÓXIMO CICLO PENDIENTE: STATE.json (current_cycle,
+   cycles_completed) y verifica el lock (PROGRAM.md §7.5): si agent_lock
+   existe con fecha <24h sin informe de ciclo correspondiente, detente como
+   blocked (posible ejecución simultánea) SIN modificar nada.
+
+7) SELECCIONA UNA ÚNICA MISIÓN del directorio backlog/ aplicando las
+   prioridades P1–P6 y las 8 reglas de selección de PROGRAM.md §3. La
+   selección debe quedar justificada en el informe (por qué esta y no otra).
+   Sugerencia de arranque: STATE.json.next_recommended. Si no hay ninguna
+   oportunidad justificada, registra el ciclo como revisión sin cambios
+   (informe en cycles/, certificado APROBADA — revisión sin cambios necesarios)
+   y detente. NO inventes mejoras.
+
+8) EJECUTA ESA MISIÓN siguiendo su archivo de backlog (criterios de entrada,
+   límites de alcance, procedimiento, pruebas, criterios de aceptación) y las
+   fases A–H de PROGRAM.md. Respeta las RESTRICCIONES DE INTEGRIDAD
+   FINANCIERA de AGENTS.md: prohibido modificar fórmulas de costos, valoración
+   de inventarios, cálculos de ventas, caja, contabilidad, redondeos
+   (Decimal.js), moneda, comisiones, documentos comerciales, RLS, multi-tenant,
+   autorizaciones, contratos API o migraciones — si la mejora lo requiere,
+   separa propuesta de implementación y detente antes de tocar código.
+
+9) VALIDA LOS RESULTADOS con los comandos existentes del repo (bun run lint,
+   bun run test, bun run test:e2e, bun run lint:a11y, bun run gate:bundle,
+   axe, verificación visual en navegador con agent-browser). Etiqueta cada
+   afirmación con su nivel de evidencia E1–E4. No afirmes que una prueba pasó
+   si no se ejecutó correctamente.
+
+10) DOCUMENTA LA EJECUCIÓN: informe único en
+    automation/continuous-improvement/cycles/cycle-<NNN>-<misión>.md (formato
+    en cycles/README.md): problema, causa raíz, solución, archivos, antes/
+    después, pruebas con resultados literales, saldo ESLint antes/después,
+    certificación (APROBADA / APROBADA CON OBSERVACIONES / RECHAZADA /
+    BLOQUEADA), limitaciones. Sin secretos ni tokens en ningún archivo.
+
+11) ACTUALIZA STATE.json conforme a PROGRAM.md §7: estados permitidos
+    (queued/in_progress/completed/blocked/rejected); una misión fallida NO es
+    completed; un ciclo bloqueado no incrementa cycles_completed; libera el
+    lock SIEMPRE; deja next_recommended justificado para el próximo ciclo.
+
+12) FINALIZA SIN ACCIONES FUERA DE ALCANCE: rama específica por misión
+    (feat|fix/cp-ci-0XX-<slug>-YYYYMMDD), commits descriptivos, PUSH y PR real
+    (título: fix|feat(ci): CP-CI-0XX — <resumen>; cuerpo con evidencias y
+    resultados de pruebas). NUNCA merge. Si no hay credenciales de GitHub
+    disponibles en el entorno: prepara los commits y el patch
+    (git format-patch) en el workspace, documéntalo en el informe como
+    limitación y NO simules el PR. Configura el remoto con el credential
+    helper disponible (nunca incrustes tokens en archivos del repo, patches
+    ni URLs visibles en logs).
+
+================================================================================
+REQUISITOS Y LIMITACIONES DEL MECANISMO (documentación para el propietario):
+- Este texto se entrega al agente como prompt en cada disparo de Schedule
+  (payload del job). El agente resultante tiene acceso al mismo workspace
+  (/home/z/my-project): los archivos automation/, skills/, AGENTS.md y el
+  repositorio deben existir ahí. Si el sandbox se recicló y el workspace está
+  vacío, el paso 1 clona el repo; las skills versionadas llegan con el repo,
+  pero las vendors NO (están gitignored): reinstálalas según AGENTS.md
+  (sección "Ecosistema de skills") o continúa sin ellas documentándolo.
+- NO incrustes credenciales en este texto ni en STATE.json. Provisión de
+  token: variable de entorno del entorno de ejecución o credential helper de
+  git; si no hay token, el paso 12 usa el fallback de patch (explícito, no
+  simulado).
+- Concurrencia: un solo job activo del programa a la vez; el lock de
+  STATE.json es la segunda barrera (PROGRAM.md §7.5).
+- Frecuencia sugerida (decisión del propietario): 1 ciclo/día o 1/ciclo de
+  trabajo; más frecuencia no acelera (una misión por ciclo).
+- Primer ciclo recomendado: backlog/CP-CI-001 (deuda ESLint, unidad 1) tras
+  fusionar el PR de infraestructura.
+================================================================================
