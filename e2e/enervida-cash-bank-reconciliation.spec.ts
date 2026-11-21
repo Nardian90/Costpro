@@ -675,8 +675,7 @@ test.describe.serial('CP-FIN-002 — clasificación efectivo/bancos por método 
     await injectSession(page, session);
     await page.goto('/', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2500);
-    await page.getByText('OPERACIÓN', { exact: true }).first().click();
-    await page.waitForTimeout(1000);
+    // CP-NAV-...-001: «Estados Financieros» es módulo de primer nivel — acceso directo.
     await page.getByText('Estados Financieros', { exact: true }).first().click();
     await page.getByTestId('financial-statements-view').waitFor({ state: 'visible', timeout: 25_000 });
     await page.getByTestId('tab-rendimiento').click();

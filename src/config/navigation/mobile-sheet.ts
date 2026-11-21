@@ -126,7 +126,14 @@ export function buildMobileSheetGroups(role: string | null | undefined): MobileS
         }
       }
     };
-    walk(section.children || []);
+    // CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001 (2026-11-22):
+    // la sección puede ser un NavEntry type 'item' de primer nivel (módulo
+    // directo, p. ej. «Estados Financieros»). Se incluye la sección misma
+    // en el walk: para grupos el flujo es IDÉNTICO al previo (el nodo
+    // sección no es hoja → cae a walk(children)); para ítems de primer
+    // nivel se emiten como grupo propio de un ítem — misma paridad móvil
+    // que desktop, sin tercer catálogo.
+    walk([section]);
     if (items.length > 0) groups.push({ section: section.label, items });
   }
 
