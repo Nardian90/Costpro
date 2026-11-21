@@ -12,6 +12,8 @@ import type {
   CategoryDetailData,
   DashboardData,
   IncomeStatementData,
+  ReconciliationData,
+  ReconciliationSnapshotMeta,
 } from './types';
 
 /** Encabezados con sesión (idénticos al patrón authHeaders del repo). */
@@ -91,4 +93,66 @@ export function fetchCategoryDetail(
     offset: String(offset),
   });
   return finFetch<CategoryDetailData>(`/api/fin/statements/category-detail?${params.toString()}`, token);
+}
+
+/**
+ * CP-FIN-REC-001: ejecuta la conciliación operativa-contable bajo demanda.
+ * El corte (asOf) aplica a las cuentas de balance; from/to (opcional, juntos)
+ * a las cuentas de resultado. Devuelve la matriz completa con su ejecución.
+ */
+export function fetchReconciliation(
+  storeId: string,
+  asOf: string,
+  from: string | null,
+  to: string | null,
+  token: string | null,
+): Promise<ReconciliationData> {
+  const params = new URLSearchParams({ store_id: storeId, as_of: asOf });
+  if (from && to) {
+    params.set('from', from);
+    params.set('to', to);
+  }
+  return finFetch<ReconciliationData>(`/api/fin/reconciliation?${params.toString()}`, token);
+}
+
+/** CP-FIN-REC-001: historial de snapshots guardados (evolución de diferencias). */
+export function fetchReconciliationHistory(
+  storeId: string,
+  token: string | null,
+  limit = 20,
+): Promise<ReconciliationSnapshotMeta[]> {
+  const params = new URLSearchParams({
+    store_id: storeId,
+    history: '1',
+    limit: String(limit),
+  });
+  return finFetch<ReconciliationSnapshotMeta[]>(`/api/fin/reconciliation?${params.toString()}`, token);
+}
+
+/** CP-FIN-REC-001: guarda un snapshot de la ejecución (evidencia de auditoría). */
+export async function saveReconciliationSnapshot(
+  storeId: string,
+  asOf: string,
+  from: string | null,
+  to: string | null,
+  token: string | null,
+): Promise<{ run_id: string; ejecutado_en: string }> {
+  const res = await fetch('/api/fin/reconciliation', {
+    method: 'POST',
+    headers: finAuthHeaders(token),
+    body: JSON.stringify({
+      store_id: storeId,
+      as_of: asOf,
+      ...(from && to ? { from, to } : {}),
+    }),
+  });
+  const body = await res.json().catch(() => null);
+  if (!res.ok) {
+    const message =
+      (body && typeof body === 'object' && 'error' in body && typeof (body as { error: unknown }).error === 'string'
+        ? (body as { error: string }).error
+        : null) ?? `Error ${res.status} al guardar el snapshot`;
+    throw new Error(message);
+  }
+  return body as { run_id: string; ejecutado_en: string };
 }

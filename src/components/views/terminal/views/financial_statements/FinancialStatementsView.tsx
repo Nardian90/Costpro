@@ -16,6 +16,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   BarChart3,
+  ClipboardCheck,
   Download,
   FileSpreadsheet,
   Landmark,
@@ -32,6 +33,7 @@ import { havanaNow, toDateInputValue } from '@/lib/sales-dashboard/periods';
 import { BalanceSheetTab } from './BalanceSheetTab';
 import { IncomeStatementTab } from './IncomeStatementTab';
 import { DashboardTab } from './DashboardTab';
+import { ReconciliationTab } from './ReconciliationTab';
 import {
   exportBalanceSheetExcel,
   exportBalanceSheetPdf,
@@ -144,12 +146,26 @@ export default function FinancialStatementsView() {
   }, []);
 
   const applyFilters = useCallback(() => {
-    if (activeTab === 'situacion') {
+    if (activeTab === 'situacion' || activeTab === 'conciliacion') {
+      // Conciliación necesita AMBOS: corte para las cuentas de balance y
+      // período para las de resultado (misión §5.5).
       if (!draftAsOf) {
         toast.error('Indica una fecha de corte válida');
         return;
       }
-      setApplied((prev) => ({ ...prev, asOf: draftAsOf }));
+      if (activeTab === 'conciliacion' && (!draftFrom || !draftTo)) {
+        toast.error('Indica un período válido (desde/hasta) para las cuentas de resultado');
+        return;
+      }
+      if (activeTab === 'conciliacion' && draftFrom > draftTo) {
+        toast.error('El período es inválido: la fecha inicial es posterior a la final');
+        return;
+      }
+      setApplied((prev) => ({
+        ...prev,
+        asOf: draftAsOf,
+        ...(activeTab === 'conciliacion' ? { from: draftFrom, to: draftTo } : {}),
+      }));
     } else {
       if (!draftFrom || !draftTo) {
         toast.error('Indica un período válido (desde/hasta)');
@@ -174,7 +190,12 @@ export default function FinancialStatementsView() {
   }, []);
 
   const activeTabHasData = activeTab === 'situacion' ? hasBalanceData : activeTab === 'rendimiento' ? hasIncomeData : false;
-  const exportsDisabled = activeTab === 'dashboard' || !activeTabHasData || exportingPdf || exportingExcel;
+  // La conciliación (como el dashboard) no exporta la pestaña: sus acciones
+  // viven dentro de la propia pestaña (snapshot/historial); los PDF/Excel de
+  // esta vista corresponden a Situación y Rendimiento (misión §7.3: sin
+  // sustituir los PDF existentes).
+  const exportsDisabled =
+    activeTab === 'dashboard' || activeTab === 'conciliacion' || !activeTabHasData || exportingPdf || exportingExcel;
 
   const handleExportPdf = useCallback(async () => {
     if (exportsDisabled || exportingPdf) return;
@@ -283,7 +304,7 @@ export default function FinancialStatementsView() {
       <div className="rounded-xl border border-border bg-card p-3 sm:p-4 shadow-sm" data-testid="financial-filters">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-end gap-2">
-            {activeTab === 'situacion' ? (
+            {(activeTab === 'situacion' || activeTab === 'conciliacion') && (
               <label className="flex flex-col gap-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                   Fecha de corte
@@ -298,7 +319,8 @@ export default function FinancialStatementsView() {
                   data-testid="filter-as-of"
                 />
               </label>
-            ) : (
+            )}
+            {activeTab !== 'situacion' && (
               <>
                 <div className="flex flex-wrap gap-1.5" role="group" aria-label="Presets de período">
                   {PERIOD_PRESETS.map((p) => (
@@ -423,7 +445,9 @@ export default function FinancialStatementsView() {
             <span aria-hidden>·</span>
             <span>
               {isPeriodTab
-                ? `Período consultado: ${applied.from} — ${applied.to}`
+                ? activeTab === 'conciliacion'
+                  ? `Corte: ${applied.asOf} · Período de resultado: ${applied.from} — ${applied.to}`
+                  : `Período consultado: ${applied.from} — ${applied.to}`
                 : `Fecha de corte: ${applied.asOf}`}
             </span>
             <span aria-hidden>·</span>
@@ -439,6 +463,12 @@ export default function FinancialStatementsView() {
             { id: 'situacion', label: 'Estado de Situación', icon: Scale, testId: 'tab-situacion' },
             { id: 'rendimiento', label: 'Estado de Rendimiento', icon: TrendingUp, testId: 'tab-rendimiento' },
             { id: 'dashboard', label: 'Dashboard', icon: BarChart3, testId: 'tab-dashboard' },
+            {
+              id: 'conciliacion',
+              label: 'Conciliación',
+              icon: ClipboardCheck,
+              testId: 'tab-conciliacion',
+            },
           ] as { id: FinancialStatementTabId; label: string; icon: React.ElementType; testId: string }[]
         ).map((tab) => (
           <button
@@ -483,6 +513,15 @@ export default function FinancialStatementsView() {
           to={applied.to}
           refreshKey={refreshKey}
           onGoToTab={setActiveTab}
+        />
+      )}
+      {activeTab === 'conciliacion' && (
+        <ReconciliationTab
+          storeId={storeId}
+          asOf={applied.asOf}
+          from={applied.from}
+          to={applied.to}
+          refreshKey={refreshKey}
         />
       )}
     </div>

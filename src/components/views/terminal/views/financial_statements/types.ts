@@ -11,7 +11,7 @@
 // ── Comunes ─────────────────────────────────────────────────────────────────
 
 /** Pestañas de la Vista B (orden del menú de tabs). */
-export type FinancialStatementTabId = 'situacion' | 'rendimiento' | 'dashboard';
+export type FinancialStatementTabId = 'situacion' | 'rendimiento' | 'dashboard' | 'conciliacion';
 
 /** Clase económica de una categoría (misma taxonomía de fin_categories). */
 export type FinClase = 'activo' | 'pasivo' | 'patrimonio' | 'ingreso' | 'gasto';
@@ -183,6 +183,8 @@ export interface MovementRow {
    * de forma explícita; NUNCA se reconstruye).
    */
   amount_origin: number | null;
+  /** CP-FIN-REC-001/PR B: tasa documental de la línea (columna de exportación). */
+  exchange_rate?: number | null;
   description: string | null;
   posted_at: string;
 }
@@ -194,6 +196,106 @@ export interface CategoryDetailData {
   desde: string;
   hasta: string;
   movimientos: MovementRow[];
+  /** CP-FIN-REC-001/PR B (aditivo): generación activa consultada + reconstrucción de saldo. */
+  generacion?: { id: string | null; code: string | null };
+  saldo_inicial?: number;
+  clase?: string | null;
+}
+
+// ── Conciliación operativa-contable (CP-FIN-REC-001, fin_get_reconciliation) ─
+
+/** Estados de conciliación (misión §5.4). */
+export type ReconciliationEstado =
+  | 'CONCILIADO'
+  | 'DIFERENCIA'
+  | 'ALERTA'
+  | 'INCOMPLETO'
+  | 'NO_CONCILIABLE'
+  | 'PENDIENTE';
+
+/** Calidad/cobertura de la información fuente de una cuenta. */
+export type ReconciliationCalidad = 'COMPLETA' | 'PARCIAL' | 'SIN_FUENTE';
+
+/** Fila de la matriz de conciliación (espejo del RPC por cuenta). */
+export interface ReconciliationAccountRow {
+  cuenta: string;
+  nombre: string;
+  clase: FinClase;
+  grupo: FinGrupo;
+  sort_order: number;
+  /** Cuenta de período (ingresos/gastos): concilia contra from..to, no contra el corte. */
+  es_periodo: boolean;
+  /** NULL cuando no hay fuente o falta el período. */
+  valor_operacional: number | null;
+  valor_contable: number | null;
+  /** Convención uniforme: operacional − contable (naturaleza-aware). */
+  diferencia: number | null;
+  /** % sobre |valor contable| cuando es matemáticamente aplicable. */
+  diferencia_pct: number | null;
+  estado: ReconciliationEstado;
+  tolerancia: number | null;
+  materialidad: number | null;
+  documentos_operacionales: number | null;
+  movimientos_contables: number | null;
+  ultima_fecha_operacional: string | null;
+  ultima_fecha_contable: string | null;
+  calidad: ReconciliationCalidad;
+  metodologia: string;
+  fuentes: string[];
+  /** Payload específico por cuenta (inventario: estadísticas/top productos; cajas: desglose). */
+  detalle: Record<string, unknown> | null;
+}
+
+export interface ReconciliationExecution {
+  calculado_en: string;
+  fecha_corte: string;
+  desde: string | null;
+  hasta: string | null;
+  generacion: { id: string | null; code: string | null };
+  metodologia_version: string;
+  fuentes_actualizadas: Record<string, string | null>;
+  convention: string;
+}
+
+export interface ReconciliationResumen {
+  conciliadas: number;
+  diferencias: number;
+  alertas: number;
+  incompletas: number;
+  no_conciliables: number;
+  pendientes: number;
+  documentos_pendientes: number;
+  movimientos_sin_respaldo: number;
+}
+
+export interface ReconciliationHallazgoTipo {
+  tipo: string;
+  pendientes?: number;
+  n?: number;
+}
+
+export interface ReconciliationData {
+  ejecucion: ReconciliationExecution;
+  resumen: ReconciliationResumen;
+  hallazgos: {
+    documentos_pendientes: ReconciliationHallazgoTipo[];
+    movimientos_sin_respaldo: ReconciliationHallazgoTipo[];
+    ventas_con_fallback_usd: number;
+  };
+  cuentas: ReconciliationAccountRow[];
+}
+
+/** Metadatos de un snapshot guardado (fin_reconciliation_history). */
+export interface ReconciliationSnapshotMeta {
+  id: string;
+  fecha_corte: string;
+  desde: string | null;
+  hasta: string | null;
+  generacion: string | null;
+  metodologia_version: string;
+  resumen: ReconciliationResumen;
+  ejecutado_en: string;
+  ejecutado_por: string | null;
 }
 
 // ── Presentación del Estado de Rendimiento ──────────────────────────────────
