@@ -499,9 +499,16 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   external_transfer en el batch, serialización FOR UPDATE compartida,
     //   gate de gestión en los RPC de borradores, idempotencia real de
     //   creación y firma patch tri-state) = 190
-    expect(m.total_incluidos).toBe(192);
+    // CP-FIN-REC-001 (2026-11-21): +2 — 20261121230000 reconciliación
+    //   operativa-contable y 20261121230100 exportación del mayor por
+    //   categoría = 192
+    // CP-NOMINA-SUPERADMIN-TRANSVERSAL (PR #1681, 2026-11-21): +1 —
+    //   20261121240000_cp_nomina_superadmin_transversal (bypass RLS del
+    //   superadmin de plataforma en trabajadores/comisiones; policies
+    //   recreadas por nombre con is_admin()) = 193
+    expect(m.total_incluidos).toBe(193);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(192);
+    expect(incluidos.length).toBe(193);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
