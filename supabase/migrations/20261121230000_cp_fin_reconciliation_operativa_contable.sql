@@ -1210,6 +1210,12 @@ DROP POLICY IF EXISTS fin_reconciliation_config_select ON public.fin_reconciliat
 CREATE POLICY fin_reconciliation_config_select ON public.fin_reconciliation_config
   FOR SELECT TO authenticated USING (true);
 
+-- ENABLE también en la tabla de configuración: una política SELECT sin RLS
+-- habilitado no filtra nada (la tabla queda legible para todo grantee). Canon
+-- del repo = ENABLE + política; sin ENABLE el anon (sin grant) no ve nada por
+-- ACL, pero el contrato de seguridad exige RLS activo en ambas tablas.
+ALTER TABLE public.fin_reconciliation_config ENABLE ROW LEVEL SECURITY;
+
 -- Grants de tabla: lectura a authenticated, sin escritura directa.
 REVOKE ALL ON public.fin_reconciliation_snapshots FROM PUBLIC, anon;
 GRANT SELECT ON public.fin_reconciliation_snapshots TO authenticated, service_role;

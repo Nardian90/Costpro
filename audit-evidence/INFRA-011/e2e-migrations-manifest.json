@@ -165,7 +165,7 @@
   "total_considerados": 607,
   "total_incluidos": 192,
   "total_excluidos": 415,
-  "digest": "de2f4dbd9d89d43a6560b7cd9acd6f800ac819789d079d91f8ceac6eee4fae29",
+  "digest": "862424ec8268dd51b2b9398b5a68e35de3b1d262f923f031d357f8b25a4c2194",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -5973,14 +5973,14 @@
     },
     {
       "nombre": "20261121230000_cp_fin_reconciliation_operativa_contable.sql",
-      "bytes": 88923,
-      "sha256_original": "4b37518430c92f4e7a11ca08bfcfe374fb910029a2588e40e30ab2b463ee0ec6",
+      "bytes": 89306,
+      "sha256_original": "8085b3a819ec0a606aeacada92804b0e5d0f01a02d7fc88f6e031d26303aecd4",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261121",
       "observaciones": [],
       "posicion": 191,
-      "sha256_generado": "4b37518430c92f4e7a11ca08bfcfe374fb910029a2588e40e30ab2b463ee0ec6"
+      "sha256_generado": "8085b3a819ec0a606aeacada92804b0e5d0f01a02d7fc88f6e031d26303aecd4"
     },
     {
       "nombre": "20261121230100_cp_fin_category_detail_export_fields.sql",

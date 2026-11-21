@@ -74,7 +74,12 @@ describe('migración CP-FIN-REC-001 (conciliación operativa-contable)', () => {
 
   it('RLS + ACL: lectura por membresía, escritura exclusiva service_role, anon sin nada', () => {
     expect(sql).toContain('ALTER TABLE public.fin_reconciliation_snapshots ENABLE ROW LEVEL SECURITY');
+    // Hardening post-merge: ENABLE RLS en AMBAS tablas (una política SELECT sin
+    // ENABLE no filtra nada). El smoke en vivo contra CostproE2E detectó que
+    // la versión original solo habilitaba RLS en fin_reconciliation_snapshots.
+    expect(sql).toContain('ALTER TABLE public.fin_reconciliation_config ENABLE ROW LEVEL SECURITY');
     expect(sql).toContain('fin_reconciliation_snapshots_select');
+    expect(sql).toContain('fin_reconciliation_config_select');
     expect(sql).toMatch(
       /REVOKE EXECUTE ON FUNCTION public\.fin_get_reconciliation\(uuid, date, date, date, uuid\) FROM PUBLIC, anon, authenticated;/,
     );
@@ -84,6 +89,7 @@ describe('migración CP-FIN-REC-001 (conciliación operativa-contable)', () => {
     );
     // Sin políticas de escritura (canal service_role exclusivo)
     expect(sql).not.toMatch(/CREATE POLICY \w+ ON public\.fin_reconciliation_snapshots\s+FOR (INSERT|UPDATE|DELETE)/);
+    expect(sql).not.toMatch(/CREATE POLICY \w+ ON public\.fin_reconciliation_config\s+FOR (INSERT|UPDATE|DELETE)/);
   });
 
   it('el guardado de snapshot recalcula server-side y exige nivel de gestión', () => {
