@@ -23,12 +23,17 @@ export interface NavigationItem {
   icon: any;
   label: string;
   roles: UserRole[];
-  category: 'INICIO' | 'OPERACIÓN' | 'ANÁLISIS' | 'SISTEMA' | 'AYUDA' | 'EN DESARROLLO';
+  category: 'INICIO' | 'OPERACIÓN' | 'Estados Financieros' | 'ANÁLISIS' | 'SISTEMA' | 'AYUDA' | 'EN DESARROLLO';
 }
 
 /** Mapa categoría → clase para tipar el flatten. */
 const VALID_CATEGORIES: NavigationItem['category'][] = [
-  'OPERACIÓN', 'ANÁLISIS', 'SISTEMA', 'AYUDA', 'EN DESARROLLO',
+  'OPERACIÓN',
+  // CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001 (2026-11-22):
+  // «Estados Financieros» es módulo de primer nivel — su categoría propia
+  // (label de la sección) es válida en el header.
+  'Estados Financieros',
+  'ANÁLISIS', 'SISTEMA', 'AYUDA', 'EN DESARROLLO',
 ];
 
 function toNavigationItem(flat: FlatNavItem): NavigationItem | null {

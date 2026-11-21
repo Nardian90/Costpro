@@ -67,8 +67,11 @@ describe('Fuente única — integridad', () => {
   it('las secciones son exactamente las aprobadas en el baseline', () => {
     // MISIÓN 2026-11-13: «RECURSOS HUMANOS» añadida entre OPERACIÓN y ANÁLISIS
     // (Trabajadores y Comisiones trasladado — misma vista, mismos roles).
+    // MISIÓN CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001 (2026-11-22):
+    // «Estados Financieros» es sección PROPIA de primer nivel — PRIMERA del
+    // menú, al mismo nivel jerárquico que OPERACIÓN (ya no es hoja suya).
     expect(NAVIGATION_SECTIONS.map(s => s.id)).toEqual([
-      'operacion', 'recursos-humanos', 'analisis', 'sistema', 'ayuda', 'desarrollo',
+      'financial-statements', 'operacion', 'recursos-humanos', 'analisis', 'sistema', 'ayuda', 'desarrollo',
     ]);
   });
 });

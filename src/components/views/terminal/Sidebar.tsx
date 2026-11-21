@@ -461,8 +461,12 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     if (focusModuleId) return; // Don't override manual focus
     // COSTPRO 4: el auto-focus SOLO considera módulos visibles para el rol —
     // nunca enfoca secciones que el filtro de permisos eliminó.
+    // CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001 (2026-11-22):
+    // los módulos de primer nivel type 'item' (p. ej. «Estados Financieros»)
+    // NO entran en focus mode: son hojas directas con resaltado propio
+    // (renderNavItem) y sin hijos — el focus UI quedaría vacío.
     for (const mod of allNavigation) {
-      if (hasViewInModule(mod, currentView)) {
+      if (mod.type !== 'item' && hasViewInModule(mod, currentView)) {
         queueMicrotask(() => enterFocusMode(mod.id));
         return;
       }
