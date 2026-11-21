@@ -1,7 +1,7 @@
 -- ============================================================================
 -- CP-FIN-AUDITORÍA-FORENSE-ENERVIDA-110 — Corrección integral del motor
 -- contable y de la metodología de conciliación CP-FIN-REC-001 (v1 → v2).
--- Fecha: 2026-11-21 · Tienda prioritaria: ENERVIDA-VITALLCONS
+-- Versión: 20261122120000 · Fecha: 2026-11-21 · Tienda prioritaria: ENERVIDA-VITALLCONS
 -- Expediente: docs/audits/cp-fin-auditoria-enervida-110/EXPEDIENTE.md
 --
 -- DIAGNÓSTICO (verificado al céntimo contra producción, read-only):

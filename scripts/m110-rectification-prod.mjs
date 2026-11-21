@@ -59,6 +59,30 @@ async function main() {
   console.log(`Puente vivo: WAC=${wac} mayor=${ledger} → importe esperado=${expected}`);
   writeFileSync(`${OUT}/m110-rect-pre-bridge.json`, JSON.stringify(bridge[0], null, 1));
 
+  // 0b) Respaldo verificable PRE escritura: saldos por categoría y conteos
+  //     (re-ejecutable; reversibilidad: GEN-2 pasa a superseded — nunca se
+  //     borra — y fin_generation_rollback permite volver a ella; RECT-110-A
+  //     es reversible anulando el asiento).
+  const backup = await runSql(`
+    SELECT c.code AS categoria,
+           round(coalesce(sum(CASE WHEN m.sense = 'debito' THEN m.amount_cup ELSE -m.amount_cup END), 0), 2) AS saldo,
+           count(*) AS movimientos
+    FROM public.fin_movements m
+    JOIN public.fin_entries e ON e.id = m.entry_id
+    JOIN public.fin_categories c ON c.code = m.category_code
+    WHERE m.store_id = '${STORE}'
+      AND e.generation_id IS NOT DISTINCT FROM public.fin_active_generation('${STORE}')
+      AND e.economic_date <= DATE '2026-11-21'
+    GROUP BY c.code ORDER BY c.code;`);
+  const backupMeta = await runSql(`
+    SELECT (SELECT count(*) FROM public.fin_entries WHERE store_id='${STORE}') AS entradas_total,
+           (SELECT count(*) FROM public.fin_movements WHERE store_id='${STORE}') AS movimientos_total,
+           public.fin_active_generation('${STORE}') AS gen_activa;`);
+  writeFileSync(`${OUT}/m110-pre-backup-saldos.json`,
+    JSON.stringify({ meta: backupMeta[0], saldos: backup }, null, 1));
+  console.log('Respaldo PRE escrito: entradas=', backupMeta[0].entradas_total,
+              'movimientos=', backupMeta[0].movimientos_total);
+
   // 1) Existencia previa (idempotencia)
   const exists = await runSql(`
     SELECT e.id, e.economic_date FROM public.fin_entries e
@@ -80,10 +104,8 @@ async function main() {
         economic_date, rule_version_id, movements_snapshot, description, created_by, generation_id)
       SELECT '${STORE}', 'AJUSTE_INVENTARIO', NULL, '${DOC_NUMBER}', 'ajuste_manual', NULL,
              DATE '2026-10-31', NULL,
-             $J$[{"traza":{"regla":"rectificacion-cp-fin-110","motivo":"sobrecosto histórico de ventas (FAC-VITALLCONS-001 + COGS congelado DF-02) — medido al céntimo contra la fuente viva","puente":"WAC vivo − mayor GEN activa","expediente":"docs/audits/cp-fin-auditoria-enervida-110"}},
-                  "amount": 2950375.33, "sentido": "debito", "categoria": "ACT_INVENTARIO"},
-                 {"traza":{"regla":"rectificacion-cp-fin-110"},
-                  "amount": 2950375.33, "sentido": "credito", "categoria": "GAS_COSTO_VENTAS"}]$J$::jsonb,
+             $J$[{"traza":{"regla":"rectificacion-cp-fin-110","motivo":"sobrecosto histórico de ventas (FAC-VITALLCONS-001 + COGS congelado DF-02) — medido al céntimo contra la fuente viva","puente":"WAC vivo − mayor GEN activa","expediente":"docs/audits/cp-fin-auditoria-enervida-110"},"amount": 2950375.33, "sentido": "debito", "categoria": "ACT_INVENTARIO"},
+                 {"traza":{"regla":"rectificacion-cp-fin-110"},"amount": 2950375.33, "sentido": "credito", "categoria": "GAS_COSTO_VENTAS"}]$J$::jsonb,
              'Rectificación CP-FIN-110 D4: sobrecosto histórico de COGS (2.950.375,33) — Dr ACT_INVENTARIO / Cr GAS_COSTO_VENTAS. Puente: recepciones 2.961.795,90 ✓, vales 810.567,06 ✓, ajustes 1,00 ✓, devoluciones 2,00 ✓, apertura 0 ✓ → residuo 100% COGS.',
              NULL, public.fin_active_generation('${STORE}')
       RETURNING id;`);

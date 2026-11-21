@@ -499,9 +499,15 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   external_transfer en el batch, serialización FOR UPDATE compartida,
     //   gate de gestión en los RPC de borradores, idempotencia real de
     //   creación y firma patch tri-state) = 190
-    expect(m.total_incluidos).toBe(192);
+    // CP-FIN-REC-001/PR B (2026-11-21): +2 — 20261121230000 conciliación
+    //   operativa-contable y 20261121230100 export fields = 192
+    // CP-FIN-AUDITORÍA-FORENSE-ENERVIDA-110 (2026-11-21): +1 —
+    //   20261122120000_cp_fin110_enervida_reconciliation_fix (riel-primacía
+    //   VENTA, reglas ORDEN_TRABAJO anticipos/reconocimiento, CP-FIN-REC-001/v2
+    //   y pase 5 de cobertura de órdenes) = 193
+    expect(m.total_incluidos).toBe(193);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(192);
+    expect(incluidos.length).toBe(193);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

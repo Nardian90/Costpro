@@ -292,7 +292,7 @@ export function ReconciliationTab({ storeId, asOf, from, to, refreshKey }: Recon
             </span>
           </span>
           <span>
-            Generación: <span className="font-bold text-foreground">{ejecucion.generacion.code ?? '— (legada)'}</span>
+            Generación: <span className="font-bold text-foreground">{ejecucion.generacion?.code ?? '— (legada)'}</span>
           </span>
           <span>
             Metodología: <span className="font-bold text-foreground">{ejecucion.metodologia_version}</span>

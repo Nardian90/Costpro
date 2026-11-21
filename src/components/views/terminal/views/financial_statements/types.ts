@@ -251,7 +251,7 @@ export interface ReconciliationExecution {
   fecha_corte: string;
   desde: string | null;
   hasta: string | null;
-  generacion: { id: string | null; code: string | null };
+  generacion: { id: string | null; code: string | null } | null;
   metodologia_version: string;
   fuentes_actualizadas: Record<string, string | null>;
   convention: string;
