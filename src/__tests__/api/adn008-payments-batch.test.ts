@@ -6,11 +6,13 @@
  *  · ref_type='service' → UNA llamada a register_supplier_payment_batch con el
  *    cliente service_role (getSupabaseAdminSafe, REVOKE authenticated — la
  *    autorización ocurre ANTES: gate canManageStore sobre la tienda activa).
- *  · ref_type='receipt' → loop histórico intacto con el cliente de SESIÓN
- *    (regresión: otros módulos no cambian en esta misión).
+ *  · CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§3): ref_type='receipt'
+ *    TAMBIÉN va por el batch atómico (misma paridad que servicios; el loop
+ *    histórico solo queda para production_order/work).
  *  · Mapeo de errores: overpay del lote → 400; tasa ausente → 422;
  *    componente inválido → 400; ADN-009: combinación medio×moneda no
- *    soportada → 400 ERR_COMBINACION_NO_SOPORTADA; servicio no activo → 409.
+ *    soportada → 400 ERR_COMBINACION_NO_SOPORTADA; servicio no activo → 409;
+ *    CP-LOG-UNIFICATION: recepción anulada/revertida → 409 ERR_RECEIPT_NOT_PAYABLE.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '@/app/api/payments/route';
@@ -241,11 +243,55 @@ describe('POST /api/payments · ADN-008 §5 liquidación atómica', () => {
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('REGRESIÓN: receipt conserva el loop histórico con el cliente de SESIÓN (fuera del alcance de 008)', async () => {
-    rpcMock.mockResolvedValue({ data: 'payment-id-1', error: null });
+  it('CP-LOG-UNIFICATION-001 §3: receipt va por el BATCH ATÓMICO (UNA llamada, bloque idempotente, cliente service_role)', async () => {
+    rpcMock.mockResolvedValue({
+      data: { payments: [
+        { id: 'pay-1', index: 0, payment_method: 'cash', currency: 'CUP', amount: 100 },
+        { id: 'pay-2', index: 1, payment_method: 'transfer', currency: 'CUP', amount: 200 },
+      ], count: 2, replayed: false },
+      error: null,
+    });
     const res = await POST(makeRequest({
       ref_type: 'receipt',
       ref_id: '11111111-1111-4111-8111-111111111166',
+      payments: [
+        { payment_method: 'cash', amount: 100, currency: 'CUP', exchange_rate: 1 },
+        { payment_method: 'transfer', amount: 200, currency: 'CUP', exchange_rate: 1 },
+      ],
+      idempotency_key: 'rec-batch-1',
+    }));
+    expect(res.status).toBe(201);
+
+    // UNA sola llamada al batch — no al motor individual (loop eliminado).
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    const [fn, args] = rpcMock.mock.calls[0];
+    expect(fn).toBe('register_supplier_payment_batch');
+    expect(args.p_ref_type).toBe('receipt');
+    expect(args.p_ref_id).toBe('11111111-1111-4111-8111-111111111166');
+    expect(args.p_idempotency_key).toBe('rec-batch-1');
+    expect(args.p_payments).toHaveLength(2);
+    const json = await res.json();
+    expect(json.success).toBe(true);
+    expect(json.count).toBe(2);
+  });
+
+  it('CP-LOG-UNIFICATION-001 §3: recepción anulada/revertida → 409 ERR_RECEIPT_NOT_PAYABLE (gate de estado)', async () => {
+    rpcMock.mockResolvedValue({ data: null, error: { message: 'ERR_RECEIPT_NOT_PAYABLE: la recepción está voided y no admite pagos nuevos' } });
+    const res = await POST(makeRequest({
+      ref_type: 'receipt',
+      ref_id: '11111111-1111-4111-8111-111111111166',
+      payments: [{ payment_method: 'cash', amount: 50, currency: 'CUP', exchange_rate: 1 }],
+    }));
+    expect(res.status).toBe(409);
+    const json = await res.json();
+    expect(json.code).toBe('ERR_RECEIPT_NOT_PAYABLE');
+  });
+
+  it('REGRESIÓN: production_order conserva el loop histórico con el cliente de SESIÓN', async () => {
+    rpcMock.mockResolvedValue({ data: 'payment-id-1', error: null });
+    const res = await POST(makeRequest({
+      ref_type: 'production_order',
+      ref_id: '11111111-1111-4111-8111-111111111177',
       payments: [
         { payment_method: 'cash', amount: 100, currency: 'CUP', exchange_rate: 1 },
         { payment_method: 'transfer', amount: 200, currency: 'CUP', exchange_rate: 1 },

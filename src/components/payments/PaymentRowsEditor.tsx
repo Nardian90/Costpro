@@ -117,6 +117,18 @@ export function rowsAreValid(rows: PaymentEditorRow[]): boolean {
   );
 }
 
+/**
+ * CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§3.2): huella del CONTENIDO
+ * del lote para claves de idempotencia ESTABLES (patrón ADN-009 §8).
+ * Misma operación → misma huella → el reintento tras una respuesta
+ * perdida/incierta es REPLAY (el batch devuelve los ids existentes sin
+ * escribir). Lote distinto → huella distinta → nueva clave de intento.
+ * Compartida por Servicios Recibidos y Recepciones: UNA implementación.
+ */
+export function payRowsFingerprint(rows: PaymentEditorRow[]): string {
+  return JSON.stringify(rows.map((r) => [r.method, r.currency, r.amount, r.exchange_rate, r.reference]));
+}
+
 interface PaymentRowsEditorProps {
   rows: PaymentEditorRow[];
   onChange: (rows: PaymentEditorRow[]) => void;

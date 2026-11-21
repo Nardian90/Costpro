@@ -38,11 +38,22 @@ export default function POSTableView({ products, onAddToCart }: POSTableViewProp
                   <div className="font-bold truncate max-w-[200px] text-foreground">{product.name}</div>
                 </div>
               </td>
-              <td className="p-4 font-mono text-xs text-muted-foreground priority-low">{product.sku || '-'}</td>
+              <td className="p-4 font-mono text-xs text-muted-foreground priority-low">
+                {product.sku || '-'}
+                {/* CP-LOG-UNIFICATION-001: fila del catálogo organizacional sin
+                    fila local — requiere activación antes de venderse. */}
+                {product.source === 'master' && (
+                  <span className="ml-2 font-sans font-black uppercase tracking-tight text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" title="Recíbelo en Recepciones o actívalo en Catálogo para venderlo">
+                    Catálogo
+                  </span>
+                )}
+              </td>
               <td className="p-4 text-right">
                 {/* MISIÓN TIPO-DE-ARTÍCULO: los servicios muestran su naturaleza
                     en lugar de un stock numérico (no tienen existencias propias). */}
-                {product.is_service ? (
+                {product.source === 'master' ? (
+                  <span className="font-bold px-2 py-0.5 rounded-lg text-xs uppercase tracking-tight bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">—</span>
+                ) : product.is_service ? (
                   <span className="font-bold px-2 py-0.5 rounded-lg text-xs uppercase tracking-tight bg-primary/10 text-primary">Servicio</span>
                 ) : (
                   <span className={cn(
@@ -53,7 +64,7 @@ export default function POSTableView({ products, onAddToCart }: POSTableViewProp
                   )}>{product.stock_current}</span>
                 )}
               </td>
-              <td className="p-4 text-right font-black text-primary">{formatCurrency(product.price)}</td>
+              <td className="p-4 text-right font-black text-primary">{product.source === 'master' ? '—' : formatCurrency(product.price)}</td>
               <td className="p-4">
                 <div className="flex justify-center">
                   <button

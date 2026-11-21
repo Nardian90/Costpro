@@ -32,6 +32,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from 'react';
 
 // ── Mocks hoisted (compartidos con las factories de vi.mock) ──────────────
@@ -49,8 +50,17 @@ vi.mock('@/lib/supabaseClient', () => ({
   supabase: { from: h.fromMock, rpc: h.rpcMock },
 }));
 
+// CP-LOG-UNIFICATION-001: useReceptionState ahora consume useAuthStore con
+// SELECTORES (token para /api/payments, activeStoreId para useStoreRates).
+// El mock debe llamar al selector sobre un estado ESTABLE — devolver un
+// objeto literal nuevo por llamada cambiaba la identidad de `token` en cada
+// render y el useEffect [refetch] de useStoreRates entraba en un bucle
+// fetch/setLoading infinito (OOM del worker en CI local).
 vi.mock('@/store', () => ({
-  useAuthStore: () => ({ user: h.userHolder.current }),
+  useAuthStore: (selector?: any) => {
+    const st = { user: h.userHolder.current, token: 'test-token' };
+    return selector ? selector(st) : st;
+  },
   useUIStore: () => ({ setCurrentView: vi.fn() }),
 }));
 
@@ -58,6 +68,11 @@ vi.mock('@/hooks/api/useInventory', () => ({
   useInventory: () => ({ data: undefined, isLoading: false, refetch: vi.fn() }),
   useRegisterReception: () => ({ mutateAsync: h.registerMock, isPending: false }),
 }));
+
+// CP-LOG-UNIFICATION-001 §2.1: la búsqueda del modal manual vive en
+// useReceptionCatalogSearch (react-query) — se ejercita REAL con el
+// QueryClientProvider del wrapper; el rpcMock por defecto ya responde
+// { data: null } → página vacía (contrato del hook).
 
 vi.mock('@/hooks/api/useReceptions', () => ({
   useSavePendingReception: () => ({ mutateAsync: h.savePendingMock, isPending: false }),
@@ -140,8 +155,16 @@ function installSupabaseMocks() {
 }
 
 function renderReception() {
+  // CP-LOG-UNIFICATION-001: useReceptionState consume react-query (búsqueda
+  // de catálogo) → wrapper con QueryClient real (patrón de la casa,
+  // retry: false para que los errores lleguen al hook sin reintentos).
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
   return renderHook(() => useReceptionState({}), {
-    wrapper: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    wrapper: ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
   });
 }
 

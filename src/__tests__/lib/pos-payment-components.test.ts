@@ -128,3 +128,88 @@ describe('buildPaymentComponents — desglose real por moneda', () => {
     expect(requiresPaymentComponents([])).toBe(false);
   });
 });
+
+describe('CP-LOG-UNIFICATION-001 §5.1 — referencia de transferencia por pago', () => {
+  const rowRef = (
+    method: 'cash' | 'transfer' | 'external_transfer' | 'zelle',
+    amount: number,
+    currency: string,
+    reference?: string | null,
+  ) => ({ method, amount, currency, ...(reference !== undefined ? { reference } : {}) });
+
+  it('11. DOS transferencias CUP con referencias distintas → DOS componentes (referencia POR pago, nunca global)', () => {
+    const items: PaymentSourceItem[] = [
+      {
+        payments: [
+          rowRef('transfer', 3000, 'CUP', 'TRANSF-0001'),
+          rowRef('transfer', 2000, 'CUP', 'TRANSF-0002'),
+        ],
+      },
+    ];
+    const comps = buildPaymentComponents(items);
+    expect(comps).toHaveLength(2);
+    expect(comps).toContainEqual({ method: 'transfer', currency: 'CUP', amount: 3000, reference: 'TRANSF-0001' });
+    expect(comps).toContainEqual({ method: 'transfer', currency: 'CUP', amount: 2000, reference: 'TRANSF-0002' });
+  });
+
+  it('12. Transferencias SIN referencia siguen AGREGÁNDOSE (comportamiento histórico intacto)', () => {
+    const items: PaymentSourceItem[] = [
+      { payments: [rowRef('transfer', 3000, 'CUP'), rowRef('transfer', 2000, 'CUP')] },
+    ];
+    const comps = buildPaymentComponents(items);
+    expect(comps).toHaveLength(1);
+    expect(comps[0]).toEqual({ method: 'transfer', currency: 'CUP', amount: 5000 });
+  });
+
+  it('13. Misma referencia en dos filas → UN componente con importe fusionado (misma operación bancaria)', () => {
+    const items: PaymentSourceItem[] = [
+      { payments: [rowRef('transfer', 1500, 'CUP', 'TRANSF-0099'), rowRef('transfer', 500, 'CUP', 'TRANSF-0099')] },
+    ];
+    const comps = buildPaymentComponents(items);
+    expect(comps).toHaveLength(1);
+    expect(comps[0]).toEqual({ method: 'transfer', currency: 'CUP', amount: 2000, reference: 'TRANSF-0099' });
+  });
+
+  it('14. La referencia de una fila EFECTIVO se ignora (solo aplica a transferencias)', () => {
+    const items: PaymentSourceItem[] = [
+      { payments: [rowRef('cash', 500, 'CUP', 'NO-DEBE-VIAJAR')] },
+    ];
+    const comps = buildPaymentComponents(items);
+    expect(comps).toHaveLength(1);
+    expect(comps[0]).not.toHaveProperty('reference');
+  });
+
+  it('15. Regla de envío EXTENDIDA: transferencia CUP con referencia → SÍ se envía (el pool legacy perdería la referencia)', () => {
+    const items: PaymentSourceItem[] = [
+      { payments: [rowRef('transfer', 5000, 'CUP', 'TRANSF-777')] },
+    ];
+    const comps = buildPaymentComponents(items);
+    expect(requiresPaymentComponents(comps)).toBe(true);
+  });
+
+  it('16. external_transfer (Transf. Exterior) con referencia → componente con SU referencia', () => {
+    const items: PaymentSourceItem[] = [
+      { payments: [rowRef('external_transfer', 20, 'USD', 'ZELLE-REF-1')] },
+    ];
+    const comps = buildPaymentComponents(items);
+    expect(comps).toHaveLength(1);
+    expect(comps[0]).toEqual({ method: 'external_transfer', currency: 'USD', amount: 20, reference: 'ZELLE-REF-1' });
+  });
+
+  it('17. Referencia heredada zelle normalizada: viaja al componente external_transfer', () => {
+    const items: PaymentSourceItem[] = [
+      { payments: [rowRef('zelle', 10, 'USD', 'OLD-REF')] },
+    ];
+    const comps = buildPaymentComponents(items);
+    expect(comps).toHaveLength(1);
+    expect(comps[0].method).toBe('external_transfer');
+    expect(comps[0].reference).toBe('OLD-REF');
+  });
+
+  it('18. Referencia con espacios → trim; vacía → sin referencia (agregación normal)', () => {
+    const a = buildPaymentComponents([{ payments: [rowRef('transfer', 100, 'CUP', '  TRIM-1  ')] }]);
+    expect(a[0].reference).toBe('TRIM-1');
+    const b = buildPaymentComponents([{ payments: [rowRef('transfer', 100, 'CUP', '   ')] }]);
+    expect(b[0]).not.toHaveProperty('reference');
+  });
+});

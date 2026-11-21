@@ -947,24 +947,6 @@
       "reason": "PR #1616 (ciclo devolución en divisa): migración 20261114140000 redefine create_devolution_v2 (tasa efectiva exacta en filas de reembolso USD/AS_PAID) CON AUTORIZACIÓN PENDIENTE — producción no debe tocarse sin decisión del propietario. El replay del PR diverge del surface certificado (vivo) hasta que la migración se aplique con autorización; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/nominas). El cuerpo propuesto está validado íntegro en BD E2E aislada (37/37 PASS + net delta 0).",
       "added_by": "CP-FIN misión final 2026-11-13 (PR #1616)",
       "expires": "2026-12-31"
-    },
-    {
-      "function": "create_sale_v2/34",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "Divergencia: §3 gate de estado de recepciones dentro del lock (espejo del gate de caja). CP-LOG-UNIFICATION-001 (misión EXTERNA concurrente): cambios aplicados en producción out-of-band entre la certificación CP-FIN-110 (surface 2026-11-21 12:58Z, 221 funciones, sha e524898a) y la re-certificación de POSTREVIEW-HARDENING-111 (2026-11-21 18:31Z, 222 funciones, sha a27f1763) — SIN migración en el stream supabase/migrations al momento de esta re-certificación. La re-certificación captura el live como fuente de verdad; el stream queda atrás hasta que la misión externa aporte su migración. NO normalizada por POSTREVIEW-HARDENING-111: función ajena a esta misión (20261122130000 solo redefine fin_generation_build, fin_get_reconciliation y crea fin_rectification_apply — anti-drift pre-aplicación verificado contra live). Requiere ratificación del propietario y migración de la misión externa.",
-      "added_by": "CP-FIN-111-POSTREVIEW-HARDENING (documenta deriva PRE-existente externa CP-LOG-UNIFICATION-001)",
-      "expires": "2026-12-31"
-    },
-    {
-      "function": "register_supplier_payment/12",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "Divergencia: §5.1 referencia de transferencia por componente (número de operación bancaria) en la clave de idempotencia y en el GROUP BY anti-duplicados. CP-LOG-UNIFICATION-001 (misión EXTERNA concurrente): cambios aplicados en producción out-of-band entre la certificación CP-FIN-110 (surface 2026-11-21 12:58Z, 221 funciones, sha e524898a) y la re-certificación de POSTREVIEW-HARDENING-111 (2026-11-21 18:31Z, 222 funciones, sha a27f1763) — SIN migración en el stream supabase/migrations al momento de esta re-certificación. La re-certificación captura el live como fuente de verdad; el stream queda atrás hasta que la misión externa aporte su migración. NO normalizada por POSTREVIEW-HARDENING-111: función ajena a esta misión (20261122130000 solo redefine fin_generation_build, fin_get_reconciliation y crea fin_rectification_apply — anti-drift pre-aplicación verificado contra live). Requiere ratificación del propietario y migración de la misión externa.",
-      "added_by": "CP-FIN-111-POSTREVIEW-HARDENING (documenta deriva PRE-existente externa CP-LOG-UNIFICATION-001)",
-      "expires": "2026-12-31"
     }
   ]
 }

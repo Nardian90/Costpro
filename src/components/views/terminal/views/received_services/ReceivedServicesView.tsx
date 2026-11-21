@@ -14,7 +14,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { useServiceTypes, type ServiceType } from '@/hooks/useServiceTypes';
 import { useStoreRates } from '@/hooks/useStoreRates';
 import PaymentRowsEditor, {
-  newPaymentRow, rowsCupTotal, rowsToPayload, rowsAreValid,
+  newPaymentRow, rowsCupTotal, rowsToPayload, rowsAreValid, payRowsFingerprint,
   type PaymentEditorRow,
 } from '@/components/payments/PaymentRowsEditor';
 // ADN-008 §4: mismo selector de proveedores del formulario de Recepciones —
@@ -1101,15 +1101,14 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
   // respuesta perdida/incierta); se regenera cuando el CONTENIDO del lote
   // cambia (misma operación → misma clave; lote distinto → nueva clave con
   // validación actualizada del saldo). Antes: crypto.randomUUID() por envío.
-  const payRowsFingerprint = useMemo(
-    () => JSON.stringify(payRows.map((r) => [r.method, r.currency, r.amount, r.exchange_rate, r.reference])),
-    [payRows],
-  );
+  // CP-LOG-UNIFICATION-001 (§3.2): helper extraída al componente COMPARTIDO
+  // (payRowsFingerprint) — misma implementación que Recepciones, sin copia.
+  const payRowsFp = useMemo(() => payRowsFingerprint(payRows), [payRows]);
   const payAttemptKeyRef = useRef<string>('');
   useEffect(() => {
     payAttemptKeyRef.current = crypto.randomUUID();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payRowsFingerprint, payNow, isOpen]);
+  }, [payRowsFp, payNow, isOpen]);
   // MISIÓN POLÍTICA TEMPORAL: fecha del servicio. Default HOY (día de negocio
   // America/Havana) o la preferencia de trabajo del usuario para servicios
   // si es válida (MISIÓN FECHAS DE TRABAJO). Tope = HOY (nunca futura);

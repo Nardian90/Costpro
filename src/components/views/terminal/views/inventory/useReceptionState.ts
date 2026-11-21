@@ -3,7 +3,11 @@ import type { DragEvent, ChangeEvent, KeyboardEvent as ReactKeyboardEvent } from
 import { useReceptionShortcuts } from './useReceptionShortcuts';
 import { useDebounce } from '@/hooks/ui/useDebounce';
 import { useAuthStore, useUIStore } from '@/store';
-import { useInventory, useRegisterReception } from '@/hooks/api/useInventory';
+import { useRegisterReception } from '@/hooks/api/useInventory';
+// CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§2.1): búsqueda del modal
+// manual sobre la RPC de recepción (get_products_for_reception) — incluye los
+// maestros de la organización para tiendas conectadas al Catálogo Maestro.
+import { useReceptionCatalogSearch } from '@/hooks/api/useReceptionCatalogSearch';
 // Reception-Flow-Fix: hooks para guardar/confirmar recepciones pendientes.
 import { useSavePendingReception, useConfirmPendingReception } from '@/hooks/api/useReceptions';
 // CP-CAT-MAESTRO-003: verificación de identidad compartida (Catálogo Maestro)
@@ -23,6 +27,15 @@ import { toast } from 'sonner';
 import { supabase } from '@/lib/supabaseClient';
 import { auditService } from '@/services/audit-service';
 import type { Product } from '@/types';
+// CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§3): liquidación al
+// confirmar — el MISMO editor unificado de pagos que Servicios Recibidos
+// (CP-FIN-003): medio × moneda × importe × tasa × referencia, multipago.
+import {
+  newPaymentRow, rowsToPayload, rowsAreValid, rowsCupTotal, payRowsFingerprint,
+  type PaymentEditorRow,
+} from '@/components/payments/PaymentRowsEditor';
+import { useStoreRates } from '@/hooks/useStoreRates';
+import { formatOperationDateForRPC } from '@/components/ui/OperationDatePicker';
 
 // ────────────────────────────────────────────────────────────
 // Types
@@ -296,6 +309,13 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const RECEPTION_SEARCH_PAGE_SIZE = 60;
   const debouncedSearch = useDebounce(addItemSearch.trim(), 250);
 
+  // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§2.1): la búsqueda del
+  // modal manual cambia de get_paginated_products (compartida por 9 módulos,
+// solo filas locales) a get_products_for_reception — la MISMA RPC del Express.
+  // Una tienda conectada al Catálogo Maestro sin filas locales (FERROCARRIL,
+  // SHADDAI: 0 products) ahora ve el catálogo de la organización: filas
+  // locales ∪ maestros activos sin fila local (source='master'). La forma de
+  // retorno es idéntica a useInventory (pages[].products / pages[].total).
   const {
     data: inventoryData,
     isLoading: inventoryLoading,
@@ -305,8 +325,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     fetchNextPage,
     error: inventoryError,
     refetch: refetchInventory,
-  } = useInventory(
-    user?.activeStoreId || '', debouncedSearch, '', RECEPTION_SEARCH_PAGE_SIZE
+  } = useReceptionCatalogSearch(
+    user?.activeStoreId || '', debouncedSearch, RECEPTION_SEARCH_PAGE_SIZE
   );
   const products = useMemo(
     () => (inventoryData?.pages || []).flatMap(p => p.products || []),
@@ -622,6 +642,54 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   }, [items]);
 
   // ──────────────────────────────────────────────────────────
+  // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§3): LIQUIDACIÓN AL
+  // CONFIRMAR — paridad operacional con Servicios Recibidos (ADN-008).
+  // Mismo editor unificado (PaymentRowsEditor), mismas validaciones, mismo
+  // canal atómico (/api/payments → register_supplier_payment_batch) y misma
+  // idempotencia estable por fingerprint (ADN-009 §8). La obligación nace en
+  // register_reception; la liquidación se registra SOLO tras el éxito del
+  // registro — si el pago falla, la recepción queda registrada con su saldo
+  // pendiente y el usuario puede liquidarla desde el detalle (sin estados
+  // inconsistentes, §3.1).
+  // ──────────────────────────────────────────────────────────
+  const { rates: liquidarStoreRates } = useStoreRates();
+  const authToken = useAuthStore((s) => s.token);
+  const [liquidarAhora, setLiquidarAhora] = useState(false);
+  const [liquidarRows, setLiquidarRows] = useState<PaymentEditorRow[]>([newPaymentRow({})]);
+  // Prefill (paridad Servicios): al activar «Liquidar al confirmar», el lote
+  // por defecto es Efectivo + CUP + total exacto de la obligación. El usuario
+  // puede cambiar medio/moneda/importe, añadir componentes (pago combinado) o
+  // pagar parcial — el saldo pendiente lo mantiene el trigger de pagos.
+  useEffect(() => {
+    if (liquidarAhora && totalCost !== null && totalCost > 0) {
+      setLiquidarRows(prev => {
+        const virgen = prev.length === 1 && prev[0].method === 'cash'
+          && prev[0].currency === 'CUP' && !(prev[0].amount > 0.005);
+        if (virgen) return [{ ...prev[0], amount: Math.round(totalCost * 100) / 100 }];
+        return prev;
+      });
+    }
+  }, [liquidarAhora, totalCost]);
+  // Idempotencia estable (helper COMPARTIDA payRowsFingerprint): la clave solo
+  // cambia cuando cambia el contenido del lote → reintento = replay.
+  const liquidarFingerprint = useMemo(() => payRowsFingerprint(liquidarRows), [liquidarRows]);
+  const liquidarKeyRef = useRef<string>('');
+  useEffect(() => {
+    liquidarKeyRef.current = crypto.randomUUID();
+  }, [liquidarFingerprint, liquidarAhora]);
+  // Validación del lote para la UI (bloquea Registrar si está activado e inválido)
+  const liquidarValido = !liquidarAhora
+    || (totalCost !== null
+        && rowsAreValid(liquidarRows)
+        && rowsCupTotal(liquidarRows) > 0.005
+        && rowsCupTotal(liquidarRows) <= (totalCost ?? 0) + 0.005);
+  const liquidarError = liquidarAhora && totalCost === null
+    ? 'Total no calculable (tasa inválida) — no se puede liquidar ahora'
+    : liquidarAhora && !liquidarValido
+      ? `El pago (${rowsCupTotal(liquidarRows).toFixed(2)} CUP) debe ser > 0 y no exceder el total (${totalCost !== null ? totalCost.toFixed(2) : '?'} CUP)`
+      : null;
+
+  // ──────────────────────────────────────────────────────────
   // Add Product Modal
   // ──────────────────────────────────────────────────────────
 
@@ -653,14 +721,85 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     setNewSalePrice(null);
   };
 
-  const handleAddItem = () => {
+  // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§2.1): activación de un
+  // producto SOLO-MAESTRO (tienda conectada al Catálogo Maestro, sin fila
+  // local). Se ejecuta AL AGREGAR (no al seleccionar: navegar/preview no debe
+  // crear filas) por el MISMO camino del importador Excel —
+  // resolve_reception_import_rows con una fila — que crea/activa la fila local
+  // vinculada al maestro con la identidad canónica del maestro y los datos
+  // comerciales introducidos en el modal. Mantiene la autoridad del nombre y
+  // los mismos permisos que el importador (has_store_access_as).
+  const [resolvingMaster, setResolvingMaster] = useState(false);
+  const activateMasterForReception = useCallback(async (
+    selected: Product,
+    unitCost: number,
+    salePrice: number | null,
+  ): Promise<string | null> => {
+    const storeId = useAuthStore.getState().user?.activeStoreId;
+    if (!storeId) {
+      toast.error('No hay tienda activa para activar el producto del catálogo');
+      return null;
+    }
+    setResolvingMaster(true);
+    try {
+      const { data, error } = await supabase.rpc('resolve_reception_import_rows', {
+        p_store_id: storeId,
+        p_rows: [{
+          name: selected.name,
+          sku: selected.sku || '',
+          barcode: selected.barcode || '',
+          unit_of_measure: selected.unit_of_measure || '',
+          // El clasificador exige cantidad >= 1 (ERR_INVALID_QUANTITY): la
+          // activación es de la IDENTIDAD; la cantidad real la registra la
+          // recepción con su costo real.
+          quantity: 1,
+          ...(unitCost > 0 ? { unit_cost: unitCost } : {}),
+          ...(salePrice && salePrice > 0 ? { sale_price: salePrice } : {}),
+        }],
+        p_confirm_reactivation: [],
+      });
+      if (error) throw error;
+      const results = (data?.results || []) as Array<{
+        status: string; product_id?: string | null; reasons?: string[];
+      }>;
+      const first = results[0];
+      if (!first || !first.product_id) {
+        const reasons = (first?.reasons || []).join(' · ') || 'sin detalle';
+        toast.error(
+          `No se pudo activar "${selected.name}" del catálogo maestro (${first?.status || 'error'}): ${reasons}`,
+          { duration: 9000 },
+        );
+        return null;
+      }
+      return first.product_id;
+    } catch (e: any) {
+      console.error('[reception] activación de maestro falló:', e);
+      toast.error(`Error al activar "${selected.name}": ${e?.message || 'desconocido'}`);
+      return null;
+    } finally {
+      setResolvingMaster(false);
+    }
+  }, []);
+
+  const handleAddItem = async () => {
     if (!selectedProductId) { toast.error('Selecciona un producto'); return; }
+    if (resolvingMaster) return;
     const selected = products.find(p => p.id === selectedProductId);
     if (!selected) return;
+    // CP-LOG-UNIFICATION-001: fila solo-maestro → activar ANTES de agregar.
+    // La fila resultante ya tiene la identidad canónica (nombre del maestro)
+    // y los datos comerciales del modal; register_reception opera después
+    // sobre un product_id LOCAL real.
+    let productId: string = selected.id;
+    if (selected.source === 'master') {
+      const localId = await activateMasterForReception(selected, newUnitCost, newSalePrice);
+      if (!localId) return; // el toast de error ya explicó la causa
+      productId = localId;
+    }
 
     // REC-2 MM-R4: validación de duplicados considera variante
     const existingIdx = items.findIndex(item =>
-      item.product_id && item.product_id === selected.id &&
+      item.product_id && item.product_id === productId &&
       item.variant_id === (selectedVariantId || null)
     );
     if (existingIdx >= 0) {
@@ -672,7 +811,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     const shouldUpdatePrice = newSalePrice !== null && newSalePrice !== (selected.price || null) && newSalePrice > 0;
 
     setItems(prev => [...prev, {
-      product_id: selected.id,
+      product_id: productId,
       sku: selected.sku || '',
       name: selected.name,
       quantity: newQuantity,
@@ -690,7 +829,7 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       tasa_cambio_recepcion: newTasa,
     }]);
     handleCloseForm();
-    toast.success(`"${selected.name}"${selectedVariant ? ` (${selectedVariant.name})` : ''} agregado a la recepcion`);
+    toast.success(`"${selected.name}"${selected.source === 'master' ? ' (activado del catálogo maestro)' : ''}${selectedVariant ? ` (${selectedVariant.name})` : ''} agregado a la recepcion`);
   };
 
   // FIX-02: Manual add for products not in catalog
@@ -1506,6 +1645,12 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     if (!supplier.trim()) { toast.error('El nombre del proveedor es obligatorio'); return; }
     if (!invoiceNumber.trim()) { toast.error('El numero de factura es obligatorio'); return; }
     if (items.length === 0) { toast.error('Agrega al menos un producto'); return; }
+    // CP-LOG-UNIFICATION-001 (§3.1 paso 1-2): si se liquidará al confirmar,
+    // el lote de pago debe ser válido ANTES de abrir la confirmación.
+    if (liquidarAhora && !liquidarValido) {
+      toast.error(liquidarError || 'Revisa la liquidación: importes > 0, tasa > 1 para divisa y sin exceder el total.');
+      return;
+    }
     if (isSubmitting) return;
 
     // Show confirmation dialog (FIX-06)
@@ -1702,7 +1847,6 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       const msgs: string[] = ['Recepcion registrada con exito'];
       if (autoCreatedSkus.length > 0) msgs.push(`${autoCreatedSkus.length} producto(s) creado(s) automaticamente`);
       if (priceUpdatedSkus.length > 0) msgs.push(`${priceUpdatedSkus.length} precio(s) actualizado(s)`);
-
       // CP-CAT-MAESTRO-003: estado real de la sincronía con el Catálogo Maestro.
       // register_reception sincroniza en su transacción; aquí se verifica el
       // resultado persistido (master_product_id) para informarlo al usuario.
@@ -1725,6 +1869,58 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           }
         } catch (linkedCheckErr) {
           console.warn('[executeSubmit] no se pudo verificar la sincronía con el Catálogo Maestro:', linkedCheckErr);
+        }
+      }
+
+      // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§3.1 paso 10):
+      // registrar la LIQUIDACIÓN solo tras el éxito del registro de la
+      // recepción. Canal atómico batch (ref_type='receipt'), idempotencia
+      // estable por fingerprint, fecha del pago = HOY (el dinero sale hoy;
+      // la recepción ya fue validada con su propia fecha). Si el pago falla,
+      // la recepción NO se revierte: queda registrada con su obligación
+      // pendiente y el usuario la liquida desde el detalle — sin estados
+      // inconsistentes (§3.1) y sin duplicar la obligación (nace UNA vez en
+      // register_reception; el trigger trg_update_payment_status mantiene
+      // paid_amount/payment_status).
+      let liquidadaAlRegistrar = false;
+      if (liquidarAhora && liquidarValido && totalCost !== null) {
+        const payloadRows = rowsToPayload(liquidarRows);
+        if (payloadRows.length > 0) {
+          try {
+            const payRes = await fetch('/api/payments', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+              },
+              body: JSON.stringify({
+                ref_type: 'receipt',
+                ref_id: receiptId,
+                payments: payloadRows,
+                payment_date: formatOperationDateForRPC(todayBusinessDay()),
+                idempotency_key: liquidarKeyRef.current,
+              }),
+            });
+            if (payRes.ok) {
+              liquidadaAlRegistrar = true;
+              msgs.push('obligacion liquidada al confirmar');
+            } else {
+              const payErr = await payRes.json().catch(() => ({}));
+              console.error('[executeSubmit] liquidación falló:', payErr);
+              toast.error(
+                `La recepción quedó registrada pero la liquidación falló: ${payErr?.error || payErr?.message || 'error desconocido'}. ` +
+                'Puedes liquidarla desde el detalle de la recepción (pestaña Pagos).',
+                { duration: 9000 },
+              );
+            }
+          } catch (payEx: any) {
+            console.error('[executeSubmit] liquidación falló (red):', payEx);
+            toast.error(
+              'La recepción quedó registrada pero la liquidación no se pudo confirmar (error de red). ' +
+              'Verifica el estado del pago en el detalle de la recepción antes de reintentar.',
+              { duration: 9000 },
+            );
+          }
         }
       }
 
@@ -1754,6 +1950,10 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       setInvoiceNumber('');
       setNotes('');
       setItems([]);
+      // CP-LOG-UNIFICATION-001: reset de la liquidación (el próximo documento
+      // es una operación nueva con su propia obligación).
+      setLiquidarAhora(false);
+      setLiquidarRows([newPaymentRow({})]);
     } catch (err: any) {
       console.error('Submit error:', err);
       // MISIÓN RECEPCIONES (2026-10-27): ya no hay rollback client-side de
@@ -2129,10 +2329,23 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     selectedProduct,
     registerReceptionIsPending: registerReception.isPending,
 
+    // CP-LOG-UNIFICATION-001 (§3): liquidación al confirmar (estado + helpers
+    // para la UI; el registro del pago ocurre en executeSubmit tras el éxito).
+    liquidarAhora,
+    setLiquidarAhora,
+    liquidarRows,
+    setLiquidarRows,
+    liquidarStoreRates,
+    liquidarValido,
+    liquidarError,
+
     // ── Handlers ───────────────────────────────────────────
     handleOpenForm,
     handleCloseForm,
     handleAddItem,
+    // CP-LOG-UNIFICATION-001: estado de la activación de un producto
+    // solo-maestro (deshabilita el botón Agregar mientras se crea la fila local)
+    resolvingMaster,
     handleAddManualProduct,
     handleRequestRemove,
     handleConfirmRemove,
