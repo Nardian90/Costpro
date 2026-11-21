@@ -6,8 +6,8 @@
 // (Management API, mecanismo 'management_api' del libro), patrón runbook
 // m055 / m-log-reception-apply.mjs (CP-LOG-RECEPTION-MASTER-CATALOG-001).
 //
-//   1. supabase/migrations/20261121130000_cp_log_unification_master_visibility.sql
-//   2. supabase/migrations/20261121130100_cp_log_unification_pos_transfer_reference.sql
+//   1. supabase/migrations/20261121200000_cp_log_unification_master_visibility.sql
+//   2. supabase/migrations/20261121200100_cp_log_unification_pos_transfer_reference.sql
 //
 // Controles fail-closed (todos obligatorios, en este orden):
 //  1. Guard oficial CP-INFRA-019 (scripts/lib/assert-not-production.mjs) en
@@ -38,13 +38,13 @@ import { assertNotProduction } from './lib/assert-not-production.mjs';
 
 const MIGS = [
   {
-    version: '20261121130000',
-    path: 'supabase/migrations/20261121130000_cp_log_unification_master_visibility.sql',
+    version: '20261121200000',
+    path: 'supabase/migrations/20261121200000_cp_log_unification_master_visibility.sql',
     label: 'PARTE 1 — unión maestra en búsqueda POS/Recepciones + gate ERR_RECEIPT_NOT_PAYABLE',
   },
   {
-    version: '20261121130100',
-    path: 'supabase/migrations/20261121130100_cp_log_unification_pos_transfer_reference.sql',
+    version: '20261121200100',
+    path: 'supabase/migrations/20261121200100_cp_log_unification_pos_transfer_reference.sql',
     label: 'PARTE 2 — referencia de transferencia por componente en create_sale_v2',
   },
 ];

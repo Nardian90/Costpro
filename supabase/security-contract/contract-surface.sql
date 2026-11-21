@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-20T20:34:10.790Z
+-- Captured  : 2026-11-21T16:20:00.000Z (re-certificado post CP-LOG-UNIFICATION-001: create_sale_v2 + register_supplier_payment desde LIVE; resto intacto de main)
 -- Project   : wthkddeleylijmonclxg
--- Functions : 220 (SECURITY DEFINER write functions, public schema)
+-- Functions : 224 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -1788,6 +1788,83 @@ BEGIN
 
     UPDATE public.receipts SET status = 'voided', updated_at = now() WHERE id = p_reception_id;
 END $function$
+
+
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
+END;
+$function$
+
+
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Transfer not found'; END IF;
+  IF v_transfer.status <> 'PENDIENTE' THEN RAISE EXCEPTION 'ERR_TRANSFER_NOT_PENDING'; END IF;
+
+  -- Autorización: caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- Actualizar estado
+  UPDATE public.transfers
+    SET status = 'CANCELADA', notes = COALESCE(notes, '') || ' [CANCELADA: ' || p_reason || ']'
+    WHERE id = p_transfer_id;
+
+  -- Liberar reservas ACTIVE
+  UPDATE public.inventory_reservations
+    SET status = 'RELEASED', released_at = NOW()
+    WHERE reference_type = 'TRANSFER' AND reference_id = p_transfer_id AND status = 'ACTIVE';
+
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (v_caller_uid, v_transfer.origin_store_id, 'transfer_cancelled', 'transfers', p_transfer_id,
+    jsonb_build_object('reason', p_reason, 'reservations_released',
+      (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
+
+  RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
+END;
+$function$
 
 
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
@@ -5904,6 +5981,12 @@ DECLARE
   -- MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): componentes de pago por
   -- moneda REAL — importe efectivamente cobrado en CUP y en USD por método.
   v_comp jsonb;
+  -- CP-LOG-UNIFICATION-001 (§5.1): referencia de la transferencia por
+  -- componente (número de operación bancaria) + índice del componente
+  -- para la clave de idempotencia (dos transferencias con referencias
+  -- distintas ya no colisionan: cada pago conserva SU referencia).
+  v_comp_ref text;
+  v_comp_idx integer;
   v_comp_method text;
   v_comp_cur text;
   v_comp_amt numeric;
@@ -6508,13 +6591,19 @@ BEGIN
     -- PK) → filas duplicadas en la fuente autoritativa del Reporte Entrega.
     -- Fail-closed coherente con la regla de la misión (Fase B: «Rechaza
     -- componentes duplicados») y con la agregación previa de pools (§13.7).
+    -- CP-LOG-UNIFICATION-001 (§5.1): la referencia entra al GROUP BY — dos
+    -- transferencias del mismo medio y moneda con referencias DISTINTAS son
+    -- DOS pagos bancarios legítimos (cada una con SU número de operación y
+    -- SU fila de payment_transactions). El duplicado real (mismo método+
+    -- moneda con la MISMA o sin referencia) sigue rechazado: es el bug de
+    -- agregación que esta regla cerró (Fase B 2026-10-24).
     IF EXISTS (
       SELECT 1
       FROM jsonb_array_elements(p_payment_components) c
-      GROUP BY lower(btrim(c->>'method')), upper(btrim(c->>'currency'))
+      GROUP BY lower(btrim(c->>'method')), upper(btrim(c->>'currency')), NULLIF(btrim(COALESCE(c->>'reference', '')), '')
       HAVING count(*) > 1
     ) THEN
-      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componentes duplicados — agrupa los importes del mismo método y moneda en un solo componente [{method, currency, amount}]';
+      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componentes duplicados — agrupa los importes del mismo método y moneda (y misma referencia) en un solo componente [{method, currency, amount, reference?}]';
     END IF;
 
     -- Tasa USD de la operación (jerarquía §6.1 — misma fuente que v_server_rate)
@@ -6863,10 +6952,15 @@ BEGIN
   -- pools del INSERT de la venta se derivaron de estos mismos componentes a
   -- esta misma tasa. Sin componentes: flujo previo (pool canónico CUP).
   IF v_components_ok THEN
+    v_comp_idx := 0;
     FOR v_comp IN SELECT * FROM jsonb_array_elements(p_payment_components) LOOP
+      v_comp_idx := v_comp_idx + 1;
       v_comp_method := lower(btrim(COALESCE(v_comp->>'method', '')));
       v_comp_cur := upper(btrim(COALESCE(v_comp->>'currency', '')));
       v_comp_amt := COALESCE(NULLIF(v_comp->>'amount', '')::numeric, NULL);
+      -- CP-LOG-UNIFICATION-001 (§5.1): referencia de la transferencia (opcional,
+      -- 400 chars máx; NULL para componentes sin referencia).
+      v_comp_ref := left(NULLIF(btrim(COALESCE(v_comp->>'reference', '')), ''), 400);
       -- CP-FIN-004: normalización del heredado en el MISMO punto único que
       -- §13.7 (este bucle re-parsea v_comp_method: sin esta línea, un
       -- componente 'zelle' de cliente cachado se persistiría tal cual).
@@ -6887,12 +6981,17 @@ BEGIN
       INSERT INTO public.payment_transactions (
         store_id, ref_type, ref_id, transaction_id,
         amount, payment_method, currency, exchange_rate,
-        payment_date, paid_by, idempotency_key
+        payment_date, paid_by, idempotency_key, reference
       ) VALUES (
         p_store_id, 'sale', v_tx_id, v_tx_id,
         v_comp_amt, v_comp_method, v_comp_cur,
         CASE WHEN v_comp_cur = 'USD' THEN v_usd_rate ELSE 1.0 END,
-        v_eff, v_uid, 'pay-' || v_comp_method || '-' || v_comp_cur || '-' || v_tx_id::text
+        v_eff, v_uid,
+        -- CP-LOG-UNIFICATION-001 (§5.1): índice en la clave — dos componentes
+        -- del mismo medio+moneda (p. ej. dos transferencias con referencias
+        -- distintas) ya no colisionan en el índice único de idempotencia.
+        'pay-' || v_comp_method || '-' || v_comp_cur || '-' || v_comp_idx::text || '-' || v_tx_id::text,
+        v_comp_ref
       ) RETURNING id INTO v_pt_id;
     END LOOP;
   ELSIF v_cash_amt > 0 THEN
@@ -15392,8 +15491,9 @@ BEGIN
   --    caminos. Las liquidaciones concurrentes del mismo documento quedan
   --    SERIALIZADAS: la segunda lee el saldo ya actualizado.
   IF p_ref_type = 'receipt' THEN
-    SELECT store_id, total_cost, 'CUP', 1
-      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
+    -- CP-LOG-UNIFICATION-001 (§3): el estado de la recepción entra al lock.
+    SELECT store_id, total_cost, 'CUP', 1, status
+      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate, v_doc_status
     FROM public.receipts WHERE id = p_ref_id FOR UPDATE;
   ELSIF p_ref_type = 'service' THEN
     SELECT store_id, total_amount, currency, COALESCE(exchange_rate, 1), status
@@ -15413,6 +15513,16 @@ BEGIN
 
   IF v_doc_store_id != p_store_id THEN
     RAISE EXCEPTION 'El documento no pertenece a la tienda especificada';
+  END IF;
+
+  -- CP-LOG-UNIFICATION-001 (§3): gate de estado de recepciones (espejo del
+  -- batch): una recepción ANULADA o REVERTIDA no admite pagos nuevos (la
+  -- reversión ya revirtió sus pagos). Pending/confirmed/active/partial
+  -- siguen admitidos — comportamiento histórico intacto.
+  IF p_ref_type = 'receipt' AND COALESCE(v_doc_status, 'active') IN ('voided', 'reversed') THEN
+    RAISE EXCEPTION
+      'ERR_RECEIPT_NOT_PAYABLE: la recepción está % y no admite pagos nuevos',
+      v_doc_status;
   END IF;
 
   -- Idempotencia (DESPUÉS del lock: dos envíos con la misma clave quedan
@@ -15840,6 +15950,307 @@ BEGIN
   RETURN jsonb_build_object('status', 'success', 'request_id', p_request_id,
     'request_number', v_req.request_number, 'to', 'draft');
 END;
+$function$
+
+
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
+$function$
+
+
+-- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+
+DECLARE
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_validation JSONB;
+  v_blockers TEXT;
+BEGIN
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- SECURITY H2: require management role (admin/manager/encargado) for destructive ops
+  IF NOT public.has_management_access_as(v_caller_uid, target_store_id) THEN
+    RAISE EXCEPTION 'ERR_MANAGEMENT_ACCESS_REQUIRED: reset requires admin/manager/encargado role';
+  END IF;
+
+  -- H-016: validar dependencias ANTES del borrado destructivo.
+  -- REGLA DELIBERADA (fase0 20260802000001, comentario restaurado 2026-10-21
+  -- tras perderse en las re-materializaciones): para reset solo bloquean las
+  -- transfers ENTRANTEs (la tienda es destino — el reset de la origen rompería
+  -- la transferencia ajena; las SALIENTES se borran con la propia tienda) y
+  -- las sesiones de caja abiertas. OTs abiertas, recibos pendientes y
+  -- transfers salientes son internas de la tienda que se resetea.
+  SELECT * INTO v_validation FROM public.validate_store_can_be_modified(target_store_id, 'reset');
+  -- AUDITORÍA 2026-10-21 (trampa de nulidad, endurecimiento defensivo):
+  -- `NOT (v_validation->>'can_modify')::boolean` con v_validation NULL o clave
+  -- ausente ⇒ NOT NULL ⇒ NULL ⇒ IF saltado ⇒ reset destructivo SIN validación
+  -- (fail-open). Hoy no es alcanzable (validate_store_can_be_modified es STABLE
+  -- y devuelve exactamente una fila con can_modify presente), pero una guarda
+  -- de seguridad no puede depender de un INVARIANTE DE CALLEE. Fail-closed en
+  -- DOS niveles:
+  --   (a) can_modify INDETERMINABLE (fila ausente o clave ausente) ⇒ rechazo
+  --       directo — jamás un reset sin validación verificada;
+  --   (b) can_modify=false ⇒ regla documentada (solo transfers_in y
+  --       open_cash_sessions bloquean) con EXISTENCE en lugar de mensaje
+  --       agregado: un bloqueador del tipo permitido con message NULL también
+  --       bloquea (string_agg de NULL devuelve NULL y el guard antiguo
+  --       `v_blockers IS NOT NULL AND v_blockers != ''` lo dejaba pasar).
+  IF v_validation IS NULL OR (v_validation->>'can_modify') IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_VALIDATION_UNAVAILABLE: no se pudo validar las dependencias de la tienda (fail-closed)';
+  END IF;
+  IF NOT (v_validation->>'can_modify')::boolean THEN
+    SELECT string_agg(blocker->>'message', '; ')
+    INTO v_blockers
+    FROM jsonb_array_elements(v_validation->'blockers') AS blocker
+    WHERE blocker->>'type' IN ('transfers_in', 'open_cash_sessions');
+    IF EXISTS (
+      SELECT 1 FROM jsonb_array_elements(v_validation->'blockers') AS blocker
+      WHERE blocker->>'type' IN ('transfers_in', 'open_cash_sessions')
+    ) THEN
+      RAISE EXCEPTION 'ERR_STORE_HAS_DEPENDENCIES: %',
+        COALESCE(v_blockers, 'transferencias entrantes pendientes o sesiones de caja abiertas');
+    END IF;
+  END IF;
+
+  -- Enable restore_mode locally so that triggers with bypass pattern allow DELETEs.
+  -- This is the canonical pattern for maintenance RPCs (see restore_transaction_snapshot).
+  -- The setting is LOCAL to this transaction and does NOT affect other sessions.
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  -- ── 1. Borrar TODAS las tablas operacionales ──
+
+  -- FIX: payment_transactions FIRST (FK ON DELETE RESTRICT to transactions)
+  DELETE FROM payment_transactions WHERE store_id = target_store_id;
+
+  -- Hijas de transactions (now safe — payment_transactions already deleted)
+  DELETE FROM transaction_items WHERE transaction_id IN (
+    SELECT id FROM transactions WHERE store_id = target_store_id
+  );
+  DELETE FROM transactions WHERE store_id = target_store_id;
+
+  -- Hijas de receipts
+  DELETE FROM receipt_items WHERE receipt_id IN (
+    SELECT id FROM receipts WHERE store_id = target_store_id
+  );
+  DELETE FROM receipts WHERE store_id = target_store_id;
+
+  -- Devoluciones
+  DELETE FROM devolution_items WHERE devolution_id IN (
+    SELECT id FROM devolutions WHERE store_id = target_store_id
+  );
+  DELETE FROM devolutions WHERE store_id = target_store_id;
+
+  -- Cotizaciones
+  DELETE FROM quotation_items WHERE quotation_id IN (
+    SELECT id FROM quotations WHERE store_id = target_store_id
+  );
+  DELETE FROM quotations WHERE store_id = target_store_id;
+
+  -- Clientes
+  DELETE FROM customers WHERE store_id = target_store_id;
+
+  -- Bancos
+  DELETE FROM bank_statement_items WHERE bank_statement_id IN (
+    SELECT id FROM bank_statements WHERE store_id = target_store_id
+  );
+  DELETE FROM bank_statements WHERE store_id = target_store_id;
+
+  -- Kardex
+  DELETE FROM kardex_entries WHERE store_id = target_store_id;
+
+  -- Conteos físicos
+  DELETE FROM physical_count_items WHERE count_id IN (
+    SELECT id FROM physical_counts WHERE store_id = target_store_id
+  );
+  DELETE FROM physical_counts WHERE store_id = target_store_id;
+
+  -- Stock movements
+  DELETE FROM stock_movements WHERE store_id = target_store_id;
+
+  -- Cash
+  DELETE FROM cash_closures WHERE store_id = target_store_id;
+  DELETE FROM cash_sessions WHERE store_id = target_store_id;
+  DELETE FROM cash_movements WHERE store_id = target_store_id;
+  DELETE FROM cash_register_sessions WHERE store_id = target_store_id;
+
+  -- Inventory adjustments
+  DELETE FROM inventory_adjustment_items WHERE adjustment_id IN (
+    SELECT id FROM inventory_adjustments WHERE store_id = target_store_id
+  );
+  DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+
+  -- Transfers
+  DELETE FROM transfer_items WHERE transfer_id IN (
+    SELECT id FROM transfers WHERE origin_store_id = target_store_id OR destination_store_id = target_store_id
+  );
+  DELETE FROM transfers WHERE origin_store_id = target_store_id OR destination_store_id = target_store_id;
+  DELETE FROM transfer_approval_rules WHERE store_id = target_store_id;
+
+  -- Purchase orders
+  DELETE FROM purchase_order_items WHERE po_id IN (
+    SELECT id FROM purchase_orders WHERE store_id = target_store_id
+  );
+  DELETE FROM purchase_orders WHERE store_id = target_store_id;
+
+  -- Production orders
+  DELETE FROM production_order_items WHERE order_id IN (
+    SELECT id FROM production_orders WHERE store_id = target_store_id
+  );
+  DELETE FROM production_orders WHERE store_id = target_store_id;
+
+  -- Workers + commissions
+  DELETE FROM commission_payments WHERE store_id = target_store_id;
+  DELETE FROM commission_rules WHERE store_id = target_store_id;
+  DELETE FROM workers WHERE store_id = target_store_id;
+
+  -- Sales transactions (legacy table if exists)
+  DELETE FROM sales_transactions WHERE store_id = target_store_id;
+
+  -- Ofertas
+  DELETE FROM ofertas WHERE store_id = target_store_id;
+
+  -- Exchange rates
+  DELETE FROM store_exchange_rates WHERE store_id = target_store_id;
+
+  -- V4-2 fix: NULLificar category_id antes de borrar categories
+  UPDATE products SET category_id = NULL WHERE store_id = target_store_id;
+  DELETE FROM suppliers WHERE store_id = target_store_id;
+  DELETE FROM categories WHERE store_id = target_store_id;
+
+  -- Warehouse
+  DELETE FROM warehouse_stock WHERE store_id = target_store_id;
+  DELETE FROM warehouses WHERE store_id = target_store_id;
+
+  -- Inventory
+  DELETE FROM inventory WHERE store_id = target_store_id;
+  DELETE FROM inventory_batches WHERE store_id = target_store_id;
+  DELETE FROM inventory_snapshots WHERE store_id = target_store_id;
+
+  -- Analytics
+  DELETE FROM abc_classifications WHERE store_id = target_store_id;
+  DELETE FROM price_change_history WHERE store_id = target_store_id;
+  DELETE FROM price_commit_log WHERE store_id = target_store_id;
+  DELETE FROM tax_configurations WHERE store_id = target_store_id;
+
+  -- Services
+  DELETE FROM received_services WHERE store_id = target_store_id;
+  DELETE FROM service_types WHERE store_id = target_store_id;
+
+  -- Fiscal
+  DELETE FROM fiscal_closings WHERE store_id = target_store_id;
+
+  -- Catalog (conditional)
+  IF p_keep_catalog THEN
+    UPDATE products SET stock_current = 0, cost_average = 0, updated_at = NOW() WHERE store_id = target_store_id;
+    DELETE FROM product_lots WHERE store_id = target_store_id;
+  ELSE
+    DELETE FROM product_lots WHERE store_id = target_store_id;
+    DELETE FROM product_variants WHERE product_id IN (SELECT id FROM products WHERE store_id = target_store_id);
+    DELETE FROM product_cost_sheets WHERE store_id = target_store_id;
+    DELETE FROM store_cost_templates WHERE store_id = target_store_id;
+    DELETE FROM cost_sheet_templates WHERE store_id = target_store_id;
+    DELETE FROM products WHERE store_id = target_store_id;
+  END IF;
+
+  -- Messaging
+  DELETE FROM whatsapp_messages WHERE store_id = target_store_id;
+  DELETE FROM whatsapp_invitations WHERE store_id = target_store_id;
+  DELETE FROM whatsapp_contacts WHERE store_id = target_store_id;
+  DELETE FROM whatsapp_risk_state WHERE store_id = target_store_id;
+  DELETE FROM whatsapp_configs WHERE store_id = target_store_id;
+  DELETE FROM telegram_messages WHERE store_id = target_store_id;
+  DELETE FROM telegram_invitations WHERE store_id = target_store_id;
+  DELETE FROM telegram_contacts WHERE store_id = target_store_id;
+  DELETE FROM telegram_configs WHERE store_id = target_store_id;
+
+  -- Notifications + snapshots
+  DELETE FROM store_notifications WHERE store_id = target_store_id;
+  DELETE FROM store_reset_snapshots WHERE store_id = target_store_id;
+
+  -- Audit
+  INSERT INTO audit_logs (action, table_name, record_id, store_id, metadata)
+  VALUES ('store_reset_completed', 'stores', target_store_id, target_store_id,
+    jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
+END;
+
 $function$
 
 

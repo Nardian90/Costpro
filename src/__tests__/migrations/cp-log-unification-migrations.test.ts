@@ -2,7 +2,7 @@
  * cp-log-unification-migrations.test.ts — CP-LOG-RECEPTIONS-SERVICES-POS-
  * UNIFICATION-001. Contratos estáticos de las DOS migraciones de la misión:
  *
- *  20261121130000_cp_log_unification_master_visibility.sql
+ *  20261121200000_cp_log_unification_master_visibility.sql
  *    · get_products_for_reception: unión maestra para tiendas conectadas
  *      (catalog_store_links) + columnas ADITIVAS al final (category, source,
  *      master_product_id) + firma de parámetros INTACTA.
@@ -13,7 +13,7 @@
  *      semántica ADN-009 (normalización zelle, INSERT sin amount_cup generado,
  *      idempotencia original).
  *
- *  20261121130100_cp_log_unification_pos_transfer_reference.sql
+ *  20261121200100_cp_log_unification_pos_transfer_reference.sql
  *    · create_sale_v2: el loop de componentes lee `reference` y lo persiste en
  *      payment_transactions.reference; la clave de idempotencia por componente
  *      incorpora el ÍNDICE (dos transferencias con referencias distintas no
@@ -25,15 +25,15 @@ import { join } from 'node:path';
 
 const MIG_DIR = join(process.cwd(), 'supabase/migrations');
 const MIG_MASTER = readFileSync(
-  join(MIG_DIR, '20261121130000_cp_log_unification_master_visibility.sql'),
+  join(MIG_DIR, '20261121200000_cp_log_unification_master_visibility.sql'),
   'utf-8',
 );
 const MIG_REF = readFileSync(
-  join(MIG_DIR, '20261121130100_cp_log_unification_pos_transfer_reference.sql'),
+  join(MIG_DIR, '20261121200100_cp_log_unification_pos_transfer_reference.sql'),
   'utf-8',
 );
 
-describe('MIG 20261121130000 · get_products_for_reception — unión maestra', () => {
+describe('MIG 20261121200000 · get_products_for_reception — unión maestra', () => {
   it('mantiene la FIRMA de parámetros histórica (uuid, text, integer, integer)', () => {
     expect(MIG_MASTER).toMatch(
       /CREATE OR REPLACE FUNCTION public\.get_products_for_reception\(p_store_id uuid, p_search_term text DEFAULT ''::text, p_page integer DEFAULT 1, p_page_size integer DEFAULT 50\)/,
@@ -70,7 +70,7 @@ describe('MIG 20261121130000 · get_products_for_reception — unión maestra', 
   });
 });
 
-describe('MIG 20261121130000 · get_products_for_pos — unión maestra', () => {
+describe('MIG 20261121200000 · get_products_for_pos — unión maestra', () => {
   it('firma de parámetros INTACTA (la que asegura el test de CP-OPERATIONAL-CLASS-002)', () => {
     expect(MIG_MASTER).toMatch(
       /CREATE OR REPLACE FUNCTION public\.get_products_for_pos\(\s*p_store_id uuid DEFAULT NULL::uuid,\s*p_search_term text DEFAULT NULL::text,\s*p_category text DEFAULT NULL::text,\s*p_limit integer DEFAULT 500,\s*p_offset integer DEFAULT 0\s*\)/,
@@ -95,7 +95,7 @@ describe('MIG 20261121130000 · get_products_for_pos — unión maestra', () => 
   });
 });
 
-describe('MIG 20261121130000 · gate de estado de receipts en el motor de pagos', () => {
+describe('MIG 20261121200000 · gate de estado de receipts en el motor de pagos', () => {
   it('el SELECT del lock de receipts ahora lee el status (batch y motor individual)', () => {
     expect(MIG_MASTER).toMatch(
       /SELECT store_id, total_cost, 'CUP', 1, status\s*INTO v_doc_store_id, v_doc_total, v_doc_currency, v_doc_rate, v_doc_status\s*FROM public\.receipts WHERE id = p_ref_id FOR UPDATE/,
@@ -125,7 +125,7 @@ describe('MIG 20261121130000 · gate de estado de receipts en el motor de pagos'
   });
 });
 
-describe('MIG 20261121130100 · create_sale_v2 — referencia de transferencia por componente', () => {
+describe('MIG 20261121200100 · create_sale_v2 — referencia de transferencia por componente', () => {
   it('firma de parámetros INTACTA (reemisión sin cambios de contrato)', () => {
     expect(MIG_REF).toMatch(/CREATE OR REPLACE FUNCTION public\.create_sale_v2\(/);
     // 33 parámetros nominales: reemisión completa con retorno jsonb original

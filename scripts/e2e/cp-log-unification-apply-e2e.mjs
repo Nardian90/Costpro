@@ -29,8 +29,8 @@ if (!SUPA_TOKEN) {
 const { assertIsolatedDb } = await import(join(REPO, 'e2e', 'fixtures', 'assert-isolated-db.cjs'));
 await assertIsolatedDb();
 
-const M1 = 'supabase/migrations/20261121130000_cp_log_unification_master_visibility.sql';
-const M2 = 'supabase/migrations/20261121130100_cp_log_unification_pos_transfer_reference.sql';
+const M1 = 'supabase/migrations/20261121200000_cp_log_unification_master_visibility.sql';
+const M2 = 'supabase/migrations/20261121200100_cp_log_unification_pos_transfer_reference.sql';
 
 async function runSql(query) {
   const res = await fetch(`https://api.supabase.com/v1/projects/${E2E_REF}/database/query`, {
