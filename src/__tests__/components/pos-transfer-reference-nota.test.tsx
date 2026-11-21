@@ -114,32 +114,21 @@ function renderPanel() {
     <POSCartCheckoutPanel
       items={useCartStore.getState().items as any}
       itemCount={useCartStore.getState().items.length}
-      subtotal={useCartStore.getState().getSubtotalCup()}
-      discount={null}
-      onSetDiscount={() => {}}
       getSubtotal={() => useCartStore.getState().getSubtotalCup()}
       getDiscountAmount={() => 0}
       getTotal={() => useCartStore.getState().getExpectedTotalCup()}
       getTaxAmount={() => 0}
+      discount={null}
       setDiscount={() => {}}
-      updateItemDiscount={() => {}}
-      updateItemPayment={() => {}}
       prorateGlobalPayment={() => {}}
-      isPaymentModeByProduct={true}
+      isPaymentModeByProduct={() => true}
       getConsolidatedPayments={() => ({})}
-      appliedTaxes={[]}
-      toggleTax={() => {}}
       isProcessing={false}
       selectedPayment={'transfer' as any}
       onSetSelectedPayment={() => {}}
       onCheckout={vi.fn().mockResolvedValue(undefined)}
-      onClose={() => {}}
+      onClearCart={() => {}}
       isMobile={false}
-      panelWidth={420}
-      isResizingPanel={false}
-      onPanelResizeStart={() => {}}
-      onPanelResizeKeyDown={() => {}}
-      onPanelResizeReset={() => {}}
     />,
   );
 }

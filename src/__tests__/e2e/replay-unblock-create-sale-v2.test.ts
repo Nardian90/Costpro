@@ -368,7 +368,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(h(VIEJA80)).toBe(SHA_VIEJA80);
   });
 
-  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 189 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
+  it('7. manifiesto: determinista (2 ejecuciones byte-idénticas), 194 incluidas, posiciones y hashes consistentes, --check MATCH', () => {
     const ejecutarGenerador = (args: string[]): string =>
       String(execFileSync(process.execPath, [RUTA_GENERADOR, ...args], { cwd: REPO, encoding: 'utf8' }));
     // determinismo: dos ejecuciones → mismo manifiesto byte a byte
@@ -498,10 +498,16 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261121190000_adn009_sr_postmerge_hardening (contrato canónico
     //   external_transfer en el batch, serialización FOR UPDATE compartida,
     //   gate de gestión en los RPC de borradores, idempotencia real de
-    //   creación y firma patch tri-state) = 190
-    expect(m.total_incluidos).toBe(192);
+    //   creación y firma patch tri-state)
+    // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (2026-11-21): +2 —
+    //   20261121130000 (unión maestra en get_products_for_pos/reception +
+    //   gate ERR_RECEIPT_NOT_PAYABLE en el motor de pagos) y 20261121130100
+    //   (referencia de transferencia por componente en create_sale_v2) —
+    //   intercaladas por orden lexicográfico ANTES de ADN-009 (13:00/13:01 <
+    //   19:00) = 194
+    expect(m.total_incluidos).toBe(194);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(192);
+    expect(incluidos.length).toBe(194);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -548,6 +554,12 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261120215000_cp_fin004_get_transactions_acl_restore.sql')).toBe(187);
     expect(pos('20261120220000_cp_fin004_normalizer_headers_sin_cobros.sql')).toBe(188);
     expect(pos('20261121120000_adn008_sr_drafts_supplier_multipago.sql')).toBe(189);
+    // CP-LOG-UNIFICATION-001: las dos migraciones de la misión se intercalan
+    // por orden lexicográfico ANTES de ADN-009 (13:00/13:01 < 19:00) y la
+    // desplazan +2 junto con las dos del conciliador (230000/230100).
+    expect(pos('20261121130000_cp_log_unification_master_visibility.sql')).toBe(190);
+    expect(pos('20261121130100_cp_log_unification_pos_transfer_reference.sql')).toBe(191);
+    expect(pos('20261121190000_adn009_sr_postmerge_hardening.sql')).toBe(192);
     expect(pos('20261105130000_cp_clasificador_maestro_base.sql')).toBe(123);
     expect(pos('20261105130100_cp_clasificador_maestro_rpcs.sql')).toBe(124);
     expect(pos('20261105140000_cp_clasificador_fase4_snapshots.sql')).toBe(125);
