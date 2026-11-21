@@ -44,9 +44,15 @@
 --   trazabilidad). Pending/confirmed/active/partial siguen admitidos
 --   (comportamiento actual intacto).
 --
--- COMPATIBILIDAD: CREATE OR REPLACE puro (sin cambios de firma existente;
---   columnas nuevas SOLO al final de las tablas de retorno → consumidores
---   posicionales intactos). Re-aplicable.
+-- COMPATIBILIDAD: PostgreSQL NO permite cambiar el RETURNS TABLE de una
+--   función existente con CREATE OR REPLACE (42P13: cannot change return
+--   type) → las dos RPC de búsqueda de productos requieren DROP + CREATE
+--   (patrón de la casa: 20261108150000 con get_products_for_pos). DROP y
+--   CREATE en la MISMA transacción del despliegue (sin ventana de ausencia)
+--   y ACL restaurado EXPLÍCITAMENTE (el DROP elimina los grants):
+--   authenticated + service_role, REVOKE PUBLIC/anon — el mismo ACL vigente.
+--   Las funciones de pagos mantienen su tipo de retorno (jsonb/uuid) →
+--   CREATE OR REPLACE puro, ACL intacto. Re-aplicable.
 -- ============================================================================
 
 -- ═══════════════════════════════════════════════════════════════════════════
@@ -56,6 +62,8 @@
 --    esta misión, también el modal «Agregar Producto» de la recepción manual
 --    (una sola RPC de búsqueda de productos para todo el flujo de recepción).
 -- ═══════════════════════════════════════════════════════════════════════════
+DROP FUNCTION IF EXISTS public.get_products_for_reception(uuid, text, integer, integer);
+
 CREATE OR REPLACE FUNCTION public.get_products_for_reception(p_store_id uuid, p_search_term text DEFAULT ''::text, p_page integer DEFAULT 1, p_page_size integer DEFAULT 50)
  RETURNS TABLE(id uuid, name text, sku text, barcode text, cost_price numeric, price numeric, unit_of_measure text, stock_current numeric, min_stock numeric, is_active boolean, total_count bigint, category text, source text, master_product_id uuid)
  LANGUAGE plpgsql
@@ -175,6 +183,12 @@ $function$;
 COMMENT ON FUNCTION public.get_products_for_reception(uuid, text, integer, integer) IS
   'Búsqueda paginada de productos para recepciones. Tiendas conectadas al catálogo maestro: filas locales activas ∪ maestros activos del tenant sin fila local (source=''master'', operativos en cero, requieren activación antes de registrar).';
 
+-- Restauración del ACL histórico (el DROP lo eliminó): mismo conjunto de
+-- ejecución que en producción — authenticated (la barrera de autorización
+-- vive DENTRO de la función) + service_role. Sin PUBLIC ni anon.
+REVOKE ALL ON FUNCTION public.get_products_for_reception(uuid, text, integer, integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_products_for_reception(uuid, text, integer, integer) TO authenticated, service_role;
+
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 2) get_products_for_pos — unión maestra + source/master_product_id
 --    (aditivo al final). Firma de parámetros INTACTA (uuid, text, text,
@@ -184,6 +198,8 @@ COMMENT ON FUNCTION public.get_products_for_reception(uuid, text, integer, integ
 --    el vistazo del catálogo de la organización (no vendible: price 0,
 --    stock 0 — el frontend bloquea el add-to-cart y ofrece activar/recibir).
 -- ═══════════════════════════════════════════════════════════════════════════
+DROP FUNCTION IF EXISTS public.get_products_for_pos(uuid, text, text, integer, integer);
+
 CREATE OR REPLACE FUNCTION public.get_products_for_pos(
   p_store_id uuid DEFAULT NULL::uuid,
   p_search_term text DEFAULT NULL::text,
@@ -362,6 +378,10 @@ $function$;
 
 COMMENT ON FUNCTION public.get_products_for_pos(uuid, text, text, integer, integer) IS
   'Catálogo del POS. Tiendas conectadas al catálogo maestro: filas locales ∪ maestros activos del tenant sin fila local (source=''master'' — vistazo del catálogo organizacional, no vendible sin activación local).';
+
+-- Restauración del ACL histórico (el DROP lo eliminó).
+REVOKE ALL ON FUNCTION public.get_products_for_pos(uuid, text, text, integer, integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.get_products_for_pos(uuid, text, text, integer, integer) TO authenticated, service_role;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 -- 3) register_supplier_payment_batch — estado de la receipt tras el lock.
@@ -821,16 +841,16 @@ BEGIN
     RAISE EXCEPTION 'CONTRACTO ROTO: firma de register_supplier_payment_batch';
   END IF;
 
-  -- Columnas de retorno: la fuente SIEMPRE al final (aditivo).
-  IF (SELECT array_agg(a.attname ORDER BY a.attnum)
-      FROM pg_proc p
-      JOIN pg_namespace n ON n.oid = p.pronamespace
-      CROSS JOIN LATERAL unnest(p.proallargtypes::oid[]) WITH ORDINALITY AS t(oid, ord)
-      JOIN pg_type ty ON ty.oid = t.oid
-      JOIN pg_attribute a ON a.attrelid = ty.typrelid AND a.attnum = t.ord
-      WHERE n.nspname = 'public' AND p.proname = 'get_products_for_reception'
-  ) IS NULL THEN
-    RAISE EXCEPTION 'CONTRACTO ROTO: get_products_for_reception sin columnas OUT';
+  -- Columnas de retorno: la fuente SIEMPRE al final (aditivo). El resultado
+  -- de la función debe declarar las columnas nuevas de procedencia.
+  IF EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname IN ('get_products_for_reception', 'get_products_for_pos')
+      AND position('source text, master_product_id uuid' in pg_get_function_result(p.oid)) = 0
+  ) THEN
+    RAISE EXCEPTION 'CONTRACTO ROTO: columnas source/master_product_id ausentes en el resultado';
   END IF;
 
   -- La rama maestra SOLO para tiendas conectadas: la definición debe
