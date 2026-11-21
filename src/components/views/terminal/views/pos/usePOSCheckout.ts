@@ -79,6 +79,10 @@ export function usePOSCheckout() {
     changeCurrency?: 'CUP' | 'USD';
     changeUsd?: number;
     settlement?: CashSettlement | null;
+    // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§5.2): nota general de
+    // la venta (opcional) — viaja al payload como sale_notes → p_notes →
+    // transactions.notes. Observación de TODA la operación, no de una línea.
+    saleNotes?: string | null;
   } | null>(null);
 
   const {
@@ -346,6 +350,13 @@ export function usePOSCheckout() {
               // en buildPaymentComponents). El servidor valida la estructura,
               // resuelve la tasa y deriva los pools (fail-closed).
               ...(sendPaymentComponents ? { payment_components: paymentComponents } : {}),
+              // CP-LOG-UNIFICATION-001 (§5.2): nota general de la venta —
+              // observación de toda la operación (cliente, entrega,
+              // aclaraciones). Opcional; no altera importes ni cálculos.
+              // El backend la persiste en transactions.notes (p_notes).
+              ...(paymentContextRef.current?.saleNotes?.trim()
+                ? { sale_notes: paymentContextRef.current.saleNotes.trim().slice(0, 1000) }
+                : {}),
               // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — recibido y
               // vuelto por moneda. Solo cuando el panel la construyó (cobro
               // simple en efectivo con dato de recibido) y SIN incidencias:
@@ -609,12 +620,34 @@ export function usePOSCheckout() {
         changeCurrency?: 'CUP' | 'USD';
         changeUsd?: number;
         settlement?: CashSettlement | null;
+        // CP-LOG-UNIFICATION-001 §5.2: nota general de la venta (opcional).
+        saleNotes?: string | null;
       } | null,
     ) => {
       if (isProcessingSale) return;
       // MISIÓN IMPRESIÓN TÉRMICA: capturar ANTES de cualquier guard/modal para
       // que sobreviva a los caminos aplazados (confirmUnpriced/rateWarning).
       paymentContextRef.current = paymentContext ?? null;
+
+      // CP-LOG-UNIFICATION-001 (§5.1): TODA fila de transferencia (transfer o
+      // Transf. Exterior) con importe > 0 debe llevar SU número de operación
+      // — la referencia es parte del comprobante del cobro y se persiste por
+      // pago (payment_transactions.reference). Se valida ANTES de cualquier
+      // guard para que el usuario complete el dato sin perder el flujo.
+      const missingRef = useCartStore.getState().items.some(i =>
+        (i.payments || []).some(p =>
+          (p.method === 'transfer' || p.method === 'external_transfer' || (p as any).method === 'zelle')
+          && (p.amount || 0) > 0
+          && !(p.reference || '').trim(),
+        ),
+      );
+      if (missingRef) {
+        toast.error(
+          'Falta el número de transferencia: cada pago por Transferencia (incl. Transf. Exterior) requiere su referencia. Ábrela en el carrito y complétala.',
+          { duration: 7000 },
+        );
+        return;
+      }
 
       // ── VALIDACIÓN DE STOCK: impedir overselling (stock negativo) ──
       // FIX-G10: multiplicar cantidad por conversion_factor de la variante

@@ -38,6 +38,11 @@ export interface PaymentRow {
   method: 'cash' | 'transfer' | 'external_transfer';
   amount: number;
   currency: string;
+  // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§5.1): número/referencia
+  // de la transferencia bancaria de ESTE pago (solo filas transfer /
+  // external_transfer). Se persiste por componente en
+  // payment_transactions.reference — una referencia por pago, NUNCA global.
+  reference?: string | null;
   // FIX-B3 (2026-07-10): unificado — positivo=recargo, negativo=descuento
   discount_type: 'percentage' | 'fixed' | null;
   discount_value: number;

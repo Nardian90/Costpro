@@ -36,6 +36,7 @@ export function useReceptionProductSearch(
     error,
     fetchNextPage,
     hasNextPage,
+    refetch,
   } = useInfiniteQuery({
     queryKey: ["reception-products", storeId, debouncedSearch],
     queryFn: async ({ pageParam = 1 }): Promise<ReceptionProductPage> => {
@@ -70,6 +71,14 @@ export function useReceptionProductSearch(
         stock_current: Number(row.stock_current) || 0,
         min_stock: Number(row.min_stock) || 0,
         is_active: row.is_active,
+        category: row.category || null,
+        // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 §2.1: filas del
+        // Catálogo Maestro de la organización sin fila local en esta tienda
+        // (tienda conectada). Requieren activación antes de registrar — el
+        // Express la ejecuta con resolve_reception_import_rows (mismo camino
+        // del importador Excel) al agregar el producto al carrito.
+        source: row.source === "master" ? "master" : "local",
+        master_product_id: row.master_product_id || null,
         store_id: storeId,
       }) as Product);
 
@@ -108,5 +117,8 @@ export function useReceptionProductSearch(
     isLoading,
     isFetchingMore: isFetchingNextPage,
     error,
+    // CP-LOG-UNIFICATION-001: reintento explícito (el Express muestra el
+    // error de la RPC con botón Reintentar — antes el fallo quedaba mudo).
+    refetch,
   };
 }

@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-21T12:58:07.990Z
+-- Captured  : 2026-11-21T17:33:10.836Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 221 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -5904,6 +5904,12 @@ DECLARE
   -- MISIÓN PAGOS MIXTOS MULTIMONEDA (2026-10-24): componentes de pago por
   -- moneda REAL — importe efectivamente cobrado en CUP y en USD por método.
   v_comp jsonb;
+  -- CP-LOG-UNIFICATION-001 (§5.1): referencia de la transferencia por
+  -- componente (número de operación bancaria) + índice del componente
+  -- para la clave de idempotencia (dos transferencias con referencias
+  -- distintas ya no colisionan: cada pago conserva SU referencia).
+  v_comp_ref text;
+  v_comp_idx integer;
   v_comp_method text;
   v_comp_cur text;
   v_comp_amt numeric;
@@ -6508,13 +6514,19 @@ BEGIN
     -- PK) → filas duplicadas en la fuente autoritativa del Reporte Entrega.
     -- Fail-closed coherente con la regla de la misión (Fase B: «Rechaza
     -- componentes duplicados») y con la agregación previa de pools (§13.7).
+    -- CP-LOG-UNIFICATION-001 (§5.1): la referencia entra al GROUP BY — dos
+    -- transferencias del mismo medio y moneda con referencias DISTINTAS son
+    -- DOS pagos bancarios legítimos (cada una con SU número de operación y
+    -- SU fila de payment_transactions). El duplicado real (mismo método+
+    -- moneda con la MISMA o sin referencia) sigue rechazado: es el bug de
+    -- agregación que esta regla cerró (Fase B 2026-10-24).
     IF EXISTS (
       SELECT 1
       FROM jsonb_array_elements(p_payment_components) c
-      GROUP BY lower(btrim(c->>'method')), upper(btrim(c->>'currency'))
+      GROUP BY lower(btrim(c->>'method')), upper(btrim(c->>'currency')), NULLIF(btrim(COALESCE(c->>'reference', '')), '')
       HAVING count(*) > 1
     ) THEN
-      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componentes duplicados — agrupa los importes del mismo método y moneda en un solo componente [{method, currency, amount}]';
+      RAISE EXCEPTION 'ERR_PAYMENT_COMPONENTS_INVALID: componentes duplicados — agrupa los importes del mismo método y moneda (y misma referencia) en un solo componente [{method, currency, amount, reference?}]';
     END IF;
 
     -- Tasa USD de la operación (jerarquía §6.1 — misma fuente que v_server_rate)
@@ -6863,10 +6875,15 @@ BEGIN
   -- pools del INSERT de la venta se derivaron de estos mismos componentes a
   -- esta misma tasa. Sin componentes: flujo previo (pool canónico CUP).
   IF v_components_ok THEN
+    v_comp_idx := 0;
     FOR v_comp IN SELECT * FROM jsonb_array_elements(p_payment_components) LOOP
+      v_comp_idx := v_comp_idx + 1;
       v_comp_method := lower(btrim(COALESCE(v_comp->>'method', '')));
       v_comp_cur := upper(btrim(COALESCE(v_comp->>'currency', '')));
       v_comp_amt := COALESCE(NULLIF(v_comp->>'amount', '')::numeric, NULL);
+      -- CP-LOG-UNIFICATION-001 (§5.1): referencia de la transferencia (opcional,
+      -- 400 chars máx; NULL para componentes sin referencia).
+      v_comp_ref := left(NULLIF(btrim(COALESCE(v_comp->>'reference', '')), ''), 400);
       -- CP-FIN-004: normalización del heredado en el MISMO punto único que
       -- §13.7 (este bucle re-parsea v_comp_method: sin esta línea, un
       -- componente 'zelle' de cliente cachado se persistiría tal cual).
@@ -6887,12 +6904,17 @@ BEGIN
       INSERT INTO public.payment_transactions (
         store_id, ref_type, ref_id, transaction_id,
         amount, payment_method, currency, exchange_rate,
-        payment_date, paid_by, idempotency_key
+        payment_date, paid_by, idempotency_key, reference
       ) VALUES (
         p_store_id, 'sale', v_tx_id, v_tx_id,
         v_comp_amt, v_comp_method, v_comp_cur,
         CASE WHEN v_comp_cur = 'USD' THEN v_usd_rate ELSE 1.0 END,
-        v_eff, v_uid, 'pay-' || v_comp_method || '-' || v_comp_cur || '-' || v_tx_id::text
+        v_eff, v_uid,
+        -- CP-LOG-UNIFICATION-001 (§5.1): índice en la clave — dos componentes
+        -- del mismo medio+moneda (p. ej. dos transferencias con referencias
+        -- distintas) ya no colisionan en el índice único de idempotencia.
+        'pay-' || v_comp_method || '-' || v_comp_cur || '-' || v_comp_idx::text || '-' || v_tx_id::text,
+        v_comp_ref
       ) RETURNING id INTO v_pt_id;
     END LOOP;
   ELSIF v_cash_amt > 0 THEN
@@ -15448,8 +15470,9 @@ BEGIN
   --    caminos. Las liquidaciones concurrentes del mismo documento quedan
   --    SERIALIZADAS: la segunda lee el saldo ya actualizado.
   IF p_ref_type = 'receipt' THEN
-    SELECT store_id, total_cost, 'CUP', 1
-      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
+    -- CP-LOG-UNIFICATION-001 (§3): el estado de la recepción entra al lock.
+    SELECT store_id, total_cost, 'CUP', 1, status
+      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate, v_doc_status
     FROM public.receipts WHERE id = p_ref_id FOR UPDATE;
   ELSIF p_ref_type = 'service' THEN
     SELECT store_id, total_amount, currency, COALESCE(exchange_rate, 1), status
@@ -15469,6 +15492,16 @@ BEGIN
 
   IF v_doc_store_id != p_store_id THEN
     RAISE EXCEPTION 'El documento no pertenece a la tienda especificada';
+  END IF;
+
+  -- CP-LOG-UNIFICATION-001 (§3): gate de estado de recepciones (espejo del
+  -- batch): una recepción ANULADA o REVERTIDA no admite pagos nuevos (la
+  -- reversión ya revirtió sus pagos). Pending/confirmed/active/partial
+  -- siguen admitidos — comportamiento histórico intacto.
+  IF p_ref_type = 'receipt' AND COALESCE(v_doc_status, 'active') IN ('voided', 'reversed') THEN
+    RAISE EXCEPTION
+      'ERR_RECEIPT_NOT_PAYABLE: la recepción está % y no admite pagos nuevos',
+      v_doc_status;
   END IF;
 
   -- Idempotencia (DESPUÉS del lock: dos envíos con la misma clave quedan

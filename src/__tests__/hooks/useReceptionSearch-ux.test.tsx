@@ -4,8 +4,10 @@
  *
  * Cubre la lógica nueva introducida en useReceptionState:
  *   1. filteredFormProducts NO filtra en cliente: los resultados provienen del
- *      servidor (useInventory recibe el término debounced) y solo se reordenan
- *      por relevancia (SKU/barcode exacto primero, luego prefijos, luego resto).
+ *      servidor (useReceptionCatalogSearch recibe el término debounced — desde
+ *      CP-LOG-UNIFICATION-001 es la ÚNICA búsqueda del flujo de recepción) y
+ *      solo se reordenan por relevancia (SKU/barcode exacto primero, luego
+ *      prefijos, luego resto).
  *   2. handleSelectProduct marca la selección; clearProductSelection resetea
  *      costo/venta/variante sin arrastrar datos del producto anterior.
  *   3. handleSearchKeyDown: ArrowDown/ArrowUp navegan, Enter con resaltado
@@ -24,7 +26,8 @@ const h = vi.hoisted(() => ({
   confirmPendingMock: vi.fn(),
   logReceptionMock: vi.fn(),
   userHolder: { current: null as any },
-  // useInventory mock configurable por test
+  // mock configurable por test — delega como respuesta del RPC de búsqueda
+  // (consumido hoy por useReceptionCatalogSearch; misma forma de páginas)
   inventoryMock: vi.fn(),
 }));
 
@@ -32,14 +35,30 @@ vi.mock('@/lib/supabaseClient', () => ({
   supabase: { from: h.fromMock },
 }));
 
+// CP-LOG-UNIFICATION-001: useReceptionState ahora consume useAuthStore con
+// SELECTORES (token para /api/payments, activeStoreId para useStoreRates).
+// El mock debe llamar al selector sobre un estado ESTABLE — devolver un
+// objeto literal nuevo por llamada cambiaba la identidad de `token` en cada
+// render y el useEffect [refetch] de useStoreRates entraba en un bucle
+// fetch/setLoading infinito (OOM del worker en CI local).
 vi.mock('@/store', () => ({
-  useAuthStore: () => ({ user: h.userHolder.current }),
+  useAuthStore: (selector?: any) => {
+    const st = { user: h.userHolder.current, token: 'test-token' };
+    return selector ? selector(st) : st;
+  },
   useUIStore: () => ({ setCurrentView: vi.fn() }),
 }));
 
 vi.mock('@/hooks/api/useInventory', () => ({
   useInventory: (...args: any[]) => h.inventoryMock(...args),
   useRegisterReception: () => ({ mutateAsync: h.registerMock, isPending: false }),
+}));
+
+// CP-LOG-UNIFICATION-001 §2.1: la búsqueda de recepciones vive ahora en
+// useReceptionCatalogSearch (RPC única get_products_for_reception). El mock
+// configurable representa la respuesta del servidor, igual que antes.
+vi.mock('@/hooks/api/useReceptionCatalogSearch', () => ({
+  useReceptionCatalogSearch: (...args: any[]) => h.inventoryMock(...args),
 }));
 
 vi.mock('@/hooks/api/useReceptions', () => ({
@@ -133,12 +152,12 @@ beforeEach(() => {
 const setup = () => renderHook(() => useReceptionState({ preselectedProduct: null, onCancel: vi.fn() }));
 
 describe('Búsqueda server-side (misión UI/UX recepciones)', () => {
-  it('useInventory recibe el término de búsqueda (server-side, no cliente)', () => {
+  it('useReceptionCatalogSearch recibe el término de búsqueda (server-side, no cliente)', () => {
     const { result } = setup();
     act(() => { result.current.setAddItemSearch('tornillo'); });
     // El debounce (250ms) pasa el término al hook de datos — verificado
     // indirectamente: filteredFormProducts SOLO reordena, no filtra.
-    expect(h.inventoryMock).toHaveBeenCalledWith(STORE_A, expect.anything(), '', expect.any(Number));
+    expect(h.inventoryMock).toHaveBeenCalledWith(STORE_A, '', expect.any(Number));
   });
 
   it('los resultados del servidor NO se descartan — solo se reordenan por relevancia', () => {

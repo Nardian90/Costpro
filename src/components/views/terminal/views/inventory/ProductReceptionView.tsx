@@ -22,6 +22,9 @@ import { useReceptionState, UNIT_OF_MEASURE_OPTIONS } from './useReceptionState'
 import type { ClassifiedRow } from './useReceptionState';
 import type { Product } from '@/types';
 import { cn, formatCurrency } from '@/lib/utils';
+// CP-LOG-UNIFICATION-001 (§3): editor unificado de pagos (mismo componente
+// que Servicios Recibidos y que la pestaña Pagos del detalle de recepción).
+import PaymentRowsEditor from '@/components/payments/PaymentRowsEditor';
 // CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 §6: jerarquía del nombre oficial
 import { effectiveImportName, importNameDiffers } from '@/lib/receptions/name-authority';
 import {
@@ -367,6 +370,52 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
         </div>
       )}
 
+      {/* ═══════════════════════════════════════════════════════════
+          CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§3): Liquidación
+          al confirmar — MISMA experiencia y MISMO editor unificado que
+          Servicios Recibidos (PaymentRowsEditor, CP-FIN-003). La obligación
+          nace al registrar; si se activa, la liquidación se registra justo
+          después del registro exitoso (canal atómico /api/payments batch).
+          ═══════════════════════════════════════════════════════════ */}
+      <div className="rounded-xl border border-border bg-card/50 p-4 space-y-3">
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={s.liquidarAhora}
+            onChange={(e) => s.setLiquidarAhora(e.target.checked)}
+            className="w-5 h-5 rounded border-border text-primary focus:ring-primary/30"
+            aria-label="Liquidar al confirmar"
+          />
+          <span className="text-xs font-black uppercase tracking-widest text-foreground">
+            Liquidar al confirmar
+          </span>
+          <span className="text-[11px] text-muted-foreground">
+            Registrar cómo se pagó esta recepción al proveedor
+          </span>
+        </label>
+        {s.liquidarAhora ? (
+          <div className="space-y-2">
+            <PaymentRowsEditor
+              rows={s.liquidarRows}
+              onChange={s.setLiquidarRows}
+              storeRates={s.liquidarStoreRates}
+              maxCupTotal={s.totalCost ?? undefined}
+            />
+            {s.liquidarError ? (
+              <p className="text-xs text-destructive font-bold" role="alert">{s.liquidarError}</p>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                Puedes pagar el total exacto, parcial o combinar medios/monedas. El saldo pendiente queda registrado en la recepción.
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="text-[11px] text-muted-foreground">
+            Deja esta opción desmarcada para dejar pendiente el pago — podrás liquidarlo después desde el detalle de la recepción (pestaña Pagos).
+          </p>
+        )}
+      </div>
+
       {/* Submit */}
       {/* Reception-Flow-Fix: 2 botones — "Guardar Pendiente" (no aplica stock)
           + "Registrar Recepción" (confirma y aplica stock). */}
@@ -709,7 +758,12 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
           <>
             <SecondaryButton onClick={s.handleCloseForm} label="Cancelar" className="flex-1" />
             {s.selectedProductId ? (
-              <PrimaryButton onClick={s.handleAddItem} label="Agregar" className="flex-1" />
+              <PrimaryButton
+                onClick={s.handleAddItem}
+                disabled={s.resolvingMaster}
+                label={s.resolvingMaster ? 'Activando del catálogo…' : 'Agregar'}
+                className="flex-1"
+              />
             ) : (
               <PrimaryButton
                 onClick={s.handleAddManualProduct}
@@ -866,6 +920,16 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
                           )}
                           {product.barcode && (
                             <span className="text-[10px] font-mono text-muted-foreground" title="Código de barras">#{product.barcode}</span>
+                          )}
+                          {/* CP-LOG-UNIFICATION-001: fila del Catálogo Maestro de
+                              la organización (sin fila local). Al agregarla se
+                              crea/activa la fila local automáticamente (mismo
+                              camino del importador Excel) — el usuario solo
+                              necesita saber que es del catálogo compartido. */}
+                          {product.source === 'master' && (
+                            <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" title="Producto del Catálogo Maestro de la organización: al agregarlo se activa en esta tienda">
+                              Catálogo
+                            </span>
                           )}
                         </div>
                       </div>

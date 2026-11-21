@@ -20,6 +20,21 @@ import { supabase } from "@/lib/supabaseClient";
 import { auditService } from "@/services/audit-service";
 import { POSPortalModal } from "@/components/views/terminal/views/pos/POSPortalModal";
 import { useReceptionShortcuts } from "./useReceptionShortcuts";
+// CP-LOG-UNIFICATION-001 (§4): mismo selector de proveedores del formulario
+// manual y de Servicios Recibidos (Clasificador Maestro + suppliers local +
+// alta al vuelo) — el Express dejaba de capturar la identidad del proveedor
+// (texto libre sin código/NIT/teléfono, sin snapshot en la recepción).
+import { SupplierSelector, type SupplierSelection } from "./SupplierSelector";
+// CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§3): liquidación al
+// confirmar — MISMO editor unificado y MISMO canal que el formulario manual
+// y que Servicios Recibidos (PaymentRowsEditor + /api/payments batch).
+import PaymentRowsEditor, {
+  newPaymentRow, rowsToPayload, rowsAreValid, rowsCupTotal, payRowsFingerprint,
+  type PaymentEditorRow,
+} from "@/components/payments/PaymentRowsEditor";
+import { useStoreRates } from "@/hooks/useStoreRates";
+import { formatOperationDateForRPC } from "@/components/ui/OperationDatePicker";
+import { todayBusinessDay } from "@/lib/cash-report/period-attribution";
 
 interface ReceptionExpressItem {
   product_id: string;
@@ -63,11 +78,15 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
   // Server-side search (EM-R2)
   const {
     searchTerm, setSearchTerm, products, hasMore, loadMore,
-    isLoading, isFetchingMore,
+    isLoading, isFetchingMore, error: searchError, refetch: refetchProducts,
   } = useReceptionProductSearch(storeId, "", 24);
 
   const [items, setItems] = useState<ReceptionExpressItem[]>([]);
   const [supplier, setSupplier] = useState("");
+  // CP-LOG-UNIFICATION-001 (§4): snapshot de identidad del proveedor (código/
+  // NIT/teléfono/dirección + fuente) del selector compartido — viaja a
+  // register_reception congelado en la recepción (paridad con el flujo manual).
+  const [supplierDetail, setSupplierDetail] = useState<SupplierSelection | null>(null);
   const [invoiceNumber, setInvoiceNumber] = useState("");
   // FIX-P1.1: moneda global para toda la recepción express
   const [moneda, setMoneda] = useState('CUP');
@@ -102,9 +121,91 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
     [items],
   );
 
-  const addItem = useCallback((product: Product) => {
+  // CP-LOG-UNIFICATION-001 (§3): liquidación al confirmar (paridad con el
+  // formulario manual y con Servicios Recibidos — ADN-008).
+  const { rates: storeRates } = useStoreRates();
+  const authToken = useAuthStore((s) => s.token);
+  const [liquidarAhora, setLiquidarAhora] = useState(false);
+  const [liquidarRows, setLiquidarRows] = useState<PaymentEditorRow[]>([newPaymentRow({})]);
+  // Prefill: Efectivo + total exacto al activar (lote «virgen»).
+  useEffect(() => {
+    if (liquidarAhora && totalCost > 0) {
+      setLiquidarRows(prev => {
+        const virgen = prev.length === 1 && prev[0].method === "cash"
+          && prev[0].currency === "CUP" && !(prev[0].amount > 0.005);
+        if (virgen) return [{ ...prev[0], amount: Math.round(totalCost * 100) / 100 }];
+        return prev;
+      });
+    }
+  }, [liquidarAhora, totalCost]);
+  // Idempotencia estable por fingerprint (helper compartida).
+  const liquidarFingerprint = useMemo(() => payRowsFingerprint(liquidarRows), [liquidarRows]);
+  const liquidarKeyRef = useRef<string>("");
+  useEffect(() => {
+    liquidarKeyRef.current = crypto.randomUUID();
+  }, [liquidarFingerprint, liquidarAhora]);
+  const liquidarValido = !liquidarAhora
+    || (rowsAreValid(liquidarRows)
+        && rowsCupTotal(liquidarRows) > 0.005
+        && rowsCupTotal(liquidarRows) <= totalCost + 0.005);
+  const liquidarError = liquidarAhora && !liquidarValido
+    ? `El pago (${rowsCupTotal(liquidarRows).toFixed(2)} CUP) debe ser > 0 y no exceder el total (${totalCost.toFixed(2)} CUP)`
+    : null;
+
+  // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§2.1): activación de un
+  // producto SOLO-MAESTRO (tienda conectada al Catálogo Maestro, sin fila
+  // local) por el MISMO camino del importador Excel —
+  // resolve_reception_import_rows con una fila. Crea/activa la fila local
+  // vinculada al maestro con la identidad canónica; la recepción registra
+  // después sobre un product_id LOCAL real.
+  const [resolvingMaster, setResolvingMaster] = useState(false);
+  const activateMaster = useCallback(async (product: Product): Promise<string | null> => {
+    if (!storeId) return null;
+    setResolvingMaster(true);
+    try {
+      const { data, error } = await supabase.rpc('resolve_reception_import_rows', {
+        p_store_id: storeId,
+        p_rows: [{
+          name: product.name,
+          sku: product.sku || '',
+          barcode: product.barcode || '',
+          unit_of_measure: product.unit_of_measure || '',
+          // El clasificador exige cantidad >= 1 (ERR_INVALID_QUANTITY): la
+          // activación es de la IDENTIDAD; la cantidad real la registra la
+          // recepción con su costo real.
+          quantity: 1,
+        }],
+        p_confirm_reactivation: [],
+      });
+      if (error) throw error;
+      const first = (data?.results || [])[0];
+      if (!first?.product_id) {
+        const reasons = (first?.reasons || []).join(' · ') || 'sin detalle';
+        toast.error(`No se pudo activar "${product.name}" del catálogo maestro (${first?.status || 'error'}): ${reasons}`, { duration: 9000 });
+        return null;
+      }
+      return first.product_id as string;
+    } catch (e: any) {
+      console.error('[reception-express] activación de maestro falló:', e);
+      toast.error(`Error al activar "${product.name}": ${e?.message || 'desconocido'}`);
+      return null;
+    } finally {
+      setResolvingMaster(false);
+    }
+  }, [storeId]);
+
+  const addItem = useCallback(async (product: Product) => {
+    // Fila solo-maestro → activar ANTES de agregar (flujo idéntico al modal
+    // manual de recepción; el toast informa el resultado).
+    let productId = product.id;
+    if (product.source === 'master') {
+      const localId = await activateMaster(product);
+      if (!localId) return;
+      productId = localId;
+      toast.info(`"${product.name}" activado del catálogo maestro de la organización`);
+    }
     setItems((prev) => {
-      const existing = prev.find((it) => it.product_id === product.id);
+      const existing = prev.find((it) => it.product_id === productId);
       if (existing) {
         return prev.map((it) =>
           it.local_id === existing.local_id
@@ -113,7 +214,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
         );
       }
       return [...prev, {
-        product_id: product.id,
+        product_id: productId,
         sku: product.sku || "",
         name: product.name,
         quantity: 1,
@@ -131,7 +232,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
         tasa_cambio_recepcion: tasa,
       }];
     });
-  }, []);
+  }, [activateMaster, moneda, tasa]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -141,18 +242,16 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
     // Match exacto por SKU
     const skuMatch = products.find((p) => p.sku?.toLowerCase() === q);
     if (skuMatch) {
-      addItem(skuMatch);
+      void addItem(skuMatch);
       setSearchTerm("");
-      toast.success(`"${skuMatch.name}" agregado`);
       return;
     }
 
     // Match exacto por barcode
     const barcodeMatch = products.find((p) => p.barcode?.toLowerCase() === q);
     if (barcodeMatch) {
-      addItem(barcodeMatch);
+      void addItem(barcodeMatch);
       setSearchTerm("");
-      toast.success(`"${barcodeMatch.name}" agregado (barcode)`);
       return;
     }
 
@@ -161,9 +260,8 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
       p.name.toLowerCase().includes(q) || p.sku?.toLowerCase().includes(q),
     );
     if (fuzzy.length === 1) {
-      addItem(fuzzy[0]);
+      void addItem(fuzzy[0]);
       setSearchTerm("");
-      toast.success(`"${fuzzy[0].name}" agregado`);
       return;
     }
 
@@ -192,6 +290,13 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
 
   const handleConfirmSale = async () => {
     if (!user?.activeStoreId || !user?.id) return;
+    // CP-LOG-UNIFICATION-001 (§3.1): validar el lote de liquidación ANTES de
+    // registrar (la obligación nacería con la recepción; el pago debe ser
+    // admisible desde el inicio).
+    if (liquidarAhora && !liquidarValido) {
+      toast.error(liquidarError || 'Revisa la liquidación: importes > 0, tasa > 1 para divisa y sin exceder el total.');
+      return;
+    }
     setShowConfirm(false);
     setIsSubmitting(true);
 
@@ -219,6 +324,14 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
         // p_user_id se envía explícitamente. p_po_id=null porque este flujo no viene de OC.
         p_user_id: user.id,
         p_po_id: null,
+        // CP-LOG-UNIFICATION-001 (§4): snapshot de identidad del proveedor del
+        // selector compartido (paridad con el formulario manual — el RPC lo
+        // congela en la recepción; sin detalle → NULL y el RPC usa la fuente
+        // que corresponda).
+        p_supplier_code: supplierDetail?.code || null,
+        p_supplier_tax_id: supplierDetail?.tax_id || null,
+        p_supplier_phone: supplierDetail?.phone || null,
+        p_supplier_address: supplierDetail?.address || null,
       });
 
       // Audit
@@ -236,10 +349,59 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
         });
       } catch { /* non-blocking */ }
 
-      toast.success(`Recepción registrada: ${items.length} productos, ${formatCurrency(totalCost)}`);
+      // CP-LOG-UNIFICATION-001 (§3.1 paso 10): registrar la LIQUIDACIÓN solo
+      // tras el éxito del registro (mismo canal atómico que el formulario
+      // manual y Servicios Recibidos). Si falla, la recepción queda
+      // registrada con su obligación pendiente — sin estados inconsistentes.
+      let liquidadaMsg = '';
+      if (liquidarAhora && liquidarValido) {
+        const payloadRows = rowsToPayload(liquidarRows);
+        if (payloadRows.length > 0) {
+          try {
+            const payRes = await fetch('/api/payments', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+              },
+              body: JSON.stringify({
+                ref_type: 'receipt',
+                ref_id: receiptId,
+                payments: payloadRows,
+                payment_date: formatOperationDateForRPC(todayBusinessDay()),
+                idempotency_key: liquidarKeyRef.current,
+              }),
+            });
+            if (payRes.ok) {
+              liquidadaMsg = ' · obligación liquidada';
+            } else {
+              const payErr = await payRes.json().catch(() => ({}));
+              console.error('[reception-express] liquidación falló:', payErr);
+              toast.error(
+                `La recepción quedó registrada pero la liquidación falló: ${payErr?.error || payErr?.message || 'error desconocido'}. ` +
+                'Puedes liquidarla desde el detalle de la recepción (pestaña Pagos).',
+                { duration: 9000 },
+              );
+            }
+          } catch (payEx: any) {
+            console.error('[reception-express] liquidación falló (red):', payEx);
+            toast.error(
+              'La recepción quedó registrada pero la liquidación no se pudo confirmar (error de red). ' +
+              'Verifica el estado del pago en el detalle de la recepción antes de reintentar.',
+              { duration: 9000 },
+            );
+          }
+        }
+      }
+
+      toast.success(`Recepción registrada: ${items.length} productos, ${formatCurrency(totalCost)}${liquidadaMsg}`);
       setItems([]);
       setSupplier("");
+      setSupplierDetail(null);
       setInvoiceNumber("");
+      // CP-LOG-UNIFICATION-001: reset de la liquidación (nueva operación).
+      setLiquidarAhora(false);
+      setLiquidarRows([newPaymentRow({})]);
       onExit();
     } catch (err: any) {
       toast.error(err?.message || "Error al registrar la recepción");
@@ -272,13 +434,13 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
           </h1>
         </div>
         <div className="flex items-center gap-2">
-          <input
-            type="text"
+          {/* CP-LOG-UNIFICATION-001 (§4): selector de proveedores COMPARTIDO
+              (mismo que manual y Servicios Recibidos) — identidad real del
+              Clasificador Maestro + alta al vuelo, no texto libre. */}
+          <SupplierSelector
             value={supplier}
-            onChange={(e) => setSupplier(e.target.value)}
-            placeholder="Proveedor"
-            className="neu-input w-32 sm:w-40 text-xs"
-            aria-label="Proveedor"
+            onChange={(name, detail) => { setSupplier(name); setSupplierDetail(detail ?? null); }}
+            className="w-40 sm:w-56"
           />
           <input
             type="text"
@@ -369,10 +531,33 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
             <div className="flex items-center justify-center py-12">
               <p className="text-sm text-muted-foreground">Cargando productos...</p>
             </div>
+          ) : searchError ? (
+            /* CP-LOG-UNIFICATION-001: la RPC de búsqueda puede fallar (RLS,
+               membresía, red) — antes el error se tragaba y el grid quedaba
+               vacío sin explicación. Estado accionable con reintento. */
+            <div className="text-center py-12 text-muted-foreground">
+              <p className="text-sm font-bold uppercase tracking-widest text-destructive">No se pudo cargar el catálogo</p>
+              <p className="text-xs mt-1 max-w-md mx-auto">
+                {(searchError as any)?.message || 'Error de consulta'} — comprueba tu acceso a la tienda activa.
+              </p>
+              <button
+                type="button"
+                onClick={() => refetchProducts()}
+                className="mt-4 px-4 py-2 rounded-xl border-2 border-primary/40 text-primary text-xs font-black uppercase tracking-widest hover:bg-primary/5"
+              >
+                Reintentar
+              </button>
+            </div>
           ) : products.length === 0 && searchTerm ? (
             <div className="text-center py-12 text-muted-foreground">
               <p className="text-sm font-bold uppercase tracking-widest">Sin resultados</p>
               <p className="text-xs mt-1">No se encontraron productos con "{searchTerm}"</p>
+            </div>
+          ) : products.length === 0 && !searchTerm ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Package className="w-10 h-10 opacity-20 mx-auto mb-3" />
+              <p className="text-sm font-bold uppercase tracking-widest">Catálogo vacío</p>
+              <p className="text-xs mt-1">Esta tienda no tiene productos activos. Agrega productos desde una recepción.</p>
             </div>
           ) : (
             <>
@@ -381,8 +566,13 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
                   <button
                     key={product.id}
                     type="button"
-                    onClick={() => addItem(product)}
-                    className="p-3 rounded-xl border-2 border-border bg-card hover:border-primary hover:bg-primary/5 transition-all text-left group active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    onClick={() => void addItem(product)}
+                    disabled={resolvingMaster}
+                    className={cn(
+                      "p-3 rounded-xl border-2 border-border bg-card hover:border-primary hover:bg-primary/5 transition-all text-left group active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30",
+                      product.source === 'master' && "border-amber-300/60 dark:border-amber-700/50",
+                      resolvingMaster && "opacity-60",
+                    )}
                     aria-label={`Agregar ${product.name}`}
                   >
                     <p className="text-xs font-bold text-foreground line-clamp-2 leading-tight">
@@ -391,12 +581,22 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
                     <p className="text-[10px] text-muted-foreground font-mono mt-1">
                       {product.sku || "—"}
                     </p>
-                    <p className="text-sm font-black text-primary tabular-nums mt-1">
-                      {formatCurrency(product.cost_price || 0)}
-                    </p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5">
-                      Stock: {product.stock_current ?? 0}
-                    </p>
+                    {product.source === 'master' ? (
+                      /* CP-LOG-UNIFICATION-001: fila del catálogo organizacional
+                         sin fila local — al agregar se activa automáticamente. */
+                      <span className="inline-block mt-1 text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                        Catálogo
+                      </span>
+                    ) : (
+                      <p className="text-sm font-black text-primary tabular-nums mt-1">
+                        {formatCurrency(product.cost_price || 0)}
+                      </p>
+                    )}
+                    {product.source !== 'master' && (
+                      <p className="text-[9px] text-muted-foreground mt-0.5">
+                        Stock: {product.stock_current ?? 0}
+                      </p>
+                    )}
                   </button>
                 ))}
               </div>
@@ -562,6 +762,39 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
               {items.length} productos · {supplier} · {invoiceNumber}
             </p>
           </div>
+
+          {/* CP-LOG-UNIFICATION-001 (§3): liquidación al confirmar — mismo
+              editor unificado que el formulario manual y Servicios Recibidos. */}
+          <div className="rounded-xl border border-border bg-card/50 p-3 space-y-2">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={liquidarAhora}
+                onChange={(e) => setLiquidarAhora(e.target.checked)}
+                className="w-5 h-5 rounded border-border text-primary focus:ring-primary/30"
+                aria-label="Liquidar al confirmar"
+              />
+              <span className="text-xs font-black uppercase tracking-widest">Liquidar al confirmar</span>
+            </label>
+            {liquidarAhora && (
+              <div className="space-y-2">
+                <PaymentRowsEditor
+                  rows={liquidarRows}
+                  onChange={setLiquidarRows}
+                  storeRates={storeRates}
+                  maxCupTotal={totalCost}
+                />
+                {liquidarError ? (
+                  <p className="text-xs text-destructive font-bold" role="alert">{liquidarError}</p>
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    Efectivo por el total exacto por defecto — cambia medio, moneda o importe si fue distinto.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="flex gap-2">
             <button
               type="button"
@@ -573,7 +806,7 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
             <button
               type="button"
               onClick={handleConfirmSale}
-              disabled={isSubmitting}
+              disabled={isSubmitting || (liquidarAhora && !liquidarValido)}
               className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {isSubmitting ? "Procesando..." : "Confirmar"}

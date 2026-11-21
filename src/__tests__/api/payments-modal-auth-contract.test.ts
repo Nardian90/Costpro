@@ -101,7 +101,11 @@ describe.skipIf(!RSV || !RDM)('Modales de pago a proveedor — contrato de auten
       );
       expect(postBlock).toContain('headers: authHeaders');
       expect(RDM).toContain('payment_date: formatOperationDateForRPC(paymentDate)');
-      expect(RDM).toContain('idempotency_key: crypto.randomUUID()');
+      // CP-LOG-UNIFICATION-001 (§3.1): idempotencia ESTABLE por fingerprint del
+      // lote (patrón ADN-009 §8, helper compartida payRowsFingerprint) — la
+      // clave NO se regenera por envío: un reintento es REPLAY, no duplicado.
+      expect(RDM).toContain('idempotency_key: payAttemptKeyRef.current');
+      expect(RDM).toContain('payRowsFingerprint(payRows)');
     });
 
     it('la fecha del pago se valida antes de enviar y bloquea el botón', () => {

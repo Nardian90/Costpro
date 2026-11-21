@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { BaseModal } from "@/components/ui/BaseModal";
 import { Package, Hash, User, Calendar, FileText, Building2, Download, CheckCircle2, AlertTriangle, Trash2, Truck, Link2, Plus, RefreshCw, Eye, X, DollarSign, Wallet, FileDown } from 'lucide-react';
@@ -19,7 +19,7 @@ import { OperationDatePicker, useOperationDateValidation, formatOperationDateFor
 import { todayBusinessDay } from '@/lib/cash-report/period-attribution';
 import { useStoreRates } from '@/hooks/useStoreRates';
 import PaymentRowsEditor, {
-  newPaymentRow, rowsCupTotal, rowsToPayload, rowsAreValid,
+  newPaymentRow, rowsCupTotal, rowsToPayload, rowsAreValid, payRowsFingerprint,
   type PaymentEditorRow,
 } from '@/components/payments/PaymentRowsEditor';
 
@@ -1178,6 +1178,18 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
   const balance = totalCost - totalPaid;
   const paymentStatus = balance <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
 
+  // CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (§3.1): idempotencia
+  // ESTABLE por fingerprint del lote (patrón ADN-009 §8, MISMA helper
+  // compartida que Servicios Recibidos — payRowsFingerprint del componente
+  // unificado). Antes: crypto.randomUUID() por envío → un reintento tras
+  // timeout de red duplicaba el pago. Ahora la clave solo cambia cuando
+  // cambia el CONTENIDO del lote; un reenvío idéntico es REPLAY.
+  const payFingerprint = useMemo(() => payRowsFingerprint(payRows), [payRows]);
+  const payAttemptKeyRef = useRef<string>(`${receiptId}::${crypto.randomUUID()}`);
+  useEffect(() => {
+    payAttemptKeyRef.current = `${receiptId}::${crypto.randomUUID()}::${payFingerprint}`;
+  }, [receiptId, payFingerprint]);
+
   const handleSubmit = async () => {
     // CP-FIN-003: el lote se valida ANTES de enviar (importe > 0, tasa > 1
     // para divisa, sin exceder el saldo pendiente en CUP).
@@ -1211,7 +1223,9 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
           // sus liquidaciones hasta completar el importe.
           payments: payloadRows,
           payment_date: formatOperationDateForRPC(paymentDate),
-          idempotency_key: crypto.randomUUID(),
+          // CP-LOG-UNIFICATION-001: clave ESTABLE por intento (cambia solo con
+          // el contenido del lote) — el reintento es replay, no duplicado.
+          idempotency_key: payAttemptKeyRef.current,
         }),
       });
       if (res.ok) {
@@ -1219,6 +1233,8 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
         setPayRows([newPaymentRow(storeRates)]);
         setShowForm(false);
         setPaymentDate(todayBusinessDay());
+        // Nueva clave de intento tras ÉXITO (el siguiente pago es un lote nuevo)
+        payAttemptKeyRef.current = `${receiptId}::${crypto.randomUUID()}`;
         fetchPayments();
       } else {
         const err = await res.json().catch(() => ({}));
