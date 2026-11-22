@@ -225,10 +225,10 @@ describe('FinancialStatementsView — render y pestañas (misión §3.1/§7)', (
   it('regresión TS2367: Exportar PDF/Excel dispara en las sub-pestañas Situación y Rendimiento', async () => {
     // Tras el refactor de 3 pestañas, comparar activeTab contra 'situacion'/'rendimiento'
     // dejaba los botones de exportación muertos (no-op silencioso detectado por CI).
-    exportBalanceSheetPdf.mockClear();
-    exportBalanceSheetExcel.mockClear();
-    exportIncomeStatementPdf.mockClear();
-    exportIncomeExcel.mockClear();
+    vi.mocked(exportBalanceSheetPdf).mockClear();
+    vi.mocked(exportBalanceSheetExcel).mockClear();
+    vi.mocked(exportIncomeStatementPdf).mockClear();
+    vi.mocked(exportIncomeExcel).mockClear();
     authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
     fetchMock.mockImplementation(async (input: unknown) => {
       const url = typeof input === 'string' ? input : (input as Request).url;
