@@ -11,16 +11,17 @@
 // ── Comunes ─────────────────────────────────────────────────────────────────
 
 /**
- * CP-FIN · Misión integral 2026-11-22 (§3.1): navegación de Estados
- * Financieros en TRES opciones — Dashboard (primera y inicial, ejecutiva),
- * Análisis (gráficos contables y estados del motor) y Configuración (acceso
- * contextual a Configuración de Documentos, cuya página oficial vive en
- * SISTEMA — no es una segunda implementación).
+ * ADNEGOCIO 2026-11-22: navegación de Estados Financieros en CUATRO pestañas
+ * directas — Dashboard (primera y inicial, ejecutiva), Estado de situación,
+ * Estado de rendimiento y Conciliación. La pestaña Análisis y su apartado
+ * Resumen desaparecen como elementos de navegación; sus gráficos (Ingresos vs
+ * Gastos y Distribución de gastos) viven ahora en el Estado de Rendimiento y
+ * su tabla consolidada, en el Dashboard. Ninguna consulta ni cálculo cambió.
  */
-export type FinancialStatementTabId = 'dashboard' | 'analisis';
+export type FinancialStatementTabId = 'dashboard' | 'situacion' | 'rendimiento' | 'conciliacion';
 
-/** Sub-pestañas del módulo Análisis (todo el análisis contable previo). */
-export type AnalysisSubTabId = 'resumen' | 'situacion' | 'rendimiento' | 'conciliacion';
+/** Los tres informes financieros alcanzables desde los accesos del Dashboard. */
+export type FinReportTabId = Exclude<FinancialStatementTabId, 'dashboard'>;
 
 /** Clase económica de una categoría (misma taxonomía de fin_categories). */
 export type FinClase = 'activo' | 'pasivo' | 'patrimonio' | 'ingreso' | 'gasto';
