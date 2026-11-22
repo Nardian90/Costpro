@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * CP-FIN · Dashboard ejecutivo — «Ritmo de ventas» (misión Estados
- * Financieros §5-§7, primera pestaña de la vista).
+ * CP-FIN · Dashboard ejecutivo — «Ritmo de ventas» (primera pestaña de la
+ * vista).
  *
  * COMPOSICIÓN SELECCIONADA (investigación §4): Alternativa C — KPI ejecutivo
  * con evolución acumulada — incorporando el Bullet Chart de la Alternativa B
@@ -16,15 +16,26 @@
  * en dos llamadas (ventana actual + comparable del mes anterior); franja
  * complementaria desde fin_get_dashboard (motor contable), claramente
  * separada de las ventas comerciales. Cero importes inventados.
+ *
+ * ADNEGOCIO 2026-11-22 (§2): el Dashboard es el punto de entrada a toda la
+ * información financiera. Tras el Ritmo de ventas: alertas contables (config.
+ * económica pendiente por tipo documental + alertas del motor) y accesos
+ * directos a los tres informes; al final, la tabla «Resumen financiero»
+ * (misma consulta del motor, sin duplicar). No duplica componentes: los
+ * accesos navegan por pestañas existentes.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   AlertTriangle,
   ArrowDownRight,
+  ArrowRight,
   ArrowUpRight,
+  ClipboardCheck,
   Landmark,
   Minus,
   RefreshCw,
+  Scale,
+  TrendingUp,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
@@ -42,7 +53,9 @@ import {
 } from '@/lib/sales-dashboard/rhythm';
 import { useSalesRhythm } from '@/hooks/api/useSalesRhythm';
 import { fetchDashboard } from './fin-api';
-import type { DashboardData } from './types';
+import { FinDocumentConfigAlert } from './FinDocumentConfigAlert';
+import { FinancialSummaryTable } from './FinancialSummaryTable';
+import type { DashboardData, FinReportTabId } from './types';
 
 interface SalesRhythmDashboardProps {
   storeId: string;
@@ -50,6 +63,12 @@ interface SalesRhythmDashboardProps {
   from: string;
   to: string;
   refreshKey: number;
+  /** ADNEGOCIO §2.3: navegación a los tres informes (sin duplicar vistas). */
+  onGoToTab: (tab: FinReportTabId) => void;
+  /** ADNEGOCIO §2.4: acceso contextual a Configuración de Documentos (Sistema). */
+  onGoDocumentConfig: () => void;
+  /** Permisos de administración para la configuración (misma regla de la vista). */
+  canConfigureFin: boolean;
 }
 
 /** Badge de variación porcentual (semántica: crecimiento/descenso/igual). */
@@ -134,7 +153,7 @@ function SalesBullet({ indexPct }: { indexPct: number | null }) {
   );
 }
 
-export function SalesRhythmDashboard({ storeId, from, to, refreshKey }: SalesRhythmDashboardProps) {
+export function SalesRhythmDashboard({ storeId, from, to, refreshKey, onGoToTab, onGoDocumentConfig, canConfigureFin }: SalesRhythmDashboardProps) {
   const token = useAuthStore((s) => s.token);
   const theme = useChartTheme();
   const tooltipProps = chartTooltipProps(theme);
@@ -318,6 +337,118 @@ export function SalesRhythmDashboard({ storeId, from, to, refreshKey }: SalesRhy
         )}
       </section>
 
+      {/* ── Alertas contables + accesos directos (ADNEGOCIO §2.2-§2.4) ──── */}
+      <div className="space-y-3" data-testid="financial-alerts">
+        {/* Configuración económica pendiente: estado REAL por tipo documental
+            (RPC fin_get_document_types_status); visible sin desplazarse. */}
+        <FinDocumentConfigAlert
+          storeId={storeId}
+          refreshKey={refreshKey}
+          canConfigure={canConfigureFin}
+          onGoDocumentConfig={onGoDocumentConfig}
+        />
+        {/* Alertas del motor (solo las activas, sustentadas en datos) — antes
+            en el apartado Resumen, ahora aquí (misma fuente fin_get_dashboard). */}
+        {finError === null && finData && (
+          <>
+            {finData.alertas.gastos_mayores_que_ingresos && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-warning/40 bg-warning/10 p-3">
+                <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+                <div className="text-xs leading-relaxed">
+                  <span className="font-black uppercase tracking-wide">Los gastos superan los ingresos del período.</span>{' '}
+                  <span className="text-muted-foreground">
+                    Ingresos {formatCurrency(finData.kpis.ingresos)} frente a gastos totales{' '}
+                    {formatCurrency(finData.kpis.costo_ventas + finData.kpis.gastos)} (costo de ventas + gastos).
+                  </span>
+                </div>
+              </div>
+            )}
+            {finData.alertas.desequilibrio_balance && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-destructive/40 bg-destructive/10 p-3">
+                <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                <div className="flex-1 text-xs leading-relaxed">
+                  <span className="font-black uppercase tracking-wide text-destructive">
+                    Desequilibrio del Estado de Situación: {formatCurrency(finData.alertas.desequilibrio_monto)} CUP.
+                  </span>{' '}
+                  <span className="text-muted-foreground">
+                    El motor reporta la diferencia tal cual; no se generan ajustes automáticos.
+                  </span>
+                  <div className="mt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onGoToTab('situacion')}
+                      className="inline-flex items-center gap-1 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
+                      data-testid="alert-go-to-balance"
+                    >
+                      Ver Situación
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {finData.alertas.errores_contabilizacion > 0 && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-destructive/40 bg-destructive/10 p-3">
+                <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs leading-relaxed">
+                  <span className="font-black uppercase tracking-wide text-destructive">
+                    {finData.alertas.errores_contabilizacion} documento{finData.alertas.errores_contabilizacion !== 1 ? 's' : ''} con
+                    errores de contabilización.
+                  </span>{' '}
+                  <span className="text-muted-foreground">
+                    El negocio no se bloqueó: los errores quedaron aislados y se pueden reprocesar.
+                  </span>
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Accesos directos a los tres informes (misma pestaña, sin copias) */}
+        <section className="grid sm:grid-cols-3 gap-2.5" aria-label="Accesos directos a los informes financieros" data-testid="fin-quick-access">
+          {[
+            {
+              tab: 'situacion' as FinReportTabId,
+              icon: Scale,
+              title: 'Estado de situación',
+              desc: 'Activos, pasivos y patrimonio a la fecha de corte',
+              testId: 'quick-go-situacion',
+            },
+            {
+              tab: 'rendimiento' as FinReportTabId,
+              icon: TrendingUp,
+              title: 'Estado de rendimiento',
+              desc: 'Ingresos, costos, gastos y resultado del período',
+              testId: 'quick-go-rendimiento',
+            },
+            {
+              tab: 'conciliacion' as FinReportTabId,
+              icon: ClipboardCheck,
+              title: 'Conciliación',
+              desc: 'Matriz operacional vs contable, bajo demanda',
+              testId: 'quick-go-conciliacion',
+            },
+          ].map((c) => (
+            <button
+              key={c.tab}
+              type="button"
+              onClick={() => onGoToTab(c.tab)}
+              title={`Abrir ${c.title}`}
+              className="group flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-3 text-left hover:border-primary/40 hover:bg-primary/[0.04] transition-all min-h-[44px]"
+              data-testid={c.testId}
+            >
+              <span className="flex items-center gap-2.5 min-w-0">
+                <c.icon className="w-4 h-4 text-primary shrink-0" />
+                <span className="min-w-0">
+                  <span className="block text-[11px] font-black uppercase tracking-wide text-foreground">{c.title}</span>
+                  <span className="block text-[10px] text-muted-foreground leading-snug">{c.desc}</span>
+                </span>
+              </span>
+              <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+            </button>
+          ))}
+        </section>
+      </div>
+
       {/* ── Evolución acumulada de las ventas ──────────────────────────── */}
       <section className="rounded-xl border border-border bg-card p-3 sm:p-4" aria-label="Evolución acumulada de ventas">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -389,46 +520,12 @@ export function SalesRhythmDashboard({ storeId, from, to, refreshKey }: SalesRhy
         </p>
       </section>
 
-      {/* ── Información financiera complementaria (motor contable) ─────── */}
-      <section className="rounded-xl border border-border bg-card p-3 sm:p-4" aria-label="Información financiera del período" data-testid="rhythm-fin-strip">
-        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h3 className="text-sm font-black uppercase tracking-widest">Información financiera del período</h3>
-          <span className="text-[11px] text-muted-foreground">Motor de partida doble · CUP contable</span>
-        </div>
-        {finLoading ? (
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
-            {[...Array(4)].map((_, i) => <SkeletonUi key={i} className="h-[72px] rounded-lg" />)}
-          </div>
-        ) : finError ? (
-          <div className="flex items-center justify-between gap-3 rounded-lg border border-warning/40 bg-warning/10 p-3">
-            <p className="text-xs text-foreground">No se pudo consultar la información contable: {finError}</p>
-            <button type="button" onClick={loadFin} className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border text-[11px] font-black uppercase tracking-widest hover:bg-muted">
-              <RefreshCw className="w-3 h-3" /> Reintentar
-            </button>
-          </div>
-        ) : finData ? (
-          <>
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2.5">
-              {[
-                { label: 'Ingresos contables', value: finData.kpis.ingresos, tip: 'Crédito − débito de categorías de ingreso del período (las devoluciones restan como contra-ingreso).' },
-                { label: 'Costo de ventas', value: finData.kpis.costo_ventas, tip: 'Costo de los productos vendidos reconocido por el motor (débito − crédito).' },
-                { label: 'Gastos operacionales', value: finData.kpis.gastos, tip: 'Consumo interno (vales), servicios recibidos, nómina y demás gastos del período.' },
-                { label: 'Resultado del período', value: finData.kpis.resultado_neto, tip: 'Ingresos − costo de ventas − gastos (resultado contable, no ventas).' },
-              ].map((c) => (
-                <div key={c.label} className="rounded-lg border border-border bg-background p-2.5" title={c.tip}>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{c.label}</p>
-                  <p className="text-base font-black tabular-nums text-foreground">{formatCurrency(c.value)}</p>
-                </div>
-              ))}
-            </div>
-            <p className="mt-2.5 text-[10px] text-muted-foreground leading-relaxed">
-              Separación conceptual: estas cifras provienen del motor contable (partida doble) e
-              incluyen efectos que las ventas comerciales no capturan; no deben sumarse ni
-              compararse directamente con el «Ritmo de ventas» de arriba.
-            </p>
-          </>
-        ) : null}
-      </section>
+      {/* ── Resumen financiero (ADNEGOCIO §6): cierre natural del Dashboard.
+          Reemplaza la franja de 4 tarjetas: sus valores (ingresos contables,
+          costo, gastos y resultado) viven ahora en el bloque «Resultados del
+          período» de la tabla, junto a los saldos a la fecha de corte.
+          MISMA consulta fetchDashboard — cero consultas duplicadas. ─────── */}
+      <FinancialSummaryTable data={finData} loading={finLoading} error={finError} onRetry={loadFin} />
     </div>
   );
 }

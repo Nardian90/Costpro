@@ -2,14 +2,18 @@
  * FinancialStatementsView — smoke test de render y navegación.
  *
  * MISIÓN CP-FIN (2026-11-13) · Vista B — Estados Financieros.
- * MISIÓN INTEGRAL (2026-11-22, §3.1/§7): navegación en TRES opciones con el
- * Dashboard ejecutivo («Ritmo de ventas») como PRIMERA pestaña y vista
- * inicial; Análisis conserva el análisis contable con sub-pestañas; y
- * Configuración conduce a la página oficial (SISTEMA) vía setCurrentView.
+ * MISIÓN INTEGRAL (2026-11-22): Dashboard ejecutivo («Ritmo de ventas»)
+ * como primera pestaña y vista inicial.
+ * ADNEGOCIO (2026-11-22): CUATRO pestañas directas — Dashboard, Estado de
+ * situación, Estado de rendimiento y Conciliación. La pestaña Análisis y el
+ * apartado Resumen desaparecen; sus gráficos viven en Estado de rendimiento
+ * (IncomeCharts) y la tabla «Resumen financiero» cierra el Dashboard, con la
+ * alerta de configuración contable pendiente (dinámica, RPC
+ * fin_get_document_types_status) y los accesos directos a los informes.
  *
  * El Dashboard usa el RPC get_sales_dashboard_analytics (mockeado aquí) y la
- * franja financiera complementaria usa fin-api (global.fetch). Las pestañas
- * de Análisis siguen usando global.fetch (fin-api con Bearer).
+ * tabla resumen usa fin-api (global.fetch). La alerta usa el RPC de estado de
+ * tipos documentales (mockeado en el mismo supabaseClient).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
@@ -21,7 +25,12 @@ globalThis.matchMedia = globalThis.matchMedia || ((q: string) => ({ matches: fal
 import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-// ── MOCK: RPC de ventas (fuente de verdad del Ritmo de ventas) ──
+// ── MOCK: RPCs de Supabase (ventas + estado de tipos documentales) ──
+const rpcState = vi.hoisted(() => ({
+  docTypes: [] as unknown,
+  docTypesError: null as string | null,
+}));
+
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
     rpc: vi.fn(async (name: string, args: Record<string, unknown>) => {
@@ -29,6 +38,10 @@ vi.mock('@/lib/supabaseClient', () => ({
         expect(args.p_prev_from).toBeDefined();
         expect(args.p_prev_to).toBeDefined();
         return { data: rhythmFixture(), error: null };
+      }
+      if (name === 'fin_get_document_types_status') {
+        if (rpcState.docTypesError) return { data: null, error: new Error(rpcState.docTypesError) };
+        return { data: rpcState.docTypes, error: null };
       }
       return { data: null, error: new Error('RPC desconocido: ' + name) };
     }),
@@ -55,6 +68,17 @@ function rhythmFixture() {
     heatmap: [],
     alerts: { doc_status: [], devolutions_count: 0, devolutions_cup: 0, devolutions_usd: 0, incident_sales: 0, sync_log: [], unreconciled_ops: 0, unreconciled_diff_cup: 0 },
   };
+}
+
+/** Estado REAL simulado del RPC fin_get_document_types_status (3 pendientes). */
+function docTypesFixture() {
+  return [
+    { code: 'VENTA', name: 'Venta', module: 'Ventas', source_table: 'sales', description: null, trigger_status: 'completed', is_postable: true, sort_order: 1, configurado: true, rule_version_id: 'rv1', version: 3, movements: [], effective_from: '2026-01-01', asientos: 120, errores: 0 },
+    { code: 'RECEPCION', name: 'Recepción de mercancía', module: 'Inventario', source_table: 'inventory_receptions', description: null, trigger_status: 'completed', is_postable: true, sort_order: 2, configurado: true, rule_version_id: 'rv2', version: 1, movements: [], effective_from: '2026-01-01', asientos: 40, errores: 0 },
+    { code: 'VALE_SALIDA', name: 'Vale de salida', module: 'Inventario', source_table: 'inventory_vales', description: null, trigger_status: 'completed', is_postable: true, sort_order: 3, configurado: false, rule_version_id: null, version: null, movements: null, effective_from: null, asientos: 0, errores: 0 },
+    { code: 'SERVICIO_RECIBIDO', name: 'Servicio recibido', module: 'Servicios', source_table: 'received_services', description: null, trigger_status: 'active', is_postable: true, sort_order: 4, configurado: false, rule_version_id: null, version: null, movements: null, effective_from: null, asientos: 12, errores: 2 },
+    { code: 'FLUJO_CAJA', name: 'Flujo de caja', module: 'Caja', source_table: 'cash_flows', description: null, trigger_status: 'completed', is_postable: true, sort_order: 5, configurado: false, rule_version_id: null, version: null, movements: null, effective_from: null, asientos: 0, errores: 0 },
+  ];
 }
 
 // ── MOCK: exportadores (los handlers usan imports estáticos; se mockean para
@@ -101,16 +125,17 @@ function balanceFixture() {
 
 function dashboardFixture() {
   return {
+    desde: '2026-11-01',
+    hasta: '2026-11-22',
     kpis: {
       ingresos: 5000, costo_ventas: 2000, gastos: 1000, utilidad_bruta: 3000,
-      resultado_neto: 2000, efectivo_cup: 0, efectivo_usd: 0, bancos: 0,
-      cuentas_por_cobrar: 0, cuentas_por_pagar: 0, inventario_valor: 0,
-      nominas: 0, retenciones: 0,
+      resultado_neto: 2000, efectivo_cup: 10000, efectivo_usd: 500, bancos: 20000,
+      cuentas_por_cobrar: 0, cuentas_por_pagar: 3000, nomina_pendiente: 0,
+      retenciones_pendientes: 0, inventario_valor: 4000,
     },
     series_mensuales: [],
     top_gastos: [],
-    alertas: { gastos_mayores_que_ingresos: false, desequilibrio_balance: false, desequilibrio_monto: 0, tipos_sin_configurar: 0, errores_contabilizacion: 0 },
-    saldos: null,
+    alertas: { gastos_mayores_que_ingresos: false, desequilibrio_balance: false, desequilibrio_monto: 0, tipos_sin_configurar: 3, errores_contabilizacion: 0 },
   };
 }
 
@@ -133,11 +158,36 @@ async function act_click(el: HTMLElement) {
   await Promise.resolve();
 }
 
-describe('FinancialStatementsView — render y pestañas (misión §3.1/§7)', () => {
+function incomeFixture() {
+  return {
+    ingresos_operacionales: 0, ajustes_ingresos: 0, ingresos_netos: 0,
+    costo_ventas: 0, utilidad_bruta: 0, gastos_operacionales: 0,
+    resultado_operativo: 0, ingresos_no_operacionales: 0,
+    gastos_no_operacionales: 0, resultado_neto: 0, desde: '2026-11-01', hasta: '2026-11-22',
+    categorias: [],
+  };
+}
+
+function standardFetchMock() {
+  fetchMock.mockImplementation(async (input: unknown) => {
+    const url = typeof input === 'string' ? input : (input as Request).url;
+    if (url.includes('type=dashboard')) {
+      return { ok: true, json: async () => dashboardFixture() } as Response;
+    }
+    if (url.includes('type=income')) {
+      return { ok: true, json: async () => incomeFixture() } as Response;
+    }
+    return { ok: true, json: async () => balanceFixture() } as Response;
+  });
+}
+
+describe('FinancialStatementsView — render y pestañas (ADNEGOCIO)', () => {
   beforeEach(() => {
     fetchMock.mockReset();
     setCurrentView.mockClear();
     authState.user = null;
+    rpcState.docTypes = docTypesFixture();
+    rpcState.docTypesError = null;
   });
   afterEach(() => cleanup());
 
@@ -147,112 +197,151 @@ describe('FinancialStatementsView — render y pestañas (misión §3.1/§7)', (
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('con tienda: Dashboard es la pestaña inicial y muestra el Ritmo de ventas con datos reales del RPC', async () => {
+  it('con tienda: Dashboard inicial con CUATRO pestañas (sin Análisis) y Ritmo de ventas', async () => {
     authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
-    // fetch para la franja financiera complementaria (fin_get_dashboard)
-    fetchMock.mockResolvedValue({ ok: true, json: async () => dashboardFixture() } as Response);
+    standardFetchMock();
 
     const { container } = renderView();
 
-    // Tres opciones de navegación en el orden exigido: Dashboard · Análisis · Configuración
+    // Cuatro pestañas directas en el orden exigido; Análisis y la pseudo-tab
+    // de Configuración desaparecen (ADNEGOCIO criterio final).
     expect(screen.getByTestId('tab-dashboard')).toBeDefined();
-    expect(screen.getByTestId('tab-analisis')).toBeDefined();
-    expect(screen.getByTestId('tab-configuracion')).toBeDefined();
+    expect(screen.getByTestId('tab-situacion')).toBeDefined();
+    expect(screen.getByTestId('tab-rendimiento')).toBeDefined();
+    expect(screen.getByTestId('tab-conciliacion')).toBeDefined();
+    expect(screen.queryByTestId('tab-analisis')).toBeNull();
+    expect(screen.queryByTestId('tab-configuracion')).toBeNull();
 
-    // La pestaña activa por defecto es Dashboard (primera, misión §3.1)
+    // La pestaña activa por defecto es Dashboard (primera)
     await waitFor(() => expect(screen.getByTestId('sales-rhythm-dashboard')).toBeDefined(), { timeout: 4000 });
-
-    // Ventas netas del RPC mockeado: 1,080,000 − 0 devoluciones
     await waitFor(() => expect(container.textContent).toContain('Ritmo de ventas'), { timeout: 4000 });
     await waitFor(() => expect(container.textContent).toContain('1,080,000'), { timeout: 4000 });
-    // Índice comparativo 108% y variación +8.0% (ejemplo de la misión)
-    await waitFor(() => expect(container.textContent).toContain('108.0%'), { timeout: 4000 });
-    expect(container.textContent).toContain('+8.0%');
-    // Período comparado visible en el encabezado
+    expect(container.textContent).toContain('108.0%');
     expect(screen.getByTestId('compared-period-label')).toBeDefined();
   });
 
-  it('cambiar a Análisis muestra las sub-pestañas y Situación consulta el balance', async () => {
+  it('alerta de configuración contable pendiente: conteo dinámico, nombres y acceso', async () => {
     authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
-    // Respuestas por endpoint: el resumen (dashboard) y el balance tienen formas distintas.
-    fetchMock.mockImplementation(async (input: unknown) => {
-      const url = typeof input === 'string' ? input : (input as Request).url;
-      if (url.includes('type=dashboard')) {
-        return { ok: true, json: async () => dashboardFixture() } as Response;
-      }
-      if (url.includes('type=income')) {
-        return {
-          ok: true,
-          json: async () => ({
-            ingresos_operacionales: 0, ajustes_ingresos: 0, ingresos_netos: 0,
-            costo_ventas: 0, utilidad_bruta: 0, gastos_operacionales: 0,
-            resultado_operativo: 0, ingresos_no_operacionales: 0,
-            gastos_no_operacionales: 0, resultado_neto: 0, desde: '2026-11-01', hasta: '2026-11-22',
-          }),
-        } as Response;
-      }
-      return { ok: true, json: async () => balanceFixture() } as Response;
-    });
+    standardFetchMock();
+
+    const { container } = renderView();
+    await waitFor(() => expect(screen.getByTestId('doc-config-alert')).toBeDefined(), { timeout: 4000 });
+
+    // Conteo calculado del RPC (3 pendientes del fixture), no codificado
+    await waitFor(() => expect(container.textContent).toContain('Configuración contable pendiente'), { timeout: 4000 });
+    expect(container.textContent).toMatch(/3 tipos documentales/);
+    // Nombre de cada tipo pendiente + su situación
+    expect(screen.getByTestId('doc-config-item-VALE_SALIDA')).toBeDefined();
+    expect(screen.getByTestId('doc-config-item-SERVICIO_RECIBIDO')).toBeDefined();
+    expect(screen.getByTestId('doc-config-item-FLUJO_CAJA')).toBeDefined();
+    expect(container.textContent).toContain('Sin regla económica activa');
+    // Errores de contabilización del tipo que los tiene
+    expect(container.textContent).toMatch(/2 errores de contabilización sin resolver/);
+    // Acceso a Configuración de Documentos (página oficial en Sistema)
+    await act_click(screen.getByTestId('doc-config-go'));
+    expect(setCurrentView).toHaveBeenCalledWith('document-config');
+  });
+
+  it('con todos los tipos configurados: estado correcto sin alertas pendientes', async () => {
+    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
+    rpcState.docTypes = docTypesFixture().map((t) => ({ ...t, configurado: true }));
+    standardFetchMock();
+
+    const { container } = renderView();
+    await waitFor(() => expect(screen.getByTestId('doc-config-ok')).toBeDefined(), { timeout: 4000 });
+    expect(container.textContent).toContain('Configuración contable al día');
+    expect(screen.queryByTestId('doc-config-alert')).toBeNull();
+  });
+
+  it('tabla Resumen financiero: resultados del período + saldos a la fecha de corte + USD incluido', async () => {
+    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
+    standardFetchMock();
+
+    const { container } = renderView();
+    await waitFor(() => expect(screen.getByTestId('financial-summary-table')).toBeDefined(), { timeout: 4000 });
+
+    // Bloques separados: resultados del período y saldos a la fecha de corte
+    expect(screen.getByTestId('summary-results-block')).toBeDefined();
+    expect(screen.getByTestId('summary-balance-block')).toBeDefined();
+    expect(screen.getByTestId('summary-results-period')).toBeDefined();
+    await waitFor(() => expect(screen.getByTestId('summary-balance-asof')).toBeDefined(), { timeout: 4000 });
+    // Renglones del período (kpis del fixture) — utilidad bruta y resultado neto
+    expect(screen.getByTestId('summary-row-ingresos')).toBeDefined();
+    expect(screen.getByTestId('summary-row-utilidad-bruta')).toBeDefined();
+    expect(screen.getByTestId('summary-row-resultado-neto')).toBeDefined();
+    expect(container.textContent).toContain('3,000');
+    // Saldos y fecha de corte (hasta del fixture)
+    expect(screen.getByTestId('summary-row-efectivo')).toBeDefined();
+    expect(screen.getByTestId('summary-row-bancos')).toBeDefined();
+    expect(screen.getByTestId('summary-row-cxc')).toBeDefined();
+    expect(screen.getByTestId('summary-row-cxp')).toBeDefined();
+    expect(screen.getByTestId('summary-row-inventario')).toBeDefined();
+    expect(container.textContent).toContain('Corte: 2026-11-22');
+    // USD como desglose secundario marcado «incluido» (no renglón aditivo)
+    expect(screen.getByTestId('summary-row-efectivo-usd')).toBeDefined();
+    expect(container.textContent).toContain('incluido');
+  });
+
+  it('accesos directos del Dashboard conducen a cada informe (sin copias)', async () => {
+    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
+    standardFetchMock();
 
     renderView();
-    await waitFor(() => expect(screen.getByTestId('tab-analisis')).toBeDefined());
+    await waitFor(() => expect(screen.getByTestId('fin-quick-access')).toBeDefined(), { timeout: 4000 });
 
-    await act_click(screen.getByTestId('tab-analisis'));
-    // Sub-pestañas del análisis contable (todo el contenido previo se conserva)
-    expect(screen.getByTestId('subtab-resumen')).toBeDefined();
-    expect(screen.getByTestId('subtab-situacion')).toBeDefined();
-    expect(screen.getByTestId('subtab-rendimiento')).toBeDefined();
-    expect(screen.getByTestId('subtab-conciliacion')).toBeDefined();
-
-    await act_click(screen.getByTestId('subtab-situacion'));
+    await act_click(screen.getByTestId('quick-go-situacion'));
     await waitFor(() => {
       const urls = fetchMock.mock.calls.map((c: unknown[]) => c[0] as string);
       expect(urls.some((u) => u.includes('type=balance'))).toBe(true);
     });
+
+    // Los accesos viven en el Dashboard: volver y acceder al siguiente informe.
+    await act_click(screen.getByTestId('tab-dashboard'));
+    await waitFor(() => expect(screen.getByTestId('fin-quick-access')).toBeDefined(), { timeout: 4000 });
+    await act_click(screen.getByTestId('quick-go-rendimiento'));
+    await waitFor(() => {
+      const urls = fetchMock.mock.calls.map((c: unknown[]) => c[0] as string);
+      expect(urls.some((u) => u.includes('type=income'))).toBe(true);
+    });
   });
 
-  it('pestaña Configuración conduce a la página oficial de Sistema (contextual, sin duplicar)', async () => {
+  it('pestañas directas: Situación consulta balance; Rendimiento consulta income + gráficos', async () => {
     authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
-    fetchMock.mockResolvedValue({ ok: true, json: async () => dashboardFixture() } as Response);
+    standardFetchMock();
 
     renderView();
-    await waitFor(() => expect(screen.getByTestId('tab-configuracion')).toBeDefined());
+    await waitFor(() => expect(screen.getByTestId('tab-situacion')).toBeDefined());
 
-    await act_click(screen.getByTestId('tab-configuracion'));
-    expect(setCurrentView).toHaveBeenCalledWith('document-config');
+    await act_click(screen.getByTestId('tab-situacion'));
+    await waitFor(() => {
+      const urls = fetchMock.mock.calls.map((c: unknown[]) => c[0] as string);
+      expect(urls.some((u) => u.includes('type=balance'))).toBe(true);
+    });
+
+    await act_click(screen.getByTestId('tab-rendimiento'));
+    await waitFor(() => {
+      const urls = fetchMock.mock.calls.map((c: unknown[]) => c[0] as string);
+      expect(urls.some((u) => u.includes('type=income'))).toBe(true);
+      // Los gráficos del antiguo Resumen viven aquí (misma consulta dashboard)
+      expect(urls.some((u) => u.includes('type=dashboard'))).toBe(true);
+    });
+    expect(screen.getByTestId('income-charts')).toBeDefined();
   });
 
-  it('regresión TS2367: Exportar PDF/Excel dispara en las sub-pestañas Situación y Rendimiento', async () => {
-    // Tras el refactor de 3 pestañas, comparar activeTab contra 'situacion'/'rendimiento'
-    // dejaba los botones de exportación muertos (no-op silencioso detectado por CI).
+  it('regresión TS2367: Exportar PDF/Excel dispara en Estado de Situación y Estado de Rendimiento', async () => {
+    // Regresión del fix 3d0d12a47 (PR #1687): las comparaciones de activeTab
+    // contra 'situacion'/'rendimiento' deben seguir disparando la exportación
+    // ahora que son pestañas directas de nuevo.
     vi.mocked(exportBalanceSheetPdf).mockClear();
     vi.mocked(exportBalanceSheetExcel).mockClear();
     vi.mocked(exportIncomeStatementPdf).mockClear();
     vi.mocked(exportIncomeExcel).mockClear();
     authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
-    fetchMock.mockImplementation(async (input: unknown) => {
-      const url = typeof input === 'string' ? input : (input as Request).url;
-      if (url.includes('type=dashboard')) {
-        return { ok: true, json: async () => dashboardFixture() } as Response;
-      }
-      if (url.includes('type=income')) {
-        return {
-          ok: true,
-          json: async () => ({
-            ingresos_operacionales: 0, ajustes_ingresos: 0, ingresos_netos: 0,
-            costo_ventas: 0, utilidad_bruta: 0, gastos_operacionales: 0,
-            resultado_operativo: 0, ingresos_no_operacionales: 0,
-            gastos_no_operacionales: 0, resultado_neto: 0, desde: '2026-11-01', hasta: '2026-11-22',
-          }),
-        } as Response;
-      }
-      return { ok: true, json: async () => balanceFixture() } as Response;
-    });
+    standardFetchMock();
 
     renderView();
-    await waitFor(() => expect(screen.getByTestId('tab-analisis')).toBeDefined());
-    await act_click(screen.getByTestId('tab-analisis'));
-    await act_click(screen.getByTestId('subtab-situacion'));
+    await waitFor(() => expect(screen.getByTestId('tab-situacion')).toBeDefined());
+    await act_click(screen.getByTestId('tab-situacion'));
 
     // El botón se habilita cuando el balance terminó de cargar (onDataLoaded).
     const pdfBtn = screen.getByTestId('export-pdf') as HTMLButtonElement;
@@ -264,7 +353,7 @@ describe('FinancialStatementsView — render y pestañas (misión §3.1/§7)', (
     await act_click(screen.getByTestId('export-excel') as HTMLButtonElement);
     await waitFor(() => expect(exportBalanceSheetExcel).toHaveBeenCalledTimes(1), { timeout: 4000 });
 
-    await act_click(screen.getByTestId('subtab-rendimiento'));
+    await act_click(screen.getByTestId('tab-rendimiento'));
     const pdfBtn2 = screen.getByTestId('export-pdf') as HTMLButtonElement;
     // Se habilita de nuevo cuando el estado de rendimiento cargó (hasIncomeData).
     await waitFor(() => expect(pdfBtn2.disabled).toBe(false), { timeout: 4000 });
@@ -274,7 +363,7 @@ describe('FinancialStatementsView — render y pestañas (misión §3.1/§7)', (
     await waitFor(() => expect(exportIncomeExcel).toHaveBeenCalledTimes(1), { timeout: 4000 });
   });
 
-  it('error del backend en la franja financiera: mensaje visible con reintento', async () => {
+  it('error del backend en la tabla resumen: mensaje visible con reintento', async () => {
     authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
     fetchMock.mockResolvedValue({
       ok: false,
@@ -283,7 +372,7 @@ describe('FinancialStatementsView — render y pestañas (misión §3.1/§7)', (
 
     const { container } = renderView();
     await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(1));
-    // El Dashboard ejecutivo sigue renderizando (error tolerado por franja)
+    // El Dashboard ejecutivo sigue renderizando (error tolerado por la tabla)
     await waitFor(() => expect(container.textContent).toMatch(/Ritmo de ventas|No se pudo consultar/i), { timeout: 4000 });
   });
 });

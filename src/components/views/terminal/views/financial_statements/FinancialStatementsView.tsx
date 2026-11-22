@@ -3,25 +3,29 @@
 /**
  * CP-FIN · Vista B — Estados Financieros (ViewType 'financial-statements').
  *
- * Misión integral 2026-11-22 (§3.1/§7): navegación en TRES opciones, con el
+ * ADNEGOCIO 2026-11-22: navegación en CUATRO pestañas directas, con el
  * Dashboard ejecutivo como PRIMERA pestaña y vista inicial:
- *  · Dashboard — «Ritmo de ventas»: KPI ejecutivo de ventas netas comparadas
- *    con el período equivalente del mes anterior (bullet + evolución
- *    acumulada) y franja financiera complementaria del motor contable.
- *  · Análisis — el análisis contable completo del motor, con sub-pestañas:
- *    Resumen (Ingresos vs Gastos + Distribución de gastos), Situación,
- *    Rendimiento y Conciliación. Mismas consultas, fórmulas y categorías.
- *  · Configuración — acceso CONTEXTUAL a Configuración de Documentos (página
- *    oficial en SISTEMA; no es una segunda implementación).
+ *  · Dashboard — «Ritmo de ventas» + alertas contables (configuración
+ *    económica pendiente y alertas del motor) + accesos directos a los tres
+ *    informes + tabla «Resumen financiero» como cierre.
+ *  · Estado de situación — el informe del motor a la fecha de corte.
+ *  · Estado de rendimiento — el informe del período; aquí viven también los
+ *    gráficos del antiguo apartado Resumen (Ingresos vs Gastos y Distribución
+ *    de gastos, mismas consultas: IncomeCharts).
+ *  · Conciliación — matriz operacional vs contable bajo demanda.
+ *
+ * La pestaña Análisis y su apartado Resumen desaparecen como navegación sin
+ * perder consultas ni cálculos. Configuración de Documentos NO es pestaña:
+ * su ubicación oficial es Inicio › SISTEMA; los accesos contextuales son el
+ * botón de la barra de filtros y la alerta del Dashboard (goDocumentConfig).
  *
  * UI operacional en ESPAÑOL hardcodeada (sin next-intl). Filtros por pestaña
- * (corte vs período con presets), exportación PDF/Excel de las pestañas de
- * Análisis (client-side, imports dinámicos) y toasts sonner para errores.
+ * (corte vs período con presets), exportación PDF/Excel de Situación y
+ * Rendimiento (client-side, imports dinámicos) y toasts sonner para errores.
  */
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   BarChart3,
-  ClipboardCheck,
   Download,
   FileSpreadsheet,
   Landmark,
@@ -31,6 +35,7 @@ import {
   Scale,
   Settings2,
   TrendingUp,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore, useUIStore } from '@/store';
@@ -40,16 +45,16 @@ import {
 } from '@/lib/sales-dashboard/periods';
 import { BalanceSheetTab } from './BalanceSheetTab';
 import { IncomeStatementTab } from './IncomeStatementTab';
-import { DashboardTab } from './DashboardTab';
 import { ReconciliationTab } from './ReconciliationTab';
 import { SalesRhythmDashboard } from './SalesRhythmDashboard';
+import { IncomeCharts } from './IncomeCharts';
 import {
   exportBalanceSheetExcel,
   exportBalanceSheetPdf,
   exportIncomeExcel,
   exportIncomeStatementPdf,
 } from './exporters';
-import type { AnalysisSubTabId, BalanceSheetData, FinancialStatementTabId, IncomeStatementData } from './types';
+import type { BalanceSheetData, FinReportTabId, FinancialStatementTabId, IncomeStatementData } from './types';
 
 // ── Presets de período (hora local de La Habana, igual que el resto del app) ─
 
@@ -111,10 +116,14 @@ export default function FinancialStatementsView() {
     setCurrentView('document-config');
   }, [setCurrentView, setFinancialOpeningNavContext]);
 
-  // Misión §3.1: Dashboard es la primera pestaña y la vista inicial.
+  // Misión ADNEGOCIO: Dashboard es la primera pestaña y la vista inicial.
   const [activeTab, setActiveTab] = useState<FinancialStatementTabId>('dashboard');
-  // Sub-pestañas del módulo Análisis (el análisis contable completo vive ahí).
-  const [activeAnalysisSub, setActiveAnalysisSub] = useState<AnalysisSubTabId>('resumen');
+
+  // Acceso desde el Dashboard a los tres informes (misma pestaña, sin copias).
+  const goToReport = useCallback(
+    (tab: FinReportTabId) => setActiveTab(tab),
+    [],
+  );
 
   // Borradores de los filtros (se aplican con «Actualizar» o al tocar un preset).
   const [draftAsOf, setDraftAsOf] = useState<string>(TODAY);
@@ -157,29 +166,30 @@ export default function FinancialStatementsView() {
     setHasIncomeData(!!d);
   }, []);
 
-  const isAsOfSubTab =
-    activeTab === 'analisis' && (activeAnalysisSub === 'situacion' || activeAnalysisSub === 'conciliacion');
+  // Pestañas que consumen la fecha de corte (situación) o corte + período
+  // (conciliación: misión §5.5 del diseño previo se conserva tal cual).
+  const isAsOfTab = activeTab === 'situacion' || activeTab === 'conciliacion';
 
   const applyFilters = useCallback(() => {
-    if (isAsOfSubTab) {
+    if (isAsOfTab) {
       // Conciliación necesita AMBOS: corte para las cuentas de balance y
       // período para las de resultado (misión §5.5).
       if (!draftAsOf) {
         toast.error('Indica una fecha de corte válida');
         return;
       }
-      if (activeAnalysisSub === 'conciliacion' && (!draftFrom || !draftTo)) {
+      if (activeTab === 'conciliacion' && (!draftFrom || !draftTo)) {
         toast.error('Indica un período válido (desde/hasta) para las cuentas de resultado');
         return;
       }
-      if (activeAnalysisSub === 'conciliacion' && draftFrom > draftTo) {
+      if (activeTab === 'conciliacion' && draftFrom > draftTo) {
         toast.error('El período es inválido: la fecha inicial es posterior a la final');
         return;
       }
       setApplied((prev) => ({
         ...prev,
         asOf: draftAsOf,
-        ...(activeAnalysisSub === 'conciliacion' ? { from: draftFrom, to: draftTo } : {}),
+        ...(activeTab === 'conciliacion' ? { from: draftFrom, to: draftTo } : {}),
       }));
     } else {
       if (!draftFrom || !draftTo) {
@@ -193,7 +203,7 @@ export default function FinancialStatementsView() {
       setApplied((prev) => ({ ...prev, from: draftFrom, to: draftTo }));
     }
     setRefreshKey((k) => k + 1);
-  }, [activeAnalysisSub, draftAsOf, draftFrom, draftTo, isAsOfSubTab]);
+  }, [activeTab, draftAsOf, draftFrom, draftTo, isAsOfTab]);
 
   const onPresetClick = useCallback((p: PeriodPresetId) => {
     const range = presetRange(p);
@@ -205,22 +215,19 @@ export default function FinancialStatementsView() {
   }, []);
 
   const activeTabHasData =
-    activeTab === 'analisis' && activeAnalysisSub === 'situacion' ? hasBalanceData
-      : activeTab === 'analisis' && activeAnalysisSub === 'rendimiento' ? hasIncomeData
+    activeTab === 'situacion' ? hasBalanceData
+      : activeTab === 'rendimiento' ? hasIncomeData
         : false;
-  // La conciliación (como el resumen) no exporta la pestaña: sus acciones
+  // La conciliación (como el Dashboard) no exporta la pestaña: sus acciones
   // viven dentro de la propia pestaña (snapshot/historial); los PDF/Excel de
-  // esta vista corresponden a Situación y Rendimiento (misión §7.3: sin
-  // sustituir los PDF existentes). El Dashboard ejecutivo no exporta (§7).
+  // esta vista corresponden a Situación y Rendimiento (sin sustituir los PDF
+  // existentes). El Dashboard ejecutivo no exporta.
   const exportsDisabled =
-    activeTab === 'dashboard' || !activeTabHasData || exportingPdf || exportingExcel;
+    !activeTabHasData || exportingPdf || exportingExcel;
 
   const handleExportPdf = useCallback(async () => {
     if (exportsDisabled || exportingPdf) return;
-    // Post-refactor de 3 pestañas, «situación»/«rendimiento» son sub-pestañas
-    // de Análisis: se exportan con activeTab === 'analisis' (comparar activeTab
-    // contra 'situacion' dejaba la exportación muerta — TS2367 en CI).
-    if (activeTab === 'analisis' && activeAnalysisSub === 'situacion') {
+    if (activeTab === 'situacion') {
       const d = balanceDataRef.current;
       if (!d) return;
       setExportingPdf(true);
@@ -234,7 +241,7 @@ export default function FinancialStatementsView() {
       }
       return;
     }
-    if (activeTab === 'analisis' && activeAnalysisSub === 'rendimiento') {
+    if (activeTab === 'rendimiento') {
       const d = incomeDataRef.current;
       if (!d) return;
       setExportingPdf(true);
@@ -247,11 +254,11 @@ export default function FinancialStatementsView() {
         setExportingPdf(false);
       }
     }
-  }, [activeTab, activeAnalysisSub, applied.from, applied.to, exportsDisabled, exportingPdf, storeName]);
+  }, [activeTab, applied.from, applied.to, exportsDisabled, exportingPdf, storeName]);
 
   const handleExportExcel = useCallback(async () => {
     if (exportsDisabled || exportingExcel) return;
-    if (activeTab === 'analisis' && activeAnalysisSub === 'situacion') {
+    if (activeTab === 'situacion') {
       const d = balanceDataRef.current;
       if (!d) return;
       setExportingExcel(true);
@@ -265,7 +272,7 @@ export default function FinancialStatementsView() {
       }
       return;
     }
-    if (activeTab === 'analisis' && activeAnalysisSub === 'rendimiento') {
+    if (activeTab === 'rendimiento') {
       const d = incomeDataRef.current;
       if (!d) return;
       setExportingExcel(true);
@@ -278,7 +285,7 @@ export default function FinancialStatementsView() {
         setExportingExcel(false);
       }
     }
-  }, [activeTab, activeAnalysisSub, applied.from, applied.to, exportsDisabled, exportingExcel, storeName]);
+  }, [activeTab, applied.from, applied.to, exportsDisabled, exportingExcel, storeName]);
 
   // Sin tienda activa: mensaje y return (patrón de vistas operativas).
   if (!storeId) {
@@ -302,7 +309,6 @@ export default function FinancialStatementsView() {
     );
   }
 
-  const isPeriodTab = !isAsOfSubTab;
   // Misión §5.3: mostrar claramente el período comparado del Dashboard
   // (equivalente del mes inmediatamente anterior, mismo día inicio/fin).
   const comparedPeriodLabel = useMemo(() => {
@@ -331,7 +337,7 @@ export default function FinancialStatementsView() {
       <div className="rounded-xl border border-border bg-card p-3 sm:p-4 shadow-sm" data-testid="financial-filters">
         <div className="flex flex-col gap-3">
           <div className="flex flex-wrap items-end gap-2">
-            {isAsOfSubTab && (
+            {isAsOfTab && (
               <label className="flex flex-col gap-1">
                 <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                   Fecha de corte
@@ -347,7 +353,7 @@ export default function FinancialStatementsView() {
                 />
               </label>
             )}
-            {!isAsOfSubTab && (
+            {!isAsOfTab && (
               <>
                 <div className="flex flex-wrap gap-1.5" role="group" aria-label="Presets de período">
                   {PERIOD_PRESETS.map((p) => (
@@ -432,11 +438,9 @@ export default function FinancialStatementsView() {
                 onClick={handleExportPdf}
                 disabled={exportsDisabled}
                 title={
-                  activeTab === 'dashboard'
-                    ? 'Exportación disponible en Análisis › Situación y Rendimiento'
-                    : activeTabHasData
-                      ? 'Exportar la pestaña activa a PDF'
-                      : 'Carga los datos primero'
+                  activeTabHasData
+                    ? 'Exportar la pestaña activa a PDF'
+                    : 'Carga los datos primero'
                 }
                 className="h-11 px-3 rounded-lg border border-border text-xs font-black uppercase tracking-wide text-muted-foreground hover:bg-muted transition-all min-h-[44px] flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="export-pdf"
@@ -449,11 +453,9 @@ export default function FinancialStatementsView() {
                 onClick={handleExportExcel}
                 disabled={exportsDisabled}
                 title={
-                  activeTab === 'dashboard'
-                    ? 'Exportación disponible en Análisis › Situación y Rendimiento'
-                    : activeTabHasData
-                      ? 'Exportar la pestaña activa a Excel'
-                      : 'Carga los datos primero'
+                  activeTabHasData
+                    ? 'Exportar la pestaña activa a Excel'
+                    : 'Carga los datos primero'
                 }
                 className="h-11 px-3 rounded-lg border border-border text-xs font-black uppercase tracking-wide text-muted-foreground hover:bg-muted transition-all min-h-[44px] flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                 data-testid="export-excel"
@@ -471,11 +473,11 @@ export default function FinancialStatementsView() {
             <span className="font-bold">{storeName}</span>
             <span aria-hidden>·</span>
             <span>
-              {isPeriodTab
-                ? activeTab === 'analisis' && activeAnalysisSub === 'conciliacion'
-                  ? `Corte: ${applied.asOf} · Período de resultado: ${applied.from} — ${applied.to}`
-                  : `Período consultado: ${applied.from} — ${applied.to}`
-                : `Fecha de corte: ${applied.asOf}`}
+              {activeTab === 'conciliacion'
+                ? `Corte: ${applied.asOf} · Período de resultado: ${applied.from} — ${applied.to}`
+                : isAsOfTab
+                  ? `Fecha de corte: ${applied.asOf}`
+                  : `Período consultado: ${applied.from} — ${applied.to}`}
             </span>
             {activeTab === 'dashboard' && (
               <>
@@ -492,15 +494,18 @@ export default function FinancialStatementsView() {
       </div>
 
       {/* Tabs (patrón SalesHistoryView: botones underline, sin Tabs de shadcn).
-          Misión §3.1: Dashboard · Análisis · Configuración, en ese orden;
-          Dashboard es la primera y la vista inicial. Configuración es un
-          acceso CONTEXTUAL a la página oficial (SISTEMA), no una pestaña con
-          contenido propio — no se marca como activa. */}
+          ADNEGOCIO: CUATRO pestañas directas — Dashboard (primera e inicial),
+          Estado de situación, Estado de rendimiento y Conciliación.
+          Configuración de Documentos NO es pestaña: su ubicación oficial es
+          SISTEMA y los accesos contextuales son el botón de la barra de
+          filtros (canConfigureFin) y la alerta del Dashboard. */}
       <div className="flex border-b border-border overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {(
           [
             { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, testId: 'tab-dashboard' },
-            { id: 'analisis', label: 'Análisis', icon: BarChart3, testId: 'tab-analisis' },
+            { id: 'situacion', label: 'Estado de situación', icon: Scale, testId: 'tab-situacion' },
+            { id: 'rendimiento', label: 'Estado de rendimiento', icon: TrendingUp, testId: 'tab-rendimiento' },
+            { id: 'conciliacion', label: 'Conciliación', icon: ClipboardCheck, testId: 'tab-conciliacion' },
           ] as { id: FinancialStatementTabId; label: string; icon: React.ElementType; testId: string }[]
         ).map((tab) => (
           <button
@@ -520,49 +525,7 @@ export default function FinancialStatementsView() {
             <tab.icon className="w-3.5 h-3.5 inline mr-1" /> {tab.label}
           </button>
         ))}
-        <button
-          type="button"
-          onClick={goDocumentConfig}
-          className="flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 border-transparent -mb-px whitespace-nowrap min-h-[44px] transition-colors text-muted-foreground hover:text-foreground"
-          aria-label="Configuración (abre Configuración de Documentos, en Sistema)"
-          title="Configuración de Documentos (ubicación oficial: Sistema)"
-          data-testid="tab-configuracion"
-        >
-          <Settings2 className="w-3.5 h-3.5 inline mr-1" /> Configuración
-        </button>
       </div>
-
-      {/* Sub-pestañas de Análisis: todo el análisis contable previo se conserva
-          aquí (Resumen con Ingresos vs Gastos + Distribución de gastos,
-          Situación, Rendimiento y Conciliación) — mismas consultas y fórmulas. */}
-      {activeTab === 'analisis' && (
-        <div className="flex gap-1 flex-wrap" role="group" aria-label="Sub-pestañas de Análisis">
-          {(
-            [
-              { id: 'resumen', label: 'Resumen', icon: BarChart3, testId: 'subtab-resumen' },
-              { id: 'situacion', label: 'Estado de Situación', icon: Scale, testId: 'subtab-situacion' },
-              { id: 'rendimiento', label: 'Estado de Rendimiento', icon: TrendingUp, testId: 'subtab-rendimiento' },
-              { id: 'conciliacion', label: 'Conciliación', icon: ClipboardCheck, testId: 'subtab-conciliacion' },
-            ] as { id: AnalysisSubTabId; label: string; icon: React.ElementType; testId: string }[]
-          ).map((sub) => (
-            <button
-              key={sub.id}
-              onClick={() => setActiveAnalysisSub(sub.id)}
-              className={cn(
-                'px-3.5 py-2 rounded-lg text-[11px] font-black uppercase tracking-wide min-h-[44px] transition-all border',
-                activeAnalysisSub === sub.id
-                  ? 'bg-primary/10 border-primary/40 text-primary'
-                  : 'border-border bg-background text-muted-foreground hover:bg-muted',
-              )}
-              aria-pressed={activeAnalysisSub === sub.id}
-              aria-label={sub.label}
-              data-testid={sub.testId}
-            >
-              <sub.icon className="w-3.5 h-3.5 inline mr-1" /> {sub.label}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Contenido por pestaña */}
       {activeTab === 'dashboard' && (
@@ -571,18 +534,12 @@ export default function FinancialStatementsView() {
           from={applied.from}
           to={applied.to}
           refreshKey={refreshKey}
+          onGoToTab={goToReport}
+          onGoDocumentConfig={goDocumentConfig}
+          canConfigureFin={canConfigureFin}
         />
       )}
-      {activeTab === 'analisis' && activeAnalysisSub === 'resumen' && (
-        <DashboardTab
-          storeId={storeId}
-          from={applied.from}
-          to={applied.to}
-          refreshKey={refreshKey}
-          onGoToTab={setActiveAnalysisSub}
-        />
-      )}
-      {activeTab === 'analisis' && activeAnalysisSub === 'situacion' && (
+      {activeTab === 'situacion' && (
         <BalanceSheetTab
           storeId={storeId}
           asOf={applied.asOf}
@@ -590,16 +547,27 @@ export default function FinancialStatementsView() {
           onDataLoaded={onBalanceLoaded}
         />
       )}
-      {activeTab === 'analisis' && activeAnalysisSub === 'rendimiento' && (
-        <IncomeStatementTab
-          storeId={storeId}
-          from={applied.from}
-          to={applied.to}
-          refreshKey={refreshKey}
-          onDataLoaded={onIncomeLoaded}
-        />
+      {activeTab === 'rendimiento' && (
+        <div className="space-y-5" data-testid="rendimiento-tab-content">
+          <IncomeStatementTab
+            storeId={storeId}
+            from={applied.from}
+            to={applied.to}
+            refreshKey={refreshKey}
+            onDataLoaded={onIncomeLoaded}
+          />
+          {/* ADNEGOCIO §3: los gráficos del antiguo apartado Resumen (Ingresos
+              vs Gastos y Distribución de gastos) viven en el informe al que
+              corresponden — el Estado de Rendimiento — con la misma consulta. */}
+          <IncomeCharts
+            storeId={storeId}
+            from={applied.from}
+            to={applied.to}
+            refreshKey={refreshKey}
+          />
+        </div>
       )}
-      {activeTab === 'analisis' && activeAnalysisSub === 'conciliacion' && (
+      {activeTab === 'conciliacion' && (
         <ReconciliationTab
           storeId={storeId}
           asOf={applied.asOf}
