@@ -101,11 +101,17 @@ describe('CP-ORG-002 — GroupHubView: tarjetas del hub por rol efectivo', () =>
     expect(isViewAllowedForRole('sistema', null)).toBe(false);
   });
 
-  it('el alcance de SISTEMA no se amplía para ningún rol operativo', () => {
-    for (const role of ['encargado', 'manager', 'tenant_admin', 'costo', 'warehouse', 'clerk', 'usuario']) {
+  it('el alcance de SISTEMA se amplía SOLO a manager (misión §9: Configuración de Documentos)', () => {
+    // MISIÓN INTEGRAL 2026-11-22 (§9): «Configuración de Documentos» vive en
+    // SISTEMA y conserva su acceso histórico admin/manager. La sección abre a
+    // manager — pero únicamente esa tarjeta (los hijos administrativos fijan
+    // roles:['admin'] explícito), y el guard de cada vista sigue negando las
+    // rutas administrativas al manager en el backend.
+    for (const role of ['encargado', 'tenant_admin', 'costo', 'warehouse', 'clerk', 'usuario']) {
       expect(isViewAllowedForRole('sistema', role)).toBe(false);
     }
-    // Exactamente el nivel administrativo la ve:
+    expect(isViewAllowedForRole('sistema', 'manager')).toBe(true);
+    // Exactamente el nivel administrativo ve TODO el hub:
     expect(isViewAllowedForRole('sistema', 'admin')).toBe(true);
     expect(isViewAllowedForRole('sistema', 'superadmin')).toBe(true);
   });

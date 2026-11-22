@@ -734,8 +734,32 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         type: 'item',
         keywords: ['abc', 'análisis', 'productos', 'clasificación', 'pareto'],
       },
+      // MISIÓN INTEGRAL 2026-11-22 (§9): «Configuración de Documentos» se
+      // trasladó a SISTEMA (su naturaleza es administrativa, no analítica).
+      // La entrada se eliminó de ANÁLISIS sin duplicarla; el acceso
+      // contextual desde Estados Financieros (pestaña «Configuración»)
+      // conduce a ESTA ruta canónica.
+    ],
+  },
+
+  // ═══════════════════════ SISTEMA (admin + acceso manager a document-config) ═══════════════════════
+  {
+    id: 'sistema',
+    label: 'SISTEMA',
+    type: 'group',
+    icon: Settings,
+    description: 'Configuración y control administrativo del tenant: configuración de documentos, usuarios, roles, salud y monitoreo.',
+    // Misión integral 2026-11-22 (§9): la sección abre a manager para que
+    // «Configuración de Documentos» conserve su acceso histórico
+    // (admin/manager). Cada hijo fija SU rol explícito — los administrativos
+    // quedan en ['admin'] (idéntico al alcance efectivo anterior, que
+    // heredaba admin de la sección), y document-config mantiene su par
+    // admin/manager. El filtrado por sección elimina grupos vacíos.
+    roles: ['admin', 'manager'],
+    children: [
       {
-        // MISIÓN CP-FIN (2026-11-13): Vista A — Configuración de Documentos.
+        // MISIÓN CP-FIN (2026-11-13) · MISIÓN INTEGRAL 2026-11-22 (§9.2):
+        // Vista A — Configuración de Documentos. Ubicación OFICIAL: SISTEMA.
         // Administra las reglas de partida doble del motor financiero por
         // tipo documental (plantillas de movimientos, simulador, versiones).
         // Roles: mínimo privilegio financiero (admin/manager); el gate REAL
@@ -749,18 +773,6 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         roles: ['admin', 'manager'],
         keywords: ['configuración de documentos', 'partida doble', 'reglas', 'motor financiero', 'débito', 'crédito', 'asientos', 'contabilización', 'categorías económicas', 'saldos iniciales', 'apertura financiera', 'cp-fin', 'simulador'],
       },
-    ],
-  },
-
-  // ═══════════════════════ SISTEMA (admin) ═══════════════════════
-  {
-    id: 'sistema',
-    label: 'SISTEMA',
-    type: 'group',
-    icon: Settings,
-    description: 'Configuración y control administrativo del tenant: usuarios, roles, salud y monitoreo.',
-    roles: ['admin'],
-    children: [
       {
         // Única entrada a settings (las 4 duplicadas mueren)
         id: 'settings',
@@ -769,6 +781,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: Settings,
         type: 'item',
         navClass: 'admin',
+        roles: ['admin'],
         keywords: ['ajustes', 'configuración', 'preferencias', 'tema', 'impuestos', 'plan', 'perfil'],
       },
       {
@@ -784,6 +797,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: Building2,
         type: 'item',
         navClass: 'admin',
+        roles: ['admin'],
         keywords: ['organizaciones', 'empresas', 'tenants', 'grupos', 'compañías', 'tiendas de la organización'],
       },
       {
@@ -793,6 +807,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: Users,
         type: 'item',
         navClass: 'admin',
+        roles: ['admin'],
         keywords: ['usuarios', 'equipo', 'personal', 'memberships', 'acceso'],
       },
       {
@@ -802,6 +817,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: ShieldCheck,
         type: 'item',
         navClass: 'admin',
+        roles: ['admin'],
         keywords: ['roles', 'permisos', 'seguridad', 'privilegios'],
       },
       {
@@ -811,6 +827,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: HeartPulse,
         type: 'item',
         navClass: 'admin',
+        roles: ['admin'],
         keywords: ['salud', 'status', 'salud plataforma', 'diagnóstico', 'comprobaciones', 'latencia'],
       },
       {
@@ -820,6 +837,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: Gauge,
         type: 'item',
         navClass: 'admin',
+        roles: ['admin'],
         keywords: ['monitoreo', 'uso', 'consumo', 'vercel', 'supabase', 'límites', 'forecast'],
       },
       {
@@ -831,6 +849,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: Rss,
         type: 'item',
         navClass: 'admin',
+        roles: ['admin'],
         keywords: ['rss', 'feeds', 'tablón', 'noticias', 'fuentes'],
       },
       {
@@ -841,6 +860,7 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         icon: Shield,
         type: 'item',
         navClass: 'admin',
+        roles: ['admin'],
         keywords: ['cierre', 'fiscal', 'periodo', 'inmutabilidad', 'consolidar'],
       },
     ],

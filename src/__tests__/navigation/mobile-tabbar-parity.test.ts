@@ -364,11 +364,33 @@ describe('CP-ORG-003 F1 — Escenario 8: cero visible-denied por construcción (
     }
   });
 
-  it('nadie ve opciones administrativas de SISTEMA sin rol admin/superadmin', () => {
+  it('SISTEMA: administrativos solo admin/superadmin; manager ve SOLO Configuración de Documentos', () => {
+    // MISIÓN INTEGRAL 2026-11-22 (§9): «Configuración de Documentos» vive en
+    // SISTEMA y conserva su acceso histórico admin/manager. La sección abre a
+    // manager, pero sus ítems ADMINISTRATIVOS (ajustes, organizaciones,
+    // usuarios, roles, salud, monitoreo, RSS, cierre fiscal) siguen siendo
+    // exclusivos de admin/superadmin — cada hijo fija su rol explícito.
+    const SYSTEM_ADMIN_ONLY_ITEMS = [
+      'settings', 'organizations', 'users', 'roles', 'health',
+      'usage-monitoring', 'rss_management', 'fiscal-close',
+    ];
     for (const role of ALL_ROLES) {
-      const seesSystem = sheetSections(role).includes('SISTEMA');
       const isAdminRole = role === 'admin' || role === 'superadmin';
-      expect(seesSystem, `rol=${role} ve SISTEMA sin ser admin`).toBe(isAdminRole);
+      const isManager = role === 'manager';
+      const systemItems = catalogSheetIds(role).filter((id) =>
+        SYSTEM_ADMIN_ONLY_ITEMS.includes(id) || id === 'document-config',
+      );
+      if (isAdminRole) {
+        expect(systemItems, `rol=${role} debe ver SISTEMA completo`).toContain('settings');
+        expect(systemItems).toContain('document-config');
+      } else if (isManager) {
+        // Manager: exactamente document-config y nada más de SISTEMA.
+        expect(systemItems, 'manager solo debe ver document-config en SISTEMA').toEqual(['document-config']);
+        expect(sheetSections(role)).toContain('SISTEMA');
+      } else {
+        expect(systemItems, `rol=${role} no debe ver ítems de SISTEMA`).toEqual([]);
+        expect(sheetSections(role)).not.toContain('SISTEMA');
+      }
     }
   });
 
