@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Truck, Package, Shield, Link2, Eye, RefreshCw, Ban, FileText, Search, CheckCircle2, Settings2, Pencil, ChevronDown } from 'lucide-react';
+import { Plus, Truck, Package, Shield, Link2, Eye, RefreshCw, Ban, FileText, Search, CheckCircle2, Settings2, Pencil, ChevronDown, MoreVertical, XCircle, Trash2 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
@@ -11,6 +11,13 @@ import { useTranslations } from 'next-intl';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useServiceTypes, type ServiceType } from '@/hooks/useServiceTypes';
 import { useStoreRates } from '@/hooks/useStoreRates';
 import PaymentRowsEditor, {
@@ -92,7 +99,8 @@ export default function ReceivedServicesView() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   // ADN-008 §3.3: los borradores se filtran y se recuperan desde el listado.
-  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'active' | 'voided'>('all');
+  // ADN-010: los borradores también pueden CANCELARSE (status 'cancelled').
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'active' | 'cancelled' | 'voided'>('all');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   // ADN-008 §3.3: edición/confirmación de un borrador existente.
   const [editService, setEditService] = useState<ReceivedService | null>(null);
@@ -103,6 +111,12 @@ export default function ReceivedServicesView() {
   const [preselectedTypeId, setPreselectedTypeId] = useState<string | null>(null);
   // FIX-PAYMENT-TRACKING: estado para modal de detalle con tab de pagos
   const [detailService, setDetailService] = useState<ReceivedService | null>(null);
+  // ADN-010: confirmaciones de Cancelar / Eliminar borrador (con identificación
+  // clara del documento y motivo opcional para la auditoría).
+  const [cancelTarget, setCancelTarget] = useState<ReceivedService | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ReceivedService | null>(null);
+  const [draftActionReason, setDraftActionReason] = useState('');
+  const [draftActionBusy, setDraftActionBusy] = useState(false);
 
   const fetchServices = useCallback(async () => {
     if (!user?.activeStoreId) return;
@@ -360,6 +374,69 @@ export default function ReceivedServicesView() {
     }
   };
 
+  // ── ADN-010: CANCELAR BORRADOR (draft→cancelled) ─────────────────────────
+  // Flujo oficial del sistema: PATCH status → RPC set_received_service_status
+  // (transiciones gated, auditoría SERVICE_STATUS_CHANGED). El documento se
+  // CONSERVA con su trazabilidad; nunca genera efectos contables.
+  const handleCancelDraft = async () => {
+    if (!cancelTarget) return;
+    setDraftActionBusy(true);
+    try {
+      const res = await fetch('/api/received-services', {
+        method: 'PATCH',
+        headers: authHeaders,
+        body: JSON.stringify({
+          service_id: cancelTarget.id,
+          status: 'cancelled',
+          reason: draftActionReason.trim() || 'Cancelación de borrador desde la tabla',
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Error al cancelar el borrador');
+      }
+      toast.success(`Borrador ${cancelTarget.service_number} cancelado. El documento se conserva en el historial.`);
+      setCancelTarget(null);
+      setDraftActionReason('');
+      fetchServices();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setDraftActionBusy(false);
+    }
+  };
+
+  // ── ADN-010: ELIMINAR BORRADOR ───────────────────────────────────────────
+  // DELETE → RPC delete_received_service_draft: solo draft, sin pagos ni
+  // distribuciones ni asientos; audita el borrado con snapshot ANTES de
+  // eliminar. Los errores de integridad llegan con mensaje comprensible.
+  const handleDeleteDraft = async () => {
+    if (!deleteTarget) return;
+    setDraftActionBusy(true);
+    try {
+      const res = await fetch('/api/received-services', {
+        method: 'DELETE',
+        headers: authHeaders,
+        body: JSON.stringify({
+          service_id: deleteTarget.id,
+          reason: draftActionReason.trim() || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Error al eliminar el borrador');
+      }
+      toast.success(`Borrador ${deleteTarget.service_number} eliminado.`);
+      setDeleteTarget(null);
+      setDraftActionReason('');
+      fetchServices();
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally {
+      setDraftActionBusy(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 p-4">
       {/* Header */}
@@ -398,17 +475,17 @@ export default function ReceivedServicesView() {
             className="w-full h-11 pl-10 pr-3 rounded-xl border border-border bg-background text-sm font-medium min-h-[44px]"
           />
         </div>
-        <div className="flex gap-1 bg-muted p-0.5 rounded-lg border border-border">
-          {(['all', 'draft', 'active', 'voided'] as const).map(s => (
+        <div className="flex gap-1 bg-muted p-0.5 rounded-lg border border-border overflow-x-auto">
+          {(['all', 'draft', 'active', 'cancelled', 'voided'] as const).map(s => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
               className={cn(
-                "px-4 py-2 rounded-md text-xs font-black uppercase tracking-widest transition-all min-h-[44px]",
+                "px-4 py-2 rounded-md text-xs font-black uppercase tracking-widest transition-all min-h-[44px] whitespace-nowrap",
                 statusFilter === s ? "bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              {s === 'all' ? 'Todos' : s === 'draft' ? 'Borradores' : s === 'active' ? 'Activos' : 'Anulados'}
+              {s === 'all' ? 'Todos' : s === 'draft' ? 'Borradores' : s === 'active' ? 'Activos' : s === 'cancelled' ? 'Cancelados' : 'Anulados'}
             </button>
           ))}
         </div>
@@ -465,9 +542,9 @@ export default function ReceivedServicesView() {
                       <td className="px-4 py-3 text-center">
                         <span className={cn(
                           "px-2 py-1 rounded text-xs font-black uppercase tracking-widest",
-                          svc.status === 'active' ? "bg-success/10 text-success" : svc.status === 'draft' ? "bg-amber-500/10 text-amber-500" : "bg-destructive/10 text-destructive"
+                          svc.status === 'active' ? "bg-success/10 text-success" : svc.status === 'draft' ? "bg-amber-500/10 text-amber-500" : svc.status === 'cancelled' ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive"
                         )}>
-                          {svc.status === 'active' ? 'Activo' : svc.status === 'draft' ? 'Borrador' : 'Anulado'}
+                          {svc.status === 'active' ? 'Activo' : svc.status === 'draft' ? 'Borrador' : svc.status === 'cancelled' ? 'Cancelado' : 'Anulado'}
                         </span>
                         {/* FIX-PAYMENT-TRACKING: badge de estado de pago */}
                         {svc.status === 'active' && svc.payment_status && (
@@ -498,6 +575,39 @@ export default function ReceivedServicesView() {
                             <button onClick={() => handleActivate(svc.id)} className="p-2 rounded-lg hover:bg-success/10 text-success transition-colors min-h-[44px] min-w-[44px]" aria-label="Activar" title="Confirmar servicio">
                               <CheckCircle2 className="w-4 h-4" />
                             </button>
+                          )}
+                          {/* ADN-010: menú de gestión del borrador (clic, NO hover:
+                              accesible en táctil y pantallas pequeñas). Acciones
+                              con etiqueta explícita y confirmación previa. */}
+                          {svc.status === 'draft' && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors min-h-[44px] min-w-[44px]"
+                                  aria-label={`Más acciones del borrador ${svc.service_number}`}
+                                  title="Más acciones del borrador"
+                                >
+                                  <MoreVertical className="w-4 h-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-52">
+                                <DropdownMenuItem
+                                  onClick={() => { setDraftActionReason(''); setCancelTarget(svc); }}
+                                  className="gap-2 text-warning focus:text-warning"
+                                  data-testid="draft-cancel-action"
+                                >
+                                  <XCircle className="w-4 h-4" /> Cancelar borrador
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => { setDraftActionReason(''); setDeleteTarget(svc); }}
+                                  className="gap-2 text-destructive focus:text-destructive focus:bg-destructive/10"
+                                  data-testid="draft-delete-action"
+                                >
+                                  <Trash2 className="w-4 h-4" /> Eliminar borrador
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
                           {/* ADN-008 (complemento §1): Recalcular SOLO tiene efecto en
                               servicios activos con recepción vinculada — oculto en borradores. */}
@@ -571,6 +681,100 @@ export default function ReceivedServicesView() {
           onEditDraft={(svc) => { setDetailService(null); setEditService(svc); }}
         />
       )}
+
+      {/* ── ADN-010: confirmación de CANCELAR borrador ──
+          El documento se conserva con su trazabilidad (estado Cancelado);
+          la operación viaja por el flujo oficial set_received_service_status. */}
+      <AlertDialog open={!!cancelTarget} onOpenChange={(o) => { if (!o) setCancelTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cancelar este borrador?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-xs">
+                <div className="rounded-lg border border-border bg-muted/40 p-2.5 font-mono text-[11px] leading-relaxed">
+                  <div><span className="font-bold text-foreground">{cancelTarget?.service_number}</span></div>
+                  <div>{cancelTarget?.service_type_name} · {cancelTarget?.supplier || 'Sin proveedor'}</div>
+                  <div>{formatCurrency(cancelTarget?.total_amount ?? 0)} {cancelTarget?.currency} · {cancelTarget?.service_date}</div>
+                </div>
+                <p>
+                  El documento pasará a estado <span className="font-bold">Cancelado</span> y se
+                  conservará en el historial con su trazabilidad. Los borradores no generan
+                  efectos contables.
+                </p>
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Motivo (opcional)</span>
+                  <input
+                    type="text"
+                    value={draftActionReason}
+                    onChange={(e) => setDraftActionReason(e.target.value)}
+                    maxLength={200}
+                    placeholder="Ej.: solicitud duplicada del proveedor"
+                    className="mt-1 w-full h-10 rounded-lg border border-border bg-background px-2.5 text-xs font-medium"
+                  />
+                </label>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={draftActionBusy} className="min-h-[44px]">Volver</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleCancelDraft(); }}
+              disabled={draftActionBusy}
+              className="min-h-[44px] bg-warning text-warning-foreground hover:bg-warning/90 font-black uppercase tracking-widest text-xs"
+              data-testid="confirm-cancel-draft"
+            >
+              {draftActionBusy ? 'Cancelando…' : 'Cancelar borrador'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── ADN-010: confirmación de ELIMINAR borrador ──
+          Identificación clara del documento afectado; el backend rechaza el
+          borrado si existen pagos, distribuciones o asientos (misión §2.5). */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar definitivamente este borrador?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-xs">
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-2.5 font-mono text-[11px] leading-relaxed">
+                  <div><span className="font-bold text-foreground">{deleteTarget?.service_number}</span></div>
+                  <div>{deleteTarget?.service_type_name} · {deleteTarget?.supplier || 'Sin proveedor'}</div>
+                  <div>{formatCurrency(deleteTarget?.total_amount ?? 0)} {deleteTarget?.currency} · {deleteTarget?.service_date}</div>
+                </div>
+                <p>
+                  Esta acción <span className="font-bold text-destructive">eliminará físicamente</span> el
+                  borrador. No genera asientos contables y la operación quedará registrada en
+                  la auditoría con una copia del documento. Si prefieres conservarlo, cáncelalo.
+                </p>
+                <label className="block">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Motivo (opcional)</span>
+                  <input
+                    type="text"
+                    value={draftActionReason}
+                    onChange={(e) => setDraftActionReason(e.target.value)}
+                    maxLength={200}
+                    placeholder="Ej.: captura de prueba, no se requiere el servicio"
+                    className="mt-1 w-full h-10 rounded-lg border border-border bg-background px-2.5 text-xs font-medium"
+                  />
+                </label>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={draftActionBusy} className="min-h-[44px]">Volver</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDeleteDraft(); }}
+              disabled={draftActionBusy}
+              className="min-h-[44px] bg-destructive text-destructive-foreground hover:bg-destructive/90 font-black uppercase tracking-widest text-xs"
+              data-testid="confirm-delete-draft"
+            >
+              {draftActionBusy ? 'Eliminando…' : 'Eliminar definitivamente'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
