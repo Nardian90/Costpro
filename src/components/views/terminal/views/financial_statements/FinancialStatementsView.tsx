@@ -217,7 +217,10 @@ export default function FinancialStatementsView() {
 
   const handleExportPdf = useCallback(async () => {
     if (exportsDisabled || exportingPdf) return;
-    if (activeTab === 'situacion') {
+    // Post-refactor de 3 pestañas, «situación»/«rendimiento» son sub-pestañas
+    // de Análisis: se exportan con activeTab === 'analisis' (comparar activeTab
+    // contra 'situacion' dejaba la exportación muerta — TS2367 en CI).
+    if (activeTab === 'analisis' && activeAnalysisSub === 'situacion') {
       const d = balanceDataRef.current;
       if (!d) return;
       setExportingPdf(true);
@@ -231,7 +234,7 @@ export default function FinancialStatementsView() {
       }
       return;
     }
-    if (activeTab === 'rendimiento') {
+    if (activeTab === 'analisis' && activeAnalysisSub === 'rendimiento') {
       const d = incomeDataRef.current;
       if (!d) return;
       setExportingPdf(true);
@@ -244,11 +247,11 @@ export default function FinancialStatementsView() {
         setExportingPdf(false);
       }
     }
-  }, [activeTab, applied.from, applied.to, exportsDisabled, exportingPdf, storeName]);
+  }, [activeTab, activeAnalysisSub, applied.from, applied.to, exportsDisabled, exportingPdf, storeName]);
 
   const handleExportExcel = useCallback(async () => {
     if (exportsDisabled || exportingExcel) return;
-    if (activeTab === 'situacion') {
+    if (activeTab === 'analisis' && activeAnalysisSub === 'situacion') {
       const d = balanceDataRef.current;
       if (!d) return;
       setExportingExcel(true);
@@ -262,7 +265,7 @@ export default function FinancialStatementsView() {
       }
       return;
     }
-    if (activeTab === 'rendimiento') {
+    if (activeTab === 'analisis' && activeAnalysisSub === 'rendimiento') {
       const d = incomeDataRef.current;
       if (!d) return;
       setExportingExcel(true);
@@ -275,7 +278,7 @@ export default function FinancialStatementsView() {
         setExportingExcel(false);
       }
     }
-  }, [activeTab, applied.from, applied.to, exportsDisabled, exportingExcel, storeName]);
+  }, [activeTab, activeAnalysisSub, applied.from, applied.to, exportsDisabled, exportingExcel, storeName]);
 
   // Sin tienda activa: mensaje y return (patrón de vistas operativas).
   if (!storeId) {

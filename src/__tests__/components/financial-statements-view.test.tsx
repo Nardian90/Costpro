@@ -57,6 +57,16 @@ function rhythmFixture() {
   };
 }
 
+// ── MOCK: exportadores (los handlers usan imports estáticos; se mockean para
+// probar el disparo real desde los botones, sin jsPDF/xlsx) ──
+const exportFns = vi.hoisted(() => ({
+  exportBalanceSheetPdf: vi.fn(async () => {}),
+  exportBalanceSheetExcel: vi.fn(async () => {}),
+  exportIncomeStatementPdf: vi.fn(async () => {}),
+  exportIncomeExcel: vi.fn(async () => {}),
+}));
+vi.mock('@/components/views/terminal/views/financial_statements/exporters', () => exportFns);
+
 // ── MOCK: store de autenticación (patrón del repo) ──
 const authState: { user: { id: string; activeStoreId: string | null; accessToken?: string; role?: string } | null } = {
   user: null,
@@ -105,6 +115,12 @@ function dashboardFixture() {
 }
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  exportBalanceSheetExcel,
+  exportBalanceSheetPdf,
+  exportIncomeExcel,
+  exportIncomeStatementPdf,
+} from '@/components/views/terminal/views/financial_statements/exporters';
 import FinancialStatementsView from '@/components/views/terminal/views/financial_statements/FinancialStatementsView';
 
 function renderView() {
@@ -204,6 +220,58 @@ describe('FinancialStatementsView — render y pestañas (misión §3.1/§7)', (
 
     await act_click(screen.getByTestId('tab-configuracion'));
     expect(setCurrentView).toHaveBeenCalledWith('document-config');
+  });
+
+  it('regresión TS2367: Exportar PDF/Excel dispara en las sub-pestañas Situación y Rendimiento', async () => {
+    // Tras el refactor de 3 pestañas, comparar activeTab contra 'situacion'/'rendimiento'
+    // dejaba los botones de exportación muertos (no-op silencioso detectado por CI).
+    exportBalanceSheetPdf.mockClear();
+    exportBalanceSheetExcel.mockClear();
+    exportIncomeStatementPdf.mockClear();
+    exportIncomeExcel.mockClear();
+    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
+    fetchMock.mockImplementation(async (input: unknown) => {
+      const url = typeof input === 'string' ? input : (input as Request).url;
+      if (url.includes('type=dashboard')) {
+        return { ok: true, json: async () => dashboardFixture() } as Response;
+      }
+      if (url.includes('type=income')) {
+        return {
+          ok: true,
+          json: async () => ({
+            ingresos_operacionales: 0, ajustes_ingresos: 0, ingresos_netos: 0,
+            costo_ventas: 0, utilidad_bruta: 0, gastos_operacionales: 0,
+            resultado_operativo: 0, ingresos_no_operacionales: 0,
+            gastos_no_operacionales: 0, resultado_neto: 0, desde: '2026-11-01', hasta: '2026-11-22',
+          }),
+        } as Response;
+      }
+      return { ok: true, json: async () => balanceFixture() } as Response;
+    });
+
+    renderView();
+    await waitFor(() => expect(screen.getByTestId('tab-analisis')).toBeDefined());
+    await act_click(screen.getByTestId('tab-analisis'));
+    await act_click(screen.getByTestId('subtab-situacion'));
+
+    // El botón se habilita cuando el balance terminó de cargar (onDataLoaded).
+    const pdfBtn = screen.getByTestId('export-pdf') as HTMLButtonElement;
+    await waitFor(() => expect(pdfBtn.disabled).toBe(false), { timeout: 4000 });
+    await act_click(pdfBtn);
+    await waitFor(() => expect(exportBalanceSheetPdf).toHaveBeenCalledTimes(1), { timeout: 4000 });
+    expect(exportBalanceSheetPdf).toHaveBeenCalledWith(expect.objectContaining({ as_of: '2026-11-22' }), 'Tienda');
+
+    await act_click(screen.getByTestId('export-excel') as HTMLButtonElement);
+    await waitFor(() => expect(exportBalanceSheetExcel).toHaveBeenCalledTimes(1), { timeout: 4000 });
+
+    await act_click(screen.getByTestId('subtab-rendimiento'));
+    const pdfBtn2 = screen.getByTestId('export-pdf') as HTMLButtonElement;
+    // Se habilita de nuevo cuando el estado de rendimiento cargó (hasIncomeData).
+    await waitFor(() => expect(pdfBtn2.disabled).toBe(false), { timeout: 4000 });
+    await act_click(pdfBtn2);
+    await waitFor(() => expect(exportIncomeStatementPdf).toHaveBeenCalledTimes(1), { timeout: 4000 });
+    await act_click(screen.getByTestId('export-excel') as HTMLButtonElement);
+    await waitFor(() => expect(exportIncomeExcel).toHaveBeenCalledTimes(1), { timeout: 4000 });
   });
 
   it('error del backend en la franja financiera: mensaje visible con reintento', async () => {
