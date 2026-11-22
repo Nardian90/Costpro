@@ -10,8 +10,17 @@
 
 // ── Comunes ─────────────────────────────────────────────────────────────────
 
-/** Pestañas de la Vista B (orden del menú de tabs). */
-export type FinancialStatementTabId = 'situacion' | 'rendimiento' | 'dashboard' | 'conciliacion';
+/**
+ * CP-FIN · Misión integral 2026-11-22 (§3.1): navegación de Estados
+ * Financieros en TRES opciones — Dashboard (primera y inicial, ejecutiva),
+ * Análisis (gráficos contables y estados del motor) y Configuración (acceso
+ * contextual a Configuración de Documentos, cuya página oficial vive en
+ * SISTEMA — no es una segunda implementación).
+ */
+export type FinancialStatementTabId = 'dashboard' | 'analisis';
+
+/** Sub-pestañas del módulo Análisis (todo el análisis contable previo). */
+export type AnalysisSubTabId = 'resumen' | 'situacion' | 'rendimiento' | 'conciliacion';
 
 /** Clase económica de una categoría (misma taxonomía de fin_categories). */
 export type FinClase = 'activo' | 'pasivo' | 'patrimonio' | 'ingreso' | 'gasto';

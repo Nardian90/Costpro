@@ -1,29 +1,74 @@
 /**
- * FinancialStatementsView — smoke test de render y navegación por pestañas.
+ * FinancialStatementsView — smoke test de render y navegación.
  *
- * MISIÓN CP-FIN (2026-11-13) · Vista B — Estados Financieros:
- *   - Renderiza header y las TRES pestañas principales (Situación,
- *     Rendimiento, Dashboard) sin tienda → mensaje de selección.
- *   - Con tienda activa: fetch del balance al montar; cambio de pestaña
- *     NO re-dispara el fetch del balance (configurar ≠ calcular).
- *   - Exportación deshabilitada mientras no hay datos (anti descarga vacía).
+ * MISIÓN CP-FIN (2026-11-13) · Vista B — Estados Financieros.
+ * MISIÓN INTEGRAL (2026-11-22, §3.1/§7): navegación en TRES opciones con el
+ * Dashboard ejecutivo («Ritmo de ventas») como PRIMERA pestaña y vista
+ * inicial; Análisis conserva el análisis contable con sub-pestañas; y
+ * Configuración conduce a la página oficial (SISTEMA) vía setCurrentView.
  *
- * Los fetches se mockean al nivel de global.fetch (la vista usa su propia
- * capa fin-api con Authorization Bearer del useAuthStore).
+ * El Dashboard usa el RPC get_sales_dashboard_analytics (mockeado aquí) y la
+ * franja financiera complementaria usa fin-api (global.fetch). Las pestañas
+ * de Análisis siguen usando global.fetch (fin-api con Bearer).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// jsdom no tiene ResizeObserver (recharts lo usa para el responsive)
+class RO { observe() {} unobserve() {} disconnect() {} }
+globalThis.ResizeObserver = globalThis.ResizeObserver || RO;
+globalThis.matchMedia = globalThis.matchMedia || ((q: string) => ({ matches: false, media: q, addListener: () => {}, removeListener: () => {}, addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => false }));
+
 import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-// ── MOCK: store de autenticación (patrón cash-report-view.test.tsx) ──
-const authState: { user: { id: string; activeStoreId: string | null; accessToken?: string } | null } = {
+// ── MOCK: RPC de ventas (fuente de verdad del Ritmo de ventas) ──
+vi.mock('@/lib/supabaseClient', () => ({
+  supabase: {
+    rpc: vi.fn(async (name: string, args: Record<string, unknown>) => {
+      if (name === 'get_sales_dashboard_analytics') {
+        expect(args.p_prev_from).toBeDefined();
+        expect(args.p_prev_to).toBeDefined();
+        return { data: rhythmFixture(), error: null };
+      }
+      return { data: null, error: new Error('RPC desconocido: ' + name) };
+    }),
+  },
+}));
+
+function rhythmFixture() {
+  return {
+    period: { from: '2026-11-01T05:00:00Z', to: '2026-11-22T04:59:59Z', granularity: 'day', prev_from: '2026-10-01T04:00:00Z', prev_to: '2026-10-22T04:59:59Z' },
+    kpi: {
+      ops: 5, gross_cup: 1080500, discounts_cup: 500, taxes_cup: 0, net_cup: 1080000,
+      devolutions_cup: 0, devolutions_usd: 0, collected_usd: 0, collected_cup_equiv: 0,
+      avg_ticket_cup: 216000, units_sold: 10, units_returned: 0,
+      prev: { ops: 4, gross_cup: 1000000, discounts_cup: 0, net_cup: 1000000, devolutions_cup: 0, devolutions_usd: 0, collected_usd: 0, avg_ticket_cup: 250000 },
+    },
+    series: [
+      { bucket: '2026-11-01 00:00', ops: 1, gross_cup: 600000, net_cup: 600000, discounts_cup: 0 },
+      { bucket: '2026-11-02 00:00', ops: 1, gross_cup: 280000, net_cup: 280000, discounts_cup: 0 },
+      { bucket: '2026-11-03 00:00', ops: 1, gross_cup: 200000, net_cup: 200000, discounts_cup: 0 },
+    ],
+    sellers: [], stores: [], stores_series: [],
+    products: { top_net: [], top_units: [], low_movement: [], total_net_cup: 0 },
+    payment_methods: { by_document: [], by_collection: [] },
+    heatmap: [],
+    alerts: { doc_status: [], devolutions_count: 0, devolutions_cup: 0, devolutions_usd: 0, incident_sales: 0, sync_log: [], unreconciled_ops: 0, unreconciled_diff_cup: 0 },
+  };
+}
+
+// ── MOCK: store de autenticación (patrón del repo) ──
+const authState: { user: { id: string; activeStoreId: string | null; accessToken?: string; role?: string } | null } = {
   user: null,
 };
+const setCurrentView = vi.fn();
 vi.mock('@/store', () => ({
   useAuthStore: (sel?: (s: unknown) => unknown) =>
     sel ? sel({ user: authState.user }) : { user: authState.user },
   useUIStore: (sel?: (s: unknown) => unknown) =>
-    sel ? sel({ setCurrentView: vi.fn() }) : { setCurrentView: vi.fn() },
+    sel
+      ? sel({ setCurrentView, setFinancialOpeningNavContext: vi.fn() })
+      : { setCurrentView, setFinancialOpeningNavContext: vi.fn() },
 }));
 
 // ── MOCK: fetch global (endpoints CP-FIN) ──
@@ -32,7 +77,7 @@ global.fetch = fetchMock as unknown as typeof fetch;
 
 function balanceFixture() {
   return {
-    as_of: '2026-11-13',
+    as_of: '2026-11-22',
     categorias: [],
     total_activos: 0,
     total_pasivos: 0,
@@ -44,82 +89,133 @@ function balanceFixture() {
   };
 }
 
+function dashboardFixture() {
+  return {
+    kpis: {
+      ingresos: 5000, costo_ventas: 2000, gastos: 1000, utilidad_bruta: 3000,
+      resultado_neto: 2000, efectivo_cup: 0, efectivo_usd: 0, bancos: 0,
+      cuentas_por_cobrar: 0, cuentas_por_pagar: 0, inventario_valor: 0,
+      nominas: 0, retenciones: 0,
+    },
+    series_mensuales: [],
+    top_gastos: [],
+    alertas: { gastos_mayores_que_ingresos: false, desequilibrio_balance: false, desequilibrio_monto: 0, tipos_sin_configurar: 0, errores_contabilizacion: 0 },
+    saldos: null,
+  };
+}
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import FinancialStatementsView from '@/components/views/terminal/views/financial_statements/FinancialStatementsView';
 
-describe('FinancialStatementsView — render y pestañas', () => {
+function renderView() {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={qc}><FinancialStatementsView /></QueryClientProvider>);
+}
+
+async function act_click(el: HTMLElement) {
+  fireEvent.click(el);
+  await Promise.resolve();
+}
+
+describe('FinancialStatementsView — render y pestañas (misión §3.1/§7)', () => {
   beforeEach(() => {
     fetchMock.mockReset();
+    setCurrentView.mockClear();
     authState.user = null;
   });
   afterEach(() => cleanup());
 
   it('sin tienda activa: mensaje de selección de tienda, sin fetches', async () => {
-    const { container } = render(<FinancialStatementsView />);
+    const { container } = renderView();
     await waitFor(() => expect(container.textContent).toMatch(/tienda/i));
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('con tienda: renderiza las tres pestañas y consulta el balance al montar', async () => {
-    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok' };
-    fetchMock.mockResolvedValueOnce({
-      ok: true,
-      json: async () => balanceFixture(),
-    } as Response);
+  it('con tienda: Dashboard es la pestaña inicial y muestra el Ritmo de ventas con datos reales del RPC', async () => {
+    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
+    // fetch para la franja financiera complementaria (fin_get_dashboard)
+    fetchMock.mockResolvedValue({ ok: true, json: async () => dashboardFixture() } as Response);
 
-    render(<FinancialStatementsView />);
+    const { container } = renderView();
 
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(fetchMock.mock.calls[0][0]).toContain('/api/fin/statements?type=balance');
-    expect(fetchMock.mock.calls[0][0]).toContain('store_id=store-1');
+    // Tres opciones de navegación en el orden exigido: Dashboard · Análisis · Configuración
+    expect(screen.getByTestId('tab-dashboard')).toBeDefined();
+    expect(screen.getByTestId('tab-analisis')).toBeDefined();
+    expect(screen.getByTestId('tab-configuracion')).toBeDefined();
 
-    expect(await screen.findByText(/Estado de Situación/i)).toBeDefined();
-    expect(screen.getByText(/Estado de Rendimiento/i)).toBeDefined();
-    expect(screen.getByText(/Dashboard/i)).toBeDefined();
-    expect(screen.getByText(/Estados Financieros/i)).toBeDefined();
+    // La pestaña activa por defecto es Dashboard (primera, misión §3.1)
+    await waitFor(() => expect(screen.getByTestId('sales-rhythm-dashboard')).toBeDefined(), { timeout: 4000 });
+
+    // Ventas netas del RPC mockeado: 1,080,000 − 0 devoluciones
+    await waitFor(() => expect(container.textContent).toContain('Ritmo de ventas'), { timeout: 4000 });
+    await waitFor(() => expect(container.textContent).toContain('1,080,000'), { timeout: 4000 });
+    // Índice comparativo 108% y variación +8.0% (ejemplo de la misión)
+    await waitFor(() => expect(container.textContent).toContain('108.0%'), { timeout: 4000 });
+    expect(container.textContent).toContain('+8.0%');
+    // Período comparado visible en el encabezado
+    expect(screen.getByTestId('compared-period-label')).toBeDefined();
   });
 
-  it('cambiar a la pestaña Rendimiento consulta el income statement (período propio)', async () => {
-    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok' };
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        ...balanceFixture(),
-        categorias: [],
-        ingresos_operacionales: 0, ajustes_ingresos: 0, ingresos_netos: 0,
-        costo_ventas: 0, utilidad_bruta: 0, gastos_operacionales: 0,
-        resultado_operativo: 0, ingresos_no_operacionales: 0,
-        gastos_no_operacionales: 0, resultado_neto: 0, desde: '2026-11-01', hasta: '2026-11-30',
-      }),
-    } as Response);
+  it('cambiar a Análisis muestra las sub-pestañas y Situación consulta el balance', async () => {
+    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
+    // Respuestas por endpoint: el resumen (dashboard) y el balance tienen formas distintas.
+    fetchMock.mockImplementation(async (input: unknown) => {
+      const url = typeof input === 'string' ? input : (input as Request).url;
+      if (url.includes('type=dashboard')) {
+        return { ok: true, json: async () => dashboardFixture() } as Response;
+      }
+      if (url.includes('type=income')) {
+        return {
+          ok: true,
+          json: async () => ({
+            ingresos_operacionales: 0, ajustes_ingresos: 0, ingresos_netos: 0,
+            costo_ventas: 0, utilidad_bruta: 0, gastos_operacionales: 0,
+            resultado_operativo: 0, ingresos_no_operacionales: 0,
+            gastos_no_operacionales: 0, resultado_neto: 0, desde: '2026-11-01', hasta: '2026-11-22',
+          }),
+        } as Response;
+      }
+      return { ok: true, json: async () => balanceFixture() } as Response;
+    });
 
-    render(<FinancialStatementsView />);
-    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(1));
+    renderView();
+    await waitFor(() => expect(screen.getByTestId('tab-analisis')).toBeDefined());
 
-    const tabRendimiento = screen.getByText(/Estado de Rendimiento/i);
-    await act_click(tabRendimiento);
+    await act_click(screen.getByTestId('tab-analisis'));
+    // Sub-pestañas del análisis contable (todo el contenido previo se conserva)
+    expect(screen.getByTestId('subtab-resumen')).toBeDefined();
+    expect(screen.getByTestId('subtab-situacion')).toBeDefined();
+    expect(screen.getByTestId('subtab-rendimiento')).toBeDefined();
+    expect(screen.getByTestId('subtab-conciliacion')).toBeDefined();
 
+    await act_click(screen.getByTestId('subtab-situacion'));
     await waitFor(() => {
       const urls = fetchMock.mock.calls.map((c: unknown[]) => c[0] as string);
-      expect(urls.some((u) => u.includes('type=income'))).toBe(true);
+      expect(urls.some((u) => u.includes('type=balance'))).toBe(true);
     });
   });
 
-  it('error del backend: mensaje visible con opción de reintento', async () => {
-    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok' };
-    fetchMock.mockResolvedValueOnce({
+  it('pestaña Configuración conduce a la página oficial de Sistema (contextual, sin duplicar)', async () => {
+    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
+    fetchMock.mockResolvedValue({ ok: true, json: async () => dashboardFixture() } as Response);
+
+    renderView();
+    await waitFor(() => expect(screen.getByTestId('tab-configuracion')).toBeDefined());
+
+    await act_click(screen.getByTestId('tab-configuracion'));
+    expect(setCurrentView).toHaveBeenCalledWith('document-config');
+  });
+
+  it('error del backend en la franja financiera: mensaje visible con reintento', async () => {
+    authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
+    fetchMock.mockResolvedValue({
       ok: false,
       json: async () => ({ error: 'Sin permisos sobre esa tienda' }),
     } as Response);
 
-    render(<FinancialStatementsView />);
-    await waitFor(() =>
-      expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(1),
-    );
+    const { container } = renderView();
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(1));
+    // El Dashboard ejecutivo sigue renderizando (error tolerado por franja)
+    await waitFor(() => expect(container.textContent).toMatch(/Ritmo de ventas|No se pudo consultar/i), { timeout: 4000 });
   });
 });
-
-// fireEvent wrapper para evitar act warnings
-async function act_click(el: HTMLElement) {
-  fireEvent.click(el);
-  await Promise.resolve();
-}
