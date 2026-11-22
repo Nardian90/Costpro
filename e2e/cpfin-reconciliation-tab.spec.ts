@@ -152,7 +152,9 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
     // es módulo de primer nivel — acceso DIRECTO sin desplegar OPERACIÓN.
     await page.getByText('Estados Financieros', { exact: true }).first().click();
     await page.getByTestId('financial-statements-view').waitFor({ state: 'visible', timeout: 25_000 });
-    await page.getByTestId('tab-conciliacion').click();
+    // Misión integral §3.1: Conciliación es sub-pestaña de Análisis.
+    await page.getByTestId('tab-analisis').click();
+    await page.getByTestId('subtab-conciliacion').click();
     // PENDIENTE inicial: nada se consulta sin acción explícita
     await expect(page.getByTestId('recon-pendiente')).toBeVisible();
     await page.getByTestId('btn-ejecutar-conciliacion').click();
@@ -174,7 +176,9 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
     // es módulo de primer nivel — acceso DIRECTO sin desplegar OPERACIÓN.
     await page.getByText('Estados Financieros', { exact: true }).first().click();
     await page.getByTestId('financial-statements-view').waitFor({ state: 'visible', timeout: 25_000 });
-    await page.getByTestId('tab-conciliacion').click();
+    // Misión integral §3.1: Conciliación es sub-pestaña de Análisis.
+    await page.getByTestId('tab-analisis').click();
+    await page.getByTestId('subtab-conciliacion').click();
     await page.getByTestId('btn-ejecutar-conciliacion').click();
     await page.getByTestId('recon-row-ACT_INVENTARIO').click();
     await expect(page.getByTestId('recon-detail-ACT_INVENTARIO')).toBeVisible();
@@ -192,7 +196,9 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
     // es módulo de primer nivel — acceso DIRECTO sin desplegar OPERACIÓN.
     await page.getByText('Estados Financieros', { exact: true }).first().click();
     await page.getByTestId('financial-statements-view').waitFor({ state: 'visible', timeout: 25_000 });
-    await page.getByTestId('tab-rendimiento').click();
+    // Misión integral §3.1: Rendimiento es sub-pestaña de Análisis.
+    await page.getByTestId('tab-analisis').click();
+    await page.getByTestId('subtab-rendimiento').click();
     // Expandir una categoría CON movimientos (patrón de fin-statements-origin-
     // traceability: ING_VENTAS siempre tiene actividad del fixture del run).
     const catBtn = page.getByRole('button', { name: /Ingresos por ventas/i }).first();

@@ -634,8 +634,75 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 }
 
+// ─── ADN-010: ELIMINAR BORRADOR (fail-closed + trazabilidad en la BD) ───────
+// Misión integral 2026-11-22 §2.4: los borradores debían poder removerse.
+// SIEMPRE vía RPC delete_received_service_draft: revalida en BD que el actor
+// puede gestionar la tienda REAL del documento (can_manage_store_as), que el
+// estado es 'draft' y que no hay dependencias incompatibles (pagos,
+// distribuciones, asientos). Audita el borrado en audit_logs ANTES de
+// eliminar (trazabilidad que sobrevive a la operación).
+async function deleteHandler(req: NextRequest, session: AuthenticatedSession) {
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) return NextResponse.json(createApiError('CONFIG_ERROR'), { status: 500 });
+    const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+
+    // service_id desde query (?service_id=) o cuerpo JSON {service_id, reason}.
+    let serviceId = req.nextUrl.searchParams.get('service_id') || '';
+    let reason: string | null = null;
+    if (!serviceId) {
+      const body = await req.json().catch(() => null);
+      const candidate = body && typeof body === 'object' ? (body as { service_id?: unknown }).service_id : undefined;
+      if (typeof candidate === 'string') {
+        serviceId = candidate;
+        const rawReason = body && typeof body === 'object' ? (body as { reason?: unknown }).reason : undefined;
+        if (typeof rawReason === 'string' && rawReason.trim()) reason = rawReason.trim().slice(0, 500);
+      }
+    }
+    if (!uuidLoose.safeParse(serviceId).success) {
+      return NextResponse.json({ error: 'service_id (uuid) es requerido' }, { status: 400 });
+    }
+    const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
+
+    // FIX F3-P0-02 (mismo patrón del PATCH): resolver la tienda REAL server-side
+    // y validar gestión ANTES de invocar el RPC privilegiado.
+    const { data: svcRow, error: svcErr } = await admin
+      .from('received_services')
+      .select('id,store_id,status')
+      .eq('id', serviceId)
+      .single();
+    if (svcErr || !svcRow?.store_id) {
+      return NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 });
+    }
+    if (!canManageStore(session.user, svcRow.store_id)) return forbidden();
+
+    const { data: rpcResult, error: rpcErr } = await admin.rpc('delete_received_service_draft', {
+      p_service_id: serviceId,
+      p_user_id: userId,
+      p_reason: reason,
+    });
+    if (rpcErr) {
+      const msg = rpcErr.message;
+      if (msg.includes('ERR_SERVICE_NOT_FOUND')) return NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 });
+      if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      if (msg.includes('ERR_NOT_DRAFT')) return NextResponse.json({ error: 'Solo los documentos en Borrador pueden eliminarse' }, { status: 409 });
+      if (msg.includes('ERR_HAS_PAYMENTS')) return NextResponse.json({ error: 'El borrador tiene pagos registrados: no puede eliminarse. Cáncelalo en su lugar.' }, { status: 409 });
+      if (msg.includes('ERR_HAS_DISTRIBUTIONS')) return NextResponse.json({ error: 'El borrador tiene distribuciones de costo calculadas: no puede eliminarse. Cáncelalo en su lugar.' }, { status: 409 });
+      if (msg.includes('ERR_ALREADY_POSTED')) return NextResponse.json({ error: 'El documento tiene asientos contables: no puede eliminarse. Anúlalo en su lugar.' }, { status: 409 });
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+    return NextResponse.json({ success: true, data: rpcResult });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 500 });
+  }
+}
+
 // * PATCH ya no confía en el cliente: resuelve service→store_id y aplica
 // * canManageStore antes de cualquier operación privilegiada.
 export const GET = withAuth(getHandler);
 export const POST = withAuth(withSecurity(postHandler, { rateLimitKey: 'received-services:post', maxRequests: 10 }));
 export const PATCH = withAuth(patchHandler);
+// ADN-010: borrado de borradores con rate-limit (operación destructiva).
+export const DELETE = withAuth(withSecurity(deleteHandler, { rateLimitKey: 'received-services:delete', maxRequests: 10 }));

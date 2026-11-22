@@ -397,7 +397,9 @@ test.describe.serial('CP-FIN-001 — Estados Financieros: importes, monedas, med
     // (ingreso) vive en el Estado de Rendimiento (la Situación solo despliega
     // activo/pasivo/patrimonio).
     await page.getByTestId('financial-statements-view').waitFor({ state: 'visible', timeout: 25_000 });
-    await page.getByTestId('tab-rendimiento').click();
+    // Misión integral §3.1: Rendimiento es sub-pestaña de Análisis.
+    await page.getByTestId('tab-analisis').click();
+    await page.getByTestId('subtab-rendimiento').click();
     await page.waitForTimeout(2500);
     const catBtn = page.getByRole('button', { name: /Ingresos por ventas/i }).first();
     await catBtn.waitFor({ state: 'visible', timeout: 25_000 });
@@ -472,7 +474,9 @@ test.describe.serial('CP-FIN-001 — Estados Financieros: importes, monedas, med
     // CP-NAV-...-001: «Estados Financieros» es módulo de primer nivel — acceso directo.
     await page.getByText('Estados Financieros', { exact: true }).first().click();
     await page.getByTestId('financial-statements-view').waitFor({ state: 'visible', timeout: 25_000 });
-    await page.getByTestId('tab-rendimiento').click();
+    // Misión integral §3.1: Rendimiento es sub-pestaña de Análisis.
+    await page.getByTestId('tab-analisis').click();
+    await page.getByTestId('subtab-rendimiento').click();
     await page.waitForTimeout(2500);
     const catBtn = page.getByRole('button', { name: /Ingresos por ventas/i }).first();
     await catBtn.waitFor({ state: 'visible', timeout: 25_000 });

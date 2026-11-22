@@ -36,15 +36,15 @@ import {
 import { useChartTheme, chartTooltipProps, chartAxisProps } from '@/lib/sales-dashboard/chart-theme';
 import { SafePieChart } from '@/components/ui/SafePieChart';
 import { fetchDashboard } from './fin-api';
-import type { DashboardData, FinancialStatementTabId } from './types';
+import type { AnalysisSubTabId, DashboardData } from './types';
 
 interface DashboardTabProps {
   storeId: string;
   from: string;
   to: string;
   refreshKey: number;
-  /** Navega a otra pestaña de la vista (p. ej. desde la alerta de desequilibrio). */
-  onGoToTab: (tab: FinancialStatementTabId) => void;
+  /** Navega a otra sub-pestaña de Análisis (p. ej. desde la alerta de desequilibrio). */
+  onGoToTab: (tab: AnalysisSubTabId) => void;
 }
 
 type KpiTone = 'primary' | 'success' | 'warning' | 'destructive';

@@ -204,6 +204,30 @@ export function previousEquivalentWindow(w: PeriodWindow): PeriodWindow {
   return { from: prevFrom, to: prevTo };
 }
 
+/**
+ * Ventana del MES ANTERIOR equivalente (misión Estados Financieros §5.3):
+ * conserva el día de inicio y el día de fin y los traslada al mes
+ * inmediatamente anterior, ajustando los días inexistentes al último día
+ * disponible de ese mes (ej.: 31 mar → 28/29 feb).
+ *  · Mes en curso (1–22 nov) ↔ 1–22 del mes anterior (jamas octubre completo).
+ *  · Mes cerrado completo ↔ mes anterior completo.
+ * Los boundaries se re-alinean a medianoche Havana (DST-safe).
+ */
+export function previousMonthEquivalentWindow(w: PeriodWindow): PeriodWindow {
+  const shift = (d: Date, clamp: 'start' | 'end'): Date => {
+    const { y, m, d: day } = havanaYMD(d);
+    const pm = m === 1 ? 12 : m - 1;
+    const py = m === 1 ? y - 1 : y;
+    // Día 0 del mes siguiente = último día del mes anterior (independiente del TZ).
+    const lastDay = new Date(Date.UTC(py, pm, 0)).getUTCDate();
+    const dd = Math.min(day, lastDay);
+    const mid = havanaMidnight(py, pm, dd);
+    if (clamp === 'start') return mid;
+    return new Date(mid.getTime() + 24 * 3600 * 1000 - 1);
+  };
+  return { from: shift(w.from, 'start'), to: shift(w.to, 'end') };
+}
+
 /** Variación porcentual. null cuando no hay base de comparación (→ «—»). */
 export function percentChange(current: number, previous: number): number | null {
   if (!Number.isFinite(previous) || previous === 0) return null;
