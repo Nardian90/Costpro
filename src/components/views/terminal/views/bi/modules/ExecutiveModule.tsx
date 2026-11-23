@@ -29,20 +29,20 @@
 import React, { useMemo, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StateRenderer } from '@/components/ui/StateRenderer';
-import type { BiModuleProps } from '../../bi-module-registry';
+import type { BiModuleProps } from '../bi-module-registry';
 import { useStoreAnalytics, type StoreAnalytics } from '@/hooks/api/useStoreAnalytics';
 import {
   useExecutiveData, useExecutiveSignals, useExecutiveObservations,
   buildPresetPeriod, type ExecutivePeriod,
-} from './useExecutiveData';
-import { ExecutivePeriodBar } from './ExecutivePeriodBar';
-import { ExecutiveKpiRow } from './ExecutiveKpiRow';
-import { ExecutiveEvolutionChart } from './ExecutiveEvolutionChart';
-import { SignalsPanel } from './SignalsPanel';
-import { ProductsPanel } from './ProductsPanel';
-import { BehaviorPanel } from './BehaviorPanel';
-import { ObservationsPanel } from './ObservationsPanel';
-import { SmartPurchaseOrder } from '../../shared/SmartPurchaseOrder';
+} from './executive/useExecutiveData';
+import { ExecutivePeriodBar } from './executive/ExecutivePeriodBar';
+import { ExecutiveKpiRow } from './executive/ExecutiveKpiRow';
+import { ExecutiveEvolutionChart } from './executive/ExecutiveEvolutionChart';
+import { SignalsPanel } from './executive/SignalsPanel';
+import { ProductsPanel } from './executive/ProductsPanel';
+import { BehaviorPanel } from './executive/BehaviorPanel';
+import { ObservationsPanel } from './executive/ObservationsPanel';
+import { SmartPurchaseOrder } from '../shared/SmartPurchaseOrder';
 
 export default function ExecutiveModule({ storeId, storeName }: BiModuleProps) {
   const [period, setPeriod] = useState<ExecutivePeriod>(() => buildPresetPeriod(30));
