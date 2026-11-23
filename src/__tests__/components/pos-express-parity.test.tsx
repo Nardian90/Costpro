@@ -276,22 +276,26 @@ describe('MISIÓN VENDER-EXPRESS — Caso A: producto existente (bug reportado)'
 });
 
 describe('MISIÓN VENDER-EXPRESS — Caso B: resultados comparables con el carrito', () => {
-  it('autocompletado EN VIVO (mismo POSAutocomplete del carrito) muestra sugerencias al escribir', () => {
+  // CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): el dropdown overlay
+  // POSAutocomplete fue RETIRADO de Express. La superficie de resultados es
+  // ÚNICA: lista en línea debajo del buscador (role=listbox «Resultados de
+  // búsqueda Express») que responde en vivo mientras se escribe.
+  it('resultados EN VIVO debajo del buscador al escribir (sin exigir Enter)', () => {
     renderExpress();
     const input = screen.getByLabelText('Búsqueda Express') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'cola' } });
-    const dropdown = screen.getByRole('listbox', { name: /sugerencias de productos/i });
-    expect(dropdown).toBeInTheDocument();
-    expect(within(dropdown).getByRole('option')).toHaveTextContent('Cemento cola de 25kg');
+    const results = screen.getByRole('listbox', { name: /resultados de búsqueda express/i });
+    expect(results).toBeInTheDocument();
+    expect(within(results).getByRole('option')).toHaveTextContent('Cemento cola de 25kg');
   });
 
-  it('seleccionar del autocompletado agrega y limpia el texto (mismo comportamiento que el carrito)', () => {
+  it('seleccionar de los resultados en vivo agrega y limpia el texto (vuelve al catálogo)', () => {
     const onAddToCart = vi.fn();
     renderExpress({ onAddToCart });
     const input = screen.getByLabelText('Búsqueda Express') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'cola' } });
-    const dropdown = screen.getByRole('listbox', { name: /sugerencias de productos/i });
-    fireEvent.click(within(dropdown).getByRole('option'));
+    const results = screen.getByRole('listbox', { name: /resultados de búsqueda express/i });
+    fireEvent.click(within(results).getByRole('option'));
     expect(onAddToCart).toHaveBeenCalledTimes(1);
     expect(onAddToCart.mock.calls[0][0].id).toBe(P_CEMENTO_COLA.id);
     expect(input.value).toBe('');

@@ -278,7 +278,21 @@ export default function POSView() {
   })));
 
   // ── Cart handlers ───────────────────────────────────────────
-  const handleCloseCart = useCallback(() => setShowCart(false), []);
+  // CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): cierre REAL del panel.
+  // Causa raíz del bug «el botón X no cierra tras completar una venta»: la
+  // condición de renderizado del panel es (showCart || lastSale) y el X solo
+  // mutaba showCart — con lastSale ≠ null (venta confirmada) el panel seguía
+  // montado. Ahora cerrar limpia TAMBIÉN lastSale: es exclusivamente estado
+  // local del comprobante; la venta YA fue confirmada en BD vía
+  // create_sale_v2 (idempotente), por lo que cerrar:
+  //   · NO revierte, cancela ni modifica la venta confirmada;
+  //   · NO dispara ningún POST ni duplica la operación;
+  //   · NO toca un carrito pendiente sin confirmar (los items viven en el
+  //     cart store y solo se borran al confirmar o vía «Anular carrito»).
+  const handleCloseCart = useCallback(() => {
+    setShowCart(false);
+    setLastSale(null);
+  }, [setLastSale]);
 
   const handleClearLastSale = useCallback(() => {
     setLastSale(null);
@@ -445,7 +459,10 @@ export default function POSView() {
       setShowCart(true);
     },
     onEscape: () => {
-      if (showCart) setShowCart(false);
+      // CP-UX-NAVIGATION-POS-REPAIR-001: Esc usa el MISMO cierre real que el
+      // botón X (showCart=false + lastSale=null). Antes solo mutaba showCart y
+      // el panel permanecía abierto tras una venta confirmada (lastSale ≠ null).
+      if (showCart || lastSale) handleCloseCart();
     },
     onFocusSearch: focusSearch,
     onIncrementLast: incrementLastItem,
@@ -511,6 +528,12 @@ export default function POSView() {
         onClearLastSale={handleClearLastSale}
         hideOutOfStock={hideOutOfStock}
         onHideOutOfStockChange={setHideOutOfStock}
+        // CP-UX-NAVIGATION-POS-REPAIR-001: estados diferenciados del catálogo
+        // (§3.3) — reutiliza la carga existente (useProducts) y su refetch;
+        // Express no crea consultas nuevas.
+        productsLoading={isLoadingProducts}
+        productsError={productsError instanceof Error ? productsError.message : (productsError ? String(productsError) : null)}
+        onRetryProducts={() => { void refetchProducts(); }}
       />
     );
   }
