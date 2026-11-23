@@ -256,30 +256,6 @@ function ProductDiagnosis({ row, storeId, desdeIso, hastaIso }: {
   );
 }
 
-/** Hallazgo del informe en pantalla (misión §3.2.H: hecho→evidencia→implicación→acción). */
-function HallazgoCard({ h, index }: { h: InformeEjecutivo['hallazgos'][number]; index: number }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-3 space-y-1.5" data-testid={`informe-hallazgo-${index}`}>
-      <p className="text-xs font-black text-foreground flex items-start gap-1.5">
-        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-black shrink-0 mt-0.5">{index + 1}</span>
-        {h.titulo}
-      </p>
-      <p className="text-[11px] leading-relaxed text-foreground">
-        <span className="font-black uppercase text-[9px] tracking-widest text-muted-foreground mr-1">Hecho:</span>{h.hallazgo}
-      </p>
-      <p className="text-[11px] leading-relaxed text-foreground">
-        <span className="font-black uppercase text-[9px] tracking-widest text-muted-foreground mr-1">Evidencia:</span><span className="tabular-nums">{h.evidencia}</span>
-      </p>
-      <p className="text-[11px] leading-relaxed text-muted-foreground">
-        <span className="font-black uppercase text-[9px] tracking-widest text-muted-foreground mr-1">Posible implicación:</span>{h.implicacion}
-      </p>
-      <p className="text-[11px] leading-relaxed text-foreground border-t border-border/60 pt-1.5">
-        <span className="font-black uppercase text-[9px] tracking-widest text-primary mr-1">Acción a evaluar:</span>{h.accion}
-      </p>
-    </div>
-  );
-}
-
 /** Vista principal. */
 export default function ProductComparisonView() {
   const { user } = useAuthStore();
@@ -424,11 +400,13 @@ export default function ProductComparisonView() {
     setPreviewLoading(true);
     setPreviewError(null);
     try {
-      // UNA fuente de redacción/cifras: el módulo puro consume rows/resumen.
+      // UNA fuente de redacción/cifras: el motor analítico consume rows/resumen
+      // y la evidencia del mayor de inventario (sin afirmar ventas ni su ausencia).
       const informeEjecutivo = buildInformeEjecutivo({
         rows,
         resumen,
         generadoEl: new Date().toISOString(),
+        ventasEnPeriodoActual: q.data?.ventasEnPeriodoActual ?? null,
         meta: {
           entidadNombre: activeStore?.name ?? 'Tienda activa',
           periodoActual: { desde: toDateInputValue(ventana.from), hasta: toDateInputValue(ventana.to) },
@@ -453,7 +431,7 @@ export default function ProductComparisonView() {
       buildingRef.current = false;
       setPreviewLoading(false);
     }
-  }, [resumen, rows, activeStore, ventana, ventanaAnterior, informeSignature]);
+  }, [resumen, rows, activeStore, ventana, ventanaAnterior, informeSignature, q.data]);
 
   // Al abrir el tab del informe con datos: construir si no hay cache vigente.
   useEffect(() => {
@@ -833,35 +811,6 @@ export default function ProductComparisonView() {
                   </span>
                 </div>
 
-                {/* Contenido redactado en pantalla (misma fuente que el PDF) */}
-                {informe && (
-                  <div className="space-y-3">
-                    <div className="rounded-xl border border-border bg-card p-3" data-testid="informe-resumen">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Resumen ejecutivo</p>
-                      <p className="text-[12px] leading-relaxed text-foreground">{informe.resumenEjecutivo.parrafo}</p>
-                      <div className="flex flex-wrap gap-1.5 mt-2">
-                        {informe.resumenEjecutivo.cifras.map((c) => (
-                          <span key={c.label} className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/30 px-2 py-1 text-[10px] text-muted-foreground">
-                            <span className="font-black text-foreground tabular-nums">{c.value}</span> {c.label}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2" data-testid="informe-hallazgos">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Hallazgos y recomendaciones (hecho → evidencia → implicación → acción)</p>
-                      {informe.hallazgos.map((h, i) => <HallazgoCard key={h.titulo} h={h} index={i} />)}
-                    </div>
-
-                    <div className="rounded-xl border border-border bg-muted/20 p-3" data-testid="informe-conclusion">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Conclusión ejecutiva</p>
-                      {informe.conclusion.map((p, i) => (
-                        <p key={i} className="text-[12px] leading-relaxed text-foreground mt-1 first:mt-0">{p}</p>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Banner de obsolescencia (nunca mostrar silenciosamente datos viejos) */}
                 {informeStale && (
                   <div role="status" className="flex flex-wrap items-center gap-2 rounded-xl border border-warning/30 bg-warning/5 px-3 py-2.5 text-xs text-warning" data-testid="informe-stale-banner">
@@ -875,35 +824,40 @@ export default function ProductComparisonView() {
                   </div>
                 )}
 
-                {/* Vista preliminar (mismo documento que se exporta — blob del builder compartido) */}
+                {/* Vista preliminar — espacio principal del tab: reproduce fielmente
+                    el documento que se exporta (blob del mismo builder compartido).
+                    El contenido analítico vive EXCLUSIVAMENTE en el PDF oficial:
+                    la interfaz no duplica texto del informe (misión Informe Gerencial §1). */}
                 {previewLoading ? (
-                  <div className="p-10 text-center text-muted-foreground" aria-live="polite">
+                  <div className="p-10 text-center text-muted-foreground" aria-live="polite" data-testid="informe-preview-loading">
                     <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                     <p className="text-xs">Generando vista preliminar del informe…</p>
                   </div>
                 ) : previewError ? (
-                  <div className="p-6 text-center space-y-2" role="alert">
+                  <div className="p-6 text-center space-y-2" role="alert" data-testid="informe-preview-error">
                     <AlertTriangle className="w-8 h-8 mx-auto text-destructive/60" />
                     <p className="text-xs text-destructive">{previewError}</p>
                     <button onClick={() => void generarInforme(true)} className="rounded-lg border border-border/40 px-3 py-2 text-[10px] font-black uppercase hover:bg-muted min-h-[36px]">Reintentar</button>
                   </div>
                 ) : previewUrl ? (
-                  <div className="rounded-lg overflow-hidden border border-border/40 bg-white" style={{ height: 'min(72vh, 900px)' }} data-testid="informe-preview">
+                  <div className="rounded-lg overflow-hidden border border-border/40 bg-white" style={{ height: 'min(78vh, 1080px)' }} data-testid="informe-preview">
                     <iframe
                       key={previewUrl}
                       src={previewUrl}
-                      title="Vista previa del Informe Ejecutivo de Comparación de Productos"
+                      title="Vista previa del Informe Ejecutivo de Desempeño Comercial y Abastecimiento"
                       className="w-full h-full"
                     />
                   </div>
                 ) : (
-                  <div className="p-8 text-center space-y-2 rounded-xl border border-dashed border-border">
+                  <div className="p-10 text-center space-y-2 rounded-xl border border-dashed border-border" data-testid="informe-preview-empty">
                     <FileText className="w-8 h-8 mx-auto text-muted-foreground/40" />
-                    <p className="text-xs text-muted-foreground">Pulsa «Generar informe» para construir el documento y ver la vista preliminar.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Pulsa «Generar informe» para construir el documento institucional (diagnóstico, prioridades, análisis y anexos) y verlo aquí.
+                    </p>
                   </div>
                 )}
                 <p className="text-[9px] text-muted-foreground text-center">
-                  La exportación del PDF es una acción separada y explícita; la vista preliminar no descarga nada. El documento completo (tablas por comportamiento, hallazgos y conclusión) se construye con la misma fuente de datos que esta pantalla.
+                  La vista preliminar reproduce exactamente el documento que se exporta. El análisis completo —diagnóstico ejecutivo, matriz de prioridades, indicadores de rotación y cobertura, y anexos— vive únicamente en el PDF oficial; esta interfaz no duplica su contenido.
                 </p>
               </div>
             )}

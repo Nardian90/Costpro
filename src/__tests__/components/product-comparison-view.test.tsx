@@ -175,9 +175,9 @@ describe('ProductComparisonView — comparación comercial (ADNEGOCIO-UI §5)', 
     await waitFor(() => expect(screen.getByText(/Sin ventas en ninguno de los dos períodos/)).toBeInTheDocument(), { timeout: 4000 });
   });
 
-  // ── MISIÓN COMPARAR PRODUCTOS 2026-11-23: tab INFORME EJECUTIVO ──
+  // ── MISIÓN INFORME GERENCIAL 2026-11-24: tab INFORME EJECUTIVO = documento ──
 
-  it('tab Informe Ejecutivo: genera el informe con datos reales y estado «actualizado»', async () => {
+  it('tab Informe Ejecutivo: controles + estado + vista preliminar, SIN texto duplicado', async () => {
     renderView();
     await waitFor(() => expect(screen.getByTestId('comparison-row-cemento')).toBeInTheDocument(), { timeout: 4000 });
 
@@ -186,17 +186,24 @@ describe('ProductComparisonView — comparación comercial (ADNEGOCIO-UI §5)', 
     expect(screen.getByTestId('informe-controls')).toBeInTheDocument();
     expect(screen.getByTestId('informe-estado').textContent).toContain('no generado todavía');
 
+    // Los tres controles oficiales del flujo documental.
+    expect(screen.getByTestId('informe-generar').textContent).toContain('Generar informe');
+    expect(screen.getByTestId('informe-actualizar').textContent).toContain('Actualizar vista preliminar');
+    expect(screen.getByTestId('informe-exportar').textContent).toContain('Exportar PDF');
+
     // El tab abierto genera el informe automáticamente (patrón Reporte de Entrega).
-    await waitFor(() => expect(screen.getByTestId('informe-resumen')).toBeInTheDocument(), { timeout: 8000 });
+    await waitFor(() => expect(screen.getByTestId('informe-preview')).toBeInTheDocument(), { timeout: 10000 });
     expect(screen.getByTestId('informe-estado').textContent).toContain('actualizado con los datos actuales');
-    // Resumen con los datos reales del fixture (cemento dejado de venderse).
-    expect(screen.getByTestId('informe-resumen').textContent).toContain('Cemento 50kg');
-    // Hallazgos con estructura hecho→evidencia→implicación→acción.
-    await waitFor(() => expect(screen.getByTestId('informe-hallazgos').children.length).toBeGreaterThan(0), { timeout: 4000 });
-    expect(screen.getByTestId('informe-hallazgos').textContent).toContain('Hecho:');
-    expect(screen.getByTestId('informe-hallazgos').textContent).toContain('Evidencia:');
-    expect(screen.getByTestId('informe-hallazgos').textContent).toContain('Acción a evaluar:');
-    // Vista preliminar (blob del mismo builder que exporta).
-    await waitFor(() => expect(screen.getByTestId('informe-preview')).toBeInTheDocument(), { timeout: 8000 });
-  }, 20_000);
+
+    // CRÍTICO (misión §1): el contenido analítico NO se duplica en la interfaz —
+    // vive únicamente en el PDF. Sin bloques de texto en pantalla.
+    expect(screen.queryByTestId('informe-resumen')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('informe-hallazgos')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('informe-conclusion')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Resumen ejecutivo/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Hallazgos y recomendaciones/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Conclusión ejecutiva/)).not.toBeInTheDocument();
+    expect(screen.queryByText('Hecho:')).not.toBeInTheDocument();
+    expect(screen.queryByText('Acción a evaluar:')).not.toBeInTheDocument();
+  }, 25_000);
 });
