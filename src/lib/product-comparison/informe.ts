@@ -108,6 +108,14 @@ export interface InformeInput {
 const fmtCup = (n: number): string => formatCurrency(n);
 const fmtCupSign = (n: number): string => `${n > 0 ? '+' : ''}${formatCurrency(n)}`;
 const fmtPct = (n: number): string => `${n > 0 ? '+' : ''}${n}%`;
+/** Fecha institucional (dd/MM/aaaa) para el texto redactado del informe. */
+const fmtFecha = (iso: string): string => {
+  const [y, m, d] = iso.split('-');
+  return y && m && d ? `${d}/${m}/${y}` : iso;
+};
+/** Flecha imprimible: U+2192 NO existe en WinAnsi (fuente estándar de jsPDF);
+ *  el documento usa el ángulo simple U+203A, presente en esa codificación. */
+const FLECHA = '›';
 /** Cantidad con SU unidad de medida (nunca agregada entre U.M. distintas). */
 const fmtCant = (n: number, um: string | null): string =>
   `${n.toLocaleString('es-CU')} ${um ?? 'u'}`;
@@ -155,7 +163,7 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
   partes.push(
     `Se compararon ${rows.length} producto${rows.length !== 1 ? 's' : ''} del ranking comercial ` +
       `(Top ${conPosicionActual.length} del período actual y Top ${rows.length - conPosicionActual.length > 0 ? rows.length - conPosicionActual.length : 0} del período anterior) ` +
-      `entre el ${meta.periodoActual.desde} y el ${meta.periodoActual.hasta}, contra el tramo equivalente del ${meta.periodoComparacion.desde} al ${meta.periodoComparacion.hasta}.`,
+      `entre el ${fmtFecha(meta.periodoActual.desde)} y el ${fmtFecha(meta.periodoActual.hasta)}, contra el tramo equivalente del ${fmtFecha(meta.periodoComparacion.desde)} al ${fmtFecha(meta.periodoComparacion.hasta)}.`,
   );
   if (resumen.liderActual) {
     partes.push(
@@ -172,11 +180,11 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
   if (nuevos.length > 0) {
     partes.push(
       `${nuevos.length} producto${nuevos.length !== 1 ? 's' : ''} aparece${nuevos.length !== 1 ? 'n' : ''} por primera vez en el ranking` +
-        (dejaron.length > 0 ? ` y ${dejaron.length} dejó de registrar ventas respecto al tramo anterior` : '') +
+        (dejaron.length > 0 ? ` y ${dejaron.length} ${dejaron.length !== 1 ? 'dejaron' : 'dejó'} de registrar ventas respecto al tramo anterior` : '') +
         '.',
     );
   } else if (dejaron.length > 0) {
-    partes.push(`${dejaron.length} producto${dejaron.length !== 1 ? 's' : ''} dejó de registrar ventas respecto al tramo anterior.`);
+    partes.push(`${dejaron.length} producto${dejaron.length !== 1 ? 's' : ''} ${dejaron.length !== 1 ? 'dejaron' : 'dejó'} de registrar ventas respecto al tramo anterior.`);
   }
 
   const resumenEjecutivo: InformeEjecutivo['resumenEjecutivo'] = {
@@ -189,7 +197,7 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
       { label: 'Dejaron de venderse', value: String(dejaron.length) },
       { label: 'Salen del Top (siguen vendiendo)', value: String(salieron.length) },
       {
-        label: 'Δ ingresos del conjunto comparado',
+        label: 'Variación de ingresos del conjunto comparado',
         value: `${fmtCupSign(deltaConjunto)} CUP`,
       },
     ],
@@ -276,7 +284,7 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
       hallazgos.push({
         titulo: `Crecimiento sostenido: ${r.name}`,
         hallazgo: `El producto crece en ingresos Y en unidades comercializadas, manteniéndose en el puesto ${r.posActual} del ranking actual.`,
-        evidencia: `${variacionTexto(r)} · unidades: ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} → ${fmtCant(r.unidadesActuales, r.unidadMedida)}${r.stockActual !== null ? ` · existencia actual: ${fmtCant(r.stockActual, r.unidadMedida)}` : ''}.`,
+        evidencia: `${variacionTexto(r)} · unidades: ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} ${FLECHA} ${fmtCant(r.unidadesActuales, r.unidadMedida)}${r.stockActual !== null ? ` · existencia actual: ${fmtCant(r.stockActual, r.unidadMedida)}` : ''}.`,
         implicacion: 'Si el ritmo de ventas se mantiene, la demanda superaría el patrón del mes anterior y la existencia actual podría agotarse antes de cerrar el ciclo.',
         accion: 'Evaluar anticipar reposición o ajustar la cantidad de la próxima compra para no perder ventas por quiebre de stock.',
       });
@@ -290,7 +298,7 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
       hallazgos.push({
         titulo: `Ingresos al alza con menos unidades: ${r.name}`,
         hallazgo: 'El producto factura más que en el tramo anterior vendiendo MENOS unidades.',
-        evidencia: `${variacionTexto(r)} · unidades: ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} → ${fmtCant(r.unidadesActuales, r.unidadMedida)}${r.devolucionesActuales > 0 ? ` (con ${fmtCant(r.devolucionesActuales, r.unidadMedida)} devueltas)` : ''}.`,
+        evidencia: `${variacionTexto(r)} · unidades: ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} ${FLECHA} ${fmtCant(r.unidadesActuales, r.unidadMedida)}${r.devolucionesActuales > 0 ? ` (con ${fmtCant(r.devolucionesActuales, r.unidadMedida)} devueltas)` : ''}.`,
         implicacion: 'Patrón compatible con un aumento de precio, un cambio en la composición de la venta (tamaños/variantes) o ventas de mayor valor unitario — no está demostrado con estos datos.',
         accion: 'Evaluar revisar la política de precios del producto y su mix de variantes antes de proyectar la demanda.',
       });
@@ -304,7 +312,7 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
       hallazgos.push({
         titulo: `Caída fuerte con existencia disponible: ${r.name}`,
         hallazgo: 'El producto pierde al menos la mitad de sus ventas mientras conserva inventario en el almacén.',
-        evidencia: `${variacionTexto(r)} · unidades: ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} → ${fmtCant(r.unidadesActuales, r.unidadMedida)} · existencia actual: ${fmtCant(r.stockActual, r.unidadMedida)}.`,
+        evidencia: `${variacionTexto(r)} · unidades: ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} ${FLECHA} ${fmtCant(r.unidadesActuales, r.unidadMedida)} · existencia actual: ${fmtCant(r.stockActual, r.unidadMedida)}.`,
         implicacion: 'La rotación del producto se está deteriorando y el inventario disponible podría volverse lento (o acumular costo de almacenamiento) si la tendencia continúa.',
         accion: 'Evaluar revisar las decisiones de compra del producto y activar acciones de comercialización antes de reabastecerlo.',
       });
@@ -399,7 +407,7 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
   const parametros = [
     `Ámbito: tienda activa (${meta.ambito}) — aislamiento por tienda garantizado por RLS.`,
     'Fuente de ventas: RPC get_sales_dashboard_analytics — valoración canónica CUP contable a la tasa de cada venta, neta de descuentos y devoluciones; anulados y borradores excluidos.',
-    'Recorte del análisis: Top 20 por ingresos del período actual ∪ Top 20 del período anterior (un líder anterior con ventas cero hoy permanece visible).',
+    'Recorte del análisis: Top 20 por ingresos del período actual más el Top 20 del período anterior (un líder anterior con ventas cero hoy permanece visible).',
     'Existencias y unidades de medida: catálogo oficial de productos de la tienda.',
     ...(meta.parametrosExtra ?? []),
   ];

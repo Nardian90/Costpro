@@ -130,7 +130,7 @@ describe('Informe Ejecutivo — cifras y variaciones', () => {
     expect(p1?.ventasAnteriores).toBe(0);
     expect(p1?.difCup).toBe(3000);
     // Δ del conjunto: (3000+2000+1000) − (1000+2000+1500) = 1500
-    expect(inf.resumenEjecutivo.cifras.find((c) => c.label.includes('Δ ingresos'))?.value).toContain('1,500.00');
+    expect(inf.resumenEjecutivo.cifras.find((c) => c.label.includes('Variación de ingresos'))?.value).toContain('1,500.00');
   });
 
   it('el resumen ejecutivo cuenta las categorías con números reales', () => {

@@ -237,19 +237,25 @@ export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promi
 
   let y = 46;
 
+  // Fechas institucionales dd/mm/aaaa (estándar documental de la Res. 11)
+  const f = (iso: string): string => {
+    const [yy, mm, dd] = iso.split('-');
+    return yy && mm && dd ? `${dd}/${mm}/${yy}` : iso;
+  };
+
   // Períodos (A. encabezado — ambos intervalos EXPLÍCITOS, como en la vista):
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.setTextColor(...C_BLACK);
   doc.text('Período analizado:', M, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${meta.periodoActual.desde} a ${meta.periodoActual.hasta}`, M + 33, y);
+  doc.text(`${f(meta.periodoActual.desde)} a ${f(meta.periodoActual.hasta)}`, M + 33, y);
 
   y += 5;
   doc.setFont('helvetica', 'bold');
   doc.text('Período de comparación:', M, y);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${meta.periodoComparacion.desde} a ${meta.periodoComparacion.hasta} (tramo equivalente del mes anterior)`, M + 33, y);
+  doc.text(`${f(meta.periodoComparacion.desde)} a ${f(meta.periodoComparacion.hasta)} (tramo equivalente del mes anterior)`, M + 33, y);
 
   y += 7;
 
