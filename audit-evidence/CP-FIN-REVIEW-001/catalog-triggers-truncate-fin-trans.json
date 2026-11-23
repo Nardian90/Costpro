@@ -1,0 +1,350 @@
+[
+ {
+  "tabla": "audit_logs",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "business_events",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "cash_closures",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "cash_flow_documents",
+  "trigger": "fin_trg_cash_flow_documents",
+  "tgenabled": "O",
+  "funcion": "fin_trg_cash_flow_documents"
+ },
+ {
+  "tabla": "cash_movements",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "cash_register_sessions",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "categories",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "commission_payments",
+  "trigger": "fin_trg_commission_payments",
+  "tgenabled": "O",
+  "funcion": "fin_trg_commission_payments"
+ },
+ {
+  "tabla": "commission_rules",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "devolutions",
+  "trigger": "fin_trg_devolutions",
+  "tgenabled": "O",
+  "funcion": "fin_trg_devolutions"
+ },
+ {
+  "tabla": "fin_entries",
+  "trigger": "fin_trg_entries_generation",
+  "tgenabled": "O",
+  "funcion": "fin_trg_entries_generation_default"
+ },
+ {
+  "tabla": "idempotency_keys",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "inventory",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "inventory_adjustment_items",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "inventory_adjustments",
+  "trigger": "fin_trg_inventory_adjustments",
+  "tgenabled": "O",
+  "funcion": "fin_trg_inventory_adjustments"
+ },
+ {
+  "tabla": "inventory_adjustments",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "inventory_batches",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "inventory_movements",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "inventory_snapshots",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "issue_slips",
+  "trigger": "fin_trg_issue_slips",
+  "tgenabled": "O",
+  "funcion": "fin_trg_issue_slips"
+ },
+ {
+  "tabla": "payment_transactions",
+  "trigger": "fin_trg_payment_transactions",
+  "tgenabled": "O",
+  "funcion": "fin_trg_payment_transactions"
+ },
+ {
+  "tabla": "payrolls",
+  "trigger": "fin_trg_payrolls",
+  "tgenabled": "O",
+  "funcion": "fin_trg_payrolls"
+ },
+ {
+  "tabla": "product_variants",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "production_orders",
+  "trigger": "fin_trg_production_orders",
+  "tgenabled": "O",
+  "funcion": "fin_trg_production_orders"
+ },
+ {
+  "tabla": "products",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "profiles",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "purchase_items",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "purchase_orders",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "receipt_items",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "receipts",
+  "trigger": "fin_trg_receipts",
+  "tgenabled": "O",
+  "funcion": "fin_trg_receipts"
+ },
+ {
+  "tabla": "receipts",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "received_services",
+  "trigger": "fin_trg_received_services",
+  "tgenabled": "O",
+  "funcion": "fin_trg_received_services"
+ },
+ {
+  "tabla": "sale_items",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "sales",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "stock_movements",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "stores",
+  "trigger": "trg_audit_backup_restore_protected",
+  "tgenabled": "O",
+  "funcion": "audit_backup_restore_protected_change"
+ },
+ {
+  "tabla": "stores",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "stores",
+  "trigger": "trg_stores_assign_store_code",
+  "tgenabled": "O",
+  "funcion": "assign_store_code"
+ },
+ {
+  "tabla": "stores",
+  "trigger": "trg_stores_mark_orphan_versions",
+  "tgenabled": "O",
+  "funcion": "mark_store_children_on_store_delete"
+ },
+ {
+  "tabla": "stores",
+  "trigger": "trg_stores_soft_delete_cleanup",
+  "tgenabled": "O",
+  "funcion": "stores_soft_delete_cleanup"
+ },
+ {
+  "tabla": "stores",
+  "trigger": "trigger_audit_store_changes",
+  "tgenabled": "O",
+  "funcion": "audit_store_changes"
+ },
+ {
+  "tabla": "stores",
+  "trigger": "trigger_auto_assign_store_to_creator",
+  "tgenabled": "O",
+  "funcion": "auto_assign_store_to_creator"
+ },
+ {
+  "tabla": "stores",
+  "trigger": "trigger_enforce_encargado_store_limit",
+  "tgenabled": "O",
+  "funcion": "enforce_encargado_store_limit"
+ },
+ {
+  "tabla": "suppliers",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "sync_log",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "tenants",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "transaction_items",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "transactions",
+  "trigger": "fin_trg_transactions",
+  "tgenabled": "O",
+  "funcion": "fin_trg_transactions"
+ },
+ {
+  "tabla": "transactions",
+  "trigger": "reverse_commissions_on_sale_void",
+  "tgenabled": "O",
+  "funcion": "reverse_commissions_on_sale_void"
+ },
+ {
+  "tabla": "transactions",
+  "trigger": "trg_audit_transaction_changes",
+  "tgenabled": "O",
+  "funcion": "log_transaction_changes"
+ },
+ {
+  "tabla": "transactions",
+  "trigger": "trg_check_active_user",
+  "tgenabled": "O",
+  "funcion": "check_active_user"
+ },
+ {
+  "tabla": "transactions",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "transactions",
+  "trigger": "trg_protect_transactions_total_amount",
+  "tgenabled": "O",
+  "funcion": "protect_transactions_total_amount"
+ },
+ {
+  "tabla": "transactions",
+  "trigger": "trg_validate_tx_transition",
+  "tgenabled": "O",
+  "funcion": "fn_validate_document_transition"
+ },
+ {
+  "tabla": "transfer_items",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "transfers",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "units_of_measure",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ },
+ {
+  "tabla": "user_store_memberships",
+  "trigger": "trg_cp_infra_020_block_truncate",
+  "tgenabled": "A",
+  "funcion": "block_truncate"
+ }
+]

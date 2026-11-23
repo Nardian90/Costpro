@@ -1,0 +1,52 @@
+{
+  "fecha": "2026-11-23",
+  "metodo": "consultas agregadas de solo lectura a producción (LIMIT implícito por agregación; 0 filas personales)",
+  "F1_cobertura_ventas": {
+    "etiqueta": "MEDIDO",
+    "total_ventas_completed": 1013,
+    "sin_asiento_gen_activa": 282,
+    "por_tienda": [
+      { "store_id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38", "tienda": "ENERVIDA-VITALLCONS", "completed": 721, "con_asiento_gen_activa": 721, "sin_asiento": 0, "errores_registrados": 0 },
+      { "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1", "tienda": "COSTPRO (Prueba)", "completed": 213, "con_asiento_gen_activa": 0, "sin_asiento": 213, "errores_registrados": 0, "asientos_ventas_cualquier_generacion": 0 },
+      { "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab", "tienda": "PUERTO PADRE", "completed": 79, "con_asiento_gen_activa": 10, "sin_asiento": 69, "errores_registrados": 0, "asientos_ventas_cualquier_generacion": 10 },
+      { "nota": "resto de tiendas: 0 ventas completed" }
+    ],
+    "generaciones_tiendas_afectadas": [
+      { "store_id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1", "code": "GEN-0", "status": "active", "creada": "2026-11-19", "asientos": 5 },
+      { "store_id": "899d2503-d000-41d2-89f0-0827f4ac37ab", "code": "GEN-0", "status": "active", "creada": "2026-11-19", "asientos": 82 }
+    ]
+  },
+  "F1_causa_raiz_corte_temporal": {
+    "etiqueta": "CONFIRMADA (evidencia temporal + código)",
+    "COSTPRO_Prueba": { "sin_asiento": { "primera": "2026-05-02", "ultima": "2026-11-04", "ventas": 213 } },
+    "PUERTO_PADRE": {
+      "sin_asiento": { "primera": "2026-10-14", "ultima": "2026-11-07", "ventas": 69 },
+      "con_asiento": { "primera": "2026-11-07", "ultima": "2026-11-17", "ventas": 10 }
+    },
+    "instalacion_motor": "2026-11-13 (migración 20261113120100_cp_fin_partida_doble_motor.sql; trigger fin_trg_transactions creado en líneas 559-573)",
+    "mecanismo": "el trigger SOLO contabiliza INSERT con status='completed' o transición a completed (NEW.status='completed' AND (TG_OP='INSERT' OR OLD.status<>'completed'))",
+    "pg_cron": "extensión cron NO instalada en producción (pg_extension sin cron) → sin jobs programados",
+    "cola": "no existe tabla de cola documentada ni registrada (confirmado por catálogo)",
+    "backfill": "no se ejecutó recorrido histórico al instalar el motor para estas 2 tiendas"
+  },
+  "F6_aperturas_sin_movimientos": { "etiqueta": "MEDIDO", "total": 4, "lectura": "documentación, no corruptas (misión 9.2)" },
+  "F7_generaciones": {
+    "etiqueta": "MEDIDO",
+    "asientos_generacion_activa": 1194,
+    "asientos_superseded": 3199,
+    "total": 4393,
+    "pct_superseded": 72.8,
+    "generaciones_por_tienda": [
+      { "store": "43a4dabc…", "code": "GEN-0", "status": "active", "asientos": 5 },
+      { "store": "899d2503…", "code": "GEN-0", "status": "active", "asientos": 82 },
+      { "store": "5e6fe821…", "code": "GEN-0", "status": "superseded", "asientos": 1069 },
+      { "store": "5e6fe821…", "code": "GEN-1", "status": "superseded", "asientos": 1061 },
+      { "store": "5e6fe821…", "code": "GEN-2", "status": "superseded", "asientos": 1069 },
+      { "store": "5e6fe821…", "code": "GEN-3", "status": "active", "asientos": 1107 }
+    ]
+  },
+  "uuid_completos_para_G2": {
+    "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1": "COSTPRO (Prueba)",
+    "899d2503-d000-41d2-89f0-0827f4ac37ab": "PUERTO PADRE"
+  }
+}

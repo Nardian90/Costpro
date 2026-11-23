@@ -1,0 +1,1 @@
+HTTP 400 {"message":"Failed to run sql query: ERROR:  42P01: relation \"schema_migrations\" does not exist\nLINE 1: SELECT version, filename, applied_at FROM schema_migrations ORDER BY version DESC LIMIT 20;\n                                                  ^\n"}

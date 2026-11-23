@@ -1,0 +1,1 @@
+SELECT p.proname, pg_get_function_identity_arguments(p.oid) AS args, p.prosrc FROM pg_proc p WHERE p.pronamespace='public'::regnamespace AND p.proname IN ('fin_get_balance_sheet','fin_get_income_statement','fin_get_dashboard','fin_get_category_detail','fin_get_document_types_status','fin_get_reconciliation') ORDER BY p.proname, args;

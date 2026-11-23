@@ -1,0 +1,92 @@
+[
+ {
+  "proname": "can_manage_store_as",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+  "args": "p_user_id uuid, p_store_id uuid"
+ },
+ {
+  "proname": "can_read_payroll_store",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+  "args": "p_store_id uuid"
+ },
+ {
+  "proname": "fin_get_balance_sheet",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+  "args": "p_store_id uuid, p_as_of date, p_user_id uuid"
+ },
+ {
+  "proname": "fin_get_category_detail",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+  "args": "p_store_id uuid, p_category text, p_from date, p_to date, p_limit integer, p_offset integer, p_user_id uuid"
+ },
+ {
+  "proname": "fin_get_dashboard",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+  "args": "p_store_id uuid, p_from date, p_to date, p_user_id uuid"
+ },
+ {
+  "proname": "fin_get_document_types_status",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+  "args": "p_store_id uuid, p_user_id uuid"
+ },
+ {
+  "proname": "fin_get_income_statement",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+  "args": "p_store_id uuid, p_from date, p_to date, p_user_id uuid"
+ },
+ {
+  "proname": "fin_get_reconciliation",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+  "args": "p_store_id uuid, p_as_of date, p_from date, p_to date, p_user_id uuid"
+ },
+ {
+  "proname": "has_management_access_as",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+  "args": "p_user_id uuid, p_store_id uuid"
+ },
+ {
+  "proname": "has_store_access",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+  "args": "p_store_id uuid"
+ },
+ {
+  "proname": "has_store_access_as",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+  "args": "p_user_id uuid, p_store_id uuid"
+ },
+ {
+  "proname": "has_store_role",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+  "args": "p_store_id uuid, p_roles text[]"
+ },
+ {
+  "proname": "has_store_role",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+  "args": "p_user_id uuid, p_store_id uuid, p_roles text[]"
+ },
+ {
+  "proname": "is_admin",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres,costpro_transaction_adjuster=X/postgres}",
+  "args": ""
+ },
+ {
+  "proname": "is_admin_check",
+  "prosecdef": true,
+  "proacl": "{postgres=X/postgres,service_role=X/postgres}",
+  "args": "p_user_id uuid"
+ }
+]

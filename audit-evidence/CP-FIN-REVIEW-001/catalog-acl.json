@@ -1,0 +1,762 @@
+[
+ {
+  "table_name": "fin_account_mapping",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_account_mapping",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_account_mapping",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_account_mapping",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_account_mapping",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_account_mapping",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_account_mapping",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_account_mapping",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "authenticated",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "authenticated",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "authenticated",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_categories",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "authenticated",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "authenticated",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "authenticated",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_document_types",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_entries",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_entries",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_entries",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_entries",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_entries",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_entries",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_entries",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_entries",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "authenticated",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "authenticated",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "authenticated",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_metric_catalog",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_movements",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_movements",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_movements",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_movements",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_movements",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_movements",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_movements",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_movements",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "authenticated",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "authenticated",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "authenticated",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_opening_balances",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "authenticated",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "authenticated",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "authenticated",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_posting_errors",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_posting_generations",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_posting_generations",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_posting_generations",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_posting_generations",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_posting_generations",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_posting_generations",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_posting_generations",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_posting_generations",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "authenticated",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "authenticated",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "authenticated",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_reconciliation_config",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "authenticated",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "authenticated",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "authenticated",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_reconciliation_snapshots",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "authenticated",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "authenticated",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "authenticated",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "fin_rule_versions",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "payroll_item_concepts",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "payroll_item_concepts",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "payroll_item_concepts",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "payroll_item_concepts",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "payroll_item_concepts",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "payroll_item_concepts",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "payroll_item_concepts",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "payroll_item_concepts",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "payroll_items",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "payroll_items",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "payroll_items",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "payroll_items",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "payroll_items",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "payroll_items",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "payroll_items",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "payroll_items",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "payrolls",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "payrolls",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "payrolls",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "payrolls",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "payrolls",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "payrolls",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "payrolls",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "payrolls",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ },
+ {
+  "table_name": "worker_salary_rates",
+  "grantee": "authenticated",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "worker_salary_rates",
+  "grantee": "service_role",
+  "privilege_type": "DELETE"
+ },
+ {
+  "table_name": "worker_salary_rates",
+  "grantee": "service_role",
+  "privilege_type": "INSERT"
+ },
+ {
+  "table_name": "worker_salary_rates",
+  "grantee": "service_role",
+  "privilege_type": "REFERENCES"
+ },
+ {
+  "table_name": "worker_salary_rates",
+  "grantee": "service_role",
+  "privilege_type": "SELECT"
+ },
+ {
+  "table_name": "worker_salary_rates",
+  "grantee": "service_role",
+  "privilege_type": "TRIGGER"
+ },
+ {
+  "table_name": "worker_salary_rates",
+  "grantee": "service_role",
+  "privilege_type": "TRUNCATE"
+ },
+ {
+  "table_name": "worker_salary_rates",
+  "grantee": "service_role",
+  "privilege_type": "UPDATE"
+ }
+]
