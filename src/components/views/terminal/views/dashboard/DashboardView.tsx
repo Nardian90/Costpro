@@ -80,7 +80,7 @@ import { CommercialRanking } from './CommercialRanking';
 // (Resumen de Indicadores + Ranking Comercial + Resumen de actividad).
 // ══════════════════════════════════════════════════════════════════════════
 const LazyBiDashboardView = withChunkRetry(
-  lazy(() => import('./bi/BiDashboardView')),
+  lazy(() => import('../bi/BiDashboardView')),
   'BiDashboardView'
 );
 
