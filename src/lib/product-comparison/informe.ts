@@ -1,428 +1,927 @@
 /**
- * ADNEGOCIO-UI 2026-11-23 · INFORME EJECUTIVO DE COMPARACIÓN DE PRODUCTOS
- * (misión Comparar Productos §3 — tab «Informe Ejecutivo»)
+ * ADNEGOCIO-UI 2026-11-24 · INFORME EJECUTIVO DE DESEMPEÑO COMERCIAL Y
+ * ABASTECIMIENTO (misión Informe Gerencial — replanteo de arquitectura).
  * ===========================================================================
- * MÓDULO PURO (sin I/O): transforma los resultados REALES de la comparación
- * (buildComparison → rows/resumen) en un informe empresarial redactado,
- * estructurado y orientado a la toma de decisiones. Consumidores: la vista
- * Comparar Productos (render en pantalla) y el generador del PDF oficial
- * (informe-ejecutivo-pdf.ts) — UNA sola fuente de redacción y cifras.
+ * Motor analítico PURO (sin I/O) que transforma la comparación REAL
+ * (buildComparison → rows/resumen) en un documento de dirección: diagnóstico,
+ * indicadores, gráfico, matriz de prioridades con decisiones fundamentadas,
+ * análisis complementario y anexos. Consumidor único: el generador del PDF
+ * oficial (informe-ejecutivo-pdf.ts). El tab de la vista NO renderiza este
+ * contenido en texto: solo controles + estado + vista preliminar.
  *
- * REGLAS DE INTEGRIDAD (no negociables, heredadas de la misión):
- *  · Nada se inventa: todo número proviene de rows/resumen (RPC
- *    get_sales_dashboard_analytics + catálogo). Sin base → «sin base»,
- *    sin datos → texto honesto, jamás cero supuesto.
- *  · Los porcentajes SOLO se calculan con base válida (ventas anteriores > 0).
- *  · Las cantidades NUNCA se agregan entre productos con unidades de medida
- *    distintas: se muestran por producto con su U.M.
- *  · Moneda: CUP contable canónico del sistema (misma valoración que la
- *    tabla) — no se mezclan nominales.
- *  · Cada hallazgo diferencia: HECHO comprobado → EVIDENCIA numérica →
- *    POSIBLE implicación comercial (hipótesis, no hecho) → ACCIÓN a evaluar.
- *  · Un producto ausente del Top actual NO se declara descatalogado: se
- *    relaciona con la evidencia disponible (existencia) y se marca lo que
- *    requiere investigación.
- *  · Umbrales publicados del producto: concentración > 50 % en un producto;
- *    caída fuerte ≥ 50 % de las ventas (CAIDA_FUERTE_PCT de compare.ts).
+ * RESPONDE CUATRO PREGUNTAS DE DIRECCIÓN:
+ *  1. ¿Qué está ocurriendo con el comportamiento comercial de los productos?
+ *  2. ¿Qué causas son compatibles con los cambios observados?
+ *  3. ¿Qué riesgos u oportunidades existen en existencias y rotación?
+ *  4. ¿Qué decisiones debería evaluar la dirección y con qué prioridad?
+ *
+ * REGLAS DE INTEGRIDAD (no negociables):
+ *  · Nada se inventa: todo número proviene de rows/resumen + catálogo + mayor
+ *    de inventario. Sin base → «sin base»; sin datos → limitación declarada.
+ *  · HECHO ≠ interpretación ≠ hipótesis ≠ decisión: la redacción lo distingue.
+ *  · NO se declara «ventas perdidas» ni demanda no atendida cuantificada: el
+ *    importe del tramo anterior no es una pérdida comprobada (Caso Cemento).
+ *  · NO se atribuye a demanda un cambio de ingresos con unidades opuestas:
+ *    se identifica precio efectivo / composición como explicación compatible
+ *    y se recomienda verificación (Caso Cable).
+ *  · NO se confunde liderazgo en facturación con rotación: una operación
+ *    aislada de alto valor se señala como tal (Caso Inversor).
+ *  · NO se recomienda aumentar inventario ante contracción con existencia
+ *    disponible (Caso Cemento Blanco): primero velocidad, cobertura, demanda.
+ *  · Velocidad y cobertura en la U.M. PROPIA de cada producto — nunca
+ *    agregadas entre U.M. distintas; precios efectivos por producto.
+ *  · Existencia ACTUAL del almacén de la tienda (instantánea del catálogo
+ *    autoritativo). NO se presenta como existencia promedio del período:
+ *    sin promedio ni costo de ventas NO se calcula rotación financiera de
+ *    inventario (limitación declarada en metodología).
+ *  · «Sin ventas» SOLO con evidencia del mayor de inventario; sin evidencia
+ *    → «verificar» (no se afirma venta ni su ausencia). Nunca mezclar
+ *    categorías solapadas al contar.
+ *
+ * UMBRALES (documentados, configurables, con fundamento):
+ *  · Cobertura de referencia = D (días del tramo analizado, la cadencia
+ *    natural del informe mensual): cobertura < D/2 → rotación alta (la
+ *    existencia no alcanza la mitad del ciclo — decisión de reposición
+ *    en el corto plazo); D/2 ≤ cobertura ≤ D → moderada; cobertura > D →
+ *    baja (la demanda del tramo no consume la existencia — revisar compras).
+ *  · Crecimiento/contracción relevante: |Δ%| ≥ 50 % — simétrico del umbral
+ *    publicado CAIDA_FUERTE_PCT de compare.ts.
+ *  · Concentración del líder: > 50 % (participación oficial del RPC).
  */
 
 import { formatCurrency } from '@/lib/utils';
 import {
-  TOP_PRINCIPAL_ANTERIOR,
   CAIDA_FUERTE_PCT,
+  TOP_PRINCIPAL_ANTERIOR,
   type ComparisonRow,
   type ComparisonResumen,
 } from './compare';
 
-// ── Estructura del informe ───────────────────────────────────────────────────
+// ── Umbrales configurables (documentados arriba; NO cambiar sin revisar
+//    la metodología del Anexo IV, que los cita) ───────────────────────────────
+
+/** Cobertura (en múltiplos de D) por debajo de la cual la rotación es ALTA. */
+export const UMBRAL_COBERTURA_ALTA = 0.5;
+/** Cobertura (en múltiplos de D) por encima de la cual la rotación es BAJA. */
+export const UMBRAL_COBERTURA_BAJA = 1;
+/** Δ% mínimo (simétrico de CAIDA_FUERTE_PCT) para «relevante» en indicadores. */
+export const UMBRAL_CRECIMIENTO_RELEVANTE = CAIDA_FUERTE_PCT;
+/** Productos máximos del gráfico ejecutivo (legibilidad del documento). */
+export const GRAFICO_MAX_PRODUCTOS = 8;
+/** Tope de filas de la matriz ejecutiva (el resto queda en anexos). */
+export const MATRIZ_MAX_FILAS = 12;
+
+// ── Tipos del documento ──────────────────────────────────────────────────────
 
 export interface InformeMeta {
-  /** Nombre de la entidad (tienda activa) — encabezado documental. */
+  /** Nombre de la entidad (tienda activa) — encabezado institucional. */
   entidadNombre: string;
-  titulo: 'INFORME EJECUTIVO DE COMPARACIÓN DE PRODUCTOS';
+  titulo: 'INFORME EJECUTIVO DE DESEMPEÑO COMERCIAL Y ABASTECIMIENTO';
   /** Ventana del período actual (yyyy-MM-dd, idéntica a la vista). */
   periodoActual: { desde: string; hasta: string };
   /** Ventana equivalente de comparación (yyyy-MM-dd). */
   periodoComparacion: { desde: string; hasta: string };
-  /** Fecha y hora de GENERACIÓN del informe (ISO; se congela al generar). */
+  /** Fecha y hora de ELABORACIÓN del informe (ISO; se congela al generar). */
   generadoEl: string;
   /** Ámbito real del análisis (tienda activa). */
   ambito: string;
+  /** Días del tramo analizado (velocidad y cobertura usan esta base). */
+  diasPeriodo: number;
   /** Parámetros y filtros aplicados (transparencia metodológica). */
   parametros: string[];
 }
 
-export interface InformeHallazgo {
-  titulo: string;
-  /** 1. Hallazgo comprobado (hecho). */
-  hallazgo: string;
-  /** 2. Evidencia numérica. */
-  evidencia: string;
-  /** 3. Posible implicación comercial (explícitamente hipótesis). */
-  implicacion: string;
-  /** 4. Acción que conviene evaluar (no una orden). */
-  accion: string;
+export interface InformeIndicador {
+  label: string;
+  value: string;
 }
 
-export interface InformeSeccion {
+export type PrioridadNivel = 'alta' | 'media' | 'preventiva';
+
+export interface InformePrioridad {
+  nivel: PrioridadNivel;
+  producto: string;
+  /** Situación redactada específica, con las cifras del caso. */
+  situacion: string;
+  /** Decisión recomendada, adaptada al problema (no plantilla repetida). */
+  decision: string;
+}
+
+export interface InformeSerieGrafico {
+  name: string;
+  /** Ingresos del tramo comparable (CUP). */
+  anterior: number;
+  /** Ingresos del período analizado (CUP). */
+  actual: number;
+}
+
+export interface InformeGrafico {
   titulo: string;
-  /** Párrafo redactado dinámicamente a partir de los datos. */
-  intro: string;
-  productos: ComparisonRow[];
+  nota: string;
+  series: InformeSerieGrafico[];
+}
+
+export interface InformeTabla {
+  titulo: string;
+  /** Introducción breve de la tabla (alcance y criterio). */
+  intro?: string;
+  /** Encabezado de columnas (la tabla es compacta, con su propio criterio). */
+  columnas: string[];
+  /** Filas con las cifras ya formateadas por producto y U.M. */
+  filas: string[][];
+  /** Nota breve específica de la tabla (cuando aporta precisión). */
+  nota?: string;
+  /** Proporciones de ancho por columna (suman 1) — evita columnas comprimidas. */
+  anchos?: number[];
+  /** Alineación por columna (por defecto: primera izquierda, resto derecha). */
+  alineaciones?: Array<'left' | 'right' | 'center'>;
+}
+
+export interface InformeMetodologia {
+  titulo: string;
+  parrafos: string[];
 }
 
 export interface InformeEjecutivo {
   meta: InformeMeta;
-  resumenEjecutivo: {
-    /** Párrafo de situación general (números reales incrustados). */
-    parrafo: string;
-    /** Cifras de contexto (todas computadas del conjunto comparado). */
-    cifras: Array<{ label: string; value: string }>;
+  /** Diagnóstico ejecutivo: situación general (párrafos sustantivos). */
+  situacionGeneral: string[];
+  /** Conclusión gerencial central (una frase, la de mayor severidad). */
+  conclusionGerencial: string;
+  /** Indicadores relevantes (pocos, útiles, sin redundancia). */
+  indicadores: InformeIndicador[];
+  /** Gráfico ejecutivo (barras comparativas de los productos de impacto). */
+  grafico: InformeGrafico | null;
+  /** Matriz de prioridades y decisiones (Página 2 del documento). */
+  prioridades: InformePrioridad[];
+  /** Análisis complementario — solo secciones con contenido. */
+  complementarias: InformeTabla[];
+  /** Anexos I-III (ranking, disponibilidad y cobertura, sin ventas). */
+  anexos: InformeTabla[];
+  /** Anexo IV — metodología y fuentes. */
+  metodologia: InformeMetodologia[];
+  /** Conciliación explícita de cifras del conjunto comparado. */
+  conciliacion: {
+    productosAnalizados: number;
+    ingresosActual: number;
+    ingresosAnterior: number;
+    variacion: number;
+    /** Etiquetado del alcance exacto (unión de Tops, no la tienda entera). */
+    alcance: string;
+    /** Variación % del conjunto — null si el anterior del conjunto es 0. */
+    variacionPct: number | null;
   };
-  indicadores: Array<{ label: string; value: string }>;
-  secciones: {
-    crecimiento: InformeSeccion;
-    descenso: InformeSeccion;
-    nuevos: InformeSeccion;
-    dejaronDeVenderse: InformeSeccion;
-    salieronDelTop: InformeSeccion;
-  };
-  hallazgos: InformeHallazgo[];
-  /** Conclusión ejecutiva (síntesis + prioridades). */
-  conclusion: string[];
 }
 
 export interface InformeInput {
   rows: ComparisonRow[];
   resumen: ComparisonResumen;
-  meta: Omit<InformeMeta, 'titulo' | 'generadoEl' | 'parametros'> & {
+  meta: Omit<InformeMeta, 'titulo' | 'generadoEl' | 'parametros' | 'diasPeriodo'> & {
     /** Parámetros extra que la vista quiera documentar (opcional). */
     parametrosExtra?: string[];
   };
-  /** Fecha de generación (ISO). El llamador la congela al generar. */
+  /** Fecha de elaboración (ISO). El llamador la congela al generar. */
   generadoEl: string;
+  /**
+   * Evidencia REAL del mayor de inventario: product_ids con salidas por
+   * venta (movement_type='sale') en el período actual. Un producto fuera
+   * del Top actual CON esa evidencia tiene ventas verificables aunque el
+   * agregado no informe su importe; SIN ella, su situación comercial se
+   * marca «verificar» — nunca se afirma venta ni su ausencia (misma regla
+   * conservadora de buildComparison, aquí en lenguaje del documento).
+   */
+  ventasEnPeriodoActual?: Set<string> | null;
 }
 
-// ── Helpers de redacción ─────────────────────────────────────────────────────
+// ── Evaluación de rotación y cobertura (indicadores operativos) ──────────────
 
-const fmtCup = (n: number): string => formatCurrency(n);
-const fmtCupSign = (n: number): string => `${n > 0 ? '+' : ''}${formatCurrency(n)}`;
-const fmtPct = (n: number): string => `${n > 0 ? '+' : ''}${n}%`;
-/** Fecha institucional (dd/MM/aaaa) para el texto redactado del informe. */
+export type RotacionClase = 'alta' | 'moderada' | 'baja' | 'sin_movimiento' | 'sin_base';
+
+export const ROTACION_LABEL: Record<RotacionClase, string> = {
+  alta: 'Alta rotación',
+  moderada: 'Rotación moderada',
+  baja: 'Baja rotación',
+  sin_movimiento: 'Sin movimiento',
+  sin_base: 'Sin base suficiente',
+};
+
+export interface EvaluacionRotacion {
+  row: ComparisonRow;
+  /** Velocidad diaria de venta (unidades de SU U.M. por día). */
+  velocidad: number | null;
+  velocidadTexto: string;
+  /** Existencia actual declarada por el catálogo (instantánea). */
+  existencia: number | null;
+  /** Cobertura estimada en días: existencia / velocidad. */
+  coberturaDias: number | null;
+  coberturaTexto: string;
+  clasificacion: RotacionClase;
+  /** Alerta de disponibilidad (texto honesto; sin fechas de agotamiento). */
+  alerta: string | null;
+  /** Precio promedio efectivo: ingresos netos / unidades (SU U.M.). */
+  precioEfectivoActual: number | null;
+  precioEfectivoAnterior: number | null;
+}
+
+/** Días del tramo [desde, hasta] INCLUSIVO (base de velocidad y cobertura). */
+export function diasDelPeriodo(desde: string, hasta: string): number {
+  const a = new Date(`${desde}T00:00:00Z`).getTime();
+  const b = new Date(`${hasta}T00:00:00Z`).getTime();
+  if (Number.isNaN(a) || Number.isNaN(b) || b < a) return 0;
+  return Math.round((b - a) / 86_400_000) + 1;
+}
+
+const num = (n: number, dec = 2): string =>
+  n.toLocaleString('es-CU', { minimumFractionDigits: 0, maximumFractionDigits: dec });
+
+export const fmtCup = (n: number): string => formatCurrency(n);
+export const fmtCupSign = (n: number): string => `${n > 0 ? '+' : n < 0 ? '-' : ''}${formatCurrency(Math.abs(n))}`;
+export const fmtPctSign = (n: number): string => `${n > 0 ? '+' : n < 0 ? '-' : ''}${num(Math.abs(n), 1)}%`;
+
+const fmtCant = (n: number, um: string | null): string =>
+  `${num(n)} ${um ?? 'u'}`;
+
+/** Fecha institucional dd/mm/aaaa. */
 const fmtFecha = (iso: string): string => {
   const [y, m, d] = iso.split('-');
   return y && m && d ? `${d}/${m}/${y}` : iso;
 };
-/** Flecha imprimible: U+2192 NO existe en WinAnsi (fuente estándar de jsPDF);
- *  el documento usa el ángulo simple U+203A, presente en esa codificación. */
-const FLECHA = '›';
-/** Cantidad con SU unidad de medida (nunca agregada entre U.M. distintas). */
-const fmtCant = (n: number, um: string | null): string =>
-  `${n.toLocaleString('es-CU')} ${um ?? 'u'}`;
 
-/** Variación legible de una fila: «+12.3% (+1,234.00 CUP)» o «sin base». */
-export function variacionTexto(r: ComparisonRow): string {
-  if (r.varPct === null) return 'sin base';
-  return `${fmtPct(r.varPct)} (${fmtCupSign(r.difCup)})`;
+const precioEfectivo = (ventas: number, unidades: number): number | null =>
+  unidades > 0 ? Math.round((ventas / unidades) * 100) / 100 : null;
+
+/**
+ * Evalúa rotación y cobertura de UNA fila con las reglas documentadas.
+ * Velocidad = unidades vendidas en el tramo analizado / D días.
+ * Cobertura = existencia actual / velocidad — solo si ambos existen;
+ * sin ventas suficientes NO se genera cobertura ficticia.
+ */
+export function evaluarRotacion(row: ComparisonRow, dias: number): EvaluacionRotacion {
+  // La velocidad se redondea SOLO para presentación; la cobertura se calcula
+  // con la velocidad EXACTA para no propagar el error de redondeo al cociente.
+  const velocidadBruta = dias > 0 && row.unidadesActuales > 0
+    ? row.unidadesActuales / dias
+    : null;
+  const velocidad = velocidadBruta !== null
+    ? Math.round(velocidadBruta * 100) / 100
+    : null;
+
+  const existencia = row.stockActual;
+  const coberturaDias = velocidadBruta !== null && velocidadBruta > 0 && existencia !== null && existencia > 0
+    ? Math.round((existencia / velocidadBruta) * 10) / 10
+    : null;
+
+  const velocidadTexto = velocidad !== null
+    ? `${num(velocidad)} ${row.unidadMedida ?? 'u'}/día`
+    : 'Sin ventas en el período analizado';
+
+  const coberturaTexto = coberturaDias !== null
+    ? `aprox. ${num(coberturaDias, 1)} días`
+    : velocidad === null
+      ? 'No calculable (sin ventas en el tramo)'
+      : 'No calculable (sin existencia)';
+
+  // Clasificación documentada (umbrales del encabezado; D = días del tramo).
+  let clasificacion: RotacionClase;
+  if (velocidad !== null) {
+    if (coberturaDias === null) {
+      clasificacion = 'sin_base'; // velocidad con existencia desconocida
+    } else if (coberturaDias < dias * UMBRAL_COBERTURA_ALTA) {
+      clasificacion = 'alta';
+    } else if (coberturaDias <= dias * UMBRAL_COBERTURA_BAJA) {
+      clasificacion = 'moderada';
+    } else {
+      clasificacion = 'baja';
+    }
+  } else if (existencia !== null && existencia > 0) {
+    clasificacion = 'sin_movimiento';
+  } else {
+    clasificacion = 'sin_base';
+  }
+
+  // Alertas de disponibilidad (E) — con la evidencia disponible, sin fechas.
+  const alertas: string[] = [];
+  if (velocidad !== null && existencia !== null && existencia <= 0) {
+    alertas.push('Existencia agotada con demanda activa en el tramo');
+  }
+  if (coberturaDias !== null && coberturaDias < dias * UMBRAL_COBERTURA_ALTA) {
+    alertas.push('Cobertura insuficiente: la existencia no alcanza la mitad del tramo al ritmo actual');
+  }
+  if (
+    row.minStock !== null && row.minStock > 0 && existencia !== null && existencia <= row.minStock
+  ) {
+    alertas.push(`Existencia en o por debajo del mínimo del catálogo (${num(row.minStock)} ${row.unidadMedida ?? 'u'})`);
+  }
+  const alerta = alertas.length > 0 ? alertas.join('. ') + '.' : null;
+
+  return {
+    row,
+    velocidad,
+    velocidadTexto,
+    existencia,
+    coberturaDias,
+    coberturaTexto,
+    clasificacion,
+    alerta,
+    precioEfectivoActual: precioEfectivo(row.ventasActuales, row.unidadesActuales),
+    precioEfectivoAnterior: precioEfectivo(row.ventasAnteriores, row.unidadesAnteriores),
+  };
 }
 
-const crecientes = (rows: ComparisonRow[]): ComparisonRow[] =>
-  rows.filter((r) => r.evolucion === 'crece' || r.evolucion === 'lidera' || r.evolucion === 'nuevo');
-const descendentes = (rows: ComparisonRow[]): ComparisonRow[] =>
-  rows.filter((r) => r.evolucion === 'desciende');
+// ── Redacción de prioridades (una por producto, la más severa primero) ────────
 
-// ── Constructor del informe ──────────────────────────────────────────────────
+interface Candidata {
+  nivel: PrioridadNivel;
+  peso: number;             // impacto para ordenar dentro del nivel
+  producto: string;
+  situacion: string;
+  decision: string;
+}
+
+/** Regla 1 — Caso Cemento TBV: agotado con antecedente de demanda relevante. */
+function reglaAgotadoConAntecedente(r: ComparisonRow, ev: EvaluacionRotacion, dias: number): Candidata | null {
+  if (!(r.ventasActuales === 0 && r.ventasAnteriores > 0 && ev.existencia !== null && ev.existencia <= 0)) return null;
+  const principal = r.posAnterior !== null && r.posAnterior <= TOP_PRINCIPAL_ANTERIOR;
+  return {
+    nivel: 'alta',
+    peso: r.ventasAnteriores,
+    producto: r.name,
+    situacion:
+      `El producto, que ${principal ? `ocupó el puesto ${r.posAnterior} del tramo comparativo con ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} y ${fmtCup(r.ventasAnteriores)} CUP` : `registró ${fmtCup(r.ventasAnteriores)} CUP en el tramo comparativo`}, no registra operaciones en el período analizado y su existencia actual es cero. La interrupción comercial es compatible con agotamiento sin reposición.` +
+      (dias > 0 && r.unidadesAnteriores > 0
+        ? ` Su salida histórica del tramo equivalió a ${num(Math.round((r.unidadesAnteriores / dias) * 100) / 100)} ${r.unidadMedida ?? 'u'}/día.`
+        : ''),
+    decision:
+      'Priorizar la evaluación de reposición y estimar la cantidad de compra tomando como referencia el ritmo histórico de salida y, cuando existan, los plazos de abastecimiento y el inventario de seguridad. El importe del tramo anterior no constituye una pérdida comprobada ni una demanda no atendida cuantificada; la reposición debe orientarse a restablecer la capacidad de atender la demanda.',
+  };
+}
+
+/** Regla 1-bis — agotado con antecedente pero existencia desconocida (datos). */
+function reglaInterrupcionSinDatoStock(r: ComparisonRow, _ev: EvaluacionRotacion): Candidata | null {
+  if (!(r.ventasActuales === 0 && r.ventasAnteriores > 0 && r.stockActual === null)) return null;
+  return {
+    nivel: 'media',
+    peso: r.ventasAnteriores,
+    producto: r.name,
+    situacion:
+      `Registró ${fmtCup(r.ventasAnteriores)} CUP en el tramo comparativo y no registra operaciones en el período analizado. El catálogo no informa su existencia actual, por lo que la causa no puede determinarse con la evidencia disponible.`,
+    decision:
+      'Verificar la existencia física y las reposiciones del producto en el almacén antes de decidir. Si el quiebre se confirma, tramitar el abastecimiento; si hay existencia sin salida, revisar demanda, precio y visibilidad.',
+  };
+}
+
+/** Regla 2 — cobertura por debajo de la mitad del tramo (Caso Royal Cole). */
+function reglaCobertura(r: ComparisonRow, ev: EvaluacionRotacion, dias: number): Candidata | null {
+  if (ev.velocidad === null || ev.coberturaDias === null) return null;
+  if (ev.coberturaDias >= dias * UMBRAL_COBERTURA_ALTA) return null;
+  if (r.ventasActuales <= 0) return null;
+  const conAgotado = ev.existencia !== null && ev.existencia <= 0;
+  if (conAgotado) return null; // ya cubierto por la regla 1 (más severa)
+  return {
+    nivel: 'alta',
+    peso: r.ventasActuales,
+    producto: r.name,
+    situacion:
+      `La demanda del período equivale a ${num(ev.velocidad)} ${r.unidadMedida ?? 'u'}/día y la existencia actual (${fmtCant(ev.existencia ?? 0, r.unidadMedida)}) cubre aproximadamente ${num(ev.coberturaDias, 1)} días — menos de la mitad del tramo analizado (${dias} días).` +
+      (r.difCup > 0 ? ` El producto además creció ${fmtCupSign(r.difCup)} CUP frente al tramo comparativo.` : ''),
+    decision:
+      'Evaluar la reposición anticipada y dimensionar la compra contra el ritmo de salida vigente. La cobertura es una estimación operativa con la existencia instantánea; contrastar con los programas de entrega antes de fijar la cantidad.',
+  };
+}
+
+/** Regla 3 — Caso Cemento Blanco: contracción fuerte con existencia disponible. */
+function reglaContraccionConStock(r: ComparisonRow, ev: EvaluacionRotacion): Candidata | null {
+  if (!(r.varPct !== null && r.varPct <= -CAIDA_FUERTE_PCT && ev.existencia !== null && ev.existencia > 0)) return null;
+  return {
+    nivel: 'media',
+    peso: Math.abs(r.difCup),
+    producto: r.name,
+    situacion:
+      `El producto contrae sus ingresos ${fmtPctSign(r.varPct)} (${fmtCupSign(r.difCup)} CUP) y sus unidades pasan de ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} a ${fmtCant(r.unidadesActuales, r.unidadMedida)}, manteniendo una existencia de ${fmtCant(ev.existencia, r.unidadMedida)}.` +
+      (ev.coberturaDias !== null ? ` La cobertura estimada es de ${num(ev.coberturaDias, 1)} días al ritmo actual.` : ''),
+    decision:
+      'Revisar la velocidad de salida, la cobertura y el comportamiento comercial del producto antes de autorizar nuevas compras. Con la demanda en contracción y existencia disponible, no procede aumentar inventario: evaluar acciones de comercialización o un ajuste del abastecimiento.',
+  };
+}
+
+/** Regla 4 — Caso Cable Solar: ingresos al alza con unidades a la baja. */
+function reglaPrecioComposicion(r: ComparisonRow, ev: EvaluacionRotacion): Candidata | null {
+  if (!(r.difCup > 0 && r.unidadesAnteriores > 0 && r.unidadesActuales < r.unidadesAnteriores)) return null;
+  const pa = ev.precioEfectivoAnterior;
+  const pc = ev.precioEfectivoActual;
+  const pTxt = pa !== null && pc !== null
+    ? `El ingreso por unidad pasó de ${fmtCup(pa)} a ${fmtCup(pc)} ${r.unidadMedida ?? 'u'}`
+    : '';
+  return {
+    nivel: 'media',
+    peso: r.difCup,
+    producto: r.name,
+    situacion:
+      `Los ingresos aumentan ${fmtCupSign(r.difCup)} CUP mientras las unidades vendidas disminuyen de ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} a ${fmtCant(r.unidadesActuales, r.unidadMedida)}. ${pTxt}` +
+      (pTxt ? '' : '.'),
+    decision:
+      'Revisar el precio promedio efectivo y la composición de las operaciones (variantes, tamaños o condiciones de venta) antes de atribuir el resultado a mayor demanda. El movimiento es compatible con un cambio de precio o de mix; la verificación definirá si sostiene la proyección de compras.',
+  };
+}
+
+/** Regla 5 — Caso Inversor: liderazgo originado en una operación aislada. */
+function reglaOperacionAislada(r: ComparisonRow, ev: EvaluacionRotacion, dias: number): Candidata | null {
+  const nuevoOPrincipal = r.posActual !== null && r.posActual <= 3;
+  if (!(nuevoOPrincipal && r.ventasAnteriores === 0 && r.ventasActuales > 0 && r.unidadesActuales <= 2)) return null;
+  const velocidadTxt = ev.velocidad !== null ? `${num(ev.velocidad)} ${r.unidadMedida ?? 'u'}/día` : 's/d';
+  return {
+    nivel: 'preventiva',
+    peso: r.ventasActuales,
+    producto: r.name,
+    situacion:
+      `El producto ocupa el puesto ${r.posActual} del ranking por ingresos (${fmtCup(r.ventasActuales)} CUP), pero ese liderazgo proviene de ${r.unidadesActuales === 1 ? 'una sola operación' : `apenas ${num(r.unidadesActuales)} operaciones`} (${velocidadTxt} en el tramo). No existe base comparable en el período anterior.` +
+      (ev.existencia !== null && ev.existencia <= 0 ? ' La existencia actual es cero, lo que justifica una alerta de disponibilidad.' : ''),
+    decision:
+      'Verificar la naturaleza de la operación, su abastecimiento y la probabilidad de repetición de la demanda antes de establecer una política de compra. El liderazgo en facturación no equivale a rotación alta ni a demanda recurrente; la existencia cero amerita alerta de disponibilidad, no una reposición masiva.',
+  };
+}
+
+/** Regla 6 — baja rotación con existencia acumulada (F). */
+function reglaBajaRotacion(r: ComparisonRow, ev: EvaluacionRotacion, dias: number): Candidata | null {
+  const acumulaPorCobertura = ev.coberturaDias !== null && ev.coberturaDias > dias * UMBRAL_COBERTURA_BAJA && ev.existencia !== null && ev.existencia > 0;
+  const sinSalida = ev.velocidad === null && ev.existencia !== null && ev.existencia > 0;
+  if (!acumulaPorCobertura && !sinSalida) return null;
+  const caidaTxt = r.varPct !== null && r.varPct < 0 ? fmtPctSign(r.varPct) : null;
+  return {
+    nivel: 'preventiva',
+    peso: -(ev.existencia ?? 0), // mayor existencia primero
+    producto: r.name,
+    situacion:
+      sinSalida
+        ? `El producto mantiene ${fmtCant(ev.existencia ?? 0, r.unidadMedida)} en existencia sin registrar salidas por venta en el tramo analizado` +
+          (caidaTxt ? `, tras una contracción de ${caidaTxt} frente al tramo comparativo.` : '.')
+        : `La existencia (${fmtCant(ev.existencia ?? 0, r.unidadMedida)}) supera el consumo estimado de un tramo completo al ritmo actual: cobertura de ${num(ev.coberturaDias ?? 0, 1)} días para ${dias} días de análisis` +
+          (caidaTxt ? `, con ventas en contracción (${caidaTxt}).` : '.'),
+    decision:
+      'Revisar el plan de compras y los niveles de inventario del producto; evaluar acciones de comercialización para acelerar su salida. El stock sin demanda equivalente inmoviliza capital y espacio de almacén.',
+  };
+}
+
+/** Regla 7 — descenso moderado fuera de umbrales pero visible en el Top. */
+function reglaDescensoTop(r: ComparisonRow, ev: EvaluacionRotacion): Candidata | null {
+  if (!(r.varPct !== null && r.varPct < -20 && r.varPct > -CAIDA_FUERTE_PCT && r.posActual !== null && r.posActual <= 10)) return null;
+  return {
+    nivel: 'preventiva',
+    peso: Math.abs(r.difCup),
+    producto: r.name,
+    situacion:
+      `El producto desciende ${fmtPctSign(r.varPct)} (${fmtCupSign(r.difCup)} CUP) y mantiene el puesto ${r.posActual} del ranking.` +
+      (ev.coberturaDias !== null ? ` Cobertura estimada: ${num(ev.coberturaDias, 1)} días.` : ''),
+    decision:
+      'Incorporar el producto al seguimiento del próximo ciclo: contrastar precio, disponibilidad y competencia interna del catálogo antes de ajustar compras.',
+  };
+}
+
+// ── Constructor del documento ────────────────────────────────────────────────
 
 export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
-  const { rows, resumen, generadoEl } = input;
+  const { rows, resumen, generadoEl, ventasEnPeriodoActual } = input;
   const { meta } = input;
 
-  const conPosicionActual = rows.filter((r) => r.posActual !== null);
-  const crec = crecientes(rows);
-  const desc = descendentes(rows);
-  const nuevos = rows.filter((r) => r.evolucion === 'nuevo');
+  const dias = diasDelPeriodo(meta.periodoActual.desde, meta.periodoActual.hasta);
+  const diasAnterior = diasDelPeriodo(meta.periodoComparacion.desde, meta.periodoComparacion.hasta);
+  const evaluaciones = rows.map((r) => evaluarRotacion(r, dias));
+
+  // ── Conciliación del conjunto comparado (metodología explícita) ──
+  const ingresosActual = Math.round(rows.reduce((s, r) => s + r.ventasActuales, 0) * 100) / 100;
+  const ingresosAnterior = Math.round(rows.reduce((s, r) => s + r.ventasAnteriores, 0) * 100) / 100;
+  const variacion = Math.round((ingresosActual - ingresosAnterior) * 100) / 100;
+  const variacionPct = ingresosAnterior > 0 ? Math.round((variacion / ingresosAnterior) * 1000) / 10 : null;
+  const alcance =
+    `unión del Top ${rows.filter((r) => r.posActual !== null).length} del período analizado y el Top ${rows.filter((r) => r.posAnterior !== null).length} del tramo comparable (${rows.length} productos)`;
+
+  // ── Clasificaciones operativas ──
+  const conPosicion = rows.filter((r) => r.posActual !== null);
+  const crecen = rows.filter((r) => r.difCup > 0);
+  const contraen = rows.filter((r) => r.difCup < 0);
+  const crecimientoRelevante = rows.filter((r) => r.varPct !== null && r.varPct >= UMBRAL_CRECIMIENTO_RELEVANTE);
+  const contraccionRelevante = rows.filter((r) => r.varPct !== null && r.varPct <= -UMBRAL_CRECIMIENTO_RELEVANTE);
   const dejaron = rows.filter((r) => r.evolucion === 'dejo_de_venderse');
+  const nuevos = rows.filter((r) => r.evolucion === 'nuevo');
   const salieron = rows.filter((r) => r.evolucion === 'sale_del_top');
 
-  // Δ ingresos del conjunto comparado (Top actual ∪ Top anterior): Σ ventas
-  // actuales − Σ ventas anteriores SOLO de los productos de la unión —
-  // etiquetado siempre con su alcance exacto (no es la tienda entera).
-  const sumAct = rows.reduce((s, r) => s + r.ventasActuales, 0);
-  const sumAnt = rows.reduce((s, r) => s + r.ventasAnteriores, 0);
-  const deltaConjunto = Math.round((sumAct - sumAnt) * 100) / 100;
+  // Disponibilidad (con la existencia del catálogo y la evidencia del mayor)
+  const agotadosConAntecedente = rows.filter(
+    (r) => r.ventasActuales === 0 && r.ventasAnteriores > 0 && r.stockActual !== null && r.stockActual <= 0,
+  );
+  const coberturaInsuficiente = evaluaciones.filter(
+    (e) => e.velocidad !== null && e.coberturaDias !== null && e.coberturaDias < dias * UMBRAL_COBERTURA_ALTA && e.row.ventasActuales > 0,
+  );
+  const bajaRotacion = evaluaciones.filter((e) => {
+    if (e.clasificacion !== 'baja' && e.clasificacion !== 'sin_movimiento') return false;
+    return e.existencia !== null && e.existencia > 0;
+  });
 
-  // Concentración: participación oficial del líder (solo si el RPC la informa).
-  const lider = conPosicionActual.find((r) => r.posActual === 1) ?? null;
+  const lider = conPosicion.find((r) => r.posActual === 1) ?? null;
   const participacionLider = lider?.participacionActual ?? null;
+  const liderEvaluacion = lider ? evaluaciones.find((e) => e.row.productId === lider.productId) ?? null : null;
 
-  const ordenCrece = [...crec].sort((a, b) => b.difCup - a.difCup);
-  const ordenDesc = [...desc].sort((a, b) => a.difCup - b.difCup);
-
-  // ── A/B. Resumen ejecutivo ──
-  const partes: string[] = [];
-  partes.push(
-    `Se compararon ${rows.length} producto${rows.length !== 1 ? 's' : ''} del ranking comercial ` +
-      `(Top ${conPosicionActual.length} del período actual y Top ${rows.length - conPosicionActual.length > 0 ? rows.length - conPosicionActual.length : 0} del período anterior) ` +
-      `entre el ${fmtFecha(meta.periodoActual.desde)} y el ${fmtFecha(meta.periodoActual.hasta)}, contra el tramo equivalente del ${fmtFecha(meta.periodoComparacion.desde)} al ${fmtFecha(meta.periodoComparacion.hasta)}.`,
+  // ── 1. DIAGNÓSTICO: situación general ──
+  const situacionGeneral: string[] = [];
+  situacionGeneral.push(
+    `El análisis compara ${rows.length} productos del ranking comercial —${alcance}— entre el ${fmtFecha(meta.periodoActual.desde)} y el ${fmtFecha(meta.periodoActual.hasta)} (${dias} días), contra el tramo equivalente del ${fmtFecha(meta.periodoComparacion.desde)} al ${fmtFecha(meta.periodoComparacion.hasta)} (${diasAnterior} días). Los ingresos del conjunto comparado ascienden a ${fmtCup(ingresosActual)} CUP en el período analizado y a ${fmtCup(ingresosAnterior)} CUP en el tramo comparable: una variación de ${fmtCupSign(variacion)} CUP` +
+      (variacionPct !== null ? ` (${fmtPctSign(variacionPct)})` : '') +
+      ', calculada exclusivamente sobre los productos incluidos en ambos cortes (Anexo IV).',
   );
-  if (resumen.liderActual) {
-    partes.push(
-      `El líder del período actual es «${resumen.liderActual.name}» con ${fmtCup(resumen.liderActual.ventas)}` +
-        (participacionLider !== null ? ` (${participacionLider.toLocaleString('es-CU')} % de las ventas del período)` : '') +
-        (resumen.cambioLider ? `. ${resumen.cambioLider}.` : '.'),
+  if (lider) {
+    const liderTxt = participacionLider !== null
+      ? `${fmtCup(lider.ventasActuales)} CUP y una participación oficial de ${num(participacionLider)}% de las ventas del período`
+      : `${fmtCup(lider.ventasActuales)} CUP`;
+    if (resumen.cambioLider) {
+      situacionGeneral.push(`El liderazgo comercial cambió de manos: ${resumen.cambioLider}. El primer producto del ranking actual —${lider.name}— registra ${liderTxt}.` +
+        (liderEvaluacion?.velocidad !== null && liderEvaluacion && liderEvaluacion.row.unidadesActuales <= 2
+          ? ' Se trata de un liderazgo sustentado en un número reducido de operaciones, que requiere verificación antes de traducirse en decisiones de compra.'
+          : ''));
+    } else {
+      situacionGeneral.push(`${lider.name} mantiene el liderazgo del ranking con ${liderTxt}.`);
+    }
+  }
+  situacionGeneral.push(
+    `${crecen.length} producto${crecen.length !== 1 ? 's' : ''} ${crecen.length !== 1 ? 'aumentan' : 'aumenta'} sus ingresos y ${contraen.length} ${contraen.length !== 1 ? 'los reducen' : 'lo reduce'} dentro del conjunto comparado; ${crecimientoRelevante.length} ${crecimientoRelevante.length !== 1 ? 'crecen' : 'crece'} con variación relevante (+${UMBRAL_CRECIMIENTO_RELEVANTE}% o más) y ${contraccionRelevante.length} ${contraccionRelevante.length !== 1 ? 'se contraen' : 'se contrae'} en la misma magnitud. ${nuevos.length} producto${nuevos.length !== 1 ? 's entran' : ' entra'} al ranking sin ventas comparables en el tramo anterior y ${dejaron.length} ${dejaron.length !== 1 ? 'dejan' : 'deja'} de registrar salidas por venta según el mayor de inventario.`,
+  );
+  if (agotadosConAntecedente.length > 0 || coberturaInsuficiente.length > 0 || bajaRotacion.length > 0) {
+    const partesDisp: string[] = [];
+    if (agotadosConAntecedente.length > 0) {
+      partesDisp.push(
+        `${agotadosConAntecedente.length} producto${agotadosConAntecedente.length !== 1 ? 's' : ''} con antecedentes de ventas relevantes se encuentra${agotadosConAntecedente.length !== 1 ? 'n' : ''} sin existencia y sin operaciones`,
       );
+    }
+    if (coberturaInsuficiente.length > 0) {
+      partesDisp.push(`${coberturaInsuficiente.length} con cobertura estimada inferior a la mitad del tramo`);
+    }
+    if (bajaRotacion.length > 0) {
+      partesDisp.push(`${bajaRotacion.length} con existencia que ${bajaRotacion.length !== 1 ? 'supera' : 'supera'} el ritmo de salida (baja rotación)`);
+    }
+    situacionGeneral.push(
+      `En disponibilidad: ${partesDisp.join('; ')}. La existencia reportada es la instantánea del catálogo del almacén de la tienda; la cobertura es una estimación operativa sobre ese dato y no incorpora plazos de reposición, que el sistema no parametriza.`,
+    );
   }
-  const dirGeneral =
-    crec.length === 0 && desc.length === 0
-      ? 'El ranking se mantiene estable respecto al tramo anterior.'
-      : `Predominan los movimientos ${crec.length >= desc.length ? 'al alza' : 'a la baja'}: ${crec.length} producto${crec.length !== 1 ? 's' : ''} con desempeño igual o mejor y ${desc.length} en descenso.`;
-  partes.push(dirGeneral);
+
+  // Conclusión gerencial central = la prioridad ALTA de mayor impacto.
+  const prioridadesCandidatas: Candidata[] = [];
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const ev = evaluaciones[i];
+    for (const regla of [
+      () => reglaAgotadoConAntecedente(r, ev, dias),
+      () => reglaCobertura(r, ev, dias),
+      () => reglaContraccionConStock(r, ev),
+      () => reglaPrecioComposicion(r, ev),
+      () => reglaOperacionAislada(r, ev, dias),
+      () => reglaBajaRotacion(r, ev, dias),
+      () => reglaDescensoTop(r, ev),
+      () => reglaInterrupcionSinDatoStock(r, ev),
+    ]) {
+      const c = regla();
+      if (c) {
+        prioridadesCandidatas.push(c);
+        break; // un producto, su situación más severa (orden de reglas = severidad)
+      }
+    }
+  }
+  const nivelRank: Record<PrioridadNivel, number> = { alta: 0, media: 1, preventiva: 2 };
+  const prioridades: InformePrioridad[] = [...prioridadesCandidatas]
+    .sort((a, b) => nivelRank[a.nivel] - nivelRank[b.nivel] || b.peso - a.peso)
+    .slice(0, MATRIZ_MAX_FILAS)
+    .map((c) => ({ nivel: c.nivel, producto: c.producto, situacion: c.situacion, decision: c.decision }));
+
+  const conclusionGerencial = prioridades[0]
+    ? `La decisión más urgente que este informe pone sobre la mesa es la de ${prioridades[0].producto}: ${prioridades[0].decision.split('. ')[0]}.`
+    : `El conjunto comparado opera sin desviaciones que superen los umbrales de revisión; el ciclo comercial del período no exige decisiones de reposición o de abastecimiento fuera del seguimiento habitual.`;
+
+  // ── 2. Indicadores relevantes ──
+  const indicadores: InformeIndicador[] = [
+    { label: 'Ingresos del conjunto comparado', value: `${fmtCup(ingresosActual)} CUP` },
+    {
+      label: 'Variación vs. tramo comparable',
+      value: `${fmtCupSign(variacion)} CUP` + (variacionPct !== null ? ` (${fmtPctSign(variacionPct)})` : ''),
+    },
+    { label: 'Productos con crecimiento relevante (+50% o más)', value: String(crecimientoRelevante.length) },
+    { label: 'Productos con contracción (-50% o más)', value: String(contraccionRelevante.length) },
+    { label: 'Productos sin ventas en el tramo (con antecedente)', value: String(dejaron.length) },
+    { label: 'Agotados con antecedentes de ventas', value: String(agotadosConAntecedente.length) },
+  ];
+  if (coberturaInsuficiente.length > 0) {
+    indicadores.push({ label: 'Con cobertura estimada insuficiente', value: String(coberturaInsuficiente.length) });
+  }
+  if (participacionLider !== null && lider) {
+    indicadores.push({ label: 'Lider del período', value: `${lider.name} — ${num(participacionLider)}% de participación` });
+  }
+
+  // ── 3. Gráfico ejecutivo: comparación de ingresos por producto principal ──
+  const topGrafico = [...rows]
+    .sort((a, b) => Math.max(b.ventasActuales, b.ventasAnteriores) - Math.max(a.ventasActuales, a.ventasAnteriores))
+    .slice(0, GRAFICO_MAX_PRODUCTOS)
+    .filter((r) => r.ventasActuales > 0 || r.ventasAnteriores > 0);
+  const grafico: InformeGrafico | null = topGrafico.length >= 2
+    ? {
+        titulo: 'Ingresos por producto: tramo comparable vs. período analizado (CUP)',
+        nota: 'Productos de mayor impacto (unión de ambos cortes). Las cifras son las del agregado oficial por producto; el alcance del conjunto se concilia en el Anexo IV.',
+        series: topGrafico.map((r) => ({ name: r.name, anterior: r.ventasAnteriores, actual: r.ventasActuales })),
+      }
+    : null;
+
+  // ── 4. Análisis complementario (solo secciones con contenido) ──
+  const complementarias: InformeTabla[] = [];
+
+  const principales = [...conPosicion].sort((a, b) => b.ventasActuales - a.ventasActuales).slice(0, 10);
+  if (principales.length > 0) {
+    complementarias.push({
+      titulo: 'Evolución de los productos principales',
+      columnas: ['Producto', 'Pos. ant.', 'Pos. act.', 'Ventas ant. (CUP)', 'Ventas act. (CUP)', 'Variación', 'Existencia'],
+      filas: principales.map((r) => {
+        const ev = evaluaciones.find((e) => e.row.productId === r.productId)!;
+        return [
+          r.name,
+          r.posAnterior === null ? '—' : String(r.posAnterior),
+          String(r.posActual ?? '—'),
+          fmtCup(r.ventasAnteriores),
+          fmtCup(r.ventasActuales),
+          r.varPct === null ? 'sin base' : `${fmtPctSign(r.varPct)} (${fmtCupSign(r.difCup)})`,
+          ev.existencia === null ? 'N/D' : fmtCant(ev.existencia, r.unidadMedida),
+        ];
+      }),
+      nota: 'Los diez primeros productos por ingresos del período analizado, con su existencia actual.',
+    });
+  }
+
+  if (agotadosConAntecedente.length > 0) {
+    complementarias.push({
+      titulo: 'Productos agotados con demanda interrumpida',
+      columnas: ['Producto', 'Pos. ant.', 'Ventas tramo anterior', 'Cant. anterior', 'Existencia actual', 'Lectura operativa'],
+      anchos: [0.17, 0.07, 0.14, 0.11, 0.13, 0.38],
+      alineaciones: ['left', 'center', 'right', 'right', 'right', 'left'],
+      filas: agotadosConAntecedente
+        .sort((a, b) => b.ventasAnteriores - a.ventasAnteriores)
+        .map((r) => [
+          r.name,
+          r.posAnterior === null ? '—' : String(r.posAnterior),
+          fmtCup(r.ventasAnteriores),
+          fmtCant(r.unidadesAnteriores, r.unidadMedida),
+          fmtCant(0, r.unidadMedida),
+          'Agotado sin reposición — interrupción compatible con falta de disponibilidad; el importe anterior no es pérdida cuantificada',
+        ]),
+    });
+  }
+
+  if (coberturaInsuficiente.length > 0) {
+    complementarias.push({
+      titulo: 'Productos con riesgo de desabastecimiento',
+      columnas: ['Producto', 'Velocidad', 'Existencia', 'Cobertura estimada', 'Clasificación'],
+      filas: coberturaInsuficiente
+        .sort((a, b) => (a.coberturaDias ?? 0) - (b.coberturaDias ?? 0))
+        .map((e) => [
+          e.row.name,
+          e.velocidadTexto,
+          fmtCant(e.existencia ?? 0, e.row.unidadMedida),
+          e.coberturaTexto,
+          ROTACION_LABEL[e.clasificacion],
+        ]),
+      nota: 'Alertas de disponibilidad sobre la existencia instantánea: el sistema no parametriza plazos de reposición ni inventario de seguridad, por lo que no se fijan fechas de agotamiento.',
+    });
+  }
+
+  const bajaTabla = bajaRotacion
+    .sort((a, b) => (b.existencia ?? 0) - (a.existencia ?? 0))
+    .slice(0, 15);
+  if (bajaTabla.length > 0) {
+    complementarias.push({
+      titulo: 'Productos de baja rotación',
+      columnas: ['Producto', 'Existencia', 'Velocidad', 'Cobertura', 'Situación'],
+      anchos: [0.20, 0.12, 0.16, 0.14, 0.38],
+      alineaciones: ['left', 'right', 'right', 'right', 'left'],
+      filas: bajaTabla.map((e) => [
+        e.row.name,
+        fmtCant(e.existencia ?? 0, e.row.unidadMedida),
+        e.velocidadTexto,
+        e.coberturaTexto,
+        e.clasificacion === 'sin_movimiento' ? 'Sin salidas en el tramo' : 'Consumo inferior a un tramo completo',
+      ]),
+      nota: 'Existencias cuya salida estimada no las consume en el tramo analizado: candidatas a revisión de compras y comercialización. La rotación financiera (costo de ventas sobre existencia promedio) no es calculable con las fuentes disponibles.',
+    });
+  }
+
   if (nuevos.length > 0) {
-    partes.push(
-      `${nuevos.length} producto${nuevos.length !== 1 ? 's' : ''} aparece${nuevos.length !== 1 ? 'n' : ''} por primera vez en el ranking` +
-        (dejaron.length > 0 ? ` y ${dejaron.length} ${dejaron.length !== 1 ? 'dejaron' : 'dejó'} de registrar ventas respecto al tramo anterior` : '') +
-        '.',
-    );
-  } else if (dejaron.length > 0) {
-    partes.push(`${dejaron.length} producto${dejaron.length !== 1 ? 's' : ''} ${dejaron.length !== 1 ? 'dejaron' : 'dejó'} de registrar ventas respecto al tramo anterior.`);
+    complementarias.push({
+      titulo: 'Productos nuevos o emergentes en el ranking',
+      columnas: ['Producto', 'Pos.', 'Ventas (CUP)', 'Cantidad', 'Existencia', 'Lectura'],
+      anchos: [0.18, 0.06, 0.13, 0.13, 0.13, 0.37],
+      alineaciones: ['left', 'center', 'right', 'right', 'right', 'left'],
+      filas: [...nuevos]
+        .sort((a, b) => (a.posActual ?? 99) - (b.posActual ?? 99))
+        .map((r) => {
+          const ev = evaluaciones.find((e) => e.row.productId === r.productId)!;
+          const aislado = r.unidadesActuales <= 2;
+          return [
+            r.name,
+            String(r.posActual ?? '—'),
+            fmtCup(r.ventasActuales),
+            fmtCant(r.unidadesActuales, r.unidadMedida),
+            ev.existencia === null ? 'N/D' : fmtCant(ev.existencia, r.unidadMedida),
+            aislado
+              ? 'Operación aislada o de bajo volumen: verificar repetibilidad antes de decisiones de compra'
+              : 'Entrada con volumen: seguir en el próximo ciclo antes de fijar política de compra',
+          ];
+        }),
+      nota: '«Nuevo en el ranking» certifica ausencia de ventas comparables en el tramo anterior, no la fecha de alta en el catálogo.',
+    });
   }
 
-  const resumenEjecutivo: InformeEjecutivo['resumenEjecutivo'] = {
-    parrafo: partes.join(' '),
-    cifras: [
-      { label: 'Productos analizados', value: String(rows.length) },
-      { label: 'En crecimiento (o líderes)', value: String(crec.length) },
-      { label: 'En descenso', value: String(desc.length) },
-      { label: 'Nuevos en el ranking', value: String(nuevos.length) },
-      { label: 'Dejaron de venderse', value: String(dejaron.length) },
-      { label: 'Salen del Top (siguen vendiendo)', value: String(salieron.length) },
-      {
-        label: 'Variación de ingresos del conjunto comparado',
-        value: `${fmtCupSign(deltaConjunto)} CUP`,
-      },
-    ],
+  if (salieron.length > 0) {
+    complementarias.push({
+      titulo: 'Productos fuera del Top analizado',
+      columnas: ['Producto', 'Pos. ant.', 'Estado respecto al período actual', 'Existencia', 'Lectura'],
+      anchos: [0.17, 0.08, 0.34, 0.12, 0.29],
+      alineaciones: ['left', 'center', 'left', 'right', 'left'],
+      filas: [...salieron]
+        .sort((a, b) => (a.posAnterior ?? 99) - (b.posAnterior ?? 99))
+        .map((r) => {
+          const ev = evaluaciones.find((e) => e.row.productId === r.productId)!;
+          const conEvidencia = ventasEnPeriodoActual?.has(r.productId) ?? false;
+          return [
+            r.name,
+            r.posAnterior === null ? '—' : String(r.posAnterior),
+            conEvidencia
+              ? 'El mayor de inventario registra salidas por venta; su importe no figura en el Top 20 por ingresos'
+              : 'Sin evidencia de ventas en el mayor del tramo: verificar antes de cualquier conclusión',
+            ev.existencia === null ? 'N/D' : fmtCant(ev.existencia, r.unidadMedida),
+            conEvidencia
+              ? 'Demanda vigente fuera del recorte del Top'
+              : 'Situación comercial por verificar (no se afirma venta ni su ausencia)',
+          ];
+        }),
+      nota: 'Estos productos NO se cuentan como «sin ventas»: el agregado oficial no informa su importe por estar fuera del corte.',
+    });
+  }
+
+  if (dejaron.length > 0) {
+    complementarias.push({
+      titulo: 'Productos que dejaron de venderse',
+      columnas: ['Producto', 'Pos. ant.', 'Ventas tramo anterior', 'Cant. anterior', 'Existencia', 'Lectura operativa'],
+      anchos: [0.17, 0.07, 0.14, 0.11, 0.13, 0.38],
+      alineaciones: ['left', 'center', 'right', 'right', 'right', 'left'],
+      filas: [...dejaron]
+        .sort((a, b) => b.ventasAnteriores - a.ventasAnteriores)
+        .map((r) => {
+          const ev = evaluaciones.find((e) => e.row.productId === r.productId)!;
+          const conStock = ev.existencia !== null && ev.existencia > 0;
+          return [
+            r.name,
+            r.posAnterior === null ? '—' : String(r.posAnterior),
+            fmtCup(r.ventasAnteriores),
+            fmtCant(r.unidadesAnteriores, r.unidadMedida),
+            ev.existencia === null ? 'N/D' : fmtCant(ev.existencia, r.unidadMedida),
+            conStock
+              ? 'Con existencia disponible y sin salidas: revisar demanda, precio y visibilidad'
+              : 'Sin existencia: la interrupción es compatible con agotamiento sin reposición',
+          ];
+        }),
+      nota: 'Solo productos cuya ausencia de salidas por venta está evidenciada en el mayor de inventario del tramo analizado.',
+    });
+  }
+
+  // ── Anexo I: ranking comparativo completo ──
+  const anexoI: InformeTabla = {
+    titulo: 'Anexo I. Ranking comparativo completo',
+    intro:
+      'Productos de la unión de ambos cortes del Top, ordenados por su posición en el período analizado. Cada cantidad se presenta en la unidad de medida propia del producto.',
+    columnas: ['Código', 'Descripción', 'Pos. ant.', 'Pos. act.', 'Ventas ant. (CUP)', 'Ventas act. (CUP)', 'Variación CUP', 'Variación %', 'Cant. ant.', 'Cant. act.'],
+    filas: [...rows]
+      .sort((a, b) => (a.posActual ?? 99) - (b.posActual ?? 99) || (a.posAnterior ?? 99) - (b.posAnterior ?? 99))
+      .map((r) => [
+        r.sku ?? '—',
+        r.name,
+        r.posAnterior === null ? '—' : String(r.posAnterior),
+        r.posActual === null ? '—' : String(r.posActual),
+        fmtCup(r.ventasAnteriores),
+        fmtCup(r.ventasActuales),
+        fmtCupSign(r.difCup),
+        r.varPct === null ? 'sin base' : fmtPctSign(r.varPct),
+        fmtCant(r.unidadesAnteriores, r.unidadMedida),
+        fmtCant(r.unidadesActuales, r.unidadMedida),
+      ]),
   };
 
-  // ── Indicadores principales (cifras oficiales, sin estimaciones) ──
-  const indicadores: InformeEjecutivo['indicadores'] = [];
-  if (resumen.liderActual) {
-    indicadores.push({
-      label: 'Líder del período actual',
-      value: `${resumen.liderActual.name} — ${fmtCup(resumen.liderActual.ventas)} CUP`,
-    });
-  }
-  if (resumen.liderAnterior) {
-    indicadores.push({
-      label: 'Líder del período anterior',
-      value: `${resumen.liderAnterior.name} — ${fmtCup(resumen.liderAnterior.ventas)} CUP`,
-    });
-  }
-  if (resumen.mayorCrecimiento) {
-    indicadores.push({
-      label: 'Mayor crecimiento',
-      value: `${resumen.mayorCrecimiento.name} — ${resumen.mayorCrecimiento.varPct !== null ? fmtPct(resumen.mayorCrecimiento.varPct) : 'sin base'} (${fmtCupSign(resumen.mayorCrecimiento.difCup)} CUP)`,
-    });
-  }
-  if (resumen.mayorCaída) {
-    indicadores.push({
-      label: 'Mayor caída',
-      value: `${resumen.mayorCaída.name} — ${resumen.mayorCaída.varPct !== null ? fmtPct(resumen.mayorCaída.varPct) : 'sin base'} (${fmtCupSign(resumen.mayorCaída.difCup)} CUP)`,
-    });
-  }
-  if (participacionLider !== null) {
-    indicadores.push({
-      label: 'Participación del líder (oficial)',
-      value: `${participacionLider.toLocaleString('es-CU')} % de las ventas del período`,
-    });
-  }
-
-  // ── C-G. Secciones por comportamiento ──
-  const introCrecimiento = crec.length
-    ? `${crec.length} producto${crec.length !== 1 ? 's' : ''} mejora${crec.length !== 1 ? 'n' : ''} posición o ingresos frente al tramo anterior` +
-      (ordenCrece[0]
-        ? `; el avance más fuerte es «${ordenCrece[0].name}» (${variacionTexto(ordenCrece[0])})`
-        : '') +
-      '. Los crecimientos sostenidos merecen atención de abastecimiento y comercialización.'
-    : 'Ningún producto del conjunto comparado mejora su desempeño frente al tramo equivalente anterior.';
-
-  const introDescenso = desc.length
-    ? `${desc.length} producto${desc.length !== 1 ? 's' : ''} reduce${desc.length !== 1 ? 'n' : ''} su desempeño comercial` +
-      (ordenDesc[0]
-        ? `; la caída más marcada es «${ordenDesc[0].name}» (${variacionTexto(ordenDesc[0])})`
-        : '') +
-      '. Se distingue entre pérdida de ingresos y pérdida de unidades: pueden tener causas distintas (precio, demanda, disponibilidad).'
-    : 'Ningún producto del conjunto comparado empeora su desempeño frente al tramo equivalente anterior.';
-
-  const introNuevos = nuevos.length
-    ? `${nuevos.length} producto${nuevos.length !== 1 ? 's' : ''} aparece${nuevos.length !== 1 ? 'n' : ''} en el ranking actual sin ventas comparables en el tramo anterior. ` +
-      'Importante: esta comparación certifica la AUSENCIA de ventas previas en el Top, no la fecha de alta en el catálogo — determinar si un producto es de incorporación reciente requiere revisar su ficha.'
-    : 'Ningún producto nuevo entra al ranking en este período.';
-
-  const introDejaron = dejaron.length
-    ? `${dejaron.length} producto${dejaron.length !== 1 ? 's' : ''} registraba${dejaron.length !== 1 ? 'n' : ''} ventas en el tramo anterior y no registra ninguna en el actual. ` +
-      'NO se asume descatalogación: la ausencia de ventas puede responder a falta de inventario, pérdida de demanda o visibilidad — la existencia disponible ayuda a orientar la investigación.'
-    : 'Ningún producto del tramo anterior dejó de venderse por completo en el período actual.';
-
-  const introSalieron = salieron.length
-    ? `${salieron.length} producto${salieron.length !== 1 ? 's' : ''} sale${salieron.length !== 1 ? 'n' : ''} del Top analizado aunque sigue registrando ventas. Este comportamiento NO equivale a «dejó de venderse»: son productos con demanda vigente fuera del recorte del Top.`
-    : 'Ningún producto activo sale del Top en este período.';
-
-  const secciones: InformeEjecutivo['secciones'] = {
-    crecimiento: { titulo: 'A. Productos en crecimiento', intro: introCrecimiento, productos: ordenCrece },
-    descenso: { titulo: 'B. Productos en descenso', intro: introDescenso, productos: ordenDesc },
-    nuevos: { titulo: 'C. Productos nuevos en el ranking', intro: introNuevos, productos: nuevos },
-    dejaronDeVenderse: { titulo: 'D. Productos que dejaron de venderse', intro: introDejaron, productos: dejaron },
-    salieronDelTop: { titulo: 'E. Productos que salen del Top (siguen vendiéndose)', intro: introSalieron, productos: salieron },
+  // ── Anexo II: disponibilidad y cobertura ──
+  const anexoII: InformeTabla = {
+    titulo: 'Anexo II. Disponibilidad y cobertura',
+    intro:
+      `Existencia actual del almacén de la tienda activa y estimación operativa de cobertura a partir de la velocidad de venta del tramo (${dias} días). Umbrales de clasificación documentados en el Anexo IV.`,
+    columnas: ['Descripción', 'Existencia', 'Velocidad', 'Cobertura estimada', 'Clasificación', 'Alerta de disponibilidad'],
+    filas: evaluaciones
+      .slice()
+      .sort((a, b) => (a.coberturaDias ?? Number.POSITIVE_INFINITY) - (b.coberturaDias ?? Number.POSITIVE_INFINITY))
+      .map((e) => [
+        e.row.name,
+        e.existencia === null ? 'N/D' : fmtCant(e.existencia, e.row.unidadMedida),
+        e.velocidadTexto,
+        e.coberturaTexto,
+        ROTACION_LABEL[e.clasificacion],
+        e.alerta ?? '—',
+      ]),
   };
 
-  // ── H. Hallazgos y recomendaciones (condicionados a la evidencia) ──
-  const hallazgos: InformeHallazgo[] = [];
+  // ── Anexo III: productos sin ventas (SOLO con evidencia del mayor) ──
+  const sinVentasFilas = dejaron.map((r) => {
+    const ev = evaluaciones.find((e) => e.row.productId === r.productId)!;
+    const conStock = ev.existencia !== null && ev.existencia > 0;
+    return [
+      r.name,
+      `${fmtFecha(meta.periodoComparacion.desde)} a ${fmtFecha(meta.periodoComparacion.hasta)}`,
+      fmtCup(r.ventasAnteriores),
+      fmtCant(r.unidadesAnteriores, r.unidadMedida),
+      ev.existencia === null ? 'N/D' : fmtCant(ev.existencia, r.unidadMedida),
+      conStock
+        ? 'Mantiene existencia sin registrar salidas: causa no determinada — revisar demanda, precio, exhibición y competencia interna del catálogo'
+        : 'Sin existencia al cierre: compatible con agotamiento sin reposición — revisar el abastecimiento y la reposición del producto',
+    ];
+  });
+  const anexoIII: InformeTabla = {
+    titulo: 'Anexo III. Productos sin ventas en el período analizado',
+    intro:
+      'Productos que registraron ventas en el tramo comparable y cuya ausencia de salidas por venta en el período analizado está evidenciada en el mayor de inventario. Los productos fuera del Top con ventas no evidenciadas NO se incluyen aquí (ver Análisis complementario).',
+    columnas: ['Producto', 'Último tramo con ventas', 'Ventas anteriores (CUP)', 'Cant. anterior', 'Existencia actual', 'Interpretación operativa'],
+    filas: sinVentasFilas,
+  };
 
-  // 1) Crecimiento con más unidades → oportunidad de abastecimiento.
-  for (const r of ordenCrece) {
-    if (r.difCup > 0 && r.unidadesActuales > r.unidadesAnteriores && r.posActual !== null && r.posActual <= 5) {
-      hallazgos.push({
-        titulo: `Crecimiento sostenido: ${r.name}`,
-        hallazgo: `El producto crece en ingresos Y en unidades comercializadas, manteniéndose en el puesto ${r.posActual} del ranking actual.`,
-        evidencia: `${variacionTexto(r)} · unidades: ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} ${FLECHA} ${fmtCant(r.unidadesActuales, r.unidadMedida)}${r.stockActual !== null ? ` · existencia actual: ${fmtCant(r.stockActual, r.unidadMedida)}` : ''}.`,
-        implicacion: 'Si el ritmo de ventas se mantiene, la demanda superaría el patrón del mes anterior y la existencia actual podría agotarse antes de cerrar el ciclo.',
-        accion: 'Evaluar anticipar reposición o ajustar la cantidad de la próxima compra para no perder ventas por quiebre de stock.',
-      });
-      break; // el caso más relevante por importe
-    }
-  }
-
-  // 2) Ingresos ↑ con unidades ↓ → posible cambio de precios/composición.
-  for (const r of ordenCrece) {
-    if (r.difCup > 0 && r.unidadesAnteriores > 0 && r.unidadesActuales < r.unidadesAnteriores) {
-      hallazgos.push({
-        titulo: `Ingresos al alza con menos unidades: ${r.name}`,
-        hallazgo: 'El producto factura más que en el tramo anterior vendiendo MENOS unidades.',
-        evidencia: `${variacionTexto(r)} · unidades: ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} ${FLECHA} ${fmtCant(r.unidadesActuales, r.unidadMedida)}${r.devolucionesActuales > 0 ? ` (con ${fmtCant(r.devolucionesActuales, r.unidadMedida)} devueltas)` : ''}.`,
-        implicacion: 'Patrón compatible con un aumento de precio, un cambio en la composición de la venta (tamaños/variantes) o ventas de mayor valor unitario — no está demostrado con estos datos.',
-        accion: 'Evaluar revisar la política de precios del producto y su mix de variantes antes de proyectar la demanda.',
-      });
-      break;
-    }
-  }
-
-  // 3) Descenso fuerte con existencia disponible → rotación / compras.
-  for (const r of ordenDesc) {
-    if (r.varPct !== null && r.varPct <= -CAIDA_FUERTE_PCT && r.stockActual !== null && r.stockActual > 0) {
-      hallazgos.push({
-        titulo: `Caída fuerte con existencia disponible: ${r.name}`,
-        hallazgo: 'El producto pierde al menos la mitad de sus ventas mientras conserva inventario en el almacén.',
-        evidencia: `${variacionTexto(r)} · unidades: ${fmtCant(r.unidadesAnteriores, r.unidadMedida)} ${FLECHA} ${fmtCant(r.unidadesActuales, r.unidadMedida)} · existencia actual: ${fmtCant(r.stockActual, r.unidadMedida)}.`,
-        implicacion: 'La rotación del producto se está deteriorando y el inventario disponible podría volverse lento (o acumular costo de almacenamiento) si la tendencia continúa.',
-        accion: 'Evaluar revisar las decisiones de compra del producto y activar acciones de comercialización antes de reabastecerlo.',
-      });
-      break;
-    }
-  }
-
-  // 4) Principal anterior que deja de venderse — causa NO afirmada.
-  const principalDetenido = dejaron.find((r) => r.posAnterior !== null && r.posAnterior <= TOP_PRINCIPAL_ANTERIOR);
-  if (principalDetenido) {
-    const conStock = principalDetenido.stockActual !== null && principalDetenido.stockActual > 0;
-    hallazgos.push({
-      titulo: `Producto principal sin ventas: ${principalDetenido.name}`,
-      hallazgo: `Un producto que llegó a estar en el puesto ${principalDetenido.posAnterior} del Top anterior no registra ninguna venta en el período actual.`,
-      evidencia: `Ventas anteriores: ${fmtCup(principalDetenido.ventasAnteriores)} CUP · unidades anteriores: ${fmtCant(principalDetenido.unidadesAnteriores, principalDetenido.unidadMedida)} · ventas actuales: 0${principalDetenido.stockActual !== null ? ` · existencia actual: ${fmtCant(principalDetenido.stockActual, principalDetenido.unidadMedida)}` : ' · existencia: sin dato'}.`,
-      implicacion: conStock
-        ? 'Hay existencia disponible sin salida: la causa no parece ser (solo) falta de inventario — puede tratarse de pérdida de demanda, visibilidad o desplazamiento por competencia interna del catálogo. REQUIERE INVESTIGACIÓN.'
-        : 'La existencia actual (cero o sin dato) es compatible con un quiebre de stock como causa — REQUIERE INVESTIGACIÓN: verificar reposiciones y movimientos recientes del producto.',
-      accion: conStock
-        ? 'Evaluar verificar disponibilidad real en piso, precios frente a sustitutos y acciones de exhibición/promoción.'
-        : 'Evaluar revisar el abastecimiento del producto y, si el quiebre se prolongó, la demanda acumulada no atendida.',
-    });
-  }
-
-  // 5) Concentración (umbral publicado del producto: > 50 % en un producto).
-  if (participacionLider !== null && participacionLider > 50 && lider) {
-    hallazgos.push({
-      titulo: `Concentración de ingresos en el líder: ${lider.name}`,
-      hallazgo: 'El primer producto del ranking concentra más de la mitad de las ventas del período (umbral de revisión: > 50 %).',
-      evidencia: `Participación oficial del líder: ${participacionLider.toLocaleString('es-CU')} % de las ventas · ${fmtCup(lider.ventasActuales)} CUP en el período.`,
-      implicacion: 'Una dependencia elevada de un solo producto expone el ingreso total a quiebres de stock o cambios de demanda de ese artículo.',
-      accion: 'Evaluar asegurar el abastecimiento del líder y diversificar el empuje comercial hacia los productos de la zona media del ranking.',
-    });
-  }
-
-  // 6) Cambio de líder (hecho observable del resumen).
-  if (resumen.cambioLider && resumen.liderActual && resumen.liderAnterior) {
-    hallazgos.push({
-      titulo: 'Cambio de liderazgo del ranking',
-      hallazgo: resumen.cambioLider + '.',
-      evidencia: `Líder actual: ${resumen.liderActual.name} con ${fmtCup(resumen.liderActual.ventas)} CUP · líder anterior: ${resumen.liderAnterior.name} con ${fmtCup(resumen.liderAnterior.ventas)} CUP en su período.`,
-      implicacion: 'La estructura de la demanda del catálogo está cambiando: los productos que suben pueden necesitar más presencia que los que ceden protagonismo.',
-      accion: 'Evaluar revisar plan de compra y espacios de exhibición de ambos productos para el próximo ciclo.',
-    });
-  }
-
-  // 7) Nuevos con entrada potente (posición observable, umbral = Top 5).
-  const nuevoPotente = [...nuevos].sort((a, b) => (a.posActual ?? 99) - (b.posActual ?? 99)).find((r) => (r.posActual ?? 99) <= 5);
-  if (nuevoPotente) {
-    hallazgos.push({
-      titulo: `Entrada potente al ranking: ${nuevoPotente.name}`,
-      hallazgo: `Un producto sin ventas comparables en el tramo anterior entra directamente al puesto ${nuevoPotente.posActual} del Top.`,
-      evidencia: `Ventas actuales: ${fmtCup(nuevoPotente.ventasActuales)} CUP · unidades: ${fmtCant(nuevoPotente.unidadesActuales, nuevoPotente.unidadMedida)}${nuevoPotente.stockActual !== null ? ` · existencia actual: ${fmtCant(nuevoPotente.stockActual, nuevoPotente.unidadMedida)}` : ''}.`,
-      implicacion: 'La demanda del producto se manifestó de forma relevante desde su primera aparición: puede tratarse de una línea con potencial de crecimiento (o de una venta puntual de alto valor — el período comparado lo aclarará).',
-      accion: 'Evaluar dar seguimiento en el próximo período antes de decidir compras adicionales.',
-    });
-  }
-
-  // Sin hallazgos: nota honesta (no se fuerza una conclusión).
-  if (hallazgos.length === 0) {
-    hallazgos.push({
-      titulo: 'Sin desviaciones sobre los umbrales de revisión',
-      hallazgo: 'Ningún comportamiento del conjunto comparado supera los umbrales de revisión de este informe (caída ≥ 50 %, concentración > 50 %, producto principal detenido).',
-      evidencia: `${rows.length} productos comparados · Δ ingresos del conjunto: ${fmtCupSign(deltaConjunto)} CUP · crecimientos: ${crec.length} · descensos: ${desc.length}.`,
-      implicacion: 'El comportamiento comercial del período es comparable con el tramo anterior sin señales de alerta.',
-      accion: 'Mantener el seguimiento periódico de la comparación.',
-    });
-  }
-
-  // ── I. Conclusión ejecutiva ──
-  const conclusion: string[] = [];
-  conclusion.push(
-    dirGeneral +
-      (resumen.liderActual ? ` El liderazgo lo ocupa «${resumen.liderActual.name}»${resumen.cambioLider ? ' tras un cambio de líder respecto al tramo anterior' : ' (se mantiene del tramo anterior)'}.` : ''),
-  );
-  if (deltaConjunto !== 0) {
-    conclusion.push(
-      `El conjunto comparado ${(deltaConjunto > 0 ? 'acumula' : 'cede')} ${formatCurrency(Math.abs(deltaConjunto))} CUP ${(deltaConjunto > 0 ? 'más' : 'menos')} que en el tramo equivalente anterior — cifra de alcance limitado al Top comparado, no al total de la tienda.`,
-    );
-  }
-  const prioridades: string[] = [];
-  if (dejaron.length > 0) prioridades.push(`investigar la causa de los ${dejaron.length} producto${dejaron.length !== 1 ? 's' : ''} sin ventas`);
-  if (ordenDesc.length > 0) prioridades.push('revisar la rotación de los productos en descenso con inventario disponible');
-  if (ordenCrece.some((r) => r.unidadesActuales > r.unidadesAnteriores)) prioridades.push('anticipar el abastecimiento de los productos en crecimiento');
-  if (prioridades.length > 0) {
-    conclusion.push(`Prioridades de revisión sugeridas por la evidencia: ${prioridades.join('; ')}.`);
-  }
-  conclusion.push(
-    'Informe generado automáticamente a partir de las fuentes oficiales de COSTPRO (RPC get_sales_dashboard_analytics y catálogo de productos); las implicaciones comerciales son hipótesis de trabajo condicionadas a la evidencia mostrada y deben validarse con la operación antes de ejecutar acciones.',
-  );
+  // ── Anexo IV: metodología y fuentes ──
+  const metodologia: InformeMetodologia[] = [
+    {
+      titulo: 'Fuente de datos',
+      parrafos: [
+        'Ventas por producto: agregado oficial get_sales_dashboard_analytics en dos llamadas (período analizado y tramo comparable), valoración canónica del sistema — CUP contable a la tasa de cada venta, neto de descuentos y de devoluciones; operaciones anuladas y borradores excluidos por el propio agregado.',
+        'Existencias, unidad de medida y existencia mínima: catálogo oficial de productos de la tienda activa (instantánea al momento de la elaboración).',
+        'Evidencia de ventas fuera del Top y ausencia de salidas: mayor de inventario (stock_movements, salidas por venta del tramo analizado), con aislamiento por tienda garantizado por RLS.',
+      ],
+    },
+    {
+      titulo: 'Períodos y criterios de comparación',
+      parrafos: [
+        `Período analizado: ${fmtFecha(meta.periodoActual.desde)} a ${fmtFecha(meta.periodoActual.hasta)} (${dias} días). Tramo comparable: ${fmtFecha(meta.periodoComparacion.desde)} a ${fmtFecha(meta.periodoComparacion.hasta)} (${diasAnterior} días) — misma longitud del mes anterior.`,
+        `El conjunto comparado es la ${alcance}. Un líder del tramo anterior con ventas cero permanece visible en el análisis.`,
+        `Variación del conjunto: ${fmtCupSign(variacion)} CUP = suma de los ingresos actuales menos la suma de los ingresos del tramo comparable, calculada SOLO sobre los ${rows.length} productos de la unión (base conciliada; no representa la tienda completa ni incluye productos fuera del corte).` +
+          (variacionPct !== null ? ` La variación porcentual (${fmtPctSign(variacionPct)}) usa como base la suma del tramo comparable de esa misma unión.` : ''),
+        'Las cantidades nunca se suman entre productos con unidades de medida distintas; los precios efectivos se calculan por producto (ingresos netos / unidades vendidas).',
+      ],
+    },
+    {
+      titulo: 'Definición de indicadores',
+      parrafos: [
+        'Velocidad diaria de venta = unidades vendidas del tramo analizado ÷ días del tramo, en la unidad de medida propia del producto (unidades/día, metros/día, kilogramos/día, según corresponda).',
+        'Cobertura estimada (días) = existencia actual ÷ velocidad diaria. Es una estimación operativa con la existencia instantánea: no proyecta demanda futura ni incorpora plazos de reposición o inventario de seguridad, que el sistema no parametriza (salvo la existencia mínima declarada en el catálogo).',
+        `Clasificación de rotación (umbrales configurables, anclados a la cadencia mensual del informe con D = ${dias} días): rotación alta, cobertura < D/2; rotación moderada, entre D/2 y D; baja rotación, cobertura > D; sin movimiento, sin salidas en el tramo con existencia disponible; sin base suficiente, cuando no puede calcularse la velocidad o la cobertura (no se generan coberturas ficticias).`,
+        `Variación relevante: variación porcentual de +50% o más (crecimiento) o de -50% o más (contracción), simétrico del umbral de caída fuerte publicado por el sistema (50%). Concentración del líder: participación oficial > 50% de las ventas del período.`,
+        'Diferencias conceptuales: la velocidad de venta (unidades/día) no equivale a la cobertura (días de existencia), y ninguna de las dos es la rotación financiera de inventario (que requiere existencia promedio y costo de ventas, no disponibles — no se calcula).',
+      ],
+    },
+    {
+      titulo: 'Limitaciones',
+      parrafos: [
+        'La existencia se reporta como valor puntual del catálogo; el sistema no conserva existencia promedio por período, por lo que la rotación financiera de inventario no se calcula ni se estima.',
+        'No existen existencias comprometidas, plazos de abastecimiento ni inventario de seguridad parametrizados en las fuentes consultadas: los riesgos se presentan como alertas de disponibilidad, sin fechas de agotamiento.',
+        'La ausencia de ventas no equivale a demanda nula, y la existencia del catálogo puede diferir de la física si hay movimientos pendientes de registro.',
+        'Los productos fuera del corte del Top 20 por ingresos no informan importe en el agregado oficial: su situación comercial se evalúa únicamente con la evidencia del mayor de inventario y, sin ella, se declara «verificar».',
+        'El informe es un instrumento de apoyo a la decisión: las interpretaciones comerciales son hipótesis de trabajo respaldadas por los indicadores mostrados y deben validarse con la operación antes de ejecutar acciones.',
+      ],
+    },
+  ];
 
   const parametros = [
     `Ámbito: tienda activa (${meta.ambito}) — aislamiento por tienda garantizado por RLS.`,
     'Fuente de ventas: RPC get_sales_dashboard_analytics — valoración canónica CUP contable a la tasa de cada venta, neta de descuentos y devoluciones; anulados y borradores excluidos.',
-    'Recorte del análisis: Top 20 por ingresos del período actual más el Top 20 del período anterior (un líder anterior con ventas cero hoy permanece visible).',
-    'Existencias y unidades de medida: catálogo oficial de productos de la tienda.',
+    'Recorte del análisis: Top 20 por ingresos del período analizado más el Top 20 del tramo comparable (un líder anterior con ventas cero permanece visible).',
+    `Existencias, unidad de medida y mínimo del catálogo: instantánea del catálogo oficial de la tienda. Cobertura y rotación estimadas con D = ${dias} días del tramo analizado.`,
     ...(meta.parametrosExtra ?? []),
   ];
 
   return {
     meta: {
       ...meta,
-      titulo: 'INFORME EJECUTIVO DE COMPARACIÓN DE PRODUCTOS',
+      titulo: 'INFORME EJECUTIVO DE DESEMPEÑO COMERCIAL Y ABASTECIMIENTO',
       generadoEl,
+      diasPeriodo: dias,
       parametros,
     },
-    resumenEjecutivo,
+    situacionGeneral,
+    conclusionGerencial,
     indicadores,
-    secciones,
-    hallazgos,
-    conclusion,
+    grafico,
+    prioridades,
+    complementarias,
+    anexos: [anexoI, anexoII, anexoIII],
+    metodologia,
+    conciliacion: {
+      productosAnalizados: rows.length,
+      ingresosActual,
+      ingresosAnterior,
+      variacion,
+      alcance,
+      variacionPct,
+    },
   };
 }

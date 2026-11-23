@@ -89,6 +89,12 @@ export interface ComparisonRow {
   unidadMedida: string | null;
   evolucion: Evolucion;
   /**
+   * Existencia mínima definida en el catálogo de la tienda (parametrización
+   * oficial del producto). null cuando el catálogo no la define — el informe
+   * la usa SOLO como referencia declarada (nunca la estima).
+   */
+  minStock: number | null;
+  /**
    * Participación oficial del producto en las ventas del período actual
    * (% del total, tal como la calcula el RPC get_sales_dashboard_analytics).
    * Opcional/nula cuando el agregado no la informa — el informe SOLO la usa
@@ -201,6 +207,7 @@ export function buildComparison(
       varPct,
       stockActual: catalogRow ? catalogRow.stock_current : null,
       unidadMedida: catalogRow?.unit_of_measure ?? null,
+      minStock: catalogRow?.min_stock ?? null,
       evolucion,
       // Participación oficial del período actual (opcional en el schema —
       // null honesto si el agregado no la informa).
