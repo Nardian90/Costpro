@@ -238,9 +238,8 @@ const pctFmt = (v: number | null | undefined, sign: boolean): string => {
  * Señales por COMPARACIÓN DE PERÍODOS (reglas verificables con las dos
  * respuestas del RPC). Umbrales documentados arriba.
  */
-export function useExecutiveSignals(data: ExecutiveData): ExecutiveSignal[] {
-  return useMemo(() => {
-    const out: ExecutiveSignal[] = [];
+export function computeExecutiveSignals(data: ExecutiveData): ExecutiveSignal[] {
+  const out: ExecutiveSignal[] = [];
     const c = data.current;
     const p = data.previous;
     if (!c || !p || !data.hasPreviousBase) return out;
@@ -425,7 +424,11 @@ export function useExecutiveSignals(data: ExecutiveData): ExecutiveSignal[] {
 
     const order: Record<ExecutiveSignalSeverity, number> = { critical: 0, warning: 1, positive: 2, info: 3 };
     return out.sort((a, b) => order[a.severity] - order[b.severity]);
-  }, [data]);
+}
+
+/** Hook React: memoiza el cálculo puro. */
+export function useExecutiveSignals(data: ExecutiveData): ExecutiveSignal[] {
+  return useMemo(() => computeExecutiveSignals(data), [data]);
 }
 
 // ── Observaciones ejecutivas (misión §3D) ───────────────────────────────────
@@ -442,9 +445,8 @@ export interface ExecutiveObservation {
   review?: string;
 }
 
-export function useExecutiveObservations(data: ExecutiveData): ExecutiveObservation[] {
-  return useMemo(() => {
-    const c = data.current;
+export function computeExecutiveObservations(data: ExecutiveData): ExecutiveObservation[] {
+  const c = data.current;
     const p = data.previous;
     if (!c) return [];
 
@@ -540,7 +542,11 @@ export function useExecutiveObservations(data: ExecutiveData): ExecutiveObservat
     }
 
     return out.slice(0, 5);
-  }, [data]);
+}
+
+/** Hook React: memoiza el cálculo puro. */
+export function useExecutiveObservations(data: ExecutiveData): ExecutiveObservation[] {
+  return useMemo(() => computeExecutiveObservations(data), [data]);
 }
 
 function PAYMENT_LABEL(method: string): string {
