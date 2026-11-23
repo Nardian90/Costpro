@@ -352,7 +352,7 @@ describe('SC-2-08 — fetchSc208SourceData sin valores económicos en modo físi
 
   beforeEach(() => supabaseMock.from.mockReset());
 
-  it('el SELECT físico no incluye unit_cost ni total_cost', async () => {
+  it('el SELECT físico no incluye unit_cost ni total_cost (product_id SIEMPRE va — dato físico del saldo)', async () => {
     supabaseMock.from.mockImplementation(() => chain({ data: [], error: null }));
     await fetchSc208SourceData(
       mkVale({ items: [] }),
@@ -361,16 +361,16 @@ describe('SC-2-08 — fetchSc208SourceData sin valores económicos en modo físi
     );
     expect(supabaseMock.from).toHaveBeenCalledWith('issue_slip_items');
     const itemsChain = supabaseMock.from.mock.results[0].value as { select: ReturnType<typeof vi.fn> };
-    expect(itemsChain.select).toHaveBeenCalledWith('quantity, products(name, sku, unit_of_measure)');
+    expect(itemsChain.select).toHaveBeenCalledWith('product_id, quantity, products(name, sku, unit_of_measure)');
   });
 
-  it('el SELECT valorizado conserva la lectura actual de costos', async () => {
+  it('el SELECT valorizado conserva la lectura actual de costos (con product_id del saldo)', async () => {
     supabaseMock.from.mockImplementation(() => chain({ data: [], error: null }));
     await fetchSc208SourceData(mkVale({ items: [] }), 'store-1');
     expect(supabaseMock.from).toHaveBeenCalledWith('issue_slip_items');
     const itemsChain = supabaseMock.from.mock.results[0].value as { select: ReturnType<typeof vi.fn> };
     expect(itemsChain.select).toHaveBeenCalledWith(
-      'quantity, unit_cost, total_cost, products(name, sku, unit_of_measure)',
+      'product_id, quantity, unit_cost, total_cost, products(name, sku, unit_of_measure)',
     );
   });
 
@@ -389,6 +389,215 @@ describe('SC-2-08 — fetchSc208SourceData sin valores económicos en modo físi
     expect(model.importeTotal).toBe('');
     expect(model.lineas[0].importe).toBe('');
   });
+
+  // ── Misión saldo 2026-11-23: el fetch deriva el saldo del submayor real ──
+
+  /** Chain que soporta el recorrido completo de fetchMovimientosPorProducto. */
+  function chainLedger(result: { data: unknown; error: unknown }) {
+    const c: Record<string, unknown> = {};
+    for (const m of ['select', 'eq', 'in', 'order', 'range']) c[m] = vi.fn(() => c);
+    c.maybeSingle = vi.fn(() => Promise.resolve(result));
+    c.then = (res?: (v: unknown) => unknown) => Promise.resolve(result).then(res);
+    return c;
+  }
+
+  const PID_SALDO = 'prod-azucar-1';
+  const STORE_VALE = 'store-vale-9';
+  const VALE_ID_SALDO = 'bbbbbbbb-2222-4222-8222-222222222222';
+
+  const mkLedger = () => [
+    { id: 'm0', product_id: PID_SALDO, quantity_change: 50, movement_type: 'purchase', notes: null, reference_id: null, created_at: '2026-10-01T09:00:00Z' },
+    // Movimientos PROPIOS del vale (enlace reference_id = vale.id):
+    { id: 'm1', product_id: PID_SALDO, quantity_change: -3, movement_type: 'issue_slip_out', notes: null, reference_id: VALE_ID_SALDO, created_at: '2026-10-22T10:15:00Z' },
+    { id: 'm2', product_id: PID_SALDO, quantity_change: -2, movement_type: 'production_out', notes: null, reference_id: VALE_ID_SALDO, created_at: '2026-10-22T10:15:01Z' },
+    // Venta posterior (no es del vale) y reversión posterior (no altera el
+    // saldo histórico del documento):
+    { id: 'm4', product_id: PID_SALDO, quantity_change: -1, movement_type: 'sale', notes: null, reference_id: 'tx-1', created_at: '2026-10-23T12:00:00Z' },
+    { id: 'm3', product_id: PID_SALDO, quantity_change: 5, movement_type: 'issue_slip_reverse', notes: null, reference_id: VALE_ID_SALDO, created_at: '2026-10-24T16:00:00Z' },
+  ];
+
+  it('deriva el saldo del ledger por (producto, tienda del vale) con SOLO los movimientos propios', async () => {
+    const chains: Record<string, { eq: ReturnType<typeof vi.fn>; in: ReturnType<typeof vi.fn> }> = {};
+    supabaseMock.from.mockImplementation((table: string) => {
+      let result: { data: unknown; error: unknown } = { data: [], error: null };
+      if (table === 'stores') {
+        result = { data: [{ name: 'ENERVIDA-VITALLCONS', logo_url: null, store_code: 8 }], error: null };
+      } else if (table === 'stock_movements') {
+        result = { data: mkLedger(), error: null };
+      }
+      const chain = chainLedger(result);
+      chains[table] = chain as never;
+      return chain;
+    });
+    const vale = mkVale({
+      id: VALE_ID_SALDO,
+      store_id: STORE_VALE,
+      items: [
+        { product_id: PID_SALDO, quantity: 5, unit_cost: 320.18, total_cost: 1600.9, products: { name: 'Azúcar 1 kg', sku: 'AZU-1K', unit_of_measure: 'unidades' } },
+      ],
+    });
+    // La tienda ACTIVA es OTRA: el saldo debe salir de la tienda del vale.
+    const source = await fetchSc208SourceData(vale, 'otra-tienda');
+    // saldo anterior = Σ antes del primer movimiento propio (purchase 50);
+    // saldo posterior = 50 + (−3 −2) = 45; la reversión (+5) y la venta
+    // posterior (−1) NO alteran el saldo histórico del documento.
+    expect(source.saldosPorProducto?.[PID_SALDO]).toEqual({
+      saldoAnterior: 50,
+      saldoPosterior: 45,
+      fuente: 'ledger',
+    });
+    // El ledger se leyó de la TIENDA DEL VALE (aislamiento por tienda):
+    expect(chains.stock_movements?.eq).toHaveBeenCalledWith('store_id', STORE_VALE);
+    expect(chains.stock_movements?.in).toHaveBeenCalledWith('product_id', [PID_SALDO]);
+    // La entidad se leyó de la tienda del vale (no de la activa):
+    expect(chains.stores?.eq).toHaveBeenCalledWith('id', STORE_VALE);
+    const model = buildSc208ModelData(source);
+    expect(model.lineas[0].saldoExistencia).toBe('45');
+  });
+
+  it('modo físico: product_id se preserva en ítems precargados (solo se eliminan costos) y el saldo queda s/d sin ledger', async () => {
+    supabaseMock.from.mockImplementation(() => chainLedger({ data: [], error: null }));
+    const vale = mkVale({
+      store_id: STORE_VALE,
+      items: [
+        { product_id: PID_SALDO, quantity: 5, unit_cost: 320.18, total_cost: 1600.9, products: { name: 'Azúcar 1 kg', sku: 'AZU-1K', unit_of_measure: 'unidades' } },
+      ],
+    });
+    const source = await fetchSc208SourceData(vale, STORE_VALE, { incluirValores: false });
+    expect(source.vale.items?.[0]).not.toHaveProperty('unit_cost');
+    expect(source.vale.items?.[0]).not.toHaveProperty('total_cost');
+    expect(source.vale.items?.[0]?.product_id).toBe(PID_SALDO);
+    // Ledger vacío y vale ya contabilizado → sin evidencia → limitación:
+    expect(source.saldosPorProducto?.[PID_SALDO]?.fuente).toBe('limitacion');
+    const model = buildSc208ModelData(source, { incluirValores: false });
+    expect(model.lineas[0].saldoExistencia).toBe('s/d');
+    expect(model.saldoNota).toContain('no se inventa cifra');
+  });
+
+  it('vale pendiente de contabilizar → proyección (saldo actual − cantidad del vale)', async () => {
+    supabaseMock.from.mockImplementation((table: string) => {
+      if (table === 'stock_movements') {
+        // Sin movimientos propios (aún En Revisión): solo una compra previa.
+        return chainLedger({
+          data: [
+            { id: 'm0', product_id: PID_SALDO, quantity_change: 50, movement_type: 'purchase', notes: null, reference_id: null, created_at: '2026-10-01T09:00:00Z' },
+          ],
+          error: null,
+        });
+      }
+      return chainLedger({ data: [], error: null });
+    });
+    const vale = mkVale({
+      id: VALE_ID_SALDO,
+      store_id: STORE_VALE,
+      status: 'pending',
+      items: [
+        { product_id: PID_SALDO, quantity: 5, unit_cost: 320.18, total_cost: 1600.9, products: { name: 'Azúcar 1 kg', sku: 'AZU-1K', unit_of_measure: 'unidades' } },
+      ],
+    });
+    const source = await fetchSc208SourceData(vale, STORE_VALE);
+    expect(source.saldosPorProducto?.[PID_SALDO]).toEqual({
+      saldoAnterior: 50,
+      saldoPosterior: 45,
+      fuente: 'proyeccion',
+    });
+    const model = buildSc208ModelData(source);
+    expect(model.saldoNota).toContain('proyección');
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────────────
+// SC-2-08 — SALDO EN EXISTENCIA según almacén en el modelo (misión 2026-11-23)
+// ────────────────────────────────────────────────────────────────────────────
+
+describe('SC-2-08 — saldo en existencia según almacén (modelo)', () => {
+  const PID = 'prod-azucar-1';
+  const itemAzucar = (qty: number) => ({
+    product_id: PID,
+    quantity: qty,
+    unit_cost: 320.18,
+    total_cost: qty * 320.18,
+    products: { name: 'Azúcar 1 kg', sku: 'AZU-1K', unit_of_measure: 'unidades' },
+  });
+
+  it('muestra el saldo posterior derivado del submayor; varias líneas del mismo SKU comparten el saldo del documento', () => {
+    const model = buildSc208ModelData({
+      entidadNombre: 'Tienda QA',
+      vale: mkVale({ items: [itemAzucar(5), itemAzucar(3)] }),
+      saldosPorProducto: { [PID]: { saldoAnterior: 50, saldoPosterior: 42, fuente: 'ledger' } },
+    });
+    expect(model.lineas).toHaveLength(2);
+    expect(model.lineas[0].saldoExistencia).toBe('42');
+    expect(model.lineas[1].saldoExistencia).toBe('42');
+  });
+
+  it('sin evidencia de saldo → «s/d» (jamás cifra inventada ni cero)', () => {
+    const model = buildSc208ModelData({
+      entidadNombre: 'Tienda QA',
+      vale: mkVale({ items: [itemAzucar(5)] }),
+    });
+    expect(model.lineas[0].saldoExistencia).toBe('s/d');
+  });
+
+  it('limitación del historial → nota al pie documentada', () => {
+    const model = buildSc208ModelData({
+      entidadNombre: 'Tienda QA',
+      vale: mkVale({ items: [itemAzucar(5)] }),
+      saldosPorProducto: { [PID]: { saldoAnterior: NaN, saldoPosterior: NaN, fuente: 'limitacion' } },
+    });
+    expect(model.lineas[0].saldoExistencia).toBe('s/d');
+    expect(model.saldoNota).toContain('s/d');
+    expect(model.saldoNota).toContain('no se inventa cifra');
+  });
+
+  it('proyección → nota al pie de proyección (no se presenta como hecho)', () => {
+    const model = buildSc208ModelData({
+      entidadNombre: 'Tienda QA',
+      vale: mkVale({ items: [itemAzucar(5)] }),
+      saldosPorProducto: { [PID]: { saldoAnterior: 50, saldoPosterior: 42, fuente: 'proyeccion' } },
+    });
+    expect(model.saldoNota).toContain('proyección');
+  });
+
+  it('el saldo es dato FÍSICO: visible también en la modalidad sin valorar', () => {
+    const model = buildSc208ModelData(
+      {
+        entidadNombre: 'Tienda QA',
+        vale: mkVale({ items: [itemAzucar(5)] }),
+        saldosPorProducto: { [PID]: { saldoAnterior: 50, saldoPosterior: 42, fuente: 'ledger' } },
+      },
+      { incluirValores: false },
+    );
+    expect(model.valorizado).toBe(false);
+    expect(model.lineas[0].importe).toBe('');
+    expect(model.lineas[0].saldoExistencia).toBe('42');
+  });
+
+  it('el PDF imprime la cifra del saldo y NO la nota cuando el saldo es ledger', async () => {
+    const model = buildSc208ModelData({
+      entidadNombre: 'Tienda QA',
+      vale: mkVale({ items: [itemAzucar(5)] }),
+      saldosPorProducto: { [PID]: { saldoAnterior: 50, saldoPosterior: 42, fuente: 'ledger' } },
+    });
+    const text = decodePdf((await renderSc208Pdf(model)).output('arraybuffer'));
+    expect(text).toContain('42');
+    expect(text).not.toContain('no se inventa cifra');
+  }, 30_000);
+
+  it('el PDF imprime la nota de limitación cuando el saldo no es determinable', async () => {
+    const model = buildSc208ModelData({
+      entidadNombre: 'Tienda QA',
+      vale: mkVale({ items: [itemAzucar(5)] }),
+      saldosPorProducto: { [PID]: { saldoAnterior: NaN, saldoPosterior: NaN, fuente: 'limitacion' } },
+    });
+    const text = decodePdf((await renderSc208Pdf(model)).output('arraybuffer'))
+      // La nota se ajusta por línea (maxWidth): se normalizan espacios para
+      // comparar fragmentos con independencia del salto de línea.
+      .replace(/\s+/g, ' ');
+    expect(text).toContain('s/d');
+    // Fragmento de UNA sola línea del ajuste (la frase se parte en el stream):
+    expect(text).toContain('no permite determinar el saldo');
+  }, 30_000);
 });
 
 // ────────────────────────────────────────────────────────────────────────────

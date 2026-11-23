@@ -22,7 +22,7 @@
  *  │    Producción o de Trabajo                  │                                   │
  *  │ 5. Código, descripción, UM, cantidad,       │ issue_slip_items + products       │ Automáticos (importe = total_cost
  *  │    precio unitario total, importe y saldo   │ (sku, name, unit_of_measure,      │ almacenado por el servidor);
- *  │    en existencia según almacén              │  quantity, unit_cost, total_cost) │ SALDO EN EXISTENCIA en blanco
+ *  │    en existencia según almacén              │  quantity, unit_cost, total_cost) │ SALDO = submayor real (misión 2026-11-23)
  *  │ 6. Importe Total del Vale o Devolución      │ issue_slips.total_cost (servidor) │ Automático (CUP)
  *  │ 7. Nombre y firma del que entrega (o recibe │ profiles.full_name (creator)      │ Nombre automático; FIRMA en blanco
  *  │    la devolución) por el almacén            │                                   │
@@ -79,17 +79,32 @@ import {
   drawRes11Footer,
   formatRes11Money,
   formatRes11Quantity,
+  formatRes11Saldo,
   RES11_BLANK_LINE,
   res11FileName,
   estadoDocumentoLabel,
   type Res11TableOptions,
 } from './res11-shared';
+import {
+  calcularSaldoPosterior,
+  fetchMovimientosPorProducto,
+  movimientosDeValeSalida,
+  type SaldoPosteriorMovement,
+  type SaldoPosteriorResultado,
+} from '@/lib/inventory/saldo-posterior';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Tipos de datos (espejo del esquema real issue_slips / issue_slip_items)
 // ────────────────────────────────────────────────────────────────────────────
 
 export interface Sc208SourceItem {
+  /**
+   * Producto de la línea (enlace con el submayor stock_movements). Necesario
+   * para derivar el «Saldo en existencia según almacén» — mismo patrón que
+   * SC-2-04/SC-2-12 (misión saldo 2026-11-23). Es dato físico: se solicita
+   * también en la modalidad SIN VALORAR.
+   */
+  product_id?: string | null;
   quantity: number;
   /**
    * Costo unitario almacenado por el servidor (products.cost_average en el
@@ -124,6 +139,8 @@ export interface Sc208ExportOptions {
 export interface Sc208SourceData {
   vale: {
     id: string;
+    /** Tienda emisora del vale (almacén que entrega — aislamiento por tienda). */
+    store_id?: string | null;
     slip_number: string;
     status: 'completed' | 'voided' | 'reversed';
     notes: string | null;
@@ -138,6 +155,14 @@ export interface Sc208SourceData {
   };
   /** Nombre de la entidad/almacén (tienda activa bajo RLS). */
   entidadNombre: string;
+  /**
+   * Saldo en existencia según almacén por producto (mission 2026-11-23):
+   * saldo posterior histórico derivado del submayor real stock_movements por
+   * (producto, tienda emisora del vale) — misma doctrina de SC-2-04/SC-2-12.
+   * Ausencia o limitación → «s/d» en la celda + nota al pie. NUNCA cifra
+   * inventada ni inventario de otra tienda.
+   */
+  saldosPorProducto?: Record<string, SaldoPosteriorResultado>;
   /**
    * CP-DOC-SC-DATA-MAPPING-006: código documental de la tienda emisora
    * (consecutivo persistente stores.store_code; nunca el uuid interno).
@@ -173,7 +198,12 @@ export interface Sc208ModelData {
     precioUnitario: string;
     /** Importe de línea almacenado; '' en la modalidad sin valorar. */
     importe: string;
-    /** Dato 5: saldo en existencia — no gestionado por línea → ''. */
+    /**
+     * Dato 5: saldo en existencia según almacén — saldo posterior histórico
+     * tras contabilizar el vale (submayor real del almacén que entrega);
+     * «s/d» cuando el historial no alcanza; '' solo si la línea no tiene
+     * producto asociado (cumplimentación manual, como el resto de blancos).
+     */
     saldoExistencia: string;
   }>;
   /** Importe Total del Vale (CUP); '' en la modalidad sin valorar. */
@@ -187,6 +217,12 @@ export interface Sc208ModelData {
   valorizado: boolean;
   entregadoPor: string; // nombre real (creator) o ''
   estado: string; // Completado / Anulado / Devuelto
+  /**
+   * Nota al pie sobre la fuente/limitación del saldo (misma regla que
+   * SC-2-04/SC-2-12): solo se imprime cuando hay limitación o proyección —
+   * documenta la evidencia; nunca se inventa cifra.
+   */
+  saldoNota?: string;
   devolucion: {
     fecha: string;
     responsable: string;
@@ -220,6 +256,13 @@ export function buildSc208ModelData(
   // (misma regla que el nombre: el vale se emite desde el almacén de la
   // tienda activa — COSTPRO no gestiona almacenes con código independiente).
   const codigoTienda = (source.entidadCodigo || '').trim();
+  // ── Dato 5: saldo en existencia según almacén (misión 2026-11-23) ──
+  // Derivado del submayor real stock_movements del almacén que entrega
+  // (saldosPorProducto, calculado en fetchSc208SourceData). Varias líneas del
+  // mismo SKU comparten el saldo del documento (Σ cantidades ya agregadas).
+  // Celda vacía ('') SOLO para líneas sin producto asociado — cumplimentación
+  // manual, igual que los demás blancos del modelo. Sin producto → sin llave
+  // para el ledger → no se inventa cifra.
   const lineas = (vale.items || []).map((item) => ({
     codigo: item.products?.sku || '',
     descripcion: item.products?.name || '',
@@ -230,8 +273,30 @@ export function buildSc208ModelData(
     precioUnitario: incluirValores ? formatRes11Money(item.unit_cost ?? NaN) : '',
     // Importe almacenado por el servidor (no se recalcula); '' en modo físico.
     importe: incluirValores ? formatRes11Money(item.total_cost ?? NaN) : '',
-    saldoExistencia: '',
+    // Saldo posterior histórico: cifra real o «s/d» (dato FÍSICO — se muestra
+    // también en la modalidad sin valorar, la columna existe en ambas cabeceras).
+    saldoExistencia: item.product_id
+      ? formatRes11Saldo(source.saldosPorProducto?.[item.product_id])
+      : '',
   }));
+
+  // Nota al pie del saldo: documenta la fuente cuando hay limitación
+  // («s/d») o proyección — misma regla que SC-2-04/SC-2-12; nunca inventada.
+  const itemsConProducto = (vale.items || []).filter((i) => i.product_id);
+  const conLimitacion = itemsConProducto.some(
+    (i) => source.saldosPorProducto?.[i.product_id!]?.fuente === 'limitacion',
+  );
+  const conProyeccion = itemsConProducto.some(
+    (i) => source.saldosPorProducto?.[i.product_id!]?.fuente === 'proyeccion',
+  );
+  let saldoNota = '';
+  if (conLimitacion) {
+    saldoNota =
+      'Saldo en existencia: «s/d» — el historial de movimientos disponible no permite determinar el saldo de ese producto en el almacén (no se inventa cifra).';
+  } else if (conProyeccion) {
+    saldoNota =
+      'Saldo en existencia: proyección del saldo posterior (vale pendiente de contabilizar = saldo actual del almacén − cantidad del vale).';
+  }
 
   // Dato 6: Importe Total del Vale — el almacenado por el servidor.
   // (costos en CUP: convención del sistema para el almacén). En modo físico
@@ -257,6 +322,7 @@ export function buildSc208ModelData(
     valorizado: incluirValores,
     entregadoPor: vale.creator?.full_name || '',
     estado: estadoDocumentoLabel(vale.status),
+    saldoNota: saldoNota || undefined,
     devolucion: esReversado
       ? {
           fecha: formatDateRes11(vale.voided_at),
@@ -294,9 +360,11 @@ export async function fetchSc208SourceData(
     // Misión CP-WH-EXIT-VOUCHER-PDF-VALUATION-001: en modo físico la lectura
     // NO solicita columnas económicas a la base de datos (mínimo dato — el PDF
     // físico no puede filtrar costos porque nunca los recibe).
+    // Misión saldo 2026-11-23: product_id SIEMPRE se solicita (dato físico —
+    // es la llave del submayor para el saldo; el strip económico lo preserva).
     const columnas = incluirValores
-      ? 'quantity, unit_cost, total_cost, products(name, sku, unit_of_measure)'
-      : 'quantity, products(name, sku, unit_of_measure)';
+      ? 'product_id, quantity, unit_cost, total_cost, products(name, sku, unit_of_measure)'
+      : 'product_id, quantity, products(name, sku, unit_of_measure)';
     const { data, error } = await supabase
       .from('issue_slip_items')
       .select(columnas)
@@ -314,10 +382,15 @@ export async function fetchSc208SourceData(
     items = items.map(({ unit_cost: _unitCost, total_cost: _totalCost, ...rest }) => rest);
   }
 
+  // Almacén que entrega: la tienda emisora del vale (fiel a la operación);
+  // fallback a la tienda activa solo para vales históricos sin store_id.
+  // Paridad con SC-2-04 (receipt.store_id || activeStoreId). El ledger se
+  // consulta SIEMPRE por la tienda del vale — jamás de otra tienda.
+  const storeId = vale.store_id || activeStoreId || null;
+
   let entidadNombre = '';
   let entidadCodigo = '';
   let logoUrl: string | null = null;
-  const storeId = activeStoreId || null;
   if (storeId) {
     const { data: storeRow, error: storeError } = await supabase
       .from('stores')
@@ -334,7 +407,50 @@ export async function fetchSc208SourceData(
     }
   }
 
-  return { vale: { ...vale, items }, entidadNombre, entidadCodigo, logoUrl };
+  // ── Saldo en existencia según almacén (misión 2026-11-23) ──
+  // Saldo posterior histórico por producto, derivado del submayor REAL
+  // stock_movements por (producto, tienda emisora) — misma doctrina que
+  // SC-2-04/SC-2-12: enlaces documentales propios del vale
+  // ('issue_slip_out' / 'production_out' con reference_id = vale.id); las
+  // reversiones posteriores no alteran el saldo histórico del documento;
+  // vale 'pending' sin contabilizar → proyección; sin evidencia → «s/d».
+  // La lectura del saldo NO bloquea el documento: ante error, las líneas
+  // quedan «s/d» y la nota al pie documenta la limitación.
+  const saldosPorProducto: Record<string, SaldoPosteriorResultado> = {};
+  const productIds = Array.from(
+    new Set((items || []).map((i) => i.product_id).filter((id): id is string => !!id)),
+  );
+  if (storeId && productIds.length > 0) {
+    try {
+      const ledger = await fetchMovimientosPorProducto(supabase, productIds, storeId);
+      // Σ cantidades del vale por producto (varias líneas del mismo SKU);
+      // negativa: el vale SALE del almacén. Solo se usa en la proyección.
+      const deltaPorProducto: Record<string, number> = {};
+      for (const it of items || []) {
+        if (!it.product_id) continue;
+        deltaPorProducto[it.product_id] = (deltaPorProducto[it.product_id] || 0) + (it.quantity || 0);
+      }
+      // 'pending' aún no descontó stock (En Revisión) → proyección.
+      // 'voided' (Anulado desde En Revisión) no generó movimientos y no
+      // representa operación de inventario → sin saldo posterior → «s/d».
+      const pendiente = vale.status === 'pending';
+      for (const pid of productIds) {
+        const movs: SaldoPosteriorMovement[] = ledger[pid] || [];
+        saldosPorProducto[pid] = calcularSaldoPosterior({
+          movimientos: movs,
+          movimientosPropios: movimientosDeValeSalida(movs, vale.id),
+          // NEGATIVO: el vale SALE del almacén (misma regla que la venta en
+          // SC-2-12). Solo se usa en la proyección (pendiente de contabilizar).
+          deltaDocumento: -(deltaPorProducto[pid] || 0),
+          pendienteContabilizar: pendiente,
+        });
+      }
+    } catch (e) {
+      logger.warn('DATABASE', 'SC208_SALDO_POSTERIOR_READ_FAILED', { error: e });
+    }
+  }
+
+  return { vale: { ...vale, items }, entidadNombre, entidadCodigo, logoUrl, saldosPorProducto };
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -477,6 +593,19 @@ export async function renderSc208Pdf(model: Sc208ModelData) {
     doc.text('Documento emitido sin valoración económica (información física).', pageWidth - marginX, finalY, {
       align: 'right',
     });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+  }
+
+  // ── Nota del saldo (misión 2026-11-23): documenta fuente/limitación ──
+  // Solo se imprime cuando hay «s/d» o proyección — misma regla que
+  // SC-2-04/SC-2-12. Nunca sustituye a la cifra: el dato va en la tabla.
+  if (model.saldoNota) {
+    finalY += 5;
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8.5);
+    doc.setTextColor(0, 0, 0);
+    doc.text(model.saldoNota, marginX, finalY, { maxWidth: pageWidth - marginX * 2 });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
   }
