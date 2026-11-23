@@ -174,4 +174,29 @@ describe('ProductComparisonView — comparación comercial (ADNEGOCIO-UI §5)', 
     await waitFor(() => expect(screen.getByTestId('comparison-header')).toBeInTheDocument(), { timeout: 4000 });
     await waitFor(() => expect(screen.getByText(/Sin ventas en ninguno de los dos períodos/)).toBeInTheDocument(), { timeout: 4000 });
   });
+
+  // ── MISIÓN COMPARAR PRODUCTOS 2026-11-23: tab INFORME EJECUTIVO ──
+
+  it('tab Informe Ejecutivo: genera el informe con datos reales y estado «actualizado»', async () => {
+    renderView();
+    await waitFor(() => expect(screen.getByTestId('comparison-row-cemento')).toBeInTheDocument(), { timeout: 4000 });
+
+    // Estado inicial del tab: controles presentes, informe no generado.
+    fireEvent.click(screen.getByTestId('comparison-tab-informe'));
+    expect(screen.getByTestId('informe-controls')).toBeInTheDocument();
+    expect(screen.getByTestId('informe-estado').textContent).toContain('no generado todavía');
+
+    // El tab abierto genera el informe automáticamente (patrón Reporte de Entrega).
+    await waitFor(() => expect(screen.getByTestId('informe-resumen')).toBeInTheDocument(), { timeout: 8000 });
+    expect(screen.getByTestId('informe-estado').textContent).toContain('actualizado con los datos actuales');
+    // Resumen con los datos reales del fixture (cemento dejado de venderse).
+    expect(screen.getByTestId('informe-resumen').textContent).toContain('Cemento 50kg');
+    // Hallazgos con estructura hecho→evidencia→implicación→acción.
+    await waitFor(() => expect(screen.getByTestId('informe-hallazgos').children.length).toBeGreaterThan(0), { timeout: 4000 });
+    expect(screen.getByTestId('informe-hallazgos').textContent).toContain('Hecho:');
+    expect(screen.getByTestId('informe-hallazgos').textContent).toContain('Evidencia:');
+    expect(screen.getByTestId('informe-hallazgos').textContent).toContain('Acción a evaluar:');
+    // Vista preliminar (blob del mismo builder que exporta).
+    await waitFor(() => expect(screen.getByTestId('informe-preview')).toBeInTheDocument(), { timeout: 8000 });
+  }, 20_000);
 });

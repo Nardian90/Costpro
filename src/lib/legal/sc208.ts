@@ -280,22 +280,17 @@ export function buildSc208ModelData(
       : '',
   }));
 
-  // Nota al pie del saldo: documenta la fuente cuando hay limitación
-  // («s/d») o proyección — misma regla que SC-2-04/SC-2-12; nunca inventada.
+  // Nota al pie del saldo: documenta la limitación cuando hay «s/d» — misma
+  // regla que SC-2-04/SC-2-12; nunca se inventa cifra. (El modelo SC-2-08
+  // solo se genera sobre estados con despacho real: no hay proyección.)
   const itemsConProducto = (vale.items || []).filter((i) => i.product_id);
   const conLimitacion = itemsConProducto.some(
     (i) => source.saldosPorProducto?.[i.product_id!]?.fuente === 'limitacion',
-  );
-  const conProyeccion = itemsConProducto.some(
-    (i) => source.saldosPorProducto?.[i.product_id!]?.fuente === 'proyeccion',
   );
   let saldoNota = '';
   if (conLimitacion) {
     saldoNota =
       'Saldo en existencia: «s/d» — el historial de movimientos disponible no permite determinar el saldo de ese producto en el almacén (no se inventa cifra).';
-  } else if (conProyeccion) {
-    saldoNota =
-      'Saldo en existencia: proyección del saldo posterior (vale pendiente de contabilizar = saldo actual del almacén − cantidad del vale).';
   }
 
   // Dato 6: Importe Total del Vale — el almacenado por el servidor.
@@ -413,7 +408,11 @@ export async function fetchSc208SourceData(
   // SC-2-04/SC-2-12: enlaces documentales propios del vale
   // ('issue_slip_out' / 'production_out' con reference_id = vale.id); las
   // reversiones posteriores no alteran el saldo histórico del documento;
-  // vale 'pending' sin contabilizar → proyección; sin evidencia → «s/d».
+  // vale 'voided' (Anulado desde En Revisión) no generó movimientos y no
+  // representa operación de inventario → sin saldo posterior → «s/d».
+  // Nota: el modelo oficial solo cubre estados con despacho real — el
+  // modal BLOQUEA la exportación de vales 'pending' (guard existente), por
+  // lo que aquí no hay rama de proyección.
   // La lectura del saldo NO bloquea el documento: ante error, las líneas
   // quedan «s/d» y la nota al pie documenta la limitación.
   const saldosPorProducto: Record<string, SaldoPosteriorResultado> = {};
@@ -423,26 +422,20 @@ export async function fetchSc208SourceData(
   if (storeId && productIds.length > 0) {
     try {
       const ledger = await fetchMovimientosPorProducto(supabase, productIds, storeId);
-      // Σ cantidades del vale por producto (varias líneas del mismo SKU);
-      // negativa: el vale SALE del almacén. Solo se usa en la proyección.
+      // Σ cantidades del vale por producto (varias líneas del mismo SKU) —
+      // solo informativa para auditoría: el saldo proviene del ledger.
       const deltaPorProducto: Record<string, number> = {};
       for (const it of items || []) {
         if (!it.product_id) continue;
         deltaPorProducto[it.product_id] = (deltaPorProducto[it.product_id] || 0) + (it.quantity || 0);
       }
-      // 'pending' aún no descontó stock (En Revisión) → proyección.
-      // 'voided' (Anulado desde En Revisión) no generó movimientos y no
-      // representa operación de inventario → sin saldo posterior → «s/d».
-      const pendiente = vale.status === 'pending';
       for (const pid of productIds) {
         const movs: SaldoPosteriorMovement[] = ledger[pid] || [];
         saldosPorProducto[pid] = calcularSaldoPosterior({
           movimientos: movs,
           movimientosPropios: movimientosDeValeSalida(movs, vale.id),
-          // NEGATIVO: el vale SALE del almacén (misma regla que la venta en
-          // SC-2-12). Solo se usa en la proyección (pendiente de contabilizar).
           deltaDocumento: -(deltaPorProducto[pid] || 0),
-          pendienteContabilizar: pendiente,
+          pendienteContabilizar: false,
         });
       }
     } catch (e) {

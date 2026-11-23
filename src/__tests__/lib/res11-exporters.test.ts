@@ -474,10 +474,14 @@ describe('SC-2-08 — fetchSc208SourceData sin valores económicos en modo físi
     expect(model.saldoNota).toContain('no se inventa cifra');
   });
 
-  it('vale pendiente de contabilizar → proyección (saldo actual − cantidad del vale)', async () => {
+  it('vale anulado (voided, desde En Revisión) → sin saldo posterior: «s/d» documentado', async () => {
+    // El modelo oficial SC-2-08 solo cubre estados con despacho real — el
+    // modal bloquea 'pending' (guard existente). Un vale 'voided' nunca
+    // generó movimientos: no hay operación de inventario que documentar →
+    // «s/d» + nota al pie (NUNCA se presenta el saldo actual como si fuera
+    // el saldo del documento).
     supabaseMock.from.mockImplementation((table: string) => {
       if (table === 'stock_movements') {
-        // Sin movimientos propios (aún En Revisión): solo una compra previa.
         return chainLedger({
           data: [
             { id: 'm0', product_id: PID_SALDO, quantity_change: 50, movement_type: 'purchase', notes: null, reference_id: null, created_at: '2026-10-01T09:00:00Z' },
@@ -490,19 +494,17 @@ describe('SC-2-08 — fetchSc208SourceData sin valores económicos en modo físi
     const vale = mkVale({
       id: VALE_ID_SALDO,
       store_id: STORE_VALE,
-      status: 'pending',
+      status: 'voided',
       items: [
         { product_id: PID_SALDO, quantity: 5, unit_cost: 320.18, total_cost: 1600.9, products: { name: 'Azúcar 1 kg', sku: 'AZU-1K', unit_of_measure: 'unidades' } },
       ],
     });
     const source = await fetchSc208SourceData(vale, STORE_VALE);
-    expect(source.saldosPorProducto?.[PID_SALDO]).toEqual({
-      saldoAnterior: 50,
-      saldoPosterior: 45,
-      fuente: 'proyeccion',
-    });
+    // Sin movimientos propios ni proyección → limitación documentada:
+    expect(source.saldosPorProducto?.[PID_SALDO]?.fuente).toBe('limitacion');
     const model = buildSc208ModelData(source);
-    expect(model.saldoNota).toContain('proyección');
+    expect(model.lineas[0].saldoExistencia).toBe('s/d');
+    expect(model.saldoNota).toContain('no se inventa cifra');
   });
 });
 
@@ -550,13 +552,16 @@ describe('SC-2-08 — saldo en existencia según almacén (modelo)', () => {
     expect(model.saldoNota).toContain('no se inventa cifra');
   });
 
-  it('proyección → nota al pie de proyección (no se presenta como hecho)', () => {
+  it('el modelo SC-2-08 no anota proyecciones: solo limitaciones (estados con despacho real)', () => {
+    // El modelo oficial solo se genera sobre estados con despacho real — el
+    // modal bloquea 'pending'. La nota de «proyección» es exclusiva de los
+    // modelos que SÍ admiten pendientes (SC-2-04/SC-2-12).
     const model = buildSc208ModelData({
       entidadNombre: 'Tienda QA',
       vale: mkVale({ items: [itemAzucar(5)] }),
       saldosPorProducto: { [PID]: { saldoAnterior: 50, saldoPosterior: 42, fuente: 'proyeccion' } },
     });
-    expect(model.saldoNota).toContain('proyección');
+    expect(model.saldoNota).toBeUndefined();
   });
 
   it('el saldo es dato FÍSICO: visible también en la modalidad sin valorar', () => {
