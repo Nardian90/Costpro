@@ -957,7 +957,13 @@ export function ChatBot({ embedded = false, onConversationChange }: { embedded?:
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             role="dialog"
             aria-label="Chat con Darian"
-            aria-modal="true"
+            /* CP-UX-POLISH-002 (§3E · WCAG/ARIA): aria-modal=true declara el resto
+               de la página INERTA para lectores de pantalla. Solo es cierto en la
+               variante flotante (overlay fijo en esquina); en modo EMBEBIDO (Inicio)
+               el chat es un panel inline más del layout — declararlo modal era un
+               defecto de accesibilidad que además interfería con la gestión de Esc
+               de otros paneles. */
+            aria-modal={!embedded ? "true" : undefined}
             className={cn(
               "bg-background border border-border shadow-2xl rounded-2xl sm:rounded-[28px] flex flex-col overflow-hidden transition-all duration-300",
               embedded
