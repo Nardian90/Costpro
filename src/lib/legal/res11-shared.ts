@@ -20,6 +20,7 @@
 
 import type { jsPDF } from 'jspdf';
 import { drawScLogo } from './sc-logo';
+import type { SaldoPosteriorResultado } from '@/lib/inventory/saldo-posterior';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Paleta de impresión económica (tinta mínima)
@@ -69,6 +70,18 @@ export function formatRes11Money(value: number): string {
 export function formatRes11Quantity(value: number): string {
   if (!Number.isFinite(value)) return '';
   return quantityFormatter.format(canonical(value));
+}
+
+/**
+ * Celda «Saldo en existencia según almacén» común a los modelos que la
+ * muestran (SC-2-04, SC-2-08, SC-2-12): cifra derivada del submayor real o
+ * «s/d» cuando el historial disponible no permite determinar el saldo —
+ * jamás una cifra inventada (misión saldo 2026-11-07, extendida 2026-11-23).
+ * Fuente del tipo: src/lib/inventory/saldo-posterior.ts.
+ */
+export function formatRes11Saldo(saldo: SaldoPosteriorResultado | undefined): string {
+  if (!saldo || !Number.isFinite(saldo.saldoPosterior)) return 's/d';
+  return quantityFormatter.format(canonical(saldo.saldoPosterior));
 }
 
 /** Línea de cumplimentación manual (nunca «N/A», ceros ni guiones). */

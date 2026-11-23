@@ -2,7 +2,10 @@
 
 /**
  * ADNEGOCIO-UI 2026-11-23 · «Comparar productos» — vista analítica dedicada
- * (misión §5), alcanzable desde el botón del velocímetro del Inicio.
+ * (misión §5), ahora con UBICACIÓN OFICIAL en ANÁLISIS (misión Comparar
+ * Productos 2026-11-23: hoja del menú ANÁLISIS + botón del Ranking Comercial
+ * del Inicio) y tab «INFORME EJECUTIVO» con vista preliminar y exportación
+ * PDF mediante el patrón documental del Reporte de Entrega.
  *
  * PREGUNTA COMERCIAL: ¿qué productos se vendían más el mes pasado, cuáles se
  * están vendiendo más este mes y qué productos han perdido o ganado
@@ -19,21 +22,32 @@
  *    afirma agotamiento si el histórico es confiable (sin truncado y
  *    conciliado con la existencia autoritativa); si no, se dice expresamente
  *    que no hay información suficiente. NUNCA se inventan causas.
+ *  · Informe Ejecutivo: buildInformeEjecutivo (lib pura) — UNA sola fuente de
+ *    redacción y cifras para pantalla y PDF (informe-ejecutivo-pdf.ts).
  *
  * MONEDA: el ranking por ingresos usa la valoración canónica autorizada por
  * el sistema (CUP contable, tasa de cada venta, neto de devoluciones). No se
  * mezclan nominales CUP/USD ni se aplican tasas propias.
  *
- * NAVEGACIÓN: mantiene el diseño de ADNegocio (PageHeader, tokens, tabs sin
- * shadcn) con botón claro de regreso al Dashboard (ViewType 'dashboard').
+ * TABLA (misión §2): contenedor con scroll horizontal real (y vertical con
+ * techo), encabezado fijo al desplazarse, primera columna fija
+ * (.sticky-column-1) y ancho mínimo declarado — sin sacrificar información.
+ *
+ * PREVIEW (patrón Reporte de Entrega, §5): cache por firma de parámetros
+ * (tienda + ventanas + datos), doc.output('bloburl') en iframe, banner
+ * «desactualizado» + regeneración explícita, y descarga como acción separada.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowLeft,
+  ArrowLeftRight,
   ArrowDownRight,
   ArrowUpRight,
+  AlertTriangle,
   ChevronDown,
   ChevronRight,
+  Download,
+  FileText,
   Info,
   Loader2,
   Minus,
@@ -45,6 +59,7 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore, useUIStore } from '@/store';
+import { toast } from 'sonner';
 import { isAdminLevel } from '@/lib/roles';
 import { useStores } from '@/hooks/api/useStores';
 import { useProducts } from '@/hooks/api/useProducts';
@@ -60,6 +75,7 @@ import {
   type Evolucion,
   type ProductCatalogRow,
 } from '@/lib/product-comparison/compare';
+import { buildInformeEjecutivo, type InformeEjecutivo } from '@/lib/product-comparison/informe';
 import { previousMonthEquivalentWindow, toDateInputValue, type PeriodWindow } from '@/lib/sales-dashboard/periods';
 import type { Product } from '@/types';
 
@@ -73,6 +89,9 @@ const EVOLUCION_TONE: Record<Evolucion, string> = {
 };
 
 type SortId = 'posActual' | 'posAnterior' | 'ventasActuales' | 'ventasAnteriores' | 'unidadesActuales' | 'difCup' | 'varPct' | 'stockActual';
+
+/** Tabs de la vista (misión §3): comparación analítica + informe ejecutivo. */
+type ComparisonTab = 'comparacion' | 'informe';
 
 function fmtUnidades(n: number, um: string | null): string {
   return `${n.toLocaleString('es-CU')} ${um ?? 'u'}`;
@@ -237,6 +256,30 @@ function ProductDiagnosis({ row, storeId, desdeIso, hastaIso }: {
   );
 }
 
+/** Hallazgo del informe en pantalla (misión §3.2.H: hecho→evidencia→implicación→acción). */
+function HallazgoCard({ h, index }: { h: InformeEjecutivo['hallazgos'][number]; index: number }) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-3 space-y-1.5" data-testid={`informe-hallazgo-${index}`}>
+      <p className="text-xs font-black text-foreground flex items-start gap-1.5">
+        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-black shrink-0 mt-0.5">{index + 1}</span>
+        {h.titulo}
+      </p>
+      <p className="text-[11px] leading-relaxed text-foreground">
+        <span className="font-black uppercase text-[9px] tracking-widest text-muted-foreground mr-1">Hecho:</span>{h.hallazgo}
+      </p>
+      <p className="text-[11px] leading-relaxed text-foreground">
+        <span className="font-black uppercase text-[9px] tracking-widest text-muted-foreground mr-1">Evidencia:</span><span className="tabular-nums">{h.evidencia}</span>
+      </p>
+      <p className="text-[11px] leading-relaxed text-muted-foreground">
+        <span className="font-black uppercase text-[9px] tracking-widest text-muted-foreground mr-1">Posible implicación:</span>{h.implicacion}
+      </p>
+      <p className="text-[11px] leading-relaxed text-foreground border-t border-border/60 pt-1.5">
+        <span className="font-black uppercase text-[9px] tracking-widest text-primary mr-1">Acción a evaluar:</span>{h.accion}
+      </p>
+    </div>
+  );
+}
+
 /** Vista principal. */
 export default function ProductComparisonView() {
   const { user } = useAuthStore();
@@ -278,6 +321,9 @@ export default function ProductComparisonView() {
     const topAnterior = (q.data.anterior.products?.top_net ?? []).map((r) => ({ ...r, net_cup: r.net_cup ?? 0 }));
     return buildComparison(topActual, topAnterior, catalogo, q.data.ventasEnPeriodoActual);
   }, [q.data, catalogo]);
+
+  // ── Tabs (misión §3) ──
+  const [activeTab, setActiveTab] = useState<ComparisonTab>('comparacion');
 
   // ── Interacción de la tabla: búsqueda, filtro de evolución, orden ──
   const [search, setSearch] = useState('');
@@ -334,6 +380,113 @@ export default function ProductComparisonView() {
     return m;
   }, [rows]);
 
+  // ══ INFORME EJECUTIVO (patrón Reporte de Entrega §5) ══
+  // Cache por firma: TIENDA + ventanas + updatedAt + hash compacto de las
+  // filas → cualquier cambio de parámetros/datos marca el informe «stale».
+  const informeSignature = useMemo(() => JSON.stringify({
+    storeId,
+    actual: `${toDateInputValue(ventana.from)}|${toDateInputValue(ventana.to)}`,
+    anterior: `${toDateInputValue(ventanaAnterior.from)}|${toDateInputValue(ventanaAnterior.to)}`,
+    updatedAt: q.data?.updatedAt ?? null,
+    rows: rows.map((r) => [r.productId, r.posActual, r.posAnterior, r.ventasActuales, r.ventasAnteriores, r.unidadesActuales, r.evolucion, r.stockActual]),
+  }), [storeId, ventana, ventanaAnterior, q.data?.updatedAt, rows]);
+
+  const [informe, setInforme] = useState<InformeEjecutivo | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const informeSigRef = useRef<string | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
+  const buildingRef = useRef(false);
+
+  const revokePreview = useCallback(() => {
+    if (previewUrlRef.current) {
+      try { URL.revokeObjectURL(String(previewUrlRef.current)); } catch {}
+      previewUrlRef.current = null;
+    }
+    informeSigRef.current = null;
+    setInforme(null);
+    setPreviewUrl(null);
+  }, []);
+
+  // Libera el blob al desmontar la vista (misma regla del Reporte de Entrega).
+  useEffect(() => () => {
+    if (previewUrlRef.current) { try { URL.revokeObjectURL(String(previewUrlRef.current)); } catch {} }
+  }, []);
+
+  const generarInforme = useCallback(async (force = false) => {
+    if (!resumen || rows.length === 0) return;
+    if (buildingRef.current) return;
+    // Cache vigente: la firma de la vista coincide con la del documento.
+    if (!force && previewUrlRef.current && informeSigRef.current === informeSignature) return;
+    buildingRef.current = true;
+    setPreviewLoading(true);
+    setPreviewError(null);
+    try {
+      // UNA fuente de redacción/cifras: el módulo puro consume rows/resumen.
+      const informeEjecutivo = buildInformeEjecutivo({
+        rows,
+        resumen,
+        generadoEl: new Date().toISOString(),
+        meta: {
+          entidadNombre: activeStore?.name ?? 'Tienda activa',
+          periodoActual: { desde: toDateInputValue(ventana.from), hasta: toDateInputValue(ventana.to) },
+          periodoComparacion: { desde: toDateInputValue(ventanaAnterior.from), hasta: toDateInputValue(ventanaAnterior.to) },
+          ambito: activeStore?.name ?? 'tienda activa',
+        },
+      });
+      // Carga DIFERIDA del generador PDF (bundle gate: jspdf fuera del chunk inicial).
+      const { buildInformeEjecutivoPdf } = await import('./informe-ejecutivo-pdf');
+      const doc = await buildInformeEjecutivoPdf(informeEjecutivo);
+      const url = doc.output('bloburl');
+      const old = previewUrlRef.current;
+      previewUrlRef.current = String(url);
+      informeSigRef.current = informeSignature;
+      setInforme(informeEjecutivo);
+      setPreviewUrl(String(url));
+      if (old) { try { URL.revokeObjectURL(String(old)); } catch {} }
+    } catch (err: unknown) {
+      const e = err as { message?: string };
+      setPreviewError(e?.message || 'No se pudo generar el informe.');
+    } finally {
+      buildingRef.current = false;
+      setPreviewLoading(false);
+    }
+  }, [resumen, rows, activeStore, ventana, ventanaAnterior, informeSignature]);
+
+  // Al abrir el tab del informe con datos: construir si no hay cache vigente.
+  useEffect(() => {
+    if (activeTab === 'informe' && rows.length > 0 && resumen) {
+      void generarInforme(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
+
+  /** ¿La vista preliminar corresponde a los parámetros/datos ACTUALES? */
+  const informeStale = !!informe && informeSigRef.current !== null && informeSigRef.current !== informeSignature;
+
+  const exportarInforme = useCallback(async () => {
+    if (!informe) {
+      toast.info('Genera el informe primero con «Generar informe».');
+      return;
+    }
+    if (informeSigRef.current !== informeSignature) {
+      toast.info('El informe está desactualizado: pulsa «Actualizar vista preliminar» y exporta después.');
+      return;
+    }
+    setExporting(true);
+    try {
+      const { exportInformeEjecutivoPdf } = await import('./informe-ejecutivo-pdf');
+      await exportInformeEjecutivoPdf(informe);
+      toast.success('Informe ejecutivo exportado (PDF).');
+    } catch {
+      toast.error('No se pudo exportar el PDF del informe. Intente nuevamente.');
+    } finally {
+      setExporting(false);
+    }
+  }, [informe, informeSignature]);
+
   return (
     <div className="space-y-5 max-w-6xl mx-auto px-3 sm:px-6 py-4" data-testid="product-comparison-view">
       {/* Encabezado con regreso claro al Dashboard (misión §5) */}
@@ -346,7 +499,9 @@ export default function ProductComparisonView() {
         >
           <ArrowLeft className="w-4 h-4" /> Volver al Dashboard
         </button>
-        <h1 className="text-2xl font-black uppercase tracking-tighter text-foreground mt-1">Comparar productos</h1>
+        {/* GATE 16 (misión BI 2026-11-23): UNA sola h1 por página — la pinta el
+            shell Header con el label oficial de la navegación. La vista usa h2. */}
+        <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground mt-1">Comparar productos</h2>
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
           Ranking comercial: mes en curso vs mismo tramo del mes anterior
         </p>
@@ -405,186 +560,353 @@ export default function ProductComparisonView() {
         </div>
       ) : (
         <>
-          {resumen && <ResumenEjecutivo resumen={resumen} rows={rows} />}
-
-          {/* Filtros por evolución (misión §5.3: clasificaciones comprensibles) */}
-          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por evolución">
-            <button
-              type="button"
-              onClick={() => setEvolucionFilter('TODOS')}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide border min-h-[36px] transition-all',
-                evolucionFilter === 'TODOS' ? 'bg-primary/10 border-primary/40 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-muted',
-              )}
-            >
-              Todos ({rows.length})
-            </button>
-            {(Object.keys(EVOLUCION_LABEL) as Evolucion[]).map((ev) => (
+          {/* ── Tab bar (patrón Reporte de Entrega — hand-rolled, mobile-safe) ── */}
+          <div className="flex border-b border-border bg-card rounded-t-xl overflow-hidden" role="tablist" aria-label="Secciones de Comparar Productos" data-testid="comparison-tabs">
+            {([
+              ['comparacion', 'Comparación', ArrowLeftRight],
+              ['informe', 'Informe Ejecutivo', FileText],
+            ] as Array<[ComparisonTab, string, React.ElementType]>).map(([id, label, Icon]) => (
               <button
-                key={ev}
-                type="button"
-                onClick={() => setEvolucionFilter(ev)}
-                aria-pressed={evolucionFilter === ev}
+                key={id}
+                role="tab"
+                id={`pc-tab-${id}`}
+                aria-selected={activeTab === id}
+                aria-controls={`pc-panel-${id}`}
+                onClick={() => setActiveTab(id)}
                 className={cn(
-                  'px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide border min-h-[36px] transition-all',
-                  evolucionFilter === ev ? 'bg-primary/10 border-primary/40 text-primary' : cn('border-border bg-background hover:bg-muted', EVOLUCION_TONE[ev]),
+                  'flex-1 py-2.5 px-3 text-[11px] sm:text-xs font-black uppercase tracking-widest transition-colors border-b-2 -mb-px flex items-center justify-center gap-1.5 min-h-[44px]',
+                  activeTab === id
+                    ? 'border-primary text-primary bg-primary/5'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/30',
                 )}
+                data-testid={`comparison-tab-${id}`}
               >
-                {EVOLUCION_LABEL[ev]} ({evolucionCounts.get(ev) ?? 0})
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{label}</span>
+                {id === 'informe' && informeStale && (
+                  <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-warning shrink-0" title="El informe necesita regenerarse con los datos actuales" />
+                )}
               </button>
             ))}
           </div>
 
-          {/* Búsqueda */}
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nombre o SKU…"
-              aria-label="Buscar producto por nombre o SKU"
-              className="w-full h-11 pl-9 pr-3 rounded-xl border border-border bg-card text-sm outline-none focus:ring-2 focus:ring-ring"
-              data-testid="comparison-search"
-            />
-          </div>
+          <div
+            className="border border-t-0 border-border rounded-b-xl p-3 sm:p-4 space-y-4"
+            role="tabpanel"
+            id={`pc-panel-${activeTab}`}
+            aria-labelledby={`pc-tab-${activeTab}`}
+            data-testid={`comparison-panel-${activeTab}`}
+          >
+            {activeTab === 'comparacion' ? (
+              <>
+                {resumen && <ResumenEjecutivo resumen={resumen} rows={rows} />}
 
-          {/* Tabla analítica (misión §5.2) — ingresos en valoración canónica CUP */}
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden" data-testid="comparison-table">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                    <th className="px-3 py-2.5 min-w-[180px]">Producto</th>
-                    <th className="px-2.5 py-2.5 text-center">{sortBtn('posActual', 'Pos. actual')}</th>
-                    <th className="px-2.5 py-2.5 text-center">{sortBtn('posAnterior', 'Pos. anterior')}</th>
-                    <th className="px-2.5 py-2.5 text-right">{sortBtn('ventasActuales', 'Ventas act.')}</th>
-                    <th className="px-2.5 py-2.5 text-right">{sortBtn('ventasAnteriores', 'Ventas ant.')}</th>
-                    <th className="px-2.5 py-2.5 text-right">{sortBtn('unidadesActuales', 'Unid. act.')}</th>
-                    <th className="px-2.5 py-2.5 text-right">Unid. ant.</th>
-                    <th className="px-2.5 py-2.5 text-right">{sortBtn('difCup', 'Variación')}</th>
-                    <th className="px-2.5 py-2.5 text-right">{sortBtn('stockActual', 'Existencia')}</th>
-                    <th className="px-2.5 py-2.5">Evolución</th>
-                    <th className="px-2 py-2.5" aria-label="Expandir diagnóstico" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRows.map((r) => (
-                    <React.Fragment key={r.productId}>
-                      <tr
-                        className={cn(
-                          'border-b border-border/50 text-[12px] hover:bg-muted/30 transition-colors',
-                          expanded === r.productId && 'bg-muted/20',
-                        )}
-                        data-testid={`comparison-row-${r.productId}`}
-                      >
-                        <td className="px-3 py-2 min-w-[180px]">
-                          <span className="font-bold text-foreground block truncate max-w-[220px]" title={r.name}>{r.name}</span>
-                          {r.sku && <span className="text-[10px] font-mono text-muted-foreground uppercase">{r.sku}</span>}
-                        </td>
-                        <td className="px-2.5 py-2 text-center tabular-nums font-black text-foreground">
-                          {r.posActual ?? <span className="text-muted-foreground/50">—</span>}
-                        </td>
-                        <td className="px-2.5 py-2 text-center tabular-nums text-muted-foreground">
-                          {r.posAnterior ?? <span className="text-muted-foreground/50">—</span>}
-                        </td>
-                        <td className="px-2.5 py-2 text-right tabular-nums font-bold text-foreground whitespace-nowrap">
-                          {formatCurrency(r.ventasActuales)}
-                          <span className="ml-1 text-[9px] text-muted-foreground">CUP</span>
-                        </td>
-                        <td className="px-2.5 py-2 text-right tabular-nums text-muted-foreground whitespace-nowrap">
-                          {formatCurrency(r.ventasAnteriores)}
-                          <span className="ml-1 text-[9px] text-muted-foreground/60">CUP</span>
-                        </td>
-                        <td className="px-2.5 py-2 text-right tabular-nums text-foreground whitespace-nowrap">
-                          {fmtUnidades(r.unidadesActuales, r.unidadMedida)}
-                          {r.devolucionesActuales > 0 && (
-                            <span className="block text-[9px] text-destructive">−{fmtUnidades(r.devolucionesActuales, r.unidadMedida)} dev.</span>
-                          )}
-                        </td>
-                        <td className="px-2.5 py-2 text-right tabular-nums text-muted-foreground whitespace-nowrap">
-                          {fmtUnidades(r.unidadesAnteriores, r.unidadMedida)}
-                        </td>
-                        <td className="px-2.5 py-2 text-right tabular-nums whitespace-nowrap">
-                          {r.varPct === null ? (
-                            <span className="text-muted-foreground text-[10px] uppercase" title="Sin base: el período anterior no registró ventas">sin base</span>
-                          ) : (
-                            <span className={cn(
-                              'inline-flex items-center gap-1 font-bold',
-                              r.difCup > 0 ? 'text-success' : r.difCup < 0 ? 'text-destructive' : 'text-muted-foreground',
-                            )}>
-                              {r.difCup > 0 ? <ArrowUpRight className="w-3 h-3" /> : r.difCup < 0 ? <ArrowDownRight className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
-                              {r.varPct > 0 ? '+' : ''}{r.varPct}%
-                              <span className="text-[9px] text-muted-foreground font-normal">
-                                ({r.difCup > 0 ? '+' : ''}{formatCurrency(r.difCup)})
-                              </span>
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-2.5 py-2 text-right tabular-nums">
-                          {r.stockActual === null ? (
-                            <span className="text-muted-foreground/60">N/D</span>
-                          ) : (
-                            <span className={cn('font-bold', r.stockActual <= 0 ? 'text-destructive' : 'text-foreground')}>
-                              {fmtUnidades(r.stockActual, r.unidadMedida)}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-2.5 py-2">
-                          <span className={cn('inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide whitespace-nowrap', EVOLUCION_TONE[r.evolucion])}>
-                            {EVOLUCION_LABEL[r.evolucion]}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2">
-                          <button
-                            type="button"
-                            onClick={() => setExpanded(expanded === r.productId ? null : r.productId)}
-                            aria-expanded={expanded === r.productId}
-                            aria-label={`Diagnóstico de inventario de ${r.name}`}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                            data-testid={`comparison-expand-${r.productId}`}
-                          >
-                            {expanded === r.productId ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                          </button>
-                        </td>
-                      </tr>
-                      {expanded === r.productId && (
-                        <tr>
-                          <td colSpan={11} className="px-3 pb-3">
-                            <ProductDiagnosis row={r} storeId={storeId} desdeIso={desdeIso} hastaIso={hastaIso} />
-                          </td>
-                        </tr>
+                {/* Filtros por evolución (misión §5.3: clasificaciones comprensibles) */}
+                <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por evolución">
+                  <button
+                    type="button"
+                    onClick={() => setEvolucionFilter('TODOS')}
+                    className={cn(
+                      'px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide border min-h-[36px] transition-all',
+                      evolucionFilter === 'TODOS' ? 'bg-primary/10 border-primary/40 text-primary' : 'border-border bg-background text-muted-foreground hover:bg-muted',
+                    )}
+                  >
+                    Todos ({rows.length})
+                  </button>
+                  {(Object.keys(EVOLUCION_LABEL) as Evolucion[]).map((ev) => (
+                    <button
+                      key={ev}
+                      type="button"
+                      onClick={() => setEvolucionFilter(ev)}
+                      aria-pressed={evolucionFilter === ev}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wide border min-h-[36px] transition-all',
+                        evolucionFilter === ev ? 'bg-primary/10 border-primary/40 text-primary' : cn('border-border bg-background hover:bg-muted', EVOLUCION_TONE[ev]),
                       )}
-                    </React.Fragment>
+                    >
+                      {EVOLUCION_LABEL[ev]} ({evolucionCounts.get(ev) ?? 0})
+                    </button>
                   ))}
-                  {filteredRows.length === 0 && (
-                    <tr>
-                      <td colSpan={11} className="px-3 py-8 text-center text-xs font-black uppercase tracking-widest text-muted-foreground">
-                        Ningún producto coincide con la búsqueda o el filtro activo
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                </div>
 
-          {/* Notas metodológicas (misión §5.2/§7) */}
-          <div className="flex items-start gap-2 text-[10px] leading-relaxed text-muted-foreground rounded-xl border border-border bg-muted/20 p-3">
-            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
-            <div>
-              <p>
-                Ingresos en la valoración canónica del sistema (CUP contable a la tasa de cada venta, netos de descuento y de
-                devoluciones; anulados y borradores excluidos por el agregado oficial). No se mezclan nominales CUP/USD ni se
-                aplican tasas propias. Las unidades se comparan por producto con su unidad de medida — nunca como cantidades
-                agregadas entre productos incompatibles.
-              </p>
-              <p className="mt-1">
-                La comparación reúne el Top (20) del período actual y el Top (20) del anterior: un líder anterior con ventas
-                cero hoy permanece visible. El diagnóstico de inventario usa el mayor real de stock_movements; solo afirma
-                agotamiento cuando el histórico es confiable y concilia con la existencia autoritativa.
-              </p>
-            </div>
+                {/* Búsqueda */}
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Buscar por nombre o SKU…"
+                    aria-label="Buscar producto por nombre o SKU"
+                    className="w-full h-11 pl-9 pr-3 rounded-xl border border-border bg-card text-sm outline-none focus:ring-2 focus:ring-ring"
+                    data-testid="comparison-search"
+                  />
+                </div>
+
+                {/*
+                  Tabla analítica (misión §2, rediseño 2026-11-23):
+                  · scroll horizontal REAL dentro del contenedor (overflow-x-auto) —
+                    las columnas NO desbordan la página;
+                  · scroll vertical con techo (max-h) + thead sticky → encabezados
+                    siempre visibles al recorrer conjuntos amplios;
+                  · primera columna FIJA (sticky-column-1) con sombra de separación;
+                  · min-w declarado en la tabla: no se comprime ni pierde legibilidad.
+                */}
+                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden" data-testid="comparison-table">
+                  <div className="overflow-x-auto overflow-y-auto max-h-[72vh]">
+                    <table className="w-full min-w-[880px] text-left sticky-column-1">
+                      <thead className="sticky top-0 z-20">
+                        <tr className="border-b border-border bg-muted/95 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                          <th className="px-3 py-2.5 min-w-[180px] sticky top-0 z-30 bg-muted/95">Producto</th>
+                          <th className="px-2.5 py-2.5 text-center">{sortBtn('posActual', 'Pos. actual')}</th>
+                          <th className="px-2.5 py-2.5 text-center">{sortBtn('posAnterior', 'Pos. anterior')}</th>
+                          <th className="px-2.5 py-2.5 text-right">{sortBtn('ventasActuales', 'Ventas act.')}</th>
+                          <th className="px-2.5 py-2.5 text-right">{sortBtn('ventasAnteriores', 'Ventas ant.')}</th>
+                          <th className="px-2.5 py-2.5 text-right">{sortBtn('unidadesActuales', 'Unid. act.')}</th>
+                          <th className="px-2.5 py-2.5 text-right">Unid. ant.</th>
+                          <th className="px-2.5 py-2.5 text-right">{sortBtn('difCup', 'Variación')}</th>
+                          <th className="px-2.5 py-2.5 text-right">{sortBtn('stockActual', 'Existencia')}</th>
+                          <th className="px-2.5 py-2.5">Evolución</th>
+                          <th className="px-2 py-2.5" aria-label="Expandir diagnóstico" />
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredRows.map((r) => (
+                          <React.Fragment key={r.productId}>
+                            <tr
+                              className={cn(
+                                'border-b border-border/50 text-[12px] hover:bg-muted/30 transition-colors',
+                                expanded === r.productId && 'bg-muted/20',
+                              )}
+                              data-testid={`comparison-row-${r.productId}`}
+                            >
+                              <td className="px-3 py-2 min-w-[180px] bg-card">
+                                <span className="font-bold text-foreground block truncate max-w-[220px]" title={r.name}>{r.name}</span>
+                                {r.sku && <span className="text-[10px] font-mono text-muted-foreground uppercase">{r.sku}</span>}
+                              </td>
+                              <td className="px-2.5 py-2 text-center tabular-nums font-black text-foreground">
+                                {r.posActual ?? <span className="text-muted-foreground/50">—</span>}
+                              </td>
+                              <td className="px-2.5 py-2 text-center tabular-nums text-muted-foreground">
+                                {r.posAnterior ?? <span className="text-muted-foreground/50">—</span>}
+                              </td>
+                              <td className="px-2.5 py-2 text-right tabular-nums font-bold text-foreground whitespace-nowrap">
+                                {formatCurrency(r.ventasActuales)}
+                                <span className="ml-1 text-[9px] text-muted-foreground">CUP</span>
+                              </td>
+                              <td className="px-2.5 py-2 text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                                {formatCurrency(r.ventasAnteriores)}
+                                <span className="ml-1 text-[9px] text-muted-foreground/60">CUP</span>
+                              </td>
+                              <td className="px-2.5 py-2 text-right tabular-nums text-foreground whitespace-nowrap">
+                                {fmtUnidades(r.unidadesActuales, r.unidadMedida)}
+                                {r.devolucionesActuales > 0 && (
+                                  <span className="block text-[9px] text-destructive">−{fmtUnidades(r.devolucionesActuales, r.unidadMedida)} dev.</span>
+                                )}
+                              </td>
+                              <td className="px-2.5 py-2 text-right tabular-nums text-muted-foreground whitespace-nowrap">
+                                {fmtUnidades(r.unidadesAnteriores, r.unidadMedida)}
+                              </td>
+                              <td className="px-2.5 py-2 text-right tabular-nums whitespace-nowrap">
+                                {r.varPct === null ? (
+                                  <span className="text-muted-foreground text-[10px] uppercase" title="Sin base: el período anterior no registró ventas">sin base</span>
+                                ) : (
+                                  <span className={cn(
+                                    'inline-flex items-center gap-1 font-bold',
+                                    r.difCup > 0 ? 'text-success' : r.difCup < 0 ? 'text-destructive' : 'text-muted-foreground',
+                                  )}>
+                                    {r.difCup > 0 ? <ArrowUpRight className="w-3 h-3" /> : r.difCup < 0 ? <ArrowDownRight className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                                    {r.varPct > 0 ? '+' : ''}{r.varPct}%
+                                    <span className="text-[9px] text-muted-foreground font-normal">
+                                      ({r.difCup > 0 ? '+' : ''}{formatCurrency(r.difCup)})
+                                    </span>
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-2.5 py-2 text-right tabular-nums">
+                                {r.stockActual === null ? (
+                                  <span className="text-muted-foreground/60">N/D</span>
+                                ) : (
+                                  <span className={cn('font-bold', r.stockActual <= 0 ? 'text-destructive' : 'text-foreground')}>
+                                    {fmtUnidades(r.stockActual, r.unidadMedida)}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="px-2.5 py-2">
+                                <span className={cn('inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wide whitespace-nowrap', EVOLUCION_TONE[r.evolucion])}>
+                                  {EVOLUCION_LABEL[r.evolucion]}
+                                </span>
+                              </td>
+                              <td className="px-2 py-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setExpanded(expanded === r.productId ? null : r.productId)}
+                                  aria-expanded={expanded === r.productId}
+                                  aria-label={`Diagnóstico de inventario de ${r.name}`}
+                                  className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                  data-testid={`comparison-expand-${r.productId}`}
+                                >
+                                  {expanded === r.productId ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                                </button>
+                              </td>
+                            </tr>
+                            {expanded === r.productId && (
+                              <tr>
+                                <td colSpan={11} className="px-3 pb-3">
+                                  <ProductDiagnosis row={r} storeId={storeId} desdeIso={desdeIso} hastaIso={hastaIso} />
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                        {filteredRows.length === 0 && (
+                          <tr>
+                            <td colSpan={11} className="px-3 py-8 text-center text-xs font-black uppercase tracking-widest text-muted-foreground">
+                              Ningún producto coincide con la búsqueda o el filtro activo
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Notas metodológicas (misión §5.2/§7) */}
+                <div className="flex items-start gap-2 text-[10px] leading-relaxed text-muted-foreground rounded-xl border border-border bg-muted/20 p-3">
+                  <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
+                  <div>
+                    <p>
+                      Ingresos en la valoración canónica del sistema (CUP contable a la tasa de cada venta, netos de descuento y de
+                      devoluciones; anulados y borradores excluidos por el agregado oficial). No se mezclan nominales CUP/USD ni se
+                      aplican tasas propias. Las unidades se comparan por producto con su unidad de medida — nunca como cantidades
+                      agregadas entre productos incompatibles.
+                    </p>
+                    <p className="mt-1">
+                      La comparación reúne el Top (20) del período actual y el Top (20) del anterior: un líder anterior con ventas
+                      cero hoy permanece visible. El diagnóstico de inventario usa el mayor real de stock_movements; solo afirma
+                      agotamiento cuando el histórico es confiable y concilia con la existencia autoritativa.
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              /* ══ TAB: INFORME EJECUTIVO (misión §3-§5) ══ */
+              <div className="space-y-4" data-testid="informe-ejecutivo">
+                {/* Controles (flujo funcional: generar → previsualizar → exportar) */}
+                <div className="flex flex-wrap items-center gap-2" data-testid="informe-controls">
+                  <button
+                    type="button"
+                    onClick={() => void generarInforme(true)}
+                    disabled={previewLoading}
+                    className="inline-flex items-center gap-1.5 px-4 h-10 rounded-xl bg-primary text-primary-foreground text-[11px] font-black uppercase tracking-widest min-h-[40px] disabled:opacity-50"
+                    data-testid="informe-generar"
+                  >
+                    {previewLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                    Generar informe
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void generarInforme(true)}
+                    disabled={previewLoading || !informe}
+                    className={cn(
+                      'inline-flex items-center gap-1.5 px-4 h-10 rounded-xl border text-[11px] font-black uppercase tracking-widest min-h-[40px] disabled:opacity-40',
+                      informeStale ? 'border-warning/50 bg-warning/10 text-warning' : 'border-border text-foreground hover:bg-muted',
+                    )}
+                    title={informeStale ? 'Los datos o filtros cambiaron: regenera el informe' : 'Volver a construir el documento con los datos actuales'}
+                    data-testid="informe-actualizar"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" /> Actualizar vista preliminar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void exportarInforme()}
+                    disabled={!informe || informeStale || exporting}
+                    className="inline-flex items-center gap-1.5 px-4 h-10 rounded-xl border border-border text-[11px] font-black uppercase tracking-widest min-h-[40px] hover:bg-muted disabled:opacity-40"
+                    title={!informe ? 'Genera el informe primero' : informeStale ? 'Actualiza la vista preliminar antes de exportar' : 'Descargar el PDF oficial del informe'}
+                    data-testid="informe-exportar"
+                  >
+                    {exporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} Exportar PDF
+                  </button>
+                  <span className={cn('inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest', informeStale ? 'text-warning' : informe ? 'text-success' : 'text-muted-foreground')} data-testid="informe-estado">
+                    <span aria-hidden="true" className={cn('w-1.5 h-1.5 rounded-full', informeStale ? 'bg-warning' : informe ? 'bg-success' : 'bg-muted-foreground/40')} />
+                    {informeStale ? 'Informe desactualizado — regenéralo con los datos actuales' : informe ? 'Informe actualizado con los datos actuales' : 'Informe no generado todavía'}
+                  </span>
+                </div>
+
+                {/* Contenido redactado en pantalla (misma fuente que el PDF) */}
+                {informe && (
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-border bg-card p-3" data-testid="informe-resumen">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Resumen ejecutivo</p>
+                      <p className="text-[12px] leading-relaxed text-foreground">{informe.resumenEjecutivo.parrafo}</p>
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {informe.resumenEjecutivo.cifras.map((c) => (
+                          <span key={c.label} className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/30 px-2 py-1 text-[10px] text-muted-foreground">
+                            <span className="font-black text-foreground tabular-nums">{c.value}</span> {c.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2" data-testid="informe-hallazgos">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Hallazgos y recomendaciones (hecho → evidencia → implicación → acción)</p>
+                      {informe.hallazgos.map((h, i) => <HallazgoCard key={h.titulo} h={h} index={i} />)}
+                    </div>
+
+                    <div className="rounded-xl border border-border bg-muted/20 p-3" data-testid="informe-conclusion">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1.5">Conclusión ejecutiva</p>
+                      {informe.conclusion.map((p, i) => (
+                        <p key={i} className="text-[12px] leading-relaxed text-foreground mt-1 first:mt-0">{p}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Banner de obsolescencia (nunca mostrar silenciosamente datos viejos) */}
+                {informeStale && (
+                  <div role="status" className="flex flex-wrap items-center gap-2 rounded-xl border border-warning/30 bg-warning/5 px-3 py-2.5 text-xs text-warning" data-testid="informe-stale-banner">
+                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                    <span className="flex-1 min-w-[200px]">
+                      Cambiaron los datos, los períodos o la tienda: la vista preliminar corresponde a la comparación anterior. Regenera antes de considerar el documento vigente.
+                    </span>
+                    <button onClick={() => void generarInforme(true)} className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-1.5 text-[10px] font-black uppercase hover:bg-warning/20 shrink-0 min-h-[36px]">
+                      Regenerar informe
+                    </button>
+                  </div>
+                )}
+
+                {/* Vista preliminar (mismo documento que se exporta — blob del builder compartido) */}
+                {previewLoading ? (
+                  <div className="p-10 text-center text-muted-foreground" aria-live="polite">
+                    <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                    <p className="text-xs">Generando vista preliminar del informe…</p>
+                  </div>
+                ) : previewError ? (
+                  <div className="p-6 text-center space-y-2" role="alert">
+                    <AlertTriangle className="w-8 h-8 mx-auto text-destructive/60" />
+                    <p className="text-xs text-destructive">{previewError}</p>
+                    <button onClick={() => void generarInforme(true)} className="rounded-lg border border-border/40 px-3 py-2 text-[10px] font-black uppercase hover:bg-muted min-h-[36px]">Reintentar</button>
+                  </div>
+                ) : previewUrl ? (
+                  <div className="rounded-lg overflow-hidden border border-border/40 bg-white" style={{ height: 'min(72vh, 900px)' }} data-testid="informe-preview">
+                    <iframe
+                      key={previewUrl}
+                      src={previewUrl}
+                      title="Vista previa del Informe Ejecutivo de Comparación de Productos"
+                      className="w-full h-full"
+                    />
+                  </div>
+                ) : (
+                  <div className="p-8 text-center space-y-2 rounded-xl border border-dashed border-border">
+                    <FileText className="w-8 h-8 mx-auto text-muted-foreground/40" />
+                    <p className="text-xs text-muted-foreground">Pulsa «Generar informe» para construir el documento y ver la vista preliminar.</p>
+                  </div>
+                )}
+                <p className="text-[9px] text-muted-foreground text-center">
+                  La exportación del PDF es una acción separada y explícita; la vista preliminar no descarga nada. El documento completo (tablas por comportamiento, hallazgos y conclusión) se construye con la misma fuente de datos que esta pantalla.
+                </p>
+              </div>
+            )}
           </div>
         </>
       )}

@@ -144,6 +144,7 @@ describe('situacionStock — etiquetas de inventario (misión §5.4)', () => {
     ventasActuales: 0, ventasAnteriores: 0, unidadesActuales: 0, unidadesAnteriores: 0,
     devolucionesActuales: 0, devolucionesAnteriores: 0, difCup: 0, varPct: null,
     stockActual: null, unidadMedida: null, evolucion: 'dejo_de_venderse' as const,
+    participacionActual: null, // misión 2026-11-23: participación oficial opcional
   };
 
   it('stock cero + sin ventas → «Stock actual agotado» (sin afirmar causa)', () => {

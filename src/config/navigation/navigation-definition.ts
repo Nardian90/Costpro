@@ -15,8 +15,10 @@
  *                 comisión · pagos · nóminas de salario SC-4-06)
  *   ANÁLISIS    → Dashboard (Centro de Inteligencia Empresarial — hoja
  *                 primera, ubicación oficial de los dashboards) ·
- *                 Análisis de datos · Inteligencia Cambiaria · Tablón de
- *                 Noticias · Reportes · Análisis ABC
+ *                 Comparar Productos (inteligencia comercial con informe
+ *                 ejecutivo — misión 2026-11-23) · Análisis de datos ·
+ *                 Inteligencia Cambiaria · Tablón de Noticias · Reportes ·
+ *                 Análisis ABC
  *   SISTEMA     → Ajustes · Usuarios · Roles · Salud · Monitoreo · Auditoría ·
  *                 Gestión RSS · Cierre Fiscal   (admin)
  *   AYUDA       → Centro de Ayuda
@@ -67,6 +69,7 @@ import {
   ReceiptText, Coins, Tags,
   Swords, Wand2, FolderOpen, Upload, Save, Download, PenTool, FileJson, CalendarClock, SlidersHorizontal,
   UsersRound, Settings2,
+  GitCompareArrows,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -682,6 +685,28 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         navClass: 'primary',
         roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
         keywords: ['dashboard', 'centro de inteligencia', 'business intelligence', 'resumen ejecutivo', 'tienda', 'kpi', 'indicadores', 'consolidado', 'resumen', 'análisis de ventas', 'ventas', 'productos', 'comportamiento', 'insights', 'desviaciones', 'alertas'],
+      },
+      {
+        // MISIÓN COMPARAR PRODUCTOS (2026-11-23): ubicación OFICIAL de la
+        // herramienta de inteligencia comercial «Comparar Productos». Antes la
+        // vista solo era alcanzable desde el botón del Ranking Comercial del
+        // Inicio — sin registro en el árbol el breadcrumb caía en el fallback
+        // ("product comparison" + "Módulo No Disponible"). Ahora es hoja de
+        // ANÁLISIS (misma vista ViewType 'product-comparison', misma ruta
+        // /?view=product-comparison; el botón del Inicio se conserva).
+        //
+        // Roles: declara EXPLÍCITAMENTE TODOS los roles operativos para
+        // PRESERVAR el acceso universal efectivo (antes cualquier rol llegaba
+        // por el botón del Inicio; heredar de ANÁLISIS [admin, manager,
+        // encargado] lo habría restringido). Sin cambio de permisos.
+        id: 'product-comparison',
+        label: 'Comparar Productos',
+        description: 'Inteligencia comercial: compara el ranking de productos entre el mes en curso y el mismo tramo del mes anterior, con informe ejecutivo descargable.',
+        icon: GitCompareArrows,
+        type: 'item',
+        navClass: 'primary',
+        roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
+        keywords: ['comparar', 'comparación', 'productos', 'ranking', 'evolución', 'ventas', 'crecimiento', 'descenso', 'informe ejecutivo', 'inteligencia comercial', 'variación', 'top'],
       },
       {
         // GATE 1.4R (UX-004/§7) + CAMBIO 8 (HOME/SALES/PERFORMANCE DEFAULTS):
@@ -1654,6 +1679,10 @@ export const VALID_VIEWS: Set<string> = new Set([
   'devolutions', 'customers', 'quotations', 'fiscal-close', 'lots', 'warehouses',
   // MISIÓN CLASIFICADOR MAESTRO (FASE 3): vista única de terceros por organización
   'clientes-proveedores',
+  // MISIÓN COMPARAR PRODUCTOS (2026-11-23): inteligencia comercial con informe
+  // ejecutivo — hoja oficial de ANÁLISIS (antes solo alcanzable desde el botón
+  // del Ranking Comercial del Inicio).
+  'product-comparison',
   'abc-analysis', 'calculator', 'accounts-payable',
   // CP-INFRA-002: 'bank-reconciliation' retirado del producto activo.
   'punto_venta', 'almacen_gestion', 'almacen_operaciones', 'analitica',

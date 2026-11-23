@@ -16,6 +16,7 @@ export const VIEW_TIPS: Record<string, string> = {
   // AI COMMAND CENTER: Inicio es el punto de entrada conversacional
   'dashboard': 'Pídele lo que necesitas a Darian, tu asistente IA',
   'store-dashboard': 'Centro de Inteligencia: resumen ejecutivo con comparación de períodos y análisis de ventas — ubícalo en Análisis → Dashboard',
+  'product-comparison': 'Comparar Productos: evolución del ranking comercial entre períodos, con informe ejecutivo exportable — ubícalo en Análisis → Comparar Productos',
 
   // Chat
   'chat': 'Pregunta a Darian sobre costos, ventas o inventario',

@@ -159,6 +159,28 @@ export function movimientosDeVenta(
   return movimientos.filter((m) => m.reference_id === transactionId && m.movement_type === 'sale');
 }
 
+/**
+ * Movimientos PROPIOS de un Vale de Salida: salida de almacén
+ * ('issue_slip_out') o consumo de producción ('production_out') con
+ * reference_id = issue_slips.id — mismo enlace que comprueba la propia RPC
+ * reverse_vale_salida (migración 20260817000001) y que consulta el modal de
+ * detalle. Misión SC-2-08 saldo (2026-11-23).
+ *
+ * Las reversiones posteriores ('issue_slip_reverse' / 'production_reverse')
+ * NO pertenecen a la operación original: el saldo del documento es el de su
+ * momento histórico — la devolución posterior no altera la reimpresión.
+ */
+export function movimientosDeValeSalida(
+  movimientos: SaldoPosteriorMovement[],
+  slipId: string,
+): SaldoPosteriorMovement[] {
+  return movimientos.filter(
+    (m) =>
+      m.reference_id === slipId &&
+      (m.movement_type === 'issue_slip_out' || m.movement_type === 'production_out'),
+  );
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Lectura del ledger bajo RLS (solo lectura, acotada a productos del documento)
 // ────────────────────────────────────────────────────────────────────────────

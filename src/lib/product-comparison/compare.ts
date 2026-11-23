@@ -88,6 +88,13 @@ export interface ComparisonRow {
   stockActual: number | null;
   unidadMedida: string | null;
   evolucion: Evolucion;
+  /**
+   * Participación oficial del producto en las ventas del período actual
+   * (% del total, tal como la calcula el RPC get_sales_dashboard_analytics).
+   * Opcional/nula cuando el agregado no la informa — el informe SOLO la usa
+   * si está presente (nunca la estima ni la inventa).
+   */
+  participacionActual: number | null;
 }
 
 export interface ComparisonResumen {
@@ -195,6 +202,9 @@ export function buildComparison(
       stockActual: catalogRow ? catalogRow.stock_current : null,
       unidadMedida: catalogRow?.unit_of_measure ?? null,
       evolucion,
+      // Participación oficial del período actual (opcional en el schema —
+      // null honesto si el agregado no la informa).
+      participacionActual: cur?.participation_pct ?? null,
     };
   });
 

@@ -80,6 +80,7 @@ import {
   drawRes11DataBlock,
   drawRes11Header,
   drawRes11SignatureFooter,
+  formatRes11Saldo,
   measureRes11DataBlockHeight,
 } from './res11-shared';
 import { logger } from '@/lib/logger';
@@ -254,8 +255,9 @@ export const SC204_TIPO_DOC_AMPARA = 'Entrada';
 
 /** Celda «Saldo en existencia» del modelo: cifra del ledger o «s/d» (sin dato). */
 export function formatSc204Saldo(saldo: SaldoPosteriorResultado | undefined): string {
-  if (!saldo || !Number.isFinite(saldo.saldoPosterior)) return 's/d';
-  return formatSc204Quantity(saldo.saldoPosterior);
+  // Misión saldo 2026-11-23: formateador compartido de la familia Res. 11
+  // (misma regla para SC-2-04, SC-2-08 y SC-2-12 — sin duplicar la fórmula).
+  return formatRes11Saldo(saldo);
 }
 
 export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
