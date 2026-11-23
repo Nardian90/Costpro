@@ -98,10 +98,17 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
     const productId = prods[0].id;
     const existingSales = await sb.select('transactions', `select=id&store_id=eq.${storeId}&status=eq.completed&limit=1`);
     if (!existingSales.length) {
+      // FIX FLAKE ROLLOVER (2026-11-23): la fecha económica de la venta es
+      // `created_at::date` en UTC (motor). Si CI corre entre 00:00 y ~05:00 UTC,
+      // "ahora" es la fecha UTC de MAÑANA desde La Habana y cualquier período
+      // del app (que termina en hoy Havana) la excluye. Se fija la venta a
+      // H-24h: su fecha UTC es ayer, siempre dentro de este mes Havana y del
+      // preset «Últimos 3 meses» que aplica el test de exportación.
+      const createdAt = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
       const saleRows = await sb.insert('transactions', [{
         store_id: storeId, seller_id: adminId, total_amount: 150, status: 'completed',
         payment_method: 'cash', sale_currency: 'CUP', cash_amount: 150,
-        created_at: new Date().toISOString(), completed_at: new Date().toISOString(),
+        created_at: createdAt, completed_at: createdAt,
       }]);
       const saleId = (saleRows as unknown as { id: string }[])[0].id;
       await sb.insert('transaction_items', [{
@@ -112,7 +119,7 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
       await sb.insert('payment_transactions', [{
         store_id: storeId, ref_type: 'sale', ref_id: saleId, transaction_id: saleId,
         payment_method: 'cash', currency: 'CUP', amount: 150, exchange_rate: 1,
-        direction: 'in', payment_date: new Date().toISOString(),
+        direction: 'in', payment_date: createdAt,
       }]);
     }
   });
@@ -200,6 +207,13 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
     await page.getByTestId('financial-statements-view').waitFor({ state: 'visible', timeout: 25_000 });
     // ADNEGOCIO 2026-11-22: Rendimiento es pestaña directa de Estados Financieros.
     await page.getByTestId('tab-rendimiento').click();
+    // FIX FLAKE ROLLOVER (2026-11-23): la fecha económica de la venta del run
+    // es `created_at::date` en UTC (motor); el período por defecto es
+    // mes-a-fecha La Habana. Entre 00:00 y 05:00 UTC la venta (UTC de hoy)
+    // cae FUERA del rango Havana (hasta ayer) y la categoría no aparece.
+    // El preset «Últimos 3 meses» aplica al toque un rango que siempre
+    // contiene la venta, a cualquier hora del día en que corra CI.
+    await page.getByRole('button', { name: /Últimos 3 meses/i }).click();
     // Expandir una categoría CON movimientos (patrón de fin-statements-origin-
     // traceability: ING_VENTAS siempre tiene actividad del fixture del run).
     const catBtn = page.getByRole('button', { name: /Ingresos por ventas/i }).first();
