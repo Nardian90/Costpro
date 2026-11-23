@@ -27,6 +27,7 @@ import { StoreSelectorSheet } from './StoreSelectorSheet';
 import { NotificationCenter } from './NotificationCenter';
 import { cn } from '@/lib/utils';
 import { isAdminLevel } from '@/lib/roles';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 import { ViewType, SidebarState, useUIStore } from '@/store';
@@ -64,6 +65,7 @@ export const Header = ({
   allStores = [],
   onLogout,
 }: HeaderProps) => {
+  const isMobile = useIsMobile();
   // F1-T04: estado de búsqueda para el dropdown del selector de tienda.
   // Permite filtrar tiendas por nombre cuando hay 10+ (antes era una lista plana sin filtro).
   const [storeSearch, setStoreSearch] = useState('');
@@ -100,13 +102,21 @@ export const Header = ({
     <header className="bg-background/80 backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 z-30 w-full pt-[env(safe-area-inset-top)] shrink-0 border-b border-border/50">
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
-          <button
-            onClick={toggleSidebar}
-            className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all"
-            aria-label="Cambiar estado del menú"
-          >
-            <SidebarIcon sidebarState={sidebarState} />
-          </button>
+          {/* CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): el control de
+              contraer/expandir vive DENTRO del encabezado del menú lateral.
+              Este botón queda como única vía de APERTURA: visible en móvil
+              (abre el drawer) y en desktop solo cuando el menú está cerrado
+              (p.ej. tras Ctrl+B). Con el menú visible (expanded/rail) se oculta
+              para no duplicar el toggle interno del sidebar. */}
+          {(isMobile || sidebarState === 'closed') && (
+            <button
+              onClick={toggleSidebar}
+              className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all"
+              aria-label="Abrir menú lateral"
+            >
+              <SidebarIcon sidebarState={sidebarState} />
+            </button>
+          )}
 
           <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto min-w-0 flex-1 no-scrollbar pr-2">
             <h1 className="text-[clamp(0.75rem,3.5vw,1.25rem)] font-label font-bold capitalize tracking-tight text-primary whitespace-nowrap shrink-0">

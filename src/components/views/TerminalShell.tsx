@@ -395,12 +395,13 @@ export default function TerminalShell() {
       });
     }
 
-    // FIX (2026-07-22): NO cerrar el sidebar al navegar en móvil.
-    // El usuario quiere navegación continua — el sidebar se cierra solo al:
-    //   1. Clic en el backdrop/overlay (línea 591)
-    //   2. Clic en el botón X del sidebar (Sidebar.tsx línea 486)
-    //   3. Clic en el botón toggle del header
-    // Antes: if (isMobile) { setSidebarState('closed'); }
+    // CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): el cierre del drawer en
+    // móvil al navegar a una vista funcional concreta ahora vive en el propio
+    // Sidebar (handleNavClick / breadcrumb / perfil), para poder distinguir
+    // hoja funcional (cerrar) de sección raíz (permanecer abierto mostrando
+    // sus opciones secundarias). Aquí solo se resuelve la ruta de la vista.
+    // Los cierres siguen existiendo también vía: backdrop, X del sidebar y
+    // hamburger del Header (apertura).
   };
 
   const handlePrefetchView = (view: ViewType) => {

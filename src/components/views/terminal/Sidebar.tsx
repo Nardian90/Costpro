@@ -13,6 +13,10 @@ import {
   PinOff,
   User,
   Settings,
+  // CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): control de contraer/expandir
+  // integrado en el ENCABEZADO del propio menú (patrón ChatGPT/Z.ai).
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useAuthStore, useUIStore, SidebarState, ViewType } from '@/store';
@@ -176,14 +180,21 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
   // ── Click on a nav item (leaf) ──
   const handleNavClick = useCallback((view: ViewType) => {
     onViewChange(view);
-    // FIX (2026-07-22): NO cerrar el sidebar al navegar en móvil.
-    // El sidebar se cierra solo al:
-    //   1. Clic en el backdrop/overlay (TerminalShell.tsx línea 591)
-    //   2. Clic en el botón X (línea 485 de este archivo)
-    //   3. Clic en el botón hamburguesa del header
-    // Esto permite navegación continua sin que el sidebar se cierre
-    // después de cada clic, como pidió el usuario.
-  }, [onViewChange]);
+    // CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): navegación jerárquica en
+    // móvil. La decisión previa (2026-07-22, "no cerrar nunca al navegar")
+    // dejaba el drawer abierto tras elegir una vista concreta — p.ej.
+    // Operación → Ventas cerraba la vista pero el menú seguía tapando el
+    // contenido. Regla vigente:
+    //   · Clic en SECCIÓN raíz (focus mode) → el drawer PERMANECE abierto para
+    //     mostrar sus opciones secundarias.
+    //   · Clic en una HOJA funcional (Ventas, Stock, …) → el drawer SE CIERRA
+    //     y la vista queda visible.
+    //   · Expandir/contraer una categoría (toggleSubmenu) NO navega y NO cierra.
+    // Desktop no cambia: el sidebar es persistente (rail/expanded).
+    if (isMobile) {
+      setSidebarState('closed');
+    }
+  }, [onViewChange, isMobile, setSidebarState]);
 
   // ── In rail mode, expand sidebar on module click ──
   const handleRailModuleClick = useCallback((mod: NavModule) => {
@@ -351,7 +362,11 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     }
 
     // Rail mode: icon button for root modules
+    // CP-UX-NAVIGATION-POS-REPAIR-001: indicador de sección activa en rail —
+    // el icono raíz se resalta cuando la vista actual pertenece a su árbol
+    // (misma semántica de isActive que las hojas).
     if (isRail && isRoot) {
+      const moduleIsActive = hasViewInModule(mod, currentView);
       return (
         <TooltipProvider key={mod.id} delayDuration={0}>
           <Tooltip>
@@ -360,9 +375,12 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 onClick={() => handleRailModuleClick(mod)}
                 aria-label={mod.label}
                 aria-expanded={isExpanded}
+                aria-current={moduleIsActive ? 'true' : undefined}
                 className={cn(
                   "w-12 h-12 flex items-center justify-center rounded-xl transition-all active:scale-95 mx-auto mb-2",
-                  "text-sidebar-foreground/80 hover:bg-primary/10 hover:text-primary"
+                  moduleIsActive
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    : "text-sidebar-foreground/80 hover:bg-primary/10 hover:text-primary"
                 )}
               >
                 {mod.icon && <mod.icon className="w-5 h-5" />}
@@ -525,7 +543,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
           <div
             className={cn(
               "px-4 pt-4 pb-2 flex items-center justify-between",
-              displayState === 'rail' && "justify-center"
+              // CP-UX-NAVIGATION-POS-REPAIR-001: en rail conviven el isotipo y el
+              // control de expandir (ambos de 32px) — gap compacto centrado.
+              displayState === 'rail' && "justify-center gap-1.5 px-2"
             )}
           >
             {displayState !== 'rail' ? (
@@ -554,7 +574,14 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               </button>
             )}
 
-            {isMobile && (
+            {/* CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): control de
+                contraer/expandir integrado en el ENCABEZADO del menú lateral.
+                Desktop: alterna expanded ↔ rail — JAMÁS deja el menú en
+                'closed' (al contraer queda la barra compacta con iconos).
+                Móvil: se conserva la X (cierre del drawer), el control de
+                apertura vive en el hamburger del Header; un segundo toggle
+                rail en pantalla táctil duplicaría controles sin utilidad. */}
+            {isMobile ? (
                <button
                 onClick={onClose}
                 className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
@@ -562,6 +589,19 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                >
                  <X className="w-4 h-4" />
                </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSidebarState(displayState === 'rail' ? 'expanded' : 'rail')}
+                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                aria-label={displayState === 'rail' ? 'Expandir menú lateral' : 'Contraer menú lateral'}
+                aria-pressed={displayState === 'rail'}
+                title={displayState === 'rail' ? 'Expandir menú' : 'Contraer a barra compacta'}
+              >
+                {displayState === 'rail'
+                  ? <PanelLeftOpen className="w-4 h-4" />
+                  : <PanelLeftClose className="w-4 h-4" />}
+              </button>
             )}
           </div>
 
@@ -614,6 +654,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                       exitFocusMode();
                       setCurrentView('dashboard');
                       onViewChange('dashboard');
+                      // CP-UX-NAVIGATION-POS-REPAIR-001: navegar a Inicio es
+                      // navegación funcional concreta → cerrar drawer en móvil.
+                      if (isMobile) setSidebarState('closed');
                     }}
                     className="flex items-center gap-1.5 text-muted-foreground/70 hover:text-primary transition-colors group outline-none"
                     aria-label="Volver al inicio"
@@ -724,7 +767,12 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                 del avatar en el Header. Libera el header móvil de un icono y centraliza
                 las opciones de cuenta en el sidebar (patrón estándar: GitHub, Slack, Discord). */}
             <button
-              onClick={() => onViewChange('settings')}
+              onClick={() => {
+                onViewChange('settings');
+                // CP-UX-NAVIGATION-POS-REPAIR-001: Mi Perfil/Ajustes navegan a una
+                // vista funcional → cerrar el drawer en móvil (coherencia con las hojas).
+                if (isMobile) setSidebarState('closed');
+              }}
               aria-label="Mi perfil"
               className={cn(
                 "flex items-center gap-4 p-3.5 rounded-xl transition-all group active:scale-95 hover:bg-primary/10 text-sidebar-foreground font-bold outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
@@ -736,7 +784,10 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
             </button>
 
             <button
-              onClick={() => onViewChange('settings')}
+              onClick={() => {
+                onViewChange('settings');
+                if (isMobile) setSidebarState('closed');
+              }}
               aria-label="Ajustes"
               title="Ajustes"
               className={cn(
