@@ -101,6 +101,17 @@ export interface SaleDetailNavContext {
   setAt: number;
 }
 
+// MISIÓN CENTRO DE INTELIGENCIA (2026-11-23) — contexto de navegación del
+// drilldown de alertas del módulo «Análisis de ventas» (Centro de
+// Inteligencia → Análisis de ventas) hacia Historial de Ventas: aplica un
+// filtro de ESTADO preseleccionado y abre el tab Detalle. Consumo ÚNICO:
+// SalesHistoryView lo aplica una vez y lo limpia (patrón saleDetailNavContext).
+export interface SalesHistoryNavContext {
+  /** Estado de transacción a preseleccionar (ej: 'voided', 'reversed'). */
+  status?: string;
+  setAt: number;
+}
+
 // CP-UX-ORG-STORES-002/003 — Página dedicada de administración de una
 // organización. El contexto (org + pestaña) vive en el store de UI y se
 // espeja en la URL (/?view=organization-detail&org=<id>&tab=<pestaña>) vía
@@ -162,6 +173,9 @@ interface UIState {
   // CP-FIN-001: contexto «Ver documento» Estados Financieros → Historial de Ventas (consumo único)
   saleDetailNavContext: SaleDetailNavContext | null;
   setSaleDetailNavContext: (ctx: SaleDetailNavContext | null) => void;
+  // MISIÓN CENTRO DE INTELIGENCIA: drill-down de alertas del BI → Historial de Ventas (consumo único)
+  salesHistoryNavContext: SalesHistoryNavContext | null;
+  setSalesHistoryNavContext: (ctx: SalesHistoryNavContext | null) => void;
   // CP-UX-ORG-STORES-002: contexto de la página dedicada de organización.
   organizationDetailState: OrganizationDetailState;
   setOrganizationDetailState: (orgId: string | null, tab?: OrganizationDetailTab) => void;
@@ -221,10 +235,12 @@ export const useUIStore = create<UIState>()(
       commissionNavContext: null,
       financialOpeningNavContext: null,
       saleDetailNavContext: null,
+      salesHistoryNavContext: null,
       organizationDetailState: { orgId: null, tab: 'tiendas' as OrganizationDetailTab },
       setCommissionNavContext: (ctx: CommissionNavContext | null) => set({ commissionNavContext: ctx }),
       setFinancialOpeningNavContext: (ctx: FinancialOpeningNavContext | null) => set({ financialOpeningNavContext: ctx }),
       setSaleDetailNavContext: (ctx: SaleDetailNavContext | null) => set({ saleDetailNavContext: ctx }),
+      setSalesHistoryNavContext: (ctx: SalesHistoryNavContext | null) => set({ salesHistoryNavContext: ctx }),
       // CP-UX-ORG-STORES-002: fija el contexto organizativo de la página
       // dedicada (org + pestaña; default 'tiendas' — entrada principal).
       setOrganizationDetailState: (orgId: string | null, tab: OrganizationDetailTab = 'tiendas') =>

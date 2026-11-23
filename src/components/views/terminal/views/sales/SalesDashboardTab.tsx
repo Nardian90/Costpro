@@ -15,13 +15,13 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { BarChart3, RefreshCw, Filter, X, Loader2, DollarSign, Store, Users } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore } from '@/store';
 import { isAdminLevel } from '@/lib/roles';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import {
-  PERIOD_OPTIONS, resolvePeriodWindow, previousEquivalentWindow,
-  granularityLabel, toDateInputValue, type PeriodPreset,
+  PERIOD_OPTIONS, resolvePeriodWindow, granularityLabel,
+  type PeriodPreset,
 } from '@/lib/sales-dashboard/periods';
 import { useSalesDashboard, useLocalSyncQueue, useProductDetail } from '@/hooks/api/useSalesDashboard';
 import { KpiCards } from './dashboard/KpiCards';
@@ -39,15 +39,20 @@ export interface DashboardDrill {
 type ComparisonDimension = 'sellers' | 'stores';
 
 interface SalesDashboardTabProps {
-  /** Cambia al tab Detalle aplicando filtros (drill-down al historial). */
-  onDrillToDetail: (d: DashboardDrill) => void;
-  /** Vendedores visibles para el filtro (id, nombre). */
-  sellers: { id: string; name: string }[];
+  /** Cambia al tab Detalle aplicando filtros (drill-down al historial). Opcional
+   * desde el Centro de Inteligencia: sin callback, el drill navega a Historial
+   * de Ventas vía salesHistoryNavContext (consumo único). */
+  onDrillToDetail?: (d: DashboardDrill) => void;
+  /** Vendedores visibles para el filtro (id, nombre). Opcional: sin prop, la
+   * lista se deriva de data.sellers del RPC (misma fuente, sin consultas extra). */
+  sellers?: { id: string; name: string }[];
 }
 
-export function SalesDashboardTab({ onDrillToDetail, sellers }: SalesDashboardTabProps) {
+export function SalesDashboardTab({ onDrillToDetail, sellers: sellersProp }: SalesDashboardTabProps) {
   const user = useAuthStore(s => s.user);
   const isAdmin = isAdminLevel(user?.role);
+  const setCurrentView = useUIStore((s) => s.setCurrentView);
+  const setSalesHistoryNavContext = useUIStore((s) => s.setSalesHistoryNavContext);
 
   // ── Filtros globales ──────────────────────────────────────────────────────
   const [period, setPeriod] = useState<PeriodPreset>('this_month');
@@ -91,6 +96,35 @@ export function SalesDashboardTab({ onDrillToDetail, sellers }: SalesDashboardTa
     return list ?? [];
   }, [data, user]);
 
+  // MISIÓN CENTRO DE INTELIGENCIA: lista de vendedores acumulada desde el RPC
+  // (data.sellers trae los vendedores con ventas del período consultado). Se
+  // acumulan en estado para que al filtrar por un vendedor el resto siga
+  // disponible (el RPC devolvería solo el vendedor filtrado).
+  const [accumulatedSellers, setAccumulatedSellers] = useState<Map<string, { id: string; name: string }>>(new Map());
+  const rpcSellers = useMemo(() => {
+    return (data?.sellers ?? [])
+      .filter(s => s.seller_id)
+      .map(s => ({ id: s.seller_id as string, name: s.name }));
+  }, [data]);
+  const sellers = useMemo(() => {
+    const map = new Map(accumulatedSellers);
+    for (const s of rpcSellers) map.set(s.id, s);
+    for (const s of sellersProp ?? []) map.set(s.id, s);
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [accumulatedSellers, rpcSellers, sellersProp]);
+  // Persistir vendedores nuevos (sin loops: solo crece).
+  React.useEffect(() => {
+    if (rpcSellers.length === 0) return;
+    setAccumulatedSellers(prev => {
+      let changed = false;
+      const next = new Map(prev);
+      for (const s of rpcSellers) {
+        if (!next.has(s.id)) { next.set(s.id, s); changed = true; }
+      }
+      return changed ? next : prev;
+    });
+  }, [rpcSellers]);
+
   const hasActiveFilters =
     period !== 'this_month' || !!storeId || !!sellerId || status !== 'completed' || !!paymentMethod || currencyView === 'USD';
 
@@ -108,8 +142,17 @@ export function SalesDashboardTab({ onDrillToDetail, sellers }: SalesDashboardTa
   }, [refreshQueue]);
 
   const drillToStatus = useCallback((st: string) => {
-    onDrillToDetail({ status: st });
-  }, [onDrillToDetail]);
+    // MISIÓN CENTRO DE INTELIGENCIA: modo tab del Historial de Ventas →
+    // callback existente (tests y flujo histórico). Modo standalone (Centro de
+    // Inteligencia) → contexto de navegación de consumo único: Historial de
+    // Ventas aplica el estado y abre el tab Detalle.
+    if (onDrillToDetail) {
+      onDrillToDetail({ status: st });
+      return;
+    }
+    setSalesHistoryNavContext?.({ status: st, setAt: Date.now() });
+    setCurrentView?.('sales');
+  }, [onDrillToDetail, setSalesHistoryNavContext, setCurrentView]);
 
   const drillToSeller = useCallback((id: string | null) => {
     setSellerId(id || '');
@@ -210,7 +253,10 @@ export function SalesDashboardTab({ onDrillToDetail, sellers }: SalesDashboardTa
                 <option value="voided">Anuladas</option>
                 <option value="reversed">Revertidas</option>
                 <option value="pending">Pendientes</option>
-                <option value="all">Todos los estados</option>
+                {/* MISIÓN CENTRO DE INTELIGENCIA (honestidad de UI): se retira la
+                    opción «Todos los estados»: el RPC resuelve ausencia de estado
+                    como SOLO completadas (t.status = COALESCE(p_status,'completed'))
+                    — la opción prometía más población de la que entregaba. */}
               </select>
             </label>
 
@@ -274,8 +320,13 @@ export function SalesDashboardTab({ onDrillToDetail, sellers }: SalesDashboardTa
                 <Filter className="w-3 h-3" /> Filtros activos
               </span>
             )}
-            <span className="text-muted-foreground">
-              {isAdmin && !storeId && stores.length > 1 ? 'Ámbito: todas tus tiendas' : 'Ámbito: tienda activa'}
+            <span className="text-muted-foreground" data-testid="scope-label">
+              {/* Honestidad de ámbito (honestidad de UI): sin filtro de tienda el
+                  RPC agrega TODAS las tiendas accesibles (current_user_store_ids())
+                  — el rótulo anterior decía «tienda activa» y era falso. */}
+              Ámbito: {storeId
+                ? (stores.find(s => s.id === storeId)?.name ?? 'tienda seleccionada')
+                : (stores.length > 1 ? 'todas tus tiendas' : stores[0]?.name ?? 'tienda activa')}
             </span>
             {lastUpdated && (
               <span className="text-muted-foreground tabular-nums" data-testid="last-updated">

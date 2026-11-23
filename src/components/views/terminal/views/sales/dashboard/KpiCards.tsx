@@ -187,14 +187,19 @@ export function KpiCards({ kpi, currencyView }: { kpi: SalesDashboardResponse['k
         tooltip="Ventas netas de documentos ÷ número de documentos válidos."
         tone="primary"
       />
+      {/* MISIÓN CENTRO DE INTELIGENCIA (honestidad de UI): el RPC no trae
+          unidades del período previo (kpi.prev no incluye unidades) — antes
+          se pasaba el MISMO valor actual como «previous» y la tarjeta mostraba
+          un +0% inventado. previous=0 → percentChange null → «— sin
+          comparación» (comportamiento previsto por el diseño original). */}
       <KpiCard
         label="Unidades netas"
         value={String(Math.round((units + Number.EPSILON) * 10) / 10)}
         currency="CUP"
         current={units}
-        previous={kpi.units_sold - kpi.units_returned}
+        previous={0}
         previousFormatter={n => String(Math.round((n + Number.EPSILON) * 10) / 10)}
-        tooltip="Unidades vendidas menos unidades devueltas del período."
+        tooltip="Unidades vendidas menos unidades devueltas del período. Sin comparación: el período previo no expone unidades."
         tone="primary"
       />
       <KpiCard

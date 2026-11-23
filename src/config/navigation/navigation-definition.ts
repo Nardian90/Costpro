@@ -6,11 +6,16 @@
  * Arquitectura aprobada (GATE 0.1 + autorización GATE 1):
  *
  *   INICIO (destino fijo: dashboard — NO es sección)
- *   OPERACIÓN   → Dashboard (tienda activa) · Ventas (Vender · Opciones) ·
+ *   ESTADOS FINANCIEROS → Situación · Rendimiento · Configuración
+ *   OPERACIÓN   → Ventas (Vender · Opciones) ·
  *                 Almacén · Logística · Costo · Gestión de Tiendas · Redes
+ *                 (la antigua hoja "Dashboard" se MUDÓ a ANÁLISIS —
+ *                 misión Centro de Inteligencia 2026-11-23)
  *   RECURSOS HUMANOS → Trabajadores y Comisiones (trabajadores · reglas de
  *                 comisión · pagos · nóminas de salario SC-4-06)
- *   ANÁLISIS    → Análisis de datos · Inteligencia Cambiaria · Tablón de
+ *   ANÁLISIS    → Dashboard (Centro de Inteligencia Empresarial — hoja
+ *                 primera, ubicación oficial de los dashboards) ·
+ *                 Análisis de datos · Inteligencia Cambiaria · Tablón de
  *                 Noticias · Reportes · Análisis ABC
  *   SISTEMA     → Ajustes · Usuarios · Roles · Salud · Monitoreo · Auditoría ·
  *                 Gestión RSS · Cierre Fiscal   (admin)
@@ -160,31 +165,12 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
     description: 'El trabajo diario: vender, mover stock, recibir mercancía y gestionar el ciclo comercial.',
     roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
     children: [
-      // CAMBIO 2 (HOME/SALES/PERFORMANCE DEFAULTS): "Dashboard" es la PRIMERA
-      // opción operativa del menú. Reutiliza la vista existente ViewType
-      // 'store-dashboard' (antes "Dashboard de Tiendas" en ANÁLISIS — se
-      // MUEVE, no se duplica: NO DUPLICAR HUBS).
-      // REMEDIACIÓN (fix/dashboard-active-store): el ViewType 'store-dashboard'
-      // responde SIEMPRE a la tienda activa (user.activeStoreId) para TODOS los
-      // roles — la rama admin/manager que renderizaba MultiStoreDashboardView
-      // fue retirada. El tablero consolidado multi-tienda vive como tab "KPIs"
-      // del hub 'management-hub' ("Gestión de Tiendas"), no como respuesta de
-      // esta entrada.
-      // REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs): UN SOLO DASHBOARD —
-      // esta entrada abre la vista consolidada por tabs (Resumen / Productos /
-      // Comportamiento) de la tienda activa: StoreDashboardView, el MISMO
-      // componente que Gestión de Tiendas abre con el botón "Dashboard" de cada
-      // tarjeta. El "Panel de Control" deja de ser destino standalone (solo
-      // queda como widget embebido del Inicio).
-      {
-        id: 'store-dashboard',
-        label: 'Dashboard',
-        description: 'Dashboard consolidado de la tienda activa: tabs Resumen (KPIs, insights, tendencia), Productos y Comportamiento.',
-        icon: TrendingUp,
-        type: 'item',
-        navClass: 'primary',
-        keywords: ['dashboard', 'tienda', 'kpi', 'indicadores', 'consolidado', 'resumen', 'inicio', 'productos', 'comportamiento', 'insights', 'orden de compra'],
-      },
+      // MISIÓN CENTRO DE INTELIGENCIA (2026-11-23): la entrada "Dashboard"
+      // (ViewType 'store-dashboard') se RETIRA de OPERACIÓN como ubicación
+      // independiente y se MUEVE (sin duplicar: misma vista, misma ruta,
+      // mismos roles efectivos) a la sección ANÁLISIS como primera hoja —
+      // ubicación oficial y centralizada: Inicio → Análisis → Dashboard.
+      // Ver comentario en la sección 'analisis' para el detalle completo.
       // MISIÓN CP-NAV-FINANCIAL-STATEMENTS-TOP-LEVEL-NAVIGATION-001
       // (2026-11-22): la hoja «Estados Financieros» (CP-FIN, Vista B) fue
       // trasladada a SECCIÓN PROPIA de primer nivel — primera del menú. NO
@@ -670,9 +656,33 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
     label: 'ANÁLISIS',
     type: 'group',
     icon: TrendingUp,
-    description: 'Análisis e inteligencia: KPIs de tiendas, tablero dinámico, cambiaria, Tablón de Noticias y reportes.',
+    description: 'Centro de Inteligencia Empresarial: dashboards de la tienda, KPIs de datos, cambiaria, Tablón de Noticias y reportes.',
     roles: ['admin', 'manager', 'encargado'],
     children: [
+      {
+        // MISIÓN CENTRO DE INTELIGENCIA (2026-11-23): ubicación OFICIAL y
+        // centralizada de los dashboards de COSTPRO: Inicio → Análisis →
+        // Dashboard. La entrada se MUEVE desde OPERACIÓN (donde era la hoja
+        // "Dashboard" independiente) — MISMA vista ViewType 'store-dashboard',
+        // misma ruta (/?view=store-dashboard), MISMO icono; sin duplicación
+        // (no duplicar hubs). La vista es el Centro de Inteligencia
+        // Empresarial: navegación interna por módulos (Resumen ejecutivo,
+        // Análisis de ventas) con arquitectura de registro para incorporar
+        // dashboards futuros sin modificar la navegación principal.
+        //
+        // Roles: la entrada declara EXPLÍCITAMENTE los roles que HEREDABA del
+        // grupo OPERACIÓN para PRESERVAR la visibilidad efectiva exacta
+        // (antes alcanzable por admin/manager/encargado/clerk/usuario/
+        // warehouse vía herencia de OPERACIÓN). Sin cambio de permisos.
+        id: 'store-dashboard',
+        label: 'Dashboard',
+        description: 'Centro de Inteligencia Empresarial: resumen ejecutivo de la tienda activa y análisis de ventas, con arquitectura abierta a nuevos dashboards.',
+        icon: TrendingUp,
+        type: 'item',
+        navClass: 'primary',
+        roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario', 'warehouse'],
+        keywords: ['dashboard', 'centro de inteligencia', 'business intelligence', 'resumen ejecutivo', 'tienda', 'kpi', 'indicadores', 'consolidado', 'resumen', 'análisis de ventas', 'ventas', 'productos', 'comportamiento', 'insights', 'desviaciones', 'alertas'],
+      },
       {
         // GATE 1.4R (UX-004/§7) + CAMBIO 8 (HOME/SALES/PERFORMANCE DEFAULTS):
         // "Análisis de Fichas" no comunicaba QUÉ analiza. Label = "Análisis de

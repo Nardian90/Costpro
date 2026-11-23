@@ -494,15 +494,13 @@ export default function TerminalShell() {
     }
     switch (view) {
         case 'dashboard': return <ViewErrorBoundary viewName="Inicio"><AICommandCenterView /></ViewErrorBoundary>;
-        // F4 + REMEDIACIÓN (fix/dashboard-active-store): el ViewType
-        // 'store-dashboard' ES la entrada "Dashboard" del menú — responde a la
-        // tienda activa para todos los roles (el tablero multi-tienda vive en el
-        // hub Gestión de Tiendas). El viewName refleja el label de menú real.
-        // REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs): DashboardView
-        // standalone monta la vista consolidada por tabs (Resumen/Productos/
-        // Comportamiento) de la tienda activa — StoreDashboardView, el mismo
-        // componente que Gestión de Tiendas abre por tarjeta. El Panel de
-        // Control queda solo como widget embebido del Inicio.
+        // MISIÓN CENTRO DE INTELIGENCIA (2026-11-23): 'store-dashboard' ES la
+        // entrada "Dashboard" del menú — ahora en la sección ANÁLISIS (Inicio →
+        // Análisis → Dashboard, ubicación oficial y centralizada). Responde a
+        // la tienda activa para todos los roles y monta el CENTRO DE
+        // INTELIGENCIA EMPRESARIAL (BiDashboardView): módulos Resumen
+        // ejecutivo + Análisis de ventas con arquitectura de registro abierta
+        // a dashboards futuros. El viewName refleja el label de menú real.
         case 'store-dashboard': return <ViewErrorBoundary viewName="Dashboard"><DashboardView /></ViewErrorBoundary>;
         case 'pos': return <ViewErrorBoundary viewName="Vender"><POSView /></ViewErrorBoundary>;
         case 'sales_catalog': return <ViewErrorBoundary viewName="Tabla de Venta"><SalesCatalogView /></ViewErrorBoundary>;

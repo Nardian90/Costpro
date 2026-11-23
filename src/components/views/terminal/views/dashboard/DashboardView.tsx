@@ -55,31 +55,33 @@ import { CommercialRanking } from './CommercialRanking';
 // Los datos ÚNICOS de actividad (transacciones, ticket, efectivo,
 // transferencia) se conservan en el bloque renombrado "Resumen de actividad".
 // ══════════════════════════════════════════════════════════════════════════
-// REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs): UN SOLO DASHBOARD.
+// ══════════════════════════════════════════════════════════════════════════
+// MISIÓN CENTRO DE INTELIGENCIA (2026-11-23):
 //
-// "Dashboard" (ViewType 'store-dashboard', menú Inicio → OPERACIÓN) abre la
-// vista consolidada por tabs — Panel / Resumen / Productos / Comportamiento —
-// de la TIENDA ACTIVA: StoreDashboardView, el MISMO componente que "Gestión de
-// Tiendas" abre por tienda (botón "Dashboard" de cada tarjeta). El viejo
-// "Panel de Control" deja de ser un destino standalone; sobrevive como (1)
-// tab default "Panel" del dashboard consolidado (REMEDIACIÓN V3 — su gráfico
-// circular concéntrico, fix/dashboard-tab-panel-control) y como (2) resumen
-// compacto embebido del Inicio (AICommandCenterView, prop embedded).
+// "Dashboard" (ViewType 'store-dashboard', ahora en Inicio → ANÁLISIS —
+// primera hoja de la sección) monta el CENTRO DE INTELIGENCIA EMPRESARIAL:
+// BiDashboardView, con navegación interna por módulos (Resumen ejecutivo —
+// rediseño profundo del dashboard ENERVIDA-VITALLCONS con comparación de
+// períodos, señales y observaciones; y Análisis de ventas — el ex-tab
+// Dashboard del Historial de Ventas).
 //
-//   Acceso 1: menú Inicio → OPERACIÓN → Dashboard  → tienda ACTIVA
+//   Acceso 1: menú Inicio → Análisis → Dashboard → tienda ACTIVA
 //             (fuente de verdad certificada: user.activeStoreId =
 //             profiles.active_store_id — cero hardcode, sin stores[0]).
-//   Acceso 2: Gestión de Tiendas → botón "Dashboard" de una tarjeta → ESA
-//             tienda (ManagementHubView/MultiStoreDashboardView ya lo hacen;
-//             sin cambios — mismo componente, misma vista).
+//   Acceso 2 (histórico): deep-links /?view=store-dashboard y la acción
+//             «Ver dashboard de la tienda» de Acciones recomendadas — misma
+//             vista, mismas props.
 //
 // El nombre de la tienda activa se resuelve con useStores — la MISMA fuente
 // que el selector de tienda del header (TerminalShell). Sin tienda activa
 // (o tienda revocada) → NoStorePrompt (estado honesto certificado).
+//
+// El modo embedded (widget del Inicio) NO cambia: sigue DashboardViewImpl
+// (Resumen de Indicadores + Ranking Comercial + Resumen de actividad).
 // ══════════════════════════════════════════════════════════════════════════
-const LazyStoreDashboardView = withChunkRetry(
-  lazy(() => import('./StoreDashboardView')),
-  'StoreDashboardView'
+const LazyBiDashboardView = withChunkRetry(
+  lazy(() => import('./bi/BiDashboardView')),
+  'BiDashboardView'
 );
 
 /** Skeleton honesto mientras se resuelve la tienda activa / carga el chunk. */
@@ -97,17 +99,14 @@ function StoreDashboardGateSkeleton() {
 }
 
 /**
- * StoreDashboardGate — resuelve la tienda activa y monta la vista consolidada.
- * FASE 3 (fuente de verdad): storeId SIEMPRE = user.activeStoreId; el nombre
- * sale del listado useStores (misma query que el selector del header). Si el
- * listado aún carga → skeleton; si no hay tienda activa o ya no es accesible
- * (membresía revocada) → NoStorePrompt (navega a Gestión de Tiendas).
- * onClose del dashboard ("← Tiendas") → vuelve a Gestión de Tiendas,
- * coherente con el breadcrumb interno del componente.
+ * StoreDashboardGate — resuelve la tienda activa y monta el Centro de
+ * Inteligencia. FASE 3 (fuente de verdad): storeId SIEMPRE =
+ * user.activeStoreId; el nombre sale del listado useStores (misma query que
+ * el selector del header). Si el listado aún carga → skeleton; si no hay
+ * tienda activa o ya no es accesible (membresía revocada) → NoStorePrompt.
  */
 function StoreDashboardGate() {
   const { user } = useAuthStore();
-  const { setCurrentView } = useUIStore();
 
   // isEncargado: misma expresión certificada de TerminalShell (FIX HIGH-004).
   const isEncargado =
@@ -133,13 +132,7 @@ function StoreDashboardGate() {
     return <NoStorePrompt />;
   }
 
-  return (
-    <LazyStoreDashboardView
-      storeId={activeStore.id}
-      storeName={activeStore.name}
-      onClose={() => setCurrentView('management-hub')}
-    />
-  );
+  return <LazyBiDashboardView storeId={activeStore.id} storeName={activeStore.name} />;
 }
 
 // CAMBIO 1 (HOME/SALES/PERFORMANCE DEFAULTS): prop `embedded` — cuando TRUE,

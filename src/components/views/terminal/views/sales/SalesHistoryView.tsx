@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight, TrendingUp, Package, Receipt, FileText, Loader2, BarChart3 } from 'lucide-react';
+import { DollarSign, CreditCard, Eye, Undo2, Copy, Calculator, CheckSquare, Square, AlertTriangle, ShoppingCart, Download, ChevronLeft, ChevronRight, X, Filter, Wallet, ArrowLeftRight, TrendingUp, Package, Receipt, FileText, Loader2 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
 import { StateRenderer } from '@/components/ui/StateRenderer';
@@ -21,7 +21,10 @@ import { useUIStore, useAuthStore } from '@/store';
 import { TaxCalculationModal } from './TaxCalculationModal';
 import { SalesSummaryTab } from './SalesSummaryTab';
 import { SalesProductTab, exportProductTabToExcel, type ProductModalityFilterValue } from './SalesProductTab';
-import { SalesDashboardTab } from './SalesDashboardTab';
+// MISIÓN CENTRO DE INTELIGENCIA (2026-11-23): el tab «Dashboard» se RETIRA de
+// Historial de Ventas — su contenido vive en la ubicación centralizada
+// Inicio → Análisis → Dashboard (módulo «Análisis de ventas»). El drill-down
+// de alertas del BI vuelve aquí vía salesHistoryNavContext (consumo único).
 
 // Helper para icono y etiqueta del método de pago
 function getPaymentMethodInfo(method: string | null | undefined): { icon: React.ElementType; label: string; color: string } {
@@ -150,8 +153,8 @@ const PaginationFooter = ({ page, totalPages, totalItems, pageSize, onPageChange
 
 export default function SalesHistoryView() {
   const [reverseTarget, setReverseTarget] = useState<{ id: string; label: string } | null>(null);
-  const [activeTab, setActiveTab] = useState<'detalle' | 'resumen' | 'producto' | 'dashboard'>('detalle');
-  const { setCurrentView, setForceOpenCart } = useUIStore();
+  const [activeTab, setActiveTab] = useState<'detalle' | 'resumen' | 'producto'>('detalle');
+  const { setCurrentView, setForceOpenCart, salesHistoryNavContext, setSalesHistoryNavContext } = useUIStore();
   const user = useAuthStore(s => s.user);
   const activeStoreId = user?.activeStoreId || '';
   // W9.5 B-8 (MODELO C Nivel 2): el botón "Revertir" del historial ES la
@@ -192,17 +195,27 @@ export default function SalesHistoryView() {
   // Ref para datos del tab Producto (para exportación)
   const productTabDataRef = React.useRef<any[]>([]);
 
-  // COSTPRO-SALES-DASHBOARD-001: vendedores con ventas visibles (para el
-  // filtro del dashboard) — derivado de los datos ya cargados, cero queries.
-  const dashboardSellers = React.useMemo(() => {
-    const map = new Map<string, { id: string; name: string }>();
-    for (const t of (filteredTransactions as unknown as { seller_id?: string; seller_name?: string | null }[]) || []) {
-      if (t.seller_id && !map.has(t.seller_id)) {
-        map.set(t.seller_id, { id: t.seller_id, name: t.seller_name || `Vendedor ${t.seller_id.slice(0, 8)}` });
-      }
+  // MISIÓN CENTRO DE INTELIGENCIA — consumo ÚNICO del drill-down de alertas
+  // del Centro de Inteligencia (módulo «Análisis de ventas»): aplica el estado
+  // solicitado, abre el tab Detalle y limpia el contexto (patrón
+  // saleDetailNavContext). Sin contexto → no hace nada.
+  const consumedSalesNavRef = React.useRef(0);
+  React.useEffect(() => {
+    if (!salesHistoryNavContext) return;
+    if (Date.now() - salesHistoryNavContext.setAt > 30 * 60 * 1000) {
+      setSalesHistoryNavContext(null);
+      return;
     }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [filteredTransactions]);
+    if (consumedSalesNavRef.current === salesHistoryNavContext.setAt) return;
+    consumedSalesNavRef.current = salesHistoryNavContext.setAt;
+    const targetStatus = salesHistoryNavContext.status;
+    setSalesHistoryNavContext(null);
+    if (targetStatus && setSelectedStatus) {
+      setSelectedStatus(targetStatus);
+      setPage(1);
+    }
+    setActiveTab('detalle');
+  }, [salesHistoryNavContext, setSalesHistoryNavContext, setSelectedStatus, setPage]);
 
   // ── Filtros avanzados de MODALIDAD/VÍA del tab Producto (misión 2026-11-06) ─
   // Viven aquí para integrarse en el panel «Filtros Avanzados» de la búsqueda;
@@ -509,17 +522,11 @@ export default function SalesHistoryView() {
           >
             <TrendingUp className="w-3.5 h-3.5 inline mr-1" /> Resumen Consolidado
           </button>
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={cn(
-              "flex-1 py-3 px-4 text-xs font-black uppercase border-b-2 -mb-px whitespace-nowrap min-h-[44px] transition-colors",
-              activeTab === 'dashboard' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-            )}
-            aria-label="Dashboard de ventas"
-            data-testid="tab-dashboard"
-          >
-            <BarChart3 className="w-3.5 h-3.5 inline mr-1" /> Dashboard
-          </button>
+          {/* MISIÓN CENTRO DE INTELIGENCIA (2026-11-23): el tab «Dashboard» fue
+              RETIRADO de Historial de Ventas (misión §1, criterio de aceptación:
+              eliminar el acceso anterior). El contenido vive en Inicio → Análisis
+              → Dashboard → módulo «Análisis de ventas» — misma fuente RPC, sin
+              duplicación. El acceso anterior NO se conserva aquí. */}
         </div>
 
         {/* Tab Resumen Consolidado */}
@@ -544,17 +551,8 @@ export default function SalesHistoryView() {
           />
         )}
 
-        {/* Tab Dashboard — COSTPRO-SALES-DASHBOARD-001 */}
-        {activeTab === 'dashboard' && (
-          <SalesDashboardTab
-            sellers={dashboardSellers}
-            onDrillToDetail={(d) => {
-              if (d.status) setSelectedStatus(d.status);
-              setActiveTab('detalle');
-              setPage(1);
-            }}
-          />
-        )}
+        {/* MISIÓN CENTRO DE INTELIGENCIA: el tab «Dashboard» ya no se monta aquí
+            — ubicación centralizada: Análisis → Dashboard (BI_MODULES.sales). */}
 
         {/* Tab Detalle */}
         {activeTab === 'detalle' && (
