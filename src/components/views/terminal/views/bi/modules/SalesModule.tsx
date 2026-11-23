@@ -15,7 +15,7 @@
 
 import React from 'react';
 import { SalesDashboardTab } from '@/components/views/terminal/views/sales/SalesDashboardTab';
-import type { BiModuleProps } from '../../bi-module-registry';
+import type { BiModuleProps } from '../bi-module-registry';
 
 export default function SalesModule({ storeName }: BiModuleProps) {
   return (
