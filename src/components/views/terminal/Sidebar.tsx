@@ -521,13 +521,15 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
 
   // CP-UX-POLISH-002 (§1 Estado C): interacción exterior por teclado. El menú
   // TEMPORAL se cierra con Esc (móvil y desktop sin pin). El guard evita robar
-  // el Esc de un diálogo abierto (Radix/modales) — si hay [role=dialog] en el
-  // documento, el Esc pertenece a ese diálogo y el menú permanece.
+  // el Esc de un MODAL abierto: solo ceden si hay un diálogo realmente modal
+  // (Radix usa data-state="open" + aria-modal="true"). Elementos con
+  // role="dialog" no modales (tarjeta del chat en Inicio, banner de cookies,
+  // sheets anclados) NO bloquean el Esc del panel.
   useEffect(() => {
     if (sidebarState === 'closed' || !isTemporary) return;
     const handler = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (document.querySelector('[role="dialog"]')) return;
+      if (document.querySelector('[role="dialog"][data-state="open"], [role="dialog"][aria-modal="true"]')) return;
       setSidebarState('closed');
     };
     window.addEventListener('keydown', handler);
