@@ -29,7 +29,7 @@
  * Objetivo: venta simple en <6 segundos, con las reglas del carrito.
  */
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -44,6 +44,7 @@ import {
   ArrowLeft,
   Eye,
   EyeOff,
+  PackageSearch,
 } from "lucide-react";
 import { cn, formatCurrency, getSupabaseUrl } from "@/lib/utils";
 import { useCartStore, type CartItem } from "@/store/cart";
@@ -66,7 +67,8 @@ import { POSPortalModal } from "./POSPortalModal";
 import { POSOperationDateSection, usePosSaleDate } from "./POSOperationDateSection";
 import ProductImage from "@/components/ui/ProductImage";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
-import { POSAutocomplete } from "./POSAutocomplete";
+// CP-UX-NAVIGATION-POS-REPAIR-001: POSAutocomplete retirado de Express —
+// la superficie de resultados es única, en línea debajo del buscador.
 import PriceSelectorModal from "./PriceSelectorModal";
 import { POSCartItemEditModal } from "./POSCartItemEditModal";
 import { POSCartDiscountModal } from "./POSCartDiscountModal";
@@ -101,10 +103,23 @@ interface POSExpressModeProps {
    */
   hideOutOfStock?: boolean;
   onHideOutOfStockChange?: (value: boolean) => void;
+  /**
+   * CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): estados diferenciados del
+   * catálogo (§3.3 de la misión). La vista Vende ya posee la carga (useProducts
+   * → RPC get_products_for_pos): Express NO repite consultas — solo recibe el
+   * estado y un reintentco para no crear consultas redundantes.
+   */
+  productsLoading?: boolean;
+  productsError?: string | null;
+  onRetryProducts?: () => void;
 }
 
-/** Máximo de resultados en la lista manual (coincidencias múltiples / servidor). */
+/** Máximo de resultados en la lista de coincidencias (en vivo / servidor). */
 const MANUAL_RESULTS_LIMIT = 24;
+/** CP-UX-NAVIGATION-POS-REPAIR-001: página inicial del catálogo bajo el buscador. */
+const EXPRESS_CATALOG_PAGE = 24;
+/** Longitud mínima de la query para filtrado en vivo (evita listas gigantes con 1 char). */
+const LIVE_SEARCH_MIN_CHARS = 2;
 
 export function POSExpressMode({
   products,
@@ -115,6 +130,9 @@ export function POSExpressMode({
   onClearLastSale,
   hideOutOfStock = true,
   onHideOutOfStockChange,
+  productsLoading = false,
+  productsError = null,
+  onRetryProducts,
 }: POSExpressModeProps) {
   const { user } = useAuthStore();
   const { setSidebarState } = useUIStore();
@@ -130,15 +148,21 @@ export function POSExpressMode({
   const [searchQuery, setSearchQuery] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
-  // MISIÓN VENDER-EXPRESS: resultados para selección manual (nombre ambiguo
-  // o búsqueda server-side) + selector de variante + editor de línea.
-  const [manualResults, setManualResults] = useState<Product[]>([]);
+  // CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): la lista de resultados ahora
+  // es DERIVADA (useMemo) — se muestra en vivo mientras se escribe, sin exigir
+  // Enter ni depender de un dropdown overlay que se cerraba con un clic fuera.
+  // El estado manualResults SOLO conserva el respaldo server-side (búsqueda
+  // RPC con 0 coincidencias locales: catálogos grandes / código de barras
+  // canónico del maestro).
+  const [serverResults, setServerResults] = useState<Product[]>([]);
   const [serverSearching, setServerSearching] = useState(false);
   const [variantProduct, setVariantProduct] = useState<Product | null>(null);
   const [editingItem, setEditingItem] = useState<CartItem | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   // Guarda la última consulta enviada al servidor para descartar respuestas obsoletas.
   const serverSearchSeq = useRef(0);
+  // CP-UX-NAVIGATION-POS-REPAIR-001: paginación del catálogo inicial («Ver más»).
+  const [catalogLimit, setCatalogLimit] = useState(EXPRESS_CATALOG_PAGE);
 
   // Audit-Fix: cerrar el sidebar al entrar al modo Express y restaurarlo al salir.
   useEffect(() => {
@@ -194,6 +218,52 @@ export function POSExpressMode({
   const subtotal = getSubtotal();
   const discountAmount = getDiscountAmount();
   const itemCount = getItemCount();
+
+  // ── Área dinámica bajo el buscador (CP-UX-NAVIGATION-POS-REPAIR-001) ─────
+
+  const trimmedQuery = searchQuery.trim();
+  const normalizedQuery = trimmedQuery.toLowerCase();
+
+  /**
+   * Catálogo inicial (§3.2 de la misión): productos de la tienda activa que el
+   * cajero puede vender AHORA — mismos datos del RPC get_products_for_pos ya
+   * cargados por POSView (cero consultas nuevas) y el MISMO predicado de
+   * visibilidad del carrito (isPosProductVisible): con «Solo con stock» activo
+   * no aparecen agotados; los servicios conservan su excepción.
+   */
+  const visibleCatalog = useMemo(
+    () => products.filter((p) => isPosProductVisible(p, hideOutOfStock)),
+    [products, hideOutOfStock],
+  );
+
+  /**
+   * Resultados EN VIVO (§3.2): filtrado por nombre/SKU/código de barras con
+   * normalización (minúsculas + trim, coincidencia parcial — sin exigir match
+   * exacto). null = query demasiado corta para filtrar.
+   */
+  const liveMatches = useMemo(() => {
+    if (normalizedQuery.length < LIVE_SEARCH_MIN_CHARS || normalizedQuery.endsWith("*")) return null;
+    return products
+      .filter((p) => isPosProductVisible(p, hideOutOfStock))
+      .filter((p) => {
+        const name = p.name.toLowerCase();
+        const sku = (p.sku || "").toLowerCase();
+        const barcode = (p.barcode || "").toLowerCase();
+        return (
+          name.includes(normalizedQuery) ||
+          sku.includes(normalizedQuery) ||
+          barcode.includes(normalizedQuery)
+        );
+      });
+  }, [products, normalizedQuery, hideOutOfStock]);
+
+  /** Lista mostrada con query activa: en vivo primero; si no, respaldo RPC. */
+  const searchResults = useMemo(() => {
+    if (liveMatches && liveMatches.length > 0) {
+      return liveMatches.slice(0, MANUAL_RESULTS_LIMIT);
+    }
+    return serverResults;
+  }, [liveMatches, serverResults]);
 
   // ── Alta de productos (delegada en el carrito) ──────────────────────────
 
@@ -282,7 +352,7 @@ export function POSExpressMode({
         const visible = mappedData
           .filter((p) => isPosProductVisible(p, hideOutOfStock))
           .slice(0, MANUAL_RESULTS_LIMIT);
-        setManualResults(visible);
+        setServerResults(visible);
         if (visible.length === 0) {
           toast.error(`"${term}" no coincide con ningún producto de la tienda`);
         } else {
@@ -325,7 +395,7 @@ export function POSExpressMode({
       if (skuMatch) {
         handleAddProduct(skuMatch);
         setSearchQuery("");
-        setManualResults([]);
+        setServerResults([]);
         return;
       }
       const skuStartsWith = products.find((p) =>
@@ -335,7 +405,7 @@ export function POSExpressMode({
         handleAddProduct(skuStartsWith);
         toast.info(`SKU "${skuQuery}" → ${skuStartsWith.name}`);
         setSearchQuery("");
-        setManualResults([]);
+        setServerResults([]);
         return;
       }
       toast.error(`No se encontró producto con SKU "${skuQuery}"`);
@@ -348,14 +418,14 @@ export function POSExpressMode({
     if (skuMatch) {
       handleAddProduct(skuMatch);
       setSearchQuery("");
-      setManualResults([]);
+      setServerResults([]);
       return;
     }
     const barcodeMatch = products.find((p) => p.barcode?.toLowerCase() === q);
     if (barcodeMatch) {
       handleAddProduct(barcodeMatch);
       setSearchQuery("");
-      setManualResults([]);
+      setServerResults([]);
       return;
     }
 
@@ -363,41 +433,43 @@ export function POSExpressMode({
     // (usePOSServerSearch/POSAutocomplete: name/SKU/código de barras includes).
     // Antes Express solo aceptaba nombre y descartaba SKU/barcode parciales
     // (causa raíz del reporte «el producto no aparece en Express»).
+    // CP-UX-NAVIGATION-POS-REPAIR-001: la lista ya es visible en vivo; Enter
+    // añade SOLO cuando el match es inequívoco (1 coincidencia visible).
     const localMatches = products.filter((p) => {
       const name = p.name.toLowerCase();
       const sku = (p.sku || "").toLowerCase();
       const barcode = (p.barcode || "").toLowerCase();
       return name.includes(q) || sku.includes(q) || barcode.includes(q);
     });
-    if (localMatches.length === 1) {
-      handleAddProduct(localMatches[0]);
+    const visibleMatches = localMatches
+      .filter((p) => isPosProductVisible(p, hideOutOfStock));
+    if (visibleMatches.length === 1) {
+      handleAddProduct(visibleMatches[0]);
       setSearchQuery("");
-      setManualResults([]);
+      setServerResults([]);
       return;
     }
-    if (localMatches.length > 1) {
-      const visible = localMatches
-        .filter((p) => isPosProductVisible(p, hideOutOfStock))
-        .slice(0, MANUAL_RESULTS_LIMIT);
-      setManualResults(visible);
+    if (visibleMatches.length > 1) {
       toast.info(
-        `${localMatches.length} coincidencias de "${raw}" — elige de la lista`,
+        `${visibleMatches.length} coincidencias de "${raw}" — elige de la lista debajo del buscador`,
       );
       return;
     }
 
     // Sin coincidencias locales: respaldo server-side (catálogos grandes y
     // código de barras canónico del maestro). Limpio resultados viejos antes.
-    setManualResults([]);
+    setServerResults([]);
     void runServerSearch(raw);
   };
 
-  // Limpiar resultados manuales al cambiar el texto (sin resultados antiguos).
-  // serverSearchSeq++ invalida cualquier búsqueda server-side en vuelo: sus
+  // Limpiar resultados del servidor al cambiar el texto (sin resultados
+  // antiguos). serverSearchSeq++ invalida cualquier búsqueda en vuelo: sus
   // respuestas se descartan y no pueden pintar resultados obsoletos.
+  // CP-UX-NAVIGATION-POS-REPAIR-001: al borrar el texto, la lista derivada
+  // vuelve automáticamente al catálogo inicial (§3.2 de la misión).
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
-    if (manualResults.length > 0) setManualResults([]);
+    if (serverResults.length > 0) setServerResults([]);
     if (serverSearching) {
       serverSearchSeq.current += 1;
       setServerSearching(false);
@@ -502,7 +574,7 @@ export function POSExpressMode({
         </div>
       </header>
 
-      {/* ── SEARCH GIGANTE (con resultados en vivo, como el carrito) ── */}
+      {/* ── SEARCH GIGANTE (con área dinámica: catálogo inicial / resultados en vivo) ── */}
       <div className="p-4 sm:p-6 border-b border-border shrink-0">
         <form onSubmit={handleSearchSubmit} className="max-w-3xl mx-auto">
           <div className="relative">
@@ -514,27 +586,35 @@ export function POSExpressMode({
               value={searchQuery}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Escanea o escribe nombre, SKU o código de barras..."
-              className="w-full pl-14 pr-4 py-4 sm:py-5 text-lg sm:text-xl font-bold rounded-2xl border-2 border-border bg-card focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none shadow-md"
+              className="w-full pl-14 pr-14 py-4 sm:py-5 text-lg sm:text-xl font-bold rounded-2xl border-2 border-border bg-card focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none shadow-md"
               aria-label="Búsqueda Express"
               aria-controls="pos-express-results"
               aria-busy={serverSearching}
               autoComplete="off"
             />
+            {/* CP-UX-NAVIGATION-POS-REPAIR-001: botón de limpiar búsqueda —
+                al borrar el texto se recupera el catálogo inicial (§3.2). */}
+            {searchQuery.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleSearchChange("");
+                  searchInputRef.current?.focus();
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground flex items-center justify-center transition-colors"
+                aria-label="Limpiar búsqueda y volver al catálogo"
+                title="Limpiar búsqueda"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
           </div>
-          {/* POS-3b EM-7: autocompletado EN VIVO — el MISMO componente del
-              carrito (POSAutocomplete): sugerencias por nombre/SKU/código con
-              imagen, precio, badges de stock y navegación por teclado. */}
-          <POSAutocomplete
-            products={products}
-            query={searchQuery}
-            inputId="pos-express-search-input"
-            onSelectProduct={(p) => {
-              handleAddProduct(p);
-              setSearchQuery("");
-              setManualResults([]);
-            }}
-            hideOutOfStock={hideOutOfStock}
-          />
+          {/* CP-UX-NAVIGATION-POS-REPAIR-001: el dropdown overlay POSAutocomplete
+              se RETIRA de Express — la superficie de resultados es ÚNICA y vive
+              debajo del buscador (el overlay se cerraba con un clic fuera y
+              dejaba la pantalla sin resultados visibles). Mismo criterio de
+              coincidencia (nombre/SKU/código) y el MISMO predicado de
+              visibilidad que el carrito. */}
           <div className="flex items-center justify-center gap-3 mt-2">
             <p className="text-[10px] text-muted-foreground text-center uppercase tracking-widest">
               Enter = agregar · F9 = cobrar · Esc = cancelar
@@ -563,92 +643,226 @@ export function POSExpressMode({
           </div>
         </form>
 
-        {/* ── Resultados manuales (nombre ambiguo / búsqueda server-side) ── */}
-        {manualResults.length > 0 && (
-          <div
-            id="pos-express-results"
-            role="listbox"
-            aria-label="Resultados de búsqueda Express"
-            className="max-w-3xl mx-auto mt-4 rounded-2xl border-2 border-border bg-card overflow-hidden"
-          >
-            <div className="px-3 py-2 border-b border-border bg-muted/30 flex items-center justify-between">
-              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                {manualResults.length} resultado{manualResults.length !== 1 ? "s" : ""}
-              </span>
-              <button
-                type="button"
-                onClick={() => setManualResults([])}
-                className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
-                aria-label="Limpiar resultados"
+        {/* ── ÁREA DINÁMICA bajo el buscador (CP-UX-NAVIGATION-POS-REPAIR-001) ──
+            Estados diferenciados (§3.3 de la misión):
+            · Error al recuperar productos (con Reintentar — reutiliza refetch del POSView).
+            · Cargando productos (skeleton).
+            · Catálogo disponible (sin texto, paginado «Ver más»).
+            · Resultados encontrados (en vivo por nombre/SKU/código, o respaldo RPC).
+            · Sin coincidencias (con pista de búsqueda).
+            · Sin productos con existencias (con pista del filtro «Solo con stock»). */}
+        <div id="pos-express-results" className="max-w-3xl mx-auto mt-3">
+          {productsError ? (
+            <div
+              role="alert"
+              className="rounded-2xl border-2 border-destructive/30 bg-destructive/5 p-5 text-center"
+            >
+              <p className="text-xs font-black uppercase tracking-widest text-destructive">
+                Error al recuperar productos
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 break-words">{productsError}</p>
+              {onRetryProducts && (
+                <button
+                  type="button"
+                  onClick={onRetryProducts}
+                  className="mt-3 px-5 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-[10px] font-black uppercase tracking-widest hover:bg-destructive/90 transition-colors min-h-[44px]"
+                >
+                  Reintentar
+                </button>
+              )}
+            </div>
+          ) : trimmedQuery.length === 0 ? (
+            /* ── SIN TEXTO → CATÁLOGO INICIAL ── */
+            productsLoading ? (
+              <div
+                role="status"
+                aria-label="Cargando productos de la tienda"
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
               >
-                Cerrar
-              </button>
-            </div>
-            <div className="max-h-[38vh] overflow-y-auto">
-              {manualResults.map((product) => {
-                const stock = product.stock_current ?? 0;
-                const stockOut = !product.is_service && stock <= 0;
-                return (
-                  <button
-                    key={product.id}
-                    type="button"
-                    role="option"
-                    aria-selected={false}
-                    onClick={() => {
-                      handleAddProduct(product);
-                      setSearchQuery("");
-                      setManualResults([]);
-                    }}
-                    className={cn(
-                      "w-full px-3 py-2.5 flex items-center gap-3 text-left border-b border-border/50 last:border-0 transition-colors hover:bg-primary/5",
-                      stockOut && "opacity-60",
-                    )}
-                  >
-                    <div className="w-11 h-11 rounded-lg overflow-hidden bg-muted/30 shrink-0">
-                      <ProductImage
-                        src={product.image_url || undefined}
-                        name={product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-foreground truncate">{product.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="p-3 rounded-xl border border-border bg-card animate-pulse">
+                    <div className="aspect-square w-full rounded-lg bg-muted mb-2" />
+                    <div className="h-3 bg-muted rounded w-3/4 mb-1.5" />
+                    <div className="h-3 bg-muted rounded w-1/2" />
+                  </div>
+                ))}
+              </div>
+            ) : visibleCatalog.length === 0 ? (
+              products.length === 0 ? (
+                <ExpressInfoState
+                  title="Sin productos en la tienda"
+                  hint="Agrega productos en Catálogo o recíbelos en Recepciones para venderlos aquí."
+                />
+              ) : (
+                <ExpressInfoState
+                  title="Sin productos con existencias"
+                  tone="warn"
+                  hint={
+                    hideOutOfStock
+                      ? "Todos los productos físicos están agotados (o los hay agotados ocultos por «Solo con stock»). Desactiva el filtro para verlos."
+                      : "Todos los productos físicos están agotados."
+                  }
+                />
+              )
+            ) : (
+              <>
+                <div className="flex items-center justify-between px-1 py-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Catálogo disponible · {visibleCatalog.length} producto{visibleCatalog.length !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider">
+                    clic = agregar
+                  </span>
+                </div>
+                <div className="max-h-[34vh] overflow-y-auto rounded-2xl border-2 border-border bg-muted/10 p-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {visibleCatalog.slice(0, catalogLimit).map((product) => (
+                      <button
+                        key={product.id}
+                        type="button"
+                        onClick={() => {
+                          handleAddProduct(product);
+                          setSearchQuery("");
+                          setServerResults([]);
+                        }}
+                        className="p-3 rounded-xl border-2 border-border bg-card hover:border-primary hover:bg-primary/5 transition-all text-left group active:scale-95"
+                        aria-label={`Agregar ${product.name}`}
+                      >
+                        <div className="aspect-square w-full rounded-lg overflow-hidden bg-muted mb-2">
+                          <ProductImage
+                            src={product.image_url || undefined}
+                            name={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <p className="text-xs font-bold text-foreground line-clamp-2 leading-tight">
+                          {product.name}
+                        </p>
                         {product.sku && (
-                          <span className="text-[10px] text-muted-foreground font-mono">SKU: {product.sku}</span>
+                          <p className="text-[9px] text-muted-foreground font-mono mt-0.5 truncate">
+                            {product.sku}
+                          </p>
                         )}
-                        {stockOut ? (
-                          <span className="text-[9px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded">
-                            Sin stock
+                        <div className="flex items-center justify-between mt-1 gap-1">
+                          <p className="text-sm font-black text-primary tabular-nums">
+                            {formatCurrency(product.price || 0)}
+                          </p>
+                          <span className="text-[8px] font-bold text-muted-foreground bg-muted px-1 py-0.5 rounded shrink-0">
+                            {product.is_service
+                              ? "Servicio"
+                              : `Stock: ${product.stock_current ?? 0}`}
                           </span>
-                        ) : (
-                          <span className="text-[9px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                            Stock: {stock}
-                          </span>
-                        )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  {catalogLimit < visibleCatalog.length && (
+                    <button
+                      type="button"
+                      onClick={() => setCatalogLimit((l) => l + EXPRESS_CATALOG_PAGE)}
+                      className="mt-3 w-full py-2.5 rounded-xl border border-border bg-card text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                      Ver más ({visibleCatalog.length - catalogLimit} restantes)
+                    </button>
+                  )}
+                </div>
+              </>
+            )
+          ) : trimmedQuery.length < LIVE_SEARCH_MIN_CHARS ? (
+            /* ── QUERY CORTA (1 carácter) ── */
+            <ExpressInfoState
+              title={`Escribe al menos ${LIVE_SEARCH_MIN_CHARS} caracteres`}
+              hint="O pulsa Enter para añadir por SKU exacto (o SKU* para prefijos)."
+            />
+          ) : serverSearching ? (
+            /* ── BUSCANDO EN EL SERVIDOR (respaldo RPC) ── */
+            <p
+              role="status"
+              aria-live="polite"
+              className="text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground py-4"
+            >
+              Buscando en el catálogo de la tienda...
+            </p>
+          ) : searchResults.length > 0 ? (
+            /* ── RESULTADOS ENCONTRADOS (en vivo / respaldo RPC) ── */
+            <div
+              role="listbox"
+              aria-label="Resultados de búsqueda Express"
+              className="mt-2 rounded-2xl border-2 border-border bg-card overflow-hidden"
+            >
+              <div className="px-3 py-2 border-b border-border bg-muted/30 flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  {liveMatches && liveMatches.length > searchResults.length
+                    ? `${liveMatches.length} coincidencias — primeras ${searchResults.length}`
+                    : `${searchResults.length} resultado${searchResults.length !== 1 ? "s" : ""}`}
+                </span>
+                <span className="text-[9px] text-muted-foreground/70 uppercase tracking-wider">
+                  clic = agregar
+                </span>
+              </div>
+              <div className="max-h-[38vh] overflow-y-auto">
+                {searchResults.map((product) => {
+                  const stock = product.stock_current ?? 0;
+                  const stockOut = !product.is_service && stock <= 0;
+                  return (
+                    <button
+                      key={product.id}
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      onClick={() => {
+                        handleAddProduct(product);
+                        setSearchQuery("");
+                        setServerResults([]);
+                      }}
+                      className={cn(
+                        "w-full px-3 py-2.5 flex items-center gap-3 text-left border-b border-border/50 last:border-0 transition-colors hover:bg-primary/5",
+                        stockOut && "opacity-60",
+                      )}
+                    >
+                      <div className="w-11 h-11 rounded-lg overflow-hidden bg-muted/30 shrink-0">
+                        <ProductImage
+                          src={product.image_url || undefined}
+                          name={product.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-sm font-black text-primary tabular-nums">
-                        {formatCurrency(product.price || 0)}
-                      </p>
-                      <Plus className="w-4 h-4 text-primary ml-auto mt-1" aria-hidden="true" />
-                    </div>
-                  </button>
-                );
-              })}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-foreground truncate">{product.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {product.sku && (
+                            <span className="text-[10px] text-muted-foreground font-mono">SKU: {product.sku}</span>
+                          )}
+                          {stockOut ? (
+                            <span className="text-[9px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded">
+                              Sin stock
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                              {product.is_service ? "Servicio" : `Stock: ${stock}`}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-black text-primary tabular-nums">
+                          {formatCurrency(product.price || 0)}
+                        </p>
+                        <Plus className="w-4 h-4 text-primary ml-auto mt-1" aria-hidden="true" />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
-        {serverSearching && (
-          <p
-            role="status"
-            aria-live="polite"
-            className="max-w-3xl mx-auto mt-3 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground"
-          >
-            Buscando en el catálogo de la tienda...
-          </p>
-        )}
+          ) : (
+            /* ── SIN COINCIDENCIAS ── */
+            <ExpressInfoState
+              title={`Sin coincidencias para «${trimmedQuery}»`}
+              hint="Prueba con nombre, SKU o código de barras. El filtro «Solo con stock» oculta agotados — pulsa Enter para buscar también en el catálogo de la organización."
+            />
+          )}
+        </div>
       </div>
 
       {/* ── BODY: dos columnas (favoritos + carrito) ── */}
@@ -986,5 +1200,32 @@ export function POSExpressMode({
       </button>
     </div>,
     document.body
+  );
+}
+
+// ── Estado informativo del área dinámica (§3.3 de la misión) ───────────────
+// Un único componente para «sin coincidencias», «sin existencias», «sin
+// productos» y «query corta»: nunca dejar espacio vacío sin explicación.
+function ExpressInfoState({
+  title,
+  hint,
+  tone = "muted",
+}: {
+  title: string;
+  hint?: string;
+  tone?: "muted" | "warn";
+}) {
+  return (
+    <div
+      role="status"
+      className={cn(
+        "rounded-2xl border-2 border-dashed p-6 text-center",
+        tone === "warn" ? "border-amber-500/30 bg-amber-500/5" : "border-border bg-muted/20",
+      )}
+    >
+      <PackageSearch className="w-8 h-8 mx-auto text-muted-foreground/60" aria-hidden="true" />
+      <p className="text-sm font-black uppercase tracking-widest text-foreground mt-2">{title}</p>
+      {hint && <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">{hint}</p>}
+    </div>
   );
 }
