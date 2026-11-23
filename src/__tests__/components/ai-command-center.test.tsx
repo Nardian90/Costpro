@@ -96,28 +96,9 @@ vi.mock('@/components/views/terminal/views/dashboard/DashboardView', () => ({
       {aside}
     </div>
   ),
-  // DASHBOARD V3: AICommandCenterView importa { DashboardAlertsSection } del
-  // mismo módulo. El stub respeta el contrato real del componente:
-  // null mientras carga o sin productos críticos; heading i18n key cuando hay
-  // stock crítico (useTranslations mockeado globalmente devuelve la key).
-  DashboardAlertsSection: () => {
-    const { data, isLoading } = useProductsMock();
-    if (isLoading) return null;
-    const critical = (data || []).filter(
-      (p: any) => (p.stock_current ?? 0) <= (p.min_stock ?? 0)
-    );
-    if (critical.length === 0) return null;
-    return (
-      <section aria-label="criticalAlerts" data-testid="dashboard-alerts-section">
-        <h3>criticalAlerts</h3>
-        <div className="space-y-3">
-          {critical.map((p: any) => (
-            <div key={p.id}>{p.name}</div>
-          ))}
-        </div>
-      </section>
-    );
-  },
+  // ADNEGOCIO-UI 2026-11-23 (misión §3): AICommandCenterView ya NO importa
+  // DashboardAlertsSection — las «Alertas Críticas» se retiraron del Inicio
+  // (la información original permanece en Inventario).
 }));
 
 // ─── MOCK: stores (zustand mínimo — mismos selectores que usa el código) ────
@@ -264,49 +245,23 @@ describe('AICommandCenterView (Inicio)', () => {
     });
   });
 
-  it('DASHBOARD V3: Alertas Críticas es la ÚLTIMA sección del Inicio (después de Darian)', async () => {
+  it('ADNEGOCIO-UI (misión §3): las Alertas Críticas NO se renderizan en el Inicio', async () => {
+    // El bloque se retiró del Panel de Control; la información original
+    // permanece intacta en su módulo (Inventario). Con productos en stock
+    // crítico la vista NO muestra la sección (ni bajo otro nombre).
     useProductsMock.mockReturnValue({
-      data: [{ id: 'p1', name: 'Producto crítico', sku: 'SKU-1', stock_current: 0, min_stock: 5 }],
-      isLoading: false,
-    });
-    const { container } = render(<AICommandCenterView />);
-    await waitFor(() => screen.getByTestId('chatbot-embedded'));
-    await waitFor(() => {
-      // DashboardAlertsSection renderiza null mientras carga → con productos
-      // críticos aparece la sección (heading = clave i18n en tests)
-      expect(screen.getByText('criticalAlerts')).toBeInTheDocument();
-    });
-    // ÚLTIMA sección: el heading de Alertas va DESPUÉS del chat (Darian)
-    // en el orden del DOM.
-    const chatEl = screen.getByTestId('chatbot-embedded');
-    const alertsHeading = screen.getByText('criticalAlerts');
-    expect(alertsHeading.compareDocumentPosition(chatEl) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(0);
-    expect(chatEl.compareDocumentPosition(alertsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // Sin duplicados: UN solo heading de Alertas Críticas
-    expect(screen.getAllByText('criticalAlerts')).toHaveLength(1);
-    void container;
-  });
-
-  it('DASHBOARD V3 + GATE 9: conversación activa → Alertas Críticas desmontadas', async () => {
-    useProductsMock.mockReturnValue({
-      data: [{ id: 'p1', name: 'Producto crítico', sku: 'SKU-1', stock_current: 0, min_stock: 5 }],
+      data: [
+        { id: 'p1', name: 'Abrazadera metálica 1 pulgada', sku: 'SKU-1', stock_current: 0, min_stock: 5 },
+        { id: 'p2', name: 'Alarma', sku: 'SKU-2', stock_current: 1, min_stock: 3 },
+      ],
       isLoading: false,
     });
     render(<AICommandCenterView />);
     await waitFor(() => screen.getByTestId('chatbot-embedded'));
-    await waitFor(() => screen.getByText('criticalAlerts'));
-
-    fireEvent.click(screen.getByTestId('simulate-active'));
-    await waitFor(() => {
-      expect(screen.queryByText('criticalAlerts')).not.toBeInTheDocument();
-    });
-  });
-
-  it('DASHBOARD V3: sin productos críticos NO se renderiza la sección de Alertas', async () => {
-    useProductsMock.mockReturnValue({ data: [], isLoading: false });
-    render(<AICommandCenterView />);
-    await waitFor(() => screen.getByTestId('chatbot-embedded'));
+    await waitFor(() => screen.getByTestId('store-dashboard-embedded'));
     expect(screen.queryByText('criticalAlerts')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('caja-status-strip')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('caja-valoracion-residual')).not.toBeInTheDocument();
   });
 });
 

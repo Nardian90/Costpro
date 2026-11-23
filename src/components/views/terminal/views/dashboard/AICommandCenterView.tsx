@@ -47,7 +47,6 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { cn } from '@/lib/utils';
-import { DashboardAlertsSection } from './DashboardView';
 
 const ChatBot = dynamic(() => import('@/components/ui/ChatBot').then(m => m.ChatBot), {
   ssr: false,
@@ -126,15 +125,11 @@ export default function AICommandCenterView() {
         </div>
       </div>
 
-      {/* DASHBOARD V3 — FASE 6: "Alertas Críticas" es la ÚLTIMA sección del
-          Panel de Control (después de Darian). Solo en estado inicial —
-          la conversación activa toma prioridad (GATE 9). Renderiza null
-          mientras carga o si no hay productos en stock crítico. */}
-      {!hasActiveConversation && (
-        <div className="mx-auto w-full max-w-4xl px-3 sm:px-6 pb-10">
-          <DashboardAlertsSection />
-        </div>
-      )}
+      {/* ADNEGOCIO-UI (misión §3): el bloque «Alertas Críticas» (stock bajo)
+          se RETIRA del Panel de Control — la información original permanece
+          intacta en su módulo (Inventario) y el acceso a los productos en
+          stock crítico sigue en el propio módulo. No se reintroduce bajo
+          otro nombre ni se duplica la información de Conciliación. */}
     </div>
   );
 }

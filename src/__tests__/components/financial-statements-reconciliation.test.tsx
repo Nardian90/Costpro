@@ -24,6 +24,15 @@ vi.mock('@/store', () => ({
 }));
 
 import { ReconciliationTab } from '@/components/views/terminal/views/financial_statements/ReconciliationTab';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+// ADNEGOCIO-UI: los bloques centralizados en Conciliación (valoración, caja
+// física, configuración pendiente) usan hooks react-query canónicos — el
+// render se envuelve en QueryClientProvider.
+function renderWithProviders(ui: React.ReactElement) {
+  const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={qc}>{ui}</QueryClientProvider>);
+}
 
 const fetchMock = vi.fn();
 global.fetch = fetchMock as unknown as typeof fetch;
@@ -173,7 +182,7 @@ describe('ReconciliationTab (CP-FIN-REC-001)', () => {
   afterEach(() => cleanup());
 
   it('muestra estado PENDIENTE con CTA «Ejecutar conciliación» y NO consulta nada al montar', () => {
-    render(
+    renderWithProviders(
       <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={0} />,
     );
     expect(screen.getByTestId('recon-pendiente')).toBeTruthy();
@@ -186,7 +195,7 @@ describe('ReconciliationTab (CP-FIN-REC-001)', () => {
       ok: true,
       json: async () => reconFixture(),
     }));
-    render(
+    renderWithProviders(
       <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={0} />,
     );
     fireEvent.click(screen.getByTestId('btn-ejecutar-conciliacion'));
@@ -201,8 +210,10 @@ describe('ReconciliationTab (CP-FIN-REC-001)', () => {
     const ejecucion = screen.getByTestId('recon-ejecucion').textContent ?? '';
     expect(ejecucion).toContain('GEN-2');
     expect(ejecucion).toContain('2026-11-20');
-    // La URL consultada lleva store_id + as_of + período
-    const url = fetchMock.mock.calls[0][0] as string;
+    // La URL consultada lleva store_id + as_of + período (los bloques
+    // centralizados añaden llamadas supabase al montar → búsqueda por contenido)
+    const url = fetchMock.mock.calls.map((c: unknown[]) => c[0]).find((u: unknown) => String(u).includes('/api/fin/reconciliation?'));
+    expect(url).toBeDefined();
     expect(url).toContain('/api/fin/reconciliation?');
     expect(url).toContain('as_of=2026-11-20');
     expect(url).toContain('from=2026-11-01');
@@ -213,7 +224,7 @@ describe('ReconciliationTab (CP-FIN-REC-001)', () => {
       ok: true,
       json: async () => reconFixture(),
     }));
-    render(
+    renderWithProviders(
       <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={0} />,
     );
     fireEvent.click(screen.getByTestId('btn-ejecutar-conciliacion'));
@@ -227,8 +238,10 @@ describe('ReconciliationTab (CP-FIN-REC-001)', () => {
     expect(detail).toContain('products, kardex_entries');
     // El drill-down de movimientos contables se reutiliza (segunda llamada fetch)
     await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2));
-    const movementUrl = fetchMock.mock.calls[1][0] as string;
-    expect(movementUrl).toContain('category-detail');
+    // Los bloques centralizados añaden llamadas supabase al montar: se busca
+    // la llamada del drill-down por contenido, no por índice.
+    const movementUrl = fetchMock.mock.calls.map((c: unknown[]) => c[0]).find((u: unknown) => String(u).includes('category-detail'));
+    expect(movementUrl).toBeDefined();
   });
 
   it('filtra por estado NO CONCILIABLE y busca por código', async () => {
@@ -236,7 +249,7 @@ describe('ReconciliationTab (CP-FIN-REC-001)', () => {
       ok: true,
       json: async () => reconFixture(),
     }));
-    render(
+    renderWithProviders(
       <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={0} />,
     );
     fireEvent.click(screen.getByTestId('btn-ejecutar-conciliacion'));
@@ -255,7 +268,7 @@ describe('ReconciliationTab (CP-FIN-REC-001)', () => {
       ok: false,
       json: async () => ({ error: 'ERR_UNAUTHORIZED' }),
     }));
-    render(
+    renderWithProviders(
       <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={0} />,
     );
     fireEvent.click(screen.getByTestId('btn-ejecutar-conciliacion'));
@@ -269,21 +282,37 @@ describe('ReconciliationTab (CP-FIN-REC-001)', () => {
       ok: true,
       json: async () => reconFixture(),
     }));
+    // Wrapper con UN MISMO QueryClient para conservar el estado entre re-render
+    // (el bloque centralizado usa hooks react-query — ADNEGOCIO-UI).
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const Wrapper = ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    );
     const { rerender } = render(
-      <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={0} />,
+      <Wrapper>
+        <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={0} />
+      </Wrapper>,
     );
     // Antes de ejecutar, un refreshKey nuevo NO consulta (bajo demanda).
     rerender(
-      <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={1} />,
+      <Wrapper>
+        <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={1} />
+      </Wrapper>,
     );
-    expect(fetchMock).not.toHaveBeenCalled();
+    // Los bloques centralizados consultan vía supabase al montar: se cuentan
+    // SOLO las llamadas del endpoint de conciliación (semántica del test).
+    const reconCalls = () =>
+      fetchMock.mock.calls.filter((c: unknown[]) => String(c[0]).includes('/api/fin/reconciliation')).length;
+    expect(reconCalls()).toBe(0);
     fireEvent.click(screen.getByTestId('btn-ejecutar-conciliacion'));
     await waitFor(() => screen.getByTestId('reconciliation-tab'));
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(reconCalls()).toBe(1);
     rerender(
-      <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={2} />,
+      <Wrapper>
+        <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={2} />
+      </Wrapper>,
     );
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(reconCalls()).toBe(2));
   });
 
   it('el detalle de movimientos embebido renderiza filas del mayor', async () => {
@@ -291,7 +320,7 @@ describe('ReconciliationTab (CP-FIN-REC-001)', () => {
       ok: true,
       json: async () => (String(url).includes('category-detail') ? movementFixture() : reconFixture()),
     }));
-    render(
+    renderWithProviders(
       <ReconciliationTab storeId="store-1" asOf="2026-11-20" from="2026-11-01" to="2026-11-20" refreshKey={0} />,
     );
     fireEvent.click(screen.getByTestId('btn-ejecutar-conciliacion'));

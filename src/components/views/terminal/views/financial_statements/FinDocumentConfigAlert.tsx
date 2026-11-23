@@ -13,10 +13,16 @@
  * Nota de comportamiento financiero: configurar una regla nueva NO genera
  * asientos retroactivos (decisión del motor); por eso el aviso indica que
  * los documentos de estos tipos no contabilizan hasta configurar la regla.
+ *
+ * ADNEGOCIO-UI 2026-11-23: el bloque se CENTRALIZA en la pestaña Conciliación
+ * (misión §2.C — antes vivía en el Dashboard de esta misma vista; retirado de
+ * ahí para no duplicar). Es autocontenido: resuelve los permisos de la página
+ * oficial (admin/manager) y la navegación canónica a Configuración de
+ * Documentos (Inicio › SISTEMA) sin props externas.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle2, RefreshCw, Settings2 } from 'lucide-react';
-import { useAuthStore } from '@/store';
+import { useAuthStore, useUIStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import type { DocumentTypeStatus } from '@/components/views/terminal/views/financial_config/types';
 
@@ -24,20 +30,23 @@ interface FinDocumentConfigAlertProps {
   storeId: string;
   /** Cambia cuando la vista refresca filtros: re-consulta el estado. */
   refreshKey: number;
-  /** La página oficial de Configuración de Documentos es admin/manager. */
-  canConfigure: boolean;
-  onGoDocumentConfig: () => void;
 }
 
-export function FinDocumentConfigAlert({
-  storeId,
-  refreshKey,
-  canConfigure,
-  onGoDocumentConfig,
-}: FinDocumentConfigAlertProps) {
+export function FinDocumentConfigAlert({ storeId, refreshKey }: FinDocumentConfigAlertProps) {
+  const user = useAuthStore((s) => s.user);
+  const setCurrentView = useUIStore((s) => s.setCurrentView);
+  const setFinancialOpeningNavContext = useUIStore((s) => s.setFinancialOpeningNavContext);
   const [types, setTypes] = useState<DocumentTypeStatus[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  /** Permisos de administración de la página oficial (misma regla de la vista). */
+  const canConfigure = user?.role === 'admin' || user?.role === 'manager';
+
+  const goDocumentConfig = useCallback(() => {
+    setFinancialOpeningNavContext({ openOpeningBalances: false, setAt: Date.now() });
+    setCurrentView('document-config');
+  }, [setCurrentView, setFinancialOpeningNavContext]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -130,7 +139,7 @@ export function FinDocumentConfigAlert({
         {canConfigure && (
           <button
             type="button"
-            onClick={onGoDocumentConfig}
+            onClick={goDocumentConfig}
             title="Abre la página oficial: Inicio › Sistema › Configuración de Documentos"
             className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-[11px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
             data-testid="doc-config-go"

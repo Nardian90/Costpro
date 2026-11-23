@@ -28,8 +28,13 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { NoStorePrompt } from '@/components/ui/NoStoreGuard';
 import { withChunkRetry } from '@/components/ui/ChunkErrorBoundary';
-// MISIÓN INGRESOS/EGRESOS 2026-10-20: indicadores de caja en el Inicio.
-import { CajaStatusStrip } from './CajaStatusStrip';
+// ADNEGOCIO-UI 2026-11-23 (misión §4/§5): el anillo configurable se sustituye
+// por el velocímetro semicircular de ventas (mes acumulado vs mismo tramo del
+// mes anterior, períodos equivalentes — PerformanceKpi permanece en el repo
+// como componente no montado). CajaStatusStrip se RETIRA del Inicio: sus
+// bloques (respaldo físico de caja + diferencia de valoración contable CUP)
+// están centralizados en Estados Financieros → Conciliación.
+import { SalesSpeedometer } from './SalesSpeedometer';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
 // REMEDIACIÓN (fix/dashboard-contextual-kpi-actions): el Inicio usa el KPI
@@ -44,11 +49,6 @@ import { CajaStatusStrip } from './CajaStatusStrip';
 // sus sparklines eran paths decorativos hardcodeados (datos inventados).
 // Los datos ÚNICOS de actividad (transacciones, ticket, efectivo,
 // transferencia) se conservan en el bloque renombrado "Resumen de actividad".
-const PerformanceKpi = dynamic(() => import('./PerformanceKpi').then(mod => mod.PerformanceKpi), {
-  loading: () => <div className="h-[360px] w-full max-w-sm rounded-2xl bg-muted/20 animate-pulse" aria-hidden="true" />,
-  ssr: false
-});
-
 // ══════════════════════════════════════════════════════════════════════════
 // REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs): UN SOLO DASHBOARD.
 //
@@ -283,10 +283,13 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
                 className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start"
               >
                 <div className="flex flex-col items-center min-w-0">
-                  {/* REMEDIACIÓN KPI temporal — el anillo recibe el período del
-                      selector Día/Mes/Año + fecha (misma fuente que las
-                      mini-stats y los pills: cero contradicciones). */}
-                  <PerformanceKpi anchor={{ mode: timeRange, date: selectedDate }} />
+                  {/* ADNEGOCIO-UI (misión §4/§5): velocímetro ejecutivo de
+                      ventas — períodos equivalentes (mes acumulado vs mismo
+                      tramo del mes anterior), escala dinámica sin truncar,
+                      sin metas inventadas — junto al acceso «Comparar
+                      productos». El selector Día/Mes/Año sigue mandando en
+                      las mini-stats y el Resumen de actividad. */}
+                  <SalesSpeedometer onCompareProducts={() => setCurrentView('product-comparison')} />
 
                   {/* Mini Stats under the ring — all tokens, no hardcoded colors.
                       REMEDIACIÓN FASE 2: costos/utilidad null ⇒ "N/D" (nunca 0). */}
@@ -358,10 +361,10 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
                 </div>
               </section>
 
-              {/* MISIÓN INGRESOS/EGRESOS 2026-10-20 (requisito §7): indicadores
-                  de caja en Inicio — saldo (efectivo esperado del turno, incluye
-                  los documentos Ingreso/Egreso UNA vez) y fondo de cambio. */}
-              <CajaStatusStrip />
+              {/* ADNEGOCIO-UI (misión §2/§3): el strip de caja (respaldo
+                  físico + diferencia de valoración contable CUP) se retira del
+                  Inicio — está centralizado en Estados Financieros →
+                  Conciliación (bloques 1 y 2 del orden exigido). */}
 
               {/* Action Buttons — removed dead "Reporte" button, kept "Ajustes" */}
               <div className="flex justify-end">

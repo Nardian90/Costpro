@@ -31,8 +31,21 @@ const rpcState = vi.hoisted(() => ({
   docTypesError: null as string | null,
 }));
 
+// Stub de from(): los bloques centralizados de Conciliación (caja física,
+// turno) consultan tablas — respuesta neutra para no bloquear la vista.
+function fromChainNeutral() {
+  const c: Record<string, unknown> = {};
+  const terminal = () => Promise.resolve({ data: null, error: null });
+  for (const m of ['select', 'eq', 'in', 'neq', 'gte', 'lte', 'order', 'limit']) c[m] = () => c;
+  for (const m of ['range', 'single', 'maybeSingle']) c[m] = () => terminal();
+  c.then = (res?: (v: unknown) => unknown, rej?: (e: unknown) => unknown) =>
+    Promise.resolve({ data: null, error: null }).then(res, rej);
+  return c;
+}
+
 vi.mock('@/lib/supabaseClient', () => ({
   supabase: {
+    from: vi.fn(() => fromChainNeutral()),
     rpc: vi.fn(async (name: string, args: Record<string, unknown>) => {
       if (name === 'get_sales_dashboard_analytics') {
         expect(args.p_prev_from).toBeDefined();
@@ -220,15 +233,32 @@ describe('FinancialStatementsView — render y pestañas (ADNEGOCIO)', () => {
     expect(screen.getByTestId('compared-period-label')).toBeDefined();
   });
 
-  it('alerta de configuración contable pendiente: conteo dinámico, nombres y acceso', async () => {
+  it('ADNEGOCIO-UI: alerta de configuración contable pendiente CENTRALIZADA en Conciliación', async () => {
     authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
     standardFetchMock();
 
     const { container } = renderView();
-    await waitFor(() => expect(screen.getByTestId('doc-config-alert')).toBeDefined(), { timeout: 4000 });
+    await waitFor(() => expect(screen.getByTestId('tab-conciliacion')).toBeDefined(), { timeout: 4000 });
 
+    // El bloque ya NO vive en el Dashboard de la vista (misión §2.C: una sola
+    // representación, en Conciliación, en el orden 1 Valoración · 2 Caja · 3 Configuración).
+    expect(screen.queryByTestId('doc-config-alert')).toBeNull();
+
+    await act_click(screen.getByTestId('tab-conciliacion'));
+    await waitFor(() => expect(screen.getByTestId('reconciliacion-centralizada')).toBeDefined(), { timeout: 4000 });
+
+    // Orden definitivo en Conciliación: Valoración (1) y Caja física (2)
+    // ANTES de Configuración contable pendiente (3)
+    const centralizada = screen.getByTestId('reconciliacion-centralizada');
+    const valIdx = (centralizada.textContent ?? '').indexOf('Diferencia de valoración');
+    const cajaIdx = (centralizada.textContent ?? '').indexOf('Respaldo físico');
+    const cfgIdx = (centralizada.textContent ?? '').indexOf('Configuración contable pendiente');
+    expect(valIdx).toBeGreaterThanOrEqual(0);
+    expect(cajaIdx).toBeGreaterThan(valIdx);
+    expect(cfgIdx).toBeGreaterThan(cajaIdx);
+
+    await waitFor(() => expect(screen.getByTestId('doc-config-alert')).toBeDefined(), { timeout: 4000 });
     // Conteo calculado del RPC (3 pendientes del fixture), no codificado
-    await waitFor(() => expect(container.textContent).toContain('Configuración contable pendiente'), { timeout: 4000 });
     expect(container.textContent).toMatch(/3 tipos documentales/);
     // Nombre de cada tipo pendiente + su situación
     expect(screen.getByTestId('doc-config-item-VALE_SALIDA')).toBeDefined();
@@ -237,17 +267,21 @@ describe('FinancialStatementsView — render y pestañas (ADNEGOCIO)', () => {
     expect(container.textContent).toContain('Sin regla económica activa');
     // Errores de contabilización del tipo que los tiene
     expect(container.textContent).toMatch(/2 errores de contabilización sin resolver/);
+    // Advertencia conservada: configurar NO genera asientos retroactivos
+    expect(container.textContent).toContain('no genera asientos retroactivos');
     // Acceso a Configuración de Documentos (página oficial en Sistema)
     await act_click(screen.getByTestId('doc-config-go'));
     expect(setCurrentView).toHaveBeenCalledWith('document-config');
   });
 
-  it('con todos los tipos configurados: estado correcto sin alertas pendientes', async () => {
+  it('con todos los tipos configurados: estado correcto sin alertas pendientes (en Conciliación)', async () => {
     authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
     rpcState.docTypes = docTypesFixture().map((t) => ({ ...t, configurado: true }));
     standardFetchMock();
 
     const { container } = renderView();
+    await waitFor(() => expect(screen.getByTestId('tab-conciliacion')).toBeDefined(), { timeout: 4000 });
+    await act_click(screen.getByTestId('tab-conciliacion'));
     await waitFor(() => expect(screen.getByTestId('doc-config-ok')).toBeDefined(), { timeout: 4000 });
     expect(container.textContent).toContain('Configuración contable al día');
     expect(screen.queryByTestId('doc-config-alert')).toBeNull();
