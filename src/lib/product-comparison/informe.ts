@@ -131,6 +131,10 @@ export interface InformeTabla {
   filas: string[][];
   /** Nota breve específica de la tabla (cuando aporta precisión). */
   nota?: string;
+  /** Proporciones de ancho por columna (suman 1) — evita columnas comprimidas. */
+  anchos?: number[];
+  /** Alineación por columna (por defecto: primera izquierda, resto derecha). */
+  alineaciones?: Array<'left' | 'right' | 'center'>;
 }
 
 export interface InformeMetodologia {
@@ -231,8 +235,8 @@ const num = (n: number, dec = 2): string =>
   n.toLocaleString('es-CU', { minimumFractionDigits: 0, maximumFractionDigits: dec });
 
 export const fmtCup = (n: number): string => formatCurrency(n);
-export const fmtCupSign = (n: number): string => `${n > 0 ? '+' : n < 0 ? '−' : ''}${formatCurrency(Math.abs(n))}`;
-export const fmtPctSign = (n: number): string => `${n > 0 ? '+' : n < 0 ? '−' : ''}${num(Math.abs(n), 1)}%`;
+export const fmtCupSign = (n: number): string => `${n > 0 ? '+' : n < 0 ? '-' : ''}${formatCurrency(Math.abs(n))}`;
+export const fmtPctSign = (n: number): string => `${n > 0 ? '+' : n < 0 ? '-' : ''}${num(Math.abs(n), 1)}%`;
 
 const fmtCant = (n: number, um: string | null): string =>
   `${num(n)} ${um ?? 'u'}`;
@@ -272,7 +276,7 @@ export function evaluarRotacion(row: ComparisonRow, dias: number): EvaluacionRot
     : 'Sin ventas en el período analizado';
 
   const coberturaTexto = coberturaDias !== null
-    ? `≈ ${num(coberturaDias, 1)} días`
+    ? `aprox. ${num(coberturaDias, 1)} días`
     : velocidad === null
       ? 'No calculable (sin ventas en el tramo)'
       : 'No calculable (sin existencia)';
@@ -538,7 +542,7 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
     }
   }
   situacionGeneral.push(
-    `${crecen.length} producto${crecen.length !== 1 ? 's' : ''} ${crecen.length !== 1 ? 'aumentan' : 'aumenta'} sus ingresos y ${contraen.length} ${contraen.length !== 1 ? 'los reducen' : 'lo reduce'} dentro del conjunto comparado; ${crecimientoRelevante.length} ${crecimientoRelevante.length !== 1 ? 'crecen' : 'crece'} con variación relevante (≥ +${UMBRAL_CRECIMIENTO_RELEVANTE}%) y ${contraccionRelevante.length} ${contraccionRelevante.length !== 1 ? 'se contraen' : 'se contrae'} en la misma magnitud. ${nuevos.length} producto${nuevos.length !== 1 ? 's entran' : ' entra'} al ranking sin ventas comparables en el tramo anterior y ${dejaron.length} ${dejaron.length !== 1 ? 'dejan' : 'deja'} de registrar salidas por venta según el mayor de inventario.`,
+    `${crecen.length} producto${crecen.length !== 1 ? 's' : ''} ${crecen.length !== 1 ? 'aumentan' : 'aumenta'} sus ingresos y ${contraen.length} ${contraen.length !== 1 ? 'los reducen' : 'lo reduce'} dentro del conjunto comparado; ${crecimientoRelevante.length} ${crecimientoRelevante.length !== 1 ? 'crecen' : 'crece'} con variación relevante (+${UMBRAL_CRECIMIENTO_RELEVANTE}% o más) y ${contraccionRelevante.length} ${contraccionRelevante.length !== 1 ? 'se contraen' : 'se contrae'} en la misma magnitud. ${nuevos.length} producto${nuevos.length !== 1 ? 's entran' : ' entra'} al ranking sin ventas comparables en el tramo anterior y ${dejaron.length} ${dejaron.length !== 1 ? 'dejan' : 'deja'} de registrar salidas por venta según el mayor de inventario.`,
   );
   if (agotadosConAntecedente.length > 0 || coberturaInsuficiente.length > 0 || bajaRotacion.length > 0) {
     const partesDisp: string[] = [];
@@ -587,7 +591,7 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
     .map((c) => ({ nivel: c.nivel, producto: c.producto, situacion: c.situacion, decision: c.decision }));
 
   const conclusionGerencial = prioridades[0]
-    ? `La decisión más urgente que este informe pone sobre la mesa es la de ${prioridades[0].producto.toLowerCase()}: ${prioridades[0].decision.split('. ')[0]}.`
+    ? `La decisión más urgente que este informe pone sobre la mesa es la de ${prioridades[0].producto}: ${prioridades[0].decision.split('. ')[0]}.`
     : `El conjunto comparado opera sin desviaciones que superen los umbrales de revisión; el ciclo comercial del período no exige decisiones de reposición o de abastecimiento fuera del seguimiento habitual.`;
 
   // ── 2. Indicadores relevantes ──
@@ -597,8 +601,8 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
       label: 'Variación vs. tramo comparable',
       value: `${fmtCupSign(variacion)} CUP` + (variacionPct !== null ? ` (${fmtPctSign(variacionPct)})` : ''),
     },
-    { label: 'Productos con crecimiento relevante (≥ +50%)', value: String(crecimientoRelevante.length) },
-    { label: 'Productos con contracción (≥ −50%)', value: String(contraccionRelevante.length) },
+    { label: 'Productos con crecimiento relevante (+50% o más)', value: String(crecimientoRelevante.length) },
+    { label: 'Productos con contracción (-50% o más)', value: String(contraccionRelevante.length) },
     { label: 'Productos sin ventas en el tramo (con antecedente)', value: String(dejaron.length) },
     { label: 'Agotados con antecedentes de ventas', value: String(agotadosConAntecedente.length) },
   ];
@@ -650,6 +654,8 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
     complementarias.push({
       titulo: 'Productos agotados con demanda interrumpida',
       columnas: ['Producto', 'Pos. ant.', 'Ventas tramo anterior', 'Cant. anterior', 'Existencia actual', 'Lectura operativa'],
+      anchos: [0.17, 0.07, 0.14, 0.11, 0.13, 0.38],
+      alineaciones: ['left', 'center', 'right', 'right', 'right', 'left'],
       filas: agotadosConAntecedente
         .sort((a, b) => b.ventasAnteriores - a.ventasAnteriores)
         .map((r) => [
@@ -687,6 +693,8 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
     complementarias.push({
       titulo: 'Productos de baja rotación',
       columnas: ['Producto', 'Existencia', 'Velocidad', 'Cobertura', 'Situación'],
+      anchos: [0.20, 0.12, 0.16, 0.14, 0.38],
+      alineaciones: ['left', 'right', 'right', 'right', 'left'],
       filas: bajaTabla.map((e) => [
         e.row.name,
         fmtCant(e.existencia ?? 0, e.row.unidadMedida),
@@ -702,6 +710,8 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
     complementarias.push({
       titulo: 'Productos nuevos o emergentes en el ranking',
       columnas: ['Producto', 'Pos.', 'Ventas (CUP)', 'Cantidad', 'Existencia', 'Lectura'],
+      anchos: [0.18, 0.06, 0.13, 0.13, 0.13, 0.37],
+      alineaciones: ['left', 'center', 'right', 'right', 'right', 'left'],
       filas: [...nuevos]
         .sort((a, b) => (a.posActual ?? 99) - (b.posActual ?? 99))
         .map((r) => {
@@ -726,6 +736,8 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
     complementarias.push({
       titulo: 'Productos fuera del Top analizado',
       columnas: ['Producto', 'Pos. ant.', 'Estado respecto al período actual', 'Existencia', 'Lectura'],
+      anchos: [0.17, 0.08, 0.34, 0.12, 0.29],
+      alineaciones: ['left', 'center', 'left', 'right', 'left'],
       filas: [...salieron]
         .sort((a, b) => (a.posAnterior ?? 99) - (b.posAnterior ?? 99))
         .map((r) => {
@@ -751,6 +763,8 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
     complementarias.push({
       titulo: 'Productos que dejaron de venderse',
       columnas: ['Producto', 'Pos. ant.', 'Ventas tramo anterior', 'Cant. anterior', 'Existencia', 'Lectura operativa'],
+      anchos: [0.17, 0.07, 0.14, 0.11, 0.13, 0.38],
+      alineaciones: ['left', 'center', 'right', 'right', 'right', 'left'],
       filas: [...dejaron]
         .sort((a, b) => b.ventasAnteriores - a.ventasAnteriores)
         .map((r) => {
@@ -850,7 +864,7 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
       parrafos: [
         `Período analizado: ${fmtFecha(meta.periodoActual.desde)} a ${fmtFecha(meta.periodoActual.hasta)} (${dias} días). Tramo comparable: ${fmtFecha(meta.periodoComparacion.desde)} a ${fmtFecha(meta.periodoComparacion.hasta)} (${diasAnterior} días) — misma longitud del mes anterior.`,
         `El conjunto comparado es la ${alcance}. Un líder del tramo anterior con ventas cero permanece visible en el análisis.`,
-        `Variación del conjunto: ${fmtCupSign(variacion)} CUP = Σ ingresos actuales − Σ ingresos del tramo comparable, calculada SOLO sobre los ${rows.length} productos de la unión (base conciliada; no representa la tienda completa ni incluye productos fuera del corte).` +
+        `Variación del conjunto: ${fmtCupSign(variacion)} CUP = suma de los ingresos actuales menos la suma de los ingresos del tramo comparable, calculada SOLO sobre los ${rows.length} productos de la unión (base conciliada; no representa la tienda completa ni incluye productos fuera del corte).` +
           (variacionPct !== null ? ` La variación porcentual (${fmtPctSign(variacionPct)}) usa como base la suma del tramo comparable de esa misma unión.` : ''),
         'Las cantidades nunca se suman entre productos con unidades de medida distintas; los precios efectivos se calculan por producto (ingresos netos / unidades vendidas).',
       ],
@@ -861,8 +875,8 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
         'Velocidad diaria de venta = unidades vendidas del tramo analizado ÷ días del tramo, en la unidad de medida propia del producto (unidades/día, metros/día, kilogramos/día, según corresponda).',
         'Cobertura estimada (días) = existencia actual ÷ velocidad diaria. Es una estimación operativa con la existencia instantánea: no proyecta demanda futura ni incorpora plazos de reposición o inventario de seguridad, que el sistema no parametriza (salvo la existencia mínima declarada en el catálogo).',
         `Clasificación de rotación (umbrales configurables, anclados a la cadencia mensual del informe con D = ${dias} días): rotación alta, cobertura < D/2; rotación moderada, entre D/2 y D; baja rotación, cobertura > D; sin movimiento, sin salidas en el tramo con existencia disponible; sin base suficiente, cuando no puede calcularse la velocidad o la cobertura (no se generan coberturas ficticias).`,
-        `Variación relevante: Δ% ≥ +50% (crecimiento) o ≤ −50% (contracción), simétrico del umbral de caída fuerte publicado por el sistema (50%). Concentración del líder: participación oficial > 50% de las ventas del período.`,
-        'Diferencias conceptuales: velocidad de venta (unidades/día) ≠ cobertura (días de existencia) ≠ rotación financiera de inventario (requiere existencia promedio y costo de ventas, no disponibles — no se calcula).',
+        `Variación relevante: variación porcentual de +50% o más (crecimiento) o de -50% o más (contracción), simétrico del umbral de caída fuerte publicado por el sistema (50%). Concentración del líder: participación oficial > 50% de las ventas del período.`,
+        'Diferencias conceptuales: la velocidad de venta (unidades/día) no equivale a la cobertura (días de existencia), y ninguna de las dos es la rotación financiera de inventario (que requiere existencia promedio y costo de ventas, no disponibles — no se calcula).',
       ],
     },
     {

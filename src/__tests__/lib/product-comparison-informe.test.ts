@@ -246,7 +246,7 @@ describe('Informe Gerencial — casos de calidad A-E', () => {
     const p = prioridadDe(inf, 'Cemento Blanco 2 Kg');
     expect(p).not.toBeNull();
     expect(p!.nivel).toBe('media');
-    expect(p!.situacion).toContain('−84%');
+    expect(p!.situacion).toContain('-84%');
     expect(p!.situacion).toContain('existencia de 4 unidades');
     expect(p!.decision).toContain('antes de autorizar nuevas compras');
     expect(p!.decision).toContain('no procede aumentar inventario');
@@ -355,7 +355,7 @@ describe('Informe Gerencial — integridad y sin contradicciones', () => {
     expect(tbv![2]).toBe('1'); // pos. anterior
     expect(tbv![3]).toBe('—'); // pos. actual
     expect(tbv![5]).toContain('0.00'); // ventas actuales
-    expect(tbv![7]).toBe('−100%');
+    expect(tbv![7]).toBe('-100%');
     expect(tbv![8]).toContain('78 unidades');
     expect(tbv![9]).toContain('0 unidades');
   });
@@ -413,6 +413,6 @@ describe('Informe Gerencial — metodología', () => {
     expect(texto).toContain('rotación alta, cobertura < D/2');
     expect(texto).toContain('baja rotación, cobertura > D');
     expect(texto).toContain('no se generan coberturas ficticias');
-    expect(texto).toContain('velocidad de venta (unidades/día) ≠ cobertura');
+    expect(texto).toContain('la velocidad de venta (unidades/día) no equivale a la cobertura');
   });
 });

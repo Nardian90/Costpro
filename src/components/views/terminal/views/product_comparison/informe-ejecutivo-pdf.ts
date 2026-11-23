@@ -392,12 +392,14 @@ async function drawSeccionTabla(
   const n = tabla.columnas.length;
   const widths =
     opts.colWidths ??
+    tabla.anchos ??
     Array.from({ length: n }, (_, i) =>
       // La primera columna (descripción) respira; las numéricas se reparten.
       i === 0 ? 0.26 : (0.74 / (n - 1)),
     );
   const aligns =
     opts.aligns ??
+    tabla.alineaciones ??
     Array.from({ length: n }, (_, i) => (i === 0 ? 'left' : 'right') as 'left' | 'right');
   const body = tabla.filas;
   y = await drawTabla(
@@ -591,10 +593,19 @@ export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promi
     });
   }
 
-  // Anexo IV — metodología y fuentes
+  // Anexo IV — metodología y fuentes. Cada bloque se mantiene COMPLETO en una
+  // página (se mide antes de dibujar): evita títulos huérfanos y páginas casi
+  // vacías al final del documento (regla editorial de la misión §7).
   y = drawSubTitle(doc, 'Anexo IV. Metodología y fuentes', y, informe);
   for (const bloque of informe.metodologia) {
-    y = ensureSpace(doc, y, 14, informe);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.2);
+    const lineasBloque = bloque.parrafos.reduce(
+      (acc, parrafo) => acc + (doc.splitTextToSize(parrafo, contentW) as string[]).length + 0.3,
+      0,
+    );
+    const altoBloque = 4.6 + lineasBloque * 4.0 + 2;
+    y = ensureSpace(doc, y, Math.min(altoBloque, 120), informe);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8.8);
     doc.setTextColor(...C_DARK);
