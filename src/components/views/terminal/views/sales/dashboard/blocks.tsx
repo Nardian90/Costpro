@@ -433,7 +433,11 @@ export function AlertsBlock({
 }
 
 // ── Mapa de calor día × hora ────────────────────────────────────────────────
-const DOW_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+// MISIÓN CENTRO DE INTELIGENCIA (corrección de datos de pantalla): el RPC
+// devuelve ISODOW (1=Lunes … 7=Domingo) y las etiquetas estaban ordenadas
+// Dom-primero → la fila «Dom» mostraba los datos del LUNES. Orden ISO:
+// DOW_LABELS[di] ↔ cell(di + 1) queda alineado con 1=Lun … 7=Dom.
+const DOW_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 export function HeatmapBlock({ heatmap }: { heatmap: SalesDashboardResponse['heatmap'] }) {
   const cell = (dow: number, hour: number) => heatmap.find(h => h.dow === dow && h.hour === hour);

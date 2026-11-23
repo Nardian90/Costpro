@@ -1,30 +1,30 @@
 /**
- * REMEDIACIÓN V2 (fix/dashboard-consolidated-tabs) — Tests del gate del
- * dashboard consolidado.
+ * MISIÓN CENTRO DE INTELIGENCIA (2026-11-23) — Tests del gate del Dashboard.
+ * (Actualiza el contrato de REMEDIACIÓN V2: la vista consolidada por tabs
+ * StoreDashboardView fue SUSTITUIDA por el Centro de Inteligencia Empresarial.)
  *
  * Contrato verificado:
  *   1. La entrada "Dashboard" del menú (ViewType 'store-dashboard' →
- *      DashboardView standalone) monta StoreDashboardView — la MISMA vista
- *      consolidada por tabs (Panel / Resumen / Productos / Comportamiento —
- *      tab "Panel" default desde fix/dashboard-tab-panel-control) que
- *      "Gestión de Tiendas" abre con el botón "Dashboard" de cada tarjeta.
+ *      DashboardView standalone, ahora en Inicio → Análisis → Dashboard)
+ *      monta BiDashboardView — el CENTRO DE INTELIGENCIA EMPRESARIAL con
+ *      navegación interna por módulos (Resumen ejecutivo | Análisis de
+ *      ventas). Es una vista in-shell: SIN overlay fullscreen y SIN onClose.
  *   2. Fuente de verdad (FASE 3): storeId SIEMPRE = user.activeStoreId;
  *      el nombre se resuelve del listado useStores (misma fuente que el
  *      selector del header). Cero hardcode.
  *   3. FASE 4 (switching): cambiar la tienda activa A→B re-renderiza el
- *      dashboard con los datos de B.
+ *      centro con los datos de B.
  *   4. Estados honestos: listado cargando → skeleton; sin tienda activa o
  *      tienda revocada → NoStorePrompt (jamás datos de otra tienda).
- *   5. onClose del dashboard consolidado → vuelve a Gestión de Tiendas
- *      ('management-hub'), coherente con el breadcrumb "← Tiendas".
+ *   5. Modo embedded (widget del Inicio) NO cambia: sigue DashboardViewImpl.
  *
- * StoreDashboardView (3160 LOC + ECharts) se sustituye por un doble que
- * expone las props recibidas — el componente real ya tiene tests de render
- * en g1-component-tests.test.tsx.
+ * BiDashboardView (lazy) se sustituye por un doble que expone las props
+ * recibidas — el shell real tiene su propia lógica de módulos probada en
+ * navegador; el gate solo decide QUÉ tienda montar.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -61,12 +61,12 @@ vi.mock('@/components/views/terminal/views/dashboard/useDashboardView', () => ({
   }),
 }));
 
-// Doble de StoreDashboardView: expone las props que el gate le pasa.
-vi.mock('@/components/views/terminal/views/dashboard/StoreDashboardView', () => ({
+// Doble de BiDashboardView: expone las props que el gate le pasa.
+vi.mock('@/components/views/terminal/views/bi/BiDashboardView', () => ({
   __esModule: true,
   default: (props: any) => (
-    <div data-testid="consolidated-dashboard" data-store-id={props.storeId} data-store-name={props.storeName}>
-      <button type="button" data-testid="consolidated-close" onClick={props.onClose}>cerrar</button>
+    <div data-testid="bi-dashboard" data-store-id={props.storeId} data-store-name={props.storeName}>
+      Centro de Inteligencia (doble de test)
     </div>
   ),
 }));
@@ -91,32 +91,32 @@ beforeEach(() => {
   h.storesLoading.value = false;
 });
 
-describe('REMEDIACIÓN V2 — Gate del dashboard consolidado (tienda activa)', () => {
+describe('MISIÓN CENTRO DE INTELIGENCIA — Gate del Dashboard (tienda activa → BI)', () => {
 
-  it('1 · monta la vista consolidada (tabs Resumen/Productos/Comportamiento) de la TIENDA ACTIVA', async () => {
+  it('1 · monta el Centro de Inteligencia (BiDashboardView) de la TIENDA ACTIVA', async () => {
     const DashboardView = (await import('@/components/views/terminal/views/dashboard/DashboardView')).default;
     render(<DashboardView />, { wrapper: Wrapper });
 
-    const dash = await screen.findByTestId('consolidated-dashboard');
+    const dash = await screen.findByTestId('bi-dashboard');
     expect(dash).toHaveAttribute('data-store-id', 'store-a');
     expect(dash).toHaveAttribute('data-store-name', 'E2E PILOT A');
   });
 
-  it('2 · FASE 4 switching A→B: el dashboard responde a la nueva tienda activa', async () => {
+  it('2 · FASE 4 switching A→B: el centro responde a la nueva tienda activa', async () => {
     const DashboardView = (await import('@/components/views/terminal/views/dashboard/DashboardView')).default;
     const { rerender } = render(<DashboardView />, { wrapper: Wrapper });
 
-    await screen.findByTestId('consolidated-dashboard');
-    expect(screen.getByTestId('consolidated-dashboard')).toHaveAttribute('data-store-id', 'store-a');
+    await screen.findByTestId('bi-dashboard');
+    expect(screen.getByTestId('bi-dashboard')).toHaveAttribute('data-store-id', 'store-a');
 
     // Cambio de tienda activa A→B (mecanismo certificado: updateUser/setActiveStore).
     h.userRef.value = { id: 'u1', activeStoreId: 'store-b', role: 'admin' };
     rerender(<DashboardView />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('consolidated-dashboard')).toHaveAttribute('data-store-id', 'store-b');
+      expect(screen.getByTestId('bi-dashboard')).toHaveAttribute('data-store-id', 'store-b');
     });
-    expect(screen.getByTestId('consolidated-dashboard')).toHaveAttribute('data-store-name', 'E2E PILOT B');
+    expect(screen.getByTestId('bi-dashboard')).toHaveAttribute('data-store-name', 'E2E PILOT B');
   });
 
   it('3 · sin tienda activa → NoStorePrompt honesto, jamás datos de otra tienda', async () => {
@@ -127,7 +127,7 @@ describe('REMEDIACIÓN V2 — Gate del dashboard consolidado (tienda activa)', (
     await waitFor(() => {
       expect(screen.getByText('selectStorePrompt')).toBeInTheDocument();
     });
-    expect(screen.queryByTestId('consolidated-dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bi-dashboard')).not.toBeInTheDocument();
   });
 
   it('4 · tienda activa revocada (fuera del listado accesible) → NoStorePrompt', async () => {
@@ -138,10 +138,10 @@ describe('REMEDIACIÓN V2 — Gate del dashboard consolidado (tienda activa)', (
     await waitFor(() => {
       expect(screen.getByText('selectStorePrompt')).toBeInTheDocument();
     });
-    expect(screen.queryByTestId('consolidated-dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bi-dashboard')).not.toBeInTheDocument();
   });
 
-  it('5 · listado de tiendas cargando → skeleton (sin renderizar el dashboard aún)', async () => {
+  it('5 · listado de tiendas cargando → skeleton (sin renderizar el centro aún)', async () => {
     // isLoading=true en react-query implica data aún no disponible (sin cache):
     // el gate no puede resolver la tienda activa → skeleton honesto.
     h.storesRef.value = [];
@@ -150,15 +150,16 @@ describe('REMEDIACIÓN V2 — Gate del dashboard consolidado (tienda activa)', (
     const { container } = render(<DashboardView />, { wrapper: Wrapper });
 
     expect(container.querySelector('[aria-busy="true"]')).toBeTruthy();
-    expect(screen.queryByTestId('consolidated-dashboard')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('bi-dashboard')).not.toBeInTheDocument();
   });
 
-  it('6 · onClose del dashboard consolidado ("← Tiendas") → vuelve a Gestión de Tiendas', async () => {
+  it('6 · vista in-shell: el gate NO pasa onClose (sin overlay fullscreen ni vuelta a management-hub)', async () => {
+    // El Centro de Inteligencia vive dentro del shell (breadcrumb Inicio →
+    // Análisis → Dashboard): la navegación la maneja el shell, no un overlay.
     const DashboardView = (await import('@/components/views/terminal/views/dashboard/DashboardView')).default;
     render(<DashboardView />, { wrapper: Wrapper });
 
-    await screen.findByTestId('consolidated-dashboard');
-    fireEvent.click(screen.getByTestId('consolidated-close'));
-    expect(h.setCurrentView).toHaveBeenCalledWith('management-hub');
+    await screen.findByTestId('bi-dashboard');
+    expect(h.setCurrentView).not.toHaveBeenCalled();
   });
 });
