@@ -499,7 +499,9 @@ export default function ProductComparisonView() {
         >
           <ArrowLeft className="w-4 h-4" /> Volver al Dashboard
         </button>
-        <h1 className="text-2xl font-black uppercase tracking-tighter text-foreground mt-1">Comparar productos</h1>
+        {/* GATE 16 (misión BI 2026-11-23): UNA sola h1 por página — la pinta el
+            shell Header con el label oficial de la navegación. La vista usa h2. */}
+        <h2 className="text-2xl font-black uppercase tracking-tighter text-foreground mt-1">Comparar productos</h2>
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mt-0.5">
           Ranking comercial: mes en curso vs mismo tramo del mes anterior
         </p>
