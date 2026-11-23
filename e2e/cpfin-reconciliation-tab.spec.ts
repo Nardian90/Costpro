@@ -180,7 +180,11 @@ test.describe('CP-FIN-REC-001 · Conciliación operativa-contable', () => {
     await page.getByTestId('btn-ejecutar-conciliacion').click();
     await page.getByTestId('recon-row-ACT_INVENTARIO').click();
     await expect(page.getByTestId('recon-detail-ACT_INVENTARIO')).toBeVisible();
-    await expect(page.getByTestId('recon-detail-ACT_INVENTARIO')).toContainText('stock_current');
+    // La metodología del row de inventario cambia según la fecha de corte
+    // (as_of < CURRENT_DATE ⇒ texto Kardex; igual ⇒ texto WAC 'stock_current'):
+    // se aserta un marcador ESTABLE presente en ambas ramas (flake de rollover).
+    await expect(page.getByTestId('recon-detail-ACT_INVENTARIO')).toContainText('Fórmula y fuentes');
+    await expect(page.getByTestId('recon-detail-ACT_INVENTARIO')).toContainText('Valor operacional');
   });
 
   test('exporta Excel y PDF del mayor por categoría (PDF pide fechas)', async ({ page }) => {

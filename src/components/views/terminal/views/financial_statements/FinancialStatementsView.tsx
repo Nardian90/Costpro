@@ -535,8 +535,6 @@ export default function FinancialStatementsView() {
           to={applied.to}
           refreshKey={refreshKey}
           onGoToTab={goToReport}
-          onGoDocumentConfig={goDocumentConfig}
-          canConfigureFin={canConfigureFin}
         />
       )}
       {activeTab === 'situacion' && (

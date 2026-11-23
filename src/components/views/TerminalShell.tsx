@@ -176,6 +176,8 @@ const DocumentConfigView = dynamic(() => import('@/components/views/terminal/vie
 // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros (Situación,
 // Rendimiento y Dashboard por tienda, sobre el motor de partida doble).
 const FinancialStatementsView = dynamic(() => import('@/components/views/terminal/views/financial_statements/FinancialStatementsView'), { ssr: false });
+// ADNEGOCIO-UI 2026-11-23 (misión §5): vista analítica «Comparar productos».
+const ProductComparisonView = dynamic(() => import('@/components/views/terminal/views/product_comparison/ProductComparisonView'), { ssr: false });
 // V1.2: Devoluciones, Clientes, Cotizaciones, Cierre Fiscal
 const DevolutionsView = dynamic(() => import('@/components/views/terminal/views/devolutions/DevolutionsView').then(m => ({ default: m.DevolutionsView })), { ssr: false });
 const CustomersView = dynamic(() => import('@/components/views/terminal/views/customers/CustomersView').then(m => ({ default: m.CustomersView })), { ssr: false });
@@ -624,6 +626,8 @@ export default function TerminalShell() {
         case 'document-config': return <ViewErrorBoundary viewName="Configuración de Documentos"><DocumentConfigView /></ViewErrorBoundary>;
         // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros
         case 'financial-statements': return <ViewErrorBoundary viewName="Estados Financieros"><FinancialStatementsView /></ViewErrorBoundary>;
+        // ADNEGOCIO-UI (misión §5): comparación comercial de productos (acceso desde el velocímetro del Inicio).
+        case 'product-comparison': return <ViewErrorBoundary viewName="Comparar productos"><ProductComparisonView /></ViewErrorBoundary>;
         // V1.2: Devoluciones, Clientes CRM, Cotizaciones, Cierre Fiscal
         case 'devolutions': return <ViewErrorBoundary viewName="Devoluciones"><DevolutionsView /></ViewErrorBoundary>;
         case 'customers': return <ViewErrorBoundary viewName="Clientes"><CustomersView /></ViewErrorBoundary>;

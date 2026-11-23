@@ -53,7 +53,6 @@ import {
 } from '@/lib/sales-dashboard/rhythm';
 import { useSalesRhythm } from '@/hooks/api/useSalesRhythm';
 import { fetchDashboard } from './fin-api';
-import { FinDocumentConfigAlert } from './FinDocumentConfigAlert';
 import { FinancialSummaryTable } from './FinancialSummaryTable';
 import type { DashboardData, FinReportTabId } from './types';
 
@@ -65,10 +64,8 @@ interface SalesRhythmDashboardProps {
   refreshKey: number;
   /** ADNEGOCIO §2.3: navegación a los tres informes (sin duplicar vistas). */
   onGoToTab: (tab: FinReportTabId) => void;
-  /** ADNEGOCIO §2.4: acceso contextual a Configuración de Documentos (Sistema). */
-  onGoDocumentConfig: () => void;
-  /** Permisos de administración para la configuración (misma regla de la vista). */
-  canConfigureFin: boolean;
+  /** ADNEGOCIO-UI §2.C: canConfigureFin/onGoDocumentConfig retirados — el
+      acceso a Configuración de Documentos vive centralizado en Conciliación. */
 }
 
 /** Badge de variación porcentual (semántica: crecimiento/descenso/igual). */
@@ -153,7 +150,7 @@ function SalesBullet({ indexPct }: { indexPct: number | null }) {
   );
 }
 
-export function SalesRhythmDashboard({ storeId, from, to, refreshKey, onGoToTab, onGoDocumentConfig, canConfigureFin }: SalesRhythmDashboardProps) {
+export function SalesRhythmDashboard({ storeId, from, to, refreshKey, onGoToTab }: SalesRhythmDashboardProps) {
   const token = useAuthStore((s) => s.token);
   const theme = useChartTheme();
   const tooltipProps = chartTooltipProps(theme);
@@ -339,14 +336,10 @@ export function SalesRhythmDashboard({ storeId, from, to, refreshKey, onGoToTab,
 
       {/* ── Alertas contables + accesos directos (ADNEGOCIO §2.2-§2.4) ──── */}
       <div className="space-y-3" data-testid="financial-alerts">
-        {/* Configuración económica pendiente: estado REAL por tipo documental
-            (RPC fin_get_document_types_status); visible sin desplazarse. */}
-        <FinDocumentConfigAlert
-          storeId={storeId}
-          refreshKey={refreshKey}
-          canConfigure={canConfigureFin}
-          onGoDocumentConfig={onGoDocumentConfig}
-        />
+        {/* ADNEGOCIO-UI (misión ADNEGOCIO-UI §2.C): el bloque «Configuración
+            contable pendiente» se CENTRALIZA en la pestaña Conciliación y se
+            retira de aquí (una sola representación, sin duplicados). Se
+            conservan las alertas del motor y los accesos directos. */}
         {/* Alertas del motor (solo las activas, sustentadas en datos) — antes
             en el apartado Resumen, ahora aquí (misma fuente fin_get_dashboard). */}
         {finError === null && finData && (

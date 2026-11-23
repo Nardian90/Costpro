@@ -360,10 +360,12 @@ describe('DashboardView embebido — mini-stats con calidad de datos (FASE 2)', 
     expect(screen.getByTestId('kpi-mini-stats')).toBeInTheDocument();
     expect(screen.getByTestId('mini-stat-costs').textContent).toBe('N/D');
     expect(screen.getByTestId('mini-stat-profit').textContent).toBe('N/D');
-    // El KPI "Rendimiento" está montado en su lugar (carga async vía dynamic)
+    // ADNEGOCIO-UI (misión §4): el indicador del Resumen de Indicadores es
+    // el velocímetro de ventas (el anillo configurable NO está montado).
     await waitFor(() => {
-      expect(screen.getByTestId('performance-kpi')).toBeInTheDocument();
+      expect(screen.getByTestId('sales-speedometer')).toBeInTheDocument();
     });
+    expect(screen.queryByTestId('performance-kpi')).not.toBeInTheDocument();
   });
 });
 
@@ -470,7 +472,7 @@ describe('DashboardView embebido — sin duplicación de KPIs (FASE 15-17)', () 
     mockDashboardData = rpcResponse(125000, 3);
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><DashboardView embedded /></QueryClientProvider>);
     await waitFor(() => {
-      expect(screen.getByTestId('performance-kpi')).toBeInTheDocument();
+      expect(screen.getByTestId('sales-speedometer')).toBeInTheDocument();
     });
     // Duplicado eliminado: el trío financiero vive SOLO en las mini-stats
     expect(screen.queryByTestId('executive-kpi-cards')).not.toBeInTheDocument();
@@ -479,15 +481,16 @@ describe('DashboardView embebido — sin duplicación de KPIs (FASE 15-17)', () 
     expect(screen.getByTestId('kpi-mini-stats')).toBeInTheDocument();
   });
 
-  it('el anillo anclado comparte la MISMA queryKey que la página (cache compartida)', async () => {
+  it('ADNEGOCIO-UI: el velocímetro sustituye al anillo y consulta la fuente canónica de ventas', async () => {
     mockDashboardData = rpcResponse(125000, 3);
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><DashboardView embedded /></QueryClientProvider>);
     await waitFor(() => {
-      expect(screen.getByTestId('performance-kpi')).toBeInTheDocument();
+      expect(screen.getByTestId('sales-speedometer')).toBeInTheDocument();
     });
-    // La página (useDashboardView) y el anillo (ancla day/hoy) piden el MISMO
-    // rango → una sola consulta de red (FASE 21).
-    const dayCalls = dashboardDataCalls.filter((c) => typeof c[2] === 'string' && c[2] === '2026-10-15T00:00:00.000Z');
-    expect(dayCalls.length).toBeGreaterThanOrEqual(2);
+    // El anillo configurable ya NO vive en el Inicio (misión §4); el
+    // velocímetro usa el RPC get_sales_dashboard_analytics en DOS llamadas
+    // (período actual y comparable — períodos equivalentes, sin metas).
+    expect(screen.queryByTestId('kpi-ring')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('performance-kpi')).not.toBeInTheDocument();
   });
 });

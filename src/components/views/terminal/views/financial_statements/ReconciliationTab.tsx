@@ -41,6 +41,14 @@ import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { fetchReconciliation, fetchReconciliationHistory, saveReconciliationSnapshot } from './fin-api';
 import { CategoryDetailPanel } from './CategoryDetailPanel';
+// ADNEGOCIO-UI 2026-11-23 (misión §2): centralización de la información
+// contable en esta pestaña — orden definitivo: 1) Diferencia de valoración
+// contable CUP, 2) Caja — Respaldo físico y disponibilidad, 3) Configuración
+// contable pendiente. Los tres bloques se RETIRARON del Inicio y del
+// Dashboard de esta vista: una sola representación, sin duplicados.
+import { FinValoracionBlock } from './FinValoracionBlock';
+import { FinCajaFisicaBlock } from './FinCajaFisicaBlock';
+import { FinDocumentConfigAlert } from './FinDocumentConfigAlert';
 import type {
   FinClase,
   ReconciliationAccountRow,
@@ -204,10 +212,25 @@ export function ReconciliationTab({ storeId, asOf, from, to, refreshKey }: Recon
     });
   }, [data, estadoFiltro, claseFiltro, busqueda]);
 
+  // ADNEGOCIO-UI (misión §2): información contable centralizada, en el orden
+  // exigido — 1) Diferencia de valoración contable CUP, 2) Caja — Respaldo
+  // físico y disponibilidad, 3) Configuración contable pendiente. Visible en
+  // TODOS los estados de la pestaña (antes de ejecutar, cargando, error y
+  // matriz): la centralización no depende de la ejecución bajo demanda.
+  const seccionCentralizada = (
+    <div className="space-y-3" data-testid="reconciliacion-centralizada">
+      <FinValoracionBlock />
+      <FinCajaFisicaBlock />
+      <FinDocumentConfigAlert storeId={storeId} refreshKey={refreshKey} />
+    </div>
+  );
+
   // ── Estado inicial: PENDIENTE (no ejecutada) ──
   if (!executed && !loading) {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 shadow-sm" data-testid="recon-pendiente">
+      <div className="space-y-4" data-testid="reconciliation-tab">
+        {seccionCentralizada}
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm" data-testid="recon-pendiente">
         <div className="flex flex-col items-center gap-4 py-8 text-center">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
             <ClipboardCheck className="w-8 h-8 text-primary" />
@@ -237,22 +260,28 @@ export function ReconciliationTab({ storeId, asOf, from, to, refreshKey }: Recon
           </button>
           {error && <p className="text-xs text-destructive font-bold">{error}</p>}
         </div>
+        </div>
       </div>
     );
   }
 
   if (loading && !data) {
     return (
-      <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground" data-testid="recon-loading">
-        <Loader2 className="w-5 h-5 animate-spin" />
-        <span className="text-xs font-black uppercase tracking-widest">Ejecutando conciliación…</span>
+      <div className="space-y-4" data-testid="reconciliation-tab">
+        {seccionCentralizada}
+        <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground" data-testid="recon-loading">
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span className="text-xs font-black uppercase tracking-widest">Ejecutando conciliación…</span>
+        </div>
       </div>
     );
   }
 
   if (error && !data) {
     return (
-      <div className="py-8 text-center space-y-3" data-testid="recon-error">
+      <div className="space-y-4" data-testid="reconciliation-tab">
+        {seccionCentralizada}
+        <div className="py-8 text-center space-y-3" data-testid="recon-error">
         <p className="text-xs text-destructive font-bold">{error}</p>
         <button
           type="button"
@@ -262,6 +291,7 @@ export function ReconciliationTab({ storeId, asOf, from, to, refreshKey }: Recon
           <RefreshCw className="w-3 h-3" /> Reintentar
         </button>
       </div>
+    </div>
     );
   }
 
@@ -273,6 +303,8 @@ export function ReconciliationTab({ storeId, asOf, from, to, refreshKey }: Recon
 
   return (
     <div className="space-y-4" data-testid="reconciliation-tab">
+      {seccionCentralizada}
+
       {/* Barra de ejecución: nunca presentar una conciliación antigua como actual */}
       <div
         className="rounded-xl border border-border bg-card p-3 sm:p-4 shadow-sm text-[11px] text-muted-foreground"
