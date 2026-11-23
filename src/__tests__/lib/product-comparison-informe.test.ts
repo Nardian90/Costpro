@@ -1,15 +1,35 @@
 /**
- * MISIÓN COMPARAR PRODUCTOS 2026-11-23 · Informe Ejecutivo (módulo puro).
- * Reglas verificadas: clasificaciones por comportamiento, hallazgos
- * condicionados a la evidencia (nunca inventados), sin porcentajes sobre
- * bases inexistentes, unidades por producto, concentración solo con
- * participación oficial, y conclusión honesta.
+ * MISIÓN INFORME GERENCIAL 2026-11-24 · Informe Ejecutivo de Desempeño
+ * Comercial y Abastecimiento (motor analítico puro).
+ *
+ * Los CASOS A-E del enunciado son las pruebas de calidad del nuevo análisis:
+ *  · A. Cemento TBV 50 Kg — agotado con antecedente relevante → reposición
+ *    prioritaria SIN declarar «ventas perdidas» ni demanda no atendida.
+ *  · B. Cemento Blanco 2 Kg — contracción fuerte con existencia → revisar
+ *    antes de comprar; NO recomienda aumentar inventario.
+ *  · C. Inversor — liderazgo por una sola operación → verificar repetibilidad;
+ *    existencia cero = alerta de disponibilidad, no reposición masiva.
+ *  · D. Royal Cole — crecimiento con cobertura insuficiente → velocidad,
+ *    cobertura y reposición anticipada (números verificados a mano).
+ *  · E. Cable Solar Negro 4mm — ingresos al alza con unidades a la baja →
+ *    precio efectivo / composición; NO atribuir a demanda automáticamente.
+ *
+ * Además: clasificación de rotación documentada, cobertura ficticia prohibida,
+ * sin-ventas solo con evidencia del mayor (sin contradicciones tipo
+ * «Conectores MC4»), conciliación del conjunto y anexos completos.
  */
 import { describe, it, expect } from 'vitest';
 import { buildComparison, type PeriodProductRow, type ProductCatalogRow } from '@/lib/product-comparison/compare';
-import { buildInformeEjecutivo, variacionTexto, type InformeInput } from '@/lib/product-comparison/informe';
+import {
+  buildInformeEjecutivo,
+  evaluarRotacion,
+  diasDelPeriodo,
+  UMBRAL_COBERTURA_ALTA,
+  UMBRAL_COBERTURA_BAJA,
+  type InformeInput,
+} from '@/lib/product-comparison/informe';
 
-// ── Fixtures (números redondos, verificables a mano) ────────────────────────
+// ── Fixtures (números del enunciado; D = 23 días, verificado a mano) ─────────
 
 const row = (o: Partial<PeriodProductRow> & { product_id: string; name: string }): PeriodProductRow => ({
   sku: o.product_id.toUpperCase().slice(0, 6),
@@ -19,24 +39,13 @@ const row = (o: Partial<PeriodProductRow> & { product_id: string; name: string }
   ...o,
 });
 
-const catalogo = (o: Partial<ProductCatalogRow> & { id: string }): ProductCatalogRow => ({
-  name: o.id,
-  stock_current: 0,
-  unit_of_measure: 'unidades',
+const catalogo = (
+  { stock_current = 0, unit_of_measure = 'unidades', ...o }: Partial<ProductCatalogRow> & { id: string; name: string },
+): ProductCatalogRow => ({
   ...o,
+  stock_current,
+  unit_of_measure,
 });
-
-const topActualBasico: PeriodProductRow[] = [
-  row({ product_id: 'p1', name: 'Aceite 1L', units_sold: 30, net_cup: 3000, participation_pct: 30 }),
-  row({ product_id: 'p2', name: 'Arroz 1kg', units_sold: 20, net_cup: 2000, participation_pct: 20 }),
-  row({ product_id: 'p3', name: 'Café 250g', units_sold: 10, net_cup: 1000, participation_pct: 10 }),
-];
-
-const topAnteriorBasico: PeriodProductRow[] = [
-  row({ product_id: 'p2', name: 'Arroz 1kg', units_sold: 10, net_cup: 1000 }),
-  row({ product_id: 'p3', name: 'Café 250g', units_sold: 20, net_cup: 2000 }),
-  row({ product_id: 'p9', name: 'Producto retirado', units_sold: 15, net_cup: 1500 }),
-];
 
 const META_BASE = {
   entidadNombre: 'ENERVIDA-VITALLCONS',
@@ -57,188 +66,353 @@ const mkInput = (
     resumen,
     meta: { ...META_BASE },
     generadoEl: '2026-11-23T10:30:00.000Z',
+    ventasEnPeriodoActual: ventasEnPeriodoActual ?? null,
   };
 };
 
-describe('Informe Ejecutivo — estructura y encabezado', () => {
-  it('incluye título, períodos explícitos, generación, ámbito y parámetros', () => {
-    const inf = buildInformeEjecutivo(mkInput(topActualBasico, topAnteriorBasico));
-    expect(inf.meta.titulo).toBe('INFORME EJECUTIVO DE COMPARACIÓN DE PRODUCTOS');
+/**
+ * Casos del enunciado (§4) reproducidos como fixture del conjunto comparado.
+ * Existencias según el enunciado; D = 23 días (01/11 → 23/11).
+ */
+const CASOS_TOP_ACTUAL: PeriodProductRow[] = [
+  // Caso C: Inversor — líder por una sola operación.
+  row({ product_id: 'inversor', name: 'Inversor', sku: 'INV-1', units_sold: 1, net_cup: 382000 }),
+  // Caso D: Royal Cole — crecimiento con cobertura ajustada (59 u en 23 días).
+  row({ product_id: 'royal', name: 'Royal Cole', sku: 'ROY-1', units_sold: 59, net_cup: 147500 }),
+  // Caso E: Cable Solar — ingresos al alza, unidades a la baja (22 m).
+  row({ product_id: 'cable', name: 'Cable Solar Negro 4mm', sku: 'CSL-4', units_sold: 22, net_cup: 91125 }),
+  // Caso B: Cemento Blanco — contracción fuerte (4 u).
+  row({ product_id: 'blanco', name: 'Cemento Blanco 2 Kg', sku: 'CB-2', units_sold: 4, net_cup: 8000 }),
+];
+
+const CASOS_TOP_ANTERIOR: PeriodProductRow[] = [
+  // Caso A: Cemento TBV — líder anterior hoy en cero.
+  row({ product_id: 'tbv', name: 'Cemento TBV 50 Kg', sku: 'TBV-50', units_sold: 78, net_cup: 1532640 }),
+  // Caso B: Cemento Blanco — 22 u / $50,000 antes.
+  row({ product_id: 'blanco', name: 'Cemento Blanco 2 Kg', sku: 'CB-2', units_sold: 22, net_cup: 50000 }),
+  // Caso D: Royal Cole — 19 u / $48,750 antes.
+  row({ product_id: 'royal', name: 'Royal Cole', sku: 'ROY-1', units_sold: 19, net_cup: 48750 }),
+  // Caso E: Cable Solar — 24 m / $74,722.50 antes.
+  row({ product_id: 'cable', name: 'Cable Solar Negro 4mm', sku: 'CSL-4', units_sold: 24, net_cup: 74722.5 }),
+];
+
+const CASOS_CATALOGO: ProductCatalogRow[] = [
+  catalogo({ id: 'inversor', name: 'Inversor', stock_current: 0, unit_of_measure: 'unidades' }),
+  catalogo({ id: 'royal', name: 'Royal Cole', stock_current: 6, unit_of_measure: 'unidades' }),
+  catalogo({ id: 'cable', name: 'Cable Solar Negro 4mm', stock_current: 340, unit_of_measure: 'metros' }),
+  catalogo({ id: 'blanco', name: 'Cemento Blanco 2 Kg', stock_current: 4, unit_of_measure: 'unidades' }),
+  catalogo({ id: 'tbv', name: 'Cemento TBV 50 Kg', stock_current: 0, unit_of_measure: 'unidades' }),
+];
+
+const casosInput = (ventasEnPeriodoActual?: Set<string>): InformeInput =>
+  mkInput(CASOS_TOP_ACTUAL, CASOS_TOP_ANTERIOR, CASOS_CATALOGO, ventasEnPeriodoActual);
+
+const prioridadDe = (inf: ReturnType<typeof buildInformeEjecutivo>, producto: string) =>
+  inf.prioridades.find((p) => p.producto === producto) ?? null;
+
+// ── Estructura del documento ─────────────────────────────────────────────────
+
+describe('Informe Gerencial — estructura documental', () => {
+  it('encabezado institucional: entidad, título, períodos, días y elaboración', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    expect(inf.meta.titulo).toBe('INFORME EJECUTIVO DE DESEMPEÑO COMERCIAL Y ABASTECIMIENTO');
     expect(inf.meta.entidadNombre).toBe('ENERVIDA-VITALLCONS');
-    expect(inf.meta.periodoActual.desde).toBe('2026-11-01');
-    expect(inf.meta.periodoComparacion.desde).toBe('2026-10-01');
+    expect(inf.meta.diasPeriodo).toBe(23);
     expect(inf.meta.generadoEl).toBe('2026-11-23T10:30:00.000Z');
-    expect(inf.meta.parametros.some((p) => p.includes('Top 20'))).toBe(true);
     expect(inf.meta.parametros.some((p) => p.includes('CUP contable'))).toBe(true);
   });
 
-  it('las secciones A-E cubren las 5 categorías de comportamiento', () => {
-    const inf = buildInformeEjecutivo(mkInput(topActualBasico, topAnteriorBasico));
-    for (const t of ['A. Productos en crecimiento', 'B. Productos en descenso', 'C. Productos nuevos en el ranking', 'D. Productos que dejaron de venderse', 'E. Productos que salen del Top (siguen vendiéndose)']) {
-      const found = Object.values(inf.secciones).some((s) => s.titulo === t);
-      expect(found, t).toBe(true);
-    }
+  it('diagnóstico + indicadores + gráfico + matriz + complementarias + anexos I-IV', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    expect(inf.situacionGeneral.length).toBeGreaterThanOrEqual(3);
+    expect(inf.conclusionGerencial.length).toBeGreaterThan(0);
+    expect(inf.indicadores.length).toBeGreaterThanOrEqual(5);
+    expect(inf.grafico).not.toBeNull();
+    expect(inf.grafico!.series.length).toBeGreaterThanOrEqual(2);
+    expect(inf.prioridades.length).toBeGreaterThanOrEqual(4);
+    expect(inf.anexos).toHaveLength(3);
+    expect(inf.anexos[0].titulo).toContain('Anexo I');
+    expect(inf.anexos[1].titulo).toContain('Anexo II');
+    expect(inf.anexos[2].titulo).toContain('Anexo III');
+    expect(inf.metodologia.length).toBe(4);
+    expect(inf.metodologia[3].titulo).toBe('Limitaciones');
+  });
+
+  it('conciliación explícita: la variación del conjunto es Σ(actual) − Σ(anterior) de la unión', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const { conciliacion } = inf;
+    expect(conciliacion.productosAnalizados).toBe(5);
+    // Verificado a mano: actual 382000+147500+91125+8000 = 628,625;
+    // anterior 1532640+50000+48750+74722.5 = 1,706,112.50; Δ = −1,077,487.50
+    expect(conciliacion.ingresosActual).toBeCloseTo(628625, 2);
+    expect(conciliacion.ingresosAnterior).toBeCloseTo(1706112.5, 2);
+    expect(conciliacion.variacion).toBeCloseTo(-1077487.5, 2);
+    expect(conciliacion.variacionPct).not.toBeNull();
+    expect(conciliacion.variacionPct!).toBeCloseTo(
+      Math.round((-1077487.5 / 1706112.5) * 1000) / 10,
+      5,
+    );
+    expect(conciliacion.alcance).toContain('unión del Top');
+    // La situación general declara la metodología del conjunto.
+    expect(inf.situacionGeneral[0]).toContain('calculada exclusivamente sobre los productos incluidos');
   });
 });
 
-describe('Informe Ejecutivo — clasificación de productos', () => {
-  it('p1 crece (3º→1º y +2000), p3 desciende en unidades/ventas, p9 sale del Top (conservador)', () => {
-    const inf = buildInformeEjecutivo(mkInput(topActualBasico, topAnteriorBasico));
-    const crec = inf.secciones.crecimiento.productos.map((r) => r.productId);
-    expect(crec).toContain('p1');
-    const desc = inf.secciones.descenso.productos.map((r) => r.productId);
-    expect(desc).toContain('p3');
-    // Conservador: sin evidencia de kardex, el ausente del Top actual queda
-    // «sale_del_top» (no se inventa el cero).
-    expect(inf.secciones.salieronDelTop.productos.map((r) => r.productId)).toContain('p9');
-    expect(inf.secciones.dejaronDeVenderse.productos).toHaveLength(0);
+// ── Rotación y cobertura (indicadores nuevos) ────────────────────────────────
+
+describe('Informe Gerencial — rotación y cobertura', () => {
+  it('velocidad y cobertura del Caso D (Royal Cole): 59/23 u-día y 6/velocidad ≈ 2,3 días', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const royal = inf.anexos[1].filas.find((f) => f[0] === 'Royal Cole');
+    expect(royal).toBeDefined();
+    const ev = evaluarRotacion(
+      // fila reconstruida a mano para aislar el cálculo
+      buildComparison(
+        [CASOS_TOP_ACTUAL.find((r) => r.product_id === 'royal')!],
+        [CASOS_TOP_ANTERIOR.find((r) => r.product_id === 'royal')!],
+        [CASOS_CATALOGO.find((c) => c.id === 'royal')!],
+      ).rows[0],
+      23,
+    );
+    expect(ev.velocidad).toBeCloseTo(59 / 23, 2);
+    expect(ev.coberturaDias).toBeCloseTo(Math.round((6 / (59 / 23)) * 10) / 10, 5);
+    // 6 ÷ 2.5652 ≈ 2.34 días < 23 × 0.5 → rotación ALTA + alerta de cobertura
+    expect(ev.coberturaDias!).toBeLessThan(23 * UMBRAL_COBERTURA_ALTA);
+    expect(ev.clasificacion).toBe('alta');
+    expect(ev.alerta).toContain('Cobertura insuficiente');
+    expect(royal![4]).toBe('Alta rotación');
   });
 
-  it('«dejó de venderse» SOLO con evidencia real de ausencia de salidas por venta', () => {
-    // Sin evidencia: conservador (sale del Top). Con evidencia de que NO hay
-    // salidas (Set vacío de productos vendidos): «dejó de venderse».
-    const inf = buildInformeEjecutivo(mkInput(topActualBasico, topAnteriorBasico, [], new Set(['p1', 'p2', 'p3'])));
-    expect(inf.secciones.dejaronDeVenderse.productos.map((r) => r.productId)).toContain('p9');
+  it('sin ventas no genera cobertura ficticia: velocidad y cobertura nulas', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const tbv = inf.anexos[1].filas.find((f) => f[0] === 'Cemento TBV 50 Kg');
+    expect(tbv).toBeDefined();
+    expect(tbv![2]).toBe('Sin ventas en el período analizado'); // velocidad
+    expect(tbv![3]).toBe('No calculable (sin ventas en el tramo)'); // cobertura
+    // Con existencia 0: sin base suficiente (nada evaluable).
+    expect(tbv![4]).toBe('Sin base suficiente');
   });
 
-  it('nuevo en el ranking vs recién incorporado al catálogo: el informe NO inventa la fecha de alta', () => {
-    const top = [...topActualBasico, row({ product_id: 'p7', name: 'Producto nuevo', units_sold: 5, net_cup: 700 })];
-    const cat = [catalogo({ id: 'p7', name: 'Producto nuevo', stock_current: 10, unit_of_measure: 'bultos' })];
-    const inf = buildInformeEjecutivo(mkInput(top, topAnteriorBasico, cat));
-    expect(inf.secciones.nuevos.productos.map((r) => r.productId)).toContain('p7');
-    // honesto: distingue ranking de alta en catálogo
-    expect(inf.secciones.nuevos.intro).toContain('no la fecha de alta');
-    // la cantidad conserva SU unidad de medida
-    const p7 = inf.secciones.nuevos.productos.find((r) => r.productId === 'p7');
-    expect(p7?.unidadMedida).toBe('bultos');
-  });
-});
-
-describe('Informe Ejecutivo — cifras y variaciones', () => {
-  it('sin base: anterior = 0 → variación «sin base» y jamás porcentaje inventado', () => {
-    const top = [row({ product_id: 'p5', name: 'Solo hoy', units_sold: 4, net_cup: 400 })];
-    const inf = buildInformeEjecutivo(mkInput(top, []));
-    const r = inf.secciones.nuevos.productos[0];
-    expect(variacionTexto(r)).toBe('sin base');
-    expect(r.varPct).toBeNull();
+  it('baja rotación documentada: cobertura > D clasifica baja; sin salidas con stock = sin movimiento', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    // Cable Solar: 340 m / (22/23 ≈ 0.9565) ≈ 355 días > 23 → baja rotación
+    const cable = inf.anexos[1].filas.find((f) => f[0] === 'Cable Solar Negro 4mm');
+    expect(cable![4]).toBe('Baja rotación');
+    const umbral = 23 * UMBRAL_COBERTURA_BAJA;
+    expect(Math.round((340 / (22 / 23)) * 10) / 10).toBeGreaterThan(umbral);
+    // El informe lo arrastra a la sección de baja rotación con lectura operativa.
+    const baja = inf.complementarias.find((c) => c.titulo === 'Productos de baja rotación');
+    expect(baja).toBeDefined();
+    expect(baja!.filas.some((f) => f[0] === 'Cable Solar Negro 4mm')).toBe(true);
   });
 
-  it('los importes de la sección de crecimiento coinciden con los de la tabla (una sola fuente)', () => {
-    const inf = buildInformeEjecutivo(mkInput(topActualBasico, topAnteriorBasico));
-    const p1 = inf.secciones.crecimiento.productos.find((r) => r.productId === 'p1');
-    expect(p1?.ventasActuales).toBe(3000);
-    expect(p1?.ventasAnteriores).toBe(0);
-    expect(p1?.difCup).toBe(3000);
-    // Δ del conjunto: (3000+2000+1000) − (1000+2000+1500) = 1500
-    expect(inf.resumenEjecutivo.cifras.find((c) => c.label.includes('Variación de ingresos'))?.value).toContain('1,500.00');
-  });
-
-  it('el resumen ejecutivo cuenta las categorías con números reales', () => {
-    const inf = buildInformeEjecutivo(mkInput(topActualBasico, topAnteriorBasico));
-    const porLabel = Object.fromEntries(inf.resumenEjecutivo.cifras.map((c) => [c.label, c.value]));
-    expect(porLabel['Productos analizados']).toBe('4');
-    expect(porLabel['En crecimiento (o líderes)']).toBe('2'); // p1 crece + p2 lidera-ventas-iguales
-    expect(porLabel['En descenso']).toBe('1');
-    expect(porLabel['Salen del Top (siguen vendiendo)']).toBe('1');
+  it('la clasificación usa la U.M. propia de cada producto y nunca las agrega', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const anexoII = inf.anexos[1];
+    const cable = anexoII.filas.find((f) => f[0] === 'Cable Solar Negro 4mm');
+    expect(cable![1]).toContain('metros');
+    const royal = anexoII.filas.find((f) => f[0] === 'Royal Cole');
+    expect(royal![2]).toContain('/día');
   });
 });
 
-describe('Informe Ejecutivo — hallazgos condicionados a la evidencia', () => {
-  it('genera hallazgo de crecimiento con más unidades (oportunidad de abastecimiento)', () => {
-    const top = [
-      row({ product_id: 'p1', name: 'Aceite 1L', units_sold: 60, net_cup: 5000, participation_pct: 55 }),
-      row({ product_id: 'p2', name: 'Arroz 1kg', units_sold: 5, net_cup: 500 }),
-    ];
-    const ant = [row({ product_id: 'p1', name: 'Aceite 1L', units_sold: 30, net_cup: 2000 })];
-    const cat = [catalogo({ id: 'p1', name: 'Aceite 1L', stock_current: 40, unit_of_measure: 'unidades' })];
-    const inf = buildInformeEjecutivo(mkInput(top, ant, cat));
-    const h = inf.hallazgos.find((x) => x.titulo.includes('Crecimiento sostenido'));
-    expect(h).toBeDefined();
-    expect(h?.evidencia).toContain('unidades');
-    expect(h?.hallazgo).not.toContain('demuestra'); // implicación marcada como hipótesis
-    expect(h?.implicacion).toContain('podría');
-    expect(h?.accion).toContain('Evaluar');
+// ── Casos de calidad A-E (enunciado §4) ──────────────────────────────────────
+
+describe('Informe Gerencial — casos de calidad A-E', () => {
+  it('CASO A · Cemento TBV 50 Kg: reposición prioritaria, sin declarar pérdidas', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const p = prioridadDe(inf, 'Cemento TBV 50 Kg');
+    expect(p).not.toBeNull();
+    expect(p!.nivel).toBe('alta');
+    // Lectura gerencial exigida: interrupción comercial + falta de disponibilidad.
+    expect(p!.situacion).toContain('no registra operaciones en el período analizado');
+    expect(p!.situacion).toContain('existencia actual es cero');
+    expect(p!.situacion).toContain('compatible con agotamiento sin reposición');
+    // Referencia histórica útil para dimensionar la reposición (78 u / 23 días).
+    expect(p!.situacion).toContain('3.39');
+    // Decisión: reposición prioritaria con referencia histórica...
+    expect(p!.decision).toContain('reposición');
+    expect(p!.decision).toContain('ritmo histórico de salida');
+    // ...y NUNCA «pérdida comprobada» ni demanda no atendida cuantificada.
+    expect(p!.decision).toContain('no constituye una pérdida comprobada');
+    expect(p!.decision).not.toMatch(/se perdieron/i);
+    // El documento jamás presenta 1,532,640 como venta perdida.
+    const todo = JSON.stringify(inf);
+    expect(todo).not.toMatch(/pérdidas de \$?1\.532\.640/i);
   });
 
-  it('ingresos al alza con menos unidades → hallazgo de posible cambio de precios (hipótesis)', () => {
-    const top = [row({ product_id: 'p1', name: 'Aceite 1L', units_sold: 5, net_cup: 3000 })];
-    const ant = [row({ product_id: 'p1', name: 'Aceite 1L', units_sold: 30, net_cup: 2000 })];
-    const inf = buildInformeEjecutivo(mkInput(top, ant));
-    const h = inf.hallazgos.find((x) => x.titulo.includes('menos unidades'));
-    expect(h).toBeDefined();
-    expect(h?.implicacion).toContain('no está demostrado');
+  it('CASO B · Cemento Blanco 2 Kg: contracción con existencia — no aumentar inventario', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const p = prioridadDe(inf, 'Cemento Blanco 2 Kg');
+    expect(p).not.toBeNull();
+    expect(p!.nivel).toBe('media');
+    expect(p!.situacion).toContain('−84%');
+    expect(p!.situacion).toContain('existencia de 4 unidades');
+    expect(p!.decision).toContain('antes de autorizar nuevas compras');
+    expect(p!.decision).toContain('no procede aumentar inventario');
+    // La lectura prohibida (comprar más ante demanda en contracción) NO aparece.
+    expect(p!.decision).not.toMatch(/aumentar el inventario para/i);
   });
 
-  it('caída fuerte (≥50%) con stock → hallazgo de rotación; sin stock NO lo afirma', () => {
-    const top = [row({ product_id: 'p1', name: 'Producto caída', units_sold: 2, net_cup: 400 })];
-    const ant = [row({ product_id: 'p1', name: 'Producto caída', units_sold: 20, net_cup: 1000 })];
-    const cat = [catalogo({ id: 'p1', name: 'Producto caída', stock_current: 15 })];
-    const inf = buildInformeEjecutivo(mkInput(top, ant, cat));
-    expect(inf.hallazgos.some((x) => x.titulo.includes('Caída fuerte con existencia disponible'))).toBe(true);
-
-    const inf2 = buildInformeEjecutivo(mkInput(top, ant, [catalogo({ id: 'p1', name: 'Producto caída', stock_current: 0 })]));
-    expect(inf2.hallazgos.some((x) => x.titulo.includes('Caída fuerte con existencia disponible'))).toBe(false);
+  it('CASO C · Inversor: liderazgo de una sola operación — verificar, no política de compra', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const p = prioridadDe(inf, 'Inversor');
+    expect(p).not.toBeNull();
+    expect(p!.nivel).toBe('preventiva');
+    expect(p!.situacion).toContain('una sola operación');
+    expect(p!.situacion).toContain('No existe base comparable');
+    // Alerta de disponibilidad por existencia cero — sin reposición masiva.
+    expect(p!.situacion).toContain('alerta de disponibilidad');
+    expect(p!.decision).toContain('repetición de la demanda');
+    expect(p!.decision).toContain('no equivale a rotación alta');
+    expect(p!.decision).toContain('no una reposición masiva');
+    // La conclusión gerencial reconoce el liderazgo de pocas operaciones.
+    expect(inf.situacionGeneral.some((s) => s.includes('número reducido de operaciones'))).toBe(true);
   });
 
-  it('principal anterior sin ventas: distingue con stock disponible vs sin stock (investigación, no conclusión)', () => {
-    const top = topActualBasico;
-    const ant = [
-      row({ product_id: 'p9', name: 'Retirado del Top', units_sold: 50, net_cup: 9000 }), // pos 1 anterior
-      ...topAnteriorBasico,
-    ];
-    const catConStock = [catalogo({ id: 'p9', name: 'Retirado del Top', stock_current: 30 })];
-    const inf = buildInformeEjecutivo(mkInput(top, ant, catConStock, new Set(['p1', 'p2', 'p3'])));
-    const h = inf.hallazgos.find((x) => x.titulo.includes('Producto principal sin ventas'));
-    expect(h).toBeDefined();
-    expect(h?.implicacion).toContain('REQUIERE INVESTIGACIÓN');
-    expect(h?.evidencia).toContain('existencia actual');
-
-    const catSinStock = [catalogo({ id: 'p9', name: 'Retirado del Top', stock_current: 0 })];
-    const inf2 = buildInformeEjecutivo(mkInput(top, ant, catSinStock, new Set(['p1', 'p2', 'p3'])));
-    expect(inf2.hallazgos.find((x) => x.titulo.includes('Producto principal sin ventas'))?.implicacion).toContain('quiebre de stock');
+  it('CASO D · Royal Cole: cobertura insuficiente con demanda activa → reposición anticipada', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const p = prioridadDe(inf, 'Royal Cole');
+    expect(p).not.toBeNull();
+    expect(p!.nivel).toBe('alta');
+    expect(p!.situacion).toContain('2.57 unidades/día');
+    expect(p!.situacion).toContain('2.3 días');
+    expect(p!.situacion).toContain('menos de la mitad del tramo analizado');
+    expect(p!.decision).toContain('reposición anticipada');
+    // No concluye agotamiento por el % de crecimiento: la alerta nace de la cobertura.
+    expect(p!.situacion).not.toMatch(/riesgo de agotamiento en/);
   });
 
-  it('concentración > 50 % SOLO con participación oficial (nunca estimada)', () => {
-    // participación informada por el RPC: 55% → hallazgo
-    const top = [
-      row({ product_id: 'p1', name: 'Líder', units_sold: 30, net_cup: 6000, participation_pct: 55 }),
-    ];
-    const inf = buildInformeEjecutivo(mkInput(top, []));
-    expect(inf.hallazgos.some((x) => x.titulo.includes('Concentración de ingresos'))).toBe(true);
-
-    // sin participación oficial → NO se estima concentración
-    const topSinPart = [row({ product_id: 'p1', name: 'Líder', units_sold: 30, net_cup: 6000 })];
-    const inf2 = buildInformeEjecutivo(mkInput(topSinPart, []));
-    expect(inf2.hallazgos.some((x) => x.titulo.includes('Concentración de ingresos'))).toBe(false);
-    // pero el indicador de participación tampoco se inventa
-    expect(inf2.indicadores.some((i) => i.label.includes('Participación'))).toBe(false);
-  });
-
-  it('sin desviaciones → hallazgo honesto «Sin desviaciones» (no se fuerza conclusión)', () => {
-    const top = [row({ product_id: 'p1', name: 'Estable', units_sold: 10, net_cup: 1000, participation_pct: 10 })];
-    const ant = [row({ product_id: 'p1', name: 'Estable', units_sold: 10, net_cup: 1000 })];
-    const inf = buildInformeEjecutivo(mkInput(top, ant));
-    expect(inf.hallazgos).toHaveLength(1);
-    expect(inf.hallazgos[0].titulo).toContain('Sin desviaciones');
+  it('CASO E · Cable Solar: ingresos al alza con unidades a la baja → precio efectivo', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const p = prioridadDe(inf, 'Cable Solar Negro 4mm');
+    expect(p).not.toBeNull();
+    expect(p!.nivel).toBe('media');
+    expect(p!.situacion).toContain('22 metros');
+    expect(p!.situacion).toContain('24 metros');
+    // Precio efectivo verificado: 74722.50/24 = 3,113.44 → 91125/22 = 4,142.05
+    expect(p!.situacion).toContain('3,113.44');
+    expect(p!.situacion).toContain('4,142.05');
+    expect(p!.decision).toContain('precio promedio efectivo');
+    expect(p!.decision).toContain('composición de las operaciones');
+    expect(p!.decision).toContain('antes de atribuir el resultado a mayor demanda');
   });
 });
 
-describe('Informe Ejecutivo — conclusión', () => {
-  it('síntesis + prioridades condicionadas + nota de método', () => {
-    const inf = buildInformeEjecutivo(mkInput(topActualBasico, topAnteriorBasico));
-    const todo = inf.conclusion.join(' ');
-    expect(todo).toContain('Predominan');
-    expect(todo).toContain('fuentes oficiales de COSTPRO');
-    expect(todo).toContain('hipótesis de trabajo');
+// ── Integridad: clasificaciones sin contradicciones ──────────────────────────
+
+describe('Informe Gerencial — integridad y sin contradicciones', () => {
+  it('producto fuera del Top sin evidencia de kardex NO entra en «sin ventas» (caso MC4)', () => {
+    // MC4: estaba en el Top anterior y hoy está fuera del Top. Sin datos del
+    // mayor (Set null → clasificación conservadora de compare.ts): el informe
+    // NO afirma venta ni su ausencia, y jamás lo mezcla con «sin ventas».
+    const topAnterior = [...CASOS_TOP_ANTERIOR, row({ product_id: 'mc4', name: 'Conectores MC4', units_sold: 5, net_cup: 20000 })];
+    const catalogoMC4 = [...CASOS_CATALOGO, catalogo({ id: 'mc4', name: 'Conectores MC4', stock_current: 12 })];
+    const inf = buildInformeEjecutivo(mkInput(CASOS_TOP_ACTUAL, topAnterior, catalogoMC4));
+    // Anexo III (sin ventas): SOLO con evidencia del mayor — MC4 no debe estar.
+    const anexoIII = inf.anexos[2];
+    expect(anexoIII.filas.some((f) => f[0] === 'Conectores MC4')).toBe(false);
+    // Fuera del Top: estado «verificar», sin afirmar venta ni su ausencia.
+    const fuera = inf.complementarias.find((c) => c.titulo === 'Productos fuera del Top analizado');
+    expect(fuera).toBeDefined();
+    const filaMC4 = fuera!.filas.find((f) => f[0] === 'Conectores MC4');
+    expect(filaMC4).toBeDefined();
+    expect(filaMC4![2]).toContain('Sin evidencia de ventas');
+    expect(filaMC4![4]).toContain('no se afirma venta ni su ausencia');
+    // Los indicadores tampoco lo cuentan como «sin ventas» (0 con evidencia).
+    const indSinVentas = inf.indicadores.find((i) => i.label.includes('sin ventas'));
+    expect(indSinVentas!.value).toBe('0');
   });
 
-  it('prioridad de abastecimiento SOLO si hay crecimiento con más unidades', () => {
-    const topCreciente = [
-      row({ product_id: 'p1', name: 'Aceite 1L', units_sold: 60, net_cup: 5000 }),
-      row({ product_id: 'p2', name: 'Arroz 1kg', units_sold: 5, net_cup: 500 }),
-    ];
-    const ant = [row({ product_id: 'p1', name: 'Aceite 1L', units_sold: 30, net_cup: 2000 })];
-    const inf = buildInformeEjecutivo(mkInput(topCreciente, ant));
-    expect(inf.conclusion.join(' ')).toContain('abastecimiento');
+  it('con evidencia del mayor, el producto fuera del Top se describe con precisión (no «sin ventas»)', () => {
+    // El caso real MC4: el mayor registra salidas por venta, pero su importe
+    // no figura en el Top 20 → «ventas actuales 0» en la tabla NO contradice
+    // «tiene ventas»: el documento lo explica con precisión (misión §8).
+    const evidencia = new Set(['mc4']);
+    const topAnterior = [...CASOS_TOP_ANTERIOR, row({ product_id: 'mc4', name: 'Conectores MC4', units_sold: 5, net_cup: 20000 })];
+    const catalogoMC4 = [...CASOS_CATALOGO, catalogo({ id: 'mc4', name: 'Conectores MC4', stock_current: 12 })];
+    const inf = buildInformeEjecutivo(mkInput(CASOS_TOP_ACTUAL, topAnterior, catalogoMC4, evidencia));
+    const fuera = inf.complementarias.find((c) => c.titulo === 'Productos fuera del Top analizado')!;
+    const filaMC4 = fuera.filas.find((f) => f[0] === 'Conectores MC4');
+    expect(filaMC4![2]).toContain('El mayor de inventario registra salidas por venta');
+    expect(filaMC4![2]).toContain('no figura en el Top 20');
+    // MC4 NO se cuenta en «sin ventas»: su evidencia dice lo contrario.
+    const anexoIII = inf.anexos[2];
+    expect(anexoIII.filas.some((f) => f[0] === 'Conectores MC4')).toBe(false);
+    const indSinVentas = inf.indicadores.find((i) => i.label.includes('sin ventas'));
+    expect(indSinVentas!.value).toBe('1'); // solo el TBV (sin evidencia de salidas)
+    // Y el Anexo III sí contiene al TBV con su interpretación operativa.
+    const filaTBV = anexoIII.filas.find((f) => f[0] === 'Cemento TBV 50 Kg');
+    expect(filaTBV).toBeDefined();
+    expect(filaTBV![5]).toContain('agotamiento sin reposición');
+  });
+
+  it('Anexo I: ranking completo con posiciones, variaciones, cantidades y U.M. por producto', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const anexoI = inf.anexos[0];
+    expect(anexoI.filas).toHaveLength(5);
+    const tbv = anexoI.filas.find((f) => f[1] === 'Cemento TBV 50 Kg');
+    expect(tbv![2]).toBe('1'); // pos. anterior
+    expect(tbv![3]).toBe('—'); // pos. actual
+    expect(tbv![5]).toContain('0.00'); // ventas actuales
+    expect(tbv![7]).toBe('−100%');
+    expect(tbv![8]).toContain('78 unidades');
+    expect(tbv![9]).toContain('0 unidades');
+  });
+
+  it('la matriz prioriza ALTA → MEDIA → PREVENTIVA y limita su tamaño sin perder el resto', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const niveles = inf.prioridades.map((p) => p.nivel);
+    const idxAlta = niveles.lastIndexOf('alta');
+    const idxMedia = niveles.findIndex((n) => n === 'media');
+    const idxPrev = niveles.findIndex((n) => n === 'preventiva');
+    expect(idxAlta).toBeLessThan(idxMedia);
+    expect(idxMedia).toBeLessThan(idxPrev);
+    expect(inf.prioridades.length).toBeLessThanOrEqual(12);
+  });
+
+  it('sin casos que superen umbrales: conclusión honesta y sin hallazgos inventados', () => {
+    const inf = buildInformeEjecutivo(mkInput(
+      [row({ product_id: 'p1', name: 'Producto A', units_sold: 10, net_cup: 1000 })],
+      [row({ product_id: 'p1', name: 'Producto A', units_sold: 10, net_cup: 1000 })],
+      // Existencia que da cobertura ≈ un tramo completo (23 días) → moderada.
+      [catalogo({ id: 'p1', name: 'Producto A', stock_current: 10 })],
+    ));
+    expect(inf.prioridades).toHaveLength(0);
+    expect(inf.conclusionGerencial).toContain('no exige decisiones');
+  });
+
+  it('diasDelPeriodo: tramo inclusivo y validación de entradas', () => {
+    expect(diasDelPeriodo('2026-11-01', '2026-11-23')).toBe(23);
+    expect(diasDelPeriodo('2026-10-01', '2026-10-31')).toBe(31);
+    expect(diasDelPeriodo('2026-11-23', '2026-11-01')).toBe(0);
+    expect(diasDelPeriodo('basura', '2026-11-01')).toBe(0);
+  });
+});
+
+// ── Metodología y limitaciones declaradas ────────────────────────────────────
+
+describe('Informe Gerencial — metodología', () => {
+  it('declara las limitaciones honestas del sistema de fuentes', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const limitaciones = inf.metodologia.find((m) => m.titulo === 'Limitaciones')!;
+    const texto = limitaciones.parrafos.join(' ');
+    expect(texto).toContain('existencia promedio');
+    expect(texto).toContain('no se calcula');
+    expect(texto).toContain('existencias comprometidas');
+    expect(texto).toContain('plazos de abastecimiento');
+    expect(texto).toContain('sin fechas de agotamiento');
+    expect(texto).toContain('hipótesis de trabajo');
+  });
+
+  it('documenta los umbrales de rotación con su fundamento y base D', () => {
+    const inf = buildInformeEjecutivo(casosInput());
+    const definiciones = inf.metodologia.find((m) => m.titulo === 'Definición de indicadores')!;
+    const texto = definiciones.parrafos.join(' ');
+    expect(texto).toContain('D = 23');
+    expect(texto).toContain('rotación alta, cobertura < D/2');
+    expect(texto).toContain('baja rotación, cobertura > D');
+    expect(texto).toContain('no se generan coberturas ficticias');
+    expect(texto).toContain('velocidad de venta (unidades/día) ≠ cobertura');
   });
 });
