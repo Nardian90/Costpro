@@ -28,13 +28,18 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { NoStorePrompt } from '@/components/ui/NoStoreGuard';
 import { withChunkRetry } from '@/components/ui/ChunkErrorBoundary';
-// ADNEGOCIO-UI 2026-11-23 (misión §4/§5): el anillo configurable se sustituye
-// por el velocímetro semicircular de ventas (mes acumulado vs mismo tramo del
-// mes anterior, períodos equivalentes — PerformanceKpi permanece en el repo
-// como componente no montado). CajaStatusStrip se RETIRA del Inicio: sus
-// bloques (respaldo físico de caja + diferencia de valoración contable CUP)
-// están centralizados en Estados Financieros → Conciliación.
-import { SalesSpeedometer } from './SalesSpeedometer';
+// MISIÓN REDISEÑO EJECUTIVO 2026-11-23 (§3/§4/§5): el velocímetro semicircular
+// se RETIRA del Resumen de Indicadores (la misión exige eliminarlo, no
+// retocarlo) y se sustituye por una composición ejecutiva de indicadores
+// (IndicatorsSummary) + el Ranking Comercial (CommercialRanking) con el botón
+// «Comparar productos» integrado en su encabezado. Las mini-stats
+// Ventas/Costos/Utilidad se retiran también: la venta vive en la tarjeta
+// principal (sin repetición) y costo/utilidad llegan N/D del RPC — el
+// resultado financiero vive en Estados Financieros → Estado de rendimiento.
+// CajaStatusStrip sigue retirado del Inicio: sus bloques están centralizados
+// en Estados Financieros → Conciliación (misión ADNEGOCIO-UI anterior).
+import { IndicatorsSummary } from './IndicatorsSummary';
+import { CommercialRanking } from './CommercialRanking';
 
 // Lazy load heavy dashboard components to improve TBT and LCP
 // REMEDIACIÓN (fix/dashboard-contextual-kpi-actions): el Inicio usa el KPI
@@ -256,16 +261,11 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
         data={summary && kpis ? [{ kpis, summary }] : []}
       >
         {(data) => {
-          const { kpis, summary } = data[0];
-          const sales = kpis?.gross_sales || 0;
-          // REMEDIACIÓN (fix/dashboard-contextual-kpi-actions) FASE 2:
-          // cost_of_goods/profit llegan con null preservado (señal honesta
-          // del RPC). null = "N/D" (dato no disponible) — NUNCA 0.
-          // REMEDIACIÓN KPI temporal: estos null YA NO se convierten a 0
-          // para ningún bloque (antes ExecutiveKpiCards los aplastaba).
-          const rawCosts = kpis?.cost_of_goods ?? null;
-          const rawProfit = kpis?.profit ?? null;
-
+          // MISIÓN REDISEÑO EJECUTIVO: los KPIs financieros del selector
+          // (gross_sales/cost_of_goods/profit) ya no se pintan aquí — la
+          // composición ejecutiva (§3) consume el RPC canónico de ventas.
+          // `kpis` permanece como condición del gate de StateRenderer.
+          const { summary } = data[0];
           const transactions = summary?.transaction_count || 0;
           const avgTicket = summary?.average_ticket || 0;
           const totalCash = summary?.total_cash || 0;
@@ -273,64 +273,31 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
 
           return (
             <div className="flex flex-col gap-8">
-              {/* DASHBOARD V3 (FASE 4): Resumen de Indicadores (KPI contextual
-                  "Rendimiento") + Acciones recientes lado a lado en desktop
-                  (lg+). En mobile se apilan: gráfico primero, Acciones
-                  recientes después. El aside es UNA única representación
-                  canónica de Acciones recientes. */}
+              {/* §3 — Resumen de Indicadores: composición ejecutiva de KPI
+                  (ventas netas del mes en curso vs mismo tramo del mes
+                  anterior, transacciones, ticket promedio, unidades) junto a
+                  Acciones recientes en desktop (lg+); apilado en mobile. El
+                  aside es UNA única representación canónica de Acciones
+                  recientes. */}
               <section
                 aria-label="Resumen de indicadores y acciones recientes"
                 className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-start"
               >
-                <div className="flex flex-col items-center min-w-0">
-                  {/* ADNEGOCIO-UI (misión §4/§5): velocímetro ejecutivo de
-                      ventas — períodos equivalentes (mes acumulado vs mismo
-                      tramo del mes anterior), escala dinámica sin truncar,
-                      sin metas inventadas — junto al acceso «Comparar
-                      productos». El selector Día/Mes/Año sigue mandando en
-                      las mini-stats y el Resumen de actividad. */}
-                  <SalesSpeedometer onCompareProducts={() => setCurrentView('product-comparison')} />
-
-                  {/* Mini Stats under the ring — all tokens, no hardcoded colors.
-                      REMEDIACIÓN FASE 2: costos/utilidad null ⇒ "N/D" (nunca 0). */}
-                  <div className="grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-sm mt-4" data-testid="kpi-mini-stats">
-                    <div className="flex flex-col items-center">
-                      <div className="w-2 h-2 rounded-full bg-primary mb-2"></div>
-                      <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('sales')}</span>
-                      <span className="text-sm font-bold font-display text-foreground tabular-nums">{formatCurrency(sales)}</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <div className="w-2 h-2 rounded-full bg-muted-foreground/50 mb-2"></div>
-                      <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('costs')}</span>
-                      <span className="text-sm font-bold font-display text-foreground tabular-nums" data-testid="mini-stat-costs">
-                        {rawCosts === null ? 'N/D' : formatCurrency(rawCosts)}
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      {/* FIX UX-001: was bg-[#00E0FF], now uses semantic success token */}
-                      <div className="w-2 h-2 rounded-full bg-success mb-2"></div>
-                      <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{t('profit')}</span>
-                      <span className="text-sm font-bold font-display text-foreground tabular-nums" data-testid="mini-stat-profit">
-                        {rawProfit === null ? 'N/D' : formatCurrency(rawProfit)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* DASHBOARD V3 (FASE 5): Acciones recientes junto al gráfico.
-                    Lógica y contenido intactos (RecentActivityPanel). */}
+                <IndicatorsSummary />
                 {aside && <div className="min-w-0">{aside}</div>}
               </section>
 
+              {/* §4/§5 — Ranking Comercial: mes en curso vs mismo tramo del
+                  mes anterior, con el acceso «Comparar productos» integrado
+                  en el encabezado de la sección (una sola ubicación, con
+                  relación visual clara con el análisis comercial). */}
+              <CommercialRanking />
+
               {/* REMEDIACIÓN KPI temporal (FASE 15-18) — "Resumen de
-                  actividad": la información ÚNICA del bloque (transacciones,
-                  ticket promedio, efectivo, transferencia). Los KPIs
-                  financieros viven SOLO en las mini-stats del anillo (Ventas /
-                  Costos / Utilidad, con N/D honesto) — sin duplicación ni
-                  contradicción contable. El tag "Live Updates" se retiró: no
-                  existía streaming real (los datos refrescan vía TanStack
-                  Query al invalidarse / staleTime — presentarlo como "live"
-                  era engañoso). */}
+                  actividad": la información ÚNICA del selector Día/Mes/Año
+                  (transacciones, ticket promedio, efectivo, transferencia).
+                  Los KPIs financieros del período equivalente viven SOLO en
+                  el Resumen de Indicadores (§3) — sin duplicación. */}
               <section className="space-y-4">
                 <div className="flex justify-between items-end px-1">
                   <h2 className="text-sm font-semibold tracking-wider uppercase text-muted-foreground">{t('activitySummary')}</h2>
@@ -361,10 +328,10 @@ function DashboardViewImpl({ embedded = false, aside = undefined }: { embedded?:
                 </div>
               </section>
 
-              {/* ADNEGOCIO-UI (misión §2/§3): el strip de caja (respaldo
-                  físico + diferencia de valoración contable CUP) se retira del
-                  Inicio — está centralizado en Estados Financieros →
-                  Conciliación (bloques 1 y 2 del orden exigido). */}
+              {/* MISIÓN REDISEÑO EJECUTIVO (§3/§5): el strip de caja sigue
+                  retirado del Inicio (centralizado en Conciliación) y el
+                  botón «Comparar productos» vive en el encabezado del Ranking
+                  Comercial — ya no cuelga del indicador de ventas. */}
 
               {/* Action Buttons — removed dead "Reporte" button, kept "Ajustes" */}
               <div className="flex justify-end">
