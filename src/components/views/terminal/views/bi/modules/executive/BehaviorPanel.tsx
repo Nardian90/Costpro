@@ -30,19 +30,25 @@ interface Props {
 export function BehaviorPanel({ analytics }: Props) {
   const t = useBiChartTheme();
 
-  // Días de la semana (semana inicia lunes — ISODOW del dominio de ventas).
+  // Días de la semana: el RPC entrega EXTRACT(DOW) (0=Domingo…6=Sábado) y
+  // weekday_name en inglés (TO_CHAR 'Day'). Mapeamos por NÚMERO (fuente
+  // estable) y mostramos lunes-primero con etiquetas propias.
   const weekdayOption = React.useMemo(() => {
     const dist = analytics.weekday_distribution ?? [];
     if (dist.length === 0) return null;
-    const order = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-    const byDay = new Map(dist.map((d) => [d.weekday_name, d]));
+    const DOW_LABELS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    const byDow = new Map(dist.map((d) => [d.weekday, d]));
+    // Orden de presentación: Lunes (1) → Domingo (0).
+    const displayOrder = [1, 2, 3, 4, 5, 6, 0];
     const labels: string[] = [];
     const data: number[] = [];
-    for (const name of order) {
-      const d = byDay.get(name);
+    const shown: typeof dist = [];
+    for (const dow of displayOrder) {
+      const d = byDow.get(dow);
       if (d) {
-        labels.push(name);
+        labels.push(DOW_LABELS[dow]);
         data.push(Math.round(d.sales * 100) / 100);
+        shown.push(d);
       }
     }
     const maxIdx = data.indexOf(Math.max(...data));
@@ -54,7 +60,7 @@ export function BehaviorPanel({ analytics }: Props) {
         ...biTooltipStyle(t),
         formatter: (params: unknown) => {
           const p = (Array.isArray(params) ? params[0] : params) as { dataIndex?: number; value?: number };
-          const d = dist.find((x) => x.weekday_name === labels[p.dataIndex ?? 0]);
+          const d = shown[p.dataIndex ?? 0];
           return `<b>${labels[p.dataIndex ?? 0]}</b><br/>Ventas: <b>${formatCurrencyShort(p.value ?? 0)}</b><br/>Transacciones: ${d?.transactions ?? 0}`;
         },
       },

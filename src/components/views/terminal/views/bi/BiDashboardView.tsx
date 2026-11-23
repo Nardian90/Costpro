@@ -43,8 +43,10 @@ export default function BiDashboardView({ storeId, storeName }: BiDashboardViewP
 
   return (
     <div className="space-y-5 max-w-6xl mx-auto w-full">
+      {/* GATE 16: el shell (Header) ya pinta la h1 de la vista ("Dashboard") —
+          el título del centro es h2 con el contexto de tienda activa. */}
       <PageHeader
-        headingLevel="h1"
+        headingLevel="h2"
         title={`Dashboard · ${storeName}`}
         description="Centro de Inteligencia Empresarial — comprende la situación del negocio, detecta desviaciones y decide con datos reales."
         icon={activeModule?.icon}

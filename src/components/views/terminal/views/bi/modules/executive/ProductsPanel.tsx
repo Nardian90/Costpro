@@ -8,21 +8,16 @@
  * ingreso, unidades, margen % y participación % — misma fuente
  * (top_products_revenue del RPC) sin duplicar consultas.
  *
- * Incluye márgenes por categoría con los umbrales publicados del producto
- * (<15% rojo, <25% ámbar, ≥25% saludable) como composición compacta.
+ * Composición de margen por categoría como LISTA NUMÉRICA (no barras): los
+ * costos registrados pueden ser anómalos (margen muy negativo) y una escala
+ * de barras queda inutilizable; la lista mantiene precisión y legibilidad con
+ * los umbrales publicados (<15% rojo, <25% ámbar, ≥25% verde).
  */
 
 import React from 'react';
-import dynamic from 'next/dynamic';
 import { formatCurrency, cn } from '@/lib/utils';
 import { formatCurrencyShort } from '@/hooks/api/useStoreAnalytics';
-import { useBiChartTheme, biTooltipStyle } from '../../shared/echarts-theme';
 import type { StoreAnalytics } from '@/hooks/api/useStoreAnalytics';
-
-const ECharts = dynamic(() => import('echarts-for-react'), {
-  ssr: false,
-  loading: () => <div className="h-[180px] w-full rounded-xl bg-muted/20 animate-pulse" />,
-}) as unknown as React.ComponentType<Record<string, unknown>>;
 
 interface Props {
   analytics: StoreAnalytics;
@@ -34,68 +29,10 @@ function marginTone(pct: number): string {
   return 'text-emerald-600 dark:text-emerald-400';
 }
 
-/** Barras horizontales de margen por categoría (umbral 15/25% publicado). */
-function CategoryMargins({ analytics }: { analytics: StoreAnalytics }) {
-  const t = useBiChartTheme();
-  const cats = (analytics.category_margins ?? []).filter((c) => c.revenue > 0).slice(0, 8);
-
-  const option = React.useMemo(() => {
-    const sorted = [...cats].sort((a, b) => a.margin_pct - b.margin_pct);
-    return {
-      animationDuration: 400,
-      grid: { left: 8, right: 40, top: 4, bottom: 0, containLabel: true },
-      tooltip: {
-        trigger: 'item',
-        ...biTooltipStyle(t),
-        formatter: (p: { name?: string; value?: number; dataIndex?: number }) => {
-          const c = sorted[p.dataIndex ?? 0];
-          return `<b>${p.name}</b><br/>Margen: <b>${p.value?.toFixed(1)}%</b><br/>Ingreso: ${formatCurrencyShort(c?.revenue ?? 0)} · Costo: ${formatCurrencyShort(c?.cost ?? 0)}`;
-        },
-      },
-      xAxis: {
-        type: 'value',
-        max: (value: { max?: number }) => Math.max(30, Math.ceil((value.max ?? 30) + 5)),
-        axisLabel: { color: t.textMuted, fontSize: 10, formatter: '{value}%' },
-        splitLine: { show: false },
-        axisLine: { show: false },
-      },
-      yAxis: {
-        type: 'category',
-        data: sorted.map((c) => c.category),
-        axisLabel: { color: t.text, fontSize: 11, width: 110, overflow: 'truncate' },
-        axisTick: { show: false },
-        axisLine: { show: false },
-      },
-      series: [{
-        type: 'bar',
-        data: sorted.map((c) => ({
-          value: Math.round(c.margin_pct * 10) / 10,
-          itemStyle: {
-            color: c.margin_pct < 15 ? t.negative : c.margin_pct < 25 ? '#F59E0B' : t.positive,
-            borderRadius: [0, 4, 4, 0],
-          },
-        })),
-        barMaxWidth: 14,
-        markLine: {
-          silent: true,
-          symbol: 'none',
-          label: { fontSize: 9, color: t.textMuted },
-          data: [
-            { xAxis: 15, lineStyle: { color: t.negative, type: 'dashed', width: 1 }, label: { formatter: 'mín 15%' } },
-            { xAxis: 25, lineStyle: { color: t.positive, type: 'dashed', width: 1 }, label: { formatter: 'saludable 25%' } },
-          ],
-        },
-      }],
-    };
-  }, [cats, t]);
-
-  if (cats.length === 0) return null;
-  return <ECharts option={option} notMerge lazyUpdate style={{ height: Math.max(120, cats.length * 26 + 30), width: '100%' }} />;
-}
-
 export function ProductsPanel({ analytics }: Props) {
   const tops = analytics.top_products_revenue ?? [];
   const sales = analytics.kpis?.period_sales ?? 0;
+  const cats = (analytics.category_margins ?? []).filter((c) => c.revenue > 0).slice(0, 8);
 
   return (
     <section aria-label="Productos que sostienen el negocio" data-testid="executive-products">
@@ -130,7 +67,12 @@ export function ProductsPanel({ analytics }: Props) {
                     <td className="p-2.5 text-right tabular-nums font-bold">{formatCurrency(p.revenue)}</td>
                     <td className="p-2.5 text-right tabular-nums">{p.quantity}</td>
                     <td className={cn('p-2.5 text-right tabular-nums font-black', marginTone(p.margin_pct))}>
-                      {p.margin_pct.toFixed(1)}%
+                      <span
+                        title="Margen sobre el costo registrado en la venta (cost_at_sale). Productos sin costo registrado muestran 100%."
+                        className="cursor-help"
+                      >
+                        {p.margin_pct.toFixed(1)}%
+                      </span>
                     </td>
                     <td className="p-2.5 text-right tabular-nums text-muted-foreground">{share.toFixed(1)}%</td>
                   </tr>
@@ -148,16 +90,44 @@ export function ProductsPanel({ analytics }: Props) {
         </div>
       </div>
 
-      {/* Composición de margen por categoría (solo si hay datos con costo) */}
-      <div className="mt-4 rounded-xl border border-border/50 bg-card p-3.5">
-        <div className="flex items-center justify-between gap-2 mb-2 px-1">
-          <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-            Margen por categoría
-          </h3>
-          <span className="text-[10px] text-muted-foreground">rojo &lt;15% · ámbar &lt;25% · verde ≥25%</span>
+      {/* Composición de margen por categoría — lista numérica precisa.
+          Misma fuente (category_margins del RPC), mismos umbrales publicados. */}
+      {cats.length > 0 && (
+        <div className="mt-4 rounded-xl border border-border/50 bg-card p-3.5">
+          <div className="flex items-center justify-between gap-2 mb-2 px-1">
+            <h3 className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+              Margen por categoría
+            </h3>
+            <span className="text-[10px] text-muted-foreground">rojo &lt;15% · ámbar &lt;25% · verde ≥25%</span>
+          </div>
+          <ul className="space-y-1.5" data-testid="executive-category-margins">
+            {cats
+              .slice()
+              .sort((a, b) => b.revenue - a.revenue)
+              .map((c) => {
+                const anomalous = c.margin_pct < -100;
+                return (
+                  <li key={c.category} className="flex items-center justify-between gap-3 px-1 py-1 rounded-lg hover:bg-muted/30 transition-colors">
+                    <span className="text-xs font-bold text-foreground truncate min-w-0">{c.category}</span>
+                    <span className="flex items-center gap-3 shrink-0 tabular-nums">
+                      <span className="text-[11px] text-muted-foreground w-20 text-right">{formatCurrencyShort(c.revenue)}</span>
+                      <span
+                        className={cn('text-xs font-black w-20 text-right', marginTone(c.margin_pct))}
+                        title={`Ingreso ${formatCurrency(c.revenue)} · costo registrado ${formatCurrency(c.cost)}${anomalous ? ' — costo anómalo: supera varias veces el ingreso, revisa el costo registrado de esta familia' : ''}`}
+                      >
+                        {c.margin_pct.toFixed(1)}%
+                      </span>
+                    </span>
+                  </li>
+                );
+              })}
+          </ul>
+          <p className="mt-2 px-1 text-[10px] text-muted-foreground">
+            Margen sobre el costo registrado en la venta (cost_at_sale). Categorías con margen muy
+            negativo suelen reflejar costos mal registrados, no pérdidas reales de venta.
+          </p>
         </div>
-        <CategoryMargins analytics={analytics} />
-      </div>
+      )}
     </section>
   );
 }

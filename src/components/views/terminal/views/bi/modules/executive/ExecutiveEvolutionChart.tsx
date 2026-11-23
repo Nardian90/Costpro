@@ -29,10 +29,13 @@ interface Props {
   hasPreviousBase: boolean;
 }
 
-function dayLabel(dateText: string): string {
-  // 'yyyy-MM-dd' → 'dd/MM'
-  const parts = dateText?.split('-') ?? [];
-  return parts.length === 3 ? `${parts[2]}/${parts[1]}` : dateText;
+function dayLabel(raw: string): string {
+  // El RPC entrega d::text (timestamp completo, ej '2026-10-25 00:00:00+00:10').
+  // Los primeros 10 caracteres son siempre la parte de fecha 'yyyy-MM-dd'
+  // (también cubre el caso de fecha plana 'yyyy-MM-dd').
+  const datePart = raw?.slice(0, 10) ?? '';
+  const parts = datePart.split('-');
+  return parts.length === 3 ? `${parts[2]}/${parts[1]}` : raw;
 }
 
 export function ExecutiveEvolutionChart({ current, previous, hasPreviousBase }: Props) {

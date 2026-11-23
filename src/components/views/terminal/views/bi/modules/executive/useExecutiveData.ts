@@ -406,6 +406,23 @@ export function useExecutiveSignals(data: ExecutiveData): ExecutiveSignal[] {
       });
     }
 
+    // 11) Categorías con margen negativo/anómalo sobre costo registrado
+    //     (verificable: category_margins del período con ingresos > 0).
+    const negativeCats = (c.category_margins ?? [])
+      .filter((cm) => n(cm.revenue) > 0 && n(cm.margin_pct) < 0)
+      .sort((a, b) => n(a.margin_pct) - n(b.margin_pct));
+    if (negativeCats.length > 0) {
+      const worst = negativeCats[0];
+      out.push({
+        id: 'category-negative-margin',
+        severity: n(worst.margin_pct) < -100 ? 'warning' : 'info',
+        title: `Margen negativo en ${negativeCats.length} ${negativeCats.length === 1 ? 'categoría' : 'categorías'}`,
+        fact: `"${worst.category}" muestra margen ${n(worst.margin_pct).toFixed(1)}% (ingreso ${formatCurrencyShort(n(worst.revenue))}, costo registrado ${formatCurrencyShort(n(worst.cost))}).`,
+        impact: 'Un margen muy negativo suele reflejar costos mal registrados (cost_at_sale) más que pérdida real de venta — pero distorsiona la lectura del resultado.',
+        review: 'Revisa el costo registrado de los productos de esa familia antes de tomar decisiones de precio.',
+      });
+    }
+
     const order: Record<ExecutiveSignalSeverity, number> = { critical: 0, warning: 1, positive: 2, info: 3 };
     return out.sort((a, b) => order[a.severity] - order[b.severity]);
   }, [data]);
@@ -490,6 +507,9 @@ export function useExecutiveObservations(data: ExecutiveData): ExecutiveObservat
     }
 
     // d) Ritmo operativo: mejor día de la semana (hecho + lectura).
+    // El RPC entrega DOW 0=Domingo…6=Sábado con weekday_name en inglés — se
+    // mapea por número con etiquetas propias.
+    const DOW_ES = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
     const weekdays = (c.weekday_distribution ?? []).filter((w) => n(w.sales) > 0);
     if (weekdays.length >= 3) {
       const sorted = [...weekdays].sort((a, b) => n(b.sales) - n(a.sales));
@@ -498,7 +518,7 @@ export function useExecutiveObservations(data: ExecutiveData): ExecutiveObservat
       const share = totalWeekday > 0 ? (n(best.sales) / totalWeekday) * 100 : 0;
       out.push({
         id: 'obs-rhythm',
-        fact: `El día de mayor venta es ${best.weekday_name} con ${formatCurrencyShort(n(best.sales))} (${share.toFixed(0)}% del total del período).`,
+        fact: `El día de mayor venta es ${DOW_ES[best.weekday] ?? best.weekday_name} con ${formatCurrencyShort(n(best.sales))} (${share.toFixed(0)}% del total del período).`,
         evidence: 'weekday_distribution del mismo RPC y período.',
         reading: 'Concentrar personal y stock disponible el día fuerte protege el ritmo de la tienda.',
       });
