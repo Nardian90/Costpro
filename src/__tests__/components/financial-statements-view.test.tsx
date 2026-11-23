@@ -146,8 +146,14 @@ function dashboardFixture() {
       cuentas_por_cobrar: 0, cuentas_por_pagar: 3000, nomina_pendiente: 0,
       retenciones_pendientes: 0, inventario_valor: 4000,
     },
-    series_mensuales: [],
-    top_gastos: [],
+    series_mensuales: [
+      { mes: '2026-10', ingresos: 4200, gastos: 2600 },
+      { mes: '2026-11', ingresos: 5000, gastos: 3000 },
+    ],
+    top_gastos: [
+      { code: 'GAS_NOMINA', name: 'Nómina', total: 1500 },
+      { code: 'GAS_SERV', name: 'Servicios básicos', total: 800 },
+    ],
     alertas: { gastos_mayores_que_ingresos: false, desequilibrio_balance: false, desequilibrio_monto: 0, tipos_sin_configurar: 3, errores_contabilizacion: 0 },
   };
 }
@@ -339,7 +345,7 @@ describe('FinancialStatementsView — render y pestañas (ADNEGOCIO)', () => {
     });
   });
 
-  it('pestañas directas: Situación consulta balance; Rendimiento consulta income + gráficos', async () => {
+  it('pestañas directas: Situación consulta balance; Rendimiento consulta income + desgloses sin gráficos', async () => {
     authState.user = { id: 'u1', activeStoreId: 'store-1', accessToken: 'tok', role: 'admin' };
     standardFetchMock();
 
@@ -356,10 +362,15 @@ describe('FinancialStatementsView — render y pestañas (ADNEGOCIO)', () => {
     await waitFor(() => {
       const urls = fetchMock.mock.calls.map((c: unknown[]) => c[0] as string);
       expect(urls.some((u) => u.includes('type=income'))).toBe(true);
-      // Los gráficos del antiguo Resumen viven aquí (misma consulta dashboard)
+      // Los desgloses del período viven aquí (MISMA consulta dashboard que
+      // tenían los gráficos retirados — misión §6)
       expect(urls.some((u) => u.includes('type=dashboard'))).toBe(true);
     });
-    expect(screen.getByTestId('income-charts')).toBeDefined();
+    // MISIÓN REDISEÑO EJECUTIVO §6: los gráficos se RETIRARON y los desgloses
+    // se presentan como tablas financieras profesionales.
+    await waitFor(() => expect(screen.getByTestId('rendimiento-desglose')).toBeDefined());
+    expect(screen.getByTestId('rendimiento-evolucion-tabla')).toBeDefined();
+    expect(screen.getByTestId('rendimiento-gastos-tabla')).toBeDefined();
   });
 
   it('regresión TS2367: Exportar PDF/Excel dispara en Estado de Situación y Estado de Rendimiento', async () => {

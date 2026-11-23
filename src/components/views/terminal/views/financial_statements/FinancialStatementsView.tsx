@@ -47,7 +47,7 @@ import { BalanceSheetTab } from './BalanceSheetTab';
 import { IncomeStatementTab } from './IncomeStatementTab';
 import { ReconciliationTab } from './ReconciliationTab';
 import { SalesRhythmDashboard } from './SalesRhythmDashboard';
-import { IncomeCharts } from './IncomeCharts';
+import { RendimientoDesglose } from './RendimientoDesglose';
 import {
   exportBalanceSheetExcel,
   exportBalanceSheetPdf,
@@ -554,10 +554,14 @@ export default function FinancialStatementsView() {
             refreshKey={refreshKey}
             onDataLoaded={onIncomeLoaded}
           />
-          {/* ADNEGOCIO §3: los gráficos del antiguo apartado Resumen (Ingresos
-              vs Gastos y Distribución de gastos) viven en el informe al que
-              corresponden — el Estado de Rendimiento — con la misma consulta. */}
-          <IncomeCharts
+          {/* MISIÓN REDISEÑO EJECUTIVO §6: los gráficos del Estado de
+              Rendimiento (ComposedChart «Ingresos vs Gastos por mes» y pie
+              «Distribución de gastos») se RETIRAN por su calidad visual
+              deficiente — sin sustituirlos por nuevos gráficos. Los desgloses
+              que alimentaban (series_mensuales y top_gastos, MISMA consulta
+              fin_get_dashboard) permanecen como tablas financieras
+              profesionales en RendimientoDesglose. */}
+          <RendimientoDesglose
             storeId={storeId}
             from={applied.from}
             to={applied.to}

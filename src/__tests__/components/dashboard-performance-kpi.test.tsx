@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-library/react';
 // MISIÓN INGRESOS/EGRESOS (2026-10-20): la tira de caja del Inicio usa hooks
 // react-query reales (useActiveShift/useCashShiftExpected) → provider en los renders.
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -115,6 +115,70 @@ vi.mock('@/hooks/api/useProducts', () => ({
   useProducts: () => ({ data: mockProducts, isLoading: false }),
 }));
 
+// ─── MOCK: datos comparativos (misión rediseño ejecutivo §3/§4/§5) ──────────
+// El Resumen de Indicadores (IndicatorsSummary) y el Ranking Comercial
+// (CommercialRanking) consumen useProductComparison — mismo hook/queryKey que
+// la vista «Comparar productos». Se mockea el hook para mantener el foco de
+// estos tests en la composición del DashboardView embebido.
+let mockComparison: any = { data: undefined, isLoading: false, isError: false, error: null, refetch: async () => {} };
+vi.mock('@/hooks/api/useProductComparison', () => ({
+  useProductComparison: () => mockComparison,
+  monthToDateWindow: () => ({
+    from: new Date('2026-11-01T05:00:00.000Z'),
+    to: new Date('2026-11-15T04:59:59.999Z'),
+  }),
+}));
+
+/** Respuesta completa del RPC para una ventana (espejo del schema canónico). */
+function analyticsWindow(top: unknown[], opts?: { netPrev?: number }) {
+  const prev = {
+    ops: 2, gross_cup: 1100000, discounts_cup: 0, net_cup: opts?.netPrev ?? 1100000,
+    devolutions_cup: 0, devolutions_usd: 0, collected_usd: 0, avg_ticket_cup: 550000,
+  };
+  return {
+    period: { from: '2026-11-01T05:00:00.000Z', to: '2026-11-15T04:59:59.999Z', granularity: 'day', prev_from: '2026-10-01T04:00:00.000Z', prev_to: '2026-10-15T04:59:59.999Z' },
+    kpi: {
+      ops: 3, gross_cup: 1600000, discounts_cup: 0, taxes_cup: 0, net_cup: 1600000,
+      devolutions_cup: 0, devolutions_usd: 0, collected_usd: 0, collected_cup_equiv: 0,
+      avg_ticket_cup: 500000, units_sold: 20, units_returned: 0,
+      prev,
+    },
+    series: [], sellers: [], stores: [], stores_series: [], accessible_stores: [],
+    products: { top_net: top, top_units: [], low_movement: [], total_net_cup: 1600000 },
+    payment_methods: { by_document: [], by_collection: [] },
+    heatmap: [],
+    alerts: { doc_status: [], devolutions_count: 0, devolutions_cup: 0, devolutions_usd: 0, incident_sales: 0, sync_log: [], unreconciled_ops: 0, unreconciled_diff_cup: 0 },
+  };
+}
+
+/** Datos del hook comparativo para la composición ejecutiva. */
+function comparisonData(opts?: { netPrev?: number; usd?: number }) {
+  const topActual = [
+    { product_id: 'p1', name: 'Cemento gris', sku: 'CM-01', units_sold: 40, net_cup: 800000 },
+    { product_id: 'p2', name: 'Bloque 20', sku: 'BL-20', units_sold: 25, net_cup: 500000 },
+    { product_id: 'p3', name: 'Reja metálica', sku: 'RJ-01', units_sold: 10, net_cup: 300000 },
+  ];
+  const topPrev = [
+    { product_id: 'p2', name: 'Bloque 20', sku: 'BL-20', units_sold: 30, net_cup: 900000 },
+    { product_id: 'p1', name: 'Cemento gris', sku: 'CM-01', units_sold: 20, net_cup: 400000 },
+    { product_id: 'p7', name: 'Pintura blanca', sku: 'PB-02', units_sold: 15, net_cup: 350000 },
+  ];
+  const actual = analyticsWindow(topActual);
+  if (opts?.usd) {
+    actual.kpi.collected_usd = opts.usd;
+    actual.kpi.collected_cup_equiv = opts.usd;
+  }
+  const anterior = analyticsWindow(topPrev, { netPrev: opts?.netPrev });
+  return {
+    ventana: { from: new Date('2026-11-01T05:00:00.000Z'), to: new Date('2026-11-15T04:59:59.999Z') },
+    ventanaAnterior: { from: new Date('2026-10-01T04:00:00.000Z'), to: new Date('2026-10-15T04:59:59.999Z') },
+    actual,
+    anterior,
+    ventasEnPeriodoActual: new Set<string>(['p7']),
+    updatedAt: '2026-11-15T12:00:00.000Z',
+  };
+}
+
 // ─── Serie sintética: septiembre 2026 completo ($100k/día) + hoy (FASE 4) ────
 const NOW = new Date('2026-10-15T12:00:00.000Z');
 // El hook congela `now` al montar — fake timers SOLO de Date para alinear el
@@ -141,6 +205,7 @@ const COMPLETE_COST_PRODUCTS = [
 
 import { PerformanceKpi } from '@/components/views/terminal/views/dashboard/PerformanceKpi';
 import DashboardView from '@/components/views/terminal/views/dashboard/DashboardView';
+import { formatCurrency } from '@/lib/utils';
 
 beforeEach(() => {
   setCurrentViewMock.mockClear();
@@ -346,9 +411,9 @@ vi.mock('@/components/ui/ChunkErrorBoundary', () => ({
 // NOTA (fix/dashboard-kpi-periods-semantics): el mock de ExecutiveKpiCards se
 // retiró junto con el componente — duplicación eliminada del Inicio.
 
-describe('DashboardView embebido — mini-stats con calidad de datos (FASE 2)', () => {
-  it('costos/utilidad NULL → "N/D" (nunca 0) en el Resumen de Indicadores', async () => {
-    // RPC del día con costos incompletos (señal NULL preservada)
+describe('DashboardView embebido — composición ejecutiva (misión rediseño 2026-11-23 §3)', () => {
+  it('el velocímetro y las mini-stats se RETIRARON; el Resumen de Indicadores es la composición KPI', async () => {
+    // RPC del día con costos incompletos (señal NULL preservada en su fuente)
     mockDashboardData = {
       data: {
         kpis: { gross_sales: 125000, cost_of_goods: null, profit: null },
@@ -356,16 +421,22 @@ describe('DashboardView embebido — mini-stats con calidad de datos (FASE 2)', 
       },
       isLoading: false,
     };
+    mockComparison = { data: comparisonData(), isLoading: false, isError: false, error: null, refetch: async () => {} };
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><DashboardView embedded /></QueryClientProvider>);
-    expect(screen.getByTestId('kpi-mini-stats')).toBeInTheDocument();
-    expect(screen.getByTestId('mini-stat-costs').textContent).toBe('N/D');
-    expect(screen.getByTestId('mini-stat-profit').textContent).toBe('N/D');
-    // ADNEGOCIO-UI (misión §4): el indicador del Resumen de Indicadores es
-    // el velocímetro de ventas (el anillo configurable NO está montado).
     await waitFor(() => {
-      expect(screen.getByTestId('sales-speedometer')).toBeInTheDocument();
+      expect(screen.getByTestId('indicators-summary')).toBeInTheDocument();
     });
+    // §3: el velocímetro semicircular ya NO vive en el Inicio (retirado, no
+    // retocado); las mini-stats repetidas tampoco (la venta vive en la
+    // tarjeta principal — sin duplicación).
+    expect(screen.queryByTestId('sales-speedometer')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kpi-mini-stats')).not.toBeInTheDocument();
     expect(screen.queryByTestId('performance-kpi')).not.toBeInTheDocument();
+    // La composición KPI consume la fuente canónica de ventas (RPC ×2)
+    expect(screen.getByTestId('kpi-sales-value').textContent).toContain(formatCurrency(1600000));
+    // Variación % contra el mismo tramo del mes anterior (500k/1.1M = +45.5%)
+    // — badge del héroe, acotado a la tarjeta principal.
+    expect(within(screen.getByTestId('kpi-sales-card')).getByTestId('kpi-variation-badge').textContent).toContain('45.5%');
   });
 });
 
@@ -467,30 +538,44 @@ describe('PerformanceKpi anclado — modo Año (FASE 7)', () => {
   });
 });
 
-describe('DashboardView embebido — sin duplicación de KPIs (FASE 15-17)', () => {
-  it('NO renderiza ExecutiveKpiCards; el bloque de actividad conserva los datos únicos', async () => {
+describe('DashboardView embebido — Ranking Comercial y acceso único a «Comparar productos» (misión §4/§5)', () => {
+  it('el Ranking Comercial vive en el Inicio y «Comparar productos» está en SU encabezado', async () => {
     mockDashboardData = rpcResponse(125000, 3);
+    mockComparison = { data: comparisonData(), isLoading: false, isError: false, error: null, refetch: async () => {} };
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><DashboardView embedded /></QueryClientProvider>);
     await waitFor(() => {
-      expect(screen.getByTestId('sales-speedometer')).toBeInTheDocument();
+      expect(screen.getByTestId('commercial-ranking')).toBeInTheDocument();
     });
-    // Duplicado eliminado: el trío financiero vive SOLO en las mini-stats
-    expect(screen.queryByTestId('executive-kpi-cards')).not.toBeInTheDocument();
-    // La sección renombrada conserva transacciones/ticket/efectivo/transferencia
+    // El botón ya no cuelga del indicador de ventas (velocímetro retirado):
+    // está integrado en el encabezado de la sección del ranking (§5).
+    expect(screen.queryByTestId('sales-compare-button')).not.toBeInTheDocument();
+    expect(screen.getByTestId('ranking-compare-button')).toBeInTheDocument();
+    // La sección conserva transacciones/ticket/efectivo/transferencia (Resumen
+    // de actividad — datos únicos del selector Día/Mes/Año)
     expect(screen.getByText('activitySummary')).toBeInTheDocument();
-    expect(screen.getByTestId('kpi-mini-stats')).toBeInTheDocument();
   });
 
-  it('ADNEGOCIO-UI: el velocímetro sustituye al anillo y consulta la fuente canónica de ventas', async () => {
+  it('«Comparar productos» navega a la vista analítica dedicada (una sola ubicación)', async () => {
     mockDashboardData = rpcResponse(125000, 3);
+    mockComparison = { data: comparisonData(), isLoading: false, isError: false, error: null, refetch: async () => {} };
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><DashboardView embedded /></QueryClientProvider>);
     await waitFor(() => {
-      expect(screen.getByTestId('sales-speedometer')).toBeInTheDocument();
+      expect(screen.getByTestId('ranking-compare-button')).toBeInTheDocument();
     });
-    // El anillo configurable ya NO vive en el Inicio (misión §4); el
-    // velocímetro usa el RPC get_sales_dashboard_analytics en DOS llamadas
-    // (período actual y comparable — períodos equivalentes, sin metas).
-    expect(screen.queryByTestId('kpi-ring')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('performance-kpi')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('ranking-compare-button'));
+    expect(setCurrentViewMock).toHaveBeenCalledWith('product-comparison');
+  });
+
+  it('cambio de líder y «salieron del Top» con clasificación honesta por evidencia real', async () => {
+    mockDashboardData = rpcResponse(125000, 3);
+    // ventasEnPeriodoActual contiene 'p7' → «Sale del Top» (sigue vendiéndose).
+    mockComparison = { data: comparisonData(), isLoading: false, isError: false, error: null, refetch: async () => {} };
+    render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><DashboardView embedded /></QueryClientProvider>);
+    await waitFor(() => {
+      expect(screen.getByTestId('ranking-cambio-lider')).toBeInTheDocument();
+    });
+    // Cemento gris (antes #2) desplaza a Bloque 20 (antes #1)
+    expect(screen.getByTestId('ranking-cambio-lider').textContent).toContain('desplaza');
+    expect(screen.getByTestId('ranking-salieron').textContent).toContain('Sale del Top');
   });
 });
