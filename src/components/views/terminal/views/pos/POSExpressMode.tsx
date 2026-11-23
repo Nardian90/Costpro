@@ -206,13 +206,30 @@ export function POSExpressMode({
     })),
   );
 
-  const { startCheckout, isProcessingSale } = usePOSCheckout();
+  const {
+    startCheckout, isProcessingSale,
+    // CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): Express posee su PROPIA
+    // instancia de usePOSCheckout (useState local). El éxito de una venta
+    // cobrada EN Express vive en esta instancia — el prop `lastSale` solo
+    // cubre la venta cobrada en el carrito antes de entrar a Express.
+    // Antes la vista de éxito jamás aparecía tras cobrar aquí (prop siempre
+    // null): el effectiveLastSale unifica ambas vías sin cambiar el hook.
+    lastSale: expressOwnLastSale,
+    setLastSale: setExpressOwnLastSale,
+  } = usePOSCheckout();
   // MISIÓN FECHA OPERATIVA: mismo estado del carrito que el flujo normal;
   // el modal de confirmación muestra el selector y gatea el cobro.
   const { validation: saleDateValidation } = usePosSaleDate();
 
   // MISIÓN VENDER-EXPRESS: exportaciones del comprobante (mismo hook del carrito).
-  const { generatePDF, shareWhatsApp, exportAsImage, printReceipt } = usePOSCartExports({ lastSale });
+  const effectiveLastSale = expressOwnLastSale ?? lastSale;
+  const { generatePDF, shareWhatsApp, exportAsImage, printReceipt } = usePOSCartExports({ lastSale: effectiveLastSale });
+
+  /** «Nueva venta»: limpia AMBAS instancias (la propia de Express y la del carrito). */
+  const handleExpressClearLastSale = useCallback(() => {
+    setExpressOwnLastSale(null);
+    onClearLastSale?.();
+  }, [setExpressOwnLastSale, onClearLastSale]);
 
   const total = getTotal();
   const subtotal = getSubtotal();
@@ -500,7 +517,7 @@ export function POSExpressMode({
   // MISIÓN VENDER-EXPRESS: tras confirmar la venta, el carrito muestra
   // POSCartSuccessView; Express muestra LA MISMA vista con el mismo hook de
   // exportaciones (PDF/WhatsApp/imagen/térmico). Sin reglas nuevas.
-  if (lastSale) {
+  if (effectiveLastSale) {
     if (typeof window === "undefined") return null; // SSR guard
     return createPortal(
       <div className="fixed inset-0 z-[45] bg-background flex flex-col overflow-hidden">
@@ -527,8 +544,8 @@ export function POSExpressMode({
           onShareWhatsApp={shareWhatsApp}
           onExportAsImage={exportAsImage}
           onPrint={printReceipt}
-          onClearLastSale={onClearLastSale}
-          lastSale={lastSale}
+          onClearLastSale={handleExpressClearLastSale}
+          lastSale={effectiveLastSale}
         />
       </div>,
       document.body,
