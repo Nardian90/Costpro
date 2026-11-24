@@ -7,7 +7,12 @@
  *
  *   INICIO (destino fijo: dashboard — NO es sección)
  *   ESTADOS FINANCIEROS → Situación · Rendimiento · Configuración
- *   OPERACIÓN   → Ventas (Vender · Opciones) ·
+ *   OPERACIÓN   → Ventas (Vender · Opciones) · FINANZAS (central financiera:
+ *                 Servicios Recibidos · Cuentas por Cobrar · Cuentas por
+ *                 Pagar · Caja · Ingresos/Egresos — misión
+ *                 CP-NAV-FINANCE-REORGANIZATION-001 2026-11-25: la categoría
+ *                 «Caja» se RENOMBRA a «FINANZAS» y absorbe las tres vistas
+ *                 financieras) ·
  *                 Almacén · Logística · Costo · Gestión de Tiendas · Redes
  *                 (la antigua hoja "Dashboard" se MUDÓ a ANÁLISIS —
  *                 misión Centro de Inteligencia 2026-11-23)
@@ -63,7 +68,7 @@ import {
   Home, Zap, ShoppingCart, Package, Warehouse, ArrowLeftRight, FileText, Calculator,
   Factory, UserCog, LayoutGrid, MessageCircle, Send, TrendingUp, Table2, DollarSign, Truck,
   BarChart4, BarChart3, Settings, Users, ShieldCheck, HeartPulse, Gauge, Shield, Rss,
-  Scale, HelpCircle, Book, FlaskConical, Layers, Landmark, Building2,
+  Scale, HelpCircle, Book, FlaskConical, Layers, Wallet, Landmark, Building2,
   Receipt, RotateCcw, CreditCard, ClipboardList, Newspaper, Megaphone, Printer,
   ClipboardCheck,
   ReceiptText, Coins, Tags,
@@ -270,23 +275,86 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
         ],
       },
       {
-        // MISIÓN INGRESOS/EGRESOS DE CAJA (2026-10-20): grupo «Caja» —
-        // gestión del efectivo físico de la tienda. La vista 'cash' (arqueo +
-        // cierre + reporte) se GRADÚA de extensión del palette a hoja de menú
-        // de PRIMER nivel (misma vista, mismo ViewType: sin segunda
-        // implementación; el palette la deriva ahora del árbol) y se añade la
-        // vista canónica única 'ingresos_egresos' (documento Ingreso/Egreso:
-        // constitución/reposición/devolución del fondo de cambio y otros).
-        // Permisos 'cash': idénticos a los de la extensión retirada
-        // (admin/manager/encargado/clerk/usuario — móvil la sigue alcanzando
-        // por su tab inferior dedicado, por eso mobileHide).
-        id: 'caja',
-        label: 'Caja',
-        description: 'Efectivo de la tienda: turnos y arqueo, e ingresos/egresos documentados (fondo de cambio y otros).',
-        icon: Landmark,
+        // MISIÓN CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): la categoría
+        // «Caja» se RENOMBRA a «FINANZAS» (icono wallet) y se convierte en el
+        // punto central del dominio financiero: recibe Servicios Recibidos
+        // (mudado desde Logística), Cuentas por Cobrar y Cuentas por Pagar
+        // (graduadas de tarjetas del hub Ventas → Opciones a hojas de menú con
+        // el patrón de graduación de `cash` 2026-10-20) y conserva sus dos
+        // accesos originales (Caja e Ingresos/Egresos). Sin segunda categoría
+        // financiera y sin duplicaciones: cada vista mantiene SU única entrada
+        // (mismo ViewType, misma ruta, mismos roles). El id técnico cambia
+        // caja→finanzas; el deep-link histórico /?view=caja sigue resolviendo
+        // vía alias legacy (LEGACY_VIEW_ALIASES) y el ViewType 'caja' se
+        // conserva para estados persistidos.
+        //
+        // MISIÓN INGRESOS/EGRESOS DE CAJA (2026-10-20, historial): la vista
+        // 'cash' (arqueo + cierre + reporte) se GRADUÓ de extensión del palette
+        // a hoja de menú (misma vista, mismo ViewType) junto a la vista
+        // canónica 'ingresos_egresos' (documento Ingreso/Egreso). Permisos
+        // 'cash' idénticos desde entonces (admin/manager/encargado/clerk/
+        // usuario — móvil la sigue alcanzando por su tab inferior dedicado,
+        // por eso mobileHide).
+        id: 'finanzas',
+        label: 'FINANZAS',
+        description: 'Central financiera de la tienda: servicios recibidos, cuentas por cobrar y por pagar, efectivo (turnos, arqueo e ingresos/egresos).',
+        icon: Wallet,
         type: 'submenu',
         navClass: 'hub',
         children: [
+          {
+            // MOVIDO desde Logística (2026-11-25) — MISIÓN
+            // CP-NAV-FINANCE-REORGANIZATION-001: el módulo se centraliza en
+            // FINANZAS (registro de servicios de terceros con pago a
+            // proveedores — dominio financiero). MISIÓN ARQUITECTURA UX
+            // (2026-10-23): «Servicios Recibidos» ya se movió de Almacén a
+            // Logística — NO se renombra ni se duplica. Mismo ViewType
+            // 'received-services', mismas rutas/APIs/BD, mismos roles
+            // (admin/manager/encargado/warehouse — visibilidad efectiva
+            // EXACTA previa). Keywords ampliadas: buscar «gasto»/«flete» en
+            // ⌘K lo encuentra.
+            id: 'received-services',
+            label: 'Servicios Recibidos',
+            description: 'Registro, distribución al costo y pago de servicios de terceros: transporte, aduana, seguro, manipulación y otros gastos de servicios.',
+            icon: Truck,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'warehouse'],
+            keywords: ['servicios', 'servicios recibidos', 'gastos', 'gasto', 'gastos de servicios', 'flete', 'transporte', 'aduana', 'seguro', 'manipulación', 'proveedores', 'pago a proveedores', 'distribución de costos', 'costos distribución'],
+          },
+          {
+            // GRADUADA (2026-11-25) — MISIÓN CP-NAV-FINANCE-REORGANIZATION-001:
+            // la vista de cobros a clientes (antes «Cobros por Antigüedad»,
+            // tarjeta del hub Ventas → Opciones) pasa a hoja de FINANZAS con
+            // el nombre canónico del dominio: «Cuentas por Cobrar». Mismo
+            // ViewType 'accounts_receivable', mismas rutas/APIs/BD, mismos
+            // roles EXACTOS de la extensión histórica. Las keywords conservan
+            // «cobros por antigüedad» para no romper búsquedas existentes.
+            // ORDEN (mandato §5): Cuentas por Cobrar ANTES de Cuentas por Pagar.
+            id: 'accounts_receivable',
+            label: 'Cuentas por Cobrar',
+            description: 'Antigüedad de saldos de clientes: órdenes de producción/servicio con saldo pendiente. Filtra por vencimiento y exporta a CSV.',
+            icon: CreditCard,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+            keywords: ['cobros', 'cuentas por cobrar', 'cxc', 'clientes', 'antigüedad', 'por cobrar', 'cobros por antigüedad'],
+          },
+          {
+            // GRADUADA (2026-11-25) — MISIÓN CP-NAV-FINANCE-REORGANIZATION-001:
+            // «Cuentas por Pagar» deja de ser tarjeta del hub Ventas → Opciones
+            // (retirada de SALES_HUB_PALETTE_ENTRIES y de SECONDARY_CARDS) y
+            // pasa a hoja de FINANZAS. Mismo ViewType 'accounts_payable',
+            // mismas rutas/APIs/BD, mismos roles EXACTOS de la extensión
+            // histórica (admin/manager/encargado/clerk/usuario). Sin
+            // mobileHide: el sheet móvil la expone bajo FINANZAS (punto
+            // central del dominio). El id ES el ViewType (sin route).
+            id: 'accounts_payable',
+            label: 'Cuentas por Pagar',
+            description: 'Antigüedad de saldos: recepciones, servicios recibidos y comisiones. Filtra por vencimiento, paga a proveedores y exporta a Excel.',
+            icon: CreditCard,
+            type: 'item',
+            roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
+            keywords: ['cuentas por pagar', 'cxp', 'pagar', 'proveedores', 'vencimientos', 'deudas'],
+          },
           {
             id: 'cash',
             label: 'Caja',
@@ -402,7 +470,9 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
       {
         id: 'almacen_operaciones',
         label: 'Logística',
-        description: 'Abastecimiento: recepciones, servicios recibidos (gastos de servicios), órdenes de compra y transferencias entre tiendas.',
+        // CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): «Servicios Recibidos»
+        // abandona el hub (description y keywords actualizadas en consecuencia).
+        description: 'Abastecimiento: recepciones, órdenes de compra y transferencias entre tiendas.',
         icon: Truck,
         type: 'submenu',
         navClass: 'hub',
@@ -417,26 +487,12 @@ export const NAVIGATION_SECTIONS: NavEntry[] = [
             roles: ['admin', 'manager', 'encargado', 'warehouse'],
             keywords: ['recibir', 'recepciones', 'mercancía', 'entradas', 'proveedor'],
           },
-          {
-            // MISIÓN ARQUITECTURA UX (2026-10-23): «Servicios Recibidos» se MUEVE
-            // desde Almacén a Logística — NO se renombra ni se duplica. Mismo
-            // ViewType 'received-services', mismas rutas/APIs/BD, mismos roles
-            // (admin/manager/encargado/warehouse — idénticos a los del hub).
-            // Justificación: el módulo registra costos de servicios de terceros
-            // ligados a la llegada de mercancía (recepciones/OC, distribución al
-            // costo y pago) — su tarea nace en el abastecimiento, no en la
-            // custodia de stock. NO es «Gastos»: no registra rentas/servicios
-            // básicos (eso es Ingresos/Egresos de Caja) y su núcleo es la
-            // distribución al costo de la mercancía. Keywords ampliadas:
-            // buscar «gasto»/«flete» en ⌘K ahora lo encuentra.
-            id: 'received-services',
-            label: 'Servicios Recibidos',
-            description: 'Registro, distribución al costo y pago de servicios de terceros: transporte, aduana, seguro, manipulación y otros gastos de servicios.',
-            icon: Truck,
-            type: 'item',
-            roles: ['admin', 'manager', 'encargado', 'warehouse'],
-            keywords: ['servicios', 'servicios recibidos', 'gastos', 'gasto', 'gastos de servicios', 'flete', 'transporte', 'aduana', 'seguro', 'manipulación', 'proveedores', 'pago a proveedores', 'distribución de costos', 'costos distribución'],
-          },
+          // MISIÓN CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): la hoja
+          // «Servicios Recibidos» (received-services) SE MUDÓ a FINANZAS
+          // (misma vista ViewType, mismas rutas/APIs/BD, mismos roles —
+          // ver el bloque FINANZAS). NO se duplica aquí: la única definición
+          // vive como hijo del submenú 'finanzas'. Historial previo: llegó a
+          // Logística desde Almacén (MISIÓN ARQUITECTURA UX 2026-10-23).
           {
             id: 'purchase-orders',
             label: 'Órdenes de Compra',
@@ -1061,33 +1117,14 @@ const SALES_HUB_PALETTE_ENTRIES: (NavEntry & { route: NavRoute })[] = [
     keywords: ['cotizaciones', 'cotización', 'presupuesto', 'proforma'],
   },
   {
-    id: 'accounts-payable',
-    label: 'Cuentas por Pagar',
-    description: 'Antigüedad de saldos: recepciones, servicios recibidos y comisiones. Filtra por vencimiento, paga a proveedores y exporta a Excel.',
-    icon: CreditCard,
-    type: 'item',
-    route: { view: 'accounts_payable' },
-    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
-    mobileHide: true,
-    keywords: ['cuentas por pagar', 'cxp', 'pagar', 'proveedores', 'vencimientos', 'deudas'],
-  },
-  {
-    id: 'accounts-receivable',
-    label: 'Cobros por Antigüedad',
-    description: 'Antigüedad de saldos de clientes: órdenes de producción/servicio con saldo pendiente. Filtra por vencimiento y exporta a CSV.',
-    icon: CreditCard,
-    type: 'item',
-    route: { view: 'accounts_receivable' },
-    roles: ['admin', 'manager', 'encargado', 'clerk', 'usuario'],
-    mobileHide: true,
-    keywords: ['cobros', 'cuentas por cobrar', 'cxc', 'clientes', 'antigüedad', 'por cobrar'],
-  },
-  {
-    // FASE B (UX-010 · GATE 1.4P): Ofertas es capacidad B — stack completo
-    // (UI 1.674 LOC + CRUD + PDF) sin discovery. Se publica con el patrón del
-    // hub (tarjeta + palette + breadcrumb), igual que Devoluciones/
-    // Cotizaciones. NO sustituye a Cotizaciones (coexisten). mobileHide = en
-    // móvil ya es alcanzable (proceso Vender: pos.activeViews + palette).
+    // GRADUADA (2026-11-25) — MISIÓN CP-NAV-FINANCE-REORGANIZATION-001:
+    // «Cuentas por Pagar» y «Cobros por Antigüedad» (id 'accounts-receivable')
+    // se RETIRAN de esta lista: pasan a hojas de menú del submenú FINANZAS de
+    // OPERACIÓN (mismo ViewType 'accounts_payable'/'accounts_receivable',
+    // mismos roles). El palette las deriva ahora de flattenNavigation —
+    // mantenerlas aquí duplicaría las acciones en ⌘K (SYSTEM_ACTIONS = árbol
+    // + extensiones, sin dedup), exactamente como ocurrió con 'cash' en su
+    // graduación (MISIÓN INGRESOS/EGRESOS 2026-10-20).
     id: 'ofertas',
     label: 'Ofertas',
     description: 'Crea y gestiona ofertas comerciales formales: suministrador, productos, ITBIS, validez y exportación a PDF.',
@@ -1391,6 +1428,11 @@ export const TECHNICAL_VIEW_IDS: string[] = [
   // Proveedores» del menú de la organización), sin hoja de menú propia.
   'organization-detail',
   'sales_catalog',
+  // CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): 'accounts_payable' y
+  // 'accounts_receivable' son AHORA TAMBIÉN hojas de menú del submenú FINANZAS
+  // (graduación desde el hub Ventas → Opciones). Conservan la clasificación
+  // técnica: siguen siendo destinos contextuales por deep-link/bookmark
+  // (/?view=…), con la dualidad documentada (mismo patrón que 'cash_report').
   'accounts_payable',
   'accounts_receivable', 'punto_venta', 'analitica',
   'cost_views', 'cost_gen', 'cost_templates', 'cost_tools',
@@ -1438,6 +1480,17 @@ export const LEGACY_VIEW_ALIASES: Record<string, LegacyAlias> = {
   'gen-expert': { view: 'cost-sheets', tab: 'gen-easy' },
   // El reporte de entrega vive dentro de Caja (hub Venta)
   // cash_report se mantiene como vista técnica (modal) — sin alias.
+  // CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): el hub «Caja» se RENOMBRA
+  // a FINANZAS — los deep-links /?view=caja y el estado persistido histórico
+  // normalizan al nuevo destino canónico (breadcrumb y sidebar derivan del
+  // árbol). El ViewType 'caja' permanece en VALID_VIEWS como alias.
+  caja: { view: 'finanzas' },
+  // Alias kebab históricos de las cuentas: el id de la antigua extensión de
+  // palette ('accounts-payable'/'accounts-receivable') ≠ ViewType snake de la
+  // vista. Con la graduación a hojas de FINANZAS el destino canónico es el
+  // snake; el alias conserva bookmarks/estado (despacha a la MISMA vista).
+  'accounts-payable': { view: 'accounts_payable' },
+  'accounts-receivable': { view: 'accounts_receivable' },
 };
 
 // ────────────────────────────────────────────────────────────────────
@@ -1698,7 +1751,9 @@ export const VALID_VIEWS: Set<string> = new Set([
   // Secciones/hubs nuevos de la arquitectura GATE 1
   // MISIÓN INGRESOS/EGRESOS 2026-10-20: submenú «Caja» de OPERACIÓN (hub
   // SectionHubView) + vista canónica del documento Ingreso/Egreso.
-  'caja', 'ingresos_egresos',
+  // CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): submenú «FINANZAS»
+  // (renombre del hub 'caja', que permanece como alias legacy).
+  'caja', 'ingresos_egresos', 'finanzas',
   'operacion', 'recursos-humanos', 'analisis', 'sistema', 'ayuda', 'desarrollo', 'redes',
   // MISIÓN CP-FIN (2026-11-13): Vista B — Estados Financieros.
   // CP-NAV-...-001 (2026-11-22): sección PROPIA de primer nivel (primera del

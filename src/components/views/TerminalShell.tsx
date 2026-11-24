@@ -587,6 +587,10 @@ export default function TerminalShell() {
         case 'punto_venta':
         case 'ventas': // CAMBIO 4: hub "Ventas" (Vender + Opciones) — wayfinding
         // MISIÓN INGRESOS/EGRESOS 2026-10-20: hub "Caja" (Caja + Ingresos/Egresos)
+        // CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): el hub se RENOMBRA a
+        // FINANZAS (id 'finanzas'; 'caja' se conserva para deep-links legacy —
+        // la URL se normaliza vía LEGACY_VIEW_ALIASES antes de llegar aquí).
+        case 'finanzas':
         case 'caja':
         case 'almacen_gestion':
         case 'almacen_operaciones':

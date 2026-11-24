@@ -34,7 +34,9 @@ import type { ViewType } from '@/store';
 export type WorkDateStatus = 'configurable' | 'fija' | 'informativa';
 
 /** Área operativa real del menú de COSTPRO. */
-export type WorkDateArea = 'Ventas' | 'Logística' | 'Almacén' | 'Caja' | 'Costo';
+// CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): 'Finanzas' entra como área
+// del movimiento Servicio recibido (centralización del módulo en FINANZAS).
+export type WorkDateArea = 'Ventas' | 'Finanzas' | 'Logística' | 'Almacén' | 'Caja' | 'Costo';
 
 export interface MovementTypeInfo {
   /** ID estable del tipo (usado como clave de la preferencia per usuario/tienda). */
@@ -136,11 +138,12 @@ export const MOVEMENT_TYPES: MovementTypeInfo[] = [
     id: 'received_service',
     label: 'Servicio recibido',
     // MISIÓN ARQUITECTURA UX (2026-10-23): el módulo se trasladó de Almacén a
-    // Logística (OPERACIÓN) — el área refleja su nueva ubicación en el menú.
-    area: 'Logística',
+    // Logística. CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): se centraliza
+    // en FINANZAS (OPERACIÓN) — el área refleja su ubicación vigente en el menú.
+    area: 'Finanzas',
     description: 'Costo de servicio del período (transporte, aduana, seguro) distribuido al inventario.',
     targetView: 'received-services',
-    selectorLocation: 'Logística → Servicios Recibidos → Registrar (campo «Fecha del servicio»)',
+    selectorLocation: 'OPERACIÓN → FINANZAS → Servicios Recibidos → Registrar (campo «Fecha del servicio»)',
     status: 'configurable',
     dateFields: {
       effective: 'received_services.service_date',
@@ -301,7 +304,9 @@ export const MOVEMENT_TYPES: MovementTypeInfo[] = [
 export const PREFERENCE_ENABLED_TYPES = MOVEMENT_TYPES.filter((t) => t.preferenceEnabled).map((t) => t.id);
 
 /** Tipos por área (para el filtro de la matriz). */
-export const WORK_DATE_AREAS: WorkDateArea[] = ['Ventas', 'Logística', 'Almacén', 'Caja', 'Costo'];
+// CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): 'Finanzas' entra al filtro
+// de áreas (área del movimiento Servicio recibido — módulo centralizado).
+export const WORK_DATE_AREAS: WorkDateArea[] = ['Ventas', 'Finanzas', 'Logística', 'Almacén', 'Caja', 'Costo'];
 
 /** Búsqueda de un tipo por ID. */
 export function getMovementType(id: string): MovementTypeInfo | undefined {

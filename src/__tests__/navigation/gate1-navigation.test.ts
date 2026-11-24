@@ -333,9 +333,15 @@ describe('GATE 1.3 — Vender/Ventas', () => {
     expect(pos?.keywords).toContain('pos');
   });
 
-  it('las vistas del hub Ventas son acciones de palette (⌘K directo)', () => {
+  it('las vistas del hub Ventas y de FINANZAS son acciones de palette (⌘K directo)', () => {
     const ids = SYSTEM_ACTIONS.map(a => a.id);
-    for (const id of ['sales', 'cash', 'inventory_count', 'devolutions', 'quotations', 'accounts-payable', 'accounts-receivable']) {
+    for (const id of ['sales', 'cash', 'inventory_count', 'devolutions', 'quotations']) {
+      expect(ids).toContain(id);
+    }
+    // MISIÓN CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): las cuentas se
+    // graduaron a hojas de FINANZAS — siguen siendo acciones de palette
+    // (derivadas del árbol) con su id canónico snake.
+    for (const id of ['accounts_payable', 'accounts_receivable']) {
       expect(ids).toContain(id);
     }
   });
@@ -356,10 +362,14 @@ describe('GATE 1.3 — Vender/Ventas', () => {
     // por su tab inferior dedicado, no por el sheet «Más»).
     expect(ext.map(e => e.id)).toEqual(expect.arrayContaining(['sales', 'devolutions']));
     expect(ext.map(e => e.id)).not.toContain('cash');
+    // CP-NAV-FINANCE-REORGANIZATION-001: las cuentas tampoco son extensiones
+    // (graduadas a hojas del submenú FINANZAS — mismas vistas, mismo guard).
+    expect(ext.map(e => e.id)).not.toContain('accounts-payable');
+    expect(ext.map(e => e.id)).not.toContain('accounts-receivable');
     // La hoja de menú «Caja» conserva mobileHide (móvil = tab inferior dedicado).
-    const cajaSubmenu = NAVIGATION_SECTIONS.find(s => s.id === 'operacion')
-      ?.children?.find(c => c.id === 'caja');
-    const cashLeaf = cajaSubmenu?.children?.find(c => c.id === 'cash');
+    const finanzasSubmenu = NAVIGATION_SECTIONS.find(s => s.id === 'operacion')
+      ?.children?.find(c => c.id === 'finanzas');
+    const cashLeaf = finanzasSubmenu?.children?.find(c => c.id === 'cash');
     expect(cashLeaf?.mobileHide).toBe(true);
     // Sin duplicación: la acción «Caja» del palette se deriva del árbol.
     expect(SYSTEM_ACTIONS.filter(a => a.id === 'cash')).toHaveLength(1);
@@ -820,6 +830,9 @@ describe('Reorganización — vistas huérfanas + Ayuda/En desarrollo (fix/navig
         'control_operativo',
         // MISIÓN INGRESOS/EGRESOS (2026-10-20): hub «Caja» (submenú wrapper)
         'caja',
+        // MISIÓN CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): hub
+        // «FINANZAS» (renombre del wrapper 'caja', que queda como alias).
+        'finanzas',
       ].includes(view);
       if (isSectionOrHub) continue;
       // Vistas con camino documentado (hub/contextual/palette/menú) o
