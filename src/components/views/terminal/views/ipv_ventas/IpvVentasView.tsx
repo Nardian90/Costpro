@@ -49,10 +49,12 @@ import {
   ipvActiveFilterLabels,
   ipvAnyFilterActive,
   type IpvResultFilters,
+  type IpvMovimientoFilter,
 } from '@/lib/ipv-ventas/filters';
+import { IPV_NUMERIC_TABLE_COLUMNS, ipvVisibleColumnKeys } from '@/lib/ipv-ventas/columns';
 import { formatIpvQty, formatIpvMoney } from '@/lib/ipv-ventas/format';
 import { ipvEndDateOnStartChange } from '@/lib/ipv-ventas/period';
-import { buildIpvVentasPdf, ipvFileName } from './ipv-ventas-pdf';
+import { buildIpvVentasPdf, ipvFileName, type IpvPdfOrientation } from './ipv-ventas-pdf';
 import { buildIpvVentasWorkbook } from './ipv-ventas-excel';
 
 const touch = 'min-h-[44px]';
@@ -111,10 +113,16 @@ export default function IpvVentasView() {
   const endDateTouchedRef = useRef(false);
   const [search, setSearch] = useState('');
 
-  // Filtros de resultados (2026-11-06): selección de filas sobre el dataset
-  // real — no alteran la configuración del informe ni lo marcan obsoleto.
-  const [fConMovimiento, setFConMovimiento] = useState(false);
+  // Filtros de resultados (2026-11-06; misión 2026-11-24 fase 4A): selección
+  // de filas sobre el dataset real calculado en servidor — no recalculan nada.
+  // Movimientos: selección exclusiva Todos / Con / Sin (mismo predicado
+  // contable ipvRowHasMovement — Con ∪ Sin = Todos, ningún producto se pierde).
+  const [fMovimiento, setFMovimiento] = useState<IpvMovimientoFilter>('todos');
   const [fEfPositiva, setFEfPositiva] = useState(false);
+  // Fase 4B: «Ocultar columnas sin valores» — reversible, detección sobre el
+  // subconjunto FILTRADO (nunca sobre el histórico); recalcula con período,
+  // tienda, búsqueda o filtro de movimientos porque depende de filteredRows.
+  const [fOcultarVacias, setFOcultarVacias] = useState(false);
 
   // ── Estado de cálculo ────────────────────────────────────────────────────
   const [applied, setApplied] = useState<AppliedReport | null>(null);
@@ -138,8 +146,8 @@ export default function IpvVentasView() {
   const stale = !!applied && (applied.cfg.storeId !== storeId || applied.cfg.startDate !== startDate || applied.cfg.endDate !== endDate);
 
   const resultFilters: IpvResultFilters = useMemo(
-    () => ({ conMovimiento: fConMovimiento, existenciaFinalPositiva: fEfPositiva }),
-    [fConMovimiento, fEfPositiva],
+    () => ({ movimiento: fMovimiento, existenciaFinalPositiva: fEfPositiva }),
+    [fMovimiento, fEfPositiva],
   );
 
   // Filas visibles = dataset aplicado ∩ filtro de búsqueda (código o
@@ -156,6 +164,22 @@ export default function IpvVentasView() {
 
   // Totales de lo VISIBLE → compartidos por pantalla, PDF y Excel (§K)
   const visibleTotals = useMemo(() => totalsFromRows(filteredRows), [filteredRows]);
+
+  // ── Fase 4B: visibilidad de columnas ─────────────────────────────────────
+  // Columnas numéricas visibles sobre el subconjunto filtrado. Con la opción
+  // apagada: TODAS. Con la opción encendida: las que tienen al menos un valor
+  // ≠ 0 / ≠ null en el resultado — Código y Descripción NO son configurables.
+  const visibleCols = useMemo(
+    () => ipvVisibleColumnKeys(filteredRows, fOcultarVacias),
+    [filteredRows, fOcultarVacias],
+  );
+  const hiddenColsSet = useMemo(() => {
+    const vis = new Set(visibleCols);
+    return new Set(IPV_NUMERIC_TABLE_COLUMNS.map((c) => c.key).filter((k) => !vis.has(k)));
+  }, [visibleCols]);
+
+  // ── Fase 5: orientación del PDF (preview y descarga usan la MISMA) ──────
+  const [pdfOrientation, setPdfOrientation] = useState<IpvPdfOrientation>('landscape');
 
   // Incidencias agrupadas por categoría (MISIÓN CORRECTIVA §6: la lista debe
   // seguir siendo legible cuando crece; TODAS permanecen visibles — nada oculto).
@@ -260,11 +284,13 @@ export default function IpvVentasView() {
       incidences: applied.incidences,
       generatedAt: applied.generatedAt,
       totalsOverride: visibleTotals,
+      orientation: pdfOrientation,
+      hiddenColumns: fOcultarVacias ? hiddenColsSet : undefined,
     });
-  }, [applied, filteredRows, visibleTotals]);
+  }, [applied, filteredRows, visibleTotals, pdfOrientation, fOcultarVacias, hiddenColsSet]);
 
   const previewSignature = applied
-    ? `${applied.cfg.storeId}|${applied.cfg.startDate}|${applied.cfg.endDate}|${applied.generatedAt}|${search}|${fConMovimiento ? 1 : 0}|${fEfPositiva ? 1 : 0}|${filteredRows.length}`
+    ? `${applied.cfg.storeId}|${applied.cfg.startDate}|${applied.cfg.endDate}|${applied.generatedAt}|${search}|${fMovimiento}|${fEfPositiva ? 1 : 0}|${fOcultarVacias ? 1 : 0}|${pdfOrientation}|${filteredRows.length}`
     : null;
 
   const handlePreview = useCallback(async () => {
@@ -465,22 +491,33 @@ export default function IpvVentasView() {
               </button>
             ))}
           </div>
-          {/* Filtros de resultados (2026-11-06) — inmediatamente después de
-              «Mes anterior». Toggles aria-pressed sobre el dataset real; el
-              estilo activo sigue los tokens shadcn (bg-primary). */}
-          <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtros de resultados del IPV">
-            <button type="button" aria-pressed={fConMovimiento}
-              onClick={() => setFConMovimiento((v) => !v)}
-              title="Solo productos con cantidad ≠ 0 en Vendidas, Vales de salida, Entradas o Devoluciones del período"
-              className={cn(
-                'flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                fConMovimiento
-                  ? 'border-primary bg-primary font-bold text-primary-foreground'
-                  : 'border-border/50 hover:bg-muted',
-              )}>
-              <Filter className="w-3 h-3" aria-hidden />
-              Con movimiento
-            </button>
+          {/* Filtros de resultados (2026-11-06; ampliados misión 2026-11-24)
+              — inmediatamente después de «Mes anterior». El filtro de
+              movimientos es de selección EXCLUSIVA (Todos · Con · Sin) con el
+              MISMO predicado contable de siempre; «Ocultar columnas sin
+              valores» es reversible y no modifica datos ni cálculos. */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5" role="group" aria-label="Filtros de resultados del IPV">
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtro de movimientos">
+              <span className="text-xs font-bold uppercase text-muted-foreground">Movimientos:</span>
+              {([
+                { v: 'todos' as const, label: 'Todos', title: 'Todos los productos del informe (sin filtro de movimientos)' },
+                { v: 'con' as const, label: 'Con movimiento', title: 'Solo productos con cantidad ≠ 0 en Vendidas, Vales de salida, Entradas o Devoluciones del período' },
+                { v: 'sin' as const, label: 'Sin movimiento', title: 'Solo productos SIN cantidad ≠ 0 en esas columnas (negación exacta del mismo criterio contable)' },
+              ]).map((opt) => (
+                <button key={opt.v} type="button" aria-pressed={fMovimiento === opt.v}
+                  onClick={() => setFMovimiento(opt.v)}
+                  title={opt.title}
+                  className={cn(
+                    'flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    fMovimiento === opt.v
+                      ? 'border-primary bg-primary font-bold text-primary-foreground'
+                      : 'border-border/50 hover:bg-muted',
+                  )}>
+                  {opt.v !== 'todos' && <Filter className="w-3 h-3" aria-hidden />}
+                  {opt.label}
+                </button>
+              ))}
+            </div>
             <button type="button" aria-pressed={fEfPositiva}
               onClick={() => setFEfPositiva((v) => !v)}
               title="Solo productos con existencia final estrictamente mayor que cero (decimales incluidos)"
@@ -493,10 +530,23 @@ export default function IpvVentasView() {
               <Filter className="w-3 h-3" aria-hidden />
               Existencia final &gt; 0
             </button>
+            <label htmlFor="ipv-ocultar-vacias"
+              title="Analiza las columnas numéricas del conjunto FILTRADO actual y oculta las que no tienen ningún valor significativo (vacías, nulas o cero en todos los productos). Código y Descripción permanecen siempre. Se recalcula al cambiar período, tienda o filtros. Reversible: al desactivarla vuelven todas las columnas."
+              className="flex items-center gap-1.5 rounded-full border border-border/50 px-3 py-1.5 text-xs hover:bg-muted cursor-pointer select-none">
+              <input
+                id="ipv-ocultar-vacias"
+                type="checkbox"
+                checked={fOcultarVacias}
+                onChange={(e) => setFOcultarVacias(e.target.checked)}
+                className="h-3.5 w-3.5 cursor-pointer accent-[var(--primary)]"
+                data-testid="ipv-ocultar-vacias"
+              />
+              Ocultar columnas sin valores
+            </label>
             {ipvAnyFilterActive(resultFilters) && (
               <button type="button"
-                onClick={() => { setFConMovimiento(false); setFEfPositiva(false); }}
-                title="Desactiva «Con movimiento» y «Existencia final > 0»"
+                onClick={() => { setFMovimiento('todos'); setFEfPositiva(false); }}
+                title="Vuelve a «Todos» y desactiva «Existencia final > 0» (no afecta la opción de columnas)"
                 className="flex items-center gap-1 rounded-full border border-border/50 px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 <X className="w-3 h-3" aria-hidden />
                 Restablecer filtros
@@ -523,13 +573,36 @@ export default function IpvVentasView() {
       ) : (
         <section aria-labelledby="ipv-results-title" className="rounded-2xl border border-border bg-card">
           <h2 id="ipv-results-title" className="sr-only">Resultados del IPV</h2>
-          {/* Encabezado del informe (MISIÓN §4) */}
+          {/* Encabezado del informe (MISIÓN §4) + selector de orientación del
+              PDF (misión 2026-11-24 fase 5): rige preview y descarga por igual,
+              así la vista previa siempre representa el PDF que se descarga. */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 px-4 py-3 text-xs text-muted-foreground">
             <span className="font-bold text-foreground">{applied.storeName}</span>
             <span>{applied.cfg.startDate} → {applied.cfg.endDate}</span>
             <span>Generado: {new Date(applied.generatedAt).toLocaleString('es')}</span>
             <span>Monedas: importe cobrado por moneda real (CUP · USD) — criterio del Reporte de Entrega</span>
             <span>{filteredRows.length} de {applied.rows.length} productos</span>
+            <div className="flex items-center gap-1.5" role="group" aria-label="Orientación del PDF">
+              <span className="font-bold uppercase">Orientación PDF:</span>
+              {([
+                { v: 'landscape' as const, label: 'Horizontal' },
+                { v: 'portrait' as const, label: 'Vertical' },
+              ]).map((opt) => (
+                <button key={opt.v} type="button" aria-pressed={pdfOrientation === opt.v}
+                  onClick={() => setPdfOrientation(opt.v)}
+                  title={opt.v === 'landscape'
+                    ? 'Apaisado: la tabla completa aprovecha el ancho de página (recomendado para muchas columnas)'
+                    : 'Retrato: la información se divide en bloques de columnas repitiendo Código y Descripción'}
+                  className={cn(
+                    'rounded-full border px-3 py-1.5 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    pdfOrientation === opt.v
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border/50 hover:bg-muted',
+                  )}>
+                  {opt.label}
+                </button>
+              ))}
+            </div>
             {ipvAnyFilterActive(resultFilters) && (
               <span data-testid="ipv-filtros-activos" className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 font-bold text-primary">
                 <Filter className="w-3 h-3" aria-hidden /> Filtros: {ipvActiveFilterLabels(resultFilters).join(' + ')}
@@ -572,22 +645,26 @@ export default function IpvVentasView() {
                     <tr className="border-b border-border bg-muted/40 text-xs uppercase text-muted-foreground">
                       <th scope="col" className="px-3 py-2.5 text-left font-bold">Código</th>
                       <th scope="col" className="px-3 py-2.5 text-left font-bold min-w-[180px]">Descripción</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Exist. inicial</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Cant. vendidas</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Vales salidas</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Entradas</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Devoluciones</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Ajustes</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Transf.</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Exist. final</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Ventas CUP (cobrado)</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Ventas USD (cobrado)</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold" title="Valoración contable preservada de ventas sin evidencia de cobro reconstruible. NO es dinero recibido y NO entra en los totales CUP/USD.">Valor hist. s/ moneda verificable</th>
+                      {/* Columnas numéricas VISIBLES (misión 2026-11-24: la
+                          columna «Valor hist. s/ moneda verificable» SALIÓ de
+                          la tabla, la fila de totales y las configuraciones;
+                          con «Ocultar columnas sin valores» se omiten las
+                          columnas sin ningún valor en el subconjunto filtrado). */}
+                      {visibleCols.map((key) => {
+                        const def = IPV_NUMERIC_TABLE_COLUMNS.find((c) => c.key === key);
+                        return (
+                          <th key={key} scope="col" className="px-3 py-2.5 text-right font-bold"
+                            title={key === 'ventasImporteCup' || key === 'ventasImporteUsd'
+                              ? 'Dinero efectivamente cobrado en SU moneda real (criterio del Reporte de Entrega)' : undefined}>
+                            {def?.label ?? key}
+                          </th>
+                        );
+                      })}
                     </tr>
                   </thead>
                   <tbody>
                     {filteredRows.length === 0 ? (
-                      <tr><td colSpan={13} className="px-4 py-8 text-center text-muted-foreground">
+                      <tr><td colSpan={2 + visibleCols.length} className="px-4 py-8 text-center text-muted-foreground">
                         {ipvAnyFilterActive(resultFilters)
                           ? (search.trim() ? 'Ningún producto cumple la búsqueda y los filtros activos. Prueba restablecer los filtros o cambiar la búsqueda.' : 'Ningún producto cumple los filtros activos. Pulsa «Restablecer filtros» para ver el informe completo.')
                           : (search.trim() ? `Sin coincidencias para «${search}».` : 'Sin productos que mostrar.')}
@@ -612,17 +689,21 @@ export default function IpvVentasView() {
                               <span className={cn('truncate max-w-[280px]', hasMov && 'font-semibold')} title={r.name}>{r.name}</span>
                             </span>
                           </td>
-                          <td className={cn('px-3 py-2 text-right font-mono', numCls, r.existenciaInicial === null && 'text-muted-foreground italic')}>{formatIpvQty(r.existenciaInicial)}</td>
-                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.cantidadesVendidas)}</td>
-                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.valesSalidas)}</td>
-                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.entradas)}</td>
-                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.devoluciones)}</td>
-                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.ajustes)}</td>
-                          <td className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r.transferencias)}</td>
-                          <td className={cn('px-3 py-2 text-right font-mono font-bold', hasMov ? 'text-[13px]' : 'text-xs', r.existenciaFinal === null && 'text-muted-foreground italic')}>{formatIpvQty(r.existenciaFinal)}</td>
-                          <td className={cn('px-3 py-2 text-right font-mono', cupCls)}>{formatIpvMoney(r.ventasImporteCup)}</td>
-                          <td className="px-3 py-2 text-right font-mono text-xs text-muted-foreground">{formatIpvMoney(r.ventasImporteUsd)}</td>
-                          <td className="px-3 py-2 text-right font-mono text-xs text-muted-foreground italic" title="Valoración contable preservada de ventas sin evidencia de cobro reconstruible. NO es dinero recibido y NO entra en los totales CUP/USD.">{formatIpvMoney(r.ventasCupHistorico)}</td>
+                          {visibleCols.map((key) => {
+                            if (key === 'existenciaInicial') {
+                              return <td key={key} className={cn('px-3 py-2 text-right font-mono', numCls, r.existenciaInicial === null && 'text-muted-foreground italic')}>{formatIpvQty(r.existenciaInicial)}</td>;
+                            }
+                            if (key === 'existenciaFinal') {
+                              return <td key={key} className={cn('px-3 py-2 text-right font-mono font-bold', hasMov ? 'text-[13px]' : 'text-xs', r.existenciaFinal === null && 'text-muted-foreground italic')}>{formatIpvQty(r.existenciaFinal)}</td>;
+                            }
+                            if (key === 'ventasImporteCup') {
+                              return <td key={key} className={cn('px-3 py-2 text-right font-mono', cupCls)}>{formatIpvMoney(r.ventasImporteCup)}</td>;
+                            }
+                            if (key === 'ventasImporteUsd') {
+                              return <td key={key} className="px-3 py-2 text-right font-mono text-xs text-muted-foreground">{formatIpvMoney(r.ventasImporteUsd)}</td>;
+                            }
+                            return <td key={key} className={cn('px-3 py-2 text-right font-mono', numCls)}>{formatIpvQty(r[key])}</td>;
+                          })}
                         </tr>
                       );
                     })}
@@ -631,29 +712,33 @@ export default function IpvVentasView() {
                     <tfoot>
                       <tr className="border-t-2 border-border bg-muted/40 font-bold">
                         <td colSpan={2} className="px-3 py-2.5 text-xs uppercase">Totales ({filteredRows.length} productos)</td>
-                        <td className={cn('px-3 py-2.5 text-right font-mono text-xs', visibleTotals.existenciaInicial === null && 'italic text-muted-foreground')}>{formatIpvQty(visibleTotals.existenciaInicial)}</td>
-                        <td className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvQty(visibleTotals.cantidadesVendidas)}</td>
-                        <td className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvQty(visibleTotals.valesSalidas)}</td>
-                        <td className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvQty(visibleTotals.entradas)}</td>
-                        <td className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvQty(visibleTotals.devoluciones)}</td>
-                        <td className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvQty(visibleTotals.ajustes)}</td>
-                        <td className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvQty(visibleTotals.transferencias)}</td>
-                        <td className={cn('px-3 py-2.5 text-right font-mono text-xs', visibleTotals.existenciaFinal === null && 'italic text-muted-foreground')}>{formatIpvQty(visibleTotals.existenciaFinal)}</td>
-                        <td className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvMoney(visibleTotals.ventasImporteCup)}</td>
-                        <td className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvMoney(visibleTotals.ventasImporteUsd)}</td>
-                        <td className="px-3 py-2.5 text-right font-mono text-xs italic">{formatIpvMoney(visibleTotals.ventasCupHistorico)}</td>
+                        {visibleCols.map((key) => {
+                          if (key === 'existenciaInicial') {
+                            return <td key={key} className={cn('px-3 py-2.5 text-right font-mono text-xs', visibleTotals.existenciaInicial === null && 'italic text-muted-foreground')}>{formatIpvQty(visibleTotals.existenciaInicial)}</td>;
+                          }
+                          if (key === 'existenciaFinal') {
+                            return <td key={key} className={cn('px-3 py-2.5 text-right font-mono text-xs', visibleTotals.existenciaFinal === null && 'italic text-muted-foreground')}>{formatIpvQty(visibleTotals.existenciaFinal)}</td>;
+                          }
+                          if (key === 'ventasImporteCup' || key === 'ventasImporteUsd') {
+                            return <td key={key} className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvMoney(visibleTotals[key])}</td>;
+                          }
+                          return <td key={key} className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvQty(visibleTotals[key])}</td>;
+                        })}
                       </tr>
                     </tfoot>
                   )}
                 </table>
               </div>
 
-              {/* ADNEGOCIO-REPORTING fase 2: criterio monetario de los importes —
-                  tres magnitudes separadas + devoluciones por moneda real. */}
+              {/* ADNEGOCIO-REPORTING fase 2 + misión 2026-11-24: criterio
+                  monetario de los importes + devoluciones por moneda real.
+                  La 3ª magnitud interna (valoración sin evidencia de cobro) ya
+                  NO ocupa columna: si existe, se señala en las incidencias
+                  (SALE_WITHOUT_PAYMENT_EVIDENCE) — nunca como dinero cobrado. */}
               {applied && (
                 <div className="border-t border-border/60 px-4 py-3 text-xs text-muted-foreground space-y-1">
                   <p><span className="font-bold">Criterio monetario:</span> las columnas «Ventas CUP/USD (cobrado)» representan dinero efectivamente cobrado en SU moneda real (misma reconstrucción única del Reporte de Entrega); los totales se calculan por moneda y nunca se suman entre sí. Las devoluciones reducen el importe por la moneda REAL del reembolso (reembolsos −, recuperaciones +, ledger de devoluciones).</p>
-                  <p><span className="font-bold">«Valor histórico sin moneda verificable (valoración CUP)»:</span> valoración contable preservada de ventas sin evidencia de cobro reconstruible — <span className="italic">NO representa un cobro confirmado</span>, no entra en los totales CUP/USD y queda pendiente de verificación.</p>
+                  <p><span className="font-bold">Ventas sin evidencia de cobro reconstruible:</span> si existieran, NO se presentan como dinero cobrado — la fila se mantiene y la valoración pendiente de verificación se señala en las incidencias (SALE_WITHOUT_PAYMENT_EVIDENCE).</p>
                   {(applied.devolucionesNoAtribuibles.cup !== 0 || applied.devolucionesNoAtribuibles.usd !== 0) && (
                     <p><span className="font-bold">Devoluciones no atribuibles por producto:</span> reembolsos/recuperaciones cuyo importe no puede repartirse con evidencia exacta entre los ítems del documento — CUP {formatIpvMoney(applied.devolucionesNoAtribuibles.cup)} · USD {formatIpvMoney(applied.devolucionesNoAtribuibles.usd)} (reportados por separado, sin reparto inventado; ver incidencias).</p>
                   )}

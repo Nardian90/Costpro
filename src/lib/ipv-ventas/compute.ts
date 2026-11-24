@@ -66,9 +66,11 @@
  *   2. Ventas USD cobradas (evidencia de cobro en USD).
  *   3. Valor histórico sin moneda verificable (valoración CUP): ventas sin
  *      evidencia de cobro reconstruible (sin pools, sin filas por ítem, sin
- *      ledger). Se PRESERVA en su propia columna «ventasCupHistorico», NO entra
- *      en los totales CUP/USD y NO se presenta como dinero recibido — no
- *      ocultar ingresos históricos sin clasificarlos en CUP.
+ *      ledger). Se PRESERVA como magnitud interna (ventasCupHistorico) para la
+ *      regla de inclusión; MISIÓN 2026-11-24 fase 3: ya NO se presenta en
+ *      columna — la fila se mantiene y el valor pendiente de verificación se
+ *      señala con la incidencia SALE_WITHOUT_PAYMENT_EVIDENCE (no es dinero
+ *      cobrado; nunca entra en los totales CUP/USD).
  *   Devoluciones (antes: resta de valoración CUP — limitación ya RESUELTA):
  *      el neto comercial por moneda = cobrado − reembolsos + recuperaciones,
  *      cada uno en la moneda REAL de su fila del ledger de devoluciones
@@ -197,7 +199,8 @@ export type IpvIncidenceType =
   | 'PRICE_ANOMALY'    // línea de venta cuya forma legado/unitaria no pudo confirmarse
   | 'SALE_WITHOUT_LEDGER'      // dinero vendido en el período pero el producto nunca tuvo movimiento 'sale' en el ledger
   | 'DEVOLUTION_WITHOUT_LEDGER' // devolución del período pero el producto nunca tuvo movimiento 'return' en el ledger
-  | 'DEVOLUTION_MONEY_NOT_ATTRIBUTABLE'; // reembolso/recuperación del ledger que NO puede atribuirse exactamente a un producto (sin inventar reparto)
+  | 'DEVOLUTION_MONEY_NOT_ATTRIBUTABLE' // reembolso/recuperación del ledger que NO puede atribuirse exactamente a un producto (sin inventar reparto)
+  | 'SALE_WITHOUT_PAYMENT_EVIDENCE'; // valoración de venta SIN evidencia de cobro reconstruible — magnitud interna (fase 3 no la presenta en columna; se señala aquí, no como dinero cobrado)
 
 export interface IpvIncidence {
   productId: string;
@@ -490,9 +493,9 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
   //   2. Ventas USD cobradas = Σ perItem.usd (CORRECCIÓN 2026-11-11).
   //   3. Valor histórico sin moneda de cobro verificable = valoración contable
   //      de líneas SIN evidencia de cobro reconstruible (sin buckets). NO es
-  //      dinero recibido: no entra en los totales CUP/USD y se presenta en su
-  //      propia columna «Valor histórico sin moneda verificable (valoración
-  //      CUP)» (fase 2 — no ocultar ingresos históricos, no clasificarlos en CUP).
+  //      dinero recibido: no entra en los totales CUP/USD; MISIÓN 2026-11-24
+  //      fase 3: ya NO ocupa columna — se señala por incidencias
+  //      (SALE_WITHOUT_PAYMENT_EVIDENCE) para no perder auditabilidad.
   // La detección de PRICE_ANOMALY (forma de price_at_sale_cup) se mantiene.
   const salesCup = new Map<string, number>();
   const salesCupHistorico = new Map<string, number>();
@@ -756,6 +759,19 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
     const ventasCup = round2(grossSalesCup + (devMoneyCup.get(pid) ?? 0));
     const ventasUsd = round2((salesUsd.get(pid) ?? 0) + (devMoneyUsd.get(pid) ?? 0));
     const ventasCupHistorico = round2(salesCupHistorico.get(pid) ?? 0);
+
+    // MISIÓN 2026-11-24 fase 3: la valoración sin evidencia de cobro ya NO se
+    // presenta en columna (aparecía vacía y su título no describía dinero
+    // real). La fila se mantiene (regla de inclusión) y el valor pendiente de
+    // verificación se SEÑALA por incidencias: auditabilidad sin una columna
+    // permanente ni presentar la magnitud como dinero cobrado.
+    if (ventasCupHistorico > 0.005) {
+      rowIncidences.push('SALE_WITHOUT_PAYMENT_EVIDENCE');
+      incidences.push({
+        productId: pid, sku, name: nm, type: 'SALE_WITHOUT_PAYMENT_EVIDENCE',
+        detail: `Valoración de venta de ${fmtMoney(ventasCupHistorico)} CUP sin evidencia de cobro reconstruible (sin pools, sin filas de pago por ítem y sin ledger de pagos): NO se presenta como dinero cobrado en CUP ni en USD (pendiente de verificación documental).`,
+      });
+    }
 
     // Regla de inclusión §6: Ei≠0 Ó movimiento en período Ó Ef≠0 Ó incidencia.
     // Ampliado (auditoría IPV): un producto con importe vendido pero sin

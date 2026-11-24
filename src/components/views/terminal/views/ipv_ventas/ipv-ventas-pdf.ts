@@ -1,5 +1,5 @@
 /**
- * IPV — Ingresos por Ventas: generador PDF (jsPDF + autoTable, A4 horizontal).
+ * IPV — Ingresos por Ventas: generador PDF (jsPDF + autoTable).
  *
  * MISIÓN §10: encabezado con tienda/título/período, fecha de generación,
  * tabla completa con encabezados repetidos en cada página, números alineados
@@ -10,12 +10,35 @@
  * El dataset que recibe es el MISMO que pinta la tabla visible y que exporta
  * el Excel (filas filtradas + totales recalculados sobre ellas) → escenarios
  * K/L: una sola ejecución del informe, tres representaciones.
+ *
+ * MISIÓN 2026-11-24 (fase 3 + fase 5):
+ *  · La columna «Valor histórico (valoración CUP)» SALIÓ del documento
+ *    (aparecía vacía): tabla, fila de TOTALES y nota metodológica sin ella;
+ *    una venta sin evidencia de cobro se señala por INCIDENCIAS
+ *    (SALE_WITHOUT_PAYMENT_EVIDENCE), nunca como dinero cobrado.
+ *  · SELECTOR DE ORIENTACIÓN (payload.orientation):
+ *    - Horizontal (apaisado, A4 landscape): la tabla completa en un solo
+ *      cuerpo — aprovecha el ancho para leer muchas columnas.
+ *    - Vertical (retrato, A4 portrait): la información se divide en BLOQUES
+ *      de columnas apilados (máx. 4 columnas numéricas por bloque),
+ *      repitiendo Código y Descripción en cada bloque para identificar
+ *      correctamente cada producto; cada bloque cierra con su fila TOTALES y
+ *      el último bloque contiene los importes → los totales quedan visibles
+ *      al finalizar el informe. Los anchos de columna se fijan por bloque
+ *      (nada se comprime hasta volverse ilegible) y los encabezados se
+ *      repiten en cada página (autoTable).
+ *  · Respeto de la opción «Ocultar columnas sin valores» (payload.
+ *    hiddenColumns): las columnas ocultas en la vista NO aparecen en el PDF
+ *    (cuerpo NI totales) — misma orientación que la vista (escenario K).
  */
 
 import type { jsPDF } from 'jspdf';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import { totalsFromRows, round2, type IpvRow, type IpvTotals, type IpvIncidence } from '@/lib/ipv-ventas/compute';
 import { formatIpvQty, formatIpvMoney, formatDayLabel } from '@/lib/ipv-ventas/format';
+import { IPV_NUMERIC_TABLE_COLUMNS, type IpvNumericColumnKey } from '@/lib/ipv-ventas/columns';
+
+export type IpvPdfOrientation = 'landscape' | 'portrait';
 
 export interface IpvPdfPayload {
   storeName: string;
@@ -27,6 +50,13 @@ export interface IpvPdfPayload {
   generatedAt: string;
   /** Totales del subconjunto visible (mismas filas que la tabla y el Excel). */
   totalsOverride?: IpvTotals;
+  /** Fase 5: orientación del documento. Por defecto horizontal (apaisado),
+   *  el comportamiento histórico del IPV. */
+  orientation?: IpvPdfOrientation;
+  /** Fase 4B: claves de columnas numéricas OCULTAS por la opción «Ocultar
+   *  columnas sin valores» sobre el subconjunto filtrado — el PDF las omite
+   *  (tabla y totales) para reflejar exactamente la vista. */
+  hiddenColumns?: ReadonlySet<IpvNumericColumnKey>;
 }
 
 const PAGE = { margin: 36 };
@@ -101,14 +131,32 @@ export function splitToWidthVerified(doc: jsPDF, text: string, maxWidth: number)
   return out;
 }
 
+type DocWithTable = jsPDF & { lastAutoTable: { finalY: number } };
+
+/** Columnas numéricas VISIBLES (orden canónico menos las ocultas por la vista). */
+function visibleColumnDefs(hidden: ReadonlySet<IpvNumericColumnKey> | undefined) {
+  return IPV_NUMERIC_TABLE_COLUMNS.filter((c) => !hidden?.has(c.key));
+}
+
+/** Valor formateado de una celda numérica (qty N/D-aware / importe). */
+function cellValue(row: IpvRow, key: IpvNumericColumnKey): string {
+  return formatIpvQty(row[key]);
+}
+function totalValue(totals: IpvTotals, key: IpvNumericColumnKey): string {
+  return formatIpvQty(totals[key]);
+}
+
 /**
- * Construye el documento PDF del IPV (A4 horizontal).
- * El caller decide: preview = doc.output('bloburl'), descarga = doc.save().
+ * Construye el documento PDF del IPV. El caller decide: preview =
+ * doc.output('bloburl'), descarga = doc.save().
  */
 export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> {
-  const doc = await createPDFDocument('l', 'pt', 'a4');
+  const orientation: IpvPdfOrientation = payload.orientation ?? 'landscape';
+  const doc = await createPDFDocument(orientation === 'portrait' ? 'p' : 'l', 'pt', 'a4');
   const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
   const totals = payload.totalsOverride ?? totalsFromRows(payload.rows);
+  const colDefs = visibleColumnDefs(payload.hiddenColumns);
 
   const drawHeader = (compact: boolean): number => {
     const y0 = PAGE.margin;
@@ -126,6 +174,9 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
 
     doc.text('Moneda de los importes: dinero cobrado por moneda real (CUP · USD) — criterio del Reporte de Entrega', pageW - PAGE.margin, y0 + (compact ? 22 : 30), { align: 'right' });
     doc.text(`Productos incluidos: ${payload.rows.length}`, pageW - PAGE.margin, y0 + (compact ? 33 : 42), { align: 'right' });
+    if (orientation === 'portrait') {
+      doc.text('Orientación vertical: bloques de columnas (Código y Descripción repetidos por bloque)', pageW - PAGE.margin, y0 + (compact ? 44 : 54), { align: 'right' });
+    }
 
     doc.setDrawColor(180);
     doc.line(PAGE.margin, y0 + (compact ? 50 : 62), pageW - PAGE.margin, y0 + (compact ? 50 : 62));
@@ -148,87 +199,142 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
   };
   const decorateNewPage = (): void => decoratePageOnce(true);
 
-  const head = [[
-    'Código', 'Descripción', 'Exist.\ninicial', 'Cant.\nvendidas', 'Vales\nsalidas', 'Entradas', 'Devolu-\nciones', 'Ajustes', 'Transf.', 'Exist.\nfinal', 'Ventas CUP\n(cobrado)', 'Ventas USD\n(cobrado)', 'Valor histórico\n(valoración CUP)',
-  ]];
-
   const autoTable = (await import('jspdf-autotable')).default;
 
-  // Énfasis de legibilidad (petición 2026-10-16): las filas CON movimientos
-  // del período se presentan en negrita y ligeramente mayores; la celda
-  // «Ventas (CUP)» con importe ≠ 0 recibe además un fondo cálido para
-  // destacar el dinero vendido. Los valores NO cambian — solo la forma.
-  const body = payload.rows.map((r) => {
+  // Cuerpo base por producto (énfasis de legibilidad 2026-10-16: filas con
+  // movimientos en semibold; Ventas CUP ≠ 0 con fondo cálido. Los valores NO
+  // cambian — solo la forma).
+  const baseRowStyles = (r: IpvRow): { hasMov: boolean; em: Record<string, unknown>; cupEm: Record<string, unknown> } => {
     const hasMov = r.hasPeriodMovements || Math.abs(r.ventasImporteCup) > 0.005 || Math.abs(r.ventasImporteUsd) > 0.005;
     const em = hasMov ? { fontStyle: 'bold' as const, fontSize: 8.2, fillColor: [246, 249, 252] as [number, number, number] } : {};
     const cupEm = hasMov && Math.abs(r.ventasImporteCup) > 0.005
       ? { fontStyle: 'bold' as const, fontSize: 8.4, fillColor: [255, 247, 231] as [number, number, number] }
       : em;
-    return [
-      { content: pdfWinAnsi(r.sku), styles: em },
-      { content: pdfWinAnsi(r.name), styles: hasMov ? { fontStyle: 'bold' as const } : {} },
-      { content: formatIpvQty(r.existenciaInicial), styles: em },
-      { content: formatIpvQty(r.cantidadesVendidas), styles: em },
-      { content: formatIpvQty(r.valesSalidas), styles: em },
-      { content: formatIpvQty(r.entradas), styles: em },
-      { content: formatIpvQty(r.devoluciones), styles: em },
-      { content: formatIpvQty(r.ajustes), styles: em },
-      { content: formatIpvQty(r.transferencias), styles: em },
-      { content: formatIpvQty(r.existenciaFinal), styles: em },
-      { content: formatIpvMoney(r.ventasImporteCup), styles: cupEm },
-      { content: formatIpvMoney(r.ventasImporteUsd), styles: em },
-      { content: formatIpvMoney(r.ventasCupHistorico), styles: { ...em, fontStyle: 'italic' as const } },
-    ];
-  });
+    return { hasMov, em, cupEm };
+  };
 
-  const foot = [[
-    { content: 'TOTALES', colSpan: 2, styles: { halign: 'left' as const, fontStyle: 'bold' as const } },
-    { content: totals.existenciaInicial === null ? 'N/D' : formatIpvQty(totals.existenciaInicial), styles: { fontStyle: 'bold' as const } },
-    { content: formatIpvQty(totals.cantidadesVendidas), styles: { fontStyle: 'bold' as const } },
-    { content: formatIpvQty(totals.valesSalidas), styles: { fontStyle: 'bold' as const } },
-    { content: formatIpvQty(totals.entradas), styles: { fontStyle: 'bold' as const } },
-    { content: formatIpvQty(totals.devoluciones), styles: { fontStyle: 'bold' as const } },
-    { content: formatIpvQty(totals.ajustes), styles: { fontStyle: 'bold' as const } },
-    { content: formatIpvQty(totals.transferencias), styles: { fontStyle: 'bold' as const } },
-    { content: totals.existenciaFinal === null ? 'N/D' : formatIpvQty(totals.existenciaFinal), styles: { fontStyle: 'bold' as const } },
-    { content: formatIpvMoney(totals.ventasImporteCup), styles: { fontStyle: 'bold' as const } },
-    { content: formatIpvMoney(totals.ventasImporteUsd), styles: { fontStyle: 'bold' as const } },
-    { content: formatIpvMoney(totals.ventasCupHistorico), styles: { fontStyle: 'italic' as const } },
-  ]];
+  const tableTheme = {
+    styles: { font: 'helvetica' as const, fontSize: 7.5, cellPadding: 3, lineColor: [210, 210, 210] as [number, number, number], lineWidth: 0.35, textColor: [30, 30, 30] as [number, number, number] },
+    headStyles: { fillColor: [240, 240, 240] as [number, number, number], textColor: [20, 20, 20] as [number, number, number], fontStyle: 'bold' as const, halign: 'center' as const, fontSize: 7.2 },
+    footStyles: { fillColor: [228, 228, 228] as [number, number, number], fontStyle: 'bold' as const },
+  };
 
-  autoTable(doc, {
-    head,
-    body,
-    foot,
-    startY,
-    margin: { left: PAGE.margin, right: PAGE.margin, top: PAGE.margin + 58 },
-    styles: { font: 'helvetica', fontSize: 7.5, cellPadding: 3, lineColor: [210, 210, 210], lineWidth: 0.35, textColor: [30, 30, 30] },
-    headStyles: { fillColor: [240, 240, 240], textColor: [20, 20, 20], fontStyle: 'bold', halign: 'center', fontSize: 7.2 },
-    footStyles: { fillColor: [228, 228, 228], fontStyle: 'bold' },
-    columnStyles: {
-      0: { cellWidth: 40, halign: 'left' },
-      1: { cellWidth: 160, halign: 'left' },
-      2: { cellWidth: 50, halign: 'right' },
-      3: { cellWidth: 50, halign: 'right' },
-      4: { cellWidth: 50, halign: 'right' },
-      5: { cellWidth: 50, halign: 'right' },
-      6: { cellWidth: 50, halign: 'right' },
-      7: { cellWidth: 46, halign: 'right' },
-      8: { cellWidth: 46, halign: 'right' },
-      9: { cellWidth: 50, halign: 'right' },
-      10: { cellWidth: 62, halign: 'right' },
-      11: { cellWidth: 54, halign: 'right' },
-      12: { cellWidth: 62, halign: 'right' },
-    },
-    didDrawPage: () => {
-      if (doc.getNumberOfPages() > 1) decoratePageOnce(true);
-    },
-  });
+  if (colDefs.length === 0) {
+    // Guardia defensiva: el conjunto filtrado no tiene ninguna columna con
+    // valores (solo puede ocurrir con filas íntegramente vacías — la regla de
+    // inclusión §6 normalmente excluye esos productos). Nada que tabular.
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9);
+    doc.setTextColor(90, 90, 90);
+    doc.text('Sin columnas con valores en el conjunto filtrado (con la opción «Ocultar columnas sin valores» activada).', PAGE.margin, startY + 12);
+  } else if (orientation === 'landscape') {
+    // ── HORIZONTAL: la tabla completa en un solo cuerpo (comportamiento
+    //    histórico del IPV, ahora sin la columna retirada y con las columnas
+    //    ocultas de la vista omitidas). ──
+    const head = [['Código', 'Descripción', ...colDefs.map((c) => c.short)]];
+    const body = payload.rows.map((r) => {
+      const { em, cupEm } = baseRowStyles(r);
+      return [
+        { content: pdfWinAnsi(r.sku), styles: em },
+        { content: pdfWinAnsi(r.name), styles: r.hasPeriodMovements || Math.abs(r.ventasImporteCup) > 0.005 || Math.abs(r.ventasImporteUsd) > 0.005 ? { fontStyle: 'bold' as const } : {} },
+        ...colDefs.map((c) => ({
+          content: cellValue(r, c.key),
+          styles: c.key === 'ventasImporteCup' ? cupEm : em,
+        })),
+      ];
+    });
+    const foot = [[
+      { content: 'TOTALES', colSpan: 2, styles: { halign: 'left' as const, fontStyle: 'bold' as const } },
+      ...colDefs.map((c) => ({ content: totalValue(totals, c.key), styles: { fontStyle: 'bold' as const } })),
+    ]];
+
+    autoTable(doc, {
+      head,
+      body,
+      foot,
+      startY,
+      margin: { left: PAGE.margin, right: PAGE.margin, top: PAGE.margin + 58 },
+      ...tableTheme,
+      columnStyles: {
+        0: { cellWidth: 40, halign: 'left' },
+        1: { cellWidth: 160, halign: 'left' },
+        ...Object.fromEntries(colDefs.map((c, i) => [
+          i + 2,
+          { cellWidth: c.kind === 'money' ? 62 : 50, halign: 'right' as const },
+        ])),
+      },
+      didDrawPage: () => {
+        if (doc.getNumberOfPages() > 1) decoratePageOnce(true);
+      },
+    });
+  } else {
+    // ── VERTICAL: bloques de columnas apilados, Código + Descripción
+    //    repetidos por bloque (la identificación del producto nunca se
+    //    pierde), anchos cómodos y fila TOTALES por bloque. El último bloque
+    //    lleva los importes → totales visibles al finalizar el informe. ──
+    const BLOCK = 4; // columnas numéricas por bloque: ancho ≈ 82 pt por columna
+    const blocks: typeof colDefs[] = [];
+    for (let i = 0; i < colDefs.length; i += BLOCK) blocks.push(colDefs.slice(i, i + BLOCK));
+
+    let cursor = startY;
+    for (const block of blocks) {
+      const blockH = 90; // encabezado del bloque + 2 filas: mínimo legible antes de saltar
+      if (cursor + blockH > pageH - PAGE.margin) {
+        doc.addPage();
+        decorateNewPage();
+        cursor = PAGE.margin + 66;
+      }
+      const head = [['Código', 'Descripción', ...block.map((c) => c.short)]];
+      const body = payload.rows.map((r) => {
+        const { em, cupEm } = baseRowStyles(r);
+        return [
+          { content: pdfWinAnsi(r.sku), styles: em },
+          { content: pdfWinAnsi(r.name), styles: r.hasPeriodMovements || Math.abs(r.ventasImporteCup) > 0.005 || Math.abs(r.ventasImporteUsd) > 0.005 ? { fontStyle: 'bold' as const } : {} },
+          ...block.map((c) => ({
+            content: cellValue(r, c.key),
+            styles: c.key === 'ventasImporteCup' ? cupEm : em,
+          })),
+        ];
+      });
+      const foot = [[
+        { content: 'TOTALES', colSpan: 2, styles: { halign: 'left' as const, fontStyle: 'bold' as const } },
+        ...block.map((c) => ({ content: totalValue(totals, c.key), styles: { fontStyle: 'bold' as const } })),
+      ]];
+
+      const usable = pageW - PAGE.margin * 2;
+      const codeW = 36;
+      const nameW = 150;
+      const remaining = usable - codeW - nameW;
+      const moneyCount = block.filter((c) => c.kind === 'money').length;
+      // Los importes piden algo más de ancho que las cantidades.
+      const moneyW = moneyCount > 0 ? Math.min(84, remaining - (block.length - moneyCount) * 70) : 0;
+      const qtyW = moneyCount > 0 ? 70 : remaining / block.length;
+
+      autoTable(doc, {
+        head,
+        body,
+        foot,
+        startY: cursor,
+        margin: { left: PAGE.margin, right: PAGE.margin, top: PAGE.margin + 58 },
+        ...tableTheme,
+        columnStyles: {
+          0: { cellWidth: codeW, halign: 'left' },
+          1: { cellWidth: nameW, halign: 'left' },
+          ...Object.fromEntries(block.map((c, i) => [
+            i + 2,
+            { cellWidth: c.kind === 'money' ? moneyW : qtyW, halign: 'right' as const },
+          ])),
+        },
+        didDrawPage: () => {
+          if (doc.getNumberOfPages() > 1) decoratePageOnce(true);
+        },
+      });
+      cursor = (doc as DocWithTable).lastAutoTable.finalY + 14;
+    }
+  }
 
   // ── Incidencias de conciliación (§5.6: visibles, nunca ocultas) ──────────
-  type DocWithTable = jsPDF & { lastAutoTable: { finalY: number } };
   let cursorY = (doc as DocWithTable).lastAutoTable.finalY + 18;
-  const pageH = doc.internal.pageSize.getHeight();
 
   const ensureSpace = (needed: number): void => {
     if (cursorY + needed > pageH - PAGE.margin) {
@@ -251,6 +357,7 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
     doc.text('Diferencias reportadas tal cual — no ajustadas. N/D = existencia histórica no reconstruible.', PAGE.margin, cursorY);
     cursorY += 8;
 
+    const incPortrait = orientation === 'portrait';
     autoTable(doc, {
       head: [['Código', 'Producto', 'Tipo', 'Calculado', 'Esperado', 'Diferencia', 'Detalle']],
       body: payload.incidences.map((i) => [
@@ -266,15 +373,17 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
       margin: { left: PAGE.margin, right: PAGE.margin, top: PAGE.margin + 58 },
       styles: { fontSize: 6.8, cellPadding: 2.5 },
       headStyles: { fillColor: [250, 240, 225], textColor: [120, 60, 10] },
-      columnStyles: {
-        0: { cellWidth: 42 },
-        1: { cellWidth: 110 },
-        2: { cellWidth: 66 },
-        3: { cellWidth: 46, halign: 'right' },
-        4: { cellWidth: 46, halign: 'right' },
-        5: { cellWidth: 46, halign: 'right' },
-        6: { cellWidth: 190 },
-      },
+      columnStyles: incPortrait
+        ? { 0: { cellWidth: 34 }, 1: { cellWidth: 96 }, 2: { cellWidth: 62 }, 3: { cellWidth: 38, halign: 'right' }, 4: { cellWidth: 38, halign: 'right' }, 5: { cellWidth: 38, halign: 'right' } }
+        : {
+            0: { cellWidth: 42 },
+            1: { cellWidth: 110 },
+            2: { cellWidth: 66 },
+            3: { cellWidth: 46, halign: 'right' },
+            4: { cellWidth: 46, halign: 'right' },
+            5: { cellWidth: 46, halign: 'right' },
+            6: { cellWidth: 190 },
+          },
       didDrawPage: () => {
         if (doc.getNumberOfPages() > 1) decoratePageOnce(true);
       },
@@ -295,7 +404,7 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
   const note = pdfWinAnsi(
     'Conciliación: Existencia final = Existencia inicial + Entradas + Devoluciones - Cantidades vendidas - Vales de salida ± Ajustes ± Transferencias. ' +
       'Cantidades del ledger de movimientos de inventario. Importes: dinero efectivamente cobrado por moneda real (CUP / USD), fuente única del Reporte de Entrega; neto por moneda = cobrado - reembolsos + recuperaciones (ledger de devoluciones, en la moneda real de cada fila). ' +
-      '"Valor histórico (valoración CUP)": ventas sin evidencia de cobro reconstruible - NO es dinero cobrado y NO entra en los totales por moneda. ' +
+      'Ventas sin evidencia de cobro reconstruible NO se presentan como dinero cobrado: se señalan en las incidencias (SALE_WITHOUT_PAYMENT_EVIDENCE). ' +
       'Los productos sin movimientos ni saldos en el período se excluyen.',
   );
   const lines = splitToWidthVerified(doc, note, pageW - PAGE.margin * 2);
