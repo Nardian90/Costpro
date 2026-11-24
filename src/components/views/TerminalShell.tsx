@@ -203,12 +203,6 @@ export default function TerminalShell() {
     setIpvActiveTab,
     sidebarState,
     setSidebarState,
-    // CP-UX-POLISH-002 (2026-11-24): eje FIJO/TEMPORAL — decide si el menú
-    // abierto RESERVA espacio en el layout (pin, Estados A/B) o se SUPERPONE
-    // sin reservar nada (Estado C). Con pin=false el contenido nunca recibe
-    // padding-left: el overlay es puro.
-    sidebarPinned,
-    toggleSidebar: globalToggleSidebar,
     isHelpReadingMode
   } = useUIStore();
   const queryClient = useQueryClient();
@@ -698,28 +692,12 @@ export default function TerminalShell() {
     return <NoStoreGuard>{renderView(currentView)}</NoStoreGuard>;
   };
 
-  const sidebarWidths = {
-    'expanded': 'pl-64 lg:pl-72',
-    'rail': 'pl-20',
-    'closed': 'pl-0'
-  };
-
-  // CP-UX-POLISH-002 (§1 Estados A/B/C): el padding SOLO existe cuando el menú
-  // es FIJO (pin activo). Estado A (pinned expanded) → pl-64/72 empuja; Estado
-  // B (pinned rail) → pl-20 empuje compacto; Estado C (sin pin) → SIN padding:
-  // el menú se superpone al contenido sin reservar espacio (backdrop incluido
-  // más abajo). Móvil: siempre temporal → nunca reserva espacio.
-  const contentPaddingClass = !isMobile && sidebarPinned ? sidebarWidths[sidebarState] : undefined;
-
-  // CP-UX-SINGLE-TOGGLE (2026-11-24): ¿el menú está SUPERPUESTO a la barra superior
-  // (drawer móvil o temporal desktop sin pin)? En ese estado la barra superior
-  // debe quedar POR ENCIMA del panel para que el ÚNICO botón toggle siga
-  // alcanzable y cierre el overlay (patrón ChatGPT). Detalle de apilamiento:
-  // main es flex item con z-10 → crea un CONTEXTO DE APILAMIENTO que encierra
-  // al header (su z-50 nunca vencería al sidebar z-40 hermano). Con overlay
-  // activo, main pasa a z-auto (sin contexto) y el header z-50 compite de
-  // frente: contenido(auto) < backdrop(30) < panel(40) < header(50).
-  const sidebarOverlaysHeader = sidebarState !== 'closed' && (isMobile || !sidebarPinned);
+  // CP-SIDEBAR-RESTORATION-001 (2026-11-24): el menú es un ÍTEM EN FLUJO del
+  // flex-row raíz (Sidebar `relative h-full shrink-0`): su ancho transiciona y
+  // el contenido se desplaza solo. NO hay padding compensatorio (pl-*), ni
+  // backdrop en desktop, ni superposición — los Estados A/B/C y el eje
+  // FIJO/TEMPORAL fueron eliminados. En móvil el drawer sigue siendo temporal.
+  const sidebarIsMobileDrawer = isMobile && sidebarState !== 'closed';
 
   return (
     // FIX-SCROLL-DESKTOP (2026-10): h-full en vez de h-screen/h-dvh. El contenedor
@@ -743,18 +721,14 @@ export default function TerminalShell() {
       )}
 
       <main id="main-content" className={cn(
-        "flex-1 h-full flex flex-col min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden",
-        // CP-UX-SINGLE-TOGGLE: z-auto cuando el header debe flotar sobre el
-        // panel superpuesto (ver comentario arriba); z-10 en el resto de estados.
-        sidebarOverlaysHeader ? "z-auto" : "z-10",
-        contentPaddingClass
+        "flex-1 h-full flex flex-col min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden z-10",
+        // CP-SIDEBAR-RESTORATION-001: sin padding-left compensatorio — el
+        // desplazamiento lo produce el propio ancho del Sidebar en flujo.
       )} role="main">
         {/* En modo lectura de ayuda, ocultamos el Header global para tener pantalla limpia. */}
         {!isHelpReadingMode && (
           <Header
-            sidebarState={sidebarState}
-            toggleSidebar={globalToggleSidebar}
-            sidebarOverlaysHeader={sidebarOverlaysHeader}
+            onOpenMobileSidebar={() => setSidebarState('expanded')}
             currentView={currentView}
             navigationItems={nav.navigationItems}
             onViewChange={handleViewChange}
@@ -824,19 +798,13 @@ export default function TerminalShell() {
         </div>
       </main>
 
-      {/* Backdrop del menú lateral cuando se comporta como PANEL TEMPORAL.
-          CP-UX-NAVIGATION-POS-REPAIR-001: móvil (drawer sobre el contenido).
-          CP-UX-POLISH-002 (§1 Estado C): desktop sin pin — el overlay no reserva
-          espacio, así que la interacción exterior (clic) cierra el panel.
-          Con pin activo en desktop NO hay backdrop: el menú fijo convive con el
-          contenido (hover-expand del rail tampoco debe taparlo). */}
+      {/* Backdrop del drawer móvil (§7): panel temporal sobre el contenido.
+          CP-SIDEBAR-RESTORATION-001: en desktop NO hay backdrop — el menú es
+          parte del layout y jamás se superpone ni se cierra por clic externo. */}
       <AnimatePresence>
-        {sidebarState !== 'closed' && (isMobile || !sidebarPinned) && (
+        {sidebarIsMobileDrawer && (
           <motion.div
-            className={cn(
-              "fixed inset-0 backdrop-blur-[2px] z-30",
-              isMobile ? "bg-black/50" : "bg-black/30"
-            )}
+            className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-30"
             aria-hidden="true" /* FIX-ACC-009 */
             onClick={() => setSidebarState('closed')}
             initial={{ opacity: 0 }}

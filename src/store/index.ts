@@ -137,17 +137,14 @@ export interface OrganizationDetailState {
 interface UIState {
   currentView: ViewType;
   previousView: ViewType | null;
+  // CP-SIDEBAR-RESTORATION-001 (2026-11-24): DOS ESTADOS en desktop —
+  // 'expanded' (ancho completo, ocupa espacio real) y 'rail' (barra compacta de
+  // iconos). El eje FIJO/TEMPORAL (sidebarPinned) y el toggle de la barra
+  // superior quedaron ELIMINADOS: nunca hay overlay ni menú oculto en desktop.
+  // 'closed' SOLO existe como drawer temporal en móvil (<768px). Persistido en
+  // 'costpro-ui-storage' para conservar la preferencia entre navegaciones y
+  // sesiones; en desktop un 'closed' persistido se SANEa a 'expanded'.
   sidebarState: SidebarState;
-  // CP-UX-POLISH-002 (2026-11-24): segunda dimensión del menú lateral — FIJO vs
-  // TEMPORAL (Estado C overlay). No confundir con sidebarState (expandido/
-  // contraído/cerrado): el pin decide si el menú RESERVA ESPACIO en el layout
-  // (empuja el contenido) o se SUPERPONE a él sin reservar nada.
-  //   · pinned=true  → Estado A (expanded: fijo expandido) / Estado B (rail: fijo contraído).
-  //   · pinned=false → Estado C: el menú abierto es un overlay temporal (desktop);
-  //     en móvil el pin se IGNORA (el drawer siempre es temporal).
-  // Persistida en 'costpro-ui-storage' para conservar la preferencia entre
-  // navegaciones y sesiones. Default true = comportamiento histórico.
-  sidebarPinned: boolean;
   isCalculatorOpen: boolean;
   themePreference: 'light' | 'dark' | 'auto';
   connectivity: '3g' | '4g';
@@ -192,10 +189,9 @@ interface UIState {
   setOrganizationDetailTab: (tab: OrganizationDetailTab) => void;
   setCurrentView: (view: ViewType) => void;
   setSidebarState: (state: SidebarState) => void;
-  // CP-UX-POLISH-002: cambia el eje FIJO/TEMPORAL del menú (comportamiento de
-  // layout real, no solo apariencia). El control pin del encabezado del menú
-  // la usa; la preferencia queda persistida.
-  setSidebarPinned: (pinned: boolean) => void;
+  // CP-SIDEBAR-RESTORATION-001: alternancia del ÚNICO eje del menú. Desktop:
+  // expanded ↔ rail (los DOS estados). Móvil: closed ↔ expanded (drawer).
+  // Usado por Ctrl+B; el control visible único vive en el encabezado del menú.
   toggleSidebar: () => void;
   setIsCalculatorOpen: (open: boolean) => void;
   setThemePreference: (pref: 'light' | 'dark' | 'auto') => void;
@@ -225,9 +221,8 @@ export const useUIStore = create<UIState>()(
       currentView: 'dashboard',
       previousView: null,
       sidebarState: 'expanded',
-      // CP-UX-POLISH-002: el menú nace FIJO (comportamiento histórico) — el
-      // usuario puede desfijarlo (Estado C temporal) desde el pin del encabezado.
-      sidebarPinned: true,
+      // CP-SIDEBAR-RESTORATION-001: el eje FIJO/TEMPORAL (sidebarPinned) fue
+      // ELIMINADO — el menú de desktop es SIEMPRE parte del layout (flex).
       isCalculatorOpen: false,
       themePreference: 'light',
       connectivity: '4g',
@@ -276,18 +271,16 @@ export const useUIStore = create<UIState>()(
         };
       }),
       setSidebarState: (sidebarState: SidebarState) => set({ sidebarState }),
-      // CP-UX-POLISH-002: fijar/desfijar el menú. Es un cambio de COMPORTAMIENTO
-      // de layout (reserva de espacio vs superposición), no de apariencia.
-      setSidebarPinned: (sidebarPinned: boolean) => set({ sidebarPinned }),
-      // CP-UX-POLISH-002: el toggle global (hamburger del Header / Ctrl+B) pasa a
-      // ser ABRIR/CERRAR puro (patrón ChatGPT/Z.ai). Contraer a barra compacta
-      // (expanded↔rail) vive EXCLUSIVAMENTE en el control interno del menú
-      // (PanelLeftClose/Open) — así el ciclo expandido→rail→cerrado ya no puede
-      // cerrar el menú por sorpresa desde el hamburger (bug histórico §B1-d).
-      // Con el menú temporal (Estado C), abrir muestra el overlay expandido.
-      toggleSidebar: () => set((state: UIState) => ({
-        sidebarState: state.sidebarState === 'closed' ? 'expanded' : 'closed',
-      })),
+      // CP-SIDEBAR-RESTORATION-001: un solo eje, dos estados. En desktop alterna
+      // expanded ↔ rail (el menú JAMÁS se cierra). En móvil mantiene el patrón
+      // drawer: closed ↔ expanded. No hay temporizadores ni hover involucrado.
+      toggleSidebar: () => set((state: UIState) => {
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+        if (isMobile) {
+          return { sidebarState: state.sidebarState === 'closed' ? 'expanded' as const : 'closed' as const };
+        }
+        return { sidebarState: state.sidebarState === 'rail' ? 'expanded' as const : 'rail' as const };
+      }),
       setIsCalculatorOpen: (open: boolean) => set({ isCalculatorOpen: open }),
       setThemePreference: (themePreference: 'light' | 'dark' | 'auto') => set({ themePreference }),
       setConnectivity: (connectivity: '3g' | '4g') => set({ connectivity }),
@@ -326,7 +319,10 @@ export const useUIStore = create<UIState>()(
       // sin exigir al usuario limpiar su storage. Un objeto jamás vuelve a
       // entrar al store como currentView: se diagnostica y aterriza en Home.
       merge: (persistedState: unknown, currentState: UIState) => {
-        const p = (persistedState ?? {}) as Partial<UIState>;
+        const pRaw = (persistedState ?? {}) as Record<string, unknown>;
+        // CP-SIDEBAR-RESTORATION-001: el eje sidebarPinned quedó eliminado — una
+        // clave heredada en localStorage JAMÁS vuelve al estado.
+        const { sidebarPinned: _legacySidebarPinned, ...p } = pRaw as Partial<UIState> & Record<string, unknown>;
         // Ausencia ≠ violación: una clave que no está en el estado persistido
         // NO se diagnostica (es un campo nuevo); solo se valida si existe.
         const healed: Partial<UIState> = {};
@@ -348,21 +344,22 @@ export const useUIStore = create<UIState>()(
           // es string; defaults documentados del estado inicial).
           ipvActiveTab: typeof p.ipvActiveTab === 'string' ? p.ipvActiveTab : currentState.ipvActiveTab,
           activeCostSection: typeof p.activeCostSection === 'string' ? p.activeCostSection : currentState.activeCostSection,
-          // F1 (Drawer/deep-link): la rehidratación del persist NO debe restaurar
-          // el drawer ABIERTO en móvil — un deep-link o recarga en <768px debe
-          // aterrizar en la vista operativa sin overlay bloqueante. La decisión
-          // de navegación continua (no cerrar al navegar en móvil) queda intacta:
-          // esto solo normaliza el estado restaurado al arrancar.
+          // CP-SIDEBAR-RESTORATION-001: saneamiento del ÚNICO eje (expanded/rail
+          // en desktop; drawer closed en móvil).
+          //  · Móvil: la rehidratación NUNCA restaura el drawer ABIERTO — un
+          //    deep-link o recarga en <768px aterriza en la vista operativa sin
+          //    overlay bloqueante.
+          //  · Desktop: DOS ESTADOS — un 'closed' persistido por builds antiguas
+          //    se SANEa a 'expanded' (el menú debe continuar visible y el
+          //    contenido se desplaza con él; nunca un hueco vacío).
           sidebarState: (
             typeof window !== 'undefined' &&
-            window.innerWidth < 768 &&
-            typeof p.sidebarState === 'string' &&
-            p.sidebarState !== 'closed'
-          ) ? 'closed' : (p.sidebarState ?? currentState.sidebarState),
-          // CP-UX-POLISH-002: la preferencia de fijado se restaura SOLO si es un
-          // booleano real; si falta (persist viejo) o está corrupta, el default
-          // del estado (true = fijo) mantiene el comportamiento histórico.
-          sidebarPinned: typeof p.sidebarPinned === 'boolean' ? p.sidebarPinned : currentState.sidebarPinned,
+            window.innerWidth < 768
+          )
+            ? 'closed'
+            : (p.sidebarState === 'closed' || p.sidebarState === 'rail' || p.sidebarState === 'expanded')
+              ? p.sidebarState
+              : currentState.sidebarState,
         };
       },
       migrate: (persistedState: any, version: number) => {

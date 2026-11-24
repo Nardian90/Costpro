@@ -12,8 +12,9 @@ import {
   PinOff,
   User,
   Settings,
-  // CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): control de contraer/expandir
-  // integrado en el ENCABEZADO del propio menú (patrón ChatGPT/Z.ai).
+  // CP-SIDEBAR-RESTORATION-001 (2026-11-24): UN ÚNICO control de contraer/
+  // expandir, integrado en el ENCABEZADO del propio menú y accesible también
+  // en la barra compacta. El icono cambia de orientación según el estado.
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -29,7 +30,6 @@ import { cn } from '@/lib/utils';
 import { AdnMonograma } from '@/components/brand/AdnBrand';
 import OnlineStatusDot from '@/components/shared/OnlineStatusDot';
 import { useIsMobile } from '@/hooks/ui/useMobile';
-import { useSidebarHoverExpand } from '@/hooks/ui/useSidebarHoverExpand';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SidebarProps {
@@ -48,11 +48,6 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
     currentView,
     sidebarState,
     setSidebarState,
-    // CP-UX-POLISH-002 (2026-11-24): eje FIJO/TEMPORAL del menú. El pin decide
-    // si el menú reservA espacio (Estados A/B) o se superpone temporalmente
-    // (Estado C) — el comportamiento de layout vive en TerminalShell.
-    sidebarPinned,
-    setSidebarPinned,
     isCalculatorOpen,
     setIsCalculatorOpen,
     activeCostSection,
@@ -63,20 +58,17 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
   } = useUIStore();
   const isMobile = useIsMobile();
 
-  // ── Hover expansion (rail → expandido temporal) ──
-  // En desktop con puntero fino, un sidebar en 'rail' se expande al pasar el
-  // puntero sobre él (hit area = TODO el aside, no un botón pequeño). El ancho
-  // crece como overlay (TerminalShell mantiene pl-20) → cero layout shift.
-  // El hover NUNCA muta sidebarState (persistencia intacta): el pin explícito
-  // sigue existiendo vía hamburguesa / Ctrl+B / clic en icono del rail.
-  const { hoverExpanded, hoverProps } = useSidebarHoverExpand({ collapsed: sidebarState === 'rail' });
-  // Estado efectivo de renderizado: rail + hover → se pinta como expandido.
-  const displayState: SidebarState = hoverExpanded && sidebarState === 'rail' ? 'expanded' : sidebarState;
-
-  // CP-UX-POLISH-002: ¿el menú se comporta como TEMPORAL (Estado C)?
-  // Desktop sin pin → overlay; móvil SIEMPRE es panel temporal (el pin no se
-  // aplica en pantalla táctil: no debe reducir el área de trabajo).
-  const isTemporary = isMobile || !sidebarPinned;
+  // ── CP-SIDEBAR-RESTORATION-001: DOS ESTADOS, CERO EXPANSIÓN AUTOMÁTICA ──
+  // Desktop tiene EXACTAMENTE dos estados: 'expanded' (ancho completo, ocupa
+  // espacio real en el layout) y 'rail' (barra compacta de iconos). El menú
+  // JAMÁS se cierra ni se superpone en desktop: no existen pin, overlay,
+  // backdrop, listeners de hover ni temporizadores — el ancho solo cambia por
+  // clic en el ÚNICO control del encabezado del menú. 'closed' es SOLO el
+  // drawer temporal de móvil (§7). (La defensa expanded-por-defecto cubre un
+  // 'closed' heredado de builds anteriores en desktop.)
+  const displayState: SidebarState = isMobile
+    ? (sidebarState === 'closed' ? 'closed' : 'expanded')
+    : (sidebarState === 'rail' ? 'rail' : 'expanded');
 
   const [sidebarSearch, setSidebarSearch] = useState('');
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
@@ -131,22 +123,17 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
     // en móvil. El efecto de auto-focus al montar (más abajo) llamaba a esta
     // función en cada carga y reabría el drawer + overlay sobre la vista operativa
     // tras un deep-link o recarga — el "focus-mode persistente" de Discovery.
-    // En móvil solo se fija el módulo enfocado (coherencia visual); el drawer
-    // se abre/cierra manualmente (hamburguesa, backdrop, X). Desktop intacto.
-    // CP-UX-POLISH-002: tampoco debe reabrir un menú CERRADO en desktop (bug
-    // B1-f: con sidebarState='closed' el auto-focus de montaje lo reabría solo
-    // tras cada recarga). El módulo se enfoca igual; el menú sigue cerrado y
-    // reaparece con el focus aplicado cuando el usuario lo abra.
-    if (!isMobile && useUIStore.getState().sidebarState !== 'closed') {
-      setSidebarState('expanded');
-    }
+    // CP-SIDEBAR-RESTORATION-001: el foco de módulo JAMÁS cambia el ancho del
+    // menú (antes forzaba 'expanded' y reabría/reexpandía paneles). La
+    // expansión es EXCLUSIVA del botón único del encabezado; en rail el icono
+    // queda resaltado con su indicador de sección activa.
     setFocusModuleId(moduleId);
     // FIX: Do NOT auto-expand children — let the user expand manually
     setExpandedModules([]);
     // FIX (2026-07-22): NO cerrar el sidebar al navegar en móvil.
     // El usuario quiere navegación continua — el sidebar se cierra solo
     // al hacer clic en el backdrop (overlay) o en el botón X.
-  }, [setSidebarState, isMobile]);
+  }, []);
 
   // ── Focus mode: exit ──
   const exitFocusMode = useCallback(() => {
@@ -192,35 +179,37 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
   // ── Click on a nav item (leaf) ──
   const handleNavClick = useCallback((view: ViewType) => {
     onViewChange(view);
-    // CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): navegación jerárquica en
-    // móvil. La decisión previa (2026-07-22, "no cerrar nunca al navegar")
-    // dejaba el drawer abierto tras elegir una vista concreta — p.ej.
-    // Operación → Ventas cerraba la vista pero el menú seguía tapando el
-    // contenido. Regla vigente:
+    // CP-SIDEBAR-RESTORATION-001 (§7): la regla de cierre por navegación es
+    // EXCLUSIVA del drawer móvil — un panel de paso, no una columna:
     //   · Clic en SECCIÓN raíz (focus mode) → el drawer PERMANECE abierto para
     //     mostrar sus opciones secundarias.
     //   · Clic en una HOJA funcional (Ventas, Stock, …) → el drawer SE CIERRA
     //     y la vista queda visible.
     //   · Expandir/contraer una categoría (toggleSubmenu) NO navega y NO cierra.
-    // CP-UX-POLISH-002 (§1 Estado C): el menú TEMPORAL (desktop sin pin o
-    // móvil) también se cierra al seleccionar una vista funcional — es un panel
-    // de paso, no una columna permanente. Con pin activo, el desktop no cierra
-    // (el menú es fijo y permanece al navegar).
-    if (isTemporary) {
+    // En desktop el menú tiene DOS estados y SIEMPRE permanece visible al
+    // navegar (jamás se cierra ni se superpone).
+    if (isMobile) {
       setSidebarState('closed');
     }
-  }, [onViewChange, isTemporary, setSidebarState]);
+  }, [onViewChange, isMobile, setSidebarState]);
 
-  // ── In rail mode, expand sidebar on module click ──
+  // ── Rail: clic en icono de módulo raíz ──
+  // CP-SIDEBAR-RESTORATION-001 (§4): en la barra compacta el clic en un icono
+  // NAVEGA — JAMÁS expande el menú. La única expansión posible es el botón
+  // único del encabezado (PanelLeftOpen). El icono queda resaltado (indicador
+  // de sección activa) y el tooltip discreto muestra la etiqueta sin alterar
+  // el ancho ni el estado.
   const handleRailModuleClick = useCallback((mod: NavModule) => {
-    setSidebarState('expanded');
-    enterFocusMode(mod.id);
-    // F3: Navegar a vista por defecto del módulo también en rail mode.
     const defaultView = MODULE_DEFAULT_VIEW[mod.id];
     if (defaultView) {
       onViewChange(defaultView);
+    } else {
+      // Módulo sin vista por defecto: queda enfocado para cuando el usuario
+      // expanda con el botón único (jerarquía conservada, sin cambio de ancho).
+      setFocusModuleId(mod.id);
+      setExpandedModules([]);
     }
-  }, [setSidebarState, enterFocusMode, onViewChange]);
+  }, [onViewChange]);
 
   // ── Render the fixed HOME item (GATE 1 §1: Inicio → dashboard) ──
   // Primer ítem del nav, fuera de secciones, todos los roles. En rail mode
@@ -507,24 +496,25 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
     }
   }, []); // Only on mount
 
-  // El ancho sigue al estado de renderizado: rail + hover → ancho expandido
-  // (overlay flotante sobre el contenido; TerminalShell no cambia su padding).
-  const sidebarWidthClass = useMemo(() => {
-    switch (displayState) {
-      case 'expanded': return "w-64 lg:w-72 translate-x-0";
-      case 'rail': return "w-20 translate-x-0";
-      case 'closed': return "w-0 -translate-x-full border-r-0";
-    }
-  }, [displayState]);
+  // ── CP-SIDEBAR-RESTORATION-001 (§5): el menú es un ÍTEM EN FLUJO ──
+  // Desktop: `relative h-full shrink-0` dentro del flex-row del shell — su
+  // ancho transiciona y el contenido principal se desplaza suavemente, sin
+  // posición fixed, sin padding compensatorio y sin superposición. Móvil:
+  // drawer temporal (fixed + backdrop gestionado por el shell).
+  const asidePositionClass = isMobile
+    ? 'fixed inset-y-0 left-0 z-40'
+    : 'relative h-full shrink-0 z-10';
+  const asideWidthClass = displayState === 'expanded'
+    ? 'w-64 lg:w-72'
+    : displayState === 'rail'
+      ? 'w-20'
+      : 'w-0 -translate-x-full border-r-0'; // solo alcanzable en móvil (drawer cerrado)
 
-  // CP-UX-POLISH-002 (§1 Estado C): interacción exterior por teclado. El menú
-  // TEMPORAL se cierra con Esc (móvil y desktop sin pin). El guard evita robar
-  // el Esc de un MODAL abierto: solo ceden si hay un diálogo realmente modal
-  // (Radix usa data-state="open" + aria-modal="true"). Elementos con
-  // role="dialog" no modales (tarjeta del chat en Inicio, banner de cookies,
-  // sheets anclados) NO bloquean el Esc del panel.
+  // CP-SIDEBAR-RESTORATION-001 (§7): Esc cierra SOLO el drawer móvil. En
+  // desktop no hay panel temporal que cerrar (dos estados, siempre visible),
+  // así que el listener ya no se registra fuera de móvil.
   useEffect(() => {
-    if (sidebarState === 'closed' || !isTemporary) return;
+    if (!isMobile || sidebarState === 'closed') return;
     const handler = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (document.querySelector('[role="dialog"][data-state="open"], [role="dialog"][aria-modal="true"]')) return;
@@ -532,11 +522,11 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [sidebarState, isTemporary, setSidebarState]);
+  }, [isMobile, sidebarState, setSidebarState]);
 
   // Focus first interactive element when sidebar opens on mobile
   useEffect(() => {
-    if (sidebarState === 'expanded' && isMobile) {
+    if (isMobile && displayState === 'expanded') {
       const timer = setTimeout(() => {
         const sidebar = document.querySelector('[data-sidebar]');
         if (sidebar) {
@@ -546,28 +536,25 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [sidebarState, isMobile]);
+  }, [displayState, isMobile]);
 
   return (
     <aside
       role="navigation"
       aria-label="Barra lateral de navegación"
       data-sidebar
-      {...hoverProps}
       className={cn(
-        "fixed inset-y-0 left-0 z-40 bg-sidebar transition-all duration-300 ease-in-out border-r border-sidebar-border shadow-2xl overflow-hidden enhanced-sidebar-edge",
-        sidebarWidthClass
+        "bg-sidebar transition-all duration-300 ease-in-out overflow-hidden enhanced-sidebar-edge",
+        asidePositionClass,
+        asideWidthClass,
+        displayState === 'closed' ? "border-r-0" : "border-r border-sidebar-border shadow-2xl"
       )}
     >
       <div className={cn(
-        "relative bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden transition-all duration-300",
-        displayState === 'expanded' ? "w-64 lg:w-72" : displayState === 'rail' ? "w-20" : "w-0",
-        // CP-UX-SINGLE-TOGGLE (2026-11-24): cuando el menú es un PANEL SUPERPUESTO
-        // (drawer móvil o temporal desktop), la barra superior se eleva por encima
-        // (z-50) y hospeda el toggle único de mostrar/ocultar. Este padding
-        // descuenta la altura de esa barra (~3.75rem + safe-area) para que el
-        // encabezado del panel (logo/pin) no quede tapado.
-        isTemporary && displayState !== 'closed' && "pt-[calc(3.75rem_+_env(safe-area-inset-top))]"
+        "relative bg-sidebar/90 backdrop-blur-2xl h-full w-full flex flex-col overflow-hidden"
+        // CP-SIDEBAR-RESTORATION-001: el ANCHO lo gobierna el aside (única
+        // fuente de verdad); el contenido se recorta durante la transición
+        // (overflow-hidden). Sin anchos duplicados ni padding de overlay.
       )}>
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-[2px] z-50 overflow-hidden">
@@ -581,8 +568,8 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
           <div
             className={cn(
               "px-4 pt-4 pb-2 flex items-center justify-between",
-              // CP-UX-NAVIGATION-POS-REPAIR-001: en rail conviven el isotipo y el
-              // control de expandir (ambos de 32px) — gap compacto centrado.
+              // CP-SIDEBAR-RESTORATION-001: en rail conviven el isotipo y el
+              // ÚNICO control (ambos de 32px) — gap compacto centrado.
               displayState === 'rail' && "justify-center gap-1.5 px-2"
             )}
           >
@@ -594,9 +581,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
                 type="button"
                 onClick={() => {
                   setCurrentView('dashboard');
-                  // CP-UX-POLISH-002: el logo es navegación funcional — el menú
-                  // TEMPORAL se cierra tras navegar a Inicio (coherente con las hojas).
-                  if (isTemporary) setSidebarState('closed');
+                  // Navegar a Inicio es navegación funcional → el drawer móvil
+                  // se cierra. En desktop el menú SIEMPRE permanece.
+                  if (isMobile) setSidebarState('closed');
                 }}
                 className="text-foreground font-black text-lg tracking-tight leading-none hover:opacity-80 active:scale-95 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded px-1 -mx-1"
                 aria-label="ADNegocio — Ir a Inicio"
@@ -617,68 +604,43 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
               </button>
             )}
 
-            {/* CP-UX-SINGLE-TOGGLE (2026-11-24): el cierre del panel vive en el
-                ÚNICO botón toggle de la barra superior (Header), que se eleva
-                sobre este panel cuando es superpuesto (drawer móvil / temporal).
-                Aquí NO hay X de cierre — el eje visibilidad (closed↔visible) es
-                exclusivo de ese botón y de Ctrl+B/backdrop/Esc/auto-cierre.
-
-                Control interno del encabezado (AJUSTE DE ANCHO, no visibilidad):
-                  · Rail → PanelLeftOpen «Expandir menú lateral» (vuelve a expanded).
-                  · Expanded fijo (pin) → Pin + PanelLeftClose «Contraer menú lateral»
-                    (baja a rail, JAMÁS closed — §1.1).
-                  · Expanded temporal (sin pin) → PinOff; fijarlo devuelve al
-                    Estado A. El cierre lo hace el toggle de la barra, el
-                    backdrop o Esc.
-                Móvil: sin controles aquí — drawer SIEMPRE temporal, sin pin ni
-                rail (el toggle único de la barra abre y cierra). */}
-            {isMobile ? null : displayState === 'rail' ? (
+            {/* CP-SIDEBAR-RESTORATION-001 (§3): UN ÚNICO CONTROL, integrado en
+                el encabezado del menú y SIGUE accesible en la barra compacta.
+                · Desktop expandido → PanelLeftClose «Contraer menú lateral».
+                · Desktop rail      → PanelLeftOpen «Expandir menú lateral».
+                · Móvil (drawer)    → PanelLeftClose «Cerrar menú» (§7).
+                El icono cambia de orientación según el estado y el tooltip
+                indica la acción siguiente. NO existen botones de fijar/
+                desfijar, mostrar/ocultar ni controles duplicados. */}
+            {displayState !== 'closed' && (
               <button
                 type="button"
-                onClick={() => setSidebarState('expanded')}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                aria-label="Expandir menú lateral"
-                aria-pressed={false}
-                title="Expandir menú"
+                onClick={() => {
+                  if (isMobile) {
+                    setSidebarState('closed');
+                  } else {
+                    setSidebarState(displayState === 'rail' ? 'expanded' : 'rail');
+                  }
+                }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                aria-label={isMobile
+                  ? 'Cerrar menú'
+                  : displayState === 'rail'
+                    ? 'Expandir menú lateral'
+                    : 'Contraer menú lateral'}
+                aria-expanded={isMobile ? undefined : displayState === 'expanded'}
+                title={isMobile
+                  ? 'Cerrar menú'
+                  : displayState === 'rail'
+                    ? 'Expandir menú'
+                    : 'Contraer menú'}
               >
-                <PanelLeftOpen className="w-4 h-4" />
+                {isMobile || displayState === 'expanded' ? (
+                  <PanelLeftClose className="w-4 h-4" />
+                ) : (
+                  <PanelLeftOpen className="w-4 h-4" />
+                )}
               </button>
-            ) : (
-              <div className="flex items-center gap-1">
-                {/* Control de fijación — el pin cambia el COMPORTAMIENTO del
-                    layout (reserva de espacio vs superposición), no solo su
-                    apariencia (TerminalShell lee sidebarPinned). */}
-                <button
-                  type="button"
-                  onClick={() => setSidebarPinned(!sidebarPinned)}
-                  className={cn(
-                    "p-2 rounded-lg transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50 border",
-                    sidebarPinned
-                      ? "bg-primary/10 text-primary border-primary/30 shadow-sm"
-                      : "text-muted-foreground hover:text-foreground hover:bg-primary/10 border-transparent",
-                  )}
-                  aria-label={sidebarPinned ? 'Desfijar menú lateral (hacer temporal)' : 'Fijar menú lateral'}
-                  aria-pressed={sidebarPinned}
-                  title={sidebarPinned
-                    ? 'Menú fijado — clic para hacerlo temporal (overlay)'
-                    : 'Menú temporal — clic para fijarlo al layout'}
-                >
-                  {sidebarPinned ? <Pin className="w-4 h-4" /> : <PinOff className="w-4 h-4" />}
-                </button>
-                {sidebarPinned ? (
-                  // Estado A/B fijo: contraer/expandir la columna (jamás closed).
-                  <button
-                    type="button"
-                    onClick={() => setSidebarState('rail')}
-                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                    aria-label="Contraer menú lateral"
-                    aria-pressed={false}
-                    title="Contraer a barra compacta"
-                  >
-                    <PanelLeftClose className="w-4 h-4" />
-                  </button>
-                ) : null}
-              </div>
             )}
           </div>
 
@@ -731,11 +693,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
                       exitFocusMode();
                       setCurrentView('dashboard');
                       onViewChange('dashboard');
-                      // CP-UX-NAVIGATION-POS-REPAIR-001: navegar a Inicio es
-                      // navegación funcional concreta → cerrar drawer en móvil.
-                      // CP-UX-POLISH-002: el menú TEMPORAL (Estado C) también
-                      // se cierra al navegar a Inicio desde el breadcrumb.
-                      if (isTemporary) setSidebarState('closed');
+                      // Navegar a Inicio es navegación funcional concreta →
+                      // cerrar drawer en móvil. En desktop el menú permanece.
+                      if (isMobile) setSidebarState('closed');
                     }}
                     className="flex items-center gap-1.5 text-muted-foreground/70 hover:text-primary transition-colors group outline-none"
                     aria-label="Volver al inicio"
@@ -848,10 +808,9 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
             <button
               onClick={() => {
                 onViewChange('settings');
-                // CP-UX-NAVIGATION-POS-REPAIR-001: Mi Perfil/Ajustes navegan a una
-                // vista funcional → cerrar el drawer en móvil (coherencia con las hojas).
-                // CP-UX-POLISH-002: igual para el menú TEMPORAL (Estado C).
-                if (isTemporary) setSidebarState('closed');
+                // Mi Perfil/Ajustes navegan a una vista funcional → cerrar el
+                // drawer en móvil. En desktop el menú permanece (dos estados).
+                if (isMobile) setSidebarState('closed');
               }}
               aria-label="Mi perfil"
               className={cn(
@@ -866,8 +825,8 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarP
             <button
               onClick={() => {
                 onViewChange('settings');
-                // CP-UX-POLISH-002: vista funcional → el menú temporal se cierra.
-                if (isTemporary) setSidebarState('closed');
+                // Vista funcional → el drawer móvil se cierra.
+                if (isMobile) setSidebarState('closed');
               }}
               aria-label="Ajustes"
               title="Ajustes"

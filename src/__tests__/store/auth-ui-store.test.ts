@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { useAuthStore, useUIStore } from '@/store';
 
 describe('useAuthStore', () => {
@@ -87,6 +87,46 @@ describe('useUIStore', () => {
   it('setSidebarState updates state', () => {
     useUIStore.getState().setSidebarState('rail');
     expect(useUIStore.getState().sidebarState).toBe('rail');
+  });
+
+  // CP-SIDEBAR-RESTORATION-001: DOS ESTADOS en desktop — toggleSidebar alterna
+  // expanded ↔ rail y JAMÁS cierra el menú. En móvil mantiene el drawer.
+  describe('toggleSidebar (CP-SIDEBAR-RESTORATION-001)', () => {
+    const setInnerWidth = (w: number) => {
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: w });
+    };
+
+    afterEach(() => setInnerWidth(1024));
+
+    it('desktop expanded → rail (y jamás closed)', () => {
+      setInnerWidth(1366);
+      useUIStore.setState({ sidebarState: 'expanded' });
+      useUIStore.getState().toggleSidebar();
+      expect(useUIStore.getState().sidebarState).toBe('rail');
+    });
+
+    it('desktop rail → expanded (vuelta al ESTADO A)', () => {
+      setInnerWidth(1366);
+      useUIStore.setState({ sidebarState: 'rail' });
+      useUIStore.getState().toggleSidebar();
+      expect(useUIStore.getState().sidebarState).toBe('expanded');
+    });
+
+    it('desktop closed heredado → expanded (nunca permanece cerrado)', () => {
+      setInnerWidth(1366);
+      useUIStore.setState({ sidebarState: 'closed' });
+      useUIStore.getState().toggleSidebar();
+      expect(useUIStore.getState().sidebarState).toBe('rail');
+    });
+
+    it('móvil closed → expanded (abre drawer) y expanded → closed', () => {
+      setInnerWidth(390);
+      useUIStore.setState({ sidebarState: 'closed' });
+      useUIStore.getState().toggleSidebar();
+      expect(useUIStore.getState().sidebarState).toBe('expanded');
+      useUIStore.getState().toggleSidebar();
+      expect(useUIStore.getState().sidebarState).toBe('closed');
+    });
   });
 
   it('setIsCalculatorOpen toggles calculator', () => {

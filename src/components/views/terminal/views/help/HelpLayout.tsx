@@ -2,7 +2,6 @@
 
 import React, { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
-import { useSidebarHoverExpand } from '@/hooks/ui/useSidebarHoverExpand';
 import {
   BookOpen,
   LifeBuoy,
@@ -41,19 +40,12 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
   const helpLibraryCollapsed = useUIStore(s => s.helpLibraryCollapsed);
   const setHelpLibraryCollapsed = useUIStore(s => s.setHelpLibraryCollapsed);
 
-  // ── Hover expansion (rail → expandida temporal) ──
-  // En desktop con puntero fino, la Biblioteca colapsada a rail se expande al
-  // pasar el puntero sobre ella (hit area = TODO el aside). La expansión es un
-  // FLYOUT flotante (absolute, z-40): el ancho de layout permanece en 68px →
-  // el artículo NUNCA se reflowa (cero layout shift). El hover NUNCA muta
-  // helpLibraryCollapsed; los controles fijos "Mostrar/Ocultar biblioteca"
-  // conservan exactamente su comportamiento persistente.
-  const { hoverExpanded, hoverProps } = useSidebarHoverExpand({
-    collapsed: helpLibraryCollapsed && !isReadingMode,
-  });
+  // CP-SIDEBAR-RESTORATION-001 (2026-11-24): el flyout por hover de la
+  // Biblioteca quedó ELIMINADO (misión §4 — cero expansión automática). La
+  // Biblioteca colapsada solo se expande con su control persistente
+  // «Mostrar biblioteca» (ayuda persistida en helpLibraryCollapsed).
 
-  // Cabecera del panel expandido — compartida entre el estado expandido fijo
-  // y el flyout de hover (una sola definición del control "Ocultar biblioteca").
+  // Cabecera del panel expandido — usada por el estado expandido fijo.
   const expandedHeader = (
     <>
       {/* Sidebar inner header + control “Ocultar biblioteca” (no
@@ -139,7 +131,6 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
         <aside
           id="help-biblioteca"
           aria-label="Biblioteca"
-          {...hoverProps}
           className={cn(
             "relative border-r border-border/30 bg-card/30 backdrop-blur-sm flex flex-col shrink-0 transition-[width,margin,opacity] duration-300 ease-out min-w-0",
             isReadingMode
@@ -150,44 +141,25 @@ export default function HelpLayout({ sidebar, children, isReadingMode, scrollPro
           )}
         >
           {helpLibraryCollapsed && !isReadingMode ? (
-            <>
-              {/* Rail colapsado — se oculta (visibility) mientras el flyout de
-                  hover está activo para no duplicar contenido ni foco. */}
-              <div
-                className={cn("flex flex-col flex-1 min-h-0", hoverExpanded && "invisible")}
-                aria-hidden={hoverExpanded || undefined}
-              >
-                {/* Control “Mostrar biblioteca” — nombre accesible explícito */}
-                <div className="pt-3 px-2 shrink-0 flex justify-center">
-                  <button
-                    type="button"
-                    onClick={() => setHelpLibraryCollapsed(false)}
-                    title="Mostrar biblioteca"
-                    aria-label="Mostrar biblioteca"
-                    aria-expanded={false}
-                    aria-controls="help-biblioteca"
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-                  >
-                    <PanelLeftOpen className="w-5 h-5" aria-hidden="true" />
-                  </button>
-                </div>
-                <div className="border-t border-border/30 mx-3 my-2 shrink-0" aria-hidden="true" />
-                {sidebar}
-              </div>
-              {/* Flyout de hover: panel expandido flotante sobre el artículo.
-                  Es hijo del aside → el puntero sobre él sigue “dentro” del área
-                  (sin flapping en el borde). Solo se monta con hover activo. */}
-              {hoverExpanded && (
-                <div
-                  data-help-library-flyout
-                  data-testid="help-library-flyout"
-                  className="absolute inset-y-0 left-0 z-40 w-[300px] xl:w-[320px] bg-card border-r border-border/50 shadow-2xl overflow-y-auto flex flex-col animate-in fade-in duration-150"
+            <div className="flex flex-col flex-1 min-h-0">
+              {/* Control “Mostrar biblioteca” — ÚNICO modo de expandir (sin
+                  hover, sin temporizadores); preferencia persistente. */}
+              <div className="pt-3 px-2 shrink-0 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setHelpLibraryCollapsed(false)}
+                  title="Mostrar biblioteca"
+                  aria-label="Mostrar biblioteca"
+                  aria-expanded={false}
+                  aria-controls="help-biblioteca"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 active:scale-95 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                 >
-                  {expandedHeader}
-                  {expandedSidebar}
-                </div>
-              )}
-            </>
+                  <PanelLeftOpen className="w-5 h-5" aria-hidden="true" />
+                </button>
+              </div>
+              <div className="border-t border-border/30 mx-3 my-2 shrink-0" aria-hidden="true" />
+              {sidebar}
+            </div>
           ) : (
             <>
               {expandedHeader}

@@ -11,8 +11,8 @@ import {
   AlertTriangle, AlertCircle, Lightbulb, Sparkles, Package, HelpCircle,
   Clock, Calendar as CalendarIcon, Target, Zap, RefreshCw, ChevronRight,
   ShoppingBag, Tag, BarChart3, Activity, Percent, DollarSign,
-  ArrowUpRight, ArrowDownRight, ExternalLink, PanelLeftClose,
-  PanelLeftOpen, Search, CalendarRange,
+  ArrowUpRight, ArrowDownRight, ExternalLink,
+  Search, CalendarRange,
   LineChart, BookOpen, Crown, CheckCircle2, Gauge,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
@@ -135,7 +135,7 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
 
   const { data: analytics, isLoading, error, refetch, isFetching } = useStoreAnalytics(storeId, analyticsParams);
   const insights = useStoreInsights(analytics);
-  const { setCurrentView, sidebarState, toggleSidebar } = useUIStore();
+  const { setCurrentView, sidebarState } = useUIStore();
 
   const sidebarInset = useMemo(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 1024) return '0rem';
@@ -170,19 +170,10 @@ export default function StoreDashboardView({ storeId, storeName, onClose }: Stor
       <div className="sticky top-0 z-20 bg-background/85 backdrop-blur-xl border-b border-border/50">
         <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              className="shrink-0 w-11 h-11 rounded-xl border border-border/50 bg-card hover:bg-muted transition-colors flex items-center justify-center text-muted-foreground hover:text-foreground"
-              aria-label={sidebarState === 'expanded' ? 'Contraer menú lateral' : 'Expandir menú lateral'}
-              title={sidebarState === 'expanded' ? 'Contraer menú' : sidebarState === 'rail' ? 'Cerrar menú' : 'Abrir menú'}
-            >
-              {sidebarState === 'expanded' ? (
-                <PanelLeftClose className="w-4 h-4" />
-              ) : (
-                <PanelLeftOpen className="w-4 h-4" />
-              )}
-            </button>
+            {/* CP-SIDEBAR-RESTORATION-001 (§3): SIN control duplicado del menú —
+                el ÚNICO botón vive en el encabezado del propio menú (visible
+                también en rail). El offset izquierdo de este dashboard flotante
+                sigue al estado del menú (sidebarInset). */}
 
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
               <BarChart3 className="w-4 h-4 text-primary" />
