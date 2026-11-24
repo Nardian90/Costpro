@@ -132,7 +132,7 @@ describe('Caso D — Ei 0, sin movimientos, Ef 0 → NO aparece en ninguno de lo
       productId: PID, sku: '100', name: 'Producto Prueba', unit: 'un',
       existenciaInicial: 0, cantidadesVendidas: 0, valesSalidas: 0, entradas: 0,
       devoluciones: 0, ajustes: 0, transferencias: 0, existenciaFinal: 0,
-      ventasImporteCup: 0, ventasImporteUsd: 0, hasPeriodMovements: false,
+      ventasImporteCup: 0, ventasImporteUsd: 0, ventasCupHistorico: 0, hasPeriodMovements: false,
       incidenceTypes: [],
     };
     expect(applyIpvResultFilters([zeroRow], CON_MOV)).toHaveLength(0);
@@ -197,7 +197,7 @@ describe('«Con movimiento» — columnas Vendidas / VS / Entradas / Devolucione
     productId: PID, sku: '100', name: 'Producto Prueba', unit: 'un',
     existenciaInicial: null, cantidadesVendidas: 0, valesSalidas: 0, entradas: 0,
     devoluciones: 0, ajustes: 0, transferencias: 0, existenciaFinal: null,
-    ventasImporteCup: 0, ventasImporteUsd: 0, hasPeriodMovements: false,
+    ventasImporteCup: 0, ventasImporteUsd: 0, ventasCupHistorico: 0, hasPeriodMovements: false,
     incidenceTypes: [], ...p,
   });
 
@@ -242,7 +242,7 @@ describe('«Existencia final > 0» — decimales, cero, negativos y N/D', () => 
     existenciaInicial: ef === null ? null : 0, cantidadesVendidas: movs,
     valesSalidas: 0, entradas: 0, devoluciones: 0, ajustes: 0, transferencias: 0,
     existenciaFinal: ef, ventasImporteCup: 0, ventasImporteUsd: 0,
-    hasPeriodMovements: movs !== 0, incidenceTypes: [],
+    ventasCupHistorico: 0, hasPeriodMovements: movs !== 0, incidenceTypes: [],
   });
 
   it('decimales positivos sí cumplen (0.5 y 0.000001), sin redondeo', () => {
@@ -270,9 +270,9 @@ describe('«Existencia final > 0» — decimales, cero, negativos y N/D', () => 
 
 describe('Composición y garantías generales de los filtros', () => {
   const rows: IpvRow[] = [
-    { productId: 'p1', sku: '1', name: 'A', unit: 'un', existenciaInicial: 0, cantidadesVendidas: 50, valesSalidas: 0, entradas: 50, devoluciones: 0, ajustes: 0, transferencias: 0, existenciaFinal: 0, ventasImporteCup: 100, ventasImporteUsd: 0, hasPeriodMovements: true, incidenceTypes: [] },
-    { productId: 'p2', sku: '2', name: 'B', unit: 'un', existenciaInicial: 20, cantidadesVendidas: 0, valesSalidas: 0, entradas: 0, devoluciones: 0, ajustes: 0, transferencias: 0, existenciaFinal: 20, ventasImporteCup: 0, ventasImporteUsd: 0, hasPeriodMovements: false, incidenceTypes: [] },
-    { productId: 'p3', sku: '3', name: 'C', unit: 'un', existenciaInicial: 5, cantidadesVendidas: 10, valesSalidas: 0, entradas: 20, devoluciones: 0, ajustes: 0, transferencias: 0, existenciaFinal: 15, ventasImporteCup: 200, ventasImporteUsd: 0, hasPeriodMovements: true, incidenceTypes: [] },
+    { productId: 'p1', sku: '1', name: 'A', unit: 'un', existenciaInicial: 0, cantidadesVendidas: 50, valesSalidas: 0, entradas: 50, devoluciones: 0, ajustes: 0, transferencias: 0, existenciaFinal: 0, ventasImporteCup: 100, ventasImporteUsd: 0, ventasCupHistorico: 0, hasPeriodMovements: true, incidenceTypes: [] },
+    { productId: 'p2', sku: '2', name: 'B', unit: 'un', existenciaInicial: 20, cantidadesVendidas: 0, valesSalidas: 0, entradas: 0, devoluciones: 0, ajustes: 0, transferencias: 0, existenciaFinal: 20, ventasImporteCup: 0, ventasImporteUsd: 0, ventasCupHistorico: 0, hasPeriodMovements: false, incidenceTypes: [] },
+    { productId: 'p3', sku: '3', name: 'C', unit: 'un', existenciaInicial: 5, cantidadesVendidas: 10, valesSalidas: 0, entradas: 20, devoluciones: 0, ajustes: 0, transferencias: 0, existenciaFinal: 15, ventasImporteCup: 200, ventasImporteUsd: 0, ventasCupHistorico: 0, hasPeriodMovements: true, incidenceTypes: [] },
   ];
 
   it('sin filtros devuelve la MISMA referencia (el IPV habitual, cero costo)', () => {
