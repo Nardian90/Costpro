@@ -1,36 +1,31 @@
 /**
- * ADNEGOCIO-UI 2026-11-24 · INFORME EJECUTIVO DE DESEMPEÑO COMERCIAL Y
- * ABASTECIMIENTO — generador del documento oficial (misión Informe Gerencial).
+ * CP-PDF-EXECUTIVE-REPORT-001 2026-11-24 · INFORME EJECUTIVO DE DESEMPEÑO
+ * COMERCIAL Y ABASTECIMIENTO — reconstrucción editorial del documento oficial
+ * (misión de rediseño del PDF de «Comparar Productos»).
  * ===========================================================================
- * PATRÓN DOCUMENTAL «REPORTE DE ENTREGA» (cash-report-pdf.ts), reutilizado:
- *  · Builder ASÍNCRONO que DEVUELVE el doc: `buildInformeEjecutivoPdf(informe)`
- *    — la vista decide: vista preliminar → doc.output('bloburl') (iframe);
- *    descarga → doc.save(nombre). Misma fuente para ambas salidas: la vista
- *    preliminar ES el documento que se exporta.
- *  · Motor jsPDF con carga DIFERIDA (createPDFDocument de lazy-pdf) —
- *    NUNCA import estático de jspdf/jspdf-autotable (bundle gate W2/W3).
- *  · Tablas con jspdf-autotable (import dinámico): encabezados repetidos en
- *    cada página, rowPageBreak 'avoid', anchos proporcionales y truncado
- *    verificado.
- *  · Gráfico ejecutivo dibujado con primitivas jsPDF (rects + texto) — sin
- *    dependencias nuevas, idéntico en cualquier visor y en impresión.
- *  · Numeración «Página X de Y» al final (loop sobre las hojas reales) y
- *    encabezado institucional en cada página.
+ * MECANISMO (diagnóstico CP-PDF-EXECUTIVE-REPORT-001): el documento se genera
+ * en cliente con jsPDF + jspdf-autotable (carga diferida vía
+ * createPDFDocument/lazy-pdf) y se consume en DOS salidas idénticas:
+ *  · vista preliminar → doc.output('bloburl') en iframe;
+ *  · descarga → doc.save(nombre oficial).
+ * La única fuente de contenido es src/lib/product-comparison/informe.ts
+ * (buildInformeEjecutivo): este generador NO recalcula ni redacta nada (§9).
  *
- * FUENTE ÚNICA DE CONTENIDO: src/lib/product-comparison/informe.ts
- * (buildInformeEjecutivo) — el PDF NO recalcula ni redacta nada: consume el
- * modelo del documento ya construido por el motor analítico.
- *
- * ARQUITECTURA DEL DOCUMENTO (misión §5):
- *  · Encabezado ejecutivo (página 1): entidad, título, períodos, elaboración.
- *  · 1. Diagnóstico ejecutivo: situación general + conclusión gerencial +
- *    indicadores relevantes + gráfico comparativo.
- *  · 2. Prioridades y decisiones: matriz ejecutiva (nivel fundamentado).
- *  · 3. Análisis complementario: secciones compactas solo si aportan valor.
- *  · Anexos I (ranking completo), II (disponibilidad y cobertura),
- *    III (sin ventas), IV (metodología y fuentes).
- *  · Diseño editorial: blanco, paleta sobria, jerarquía tipográfica clara,
- *    sin grandes bloques de texto ni repeticiones.
+ * SISTEMA EDITORIAL (misión §2-§8):
+ *  · Papel A4 vertical (antes Letter); márgenes 20 mm; Anexo I en horizontal
+ *    (orientación justificada por la tabla de 10 columnas, §5).
+ *  · Tipografía jerárquica: portada 21 pt, títulos de sección 13 pt,
+ *    subtítulos 10.5 pt, cuerpo 9.3 pt, auxiliar 8.2 pt, tablas 7.2-7.6 pt.
+ *  · PORTADA ejecutiva (§4): identificación, períodos, elaboración, resumen
+ *    de indicadores y contenido del documento — sin numeración visible.
+ *  · PAGINACIÓN (§6): encabezado institucional de páginas continuas, guardas
+ *    anti-huérfanos por bloque (título+intro+tabla), filas que no se parten
+ *    (rowPageBreak 'avoid'), encabezados de tabla repetidos por autoTable en
+ *    cada página y pie «Página X de Y» con identificación del documento.
+ *  · ANEXOS (§7-§8): CADA anexo comienza en página nueva mediante addPage()
+ *    REAL del motor (nunca espacios vacíos), con identificación ANEXO I-IV,
+ *    título, introducción y nota; los anexos extensos continúan ordenados.
+ *  · Integridad (§9): ninguna cifra ni texto del análisis se altera.
  */
 
 import { format } from 'date-fns';
@@ -43,13 +38,16 @@ import type {
   InformeTabla,
 } from '@/lib/product-comparison/informe';
 
-// Paleta editorial de impresión (sobria: blanco, grafito, acentos discretos)
+// ── Paleta editorial de impresión (sobria: blanco, grafito, azul institucional) ──
 const C_DARK: [number, number, number] = [31, 41, 55];       // grafito (texto)
-const C_BLACK: [number, number, number] = [17, 17, 17];      // títulos
-const C_MUTED: [number, number, number] = [107, 114, 128];   // secundario
-const C_BORDER: [number, number, number] = [203, 213, 225];  // líneas
-const C_HEADER_BG: [number, number, number] = [241, 245, 249];
-const C_BAND: [number, number, number] = [249, 250, 251];    // banda suave
+const C_BLACK: [number, number, number] = [16, 24, 40];      // títulos
+const C_MUTED: [number, number, number] = [100, 116, 139];   // secundario
+const C_BORDER: [number, number, number] = [203, 213, 225];  // líneas de tabla
+const C_RULE: [number, number, number] = [148, 163, 184];    // reglas editoriales
+const C_HEADER_BG: [number, number, number] = [238, 242, 247];
+const C_BAND: [number, number, number] = [248, 250, 252];    // banda suave
+const C_STRIPE: [number, number, number] = [246, 248, 250];  // fila alternada
+const C_ACCENT: [number, number, number] = [31, 78, 121];    // azul institucional
 const C_ALTA_BG: [number, number, number] = [250, 232, 229];
 const C_ALTA_TX: [number, number, number] = [153, 42, 27];
 const C_MEDIA_BG: [number, number, number] = [250, 240, 219];
@@ -57,7 +55,13 @@ const C_MEDIA_TX: [number, number, number] = [146, 104, 14];
 const C_PREV_BG: [number, number, number] = [233, 237, 241];
 const C_PREV_TX: [number, number, number] = [68, 81, 91];
 const C_BAR_ANT: [number, number, number] = [191, 199, 209]; // barra tramo anterior
-const C_BAR_ACT: [number, number, number] = [31, 78, 121];   // barra período actual (azul sobrio)
+const C_BAR_ACT: [number, number, number] = [31, 78, 121];   // barra período actual
+
+// ── Retícula del documento (A4: 210 × 297 mm) ────────────────────────────────
+const M = 20;                 // márgenes laterales (§3: 20-22 mm)
+const BOTTOM_RESERVE = 20;    // reserva inferior (pie incluido)
+const PAGE_TOP_CONT = 24;     // inicio de contenido en páginas continuas
+const TITULO_DOC = 'Informe Ejecutivo de Desempeño Comercial y Abastecimiento';
 
 const fmtCup = (n: number): string =>
   `${n.toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -70,7 +74,7 @@ function fmtCompact(n: number): string {
   return n.toLocaleString('es-CU', { maximumFractionDigits: 0 });
 }
 
-/** Truncado con «…» verificado por ancho real (misma regla del reporte de caja). */
+/** Truncado con «…» verificado por ancho real. */
 function truncar(doc: jsPDF, text: string, maxWidth: number): string {
   if (doc.getTextWidth(text) <= maxWidth) return text;
   let t = text;
@@ -86,33 +90,41 @@ export function informeEjecutivoFileName(informe: InformeEjecutivo): string {
   return `Informe_Ejecutivo_Desempeno_Comercial_${tienda}_${format(new Date(informe.meta.generadoEl), 'yyyyMMdd_HHmm')}.pdf`;
 }
 
-// ── Utilidades de página ─────────────────────────────────────────────────────
+// ── Utilidades de página (dimensiones SIEMPRE de la página actual) ──────────
 
-const M = 15;                 // margen lateral (mm)
-const BOTTOM_RESERVE = 18;    // reserva del pie (mm)
-const PAGE_TOP_CONT = 17;     // alto del encabezado de páginas continuas
+function pageW(doc: jsPDF): number {
+  return doc.internal.pageSize.getWidth();
+}
+function pageH(doc: jsPDF): number {
+  return doc.internal.pageSize.getHeight();
+}
 
+/** Encabezado institucional de páginas continuas (con o sin anexos). */
 function drawContinuationHeader(doc: jsPDF, informe: InformeEjecutivo): void {
-  const pw = doc.internal.pageSize.getWidth();
+  const pw = pageW(doc);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...C_BLACK);
-  doc.text('Informe Ejecutivo de Desempeño Comercial y Abastecimiento', M, 9);
+  doc.text(TITULO_DOC, M, 11);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(...C_MUTED);
-  doc.text(informe.meta.entidadNombre, pw - M, 9, { align: 'right' });
-  doc.setDrawColor(...C_BORDER);
-  doc.setLineWidth(0.2);
-  doc.line(M, 12, pw - M, 12);
+  doc.text(informe.meta.entidadNombre, pw - M, 11, { align: 'right' });
+  doc.setDrawColor(...C_RULE);
+  doc.setLineWidth(0.25);
+  doc.line(M, 15, pw - M, 15);
+}
+
+/** Nueva página VERTICAL con encabezado institucional. */
+function nuevaPaginaVertical(doc: jsPDF, informe: InformeEjecutivo): void {
+  doc.addPage('a4', 'portrait');
+  drawContinuationHeader(doc, informe);
 }
 
 /** Necesita espacio antes de dibujar un bloque de altura `need` (mm). */
 function ensureSpace(doc: jsPDF, y: number, need: number, informe: InformeEjecutivo): number {
-  const ph = doc.internal.pageSize.getHeight();
-  if (y + need <= ph - BOTTOM_RESERVE) return y;
-  doc.addPage();
-  drawContinuationHeader(doc, informe);
+  if (y + need <= pageH(doc) - BOTTOM_RESERVE) return y;
+  nuevaPaginaVertical(doc, informe);
   return PAGE_TOP_CONT;
 }
 
@@ -126,18 +138,58 @@ function drawWrapped(
   lineH: number,
   informe: InformeEjecutivo,
 ): number {
-  const ph = doc.internal.pageSize.getHeight();
   const lines = doc.splitTextToSize(text, maxWidth) as string[];
   for (const line of lines) {
-    if (y + lineH > ph - BOTTOM_RESERVE) {
-      doc.addPage();
-      drawContinuationHeader(doc, informe);
+    if (y + lineH > pageH(doc) - BOTTOM_RESERVE) {
+      nuevaPaginaVertical(doc, informe);
       y = PAGE_TOP_CONT;
     }
     doc.text(line, x, y);
     y += lineH;
   }
   return y;
+}
+
+/** Párrafo de cuerpo (9.3 pt, interlineado cómodo para lectura prolongada). */
+function drawParrafo(doc: jsPDF, texto: string, y: number, informe: InformeEjecutivo): number {
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.3);
+  doc.setTextColor(...C_DARK);
+  return drawWrapped(doc, texto, M, y, pageW(doc) - 2 * M, 4.9, informe) + 2;
+}
+
+/** Párrafo auxiliar (8.2 pt, secundario: introducciones y notas). */
+function drawAuxiliar(doc: jsPDF, texto: string, y: number, informe: InformeEjecutivo): number {
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.2);
+  doc.setTextColor(...C_MUTED);
+  return drawWrapped(doc, texto, M, y, pageW(doc) - 2 * M, 4.0, informe) + 1.5;
+}
+
+/** Título de sección numerado (13 pt + regla editorial). Guarda anti-huérfanos:
+ *  `need` reserva espacio para el título MÁS el primer bloque de contenido
+ *  (§3: nunca un encabezado aislado al pie de página). */
+function drawSectionTitle(doc: jsPDF, titulo: string, y: number, informe: InformeEjecutivo, need = 46): number {
+  const pw = pageW(doc);
+  const yy = ensureSpace(doc, y, need, informe);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(...C_BLACK);
+  doc.text(titulo, M, yy + 2.5);
+  doc.setDrawColor(...C_ACCENT);
+  doc.setLineWidth(0.5);
+  doc.line(M, yy + 5, pw - M, yy + 5);
+  return yy + 9.5;
+}
+
+/** Subtítulo interno (10.5 pt bold grafito). Guarda anti-huérfanos. */
+function drawSubTitle(doc: jsPDF, titulo: string, y: number, informe: InformeEjecutivo, need = 14): number {
+  const yy = ensureSpace(doc, y, need, informe);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(...C_DARK);
+  doc.text(titulo, M, yy + 1.5);
+  return yy + 6;
 }
 
 // ── Tablas (autoTable dinámico — encabezados repetidos en multipágina) ───────
@@ -159,8 +211,13 @@ async function drawTabla(
   startY: number,
 ): Promise<number> {
   const { default: autoTable } = await import('jspdf-autotable');
-  const pw = doc.internal.pageSize.getWidth();
-  const contentW = pw - 2 * M;
+  const contentW = pageW(doc) - 2 * M;
+  // Páginas que YA llevan el encabezado institucional al empezar la tabla.
+  // autoTable añade páginas por salto y las detectamos con getCurrentPageInfo
+  // (ABSOLUTO y fiable) dentro de didDrawPage; data.pageNumber es relativo a
+  // la propia tabla y no sirve para comparar (defecto detectado en escenarios
+  // de estrés E/F: páginas internas sin encabezado).
+  const paginasConHeader = new Set<number>([doc.getCurrentPageInfo().pageNumber]);
   autoTable(doc, {
     startY,
     head: [opts.head],
@@ -168,10 +225,10 @@ async function drawTabla(
     theme: 'grid',
     styles: {
       font: 'helvetica',
-      fontSize: opts.fontSize ?? 7.8,
-      cellPadding: 1.6,
+      fontSize: opts.fontSize ?? 7.4,
+      cellPadding: 1.7,
       lineColor: C_BORDER,
-      lineWidth: 0.15,
+      lineWidth: 0.12,
       textColor: C_DARK,
       overflow: 'linebreak',
       valign: 'middle',
@@ -180,10 +237,12 @@ async function drawTabla(
       fillColor: C_HEADER_BG,
       textColor: C_BLACK,
       fontStyle: 'bold',
-      fontSize: (opts.fontSize ?? 7.8) - 0.3,
-      halign: 'center',
+      fontSize: (opts.fontSize ?? 7.4) - 0.2,
+      lineWidth: 0.2,
+      lineColor: C_RULE,
+      // La alineación del encabezado sigue la de su columna (consistencia §5).
     },
-    alternateRowStyles: { fillColor: C_BAND },
+    alternateRowStyles: { fillColor: C_STRIPE },
     columnStyles: Object.fromEntries(
       opts.head.map((_, i) => [
         i,
@@ -195,61 +254,47 @@ async function drawTabla(
     ),
     margin: { left: M, right: M, top: PAGE_TOP_CONT, bottom: BOTTOM_RESERVE },
     rowPageBreak: 'avoid',
+    didDrawPage: () => {
+      // Encabezado institucional en las páginas de CONTINUACIÓN de la tabla
+      // (la primera ya lo trae dibujado por el flujo del documento).
+      const pn = doc.getCurrentPageInfo().pageNumber;
+      if (!paginasConHeader.has(pn)) {
+        drawContinuationHeader(doc, informe);
+        paginasConHeader.add(pn);
+      }
+    },
     ...(opts.didParseCell ? { didParseCell: opts.didParseCell } : {}),
   });
   const docAny = doc as unknown as { lastAutoTable?: { finalY: number } };
   return docAny.lastAutoTable?.finalY ?? startY;
 }
 
-/** Encabezado de sección numerado (jerarquía editorial). */
-function drawSectionTitle(doc: jsPDF, titulo: string, y: number, informe: InformeEjecutivo): number {
-  const pw = doc.internal.pageSize.getWidth();
-  let yy = ensureSpace(doc, y, 12, informe);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(...C_BLACK);
-  doc.text(titulo, M, yy);
-  doc.setDrawColor(...C_BLACK);
-  doc.setLineWidth(0.4);
-  doc.line(M, yy + 1.8, pw - M, yy + 1.8);
-  return yy + 7;
-}
-
-/** Subtítulo (secciones internas — jerarquía secundaria). */
-function drawSubTitle(doc: jsPDF, titulo: string, y: number, informe: InformeEjecutivo): number {
-  let yy = ensureSpace(doc, y, 9, informe);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.6);
-  doc.setTextColor(...C_DARK);
-  doc.text(titulo, M, yy);
-  return yy + 5;
-}
-
-/** Párrafo de sección (texto normal envuelto, interlineado cómodo). */
-function drawParrafo(doc: jsPDF, texto: string, y: number, informe: InformeEjecutivo): number {
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9.2);
-  doc.setTextColor(...C_DARK);
-  return drawWrapped(doc, texto, M, y, doc.internal.pageSize.getWidth() - 2 * M, 4.7, informe) + 1.5;
-}
-
 // ── Gráfico ejecutivo (barras horizontales comparativas — primitivas jsPDF) ──
+
+function alturaGrafico(informe: InformeEjecutivo): number {
+  const g = informe.grafico;
+  if (!g) return 0;
+  const barH = 3.4;
+  const gapBar = 1.1;
+  const gapProd = 2.6;
+  const headerH = 5;
+  const legendH = 6;
+  return headerH + g.series.length * (barH * 2 + gapBar + gapProd) - gapProd + legendH + 8;
+}
 
 function drawGrafico(doc: jsPDF, informe: InformeEjecutivo, y0: number): number {
   const g = informe.grafico;
   if (!g) return y0;
-  const pw = doc.internal.pageSize.getWidth();
-  const contentW = pw - 2 * M;
+  const contentW = pageW(doc) - 2 * M;
   const labelW = contentW * 0.30;
-  const barArea = contentW - labelW - 16; // reserva para la etiqueta de valor
+  const barArea = contentW - labelW - 18; // reserva para la etiqueta de valor
   const maxVal = Math.max(...g.series.flatMap((s) => [s.anterior, s.actual]), 1);
   const barH = 3.4;
   const gapBar = 1.1;
   const gapProd = 2.6;
   const headerH = 5;
   const legendH = 6;
-  const alto =
-    headerH + g.series.length * (barH * 2 + gapBar + gapProd) - gapProd + legendH + 4;
+  const alto = alturaGrafico(informe);
 
   const yStart = ensureSpace(doc, y0, alto, informe);
 
@@ -266,7 +311,7 @@ function drawGrafico(doc: jsPDF, informe: InformeEjecutivo, y0: number): number 
     doc.setTextColor(...C_DARK);
     doc.text(truncar(doc, s.name, labelW - 2), M, y + barH);
 
-    // Barras: anterior (gris) y actual (azul sobrio), escala común.
+    // Barras: anterior (gris) y actual (azul institucional), escala común.
     const wAnt = Math.max((s.anterior / maxVal) * barArea, s.anterior > 0 ? 0.8 : 0);
     const wAct = Math.max((s.actual / maxVal) * barArea, s.actual > 0 ? 0.8 : 0);
     doc.setFillColor(...C_BAR_ANT);
@@ -340,7 +385,7 @@ async function drawMatrizPrioridades(
     {
       head: ['Prioridad', 'Producto', 'Situación', 'Decisión recomendada'],
       body,
-      colWidths: [0.11, 0.17, 0.36, 0.36],
+      colWidths: [0.10, 0.17, 0.365, 0.365],
       aligns: ['center', 'left', 'left', 'left'],
       fontSize: 7.6,
       didParseCell: (data) => {
@@ -365,8 +410,38 @@ async function drawMatrizPrioridades(
   );
 }
 
-// ── Secciones de tablas (complementarias y anexos) ───────────────────────────
+// ── Anexos (§7: cada anexo en página nueva; §8: identificación completa) ─────
 
+/** Cabecera de anexo: identificación ANEXO n + título + introducción. */
+function drawAnnexHeader(
+  doc: jsPDF,
+  informe: InformeEjecutivo,
+  ident: string,
+  titulo: string,
+  intro: string | undefined,
+): number {
+  const pw = pageW(doc);
+  let y = PAGE_TOP_CONT;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...C_ACCENT);
+  doc.text(ident, M, y + 1, { charSpace: 0.5 });
+  y += 5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(...C_BLACK);
+  doc.text(titulo, M, y + 2.5);
+  doc.setDrawColor(...C_ACCENT);
+  doc.setLineWidth(0.5);
+  doc.line(M, y + 5, pw - M, y + 5);
+  y += 9.5;
+  if (intro) {
+    y = drawAuxiliar(doc, intro, y, informe) + 1.5;
+  }
+  return y;
+}
+
+/** Sección/tabla interna con introducción y nota (análisis complementario). */
 async function drawSeccionTabla(
   doc: jsPDF,
   tabla: InformeTabla,
@@ -375,18 +450,16 @@ async function drawSeccionTabla(
   opts: { colWidths?: number[]; aligns?: Array<'left' | 'right' | 'center'>; fontSize?: number } = {},
 ): Promise<number> {
   let y = y0;
-  y = drawSubTitle(doc, tabla.titulo, y, informe);
+  // Guarda anti-huérfanos: el subtítulo nunca queda aislado al pie de página.
+  y = drawSubTitle(doc, tabla.titulo, y, informe, 30);
   if (tabla.intro) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.8);
-    doc.setTextColor(...C_MUTED);
-    y = drawWrapped(doc, tabla.intro, M, y, doc.internal.pageSize.getWidth() - 2 * M, 3.9, informe) + 1;
+    y = drawAuxiliar(doc, tabla.intro, y, informe) + 1;
   }
   if (tabla.filas.length === 0) {
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(8.4);
+    doc.setFontSize(8.6);
     doc.setTextColor(...C_MUTED);
-    y = drawWrapped(doc, 'Sin casos en este período.', M, y, doc.internal.pageSize.getWidth() - 2 * M, 4.2, informe) + 2;
+    y = drawWrapped(doc, 'Sin casos en este período.', M, y, pageW(doc) - 2 * M, 4.4, informe) + 2;
     return y;
   }
   const n = tabla.columnas.length;
@@ -416,20 +489,195 @@ async function drawSeccionTabla(
   );
   if (tabla.nota) {
     doc.setFont('helvetica', 'italic');
-    doc.setFontSize(7.2);
+    doc.setFontSize(7.4);
     doc.setTextColor(...C_MUTED);
-    y = drawWrapped(doc, `Nota: ${tabla.nota}`, M, y + 1.5, doc.internal.pageSize.getWidth() - 2 * M, 3.6, informe) + 1.5;
+    y = drawWrapped(doc, `Nota: ${tabla.nota}`, M, y + 1.8, pageW(doc) - 2 * M, 3.8, informe) + 1.5;
   }
-  return y + 3;
+  return y + 4;
+}
+
+/** Dibuja un anexo tabular (InformeTabla) en página nueva con identidad propia. */
+async function drawAnexoTabla(
+  doc: jsPDF,
+  informe: InformeEjecutivo,
+  anexo: InformeTabla,
+  ident: string,
+  orientacion: 'portrait' | 'landscape',
+  layout: { colWidths: number[]; aligns: Array<'left' | 'right' | 'center'>; fontSize: number },
+): Promise<void> {
+  doc.addPage('a4', orientacion);
+  drawContinuationHeader(doc, informe);
+  let y = drawAnnexHeader(doc, informe, ident, anexo.titulo, anexo.intro);
+  if (anexo.filas.length === 0) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8.6);
+    doc.setTextColor(...C_MUTED);
+    y = drawWrapped(doc, 'Sin casos en este período.', M, y, pageW(doc) - 2 * M, 4.4, informe) + 2;
+  } else {
+    y = await drawTabla(
+      doc,
+      {
+        head: anexo.columnas,
+        body: anexo.filas,
+        colWidths: layout.colWidths,
+        aligns: layout.aligns,
+        fontSize: layout.fontSize,
+      },
+      informe,
+      y,
+    );
+  }
+  if (anexo.nota) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(7.4);
+    doc.setTextColor(...C_MUTED);
+    y = drawWrapped(doc, `Nota: ${anexo.nota}`, M, y + 1.8, pageW(doc) - 2 * M, 3.8, informe) + 1.5;
+  }
+}
+
+// ── PORTADA (§4) ─────────────────────────────────────────────────────────────
+
+function drawPortada(doc: jsPDF, informe: InformeEjecutivo): void {
+  const pw = pageW(doc);
+  const contentW = pw - 2 * M;
+  const { meta } = informe;
+  const f = (iso: string): string => {
+    const [yy, mm, dd] = iso.split('-');
+    return yy && mm && dd ? `${dd}/${mm}/${yy}` : iso;
+  };
+
+  // Bloque superior: identificación editorial (kicker + título + subtítulo)
+  let y = 30;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...C_ACCENT);
+  doc.text('ANÁLISIS COMERCIAL · COMPARACIÓN DE PRODUCTOS', M, y, { charSpace: 0.7 });
+  y += 6;
+  doc.setDrawColor(...C_ACCENT);
+  doc.setLineWidth(0.9);
+  doc.line(M, y, M + 34, y);
+  y += 16;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(21);
+  doc.setTextColor(...C_BLACK);
+  doc.text('COMPARACIÓN DE PRODUCTOS', M, y);
+  y += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11.5);
+  doc.setTextColor(...C_DARK);
+  doc.text(TITULO_DOC, M, y);
+
+  // Ficha institucional (entidad, períodos, elaboración)
+  y += 12;
+  doc.setFillColor(...C_BAND);
+  doc.setDrawColor(...C_BORDER);
+  doc.setLineWidth(0.2);
+  doc.rect(M, y, contentW, 44, 'S');
+  const filas: Array<[string, string]> = [
+    ['ENTIDAD', meta.entidadNombre],
+    ['PERÍODO ANALIZADO', `${f(meta.periodoActual.desde)} a ${f(meta.periodoActual.hasta)} (${meta.diasPeriodo} días)`],
+    ['PERÍODO COMPARATIVO', `${f(meta.periodoComparacion.desde)} a ${f(meta.periodoComparacion.hasta)}`],
+    ['ELABORACIÓN', `${format(new Date(meta.generadoEl), 'dd/MM/yyyy HH:mm')} · Ámbito: ${meta.ambito}`],
+  ];
+  let yf = y + 8;
+  for (const [etiqueta, valor] of filas) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...C_MUTED);
+    doc.text(etiqueta, M + 5, yf);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.6);
+    doc.setTextColor(...C_DARK);
+    doc.text(valor, M + 48, yf);
+    yf += 9;
+  }
+
+  // Resumen de indicadores principales
+  y += 44 + 10;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...C_ACCENT);
+  doc.text('RESUMEN DE INDICADORES', M, y, { charSpace: 0.5 });
+  y += 2.5;
+  doc.setDrawColor(...C_RULE);
+  doc.setLineWidth(0.2);
+  doc.line(M, y, pw - M, y);
+  y += 6.5;
+  const vw = 62; // ancho reservado a los valores
+  for (const ind of informe.indicadores) {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.8);
+    doc.setTextColor(...C_DARK);
+    doc.text(truncar(doc, ind.label, contentW - vw - 4), M, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C_BLACK);
+    doc.text(ind.value, pw - M, y, { align: 'right' });
+    y += 5.2;
+    doc.setDrawColor(...C_BORDER);
+    doc.setLineWidth(0.1);
+    doc.line(M, y - 2.2, pw - M, y - 2.2);
+  }
+
+  // Contenido del documento
+  y += 7;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...C_ACCENT);
+  doc.text('CONTENIDO', M, y, { charSpace: 0.5 });
+  y += 6.5;
+  const secciones: Array<[string, string]> = [
+    ['1.', 'Diagnóstico ejecutivo'],
+    ['2.', 'Prioridades y decisiones recomendadas'],
+    ['3.', 'Análisis complementario'],
+    // (el ancho del numeral se mide al dibujar; véase más abajo)
+    ...informe.anexos.map((a, i) => {
+      const m = a.titulo.match(/^(Anexo\s+[IVX]+)\.\s*(.+)$/i);
+      const ident = m ? m[1].replace('Anexo', 'ANEXO').toUpperCase() : `ANEXO ${i + 1}`;
+      const resto = m ? m[2] : a.titulo;
+      return [ident.replace(/\.?\s*$/, ''), resto] as [string, string];
+    }),
+    ['ANEXO IV', 'Metodología y fuentes'],
+  ];
+  const mitad = Math.ceil(secciones.length / 2);
+  const colW = (contentW - 8) / 2;
+  for (let i = 0; i < mitad; i++) {
+    const fila = secciones[i];
+    const fila2 = secciones[i + mitad];
+    const yy = y + i * 6;
+    for (const [col, item] of [[0, fila], [1, fila2]] as Array<[number, [string, string] | undefined]>) {
+      if (!item) continue;
+      const x = M + col * (colW + 8);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.6);
+      doc.setTextColor(...C_ACCENT);
+      doc.text(item[0], x, yy);
+      // El título se coloca tras el ancho REAL del numeral en mm
+      // (getTextWidth ya devuelve unidades del documento), sin solapes.
+      const wNum = doc.getTextWidth(item[0]);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(...C_DARK);
+      doc.text(truncar(doc, item[1], colW - wNum - 2), x + wNum + 2, yy);
+    }
+  }
+
+  // Identificación al pie de la portada (sin numeración de página, §4)
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.6);
+  doc.setTextColor(...C_MUTED);
+  doc.setDrawColor(...C_RULE);
+  doc.setLineWidth(0.2);
+  doc.line(M, 273, pw - M, 273);
+  doc.text(
+    `${meta.entidadNombre} · ${TITULO_DOC} · Generado el ${format(new Date(meta.generadoEl), 'dd/MM/yyyy HH:mm')}`,
+    M,
+    278,
+  );
 }
 
 // ── Builder principal ────────────────────────────────────────────────────────
 
 export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promise<jsPDF> {
-  const doc = await createPDFDocument('p', 'mm', 'letter');
-  const pw = doc.internal.pageSize.getWidth();
-  const ph = doc.internal.pageSize.getHeight();
-  const contentW = pw - 2 * M;
+  const doc = await createPDFDocument('p', 'mm', 'a4');
   const { meta } = informe;
 
   const f = (iso: string): string => {
@@ -437,40 +685,15 @@ export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promi
     return yy && mm && dd ? `${dd}/${mm}/${yy}` : iso;
   };
 
-  // ── ENCABEZADO INSTITUCIONAL (página 1) ──
-  doc.setFillColor(...C_HEADER_BG);
-  doc.rect(M, 12, contentW, 30, 'F');
-  doc.setDrawColor(...C_BLACK);
-  doc.setLineWidth(0.5);
-  doc.rect(M, 12, contentW, 30);
+  // ── PÁGINA 1 · PORTADA (sin numeración visible, §4) ──
+  drawPortada(doc, informe);
 
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...C_MUTED);
-  doc.text(meta.entidadNombre.toUpperCase(), M + 4, 19);
+  // ── PÁGINA 2 · CUERPO ──
+  nuevaPaginaVertical(doc, informe);
+  let y = PAGE_TOP_CONT;
 
-  doc.setFontSize(12.5);
-  doc.setTextColor(...C_BLACK);
-  doc.text(truncar(doc, 'Informe Ejecutivo de Desempeño Comercial y Abastecimiento', contentW - 8), M + 4, 26);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.4);
-  doc.setTextColor(...C_DARK);
-  doc.text(
-    `Elaborado: ${format(new Date(meta.generadoEl), 'dd/MM/yyyy HH:mm')}   ·   Ámbito: ${meta.ambito}`,
-    M + 4,
-    32.5,
-  );
-  doc.text(
-    `Período analizado: ${f(meta.periodoActual.desde)} a ${f(meta.periodoActual.hasta)} (${meta.diasPeriodo} días)   ·   Período comparativo: ${f(meta.periodoComparacion.desde)} a ${f(meta.periodoComparacion.hasta)}`,
-    M + 4,
-    38,
-  );
-
-  let y = 44;
-
-  // ── 1. DIAGNÓSTICO EJECUTIVO ──
-  y = drawSectionTitle(doc, '1. Diagnóstico ejecutivo', y, informe);
+  // 1. DIAGNÓSTICO EJECUTIVO
+  y = drawSectionTitle(doc, '1. Diagnóstico ejecutivo', y, informe, 40);
   y = drawSubTitle(doc, 'Situación general', y, informe);
   for (const parrafo of informe.situacionGeneral) {
     y = drawParrafo(doc, parrafo, y, informe);
@@ -479,30 +702,31 @@ export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promi
 
   // Conclusión gerencial destacada (banda editorial sobria)
   {
+    const contentW = pageW(doc) - 2 * M;
     const lines = doc.splitTextToSize(informe.conclusionGerencial, contentW - 8) as string[];
-    const altoBanda = lines.length * 4.4 + 6;
+    const altoBanda = lines.length * 4.6 + 8;
     y = ensureSpace(doc, y + 1, altoBanda + 3, informe);
     doc.setFillColor(...C_BAND);
     doc.rect(M, y, contentW, altoBanda, 'F');
-    doc.setDrawColor(...C_BAR_ACT);
-    doc.setLineWidth(0.8);
+    doc.setDrawColor(...C_ACCENT);
+    doc.setLineWidth(0.9);
     doc.line(M, y, M, y + altoBanda);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(8);
-    doc.setTextColor(...C_BAR_ACT);
-    doc.text('CONCLUSIÓN GERENCIAL', M + 4, y + 4.5);
+    doc.setTextColor(...C_ACCENT);
+    doc.text('CONCLUSIÓN GERENCIAL', M + 4, y + 5);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9.2);
+    doc.setFontSize(9.3);
     doc.setTextColor(...C_DARK);
-    let yc = y + 9;
+    let yc = y + 10;
     for (const line of lines) {
       doc.text(line, M + 4, yc);
-      yc += 4.4;
+      yc += 4.6;
     }
-    y += altoBanda + 4;
+    y += altoBanda + 5;
   }
 
-  // Indicadores relevantes
+  // Indicadores relevantes (detalle completo del resumen de portada)
   y = drawSubTitle(doc, 'Indicadores relevantes', y, informe);
   y = await drawTabla(
     doc,
@@ -511,22 +735,28 @@ export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promi
       body: informe.indicadores.map((i) => [i.label, i.value]),
       colWidths: [0.62, 0.38],
       aligns: ['left', 'right'],
-      fontSize: 7.9,
+      fontSize: 8.0,
     },
     informe,
     y,
   );
-  y += 5;
+  y += 6;
 
-  // Gráfico ejecutivo
-  y = drawSubTitle(doc, 'Comportamiento comparado de los productos principales', y, informe);
+  // Gráfico ejecutivo — el subtítulo NUNCA queda huérfano: se reserva el
+  // espacio del gráfico completo ANTES de dibujar el título (defecto del
+  // generador anterior detectado en la portada del baseline).
+  {
+    const alto = informe.grafico ? alturaGrafico(informe) : 12;
+    y = ensureSpace(doc, y, Math.min(alto + 10, pageH(doc) - PAGE_TOP_CONT - BOTTOM_RESERVE), informe);
+    y = drawSubTitle(doc, 'Comportamiento comparado de los productos principales', y, informe, alto + 8);
+  }
   if (informe.grafico) {
     y = drawGrafico(doc, informe, y);
   } else {
     y = drawParrafo(doc, 'Sin datos suficientes para construir el gráfico comparativo en este período.', y, informe);
   }
 
-  // ── 2. PRIORIDADES Y DECISIONES ──
+  // 2. PRIORIDADES Y DECISIONES
   y = drawSectionTitle(doc, '2. Prioridades y decisiones recomendadas', y, informe);
   if (informe.prioridades.length === 0) {
     y = drawParrafo(
@@ -544,10 +774,10 @@ export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promi
     );
     y += 1.5;
     y = await drawMatrizPrioridades(doc, informe, y);
-    y += 5;
+    y += 6;
   }
 
-  // ── 3. ANÁLISIS COMPLEMENTARIO ──
+  // 3. ANÁLISIS COMPLEMENTARIO
   if (informe.complementarias.length > 0) {
     y = drawSectionTitle(doc, '3. Análisis complementario', y, informe);
     for (const tabla of informe.complementarias) {
@@ -555,87 +785,91 @@ export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promi
     }
   }
 
-  // ── ANEXOS ──
-  y = drawSectionTitle(doc, 'Anexos', y, informe);
-  y = drawParrafo(
-    doc,
-    'El detalle completo que respalda las decisiones se presenta en los anexos: ranking comparativo, disponibilidad y cobertura, productos sin ventas y metodología con las fuentes y limitaciones del análisis.',
-    y,
-    informe,
-  );
-  y += 1.5;
+  // ── ANEXOS (§7): CADA anexo comienza en página nueva mediante addPage real.
+  //    No se simula la separación con espacios ni saltos de línea.
 
-  // Anexo I — anchos ajustados a 10 columnas
+  // Anexo I — ranking comparativo completo (10 columnas → orientación
+  // horizontal justificada, §5). Los saltos internos de autoTable conservan
+  // la orientación y repiten el encabezado en cada página.
   const anexoI = informe.anexos[0];
   if (anexoI) {
-    y = await drawSeccionTabla(doc, anexoI, informe, y, {
-      colWidths: [0.09, 0.21, 0.06, 0.06, 0.11, 0.11, 0.10, 0.08, 0.09, 0.09],
+    await drawAnexoTabla(doc, informe, anexoI, 'ANEXO I', 'landscape', {
+      colWidths: [0.08, 0.28, 0.05, 0.05, 0.11, 0.11, 0.10, 0.08, 0.07, 0.07],
       aligns: ['left', 'left', 'center', 'center', 'right', 'right', 'right', 'right', 'right', 'right'],
-      fontSize: 6.8,
+      fontSize: 7.4,
     });
   }
-  // Anexo II
+  // Anexo II — disponibilidad y cobertura (vertical)
   const anexoII = informe.anexos[1];
   if (anexoII) {
-    y = await drawSeccionTabla(doc, anexoII, informe, y, {
-      colWidths: [0.20, 0.12, 0.13, 0.13, 0.14, 0.28],
+    await drawAnexoTabla(doc, informe, anexoII, 'ANEXO II', 'portrait', {
+      colWidths: [0.23, 0.10, 0.13, 0.14, 0.15, 0.25],
       aligns: ['left', 'right', 'right', 'right', 'left', 'left'],
-      fontSize: 7.0,
+      fontSize: 7.2,
     });
   }
-  // Anexo III
+  // Anexo III — productos sin ventas (vertical)
   const anexoIII = informe.anexos[2];
   if (anexoIII) {
-    y = await drawSeccionTabla(doc, anexoIII, informe, y, {
-      colWidths: [0.16, 0.13, 0.12, 0.11, 0.11, 0.37],
+    await drawAnexoTabla(doc, informe, anexoIII, 'ANEXO III', 'portrait', {
+      colWidths: [0.19, 0.14, 0.13, 0.11, 0.12, 0.31],
       aligns: ['left', 'left', 'right', 'right', 'right', 'left'],
-      fontSize: 7.0,
+      fontSize: 7.2,
     });
   }
 
-  // Anexo IV — metodología y fuentes. Cada bloque se mantiene COMPLETO en una
-  // página (se mide antes de dibujar): evita títulos huérfanos y páginas casi
-  // vacías al final del documento (regla editorial de la misión §7).
-  y = drawSubTitle(doc, 'Anexo IV. Metodología y fuentes', y, informe);
-  for (const bloque of informe.metodologia) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.2);
-    const lineasBloque = bloque.parrafos.reduce(
-      (acc, parrafo) => acc + (doc.splitTextToSize(parrafo, contentW) as string[]).length + 0.3,
-      0,
-    );
-    const altoBloque = 4.6 + lineasBloque * 4.0 + 2;
-    y = ensureSpace(doc, y, Math.min(altoBloque, 120), informe);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.8);
-    doc.setTextColor(...C_DARK);
-    doc.text(bloque.titulo, M, y);
-    y += 4.6;
-    for (const parrafo of bloque.parrafos) {
+  // Anexo IV — metodología y fuentes (página nueva propia).
+  doc.addPage('a4', 'portrait');
+  drawContinuationHeader(doc, informe);
+  {
+    let ym = drawAnnexHeader(doc, informe, 'ANEXO IV', 'Metodología y fuentes', undefined);
+    const contentW = pageW(doc) - 2 * M;
+    for (const bloque of informe.metodologia) {
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8.2);
+      const lineasBloque = bloque.parrafos.reduce(
+        (acc, parrafo) => acc + (doc.splitTextToSize(parrafo, contentW) as string[]).length + 0.3,
+        0,
+      );
+      const altoBloque = 4.6 + lineasBloque * 4.0 + 3;
+      ym = ensureSpace(doc, ym, Math.min(altoBloque, 120), informe);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.4);
       doc.setTextColor(...C_DARK);
-      y = drawWrapped(doc, parrafo, M, y, contentW, 4.0, informe) + 1.2;
+      doc.text(bloque.titulo, M, ym + 1.5);
+      ym += 6;
+      for (const parrafo of bloque.parrafos) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.4);
+        doc.setTextColor(...C_DARK);
+        ym = drawWrapped(doc, parrafo, M, ym, contentW, 4.1, informe) + 1.4;
+      }
+      ym += 2.5;
     }
-    y += 2;
   }
 
-  // ── Pie institucional + numeración «Página X de Y» (loop final) ──
+  // ── Pie institucional + numeración «Página X de Y» (loop final; la portada
+  //    queda libre de numeración visible, §4). Dimensiones SIEMPRE de la
+  //    página actual para convivir con las páginas horizontales del Anexo I.
   const total = doc.getNumberOfPages();
-  for (let p = 1; p <= total; p++) {
+  for (let p = 2; p <= total; p++) {
     doc.setPage(p);
+    const pw = pageW(doc);
+    const ph = pageH(doc);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.2);
     doc.setTextColor(...C_MUTED);
-    doc.setDrawColor(...C_BORDER);
+    doc.setDrawColor(...C_RULE);
     doc.setLineWidth(0.15);
-    doc.line(M, ph - 11, pw - M, ph - 11);
+    doc.line(M, ph - 12, pw - M, ph - 12);
     doc.text(
-      `${meta.entidadNombre} — Informe Ejecutivo de Desempeño Comercial y Abastecimiento`,
+      truncar(doc, `${meta.entidadNombre} — ${TITULO_DOC}`, pw * 0.62),
       M,
-      ph - 7,
+      ph - 7.5,
     );
-    doc.text(`Página ${p} de ${total}`, pw - M, ph - 7, { align: 'right' });
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Página ${p} de ${total}`, pw - M, ph - 7.5, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
   }
 
   return doc;
