@@ -148,6 +148,19 @@ export interface Sc204SourceData {
 }
 
 /**
+ * CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (§1): opciones de REPRESENTACIÓN del
+ * documento. La opción «incluirValoresEconomicos» (default true) decide si el
+ * PDF muestra las columnas Precio unitario / Importe y los totales económicos.
+ * SOLO afecta la representación: no modifica la recepción ni sus importes
+ * almacenados, ni cálculos, costos, inventario, contabilidad ni información
+ * financiera.
+ */
+export interface Sc204ExportOptions {
+  /** true (default) → PDF con valores económicos (comportamiento vigente). */
+  incluirValoresEconomicos?: boolean;
+}
+
+/**
  * Estructura del modelo SC-2-04. Los campos no gestionados por COSTPRO son
  * cadenas vacías: se representan en el PDF como espacios para cumplimentar
  * a mano (nunca «N/A», ceros ni guiones).
@@ -200,6 +213,12 @@ export interface Sc204ModelData {
    * ledger): documenta limitaciones de historial o la proyección aplicada.
    */
   saldoNota?: string;
+  /**
+   * CP-RECEP-001 §1: false → el documento se representa SIN valores
+   * económicos (columnas Precio unitario/Importe y totales omitidos; las
+   * líneas llegan con los campos económicos en ''). Default/undefined = true.
+   */
+  incluirValoresEconomicos?: boolean;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -260,7 +279,9 @@ export function formatSc204Saldo(saldo: SaldoPosteriorResultado | undefined): st
   return formatRes11Saldo(saldo);
 }
 
-export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
+export function buildSc204ModelData(source: Sc204SourceData, options?: Sc204ExportOptions): Sc204ModelData {
+  // CP-RECEP-001 §1: opción de representación (default true = como siempre).
+  const incluirValores = options?.incluirValoresEconomicos !== false;
   const lineas = (source.items || []).map((item) => {
     const importe = (item.quantity || 0) * (item.unit_cost || 0);
     const moneda = lineCurrency(item);
@@ -275,8 +296,11 @@ export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
       descripcion: item.products?.name || '',
       unidadMedida: item.products?.unit_of_measure || '',
       cantidad: formatSc204Quantity(item.quantity),
-      precioUnitario: `${formatSc204Money(item.unit_cost)} ${moneda}`.trim(),
-      importe: `${formatSc204Money(importe)} ${moneda}`.trim(),
+      // §1 «Exportar sin valores»: las celdas económicas quedan vacías y las
+      // columnas desaparecen de la tabla (ver renderSc204Pdf). Las cantidades,
+      // unidades, códigos, descripciones y el saldo NO se tocan.
+      precioUnitario: incluirValores ? `${formatSc204Money(item.unit_cost)} ${moneda}`.trim() : '',
+      importe: incluirValores ? `${formatSc204Money(importe)} ${moneda}`.trim() : '',
       saldoExistencia: formatSc204Saldo(saldo),
     };
   });
@@ -300,11 +324,15 @@ export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
 
   // Dato 8: Importe Total del modelo — agrupado por moneda de línea.
   // Nunca se mezclan monedas en una misma suma.
+  // §1 «Exportar sin valores»: sin totales económicos que revelen los valores
+  // excluidos → importesTotales queda vacío y el render omite el bloque.
   const totalsByCurrency = new Map<string, number>();
-  for (const item of source.items || []) {
-    const moneda = lineCurrency(item);
-    const importe = (item.quantity || 0) * (item.unit_cost || 0);
-    totalsByCurrency.set(moneda, (totalsByCurrency.get(moneda) || 0) + importe);
+  if (incluirValores) {
+    for (const item of source.items || []) {
+      const moneda = lineCurrency(item);
+      const importe = (item.quantity || 0) * (item.unit_cost || 0);
+      totalsByCurrency.set(moneda, (totalsByCurrency.get(moneda) || 0) + importe);
+    }
   }
   const currencies = Array.from(totalsByCurrency.keys());
   const importesTotales = currencies.map((moneda) => ({
@@ -355,6 +383,8 @@ export function buildSc204ModelData(source: Sc204SourceData): Sc204ModelData {
     numeroConsecutivo: '',
     identificadorRecepcion: source.receipt.id?.split('-')[0] || '',
     saldoNota,
+    // CP-RECEP-001 §1: modo de representación económica del documento
+    incluirValoresEconomicos: incluirValores,
   };
 }
 
@@ -583,29 +613,61 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
   const tableStartY = drawSc204HeaderBlocks(model, doc, headerEndY + 4);
 
   // ── Dato 7: tabla de productos ──
+  // CP-RECEP-001 §1: con valores (default) la tabla conserva las 7 columnas
+  // históricas; sin valores se omiten «Precio unitario» e «Importe» y el
+  // ancho liberado se redistribuye (Descripción y Saldo absorben el espacio)
+  // — mismas cantidades, unidades, códigos, descripciones y saldo.
+  const incluirValores = model.incluirValoresEconomicos !== false;
   const { default: autoTable } = await import('jspdf-autotable');
+  const tableHead = incluirValores
+    ? [
+        [
+          'Código',
+          'Descripción',
+          'U.M.',
+          'Cantidad',
+          'Precio unitario',
+          'Importe',
+          'Saldo en existencia según almacén',
+        ],
+      ]
+    : [
+        [
+          'Código',
+          'Descripción',
+          'U.M.',
+          'Cantidad',
+          'Saldo en existencia según almacén',
+        ],
+      ];
+  const tableBody = model.lineas.map((l) =>
+    incluirValores
+      ? [l.codigo, l.descripcion, l.unidadMedida, l.cantidad, l.precioUnitario, l.importe, l.saldoExistencia]
+      : [l.codigo, l.descripcion, l.unidadMedida, l.cantidad, l.saldoExistencia],
+  );
+  const tableColumnStyles: Record<string, { cellWidth?: number | 'auto'; halign?: 'left' | 'center' | 'right' }> = incluirValores
+    ? {
+        0: { cellWidth: 22, halign: 'center' as const },
+        1: { cellWidth: 'auto' as const },
+        2: { cellWidth: 14, halign: 'center' as const },
+        3: { cellWidth: 17, halign: 'right' as const },
+        4: { cellWidth: 27, halign: 'right' as const },
+        5: { cellWidth: 27, halign: 'right' as const },
+        6: { cellWidth: 30, halign: 'right' as const },
+      }
+    : {
+        // Sin valores: Descripción sigue absorbiendo el resto (auto) y el
+        // saldo aprovecha el espacio liberado por las dos columnas omitidas.
+        0: { cellWidth: 22, halign: 'center' as const },
+        1: { cellWidth: 'auto' as const },
+        2: { cellWidth: 14, halign: 'center' as const },
+        3: { cellWidth: 17, halign: 'right' as const },
+        4: { cellWidth: 42, halign: 'right' as const },
+      };
   autoTable(doc, {
     startY: tableStartY,
-    head: [
-      [
-        'Código',
-        'Descripción',
-        'U.M.',
-        'Cantidad',
-        'Precio unitario',
-        'Importe',
-        'Saldo en existencia según almacén',
-      ],
-    ],
-    body: model.lineas.map((l) => [
-      l.codigo,
-      l.descripcion,
-      l.unidadMedida,
-      l.cantidad,
-      l.precioUnitario,
-      l.importe,
-      l.saldoExistencia,
-    ]),
+    head: tableHead,
+    body: tableBody,
     theme: 'grid',
     styles: {
       font: 'helvetica',
@@ -633,21 +695,15 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
       fillColor: [255, 255, 255],
     },
     rowPageBreak: 'avoid',
-    columnStyles: {
-      0: { cellWidth: 22, halign: 'center' },
-      1: { cellWidth: 'auto' },
-      2: { cellWidth: 14, halign: 'center' },
-      3: { cellWidth: 17, halign: 'right' },
-      4: { cellWidth: 27, halign: 'right' },
-      5: { cellWidth: 27, halign: 'right' },
-      6: { cellWidth: 30, halign: 'right' },
-    },
+    columnStyles: tableColumnStyles,
     margin: { left: marginX, right: marginX },
   });
 
   // ── Dato 8: Importe Total del modelo ──
   // Etiqueta + valor como una sola línea alineada a la derecha (evita
   // superposición cuando la etiqueta es larga por el nombre de la moneda).
+  // §1 «Exportar sin valores»: importesTotales llega vacío → el bloque no se
+  // imprime (ningún total económico revela los valores excluidos).
   const docAny = doc as unknown as { lastAutoTable?: { finalY: number } };
   let finalY = docAny.lastAutoTable?.finalY || tableStartY;
   finalY += 6;
@@ -708,7 +764,11 @@ export async function renderSc204Pdf(model: Sc204ModelData) {
     { maxWidth: contentWidth },
   );
   doc.text(
-    `Identificador ADNegocio de la recepción: ${model.identificadorRecepcion}`,
+    incluirValores
+      ? `Identificador ADNegocio de la recepción: ${model.identificadorRecepcion}`
+      // §1 «Exportar sin valores»: el aviso viaja en la MISMA línea del pie
+      // (sin filas extra que colisionen con la nota del saldo a -5.5).
+      : `Identificador ADNegocio de la recepción: ${model.identificadorRecepcion} — Documento emitido sin valores económicos.`,
     marginX,
     pageHeight - 8,
     { maxWidth: contentWidth },
@@ -735,10 +795,14 @@ export async function generateSc204Pdf(model: Sc204ModelData): Promise<void> {
  * Genera y descarga el SC-2-04 de UNA recepción. Solo lectura: no modifica
  * la recepción ni ningún otro registro. Las lecturas respetan RLS y el
  * aislamiento de la tienda activa.
+ *
+ * CP-RECEP-001 §1: options.incluirValoresEconomicos=false genera el documento
+ * SIN las columnas Precio unitario/Importe ni totales (solo representación).
  */
 export async function exportSc204ForReceipt(
   receipt: Sc204SourceData['receipt'],
   activeStoreId?: string | null,
+  options?: Sc204ExportOptions,
 ): Promise<void> {
   const { entidadNombre, entidadCodigo, logoUrl, proveedorTaxId, items, saldosPorProducto } =
     await fetchSc204SourceData(receipt, activeStoreId);
@@ -751,7 +815,7 @@ export async function exportSc204ForReceipt(
     items,
     saldosPorProducto,
     emissionDate: new Date(),
-  });
+  }, options);
   try {
     await generateSc204Pdf(model);
   } catch (error) {

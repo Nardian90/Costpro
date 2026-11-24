@@ -27,10 +27,11 @@ import React from 'react';
 // ── Mocks hoisted ───────────────────────────────────────────────────────────
 const h = vi.hoisted(() => ({
   fromMock: vi.fn(),
+  rpcMock: vi.fn(),
 }));
 
 vi.mock('@/lib/supabaseClient', () => ({
-  supabase: { from: h.fromMock, rpc: vi.fn() },
+  supabase: { from: h.fromMock, rpc: h.rpcMock },
 }));
 
 vi.mock('./base', async (importOriginal) => {
@@ -60,6 +61,26 @@ let productsInsertCalls: any[][] = [];
 let receiptsInsertCalls: any[][] = [];
 let receiptItemsInsertCalls: any[][] = [];
 
+// CP-RECEP-001: el flujo pendiente resuelve los productos nuevos con el
+// escritor canónico. El mock simula una tienda NO CONECTADA (new_local, sin
+// product_id) para que la fila caiga al alta local client-side — el único
+// camino que conserva el insert con tenant_id que este test audita.
+function installRpcMocks() {
+  h.rpcMock.mockImplementation(async (fn: string) => {
+    if (fn === 'resolve_reception_import_rows') {
+      return {
+        data: {
+          status: 'success',
+          results: [{ index: 1, sku: 'SKU-NEW-1', name: 'Producto Nuevo 1', status: 'new_local', action: 'new_local', product_id: null }],
+          errors: [],
+        },
+        error: null,
+      };
+    }
+    throw new Error(`RPC no mockeada en test: ${fn}`);
+  });
+}
+
 function installSupabaseMocks() {
   h.fromMock.mockImplementation((table: string) => {
     if (table === 'stores') {
@@ -82,14 +103,22 @@ function installSupabaseMocks() {
     }
     if (table === 'products') {
       return {
-        insert: (payload: any[]) => {
-          productsInsertCalls.push(payload);
+        // CP-RECEP-001: el fallback local inserta UNA fila por producto
+        // (.insert(obj).select().single()); el mock admite objeto o array.
+        insert: (payload: any) => {
+          const rows = Array.isArray(payload) ? payload : [payload];
+          productsInsertCalls.push(rows);
+          const result = {
+            data: rows.map((p: any, i: number) => ({ id: `prod-new-${productsInsertCalls.length}-${i + 1}`, sku: p.sku })),
+            error: null,
+          };
           return {
-            select: () =>
-              Promise.resolve({
-                data: payload.map((p, i) => ({ id: `prod-new-${productsInsertCalls.length}-${i + 1}`, sku: p.sku })),
-                error: null,
-              }),
+            select: () => ({
+              // .select() sin .single() (insert masivo histórico)…
+              then: (onFulfilled: (v: { data: unknown; error: null }) => unknown) => Promise.resolve(onFulfilled(result)),
+              // …y con .single() (fallback CP-RECEP-001: una fila por producto).
+              single: () => Promise.resolve({ data: result.data[0], error: null }),
+            }),
           };
         },
       };
@@ -164,6 +193,7 @@ describe('useSavePendingReception — CP-CAT-004 · tenant_id en alta de product
     receiptItemsInsertCalls = [];
     storesBehaviour = { kind: 'ok', tenantId: TENANT_A };
     installSupabaseMocks();
+    installRpcMocks();
   });
 
   it('1 · inserta products CON tenant_id resuelto desde stores (RLS-FIX)', async () => {

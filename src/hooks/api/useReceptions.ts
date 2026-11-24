@@ -385,28 +385,26 @@ export function useSavePendingReception() {
       items: PendingReceptionItem[];
       notes?: string;
     }) => {
-      // 0. Crear productos nuevos (is_new=true sin product_id) antes de insertar items
+      // 0. Resolver productos nuevos (is_new=true sin product_id) antes de insertar items
       const newItems = params.items.filter(i => i.is_new && !i.product_id);
-      const existingItems = params.items.filter(i => i.product_id);
 
-      const createdProductIds: Record<string, string> = {}; // sku -> new product_id
-      // MISIÓN RECEPCIONES (2026-10-27): los productos creados en este flujo
-      // se revierten si CUALQUIER paso posterior falla (antes: un fallo al
-      // insertar la cabecera o las líneas dejaba productos huérfanos en el
-      // catálogo — misión §4.2 "evitar productos duplicados o huérfanos").
+      // MISIÓN RECEPCIONES (2026-10-27): los productos creados CLIENT-SIDE en
+      // este flujo (fallback de tienda NO conectada) se revierten si CUALQUIER
+      // paso posterior falla. Los creados por el escritor canónico son
+      // transaccionales server-side y no requieren rollback.
       let createdProductIdList: string[] = [];
+      // CP-RECEP-001: product_id (y código oficial asignado) por POSICIÓN de
+      // la fila dentro de newItems ⇔ results.index del escritor canónico.
+      // Declarado FUERA del if: el mapeo de allItems ocurre después.
+      const resolvedByPos = new Map<number, { product_id: string; sku: string }>();
 
       if (newItems.length > 0) {
         // FIX CP-CAT-004 (auditoría 2026-10-16): la policy products_tenant_insert
         // (migración 20260827000005, sin flag) exige
         // tenant_id = current_user_tenant_id() AND store_id ∈ current_user_store_ids().
-        // El insert anterior omitía tenant_id → 403 RLS y la recepción con productos
-        // nuevos quedaba bloqueada. El tenant se resuelve desde la BD leyendo
-        // stores.tenant_id con el JWT del usuario (mismo patrón RLS-FIX que
-        // useReceptionState): la policy stores_tenant_select solo devuelve tiendas
-        // del propio tenant, así que el valor queda validado contra la identidad
-        // del usuario (no es dato arbitrario del cliente). Fail-closed: si la
-        // tienda no es legible o tenant_id es NULL, se aborta sin INSERT.
+        // El tenant se resuelve desde la BD leyendo stores.tenant_id con el JWT
+        // del usuario (mismo patrón RLS-FIX que useReceptionState). Fail-closed:
+        // si la tienda no es legible o tenant_id es NULL, se aborta sin INSERT.
         const { data: tenantStore, error: tenantError } = await supabase
           .from('stores')
           .select('tenant_id')
@@ -427,195 +425,129 @@ export function useSavePendingReception() {
         const verifiedTenantId: string = tenantStore.tenant_id;
 
         // ═══════════════════════════════════════════════════════════════════
-        // CP-CAT-MAESTRO-003 (2026-11-07): sincronización del borrador con el
-        // Catálogo Maestro de la organización. Causa raíz: los productos nuevos
-        // del flujo de borrador nacían SOLO locales (name=SKU placeholder,
-        // master_product_id NULL). Reglas:
-        //   · Tienda conectada + maestro activo con ese SKU → la fila local se
-        //     INSERTA YA VINCULADA (master_product_id); el trigger
-        //     trg_products_master_identity_guard coerciona sku/name al maestro.
-        //     Jamás un segundo registro maestro.
-        //   · Tienda conectada + SKU nuevo → alta de identidad compartida vía
-        //     la RPC certificada create_master_product (maestro + fila local en
-        //     UNA transacción, con auditoría). Carrera ERR_MASTER_SKU_EXISTS →
-        //     se reutiliza el maestro ganador.
-        //   · Fallo de sincronización → NO bloquea el borrador (la recepción
-        //     jamás se pierde por un error secundario) pero se avisa al usuario
-        //     de forma visible; jamás éxito silencioso sin sincronía.
-        //   · Tienda NO conectada (o verificación no resolvida, fail-open) →
-        //     flujo local histórico exacto.
-        //   Los datos comerciales (costo/precio) siguen siendo de ESTA tienda.
+        // CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (§3, 2026-11-25): el flujo
+        // de borradores usa el MISMO escritor canónico que el alta directa y
+        // el importador (resolve_reception_import_rows). El zoo client-side
+        // anterior (masterBySku + create_master_product + fallback
+        // `SKU-${Date.now()}-...`) fue ELIMINADO: era un segundo generador
+        // que producía códigos fuera del consecutivo oficial del Catálogo
+        // Maestro. Ahora:
+        //   · Tienda CONECTADA: reuse/activación/maestro nuevo + fila local
+        //     vinculada EN UNA transacción server-side; las filas sin SKU
+        //     reciben el siguiente código OFICIAL (next_master_catalog_sku,
+        //     advisory lock por tenant).
+        //   · Tienda NO conectada (new_local): el escritor no escribe; el alta
+        //     local sigue client-side PERO pidiendo el código canónico al
+        //     servidor (assign_next_catalog_sku) cuando la fila llega sin SKU.
+        //   · Filas bloqueadas → fail-closed: no se guarda nada (misión §10).
         // ═══════════════════════════════════════════════════════════════════
-        let storeConnected = false;
-        try {
-          const { data: linkRow, error: linkErr } = await supabase
-            .from('catalog_store_links')
-            .select('status')
-            .eq('store_id', params.storeId)
-            .eq('tenant_id', verifiedTenantId)
-            .maybeSingle();
-          if (linkErr) throw linkErr;
-          storeConnected = linkRow?.status === 'connected';
-        } catch (linkErr) {
-          console.warn('[useSavePendingReception] no se pudo verificar la conexión al Catálogo Maestro (fail-open, flujo local):', linkErr);
+        const resolvePayload = newItems.map(i => ({
+          sku: i.sku || null, // '' → null: fila sin código → asignación server
+          name: i.name,
+          quantity: i.quantity,
+          unit_cost: i.unit_cost,
+          unit_of_measure: i.unit_of_measure || 'unidad',
+          sale_price: i.sale_price,
+          price_currency: i.price_currency || 'CUP',
+        }));
+        const { data: resolveRes, error: resolveErr } = await supabase.rpc(
+          'resolve_reception_import_rows',
+          { p_store_id: params.storeId, p_rows: resolvePayload, p_confirm_reactivation: [] },
+        );
+        if (resolveErr || !resolveRes) {
+          console.error('[useSavePendingReception] resolución canónica falló:', resolveErr);
+          throw new Error(
+            `No se pudo preparar la recepción pendiente: ${resolveErr?.message ?? 'error del servidor'}. No se creó ni activó nada.`
+          );
         }
 
-        const masterBySku = new Map<string, { id: string; name: string; status: string }>();
-        if (storeConnected) {
-          const newSkus = Array.from(new Set(newItems.map(i => (i.sku || '').trim()).filter(Boolean)));
-          if (newSkus.length > 0) {
-            try {
-              const { data: masterRows, error: masterErr } = await supabase
-                .from('master_products')
-                .select('id, sku, name, status')
-                .eq('tenant_id', verifiedTenantId)
-                .in('sku', newSkus);
-              if (masterErr) throw masterErr;
-              for (const m of masterRows || []) masterBySku.set(m.sku, m);
-            } catch (masterErr) {
-              console.warn('[useSavePendingReception] no se pudo consultar el Catálogo Maestro (fail-open, flujo local):', masterErr);
-            }
+        const resolveResults = ((resolveRes as { results?: Record<string, unknown>[] }).results ?? []) as Record<string, unknown>[];
+        const unresolvedLocals: Array<{ pos: number; item: PendingReceptionItem }> = [];
+        const blockedList: string[] = [];
+        resolveResults.forEach((res, i) => {
+          const pos = Number(res.index ?? (i + 1)) - 1; // índice denso 1..N sobre p_rows
+          const src = newItems[pos];
+          const action = String(res.action ?? '');
+          const displayCode = String(res.sku ?? '') || src?.sku || src?.name || '(sin código)';
+          if (action === 'blocked') {
+            const reasons = Array.isArray(res.reasons) ? (res.reasons as string[]).map(String) : [];
+            blockedList.push(`${displayCode}: ${reasons[0] ?? 'requiere revisión'}`);
+          } else if (res.product_id && src) {
+            // identified / activate_local / new_master: creado o reutilizado
+            // por el escritor canónico. El código oficial asignado viaja en res.sku.
+            resolvedByPos.set(pos, { product_id: String(res.product_id), sku: String(res.sku ?? '') });
+          } else if (src) {
+            // new_local (tienda NO conectada): alta local client-side con
+            // código oficial (ver fallback abajo).
+            unresolvedLocals.push({ pos, item: src });
           }
-        }
-
-        const productsToInsert: Array<Record<string, unknown>> = [];
-        const syncWarnings: string[] = [];
-
-        const localRowFor = (item: PendingReceptionItem, sku: string, name: string, masterId?: string) => ({
-          store_id: params.storeId,
-          tenant_id: verifiedTenantId,
-          ...(masterId ? { master_product_id: masterId } : {}),
-          sku,
-          name,
-          cost_price: item.unit_cost,
-          price: item.sale_price || 0,
-          unit_of_measure: item.unit_of_measure || 'unidad',
-          is_active: true,
-          is_complete: false,
-          stock_current: 0,
         });
 
-        for (const item of newItems) {
-          const sku = (item.sku || '').trim();
-          // CP-CAT-MAESTRO-003: nombre real del item (antes se descartaba y el
-          // producto nacía con name=SKU). Sin nombre: fallback histórico.
-          const localName = (item.name || '').trim() || sku || `Producto ${Date.now()}`;
-          const master = sku ? masterBySku.get(sku) : undefined;
+        if (blockedList.length > 0) {
+          throw new Error(
+            `No se guardó la recepción pendiente. ${blockedList.length} producto(s) requieren revisión (no se creó ni activó nada):\n` +
+            blockedList.slice(0, 6).map(s => `· ${s}`).join('\n') +
+            (blockedList.length > 6 ? `\n… y ${blockedList.length - 6} más` : '')
+          );
+        }
 
-          if (master && master.status === 'active') {
-            // CASO A4: reutilizar identidad existente, fila local vinculada.
-            productsToInsert.push(localRowFor(item, sku, localName, master.id));
-            continue;
+        // Fallback LOCAL (solo tienda NO conectada): alta client-side con el
+        // código canónico del servidor. Los datos comerciales son de ESTA
+        // tienda; sin vínculo al maestro (la tienda no participa en él).
+        for (const { pos, item } of unresolvedLocals) {
+          let sku = (item.sku || '').trim();
+          if (!sku) {
+            const { data: nextSku, error: skuErr } = await supabase.rpc('assign_next_catalog_sku', {
+              p_store_id: params.storeId,
+            });
+            if (skuErr || !nextSku) {
+              throw new Error(`No se pudo asignar el código oficial para "${item.name || 'producto nuevo'}": ${skuErr?.message ?? 'error del servidor'}`);
+            }
+            sku = String(nextSku);
           }
-
-          if (storeConnected && sku && !master) {
-            // CASO A5: alta de identidad compartida vía RPC certificada.
-            try {
-              const { data: rpcRes, error: rpcErr } = await supabase.rpc('create_master_product', {
-                p_store_id: params.storeId,
-                p_sku: sku,
-                p_name: localName,
-                p_description: null,
-                p_image_path: null,
-                p_barcode: null,
-                p_barcode_type: null,
-                p_unit_of_measure: item.unit_of_measure || 'unidad',
-                p_is_service: false,
-                p_local: {
-                  price: String(item.sale_price || 0),
-                  price_currency: item.price_currency || 'CUP',
-                  cost_price: String(item.unit_cost || 0),
-                  min_stock: '1',
-                  category: '',
-                  supplier: '',
-                },
-              });
-              if (rpcErr) throw rpcErr;
-              const res = rpcRes as { product_id: string };
-              if (sku) createdProductIds[sku] = res.product_id;
-              createdProductIdList.push(res.product_id);
-              continue;
-            } catch (cmErr) {
-              const msg = cmErr instanceof Error ? cmErr.message : String(cmErr ?? '');
-              if (msg.includes('ERR_MASTER_SKU_EXISTS')) {
-                // Carrera: otra tienda creó el maestro en paralelo → vincular.
-                try {
-                  const { data: winner } = await supabase
-                    .from('master_products')
-                    .select('id, status')
-                    .eq('tenant_id', verifiedTenantId)
-                    .eq('sku', sku)
-                    .maybeSingle();
-                  if (winner?.id && winner.status === 'active') {
-                    productsToInsert.push(localRowFor(item, sku, localName, winner.id));
-                    continue;
-                  }
-                } catch { /* cae al fallback local */ }
-              }
-              console.error('[useSavePendingReception] sincronización con el Catálogo Maestro falló para', sku, cmErr);
-              syncWarnings.push(
-                msg.includes('ERR_UNAUTHORIZED')
-                  ? `${sku} (requiere permisos de alta de productos)`
-                  : `${sku} (no quedó vinculado al Catálogo Maestro)`
+          const localName = (item.name || '').trim() || sku;
+          const { data: created, error: createErr } = await supabase
+            .from('products')
+            .insert({
+              store_id: params.storeId,
+              tenant_id: verifiedTenantId,
+              sku,
+              name: localName,
+              cost_price: item.unit_cost,
+              price: item.sale_price || 0,
+              unit_of_measure: item.unit_of_measure || 'unidad',
+              is_active: true,
+              is_complete: false,
+              stock_current: 0,
+            })
+            .select('id, sku')
+            .single();
+          if (createErr || !created) {
+            if (createErr && (createErr.code === '23505' || /products_sku_store_unique|duplicate key/i.test(createErr.message))) {
+              throw new Error(
+                `ERR_SKU_EXISTS: el SKU "${sku}" ya existe en el catálogo de esta tienda. ` +
+                'Elimina el item de la recepción y selecciona el producto existente desde el buscador.'
               );
             }
-          } else if (master && master.status !== 'active') {
-            // CASO A6: maestro archivado → fila local sin vínculo + aviso.
-            syncWarnings.push(`${sku} (el producto está archivado en el Catálogo Maestro — sin vínculo)`);
+            throw new Error(`Error al crear el producto nuevo "${localName}": ${createErr?.message ?? 'sin fila devuelta'}`);
           }
-
-          // Fallback / caso B: alta local pura (comportamiento histórico).
-          productsToInsert.push(localRowFor(
-            item,
-            sku || `SKU-${Date.now()}-${safeRandomShortId()}`,
-            localName,
-          ));
-        }
-
-        const { data: createdProducts, error: createErr } = await supabase
-          .from('products')
-          .insert(productsToInsert)
-          .select('id, sku');
-
-        if (createErr) {
-          // MISIÓN RECEPCIONES (defecto D-A/D-B): clasificar el 23505 de
-          // products_sku_store_unique con un mensaje específico y accionable
-          // (antes: mensaje crudo del motor).
-          if (createErr.code === '23505' || /products_sku_store_unique|duplicate key/i.test(createErr.message)) {
-            const dupSkus = newItems.map(i => i.sku).filter(Boolean).join(', ');
-            throw new Error(
-              `ERR_SKU_EXISTS: el SKU ${dupSkus ? `"${dupSkus}" ` : ''}ya existe en el catálogo de esta tienda. ` +
-              'Elimina el item de la recepción y selecciona el producto existente desde el buscador.'
-            );
-          }
-          throw new Error(`Error al crear productos nuevos: ${createErr.message}`);
-        }
-
-        for (const p of createdProducts || []) {
-          if (p.sku) createdProductIds[p.sku] = p.id;
-          createdProductIdList.push(p.id);
-        }
-
-        // CP-CAT-MAESTRO-003 (misión §4.3): si algún producto nuevo no pudo
-        // sincronizarse con el Catálogo Maestro, el usuario lo sabe AHORA —
-        // jamás éxito silencioso sin sincronía.
-        if (syncWarnings.length > 0) {
-          toast.warning(
-            'Productos guardados localmente sin vínculo al Catálogo Maestro: ' + syncWarnings.join(' · '),
-            { duration: 9000 }
-          );
+          resolvedByPos.set(pos, { product_id: created.id, sku: created.sku || sku });
+          createdProductIdList.push(created.id);
         }
       }
 
-      // Combinar items existentes + nuevos con product_id asignado
-      const allItems = [
-        ...existingItems,
-        ...newItems.map(item => ({
-          ...item,
-          product_id: createdProductIds[item.sku || ''] || '',
-        })),
-      ].filter(i => i.product_id); // Solo items con product_id válido
-
+      // Combinar items existentes + nuevos con product_id asignado — el
+      // emparejamiento es POR POSICIÓN (orden de newItems ⇔ results.index),
+      // no por SKU: varias filas pueden llegar sin código y el servidor les
+      // asignó códigos distintos.
+      let newPosCursor = 0;
+      const allItems = params.items.map(item => {
+        if (item.is_new && !item.product_id) {
+          const r = resolvedByPos.get(newPosCursor++);
+          return r ? { ...item, product_id: r.product_id, sku: r.sku || item.sku } : item;
+        }
+        return item;
+      }).filter(i => i.product_id); // Solo items con product_id válido
       if (allItems.length === 0) {
         throw new Error('No hay items válidos para guardar');
       }

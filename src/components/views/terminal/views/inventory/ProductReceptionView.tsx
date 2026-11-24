@@ -1182,10 +1182,17 @@ export default function ProductReceptionView({ onCancel, preselectedProduct }: P
               <div className="space-y-2">
                 <input id="manual-name" type="text" value={s.manualName} onChange={e => s.setManualName(e.target.value)} className="neu-input w-full text-sm" placeholder="Nombre del producto nuevo" aria-label="Nombre del producto nuevo" />
                 <div className="grid grid-cols-3 gap-2">
-                  <input type="text" value={s.manualSku} onChange={e => s.setManualSku(e.target.value)} className="neu-input w-full text-xs" placeholder="SKU (opcional)" aria-label="SKU del producto nuevo" />
+                  <input type="text" value={s.manualSku} onChange={e => s.setManualSku(e.target.value)} className="neu-input w-full text-xs" placeholder="SKU (opcional)" aria-label="SKU del producto nuevo (opcional; si se deja vacío el sistema asigna el siguiente código del Catálogo Maestro)" />
                   <input type="number" inputMode="decimal" min="0.0001" step="0.01" value={s.newQuantity} onChange={e => s.setNewQuantity(Math.max(0.0001, parseFloat(e.target.value) || 1))} className="neu-input w-full text-xs" placeholder="Cantidad" aria-label="Cantidad" />
                   <input type="number" inputMode="decimal" min="0" step="0.01" value={s.newUnitCost || ''} onChange={e => s.setNewUnitCost(parseFloat(e.target.value) || 0)} className="neu-input w-full text-xs" placeholder="Costo" aria-label="Costo unitario" />
                 </div>
+                {/* CP-RECEP-001: el código ya NO lo inventa el cliente (generador
+                    AUTO-* eliminado). Sin SKU tecleado, el servidor asigna el
+                    siguiente código disponible del consecutivo oficial del
+                    Catálogo Maestro al registrar la recepción. */}
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  Sin SKU: el sistema asigna el siguiente código disponible del Catálogo Maestro.
+                </p>
                 {/* REC-2 MM-R10: UM picker estructurado */}
                 <div className="grid grid-cols-2 gap-2">
                   <select
