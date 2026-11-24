@@ -33,6 +33,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.8,
     },
+    {
+      // ADN-011: periódico público — se actualiza a diario
+      url: `${baseUrl}/gaceta`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.9,
+    },
   ];
 
   return staticPages;
