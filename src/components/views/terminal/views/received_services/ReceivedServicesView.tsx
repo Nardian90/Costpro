@@ -1101,17 +1101,27 @@ function ServiceDetailModal({
                     </div>
                   </div>
                   <button onClick={async () => {
-                    if (!confirm('¿Anular este pago?')) return;
-                    // MISIÓN SERVICIOS RECIBIDOS: + Authorization (antes 401
-                    // garantizado). Nota: la BD prohíbe el borrado directo de
-                    // pagos por diseño (PT007, ERR_PAYMENT_DELETE_FORBIDDEN) —
-                    // limitación documentada, sin flujo de reversión aún.
+                    // CP-OPS-ENERVIDA §5: REVERSIÓN contable (antes DELETE
+                    // físico, prohibido por PT007). Fila contraria + asiento
+                    // compensatorio; la obligación del servicio se restablece.
+                    if (!confirm('¿Anular este pago? Se registrará un movimiento compensatorio y la obligación del servicio quedará restablecida por el importe revertido.')) return;
+                    const reason = prompt('Motivo de la anulación (opcional):') ?? '';
                     const res = await fetch(`/api/payments/${p.id}`, {
-                      method: 'DELETE',
-                      headers: { ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                      },
+                      body: JSON.stringify({ reason: reason.trim() || null }),
                     });
-                    if (res.ok) { toast.success('Pago anulado'); fetchPayments(); onUpdate(); }
-                  }} className="p-1.5 rounded text-destructive hover:bg-destructive/10" title="Anular">
+                    const body = await res.json().catch(() => ({}));
+                    if (res.ok) {
+                      toast.success(body.message || 'Pago anulado (reversión registrada)');
+                      fetchPayments(); onUpdate();
+                    } else {
+                      toast.error(body.error || 'Error al anular pago');
+                    }
+                  }} className="p-1.5 rounded text-destructive hover:bg-destructive/10" title="Anular (reversión contable)">
                     <Ban className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -1561,6 +1571,10 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
         // ADN-009 (§8): clave estable del intento de liquidación.
         payload.payment_idempotency_key = payAttemptKeyRef.current || crypto.randomUUID();
       }
+      // CP-OPS-ENERVIDA §4: la CONFIRMACIÓN también viaja con creation_key —
+      // un reintento (respuesta perdida, error de red tras crear) devuelve el
+      // MISMO servicio en lugar de crear un borrador duplicado.
+      payload.creation_key = creationKey;
       payload.paymentRows = payNow ? payRows : [];
     }
     return payload;
@@ -1631,6 +1645,9 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
       setPayNow(false); setPayRows([newPaymentRow(storeRates)]);
       setOtSelected([]); setRcptSelected([]); setOtSearch(''); setRcptSearch('');
       setLinksOpen(false);
+      // CP-OPS-ENERVIDA §4: la confirmación exitosa consume su creation_key —
+      // la siguiente operación del modal es una operación NUEVA (clave nueva).
+      setCreationKey(crypto.randomUUID());
     }
   };
 

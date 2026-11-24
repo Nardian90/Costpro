@@ -55,6 +55,12 @@ interface PartyOption {
   phone: string | null;
   address: string | null;
   email: string | null;
+  /** CP-OPS-ENERVIDA §4: rama de origen en search_master_parties — un
+   * proveedor LOCAL (suppliers.id, sin master_party_id) NO puede viajar
+   * como masterPartyId: es la causa raíz del error al crear servicios. */
+  source: "master" | "local";
+  /** Fila local vinculada cuando la rama es maestra (id de suppliers). */
+  linked_supplier_id?: string | null;
 }
 
 export function SupplierSelector({ value, onChange, className }: SupplierSelectorProps) {
@@ -94,6 +100,8 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
         phone: (p.phone as string | null) ?? null,
         address: (p.address as string | null) ?? null,
         email: (p.email as string | null) ?? null,
+        source: p.source === "local" ? ("local" as const) : ("master" as const),
+        linked_supplier_id: (p.linked_supplier_id as string | null) ?? null,
       }));
     },
     enabled: isOpen && !!storeId,
@@ -110,15 +118,49 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
     return list.slice(0, 8);
   }, [suppliers, value]);
 
-  // Filas del listado: maestro primero + locales (evitando duplicar por nombre)
+  // Filas del listado: maestro primero + locales, SIN duplicar.
+  // CP-OPS-ENERVIDA §4: search_master_parties devuelve AMBAS ramas (maestro
+  // + locales sin vincular). El `source` de cada fila decide qué identidad se
+  // envía al guardar; antes TODO se etiquetaba «master», así un local como
+  // «Tienda Pueblo» viajaba como masterPartyId con un suppliers.id y el
+  // servicio fallaba con ERR_SUPPLIER_MASTER_INVALID.
   const rows = useMemo(() => {
-    const masterNames = new Set(masterParties.map((p) => p.name.toLowerCase()));
-    const localRows = localMatches
-      .filter((s) => !masterNames.has(s.name.toLowerCase()))
+    const masterRows = masterParties
+      .filter((p) => p.source === "master")
+      .map((p) => ({
+        key: `master-${p.id}`,
+        kind: "master" as const,
+        id: p.id,
+        linkedSupplierId: p.linked_supplier_id ?? null,
+        name: p.name,
+        code: p.code,
+        tax_id: p.tax_id,
+        phone: p.phone,
+        address: p.address,
+        email: p.email,
+      }));
+    const rpcLocalRows = masterParties
+      .filter((p) => p.source === "local")
+      .map((p) => ({
+        key: `local-${p.id}`,
+        kind: "local" as const,
+        id: p.id,
+        linkedSupplierId: null as string | null,
+        name: p.name,
+        code: p.code,
+        tax_id: p.tax_id,
+        phone: p.phone,
+        address: p.address,
+        email: p.email,
+      }));
+    const rpcLocalIds = new Set(rpcLocalRows.map((r) => r.id));
+    const fallbackLocalRows = localMatches
+      .filter((s) => !rpcLocalIds.has(s.id))
       .map((s) => ({
         key: `local-${s.id}`,
         kind: "local" as const,
         id: s.id,
+        linkedSupplierId: null as string | null,
         name: s.name,
         code: null as string | null,
         tax_id: s.tax_id ?? null,
@@ -126,18 +168,7 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
         address: s.address ?? null,
         email: s.email ?? null,
       }));
-    const masterRows = masterParties.map((p) => ({
-      key: `master-${p.id}`,
-      kind: "master" as const,
-      id: p.id,
-      name: p.name,
-      code: p.code,
-      tax_id: p.tax_id,
-      phone: p.phone,
-      address: p.address,
-      email: p.email,
-    }));
-    return [...masterRows, ...localRows].slice(0, 12);
+    return [...masterRows, ...rpcLocalRows, ...fallbackLocalRows].slice(0, 12);
   }, [masterParties, localMatches]);
 
   // Cerrar al clic fuera
@@ -154,7 +185,7 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
 
   const handleSelect = (row: (typeof rows)[number]) => {
     onChange(row.name, {
-      supplierId: row.kind === "local" ? row.id : null,
+      supplierId: row.kind === "local" ? row.id : row.linkedSupplierId,
       masterPartyId: row.kind === "master" ? row.id : null,
       code: row.code,
       tax_id: row.tax_id,

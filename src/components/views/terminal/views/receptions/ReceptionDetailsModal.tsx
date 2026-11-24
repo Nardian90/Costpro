@@ -1358,31 +1358,37 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
                   )}
                 </div>
               </div>
-              {/* FIX-DELETE-PAYMENT: botón para anular pago */}
+              {/* CP-OPS-ENERVIDA §5: REVERSIÓN contable del pago (antes DELETE
+                  físico, prohibido por PT007). El documento permanece
+                  confirmado, su inventario y costo intactos; la obligación se
+                  restablece y caja/banco recibe su contra-fila. */}
               <button
                 type="button"
                 onClick={async () => {
-                  if (!confirm('¿Anular este pago? El saldo se recalculará automáticamente.')) return;
+                  if (!confirm('¿Anular este pago? Se registrará un movimiento compensatorio: la recepción SIGUE confirmada, su inventario queda intacto y la obligación con el proveedor se restablece.')) return;
+                  const reason = prompt('Motivo de la anulación (opcional):') ?? '';
                   try {
-                    // MISIÓN SERVICIOS RECIBIDOS: + Authorization (antes 401
-                    // garantizado). La BD prohíbe el borrado directo de pagos
-                    // por diseño (PT007) — limitación documentada, reportada.
                     const authToken = useAuthStore.getState().token;
                     const res = await fetch(`/api/payments/${p.id}`, {
-                      method: 'DELETE',
-                      headers: { ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}) },
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+                      },
+                      body: JSON.stringify({ reason: reason.trim() || null }),
                     });
+                    const body = await res.json().catch(() => ({}));
                     if (res.ok) {
-                      toast.success('Pago anulado');
+                      toast.success(body.message || 'Pago anulado (reversión registrada)');
                       fetchPayments();
                     } else {
-                      toast.error('Error al anular pago');
+                      toast.error(body.error || 'Error al anular pago');
                     }
                   } catch { toast.error('Error de conexión'); }
                 }}
                 className="p-2 min-h-[44px] min-w-[44px] self-end sm:self-center rounded text-destructive hover:bg-destructive/10"
-                title="Anular pago"
-                aria-label="Anular pago"
+                title="Anular pago (reversión contable)"
+                aria-label="Anular pago (reversión contable)"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
