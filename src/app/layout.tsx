@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { Geist, Geist_Mono, Space_Grotesk, Inter, Archivo, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { DialogProvider } from "@/components/ui/dialogs";
 import { ThemeProvider } from "@/components/theme-provider";
 import { GlobalSessionManager } from "@/components/GlobalSessionManager";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
@@ -322,7 +323,9 @@ export default async function RootLayout({
                   <MotionPreferencesProvider>
                     <SyncProvider>
                       <GlobalSessionManager />
-                      <div id="root" suppressHydrationWarning>{children}</div>
+                      <DialogProvider>
+                        <div id="root" suppressHydrationWarning>{children}</div>
+                      </DialogProvider>
                       <Toaster position="top-center" richColors />
                       <ServiceWorkerRegister />
                       <PWAUpdateBanner />

@@ -16,12 +16,10 @@
  *  · §3.3 edición de borrador: prefill + guardar cambios / confirmar.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 
 const fetchMock = vi.fn();
 vi.stubGlobal('fetch', fetchMock);
-const confirmMock = vi.fn(() => true);
-vi.stubGlobal('confirm', confirmMock);
 
 vi.mock('sonner', () => ({
   toast: { info: vi.fn(), success: vi.fn(), error: vi.fn(), warning: vi.fn() },
@@ -96,6 +94,7 @@ vi.mock('@/components/views/terminal/views/inventory/SupplierSelector', () => ({
 
 import { CreateServiceModal } from '@/components/views/terminal/views/received_services/ReceivedServicesView';
 import type { ServiceType } from '@/hooks/useServiceTypes';
+import { renderWithDialogs } from '../helpers/render-with-dialogs';
 
 const TYPES: ServiceType[] = [
   { id: 't-1', store_id: null, name: 'Transporte', code: 'TRANSP', description: null, is_active: true, created_at: '2026-06-25' },
@@ -119,7 +118,7 @@ const DRAFT = {
 } as any;
 
 function renderModal(overrides: Record<string, unknown> = {}) {
-  return render(
+  return renderWithDialogs(
     <CreateServiceModal
       isOpen
       onClose={vi.fn()}
@@ -140,7 +139,6 @@ function fillBase(amount = '1040') {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  confirmMock.mockClear().mockReturnValue(true);
   authState.user = { id: 'u-1', role: 'manager', activeStoreId: 'store-1' };
   supabaseState.otRows = [];
   supabaseState.rcptRows = [];
@@ -158,13 +156,17 @@ describe('ADN-008 §3 — Guardar borrador', () => {
     fireEvent.change(screen.getByLabelText('Importe total'), { target: { value: '1040' } });
     fireEvent.click(screen.getByTestId('save-draft-button'));
 
+    // CP-UX-FINAL-POLISH-003: el gate es ahora el diálogo propio de COSTPRO.
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent('BORRADOR');
+    fireEvent.click(screen.getByTestId('dialog-confirm'));
+
     await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(1));
     const payload = onCreate.mock.calls[0][0];
     expect(payload.save_as_draft).toBe(true);
     expect(payload.creation_key).toBeTruthy();
     expect(payload.supplier).toBeNull();
     expect(payload.paymentRows).toEqual([]);
-    expect(confirmMock).toHaveBeenCalledWith(expect.stringContaining('BORRADOR'));
   });
 
   it('borrador CON proveedor seleccionado conserva su identidad', async () => {
@@ -173,6 +175,7 @@ describe('ADN-008 §3 — Guardar borrador', () => {
     fireEvent.click(screen.getByTestId('supplier-stub-select'));
     fireEvent.change(screen.getByLabelText('Importe total'), { target: { value: '500' } });
     fireEvent.click(screen.getByTestId('save-draft-button'));
+    fireEvent.click(await screen.findByTestId('dialog-confirm'));
 
     await waitFor(() => expect(onCreate).toHaveBeenCalled());
     const payload = onCreate.mock.calls[0][0];
@@ -191,7 +194,7 @@ describe('ADN-008 §4.2/§7 — confirmación exige proveedor', () => {
     fireEvent.click(screen.getByTestId('confirm-service-button'));
 
     expect(onCreate).not.toHaveBeenCalled();
-    expect(confirmMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('dialog-confirm')).toBeNull(); // sin diálogo propio: bloqueado ANTES
     expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('proveedor'));
   });
 
@@ -200,11 +203,14 @@ describe('ADN-008 §4.2/§7 — confirmación exige proveedor', () => {
     renderModal({ onCreate });
     fillBase('1040');
     fireEvent.click(screen.getByTestId('confirm-service-button'));
+    // CP-UX-FINAL-POLISH-003: confirmar en el diálogo propio.
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent('pendiente de pago');
+    fireEvent.click(screen.getByTestId('dialog-confirm'));
 
     await waitFor(() => expect(onCreate).toHaveBeenCalled());
     const payload = onCreate.mock.calls[0][0];
     expect(payload.paymentRows).toEqual([]);
-    expect(confirmMock).toHaveBeenCalledWith(expect.stringContaining('pendiente de pago'));
     expect(screen.getByTestId('payment-mode-pending-text')).toBeTruthy();
     expect(screen.getByTestId('payment-mode-pending-text').textContent).toContain('No se generará ningún egreso');
   });
@@ -242,6 +248,7 @@ describe('ADN-008 §5.1 — valores predeterminados de la liquidación', () => {
     await waitFor(() => expect(screen.getByTestId('payment-rows-total').textContent).toContain('17,000.00'));
 
     fireEvent.click(screen.getByTestId('confirm-service-button'));
+    fireEvent.click(await screen.findByTestId('dialog-confirm'));
     await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(1));
 
     const payload = onCreate.mock.calls[0][0];
@@ -250,7 +257,6 @@ describe('ADN-008 §5.1 — valores predeterminados de la liquidación', () => {
     // Filas del editor (el padre las serializa con rowsToPayload → /api/payments).
     expect(payload.paymentRows[0]).toMatchObject({ method: 'cash', currency: 'USD', amount: 40, exchange_rate: 400 });
     expect(payload.paymentRows[1]).toMatchObject({ method: 'cash', currency: 'CUP', amount: 1000 });
-    expect(confirmMock).toHaveBeenCalledWith(expect.stringContaining('2 componentes de pago'));
   });
 
   it('liquidación parcial al confirmar → saldo pendiente visible (jamás «Pagado» implícito)', async () => {
@@ -280,6 +286,7 @@ describe('ADN-008 complemento §2 — combobox de tipo de servicio', () => {
     fireEvent.change(screen.getByLabelText('Importe total'), { target: { value: '100' } });
     fireEvent.click(screen.getByTestId('supplier-stub-select'));
     fireEvent.click(screen.getByTestId('confirm-service-button'));
+    fireEvent.click(await screen.findByTestId('dialog-confirm'));
 
     await waitFor(() => expect(onCreate).toHaveBeenCalled());
     expect(onCreate.mock.calls[0][0].service_type_id).toBe('t-3');
@@ -346,6 +353,7 @@ describe('ADN-008 §3.3 — edición de borrador (recuperación)', () => {
     expect((screen.getByLabelText('Observaciones') as HTMLTextAreaElement).value).toBe('nota del borrador');
 
     fireEvent.click(screen.getByTestId('save-draft-button'));
+    fireEvent.click(await screen.findByTestId('dialog-confirm'));
     await waitFor(() => expect(onSaveEdit).toHaveBeenCalledTimes(1));
     const [id, payload, mode] = onSaveEdit.mock.calls[0];
     expect(id).toBe('srv-1');
@@ -360,6 +368,7 @@ describe('ADN-008 §3.3 — edición de borrador (recuperación)', () => {
     renderModal({ editService: DRAFT, onSaveEdit });
     fireEvent.click(screen.getByTestId('supplier-stub-select'));
     fireEvent.click(screen.getByTestId('confirm-service-button'));
+    fireEvent.click(await screen.findByTestId('dialog-confirm'));
 
     await waitFor(() => expect(onSaveEdit).toHaveBeenCalledTimes(1));
     const [id, payload, mode] = onSaveEdit.mock.calls[0];

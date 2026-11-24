@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Plus, Settings2, Pencil, Power, RefreshCw, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -56,6 +57,8 @@ export function ServiceTypesManagerModal({
 }: ServiceTypesManagerModalProps) {
   const { user, token } = useAuthStore();
   const isAdmin = isAdminLevel(user?.role);
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
 
   /**
    * FIX SUPERADMIN-TIPOS (2026-10-17): el fetch crudo sin Authorization daba
@@ -150,9 +153,16 @@ export function ServiceTypesManagerModal({
     const usage = t.usage_count ?? 0;
     if (deactivating) {
       const consequence = usage > 0
-        ? `«${t.name}» está asociado a ${usage} servicio(s) registrado(s).\n\nConsecuencias: el historial NO se pierde ni se altera (seguirá mostrando este tipo tal como fue creado), pero NO estará disponible para nuevos servicios recibidos.`
+        ? `«${t.name}» está asociado a ${usage} servicio(s) registrado(s). Consecuencias: el historial NO se pierde ni se altera (seguirá mostrando este tipo tal como fue creado), pero NO estará disponible para nuevos servicios recibidos.`
         : `«${t.name}» no tiene servicios asociados. Dejará de ofrecerse para nuevos servicios y podrás reactivarlo cuando quieras.`;
-      if (!window.confirm(`¿Desactivar el tipo de servicio?\n\n${consequence}`)) return;
+      // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+      const ok = await dialogs.confirm({
+        title: 'Desactivar tipo de servicio',
+        message: consequence,
+        variant: 'warning',
+        confirmLabel: 'Desactivar',
+      });
+      if (!ok) return;
     }
     setBusyId(t.id);
     try {
