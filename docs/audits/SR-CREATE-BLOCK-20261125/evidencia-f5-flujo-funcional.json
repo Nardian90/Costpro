@@ -1,0 +1,102 @@
+{
+  "stamp": "mwv7aief",
+  "store": "9635e633-387f-411d-bc15-7d2b6179aae4",
+  "results": [
+    {
+      "name": "Setup: tienda con miembro",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Setup: rol temporal encargado (era clerk, se restaura al final)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Setup: email del miembro",
+      "ok": true,
+      "detail": "fase2-a@e2e-test.local"
+    },
+    {
+      "name": "Setup: service_type creado (aislado)",
+      "ok": true,
+      "detail": "ea2f1cc9-f99b-41c4-b68a-0a2d5b494dab"
+    },
+    {
+      "name": "Setup: proveedor local creado (aislado)",
+      "ok": true,
+      "detail": "a9c1a4b7-c372-4b8a-b068-c96c90b1ccc9"
+    },
+    {
+      "name": "Sesión: magic link emitido",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sesión: JWT real obtenido",
+      "ok": true,
+      "detail": "bearer ***"
+    },
+    {
+      "name": "CONFIRM: 201 creado vía ruta real",
+      "ok": true,
+      "detail": "HTTP 201 · {\"data\":{\"id\":\"f1fbc74a-6fe8-47b1-9cb6-94c31fe1d95a\",\"service_number\":\"SRV-20261124-00324\",\"production_order_link_count\":0,\"duplicate\":false,\"identity_warning\":"
+    },
+    {
+      "name": "CONFIRM: número de servicio emitido",
+      "ok": true,
+      "detail": "SRV-20261124-00324"
+    },
+    {
+      "name": "CONFIRM: sin warning de identidad",
+      "ok": true,
+      "detail": "{\"data\":{\"id\":\"f1fbc74a-6fe8-47b1-9cb6-94c31fe1d95a\",\"service_number\":\"SRV-20261124-00324\",\"production_order_link_count\""
+    },
+    {
+      "name": "REPLAY: idempotente (mismo id, sin duplicado)",
+      "ok": true,
+      "detail": "HTTP 201 · id=f1fbc74a · dup=true"
+    },
+    {
+      "name": "NEGATIVO: importe 0 rechazado (>=400)",
+      "ok": true,
+      "detail": "HTTP 400"
+    },
+    {
+      "name": "NEGATIVO: sin escritura residual",
+      "ok": true,
+      "detail": "filas=1 (baseline+1)"
+    },
+    {
+      "name": "LIMPIEZA: servicio eliminado",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "LIMPIEZA: rol del miembro restaurado",
+      "ok": true,
+      "detail": "clerk"
+    },
+    {
+      "name": "NET-ZERO: contadores == baseline",
+      "ok": true,
+      "detail": "{\"received\":0,\"fin\":188,\"audit\":1275,\"types\":0,\"sups\":0} → {\"received\":0,\"fin\":188,\"audit\":1275,\"types\":0,\"sups\":0}"
+    }
+  ],
+  "baseline": {
+    "received": 0,
+    "fin": 188,
+    "audit": 1275,
+    "types": 0,
+    "sups": 0
+  },
+  "postCounts": {
+    "received": 0,
+    "fin": 188,
+    "audit": 1275,
+    "types": 0,
+    "sups": 0
+  },
+  "verdict": "PASS",
+  "at": "2026-11-24T21:22:37.381Z"
+}
