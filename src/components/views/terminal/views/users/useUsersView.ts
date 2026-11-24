@@ -12,9 +12,13 @@ import { UserContract, mapProfileToContract, UserContractFactory } from '@/contr
 import { Profile, UserRole } from '@/types';
 import { getAllowedRoles, isAdminLevel } from '@/lib/roles';
 import { supabase } from '@/lib/supabaseClient';
+// CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+import { useDialogs } from '@/components/ui/dialogs';
 
 export function useUsersView() {
     const { user } = useAuthStore();
+    // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+    const dialogs = useDialogs();
     const [searchTerm, setSearchTerm] = useState('');
     // MISIÓN ORGANIZACIONES (2026-10-26): filtros de empresa/rol/estado
     // (misión FASE 2 §2: búsqueda, empresa — «Todas» solo SuperAdmin —,
@@ -373,9 +377,14 @@ export function useUsersView() {
     };
 
     const handleResetPassword = async (userId: string) => {
-        if (!confirm('¿Estás seguro de que deseas reiniciar la contraseña de este usuario? Se enviará un correo de recuperación.')) {
-            return;
-        }
+        // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+        const ok = await dialogs.confirm({
+            title: 'Reiniciar contraseña',
+            message: '¿Estás seguro de que deseas reiniciar la contraseña de este usuario? Se enviará un correo de recuperación.',
+            variant: 'warning',
+            confirmLabel: 'Reiniciar',
+        });
+        if (!ok) return;
 
         try {
             const { data: { session } } = await supabase.auth.getSession();

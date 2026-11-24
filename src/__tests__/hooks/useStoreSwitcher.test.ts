@@ -51,6 +51,17 @@ vi.mock('sonner', () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+// CP-UX-FINAL-POLISH-003 §3.1: el hook usa el sistema unificado de diálogos.
+// Se mockea SIN React para ser compatible con el mock de 'react' de arriba.
+const mockConfirm = vi.fn(async () => true);
+vi.mock('@/components/ui/dialogs', () => ({
+  useDialogs: () => ({
+    confirm: mockConfirm,
+    alert: vi.fn(async () => undefined),
+    prompt: vi.fn(async () => null),
+  }),
+}));
+
 describe('useStoreSwitcher', () => {
   let switchStore: (storeId: string) => Promise<void>;
   let isSwitching: { current: boolean };
@@ -64,6 +75,8 @@ describe('useStoreSwitcher', () => {
     mockSetActiveStore.mockReset();
     mockInvalidateQueries.mockReset();
     mockSetState.mockReset();
+    mockConfirm.mockClear();
+    mockConfirm.mockResolvedValue(true);
 
     // Import fresh each time
     const mod = await import('@/hooks/ui/useStoreSwitcher');
@@ -222,6 +235,13 @@ describe('useStoreSwitcher', () => {
       }));
       vi.doMock('sonner', () => ({
         toast: { success: vi.fn(), error: vi.fn() },
+      }));
+      vi.doMock('@/components/ui/dialogs', () => ({
+        useDialogs: () => ({
+          confirm: mockConfirm,
+          alert: vi.fn(async () => undefined),
+          prompt: vi.fn(async () => null),
+        }),
       }));
 
       const mod = await import('@/hooks/ui/useStoreSwitcher');

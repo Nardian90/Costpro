@@ -46,6 +46,7 @@ import {
   useUpdateMasterProduct,
 } from '@/hooks/api/useMasterCatalog';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 
 export interface CreateMasterProductModalProps {
   open: boolean;
@@ -74,6 +75,8 @@ export const CreateMasterProductModal: React.FC<CreateMasterProductModalProps> =
   storeId,
   isGovernor,
 }) => {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const createMaster = useCreateMasterProduct(storeId);
   const activateMaster = useActivateMasterProduct(storeId);
   const updateMaster = useUpdateMasterProduct(storeId);
@@ -181,12 +184,16 @@ export const CreateMasterProductModal: React.FC<CreateMasterProductModalProps> =
           setIsSaving(false);
           return;
         }
-        const aceptar = window.confirm(
-          `El SKU «${master.sku}» ya existe en el catálogo de la organización como «${master.name}».\n\n` +
-          '¿Activarlo en esta tienda? Se creará el producto local vinculado (existencia 0, sin movimientos); ' +
-          'el precio y demás datos comerciales se configuran después desde el inventario.\n\n' +
-          'Cancelar: no se creará nada.'
-        );
+        // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes window.confirm() nativo).
+        const aceptar = await dialogs.confirm({
+          title: 'Activar producto del catálogo',
+          message:
+            `El SKU «${master.sku}» ya existe en el catálogo de la organización como «${master.name}».\n\n` +
+            '¿Activarlo en esta tienda? Se creará el producto local vinculado (existencia 0, sin movimientos); ' +
+            'el precio y demás datos comerciales se configuran después desde el inventario.\n\n' +
+            'Cancelar: no se creará nada.',
+          variant: 'warning',
+        });
         if (!aceptar) {
           setIsSaving(false);
           return;
@@ -244,7 +251,7 @@ export const CreateMasterProductModal: React.FC<CreateMasterProductModalProps> =
     } finally {
       setIsSaving(false);
     }
-  }, [storeId, sku, name, description, imageFile, createMaster, activateMaster, updateMaster, proposeMaster, uploadSharedImage, isGovernor, onClose]);
+  }, [storeId, sku, name, description, imageFile, createMaster, activateMaster, updateMaster, proposeMaster, uploadSharedImage, isGovernor, onClose, dialogs]);
 
   const saving = isSaving || isUploadingImage;
 

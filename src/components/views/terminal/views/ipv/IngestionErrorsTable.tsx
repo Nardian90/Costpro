@@ -17,19 +17,28 @@ import { Input } from '@/components/ui/input';
 import { Trash2, RefreshCw, Edit2, Check, X, AlertCircle } from 'lucide-react';
 import { formatCurrency, formatCurrencyCents, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 import { generateHash } from '@/lib/ipv/engine';
 import { extractCommission } from '@/lib/ipv/utils';
 
 export function IngestionErrorsTable() {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const errors = useLiveQuery(() => db.ingestion_errors.orderBy('fecha').toArray());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<IngestionError>>({});
 
   const handleDelete = async (id: string) => {
-    if (confirm('¿Eliminar este error de ingesta?')) {
-      await db.ingestion_errors.delete(id);
-      toast.success('Error eliminado');
-    }
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Eliminar error de ingesta',
+      message: '¿Eliminar este error de ingesta?',
+      variant: 'destructive',
+      confirmLabel: 'Eliminar',
+    });
+    if (!ok) return;
+    await db.ingestion_errors.delete(id);
+    toast.success('Error eliminado');
   };
 
   const startEditing = (err: IngestionError) => {
@@ -85,10 +94,16 @@ export function IngestionErrorsTable() {
   };
 
   const clearAllErrors = async () => {
-      if (confirm('¿Eliminar todos los errores de ingesta?')) {
-          await db.ingestion_errors.clear();
-          toast.success('Bandeja de errores vaciada');
-      }
+      // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+      const ok = await dialogs.confirm({
+          title: 'Vaciar bandeja de errores',
+          message: '¿Eliminar todos los errores de ingesta?',
+          variant: 'destructive',
+          confirmLabel: 'Vaciar Todo',
+      });
+      if (!ok) return;
+      await db.ingestion_errors.clear();
+      toast.success('Bandeja de errores vaciada');
   };
 
   return (

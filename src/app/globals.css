@@ -84,8 +84,12 @@ main[data-help-scroll] {
   --color-on-primary: #003914;
   --color-primary-container: #15803d;
   --color-on-primary-container: #003111;
-  --color-secondary: #4cd7f6;
-  --color-on-secondary: #003640;
+  /* FIX CP-UX-FINAL-POLISH-003 §3.2: `--color-secondary` estaba hardcodeado como
+     cian #4cd7f6 FIJO en ambos temas (la variante secondary de button/badge y los
+     fondos sutiles que la usan se rompían en Dark y contra texto ámbar). Ahora
+     refleja el par semántico real de tokens.css (#475569 light / #71717a dark). */
+  --color-secondary: var(--secondary);
+  --color-on-secondary: var(--secondary-foreground);
   --color-secondary-container: #03b5d3;
   --color-on-secondary-container: #00424e;
   --color-tertiary: #d0bcff;

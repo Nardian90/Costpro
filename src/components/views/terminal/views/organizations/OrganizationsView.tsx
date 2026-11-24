@@ -38,11 +38,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore, useUIStore } from '@/store';
 import { useOrganizations, useDeleteOrganization } from '@/hooks/api/useOrganizations';
+import { useDialogs } from '@/components/ui/dialogs';
 import { OrganizationFormModal } from './OrganizationFormModal';
 
 type SortKey = 'name' | 'status' | 'stores' | 'users';
 
 export default function OrganizationsView() {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const { user } = useAuthStore();
   const isSuperAdmin = user?.role === 'superadmin';
   // CP-UX-ORG-STORES-002: navegación a la página DEDICADA de la organización
@@ -105,10 +108,16 @@ export default function OrganizationsView() {
     }
   };
 
-  const handleDelete = (org: { id: string; name: string }) => {
-    const confirmed = window.confirm(
-      `¿Eliminar la organización «${org.name}»?\n\nSolo se elimina si NO tiene tiendas ni usuarios asignados. La operación no usa cascadas.`
-    );
+  const handleDelete = async (org: { id: string; name: string }) => {
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes window.confirm() nativo).
+    // Operación significativa con condiciones (solo elimina si no tiene
+    // tiendas/usuarios): advertencia antes de proceder.
+    const confirmed = await dialogs.confirm({
+      title: 'Eliminar organización',
+      message: `¿Eliminar la organización «${org.name}»?\n\nSolo se elimina si NO tiene tiendas ni usuarios asignados. La operación no usa cascadas.`,
+      variant: 'warning',
+      confirmLabel: 'Eliminar',
+    });
     if (!confirmed) return;
     deleteMutation.mutate(org.id);
   };

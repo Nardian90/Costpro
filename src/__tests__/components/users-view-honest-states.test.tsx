@@ -11,6 +11,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import UsersManagementView from '@/components/views/terminal/views/users/UsersManagementView';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { DialogProvider } from '@/components/ui/dialogs';
 
 // Vista dependientes de modales — se montan, no se usan aquí.
 // Autenticación del store: admin con tenant.
@@ -61,7 +62,10 @@ function renderView() {
   const client = makeClient();
   return render(
     <QueryClientProvider client={client}>
-      <UsersManagementView />
+      {/* CP-UX-FINAL-POLISH-003: DialogProvider como en layout.tsx (useUsersView → useDialogs). */}
+      <DialogProvider>
+        <UsersManagementView />
+      </DialogProvider>
     </QueryClientProvider>
   );
 }

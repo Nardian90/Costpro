@@ -14,6 +14,7 @@ import { BaseModal } from "@/components/ui/BaseModal";
 import { formatCurrency } from "@/lib/utils";
 import { useAuthStore } from "@/store";
 import { toast } from "sonner";
+import { useDialogs } from "@/components/ui/dialogs";
 
 export interface LiquidationItem {
   id: string;
@@ -39,6 +40,8 @@ const METHODS = [
 ] as const;
 
 export function LiquidationModal({ open, onClose, items, onSettled }: LiquidationModalProps) {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const token = useAuthStore((s) => s.token);
   const [method, setMethod] = useState<'cash' | 'transfer' | 'external_transfer'>('cash');
   const [reference, setReference] = useState('');
@@ -69,7 +72,15 @@ export function LiquidationModal({ open, onClose, items, onSettled }: Liquidatio
 
   const submit = async () => {
     if (!canSubmit) return;
-    if (!window.confirm(`¿Confirmar la liquidación de ${rows.length} documento(s) por ${formatCurrency(total)} CUP (${METHODS.find((m) => m.value === method)?.label})? Se registrarán los pagos y movimientos correspondientes.`)) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes window.confirm() nativo).
+    // Operación financiera: se conserva el mensaje completo con montos y método.
+    const ok = await dialogs.confirm({
+      title: 'Confirmar liquidación',
+      message: `¿Confirmar la liquidación de ${rows.length} documento(s) por ${formatCurrency(total)} CUP (${METHODS.find((m) => m.value === method)?.label})? Se registrarán los pagos y movimientos correspondientes.`,
+      variant: 'default',
+      confirmLabel: 'Liquidar',
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       const res = await fetch('/api/payments/multi', {

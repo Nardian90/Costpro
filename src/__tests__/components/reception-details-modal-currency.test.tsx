@@ -14,7 +14,10 @@
  * la tarjeta de cabecera se etiqueta «Total Costo (CUP)».
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+// CP-UX-FINAL-POLISH-003 §3.1: el modal usa el sistema unificado de diálogos
+// (useDialogs) — el helper envuelve el render en <DialogProvider> como el layout raíz.
+import { renderWithDialogs } from '../helpers/render-with-dialogs';
 
 vi.mock('sonner', () => ({
   toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() },
@@ -77,7 +80,7 @@ const ITEMS = [
 const CUP_EQUIV_USD_LINE = 2 * 100 * 680;
 
 function setup(items = ITEMS, receipt = RECEIPT) {
-  return render(
+  return renderWithDialogs(
     <ReceptionDetailsModal
       receipt={receipt}
       isOpen

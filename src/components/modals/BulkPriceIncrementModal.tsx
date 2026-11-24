@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { BaseModal } from '@/components/ui/BaseModal';
+import { useDialogs } from '@/components/ui/dialogs';
 import { PrimaryButton, SecondaryButton } from '@/components/ui/atomic';
 import { useAuthStore } from '@/store';
 import { useBulkPriceUpdate } from '@/hooks/api/useProducts';
@@ -107,6 +108,8 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
   totalProductCount,
   storeId,
 }) => {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const { user } = useAuthStore();
   const effectiveStoreId = storeId || user?.activeStoreId || '';
 
@@ -225,12 +228,18 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
   const handleApply = useCallback(async () => {
     if (!canApply) return;
 
-    // CM-3.6: Confirmación para incrementos >20%
+    // CM-3.6: Confirmación para incrementos >20%.
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
     if (method === 'markup' && numericValue > 20) {
-      if (!confirm(
-        `Estás aplicando un incremento del ${numericValue}% a ${affectedProducts.length} producto(s).\n\n` +
-        `¿Estás seguro de que deseas continuar?`
-      )) return;
+      const ok = await dialogs.confirm({
+        title: 'Aplicar incremento de precios',
+        message:
+          `Estás aplicando un incremento del ${numericValue}% a ${affectedProducts.length} producto(s).\n\n` +
+          '¿Estás seguro de que deseas continuar?',
+        variant: 'default',
+        confirmLabel: 'Aplicar incremento',
+      });
+      if (!ok) return;
     }
 
     const productIds = affectedProducts.map((p) => p.id);
@@ -319,6 +328,7 @@ export const BulkPriceIncrementModal: React.FC<BulkPriceIncrementModalProps> = (
     scope,
     selectedCategory,
     bulkPriceUpdate,
+    dialogs,
     handleReset,
     onOpenChange,
   ]);

@@ -4,6 +4,7 @@ import {
   FileJson, AlertCircle, CheckCircle2
 } from "lucide-react";
 import { toast } from "sonner";
+import { useDialogs } from "@/components/ui/dialogs";
 import { db } from "@/lib/dexie";
 import { MVTTemplate } from "@/lib/ipv/mvt/types";
 import { STANDARD_MVT_TEMPLATE } from "@/lib/ipv/mvt/defaults";
@@ -25,6 +26,8 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
   onSelect,
   currentTemplateId
 }) => {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDuplicate = async (template: MVTTemplate) => {
@@ -52,7 +55,14 @@ export const TemplateManager: React.FC<TemplateManagerProps> = ({
       return;
     }
 
-    if (!confirm("¿Estás seguro de que deseas eliminar esta plantilla?")) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Eliminar plantilla',
+      message: '¿Estás seguro de que deseas eliminar esta plantilla?',
+      variant: 'destructive',
+      confirmLabel: 'Eliminar',
+    });
+    if (!ok) return;
 
     try {
       await db.mvt_templates.delete(id);

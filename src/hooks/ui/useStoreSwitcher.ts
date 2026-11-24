@@ -5,6 +5,8 @@ import { userService } from '@/services/user-service';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+// CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+import { useDialogs } from '@/components/ui/dialogs';
 
 /**
  * FIX HIGH-001: Consolidated store switching logic.
@@ -16,6 +18,8 @@ import { logger } from '@/lib/logger';
  */
 export function useStoreSwitcher() {
   const { user, updateUser } = useAuthStore();
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+  const dialogs = useDialogs();
   const queryClient = useQueryClient();
 
   // FIX-RES-3: Concurrency guard to prevent double-click / rapid switching
@@ -37,12 +41,15 @@ export function useStoreSwitcher() {
     }
 
     // V2.12.41 H-025: Confirmar antes de limpiar carrito con items
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes window.confirm() nativo).
     const cartStore = useCartStore.getState();
     if (!options?.skipCartConfirm && cartStore.storeId && cartStore.storeId !== storeId && cartStore.items.length > 0) {
-      const confirmed = window.confirm(
-        `Tienes ${cartStore.items.length} producto(s) en el carrito de la tienda actual. ` +
-        `Si cambias de tienda, el carrito se limpiará. ¿Continuar?`
-      );
+      const confirmed = await dialogs.confirm({
+        title: 'Cambiar de tienda',
+        message: `Tienes ${cartStore.items.length} producto(s) en el carrito de la tienda actual. Si cambias de tienda, el carrito se limpiará. ¿Continuar?`,
+        variant: 'warning',
+        confirmLabel: 'Cambiar tienda',
+      });
       if (!confirmed) return;
     }
 
@@ -87,7 +94,7 @@ export function useStoreSwitcher() {
       isSwitchingRef.current = false;
       setGlobalSwitching(false);
     }
-  }, [user, updateUser, queryClient]);
+  }, [user, updateUser, queryClient, dialogs]);
 
   return { switchStore, isSwitching: isSwitchingRef };
 }
