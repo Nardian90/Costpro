@@ -62,7 +62,11 @@ export function formatDayLabel(value: string): string {
   return value;
 }
 
-/** Etiquetas de columna canónicas (pantalla, PDF y Excel comparten orden). */
+/** Etiquetas de columna canónicas (pantalla, PDF y Excel comparten orden).
+ *  MISIÓN 2026-11-24 fase 3: la columna «Valor histórico sin moneda verificable»
+ *  SALIÓ de la presentación (tabla, totales, PDF y Excel) — la magnitud interna
+ *  sigue calculándose en compute.ts y una venta sin evidencia de cobro se
+ *  señala con la incidencia SALE_WITHOUT_PAYMENT_EVIDENCE (sin columna vacía). */
 export const IPV_COLUMN_LABELS = {
   sku: 'Código',
   name: 'Descripción',
@@ -76,20 +80,4 @@ export const IPV_COLUMN_LABELS = {
   existenciaFinal: 'Existencia final',
   ventasImporteCup: 'Ventas CUP (cobrado)',
   ventasImporteUsd: 'Ventas USD (cobrado)',
-  ventasCupHistorico: 'Valor histórico sin moneda verificable (valoración CUP)',
 } as const;
-
-/** Orden canónico de columnas numéricas del IPV (compartido por los 3 renderers). */
-export const IPV_NUMERIC_COLUMNS = [
-  'existenciaInicial',
-  'cantidadesVendidas',
-  'valesSalidas',
-  'entradas',
-  'devoluciones',
-  'ajustes',
-  'transferencias',
-  'existenciaFinal',
-  'ventasImporteCup',
-  'ventasImporteUsd',
-  'ventasCupHistorico',
-] as const;

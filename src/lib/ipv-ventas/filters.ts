@@ -1,10 +1,9 @@
 /**
- * IPV — Ingresos por Ventas: FILTROS DE RESULTADOS (petición 2026-11-06).
+ * IPV — Ingresos por Ventas: FILTROS DE RESULTADOS (petición 2026-11-06,
+ * ampliada misión 2026-11-24 fase 4A: filtro de movimientos de TRES estados).
  *
- * Dos filtros de FILAS sobre el dataset real del IPV (las filas devueltas por
- * /api/ipv-ventas — valores EXACTOS calculados en servidor; nunca sobre
- * aproximaciones ni valores recalculados en la interfaz):
- *
+ * FILTRO DE MOVIMIENTOS — selección exclusiva (Todos · Con movimiento · Sin
+ * movimiento):
  *  · «Con movimiento»: el producto registró cantidad ≠ 0 en el período en AL
  *    MENOS una de las columnas Vendidas, VS (vales de salida), Entradas o
  *    Devoluciones. Un producto con Ei=0, entradas 50, vendidas 50 y Ef=0 SÍ
@@ -12,14 +11,18 @@
  *    Las columnas Ajustes y Transferencias NO cuentan como movimiento
  *    comercial según el criterio solicitado (quedan fuera del predicado a
  *    propósito — documentado aquí y en los tests).
- *  · «Existencia final > 0»: existencia final ESTRICTAMENTE mayor que cero.
- *    Excluye 0 y negativos; funciona con decimales (0.5, 0.000001 sí; −0.25
- *    no). N/D (null, producto sin ledger) NO cumple el filtro.
+ *  · «Sin movimiento»: negación EXACTA del mismo predicado contable
+ *    (ipvRowHasMovement) — sin criterios nuevos: lo que «Con movimiento»
+ *    incluye, «Sin movimiento» excluye, y viceversa. Ningún producto se
+ *    pierde: Con ∪ Sin = Todos.
+ *  · «Todos»: sin filtro (identidad — la MISMA lista, cero costo).
  *
- * COMPOSICIÓN: los dos filtros se combinan en AND (Caso E). Con ambos
- * activos solo se muestran productos con movimiento Y existencia final
- * positiva. Sin filtros activos el resultado es el IPV habitual — la lista
- * devuelta es la MISMA referencia (cero costo).
+ * FILTRO ADICIONAL «Existencia final > 0»: existencia final ESTRICTAMENTE
+ * mayor que cero. Excluye 0 y negativos; funciona con decimales (0.5,
+ * 0.000001 sí; −0.25 no). N/D (null, producto sin ledger) NO cumple.
+ *
+ * COMPOSICIÓN: el filtro de movimientos y «Existencia final > 0» se combinan
+ * en AND (Caso E). «Todos» + sin Ef>0 = el IPV habitual.
  *
  * GARANTÍAS (petición §4/§5):
  *  · NO modifica fórmulas, reglas de negocio ni cálculos del IPV — solo
@@ -32,21 +35,25 @@
 
 import type { IpvRow } from './compute';
 
+/** Estado del filtro de movimientos (selección exclusiva — fase 4A). */
+export type IpvMovimientoFilter = 'todos' | 'con' | 'sin';
+
 export interface IpvResultFilters {
-  /** «Con movimiento»: Vendidas/VS/Entradas/Devoluciones ≠ 0. */
-  conMovimiento: boolean;
+  /** Todos · Con movimiento · Sin movimiento (criterio contable intacto). */
+  movimiento: IpvMovimientoFilter;
   /** «Existencia final > 0»: estricto, decimales incluidos. */
   existenciaFinalPositiva: boolean;
 }
 
 export const IPV_FILTERS_OFF: IpvResultFilters = {
-  conMovimiento: false,
+  movimiento: 'todos',
   existenciaFinalPositiva: false,
 };
 
 /** Etiquetas canónicas de los filtros (chips, badge, aria-live, tests). */
 export const IPV_FILTER_LABELS = {
   conMovimiento: 'Con movimiento',
+  sinMovimiento: 'Sin movimiento',
   existenciaFinalPositiva: 'Existencia final > 0',
 } as const;
 
@@ -56,6 +63,9 @@ export const IPV_FILTER_LABELS = {
  * Vendidas · VS (vales de salida) · Entradas · Devoluciones.
  * Los valores son los del IPV (netos del período, ya normalizados a 6
  * decimales por roundQ) → comparación exacta ≠ 0, sin redondeo aquí.
+ * PREDICADO CONTABLE INTACTO: ni «Con movimiento» ni «Sin movimiento»
+ * alteran esta definición (misión 2026-11-24: comportamiento actual sin
+ * modificar los criterios contables).
  */
 export function ipvRowHasMovement(r: IpvRow): boolean {
   return (
@@ -76,25 +86,29 @@ export function ipvRowHasPositiveFinalStock(r: IpvRow): boolean {
 
 /** ¿Hay al menos un filtro activo? */
 export function ipvAnyFilterActive(f: IpvResultFilters): boolean {
-  return f.conMovimiento || f.existenciaFinalPositiva;
+  return f.movimiento !== 'todos' || f.existenciaFinalPositiva;
 }
 
 /**
  * Aplica los filtros activos sobre las filas del IPV.
- * AND entre los activos; sin filtros → la MISMA lista (identidad).
+ * AND entre el filtro de movimientos y «Existencia final > 0»;
+ * sin filtros → la MISMA lista (identidad).
  */
 export function applyIpvResultFilters(rows: IpvRow[], f: IpvResultFilters): IpvRow[] {
   if (!ipvAnyFilterActive(f)) return rows;
-  return rows.filter((r) =>
-    (!f.conMovimiento || ipvRowHasMovement(r)) &&
-    (!f.existenciaFinalPositiva || ipvRowHasPositiveFinalStock(r)),
-  );
+  return rows.filter((r) => {
+    if (f.movimiento === 'con' && !ipvRowHasMovement(r)) return false;
+    if (f.movimiento === 'sin' && ipvRowHasMovement(r)) return false;
+    if (f.existenciaFinalPositiva && !ipvRowHasPositiveFinalStock(r)) return false;
+    return true;
+  });
 }
 
 /** Etiquetas de los filtros activos, para la indicación visual y aria-live. */
 export function ipvActiveFilterLabels(f: IpvResultFilters): string[] {
   const out: string[] = [];
-  if (f.conMovimiento) out.push(IPV_FILTER_LABELS.conMovimiento);
+  if (f.movimiento === 'con') out.push(IPV_FILTER_LABELS.conMovimiento);
+  if (f.movimiento === 'sin') out.push(IPV_FILTER_LABELS.sinMovimiento);
   if (f.existenciaFinalPositiva) out.push(IPV_FILTER_LABELS.existenciaFinalPositiva);
   return out;
 }

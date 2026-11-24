@@ -1,6 +1,7 @@
 /**
- * Pruebas de los FILTROS DE RESULTADOS del IPV (petición 2026-11-06):
- * «Con movimiento» y «Existencia final > 0».
+ * Pruebas de los FILTROS DE RESULTADOS del IPV (petición 2026-11-06,
+ * ampliada misión 2026-11-24 fase 4A: filtro de movimientos de TRES estados
+ * Todos / Con movimiento / Sin movimiento).
  *
  * CASOS OBLIGATORIOS A–F de la petición, evaluados sobre filas producidas por
  * computeIpv() REAL (mismo camino que producción: /api/ipv-ventas → computeIpv
@@ -10,8 +11,10 @@
  * Garantías verificadas:
  *  · Los filtros NO alteran cantidades ni totales (solo seleccionan filas).
  *  · Sin filtros → la misma lista (identidad, misma referencia).
- *  · Combinación AND; decimales exactos; N/D (null) no cumple «> 0»;
- *    negativos excluidos de «Existencia final > 0».
+ *  · «Sin movimiento» es la NEGACIÓN EXACTA del MISMO predicado contable:
+ *    Con ∪ Sin = Todos (ningún producto se pierde; criterio contable intacto).
+ *  · Combinación AND con «Existencia final > 0»; decimales exactos; N/D (null)
+ *    no cumple «> 0»; negativos excluidos de «Existencia final > 0».
  */
 import { describe, it, expect } from 'vitest';
 import {
@@ -56,9 +59,11 @@ function rowOf(result: ReturnType<typeof computeIpv>): IpvRow {
   return row as IpvRow;
 }
 
-const BOTH_ON = { conMovimiento: true, existenciaFinalPositiva: true };
-const CON_MOV = { conMovimiento: true, existenciaFinalPositiva: false };
-const EF_POS = { conMovimiento: false, existenciaFinalPositiva: true };
+const BOTH_ON = { movimiento: 'con' as const, existenciaFinalPositiva: true };
+const CON_MOV = { movimiento: 'con' as const, existenciaFinalPositiva: false };
+const EF_POS = { movimiento: 'todos' as const, existenciaFinalPositiva: true };
+const SIN_MOV = { movimiento: 'sin' as const, existenciaFinalPositiva: false };
+const TODOS = { movimiento: 'todos' as const, existenciaFinalPositiva: false };
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Casos de aceptación obligatorios (petición §5)
@@ -138,6 +143,8 @@ describe('Caso D — Ei 0, sin movimientos, Ef 0 → NO aparece en ninguno de lo
     expect(applyIpvResultFilters([zeroRow], CON_MOV)).toHaveLength(0);
     expect(applyIpvResultFilters([zeroRow], EF_POS)).toHaveLength(0);
     expect(applyIpvResultFilters([zeroRow], BOTH_ON)).toHaveLength(0);
+    // MISIÓN 2026-11-24: «Sin movimiento» SÍ incluye al producto sin movimientos.
+    expect(applyIpvResultFilters([zeroRow], SIN_MOV)).toContain(zeroRow);
   });
 
   it('el producto real (sin nada) ni siquiera entra al IPV por la regla de inclusión §6', () => {
@@ -277,14 +284,26 @@ describe('Composición y garantías generales de los filtros', () => {
 
   it('sin filtros devuelve la MISMA referencia (el IPV habitual, cero costo)', () => {
     expect(applyIpvResultFilters(rows, IPV_FILTERS_OFF)).toBe(rows);
-    expect(applyIpvResultFilters(rows, { conMovimiento: false, existenciaFinalPositiva: false })).toBe(rows);
+    expect(applyIpvResultFilters(rows, TODOS)).toBe(rows);
     expect(ipvAnyFilterActive(IPV_FILTERS_OFF)).toBe(false);
+    expect(ipvAnyFilterActive(TODOS)).toBe(false);
   });
 
   it('«Con movimiento» → A y C; «Ef > 0» → B y C; ambos → solo C', () => {
     expect(applyIpvResultFilters(rows, CON_MOV).map((r) => r.productId)).toEqual(['p1', 'p3']);
     expect(applyIpvResultFilters(rows, EF_POS).map((r) => r.productId)).toEqual(['p2', 'p3']);
     expect(applyIpvResultFilters(rows, BOTH_ON).map((r) => r.productId)).toEqual(['p3']);
+  });
+
+  it('«Sin movimiento» → solo B; y Con ∪ Sin = Todos (negación exacta del MISMO predicado)', () => {
+    expect(applyIpvResultFilters(rows, SIN_MOV).map((r) => r.productId)).toEqual(['p2']);
+    const union = new Set([
+      ...applyIpvResultFilters(rows, CON_MOV).map((r) => r.productId),
+      ...applyIpvResultFilters(rows, SIN_MOV).map((r) => r.productId),
+    ]);
+    expect([...union].sort()).toEqual(rows.map((r) => r.productId).sort());
+    // «Sin movimiento» + «Ef > 0» (AND): B cumple ambos.
+    expect(applyIpvResultFilters(rows, { movimiento: 'sin', existenciaFinalPositiva: true }).map((r) => r.productId)).toEqual(['p2']);
   });
 
   it('los filtros NO alteran cantidades ni fórmulas: los totales del subconjunto salen de las mismas filas', () => {
@@ -300,7 +319,9 @@ describe('Composición y garantías generales de los filtros', () => {
 
   it('etiquetas de filtros activos para la indicación visual', () => {
     expect(ipvActiveFilterLabels(IPV_FILTERS_OFF)).toEqual([]);
+    expect(ipvActiveFilterLabels(TODOS)).toEqual([]);
     expect(ipvActiveFilterLabels(CON_MOV)).toEqual(['Con movimiento']);
+    expect(ipvActiveFilterLabels(SIN_MOV)).toEqual(['Sin movimiento']);
     expect(ipvActiveFilterLabels(EF_POS)).toEqual(['Existencia final > 0']);
     expect(ipvActiveFilterLabels(BOTH_ON)).toEqual(['Con movimiento', 'Existencia final > 0']);
   });

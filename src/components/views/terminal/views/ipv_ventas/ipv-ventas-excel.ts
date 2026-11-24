@@ -12,6 +12,11 @@
  *  · Totales idénticos a los del informe visible (totalsFromRows sobre las
  *    filas filtradas — el caller pasa las MISMAS filas que pintó la tabla).
  *  · N/D se escribe como texto "N/D" (no como 0 falso).
+ *
+ * MISIÓN 2026-11-24 fase 3: la columna «Valor histórico sin moneda verificable»
+ * SALIÓ de la hoja IPV (encabezado, filas y totales). Las ventas sin evidencia
+ * de cobro reconstruible se señalan con la incidencia
+ * SALE_WITHOUT_PAYMENT_EVIDENCE (hoja Incidencias), nunca como dinero cobrado.
  */
 
 import { totalsFromRows, type IpvRow, type IpvIncidence } from '@/lib/ipv-ventas/compute';
@@ -75,7 +80,6 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
       IPV_COLUMN_LABELS.existenciaFinal,
       IPV_COLUMN_LABELS.ventasImporteCup,
       IPV_COLUMN_LABELS.ventasImporteUsd,
-      IPV_COLUMN_LABELS.ventasCupHistorico,
     ],
   ];
 
@@ -93,7 +97,6 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
       qtyCell(r.existenciaFinal),
       r.ventasImporteCup,
       r.ventasImporteUsd,
-      r.ventasCupHistorico,
     ]);
   }
 
@@ -110,7 +113,6 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
     qtyCell(totals.existenciaFinal),
     totals.ventasImporteCup,
     totals.ventasImporteUsd,
-    totals.ventasCupHistorico,
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -133,9 +135,9 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
   ws['!cols'] = [
     { wch: 14 }, { wch: 38 }, { wch: 12 }, { wch: 12 }, { wch: 11 },
     { wch: 10 }, { wch: 13 }, { wch: 9 }, { wch: 14 }, { wch: 12 },
-    { wch: 15 }, { wch: 12 }, { wch: 20 },
+    { wch: 15 }, { wch: 12 },
   ];
-  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 12 } }];
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }];
   XLSX.utils.book_append_sheet(wb, ws, 'IPV');
 
   // ── Hoja 2: Incidencias de conciliación ──────────────────────────────────
@@ -174,7 +176,7 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
     ['Existencia inicial:', 'Saldo reconstruido del ledger de movimientos (stock_movements.quantity_change) anterior a la fecha inicial del período. N/D = no reconstruible (carga inicial previa al ledger).'],
     ['Fuente de cantidades:', 'stock_movements (ledger canónico; fecha operativa movement_date). Nunca se mezclan kardex_entries ni tablas de venta para cantidades.'],
     ['Fuente de importes:', 'Ventas con estado "completed" del período: el importe de cada columna es el dinero REALMENTE COBRADO en esa moneda, según la misma reconstrucción única del Reporte de Entrega (payment_transactions + desglose por ítem — collection-currency.ts). Ventas CUP: CUP recibido. Ventas USD: USD recibidos; el equivalente contable en CUP de un cobro en USD (tasa de la operación) NO entra como venta en CUP.'],
-    ['Valor histórico sin moneda verificable (valoración CUP):', 'Valoración contable preservada de ventas SIN evidencia de cobro reconstruible (sin pools, sin filas por ítem y sin ledger). NO representa un cobro confirmado: NO entra en los totales CUP/USD y queda pendiente de verificación.'],
+    ['Ventas sin evidencia de cobro reconstruible:', 'Si existiera una venta sin pools, sin filas de pago por ítem y sin ledger de pagos, su valoración NO se presenta como dinero cobrado: la fila se mantiene y la magnitud pendiente de verificación se señala con la incidencia SALE_WITHOUT_PAYMENT_EVIDENCE (hoja Incidencias).'],
     ['Devoluciones:', 'El neto comercial por moneda = cobrado - reembolsos + recuperaciones, en la moneda REAL de cada fila del ledger de devoluciones (payment_transactions ref_type=devolution: direction=refund resta, direction=recovery revierte; ventana por payment_date — criterio del Reporte de Entrega). Un reembolso USD jamás se resta de CUP. Los documentos de devolución completados aportan la columna de cantidades (ledger).'],
     ['Devoluciones no atribuibles por producto:', 'Cuando el importe del reembolso/recuperación de un documento multi-ítem no coincide con la suma documental de sus líneas, NO se inventa un reparto: se reporta por separado (devolucionesNoAtribuibles + incidencia DEVOLUTION_MONEY_NOT_ATTRIBUTABLE).'],
     ['Monedas:', 'Las columnas «Ventas CUP/USD (cobrado)» representan dinero efectivamente cobrado en SU moneda real (criterio del Reporte de Entrega). Un precio de referencia en USD del catálogo NO genera ingreso USD y una venta cobrada en USD NO se duplica en CUP. NO se suman entre sí: los totales se calculan independientemente por moneda.'],
