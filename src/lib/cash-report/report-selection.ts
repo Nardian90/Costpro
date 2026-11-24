@@ -426,6 +426,50 @@ export function saveSummaryConcepts(storeId: string | null | undefined, sel: Sum
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// CP-OPS-ENERVIDA §2.2 — Selección de conceptos que se MUESTRAN EN EL PDF.
+// Independiente de la selección de CÁLCULO (summary-concepts): ocultar un
+// concepto del documento impreso JAMÁS altera los importes contables — los
+// conceptos ocultos que participan en el cálculo se agrupan en «Otros
+// conceptos incluidos» para conservar la conciliación impresa. Misma
+// persistencia por tienda que summary-concepts (aislamiento §6).
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const PDF_CONCEPTS_LS_PREFIX = 'costpro:cash-report:pdf-concepts:v1';
+
+export function pdfConceptsLsKey(storeId: string | null | undefined): string {
+  const scope = (storeId || '').trim() || 'sin-tienda';
+  return `${PDF_CONCEPTS_LS_PREFIX}:store:${scope}`;
+}
+
+/** Selección de MOSTRADO en PDF — por defecto TODO visible (v1). */
+export function loadPdfConcepts(storeId: string | null | undefined): SummaryConceptsSelection {
+  if (typeof window === 'undefined') return { ...DEFAULT_SUMMARY_CONCEPTS };
+  try {
+    const raw = window.localStorage.getItem(pdfConceptsLsKey(storeId));
+    if (!raw) return { ...DEFAULT_SUMMARY_CONCEPTS };
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return { ...DEFAULT_SUMMARY_CONCEPTS };
+    const obj = parsed as Record<string, unknown>;
+    const out = { ...DEFAULT_SUMMARY_CONCEPTS };
+    for (const key of SUMMARY_CONCEPT_KEYS) {
+      if (typeof obj[key] === 'boolean') out[key] = obj[key] as boolean;
+    }
+    return out;
+  } catch {
+    return { ...DEFAULT_SUMMARY_CONCEPTS };
+  }
+}
+
+export function savePdfConcepts(storeId: string | null | undefined, sel: SummaryConceptsSelection): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const out: Record<string, boolean> = {};
+    for (const key of SUMMARY_CONCEPT_KEYS) out[key] = sel[key] === true;
+    window.localStorage.setItem(pdfConceptsLsKey(storeId), JSON.stringify(out));
+  } catch {}
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // FUNCIÓN B · Recomputación del split a partir de las ventas seleccionadas
 // ═══════════════════════════════════════════════════════════════════════════
 

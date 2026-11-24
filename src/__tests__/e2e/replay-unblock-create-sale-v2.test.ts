@@ -528,9 +528,15 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261122100000_adn010_sr_draft_cancel_delete (RPC de borrado de
     //   borradores de Servicios Recibidos; se intercala por orden
     //   lexicográfico ANTES de cp_fin110) = 198
-    expect(m.total_incluidos).toBe(198);
+    // CP-OPS-ENERVIDA (2026-11-24): +5 — 20261124120000 reversiones de pagos
+    //   (direction='reversal' + reverse_supplier_payment), 20261124120100
+    //   void/idempotencia de creación de servicios, 20261124120200 elegibilidad
+    //   del Reporte Entrega, 20261124120300 liquidación múltiple CxP y
+    //   20261124120400 consolidación de terceros (todas al FINAL del orden
+    //   lexicográfico — posiciones previas intactas) = 203
+    expect(m.total_incluidos).toBe(203);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(198);
+    expect(incluidos.length).toBe(203);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

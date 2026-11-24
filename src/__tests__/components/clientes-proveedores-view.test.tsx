@@ -61,6 +61,7 @@ vi.mock('@/hooks/api/useClassifier', () => ({
   },
   usePartyChangeLog: () => ({ data: [], isLoading: false }),
   useCreateMasterParty: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useConsolidateLocalParty: () => ({ mutate: vi.fn(), isPending: false }),
   useUpdateMasterParty: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useDeleteMasterParty: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useActivateMasterParty: () => ({ mutateAsync: vi.fn(), isPending: false }),

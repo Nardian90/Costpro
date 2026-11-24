@@ -340,9 +340,32 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         }, { status: 201 });
       }
 
+      // CP-OPS-ENERVIDA §4: la identidad del proveedor se resuelve ANTES de
+      // crear el servicio — el orden anterior (crear → resolver) dejaba un
+      // draft huérfano por cada reintento cuando la identidad no validaba,
+      // y el camino de confirmación no portaba creation_key. Ahora:
+      //   1) identidad resuelta y validada contra la fuente autorizada;
+      //   2) create_received_service_v2 con p_creation_key (idempotente);
+      //   3) enriquecimiento por PK (ya no debería fallar, y si falla el
+      //      servicio existe y el reintento NO lo duplica).
+      let identityWarning: string | null = null;
+      let resolvedIdentity: Awaited<ReturnType<typeof resolveSupplierIdentity>> | null = null;
+      if (body.supplier_id || body.supplier_master_party_id) {
+        const identity = await resolveSupplierIdentity(admin, storeId, {
+          supplier_id: body.supplier_id || null,
+          supplier_master_party_id: body.supplier_master_party_id || null,
+          supplier_meta: supplierMeta,
+          supplier: body.supplier ?? null,
+        });
+        if (!identity.ok) {
+          return NextResponse.json({ error: identity.error, code: identity.code }, { status: identity.status });
+        }
+        resolvedIdentity = identity;
+      }
+
       const { data: rpcResult, error: rpcErr } = await admin.rpc('create_received_service_v2', {
         p_store_id: storeId,
-        p_supplier: body.supplier,
+        p_supplier: resolvedIdentity?.identity.name ?? body.supplier,
         p_total_amount: body.total_amount,
         p_service_type_id: body.service_type_id || null,
         p_service_type_name: body.service_type_name || 'Otro',
@@ -357,42 +380,25 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         p_receipt_ids: body.receipt_ids || [],
         p_created_by: userId,
         p_production_order_ids: body.production_order_ids || [],
+        p_creation_key: body.creation_key || null,
       });
 
       if (rpcErr) {
         return mapCreateServiceRpcError(rpcErr.message);
       }
 
-      // ADN-008 §4.3 + ADN-009 §6: al confirmar con un proveedor del catálogo,
-      // su IDENTIDAD real (id local / tercero maestro + snapshot) se congela en
-      // el registro — patrón receipts. create_received_service_v2 NO se toca
-      // (cero riesgo de overloads en el app vivo): el enriquecimiento es un
-      // UPDATE por PK justo tras la creación. ADN-009: los IDs del cliente se
-      // VALIDAN contra la fuente autorizada ANTES del UPDATE privilegiado
-      // (tienda local / tenant del maestro / estado activo / coherencia) y el
-      // snapshot sale de la fila de la BD — nunca de metadatos manipulables.
-      // Si fallara (infra), el servicio ya existe con su nombre → se devuelve
-      // 201 con warning en vez de 500 (un reintento duplicaría el servicio).
-      let identityWarning: string | null = null;
-      if (body.supplier_id || body.supplier_master_party_id) {
-        const identity = await resolveSupplierIdentity(admin, storeId, {
-          supplier_id: body.supplier_id || null,
-          supplier_master_party_id: body.supplier_master_party_id || null,
-          supplier_meta: supplierMeta,
-          supplier: body.supplier ?? null,
-        });
-        if (!identity.ok) {
-          return NextResponse.json({ error: identity.error, code: identity.code }, { status: identity.status });
-        }
+      // ADN-008 §4.3 + ADN-009 §6: identidad ya resuelta (pre-creación) →
+      // el enriquecimiento por PK congela id local / maestro + snapshot.
+      if (resolvedIdentity) {
         const { error: idErr } = await admin
           .from('received_services')
           .update({
-            supplier_id: identity.identity.supplierId,
-            supplier_master_party_id: identity.identity.masterPartyId,
-            supplier_code: identity.identity.snapshot?.code ?? null,
-            supplier_tax_id: identity.identity.snapshot?.tax_id ?? null,
-            supplier_phone: identity.identity.snapshot?.phone ?? null,
-            supplier_address: identity.identity.snapshot?.address ?? null,
+            supplier_id: resolvedIdentity.identity.supplierId,
+            supplier_master_party_id: resolvedIdentity.identity.masterPartyId,
+            supplier_code: resolvedIdentity.identity.snapshot?.code ?? null,
+            supplier_tax_id: resolvedIdentity.identity.snapshot?.tax_id ?? null,
+            supplier_phone: resolvedIdentity.identity.snapshot?.phone ?? null,
+            supplier_address: resolvedIdentity.identity.snapshot?.address ?? null,
           })
           .eq('id', rpcResult.service_id);
         if (idErr) {
@@ -401,7 +407,15 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         }
       }
 
-      return NextResponse.json({ data: { id: rpcResult.service_id, service_number: rpcResult.service_number, production_order_link_count: rpcResult.production_order_link_count || 0, identity_warning: identityWarning } }, { status: 201 });
+      return NextResponse.json({
+        data: {
+          id: rpcResult.service_id,
+          service_number: rpcResult.service_number,
+          production_order_link_count: rpcResult.production_order_link_count || 0,
+          duplicate: rpcResult.status === 'idempotent',
+          identity_warning: identityWarning,
+        },
+      }, { status: 201 });
     }
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

@@ -169,6 +169,11 @@ export interface CashReportLike {
    * canónica del grupo) y transaction_count — opcionales en el fallback legacy. */
   sales?: Array<{ payment_method: string; currency: string; total: number; total_cup?: number; transaction_count?: number }>;
   payments?: Array<{ payment_method: string; currency: string; ref_type: string; total: number; total_cup?: number }>;
+  /** CP-OPS-ENERVIDA (P0): contra-filas de reversión de pagos a proveedores
+   *  (direction='reversal') sobre documentos VÁLIDOS — ENTRADA de efectivo.
+   *  Grupo `payment_reversals` del RPC get_cash_report (migración de
+   *  elegibilidad). Ausente en fixtures legados ⇒ 0. */
+  payment_reversals?: Array<{ payment_method: string; currency: string; ref_type: string; total: number; total_cup?: number }>;
   commissions?: Array<{ payment_method: string; currency: string; total: number; total_cup?: number }>;
   production?: Array<{ payment_method: string; currency: string; total: number; total_cup?: number }>;
   /** Nuevo campo expuesto por /api/cash-report (split real por moneda). */
@@ -197,6 +202,13 @@ export interface CashReportLike {
    *  bucket cash de la moneda. Mismo productor que sales_split (la ruta),
    *  recomputado por selección en report-selection.ts. */
   sales_bills_split?: Partial<Record<string, number>>;
+  /** CP-OPS-ENERVIDA §2.1: obligaciones PENDIENTES del período, separadas de
+   *  los pagos ejecutados (A servicios · B recepciones). Una obligación
+   *  pendiente NO es una salida de efectivo — no reduce el esperado. */
+  pending_obligations?: {
+    services: Array<{ id: string; service_number: string; reference_doc: string | null; supplier: string; total_amount: number; paid_amount: number; balance: number; currency: string; payment_status: string }>;
+    receipts: Array<{ id: string; document_number: string | null; reference_doc: string | null; supplier: string; total_cost: number; paid_amount: number; balance: number; payment_status: string }>;
+  };
 }
 
 export interface DailySummary {
@@ -221,6 +233,10 @@ export interface DailySummary {
   serviciosRecibidosCash: number;
   /** Recibos de proveedores pagados en efectivo (ref_type='receipt'). */
   recibosProveedoresCash: number;
+  /** CP-OPS-ENERVIDA (P0): reversaciones de pagos de proveedores en efectivo
+   *  (direction='reversal' sobre documentos válidos) — el dinero VOLVIÓ al
+   *  cajón; SUMA al efectivo esperado. */
+  reversionesPagosCash: number;
   /** Ajustes extraordinarios que SUMAN al efectivo esperado. */
   ajustesPositivos: number;
   /** Ajustes extraordinarios que RESTAN al efectivo esperado. */
@@ -293,7 +309,7 @@ export function computeDailySummary(
   const zero: DailySummary = {
     currency, ventasCash: 0, ventasTransfer: 0, ventasZelle: 0, ventasMixed: 0,
     ventasTotales: 0, otIngresosCash: 0, comisionesCash: 0, comisionesTransfer: 0,
-    serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
+    serviciosRecibidosCash: 0, recibosProveedoresCash: 0, reversionesPagosCash: 0, ajustesPositivos: 0,
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0,
     reembolsosCash: 0, reembolsosVoucher: 0, equivCashOtraMoneda: 0,
     equivVouchersOtraMoneda: 0, efectivoEsperado: 0, saldoInicial: 0,
@@ -386,6 +402,17 @@ export function computeDailySummary(
     else if (p.ref_type === 'receipt') recibosProveedoresCash += n(p.total);
   }
 
+  // CP-OPS-ENERVIDA (P0): contra-filas de reversión (direction='reversal') de
+  // pagos a proveedores sobre documentos VÁLIDOS — el dinero volvió al cajón.
+  // El grupo `payments` ya EXCLUYE filas de reversión y de documentos
+  // anulados (regla de elegibilidad de la migración): aquí solo se SUMAN las
+  // entradas de efectivo por la reversión.
+  let reversionesPagosCash = 0;
+  for (const rv of report.payment_reversals || []) {
+    if (!isCur(rv) || !isCash(rv)) continue;
+    if (rv.ref_type === 'service' || rv.ref_type === 'receipt') reversionesPagosCash += n(rv.total);
+  }
+
   let otIngresosCash = 0;
   for (const pr of report.production || []) {
     if (!isCur(pr) || !isCash(pr)) continue;
@@ -448,7 +475,8 @@ export function computeDailySummary(
   const efectivoEsperado =
     saldoInicial + cobrosBilletes + otIngresosCash + ajustesPositivos + ingresosCaja
     - comisionesCash - serviciosRecibidosCash - recibosProveedoresCash - ajustesNegativos - egresosCaja
-    - reembolsosCash;
+    - reembolsosCash
+    + reversionesPagosCash;
 
   // ── MISIÓN EFECTIVO FÍSICO (P0 2026-10-26): valor canónico CUP NETO de los
   //    flujos de efectivo en OTRA moneda del período (solo hoja CUP). Es la
@@ -487,7 +515,7 @@ export function computeDailySummary(
   return {
     currency, ventasCash, ventasTransfer, ventasZelle, ventasMixed, ventasTotales,
     otIngresosCash, comisionesCash, comisionesTransfer, serviciosRecibidosCash,
-    recibosProveedoresCash, ajustesPositivos, ajustesNegativos, ajustesNeto,
+    recibosProveedoresCash, reversionesPagosCash, ajustesPositivos, ajustesNegativos, ajustesNeto,
     ingresosCaja, egresosCaja, reembolsosCash, reembolsosVoucher,
     equivCashOtraMoneda: equivCash, equivVouchersOtraMoneda: equivVouchers,
     efectivoEsperado, saldoInicial, liquidacionBilletes, cobrosBilletes,

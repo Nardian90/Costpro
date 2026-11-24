@@ -953,6 +953,44 @@
       "reason": "PR #1616 (ciclo devolución en divisa): migración 20261114140000 redefine create_devolution_v2 (tasa efectiva exacta en filas de reembolso USD/AS_PAID) CON AUTORIZACIÓN PENDIENTE — producción no debe tocarse sin decisión del propietario. El replay del PR diverge del surface certificado (vivo) hasta que la migración se aplique con autorización; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/nominas). El cuerpo propuesto está validado íntegro en BD E2E aislada (37/37 PASS + net delta 0).",
       "added_by": "CP-FIN misión final 2026-11-13 (PR #1616)",
       "expires": "2026-12-31"
+    },
+    {
+      "function": "delete_master_party/3",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION",
+        "UNEXPECTED_ACL_DRIFT"
+      ],
+      "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120400_cp_ops_enervida_parties_consolidation.sql re-emite la función con la corrección de la misión (guard de historial corregido + desvinculación de locales al borrar maestro sin historial; ACL authenticated CONSERVADA para igualar el LIVE). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
+      "added_by": "CP-OPS-ENERVIDA",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_supplier_payment/12",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION",
+        "UNEXPECTED_ACL_DRIFT"
+      ],
+      "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120000_cp_ops_enervida_payment_reversals.sql re-emite la función con la corrección de la misión (neteo del saldo del documento al revertir el pago (restaura la obligación por el trigger, riel PT007 intacto); ACL authenticated CONSERVADA). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
+      "added_by": "CP-OPS-ENERVIDA",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "set_received_service_status/4",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120100_cp_ops_enervida_service_void_idempotency.sql re-emite la función con la corrección de la misión (la cancelación/anulación revierte los pagos activos del documento (contra-filas reversal) en lugar de dejar salidas fantasma). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
+      "added_by": "CP-OPS-ENERVIDA",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "void_received_service_with_reversal/4",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120100_cp_ops_enervida_service_void_idempotency.sql re-emite la función con la corrección de la misión (el void genera contra-filas direction=reversal enlazadas (reverses_payment_id) en vez de solo anotar notas). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
+      "added_by": "CP-OPS-ENERVIDA",
+      "expires": "2026-12-31"
     }
   ]
 }
