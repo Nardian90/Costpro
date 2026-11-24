@@ -6,6 +6,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { apiFetch } from '@/lib/api-fetch';
 import { useAccountsPayable, type AgingTab, type GroupedPayable, type UnifiedPayable } from '@/hooks/api/useAccountsPayable';
+import { StateRenderer } from '@/components/ui/StateRenderer'; // CP-CI-006 U1: estados canónicos
 import PaymentModal, { type PayableDocument } from './PaymentModal';
 import PaymentHistoryRow from './PaymentHistoryRow';
 
@@ -301,27 +302,35 @@ export default function AccountsPayableView() {
         </select>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3">
-          <p className="text-xs text-destructive font-bold">Error: {error}</p>
-        </div>
-      )}
-
-      {/* Content */}
-      {loading ? (
-        <p className="text-center py-8 text-muted-foreground">Cargando...</p>
-      ) : error ? null : viewMode === 'grouped' ? (
-        <GroupedTableView data={data as GroupedPayable[]} totals={totals} />
-      ) : (
-        <ListView
-          data={data as UnifiedPayable[]}
-          onPay={(doc) => setPaymentModalDoc(doc)}
-          selectedIds={selectedIds}
-          onToggleSelect={toggleSelect}
-          onToggleSelectAll={toggleSelectAll}
-        />
-      )}
+      {/* Content — estados canónicos cargando/vacío/error vía StateRenderer (CP-CI-006 U1) */}
+      <StateRenderer
+        isLoading={loading}
+        error={error ? new Error(error) : null}
+        onRetry={refetch}
+        data={data as UnifiedPayable[]}
+        emptyComponent={
+          <div className="flex flex-col items-center justify-center py-12 gap-2 text-center text-muted-foreground bg-muted/20 border border-border rounded-2xl">
+            <Wallet className="w-8 h-8 opacity-30 mb-1" />
+            <p className="text-sm">
+              {viewMode === 'grouped' ? 'No hay cuentas por pagar en esta categoría' : 'No hay documentos en esta categoría'}
+            </p>
+          </div>
+        }
+      >
+        {() =>
+          viewMode === 'grouped' ? (
+            <GroupedTableView data={data as GroupedPayable[]} totals={totals} />
+          ) : (
+            <ListView
+              data={data as UnifiedPayable[]}
+              onPay={(doc) => setPaymentModalDoc(doc)}
+              selectedIds={selectedIds}
+              onToggleSelect={toggleSelect}
+              onToggleSelectAll={toggleSelectAll}
+            />
+          )
+        }
+      </StateRenderer>
 
       {/* Bulk action bar */}
       {showBulkBar && viewMode === 'list' && (
@@ -375,15 +384,7 @@ export default function AccountsPayableView() {
 // GROUPED TABLE VIEW — estilo Excel con columnas por aging
 // ═════════════════════════════════════════════════════════════════
 function GroupedTableView({ data, totals }: { data: GroupedPayable[]; totals: any }) {
-  if (data.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <Wallet className="w-8 h-8 mx-auto opacity-30 mb-2" />
-        <p className="text-sm">No hay cuentas por pagar en esta categoría</p>
-      </div>
-    );
-  }
-
+  // Estado vacío canónico manejado por StateRenderer en la vista madre (CP-CI-006 U1)
   const fmt = (n: number) => formatCurrency(n, 'CUP');
   const cellClass = (n: number) => cn(
     "p-2 text-right font-mono tabular-nums text-xs",
@@ -474,15 +475,7 @@ function ListView({
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: (items: UnifiedPayable[]) => void;
 }) {
-  if (data.length === 0) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <Wallet className="w-8 h-8 mx-auto opacity-30 mb-2" />
-        <p className="text-sm">No hay documentos en esta categoría</p>
-      </div>
-    );
-  }
-
+  // Estado vacío canónico manejado por StateRenderer en la vista madre (CP-CI-006 U1)
   const payableItems = data.filter(p => p.payment_status !== 'paid');
   const allSelected = payableItems.length > 0 && selectedIds.size === payableItems.length;
 
