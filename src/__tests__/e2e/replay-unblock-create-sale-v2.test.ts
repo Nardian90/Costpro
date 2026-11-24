@@ -537,9 +537,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // ADN-011 · EL DIARIO CONTABLE (PR #1699, 2026-11-24): +1 —
     //   20261124120000_adn011_gaceta_diario_publico (tabla gaceta_posts +
     //   vista pública public_gaceta_v; al FINAL del orden lexicográfico) = 204
-    expect(m.total_incluidos).toBe(204);
+    // CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (2026-11-25): +2 —
+    //   20261125120000_cp_recep001_confirm_notes_link (enlace documental del
+    //   saldo en confirm_pending_reception + backfill conservador) y
+    //   20261125120100_cp_recep001_master_sku_consecutivo (consecutivo oficial
+    //   del Catálogo Maestro; al FINAL del orden lexicográfico) = 206
+    expect(m.total_incluidos).toBe(206);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(204);
+    expect(incluidos.length).toBe(206);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
