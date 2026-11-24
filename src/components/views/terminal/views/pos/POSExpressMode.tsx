@@ -764,20 +764,21 @@ export function POSExpressMode({
 
   /**
    * Panel de carrito compartido: desktop/tablet = columna derecha de ALTURA
-   * COMPLETA (row-span-2 del grid, siempre visible); móvil = cuerpo del
-   * overlay a pantalla completa. Un solo markup, dos presentaciones.
+   * COMPLETA (row-span-2 del grid, siempre visible); móvil = panel a pantalla
+   * completa UNA SOLA CABECERA (la X de cierre vive en el propio panel vía
+   * onCloseMobile — sin cabecera duplicada del overlay). Un solo markup.
    */
-  const cartPanel = (mobile: boolean) => (
+  const cartPanel = (mobile: boolean, onCloseMobile?: () => void) => (
     <div
       className={cn(
         "flex flex-col min-h-0 bg-card",
         mobile
           ? "flex-1"
-          : "hidden md:flex md:col-span-1 md:row-span-2 border-l border-border",
+          : "hidden md:flex md:col-start-2 md:row-start-1 md:row-span-2 border-l border-border",
       )}
       data-testid={mobile ? "express-cart-mobile" : "express-cart-desktop"}
     >
-      {/* Header del carrito */}
+      {/* Header del carrito (en móvil es TAMBIÉN la cabecera del overlay) */}
       <div className="p-3 border-b border-border flex items-center justify-between shrink-0">
         <h2 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2">
           <ShoppingCart className="w-4 h-4" />
@@ -789,6 +790,16 @@ export function POSExpressMode({
           )}
         </h2>
         <div className="flex items-center gap-1">
+          {onCloseMobile && (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              className="w-11 h-11 mr-1 rounded-xl border border-border hover:bg-muted flex items-center justify-center"
+              aria-label="Cerrar carrito"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
           {/* MISIÓN VENDER-EXPRESS: descuento global con el MISMO modal del
               carrito (POSCartDiscountModal — gate de supervisor ≥15%). */}
           {itemCount > 0 && (
@@ -1138,8 +1149,10 @@ export function POSExpressMode({
           de altura (las max-h-[34vh]/[38vh] eran la causa del carrito
           comprimido): cada columna distribuye el viewport real. */}
       <div className="flex-1 min-h-0 grid grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_340px] lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_460px] 2xl:grid-cols-[minmax(0,1fr)_520px]">
-        {/* Fila 1 · col 1: SEARCH compacto */}
-        <div className="border-b border-border px-3 sm:px-6 pt-3 pb-2 shrink-0">
+        {/* Fila 1 · col 1: SEARCH compacto (colocación EXPLÍCITA — el
+            auto-placement llenaba la fila 1 de izquierda a derecha y
+            desplazaba el catálogo a la col 2 y el carrito abajo-izquierda) */}
+        <div className="col-start-1 row-start-1 border-b border-border px-3 sm:px-6 pt-3 pb-2 shrink-0">
           <form onSubmit={handleSearchSubmit} className="max-w-3xl mx-auto">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
@@ -1214,7 +1227,7 @@ export function POSExpressMode({
             max-h fijos: la grid asigna el resto real del viewport. */}
         <div
           id="pos-express-results"
-          className="min-h-0 overflow-y-auto px-3 sm:px-6 py-3"
+          className="col-start-1 row-start-2 min-h-0 overflow-y-auto px-3 sm:px-6 py-3"
         >
           {productsError ? (
             <div
@@ -1499,7 +1512,7 @@ export function POSExpressMode({
             aria-label={`Ver carrito, ${itemCount} productos`}
           >
             <ShoppingCart className="w-4 h-4" />
-            <span className="hidden xs:inline">Carrito</span>
+            <span className="hidden min-[420px]:inline">Carrito</span>
             {itemCount > 0 && (
               <span className="bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full text-[10px] tabular-nums">
                 {itemCount}
@@ -1527,7 +1540,8 @@ export function POSExpressMode({
         </div>
       </div>
 
-      {/* ── MÓVIL: carrito a pantalla completa (mismo panel compartido). */}
+      {/* ── MÓVIL: carrito a pantalla completa (el MISMO panel compartido —
+          una sola cabecera: la X de cierre vive dentro del panel). */}
       {cartOpenMobile && (
         <div
           className="md:hidden fixed inset-0 z-[47] bg-background flex flex-col"
@@ -1535,26 +1549,7 @@ export function POSExpressMode({
           aria-modal="true"
           aria-label="Carrito de la venta"
         >
-          <div className="flex items-center justify-between p-3 border-b border-border bg-card shrink-0">
-            <h2 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2">
-              <ShoppingCart className="w-4 h-4" />
-              Carrito
-              {itemCount > 0 && (
-                <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-[10px] tabular-nums">
-                  {itemCount}
-                </span>
-              )}
-            </h2>
-            <button
-              type="button"
-              onClick={() => setCartOpenMobile(false)}
-              className="w-11 h-11 rounded-xl border border-border hover:bg-muted flex items-center justify-center"
-              aria-label="Cerrar carrito"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          {cartPanel(true)}
+          {cartPanel(true, () => setCartOpenMobile(false))}
         </div>
       )}
 
