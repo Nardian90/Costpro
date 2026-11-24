@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 618,
-  "total_incluidos": 203,
+  "total_considerados": 619,
+  "total_incluidos": 204,
   "total_excluidos": 415,
-  "digest": "5358b233a005e08d4df5d4aca1989a22cfb33669ff0b95424606f5a10b26b376",
+  "digest": "bd3f000d66e385d98f871634465f87948bd8d76af40108fbace2fa11aa8d4259",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6060,6 +6060,17 @@
       "sha256_generado": "99bef0e2d35ddcf890a75acbdf9ee4d3efb0235b42669fce20895295b0a8131a"
     },
     {
+      "nombre": "20261124120000_adn011_gaceta_diario_publico.sql",
+      "bytes": 8248,
+      "sha256_original": "80aec1a7c0ac94a9ba98dc06d71b7462326412322bc8f521a3bbc71451435d5d",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261124",
+      "observaciones": [],
+      "posicion": 199,
+      "sha256_generado": "80aec1a7c0ac94a9ba98dc06d71b7462326412322bc8f521a3bbc71451435d5d"
+    },
+    {
       "nombre": "20261124120000_cp_ops_enervida_payment_reversals.sql",
       "bytes": 21242,
       "sha256_original": "8fbf0fe7b6961c2eeaa0f363c100a0081f7a092354acb05d6fd6bb4cd8ef916d",
@@ -6067,7 +6078,7 @@
       "razon": null,
       "timestamp": "20261124",
       "observaciones": [],
-      "posicion": 199,
+      "posicion": 200,
       "sha256_generado": "8fbf0fe7b6961c2eeaa0f363c100a0081f7a092354acb05d6fd6bb4cd8ef916d"
     },
     {
@@ -6078,7 +6089,7 @@
       "razon": null,
       "timestamp": "20261124",
       "observaciones": [],
-      "posicion": 200,
+      "posicion": 201,
       "sha256_generado": "7e13569d15dd51e9cbcd2c63f9fee47a2c46174a041b20e53645f10679fe4603"
     },
     {
@@ -6089,7 +6100,7 @@
       "razon": null,
       "timestamp": "20261124",
       "observaciones": [],
-      "posicion": 201,
+      "posicion": 202,
       "sha256_generado": "f1277bc1a20a2586930b969ece2d95e3efc880f340b268550ec044cf128f3ef8"
     },
     {
@@ -6100,7 +6111,7 @@
       "razon": null,
       "timestamp": "20261124",
       "observaciones": [],
-      "posicion": 202,
+      "posicion": 203,
       "sha256_generado": "3f07398873f85bbae8c6ece6023805e38efab517f1f31cdb2f9c90fdae21a084"
     },
     {
@@ -6111,7 +6122,7 @@
       "razon": null,
       "timestamp": "20261124",
       "observaciones": [],
-      "posicion": 203,
+      "posicion": 204,
       "sha256_generado": "6ddfb3a4e2dbc7914c1d222c7586e1b791fba3eb40e51511a0bab037afe3f421"
     },
     {

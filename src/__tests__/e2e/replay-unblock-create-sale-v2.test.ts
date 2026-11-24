@@ -534,9 +534,12 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   del Reporte Entrega, 20261124120300 liquidación múltiple CxP y
     //   20261124120400 consolidación de terceros (todas al FINAL del orden
     //   lexicográfico — posiciones previas intactas) = 203
-    expect(m.total_incluidos).toBe(203);
+    // ADN-011 · EL DIARIO CONTABLE (PR #1699, 2026-11-24): +1 —
+    //   20261124120000_adn011_gaceta_diario_publico (tabla gaceta_posts +
+    //   vista pública public_gaceta_v; al FINAL del orden lexicográfico) = 204
+    expect(m.total_incluidos).toBe(204);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(203);
+    expect(incluidos.length).toBe(204);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -625,6 +628,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261110120000_cp_plantillas_privadas_propietario.sql')).toBe(142);
     // GESTIÓN-MAESTRO (2026-11-11): última del tramo — guardas de SKU ante movimientos
     expect(pos('20261111120000_cp_catalogo_master_gestion_tienda.sql')).toBe(143);
+    // ADN-011 (PR #1699): la gaceta comparte timestamp 20261124120000 con
+    //   CP-OPS-ENERVIDA; el sufijo _adn011 la coloca ANTES de las 5 de cp_ops.
+    expect(pos('20261124120000_adn011_gaceta_diario_publico.sql')).toBe(199);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }
