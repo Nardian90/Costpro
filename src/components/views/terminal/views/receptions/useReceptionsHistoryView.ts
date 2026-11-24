@@ -320,14 +320,22 @@ export function useReceptionsHistoryView() {
   // oficial SC-2-04 «Informe de Recepción» (Res. 11/2007 MFP). Solo lectura:
   // la función lee los datos bajo RLS y genera el PDF — no muta ningún
   // registro, inventario ni estado de la recepción.
+  // CP-RECEP-001 §1: el usuario decide si el PDF lleva los valores económicos
+  // (checkbox en el modal de detalle; default marcado = comportamiento vigente).
   const [isExportingSc204, setIsExportingSc204] = useState(false);
+  const [includeSc204Values, setIncludeSc204Values] = useState(true);
   const handleExportSc204 = async () => {
     if (!selectedReceipt) return;
     setIsExportingSc204(true);
     const toastId = toast.loading('Generando SC-2-04 (PDF)...');
     try {
-      await exportSc204ForReceipt(selectedReceipt, user?.activeStoreId);
-      toast.success('Informe SC-2-04 generado', { id: toastId });
+      await exportSc204ForReceipt(selectedReceipt, user?.activeStoreId, {
+        incluirValoresEconomicos: includeSc204Values,
+      });
+      toast.success(
+        includeSc204Values ? 'Informe SC-2-04 generado' : 'Informe SC-2-04 generado sin valores económicos',
+        { id: toastId },
+      );
     } catch (error) {
       logger.error('SYSTEM', 'SC204_EXPORT_FAILED', { error });
       toast.error('No se pudo generar el SC-2-04: ' + (error instanceof Error ? error.message : String(error)), { id: toastId, duration: 8000 });
@@ -434,6 +442,9 @@ export function useReceptionsHistoryView() {
     // MISIÓN RESOLUCIÓN 11: exportación SC-2-04
     handleExportSc204,
     isExportingSc204,
+    // CP-RECEP-001 §1: opción de valores económicos del PDF
+    includeSc204Values,
+    setIncludeSc204Values,
     isInverting: invertDocumentMutation.isPending,
 
     // R2: modal de inversión estilado

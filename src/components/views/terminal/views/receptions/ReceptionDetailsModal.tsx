@@ -36,6 +36,10 @@ interface ReceptionDetailsModalProps {
   // «Informe de Recepción» en PDF (solo lectura, Res. 11/2007 MFP).
   onExportSc204Pdf?: () => void;
   isExportingSc204?: boolean;
+  // CP-RECEP-001 §1: el usuario decide si el PDF incluye los valores
+  // económicos (columnas Precio unitario/Importe y totales). Solo representación.
+  includeSc204Values?: boolean;
+  onToggleSc204Values?: (next: boolean) => void;
   // Nuevas props para edición y anulación:
   isEditMode?: boolean;
   onUpdateSubmit?: (updates: { supplier?: string; referenceDoc?: string; itemUpdates?: Array<{ id: string; quantity: number; unit_cost: number; deleted: boolean }> }) => void;
@@ -58,6 +62,8 @@ export function ReceptionDetailsModal({
   onExport,
   onExportSc204Pdf,
   isExportingSc204 = false,
+  includeSc204Values = true,
+  onToggleSc204Values,
   isEditMode = false,
   onUpdateSubmit,
   onVoidRequest,
@@ -225,16 +231,37 @@ export function ReceptionDetailsModal({
               </p>
             )}
             {!isEditMode && !isConfirmPendingMode && (
-              <button
-                onClick={onExportSc204Pdf}
-                disabled={isExportingSc204}
-                className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95 disabled:opacity-50"
-                type="button"
-                aria-label="Exportar recepción como modelo oficial SC-2-04 Informe de Recepción en PDF"
-              >
-                <FileDown className="w-4 h-4" aria-hidden="true" />
-                {isExportingSc204 ? 'Generando…' : 'Exportar SC-2-04 (PDF)'}
-              </button>
+              <div className="flex flex-col items-start gap-1">
+                {/* CP-RECEP-001 §1: opción visible del proceso de exportación —
+                    ☑ Incluir valores económicos / ☐ Exportar sin valores.
+                    Afecta EXCLUSIVAMENTE la representación del PDF. */}
+                <label
+                  htmlFor="sc204-include-values"
+                  className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground cursor-pointer select-none hover:text-foreground transition-colors"
+                  title="Desmarcar genera el SC-2-04 sin las columnas Precio unitario e Importe ni totales (solo representación; los registros quedan intactos)"
+                >
+                  <input
+                    id="sc204-include-values"
+                    type="checkbox"
+                    checked={includeSc204Values}
+                    disabled={isExportingSc204}
+                    onChange={(e) => onToggleSc204Values?.(e.target.checked)}
+                    className="w-3.5 h-3.5 accent-[var(--primary)] cursor-pointer disabled:opacity-50"
+                    data-testid="sc204-include-values"
+                  />
+                  Incluir valores económicos
+                </label>
+                <button
+                  onClick={onExportSc204Pdf}
+                  disabled={isExportingSc204}
+                  className="flex items-center gap-2 px-4 py-3 bg-background border border-border rounded-xl text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-foreground transition-all active:scale-95 disabled:opacity-50"
+                  type="button"
+                  aria-label={includeSc204Values ? 'Exportar recepción como modelo oficial SC-2-04 Informe de Recepción en PDF, con valores económicos' : 'Exportar recepción como modelo oficial SC-2-04 Informe de Recepción en PDF, sin valores económicos'}
+                >
+                  <FileDown className="w-4 h-4" aria-hidden="true" />
+                  {isExportingSc204 ? 'Generando…' : includeSc204Values ? 'Exportar SC-2-04 (PDF)' : 'Exportar SC-2-04 sin valores'}
+                </button>
+              </div>
             )}
             {!isEditMode && !isConfirmPendingMode && (
               <button

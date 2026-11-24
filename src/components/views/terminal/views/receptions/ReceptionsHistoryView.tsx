@@ -92,6 +92,9 @@ export default function ReceptionsHistoryView() {
     // MISIÓN RESOLUCIÓN 11 (2026-10-29): exportación SC-2-04
     handleExportSc204,
     isExportingSc204,
+    // CP-RECEP-001 §1: opción de valores económicos del PDF
+    includeSc204Values,
+    setIncludeSc204Values,
     receiptItems,
     loadingDetails,
     // FM-06 additions
@@ -564,6 +567,9 @@ export default function ReceptionsHistoryView() {
         // MISIÓN RESOLUCIÓN 11 (2026-10-29): modelo oficial SC-2-04 (solo lectura)
         onExportSc204Pdf={() => handleExportSc204()}
         isExportingSc204={isExportingSc204}
+        // CP-RECEP-001 §1: decisión del usuario sobre valores económicos
+        includeSc204Values={includeSc204Values}
+        onToggleSc204Values={setIncludeSc204Values}
         isEditMode={isEditMode}
         onUpdateSubmit={(updates) => selectedReceipt && handleUpdateSubmit(selectedReceipt.id, updates)}
         onVoidRequest={() => selectedReceipt && handleVoidConfirm(selectedReceipt!)}
