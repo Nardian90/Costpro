@@ -294,9 +294,12 @@ const VIEW_TO_HUB_MAP: Record<string, { hubId: string; leafLabel: string }> = {
   // menú del grupo Ventas (hijo directo, entre Vender y Opciones) y su
   // breadcrumb se deriva del árbol de la definición (fuente única):
   // Inicio > OPERACIÓN > Ventas > Reporte Entrega.
-  'accounts-payable': { hubId: 'sales-hub', leafLabel: 'Cuentas por Pagar' },
-  accounts_payable: { hubId: 'sales-hub', leafLabel: 'Cuentas por Pagar' },
-  accounts_receivable: { hubId: 'sales-hub', leafLabel: 'Cobros por Antigüedad' },
+  // CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): las claves
+  // 'accounts-payable' / 'accounts_payable' / 'accounts_receivable' se
+  // RETIRAN de este mapa — las tres vistas son hojas de menú del submenú
+  // FINANZAS y su breadcrumb se deriva del árbol (fuente única):
+  // Inicio > OPERACIÓN > FINANZAS > <vista>. Los deep-links kebab
+  // normalizan vía LEGACY_VIEW_ALIASES antes de llegar aquí.
   // Tabs contextuales de Inventario (Almacén)
   catalog: { hubId: 'inventory', leafLabel: 'Catálogo' },
   history: { hubId: 'inventory', leafLabel: 'Trazabilidad (Movimientos de Stock)' },

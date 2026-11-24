@@ -42,7 +42,7 @@ import {
   ShoppingCart, Table2, Receipt, DollarSign,
   ArrowRight, Wallet, TrendingUp, ClipboardList,
   AlertCircle, Package as PackageIcon, FileClock,
-  CreditCard, RotateCcw, FileText, Megaphone, Users,
+  RotateCcw, FileText, Megaphone, Users,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import PageHeader from "@/components/ui/PageHeader";
@@ -82,7 +82,13 @@ interface HubCard {
  * del dominio, no una segunda navegación primaria.
  *
  * Orden secundario (§19): Tabla de Venta → Venta por Conteo → Devoluciones
- * → Cotizaciones → Cuentas por Pagar → Cobros por Antigüedad.
+ * → Cotizaciones → Ofertas → Clientes.
+ *
+ * MISIÓN CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): las tarjetas
+ * «Cuentas por Pagar» y «Cobros por Antigüedad» (Cuentas por Cobrar) se
+ * RETIRAN del hub — ambas vistas son hojas de menú del submenú FINANZAS de
+ * OPERACIÓN (fuente única de navegación). Mismas vistas, mismas rutas,
+ * mismos roles: sin segunda implementación (§17).
  *
  * CAMBIO 2026-10 — DENSIDAD VISUAL: las 3 tarjetas primarias pasan de
  * composición vertical (icono arriba, mucho padding y espacio vacío) a
@@ -225,27 +231,11 @@ const SECONDARY_CARDS: HubCard[] = [
     bgColor: "bg-info/5",
     borderColor: "border-info/20",
   },
-  {
-    id: "accounts_payable",
-    title: "Cuentas por Pagar",
-    description: "Antigüedad de saldos: recepciones, servicios recibidos y comisiones. Filtra por vencimiento, paga a proveedores y exporta a Excel.",
-    icon: CreditCard,
-    view: "accounts_payable",
-    color: "text-destructive",
-    bgColor: "bg-destructive/5",
-    borderColor: "border-destructive/20",
-  },
-  // V2.12.36: Cobros por Antigüedad — espejo de Cuentas por Pagar para cobros a clientes
-  {
-    id: "accounts_receivable",
-    title: "Cobros por Antigüedad",
-    description: "Antigüedad de saldos de clientes: órdenes de producción/servicio con saldo pendiente. Filtra por vencimiento y exporta a CSV.",
-    icon: CreditCard,
-    view: "accounts_receivable",
-    color: "text-success",
-    bgColor: "bg-success/5",
-    borderColor: "border-success/20",
-  },
+  // MISIÓN CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): las tarjetas
+  // accounts_payable («Cuentas por Pagar») y accounts_receivable («Cobros por
+  // Antigüedad», hoy «Cuentas por Cobrar») se retiraron de SECONDARY_CARDS —
+  // son hojas del submenú FINANZAS (OPERACIÓN). La navegación hacia ellas
+  // sigue funcionando: mismo ViewType, mismo componente, mismo guard.
 ];
 
 export default function SalesHubView() {

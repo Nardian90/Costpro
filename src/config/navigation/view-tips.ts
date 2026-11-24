@@ -45,7 +45,9 @@ export const VIEW_TIPS: Record<string, string> = {
   'exchange-intelligence': 'Simula escenarios de devaluación cambiaria',
   'reports': 'Diseña reportes con filtros personalizados',
   'pos': 'Escáner de código de barras integrado — presiona F2',
-  'sales-hub': 'Opciones de ventas: Historial, Devoluciones, Cotizaciones, Cuentas y más',
+  // CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): «Cuentas» sale del tip del
+  // hub — esas vistas son hojas del submenú FINANZAS (OPERACIÓN).
+  'sales-hub': 'Opciones de ventas: Historial, Devoluciones, Cotizaciones, Clientes y más',
   'cash_report': 'Cuadre y desglose de billetes para la entrega de dinero del día',
   'ipv_ventas': 'Conciliación de existencias e ingresos por producto — genera el informe con tus fechas',
   'ofertas': 'Crea promociones y combos activos',

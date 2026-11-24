@@ -41,9 +41,10 @@ import { useApplyWorkDateDefault } from '@/hooks/ui/useWorkDateDefault';
 
 /**
  * F2: Servicios Recibidos y Costos Asociados.
- * MISIÓN ARQUITECTURA UX (2026-10-23): vista principal del módulo
- * OPERACIÓN → Logística → Servicios Recibidos (antes: Almacén).
- * Mismo ViewType 'received-services' — sin cambio de rutas ni APIs.
+ * CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): vista principal del módulo
+ * OPERACIÓN → FINANZAS → Servicios Recibidos (historial: Almacén hasta
+ * 2026-10-23, Logística hasta 2026-11-25). Mismo ViewType
+ * 'received-services' — sin cambio de rutas ni APIs ni lógica.
  */
 
 // Exportado para pruebas de componentes consumidores.

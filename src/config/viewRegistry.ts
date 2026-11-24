@@ -199,9 +199,17 @@ export const VIEW_REGISTRY: ViewRegistryItem[] = [
     actions: ["view_details", "reverse_vale"]
   },
   {
+    // CP-NAV-FINANCE-REORGANIZATION-001 (2026-11-25): hub FINANZAS (renombre
+    // del histórico 'caja', que permanece como alias de deep-link).
+    id: "finanzas",
+    route: "/?view=finanzas",
+    description: "Central financiera de la tienda (OPERACIÓN): Servicios Recibidos, Cuentas por Cobrar, Cuentas por Pagar, Caja (turnos/arqueo) e Ingresos/Egresos.",
+    actions: ["open_received_services", "open_accounts_receivable", "open_accounts_payable", "open_cash", "open_ingresos_egresos"]
+  },
+  {
     id: "caja",
     route: "/?view=caja",
-    description: "Hub de Caja (OPERACIÓN): turnos/arqueo de la vista Caja y documentos de Ingresos/Egresos de efectivo.",
+    description: "Hub de Caja (alias histórico del hub FINANZAS): turnos/arqueo de la vista Caja y documentos de Ingresos/Egresos de efectivo.",
     actions: ["open_cash", "open_ingresos_egresos"]
   },
   {

@@ -79,11 +79,13 @@ Vistas mas comunes y sus viewId:
 - Ventas (hub del ciclo comercial): sales-hub
 - Historial de Ventas: sales
 - Caja (arqueo y turnos): cash
+- Servicios Recibidos (FINANZAS): received-services
+- Cuentas por Pagar (FINANZAS): accounts_payable
+- Cuentas por Cobrar (FINANZAS): accounts_receivable
 - Inventario: inventory
 - Catalogo: catalog
 - Fichas de Costo: cost-sheets
 - Recepciones: reception_list
-- Cuentas por Pagar: accounts_payable
 - Reporte de Entrega: cash_report
 - Trabajadores: workers
 - Transferencias: transferencias
