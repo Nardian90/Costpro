@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-21T20:54:51.889Z
+-- Captured  : 2026-11-24T20:43:30.025Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 222 (SECURITY DEFINER write functions, public schema)
+-- Functions : 224 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -2894,8 +2894,12 @@ BEGIN
 
     UPDATE products SET updated_at = v_effective_date WHERE id = v_item.product_id AND store_id = v_store_id;
 
-    INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, created_at, created_by, movement_date)
-    VALUES (v_item.product_id, v_store_id, 'purchase'::movement_type, v_units_to_add, v_unit_cost_cup, 'Confirmacion recepcion', v_effective_date, v_caller_uid, v_effective_date);
+    -- CP-RECEP-001: el movimiento de confirmación porta el ENLACE DOCUMENTAL
+    -- (notes = receipt.id) exigido por la doctrina del saldo posterior
+    -- (lib/inventory/saldo-posterior.ts) — en paridad con register_reception.
+    -- Antes quedaba notes=NULL y el SC-2-04 imprimía «s/d» injustificado.
+    INSERT INTO stock_movements (product_id, store_id, movement_type, quantity_change, unit_cost, reference_doc, notes, created_at, created_by, movement_date)
+    VALUES (v_item.product_id, v_store_id, 'purchase'::movement_type, v_units_to_add, v_unit_cost_cup, 'Confirmacion recepcion', p_receipt_id::text, v_effective_date, v_caller_uid, v_effective_date);
   END LOOP;
 
   UPDATE receipts
@@ -3463,6 +3467,101 @@ BEGIN
     'usd_exterior_final', round(v_usd_ext, 2),
     'usd_reclasificados_efectivo', round(v_usd_cash, 2),
     'residual_zelle', v_residual);
+END $function$
+
+
+-- @contract-function name=cp_recep001_backfill_confirm_notes args="p_dry_run boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cp_recep001_backfill_confirm_notes(p_dry_run boolean DEFAULT false)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_batch RECORD;
+  v_candidate RECORD;
+  v_n_candidates int;
+  v_items_count int;
+  v_linked int := 0;
+  v_batches int := 0;
+  v_skipped int := 0;
+  v_mov_count int;
+BEGIN
+  -- Lotes de confirmación huérfanos: misma tienda + created_at idéntico.
+  FOR v_batch IN
+    SELECT store_id, created_at, count(*) AS movs
+    FROM public.stock_movements
+    WHERE movement_type = 'purchase'
+      AND notes IS NULL
+      AND reference_doc = 'Confirmacion recepcion'
+    GROUP BY store_id, created_at
+  LOOP
+    -- Recepción candidata: misma tienda, activa, confirmada en ESE instante
+    -- (confirm_pending_reception escribe updated_at = v_effective_date, que es
+    -- exactamente el created_at de sus movimientos). La candidata es válida
+    -- SOLO si es ÚNICA (conteo explícito: dos recepciones confirmadas en el
+    -- mismo instante con items solapados serían ambiguas → conservar).
+    SELECT count(*) INTO v_n_candidates
+    FROM public.receipts r
+    WHERE r.store_id = v_batch.store_id
+      AND r.status = 'active'
+      AND r.updated_at = v_batch.created_at;
+    IF v_n_candidates <> 1 THEN
+      v_skipped := v_skipped + v_batch.movs;
+      CONTINUE;
+    END IF;
+
+    SELECT r.id, (SELECT count(*) FROM public.receipt_items ri WHERE ri.receipt_id = r.id) AS items
+      INTO v_candidate
+    FROM public.receipts r
+    WHERE r.store_id = v_batch.store_id
+      AND r.status = 'active'
+      AND r.updated_at = v_batch.created_at;
+
+    SELECT count(*) INTO v_mov_count
+    FROM public.stock_movements m
+    WHERE m.store_id = v_batch.store_id AND m.created_at = v_batch.created_at
+      AND m.movement_type = 'purchase' AND m.notes IS NULL
+      AND m.reference_doc = 'Confirmacion recepcion'
+      AND EXISTS (
+        SELECT 1 FROM public.receipt_items ri
+        WHERE ri.receipt_id = v_candidate.id
+          AND ri.product_id = m.product_id
+          AND ri.quantity = m.quantity_change
+      );
+
+    v_items_count := v_candidate.items;
+    -- Emparejamiento inequívoco: cada movimiento tiene su ítem y los conteos
+    -- coinciden 1-a-1 (el lote completo pertenece a ESA recepción).
+    IF v_mov_count = v_batch.movs AND v_items_count = v_batch.movs THEN
+      v_batches := v_batches + 1;
+      IF NOT p_dry_run THEN
+        UPDATE public.stock_movements m
+        SET notes = v_candidate.id::text
+        WHERE m.store_id = v_batch.store_id AND m.created_at = v_batch.created_at
+          AND m.movement_type = 'purchase' AND m.notes IS NULL
+          AND m.reference_doc = 'Confirmacion recepcion';
+        INSERT INTO public.audit_logs (action, table_name, record_id, store_id, metadata)
+        VALUES ('CP_RECEP001_CONFIRM_NOTES_BACKFILL', 'stock_movements', v_candidate.id, v_batch.store_id,
+          jsonb_build_object(
+            'receipt_id', v_candidate.id,
+            'movements_linked', v_batch.movs,
+            'movement_instant', v_batch.created_at,
+            'rule', 'updated_at==created_at ∧ multiset(producto,cantidad) completo e inequívoco',
+            'mission', 'CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001'));
+      END IF;
+      v_linked := v_linked + v_batch.movs;
+    ELSE
+      v_skipped := v_skipped + v_batch.movs;
+    END IF;
+  END LOOP;
+
+  RETURN jsonb_build_object(
+    'dry_run', p_dry_run,
+    'batches_linked', v_batches,
+    'movements_linked', v_linked,
+    'movements_skipped_conservados', v_skipped
+  );
 END $function$
 
 
@@ -7782,6 +7881,97 @@ BEGIN
 
   RETURN jsonb_build_object('status', 'success', 'pi_id', p_pi_id,
                             'pi_number', v_pi.pi_number);
+END;
+$function$
+
+
+-- @contract-function name=delete_received_service_draft args="p_service_id uuid, p_user_id uuid, p_reason text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.delete_received_service_draft(p_service_id uuid, p_user_id uuid DEFAULT NULL::uuid, p_reason text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE
+  v_store_id uuid;
+  v_status text;
+  v_service_number text;
+  v_supplier text;
+  v_total numeric;
+  v_currency text;
+  v_snapshot jsonb;
+  v_payments integer;
+  v_distributions integer;
+  v_posted integer;
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext(p_service_id::text));
+
+  SELECT store_id, status, service_number, supplier, total_amount, currency
+  INTO v_store_id, v_status, v_service_number, v_supplier, v_total, v_currency
+  FROM received_services WHERE id = p_service_id FOR UPDATE;
+
+  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_SERVICE_NOT_FOUND'; END IF;
+
+  -- Autorización del ACTOR sobre la tienda REAL del documento (patrón ADN-009).
+  IF v_caller_uid IS NULL OR NOT public.can_manage_store_as(v_caller_uid, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- Solo borradores: los documentos activos se ANULAN (con asiento de
+  -- reversión), jamás se eliminan físicamente.
+  IF v_status <> 'draft' THEN
+    RAISE EXCEPTION 'ERR_NOT_DRAFT: solo los documentos en Borrador pueden eliminarse (estado actual: %)', v_status;
+  END IF;
+
+  -- Dependencias incompatibles con el borrado físico.
+  SELECT COUNT(*) INTO v_payments
+    FROM payment_transactions
+   WHERE ref_type = 'service' AND ref_id = p_service_id;
+  IF v_payments > 0 THEN
+    RAISE EXCEPTION 'ERR_HAS_PAYMENTS: el borrador tiene % pago(s) registrado(s); cáncelalo en su lugar', v_payments;
+  END IF;
+
+  SELECT COUNT(*) INTO v_distributions
+    FROM service_cost_distributions
+   WHERE service_id = p_service_id;
+  IF v_distributions > 0 THEN
+    RAISE EXCEPTION 'ERR_HAS_DISTRIBUTIONS: el borrador tiene distribuciones de costo calculadas; cáncelalo en su lugar';
+  END IF;
+
+  -- Defensa contable (en un borrador sano no existen asientos).
+  SELECT COUNT(*) INTO v_posted
+    FROM fin_entries
+   WHERE document_type = 'SERVICIO_RECIBIDO' AND document_id = p_service_id;
+  IF v_posted > 0 THEN
+    RAISE EXCEPTION 'ERR_ALREADY_POSTED: el documento tiene asientos contables; anúlalo en su lugar';
+  END IF;
+
+  -- Trazabilidad PRIMERO (sobrevive al DELETE del documento).
+  SELECT to_jsonb(rs.*) INTO v_snapshot
+    FROM received_services rs WHERE rs.id = p_service_id;
+
+  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (v_caller_uid, v_store_id, 'SERVICE_DRAFT_DELETED', 'received_services', p_service_id,
+    jsonb_build_object(
+      'service_number', v_service_number,
+      'supplier', v_supplier,
+      'total_amount', v_total,
+      'currency', v_currency,
+      'reason', p_reason,
+      'snapshot', v_snapshot
+    ));
+
+  DELETE FROM received_services WHERE id = p_service_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'deleted', true,
+    'service_number', v_service_number
+  );
 END;
 $function$
 
@@ -15259,6 +15449,8 @@ DECLARE
   v_new_sku TEXT;
   v_new_tenant_id UUID;
   v_created_skus TEXT[] := '{}';
+  -- CP-RECEP-001: conteo de códigos oficiales asignados por el servidor
+  v_new_skus_autoassigned int := 0;
   v_new_products_count INTEGER := 0;
   -- CP-CAT-MAESTRO-003: sincronización con el catálogo maestro
   v_store_connected BOOLEAN := FALSE;
@@ -15319,11 +15511,24 @@ BEGIN
       END IF;
       v_new_product := v_item->'new_product';
       v_new_sku := btrim(COALESCE(v_new_product->>'sku', ''));
-      IF v_new_sku = '' THEN
-        RAISE EXCEPTION 'ERR_NEW_PRODUCT_INVALID: el producto nuevo requiere sku';
-      END IF;
       IF btrim(COALESCE(v_new_product->>'name', '')) = '' THEN
         RAISE EXCEPTION 'ERR_NEW_PRODUCT_INVALID: el producto nuevo % requiere nombre', v_new_sku;
+      END IF;
+      -- CP-RECEP-001: el tenant se resuelve ANTES de la asignación de código.
+      IF v_new_tenant_id IS NULL THEN
+        SELECT tenant_id INTO v_new_tenant_id FROM public.stores WHERE id = p_store_id;
+        IF v_new_tenant_id IS NULL THEN
+          RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: no se pudo resolver el tenant de la tienda %', p_store_id;
+        END IF;
+      END IF;
+      -- CP-RECEP-001: producto nuevo SIN SKU tecleado → el SERVIDOR le asigna
+      -- el siguiente código del consecutivo OFICIAL del Catálogo Maestro
+      -- (next_master_catalog_sku, advisory xact lock por tenant). Ya no se
+      -- exige SKU tecleado ni se depende del generador AUTO-* del cliente
+      -- (eliminado del frontend: producía códigos fuera del consecutivo).
+      IF v_new_sku = '' THEN
+        v_new_sku := public.next_master_catalog_sku(v_new_tenant_id);
+        v_new_skus_autoassigned := v_new_skus_autoassigned + 1;
       END IF;
       IF v_new_sku = ANY (v_created_skus) THEN
         RAISE EXCEPTION 'ERR_SKU_DUPLICATE_PAYLOAD: el SKU "%" aparece más de una vez entre los productos nuevos de la recepción', v_new_sku;
@@ -15335,6 +15540,7 @@ BEGIN
         RAISE EXCEPTION 'ERR_SKU_EXISTS: el SKU "%" ya existe en el catálogo de esta tienda. Selecciona el producto existente (o actívalo desde el Catálogo Maestro con el asistente de importación) en lugar de crearlo de nuevo.', v_new_sku;
       END IF;
       IF v_new_tenant_id IS NULL THEN
+        -- (CP-RECEP-001: ya resuelto antes de asignar código; guard defensivo)
         SELECT tenant_id INTO v_new_tenant_id FROM public.stores WHERE id = p_store_id;
         IF v_new_tenant_id IS NULL THEN
           RAISE EXCEPTION 'ERR_STORE_NOT_FOUND: no se pudo resolver el tenant de la tienda %', p_store_id;
@@ -15572,7 +15778,8 @@ BEGIN
       'po_id', p_po_id,
       'new_products_created', v_new_products_count,
       'new_products_master_created', v_master_created_count,
-      'new_products_master_linked', v_master_linked_count
+      'new_products_master_linked', v_master_linked_count,
+      'new_products_sku_autoassigned', v_new_skus_autoassigned
     ));
 
   RETURN v_receipt_id;
@@ -16472,6 +16679,8 @@ DECLARE
   v_masters_created int := 0;
   v_masters_reactivated int := 0;
   v_blocked int := 0;
+  -- CP-RECEP-001: códigos del consecutivo oficial asignados por el servidor
+  v_auto_skus_assigned int := 0;
   v_valid_lines int := 0;
   v_seen_skus text[] := '{}';
 BEGIN
@@ -16694,6 +16903,17 @@ BEGIN
           CONTINUE;
         END IF;
 
+        -- CP-RECEP-001: filas sin SKU reciben el siguiente código del
+        -- consecutivo OFICIAL del Catálogo Maestro. Asignación SERVIDOR y
+        -- transaccional (advisory xact lock por tenant dentro del generador);
+        -- NUNCA MAX+1 desde el cliente. Dos tiendas creando productos a la
+        -- vez obtienen códigos distintos; un fallo posterior de la fila no
+        -- quema el código (el generador no persiste nada por sí solo).
+        IF v_sku IS NULL THEN
+          v_sku := public.next_master_catalog_sku(v_tenant);
+          v_auto_skus_assigned := v_auto_skus_assigned + 1;
+        END IF;
+
         BEGIN
           INSERT INTO public.master_products
             (tenant_id, sku, name, barcode, barcode_type, unit_of_measure,
@@ -16754,7 +16974,9 @@ BEGIN
 
         v_valid_lines := v_valid_lines + 1;
         v_results := v_results || jsonb_build_object(
-          'index', v_idx, 'sku', v_class->>'sku', 'status', 'new_master',
+          'index', v_idx, 'sku', v_sku,
+          'sku_assigned_by_server', ((v_class->>'sku') IS NULL),
+          'status', 'new_master',
           'action', 'master_and_local_created', 'product_id', v_product_id,
           'master_product_id', v_master_id, 'master_created', v_master_created,
           'product_name', v_master_name,
@@ -16802,6 +17024,7 @@ BEGIN
       'locals_activated', v_local_activated,
       'blocked', v_blocked,
       'valid_lines', v_valid_lines,
+      'auto_skus_assigned', v_auto_skus_assigned,
       'computed_by', 'backend'
     ),
     'results', v_results,

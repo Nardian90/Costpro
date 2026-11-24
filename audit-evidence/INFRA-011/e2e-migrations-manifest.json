@@ -165,7 +165,7 @@
   "total_considerados": 621,
   "total_incluidos": 206,
   "total_excluidos": 415,
-  "digest": "035661974f4b272e361fbd5f0f301e04c360a13c39494a4a3d79ca0e56fdf35f",
+  "digest": "fb86edfd95019956fb04754d95c233cf460aa2a82dbc5ce1b048acee7ca65d1f",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6127,14 +6127,14 @@
     },
     {
       "nombre": "20261125120000_cp_recep001_confirm_notes_link.sql",
-      "bytes": 13280,
-      "sha256_original": "c789af6f46d9dab982f8de277e1fe76b7eaac11343dd2a6d73038fc0be7d6f56",
+      "bytes": 13678,
+      "sha256_original": "c180f11217a5cabae4f09c26e2378f496c861cab75a9d04d34feeef25c7318d5",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261125",
       "observaciones": [],
       "posicion": 205,
-      "sha256_generado": "c789af6f46d9dab982f8de277e1fe76b7eaac11343dd2a6d73038fc0be7d6f56"
+      "sha256_generado": "c180f11217a5cabae4f09c26e2378f496c861cab75a9d04d34feeef25c7318d5"
     },
     {
       "nombre": "20261125120100_cp_recep001_master_sku_consecutivo.sql",

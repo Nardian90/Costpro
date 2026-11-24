@@ -201,7 +201,12 @@ BEGIN
   );
 END $function$;
 
-REVOKE EXECUTE ON FUNCTION public.cp_recep001_backfill_confirm_notes(boolean) FROM PUBLIC, anon;
+-- ACL EXCLUSIVA service_role: Supabase otorga EXECUTE a authenticated POR
+-- DEFECTO (ALTER DEFAULT PRIVILEGES) en el momento de crear la función, así que
+-- el REVOKE explícito de authenticated es OBLIGATORIO para que la exclusiva sea
+-- real (detectado por Capa C del security contract: UNEXPECTED_ACL_DRIFT entre
+-- el surface LIVE y el replay de migraciones; CI 2026-11-24).
+REVOKE EXECUTE ON FUNCTION public.cp_recep001_backfill_confirm_notes(boolean) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.cp_recep001_backfill_confirm_notes(boolean) TO service_role;
 
 -- Aplicar el backfill UNA SOLA VEZ (regla de oro productiva; idempotente).

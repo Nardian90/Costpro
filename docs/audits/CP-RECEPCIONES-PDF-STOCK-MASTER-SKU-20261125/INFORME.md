@@ -168,6 +168,42 @@ Generados con el generador de producción (`scripts/dev-recep001-pdf-evidence.ts
 
 ---
 
+## 11. Seguimiento CI del PR #1706 (2026-11-25, reanudación)
+
+**Reporte del propietario: «los CI fallaron del PR 1706» + verificar que los códigos de la última recepción de ENERVIDA tomaran la enumeración esperada («creo que a partir del 239, ya que el catálogo maestro se quedó en ese número»).**
+
+### 11.1 Diagnóstico de los 3 checks en fallo (head 19e1cb428)
+
+| Check | Causa raíz | Corrección |
+|---|---|---|
+| **SQL DB Security Checks** (`secdef_no_auth`) | La nueva función `cp_recep001_backfill_confirm_notes` es SECURITY DEFINER sin auth-check propio (por diseño: herramienta de mantenimiento service_role-only) y NO estaba en `ci-gate-allowlist.json` → 124 hallazgos, 123 permitidos, 1 fuera. | Entrada de allowlist con justificación completa (dry-run, emparejamiento inequívoco, audit_logs, idempotencia, ACL exclusiva). Formato validado contra las reglas del job Allowlist Review (reason/added_by/expires no vencido). |
+| **Security Audit** (Capa C, `BODY_DRIFT_FROM_MIGRATION`) | El surface certificado (`contract-surface.sql`, captura LIVE 2026-11-21) precedía a las migraciones del PR → los cuerpos LIVE (ya migrados en producción el 2026-11-25) divergían del replay para `confirm_pending_reception/3`, `register_reception/11`, `resolve_reception_import_rows/4`. | Re-certificación sancionada por el propio generador: `export-contract-surface.cjs` re-ejecutado contra producción LIVE (224 funciones, antes 222) tras aplicar las migraciones autorizadas. Capa C: **224/224 representadas, 0 divergencias**. |
+| **E2E Aislado (project)** — 54/55 | Único fallo: `cpfin-reconciliation-tab.spec.ts:188` (timeout 60s esperando `recon-row-ACT_INVENTARIO`). Pestaña de Conciliación contable, sin relación funcional con este PR (migraciones aplicadas en el replay aislado SIN alterar datos del provisionador; backfill actúa solo sobre patrones de confirmaciones huérfanas inexistentes en una BD recién provisionada). Los 10 PRs anteriores con este mismo suite pasaron. | Se re-ejecuta tras el push correctivo; si persiste, se abre investigación independiente (posible lentitud de la ejecución bajo demanda en runner compartido). No se toca el test para «hacerlo pasar». |
+
+**Hallazgo adicional de seguridad (Capa C tras re-certificar, `UNEXPECTED_ACL_DRIFT`):** en LIVE la función backfill heredaba `EXECUTE` para `authenticated` (los *default privileges* de Supabase conceden a anon/authenticated/service_role en la CREACIÓN de funciones) aunque la migración solo concedía `service_role`. Como es SECURITY DEFINER (saltaría RLS), se corrigió en AMBOS lados:
+- Migración 20261125120000: `REVOKE … FROM PUBLIC, anon` → `FROM PUBLIC, anon, authenticated` (comentario del porqué en el propio archivo).
+- Producción: DCL único e idempotente aplicado y verificado por script (`scripts/apply_recep001_acl_revoke.mjs` en sandbox): proacl final `{postgres=X/postgres,service_role=X/postgres}` — **sin authenticated**. Sin impacto en datos (statement de privilegios, re-ejecutable). El manifiesto del replay E2E fue regenerado (`build-migrations-replay.mjs`, `--check` → MATCH) para absorber la edición de la migración.
+
+### 11.2 Verificación con datos reales: consecutivo de la última recepción de ENERVIDA
+
+Consultas read-only a producción (script `scripts/verify_enervida_consecutivo.mjs`, 2026-11-25):
+
+1. **El Catálogo Maestro NO se quedó en 239.** SKUs numéricos del tenant 5364ccf8: **prefijo contiguo 1..256 COMPLETO** (existen 239, 240, …, 256; huecos en 1..316: solo 257+; máx. numérico 999 = outliers históricos). → El siguiente código oficial es **257**, que es exactamente lo que el generador `next_master_catalog_sku` asignará (coincide con el POST de producción: «siguiente código ENERVIDA = 257»).
+2. **La última recepción de ENERVIDA es 47380573** (24/11/2026 18:41 UTC; no hay recepciones posteriores). Sus **16 productos creados** tienen códigos `AUTO-MWV*` (generador del frontend ANTERIOR a este fix), emparejados local↔maestro 1-a-1, con existencias registradas — ver §4/§5. **NO tomaron enumeración numérica** porque se crearon antes de que este PR existiera; renumerarlos sigue prohibido sin aprobación explícita (§9.2).
+3. **Ningún maestro creado desde el 2026-11-25**: el consecutivo oficial aún no se ha ejercitado en producción; comenzará en **257** con el primer producto nuevo creado con este PR fusionado/desplegado (el RPC server-side ya está vivo; el frontend que dejaba llegar `AUTO-*` queda corregido por este PR).
+
+**Conclusión para el propietario:** la enumeración esperada no era «a partir del 239» sino **a partir del 257** (239–256 están todos ocupados en el maestro). Los códigos de la última recepción quedaron como `AUTO-*` por ser anteriores al fix; a partir de la fusión, toda recepción nueva toma 257, 258, … de forma server-side, transaccional y concurrency-safe. Si se desea renumerar los 17 `AUTO-*` hacia 257..273, existe la estrategia en §3/§9.2 y requiere su aprobación explícita (ventana de mantenimiento + verificación de referencias denormalizadas).
+
+### 11.3 Verificación local posterior a la corrección
+
+- `security-contract-test-static.cjs`: **CONTRATO OK** — Capa A 224/224, Capa B 0 nuevas, Capa C 0 divergencias (3 warnings MEDIUM pre-existentes en main, no bloqueantes).
+- `build-migrations-replay.mjs --check`: **MATCH** (manifiesto regenerado 206 migraciones).
+- `ci-gate-sql-checks.js` offline + validación de allowlist (reason/added_by/expires): OK.
+- Unit tests: `cp-recep001-migrations` 14/14 · `sc204-sin-valores` 6/6 · `assert-not-production` 75/75.
+
+
+---
+
 ## Clasificación de la misión
 
 **APROBADO** — las tres incidencias quedan resueltas con causas raíz corregidas en BD y frontend, los dos casos reportados verificados con datos reales (cd921832 muestra saldos reales que coinciden 10/10 con el inventario; 47380573 diagnosticada sin renumeración histórica), las pruebas obligatorias A/B/C/D ejecutadas y el único residuo («s/d» de 101 movimientos históricos sin recepción) **técnicamente justificado y documentado**, no un defecto no verificado.
