@@ -120,7 +120,6 @@ describe('ADNEGOCIO-REPORTING · §1 trazabilidad del Inversor (SKU 117, 21/11/2
         price_at_sale: '42375', price_at_sale_cup: '42375', price_currency: 'CUP',
         currency: 'CUP', exchange_rate: '1', sale_exchange_rate: '1',
         cash_paid: '84750', cash_currency: 'CUP', cash_amount: '84750.00', sale_currency: 'CUP',
-        sale_exchange_rate: '1',
       },
     ];
     const r = computeIpv(base({
@@ -195,7 +194,6 @@ describe('ADNEGOCIO-REPORTING · §8 escenarios obligatorios de moneda', () => {
         currency: 'CUP', exchange_rate: '1', sale_exchange_rate: '950',
         cash_paid: '8000', cash_currency: 'CUP',
         cash_amount: '8000.00', zelle_amount: '12000.00', sale_currency: 'CUP',
-        sale_exchange_rate: '1',
       }],
       salesPayments: [
         { transaction_id: 't-mix', payment_method: 'cash', currency: 'CUP', amount: '8000', exchange_rate: '1' },
@@ -217,7 +215,6 @@ describe('ADNEGOCIO-REPORTING · §8 escenarios obligatorios de moneda', () => {
         price_at_sale: '10000', price_at_sale_cup: '10000', price_currency: 'CUP',
         currency: 'CUP', exchange_rate: '1', sale_exchange_rate: '910',
         zelle_amount: '10000.00', sale_currency: 'CUP',
-        sale_exchange_rate: '1',
       }],
       salesPayments: [{ transaction_id: 't-den-cup', payment_method: 'zelle', currency: 'USD', amount: '10.99', exchange_rate: '910' }],
     }));
