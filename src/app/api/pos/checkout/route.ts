@@ -486,6 +486,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     if (msg.includes('ERR_PAYMENT_COMPONENTS_INVALID')) {
       return NextResponse.json({ error: 'Desglose de pago por moneda inválido: cada componente debe tener método (efectivo/transferencia/transf. exterior), moneda (CUP/USD) e importe positivo. La transferencia exterior solo admite USD.' }, { status: 422 });
     }
+    // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 4): distribución de pago por
+    // línea inválida (items[].payments) — fail-closed del RPC.
+    if (msg.includes('ERR_ITEM_PAYMENTS_INVALID')) {
+      return NextResponse.json({ error: 'Distribución de pago por producto inválida: cada línea admite hasta 8 filas con método (efectivo/transferencia/transf. exterior), importe no negativo y número de transferencia obligatorio en las filas de transferencia con monto mayor que cero.' }, { status: 422 });
+    }
     // CP-MONEY-002 (D1): la BD no acepta la firma esperada — migración pendiente
     // (20261024150000 + companion 20261025120000) o desalineada con el código
     // desplegado. Sin esta rama el operador veía un 500 opaco con el mensaje

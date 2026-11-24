@@ -295,6 +295,365 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
     const inv = await getInventory(store.id, product.id);
     expect(num(inv!.quantity)).toBe(stockBefore - qty);
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (2026-11-25): pagos independientes
+  // por producto. items[].payments = distribución REAL por línea → se persiste
+  // en transaction_items.payment_distributions (aditivo; históricos NULL) y
+  // los pagos consolidados siguen en payment_transactions (ledger intacto).
+  // La conciliación exige: Σ distribuciones por línea = Σ ledger = total.
+  // ─────────────────────────────────────────────────────────────────────────
+  test('E2E-POS-010 (A) un producto, pago completo en efectivo: distribución por línea persistida y conciliada', async ({ request }) => {
+    const stockBefore = num((await getInventory(store.id, product.id))!.quantity);
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'cash',
+        total_amount: 100,
+        subtotal: 100,
+        cash_amount: 100,
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'cash', currency: 'CUP', amount: 100, discount_type: null, discount_value: 0, discount_currency: 'CUP' }],
+        }],
+      }),
+    });
+    expect(res.status(), `body: ${await res.text()}`).toBe(200);
+    const json = await res.json();
+
+    const itemRow = (await sb.select<{ payment_distributions: Array<Record<string, unknown>> } | null>(
+      'transaction_items', `transaction_id=eq.${json.transaction_id}&select=payment_distributions`,
+    ))[0];
+    expect(itemRow?.payment_distributions).toBeTruthy();
+    expect(itemRow!.payment_distributions).toHaveLength(1);
+    expect(itemRow!.payment_distributions[0]).toMatchObject({ method: 'cash', currency: 'CUP', amount: 100 });
+
+    // Ledger consolidado intacto (payment_transactions)
+    const ledger = await sb.select<{ payment_method: string; currency: string; amount: string | number; amount_cup: string | number }>(
+      'payment_transactions', `transaction_id=eq.${json.transaction_id}&select=payment_method,currency,amount,amount_cup`,
+    );
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0]).toMatchObject({ payment_method: 'cash', currency: 'CUP' });
+    expect(num(ledger[0].amount_cup)).toBe(100);
+
+    // Conciliación: Σ distribuciones = Σ ledger = total
+    const sumDist = itemRow!.payment_distributions.reduce((s, d) => s + num(d.amount as string | number), 0);
+    expect(sumDist).toBe(100);
+    const stockAfter = num((await getInventory(store.id, product.id))!.quantity);
+    expect(stockAfter).toBe(stockBefore - 1);
+  });
+
+  test('E2E-POS-011 (B) un producto, pago completo por transferencia: referencia por pago en ledger y distribución', async ({ request }) => {
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'transfer',
+        total_amount: 100,
+        subtotal: 100,
+        cash_amount: 0,
+        transfer_amount: 100,
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'transfer', currency: 'CUP', amount: 100, reference: 'TR-E2E-B-1' }],
+        }],
+      }),
+    });
+    expect(res.status(), `body: ${await res.text()}`).toBe(200);
+    const json = await res.json();
+
+    const ledger = await sb.select<{ payment_method: string; reference: string | null; currency: string }>(
+      'payment_transactions', `transaction_id=eq.${json.transaction_id}&select=payment_method,reference,currency`,
+    );
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0]).toMatchObject({ payment_method: 'transfer', reference: 'TR-E2E-B-1', currency: 'CUP' });
+
+    const itemRow = (await sb.select<{ payment_distributions: Array<Record<string, unknown>> } | null>(
+      'transaction_items', `transaction_id=eq.${json.transaction_id}&select=payment_distributions`,
+    ))[0];
+    expect(itemRow!.payment_distributions[0]).toMatchObject({ method: 'transfer', amount: 100, reference: 'TR-E2E-B-1' });
+  });
+
+  test('E2E-POS-012 (C) un producto mixto efectivo + transferencia: dos filas, dos filas de ledger', async ({ request }) => {
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'mixed',
+        total_amount: 100,
+        subtotal: 100,
+        cash_amount: 60,
+        transfer_amount: 40,
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [
+            { method: 'cash', currency: 'CUP', amount: 60 },
+            { method: 'transfer', currency: 'CUP', amount: 40, reference: 'TR-E2E-C-1' },
+          ],
+        }],
+      }),
+    });
+    expect(res.status(), `body: ${await res.text()}`).toBe(200);
+    const json = await res.json();
+
+    const itemRow = (await sb.select<{ payment_distributions: Array<Record<string, unknown>> } | null>(
+      'transaction_items', `transaction_id=eq.${json.transaction_id}&select=payment_distributions`,
+    ))[0];
+    expect(itemRow!.payment_distributions).toHaveLength(2);
+    expect(itemRow!.payment_distributions.map((d) => d.method).sort()).toEqual(['cash', 'transfer']);
+
+    const ledger = await sb.select<{ payment_method: string; reference: string | null; amount: string | number }>(
+      'payment_transactions', `transaction_id=eq.${json.transaction_id}&select=payment_method,reference,amount&order=payment_method.asc`,
+    );
+    expect(ledger).toHaveLength(2);
+    const sumLedger = ledger.reduce((s, r) => s + num(r.amount), 0);
+    expect(sumLedger).toBe(100);
+  });
+
+  test('E2E-POS-013 (D) tres productos con métodos diferentes: distribución por línea + conciliación global', async ({ request }) => {
+    const p2 = await seedProduct(store, { name: 'Producto E2E POS D2', price: 50, cost: 30, quantity: 50, sku: `E2E80-PERITEM-${Date.now()}-D2` });
+    const p3 = await seedProduct(store, { name: 'Producto E2E POS D3', price: 25, cost: 15, quantity: 50, sku: `E2E80-PERITEM-${Date.now()}-D3` });
+    const total = 100 + 50 + 25; // 175: A cash / B transfer / C mixto
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'mixed',
+        total_amount: total,
+        subtotal: total,
+        cash_amount: 100 + 10,
+        transfer_amount: 50 + 15,
+        items: [
+          { product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+            payments: [{ method: 'cash', currency: 'CUP', amount: 100 }] },
+          { product_id: p2.id, quantity: 1, price: 50, cost: 30,
+            payments: [{ method: 'transfer', currency: 'CUP', amount: 50, reference: 'TR-E2E-D-2' }] },
+          { product_id: p3.id, quantity: 1, price: 25, cost: 15,
+            payments: [
+              { method: 'cash', currency: 'CUP', amount: 10 },
+              { method: 'transfer', currency: 'CUP', amount: 15, reference: 'TR-E2E-D-3' },
+            ] },
+        ],
+      }),
+    });
+    expect(res.status(), `body: ${await res.text()}`).toBe(200);
+    const json = await res.json();
+
+    const itemRows = await sb.select<{ product_id: string; payment_distributions: Array<Record<string, unknown>> }>(
+      'transaction_items', `transaction_id=eq.${json.transaction_id}&select=product_id,payment_distributions`,
+    );
+    expect(itemRows).toHaveLength(3);
+    const byProduct = new Map(itemRows.map((r) => [r.product_id, r.payment_distributions || []]));
+    expect(byProduct.get(product.id)![0]).toMatchObject({ method: 'cash', amount: 100 });
+    expect(byProduct.get(p2.id)![0]).toMatchObject({ method: 'transfer', amount: 50, reference: 'TR-E2E-D-2' });
+    expect(byProduct.get(p3.id)).toHaveLength(2);
+
+    // Conciliación global: Σ distribuciones (CUP) = Σ ledger = total de la venta
+    const sumDist = itemRows.reduce(
+      (s, r) => s + (r.payment_distributions || []).reduce((ps, d) => ps + num(d.amount as string | number), 0), 0,
+    );
+    expect(sumDist).toBe(total);
+    const ledger = await sb.select<{ amount_cup: string | number }>(
+      'payment_transactions', `transaction_id=eq.${json.transaction_id}&select=amount_cup`,
+    );
+    const sumLedger = ledger.reduce((s, r) => s + num(r.amount_cup), 0);
+    expect(sumLedger).toBe(total);
+  });
+
+  test('E2E-POS-014 (F) venta con transferencia + cliente: customer_name y customer_ci persistidos', async ({ request }) => {
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'transfer',
+        total_amount: 100,
+        subtotal: 100,
+        cash_amount: 0,
+        transfer_amount: 100,
+        customer_name: 'Cliente QA Transferencia',
+        customer_ci: '92031112345',
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'transfer', currency: 'CUP', amount: 100, reference: 'TR-E2E-F-1' }],
+        }],
+      }),
+    });
+    expect(res.status(), `body: ${await res.text()}`).toBe(200);
+    const json = await res.json();
+
+    const tx = await getTransaction(json.transaction_id);
+    expect(tx!.customer_name).toBe('Cliente QA Transferencia');
+    expect(tx!.customer_ci).toBe('92031112345');
+  });
+
+  test('E2E-POS-014b (G) venta sin transferencia y sin CI: el campo queda null (no se exigen datos personales)', async ({ request }) => {
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        total_amount: 100, subtotal: 100, cash_amount: 100,
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'cash', currency: 'CUP', amount: 100 }],
+        }],
+      }),
+    });
+    expect(res.status()).toBe(200);
+    const json = await res.json();
+    const tx = await getTransaction(json.transaction_id);
+    expect(tx!.customer_ci).toBeNull();
+    expect(tx!.customer_name).toBeNull();
+  });
+
+  test('E2E-POS-015 (I) importe parcialmente distribuido sin incidencias: rechazo 422 (no autorizado)', async ({ request }) => {
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'mixed',
+        total_amount: 100,
+        subtotal: 100,
+        cash_amount: 60,
+        transfer_amount: 0,
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'cash', currency: 'CUP', amount: 60 }],
+        }],
+      }),
+    });
+    // El servidor ES la autoridad: sin incidencias documentadas, la venta con
+    // faltante se rechaza (invariante I1b/PT011) — el cliente solo permite
+    // este camino cuando el cajero confirma la incidencia (política vigente).
+    expect([422, 500]).toContain(res.status());
+    const txCount = await sb.select<{ n: number }>(
+      'transactions', `store_id=eq.${store.id}&total_amount=eq.60&select=id`,
+    );
+    expect(txCount.length).toBe(0);
+  });
+
+  test('E2E-POS-015b (I2) importe parcial CON incidencias documentadas: se registra (política MISIÓN-FLEX vigente)', async ({ request }) => {
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'mixed',
+        total_amount: 100,
+        subtotal: 100,
+        cash_amount: 60,
+        transfer_amount: 0,
+        payment_incidents: [{
+          type: 'insufficient_payment',
+          expected_cup: 100,
+          received_cup: 60,
+          difference_cup: -40,
+          detail: 'E2E: faltante documentado por el cajero',
+        }],
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'cash', currency: 'CUP', amount: 60 }],
+        }],
+      }),
+    });
+    expect(res.status(), `body: ${await res.text()}`).toBe(200);
+    const json = await res.json();
+    const tx = await getTransaction(json.transaction_id);
+    expect(tx!.payment_incidents).toBeTruthy();
+  });
+
+  test('E2E-POS-016 (J) importe distribuido SUPERIOR sin incidencias: rechazo (no se inventa vuelto)', async ({ request }) => {
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'mixed',
+        total_amount: 100,
+        subtotal: 100,
+        cash_amount: 150,
+        transfer_amount: 0,
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'cash', currency: 'CUP', amount: 150 }],
+        }],
+      }),
+    });
+    expect([422, 500]).toContain(res.status());
+  });
+
+  test('E2E-POS-017 distribución inválida (transferencia sin referencia): 422 fail-closed ERR_ITEM_PAYMENTS_INVALID', async ({ request }) => {
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'transfer',
+        total_amount: 100,
+        subtotal: 100,
+        cash_amount: 0,
+        transfer_amount: 100,
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'transfer', currency: 'CUP', amount: 100 }],
+        }],
+      }),
+    });
+    expect(res.status()).toBe(422);
+    const body = await res.json();
+    expect(JSON.stringify(body)).toContain('Distribución de pago por producto inválida');
+  });
+
+  test('E2E-POS-017b distribución inválida (método desconocido): 422 fail-closed', async ({ request }) => {
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        total_amount: 100, subtotal: 100, cash_amount: 100,
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'cripto', currency: 'CUP', amount: 100 }],
+        }],
+      }),
+    });
+    // Zod del route (400) o fail-closed del RPC (422) — ambos RECHAZAN
+    expect([400, 422]).toContain(res.status());
+  });
+
+  test('E2E-POS-018 (M) filas multi-moneda por línea (CUP + USD): distribución conserva ambas con su moneda', async ({ request }) => {
+    // Producto de 120 CUP: 100 CUP + 20/450 USD (≈ 0.0444 USD → se usa una fila USD de 20 CUP-equivalentes no válida;
+    // para mantener el cuadre exacto: 100 CUP + 20 CUP (fila USD NO) — se usa venta de 100 CUP con fila USD de tasa 450
+    // cuyo equivalente cierra el total: USD 20 × ... NO. Se modela: total 100 = 80 CUP + USD 20/450 → no exacto.
+    // Escenario válido exacto: producto 190 CUP = 100 CUP + USD 0.2 × 450 = 90 CUP. Se siembra a 190.
+    const pMulti = await seedProduct(store, { name: 'Producto E2E POS Multi', price: 190, cost: 100, quantity: 10, sku: `E2E80-PERITEM-${Date.now()}-M` });
+    const total = 190; // 100 CUP + 0.2 USD × 450 = 90 CUP
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'mixed',
+        total_amount: total,
+        subtotal: total,
+        sale_currency: 'CUP',
+        cash_amount: 190,
+        transfer_amount: 0,
+        payment_components: [
+          { method: 'cash', currency: 'CUP', amount: 100 },
+          { method: 'cash', currency: 'USD', amount: 0.2 },
+        ],
+        items: [{
+          product_id: pMulti.id, quantity: 1, price: 190, cost: 100, currency: 'CUP', exchange_rate: 1,
+          payments: [
+            { method: 'cash', currency: 'CUP', amount: 100 },
+            { method: 'cash', currency: 'USD', amount: 0.2, exchange_rate: 450 },
+          ],
+        }],
+      }),
+    });
+    expect(res.status(), `body: ${await res.text()}`).toBe(200);
+    const json = await res.json();
+
+    const itemRow = (await sb.select<{ payment_distributions: Array<Record<string, unknown>> } | null>(
+      'transaction_items', `transaction_id=eq.${json.transaction_id}&select=payment_distributions`,
+    ))[0];
+    expect(itemRow!.payment_distributions).toHaveLength(2);
+    expect(itemRow!.payment_distributions.map((d) => d.currency).sort()).toEqual(['CUP', 'USD']);
+    // La fila USD conserva su tasa informativa (la autoritativa es la del servidor)
+    const usdRow = itemRow!.payment_distributions.find((d) => d.currency === 'USD');
+    expect(num(usdRow!.exchange_rate as string | number)).toBe(450);
+    // Ledger: una fila por componente con moneda real
+    const ledger = await sb.select<{ currency: string; amount: string | number; amount_cup: string | number }>(
+      'payment_transactions', `transaction_id=eq.${json.transaction_id}&select=currency,amount,amount_cup`,
+    );
+    expect(ledger).toHaveLength(2);
+    const sumLedgerCup = ledger.reduce((s, r) => s + num(r.amount_cup), 0);
+    expect(sumLedgerCup).toBe(total);
+  });
 });
 
 test.describe('POS Checkout V2 — flujo UI de usuario real', () => {
