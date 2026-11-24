@@ -7,8 +7,9 @@
  * El carrito habitual (POSView) es la referencia funcional y técnica. Express
  * reutiliza SUS mismos servicios y reglas en lugar de duplicar lógica:
  *
- *  · Búsqueda en vivo: POSAutocomplete (el MISMO dropdown del carrito —
- *    nombre/SKU/código de barras, navegable con teclado, badges de stock).
+ *  · Búsqueda en vivo: superficie de resultados única en línea (mismo
+ *    criterio de coincidencia nombre/SKU/código y el MISMO predicado de
+ *    visibilidad que el carrito).
  *  · Alta de productos: se delega en onAddToCart/handleAddItem del POSView
  *    (pre-check de existencias + auditoría precio<costo + variantes).
  *  · Edición de línea: POSCartItemEditModal del carrito (cantidad decimal 4dp,
@@ -22,11 +23,36 @@
  *  · Filtro «Solo con stock»: el MISMO estado (usePOSServerSearch) que el
  *    carrito, pasado por props — un solo criterio de visibilidad.
  *
- * Layout full-screen optimizado para venta de alto volumen (z-[45]: por
- * ENCIMA del sidebar global (z-40) y por DEBAJO de los diálogos Radix
- * reutilizados (z-50) y de POSPortalModal (z-[10000])).
+ * CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (2026-11-25) — rediseño integral:
+ *  · LAYOUT: grid `auto + 1fr` con el carrito como COLUMNA DERECHA DE ALTURA
+ *    COMPLETA (row-span-2) desde md — el carrito ya no vive en el remanente
+ *    vertical de la búsqueda (causa raíz del «carrito comprimido abajo-derecha»:
+ *    la reserva fija `max-h-[34vh]/[38vh]` + header consumían 55-70% del
+ *    viewport y el aside compartía el resto con Frecuentes). La búsqueda y el
+ *    catálogo scrollean de forma independiente en la columna izquierda.
+ *  · LÍNEAS DEL CARRITO: imagen, nombre, SKU/variante/unidad, cantidad ±,
+ *    precio, IMPORTE de línea y DISTRIBUCIÓN DE PAGO asignada (chips) con
+ *    acción «Configurar pago» → POSExpressPaymentModal (MISMO editor de filas
+ *    de pago del carrito clásico, extraído a PaymentRowsEditor).
+ *  · PAGOS POR PRODUCTO: se ELIMINA la limitación del método global — el
+ *    método de la venta se DERIVA de las distribuciones reales de las líneas
+ *    (deriveCartPaymentMethod, el mismo contrato del panel clásico).
+ *  · RESUMEN CONSOLIDADO: totales por método y moneda desde
+ *    getConsolidatedPayments() + pendiente de asignar, con desglose por
+ *    producto (qué líneas componen cada importe).
+ *  · PESTAÑA «DATOS DE TRANSFERENCIA»: condicional (solo si alguna
+ *    distribución incluye transferencia) en el modal de cobro — nombre del
+ *    cliente, carné de identidad y UN número de operación POR fila de
+ *    transferencia (cada pago conserva SU referencia; nunca una global) +
+ *    notas de la venta (campo existente saleNotes). Sin transferencia la
+ *    pestaña no existe y NO se exigen datos personales.
+ *  · MÓVIL (<md): barra inferior fija con total + Cobrar + acceso evidente al
+ *    carrito (panel a pantalla completa); tablet con dos columnas desde md.
  *
- * Objetivo: venta simple en <6 segundos, con las reglas del carrito.
+ * Layout full-screen (z-[45]: por ENCIMA del sidebar global (z-40) y por
+ * DEBAJO de los diálogos Radix reutilizados (z-50) y de POSPortalModal
+ * (z-[10000])). Objetivo: venta simple en <6 segundos, con las reglas del
+ * carrito.
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -45,6 +71,8 @@ import {
   Eye,
   EyeOff,
   PackageSearch,
+  CreditCard,
+  ClipboardList,
 } from "lucide-react";
 import { cn, formatCurrency, getSupabaseUrl } from "@/lib/utils";
 import { useCartStore, type CartItem } from "@/store/cart";
@@ -66,7 +94,12 @@ import { POSPortalModal } from "./POSPortalModal";
 // MISIÓN FECHA OPERATIVA (2026-10-17): selector de fecha económica también en Express.
 import { POSOperationDateSection, usePosSaleDate } from "./POSOperationDateSection";
 import ProductImage from "@/components/ui/ProductImage";
-import { PaymentMethodSelector } from "./PaymentMethodSelector";
+// CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: etiqueta canónica del método derivado.
+import { getPaymentLabel } from "./PaymentMethodSelector";
+// CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 2): método derivado de las
+// distribuciones reales por línea (mismo contrato que el panel clásico).
+import { deriveCartPaymentMethod } from "@/lib/pos/derive-payment-method";
+import { isExteriorMethod } from "@/lib/payments/methods";
 // CP-UX-NAVIGATION-POS-REPAIR-001: POSAutocomplete retirado de Express —
 // la superficie de resultados es única, en línea debajo del buscador.
 import PriceSelectorModal from "./PriceSelectorModal";
@@ -75,6 +108,7 @@ import { POSCartDiscountModal } from "./POSCartDiscountModal";
 import { POSCartSuccessView } from "./POSCartSuccessView";
 import { usePOSCartExports } from "./usePOSCartExports";
 import type { LastSale } from "./POSCart.types";
+import { POSExpressPaymentModal } from "./POSExpressPaymentModal";
 
 interface POSExpressModeProps {
   products: Product[];
@@ -107,7 +141,7 @@ interface POSExpressModeProps {
    * CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): estados diferenciados del
    * catálogo (§3.3 de la misión). La vista Vende ya posee la carga (useProducts
    * → RPC get_products_for_pos): Express NO repite consultas — solo recibe el
-   * estado y un reintentco para no crear consultas redundantes.
+   * estado y un reintento para no crear consultas redundantes.
    */
   productsLoading?: boolean;
   productsError?: string | null;
@@ -120,6 +154,12 @@ const MANUAL_RESULTS_LIMIT = 24;
 const EXPRESS_CATALOG_PAGE = 24;
 /** Longitud mínima de la query para filtrado en vivo (evita listas gigantes con 1 char). */
 const LIVE_SEARCH_MIN_CHARS = 2;
+
+const METHOD_SHORT_LABEL: Record<string, string> = {
+  cash: "Efect.",
+  transfer: "Transf.",
+  external_transfer: "Ext.",
+};
 
 export function POSExpressMode({
   products,
@@ -148,6 +188,18 @@ export function POSExpressMode({
   const [searchQuery, setSearchQuery] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: pestaña del modal de cobro
+  // («resumen» de la venta | «datos» de transferencia — solo con transferencia).
+  const [payTab, setPayTab] = useState<'resumen' | 'datos'>('resumen');
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: nota de la venta (campo existente
+  // del proceso de cobro — viaja como saleNotes al RPC transactions.notes).
+  const [saleNotes, setSaleNotes] = useState("");
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: línea con «Configurar pago» abierto.
+  const [payingItem, setPayingItem] = useState<CartItem | null>(null);
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: carrito a pantalla completa en móvil.
+  const [cartOpenMobile, setCartOpenMobile] = useState(false);
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: resumen de pagos desplegable.
+  const [showPaySummary, setShowPaySummary] = useState(false);
   // CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): la lista de resultados ahora
   // es DERIVADA (useMemo) — se muestra en vivo mientras se escribe, sin exigir
   // Enter ni depender de un dropdown overlay que se cerraba con un clic fuera.
@@ -163,6 +215,11 @@ export function POSExpressMode({
   const serverSearchSeq = useRef(0);
   // CP-UX-NAVIGATION-POS-REPAIR-001: paginación del catálogo inicial («Ver más»).
   const [catalogLimit, setCatalogLimit] = useState(EXPRESS_CATALOG_PAGE);
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (§1.3): el producto recién agregado
+  // debe quedar VISIBLE sin desplazamientos — auto-scroll al final de la lista
+  // solo cuando el NÚMERO DE LÍNEAS crece (no en cada re-render de importes).
+  const itemsEndRef = useRef<HTMLDivElement | null>(null);
+  const prevLineCountRef = useRef(0);
 
   // Audit-Fix: liberar área de trabajo al entrar al modo Express y restaurar al salir.
   // CP-SIDEBAR-RESTORATION-001: en desktop el menú JAMÁS se oculta (dos estados)
@@ -188,10 +245,13 @@ export function POSExpressMode({
     getSubtotal,
     getDiscountAmount,
     getItemCount,
-    selectedPayment,
-    setSelectedPayment,
     discount,
     setDiscount,
+    getConsolidatedPayments,
+    setCustomer,
+    setCustomerCi,
+    customerName,
+    customerCi,
   } = useCartStore(
     useShallow((s) => ({
       items: s.items,
@@ -203,10 +263,13 @@ export function POSExpressMode({
       getSubtotal: s.getSubtotal,
       getDiscountAmount: s.getDiscountAmount,
       getItemCount: s.getItemCount,
-      selectedPayment: s.selectedPayment,
-      setSelectedPayment: s.setSelectedPayment,
       discount: s.discount,
       setDiscount: s.setDiscount,
+      getConsolidatedPayments: s.getConsolidatedPayments,
+      setCustomer: s.setCustomer,
+      setCustomerCi: s.setCustomerCi,
+      customerName: s.customerName,
+      customerCi: s.customerCi,
     })),
   );
 
@@ -239,6 +302,73 @@ export function POSExpressMode({
   const subtotal = getSubtotal();
   const discountAmount = getDiscountAmount();
   const itemCount = getItemCount();
+
+  // ── CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: pagos por producto ────────────
+
+  /** Método de la venta DERIVADO de las distribuciones reales de las líneas. */
+  const derivedPaymentMethod = useMemo(
+    () => deriveCartPaymentMethod(items),
+    [items],
+  );
+
+  /** Filas de transferencia con importe > 0 (por línea) — activan la pestaña. */
+  const transferRows = useMemo(() => {
+    const out: Array<{ item: CartItem; rowId: string; method: 'transfer' | 'external_transfer'; amount: number; currency: string }> = [];
+    for (const item of items) {
+      for (const p of item.payments || []) {
+        if ((p.method === 'transfer' || isExteriorMethod(p.method)) && (p.amount || 0) > 0) {
+          out.push({
+            item,
+            rowId: p.id,
+            method: p.method === 'transfer' ? 'transfer' : 'external_transfer',
+            amount: p.amount,
+            currency: p.currency || 'CUP',
+          });
+        }
+      }
+    }
+    return out;
+  }, [items]);
+
+  /** ¿La venta incluye al menos una distribución por transferencia? */
+  const hasTransfer = transferRows.length > 0;
+
+  /** Datos de transferencia completos (cliente + CI + referencia por fila). */
+  const transferDataOk = useMemo(() => {
+    if (!hasTransfer) return true;
+    if (!(customerName || '').trim()) return false;
+    if (!(customerCi || '').trim()) return false;
+    return transferRows.every(({ item, rowId }) => {
+      const row = (item.payments || []).find(p => p.id === rowId);
+      return !!(row?.reference || '').trim();
+    });
+  }, [hasTransfer, customerName, customerCi, transferRows]);
+
+  /**
+   * Resumen consolidado de la venta (misión §2.4) — SOLO agregaciones de los
+   * getters existentes del store (cero aritmética monetaria nueva):
+   *  · por método y moneda: getConsolidatedPayments()
+   *  · asignado en CUP: Σ getItemPaidCup(item)
+   *  · pendiente: getExpectedTotalCup() + impuestos − asignado (≥ 0)
+   */
+  const paymentSummary = useMemo(() => {
+    const cartState = useCartStore.getState();
+    const consolidated = getConsolidatedPayments();
+    const rowsByMethod: Record<'cash' | 'transfer' | 'external_transfer', Array<{ currency: string; amount: number }>> = {
+      cash: [], transfer: [], external_transfer: [],
+    };
+    for (const [currency, buckets] of Object.entries(consolidated)) {
+      if (buckets.cash > 0) rowsByMethod.cash.push({ currency, amount: buckets.cash });
+      if (buckets.transfer > 0) rowsByMethod.transfer.push({ currency, amount: buckets.transfer });
+      if (buckets.zelle > 0) rowsByMethod.external_transfer.push({ currency, amount: buckets.zelle });
+    }
+    const paidCup = items.reduce((s, i) => s + cartState.getItemPaidCup(i), 0);
+    const expectedCup = cartState.getExpectedTotalCup();
+    const taxCup = cartState.getTaxAmount();
+    const pendingCup = Math.max(0, Math.round((expectedCup + taxCup - paidCup) * 100) / 100);
+    return { rowsByMethod, paidCup, pendingCup };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, getConsolidatedPayments]);
 
   // ── Área dinámica bajo el buscador (CP-UX-NAVIGATION-POS-REPAIR-001) ─────
 
@@ -511,9 +641,42 @@ export function POSExpressMode({
     return () => window.removeEventListener("keydown", handler);
   }, [itemCount, showConfirm]);
 
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (§1.3): auto-scroll a la línea
+  // recién agregada (los items se agregan al final del array del store).
+  useEffect(() => {
+    const lineCount = items.length;
+    if (lineCount > prevLineCountRef.current) {
+      // Espera al commit del layout (AnimatePresence/motion) antes de scrollear.
+      const t = setTimeout(() => {
+        itemsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 80);
+      prevLineCountRef.current = lineCount;
+      return () => clearTimeout(t);
+    }
+    prevLineCountRef.current = lineCount;
+  }, [items.length]);
+
   const handleConfirmSale = async () => {
+    // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 3.3): con transferencia,
+    // exigir los datos de la operación ANTES del POST (fail-closed en
+    // cliente; el RPC revalida). Sin transferencia no se exige nada personal.
+    if (hasTransfer && !transferDataOk) {
+      setPayTab('datos');
+      toast.error(
+        'Completa los datos de transferencia: cliente, carné de identidad y el número de cada operación.',
+        { duration: 6000 },
+      );
+      return;
+    }
     setShowConfirm(false);
-    await startCheckout(selectedPayment, null);
+    setPayTab('resumen');
+    // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 2): método DERIVADO de las
+    // distribuciones reales por línea (ya no hay método global que obligue a
+    // toda la venta a una sola forma de pago). Las notas de la venta viajan
+    // por el mismo camino del carrito (paymentContext.saleNotes → notes).
+    await startCheckout(derivedPaymentMethod, null, {
+      saleNotes: saleNotes.trim() || null,
+    });
   };
 
   // ── Render: vista de éxito (compartida con el carrito) ──────────────────
@@ -556,6 +719,40 @@ export function POSExpressMode({
     );
   }
 
+  // ── Chips de distribución de pago de UNA línea (§1.3.7) ─────────────────
+  // Agregación SOLO para presentación (misma clave método|moneda que
+  // getConsolidatedPayments): dos filas cash CUP se muestran como una chip
+  // con la suma. Sin aritmética nueva: sumas de presentación.
+
+  const renderPaymentChips = (item: CartItem): React.ReactNode => {
+    const rows = (item.payments || []).filter((p) => (p.amount || 0) > 0);
+    if (rows.length === 0) {
+      return (
+        <span className="text-[9px] font-bold text-amber-500 uppercase tracking-wider">
+          Sin pago asignado
+        </span>
+      );
+    }
+    const acc = new Map<string, number>();
+    for (const p of rows) {
+      const m = isExteriorMethod(p.method) ? 'external_transfer' : p.method;
+      const key = `${m}|${p.currency || 'CUP'}`;
+      acc.set(key, Math.round(((acc.get(key) || 0) + p.amount) * 100) / 100);
+    }
+    return [...acc.entries()].map(([key, amt]) => {
+      const [m, cur] = key.split('|');
+      return (
+        <span
+          key={key}
+          className="inline-flex items-center rounded px-1 py-0.5 bg-background border border-border/40 text-[9px] font-bold tabular-nums text-foreground"
+        >
+          <span className="text-muted-foreground mr-0.5">{METHOD_SHORT_LABEL[m] || m}</span>
+          {formatCurrency(amt)} {cur}
+        </span>
+      );
+    });
+  };
+
   // ── Render: modo Express ────────────────────────────────────────────────
 
   // Audit-Fix: usar createPortal para escapar del stacking context del motion.div
@@ -564,18 +761,343 @@ export function POSExpressMode({
   // (POSCartItemEditModal / PriceSelectorModal — z-50) y a POSPortalModal
   // (z-[10000]). El z-[9999] anterior tapaba los modales Radix.
   if (typeof window === 'undefined') return null; // SSR guard
+
+  /**
+   * Panel de carrito compartido: desktop/tablet = columna derecha de ALTURA
+   * COMPLETA (row-span-2 del grid, siempre visible); móvil = cuerpo del
+   * overlay a pantalla completa. Un solo markup, dos presentaciones.
+   */
+  const cartPanel = (mobile: boolean) => (
+    <div
+      className={cn(
+        "flex flex-col min-h-0 bg-card",
+        mobile
+          ? "flex-1"
+          : "hidden md:flex md:col-span-1 md:row-span-2 border-l border-border",
+      )}
+      data-testid={mobile ? "express-cart-mobile" : "express-cart-desktop"}
+    >
+      {/* Header del carrito */}
+      <div className="p-3 border-b border-border flex items-center justify-between shrink-0">
+        <h2 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2">
+          <ShoppingCart className="w-4 h-4" />
+          Carrito
+          {itemCount > 0 && (
+            <span className="bg-primary text-primary-foreground px-2 py-0.5 rounded-full text-[10px] tabular-nums">
+              {itemCount}
+            </span>
+          )}
+        </h2>
+        <div className="flex items-center gap-1">
+          {/* MISIÓN VENDER-EXPRESS: descuento global con el MISMO modal del
+              carrito (POSCartDiscountModal — gate de supervisor ≥15%). */}
+          {itemCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowDiscount((v) => !v)}
+              className={cn(
+                "px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-colors",
+                discount
+                  ? "bg-primary/10 text-primary border-primary/30"
+                  : "text-muted-foreground border-border hover:bg-muted",
+              )}
+              aria-expanded={showDiscount}
+              aria-label="Descuento de la venta"
+            >
+              Descuento{discount ? `: -${formatCurrency(discountAmount)}` : ""}
+            </button>
+          )}
+          {itemCount > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                clearCart();
+                toast.success("Carrito vaciado");
+              }}
+              className="text-destructive hover:bg-destructive/10 p-1.5 rounded-lg transition-colors"
+              aria-label="Vaciar carrito"
+              title="Vaciar carrito"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* MISIÓN VENDER-EXPRESS: descuento global — MISMO componente del
+          carrito (mismas reglas, mismo gate de supervisor). */}
+      {showDiscount && itemCount > 0 && (
+        <div className="p-3 border-b border-border">
+          <POSCartDiscountModal
+            discount={discount}
+            setDiscount={setDiscount}
+            getTotal={getTotal}
+          />
+        </div>
+      )}
+
+      {/* Líneas del carrito — scroll propio con altura útil garantizada */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-8">
+            <ShoppingCart className="w-12 h-12 opacity-20 mb-3" />
+            <p className="text-xs font-bold uppercase tracking-widest">Vacío</p>
+            <p className="text-[10px] mt-1">Escanea o busca para agregar</p>
+          </div>
+        ) : (
+          <AnimatePresence initial={false}>
+            {items.map((item) => {
+              const stock = item.product?.stock_current ?? 0;
+              const isService = item.product?.is_service === true;
+              const stockOut = !isService && stock <= 0;
+              return (
+                <motion.div
+                  key={`${item.product_id}-${item.variant_id}`}
+                  layout
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className={cn(
+                    "rounded-xl border p-2 bg-background space-y-1.5",
+                    stockOut ? "border-destructive/40" : "border-border",
+                  )}
+                >
+                  {/* Fila 1: imagen + nombre/SKU/unidad + quitar */}
+                  <div className="flex items-start gap-2">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden bg-muted/30 shrink-0">
+                      <ProductImage
+                        src={item.product?.image_url || undefined}
+                        name={item.product?.name || "Producto"}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditingItem(item)}
+                      className="flex-1 min-w-0 text-left group"
+                      aria-label={`Editar ${item.product?.name || "producto"}`}
+                      title="Editar cantidad, precio o descuento (mismo editor del carrito)"
+                    >
+                      <p className="text-sm font-bold text-foreground truncate leading-tight">
+                        {item.product?.name || "Producto"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground font-mono truncate">
+                        {item.product?.sku ? `SKU: ${item.product.sku}` : ""}
+                        {item.variant ? ` · ${item.variant.name}` : ""}
+                        {!item.variant && item.product?.unit_of_measure ? ` · ${item.product.unit_of_measure}` : ""}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(item.product_id, item.variant_id)}
+                      className="text-destructive hover:bg-destructive/10 p-1.5 rounded-lg transition-colors shrink-0"
+                      aria-label="Quitar"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Fila 2: cantidad ± / precio c/u / importe de línea */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateQuantity(item.product_id, item.variant_id, item.quantity - 1)
+                        }
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-lg border border-border hover:bg-muted flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        aria-label="Reducir cantidad"
+                      >
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingItem(item)}
+                        className="w-12 text-center font-black tabular-nums hover:bg-muted rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        aria-label="Editar cantidad decimal"
+                        title="Editar cantidad (admite decimales, precio y descuento)"
+                      >
+                        {item.quantity}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          updateQuantity(item.product_id, item.variant_id, item.quantity + 1)
+                        }
+                        className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-lg border border-border hover:bg-muted flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        aria-label="Aumentar cantidad"
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <div className="text-right min-w-0">
+                      <p className="text-sm font-black text-foreground tabular-nums leading-tight">
+                        {formatCurrency(item.subtotal)}
+                        <span className="text-[9px] text-muted-foreground font-bold ml-1">
+                          {item.currency || "CUP"}
+                        </span>
+                      </p>
+                      <p className="text-[9px] text-muted-foreground tabular-nums truncate">
+                        {formatCurrency(item.price)} c/u
+                        {item.discount_type && item.discount_value > 0
+                          ? ` · −${item.discount_type === "percentage" ? `${item.discount_value}%` : formatCurrency(item.discount_value)}`
+                          : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Fila 3: distribución de pago asignada + Configurar pago */}
+                  <button
+                    type="button"
+                    onClick={() => setPayingItem(item)}
+                    className="w-full flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/20 px-2 py-1.5 hover:border-primary/40 hover:bg-primary/5 transition-colors text-left"
+                    aria-label={`Configurar pago de ${item.product?.name || "producto"}`}
+                    data-testid={`express-pay-config-${item.product_id}`}
+                  >
+                    <span className="flex flex-wrap items-center gap-1 min-w-0">
+                      {renderPaymentChips(item)}
+                    </span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-primary shrink-0 flex items-center gap-1">
+                      <CreditCard className="w-3 h-3" />
+                      Configurar pago
+                    </span>
+                  </button>
+
+                  {stockOut && (
+                    <span className="inline-block text-[8px] font-bold text-destructive bg-destructive/10 px-1 py-0.5 rounded">
+                      Sin stock
+                    </span>
+                  )}
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        )}
+        {/* Ancla de auto-scroll (§1.3: el recién agregado queda visible) */}
+        <div ref={itemsEndRef} aria-hidden="true" />
+      </div>
+
+      {/* Resumen consolidado de pagos (§2.4) — agregaciones del store */}
+      {itemCount > 0 && (
+        <div
+          className="px-3 pt-2 pb-1 border-t border-border shrink-0"
+          data-testid="express-payment-summary"
+        >
+          <button
+            type="button"
+            onClick={() => setShowPaySummary((v) => !v)}
+            className="w-full flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+            aria-expanded={showPaySummary}
+            aria-label="Resumen de pagos de la venta"
+          >
+            <span className="flex items-center gap-1">
+              <ClipboardList className="w-3 h-3" />
+              Resumen de pagos
+            </span>
+            <span className="flex items-center gap-2">
+              {paymentSummary.pendingCup > 0 && (
+                <span className="text-amber-500">
+                  Pendiente {formatCurrency(paymentSummary.pendingCup)} CUP
+                </span>
+              )}
+              <span>{showPaySummary ? "−" : "+"}</span>
+            </span>
+          </button>
+          {showPaySummary && (
+            <div className="mt-1.5 space-y-1">
+              {(['cash', 'transfer', 'external_transfer'] as const).map((m) => {
+                const entries = paymentSummary.rowsByMethod[m];
+                if (!entries || entries.length === 0) return null;
+                return (
+                  <div key={m} className="flex items-center justify-between text-[10px]">
+                    <span className="font-black uppercase tracking-wider text-muted-foreground">
+                      {m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Transf. Exterior'}
+                    </span>
+                    <span className="font-bold tabular-nums text-foreground">
+                      {entries.map((e, i) => (
+                        <span key={`${m}-${e.currency}`}>
+                          {i > 0 ? ' + ' : ''}{formatCurrency(e.amount)} {e.currency}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                );
+              })}
+              {/* Desglose por producto: qué líneas componen cada importe */}
+              <div className="pt-1 mt-1 border-t border-border/40 space-y-0.5">
+                {items.map((i) => {
+                  const rows = (i.payments || []).filter((p) => (p.amount || 0) > 0);
+                  if (rows.length === 0) return null;
+                  return (
+                    <div key={`${i.product_id}-${i.variant_id}`} className="flex items-center justify-between gap-2 text-[9px]">
+                      <span className="truncate text-muted-foreground">
+                        {i.product?.name || "Producto"}
+                      </span>
+                      <span className="flex items-center gap-1 shrink-0 tabular-nums text-foreground font-bold">
+                        {renderPaymentChips(i)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TOTAL + COBRAR */}
+      <div className="p-3 border-t border-border bg-card shrink-0 space-y-2">
+        <div className="flex items-baseline justify-between">
+          <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+            Total
+          </span>
+          <span className="text-[clamp(1.6rem,6vw,2.5rem)] font-black text-primary tabular-nums leading-none">
+            {formatCurrency(total)}
+          </span>
+        </div>
+        {(discountAmount > 0 || subtotal !== total) && (
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest">
+            <span>Subtotal {formatCurrency(subtotal)}</span>
+            {discountAmount > 0 && <span>Descuento −{formatCurrency(discountAmount)}</span>}
+          </div>
+        )}
+        {itemCount > 0 && (
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-widest text-muted-foreground">
+            <span>Método</span>
+            <span className="font-black text-foreground normal-case tracking-normal text-xs">
+              {getPaymentLabel(derivedPaymentMethod)}
+            </span>
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => setShowConfirm(true)}
+          disabled={itemCount === 0 || isProcessingSale}
+          className="w-full h-14 rounded-2xl bg-primary text-primary-foreground font-black text-base uppercase tracking-widest shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
+          aria-label="Cobrar venta"
+        >
+          <Check className="w-6 h-6" />
+          Cobrar
+          {total > 0 && (
+            <span className="bg-primary-foreground/20 px-2 py-1 rounded-md text-sm tabular-nums">
+              {formatCurrency(total)}
+            </span>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+
   return createPortal(
     <div className="fixed inset-0 z-[45] bg-background flex flex-col">
-      {/* ── HEADER — CP-UX-POLISH-002 (§2.1): zonas exclusivas SIN superposición.
-          Fila 1: [Salir · título · X] — zona exclusiva de título y cierre; la X
-          es un hijo flex del header (NINGÚN posicionamiento fixed/absolute):
-          es estructuralmente imposible que colisione con el método de pago al
-          cambiar el ancho de pantalla. Durante el POST ambas salidas se
-          deshabilitan (§2.4: el cierre no interfiere con el POST ni cancela
-          una venta en curso; el estado del proceso se conserva).
-          Fila 2: método de pago SIEMPRE visible y accesible (§2.2) — nunca
-          debajo de la X ni recortado por el encabezado. */}
-      <header className="border-b border-border bg-card shrink-0 px-3 sm:px-4 py-2.5">
+      {/* ── HEADER compacto — CP-UX-POLISH-002 (§2.1): zonas exclusivas SIN
+          superposición. Fila única: [Salir · título · X]. El selector GLOBAL
+          de método de pago se RETIRA (CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001
+          §2.1: ninguna selección única obliga a todos los productos a la misma
+          forma de pago) — el método se DERIVA por línea y se muestra en el
+          carrito y en la confirmación. Durante el POST ambas salidas se
+          deshabilitan (§2.4). */}
+      <header className="border-b border-border bg-card shrink-0 px-3 sm:px-4 py-2">
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             type="button"
@@ -594,9 +1116,8 @@ export function POSExpressMode({
               Cajero Express
             </h1>
           </div>
-          {/* Zona exclusiva del cierre: separada del selector de pago por
-              estructura flex (no por coordenadas absolutas). Área táctil 44px
-              (WCAG 2.5.8), foco visible, estado de proceso honesto. */}
+          {/* Zona exclusiva del cierre: separada por estructura flex (no por
+              coordenadas absolutas). Área táctil 44px (WCAG 2.5.8). */}
           <button
             type="button"
             onClick={onExit}
@@ -608,99 +1129,93 @@ export function POSExpressMode({
             <X className="w-5 h-5" />
           </button>
         </div>
-        {/* Método de pago — fila propia (§2.2): el selector conserva sus
-            dimensiones, texto legible y accesible en cualquier resolución. */}
-        <div className="flex items-center justify-center sm:justify-end gap-2 mt-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-            Método de pago
-          </span>
-          <PaymentMethodSelector
-            value={selectedPayment}
-            onChange={setSelectedPayment}
-            variant="compact"
-            className="max-w-[240px]"
-          />
-        </div>
       </header>
 
-      {/* ── SEARCH GIGANTE (con área dinámica: catálogo inicial / resultados en vivo) ── */}
-      <div className="p-4 sm:p-6 border-b border-border shrink-0">
-        <form onSubmit={handleSearchSubmit} className="max-w-3xl mx-auto">
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground pointer-events-none" />
-            <input
-              ref={searchInputRef}
-              id="pos-express-search-input"
-              type="text"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              placeholder="Escanea o escribe nombre, SKU o código de barras..."
-              className="w-full pl-14 pr-14 py-4 sm:py-5 text-lg sm:text-xl font-bold rounded-2xl border-2 border-border bg-card focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none shadow-md"
-              aria-label="Búsqueda Express"
-              aria-controls="pos-express-results"
-              aria-busy={serverSearching}
-              autoComplete="off"
-            />
-            {/* CP-UX-NAVIGATION-POS-REPAIR-001: botón de limpiar búsqueda —
-                al borrar el texto se recupera el catálogo inicial (§3.2). */}
-            {searchQuery.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  handleSearchChange("");
-                  searchInputRef.current?.focus();
-                }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground flex items-center justify-center transition-colors"
-                aria-label="Limpiar búsqueda y volver al catálogo"
-                title="Limpiar búsqueda"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-          {/* CP-UX-NAVIGATION-POS-REPAIR-001: el dropdown overlay POSAutocomplete
-              se RETIRA de Express — la superficie de resultados es ÚNICA y vive
-              debajo del buscador (el overlay se cerraba con un clic fuera y
-              dejaba la pantalla sin resultados visibles). Mismo criterio de
-              coincidencia (nombre/SKU/código) y el MISMO predicado de
-              visibilidad que el carrito. */}
-          <div className="flex items-center justify-center gap-3 mt-2">
-            <p className="text-[10px] text-muted-foreground text-center uppercase tracking-widest">
-              Enter = agregar · F9 = cobrar · Esc = cancelar
-            </p>
-            {/* MISIÓN VENDER-EXPRESS: el MISMO toggle «Solo con stock» del
-                carrito (estado compartido vía props de POSView). */}
-            {onHideOutOfStockChange && (
-              <button
-                type="button"
-                onClick={() => onHideOutOfStockChange(!hideOutOfStock)}
-                className={cn(
-                  "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95",
-                  hideOutOfStock
-                    ? "bg-success/10 text-success border-success/30"
-                    : "bg-muted/50 text-muted-foreground border-border hover:bg-muted",
-                )}
-                title={hideOutOfStock
-                  ? "Productos agotados ocultos (igual que el carrito). Clic para mostrar todos."
-                  : "Mostrando todos los productos incluyendo agotados."}
-                aria-label="Alternar visibilidad de productos agotados"
-              >
-                {hideOutOfStock ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                {hideOutOfStock ? "Solo con stock" : "Ver todo"}
-              </button>
-            )}
-          </div>
-        </form>
+      {/* ── GRID PRINCIPAL (CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 §1.2):
+          fila 1 = buscador compacto (col izquierda), fila 2 = catálogo/
+          resultados con scroll PROPIO, columna derecha = CARRITO DE ALTURA
+          COMPLETA (row-span-2, siempre visible ≥768px). Sin reservas fijas
+          de altura (las max-h-[34vh]/[38vh] eran la causa del carrito
+          comprimido): cada columna distribuye el viewport real. */}
+      <div className="flex-1 min-h-0 grid grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_340px] lg:grid-cols-[minmax(0,1fr)_400px] xl:grid-cols-[minmax(0,1fr)_460px] 2xl:grid-cols-[minmax(0,1fr)_520px]">
+        {/* Fila 1 · col 1: SEARCH compacto */}
+        <div className="border-b border-border px-3 sm:px-6 pt-3 pb-2 shrink-0">
+          <form onSubmit={handleSearchSubmit} className="max-w-3xl mx-auto">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                id="pos-express-search-input"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Escanea o escribe nombre, SKU o código de barras..."
+                className="w-full pl-12 pr-12 py-3 sm:py-3.5 text-base sm:text-lg font-bold rounded-2xl border-2 border-border bg-card focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none shadow-sm"
+                aria-label="Búsqueda Express"
+                aria-controls="pos-express-results"
+                aria-busy={serverSearching}
+                autoComplete="off"
+              />
+              {/* CP-UX-NAVIGATION-POS-REPAIR-001: botón de limpiar búsqueda —
+                  al borrar el texto se recupera el catálogo inicial (§3.2). */}
+              {searchQuery.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleSearchChange("");
+                    searchInputRef.current?.focus();
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-muted text-muted-foreground hover:bg-muted/70 hover:text-foreground flex items-center justify-center transition-colors"
+                  aria-label="Limpiar búsqueda y volver al catálogo"
+                  title="Limpiar búsqueda"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            {/* CP-UX-NAVIGATION-POS-REPAIR-001: el dropdown overlay POSAutocomplete
+                se RETIRA de Express — la superficie de resultados es ÚNICA y vive
+                debajo del buscador (el overlay se cerraba con un clic fuera y
+                dejaba la pantalla sin resultados visibles). Mismo criterio de
+                coincidencia (nombre/SKU/código) y el MISMO predicado de
+                visibilidad que el carrito. */}
+            <div className="flex items-center justify-center gap-3 mt-1.5">
+              <p className="text-[10px] text-muted-foreground text-center uppercase tracking-widest">
+                Enter = agregar · F9 = cobrar · Esc = cancelar
+              </p>
+              {/* MISIÓN VENDER-EXPRESS: el MISMO toggle «Solo con stock» del
+                  carrito (estado compartido vía props de POSView). */}
+              {onHideOutOfStockChange && (
+                <button
+                  type="button"
+                  onClick={() => onHideOutOfStockChange(!hideOutOfStock)}
+                  className={cn(
+                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95",
+                    hideOutOfStock
+                      ? "bg-success/10 text-success border-success/30"
+                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted",
+                  )}
+                  title={hideOutOfStock
+                    ? "Productos agotados ocultos (igual que el carrito). Clic para mostrar todos."
+                    : "Mostrando todos los productos incluyendo agotados."}
+                  aria-label="Alternar visibilidad de productos agotados"
+                >
+                  {hideOutOfStock ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                  {hideOutOfStock ? "Solo con stock" : "Ver todo"}
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
 
-        {/* ── ÁREA DINÁMICA bajo el buscador (CP-UX-NAVIGATION-POS-REPAIR-001) ──
-            Estados diferenciados (§3.3 de la misión):
-            · Error al recuperar productos (con Reintentar — reutiliza refetch del POSView).
-            · Cargando productos (skeleton).
-            · Catálogo disponible (sin texto, paginado «Ver más»).
-            · Resultados encontrados (en vivo por nombre/SKU/código, o respaldo RPC).
-            · Sin coincidencias (con pista de búsqueda).
-            · Sin productos con existencias (con pista del filtro «Solo con stock»). */}
-        <div id="pos-express-results" className="max-w-3xl mx-auto mt-3">
+        {/* Fila 2 · col 1: ÁREA DINÁMICA con scroll PROPIO (CP-UX-NAVIGATION-
+            POS-REPAIR-001 + §1.2 de la misión actual). Estados diferenciados:
+            error / carga / catálogo / resultados / sin coincidencias. SIN
+            max-h fijos: la grid asigna el resto real del viewport. */}
+        <div
+          id="pos-express-results"
+          className="min-h-0 overflow-y-auto px-3 sm:px-6 py-3"
+        >
           {productsError ? (
             <div
               role="alert"
@@ -726,7 +1241,7 @@ export function POSExpressMode({
               <div
                 role="status"
                 aria-label="Cargando productos de la tienda"
-                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3"
+                className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3"
               >
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="p-3 rounded-xl border border-border bg-card animate-pulse">
@@ -763,8 +1278,8 @@ export function POSExpressMode({
                     clic = agregar
                   </span>
                 </div>
-                <div className="max-h-[34vh] overflow-y-auto rounded-2xl border-2 border-border bg-muted/10 p-3">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <div className="rounded-2xl border-2 border-border bg-muted/10 p-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
                     {visibleCatalog.slice(0, catalogLimit).map((product) => (
                       <button
                         key={product.id}
@@ -815,6 +1330,56 @@ export function POSExpressMode({
                     </button>
                   )}
                 </div>
+                {/* Frecuentes del turno — integrados al flujo de la columna
+                    izquierda (scrollean con el catálogo; el carrito conserva su
+                    altura completa sin compartir viewport). */}
+                <section className="mt-4" aria-label="Frecuentes del turno">
+                  <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-2">
+                    ⭐ Frecuentes del turno
+                  </h2>
+                  {frequentProducts && frequentProducts.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
+                      {frequentProducts.slice(0, 8).map((fp) => {
+                        const stock = fp.product.stock_current ?? 0;
+                        const stockOut = !fp.product.is_service && stock <= 0;
+                        return (
+                          <button
+                            key={fp.product.id}
+                            type="button"
+                            onClick={() => handleAddProduct(fp.product)}
+                            className="p-3 rounded-xl border-2 border-border bg-card hover:border-primary hover:bg-primary/5 transition-all text-left group active:scale-95"
+                            aria-label={`Agregar ${fp.product.name}`}
+                          >
+                            <div className="aspect-square w-full rounded-lg overflow-hidden bg-muted mb-2">
+                              <ProductImage
+                                src={fp.product.image_url || undefined}
+                                name={fp.product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <p className="text-xs font-bold text-foreground line-clamp-2 leading-tight">
+                              {fp.product.name}
+                            </p>
+                            <div className="flex items-center justify-between mt-1 gap-1">
+                              <p className="text-sm font-black text-primary tabular-nums">
+                                {formatCurrency(fp.product.price || 0)}
+                              </p>
+                              {stockOut && (
+                                <span className="text-[8px] font-bold text-destructive bg-destructive/10 px-1 py-0.5 rounded shrink-0">
+                                  Sin stock
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-muted-foreground px-1 py-2">
+                      Los productos más vendidos del turno aparecerán aquí.
+                    </p>
+                  )}
+                </section>
               </>
             )
           ) : trimmedQuery.length < LIVE_SEARCH_MIN_CHARS ? (
@@ -837,7 +1402,7 @@ export function POSExpressMode({
             <div
               role="listbox"
               aria-label="Resultados de búsqueda Express"
-              className="mt-2 rounded-2xl border-2 border-border bg-card overflow-hidden"
+              className="rounded-2xl border-2 border-border bg-card overflow-hidden"
             >
               <div className="px-3 py-2 border-b border-border bg-muted/30 flex items-center justify-between">
                 <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
@@ -849,7 +1414,7 @@ export function POSExpressMode({
                   clic = agregar
                 </span>
               </div>
-              <div className="max-h-[38vh] overflow-y-auto">
+              <div>
                 {searchResults.map((product) => {
                   const stock = product.stock_current ?? 0;
                   const stockOut = !product.is_service && stock <= 0;
@@ -912,72 +1477,65 @@ export function POSExpressMode({
             />
           )}
         </div>
+
+        {/* Col 2 · filas 1-2: CARRITO de altura completa (≥md) — §1.2:
+            presencia visual suficiente y siempre visible. */}
+        {cartPanel(false)}
       </div>
 
-      {/* ── BODY: dos columnas (favoritos + carrito) ── */}
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-        {/* Favoritos / frecuentes */}
-        <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
-          <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3">
-            ⭐ Frecuentes del turno
-          </h2>
-          {frequentProducts && frequentProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {frequentProducts.slice(0, 12).map((fp) => {
-                const stock = fp.product.stock_current ?? 0;
-                const stockOut = !fp.product.is_service && stock <= 0;
-                return (
-                  <button
-                    key={fp.product.id}
-                    type="button"
-                    onClick={() => handleAddProduct(fp.product)}
-                    className="p-3 rounded-xl border-2 border-border bg-card hover:border-primary hover:bg-primary/5 transition-all text-left group active:scale-95"
-                    aria-label={`Agregar ${fp.product.name}`}
-                  >
-                    <div className="aspect-square w-full rounded-lg overflow-hidden bg-muted mb-2">
-                      <ProductImage
-                        src={fp.product.image_url || undefined}
-                        name={fp.product.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <p className="text-xs font-bold text-foreground line-clamp-2 leading-tight">
-                      {fp.product.name}
-                    </p>
-                    {fp.product.sku && (
-                      <p className="text-[9px] text-muted-foreground font-mono mt-0.5 truncate">
-                        {fp.product.sku}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between mt-1 gap-1">
-                      <p className="text-sm font-black text-primary tabular-nums">
-                        {formatCurrency(fp.product.price || 0)}
-                      </p>
-                      {stockOut && (
-                        <span className="text-[8px] font-bold text-destructive bg-destructive/10 px-1 py-0.5 rounded shrink-0">
-                          Sin stock
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <p className="text-sm font-bold uppercase tracking-widest">
-                Sin frecuentes aún
-              </p>
-              <p className="text-xs mt-1">
-                Los productos más vendidos del turno aparecerán aquí.
-              </p>
-            </div>
-          )}
+      {/* ── MÓVIL (<md): barra inferior fija — acceso EVIDENTE al carrito y
+          al importe pendiente (§1.4), sin tapar el catálogo (pb del grid no
+          necesario: la barra es overlay del portal, el scroll del catálogo
+          termina sobre ella con padding inferior propio). */}
+      <div
+        className="md:hidden fixed bottom-0 left-0 right-0 z-[46] border-t border-border bg-card px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))]"
+        data-testid="express-mobile-bar"
+      >
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setCartOpenMobile(true)}
+            className="relative h-12 px-3 rounded-xl border-2 border-border bg-background flex items-center gap-2 text-xs font-black uppercase tracking-widest text-foreground active:scale-95 transition-all"
+            aria-label={`Ver carrito, ${itemCount} productos`}
+          >
+            <ShoppingCart className="w-4 h-4" />
+            <span className="hidden xs:inline">Carrito</span>
+            {itemCount > 0 && (
+              <span className="bg-primary text-primary-foreground px-1.5 py-0.5 rounded-full text-[10px] tabular-nums">
+                {itemCount}
+              </span>
+            )}
+          </button>
+          <div className="flex-1 text-right min-w-0">
+            <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-none">
+              Total
+            </p>
+            <p className="text-lg font-black text-primary tabular-nums leading-tight truncate">
+              {formatCurrency(total)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowConfirm(true)}
+            disabled={itemCount === 0 || isProcessingSale}
+            className="h-12 px-4 rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest disabled:opacity-50 flex items-center gap-2 active:scale-[0.98] transition-all shrink-0"
+            aria-label="Cobrar venta"
+          >
+            <Check className="w-4 h-4" />
+            Cobrar
+          </button>
         </div>
+      </div>
 
-        {/* Carrito lateral derecho */}
-        <aside className="lg:w-[380px] xl:w-[420px] border-t lg:border-t-0 lg:border-l border-border bg-card flex flex-col">
-          <div className="p-4 border-b border-border flex items-center justify-between shrink-0">
+      {/* ── MÓVIL: carrito a pantalla completa (mismo panel compartido). */}
+      {cartOpenMobile && (
+        <div
+          className="md:hidden fixed inset-0 z-[47] bg-background flex flex-col"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Carrito de la venta"
+        >
+          <div className="flex items-center justify-between p-3 border-b border-border bg-card shrink-0">
             <h2 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2">
               <ShoppingCart className="w-4 h-4" />
               Carrito
@@ -987,230 +1545,326 @@ export function POSExpressMode({
                 </span>
               )}
             </h2>
-            <div className="flex items-center gap-1">
-              {/* MISIÓN VENDER-EXPRESS: descuento global con el MISMO modal del
-                  carrito (POSCartDiscountModal — gate de supervisor ≥15%). */}
-              {itemCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowDiscount((v) => !v)}
-                  className={cn(
-                    "px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-colors",
-                    discount
-                      ? "bg-primary/10 text-primary border-primary/30"
-                      : "text-muted-foreground border-border hover:bg-muted",
-                  )}
-                  aria-expanded={showDiscount}
-                  aria-label="Descuento de la venta"
-                >
-                  Descuento{discount ? `: -${formatCurrency(discountAmount)}` : ""}
-                </button>
-              )}
-              {itemCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    clearCart();
-                    toast.success("Carrito vaciado");
-                  }}
-                  className="text-destructive hover:bg-destructive/10 p-1.5 rounded-lg transition-colors"
-                  aria-label="Vaciar carrito"
-                  title="Vaciar carrito"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* MISIÓN VENDER-EXPRESS: descuento global — MISMO componente del
-              carrito (mismas reglas, mismo gate de supervisor). */}
-          {showDiscount && itemCount > 0 && (
-            <div className="p-3 border-b border-border">
-              <POSCartDiscountModal
-                discount={discount}
-                setDiscount={setDiscount}
-                getTotal={getTotal}
-              />
-            </div>
-          )}
-
-          {/* Items scroll */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
-            {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-8">
-                <ShoppingCart className="w-12 h-12 opacity-20 mb-3" />
-                <p className="text-xs font-bold uppercase tracking-widest">Vacío</p>
-                <p className="text-[10px] mt-1">Escanea o busca para agregar</p>
-              </div>
-            ) : (
-              <AnimatePresence initial={false}>
-                {items.map((item) => {
-                  const stock = item.product?.stock_current ?? 0;
-                  const isService = item.product?.is_service === true;
-                  const stockOut = !isService && stock <= 0;
-                  return (
-                    <motion.div
-                      key={`${item.product_id}-${item.variant_id}`}
-                      layout
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="flex items-center gap-2 p-2 rounded-lg border border-border bg-background"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setEditingItem(item)}
-                        className="flex-1 min-w-0 text-left group"
-                        aria-label={`Editar ${item.product?.name || "producto"}`}
-                        title="Editar cantidad, precio o descuento (mismo editor del carrito)"
-                      >
-                        <p className="text-sm font-bold text-foreground truncate">
-                          {item.product?.name || "Producto"}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground font-mono truncate">
-                          {item.product?.sku ? `SKU: ${item.product.sku}` : ""}
-                          {item.variant ? ` · ${item.variant.name}` : ""}
-                        </p>
-                        <p className="text-xs text-muted-foreground tabular-nums">
-                          {formatCurrency(item.price)} c/u
-                          {item.discount_type && item.discount_value > 0
-                            ? ` · −${item.discount_type === "percentage" ? `${item.discount_value}%` : formatCurrency(item.discount_value)}`
-                            : ""}
-                        </p>
-                        {stockOut && (
-                          <span className="text-[8px] font-bold text-destructive bg-destructive/10 px-1 py-0.5 rounded">
-                            Sin stock
-                          </span>
-                        )}
-                      </button>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateQuantity(item.product_id, item.variant_id, item.quantity - 1)
-                          }
-                          className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-lg border border-border hover:bg-muted flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          aria-label="Reducir cantidad"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingItem(item)}
-                          className="w-12 text-center font-black tabular-nums hover:bg-muted rounded-lg py-2 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          aria-label="Editar cantidad decimal"
-                          title="Editar cantidad (admite decimales, precio y descuento)"
-                        >
-                          {item.quantity}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateQuantity(item.product_id, item.variant_id, item.quantity + 1)
-                          }
-                          className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-lg border border-border hover:bg-muted flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary/30"
-                          aria-label="Aumentar cantidad"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeItem(item.product_id, item.variant_id)}
-                        className="text-destructive hover:bg-destructive/10 p-1.5 rounded-lg transition-colors shrink-0"
-                        aria-label="Quitar"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            )}
-          </div>
-
-          {/* TOTAL + COBRAR */}
-          <div className="p-4 border-t border-border bg-card shrink-0 space-y-3">
-            <div className="flex items-baseline justify-between">
-              <span className="text-xs font-black uppercase tracking-widest text-muted-foreground">
-                Total
-              </span>
-              <span className="text-[clamp(2rem,8vw,3rem)] font-black text-primary tabular-nums leading-none">
-                {formatCurrency(total)}
-              </span>
-            </div>
-            {(discountAmount > 0 || subtotal !== total) && (
-              <div className="flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-widest">
-                <span>Subtotal {formatCurrency(subtotal)}</span>
-                {discountAmount > 0 && <span>Descuento −{formatCurrency(discountAmount)}</span>}
-              </div>
-            )}
             <button
               type="button"
-              onClick={() => setShowConfirm(true)}
-              disabled={itemCount === 0 || isProcessingSale}
-              className="w-full h-16 rounded-2xl bg-primary text-primary-foreground font-black text-base uppercase tracking-widest shadow-xl shadow-primary/20 disabled:opacity-50 flex items-center justify-center gap-3 active:scale-[0.98] transition-all"
-              aria-label="Cobrar venta"
+              onClick={() => setCartOpenMobile(false)}
+              className="w-11 h-11 rounded-xl border border-border hover:bg-muted flex items-center justify-center"
+              aria-label="Cerrar carrito"
             >
-              <Check className="w-6 h-6" />
-              Cobrar
-              {total > 0 && (
-                <span className="bg-primary-foreground/20 px-2 py-1 rounded-md text-sm tabular-nums">
-                  {formatCurrency(total)}
-                </span>
-              )}
+              <X className="w-5 h-5" />
             </button>
           </div>
-        </aside>
-      </div>
+          {cartPanel(true)}
+        </div>
+      )}
 
-      {/* POS-3b audit P0.3: Modal accesible con focus trap + role=dialog */}
+      {/* POS-3b audit P0.3: Modal accesible con focus trap + role=dialog.
+          CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 3): confirmación con
+          PESTAÑAS — «Resumen» (venta completa) y «Datos de transferencia»
+          (SOLO si alguna distribución incluye transferencia). Cambiar de
+          pestaña NO pierde estado: todo vive en el store/componente. */}
       <POSPortalModal
         open={showConfirm}
-        onClose={() => setShowConfirm(false)}
+        onClose={() => { setShowConfirm(false); setPayTab('resumen'); }}
         title="Confirmar Venta"
       >
-        <div className="space-y-4">
-          <div className="text-center">
-            <p className="text-3xl font-black text-primary tabular-nums">
-              {formatCurrency(total)}
-            </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              {itemCount} {itemCount === 1 ? "producto" : "productos"} ·{" "}
-              <strong className="text-foreground uppercase">
-                {selectedPayment}
-              </strong>
-            </p>
-            {discountAmount > 0 && (
-              <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">
-                Subtotal {formatCurrency(subtotal)} · Descuento −{formatCurrency(discountAmount)}
-              </p>
+        <div className="space-y-3">
+          {/* Tabs del cobro */}
+          <div
+            role="tablist"
+            aria-label="Pasos del cobro"
+            className="flex rounded-xl border border-border p-1 gap-1"
+          >
+            <button
+              type="button"
+              role="tab"
+              aria-selected={payTab === 'resumen'}
+              onClick={() => setPayTab('resumen')}
+              className={cn(
+                "flex-1 h-9 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                payTab === 'resumen'
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted",
+              )}
+            >
+              Resumen
+            </button>
+            {hasTransfer && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={payTab === 'datos'}
+                onClick={() => setPayTab('datos')}
+                data-testid="tab-datos-transferencia"
+                className={cn(
+                  "flex-1 h-9 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 flex items-center justify-center gap-1",
+                  payTab === 'datos'
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted",
+                  hasTransfer && !transferDataOk && payTab !== 'datos' && "text-amber-500",
+                )}
+              >
+                Datos de transferencia
+                {hasTransfer && !transferDataOk && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" aria-label="Datos incompletos" />
+                )}
+              </button>
             )}
           </div>
-          {/* MISIÓN FECHA OPERATIVA: fecha económica editable también en Express
-              (misma del carrito). El servidor revalida al confirmar. */}
-          <div className="rounded-xl border border-border/60 bg-muted/10 p-3">
-            <POSOperationDateSection inputId="pos-date-express" />
-          </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setShowConfirm(false)}
-              className="flex-1 h-12 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={handleConfirmSale}
-              disabled={isProcessingSale || !saleDateValidation.valid}
-              title={!saleDateValidation.valid ? saleDateValidation.error : undefined}
-              className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-              {isProcessingSale ? "Procesando..." : "Confirmar"}
-            </button>
-          </div>
+
+          {payTab === 'resumen' ? (
+            <>
+              <div className="text-center">
+                <p className="text-3xl font-black text-primary tabular-nums">
+                  {formatCurrency(total)}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {itemCount} {itemCount === 1 ? "producto" : "productos"} ·{" "}
+                  <strong className="text-foreground uppercase">
+                    {getPaymentLabel(derivedPaymentMethod)}
+                  </strong>
+                </p>
+                {discountAmount > 0 && (
+                  <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-widest">
+                    Subtotal {formatCurrency(subtotal)} · Descuento −{formatCurrency(discountAmount)}
+                  </p>
+                )}
+                {/* Resumen consolidado por método (§2.4) — misma fuente que el carrito */}
+                <div className="mt-2 rounded-xl border border-border/60 bg-muted/10 p-2 text-left" data-testid="express-confirm-summary">
+                  {(['cash', 'transfer', 'external_transfer'] as const).map((m) => {
+                    const entries = paymentSummary.rowsByMethod[m];
+                    if (!entries || entries.length === 0) return null;
+                    return (
+                      <div key={m} className="flex items-center justify-between text-[10px] py-0.5">
+                        <span className="font-black uppercase tracking-wider text-muted-foreground">
+                          {m === 'cash' ? 'Efectivo' : m === 'transfer' ? 'Transferencia' : 'Transf. Exterior'}
+                        </span>
+                        <span className="font-bold tabular-nums text-foreground">
+                          {entries.map((e, i) => (
+                            <span key={`${m}-${e.currency}`}>
+                              {i > 0 ? ' + ' : ''}{formatCurrency(e.amount)} {e.currency}
+                            </span>
+                          ))}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {paymentSummary.pendingCup > 0 && (
+                    <div className="flex items-center justify-between text-[10px] py-0.5 border-t border-border/40 mt-1 pt-1">
+                      <span className="font-black uppercase tracking-wider text-amber-500">
+                        Pendiente de asignar
+                      </span>
+                      <span className="font-bold tabular-nums text-amber-500">
+                        {formatCurrency(paymentSummary.pendingCup)} CUP
+                      </span>
+                    </div>
+                  )}
+                  {paymentSummary.pendingCup > 0 && (
+                    <p className="text-[9px] text-muted-foreground mt-1">
+                      La venta se registrará con incidencia de pago (política vigente).
+                    </p>
+                  )}
+                </div>
+              </div>
+              {/* MISIÓN FECHA OPERATIVA: fecha económica editable también en Express
+                  (misma del carrito). El servidor revalida al confirmar. */}
+              <div className="rounded-xl border border-border/60 bg-muted/10 p-3">
+                <POSOperationDateSection inputId="pos-date-express" />
+              </div>
+              {/* Notas de la venta — campo EXISTENTE del proceso de cobro
+                  (saleNotes → transactions.notes). Conservado y ampliado a Express. */}
+              <div>
+                <label
+                  htmlFor="pos-express-sale-notes"
+                  className="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
+                >
+                  Notas de la venta
+                </label>
+                <textarea
+                  id="pos-express-sale-notes"
+                  value={saleNotes}
+                  onChange={(e) => setSaleNotes(e.target.value.slice(0, 1000))}
+                  rows={2}
+                  maxLength={1000}
+                  placeholder="Observaciones de la operación (opcional)"
+                  className="w-full mt-1 rounded-xl border border-border bg-background px-3 py-2 text-xs focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  aria-label="Notas de la venta"
+                />
+                <p className="text-[9px] text-muted-foreground text-right mt-0.5">
+                  {saleNotes.length}/1000 · Se guarda con la venta
+                </p>
+              </div>
+              {hasTransfer && !transferDataOk && (
+                <p className="text-[10px] font-bold text-amber-500" role="alert">
+                  La venta incluye transferencia: completa la pestaña «Datos de transferencia»
+                  antes de confirmar.
+                </p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(false)}
+                  className="flex-1 h-12 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmSale}
+                  disabled={isProcessingSale || !saleDateValidation.valid}
+                  title={!saleDateValidation.valid ? saleDateValidation.error : undefined}
+                  className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  {isProcessingSale ? "Procesando..." : hasTransfer && !transferDataOk ? "Completar datos" : "Confirmar"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* ── PESTAÑA «DATOS DE TRANSFERENCIA» (FASE 3) ──
+                  Nombre del cliente + carné de identidad + UN número de
+                  operación POR fila de transferencia (cada pago bancario
+                  conserva SU referencia — payment_transactions.reference;
+                  nunca una referencia global) + notas compartidas. */}
+              <div className="space-y-2" data-testid="datos-transferencia-panel">
+                <p className="text-[10px] text-muted-foreground">
+                  Identifica la operación bancaria de esta venta. Estos datos
+                  quedan asociados a la venta y a cada pago por transferencia.
+                </p>
+                <div>
+                  <label
+                    htmlFor="pos-express-transfer-name"
+                    className="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
+                  >
+                    Nombre y apellidos del cliente <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    id="pos-express-transfer-name"
+                    type="text"
+                    value={customerName || ''}
+                    onChange={(e) => setCustomer(null, e.target.value || null)}
+                    maxLength={200}
+                    autoComplete="off"
+                    className={cn(
+                      "w-full mt-1 rounded-xl border bg-background px-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20",
+                      !(customerName || '').trim() ? "border-amber-500/60" : "border-border focus:border-primary",
+                    )}
+                    aria-label="Nombre y apellidos del cliente (requerido con transferencia)"
+                    aria-required="true"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="pos-express-transfer-ci"
+                    className="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
+                  >
+                    Carné de identidad <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    id="pos-express-transfer-ci"
+                    type="text"
+                    value={customerCi || ''}
+                    onChange={(e) => setCustomerCi(e.target.value || null)}
+                    maxLength={20}
+                    autoComplete="off"
+                    className={cn(
+                      "w-full mt-1 rounded-xl border bg-background px-3 py-2.5 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary/20",
+                      !(customerCi || '').trim() ? "border-amber-500/60" : "border-border focus:border-primary",
+                    )}
+                    aria-label="Carné de identidad del cliente (requerido con transferencia)"
+                    aria-required="true"
+                    data-testid="pos-express-transfer-ci"
+                  />
+                  {/* COSTPRO no define una regla canónica de CI (decisión
+                      documentada en el diagnóstico): pista de formato 11
+                      dígitos sin bloquear identidades con letras. */}
+                  {!!(customerCi || '').trim() && !/^\d{11}$/.test(customerCi || '') && (
+                    <p className="text-[9px] text-amber-500 mt-0.5">
+                      Formato habitual: 11 dígitos (se aceptan CI con letras).
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                    Números de transferencia <span className="text-destructive">*</span>
+                  </p>
+                  <p className="text-[9px] text-muted-foreground">
+                    Una referencia POR operación bancaria: si la venta tiene
+                    varias transferencias, cada una lleva su número.
+                  </p>
+                  {transferRows.map(({ item, rowId, method, amount, currency }) => {
+                    const row = (item.payments || []).find((p) => p.id === rowId);
+                    const missing = !(row?.reference || '').trim();
+                    return (
+                      <div
+                        key={`${item.product_id}-${item.variant_id ?? 'null'}-${rowId}`}
+                        className="rounded-xl border border-border/60 bg-muted/10 p-2"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="text-[10px] font-bold text-foreground truncate">
+                            {item.product?.name || "Producto"}
+                            {item.variant ? ` · ${item.variant.name}` : ""}
+                          </span>
+                          <span className="text-[10px] font-black tabular-nums text-primary shrink-0">
+                            {formatCurrency(amount)} {currency}
+                            <span className="ml-1 text-muted-foreground font-bold">
+                              {method === 'transfer' ? 'Transf.' : 'Ext.'}
+                            </span>
+                          </span>
+                        </div>
+                        <input
+                          type="text"
+                          value={row?.reference || ''}
+                          onChange={(e) =>
+                            useCartStore.getState().updateItemPaymentRow(
+                              item.product_id, item.variant_id, rowId,
+                              { reference: e.target.value || null },
+                            )
+                          }
+                          maxLength={400}
+                          className={cn(
+                            "w-full rounded-lg border bg-background px-2 py-2 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-primary/20",
+                            missing ? "border-amber-500/60" : "border-border focus:border-primary",
+                          )}
+                          placeholder="N.º de transferencia (obligatorio)"
+                          aria-label={`Número de transferencia para ${item.product?.name || "producto"}`}
+                          data-testid={`transfer-ref-${item.product_id}`}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-[9px] text-muted-foreground">
+                  Las notas generales se editan en la pestaña Resumen y viajan
+                  con la venta.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPayTab('resumen')}
+                  className="flex-1 h-12 rounded-xl border border-border text-xs font-black uppercase tracking-widest hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  Volver al resumen
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmSale}
+                  disabled={isProcessingSale || !saleDateValidation.valid || !transferDataOk}
+                  title={
+                    !transferDataOk
+                      ? "Completa cliente, carné de identidad y los números de transferencia"
+                      : !saleDateValidation.valid
+                        ? saleDateValidation.error
+                        : undefined
+                  }
+                  className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                >
+                  {isProcessingSale ? "Procesando..." : "Confirmar"}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </POSPortalModal>
 
@@ -1235,6 +1889,13 @@ export function POSExpressMode({
           onClose={() => setEditingItem(null)}
         />
       )}
+
+      {/* CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 2): «Configurar pago»
+          de una línea — el MISMO editor de filas de pago del carrito clásico. */}
+      <POSExpressPaymentModal
+        item={payingItem}
+        onClose={() => setPayingItem(null)}
+      />
 
       {/* CP-UX-POLISH-002 (§2.1): el botón flotante fixed top-4 right-4 se RETIRA.
           Era la causa raíz de la superposición con el método de pago (misma

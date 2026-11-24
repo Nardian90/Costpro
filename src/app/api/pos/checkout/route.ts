@@ -78,6 +78,31 @@ const itemSchema = z.object({
   zelle_discount_type: z.string().nullable().optional(),
   zelle_discount_value: z.number().optional(),
   zelle_discount_currency: z.string().optional(),
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 4): distribución de pago REAL
+  // de la línea — filas de pago del carrito (método, moneda, importe,
+  // referencia de transferencia por pago, ajuste y tasa informativa). El RPC
+  // las valida (estructura + referencia obligatoria en transferencias con
+  // monto > 0) y las persiste en transaction_items.payment_distributions
+  // (columna nueva aditiva; los históricos quedan NULL). Máximo 8 filas por
+  // línea (mismo espíritu que los 20 componentes por venta).
+  payments: z.array(
+    z.object({
+      // 'zelle' heredado aceptado (clientes en caché); el RPC normaliza al
+      // canónico 'external_transfer' y jamás lo persiste.
+      method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']),
+      currency: z.string().min(1).max(8),
+      amount: z.number().min(0).finite(),
+      // Referencia de ESTA transferencia (§5.1 CP-LOG-UNIFICATION): una
+      // referencia por operación bancaria, nunca global.
+      reference: z.string().max(400).nullable().optional(),
+      discount_type: z.string().nullable().optional(),
+      discount_value: z.number().finite().optional(),
+      discount_currency: z.string().max(8).optional(),
+      // Tasa informativa de la fila (cliente, no autoritativa: los pools y
+      // el total los sigue decidiendo el servidor con su jerarquía).
+      exchange_rate: z.number().positive().finite().optional(),
+    }),
+  ).max(8).optional(),
 });
 
 const checkoutSchema = z.object({
@@ -111,6 +136,12 @@ const checkoutSchema = z.object({
   // eventual"), pero el schema solo aceptaba string|undefined → 400 en TODAS las
   // ventas walk-in V2. El RPC create_sale_v2 ya acepta null (p_customer_name).
   customer_name: z.string().nullable().optional(),
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 3): CI del cliente — se recoge
+  // en la pestaña «Datos de transferencia» de Cajero Express cuando la venta
+  // tiene pagos por transferencia. Se persiste en transactions.customer_ci
+  // (columna ya existente). La OBLIGATORIEDAD se valida en el cliente y el RPC
+  // no la exige (compatibilidad con ventas sin transferencia).
+  customer_ci: z.string().max(20).nullable().optional(),
   // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot COMPRADOR (SC-2-12)
   customer_address: z.string().max(200).nullable().optional(),
   customer_code: z.string().max(30).nullable().optional(),
@@ -285,6 +316,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     zelle_discount_type: i.zelle_discount_type,
     zelle_discount_value: i.zelle_discount_value,
     zelle_discount_currency: i.zelle_discount_currency,
+    // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 4): distribución de pago
+    // real de la línea (viaja DENTRO de p_items — no cambia la firma del RPC).
+    ...(i.payments ? { payments: i.payments } : {}),
   }));
 
   const { data: rpcData, error: rpcError } = await supabaseAdmin.rpc('create_sale_v2', {
@@ -312,6 +346,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     p_sale_exchange_rate: d.sale_exchange_rate,
     p_customer_id: d.customer_id ?? null,
     p_customer_name: d.customer_name ?? null,
+    // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 3): CI del cliente. Clave
+    // CONDICIONAL (patrón CP-MONEY-002): sin CI la llamada resuelve también
+    // contra la firma previa del RPC (BD sin migrar); con CI exige la BD
+    // migrada (fail-closed correcto — el dato solo existe con transferencia).
+    ...(d.customer_ci ? { p_customer_ci: d.customer_ci } : {}),
     // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot del comprador
     p_customer_address: d.customer_address ?? null,
     p_customer_code: d.customer_code ?? null,
