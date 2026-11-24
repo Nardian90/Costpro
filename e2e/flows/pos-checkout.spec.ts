@@ -352,6 +352,10 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
         subtotal: 100,
         cash_amount: 0,
         transfer_amount: 100,
+        // El cliente real (usePOSCheckout) envía payment_components SIEMPRE que
+        // hay referencia de transferencia (requiresPaymentComponents §5.1) — es
+        // el ÚNICO camino que persiste la referencia por pago en el ledger.
+        payment_components: [{ method: 'transfer', currency: 'CUP', amount: 100, reference: 'TR-E2E-B-1' }],
         items: [{
           product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
           payments: [{ method: 'transfer', currency: 'CUP', amount: 100, reference: 'TR-E2E-B-1' }],
@@ -612,6 +616,12 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
     // cuyo equivalente cierra el total: USD 20 × ... NO. Se modela: total 100 = 80 CUP + USD 20/450 → no exacto.
     // Escenario válido exacto: producto 190 CUP = 100 CUP + USD 0.2 × 450 = 90 CUP. Se siembra a 190.
     const pMulti = await seedProduct(store, { name: 'Producto E2E POS Multi', price: 190, cost: 100, quantity: 10, sku: `E2E80-PERITEM-${Date.now()}-M` });
+    // Prerrequisito §6.1: tasa USD de la tienda (autoridad del servidor para
+    // componentes en USD). Idempotente: select-then-insert (sb no tiene upsert).
+    const rateRow = await sb.select('store_exchange_rates', `store_id=eq.${store.id}&currency=eq.USD&select=id`);
+    if (rateRow.length === 0) {
+      await sb.insert('store_exchange_rates', [{ store_id: store.id, currency: 'USD', rate: 450 }]);
+    }
     const total = 190; // 100 CUP + 0.2 USD × 450 = 90 CUP
     const res = await request.post('/api/pos/checkout', {
       headers: apiHeaders(adminToken),
