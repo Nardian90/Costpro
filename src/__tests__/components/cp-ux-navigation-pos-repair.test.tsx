@@ -300,7 +300,7 @@ describe('CP-UX-NAVIGATION-POS-REPAIR-001 · Cierre del panel de Ventas (§2)', 
     useCartStore.setState({ items: [], storeId: STORE, lastUpdated: Date.now() });
   });
 
-  it('X cierra el panel de verdad tras una venta confirmada (lastSale ≠ null)', () => {
+  it('X cierra el panel de verdad tras una venta confirmada (lastSale ≠ null)', async () => {
     // Simula el estado post-venta: la venta fue confirmada (POST OK) y el
     // recibo (lastSale) permanece — exactamente el escenario del bug.
     lastSaleHolder.current = SALE;
@@ -311,8 +311,12 @@ describe('CP-UX-NAVIGATION-POS-REPAIR-001 · Cierre del panel de Ventas (§2)', 
       </QueryClientProvider>,
     );
 
-    // El panel está montado mostrando la vista de éxito (condición showCart || lastSale)
-    expect(screen.getByTestId('pos-success-view')).toBeInTheDocument();
+    // FIABILIDAD CI (2026-11-24): en producción lastSale SIEMPRE llega de forma
+    // asíncrona (se fija cuando el POST de create_sale_v2 resuelve), así que el
+    // contrato correcto es «la vista de éxito aparece» — no «aparece en el
+    // primer microtask». findBy tolera el render asíncrono bajo carga del
+    // runner (flake observado en CI: getByTestId síncrono antes del re-render).
+    await screen.findByTestId('pos-success-view');
 
     // Clic en el X del header del carrito
     fireEvent.click(screen.getByRole('button', { name: 'Cerrar carrito' }));
