@@ -1,0 +1,122 @@
+[
+  {
+    "id": "A1",
+    "criterio": "Menú fijo expandido — visible y empuja el contenido",
+    "resultado": "APROBADO",
+    "detalle": "pin=true, padding.contenido=288px"
+  },
+  {
+    "id": "P1",
+    "criterio": "Persistencia — preferencia presente en storage",
+    "resultado": "APROBADO",
+    "detalle": "sidebarPinned=true"
+  },
+  {
+    "id": "B1",
+    "criterio": "Menú fijo contraído — visible, compacto y empuja el contenido",
+    "resultado": "APROBADO",
+    "detalle": "iconos rail=true, padding.contenido=80px"
+  },
+  {
+    "id": "C1",
+    "criterio": "Menú no fijo — se superpone SIN reservar espacio (backdrop presente)",
+    "resultado": "APROBADO",
+    "detalle": "backdrop=true, padding.contenido=0px"
+  },
+  {
+    "id": "P2",
+    "criterio": "Persistencia — pin=false conservado en storage",
+    "resultado": "APROBADO",
+    "detalle": "sidebarPinned=false"
+  },
+  {
+    "id": "C2",
+    "criterio": "Estado C — interacción exterior (clic fuera) cierra el panel",
+    "resultado": "APROBADO",
+    "detalle": "ancho aside tras clic=0"
+  },
+  {
+    "id": "C3",
+    "criterio": "Estado C — reabre como overlay (hamburger) con X propia",
+    "resultado": "APROBADO",
+    "detalle": "X temporal=true, padding.contenido=0px"
+  },
+  {
+    "id": "C4",
+    "criterio": "Estado C — Esc cierra el panel temporal",
+    "resultado": "APROBADO",
+    "detalle": "cerrado=true, dialogs abiertos=1"
+  },
+  {
+    "id": "A2",
+    "criterio": "Refijar desde overlay → Estado A de nuevo (empuja, sin backdrop)",
+    "resultado": "APROBADO",
+    "detalle": "padding.contenido=288px, backdrop=true"
+  },
+  {
+    "id": "N1",
+    "criterio": "Estado A — navegar a vista funcional NO cierra el menú fijo",
+    "resultado": "APROBADO",
+    "detalle": "visible=true"
+  },
+  {
+    "id": "E1",
+    "criterio": "Cajero Express — X independiente del método de pago (sin superposición)",
+    "resultado": "APROBADO",
+    "detalle": "X=(1306,10,44x44) · pago=(1167,62,183x36)"
+  },
+  {
+    "id": "E2",
+    "criterio": "Selector de pago — siempre visible y accesible (bounding box completo en viewport)",
+    "resultado": "APROBADO",
+    "detalle": "X=(1306,10,44x44) · pago=(1167,62,183x36)"
+  },
+  {
+    "id": "E3",
+    "criterio": "Cajero Express — la X cierra el panel correctamente",
+    "resultado": "APROBADO",
+    "detalle": "cerrado=true"
+  },
+  {
+    "id": "R1",
+    "criterio": "Responsive 1920×1080 — sin desbordamiento horizontal en Express",
+    "resultado": "APROBADO",
+    "detalle": ""
+  },
+  {
+    "id": "R2",
+    "criterio": "Responsive 1024×768 — sin desbordamiento horizontal en Express",
+    "resultado": "APROBADO",
+    "detalle": ""
+  },
+  {
+    "id": "M1",
+    "criterio": "Móvil — el control pin NO existe (drawer siempre temporal)",
+    "resultado": "APROBADO",
+    "detalle": ""
+  },
+  {
+    "id": "M2",
+    "criterio": "Móvil — clic en sección raíz (Operación) NO cierra el menú",
+    "resultado": "APROBADO",
+    "detalle": ""
+  },
+  {
+    "id": "M3",
+    "criterio": "Móvil — clic en vista funcional (Inicio) cierra el menú",
+    "resultado": "APROBADO",
+    "detalle": ""
+  },
+  {
+    "id": "R3",
+    "criterio": "Responsive 390×844 — sin desbordamiento horizontal",
+    "resultado": "APROBADO",
+    "detalle": ""
+  },
+  {
+    "id": "R4",
+    "criterio": "Responsive 768×1024 — sin desbordamiento horizontal",
+    "resultado": "APROBADO",
+    "detalle": ""
+  }
+]

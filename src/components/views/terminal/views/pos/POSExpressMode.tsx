@@ -562,31 +562,59 @@ export function POSExpressMode({
   if (typeof window === 'undefined') return null; // SSR guard
   return createPortal(
     <div className="fixed inset-0 z-[45] bg-background flex flex-col">
-      {/* ── HEADER ── */}
-      <header className="flex items-center justify-between p-4 border-b border-border bg-card shrink-0">
-        <button
-          type="button"
-          onClick={onExit}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-black uppercase tracking-widest border border-primary/20 active:scale-95"
-          aria-label="Salir del modo Express"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Salir
-        </button>
-        <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-primary" />
-          <h1 className="text-base sm:text-lg font-black uppercase tracking-widest text-foreground">
-            Cajero Express
-          </h1>
+      {/* ── HEADER — CP-UX-POLISH-002 (§2.1): zonas exclusivas SIN superposición.
+          Fila 1: [Salir · título · X] — zona exclusiva de título y cierre; la X
+          es un hijo flex del header (NINGÚN posicionamiento fixed/absolute):
+          es estructuralmente imposible que colisione con el método de pago al
+          cambiar el ancho de pantalla. Durante el POST ambas salidas se
+          deshabilitan (§2.4: el cierre no interfiere con el POST ni cancela
+          una venta en curso; el estado del proceso se conserva).
+          Fila 2: método de pago SIEMPRE visible y accesible (§2.2) — nunca
+          debajo de la X ni recortado por el encabezado. */}
+      <header className="border-b border-border bg-card shrink-0 px-3 sm:px-4 py-2.5">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={onExit}
+            disabled={isProcessingSale}
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-black uppercase tracking-widest border border-primary/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none min-h-[44px] shrink-0"
+            aria-label="Salir del modo Express"
+            title={isProcessingSale ? "Procesando venta… espera a la confirmación" : "Salir del modo Express"}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Salir
+          </button>
+          <div className="flex-1 min-w-0 flex items-center justify-center gap-2">
+            <Zap className="w-5 h-5 text-primary shrink-0" />
+            <h1 className="text-base sm:text-lg font-black uppercase tracking-widest text-foreground truncate">
+              Cajero Express
+            </h1>
+          </div>
+          {/* Zona exclusiva del cierre: separada del selector de pago por
+              estructura flex (no por coordenadas absolutas). Área táctil 44px
+              (WCAG 2.5.8), foco visible, estado de proceso honesto. */}
+          <button
+            type="button"
+            onClick={onExit}
+            disabled={isProcessingSale}
+            className="shrink-0 w-11 h-11 rounded-xl bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive hover:text-destructive-foreground transition-all active:scale-95 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 disabled:opacity-50 disabled:pointer-events-none"
+            aria-label="Cerrar modo Express"
+            title={isProcessingSale ? "Procesando venta… espera a la confirmación" : "Cerrar modo Express"}
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hidden sm:inline">
-            Método
+        {/* Método de pago — fila propia (§2.2): el selector conserva sus
+            dimensiones, texto legible y accesible en cualquier resolución. */}
+        <div className="flex items-center justify-center sm:justify-end gap-2 mt-2">
+          <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            Método de pago
           </span>
           <PaymentMethodSelector
             value={selectedPayment}
             onChange={setSelectedPayment}
             variant="compact"
+            className="max-w-[240px]"
           />
         </div>
       </header>
@@ -1204,17 +1232,11 @@ export function POSExpressMode({
         />
       )}
 
-      {/* Audit-Fix: botón flotante de cerrar (X) en esquina superior derecha.
-          Visible siempre, incluso si el header scrolla fuera de vista. */}
-      <button
-        type="button"
-        onClick={onExit}
-        className="fixed top-4 right-4 z-[10000] w-12 h-12 rounded-full bg-destructive text-destructive-foreground shadow-2xl hover:bg-destructive/90 transition-all active:scale-90 flex items-center justify-center border-2 border-background"
-        aria-label="Cerrar modo Express"
-        title="Cerrar modo Express"
-      >
-        <X className="w-5 h-5" />
-      </button>
+      {/* CP-UX-POLISH-002 (§2.1): el botón flotante fixed top-4 right-4 se RETIRA.
+          Era la causa raíz de la superposición con el método de pago (misma
+          coordenada right-16px que el grupo de controles del header, en TODAS
+          las resoluciones). El cierre vive ahora DENTRO del header — zona
+          exclusiva, sin posicionamiento absoluto (misión §2.1). */}
     </div>,
     document.body
   );

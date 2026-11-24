@@ -416,24 +416,45 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
   if (typeof window === 'undefined') return null; // SSR guard
   return createPortal(
     <div className="fixed inset-0 z-[9999] bg-background flex flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between p-4 border-b border-border bg-card shrink-0 gap-4">
-        <button
-          type="button"
-          onClick={onExit}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-black uppercase tracking-widest border border-primary/20 active:scale-95 shrink-0"
-          aria-label="Salir del modo Express"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Salir
-        </button>
-        <div className="flex items-center gap-2">
-          <Zap className="w-5 h-5 text-primary" />
-          <h1 className="text-base sm:text-lg font-black uppercase tracking-widest text-foreground">
-            Recepción Express
-          </h1>
+      {/* Header — CP-UX-POLISH-002 (§2.1): zonas exclusivas sin superposición.
+          Fila 1: [Salir · título · X] — el cierre es hijo flex del header (sin
+          posición fija); Fila 2: controles de recepción (proveedor/factura/
+          moneda/tasa) SIEMPRE visibles, jamás bajo la X (§2.2). Durante el
+          envío (isSubmitting) ambas salidas se deshabilitan: el cierre no
+          interfiere con la recepción en curso (§2.4). */}
+      <header className="border-b border-border bg-card shrink-0 px-3 sm:px-4 py-2.5">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={onExit}
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-primary/10 text-primary hover:bg-primary/20 transition-colors text-xs font-black uppercase tracking-widest border border-primary/20 active:scale-95 disabled:opacity-50 disabled:pointer-events-none min-h-[44px] shrink-0"
+            aria-label="Salir del modo Express"
+            title={isSubmitting ? "Procesando recepción… espera a la confirmación" : "Salir del modo Express"}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Salir
+          </button>
+          <div className="flex-1 min-w-0 flex items-center justify-center gap-2">
+            <Zap className="w-5 h-5 text-primary shrink-0" />
+            <h1 className="text-base sm:text-lg font-black uppercase tracking-widest text-foreground truncate">
+              Recepción Express
+            </h1>
+          </div>
+          <button
+            type="button"
+            onClick={onExit}
+            disabled={isSubmitting}
+            className="shrink-0 w-11 h-11 rounded-xl bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive hover:text-destructive-foreground transition-all active:scale-95 flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 disabled:opacity-50 disabled:pointer-events-none"
+            aria-label="Cerrar modo Express"
+            title={isSubmitting ? "Procesando recepción… espera a la confirmación" : "Cerrar modo Express"}
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <div className="flex items-center gap-2">
+        {/* Controles de recepción — fila propia con wrap (§2.3): en pantallas
+            pequeñas reordenan verticalmente sin sacrificar funcionalidades. */}
+        <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2 mt-2">
           {/* CP-LOG-UNIFICATION-001 (§4): selector de proveedores COMPARTIDO
               (mismo que manual y Servicios Recibidos) — identidad real del
               Clasificador Maestro + alta al vuelo, no texto libre. */}
@@ -815,17 +836,10 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
         </div>
       </POSPortalModal>
 
-      {/* Audit-Fix: botón flotante de cerrar (X) en esquina superior derecha.
-          Visible siempre, incluso si el header scrolla fuera de vista. */}
-      <button
-        type="button"
-        onClick={onExit}
-        className="fixed top-4 right-4 z-[10000] w-12 h-12 rounded-full bg-destructive text-destructive-foreground shadow-2xl hover:bg-destructive/90 transition-all active:scale-90 flex items-center justify-center border-2 border-background"
-        aria-label="Cerrar modo Express"
-        title="Cerrar modo Express"
-      >
-        <X className="w-5 h-5" />
-      </button>
+      {/* CP-UX-POLISH-002 (§2.1): botón flotante fixed top-4 right-4 RETIRADO —
+          se superponía a los controles de la esquina superior derecha del
+          header (proveedor/factura/moneda). El cierre vive ahora en la zona
+          exclusiva del header, sin posicionamiento absoluto. */}
     </div>,
     document.body
   );

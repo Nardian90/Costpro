@@ -203,6 +203,11 @@ export default function TerminalShell() {
     setIpvActiveTab,
     sidebarState,
     setSidebarState,
+    // CP-UX-POLISH-002 (2026-11-24): eje FIJO/TEMPORAL — decide si el menú
+    // abierto RESERVA espacio en el layout (pin, Estados A/B) o se SUPERPONE
+    // sin reservar nada (Estado C). Con pin=false el contenido nunca recibe
+    // padding-left: el overlay es puro.
+    sidebarPinned,
     toggleSidebar: globalToggleSidebar,
     isHelpReadingMode
   } = useUIStore();
@@ -699,6 +704,13 @@ export default function TerminalShell() {
     'closed': 'pl-0'
   };
 
+  // CP-UX-POLISH-002 (§1 Estados A/B/C): el padding SOLO existe cuando el menú
+  // es FIJO (pin activo). Estado A (pinned expanded) → pl-64/72 empuja; Estado
+  // B (pinned rail) → pl-20 empuje compacto; Estado C (sin pin) → SIN padding:
+  // el menú se superpone al contenido sin reservar espacio (backdrop incluido
+  // más abajo). Móvil: siempre temporal → nunca reserva espacio.
+  const contentPaddingClass = !isMobile && sidebarPinned ? sidebarWidths[sidebarState] : undefined;
+
   return (
     // FIX-SCROLL-DESKTOP (2026-10): h-full en vez de h-screen/h-dvh. El contenedor
     // definitivo de altura lo da HomePageClient (h-dvh) envolviendo a CyberShell;
@@ -723,7 +735,7 @@ export default function TerminalShell() {
 
       <main id="main-content" className={cn(
         "flex-1 h-full flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden",
-        !isMobile && sidebarWidths[sidebarState]
+        contentPaddingClass
       )} role="main">
         {/* En modo lectura de ayuda, ocultamos el Header global para tener pantalla limpia. */}
         {!isHelpReadingMode && (
@@ -799,10 +811,19 @@ export default function TerminalShell() {
         </div>
       </main>
 
+      {/* Backdrop del menú lateral cuando se comporta como PANEL TEMPORAL.
+          CP-UX-NAVIGATION-POS-REPAIR-001: móvil (drawer sobre el contenido).
+          CP-UX-POLISH-002 (§1 Estado C): desktop sin pin — el overlay no reserva
+          espacio, así que la interacción exterior (clic) cierra el panel.
+          Con pin activo en desktop NO hay backdrop: el menú fijo convive con el
+          contenido (hover-expand del rail tampoco debe taparlo). */}
       <AnimatePresence>
-        {sidebarState !== 'closed' && isMobile && (
+        {sidebarState !== 'closed' && (isMobile || !sidebarPinned) && (
           <motion.div
-            className="fixed inset-0 bg-black/50 backdrop-blur-[2px] z-30"
+            className={cn(
+              "fixed inset-0 backdrop-blur-[2px] z-30",
+              isMobile ? "bg-black/50" : "bg-black/30"
+            )}
             aria-hidden="true" /* FIX-ACC-009 */
             onClick={() => setSidebarState('closed')}
             initial={{ opacity: 0 }}
