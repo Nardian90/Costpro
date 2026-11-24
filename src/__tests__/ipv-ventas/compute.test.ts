@@ -47,6 +47,11 @@ const sale = (product_id: string, qty: number, price_cup: number, currency = 'CU
   price_currency: currency,
   exchange_rate: 1,
   sale_exchange_rate: 1,
+  // ADNEGOCIO-REPORTING fase 2: pool canónico de la cabecera (transacciones
+  // reales SIEMPRE traen pools) — venta CUP → efectivo CUP; venta USD → riel
+  // zelle USD. Sin pool la línea sería «sin evidencia» (histórico), que no es
+  // el escenario que este helper representa.
+  ...(currency === 'CUP' ? { cash_amount: price_cup * qty } : { zelle_amount: (price ?? price_cup) * qty }),
 });
 
 function rowOf(result: ReturnType<typeof computeIpv>, pid: string) {
@@ -159,7 +164,7 @@ describe('Escenario D — Producto irrelevante para el período', () => {
 });
 
 describe('Escenario E — Devolución de una venta (sin doble conteo)', () => {
-  it('venta 5 + devolución 2: cantidades del ledger, importe neto por devolution_items', () => {
+  it('venta 5 + devolución 2: cantidades del ledger, dinero neto por reembolso REAL del ledger', () => {
     const r = computeIpv(base({
       movements: [
         mov(P1, 'initial', 5, '2026-09-01T12:00:00Z'),
@@ -167,7 +172,11 @@ describe('Escenario E — Devolución de una venta (sin doble conteo)', () => {
         mov(P1, 'return', 2, '2026-10-13T11:00:00Z'),
       ],
       salesLines: [sale(P1, 5, 1000)],
-      devolutionLines: [{ product_id: P1, quantity: 2, unit_price: 1000 }],
+      devolutionLines: [{ product_id: P1, quantity: 2, unit_price: 1000, devolution_id: 'dev-1' }],
+      devolutionMoney: [
+        // Reembolso REAL de 2.000 CUP por el documento dev-1 (moneda real del reembolso).
+        { ref_id: 'dev-1', direction: 'refund', currency: 'CUP', amount: '2000', amount_cup: '2000' },
+      ],
       inventory: [{ product_id: P1, quantity: 2 }],
     }));
     const row = rowOf(r, P1);
@@ -175,7 +184,7 @@ describe('Escenario E — Devolución de una venta (sin doble conteo)', () => {
     expect(row?.cantidadesVendidas).toBe(5);   // del ledger
     expect(row?.devoluciones).toBe(2);         // del ledger — no duplica con devolution_items
     expect(row?.existenciaFinal).toBe(2);      // 5 − 5 + 2
-    expect(row?.ventasImporteCup).toBe(3000);  // 5000 vendido − 2000 devuelto
+    expect(row?.ventasImporteCup).toBe(3000);  // 5.000 cobrado − 2.000 reembolsados (evidencia: fila refund CUP 2.000)
   });
 });
 
@@ -482,7 +491,11 @@ describe('Regla de inclusión y totales filtrados (escenario K — misma ejecuci
     const row = rowOf(r, P1);
     expect(row).toBeDefined();
     expect(row?.existenciaInicial).toBeNull(); // N/D, no cero
-    expect(row?.ventasImporteCup).toBe(18000);
+    // ADNEGOCIO-REPORTING fase 2: la línea NO tiene evidencia de cobro (sin
+    // pools ni filas por ítem ni ledger) → su valoración es magnitud HISTÓRICA:
+    // la fila aparece (inclusión §6 ampliada) pero NO se presenta como CUP cobrado.
+    expect(row?.ventasImporteCup).toBe(0);
+    expect(row?.ventasCupHistorico).toBe(18000);
   });
 
   it('devolución con dinero pero sin movimiento return en ledger → DEVOLUTION_WITHOUT_LEDGER (caso real Central)', () => {
@@ -496,7 +509,8 @@ describe('Regla de inclusión y totales filtrados (escenario K — misma ejecuci
     const row = rowOf(r, P1);
     expect(row).toBeDefined();
     expect(row?.devoluciones).toBe(0);              // el ledger NO tiene return
-    expect(row?.ventasImporteCup).toBe(350 - 349650); // el dinero SÍ se descuenta
+    expect(row?.ventasImporteCup).toBe(350);        // fase 2: sin fila de reembolso en el ledger NO se descuenta dinero (no se inventa)
+    expect(r.devolucionesNoAtribuibles.cup).toBe(0);
     expect(row?.incidenceTypes).toContain('DEVOLUTION_WITHOUT_LEDGER');
     expect(row?.incidenceTypes).toContain('SALE_WITHOUT_LEDGER');
   });

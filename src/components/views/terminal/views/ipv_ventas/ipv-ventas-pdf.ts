@@ -149,7 +149,7 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
   const decorateNewPage = (): void => decoratePageOnce(true);
 
   const head = [[
-    'Código', 'Descripción', 'Exist.\ninicial', 'Cant.\nvendidas', 'Vales\nsalidas', 'Entradas', 'Devolu-\nciones', 'Ajustes', 'Transf.', 'Exist.\nfinal', 'Ventas\n(CUP)', 'Ventas\nUSD',
+    'Código', 'Descripción', 'Exist.\ninicial', 'Cant.\nvendidas', 'Vales\nsalidas', 'Entradas', 'Devolu-\nciones', 'Ajustes', 'Transf.', 'Exist.\nfinal', 'Ventas CUP\n(cobrado)', 'Ventas USD\n(cobrado)', 'Valor histórico\n(valoración CUP)',
   ]];
 
   const autoTable = (await import('jspdf-autotable')).default;
@@ -177,6 +177,7 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
       { content: formatIpvQty(r.existenciaFinal), styles: em },
       { content: formatIpvMoney(r.ventasImporteCup), styles: cupEm },
       { content: formatIpvMoney(r.ventasImporteUsd), styles: em },
+      { content: formatIpvMoney(r.ventasCupHistorico), styles: { ...em, fontStyle: 'italic' as const } },
     ];
   });
 
@@ -192,6 +193,7 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
     { content: totals.existenciaFinal === null ? 'N/D' : formatIpvQty(totals.existenciaFinal), styles: { fontStyle: 'bold' as const } },
     { content: formatIpvMoney(totals.ventasImporteCup), styles: { fontStyle: 'bold' as const } },
     { content: formatIpvMoney(totals.ventasImporteUsd), styles: { fontStyle: 'bold' as const } },
+    { content: formatIpvMoney(totals.ventasCupHistorico), styles: { fontStyle: 'italic' as const } },
   ]];
 
   autoTable(doc, {
@@ -204,8 +206,8 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
     headStyles: { fillColor: [240, 240, 240], textColor: [20, 20, 20], fontStyle: 'bold', halign: 'center', fontSize: 7.2 },
     footStyles: { fillColor: [228, 228, 228], fontStyle: 'bold' },
     columnStyles: {
-      0: { cellWidth: 42, halign: 'left' },
-      1: { cellWidth: 168, halign: 'left' },
+      0: { cellWidth: 40, halign: 'left' },
+      1: { cellWidth: 160, halign: 'left' },
       2: { cellWidth: 50, halign: 'right' },
       3: { cellWidth: 50, halign: 'right' },
       4: { cellWidth: 50, halign: 'right' },
@@ -216,6 +218,7 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
       9: { cellWidth: 50, halign: 'right' },
       10: { cellWidth: 62, halign: 'right' },
       11: { cellWidth: 54, halign: 'right' },
+      12: { cellWidth: 62, halign: 'right' },
     },
     didDrawPage: () => {
       if (doc.getNumberOfPages() > 1) decoratePageOnce(true);
@@ -290,8 +293,10 @@ export async function buildIpvVentasPdf(payload: IpvPdfPayload): Promise<jsPDF> 
   // final del texto). pdfWinAnsi normaliza los glifos y splitToWidthVerified
   // garantiza que ningún renglón exceda el ancho imprimible.
   const note = pdfWinAnsi(
-    'Conciliación: Existencia final = Existencia inicial + Entradas + Devoluciones − Cantidades vendidas − Vales de salida ± Ajustes ± Transferencias. ' +
-      'Cantidades del ledger de movimientos de inventario; importes de las líneas de venta (CUP, tasa histórica por venta). Los productos sin movimientos ni saldos en el período se excluyen.',
+    'Conciliación: Existencia final = Existencia inicial + Entradas + Devoluciones - Cantidades vendidas - Vales de salida ± Ajustes ± Transferencias. ' +
+      'Cantidades del ledger de movimientos de inventario. Importes: dinero efectivamente cobrado por moneda real (CUP / USD), fuente única del Reporte de Entrega; neto por moneda = cobrado - reembolsos + recuperaciones (ledger de devoluciones, en la moneda real de cada fila). ' +
+      '"Valor histórico (valoración CUP)": ventas sin evidencia de cobro reconstruible - NO es dinero cobrado y NO entra en los totales por moneda. ' +
+      'Los productos sin movimientos ni saldos en el período se excluyen.',
   );
   const lines = splitToWidthVerified(doc, note, pageW - PAGE.margin * 2);
   doc.text(lines, PAGE.margin, cursorY);

@@ -76,6 +76,7 @@ export const IPV_COLUMN_LABELS = {
   existenciaFinal: 'Existencia final',
   ventasImporteCup: 'Ventas CUP (cobrado)',
   ventasImporteUsd: 'Ventas USD (cobrado)',
+  ventasCupHistorico: 'Valor histórico sin moneda verificable (valoración CUP)',
 } as const;
 
 /** Orden canónico de columnas numéricas del IPV (compartido por los 3 renderers). */
@@ -90,4 +91,5 @@ export const IPV_NUMERIC_COLUMNS = [
   'existenciaFinal',
   'ventasImporteCup',
   'ventasImporteUsd',
+  'ventasCupHistorico',
 ] as const;

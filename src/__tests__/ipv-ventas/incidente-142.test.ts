@@ -65,6 +65,9 @@ function venta(product_id: string, qty: number, precio: number, currency = 'CUP'
     product_id, quantity: String(qty), price_at_sale: String(precio),
     price_at_sale_cup: String(precio), price_currency: currency,
     exchange_rate: currency === 'CUP' ? null : null, sale_exchange_rate: null,
+    // ADNEGOCIO-REPORTING fase 2: pool canónico de la venta (las transacciones
+    // reales traen pools) — el escenario representado es venta CON evidencia.
+    cash_amount: String(precio * qty),
   };
 }
 
@@ -269,14 +272,18 @@ describe('Prueba G — devolución (signo y dinero sin doble conteo)', () => {
       ],
       inventory: [{ product_id: P142, quantity: '23' }],
       salesLines: [venta(P142, 5, 2000)],
-      devolutionLines: [{ product_id: P142, quantity: '2', unit_price: '2000' }],
+      devolutionLines: [{ product_id: P142, quantity: '2', unit_price: '2000', devolution_id: 'dev-142' }],
+      devolutionMoney: [
+        // ADNEGOCIO-REPORTING fase 2: reembolso REAL del documento (moneda real CUP).
+        { ref_id: 'dev-142', direction: 'refund', currency: 'CUP', amount: '4000', amount_cup: '4000' },
+      ],
       products: productos,
     });
     const r = rowOf(res, P142);
     expect(r.cantidadesVendidas).toBe(5);   // bruta del ledger, no neta con la devolución
     expect(r.devoluciones).toBe(2);          // columna propia con su signo
     expect(r.existenciaFinal).toBe(23);      // 26 − 5 + 2
-    expect(r.ventasImporteCup).toBe(10000 - 4000); // dinero: bruto − devolución (no se resta dos veces)
+    expect(r.ventasImporteCup).toBe(10000 - 4000); // dinero: 10.000 cobrado − 4.000 reembolsados (fila real del ledger)
   });
 });
 

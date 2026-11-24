@@ -75,6 +75,7 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
       IPV_COLUMN_LABELS.existenciaFinal,
       IPV_COLUMN_LABELS.ventasImporteCup,
       IPV_COLUMN_LABELS.ventasImporteUsd,
+      IPV_COLUMN_LABELS.ventasCupHistorico,
     ],
   ];
 
@@ -92,6 +93,7 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
       qtyCell(r.existenciaFinal),
       r.ventasImporteCup,
       r.ventasImporteUsd,
+      r.ventasCupHistorico,
     ]);
   }
 
@@ -108,6 +110,7 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
     qtyCell(totals.existenciaFinal),
     totals.ventasImporteCup,
     totals.ventasImporteUsd,
+    totals.ventasCupHistorico,
   ]);
 
   const ws = XLSX.utils.aoa_to_sheet(aoa);
@@ -120,7 +123,7 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
       const cell = ws[addr];
       if (cell && cell.t === 'n') cell.z = QTY_ZFMT;
     }
-    for (const C of [10, 11]) {
+    for (const C of [10, 11, 12]) {
       const addr = XLSX.utils.encode_cell({ r: R, c: C });
       const cell = ws[addr];
       if (cell && cell.t === 'n') cell.z = MONEY_ZFMT;
@@ -130,9 +133,9 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
   ws['!cols'] = [
     { wch: 14 }, { wch: 38 }, { wch: 12 }, { wch: 12 }, { wch: 11 },
     { wch: 10 }, { wch: 13 }, { wch: 9 }, { wch: 14 }, { wch: 12 },
-    { wch: 15 }, { wch: 12 },
+    { wch: 15 }, { wch: 12 }, { wch: 20 },
   ];
-  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }];
+  ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 12 } }];
   XLSX.utils.book_append_sheet(wb, ws, 'IPV');
 
   // ── Hoja 2: Incidencias de conciliación ──────────────────────────────────
@@ -170,8 +173,11 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
     ['Fórmula de conciliación:', 'Existencia final = Existencia inicial + Entradas + Devoluciones − Cantidades vendidas − Vales de salida ± Ajustes ± Transferencias'],
     ['Existencia inicial:', 'Saldo reconstruido del ledger de movimientos (stock_movements.quantity_change) anterior a la fecha inicial del período. N/D = no reconstruible (carga inicial previa al ledger).'],
     ['Fuente de cantidades:', 'stock_movements (ledger canónico; fecha operativa movement_date). Nunca se mezclan kardex_entries ni tablas de venta para cantidades.'],
-    ['Fuente de importes:', 'Ventas con estado "completed" del período: el importe de cada columna es el dinero REALMENTE COBRADO en esa moneda, según la misma reconstrucción única del Reporte de Entrega (payment_transactions + desglose por ítem — collection-currency.ts). Ventas CUP: CUP recibido. Ventas USD: USD recibidos; el equivalente contable en CUP de un cobro en USD (tasa de la operación) NO entra como venta en CUP. Ventas sin evidencia de pago (históricas): valoración contable de la línea. Devoluciones completadas se restan por producto (valoración CUP).'],
-    ['Monedas:', 'Ambas columnas representan dinero efectivamente cobrado en SU moneda real (criterio del Reporte de Entrega). Un precio de referencia en USD del catálogo NO genera ingreso USD y una venta cobrada en USD NO se duplica en CUP. NO se suman entre sí: los totales se calculan independientemente por moneda.'],
+    ['Fuente de importes:', 'Ventas con estado "completed" del período: el importe de cada columna es el dinero REALMENTE COBRADO en esa moneda, según la misma reconstrucción única del Reporte de Entrega (payment_transactions + desglose por ítem — collection-currency.ts). Ventas CUP: CUP recibido. Ventas USD: USD recibidos; el equivalente contable en CUP de un cobro en USD (tasa de la operación) NO entra como venta en CUP.'],
+    ['Valor histórico sin moneda verificable (valoración CUP):', 'Valoración contable preservada de ventas SIN evidencia de cobro reconstruible (sin pools, sin filas por ítem y sin ledger). NO representa un cobro confirmado: NO entra en los totales CUP/USD y queda pendiente de verificación.'],
+    ['Devoluciones:', 'El neto comercial por moneda = cobrado - reembolsos + recuperaciones, en la moneda REAL de cada fila del ledger de devoluciones (payment_transactions ref_type=devolution: direction=refund resta, direction=recovery revierte; ventana por payment_date — criterio del Reporte de Entrega). Un reembolso USD jamás se resta de CUP. Los documentos de devolución completados aportan la columna de cantidades (ledger).'],
+    ['Devoluciones no atribuibles por producto:', 'Cuando el importe del reembolso/recuperación de un documento multi-ítem no coincide con la suma documental de sus líneas, NO se inventa un reparto: se reporta por separado (devolucionesNoAtribuibles + incidencia DEVOLUTION_MONEY_NOT_ATTRIBUTABLE).'],
+    ['Monedas:', 'Las columnas «Ventas CUP/USD (cobrado)» representan dinero efectivamente cobrado en SU moneda real (criterio del Reporte de Entrega). Un precio de referencia en USD del catálogo NO genera ingreso USD y una venta cobrada en USD NO se duplica en CUP. NO se suman entre sí: los totales se calculan independientemente por moneda.'],
     ['Regla de inclusión:', 'Se incluye un producto con existencia inicial ≠ 0, o movimientos en el período, o existencia final ≠ 0, o importe vendido, o incidencia de conciliación.'],
     ['Descuentos:', 'El importe usa la línea bruta cobrada: en COSTPRO, transactions.total_amount = suma de líneas brutas (item_discount_value es informativo, verificado en BD).'],
   ];

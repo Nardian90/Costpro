@@ -66,6 +66,9 @@ interface AppliedReport {
   incidences: IpvIncidence[];
   totals: IpvTotals;
   excludedCount: number;
+  /** ADNEGOCIO-REPORTING fase 2: reembolsos/recuperaciones no atribuibles por
+   * producto (se reportan separados, sin reparto inventado). */
+  devolucionesNoAtribuibles: { cup: number; usd: number };
   generatedAt: string;
 }
 
@@ -215,7 +218,8 @@ export default function IpvVentasView() {
       const qs = new URLSearchParams({ from: fromISO, to: toISO, store_id: storeId });
       const data = await apiFetch(`/api/ipv-ventas?${qs.toString()}`, { signal: ctrl.signal }) as {
         store: { id: string; name: string };
-        result: { rows: IpvRow[]; incidences: IpvIncidence[]; totals: IpvTotals; excludedCount: number };
+        result: { rows: IpvRow[]; incidences: IpvIncidence[]; totals: IpvTotals; excludedCount: number;
+                  devolucionesNoAtribuibles: { cup: number; usd: number } };
         generatedAt: string;
       };
       if (!ctrl.signal.aborted) {
@@ -226,6 +230,7 @@ export default function IpvVentasView() {
           incidences: data.result.incidences ?? [],
           totals: data.result.totals,
           excludedCount: data.result.excludedCount ?? 0,
+          devolucionesNoAtribuibles: data.result.devolucionesNoAtribuibles ?? { cup: 0, usd: 0 },
           generatedAt: data.generatedAt ?? new Date().toISOString(),
         });
         // Invalida preview anterior (nueva ejecución del informe)
@@ -577,11 +582,12 @@ export default function IpvVentasView() {
                       <th scope="col" className="px-3 py-2.5 text-right font-bold">Exist. final</th>
                       <th scope="col" className="px-3 py-2.5 text-right font-bold">Ventas CUP (cobrado)</th>
                       <th scope="col" className="px-3 py-2.5 text-right font-bold">Ventas USD (cobrado)</th>
+                      <th scope="col" className="px-3 py-2.5 text-right font-bold" title="Valoración contable preservada de ventas sin evidencia de cobro reconstruible. NO es dinero recibido y NO entra en los totales CUP/USD.">Valor hist. s/ moneda verificable</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredRows.length === 0 ? (
-                      <tr><td colSpan={12} className="px-4 py-8 text-center text-muted-foreground">
+                      <tr><td colSpan={13} className="px-4 py-8 text-center text-muted-foreground">
                         {ipvAnyFilterActive(resultFilters)
                           ? (search.trim() ? 'Ningún producto cumple la búsqueda y los filtros activos. Prueba restablecer los filtros o cambiar la búsqueda.' : 'Ningún producto cumple los filtros activos. Pulsa «Restablecer filtros» para ver el informe completo.')
                           : (search.trim() ? `Sin coincidencias para «${search}».` : 'Sin productos que mostrar.')}
@@ -616,6 +622,7 @@ export default function IpvVentasView() {
                           <td className={cn('px-3 py-2 text-right font-mono font-bold', hasMov ? 'text-[13px]' : 'text-xs', r.existenciaFinal === null && 'text-muted-foreground italic')}>{formatIpvQty(r.existenciaFinal)}</td>
                           <td className={cn('px-3 py-2 text-right font-mono', cupCls)}>{formatIpvMoney(r.ventasImporteCup)}</td>
                           <td className="px-3 py-2 text-right font-mono text-xs text-muted-foreground">{formatIpvMoney(r.ventasImporteUsd)}</td>
+                          <td className="px-3 py-2 text-right font-mono text-xs text-muted-foreground italic" title="Valoración contable preservada de ventas sin evidencia de cobro reconstruible. NO es dinero recibido y NO entra en los totales CUP/USD.">{formatIpvMoney(r.ventasCupHistorico)}</td>
                         </tr>
                       );
                     })}
@@ -634,11 +641,24 @@ export default function IpvVentasView() {
                         <td className={cn('px-3 py-2.5 text-right font-mono text-xs', visibleTotals.existenciaFinal === null && 'italic text-muted-foreground')}>{formatIpvQty(visibleTotals.existenciaFinal)}</td>
                         <td className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvMoney(visibleTotals.ventasImporteCup)}</td>
                         <td className="px-3 py-2.5 text-right font-mono text-xs">{formatIpvMoney(visibleTotals.ventasImporteUsd)}</td>
+                        <td className="px-3 py-2.5 text-right font-mono text-xs italic">{formatIpvMoney(visibleTotals.ventasCupHistorico)}</td>
                       </tr>
                     </tfoot>
                   )}
                 </table>
               </div>
+
+              {/* ADNEGOCIO-REPORTING fase 2: criterio monetario de los importes —
+                  tres magnitudes separadas + devoluciones por moneda real. */}
+              {applied && (
+                <div className="border-t border-border/60 px-4 py-3 text-xs text-muted-foreground space-y-1">
+                  <p><span className="font-bold">Criterio monetario:</span> las columnas «Ventas CUP/USD (cobrado)» representan dinero efectivamente cobrado en SU moneda real (misma reconstrucción única del Reporte de Entrega); los totales se calculan por moneda y nunca se suman entre sí. Las devoluciones reducen el importe por la moneda REAL del reembolso (reembolsos −, recuperaciones +, ledger de devoluciones).</p>
+                  <p><span className="font-bold">«Valor histórico sin moneda verificable (valoración CUP)»:</span> valoración contable preservada de ventas sin evidencia de cobro reconstruible — <span className="italic">NO representa un cobro confirmado</span>, no entra en los totales CUP/USD y queda pendiente de verificación.</p>
+                  {(applied.devolucionesNoAtribuibles.cup !== 0 || applied.devolucionesNoAtribuibles.usd !== 0) && (
+                    <p><span className="font-bold">Devoluciones no atribuibles por producto:</span> reembolsos/recuperaciones cuyo importe no puede repartirse con evidencia exacta entre los ítems del documento — CUP {formatIpvMoney(applied.devolucionesNoAtribuibles.cup)} · USD {formatIpvMoney(applied.devolucionesNoAtribuibles.usd)} (reportados por separado, sin reparto inventado; ver incidencias).</p>
+                  )}
+                </div>
+              )}
 
               {/* Incidencias de conciliación (§5.6) — agrupadas por tipo.
                   DEFECTO CORREGIDO (MISIÓN CORRECTIVA §6): antes el span
