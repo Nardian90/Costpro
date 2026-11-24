@@ -34,6 +34,11 @@
 ALTER TABLE public.payment_transactions
   DROP CONSTRAINT IF EXISTS direction_check;
 
+-- El nombre vivo de la restricción en BD (creada inline en 20261021000001):
+-- se elimina por SU nombre real para que la nueva (con 'reversal') sea la única.
+ALTER TABLE public.payment_transactions
+  DROP CONSTRAINT IF EXISTS payment_transactions_direction_check;
+
 ALTER TABLE public.payment_transactions
   ADD CONSTRAINT direction_check
   CHECK (direction IN ('in', 'out', 'refund', 'recovery', 'reversal'));

@@ -1915,14 +1915,14 @@ function ConceptosSelector({ concepts, onToggle, onSetAll, variant = 'calc', }: 
           <button
             onClick={() => onSetAll(true)}
             className="px-2.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
-            data-testid={`${testId}-seleccionar-todos`}
+            data-testid={isPdf ? 'pdf-conceptos-seleccionar-todos' : 'conceptos-seleccionar-todos'}
           >
             Seleccionar todos
           </button>
           <button
             onClick={() => onSetAll(false)}
             className="px-2.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
-            data-testid={`${testId}-desmarcar-todos`}
+            data-testid={isPdf ? 'pdf-conceptos-desmarcar-todos' : 'conceptos-desmarcar-todos'}
           >
             Desmarcar todos
           </button>
@@ -1942,7 +1942,7 @@ function ConceptosSelector({ concepts, onToggle, onSetAll, variant = 'calc', }: 
               checked={concepts[c.key]}
               onChange={() => onToggle(c.key)}
               aria-label={c.label}
-              data-testid={`concepto-${c.key}`}
+              data-testid={isPdf ? `pdf-concepto-${c.key}` : `concepto-${c.key}`}
               className="mt-0.5 w-4 h-4 accent-primary shrink-0 cursor-pointer"
             />
             <span className="min-w-0">

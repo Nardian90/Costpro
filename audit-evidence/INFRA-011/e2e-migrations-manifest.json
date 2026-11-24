@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 613,
-  "total_incluidos": 198,
+  "total_considerados": 618,
+  "total_incluidos": 203,
   "total_excluidos": 415,
-  "digest": "c74cabd0d92052d2b229c4adb77b023c019c29aac23980d1d07537267a504fc2",
+  "digest": "5358b233a005e08d4df5d4aca1989a22cfb33669ff0b95424606f5a10b26b376",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6058,6 +6058,61 @@
       "observaciones": [],
       "posicion": 198,
       "sha256_generado": "99bef0e2d35ddcf890a75acbdf9ee4d3efb0235b42669fce20895295b0a8131a"
+    },
+    {
+      "nombre": "20261124120000_cp_ops_enervida_payment_reversals.sql",
+      "bytes": 21242,
+      "sha256_original": "8fbf0fe7b6961c2eeaa0f363c100a0081f7a092354acb05d6fd6bb4cd8ef916d",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261124",
+      "observaciones": [],
+      "posicion": 199,
+      "sha256_generado": "8fbf0fe7b6961c2eeaa0f363c100a0081f7a092354acb05d6fd6bb4cd8ef916d"
+    },
+    {
+      "nombre": "20261124120100_cp_ops_enervida_service_void_idempotency.sql",
+      "bytes": 19170,
+      "sha256_original": "7e13569d15dd51e9cbcd2c63f9fee47a2c46174a041b20e53645f10679fe4603",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261124",
+      "observaciones": [],
+      "posicion": 200,
+      "sha256_generado": "7e13569d15dd51e9cbcd2c63f9fee47a2c46174a041b20e53645f10679fe4603"
+    },
+    {
+      "nombre": "20261124120200_cp_ops_enervida_cash_report_eligibility.sql",
+      "bytes": 23590,
+      "sha256_original": "f1277bc1a20a2586930b969ece2d95e3efc880f340b268550ec044cf128f3ef8",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261124",
+      "observaciones": [],
+      "posicion": 201,
+      "sha256_generado": "f1277bc1a20a2586930b969ece2d95e3efc880f340b268550ec044cf128f3ef8"
+    },
+    {
+      "nombre": "20261124120300_cp_ops_enervida_multi_settlement.sql",
+      "bytes": 11894,
+      "sha256_original": "3f07398873f85bbae8c6ece6023805e38efab517f1f31cdb2f9c90fdae21a084",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261124",
+      "observaciones": [],
+      "posicion": 202,
+      "sha256_generado": "3f07398873f85bbae8c6ece6023805e38efab517f1f31cdb2f9c90fdae21a084"
+    },
+    {
+      "nombre": "20261124120400_cp_ops_enervida_parties_consolidation.sql",
+      "bytes": 15569,
+      "sha256_original": "6ddfb3a4e2dbc7914c1d222c7586e1b791fba3eb40e51511a0bab037afe3f421",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261124",
+      "observaciones": [],
+      "posicion": 203,
+      "sha256_generado": "6ddfb3a4e2dbc7914c1d222c7586e1b791fba3eb40e51511a0bab037afe3f421"
     },
     {
       "nombre": "AUDIT_FIXES.md",

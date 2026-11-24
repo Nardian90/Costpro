@@ -22,6 +22,27 @@
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
+-- §0. customers.master_party_id — incorporación VERBATIM al stream (patrón
+--    ADN-009 F2 para suppliers): la columna EXISTE en producción pero estaba
+--    AUSENTE del stream, por lo que cualquier replay (E2E, restores) rompía
+--    en los guards/updates de consolidación. Idempotente: en producción es
+--    un no-op exacto.
+-- ---------------------------------------------------------------------------
+ALTER TABLE public.customers
+  ADD COLUMN IF NOT EXISTS master_party_id uuid;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint
+                 WHERE conrelid = 'public.customers'::regclass
+                   AND conname = 'customers_master_party_id_fkey') THEN
+    ALTER TABLE public.customers
+      ADD CONSTRAINT customers_master_party_id_fkey
+      FOREIGN KEY (master_party_id) REFERENCES public.master_parties(id);
+  END IF;
+END $$;
+
+-- ---------------------------------------------------------------------------
 -- §1. consolidate_local_party
 -- ---------------------------------------------------------------------------
 
@@ -42,6 +63,7 @@ DECLARE
   v_kind text := lower(btrim(COALESCE(p_kind, '')));
   v_mode text := lower(btrim(COALESCE(p_mode, '')));
   v_local record;
+  v_local_tax text;
   v_store_id uuid;
   v_tenant uuid;
   v_master record;
@@ -65,8 +87,10 @@ BEGIN
   -- Fila local + tienda (la gestión es por tienda, como create_master_party).
   IF v_kind = 'supplier' THEN
     SELECT * INTO v_local FROM public.suppliers WHERE id = p_local_id FOR UPDATE;
+    SELECT NULLIF(btrim(COALESCE(tax_id, '')), '') INTO v_local_tax FROM public.suppliers WHERE id = p_local_id;
   ELSE
     SELECT * INTO v_local FROM public.customers WHERE id = p_local_id FOR UPDATE;
+    SELECT NULLIF(btrim(COALESCE(ci, '')), '') INTO v_local_tax FROM public.customers WHERE id = p_local_id;
   END IF;
   IF v_local.id IS NULL THEN
     RAISE EXCEPTION 'ERR_LOCAL_PARTY_NOT_FOUND: % %', v_kind, p_local_id;
@@ -133,15 +157,10 @@ BEGIN
      WHERE m.tenant_id = v_tenant AND m.code ~ '^CP-\d+$';
     v_code := 'CP-' || lpad(COALESCE(v_max_seq, 1)::text, 4, '0');
 
-    IF v_kind = 'supplier' AND COALESCE(btrim(v_local.tax_id), '') <> '' AND EXISTS (
+    IF v_local_tax IS NOT NULL AND EXISTS (
       SELECT 1 FROM public.master_parties m
-       WHERE m.tenant_id = v_tenant AND upper(btrim(m.tax_id)) = upper(btrim(v_local.tax_id))) THEN
-      RAISE EXCEPTION 'ERR_PARTY_TAX_ID_EXISTS: la identificación fiscal % ya pertenece a un tercero del maestro (vincúlelo en su lugar)', v_local.tax_id;
-    END IF;
-    IF v_kind = 'customer' AND COALESCE(btrim(v_local.ci), '') <> '' AND EXISTS (
-      SELECT 1 FROM public.master_parties m
-       WHERE m.tenant_id = v_tenant AND upper(btrim(m.tax_id)) = upper(btrim(v_local.ci))) THEN
-      RAISE EXCEPTION 'ERR_PARTY_TAX_ID_EXISTS: la identificación % ya pertenece a un tercero del maestro (vincúlelo en su lugar)', v_local.ci;
+       WHERE m.tenant_id = v_tenant AND upper(btrim(m.tax_id)) = upper(v_local_tax)) THEN
+      RAISE EXCEPTION 'ERR_PARTY_TAX_ID_EXISTS: la identificación % ya pertenece a un tercero del maestro (vincúlelo en su lugar)', v_local_tax;
     END IF;
 
     SELECT coalesce(jsonb_agg(jsonb_build_object('id', m2.id, 'code', m2.code, 'name', m2.name)), '[]'::jsonb)
@@ -159,8 +178,7 @@ BEGIN
     VALUES
       (v_tenant, v_code, btrim(v_local.name),
        v_local.address, v_local.phone, v_local.email,
-       CASE WHEN v_kind = 'supplier' THEN NULLIF(btrim(COALESCE(v_local.tax_id, '')), '')
-            ELSE NULLIF(btrim(COALESCE(v_local.ci, '')), '') END,
+       v_local_tax,
        'natural',
        v_is_client, v_is_supplier, 'active',
        'Promovido desde registro local de la tienda ' || v_store_id::text,
