@@ -583,6 +583,9 @@ function diarioCurrencyReport(
     d.options.breakdownServicesByConcept === true
       ? ctx.report?.servicios_recibidos_por_concepto?.[currency] ?? null
       : null,
+    // CP-OPS-ENERVIDA §2.2: misma selección de mostrado que el PDF (paridad
+    // por construcción — presentación pura, importes intactos).
+    d.options.pdfConcepts ?? null,
   );
   const esperadoLabel = currency === 'CUP'
     ? (d.idLabel ? 'Efectivo esperado (personalizado)' : 'Efectivo esperado a entregar')

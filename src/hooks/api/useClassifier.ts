@@ -199,8 +199,43 @@ export function useCreateMasterParty(storeId?: string | null) {
   });
 }
 
-/** Edición con trazabilidad por campo (status incluido → activar/desactivar). */
-export function useUpdateMasterParty(storeId?: string | null) {
+/** CP-OPS-ENERVIDA §3 — consolidación Local → Maestro: 'link' vincula el
+ *  registro local a un maestro EXISTENTE (decisión humana explícita) y
+ *  'promote' crea su identidad maestra. El registro local se CONSERVA
+ *  (trazabilidad histórica); vinculado deja de aparecer como tercero
+ *  independiente seleccionable (search_master_parties filtra los vinculados). */
+export function useConsolidateLocalParty(storeId?: string | null) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ kind, localId, mode, masterPartyId }: {
+      kind: 'supplier' | 'customer';
+      localId: string;
+      mode: 'link' | 'promote';
+      masterPartyId?: string | null;
+    }) => {
+      if (!storeId) throw new Error('Sin tienda activa');
+      const { data, error } = await supabase.rpc('consolidate_local_party', {
+        p_kind: kind,
+        p_local_id: localId,
+        p_mode: mode,
+        p_master_party_id: masterPartyId ?? null,
+        p_user_id: null, // actor = auth.uid() (sesión del usuario)
+      });
+      if (error) throw error;
+      return data as {
+        status: string;
+        master_party_id?: string;
+        kind?: string;
+        local_id?: string;
+        mode?: string;
+        name_duplicates_in_master?: Array<{ id: string; code: string; name: string }>;
+      };
+    },
+    onSuccess: () => invalidateClassifier(qc),
+  });
+}
+
+/** Edición con trazabilidad por campo (status incluido → activar/desactivar). */export function useUpdateMasterParty(storeId?: string | null) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ partyId, changes }: { partyId: string; changes: Record<string, unknown> }) => {

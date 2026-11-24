@@ -673,7 +673,54 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     // EXCLUIA el tramo efectivo de ventas mixed (p. ej. EnerVida 02/10: 2.600
     // en vez de 12.600). La fórmula única vive en src/lib/cash-report/summary.ts
     // y la consumen idénticamente vista, previsualización y PDF.
-    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds, sales_rows: salesRows, sales_rows_truncated: salesRowsTruncated, ...equivFields, opening_balance: openingBalance, sales_bills_split: salesBillsSplit, ...(serviciosPorConcepto ? { servicios_recibidos_por_concepto: serviciosPorConcepto } : {}) };
+    // CP-OPS-ENERVIDA §2.1: obligaciones PENDIENTES del período (A servicios ·
+    // B recepciones) — separadas de los pagos ejecutados (C). Solo lectura;
+    // degradación limpia si la consulta falla (nunca rompe el reporte).
+    let pendingObligations: { services: unknown[]; receipts: unknown[] } = { services: [], receipts: [] };
+    try {
+      let svcQ = supabase
+        .from('received_services')
+        .select('id, service_number, reference_doc, supplier, total_amount, paid_amount, currency, payment_status')
+        .eq('store_id', userData.active_store_id)
+        .eq('status', 'active')
+        .in('payment_status', ['unpaid', 'partial'])
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (!includeAllDates) {
+        svcQ = svcQ.gte('created_at', startDate).lte('created_at', endDate);
+      }
+      const { data: pendingSvc, error: pendingSvcErr } = await svcQ;
+      if (pendingSvcErr) throw pendingSvcErr;
+      pendingObligations.services = (pendingSvc || []).map((r: Record<string, unknown>) => ({
+        id: r.id, service_number: r.service_number, reference_doc: (r.reference_doc as string | null) ?? null,
+        supplier: r.supplier, total_amount: Number(r.total_amount || 0), paid_amount: Number(r.paid_amount || 0),
+        balance: Number(r.total_amount || 0) - Number(r.paid_amount || 0),
+        currency: r.currency ?? 'CUP', payment_status: r.payment_status,
+      }));
+
+      let recQ = supabase
+        .from('receipts')
+        .select('id, document_number, reference_doc, supplier, total_cost, paid_amount, payment_status')
+        .eq('store_id', userData.active_store_id)
+        .eq('status', 'active')
+        .in('payment_status', ['unpaid', 'partial'])
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (!includeAllDates) {
+        recQ = recQ.gte('created_at', startDate).lte('created_at', endDate);
+      }
+      const { data: pendingRec, error: pendingRecErr } = await recQ;
+      if (pendingRecErr) throw pendingRecErr;
+      pendingObligations.receipts = (pendingRec || []).map((r: Record<string, unknown>) => ({
+        id: r.id, document_number: (r.document_number as string | null) ?? null, reference_doc: (r.reference_doc as string | null) ?? null,
+        supplier: r.supplier, total_cost: Number(r.total_cost || 0), paid_amount: Number(r.paid_amount || 0),
+        balance: Number(r.total_cost || 0) - Number(r.paid_amount || 0), payment_status: r.payment_status,
+      }));
+    } catch (obligErr: unknown) {
+      console.warn('[cash-report] obligaciones pendientes no disponibles:', (obligErr as { message?: string })?.message);
+    }
+
+    const enrichedReport = { ...reportData, sales_split: salesSplit, adjustments, cash_flows: cashFlows, refund_rows: refunds, sales_rows: salesRows, sales_rows_truncated: salesRowsTruncated, ...equivFields, opening_balance: openingBalance, sales_bills_split: salesBillsSplit, pending_obligations: pendingObligations, ...(serviciosPorConcepto ? { servicios_recibidos_por_concepto: serviciosPorConcepto } : {}) };
     // INCIDENTE 2026-10-16: grupos `sales` por MONEDA DE COBRO (antes por
     // sale_currency — los cobros USD aparecían como CUP). La vista (acordeón),
     // el fallback de computeDailySummary y la plantilla Estándar heredan la

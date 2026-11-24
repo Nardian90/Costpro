@@ -33,7 +33,7 @@ function fila(i: number): IpvRow {
     existenciaFinal: 13,
     ventasImporteCup: 4000,
     ventasImporteUsd: 0,
-    hasPeriodMovements: true,
+    ventasCupHistorico: 0, hasPeriodMovements: true,
     incidenceTypes: [],
   };
 }

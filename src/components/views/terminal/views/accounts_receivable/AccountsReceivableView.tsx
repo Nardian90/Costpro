@@ -4,6 +4,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Clock, AlertTriangle, CheckCircle2, TrendingUp, Search, Download, Phone, Table2, List } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
+import { StateRenderer } from '@/components/ui/StateRenderer'; // CP-CI-006 U1: estados canónicos
 
 type AgingTab = 'all' | 'overdue' | '30' | '60' | '90' | '120' | 'paid';
 
@@ -285,33 +286,26 @@ export default function AccountsReceivableView() {
         </select>
       </div>
 
-      {/* Loading / Error / Empty states */}
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block w-8 h-8 border-2 border-success/30 border-t-success rounded-full animate-spin" />
-          <p className="text-xs text-muted-foreground mt-2">Cargando...</p>
-        </div>
-      ) : error ? (
-        <div className="text-center py-12 bg-destructive/5 border border-destructive/20 rounded-xl">
-          <AlertTriangle className="w-8 h-8 text-destructive mx-auto mb-2" />
-          <p className="text-sm font-bold text-destructive mb-1">Error al cargar</p>
-          <p className="text-xs text-muted-foreground">{error}</p>
-          <button onClick={fetchData} className="mt-3 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold">
-            Reintentar
-          </button>
-        </div>
-      ) : filteredData.length === 0 ? (
-        <div className="text-center py-12 bg-muted/20 border border-border rounded-xl">
-          <CheckCircle2 className="w-12 h-12 text-success mx-auto mb-3" />
-          <p className="text-sm font-black uppercase text-muted-foreground">Sin cobros pendientes</p>
-          <p className="text-xs text-muted-foreground mt-1">No hay órdenes con saldo pendiente en este filtro.</p>
-        </div>
-      ) : viewMode === 'grouped' ? (
-        /* Vista agrupada por cliente */
-        <GroupedReceivablesView data={filteredData} />
-      ) : (
-        /* Vista de lista (detalle) — tabla completa */
-        <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
+      {/* Estados canónicos cargando/vacío/error vía StateRenderer + contenido (CP-CI-006 U1) */}
+      <StateRenderer
+        isLoading={loading}
+        error={error ? new Error(error) : null}
+        onRetry={fetchData}
+        data={filteredData}
+        emptyComponent={
+          <div className="text-center py-12 bg-muted/20 border border-border rounded-2xl">
+            <CheckCircle2 className="w-12 h-12 text-success mx-auto mb-3" />
+            <p className="text-sm font-black uppercase text-muted-foreground">Sin cobros pendientes</p>
+            <p className="text-xs text-muted-foreground mt-1">No hay órdenes con saldo pendiente en este filtro.</p>
+          </div>
+        }
+      >
+        {() => viewMode === 'grouped' ? (
+          /* Vista agrupada por cliente */
+          <GroupedReceivablesView data={filteredData} />
+        ) : (
+          /* Vista de lista (detalle) — tabla completa */
+          <div className="overflow-x-auto rounded-xl border border-border bg-card shadow-sm">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10 bg-muted/30 border-b border-border">
               <tr className="text-muted-foreground font-black uppercase text-[10px] tracking-widest">
@@ -379,7 +373,8 @@ export default function AccountsReceivableView() {
             )}
           </table>
         </div>
-      )}
+        )}
+      </StateRenderer>
     </div>
   );
 }

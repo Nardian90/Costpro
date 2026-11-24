@@ -94,6 +94,12 @@ export interface CashReportPdfOptions {
    *  FALSE = comportamiento actual intacto y compatibilidad con los reportes
    *  existentes (§3 del brief). */
   breakdownServicesByConcept: boolean;
+  /** CP-OPS-ENERVIDA §2.2: conceptos que se MUESTRAN en el PDF (presentación).
+   *  Independiente de la selección de CÁLCULO: un concepto oculto que
+   *  participa en el cálculo se agrupa en «Otros conceptos incluidos» —
+   *  los importes contables y el esperado NUNCA cambian por ocultar filas.
+   *  null/undefined = todo visible (comportamiento previo intacto). */
+  pdfConcepts?: SummaryConceptsSelection | null;
 }
 
 export const DEFAULT_PDF_OPTIONS: CashReportPdfOptions = {
@@ -118,7 +124,8 @@ export const DEFAULT_PDF_OPTIONS: CashReportPdfOptions = {
 // no existe preferencia guardada VÁLIDA para esa clave (regla B-1). Un JSON
 // antiguo/corrupto se recupera con los defaults en las claves afectadas, sin
 // bloquear la interfaz (try/catch, mismo patrón que loadPdfTemplate).
-const PDF_OPTION_KEYS = Object.keys(DEFAULT_PDF_OPTIONS) as Array<keyof CashReportPdfOptions>;
+type PdfBooleanOptionKey = Exclude<keyof CashReportPdfOptions, 'pdfConcepts'>;
+const PDF_OPTION_KEYS = Object.keys(DEFAULT_PDF_OPTIONS) as Array<PdfBooleanOptionKey>;
 
 export function loadPdfOptions(): CashReportPdfOptions {
   if (typeof window === 'undefined') return { ...DEFAULT_PDF_OPTIONS };
@@ -350,6 +357,11 @@ export function buildDiarioIncomeRows(
    *  Ausente/vacío ⇒ sin sub-filas (formato actual intacto). El llamador
    *  activa con options.breakdownServicesByConcept. */
   servicesBreakdown?: Array<{ concept: string; total: number; count: number }> | null,
+  /** CP-OPS-ENERVIDA §2.2: conceptos que se MUESTRAN en el documento. Los
+   *  conceptos desmarcados que participan en el cálculo colapsan en UNA fila
+   *  «Otros conceptos incluidos» con su suma neta — conciliación impresa
+   *  conservada, importes contables intactos. null = todo visible. */
+  displaySelection?: SummaryConceptsSelection | null,
 ): ConceptTaggedRow[] {
   const incomeRows: ConceptTaggedRow[] = filterIncomeRowsByConcepts(([
     { label: 'Saldo inicial / fondo de caja', amount: s.saldoInicial, concept: 'saldoInicial' },
@@ -400,6 +412,9 @@ export function buildDiarioIncomeRows(
       }
     }
     if (s.recibosProveedoresCash > 0) incomeRows.push({ label: 'Pagos a proveedores (efectivo)', amount: s.recibosProveedoresCash, note: 'expense', concept: 'otrosEgresos' });
+    // CP-OPS-ENERVIDA (P0): contra-filas de reversión de pagos a proveedores
+    // sobre documentos VÁLIDOS — el dinero VOLVIÓ al cajón (entrada de caja).
+    if (s.reversionesPagosCash > 0) incomeRows.push({ label: 'Reversiones de pagos a proveedores (efectivo)', amount: s.reversionesPagosCash, note: 'ingreso', concept: 'otrosEgresos' });
     if (s.ajustesPositivos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (+)', amount: s.ajustesPositivos, concept: 'ajustes' });
     if (s.ajustesNegativos > 0) incomeRows.push({ label: 'Ajustes extraordinarios (-)', amount: s.ajustesNegativos, note: 'expense', concept: 'ajustes' });
     // MISIÓN INGRESOS/EGRESOS 2026-10-20: documentos de caja (fondo de cambio
@@ -435,6 +450,32 @@ export function buildDiarioIncomeRows(
     incomeRows.push(currency === 'CUP'
       ? { label: 'Vuelto dado en CUP de cobros en otras monedas', amount: s.liquidacionBilletes }
       : { label: 'Billetes recibidos en exceso (vuelto dado en CUP)', amount: s.liquidacionBilletes });
+  }
+  // CP-OPS-ENERVIDA §2.2 — colapso de presentación: los conceptos OCULTOS del
+  // PDF (displaySelection) que participan en el cálculo se agrupan en UNA
+  // fila «Otros conceptos incluidos» con la SUMA NETA (con signo según su
+  // naturaleza) para que el documento impreso siga conciliando. Presentación
+  // PURA: el esperado/cuadre del pie no se recalculan aquí — son los mismos
+  // importes contables de siempre.
+  if (displaySelection) {
+    const isHidden = (r: ConceptTaggedRow) => !!r.concept && displaySelection[r.concept] === false;
+    const hidden = incomeRows.filter(isHidden);
+    if (hidden.length > 0) {
+      const shown = incomeRows.filter(r => !isHidden(r));
+      // Las sub-filas del desglose de servicios acompañan a su fila padre
+      // (si «otrosEgresos» está oculto, TODO el bloque se agrupa junto).
+      const signedAmount = (r: ConceptTaggedRow) => (r.note === 'expense' ? -r.amount : r.amount);
+      const net = hidden.reduce((acc: number, r: ConceptTaggedRow) => acc + signedAmount(r), 0);
+      const collapseRow: ConceptTaggedRow = {
+        label: 'Otros conceptos incluidos',
+        amount: Math.abs(net),
+        note: net < 0 ? 'expense' : 'ingreso',
+      };
+      const firstHiddenIdx = incomeRows.indexOf(hidden[0]);
+      const insertAt = Math.min(firstHiddenIdx, shown.length);
+      shown.splice(insertAt, 0, collapseRow);
+      return shown;
+    }
   }
   return incomeRows;
 }
@@ -1888,6 +1929,9 @@ async function buildDiarioPdf(doc: jsPDF, ctx: CashReportPdfContext, summaries?:
       options.breakdownServicesByConcept === true
         ? report.servicios_recibidos_por_concepto?.[currency] ?? null
         : null,
+      // CP-OPS-ENERVIDA §2.2: conceptos OCULTOS del PDF colapsan en «Otros
+      // conceptos incluidos» — presentación pura, importes intactos.
+      options.pdfConcepts ?? null,
     );
     const esperadoLabel = currency === 'CUP'
       ? (idLabel ? 'Efectivo esperado (personalizado)' : 'Efectivo esperado a entregar')

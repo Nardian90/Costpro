@@ -75,6 +75,10 @@ export interface ServicePaymentRow {
    *  trae el método, se re-verifica aquí — el tramo transfer/zelle de un pago
    *  mixto JAMÁS entra al desglose (no se contabiliza dos veces). */
   payment_method?: string | null;
+  /** CP-OPS-ENERVIDA (P0): las contra-filas (direction='reversal') no son
+   *  salidas — se excluyen del desglose (el neteo vive en el concepto de
+   *  reversiones del resumen, no aquí). */
+  direction?: string | null;
 }
 
 const n = (v: unknown): number => (typeof v === 'number' && Number.isFinite(v) ? v : Number(v) || 0);
@@ -97,6 +101,7 @@ export function groupServiceCashByConcept(
   rows: ServicePaymentRow[],
   conceptByRefId: Map<string, string | null>,
   currency: string,
+  ineligibleRefIds?: Set<string>,
 ): ServiceConceptTotal[] {
   const acc = new Map<string, { total: number; count: number }>();
   for (const row of rows || []) {
@@ -105,6 +110,8 @@ export function groupServiceCashByConcept(
     // re-verificarlo garantiza que un pago dividido (cash+transfer) aporte
     // ÚNICAMENTE su componente cash — sin doble contabilización.
     if (row.payment_method !== undefined && row.payment_method !== null && row.payment_method !== 'cash') continue;
+    // CP-OPS-ENERVIDA (P0): una contra-fila de reversión NO es salida.
+    if (row.direction !== undefined && row.direction !== null && row.direction === 'reversal') continue;
     // Moneda NATIVA de la fila — la misma clasificación de la hoja del RPC
     // (computeDailySummary: isCur(p) con p.currency). Sin conversión: los
     // importes del desglose son los mismos billetes del total global.
@@ -112,6 +119,10 @@ export function groupServiceCashByConcept(
     const amount = n(row.amount);
     if (amount === 0 && !row.amount) continue; // fila sin importe usable — nada que agrupar
     const refId = row.ref_id ? String(row.ref_id) : '';
+    // CP-OPS-ENERVIDA (P0): un servicio ANULADO (voided/cancelled) no genera
+    // efectos económicos activos — sus pagos quedan fuera del desglose (misma
+    // regla de elegibilidad que el RPC get_cash_report).
+    if (refId && ineligibleRefIds?.has(refId)) continue;
     const concept = refId && conceptByRefId.has(refId)
       ? normalizeConceptName(conceptByRefId.get(refId))
       : SIN_CONCEPTO_LABEL;
@@ -141,6 +152,7 @@ export function groupServiceCashByConcept(
 export function buildServicesConceptBreakdown(
   rows: ServicePaymentRow[],
   conceptByRefId: Map<string, string | null>,
+  ineligibleRefIds?: Set<string>,
 ): ServicesConceptBreakdown {
   const out: ServicesConceptBreakdown = { CUP: [], USD: [] };
   for (const row of rows || []) {
@@ -148,7 +160,7 @@ export function buildServicesConceptBreakdown(
     if (!out[cur]) out[cur] = [];
   }
   for (const cur of Object.keys(out)) {
-    out[cur] = groupServiceCashByConcept(rows, conceptByRefId, cur);
+    out[cur] = groupServiceCashByConcept(rows, conceptByRefId, cur, ineligibleRefIds);
   }
   return out;
 }
@@ -201,7 +213,7 @@ export async function fetchServiceConceptBreakdown(
   try {
     let query = client
       .from('payment_transactions')
-      .select('ref_id, amount, currency, payment_method')
+      .select('ref_id, amount, currency, payment_method, direction')
       .eq('store_id', params.storeId)
       .eq('ref_type', 'service')
       .eq('payment_method', 'cash');
@@ -215,18 +227,25 @@ export async function fetchServiceConceptBreakdown(
 
     const refIds = [...new Set((rows || []).map(r => (r.ref_id ? String(r.ref_id) : '')).filter(Boolean))];
     const conceptByRefId = new Map<string, string | null>();
+    // CP-OPS-ENERVIDA (P0): servicios anulados (voided/cancelled) — sus pagos
+    // no aportan al desglose (misma regla de elegibilidad que el RPC
+    // get_cash_report tras la migración de integridad).
+    const ineligibleRefIds = new Set<string>();
     for (let i = 0; i < refIds.length; i += CHUNK) {
       const chunk = refIds.slice(i, i + CHUNK);
       const svcRes = (await client
         .from('received_services')
-        .select('id, service_type_name')
+        .select('id, service_type_name, status')
         .in('id', chunk)) as unknown as PostgrestLikeResult;
       if (svcRes.error) throw new Error(svcRes.error.message || 'error de consulta');
-      for (const svc of (Array.isArray(svcRes.data) ? svcRes.data : []) as Array<{ id: string; service_type_name?: string | null }>) {
+      for (const svc of (Array.isArray(svcRes.data) ? svcRes.data : []) as Array<{ id: string; service_type_name?: string | null; status?: string | null }>) {
         conceptByRefId.set(String(svc.id), svc.service_type_name ?? null);
+        if (svc.status === 'voided' || svc.status === 'cancelled') {
+          ineligibleRefIds.add(String(svc.id));
+        }
       }
     }
-    return buildServicesConceptBreakdown(rows, conceptByRefId);
+    return buildServicesConceptBreakdown(rows, conceptByRefId, ineligibleRefIds);
   } catch (err: unknown) {
     console.warn('[cash-report] desglose de servicios por concepto no disponible:', (err as { message?: string })?.message);
     return null;

@@ -92,6 +92,8 @@ import {
   isDefaultSummaryConcepts,
   loadSummaryConcepts,
   saveSummaryConcepts,
+  loadPdfConcepts,
+  savePdfConcepts,
   selectAllSummaryConcepts,
   deselectAllSummaryConcepts,
   classifySaleByPayments,
@@ -199,6 +201,10 @@ export default function CashReportView() {
   // aún no personaliza el reporte. Se restaura post-mount desde localStorage
   // AISLADO POR TIENDA (cada tienda entrega un dinero distinto — misión §6).
   const [summaryConcepts, setSummaryConcepts] = useState<SummaryConceptsSelection>(DEFAULT_SUMMARY_CONCEPTS);
+  // CP-OPS-ENERVIDA §2.2: conceptos que se MUESTRAN EN EL PDF (presentación) —
+  // independiente de los conceptos de CÁLCULO (summaryConcepts). Ocultar un
+  // concepto del documento impreso JAMÁS altera los importes.
+  const [pdfConcepts, setPdfConcepts] = useState<SummaryConceptsSelection>(DEFAULT_SUMMARY_CONCEPTS);
 
   // ══ MISIÓN PERSONALIZACIÓN · FUNCIÓN B — selección de ventas ══
   // Estado natural = TODO seleccionado ( Set de ids EXCLUIDOS). NO se
@@ -242,6 +248,7 @@ export default function CashReportView() {
     // MISIÓN PERSONALIZACIÓN: conceptos del Resumen del Día — restaurados de
     // localStorage PROPIEDAD DE LA TIENDA ACTIVA (aislamiento §6).
     setSummaryConcepts(loadSummaryConcepts(user?.activeStoreId));
+    setPdfConcepts(loadPdfConcepts(user?.activeStoreId));
   }, []);
 
   // ── NAV-2026-10 (NAV-03): al Volver a Reporte Entrega, restaurar el período del
@@ -492,6 +499,7 @@ export default function CashReportView() {
   // Al CAMBIAR de tienda se recarga la preferencia de la tienda activa.
   useEffect(() => {
     setSummaryConcepts(loadSummaryConcepts(user?.activeStoreId));
+    setPdfConcepts(loadPdfConcepts(user?.activeStoreId));
   }, [user?.activeStoreId]);
   const toggleSummaryConcept = useCallback((key: SummaryConceptKey) => {
     setSummaryConcepts(prev => {
@@ -510,6 +518,27 @@ export default function CashReportView() {
       { duration: 5000 });
   }, [user?.activeStoreId]);
   const conceptsNone = !hasAnySummaryConcept(summaryConcepts);
+
+  // CP-OPS-ENERVIDA §2.2: persistencia por tienda de la selección de PDF
+  // (mismo mecanismo que los conceptos de cálculo — aislamiento por tienda).
+  const togglePdfConcept = useCallback((key: SummaryConceptKey) => {
+    setPdfConcepts(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      savePdfConcepts(user?.activeStoreId, next);
+      return next;
+    });
+  }, [user?.activeStoreId]);
+  const setAllPdfConcepts = useCallback((all: boolean) => {
+    setPdfConcepts(() => {
+      const next = all ? selectAllSummaryConcepts() : deselectAllSummaryConcepts();
+      savePdfConcepts(user?.activeStoreId, next);
+      return next;
+    });
+  }, [user?.activeStoreId]);
+  /** Opciones del documento con la selección de mostrado (PDF/Word comparten
+   *  el ensamblador — los conceptos ocultos colapsan en «Otros conceptos
+   *  incluidos», importes contables intactos). */
+  const pdfOptionsWithConcepts = useMemo(() => ({ ...pdfOptions, pdfConcepts }), [pdfOptions, pdfConcepts]);
 
   // ── MISIÓN PERSONALIZACIÓN: selección de ventas — acciones ──
   // «Seleccionar todas» = todas las ventas del período que cumplen el filtro
@@ -728,7 +757,7 @@ export default function CashReportView() {
   const previewSignature = useMemo(() => JSON.stringify({
     template: pdfTemplate,
     orientation: pdfOrientation, // §1: la orientación cambia el documento → invalida el cache
-    options: pdfOptions, // opciones siempre parte de la firma
+    options: pdfOptionsWithConcepts, // opciones siempre parte de la firma
     concepts: summaryConcepts,
     excludedSales: [...excludedSales].sort(),
     cfg: applied?.cfg ?? null,
@@ -815,7 +844,7 @@ export default function CashReportView() {
         storeInfo, deliveredBy, recipientName, madeBy,
         cupDenoms: cupDenoms, usdDenoms: usdDenoms,
         cupBreakdown, usdBreakdown,
-        options: pdfOptions,
+        options: pdfOptionsWithConcepts,
         orientation: pdfOrientation,
         concepts: selCtx.concepts,
         selectionMeta: selCtx.selectionMeta,
@@ -877,7 +906,7 @@ export default function CashReportView() {
         salesCounts: selCtx.salesCounts,
         startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
         storeInfo, deliveredBy, recipientName, madeBy,
-        cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
+        cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptionsWithConcepts,
         orientation: pdfOrientation,
         concepts: selCtx.concepts,
         selectionMeta: selCtx.selectionMeta,
@@ -921,7 +950,7 @@ export default function CashReportView() {
         salesCounts: selCtx.salesCounts,
         startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
         storeInfo, deliveredBy, recipientName, madeBy,
-        cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
+        cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptionsWithConcepts,
         orientation: pdfOrientation,
         concepts: selCtx.concepts,
         selectionMeta: selCtx.selectionMeta,
@@ -961,7 +990,7 @@ export default function CashReportView() {
           salesCounts: selCtx.salesCounts,
           startDate: applied.cfg.startDate, endDate: applied.cfg.endDate,
           storeInfo, deliveredBy, recipientName, madeBy,
-          cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptions,
+          cupDenoms, usdDenoms, cupBreakdown, usdBreakdown, options: pdfOptionsWithConcepts,
           orientation: pdfOrientation,
           concepts: selCtx.concepts,
           selectionMeta: selCtx.selectionMeta,
@@ -1264,6 +1293,9 @@ export default function CashReportView() {
                 loadingDetails={loadingDetails}
                 setSelectedDoc={setSelectedDoc}
                 concepts={summaryConcepts}
+                pdfConcepts={pdfConcepts}
+                onTogglePdfConcept={togglePdfConcept}
+                onSetAllPdfConcepts={setAllPdfConcepts}
                 customResult={customResultsView?.CUP ?? null}
                 onToggleConcept={toggleSummaryConcept}
                 onSetAllConcepts={setAllSummaryConcepts}
@@ -1843,30 +1875,37 @@ function AccordionSection(p: {
 // MISIÓN PANELES DESPLEGABLES (2026-11-08): el apartado funciona como
 // ACORDEÓN RECOGIDO POR DEFECTO; abrir/cerrar no recalcula nada y las
 // selecciones viven en el padre (no se pierden al plegar).
-function ConceptosSelector({ concepts, onToggle, onSetAll }: {
+function ConceptosSelector({ concepts, onToggle, onSetAll, variant = 'calc', }: {
   concepts: SummaryConceptsSelection;
   onToggle: (key: SummaryConceptKey) => void;
   onSetAll: (all: boolean) => void;
+  /** CP-OPS-ENERVIDA §2.2: 'calc' = conceptos que participan en el CÁLCULO;
+   *  'pdf' = conceptos que se MUESTRAN en el documento impreso. */
+  variant?: 'calc' | 'pdf';
 }) {
   const [open, setOpen] = useState(false); // recogido por defecto (misión §4)
   const activeCount = SUMMARY_CONCEPT_KEYS.filter(k => concepts[k]).length;
   const none = activeCount === 0;
+  const isPdf = variant === 'pdf';
+  const title = isPdf ? 'Conceptos que se mostrarán en el PDF' : 'Conceptos que se incluirán en el reporte';
+  const subtitle = isPdf ? 'Presentación del documento impreso — no altera los importes contables' : 'Pulsa para desplegar';
+  const testId = isPdf ? 'pdf-conceptos-selector' : 'conceptos-selector';
   return (
-    <section aria-label="Conceptos que se incluirán en el reporte" data-testid="conceptos-selector" className="rounded-2xl border border-border bg-card overflow-hidden">
+    <section aria-label={title} data-testid={testId} className="rounded-2xl border border-border bg-card overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-border/40 bg-muted/20">
         <button
           onClick={() => setOpen(o => !o)}
           aria-expanded={open}
-          aria-controls="conceptos-selector-panel"
-          data-testid="conceptos-selector-header"
+          aria-controls={`${testId}-panel`}
+          data-testid={`${testId}-header`}
           className="flex items-center gap-2 text-left min-w-0 group"
         >
           {open
             ? <ChevronDown className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-foreground transition-transform" aria-hidden />
             : <ChevronRight className="w-4 h-4 shrink-0 text-muted-foreground group-hover:text-foreground transition-transform" aria-hidden />}
           <span className="min-w-0">
-            <span className="block text-xs font-black uppercase tracking-wider">Conceptos que se incluirán en el reporte</span>
-            <span className="block text-[9px] text-muted-foreground">{open ? 'Pulsa para recoger' : 'Pulsa para desplegar'}</span>
+            <span className="block text-xs font-black uppercase tracking-wider">{title}</span>
+            <span className="block text-[9px] text-muted-foreground">{open ? 'Pulsa para recoger' : subtitle}</span>
           </span>
         </button>
         <div className="flex items-center gap-1.5">
@@ -1876,20 +1915,20 @@ function ConceptosSelector({ concepts, onToggle, onSetAll }: {
           <button
             onClick={() => onSetAll(true)}
             className="px-2.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
-            data-testid="conceptos-seleccionar-todos"
+            data-testid={isPdf ? 'pdf-conceptos-seleccionar-todos' : 'conceptos-seleccionar-todos'}
           >
             Seleccionar todos
           </button>
           <button
             onClick={() => onSetAll(false)}
             className="px-2.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
-            data-testid="conceptos-desmarcar-todos"
+            data-testid={isPdf ? 'pdf-conceptos-desmarcar-todos' : 'conceptos-desmarcar-todos'}
           >
             Desmarcar todos
           </button>
         </div>
       </div>
-      <div id="conceptos-selector-panel" hidden={!open} className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5" data-testid="conceptos-selector-panel">
+      <div id={`${testId}-panel`} hidden={!open} className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5" data-testid={`${testId}-panel`}>
         {SUMMARY_CONCEPTS.map(c => (
           <label
             key={c.key}
@@ -1903,7 +1942,7 @@ function ConceptosSelector({ concepts, onToggle, onSetAll }: {
               checked={concepts[c.key]}
               onChange={() => onToggle(c.key)}
               aria-label={c.label}
-              data-testid={`concepto-${c.key}`}
+              data-testid={isPdf ? `pdf-concepto-${c.key}` : `concepto-${c.key}`}
               className="mt-0.5 w-4 h-4 accent-primary shrink-0 cursor-pointer"
             />
             <span className="min-w-0">
@@ -2294,6 +2333,13 @@ interface ResultadosPanelProps {
   // ══ MISIÓN PERSONALIZACIÓN (2026-10-25) ══
   /** Conceptos activos (todos activados = comportamiento actual). */
   concepts: SummaryConceptsSelection;
+  /** CP-OPS-ENERVIDA §2.2: conceptos que se MUESTRAN EN EL PDF (presentación
+   *  — independiente del cálculo). Ocultar un concepto del documento impreso
+   *  JAMÁS altera los importes: los ocultos colapsan en «Otros conceptos
+   *  incluidos» para conservar la conciliación impresa. */
+  pdfConcepts: SummaryConceptsSelection;
+  onTogglePdfConcept: (key: SummaryConceptKey) => void;
+  onSetAllPdfConcepts: (all: boolean) => void;
   // ══ MISIÓN CONCILIACIÓN (2026-10-26) ══
   /** Resultado personalizado + oficial de la hoja CUP (custom-result.ts).
    *  Null-safe: sin reporte calculado la vista degrada al comportamiento previo. */
@@ -2332,7 +2378,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
   const s: DailySummary = p.summary ?? {
     currency: 'CUP', ventasCash: 0, ventasTransfer: 0, ventasZelle: 0, ventasMixed: 0,
     ventasTotales: 0, otIngresosCash: 0, comisionesCash: 0, comisionesTransfer: 0,
-    serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
+    serviciosRecibidosCash: 0, recibosProveedoresCash: 0, reversionesPagosCash: 0, ajustesPositivos: 0,
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0, reembolsosCash: 0, reembolsosVoucher: 0,
     equivCashOtraMoneda: 0, equivVouchersOtraMoneda: 0,
     efectivoEsperado: p.expectedCup, saldoInicial: 0, liquidacionBilletes: 0, cobrosBilletes: 0,
@@ -2479,6 +2525,66 @@ function ResultadosPanel(p: ResultadosPanelProps) {
         onSetAll={p.onSetAllConcepts}
       />
 
+      {/* ══ CP-OPS-ENERVIDA §2.2: conceptos que se MUESTRAN en el PDF ══ */}
+      <ConceptosSelector
+        concepts={p.pdfConcepts}
+        onToggle={p.onTogglePdfConcept}
+        onSetAll={p.onSetAllPdfConcepts}
+        variant="pdf"
+      />
+
+      {/* ══ CP-OPS-ENERVIDA §2.1 — separación contable de conceptos ══
+          A. Obligaciones por servicios · B. Obligaciones por recepciones.
+          Una obligación PENDIENTE no es una salida de efectivo: no reduce el
+          esperado. C (pagos ejecutados) vive en los acordeones de abajo. */}
+      {(() => {
+        const obl = report.pending_obligations;
+        const svc = (obl?.services || []) as Array<{ id: string; service_number: string; reference_doc: string | null; supplier: string; total_amount: number; paid_amount: number; balance: number; currency: string; payment_status: string }>;
+        const rec = (obl?.receipts || []) as Array<{ id: string; document_number: string | null; reference_doc: string | null; supplier: string; total_cost: number; paid_amount: number; balance: number; payment_status: string }>;
+        if (svc.length === 0 && rec.length === 0) return null;
+        const svcPending = svc.reduce((s, r) => s + r.balance, 0);
+        const recPending = rec.reduce((s, r) => s + r.balance, 0);
+        const OblRow = ({ doc, ref, total, paid }: { doc: string; ref: string; total: number; paid: number }) => (
+          <tr className="border-b border-border/10">
+            <td className="p-1.5 font-bold">{doc}</td>
+            <td className="p-1.5">{ref || '—'}</td>
+            <td className="p-1.5 text-right font-mono tabular-nums">{fmt(total)}</td>
+            <td className="p-1.5 text-right font-mono tabular-nums">{fmt(paid)}</td>
+            <td className="p-1.5 text-right font-mono tabular-nums font-black">{fmt(total - paid)}</td>
+          </tr>
+        );
+        return (
+          <section aria-label="Obligaciones del período" data-testid="obligaciones-periodo" className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="px-4 py-3 border-b border-border/40 bg-muted/20">
+              <h3 className="text-xs font-black uppercase tracking-wider">Obligaciones del período (pendientes de pago)</h3>
+              <p className="text-[9px] text-muted-foreground">Deudas con terceros generadas por servicios y recepciones — NO son salidas de efectivo: no reducen el efectivo esperado hasta que se paguen.</p>
+            </div>
+            {svc.length > 0 && (
+              <div className="p-3">
+                <p className="text-[10px] font-black uppercase text-muted-foreground mb-1.5">A. Obligaciones por servicios ({svc.length}) — pendiente: {formatCurrency(svcPending)}</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[10px]">
+                    <thead><tr className="text-[9px] font-black uppercase text-muted-foreground border-b border-border/30"><th className="p-1.5 text-left">Documento</th><th className="p-1.5 text-left">Referencia / Proveedor</th><th className="p-1.5 text-right">Total</th><th className="p-1.5 text-right">Pagado</th><th className="p-1.5 text-right">Pendiente</th></tr></thead>
+                    <tbody>{svc.map(r => <OblRow key={r.id} doc={r.service_number} ref={`${r.reference_doc || '—'} · ${r.supplier} · ${r.currency}`} total={r.total_amount} paid={r.paid_amount} />)}</tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+            {rec.length > 0 && (
+              <div className="p-3 border-t border-border/20">
+                <p className="text-[10px] font-black uppercase text-muted-foreground mb-1.5">B. Obligaciones por recepciones ({rec.length}) — pendiente: {formatCurrency(recPending)}</p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[10px]">
+                    <thead><tr className="text-[9px] font-black uppercase text-muted-foreground border-b border-border/30"><th className="p-1.5 text-left">Documento</th><th className="p-1.5 text-left">Referencia / Proveedor</th><th className="p-1.5 text-right">Total</th><th className="p-1.5 text-right">Pagado</th><th className="p-1.5 text-right">Pendiente</th></tr></thead>
+                    <tbody>{rec.map(r => <OblRow key={r.id} doc={r.document_number || '—'} ref={`${r.reference_doc || '—'} · ${r.supplier}`} total={r.total_cost} paid={r.paid_amount} />)}</tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </section>
+        );
+      })()}
+
       {/* AUDITORÍA 2026-10: Resumen del Día — fórmula centralizada, MISMA que el PDF.
           Orden lógico §4 del brief. Nombres inequívocos (esperado vs contado vs cuadre).
           MISIÓN PERSONALIZACIÓN: las filas cuyos conceptos están desactivados se
@@ -2530,6 +2636,9 @@ function ResultadosPanel(p: ResultadosPanelProps) {
           {p.concepts.otrosEgresos && s.comisionesTransfer > 0 && <SummaryRow label="Comisiones pagadas por transferencia" value={-s.comisionesTransfer} negative note="no reduce el efectivo físico" />}
           {p.concepts.otrosEgresos && s.serviciosRecibidosCash > 0 && <SummaryRow label="Servicios recibidos pagados en efectivo" value={-s.serviciosRecibidosCash} negative />}
           {p.concepts.otrosEgresos && s.recibosProveedoresCash > 0 && <SummaryRow label="Pagos a proveedores (efectivo)" value={-s.recibosProveedoresCash} negative />}
+          {/* CP-OPS-ENERVIDA (P0): contra-filas de reversión sobre documentos
+              válidos — el dinero VOLVIÓ al cajón (entrada). */}
+          {p.concepts.otrosEgresos && s.reversionesPagosCash > 0 && <SummaryRow label="Reversiones de pagos a proveedores (efectivo)" value={s.reversionesPagosCash} note="anulación de pago — el dinero volvió al cajón" />}
           {p.concepts.ajustes && s.ajustesPositivos > 0 && <SummaryRow label="Ajustes extraordinarios (+)" value={s.ajustesPositivos} />}
           {p.concepts.ajustes && s.ajustesNegativos > 0 && <SummaryRow label="Ajustes extraordinarios (−)" value={-s.ajustesNegativos} negative />}
           {/* MISIÓN PERSONALIZACIÓN: los documentos de caja (fondo y otros) se
@@ -2667,9 +2776,10 @@ function ResultadosPanel(p: ResultadosPanelProps) {
         </div>
       )}
 
-      {/* Pagos */}
+      {/* Pagos — CP-OPS-ENERVIDA §2.1: categoría C (PAGOS EJECUTADOS):
+          salidas reales de efectivo/cuenta con su método y documento. */}
       <div>
-        <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">Pagos a Proveedores</h3>
+        <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">C. Pagos efectivamente realizados · Proveedores</h3>
         <div className="space-y-1">
           {payments.filter(filterPayments).length === 0 ? <p className="text-xs text-muted-foreground text-center py-2">Sin pagos</p> :
             payments.filter(filterPayments).map((q, i) => renderAccordionItem(`p-${q.payment_method}-${q.currency}-${q.ref_type}-${i}`, String(q.payment_method), String(q.currency), `${q.payment_count} pagos`, Number(q.total), true, String(q.ref_type)))}

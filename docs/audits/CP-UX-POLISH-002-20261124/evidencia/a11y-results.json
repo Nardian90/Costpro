@@ -1,0 +1,56 @@
+[
+  {
+    "id": "ACC1",
+    "verificacion": "Pin del menú — foco visible por teclado (outline/ring)",
+    "resultado": "APROBADO",
+    "detalle": "outline=0px solid rgb(228, 228, 231), boxShadow=true, focused=true"
+  },
+  {
+    "id": "ACC2",
+    "verificacion": "Pin — aria-pressed refleja el estado (toggle comprensible)",
+    "resultado": "APROBADO",
+    "detalle": "aria-pressed=true"
+  },
+  {
+    "id": "ACC3",
+    "verificacion": "Pin — contraste icono/fondo (≥3:1 UI)",
+    "resultado": "APROBADO",
+    "detalle": "ratio=16.53 (rgb(228, 228, 231) sobre oklab(0.919723 0.0011749 -0.00385052 / 0.1))"
+  },
+  {
+    "id": "ACC4",
+    "verificacion": "Express — áreas táctiles de X/Salir/selector ≥24px (WCAG 2.5.8)",
+    "resultado": "APROBADO",
+    "detalle": "{\"x\":{\"w\":44,\"h\":44,\"disabled\":false},\"salir\":{\"w\":102,\"h\":44,\"disabled\":false},\"pago\":{\"w\":183,\"h\":36,\"disabled\":false}}"
+  },
+  {
+    "id": "ACC5",
+    "verificacion": "Express — orden de tabulación: Salir → X → selector de pago",
+    "resultado": "APROBADO",
+    "detalle": "siguiente=Cerrar modo Express"
+  },
+  {
+    "id": "ACC6",
+    "verificacion": "Express — tras la X el foco llega al selector de pago",
+    "resultado": "APROBADO",
+    "detalle": "siguiente=Seleccionar método de pago"
+  },
+  {
+    "id": "ACC7",
+    "verificacion": "Express — X comunica su función (title/aria estables, sin hover-dependencia)",
+    "resultado": "APROBADO",
+    "detalle": "title=Cerrar modo Express"
+  },
+  {
+    "id": "ACC8",
+    "verificacion": "Express — contraste del rótulo «Método de pago» (≥4.5:1)",
+    "resultado": "APROBADO",
+    "detalle": "ratio=8.94"
+  },
+  {
+    "id": "ACC9",
+    "verificacion": "General — sin desbordamiento horizontal con menú fijo (1366)",
+    "resultado": "APROBADO",
+    "detalle": ""
+  }
+]

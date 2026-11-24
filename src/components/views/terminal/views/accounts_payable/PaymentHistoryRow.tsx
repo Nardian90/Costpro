@@ -86,12 +86,22 @@ export default function PaymentHistoryRow({ refType, refId, paidAmount }: Paymen
     : payments;
   const displayLoading = refType === 'commission' ? commissionLoading : loading;
 
-  // FIX-AUD3-3 (2026-07-13): handleVoid estaba indefinido → ReferenceError
+  // CP-OPS-ENERVIDA §5: REVERSIÓN contable (antes DELETE físico → PT007 500).
+  // Fila contraria + asiento compensatorio; el documento sigue confirmado y
+  // la obligación se restablece por neteo.
   const handleVoid = async (paymentId: string) => {
-    if (!confirm('¿Anular este pago? El saldo se recalculará automáticamente.')) return;
+    if (!confirm('¿Anular este pago? Se registrará un movimiento compensatorio: el documento permanece, la obligación se restablece y caja/banco recibe su contra-fila.')) return;
+    const reason = prompt('Motivo de la anulación (opcional):') ?? '';
 
     try {
-      await apiFetch(`/api/payments/${paymentId}`, { method: 'DELETE' });
+      const data = await apiFetch<{ message?: string }>(`/api/payments/${paymentId}`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason.trim() || null }),
+      });
+      if (data?.message) {
+        // El mensaje estructurado de la ruta (reversión registrada / idempotente).
+        alert(data.message);
+      }
       refetch();
     } catch (e: any) {
       alert(`Error al anular: ${e.message}`);
