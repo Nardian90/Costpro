@@ -23,10 +23,13 @@ import {
   History
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export default function MovementsView() {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const [searchTerm, setSearchTerm] = useState('');
 
   const movements = useLiveQuery(
@@ -34,7 +37,14 @@ export default function MovementsView() {
   );
 
   const handleRevertMovement = async (m: any) => {
-    if (!confirm("¿Deseas revertir este movimiento de inventario mediante compensación?")) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Revertir movimiento de inventario',
+      message: '¿Deseas revertir este movimiento de inventario mediante compensación?',
+      variant: 'destructive',
+      confirmLabel: 'Revertir',
+    });
+    if (!ok) return;
     try {
       const snapshot = await StockService.takeSnapshot(m.producto_destino_cod);
       await StockService.revertMovement(m.id, snapshot);

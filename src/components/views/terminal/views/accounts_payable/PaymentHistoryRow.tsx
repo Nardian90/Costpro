@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, History, Trash2, Banknote, Smartphone, Dolla
 import { cn, formatCurrency } from '@/lib/utils';
 import { apiFetch } from '@/lib/api-fetch';
 import { usePaymentHistory, type PaymentRecord } from '@/hooks/api/usePaymentHistory';
+import { useDialogs } from '@/components/ui/dialogs';
 
 interface PaymentHistoryRowProps {
   refType: 'receipt' | 'service' | 'commission';
@@ -28,6 +29,8 @@ const METHOD_LABELS: Record<'cash' | 'transfer' | 'zelle' | 'external_transfer',
 };
 
 export default function PaymentHistoryRow({ refType, refId, paidAmount }: PaymentHistoryRowProps) {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt/alert nativos).
+  const dialogs = useDialogs();
   const [expanded, setExpanded] = useState(false);
   const { payments, loading, error, refetch } = usePaymentHistory(
     refType,
@@ -90,8 +93,26 @@ export default function PaymentHistoryRow({ refType, refId, paidAmount }: Paymen
   // Fila contraria + asiento compensatorio; el documento sigue confirmado y
   // la obligación se restablece por neteo.
   const handleVoid = async (paymentId: string) => {
-    if (!confirm('¿Anular este pago? Se registrará un movimiento compensatorio: el documento permanece, la obligación se restablece y caja/banco recibe su contra-fila.')) return;
-    const reason = prompt('Motivo de la anulación (opcional):') ?? '';
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación + motivo con diálogos propios
+    // (antes confirm()/prompt() nativos).
+    const ok = await dialogs.confirm({
+      title: 'Anular pago',
+      message: '¿Anular este pago? Se registrará un movimiento compensatorio: el documento permanece, la obligación se restablece y caja/banco recibe su contra-fila.',
+      variant: 'destructive',
+      confirmLabel: 'Anular pago',
+    });
+    if (!ok) return;
+    // El prompt original era opcional: cancelar (null) o confirmar vacío
+    // seguían AMBOS el flujo con motivo vacío. Se replica con `optional` + `?? ''`.
+    const reason = (await dialogs.prompt({
+      title: 'Motivo de la anulación',
+      message: 'Motivo de la anulación (opcional).',
+      label: 'Motivo',
+      placeholder: 'Motivo de la anulación (opcional)',
+      optional: true,
+      type: 'textarea',
+      confirmLabel: 'Anular pago',
+    })) ?? '';
 
     try {
       const data = await apiFetch<{ message?: string }>(`/api/payments/${paymentId}`, {
@@ -100,11 +121,12 @@ export default function PaymentHistoryRow({ refType, refId, paidAmount }: Paymen
       });
       if (data?.message) {
         // El mensaje estructurado de la ruta (reversión registrada / idempotente).
-        alert(data.message);
+        // Sin await: refetch() sigue de inmediato (el aviso no bloquea el flujo).
+        dialogs.alert({ title: 'Pago anulado', message: data.message, variant: 'success' });
       }
       refetch();
     } catch (e: any) {
-      alert(`Error al anular: ${e.message}`);
+      dialogs.alert({ title: 'Error al anular', message: e.message, variant: 'error' });
     }
   };
 

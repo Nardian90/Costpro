@@ -77,6 +77,7 @@ vi.mock('@/hooks/api/useOrganizations', () => ({
 
 import OrganizationsView from '@/components/views/terminal/views/organizations/OrganizationsView';
 import { OrganizationFormModal } from '@/components/views/terminal/views/organizations/OrganizationFormModal';
+import { renderWithDialogs } from '../helpers/render-with-dialogs';
 
 describe('CP-ORG-001 — creación de organizaciones desde la vista (brecha §4.1)', () => {
   beforeEach(() => {
@@ -87,18 +88,18 @@ describe('CP-ORG-001 — creación de organizaciones desde la vista (brecha §4.
   });
 
   it('SuperAdmin ve el botón «Nueva Organización» en la cabecera', () => {
-    render(<OrganizationsView />);
+    renderWithDialogs(<OrganizationsView />);
     expect(screen.getByRole('button', { name: 'Nueva Organización' })).toBeTruthy();
   });
 
   it('admin ordinario NO ve el botón de creación (acción de plataforma)', () => {
     authState.user = { id: 'admin-1', role: 'admin' };
-    render(<OrganizationsView />);
+    renderWithDialogs(<OrganizationsView />);
     expect(screen.queryByRole('button', { name: 'Nueva Organización' })).toBeNull();
   });
 
   it('pulsar el botón abre el formulario de creación (no edición)', async () => {
-    render(<OrganizationsView />);
+    renderWithDialogs(<OrganizationsView />);
     await userEvent.click(screen.getByRole('button', { name: 'Nueva Organización' }));
     // El modal de creación existe con su título y descripción de creación.
     expect(screen.getByText('Nueva organización')).toBeTruthy();
@@ -106,7 +107,7 @@ describe('CP-ORG-001 — creación de organizaciones desde la vista (brecha §4.
   });
 
   it('el formulario bloquea el envío con nombre vacío y muestra el error', async () => {
-    render(<OrganizationsView />);
+    renderWithDialogs(<OrganizationsView />);
     await userEvent.click(screen.getByRole('button', { name: 'Nueva Organización' }));
     const input = screen.getByLabelText(/Nombre de la organización/i);
     // Blur sin escribir → error de validación visible.
@@ -117,7 +118,7 @@ describe('CP-ORG-001 — creación de organizaciones desde la vista (brecha §4.
   });
 
   it('enviar un nombre válido llama a la creación con nombre normalizado y cierra', async () => {
-    render(<OrganizationsView />);
+    renderWithDialogs(<OrganizationsView />);
     await userEvent.click(screen.getByRole('button', { name: 'Nueva Organización' }));
     await userEvent.type(screen.getByLabelText(/Nombre de la organización/i), '  Grupo   Creado  ');
     // El botón de envío en modo creación tiene aria-label «Guardar organización».
@@ -128,7 +129,7 @@ describe('CP-ORG-001 — creación de organizaciones desde la vista (brecha §4.
 
   it('si la creación falla, el modal PERMANECE abierto (no se pierde el texto)', async () => {
     createMutateAsync.mockRejectedValue(new Error('Ya existe una organización con ese nombre'));
-    render(<OrganizationsView />);
+    renderWithDialogs(<OrganizationsView />);
     await userEvent.click(screen.getByRole('button', { name: 'Nueva Organización' }));
     await userEvent.type(screen.getByLabelText(/Nombre de la organización/i), 'Repetida');
     await userEvent.click(screen.getByRole('button', { name: 'Guardar organización' }));

@@ -12,10 +12,11 @@
  * existen escrituras secundarias (ni console.error ocultos).
  */
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { CreateProductModal } from '@/components/modals/CreateProductModal';
+import { renderWithDialogs } from '../helpers/render-with-dialogs';
 
 beforeAll(() => {
   if (!(globalThis as any).IntersectionObserver) {
@@ -137,7 +138,7 @@ beforeEach(() => {
 describe('CP-OPERATIONAL-CLASS-001/002 · alta de producto con clasificación obligatoria', () => {
 
   it('TAREA 1.1 · Venta PRESELECCIONADA desde la primera apertura (4 opciones, nunca vacío)', () => {
-    render(<CreateProductModal />);
+    renderWithDialogs(<CreateProductModal />);
     expect(screen.getByText('Clasificación operativa')).toBeTruthy();
     expect(screen.getByTestId('operational-class-current').textContent).toContain('Venta');
     const group = screen.getByRole('radiogroup', { name: 'Clasificación operativa' });
@@ -149,7 +150,7 @@ describe('CP-OPERATIONAL-CLASS-001/002 · alta de producto con clasificación ob
     // Con Venta preseleccionada el guardado no puede salir vacío: la
     // selección viaja en el payload tal cual el usuario la dejó.
     const user = userEvent.setup();
-    render(<CreateProductModal />);
+    renderWithDialogs(<CreateProductModal />);
     await fillRequiredFields(user);
     await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
     const payload = (mocks.createLocalMutateAsync.mock.calls as unknown[][])[0][0] as Record<string, unknown>;
@@ -162,7 +163,7 @@ describe('CP-OPERATIONAL-CLASS-001/002 · alta de producto con clasificación ob
 
   it('§6 · CAMINO 1 (alta local): la clasificación viaja en el INSERT (misma escritura)', async () => {
     const user = userEvent.setup();
-    render(<CreateProductModal />);
+    renderWithDialogs(<CreateProductModal />);
     await fillRequiredFields(user);
     await user.click(screen.getByTestId('operational-class-venta'));
     await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
@@ -175,7 +176,7 @@ describe('CP-OPERATIONAL-CLASS-001/002 · alta de producto con clasificación ob
   it('§6 · CAMINO 2 (tienda conectada): create_master_product recibe p_operational_class — sin UPDATE secundario', async () => {
     mocks.connected = true;
     const user = userEvent.setup();
-    render(<CreateProductModal />);
+    renderWithDialogs(<CreateProductModal />);
     await fillRequiredFields(user);
     await user.click(screen.getByTestId('operational-class-insumo'));
     await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
@@ -191,25 +192,28 @@ describe('CP-OPERATIONAL-CLASS-001/002 · alta de producto con clasificación ob
 
   it('§6 · CAMINO 3 (activación de maestro): activate_master_product recibe { masterId, operationalClass }', async () => {
     mocks.findMasterBySku.mockResolvedValue({ id: 'm-1', sku: 'REF-01', name: 'Equipo de refrigeración', activated: false } as unknown as null);
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     const user = userEvent.setup();
-    render(<CreateProductModal />);
+    renderWithDialogs(<CreateProductModal />);
     await fillRequiredFields(user);
     await user.click(screen.getByTestId('operational-class-activo_fijo'));
     await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
-    expect(mocks.activateMasterMutateAsync).toHaveBeenCalledTimes(1);
+    // CP-UX-FINAL-POLISH-003: el diálogo propio de COSTPRO (no confirm() nativo)
+    // explica el dedup antes de ofrecer la activación.
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent(/ya existe en el catálogo de la organización como «Equipo de refrigeración»/);
+    await user.click(screen.getByTestId('dialog-confirm'));
+    await waitFor(() => expect(mocks.activateMasterMutateAsync).toHaveBeenCalledTimes(1));
     const input = (mocks.activateMasterMutateAsync.mock.calls as unknown[][])[0][0] as Record<string, unknown>;
     expect(input.masterId).toBe('m-1');
     expect(input.operationalClass).toBe('activo_fijo');
     expect(mocks.createLocalMutateAsync).not.toHaveBeenCalled();
-    expect(confirmSpy).toHaveBeenCalled();
   });
 
   it('§10 · un FALLO del RPC no genera confirmación de éxito (sin éxito falso)', async () => {
     mocks.createMasterMutateAsync.mockRejectedValueOnce(new Error('ERR_MASTER_SKU_EXISTS: m-0'));
     mocks.connected = true;
     const user = userEvent.setup();
-    render(<CreateProductModal />);
+    renderWithDialogs(<CreateProductModal />);
     await fillRequiredFields(user);
     await user.click(screen.getByTestId('operational-class-venta'));
     await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
@@ -224,7 +228,7 @@ describe('CP-OPERATIONAL-CLASS-001/002 · alta de producto con clasificación ob
   it('§10 · un FALLO del alta local tampoco confirma éxito', async () => {
     mocks.createLocalMutateAsync.mockRejectedValueOnce(new Error('network down'));
     const user = userEvent.setup();
-    render(<CreateProductModal />);
+    renderWithDialogs(<CreateProductModal />);
     await fillRequiredFields(user);
     await user.click(screen.getByTestId('operational-class-venta'));
     await user.click(screen.getByRole('button', { name: /Crear Producto/i }));
@@ -236,7 +240,7 @@ describe('CP-OPERATIONAL-CLASS-001/002 · alta de producto con clasificación ob
 
   it('cada opción del selector queda marcada al elegirla (Activo Fijo como ejemplo de no-venta)', async () => {
     const user = userEvent.setup();
-    render(<CreateProductModal />);
+    renderWithDialogs(<CreateProductModal />);
     await user.click(screen.getByTestId('operational-class-activo_fijo'));
     expect(screen.getByTestId('operational-class-activo_fijo').getAttribute('aria-checked')).toBe('true');
     expect(screen.getByTestId('operational-class-current').textContent).toContain('Activo Fijo');

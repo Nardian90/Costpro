@@ -19,6 +19,9 @@ import React from 'react';
 
 import AccountsPayableView from '@/components/views/terminal/views/accounts_payable/AccountsPayableView';
 import AccountsReceivableView from '@/components/views/terminal/views/accounts_receivable/AccountsReceivableView';
+// CP-UX-FINAL-POLISH-003: AccountsPayableView (y su LiquidationModal hijo) usan
+// useDialogs → necesitan el <DialogProvider> montado en el layout raíz.
+import { renderWithDialogs } from '../helpers/render-with-dialogs';
 
 beforeAll(() => {
   if (!(globalThis as unknown as Record<string, unknown>).IntersectionObserver) {
@@ -134,7 +137,7 @@ beforeEach(() => {
 describe('AccountsPayableView — 4 estados canónicos via StateRenderer (CP-CI-006 U1)', () => {
   it('cargando: splash de marca (ViewLoadingSplash), no tabla', () => {
     payableState.loading = true;
-    render(<AccountsPayableView />);
+    renderWithDialogs(<AccountsPayableView />);
     expect(screen.getByText('CARGANDO')).toBeTruthy();
     expect(screen.queryByRole('table')).toBeNull();
   });
@@ -142,7 +145,7 @@ describe('AccountsPayableView — 4 estados canónicos via StateRenderer (CP-CI-
   it('error: tarjeta canónica con Reintentar funcional (llama refetch)', () => {
     payableState.loading = false;
     payableState.error = 'Fallo de red simulado';
-    render(<AccountsPayableView />);
+    renderWithDialogs(<AccountsPayableView />);
     expect(screen.getByText('Ha ocurrido un error')).toBeTruthy();
     expect(screen.getByText('Fallo de red simulado')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
@@ -152,14 +155,14 @@ describe('AccountsPayableView — 4 estados canónicos via StateRenderer (CP-CI-
   it('vacío: mensaje contextual en modo agrupado (default)', () => {
     payableState.loading = false;
     payableState.data = [];
-    render(<AccountsPayableView />);
+    renderWithDialogs(<AccountsPayableView />);
     expect(screen.getByText('No hay cuentas por pagar en esta categoría')).toBeTruthy();
   });
 
   it('datos (agrupado, default): aging por proveedor con documento cargado', async () => {
     payableState.loading = false;
     payableState.data = [UNIFIED_PAYABLE];
-    render(<AccountsPayableView />);
+    renderWithDialogs(<AccountsPayableView />);
     await waitFor(() => expect(screen.getByText('Proveedor Uno')).toBeTruthy());
     expect(screen.getAllByRole('table').length).toBeGreaterThan(0);
   });
@@ -167,7 +170,7 @@ describe('AccountsPayableView — 4 estados canónicos via StateRenderer (CP-CI-
   it('datos (lista): tabla de detalle tras alternar a "Detalle"', async () => {
     payableState.loading = false;
     payableState.data = [UNIFIED_PAYABLE];
-    render(<AccountsPayableView />);
+    renderWithDialogs(<AccountsPayableView />);
     fireEvent.click(screen.getByRole('button', { name: /Detalle/ }));
     await waitFor(() => expect(screen.getByText('Proveedor Uno')).toBeTruthy());
     expect(screen.getAllByRole('table').length).toBeGreaterThan(0);

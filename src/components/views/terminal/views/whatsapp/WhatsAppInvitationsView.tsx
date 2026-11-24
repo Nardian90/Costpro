@@ -11,6 +11,8 @@ import { useAuthStore } from '@/store';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+// CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+import { useDialogs } from '@/components/ui/dialogs';
 
 interface Invitation {
   id: string;
@@ -45,6 +47,8 @@ const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
 
 export default function WhatsAppInvitationsView() {
   const { user } = useAuthStore();
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+  const dialogs = useDialogs();
   const storeId = user?.activeStoreId;
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [risk, setRisk] = useState<RiskInfo | null>(null);
@@ -122,7 +126,14 @@ export default function WhatsAppInvitationsView() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Cancelar esta invitación?')) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Cancelar invitación',
+      message: '¿Cancelar esta invitación?',
+      variant: 'destructive',
+      confirmLabel: 'Cancelar invitación',
+    });
+    if (!ok) return;
     if (!storeId) return;
     await fetch(`/api/whatsapp/invitations?id=${id}&store_id=${storeId}`, { method: 'DELETE' });
     setInvitations(prev => prev.filter(i => i.id !== id));

@@ -38,6 +38,7 @@ import { recalculateIPVReportsChain } from '@/lib/ipv/utils';
 import { importCatalogProducts } from '@/lib/ipv/importUtils';
 import ActionMenu, { Action } from "@/components/ui/ActionMenu";
 import { createWorkbook } from '@/lib/export/lazy-excel';
+import { useDialogs } from '@/components/ui/dialogs';
 import {
   Tooltip,
   TooltipContent,
@@ -46,6 +47,8 @@ import {
 import { ImportValidator } from "@/lib/ipv/import-validator";
 
 export function CatalogTable() {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin prompt()/confirm() nativos).
+  const dialogs = useDialogs();
   const [searchTerm, setSearchTerm] = useState(() => (typeof window !== 'undefined' ? localStorage.getItem('catalog_searchTerm') || '' : ''));
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<Product>>({});
@@ -354,7 +357,18 @@ export function CatalogTable() {
   const handleBulkPercentageAdjustment = async () => {
     const targetProducts = selectedProductIds.length > 0 ? products?.filter(p => selectedProductIds.includes(p.cod)) || [] : products || [];
     if (targetProducts.length === 0) return;
-    const percentStr = prompt(`Aplicar ajuste porcentual a ${targetProducts.length} productos. Ejemplo: 50 para el 50% del valor, 110 para incremento del 10%.`, "100");
+    // CP-UX-FINAL-POLISH-003 §3.1: prompt propio (antes prompt() nativo). Se conserva
+    // EXACTAMENTE la semántica original: null = cancelado; valor no numérico →
+    // parseFloat → NaN → toast «Porcentaje inválido».
+    const percentStr = await dialogs.prompt({
+      title: 'Ajuste porcentual masivo',
+      message: `Aplicar ajuste porcentual a ${targetProducts.length} productos. Ejemplo: 50 para el 50% del valor, 110 para incremento del 10%.`,
+      label: 'Porcentaje',
+      placeholder: 'Ejemplo: 50 o 110',
+      initialValue: '100',
+      type: 'number',
+      confirmLabel: 'Aplicar',
+    });
     if (percentStr === null) return;
     const factor = parseFloat(percentStr) / 100;
     if (isNaN(factor)) {
@@ -875,14 +889,22 @@ const handleExportCatalog = async () => {
         const errorSummary = results.errors.length > 0 ? `\n\n❌ ${results.errors.length} error(es):\n${results.errors.slice(0, 10).join('\n')}` : '';
         const warningSummary = results.warnings.length > 0 ? `\n\n⚠️ ${results.warnings.length} advertencia(s):\n${results.warnings.slice(0, 10).join('\n')}` : '';
 
-        const confirmed = window.confirm(
-          `📊 Resumen de Importación de Ventas:\n\n` +
-          `✅ ${results.valid} ventas válidas\n` +
-          `⏭️ ${results.skipped} filas omitidas\n` +
-          `Total importe: ${reconciliationLines.reduce((s, l) => s + l.total_amount_cents, 0).toFixed(2)}\n` +
-          warningSummary + errorSummary +
-          `\n\n¿Confirmar importación?`
-        );
+        // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes window.confirm() nativo).
+        const confirmed = await dialogs.confirm({
+          title: 'Confirmar importación de ventas',
+          message: (
+            <span className="whitespace-pre-line">
+              {`📊 Resumen de Importación de Ventas:\n\n` +
+              `✅ ${results.valid} ventas válidas\n` +
+              `⏭️ ${results.skipped} filas omitidas\n` +
+              `Total importe: ${reconciliationLines.reduce((s, l) => s + l.total_amount_cents, 0).toFixed(2)}\n` +
+              warningSummary + errorSummary +
+              `\n\n¿Confirmar importación?`}
+            </span>
+          ),
+          variant: 'default',
+          confirmLabel: 'Importar',
+        });
 
         if (!confirmed) {
           toast.info('Importación cancelada');

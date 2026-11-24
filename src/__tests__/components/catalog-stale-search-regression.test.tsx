@@ -31,6 +31,7 @@ import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { DialogProvider } from '@/components/ui/dialogs';
 import CatalogView from '@/components/views/terminal/views/catalog/CatalogView';
 
 // ── Polyfills jsdom (misma convención que inventory-mobile-row.test.tsx) ──
@@ -178,9 +179,13 @@ function renderCatalog() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+  // CP-UX-FINAL-POLISH-003: CatalogView monta BulkPriceIncrementModal, que usa
+  // useDialogs → el árbol se envuelve en el <DialogProvider> del layout raíz.
   return render(
     <QueryClientProvider client={queryClient}>
-      <CatalogView />
+      <DialogProvider>
+        <CatalogView />
+      </DialogProvider>
     </QueryClientProvider>
   );
 }

@@ -32,6 +32,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 import { getSupabaseUrl } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import {
@@ -74,6 +75,8 @@ interface LinkedImageRow {
 }
 
 export function CatalogGovernanceSection({ orgId, stores }: CatalogGovernanceSectionProps) {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const user = useAuthStore(s => s.user);
   const qc = useQueryClient();
 
@@ -109,10 +112,15 @@ export function CatalogGovernanceSection({ orgId, stores }: CatalogGovernanceSec
   };
 
   const handleDisconnect = async (storeId: string, name: string) => {
-    const ok = window.confirm(
-      `¿Desconectar «${name}» del catálogo de la organización?\n\n` +
-      'La tienda dejará de ver el catálogo compartido, pero NO se eliminarán sus productos locales, precios, existencias ni historial.'
-    );
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes window.confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: `Desconectar «${name}»`,
+      message:
+        `¿Desconectar «${name}» del catálogo de la organización?\n\n` +
+        'La tienda dejará de ver el catálogo compartido, pero NO se eliminarán sus productos locales, precios, existencias ni historial.',
+      variant: 'warning',
+      confirmLabel: 'Desconectar',
+    });
     if (!ok) return;
     try {
       await disconnect.mutateAsync({ storeId });

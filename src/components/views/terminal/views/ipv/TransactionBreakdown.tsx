@@ -21,6 +21,7 @@ import {
   Info
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 import { formatCurrencyCents } from '../../../../../lib/utils';
 import {
     Dialog,
@@ -65,6 +66,8 @@ const ObservationsModal = ({ open, onOpenChange, observations, reference }: { op
 );
 
 export default function TransactionBreakdown() {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('ALL');
   const [editingLine, setEditingLine] = useState<ReconciliationLine | null>(null);
@@ -99,7 +102,14 @@ export default function TransactionBreakdown() {
   }, [lines, txMap, searchTerm, paymentStatusFilter]);
 
   const handleDeleteLine = async (line: ReconciliationLine) => {
-    if (!confirm("¿Deseas revertir este registro?")) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Revertir registro',
+      message: '¿Deseas revertir este registro?',
+      variant: 'destructive',
+      confirmLabel: 'Revertir',
+    });
+    if (!ok) return;
     try {
         const snapshot = await StockService.takeSnapshot(line.product_cod);
         await StockService.revertReconciliationLine(line.id, snapshot);

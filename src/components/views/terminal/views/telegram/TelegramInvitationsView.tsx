@@ -9,6 +9,7 @@ import { Loader2, Upload, Trash2, UserPlus, Clock, CheckCircle2, XCircle, AlertC
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useDialogs } from '@/components/ui/dialogs';
 
 interface Invitation {
   id: string;
@@ -34,6 +35,8 @@ const STATUS_CONFIG: Record<string, { color: string; icon: any; label: string }>
 };
 
 export default function TelegramInvitationsView() {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin prompt() nativo).
+  const dialogs = useDialogs();
   const { user, token: authToken } = useAuthStore();
   const storeId = user?.activeStoreId;
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -63,9 +66,15 @@ export default function TelegramInvitationsView() {
 
   const handleAddOne = async () => {
     if (!storeId) return;
-    // Prompt simple: pedir telegram_user_id via input inline
-    const input = prompt('Telegram User ID (número):');
-    if (!input) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: prompt propio (antes prompt() nativo). El
+    // original cancelaba con null (ESC/Cancelar) o con vacío: sin `optional`,
+    // el diálogo propio solo puede devolver null al cancelar — misma ramificación.
+    const input = await dialogs.prompt({
+      title: 'Nueva invitación',
+      message: 'Telegram User ID (número):',
+      type: 'text',
+    });
+    if (input === null) return;
     const tgId = parseInt(input, 10);
     if (isNaN(tgId)) {
       toast.error('ID debe ser un número');

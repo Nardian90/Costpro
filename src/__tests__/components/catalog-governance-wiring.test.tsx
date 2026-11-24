@@ -13,7 +13,7 @@
  *    pestaña «Catálogo»; CreateProductModal crea maestro al estar conectada.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import React from 'react';
@@ -65,6 +65,7 @@ vi.mock('@/lib/supabaseClient', () => ({ supabase: { from: vi.fn(), rpc: vi.fn()
 vi.mock('@/lib/utils', () => ({ getSupabaseUrl: () => null, cn: (...a: unknown[]) => a.join(' ') }));
 
 import { CatalogGovernanceSection } from '@/components/views/terminal/views/organizations/CatalogGovernanceSection';
+import { renderWithDialogs } from '../helpers/render-with-dialogs';
 
 const STORIES = [
   { id: STORE_A, name: 'ENERVIDA de prueba', is_active: true, is_archived: false },
@@ -73,7 +74,9 @@ const STORIES = [
 
 function renderSection() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(
+  // CP-UX-FINAL-POLISH-003: la sección usa useDialogs → render dentro de
+  // <DialogProvider> (igual que src/app/layout.tsx en producción).
+  return renderWithDialogs(
     <QueryClientProvider client={qc}>
       <CatalogGovernanceSection orgId={ORG} stores={STORIES} />
     </QueryClientProvider>
@@ -97,12 +100,14 @@ describe('CatalogGovernanceSection — operaciones de gobernanza', () => {
   });
 
   it('gobernador: desconecta pidiendo confirmación (datos locales intactos)', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderSection();
     fireEvent.click(screen.getByRole('button', { name: /Desconectar ENERVIDA de prueba del catálogo/ }));
+    // CP-UX-FINAL-POLISH-003: el diálogo propio de COSTPRO (no confirm() nativo)
+    // explica que los datos locales quedan intactos antes de desconectar.
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent(/NO se eliminarán sus productos locales, precios, existencias ni historial/);
+    fireEvent.click(screen.getByTestId('dialog-confirm'));
     await waitFor(() => expect(disconnectMutate).toHaveBeenCalledWith({ storeId: STORE_A }));
-    expect(confirmSpy).toHaveBeenCalled();
-    confirmSpy.mockRestore();
   });
 
   it('NO gobernador: no ve acciones de gobierno (ni conectar, ni editar, ni revisar)', () => {

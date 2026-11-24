@@ -10,6 +10,7 @@ import { StateRenderer } from '@/components/ui/StateRenderer'; // CP-CI-006 U1: 
 import PaymentModal, { type PayableDocument } from './PaymentModal';
 import PaymentHistoryRow from './PaymentHistoryRow';
 import { LiquidationModal, type LiquidationItem } from './LiquidationModal';
+import { useDialogs } from '@/components/ui/dialogs';
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   unpaid: 'Pendiente',
@@ -42,6 +43,8 @@ const CURRENCY_FILTERS = [
 ];
 
 export default function AccountsPayableView() {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin alert() nativo).
+  const dialogs = useDialogs();
   const [tab, setTab] = useState<AgingTab>('all');
   const [methodFilter, setMethodFilter] = useState('');
   const [currencyFilter, setCurrencyFilter] = useState('');
@@ -90,7 +93,9 @@ export default function AccountsPayableView() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (e: any) {
-      alert(`Error al exportar: ${e.message}`);
+      // CP-UX-FINAL-POLISH-003 §3.1: aviso propio (antes alert() nativo). Sin
+      // await: el finally libera `exporting` de inmediato y no bloquea la UI.
+      dialogs.alert({ title: 'Error al exportar', message: e.message, variant: 'error' });
     } finally {
       setExporting(false);
     }
@@ -152,7 +157,13 @@ export default function AccountsPayableView() {
     const listData = (data as UnifiedPayable[] | undefined) ?? [];
     const invalid = listData.filter(p => selectedIds.has(p.id) && (p.payment_status === 'paid' || p.ref_type === 'commission'));
     if (invalid.length > 0) {
-      alert(`${invalid.length} documento(s) seleccionado(s) ya están pagados o son comisiones (flujo propio) — desmárcalos para liquidar.`);
+      // CP-UX-FINAL-POLISH-003 §3.1: aviso propio (antes alert() nativo). El
+      // flujo termina aquí igual que antes (return) sin bloquear la UI.
+      dialogs.alert({
+        title: 'Selección inválida para liquidar',
+        message: `${invalid.length} documento(s) seleccionado(s) ya están pagados o son comisiones (flujo propio) — desmárcalos para liquidar.`,
+        variant: 'warning',
+      });
       return;
     }
     if (liquidationItems.length === 0) return;

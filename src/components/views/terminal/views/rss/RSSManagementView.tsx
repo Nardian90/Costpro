@@ -16,9 +16,12 @@ import { cn } from '@/lib/utils';
 import { useRSSFeeds, useRSSSettings, useAddRSSFeed, useUpdateRSSFeed, useDeleteRSSFeed, useUpdateRSSSettings } from '@/hooks/api/useRSS';
 import { StateRenderer } from '@/components/ui/StateRenderer';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 import { RSSFeedCategory, RSS_FEED_CATEGORIES } from '@/types';
 
 export default function RSSManagementView() {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const { data: feeds, isLoading: isLoadingFeeds, error: feedsError } = useRSSFeeds();
   const { data: settings, isLoading: isLoadingSettings, error: settingsError } = useRSSSettings();
 
@@ -62,7 +65,14 @@ export default function RSSManagementView() {
   };
 
   const handleDeleteFeed = async (id: string) => {
-    if (!confirm('¿Estás seguro de eliminar esta fuente?')) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Eliminar fuente RSS',
+      message: '¿Estás seguro de eliminar esta fuente?',
+      variant: 'destructive',
+      confirmLabel: 'Eliminar',
+    });
+    if (!ok) return;
     try {
       await deleteFeedMutation.mutateAsync(id);
       toast.success('Fuente eliminada');

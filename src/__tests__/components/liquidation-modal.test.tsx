@@ -11,7 +11,7 @@
  *  5. Total de la operación = Σ importes asignados.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
@@ -31,6 +31,7 @@ vi.mock('@/components/ui/BaseModal', () => ({
 }));
 
 import { LiquidationModal, type LiquidationItem } from '@/components/views/terminal/views/accounts_payable/LiquidationModal';
+import { renderWithDialogs } from '../helpers/render-with-dialogs';
 
 const ITEMS: LiquidationItem[] = [
   { id: 'd1', ref_type: 'receipt', ref_id: 'r-1', supplier: 'Proveedor A', reference: 'ENT-000003-2026', balance: 100, currency: 'CUP' },
@@ -38,7 +39,8 @@ const ITEMS: LiquidationItem[] = [
 ];
 
 function setup() {
-  return render(<LiquidationModal open onClose={vi.fn()} items={ITEMS} onSettled={vi.fn()} />);
+  // CP-UX-FINAL-POLISH-003: el modal usa useDialogs → render dentro de <DialogProvider>.
+  return renderWithDialogs(<LiquidationModal open onClose={vi.fn()} items={ITEMS} onSettled={vi.fn()} />);
 }
 
 describe('CP-OPS-ENERVIDA · LiquidationModal', () => {

@@ -18,6 +18,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
+import { DialogProvider } from '@/components/ui/dialogs';
 
 // ── Estado configurable (antes de los mocks, vía vi.hoisted) ───────
 const h = vi.hoisted(() => {
@@ -262,7 +263,14 @@ describe('Organizaciones — menú de tres puntos → Administración de la orga
 
   const renderOrgList = async () => {
     const OrganizationsView = (await import('@/components/views/terminal/views/organizations/OrganizationsView')).default;
-    render(<OrganizationsView />, { wrapper: Wrapper });
+    // CP-UX-FINAL-POLISH-003: OrganizationsView usa useDialogs → se monta dentro
+    // del <DialogProvider> del layout raíz.
+    render(
+      <DialogProvider>
+        <OrganizationsView />
+      </DialogProvider>,
+      { wrapper: Wrapper },
+    );
     await waitFor(() => expect(screen.getByText('Constructora del Este')).toBeDefined());
   };
 
