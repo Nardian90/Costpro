@@ -40,8 +40,6 @@ const P_AGOTADO = {
 };
 const PRODUCTS = [P_ALARMA, P_CEMENTO_COLA, P_AGOTADO];
 
-const { usePOSCheckoutMock } = vi.hoisted(() => ({ usePOSCheckoutMock: vi.fn() }));
-
 vi.mock('@/hooks/api/useActiveShift', () => ({
   useActiveShift: () => ({ data: null, isLoading: false }),
 }));
@@ -76,18 +74,20 @@ vi.mock('@/lib/supabaseClient', () => {
     },
   };
 });
-vi.mock('@/components/views/terminal/views/pos/usePOSCheckout', () => ({
-  usePOSCheckout: usePOSCheckoutMock,
-}));
+// HARDENING CI (2026-11-24): UN solo vi.mock por módulo. Antes este archivo
+// registraba DOS veces `@/…/usePOSCheckout` (fábrica sync muerta con
+// lastSale:null + la fábrica real de abajo) y DOS veces `POSCartSuccessView`
+// (con testids distintos). El registro duplicado es código muerto (Vitest
+// resuelve con la última fábrica) pero introduce ambigüedad y fue la única
+// vía por la que el panel de éxito podía quedar sin montar en CI
+// («Unable to find [data-testid="pos-success-view"]», 2 corridas
+// consecutivas en runner de GitHub, irreproducible en local).
 vi.mock('@/components/views/terminal/views/pos/POSOperationDateSection', () => ({
   POSOperationDateSection: () => null,
   usePosSaleDate: () => ({ validation: { valid: true, error: null } }),
 }));
 vi.mock('@/components/views/terminal/views/pos/PaymentMethodSelector', () => ({
   PaymentMethodSelector: () => <div data-testid="payment-selector-mock" />,
-}));
-vi.mock('@/components/views/terminal/views/pos/POSCartSuccessView', () => ({
-  POSCartSuccessView: () => <div data-testid="express-success-view" />,
 }));
 vi.mock('@/components/views/terminal/views/pos/usePOSCartExports', () => ({
   usePOSCartExports: () => ({
@@ -130,12 +130,6 @@ describe('CP-UX-NAVIGATION-POS-REPAIR-001 · Cajero Express (§3.2/§3.3)', () =
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
-    usePOSCheckoutMock.mockReturnValue({
-      startCheckout: vi.fn(), confirmUnpricedCheckout: vi.fn(), isProcessingSale: false,
-      showPriceWarning: false, setShowPriceWarning: vi.fn(), showRateWarning: false,
-      rateWarningData: null, confirmRateWarning: vi.fn(), cancelRateWarning: vi.fn(),
-      updateRateFromModal: vi.fn(), lastSale: null, setLastSale: vi.fn(),
-    } as never);
     useAuthStore.setState({
       user: { id: 'u1', email: 'express@test.local', role: 'admin', activeStoreId: STORE } as never,
       status: 'authenticated_valid', loading: false,
@@ -219,24 +213,31 @@ const { lastSaleHolder, setLastSaleMock } = vi.hoisted(() => ({
 vi.mock('@/hooks/api/useProducts', () => ({
   useProducts: () => ({ data: PRODUCTS, isLoading: false, error: null, refetch: vi.fn() }),
 }));
-// Mock de usePOSCheckout con lastSale como ESTADO REACT (fiel al contrato real:
-// setLastSale es un useState dentro del hook → setearlo provoca re-render).
-// El holder permite sembrar el estado post-venta desde cada test.
+// Mock de usePOSCheckout (ÚNICO registro para este módulo) con lastSale como
+// ESPEJO del holder: se LEE EN CADA RENDER (no solo como valor inicial de
+// useState) y setLastSale fuerza re-render — fiel al contrato real (setLastSale
+// es un setState del hook y el POST lo setea tras confirmar la venta).
+// HARDENING CI (2026-11-24): el diseño anterior sembraba el estado solo vía
+// valor inicial de useState, de modo que cualquier remontaje/timing de módulo
+// podía ver lastSale=null tras haber sembrado el holder — exactamente el modo
+// de fallo observado en runner de GitHub (panel de éxito ausente en
+// «X cierra el panel de verdad tras una venta confirmada»). Con el espejo,
+// el estado post-venta es determinista ante cualquier orden de montaje.
 vi.mock('@/components/views/terminal/views/pos/usePOSCheckout', async () => {
-  const { useState, useCallback } = await import('react');
+  const { useCallback, useReducer } = await import('react');
   return {
     usePOSCheckout: () => {
-      const [lastSale, setLastSaleState] = useState(lastSaleHolder.current);
+      const [, forceRender] = useReducer((c: number) => c + 1, 0);
       const setLastSale = useCallback((v: unknown) => {
         lastSaleHolder.current = v;
         setLastSaleMock(v);
-        setLastSaleState(v as never);
+        forceRender();
       }, []);
       return {
         startCheckout: vi.fn(), confirmUnpricedCheckout: vi.fn(), isProcessingSale: false,
         showPriceWarning: false, setShowPriceWarning: vi.fn(), showRateWarning: false,
         rateWarningData: null, confirmRateWarning: vi.fn(), cancelRateWarning: vi.fn(),
-        updateRateFromModal: vi.fn(), lastSale, setLastSale,
+        updateRateFromModal: vi.fn(), lastSale: lastSaleHolder.current as never, setLastSale,
       };
     },
   };
