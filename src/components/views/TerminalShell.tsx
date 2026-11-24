@@ -711,6 +711,16 @@ export default function TerminalShell() {
   // más abajo). Móvil: siempre temporal → nunca reserva espacio.
   const contentPaddingClass = !isMobile && sidebarPinned ? sidebarWidths[sidebarState] : undefined;
 
+  // CP-UX-SINGLE-TOGGLE (2026-11-24): ¿el menú está SUPERPUESTO a la barra superior
+  // (drawer móvil o temporal desktop sin pin)? En ese estado la barra superior
+  // debe quedar POR ENCIMA del panel para que el ÚNICO botón toggle siga
+  // alcanzable y cierre el overlay (patrón ChatGPT). Detalle de apilamiento:
+  // main es flex item con z-10 → crea un CONTEXTO DE APILAMIENTO que encierra
+  // al header (su z-50 nunca vencería al sidebar z-40 hermano). Con overlay
+  // activo, main pasa a z-auto (sin contexto) y el header z-50 compite de
+  // frente: contenido(auto) < backdrop(30) < panel(40) < header(50).
+  const sidebarOverlaysHeader = sidebarState !== 'closed' && (isMobile || !sidebarPinned);
+
   return (
     // FIX-SCROLL-DESKTOP (2026-10): h-full en vez de h-screen/h-dvh. El contenedor
     // definitivo de altura lo da HomePageClient (h-dvh) envolviendo a CyberShell;
@@ -728,13 +738,15 @@ export default function TerminalShell() {
         <Sidebar
           onViewChange={handleViewChange}
           onLogout={handleLogout}
-          onClose={() => setSidebarState('closed')}
           onPrefetchView={handlePrefetchView}
         />
       )}
 
       <main id="main-content" className={cn(
-        "flex-1 h-full flex flex-col z-10 min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden",
+        "flex-1 h-full flex flex-col min-w-0 transition-[padding-left,padding-right] duration-300 cubic-bezier(0.4,0,0.2,1) overflow-x-hidden overflow-y-hidden",
+        // CP-UX-SINGLE-TOGGLE: z-auto cuando el header debe flotar sobre el
+        // panel superpuesto (ver comentario arriba); z-10 en el resto de estados.
+        sidebarOverlaysHeader ? "z-auto" : "z-10",
         contentPaddingClass
       )} role="main">
         {/* En modo lectura de ayuda, ocultamos el Header global para tener pantalla limpia. */}
@@ -742,6 +754,7 @@ export default function TerminalShell() {
           <Header
             sidebarState={sidebarState}
             toggleSidebar={globalToggleSidebar}
+            sidebarOverlaysHeader={sidebarOverlaysHeader}
             currentView={currentView}
             navigationItems={nav.navigationItems}
             onViewChange={handleViewChange}

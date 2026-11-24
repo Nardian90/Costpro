@@ -10,7 +10,6 @@ import {
   User,
   Settings,
   LogOut,
-  Layout,
   Search
 } from 'lucide-react';
 import {
@@ -27,7 +26,6 @@ import { StoreSelectorSheet } from './StoreSelectorSheet';
 import { NotificationCenter } from './NotificationCenter';
 import { cn } from '@/lib/utils';
 import { isAdminLevel } from '@/lib/roles';
-import { useIsMobile } from '@/hooks/ui/useMobile';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
 import { ViewType, SidebarState, useUIStore } from '@/store';
@@ -44,12 +42,16 @@ interface HeaderProps {
   handleSetActiveStore: (id: string) => void;
   allStores?: any[];
   onLogout?: () => void;
+  /** CP-UX-SINGLE-TOGGLE: el menú está superpuesto a la barra (drawer móvil
+   *  o temporal desktop). La barra se eleva sobre el panel para que el
+   *  MISMO botón toggle siga siendo alcanzable y sirva de cierre. */
+  sidebarOverlaysHeader?: boolean;
 }
 
 function SidebarIcon({ sidebarState }: { sidebarState: string }) {
   switch (sidebarState) {
     case 'expanded': return <X className="w-5 h-5" />;
-    case 'rail': return <Layout className="w-5 h-5" />;
+    case 'rail': return <X className="w-5 h-5" />;
     case 'closed': return <Menu className="w-5 h-5" />;
   }
 }
@@ -64,8 +66,8 @@ export const Header = ({
   handleSetActiveStore,
   allStores = [],
   onLogout,
+  sidebarOverlaysHeader = false,
 }: HeaderProps) => {
-  const isMobile = useIsMobile();
   // F1-T04: estado de búsqueda para el dropdown del selector de tienda.
   // Permite filtrar tiendas por nombre cuando hay 10+ (antes era una lista plana sin filtro).
   const [storeSearch, setStoreSearch] = useState('');
@@ -99,24 +101,33 @@ export const Header = ({
   const activeStoreName = activeStore?.name || 'Seleccionar Tienda';
 
   return (
-    <header className="bg-background/80 backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 z-30 w-full pt-[env(safe-area-inset-top)] shrink-0 border-b border-border/50">
+    // CP-UX-SINGLE-TOGGLE (2026-11-24): cuando el menú se superpone a la barra
+    // (drawer móvil o temporal desktop) la barra se ELEVA (z-50, fondo sólido)
+    // por encima del panel (z-40) — el mismo botón toggle queda alcanzable y
+    // actúa de cierre, como en ChatGPT/Claude. Sin superposición se mantiene
+    // el z-30 translúcido clásico.
+    <header className={cn(
+      "backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 w-full pt-[env(safe-area-inset-top)] shrink-0 border-b border-border/50",
+      sidebarOverlaysHeader ? "z-50 bg-background" : "z-30 bg-background/80",
+    )}>
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
-          {/* CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): el control de
-              contraer/expandir vive DENTRO del encabezado del menú lateral.
-              Este botón queda como única vía de APERTURA: visible en móvil
-              (abre el drawer) y en desktop solo cuando el menú está cerrado
-              (p.ej. tras Ctrl+B). Con el menú visible (expanded/rail) se oculta
-              para no duplicar el toggle interno del sidebar. */}
-          {(isMobile || sidebarState === 'closed') && (
-            <button
-              onClick={toggleSidebar}
-              className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all"
-              aria-label="Abrir menú lateral"
-            >
-              <SidebarIcon sidebarState={sidebarState} />
-            </button>
-          )}
+          {/* CP-UX-SINGLE-TOGGLE (2026-11-24): práctica internacional (patrón
+              ChatGPT/Claude) — UN SOLO botón fijo en la barra superior alterna
+              mostrar/ocultar el menú lateral por clic. Visible SIEMPRE (desktop
+              y móvil, con el menú abierto o cerrado); sustituye al modelo
+              anterior de abrir con hamburguesa y cerrar con X internas del
+              panel. El control interno del menú (contraer→rail) sigue vivo
+              para el eje expanded↔rail, que es un ajuste de ancho, no de
+              visibilidad. Ctrl+B conserva el atajo. */}
+          <button
+            onClick={toggleSidebar}
+            className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all"
+            aria-label={sidebarState === 'closed' ? 'Mostrar menú lateral' : 'Ocultar menú lateral'}
+            aria-expanded={sidebarState !== 'closed'}
+          >
+            <SidebarIcon sidebarState={sidebarState} />
+          </button>
 
           <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto min-w-0 flex-1 no-scrollbar pr-2">
             <h1 className="text-[clamp(0.75rem,3.5vw,1.25rem)] font-label font-bold capitalize tracking-tight text-primary whitespace-nowrap shrink-0">

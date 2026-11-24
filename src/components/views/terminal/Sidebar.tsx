@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
-  X,
   Search,
   ChevronDown,
   Home,
@@ -36,14 +35,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 interface SidebarProps {
   onViewChange: (view: ViewType) => void;
   onLogout: () => void;
-  onClose: () => void;
   onPrefetchView: (view: ViewType) => void;
 }
 
 // Root module IDs (depth=0) — these trigger focus mode
 const ROOT_MODULE_IDS = new Set(SIDEBAR_STRUCTURE.map(m => m.id));
 
-const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }: SidebarProps) => {
+const Sidebar = React.memo(({ onViewChange, onLogout, onPrefetchView }: SidebarProps) => {
   const prefersReducedMotion = useReducedMotion();
   const { user } = useAuthStore();
   const {
@@ -563,7 +561,13 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
     >
       <div className={cn(
         "relative bg-sidebar/90 backdrop-blur-2xl h-full flex flex-col overflow-hidden transition-all duration-300",
-        displayState === 'expanded' ? "w-64 lg:w-72" : displayState === 'rail' ? "w-20" : "w-0"
+        displayState === 'expanded' ? "w-64 lg:w-72" : displayState === 'rail' ? "w-20" : "w-0",
+        // CP-UX-SINGLE-TOGGLE (2026-11-24): cuando el menú es un PANEL SUPERPUESTO
+        // (drawer móvil o temporal desktop), la barra superior se eleva por encima
+        // (z-50) y hospeda el toggle único de mostrar/ocultar. Este padding
+        // descuenta la altura de esa barra (~3.75rem + safe-area) para que el
+        // encabezado del panel (logo/pin) no quede tapado.
+        isTemporary && displayState !== 'closed' && "pt-[calc(3.75rem_+_env(safe-area-inset-top))]"
       )}>
         {/* Gradient accent line at top */}
         <div className="absolute top-0 left-0 right-0 h-[2px] z-50 overflow-hidden">
@@ -613,31 +617,22 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
               </button>
             )}
 
-            {/* CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24): control de
-                contraer/expandir integrado en el ENCABEZADO del menú lateral.
-                Desktop: alterna expanded ↔ rail — JAMÁS deja el menú en
-                'closed' (al contraer queda la barra compacta con iconos).
-                Móvil: se conserva la X (cierre del drawer), el control de
-                apertura vive en el hamburger del Header; un segundo toggle
-                rail en pantalla táctil duplicaría controles sin utilidad.
+            {/* CP-UX-SINGLE-TOGGLE (2026-11-24): el cierre del panel vive en el
+                ÚNICO botón toggle de la barra superior (Header), que se eleva
+                sobre este panel cuando es superpuesto (drawer móvil / temporal).
+                Aquí NO hay X de cierre — el eje visibilidad (closed↔visible) es
+                exclusivo de ese botón y de Ctrl+B/backdrop/Esc/auto-cierre.
 
-                CP-UX-POLISH-002 (§1.1): a la izquierda del toggle vive el
-                CONTROL DE FIJAR (pin) — desktop expandido. Estados:
-                  · Pinned (A/B) → Pin activo (tinte primario + aria-pressed):
-                    el menú reserva espacio y empuja el contenido.
-                  · Temporal (C) → PinOff + X propia: el menú se superpone sin
-                    reservar espacio; la X lo cierra y el backdrop/Esc también.
-                En rail el pin se omite por espacio (rail ≡ fijo contraído); la
-                barra compacta es siempre un estado fijo del layout. */}
-            {isMobile ? (
-               <button
-                onClick={onClose}
-                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                aria-label="Cerrar menú lateral"
-               >
-                 <X className="w-4 h-4" />
-               </button>
-            ) : displayState === 'rail' ? (
+                Control interno del encabezado (AJUSTE DE ANCHO, no visibilidad):
+                  · Rail → PanelLeftOpen «Expandir menú lateral» (vuelve a expanded).
+                  · Expanded fijo (pin) → Pin + PanelLeftClose «Contraer menú lateral»
+                    (baja a rail, JAMÁS closed — §1.1).
+                  · Expanded temporal (sin pin) → PinOff; fijarlo devuelve al
+                    Estado A. El cierre lo hace el toggle de la barra, el
+                    backdrop o Esc.
+                Móvil: sin controles aquí — drawer SIEMPRE temporal, sin pin ni
+                rail (el toggle único de la barra abre y cierra). */}
+            {isMobile ? null : displayState === 'rail' ? (
               <button
                 type="button"
                 onClick={() => setSidebarState('expanded')}
@@ -682,19 +677,7 @@ const Sidebar = React.memo(({ onViewChange, onLogout, onClose, onPrefetchView }:
                   >
                     <PanelLeftClose className="w-4 h-4" />
                   </button>
-                ) : (
-                  // Estado C temporal: cierre del panel temporal (además del
-                  // backdrop y de seleccionar una vista funcional).
-                  <button
-                    type="button"
-                    onClick={() => setSidebarState('closed')}
-                    className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-all active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                    aria-label="Cerrar menú temporal"
-                    title="Cerrar menú temporal"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+                ) : null}
               </div>
             )}
           </div>
