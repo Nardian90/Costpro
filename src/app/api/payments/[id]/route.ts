@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
@@ -35,10 +36,18 @@ async function reverseHandler(req: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: 'ID de pago requerido' }, { status: 400 });
     }
 
+    // CP-SEC: validación Zod del cuerpo (check 4 del ci-gate-ts-checks).
+    const reverseBodySchema = z.object({
+      reason: z.string().max(300).optional().nullable(),
+    });
     let reason: string | null = null;
     try {
-      const body = await req.json();
-      reason = typeof body?.reason === 'string' && body.reason.trim() ? body.reason.trim().slice(0, 300) : null;
+      const raw = await req.json();
+      const parsed = reverseBodySchema.safeParse(raw);
+      if (!parsed.success) {
+        return NextResponse.json({ error: 'Cuerpo inválido: reason debe ser un texto de hasta 300 caracteres' }, { status: 400 });
+      }
+      reason = parsed.data.reason && parsed.data.reason.trim() ? parsed.data.reason.trim().slice(0, 300) : null;
     } catch {
       // cuerpo vacío es válido (motivo opcional)
     }

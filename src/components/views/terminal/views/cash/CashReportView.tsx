@@ -2378,7 +2378,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
   const s: DailySummary = p.summary ?? {
     currency: 'CUP', ventasCash: 0, ventasTransfer: 0, ventasZelle: 0, ventasMixed: 0,
     ventasTotales: 0, otIngresosCash: 0, comisionesCash: 0, comisionesTransfer: 0,
-    serviciosRecibidosCash: 0, recibosProveedoresCash: 0, ajustesPositivos: 0,
+    serviciosRecibidosCash: 0, recibosProveedoresCash: 0, reversionesPagosCash: 0, ajustesPositivos: 0,
     ajustesNegativos: 0, ajustesNeto: 0, ingresosCaja: 0, egresosCaja: 0, reembolsosCash: 0, reembolsosVoucher: 0,
     equivCashOtraMoneda: 0, equivVouchersOtraMoneda: 0,
     efectivoEsperado: p.expectedCup, saldoInicial: 0, liquidacionBilletes: 0, cobrosBilletes: 0,

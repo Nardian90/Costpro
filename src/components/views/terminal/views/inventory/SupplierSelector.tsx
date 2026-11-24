@@ -249,6 +249,7 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
           key: `local-${created.id}`,
           kind: "local",
           id: created.id,
+          linkedSupplierId: null,
           name: created.name,
           code: null,
           tax_id: created.tax_id ?? null,

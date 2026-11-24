@@ -124,7 +124,8 @@ export const DEFAULT_PDF_OPTIONS: CashReportPdfOptions = {
 // no existe preferencia guardada VÁLIDA para esa clave (regla B-1). Un JSON
 // antiguo/corrupto se recupera con los defaults en las claves afectadas, sin
 // bloquear la interfaz (try/catch, mismo patrón que loadPdfTemplate).
-const PDF_OPTION_KEYS = Object.keys(DEFAULT_PDF_OPTIONS) as Array<keyof CashReportPdfOptions>;
+type PdfBooleanOptionKey = Exclude<keyof CashReportPdfOptions, 'pdfConcepts'>;
+const PDF_OPTION_KEYS = Object.keys(DEFAULT_PDF_OPTIONS) as Array<PdfBooleanOptionKey>;
 
 export function loadPdfOptions(): CashReportPdfOptions {
   if (typeof window === 'undefined') return { ...DEFAULT_PDF_OPTIONS };
@@ -469,7 +470,6 @@ export function buildDiarioIncomeRows(
         label: 'Otros conceptos incluidos',
         amount: Math.abs(net),
         note: net < 0 ? 'expense' : 'ingreso',
-        concept: null,
       };
       const firstHiddenIdx = incomeRows.indexOf(hidden[0]);
       const insertAt = Math.min(firstHiddenIdx, shown.length);

@@ -19,7 +19,7 @@ export interface LiquidationItem {
   id: string;
   ref_type: 'receipt' | 'service';
   ref_id: string;
-  supplier: string;
+  supplier: string | null;
   reference: string;
   balance: number;      // saldo pendiente (CUP canónico)
   currency: string;     // moneda del documento
@@ -122,7 +122,7 @@ export function LiquidationModal({ open, onClose, items, onSettled }: Liquidatio
                     {r.reference || r.ref_type}
                     <span className="block text-[9px] text-muted-foreground uppercase">{r.ref_type === 'receipt' ? 'Recepción' : 'Servicio'} · {r.currency}</span>
                   </td>
-                  <td className="p-2">{r.supplier}</td>
+                  <td className="p-2">{r.supplier ?? '—'}</td>
                   <td className="p-2 text-right font-mono tabular-nums">{formatCurrency(r.balance)}</td>
                   <td className="p-2 text-right">
                     <input
@@ -132,7 +132,7 @@ export function LiquidationModal({ open, onClose, items, onSettled }: Liquidatio
                       value={r.amount}
                       onChange={(e) => setAmounts((a) => ({ ...a, [r.id]: parseFloat(e.target.value) || 0 }))}
                       className={`neu-input w-28 text-right font-mono tabular-nums ${r.over ? 'border-destructive' : ''}`}
-                      aria-label={`Importe a liquidar de ${r.reference || r.supplier}`}
+                      aria-label={`Importe a liquidar de ${r.reference || r.supplier || '—'}`}
                     />
                   </td>
                   <td className={`p-2 text-right font-mono tabular-nums ${r.remaining === 0 ? 'text-success' : 'text-muted-foreground'}`}>{formatCurrency(r.remaining)}</td>
