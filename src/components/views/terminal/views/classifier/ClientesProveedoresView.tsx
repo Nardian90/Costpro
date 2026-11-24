@@ -36,6 +36,7 @@ import {
   useSearchMasterParties, usePartyStoreLink, usePartyChangeLog,
   useCreateMasterParty, useUpdateMasterParty, useDeleteMasterParty,
   useActivateMasterParty, useConnectStoreClassifier, useDisconnectStoreClassifier,
+  useConsolidateLocalParty,
   partyClassification, translateClassifierError,
   type MasterPartyRow,
 } from '@/hooks/api/useClassifier';
@@ -336,7 +337,7 @@ function PartyActions({ p, onDetail, onEdit, onDelete, storeId }: {
       <button onClick={onDetail} className="p-2 rounded-lg hover:bg-muted" aria-label={`Ver detalle de ${p.name}`} title="Detalle y trazabilidad">
         <Eye className="w-4 h-4" />
       </button>
-      {isMaster && (
+      {isMaster ? (
         <>
           <button onClick={onEdit} className="p-2 rounded-lg hover:bg-muted" aria-label={`Editar ${p.name}`} title="Editar">
             <Pencil className="w-4 h-4" />
@@ -346,7 +347,135 @@ function PartyActions({ p, onDetail, onEdit, onDelete, storeId }: {
             <Trash2 className="w-4 h-4" />
           </button>
         </>
+      ) : (
+        /* CP-OPS-ENERVIDA §3: consolidación de registros LOCALES — vincular a
+         * un maestro existente o promover al Maestro, sin borrar el local. */
+        <LocalConsolidateButtons p={p} storeId={storeId} />
       )}
+    </div>
+  );
+}
+
+/** CP-OPS-ENERVIDA §3 — acciones de consolidación para registros LOCALES.
+ *  «Vincular» abre el selector de candidatos del Maestro (la coincidencia
+ *  se VERIFICA, nunca se fusiona automáticamente por nombre); «Promover»
+ *  crea la identidad maestra desde el local. El registro local se conserva
+ *  (historial intacto) y deja de aparecer como tercero independiente. */
+function LocalConsolidateButtons({ p, storeId }: { p: MasterPartyRow; storeId: string | null }) {
+  const [linkOpen, setLinkOpen] = useState(false);
+  const mut = useConsolidateLocalParty(storeId);
+  const kind: 'customer' | 'supplier' = p.is_client && !p.is_supplier ? 'customer' : 'supplier';
+  const nameBlank = !p.name || p.name.trim() === '' || p.name === '—';
+  const insufficientData = nameBlank && !p.tax_id && !p.phone;
+
+  const promote = () => {
+    if (nameBlank) {
+      toast.error('Registro pendiente de depuración: sin nombre suficiente no puede promoverse al Maestro (identifícalo primero).');
+      return;
+    }
+    if (!window.confirm(`¿Promover «${p.name}» al Maestro compartido de la organización? Se creará su identidad maestra y este registro local quedará VINCULADO (el historial se conserva; deja de aparecer como tercero independiente).`)) return;
+    mut.mutate({ kind, localId: p.id, mode: 'promote' }, {
+      onSuccess: (d) => {
+        const dups = d?.name_duplicates_in_master ?? [];
+        toast.success(
+          dups.length > 0
+            ? `Promovido al Maestro. ATENCIÓN: ya existían terceros maestros con ese nombre (${dups.map(x => x.code).join(', ')}) — verifica si son la misma entidad antes de operar.`
+            : 'Promovido al Maestro y vinculado (el registro local se conserva).'
+        );
+      },
+      onError: (e: { message?: string }) => toast.error(translateClassifierError(e?.message ?? '') || e?.message || 'Error al promover al Maestro'),
+    });
+  };
+
+  return (
+    <>
+      {insufficientData && (
+        <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 whitespace-nowrap" title="Sin nombre ni identificación: caso pendiente de depuración — no se fusiona ni promueve automáticamente">
+          Pendiente de depuración
+        </span>
+      )}
+      <button
+        onClick={() => setLinkOpen(true)}
+        disabled={mut.isPending}
+        className="px-2 h-8 rounded-lg border border-primary/30 bg-primary/5 text-primary text-[10px] font-black uppercase hover:bg-primary/10 disabled:opacity-50"
+        title="Vincular a un tercero existente del Maestro (verifica la identidad antes de vincular)"
+        data-testid="consolidar-vincular"
+      >
+        Vincular al maestro
+      </button>
+      <button
+        onClick={promote}
+        disabled={mut.isPending || nameBlank}
+        className="px-2 h-8 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted disabled:opacity-50"
+        title={nameBlank ? 'Sin nombre suficiente (pendiente de depuración)' : 'Crear la identidad maestra desde este registro local'}
+        data-testid="consolidar-promover"
+      >
+        Promover al maestro
+      </button>
+      {linkOpen && <LinkPartyModal p={p} kind={kind} storeId={storeId} onClose={() => setLinkOpen(false)} />}
+    </>
+  );
+}
+
+/** Selector de candidatos del Maestro para VINCULAR un registro local. */
+function LinkPartyModal({ p, kind, storeId, onClose }: { p: MasterPartyRow; kind: 'customer' | 'supplier'; storeId: string | null; onClose: () => void }) {
+  const [q, setQ] = useState(p.name === '—' ? '' : p.name);
+  const { data: rows = [], isLoading } = useSearchMasterParties(storeId, q, kind === 'customer' ? 'client' : 'supplier');
+  const mut = useConsolidateLocalParty(storeId);
+  const candidates = rows.filter(r => r.source === 'master' && r.id !== p.id).slice(0, 8);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-label="Vincular al maestro" data-testid="link-party-modal">
+      <div className="bg-background border border-border rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-wider">Vincular «{p.name === '—' ? '(sin nombre)' : p.name}» al Maestro</h3>
+            <p className="text-[10px] text-muted-foreground">Verifica NIT/CI, contacto y clasificación ANTES de vincular — no se fusionan identidades automáticamente.</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-muted" aria-label="Cerrar">✕</button>
+        </div>
+        <div className="p-3 border-b border-border/20">
+          <input
+            autoFocus
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Buscar en el Maestro por nombre, código, NIT/CI o teléfono…"
+            className="w-full px-3 h-10 rounded-lg border border-border/40 bg-background text-sm"
+            data-testid="link-party-search"
+          />
+        </div>
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+          {isLoading ? (
+            <p className="text-xs text-muted-foreground text-center py-4">Buscando candidatos…</p>
+          ) : candidates.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-4">
+              Sin candidatos en el Maestro. Si este tercero NO existe en el Maestro, usa «Promover al maestro».
+            </p>
+          ) : candidates.map(c => (
+            <button
+              key={c.id}
+              onClick={() => {
+                if (!window.confirm(`¿Vincular «${p.name}» con ${c.code} · ${c.name}? El registro local quedará asociado al maestro (el historial se conserva).`)) return;
+                mut.mutate({ kind, localId: p.id, mode: 'link', masterPartyId: c.id }, {
+                  onSuccess: () => { toast.success('Registro local vinculado al Maestro.'); onClose(); },
+                  onError: (e: { message?: string }) => toast.error(translateClassifierError(e?.message ?? '') || e?.message || 'Error al vincular'),
+                });
+              }}
+              disabled={mut.isPending}
+              className="w-full text-left p-2.5 rounded-lg border border-border/40 hover:bg-primary/5 disabled:opacity-50"
+              data-testid={`link-candidate-${c.code}`}
+            >
+              <span className="flex items-center justify-between gap-2">
+                <span className="font-bold text-sm truncate">{c.name}</span>
+                <span className="font-mono text-[10px] text-muted-foreground">{c.code}</span>
+              </span>
+              <span className="block text-[10px] text-muted-foreground">
+                {[c.tax_id, c.phone, c.email].filter(Boolean).join(' · ') || 'Sin identificación'} · {partyClassification(c)}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

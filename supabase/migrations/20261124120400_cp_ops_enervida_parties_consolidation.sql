@@ -205,8 +205,11 @@ BEGIN
 END;
 $function$;
 
-REVOKE EXECUTE ON FUNCTION public.consolidate_local_party(text, uuid, text, uuid, uuid) FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.consolidate_local_party(text, uuid, text, uuid, uuid) TO service_role;
+REVOKE EXECUTE ON FUNCTION public.consolidate_local_party(text, uuid, text, uuid, uuid) FROM PUBLIC, anon;
+-- authenticated CONSERVADO (patrón draft-RPCs del repo): la autorización de
+-- gestión vive DENTRO del cuerpo (has_store_access_as + rol admin/manager/
+-- encargado sobre la tienda del registro local) y el actor es auth.uid().
+GRANT EXECUTE ON FUNCTION public.consolidate_local_party(text, uuid, text, uuid, uuid) TO authenticated, service_role;
 
 COMMENT ON FUNCTION public.consolidate_local_party(text, uuid, text, uuid, uuid) IS
   'CP-OPS-ENERVIDA §3: vincula (link) o promueve (promote) un tercero LOCAL al Maestro sin destruir el registro local. Fusiones de identidad ambigua quedan fuera (decisión humana por la UI).';

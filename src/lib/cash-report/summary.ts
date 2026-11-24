@@ -202,6 +202,13 @@ export interface CashReportLike {
    *  bucket cash de la moneda. Mismo productor que sales_split (la ruta),
    *  recomputado por selección en report-selection.ts. */
   sales_bills_split?: Partial<Record<string, number>>;
+  /** CP-OPS-ENERVIDA §2.1: obligaciones PENDIENTES del período, separadas de
+   *  los pagos ejecutados (A servicios · B recepciones). Una obligación
+   *  pendiente NO es una salida de efectivo — no reduce el esperado. */
+  pending_obligations?: {
+    services: Array<{ id: string; service_number: string; reference_doc: string | null; supplier: string; total_amount: number; paid_amount: number; balance: number; currency: string; payment_status: string }>;
+    receipts: Array<{ id: string; document_number: string | null; reference_doc: string | null; supplier: string; total_cost: number; paid_amount: number; balance: number; payment_status: string }>;
+  };
 }
 
 export interface DailySummary {

@@ -11,7 +11,7 @@
 import React, { useMemo, useState } from "react";
 import { Banknote, Landmark, CreditCard, X, Loader2, AlertTriangle } from "lucide-react";
 import { BaseModal } from "@/components/ui/BaseModal";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency } from "@/lib/utils";
 import { useAuthStore } from "@/store";
 import { toast } from "sonner";
 
