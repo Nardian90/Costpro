@@ -11,6 +11,11 @@
  * FIJO contraído y TEMPORAL (overlay). El pin del encabezado cambia el
  * COMPORTAMIENTO del layout (sidebarPinned), la preferencia persiste y el
  * menú temporal se cierra al elegir una vista funcional.
+ *
+ * CP-UX-SINGLE-TOGGLE (2026-11-24): el eje VISIBILIDAD (closed↔visible) es
+ * exclusivo del ÚNICO botón toggle de la barra superior (Header) — el panel
+ * NO tiene X propia (ni móvil ni temporal). El control interno del panel
+ * solo ajusta ANCHO (expanded↔rail) y el pin cambia fijo↔temporal.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
@@ -68,7 +73,6 @@ const mountSidebar = () =>
     <Sidebar
       onViewChange={noop}
       onLogout={noop}
-      onClose={noop}
       onPrefetchView={noop}
     />,
   );
@@ -156,9 +160,9 @@ describe('CP-UX-NAVIGATION-POS-REPAIR-001 · Menú lateral — §1.2 comportamie
     expect(setSidebarStateMock).toHaveBeenCalledWith('closed');
   });
 
-  it('móvil conserva la X del encabezado para cerrar el drawer (sin toggle rail duplicado)', () => {
+  it('CP-UX-SINGLE-TOGGLE: el panel NO tiene X propia — el cierre vive en el toggle único de la barra', () => {
     mountSidebar();
-    expect(screen.getByRole('button', { name: 'Cerrar menú lateral' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Cerrar menú lateral' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Contraer menú lateral' })).toBeNull();
   });
 
@@ -196,12 +200,12 @@ describe('CP-UX-POLISH-002 · Estados A/B/C — fijar (pin), contraer y temporal
     expect(useUIStore.getState().sidebarPinned).toBe(false);
   });
 
-  it('Estado C — temporal: muestra PinOff + X propia y ya NO ofrece el toggle rail (modelos separados)', () => {
+  it('Estado C — temporal: muestra PinOff y ya NO ofrece toggle rail ni X propia (cierre en la barra)', () => {
     useUIStore.setState({ sidebarPinned: false });
     mountSidebar();
     const pin = screen.getByRole('button', { name: 'Fijar menú lateral' });
     expect(pin.getAttribute('aria-pressed')).toBe('false');
-    expect(screen.getByRole('button', { name: 'Cerrar menú temporal' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Cerrar menú temporal' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Contraer menú lateral' })).toBeNull();
   });
 
@@ -238,5 +242,14 @@ describe('CP-UX-POLISH-002 · Estados A/B/C — fijar (pin), contraer y temporal
     expect(setSidebarStateMock).toHaveBeenCalledWith('expanded');
     expect(useUIStore.getState().sidebarState).toBe('expanded');
     expect(screen.getByRole('button', { name: 'Desfijar menú lateral (hacer temporal)' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('CP-UX-SINGLE-TOGGLE: ni en fijo ni en temporal existe «Cerrar menú temporal» — visibilidad solo en la barra', () => {
+    mountSidebar();
+    expect(screen.queryByRole('button', { name: 'Cerrar menú temporal' })).toBeNull();
+    useUIStore.setState({ sidebarPinned: false });
+    cleanup();
+    mountSidebar();
+    expect(screen.queryByRole('button', { name: 'Cerrar menú temporal' })).toBeNull();
   });
 });

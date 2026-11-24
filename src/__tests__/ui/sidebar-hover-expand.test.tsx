@@ -115,7 +115,6 @@ describe('Sidebar principal — hover expand (rail → expandido temporal)', () 
   const view = {
     onViewChange: vi.fn(),
     onLogout: vi.fn(),
-    onClose: vi.fn(),
     onPrefetchView: vi.fn(),
   };
 

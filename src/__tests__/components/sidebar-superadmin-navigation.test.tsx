@@ -50,7 +50,6 @@ const mountSidebar = () =>
     <Sidebar
       onViewChange={noop}
       onLogout={noop}
-      onClose={noop}
       onPrefetchView={noop}
     />,
   );
