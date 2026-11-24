@@ -43,7 +43,33 @@
  *   ítem (cash_paid/cash_currency…) y reconstrucción legada documentada
  *   (zelle→USD; exact-match→USD cash legado; resto CUP). Sin evidencia de
  *   pago en USD → 0 (nunca se inventa ingreso en dólares).
- *   La columna contable Ventas (CUP) NO cambia (tasa histórica por venta).
+ *
+ * ADNEGOCIO-REPORTING (2026-11-24) — VENTAS CUP = CUP EFECTIVAMENTE COBRADO:
+ *   Incidente real (ENERVIDA-VITALLCONS, 2026-11-21, SKU 117 "Inversor"):
+ *   una venta cobrada 100 % en USD (ledger: cash|USD|400@955, ítem
+ *   cash_paid=400 cash_currency='USD') mostraba 400,00 USD **y** 382.000,00
+ *   CUP — el equivalente contable (400 × tasa 955 de la operación) entraba
+ *   como una SEGUNDA venta en la columna CUP: una misma operación inflaba los
+ *   dos totales comerciales y el IPV contradecía al Reporte de Entrega (que
+ *   reconoce SOLO los 400 USD).
+ *   Regla corregida: AMBAS columnas representan dinero REALMENTE COBRADO y
+ *   provienen de la MISMA reconstrucción única del Reporte de Entrega:
+ *     · Ventas CUP = Σ perItem.cup (CUP recibido por método documental).
+ *     · Ventas USD = Σ perItem.usd (USD recibidos — regla 2026-11-11).
+ *   El equivalente contable de un cobro en USD (usdCupEquiv) ya NO se presenta
+ *   como venta en CUP: la valoración contable sigue existiendo en los asientos
+ *   (fin_entries, tasa histórica) pero el IPV es un informe de INGRESOS por
+ *   moneda, no una segunda contabilidad.
+ *   Fallback documentado: si la venta NO tiene evidencia de pago alguna
+ *   (reconstrucción sin buckets — ventas históricas sin pools ni filas por
+ *   ítem ni ledger), no hay moneda demostrable y se usa la valoración contable
+ *   de la línea (comportamiento previo) para no ocultar ingresos. Con
+ *   evidencia la clasificación es estricta: nunca se duplica una operación.
+ *   Limitación conocida (corrección independiente propuesta): una devolución
+ *   de una venta cobrada íntegramente en USD resta su valoración CUP de la
+ *   columna CUP (devolution_items.unit_price es la valoración canónica; el
+ *   reembolso real por moneda vive en payment_transactions
+ *   ref_type='devolution', base del Reporte de Entrega).
  */
 
 // ── Tipos de entrada (crudos de Supabase, numéricos como string) ──────────
@@ -164,7 +190,9 @@ export interface IpvRow {
   transferencias: number;
   /** Existencia final calculada (Ei + Σ período). null = N/D. */
   existenciaFinal: number | null;
-  /** Ventas en importe — CUP, moneda contable (tasa histórica de cada venta). */
+  /** Ventas en importe — CUP efectivamente COBRADO (ADNEGOCIO-REPORTING
+   * 2026-11-24: misma fuente única del Reporte de Entrega; el equivalente
+   * contable de un cobro en USD NO entra como segunda venta en CUP). */
   ventasImporteCup: number;
   /** USD efectivamente COBRADOS en la venta (payment_transactions/desglose por
    * ítem/reconstrucción legada) — un precio de referencia USD del catálogo NO
@@ -391,23 +419,21 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
   for (const inv of inventory) currentQty.set(inv.product_id, num(inv.quantity));
 
   // ── 3. Importes de venta (dominio dinero, separado del ledger) ───────────
-  // CUP contable: SIN CAMBIO (tasa histórica de cada venta — computeLineTotalCup).
-  //
-  // USD efectivamente cobrados (CORRECCIÓN IPV 2026-11-11): la moneda de cada
-  // importe se determina por el registro REAL de la venta y sus pagos, con la
-  // MISMA fuente única del Reporte de Entrega (collection-currency.ts):
-  //   · ledger payment_transactions por componente (ventas con payment_components);
-  //   · desglose del cobro por ítem (cash_paid/cash_currency…);
-  //   · reconstrucción legada documentada (zelle→USD; exact-match→USD cash
-  //     legado; resto CUP canónico).
-  // La moneda del PRECIO del ítem (catálogo) ya NO genera importe USD.
+  // AMBAS columnas = dinero REALMENTE COBRADO (ADNEGOCIO-REPORTING 2026-11-24),
+  // de la MISMA reconstrucción única del Reporte de Entrega (collection-currency.ts):
+  //   · Ventas CUP = Σ perItem.cup (CUP recibido por método documental) — el
+  //     equivalente contable de un cobro en USD (usdCupEquiv) ya NO entra como
+  //     una segunda venta en CUP (incidente SKU 117 "Inversor", 2026-11-21).
+  //   · Ventas USD = Σ perItem.usd (USD recibidos — CORRECCIÓN 2026-11-11).
+  // Fallback documentado: venta SIN evidencia de pago alguna (reconstrucción
+  // sin buckets) → valoración contable de la línea (no ocultar ingresos).
+  // La detección de PRICE_ANOMALY (forma de price_at_sale_cup) se mantiene:
+  // sigue siendo relevante para el fallback y las incidencias §5.6.
   const salesCup = new Map<string, number>();
   const salesUsd = new Map<string, number>();
   for (const line of salesLines) {
-    const pid = line.product_id;
-    const { total, anomaly } = computeLineTotalCup(line);
-    salesCup.set(pid, (salesCup.get(pid) ?? 0) + total);
-    if (anomaly) priceAnomalyProducts.add(pid);
+    const { anomaly } = computeLineTotalCup(line);
+    if (anomaly) priceAnomalyProducts.add(line.product_id);
   }
 
   // 3b. Reconstrucción por venta → USD cobrado atribuible a cada línea.
@@ -464,9 +490,21 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
     }));
     const payments = tx.id ? paymentsByTx.get(tx.id) : undefined;
     const reconstruction = reconstructTxCollections(tx, items, payments);
+    // ADNEGOCIO-REPORTING 2026-11-24: sin NINGÚN bucket de pago no hay moneda
+    // demostrable → fallback a la valoración contable de la línea (documentado
+    // en la cabecera del módulo). Con evidencia, clasificación estricta por
+    // moneda cobrada: CUP recibido a Ventas CUP; USD recibido a Ventas USD.
+    const sinEvidencia = reconstruction.buckets.length === 0;
     lines.forEach((l, i) => {
+      const pid = l.product_id;
+      if (sinEvidencia) {
+        salesCup.set(pid, (salesCup.get(pid) ?? 0) + computeLineTotalCup(l).total);
+        return;
+      }
       const col = reconstruction.perItem[i];
       if (!col) return;
+      const cup = col.cup.cash + col.cup.transfer + col.cup.zelle;
+      if (cup !== 0) salesCup.set(pid, (salesCup.get(pid) ?? 0) + cup);
       const usd = col.usd.cash + col.usd.transfer + col.usd.zelle;
       if (usd === 0) return;
       salesUsd.set(l.product_id, (salesUsd.get(l.product_id) ?? 0) + usd);

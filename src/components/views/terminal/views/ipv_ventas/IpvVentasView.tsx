@@ -51,6 +51,7 @@ import {
   type IpvResultFilters,
 } from '@/lib/ipv-ventas/filters';
 import { formatIpvQty, formatIpvMoney } from '@/lib/ipv-ventas/format';
+import { ipvEndDateOnStartChange } from '@/lib/ipv-ventas/period';
 import { buildIpvVentasPdf, ipvFileName } from './ipv-ventas-pdf';
 import { buildIpvVentasWorkbook } from './ipv-ventas-excel';
 
@@ -100,6 +101,11 @@ export default function IpvVentasView() {
   const [storeId, setStoreId] = useState<string>(user?.activeStoreId ?? '');
   const [startDate, setStartDate] = useState<string>(() => isoDate(new Date()));
   const [endDate, setEndDate] = useState<string>(() => isoDate(new Date()));
+  // ADNEGOCIO-REPORTING §5 (2026-11-24): la fecha final sigue a la inicial
+  // mientras el usuario no la haya elegido explícitamente — así «seleccionar un
+  // día» produce inicio = fin (antes la final nacía HOY y el período se
+  // extendía en silencio hasta la fecha de generación: 21 → 23).
+  const endDateTouchedRef = useRef(false);
   const [search, setSearch] = useState('');
 
   // Filtros de resultados (2026-11-06): selección de filas sobre el dataset
@@ -409,7 +415,12 @@ export default function IpvVentasView() {
               <CalendarDays className="w-3.5 h-3.5" /> Fecha inicial
             </label>
             <input id="ipv-start" type="date" value={startDate} max={endDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => {
+                const v = e.target.value;
+                setStartDate(v);
+                // §5: fin sigue a inicio hasta toque explícito de la final.
+                setEndDate((cur) => ipvEndDateOnStartChange(v, cur, endDateTouchedRef.current));
+              }}
               className={cn('w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', rangeInvalid && 'border-red-500')}
             />
           </div>
@@ -418,7 +429,11 @@ export default function IpvVentasView() {
               <CalendarDays className="w-3.5 h-3.5" /> Fecha final
             </label>
             <input id="ipv-end" type="date" value={endDate} min={startDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(e) => {
+                // §5: elección EXPLÍCITA de la final — se respeta exactamente.
+                endDateTouchedRef.current = true;
+                setEndDate(e.target.value);
+              }}
               className={cn('w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', rangeInvalid && 'border-red-500')}
             />
           </div>
@@ -439,7 +454,7 @@ export default function IpvVentasView() {
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Períodos rápidos">
             {PERIOD_CHIPS.map((p) => (
               <button key={p.label} type="button"
-                onClick={() => { const [a, b] = p.range(); setStartDate(a); setEndDate(b); }}
+                onClick={() => { const [a, b] = p.range(); setStartDate(a); setEndDate(b); endDateTouchedRef.current = false; }}
                 className="rounded-full border border-border/50 px-3 py-1.5 text-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 {p.label}
               </button>
@@ -508,7 +523,7 @@ export default function IpvVentasView() {
             <span className="font-bold text-foreground">{applied.storeName}</span>
             <span>{applied.cfg.startDate} → {applied.cfg.endDate}</span>
             <span>Generado: {new Date(applied.generatedAt).toLocaleString('es')}</span>
-            <span>Monedas: CUP contable · USD efectivamente cobrado</span>
+            <span>Monedas: importe cobrado por moneda real (CUP · USD) — criterio del Reporte de Entrega</span>
             <span>{filteredRows.length} de {applied.rows.length} productos</span>
             {ipvAnyFilterActive(resultFilters) && (
               <span data-testid="ipv-filtros-activos" className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2 py-0.5 font-bold text-primary">
@@ -560,8 +575,8 @@ export default function IpvVentasView() {
                       <th scope="col" className="px-3 py-2.5 text-right font-bold">Ajustes</th>
                       <th scope="col" className="px-3 py-2.5 text-right font-bold">Transf.</th>
                       <th scope="col" className="px-3 py-2.5 text-right font-bold">Exist. final</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Ventas (CUP)</th>
-                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Ventas USD</th>
+                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Ventas CUP (cobrado)</th>
+                      <th scope="col" className="px-3 py-2.5 text-right font-bold">Ventas USD (cobrado)</th>
                     </tr>
                   </thead>
                   <tbody>

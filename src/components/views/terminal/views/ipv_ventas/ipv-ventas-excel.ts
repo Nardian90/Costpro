@@ -59,7 +59,7 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
     ['Tienda:', payload.storeName],
     ['Período:', `${payload.startDateLabel} — ${payload.endDateLabel}`],
     ['Generado:', new Date(payload.generatedAt).toLocaleString('es')],
-    ['Monedas:', 'CUP contable (tasa histórica por venta); USD nativo informativo'],
+    ['Monedas:', 'Importe cobrado por moneda real (criterio del Reporte de Entrega): CUP y USD; nunca se suman entre sí'],
     ['Productos incluidos:', payload.rows.length],
     [],
     [
@@ -170,8 +170,8 @@ export async function buildIpvVentasWorkbook(payload: IpvExcelPayload): Promise<
     ['Fórmula de conciliación:', 'Existencia final = Existencia inicial + Entradas + Devoluciones − Cantidades vendidas − Vales de salida ± Ajustes ± Transferencias'],
     ['Existencia inicial:', 'Saldo reconstruido del ledger de movimientos (stock_movements.quantity_change) anterior a la fecha inicial del período. N/D = no reconstruible (carga inicial previa al ledger).'],
     ['Fuente de cantidades:', 'stock_movements (ledger canónico; fecha operativa movement_date). Nunca se mezclan kardex_entries ni tablas de venta para cantidades.'],
-    ['Fuente de importes:', 'transaction_items de ventas con estado "completed" del período (precio capturado al vender, convertido a CUP con la tasa histórica de cada venta). Ventas USD: importe cobrado en USD según el registro real de pagos de la venta (payment_transactions + desglose por ítem). Devoluciones completadas se restan por producto.'],
-    ['Monedas:', 'La columna Ventas (CUP) es la moneda contable del sistema. La columna Ventas USD refleja EXCLUSIVAMENTE el importe efectivamente cobrado en USD (registro de pagos de la venta; un precio de referencia en USD del catálogo NO genera ingreso USD); NO se suman entre sí.'],
+    ['Fuente de importes:', 'Ventas con estado "completed" del período: el importe de cada columna es el dinero REALMENTE COBRADO en esa moneda, según la misma reconstrucción única del Reporte de Entrega (payment_transactions + desglose por ítem — collection-currency.ts). Ventas CUP: CUP recibido. Ventas USD: USD recibidos; el equivalente contable en CUP de un cobro en USD (tasa de la operación) NO entra como venta en CUP. Ventas sin evidencia de pago (históricas): valoración contable de la línea. Devoluciones completadas se restan por producto (valoración CUP).'],
+    ['Monedas:', 'Ambas columnas representan dinero efectivamente cobrado en SU moneda real (criterio del Reporte de Entrega). Un precio de referencia en USD del catálogo NO genera ingreso USD y una venta cobrada en USD NO se duplica en CUP. NO se suman entre sí: los totales se calculan independientemente por moneda.'],
     ['Regla de inclusión:', 'Se incluye un producto con existencia inicial ≠ 0, o movimientos en el período, o existencia final ≠ 0, o importe vendido, o incidencia de conciliación.'],
     ['Descuentos:', 'El importe usa la línea bruta cobrada: en COSTPRO, transactions.total_amount = suma de líneas brutas (item_discount_value es informativo, verificado en BD).'],
   ];

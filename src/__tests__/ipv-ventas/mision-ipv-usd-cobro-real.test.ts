@@ -15,6 +15,15 @@
  * de Entrega, collection-currency.ts). La columna Ventas (CUP) NO cambia
  * (contable, tasa histórica de cada venta).
  *
+ * ADENDUM ADNEGOCIO-REPORTING (2026-11-24): la regla se EXTIENDE a ambas
+ * columnas — Ventas CUP = CUP efectivamente cobrado (perItem.cup de la misma
+ * reconstrucción). El equivalente contable de un cobro en USD ya NO se presenta
+ * como segunda venta en CUP (incidente SKU 117 "Inversor", 400 USD + su
+ * conversión 382.000 CUP a tasa 955). Las expectativas de los escenarios con
+ * cobro USD se actualizaron a la regla vigente; los casos de cobro CUP
+ * conservan sus valores (cobrado == contable) y el fallback sin evidencia
+ * (ventas históricas sin buckets de pago) mantiene la valoración contable.
+ *
  * Escenarios de aceptación de la misión (§6):
  *   1. Venta íntegramente en CUP de un producto con precio de referencia USD en catálogo.
  *   2. Venta íntegramente en USD (Zelle y efectivo USD con componentes de pago).
@@ -125,7 +134,7 @@ describe('CORRECCIÓN IPV 2026-11-11 — Escenario 1: venta íntegramente en CUP
 });
 
 describe('CORRECCIÓN IPV 2026-11-11 — Escenario 2: venta íntegramente en USD', () => {
-  it('Zelle USD: 7 USD cobrados a tasa 800 → CUP 5.600 (tasa histórica) y USD 7', () => {
+  it('Zelle USD: 7 USD cobrados a tasa 800 → USD 7 y SIN duplicado en CUP', () => {
     const line: IpvSalesLineRow = {
       transaction_id: 'tx-zelle-usd', product_id: P22, quantity: '1',
       price_at_sale: '7.00', price_at_sale_cup: '5600.00',
@@ -137,7 +146,7 @@ describe('CORRECCIÓN IPV 2026-11-11 — Escenario 2: venta íntegramente en USD
     ];
     const r = computeIpv(base({ salesLines: [line], salesPayments: payments }));
     const row = rowOf(r, P22);
-    expect(row!.ventasImporteCup).toBe(5600); // contable con tasa histórica — tratamiento vigente
+    expect(row!.ventasImporteCup).toBe(0);     // ADNEGOCIO 2026-11-24: cobro 100 % USD → SIN equivalente CUP (—)
     expect(row!.ventasImporteUsd).toBe(7);     // USD nativos realmente recibidos
   });
 
@@ -153,7 +162,7 @@ describe('CORRECCIÓN IPV 2026-11-11 — Escenario 2: venta íntegramente en USD
     ];
     const r = computeIpv(base({ salesLines: [line], salesPayments: payments }));
     const row = rowOf(r, P88);
-    expect(row!.ventasImporteCup).toBe(18600); // 9300 × 2
+    expect(row!.ventasImporteCup).toBe(0);     // ADNEGOCIO 2026-11-24: cobro 100 % USD (18.600 es valoración, no cobro CUP)
     expect(row!.ventasImporteUsd).toBe(20);
   });
 });
@@ -173,8 +182,8 @@ describe('CORRECCIÓN IPV 2026-11-11 — Escenario 3: pagos combinados CUP + USD
     ];
     const r = computeIpv(base({ salesLines: [line], salesPayments: payments }));
     const row = rowOf(r, P88);
-    // Cada columna refleja ÚNICAMENTE su moneda real: 9.300 CUP + 10 USD = 18.600 CUP
-    expect(row!.ventasImporteCup).toBe(18600); // contable (ambos tramos a tasa histórica)
+    // Cada columna refleja ÚNICAMENTE su moneda real: 9.300 CUP cobrados + 10 USD cobrados.
+    expect(row!.ventasImporteCup).toBe(9300); // CUP realmente recibido (el equivalente del zelle NO se duplica)
     expect(row!.ventasImporteUsd).toBe(10);    // solo el USD realmente recibido
   });
 });
@@ -203,9 +212,10 @@ describe('CORRECCIÓN IPV 2026-11-11 — Escenario 4: varios productos, monedas 
     const r = computeIpv(base({ salesLines: lines, salesPayments: payments }));
     const p99 = rowOf(r, P99);
     const p88 = rowOf(r, P88);
-    // Contable CUP por producto: sin cambio.
+    // ADNEGOCIO 2026-11-24: P88 solo recibió USD 31.5 (ledger) — sin fila CUP,
+    // su columna CUP es el cobro real (0), no la valoración 29.295.
     expect(p99!.ventasImporteCup).toBe(1000);
-    expect(p88!.ventasImporteCup).toBe(29295);
+    expect(p88!.ventasImporteCup).toBe(0);
     // CP-FIX 2026-11-20 (Nivel 1 — atribución por artículo): la fila explícita
     // de P99 (cash_paid 1.000 CUP) cubre EXACTO el bucket cash|CUP del ledger,
     // y el residual del bucket cash|USD (31.5, sin fila explícita de nadie) se
@@ -242,7 +252,7 @@ describe('CORRECCIÓN IPV 2026-11-11 — Escenario 4: varios productos, monedas 
     expect(rowOf(r, P99)!.ventasImporteUsd).toBe(0);
     expect(rowOf(r, P99)!.ventasImporteCup).toBe(1000);
     expect(rowOf(r, P22)!.ventasImporteUsd).toBe(7);
-    expect(rowOf(r, P22)!.ventasImporteCup).toBe(5600);
+    expect(rowOf(r, P22)!.ventasImporteCup).toBe(0); // cobro 100 % USD → sin duplicado CUP
   });
 });
 
@@ -272,13 +282,13 @@ describe('CORRECCIÓN IPV 2026-11-11 — Escenario 5: mismo producto cobrado en 
     }));
     const row = rowOf(r, P88);
     expect(row!.cantidadesVendidas).toBe(14);            // inventario: ambas ventas
-    expect(row!.ventasImporteCup).toBe(58590);           // 29.295 × 2 (tasa histórica cada venta)
+    expect(row!.ventasImporteCup).toBe(29295);           // SOLO la venta cobrada en CUP (la USD va a su moneda)
     expect(row!.ventasImporteUsd).toBe(31.5);             // SOLO la venta cobrada en USD
   });
 });
 
 describe('CORRECCIÓN IPV 2026-11-11 — Escenario 6: totales y correspondencia con los pagos reales', () => {
-  it('Σ Ventas USD == Σ importes USD de las filas de pago del período; Σ Ventas (CUP) == contable por línea', () => {
+  it('Σ Ventas USD == Σ importes USD de las filas de pago del período; Σ Ventas CUP == CUP realmente cobrado', () => {
     // 3 ventas: CUP pura (29.295 CUP) + Zelle USD (7 USD) + mixta (9.300 CUP + 10 USD).
     const lines: IpvSalesLineRow[] = [
       lineaEnervida,
@@ -309,12 +319,12 @@ describe('CORRECCIÓN IPV 2026-11-11 — Escenario 6: totales y correspondencia 
     expect(usdReal).toBe(17); // 7 + 10
     expect(r.totals.ventasImporteUsd).toBeCloseTo(usdReal, 6); // correspondencia exacta
 
-    // Contable CUP: 29.295 + 5.600 + 18.600 = 53.495 (tasa histórica de cada venta)
-    expect(r.totals.ventasImporteCup).toBe(53495);
+    // CUP realmente cobrado: 29.295 (venta CUP) + 0 (venta USD) + 9.300 (mixta) = 38.595
+    expect(r.totals.ventasImporteCup).toBe(38595);
 
     // El total USD visible (pantalla/PDF/Excel) es EXACTAMENTE el mismo objeto de totales.
     expect(totalsFromRows(r.rows).ventasImporteUsd).toBeCloseTo(usdReal, 6);
-    expect(totalsFromRows(r.rows).ventasImporteCup).toBe(53495);
+    expect(totalsFromRows(r.rows).ventasImporteCup).toBe(38595);
   });
 
   it('regresión de la causa raíz: sin payment_transactions la reconstrucción usa el desglose por ítem (no el precio del catálogo)', () => {

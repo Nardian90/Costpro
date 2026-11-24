@@ -65,7 +65,7 @@ const ledger: IpvMovementRow[] = [
 ];
 
 describe('IPV — MISIÓN MULTIMONEDA 23/10/2026 (SKU 22, 7 USD, vuelto 2.400 CUP)', () => {
-  it('ingreso canónico 5.600 CUP; el vuelto y el billete NO son ingreso; USD cobrados 7', () => {
+  it('cobro real 7 USD en efectivo; el vuelto y el billete NO son ingreso; sin duplicado en CUP', () => {
     const res = computeIpv({
       window: { fromISO: FROM, toISO: TO },
       movements: ledger,
@@ -77,8 +77,10 @@ describe('IPV — MISIÓN MULTIMONEDA 23/10/2026 (SKU 22, 7 USD, vuelto 2.400 CU
 
     const row = res.rows.find((r) => r.productId === P22);
     expect(row).toBeTruthy();
-    // Contabilidad: el ingreso es 5.600 CUP a la tasa de la operación
-    expect(row!.ventasImporteCup).toBe(5600);
+    // ADNEGOCIO 2026-11-24: el cobro fue 100 % USD (cash_paid=7 USD) → la
+    // columna CUP no presenta el equivalente contable (5.600 a tasa 800), que
+    // vive en los asientos; el ingreso se informa en la moneda cobrada.
+    expect(row!.ventasImporteCup).toBe(0);
     // NO es 8.000 (billete recibido) ni 8.000−2.400 mal calculado: la venta es 7 USD
     expect(row!.cantidadesVendidas).toBe(1);
     // USD efectivamente COBRADOS: 7 (efectivo USD registrado en el ítem)
@@ -87,8 +89,9 @@ describe('IPV — MISIÓN MULTIMONEDA 23/10/2026 (SKU 22, 7 USD, vuelto 2.400 CU
     expect(row!.existenciaInicial).toBe(0);
     expect(row!.entradas).toBe(10);
     expect(row!.existenciaFinal).toBe(9);
-    // Sin incidencias de precio: 5600 = 7 × 800 (forma unitaria exacta)
-    expect(res.totals.ventasImporteCup).toBe(5600);
+    // Totales por moneda: USD 7; CUP 0 (sin cobro CUP documentado)
+    expect(res.totals.ventasImporteCup).toBe(0);
+    expect(res.totals.ventasImporteUsd).toBe(7);
   });
 
   it('fallback histórico V1: sin filas de pago por ítem, el pool exacto USD marca el cobro legado en USD', () => {
@@ -105,8 +108,10 @@ describe('IPV — MISIÓN MULTIMONEDA 23/10/2026 (SKU 22, 7 USD, vuelto 2.400 CU
     const row = res.rows.find((r) => r.productId === P22);
     // Reconstrucción legada (misma fuente única del Reporte de Entrega):
     // líneas USD originales + pool exacto = conversión exacta del RPC → USD.
+    // ADNEGOCIO 2026-11-24: el equivalente CUP del pool ya NO se duplica como
+    // venta en la columna CUP — la operación se informa en la moneda cobrada.
     expect(row!.ventasImporteUsd).toBe(7);
-    expect(row!.ventasImporteCup).toBe(5600);
+    expect(row!.ventasImporteCup).toBe(0);
   });
 
   it('ítem CUP nativo no contamina la columna USD', () => {

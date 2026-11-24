@@ -240,11 +240,11 @@ describe('Escenario H — Ventas en monedas diferentes', () => {
     }));
     const row = rowOf(r, P1);
     expect(row?.cantidadesVendidas).toBe(5);
-    expect(row?.ventasImporteCup).toBe(1045); // 1000 CUP + 45 USD × 1 (tasa de la línea)
+    expect(row?.ventasImporteCup).toBe(1000); // ADNEGOCIO 2026-11-24: SOLO el CUP recibido — el equivalente del cobro USD no se duplica
     expect(row?.ventasImporteUsd).toBe(45);
   });
 
-  it('la línea cobrada en USD usa su price_at_sale_cup (tasa histórica) en la columna CUP', () => {
+  it('la línea cobrada en USD NO presenta su valoración contable (price_at_sale_cup) como venta en CUP', () => {
     const line: IpvSalesLineRow = {
       product_id: P1, quantity: 3, price_at_sale: 15, price_at_sale_cup: 6000,
       price_currency: 'USD', exchange_rate: 400, sale_exchange_rate: 400,
@@ -253,7 +253,7 @@ describe('Escenario H — Ventas en monedas diferentes', () => {
     };
     const r = computeIpv(base({ salesLines: [line] }));
     const row = rowOf(r, P1);
-    expect(row?.ventasImporteCup).toBe(18000); // 6000×3 — tasa histórica, no la actual
+    expect(row?.ventasImporteCup).toBe(0);  // ADNEGOCIO 2026-11-24: cobro 100 % USD → sin duplicado CUP (la valoración 18.000 vive en los asientos)
     expect(row?.ventasImporteUsd).toBe(45);
   });
 
