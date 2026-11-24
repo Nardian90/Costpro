@@ -234,7 +234,7 @@ describe('fetchServiceConceptBreakdown — criterios idénticos al RPC get_cash_
     expect(queries).toHaveLength(2);
     const pay = queries[0];
     expect(pay.table).toBe('payment_transactions');
-    expect(pay.select).toBe('ref_id, amount, currency, payment_method');
+    expect(pay.select).toBe('ref_id, amount, currency, payment_method, direction');
     expect(pay.filters).toContainEqual({ op: 'eq', column: 'store_id', value: STORE });
     expect(pay.filters).toContainEqual({ op: 'eq', column: 'ref_type', value: 'service' });
     expect(pay.filters).toContainEqual({ op: 'eq', column: 'payment_method', value: 'cash' });

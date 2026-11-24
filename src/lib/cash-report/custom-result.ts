@@ -323,7 +323,7 @@ export function conceptTerms(s: DailySummary): Record<SummaryConceptKey, number>
     equivalenciaCup: num(s.equivCashOtraMoneda),
     ingresosCaja: num(s.ingresosCaja),
     egresosCaja: num(s.egresosCaja),
-    otrosEgresos: num(s.comisionesCash) + num(s.serviciosRecibidosCash) + num(s.recibosProveedoresCash),
+    otrosEgresos: num(s.comisionesCash) + num(s.serviciosRecibidosCash) + num(s.recibosProveedoresCash) - num(s.reversionesPagosCash),
     otIngresos: num(s.otIngresosCash),
     ajustes: num(s.ajustesPositivos) - num(s.ajustesNegativos),
     reembolsos: num(s.reembolsosCash),
@@ -335,6 +335,9 @@ export function conceptTerms(s: DailySummary): Record<SummaryConceptKey, number>
  * Efectivo esperado del REPORTE PERSONALIZADO (fórmula centralizada).
  * Con todos los conceptos activos reproduce EXACTAMENTE el esperado oficial
  * de summary.ts — identidad certificada por prueba.
+ * CP-OPS-ENERVIDA (P0): las REVERSIONES de pagos de proveedores (dinero que
+ * volvió al cajón) se netean dentro de «Otros egresos» — la identidad con el
+ * esperado oficial (que ya suma reversionesPagosCash) se conserva.
  */
 export function customExpected(s: DailySummary, sel: SummaryConceptsSelection): number {
   let e = 0;
@@ -343,7 +346,10 @@ export function customExpected(s: DailySummary, sel: SummaryConceptsSelection): 
   if (sel.otIngresos) e += num(s.otIngresosCash);
   if (sel.ajustes) e += num(s.ajustesPositivos) - num(s.ajustesNegativos);
   if (sel.ingresosCaja) e += num(s.ingresosCaja);
-  if (sel.otrosEgresos) e -= num(s.comisionesCash) + num(s.serviciosRecibidosCash) + num(s.recibosProveedoresCash);
+  if (sel.otrosEgresos) {
+    e -= num(s.comisionesCash) + num(s.serviciosRecibidosCash) + num(s.recibosProveedoresCash);
+    e += num(s.reversionesPagosCash);
+  }
   if (sel.egresosCaja) e -= num(s.egresosCaja);
   if (sel.reembolsos) e -= num(s.reembolsosCash);
   return e;

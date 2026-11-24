@@ -8,6 +8,7 @@ import { apiFetch } from '@/lib/api-fetch';
 import { useAccountsPayable, type AgingTab, type GroupedPayable, type UnifiedPayable } from '@/hooks/api/useAccountsPayable';
 import PaymentModal, { type PayableDocument } from './PaymentModal';
 import PaymentHistoryRow from './PaymentHistoryRow';
+import { LiquidationModal, type LiquidationItem } from './LiquidationModal';
 
 const PAYMENT_STATUS_LABELS: Record<string, string> = {
   unpaid: 'Pendiente',
@@ -125,37 +126,39 @@ export default function AccountsPayableView() {
     }
   };
 
-  const handleBulkPay = async () => {
-    if (selectedIds.size === 0) return;
-    const listData = data as UnifiedPayable[];
-    const selected = listData.filter(p => selectedIds.has(p.id));
+  // CP-OPS-ENERVIDA §6: liquidación múltiple EXPLÍCITA — el botón de estados
+  // en bloque (bulk-pay «Marcar Pagadas») se sustituye por un flujo contable
+  // verificable: panel por documento con importe total/parcial, un método y
+  // una moneda por lote, lote ATÓMICO e idempotente (/api/payments/multi).
+  const [liquidationOpen, setLiquidationOpen] = useState(false);
+  const liquidationItems: LiquidationItem[] = useMemo(() => {
+    const listData = (data as UnifiedPayable[] | undefined) ?? [];
+    return listData
+      .filter(p => selectedIds.has(p.id) && p.payment_status !== 'paid' && p.balance > 0)
+      .map(p => ({
+        id: p.id,
+        ref_type: p.ref_type as 'receipt' | 'service',
+        ref_id: p.ref_id,
+        supplier: p.supplier,
+        reference: p.reference || '',
+        balance: p.balance_cup ?? p.balance,
+        currency: p.currency,
+      }));
+  }, [data, selectedIds]);
+  const selectedTotalPending = liquidationItems.reduce((s, it) => s + it.balance, 0);
 
-    if (!confirm(`¿Marcar ${selected.length} documento(s) como pagados con método "${bulkMethod}"?`)) return;
-
-    setBulkPaying(true);
-    try {
-      const result = await apiFetch('/api/accounts-payable/bulk-pay', {
-        method: 'POST',
-        body: JSON.stringify({
-          items: selected.map(p => ({ ref_type: p.ref_type, ref_id: p.ref_id })),
-          payment_method: bulkMethod,
-        }),
-      });
-
-      if (result.error_count > 0) {
-        alert(`${result.success_count} pagados, ${result.error_count} con errores. Revisa la consola.`);
-        console.error('Bulk pay errors:', result.results.filter((r: any) => !r.success));
-      }
-
-      setSelectedIds(new Set());
-      setShowBulkBar(false);
-      refetch();
-    } catch (e: any) {
-      alert(`Error: ${e.message}`);
-    } finally {
-      setBulkPaying(false);
+  const openLiquidation = () => {
+    const listData = (data as UnifiedPayable[] | undefined) ?? [];
+    const invalid = listData.filter(p => selectedIds.has(p.id) && (p.payment_status === 'paid' || p.ref_type === 'commission'));
+    if (invalid.length > 0) {
+      alert(`${invalid.length} documento(s) seleccionado(s) ya están pagados o son comisiones (flujo propio) — desmárcalos para liquidar.`);
+      return;
     }
+    if (liquidationItems.length === 0) return;
+    setLiquidationOpen(true);
   };
+
+  const closeBulk = () => { setSelectedIds(new Set()); setShowBulkBar(false); };
 
   return (
     <div className="space-y-4 p-4">
@@ -323,36 +326,40 @@ export default function AccountsPayableView() {
         />
       )}
 
-      {/* Bulk action bar */}
+      {/* Bulk action bar — CP-OPS-ENERVIDA §6.1: contador + total pendiente
+          seleccionado + acción «Liquidar seleccionadas» (flujo detallado). */}
       {showBulkBar && viewMode === 'list' && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-background border border-border/40 rounded-2xl shadow-2xl p-3 flex items-center gap-3">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-background border border-border/40 rounded-2xl shadow-2xl p-3 flex items-center gap-3" data-testid="cxp-bulk-bar">
           <span className="text-xs font-black uppercase">
-            {selectedIds.size} seleccionado(s)
+            {liquidationItems.length} seleccionado(s)
           </span>
-          <select
-            value={bulkMethod}
-            onChange={(e) => setBulkMethod(e.target.value as any)}
-            className="px-2 py-1.5 rounded-lg border border-border/40 bg-background text-xs"
-          >
-            <option value="cash">Efectivo</option>
-            <option value="transfer">Transferencia</option>
-            <option value="mixed">Mixto</option>
-          </select>
+          <span className="text-xs text-muted-foreground">
+            Pendiente: <span className="font-mono font-bold tabular-nums">{formatCurrency(selectedTotalPending)}</span>
+          </span>
           <button
-            onClick={handleBulkPay}
-            disabled={bulkPaying}
+            onClick={openLiquidation}
+            disabled={liquidationItems.length === 0}
             className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:bg-primary/90 disabled:opacity-50"
+            data-testid="cxp-liquidar-seleccionadas"
           >
-            {bulkPaying ? 'Procesando...' : 'Marcar Pagadas'}
+            Liquidar seleccionadas
           </button>
           <button
-            onClick={() => { setSelectedIds(new Set()); setShowBulkBar(false); }}
+            onClick={closeBulk}
             className="px-2 py-1.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
           >
             Cancelar
           </button>
         </div>
       )}
+
+      {/* Panel de liquidación múltiple (§6.2/§6.3) */}
+      <LiquidationModal
+        open={liquidationOpen}
+        onClose={() => setLiquidationOpen(false)}
+        items={liquidationItems}
+        onSettled={() => { closeBulk(); refetch(); }}
+      />
 
       {/* Count */}
       {!loading && !error && count > 0 && (
