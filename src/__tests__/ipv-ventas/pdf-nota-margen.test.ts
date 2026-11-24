@@ -59,7 +59,7 @@ function fila(i: number): IpvRow {
     existenciaFinal: 10 + i,
     ventasImporteCup: i % 3 === 0 ? 4000 : 0,
     ventasImporteUsd: 0,
-    hasPeriodMovements: i % 3 === 0,
+    ventasCupHistorico: 0, hasPeriodMovements: i % 3 === 0,
     incidenceTypes: [],
   };
 }
@@ -136,13 +136,13 @@ describe('PDF del IPV — nota de conciliación dentro de márgenes (PR #1411)',
     doc.setFontSize(6.8);
     const bloqueNota = raw.slice(raw.indexOf('/F3 6.8 Tf'), raw.indexOf('/F3 6.8 Tf') + 2000);
     const renglones = extraerLiteralesTj(bloqueNota).filter(
-      (s) => s.startsWith('Conciliación') || s.startsWith('venta') || s.includes('excluyen'),
+      (s) => s.startsWith('Conciliación') || s.startsWith('Importes:') || s.startsWith('"Valor histórico') || s.includes('excluyen'),
     );
     expect(renglones.length).toBeGreaterThanOrEqual(2); // la nota parte en varios renglones
     for (const linea of renglones) {
       expect(doc.getTextWidth(linea)).toBeLessThanOrEqual(printable + 0.5);
     }
-    // Y el tramo que antes se perdía ahora está presente en el stream:
-    expect(raw).toContain('importes de las líneas de venta');
+    // Y el criterio monetario vigente (fase 2) está presente en el stream:
+    expect(raw).toContain('fuente única del Reporte de Entrega');
   });
 });

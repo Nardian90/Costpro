@@ -10,6 +10,7 @@ import {
   type IpvSalesLineRow,
   type IpvSalePaymentRow,
   type IpvDevolutionLineRow,
+  type IpvDevolutionMoneyRow,
   type IpvProductRow,
 } from '@/lib/ipv-ventas/compute';
 import { fetchAllRows, type FetchAllBuilderLike } from '@/lib/supabase-fetch-all';
@@ -18,14 +19,21 @@ import { fetchSalePaymentsByTx } from '@/lib/cash-report/fetch-sale-payments';
 /**
  * GET /api/ipv-ventas?from=<ISO>&to=<ISO>[&store_id=<uuid>]
  *
- * IPV — INGRESOS POR VENTAS (MISIÓN 2026-10-16).
- * Reporte de conciliación por producto: existencia inicial (reconstruida del
- * ledger a la víspera del período) → movimientos del período (ventas, vales de
- * salida, entradas, devoluciones, ajustes, transferencias) → existencia final,
- * más la columna "Ventas en importe": CUP contable (tasa histórica de cada
- * venta) + USD efectivamente cobrados (CORRECCIÓN 2026-11-11: la moneda de
- * cada importe sale del registro REAL de la venta y sus pagos — ver
- * src/lib/ipv-ventas/compute.ts).
+ * IPV — INGRESOS POR VENTAS (MISIÓN 2026-10-16 · fases ADNEGOCIO-REPORTING
+ * 2026-11-24). Reporte de conciliación por producto: existencia inicial
+ * (reconstruida del ledger a la víspera del período) → movimientos del período
+ * (ventas, vales de salida, entradas, devoluciones, ajustes, transferencias) →
+ * existencia final, más los importes comerciales (fase 2 — TRES magnitudes):
+ *   1. Ventas CUP (cobrado): CUP efectivamente cobrado con evidencia.
+ *   2. Ventas USD (cobrado): USD efectivamente cobrados (CORRECCIÓN 2026-11-11:
+ *      la moneda de cada importe sale del registro REAL de la venta y sus
+ *      pagos — ver src/lib/ipv-ventas/compute.ts).
+ *   3. Valor histórico sin moneda verificable (valoración CUP): valoración
+ *      preservada de ventas sin evidencia de cobro reconstruible — NO es dinero
+ *      recibido y NO entra en los totales 1/2.
+ * Las devoluciones reducen los importes por la moneda REAL del reembolso
+ * (ledger ref_type='devolution': refund resta, recovery revierte; ventana por
+ * payment_date — fase 2). No se suman monedas distintas.
  *
  * Seguridad (MISIÓN §12):
  *  · withAuth: sesión obligatoria; cliente Supabase DE SESIÓN → RLS respetada.
@@ -163,7 +171,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       fetchAllRows(
         pageable(supabase
           .from('devolution_items')
-          .select('product_id, quantity, unit_price, devolutions!inner(status, store_id, created_at)')
+          .select('product_id, quantity, unit_price, devolution_id, devolutions!inner(status, store_id, created_at)')
           .eq('devolutions.status', 'completed')
           .eq('devolutions.store_id', storeIdFinal)
           .gte('devolutions.created_at', fromISO)
@@ -230,6 +238,26 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       }
     }
 
+    // ADNEGOCIO-REPORTING fase 2: dinero REAL de devoluciones del período —
+    // reembolsos (direction='refund') y recuperaciones (direction='recovery')
+    // del ledger ref_type='devolution', en su moneda real, por payment_date
+    // (fecha del movimiento de dinero — criterio canónico del Reporte de
+    // Entrega). ref_id = documento de devolución; transaction_id = venta
+    // original. La ventana del dinero es payment_date; los estados válidos y
+    // las recuperaciones posteriores quedan representados por sus propias
+    // filas del ledger (evidencia, no suposición).
+    const devolutionMoney: IpvDevolutionMoneyRow[] = await fetchAllRows(
+      pageable(supabase
+        .from('payment_transactions')
+        .select('ref_id, transaction_id, direction, currency, amount, amount_cup, payment_date')
+        .eq('ref_type', 'devolution')
+        .in('direction', ['refund', 'recovery'])
+        .eq('store_id', storeIdFinal)
+        .gte('payment_date', fromISO)
+        .lte('payment_date', toISO)
+        .order('id')),
+    );
+
     const result: IpvResult = computeIpv({
       window: { fromISO, toISO },
       movements: movements as unknown as IpvMovementRow[],
@@ -237,6 +265,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
       salesLines: salesLinesFlat,
       salesPayments,
       devolutionLines: devolutionLines as unknown as IpvDevolutionLineRow[],
+      devolutionMoney: devolutionMoney as unknown as IpvDevolutionMoneyRow[],
       products: products as unknown as IpvProductRow[],
     });
 

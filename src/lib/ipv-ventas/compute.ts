@@ -43,13 +43,53 @@
  *   ítem (cash_paid/cash_currency…) y reconstrucción legada documentada
  *   (zelle→USD; exact-match→USD cash legado; resto CUP). Sin evidencia de
  *   pago en USD → 0 (nunca se inventa ingreso en dólares).
- *   La columna contable Ventas (CUP) NO cambia (tasa histórica por venta).
+ *
+ * ADNEGOCIO-REPORTING (2026-11-24) — VENTAS CUP = CUP EFECTIVAMENTE COBRADO:
+ *   Incidente real (ENERVIDA-VITALLCONS, 2026-11-21, SKU 117 "Inversor"):
+ *   una venta cobrada 100 % en USD (ledger: cash|USD|400@955, ítem
+ *   cash_paid=400 cash_currency='USD') mostraba 400,00 USD **y** 382.000,00
+ *   CUP — el equivalente contable (400 × tasa 955 de la operación) entraba
+ *   como una SEGUNDA venta en la columna CUP: una misma operación inflaba los
+ *   dos totales comerciales y el IPV contradecía al Reporte de Entrega (que
+ *   reconoce SOLO los 400 USD).
+ *   Regla corregida: AMBAS columnas representan dinero REALMENTE COBRADO y
+ *   provienen de la MISMA reconstrucción única del Reporte de Entrega:
+ *     · Ventas CUP = Σ perItem.cup (CUP recibido por método documental).
+ *     · Ventas USD = Σ perItem.usd (USD recibidos — regla 2026-11-11).
+ *   El equivalente contable de un cobro en USD (usdCupEquiv) ya NO se presenta
+ *   como venta en CUP: la valoración contable sigue existiendo en los asientos
+ *   (fin_entries, tasa histórica) pero el IPV es un informe de INGRESOS por
+ *   moneda, no una segunda contabilidad.
+ *   ADNEGOCIO-REPORTING FASE 2 (2026-11-24) — TRES magnitudes + devoluciones
+ *   por moneda real del reembolso:
+ *   1. Ventas CUP cobradas (evidencia de cobro en CUP).
+ *   2. Ventas USD cobradas (evidencia de cobro en USD).
+ *   3. Valor histórico sin moneda verificable (valoración CUP): ventas sin
+ *      evidencia de cobro reconstruible (sin pools, sin filas por ítem, sin
+ *      ledger). Se PRESERVA en su propia columna «ventasCupHistorico», NO entra
+ *      en los totales CUP/USD y NO se presenta como dinero recibido — no
+ *      ocultar ingresos históricos sin clasificarlos en CUP.
+ *   Devoluciones (antes: resta de valoración CUP — limitación ya RESUELTA):
+ *      el neto comercial por moneda = cobrado − reembolsos + recuperaciones,
+ *      cada uno en la moneda REAL de su fila del ledger de devoluciones
+ *      (payment_transactions ref_type='devolution', direction='refund' resta /
+ *      'recovery' revierte; ventana por payment_date — criterio del Reporte de
+ *      Entrega; AS_PAID produce filas por moneda y se procesa tal cual). Un
+ *      reembolso USD jamás se convierte para restarlo de CUP. Atribución por
+ *      producto vía devolution_items (ref_id): documento de 1 ítem → exacta;
+ *      multi-ítem cuyo importe coincide con la suma documental → proporcional
+ *      a la valoración de línea (exacta por construcción); cualquier otro caso
+ *      → devolucionesNoAtribuibles + incidencia DEVOLUTION_MONEY_NOT_ATTRIBUTABLE
+ *      (sin reparto inventado). Conciliación con el Reporte de Entrega por
+ *      ventas brutas, reembolsos y recuperaciones separados — no exige que un
+ *      neto visual coincida con un bruto.
  */
 
 // ── Tipos de entrada (crudos de Supabase, numéricos como string) ──────────
 
 import {
   reconstructTxCollections,
+  normCur,
   type CollectionItem,
   type CollectionTx,
   type LedgerPayment,
@@ -115,7 +155,30 @@ export interface IpvSalePaymentRow {
 export interface IpvDevolutionLineRow {
   product_id: string;
   quantity: string | number | null;
+  /** Valoración CUP canónica del renglón (base de atribución cuando el importe
+   * del ledger coincide con la suma de líneas). */
   unit_price: string | number | null;
+  /** ADNEGOCIO-REPORTING fase 2: documento de devolución (ref_id del ledger de
+   * pagos) — agrupa los ítems de un mismo documento para la atribución. */
+  devolution_id?: string | null;
+}
+
+/**
+ * ADNEGOCIO-REPORTING fase 2: filas de payment_transactions
+ * (ref_type='devolution', direction='refund'|'recovery') del período — el
+ * dinero REAL devuelto/recuperado por documento, en su moneda real.
+ *   · transaction_id = venta original; ref_id = documento de devolución;
+ *   · refund → resta de su moneda; recovery → revierte el reembolso (+).
+ * Ventana: payment_date (fecha del movimiento de dinero — criterio canónico
+ * del Reporte de Entrega). Ventana la aplica la ruta.
+ */
+export interface IpvDevolutionMoneyRow {
+  ref_id?: string | null;
+  transaction_id?: string | null;
+  direction?: string | null;
+  currency?: string | null;
+  amount?: string | number | null;
+  amount_cup?: string | number | null;
 }
 
 export interface IpvProductRow {
@@ -133,7 +196,8 @@ export type IpvIncidenceType =
   | 'UNMAPPED_TYPE'    // movement_type no clasificado (enum futuro) — nunca se descarta
   | 'PRICE_ANOMALY'    // línea de venta cuya forma legado/unitaria no pudo confirmarse
   | 'SALE_WITHOUT_LEDGER'      // dinero vendido en el período pero el producto nunca tuvo movimiento 'sale' en el ledger
-  | 'DEVOLUTION_WITHOUT_LEDGER'; // devolución cobrada en el período pero el producto nunca tuvo movimiento 'return' en el ledger
+  | 'DEVOLUTION_WITHOUT_LEDGER' // devolución del período pero el producto nunca tuvo movimiento 'return' en el ledger
+  | 'DEVOLUTION_MONEY_NOT_ATTRIBUTABLE'; // reembolso/recuperación del ledger que NO puede atribuirse exactamente a un producto (sin inventar reparto)
 
 export interface IpvIncidence {
   productId: string;
@@ -164,12 +228,19 @@ export interface IpvRow {
   transferencias: number;
   /** Existencia final calculada (Ei + Σ período). null = N/D. */
   existenciaFinal: number | null;
-  /** Ventas en importe — CUP, moneda contable (tasa histórica de cada venta). */
+  /** Ventas en importe — CUP efectivamente COBRADO (ADNEGOCIO-REPORTING
+   * 2026-11-24: misma fuente única del Reporte de Entrega; el equivalente
+   * contable de un cobro en USD NO entra como segunda venta en CUP). */
   ventasImporteCup: number;
   /** USD efectivamente COBRADOS en la venta (payment_transactions/desglose por
    * ítem/reconstrucción legada) — un precio de referencia USD del catálogo NO
    * genera importe aquí (CORRECCIÓN IPV 2026-11-11). */
   ventasImporteUsd: number;
+  /** ADNEGOCIO-REPORTING fase 2 (2026-11-24): valoración contable preservada de
+   * ventas SIN evidencia de cobro reconstruible (sin pools ni filas por ítem ni
+   * ledger). NO es dinero recibido: no entra en los totales CUP/USD y se
+   * presenta separada como magnitud histórica pendiente de verificación. */
+  ventasCupHistorico: number;
   hasPeriodMovements: boolean;
   incidenceTypes: IpvIncidenceType[];
 }
@@ -185,6 +256,10 @@ export interface IpvTotals {
   existenciaFinal: number | null;
   ventasImporteCup: number;
   ventasImporteUsd: number;
+  /** ADNEGOCIO-REPORTING fase 2: Σ valoración histórica sin moneda de cobro
+   * verificable — NO es dinero cobrado (se presenta separada, nunca se suma a
+   * los totales CUP/USD). */
+  ventasCupHistorico: number;
 }
 
 export interface IpvResult {
@@ -193,6 +268,12 @@ export interface IpvResult {
   excludedCount: number;
   totals: IpvTotals;
   incidences: IpvIncidence[];
+  /** ADNEGOCIO-REPORTING fase 2: reembolsos/recuperaciones del ledger
+   * (ref_type='devolution') que NO pudieron atribuirse exactamente a un
+   * producto (documento multi-ítem cuyo importe no coincide con la suma de sus
+   * líneas, o dinero sin documento). Se reportan SEPARADOS — nunca dentro de
+   * las columnas por producto ni inventando un reparto. */
+  devolucionesNoAtribuibles: { cup: number; usd: number };
   meta: {
     productCount: number;
     movementsAnalyzed: number;
@@ -251,6 +332,11 @@ export function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
+/** Importe legible para detalles de incidencia (2 decimales, separador es). */
+function fmtMoney(n: number): string {
+  return new Intl.NumberFormat('es', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+}
+
 /**
  * Redondeo de CANTIDADES a 6 decimales: elimina el ruido de flotantes de la
  * suma sin destruir la precisión real del inventario (MISIÓN §8: 10.125, 65.25, 966.1289,
@@ -305,6 +391,10 @@ export interface IpvComputeInput {
    * moneda REAL de cada componente del cobro. Opcional: sin ellas la
    * reconstrucción cae al desglose por ítem / heurística legada. */
   salesPayments?: IpvSalePaymentRow[];
+  /** ADNEGOCIO-REPORTING fase 2: filas de payment_transactions
+   * (ref_type='devolution', direction refund/recovery) del período por
+   * payment_date — el dinero REAL devuelto/recuperado. Opcional. */
+  devolutionMoney?: IpvDevolutionMoneyRow[];
 }
 
 /**
@@ -326,6 +416,7 @@ export function totalsFromRows(rows: IpvRow[]): IpvTotals {
     existenciaFinal: rows.some((r) => r.existenciaFinal === null) ? null : sumQ((r) => r.existenciaFinal ?? 0),
     ventasImporteCup: sumM((r) => r.ventasImporteCup),
     ventasImporteUsd: sumM((r) => r.ventasImporteUsd),
+    ventasCupHistorico: sumM((r) => r.ventasCupHistorico),
   };
 }
 
@@ -333,7 +424,7 @@ export function totalsFromRows(rows: IpvRow[]): IpvTotals {
  * Calcula el IPV completo. PURA — sin I/O — para pruebas A–L con datos sintéticos.
  */
 export function computeIpv(input: IpvComputeInput): IpvResult {
-  const { window, movements, inventory, salesLines, devolutionLines, products, salesPayments } = input;
+  const { window, movements, inventory, salesLines, devolutionLines, products, salesPayments, devolutionMoney } = input;
   const from = new Date(window.fromISO).getTime();
   const to = new Date(window.toISO).getTime();
 
@@ -391,23 +482,24 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
   for (const inv of inventory) currentQty.set(inv.product_id, num(inv.quantity));
 
   // ── 3. Importes de venta (dominio dinero, separado del ledger) ───────────
-  // CUP contable: SIN CAMBIO (tasa histórica de cada venta — computeLineTotalCup).
-  //
-  // USD efectivamente cobrados (CORRECCIÓN IPV 2026-11-11): la moneda de cada
-  // importe se determina por el registro REAL de la venta y sus pagos, con la
-  // MISMA fuente única del Reporte de Entrega (collection-currency.ts):
-  //   · ledger payment_transactions por componente (ventas con payment_components);
-  //   · desglose del cobro por ítem (cash_paid/cash_currency…);
-  //   · reconstrucción legada documentada (zelle→USD; exact-match→USD cash
-  //     legado; resto CUP canónico).
-  // La moneda del PRECIO del ítem (catálogo) ya NO genera importe USD.
+  // TRES magnitudes separadas (ADNEGOCIO-REPORTING 2026-11-24, fases 1-2),
+  // de la MISMA reconstrucción única del Reporte de Entrega (collection-currency.ts):
+  //   1. Ventas CUP cobradas = Σ perItem.cup (CUP recibido por método
+  //      documental) — el equivalente contable de un cobro en USD (usdCupEquiv)
+  //      ya NO entra como segunda venta en CUP (incidente SKU 117 "Inversor").
+  //   2. Ventas USD cobradas = Σ perItem.usd (CORRECCIÓN 2026-11-11).
+  //   3. Valor histórico sin moneda de cobro verificable = valoración contable
+  //      de líneas SIN evidencia de cobro reconstruible (sin buckets). NO es
+  //      dinero recibido: no entra en los totales CUP/USD y se presenta en su
+  //      propia columna «Valor histórico sin moneda verificable (valoración
+  //      CUP)» (fase 2 — no ocultar ingresos históricos, no clasificarlos en CUP).
+  // La detección de PRICE_ANOMALY (forma de price_at_sale_cup) se mantiene.
   const salesCup = new Map<string, number>();
+  const salesCupHistorico = new Map<string, number>();
   const salesUsd = new Map<string, number>();
   for (const line of salesLines) {
-    const pid = line.product_id;
-    const { total, anomaly } = computeLineTotalCup(line);
-    salesCup.set(pid, (salesCup.get(pid) ?? 0) + total);
-    if (anomaly) priceAnomalyProducts.add(pid);
+    const { anomaly } = computeLineTotalCup(line);
+    if (anomaly) priceAnomalyProducts.add(line.product_id);
   }
 
   // 3b. Reconstrucción por venta → USD cobrado atribuible a cada línea.
@@ -464,20 +556,113 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
     }));
     const payments = tx.id ? paymentsByTx.get(tx.id) : undefined;
     const reconstruction = reconstructTxCollections(tx, items, payments);
+    // ADNEGOCIO-REPORTING 2026-11-24: sin NINGÚN bucket de pago no hay moneda
+    // demostrable → magnitud HISTÓRICA separada (3ª categoría, fase 2; ver
+    // cabecera del módulo). Con evidencia, clasificación estricta por
+    // moneda cobrada: CUP recibido a Ventas CUP; USD recibido a Ventas USD.
+    const sinEvidencia = reconstruction.buckets.length === 0;
     lines.forEach((l, i) => {
+      const pid = l.product_id;
+      if (sinEvidencia) {
+        // Sin evidencia de cobro NO se afirma un cobro en CUP: la valoración
+        // contable se preserva como magnitud HISTÓRICA separada (3ª categoría),
+        // jamás sumada a los totales CUP/USD (fase 2).
+        salesCupHistorico.set(pid, (salesCupHistorico.get(pid) ?? 0) + computeLineTotalCup(l).total);
+        return;
+      }
       const col = reconstruction.perItem[i];
       if (!col) return;
+      const cup = col.cup.cash + col.cup.transfer + col.cup.zelle;
+      if (cup !== 0) salesCup.set(pid, (salesCup.get(pid) ?? 0) + cup);
       const usd = col.usd.cash + col.usd.transfer + col.usd.zelle;
       if (usd === 0) return;
       salesUsd.set(l.product_id, (salesUsd.get(l.product_id) ?? 0) + usd);
     });
   }
 
-  // ── 4. Devoluciones (dinero neto a restar; cantidades vienen del ledger) ─
-  const devCup = new Map<string, number>();
+  // ── 4. Devoluciones — dinero REAL del ledger (ADNEGOCIO-REPORTING fase 2) ─
+  // Neto comercial por moneda: ventas cobradas − reembolsos + recuperaciones,
+  // cada uno en SU moneda real (payment_transactions ref_type='devolution',
+  // direction='refund'|'recovery'). La valoración unit_price×qty de
+  // devolution_items ya NO se resta del dinero: es la base de ATRIBUCIÓN por
+  // producto y la columna de cantidades sigue viniendo del ledger.
+  //   · refund    → resta de su moneda real (CUP resta CUP; USD resta USD; un
+  //                 reembolso USD jamás se convierte para restarlo de CUP).
+  //   · recovery  → revierte el reembolso correspondiente (+ en su moneda).
+  // Atribución por producto (por documento, vía devolution_items.ref_id):
+  //   · documento de 1 ítem → atribución 100 % a ese producto (exacta).
+  //   · documento multi-ítem con |Σ valoración de líneas − importe del ledger|
+  //     ≤ 0.01 → distribución proporcional a la valoración de línea (exacta por
+  //     construcción: el ledger coincide con la suma documental).
+  //   · cualquier otro caso (reembolso parcial global, multi-ítem sin igualdad
+  //     exacta, dinero sin documento) → NO se inventa atribución por producto:
+  //     queda como «devolución no atribuible individualmente» en
+  //     devolucionesNoAtribuibles + incidencia DEVOLUTION_MONEY_NOT_ATTRIBUTABLE.
+  // Devoluciones SIN fila de reembolso en el período (store_credit, reembolso
+  // pendiente o pagado en otra ventana) NO reducen los importes cobrados: no
+  // hubo dinero devuelto en este período (se visibilizan por cantidades).
+  const devMoneyCup = new Map<string, number>();   // neto firmado: −refund/+recovery
+  const devMoneyUsd = new Map<string, number>();
+  const noAtrib = { cup: 0, usd: 0 };
+  const devValuation = new Map<string, number>();  // solo para la incidencia DEVOLUTION_WITHOUT_LEDGER
+  interface DocItem { pid: string; val: number }
+  const docs = new Map<string, DocItem[]>();
   for (const d of devolutionLines) {
-    const total = round2(num(d.unit_price) * num(d.quantity));
-    devCup.set(d.product_id, (devCup.get(d.product_id) ?? 0) + total);
+    const docId = d.devolution_id ?? '';
+    const val = round2(num(d.unit_price) * num(d.quantity));
+    devValuation.set(d.product_id, (devValuation.get(d.product_id) ?? 0) + val);
+    if (!docId) continue;
+    const arr = docs.get(docId) ?? [];
+    arr.push({ pid: d.product_id, val });
+    docs.set(docId, arr);
+  }
+  // Agrupar filas de dinero por (documento, dirección, moneda): un documento
+  // AS_PAID produce filas por moneda; varias filas del mismo grupo se suman.
+  const moneyGroups = new Map<string, { docId: string; direction: 'refund' | 'recovery'; cur: string; amount: number }>();
+  for (const m of devolutionMoney ?? []) {
+    const docId = m.ref_id ?? '';
+    const cur = normCur(m.currency);
+    const direction = m.direction === 'recovery' ? 'recovery' as const : 'refund' as const;
+    const key = `${docId}|${direction}|${cur}`;
+    const g = moneyGroups.get(key) ?? { docId, direction, cur, amount: 0 };
+    g.amount += num(m.amount);
+    moneyGroups.set(key, g);
+  }
+  for (const g of moneyGroups.values()) {
+    const amt = round2(g.amount);
+    if (Math.abs(amt) <= 0.005) continue;
+    const sign = g.direction === 'recovery' ? 1 : -1;
+    const bucket = g.cur === 'USD' ? 'usd' as const : 'cup' as const;
+    const items = docs.get(g.docId);
+    if (!items || items.length === 0) {
+      // Dinero del ledger sin documento/ítems atribuibles en la fuente.
+      noAtrib[bucket] += sign * amt;
+      incidences.push({
+        productId: '', sku: '—', name: `Documento ${g.docId.slice(0, 8)}…`,
+        type: 'DEVOLUTION_MONEY_NOT_ATTRIBUTABLE',
+        detail: `${g.direction === 'recovery' ? 'Recuperación' : 'Reembolso'} de ${fmtMoney(amt)} ${bucket.toUpperCase()} sin documento de devolución con ítems en la fuente: NO se atribuye a ningún producto ni se inventa un reparto. Se reporta por separado en los totales.`,
+      });
+      continue;
+    }
+    const sumVal = round2(items.reduce((s, it) => s + Math.abs(it.val), 0));
+    if (items.length === 1 || Math.abs(sumVal - Math.abs(amt)) <= 0.01) {
+      // Atribución exacta: 1 ítem, o multi-ítem cuyo ledger coincide con la
+      // suma documental → proporción por valoración de línea.
+      for (const it of items) {
+        const share = items.length === 1 ? 1 : (sumVal > 0 ? Math.abs(it.val) / sumVal : 1 / items.length);
+        const map = bucket === 'usd' ? devMoneyUsd : devMoneyCup;
+        map.set(it.pid, (map.get(it.pid) ?? 0) + sign * amt * share);
+      }
+    } else {
+      // Multi-ítem con importe ≠ suma documental (parcial global, importación):
+      // exactitud monetaria > cifra por fila — NO se reparte a ciegas.
+      noAtrib[bucket] += sign * amt;
+      incidences.push({
+        productId: '', sku: '—', name: `Documento ${g.docId.slice(0, 8)}…`,
+        type: 'DEVOLUTION_MONEY_NOT_ATTRIBUTABLE',
+        detail: `${g.direction === 'recovery' ? 'Recuperación' : 'Reembolso'} de ${fmtMoney(amt)} ${bucket.toUpperCase()} en un documento de ${items.length} ítems cuyo importe NO coincide con la suma de sus líneas (${fmtMoney(sumVal)}): NO se atribuye a ningún producto ni se inventa un reparto. Se reporta por separado en los totales.`,
+      });
+    }
   }
 
   // ── 5. Filas + regla de inclusión (§6) + incidencias (§5.6) ──────────────
@@ -550,7 +735,7 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
     // en producción: Central tiene devoluciones de 2026-08 cuyo movimiento
     // 'return' no existe (ledger reiniciado con 'initial' en 2026-09).
     const grossSalesCup = salesCup.get(pid) ?? 0;
-    const devCupPid = devCup.get(pid) ?? 0;
+    const devValuationPid = devValuation.get(pid) ?? 0;
     if (Math.abs(grossSalesCup) > 0.005 && a && !a.typesSeen.has('sale')) {
       rowIncidences.push('SALE_WITHOUT_LEDGER');
       incidences.push({
@@ -558,21 +743,26 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
         detail: 'Hay importe de ventas del período, pero el producto no tiene NINGÚN movimiento de tipo "sale" en el ledger: el ledger no refleja la venta (pérdida de movimientos o venta sin stock). El importe se muestra; la columna de cantidades NO incluye esta venta.',
       });
     }
-    if (Math.abs(devCupPid) > 0.005 && a && !a.typesSeen.has('return')) {
+    if (Math.abs(devValuationPid) > 0.005 && a && !a.typesSeen.has('return')) {
       rowIncidences.push('DEVOLUTION_WITHOUT_LEDGER');
       incidences.push({
         productId: pid, sku, name: nm, type: 'DEVOLUTION_WITHOUT_LEDGER',
-        detail: 'Hay devoluciones completadas del período, pero el producto no tiene NINGÚN movimiento de tipo "return" en el ledger: la devolución devolvió stock según el documento comercial, no según el ledger (típico tras un reset con saldo de apertura). El importe se descuenta; la columna Devoluciones no puede reflejarlo.',
+        detail: 'Hay devoluciones completadas del período, pero el producto no tiene NINGÚN movimiento de tipo "return" en el ledger: la devolución devolvió stock según el documento comercial, no según el ledger (típico tras un reset con saldo de apertura). La columna Devoluciones no puede reflejarlo; el reembolso se descuenta por su fila real del ledger (moneda real) cuando existe.',
       });
     }
 
-    const ventasCup = round2(grossSalesCup - devCupPid);
-    const ventasUsd = round2(salesUsd.get(pid) ?? 0);
+    // ADNEGOCIO-REPORTING fase 2: neto comercial por moneda real del reembolso
+    // (devMoney acumula −refund/+recovery en SU moneda; jamás se convierte).
+    const ventasCup = round2(grossSalesCup + (devMoneyCup.get(pid) ?? 0));
+    const ventasUsd = round2((salesUsd.get(pid) ?? 0) + (devMoneyUsd.get(pid) ?? 0));
+    const ventasCupHistorico = round2(salesCupHistorico.get(pid) ?? 0);
 
     // Regla de inclusión §6: Ei≠0 Ó movimiento en período Ó Ef≠0 Ó incidencia.
     // Ampliado (auditoría IPV): un producto con importe vendido pero sin
     // movimientos de ledger (venta sin movimiento = anomalía) TAMBIÉN debe
     // aparecer — ocultar ingresos sería peor que una columna de stock N/D.
+    // Fase 2: el valor histórico sin moneda verificable TAMBIÉN incluye la fila
+    // (no ocultar ingresos históricos, aunque no se presenten como cobros).
     const eiNonZero = ei !== null && Math.abs(ei) > TOLERANCE;
     const efNonZero = ef !== null && Math.abs(ef) > TOLERANCE;
     const include =
@@ -581,6 +771,7 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
       (a !== undefined && a.hasPeriod) ||
       Math.abs(ventasCup) > 0.005 ||
       Math.abs(ventasUsd) > 0.005 ||
+      Math.abs(ventasCupHistorico) > 0.005 ||
       rowIncidences.length > 0;
 
     if (!include) { excludedCount += 1; continue; }
@@ -603,6 +794,7 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
       existenciaFinal: ef === null ? null : roundQ(ef),
       ventasImporteCup: ventasCup,
       ventasImporteUsd: ventasUsd,
+      ventasCupHistorico,
       hasPeriodMovements: a ? a.hasPeriod : false,
       incidenceTypes: rowIncidences,
     });
@@ -629,6 +821,7 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
     existenciaFinal: rows.some((r) => r.existenciaFinal === null) ? null : sumQ((r) => r.existenciaFinal ?? 0),
     ventasImporteCup: sumM((r) => r.ventasImporteCup),
     ventasImporteUsd: sumM((r) => r.ventasImporteUsd),
+    ventasCupHistorico: sumM((r) => r.ventasCupHistorico),
   };
 
   return {
@@ -636,6 +829,10 @@ export function computeIpv(input: IpvComputeInput): IpvResult {
     excludedCount,
     totals,
     incidences,
+    // ADNEGOCIO-REPORTING fase 2: reembolsos/recuperaciones del ledger que NO
+    // pudieron atribuirse a un producto sin inventar reparto — se reportan
+    // SEPARADOS (nunca dentro de las columnas por producto).
+    devolucionesNoAtribuibles: { cup: round2(noAtrib.cup), usd: round2(noAtrib.usd) },
     meta: {
       productCount: rows.length,
       movementsAnalyzed: movements.length,
