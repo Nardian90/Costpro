@@ -164,10 +164,14 @@ export function POSExpressMode({
   // CP-UX-NAVIGATION-POS-REPAIR-001: paginación del catálogo inicial («Ver más»).
   const [catalogLimit, setCatalogLimit] = useState(EXPRESS_CATALOG_PAGE);
 
-  // Audit-Fix: cerrar el sidebar al entrar al modo Express y restaurarlo al salir.
+  // Audit-Fix: liberar área de trabajo al entrar al modo Express y restaurar al salir.
+  // CP-SIDEBAR-RESTORATION-001: en desktop el menú JAMÁS se oculta (dos estados)
+  // — Express lo CONTRAE a rail (sigue visible y accesible). En móvil cierra el
+  // drawer temporal como siempre.
   useEffect(() => {
     const previousSidebarState = useUIStore.getState().sidebarState;
-    setSidebarState('closed');
+    const isMobileViewport = typeof window !== 'undefined' && window.innerWidth < 768;
+    setSidebarState(isMobileViewport ? 'closed' : 'rail');
     return () => {
       // Restaurar el estado previo al salir del modo Express
       setSidebarState(previousSidebarState === 'closed' ? 'expanded' : previousSidebarState);

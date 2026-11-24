@@ -102,14 +102,17 @@ export function ReceptionExpressMode({ onExit }: ReceptionExpressModeProps) {
     searchInputRef.current?.focus();
   }, []);
 
-  // Audit-Fix: cerrar el sidebar al entrar al modo Express y restaurarlo al salir.
+  // Audit-Fix: liberar área de trabajo al entrar al modo Express y restaurar al salir.
   // Antes el sidebar quedaba visible encima del overlay (z-40 vs z-[9999]) porque
   // el motion.div padre en TerminalShell crea un stacking context que atrapa el z-index.
-  // Ahora: cerramos el sidebar al montar + usamos createPortal para escapar
+  // Ahora: cerramos el drawer en móvil al montar + usamos createPortal para escapar
   // del stacking context. Al desmontar, restauramos el sidebar a su estado previo.
+  // CP-SIDEBAR-RESTORATION-001: en desktop el menú JAMÁS se oculta (dos estados) —
+  // Express lo CONTRAE a rail (sigue visible y accesible).
   useEffect(() => {
     const previousSidebarState = useUIStore.getState().sidebarState;
-    setSidebarState('closed');
+    const isMobileViewport = typeof window !== 'undefined' && window.innerWidth < 768;
+    setSidebarState(isMobileViewport ? 'closed' : 'rail');
     return () => {
       setSidebarState(previousSidebarState === 'closed' ? 'expanded' : previousSidebarState);
     };

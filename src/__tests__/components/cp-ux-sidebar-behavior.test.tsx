@@ -1,29 +1,22 @@
 /**
- * CP-UX-NAVIGATION-POS-REPAIR-001 (2026-11-24) — Comportamiento del menú lateral.
+ * CP-SIDEBAR-RESTORATION-001 (2026-11-24) — Comportamiento del menú lateral.
  *
- * §1.1 de la misión: el control de contraer/expandir vive DENTRO del
- * encabezado del menú (patrón ChatGPT/Z.ai); contraer deja la barra compacta
- * (rail) con iconos — NUNCA 'closed'. Indicador de sección activa en rail.
- * §1.2: en móvil, navegar a una vista funcional concreta (hoja / Inicio /
- * perfil) cierra el drawer; expandir una categoría NO lo cierra.
- *
- * CP-UX-POLISH-002 (2026-11-24): Estados A/B/C del menú — FIJO expandido,
- * FIJO contraído y TEMPORAL (overlay). El pin del encabezado cambia el
- * COMPORTAMIENTO del layout (sidebarPinned), la preferencia persiste y el
- * menú temporal se cierra al elegir una vista funcional.
- *
- * CP-UX-SINGLE-TOGGLE (2026-11-24): el eje VISIBILIDAD (closed↔visible) es
- * exclusivo del ÚNICO botón toggle de la barra superior (Header) — el panel
- * NO tiene X propia (ni móvil ni temporal). El control interno del panel
- * solo ajusta ANCHO (expanded↔rail) y el pin cambia fijo↔temporal.
+ * CONTRATO NUEVO: DOS ESTADOS en desktop y UN SOLO CONTROL.
+ *  · ESTADO A (expanded): iconos + etiquetas, ocupa espacio real del layout.
+ *  · ESTADO B (rail): barra compacta de iconos; jerarquía conservada mediante
+ *    tooltips discretos e indicador de sección activa.
+ *  · UN ÚNICO botón, integrado en el ENCABEZADO del menú, accesible también en
+ *    la barra compacta; icono y tooltip según la acción siguiente.
+ *  · CERO expansión automática: sin hover, sin temporizadores, sin pin, sin
+ *    overlay/backdrop/Esc en desktop. El menú JAMÁS se cierra en desktop.
+ *  · Móvil (§7): drawer temporal — sección raíz NO cierra, hoja funcional SÍ.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 
-const { isMobileFlag, setSidebarStateMock, setSidebarPinnedMock, mockUserHolder } = vi.hoisted(() => ({
+const { isMobileFlag, setSidebarStateMock, mockUserHolder } = vi.hoisted(() => ({
   isMobileFlag: { current: false },
   setSidebarStateMock: vi.fn(),
-  setSidebarPinnedMock: vi.fn(),
   mockUserHolder: { current: null as Record<string, unknown> | null },
 }));
 
@@ -37,17 +30,11 @@ vi.mock('@/store', async () => {
   const useUIStore = create((set: (p: Record<string, unknown>) => void) => ({
     currentView: 'dashboard',
     sidebarState: 'expanded',
-    sidebarPinned: true,
-    // CP-UX-NAVIGATION-POS-REPAIR-001: registra la llamada Y muta el estado
-    // (re-render real, como el store genuino).
+    // CP-SIDEBAR-RESTORATION-001: registra la llamada Y muta el estado
+    // (re-render real, como el store genuino). NO existe setSidebarPinned.
     setSidebarState: (state: string) => {
       setSidebarStateMock(state);
       set({ sidebarState: state });
-    },
-    // CP-UX-POLISH-002: el pin registra Y muta (comportamiento real de layout).
-    setSidebarPinned: (pinned: boolean) => {
-      setSidebarPinnedMock(pinned);
-      set({ sidebarPinned: pinned });
     },
     isCalculatorOpen: false,
     setIsCalculatorOpen: () => {},
@@ -82,7 +69,9 @@ const ADMIN = {
   activeStoreId: 'store-1', memberships: [],
 };
 
-describe('CP-UX-NAVIGATION-POS-REPAIR-001 · Menú lateral — §1.1 control integrado', () => {
+const closedCalls = () => setSidebarStateMock.mock.calls.filter((c) => c[0] === 'closed');
+
+describe('CP-SIDEBAR-RESTORATION-001 · DOS ESTADOS — control único integrado', () => {
   beforeEach(() => {
     mockUserHolder.current = ADMIN;
     isMobileFlag.current = false;
@@ -91,14 +80,16 @@ describe('CP-UX-NAVIGATION-POS-REPAIR-001 · Menú lateral — §1.1 control int
   });
   afterEach(() => cleanup());
 
-  it('expandido: el toggle vive en el ENCABEZADO del propio menú (Contraer)', () => {
+  it('ESTADO A (expandido): el ÚNICO control vive en el ENCABEZADO del menú (Contraer)', () => {
     mountSidebar();
     const btn = screen.getByRole('button', { name: 'Contraer menú lateral' });
-    // Encabezado: precede al nav en el DOM (está dentro del contenedor del logo)
     expect(btn.closest('#sidebar-logo-container')).toBeTruthy();
+    expect(btn.getAttribute('title')).toBe('Contraer menú');
+    // Un solo control del menú en todo el panel
+    expect(screen.getAllByRole('button', { name: /menú lateral/ })).toHaveLength(1);
   });
 
-  it('Contraer → barra compacta (rail), JAMÁS cerrado por completo', () => {
+  it('clic en el control → ESTADO B (rail); nunca closed', () => {
     mountSidebar();
     fireEvent.click(screen.getByRole('button', { name: 'Contraer menú lateral' }));
     expect(setSidebarStateMock).toHaveBeenCalledTimes(1);
@@ -106,46 +97,86 @@ describe('CP-UX-NAVIGATION-POS-REPAIR-001 · Menú lateral — §1.1 control int
     expect(useUIStore.getState().sidebarState).toBe('rail');
   });
 
-  it('rail: los iconos de navegación siguen presentes (barra compacta)', () => {
+  it('ESTADO B (rail): iconos de navegación presentes (barra compacta con jerarquía)', () => {
     useUIStore.setState({ sidebarState: 'rail' });
     mountSidebar();
-    // Rail sin focus mode: iconos de secciones raíz con aria-label
     expect(screen.getByRole('button', { name: 'OPERACIÓN' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Inicio' })).toBeTruthy();
   });
 
-  it('rail: el toggle cambia a «Expandir menú lateral» y vuelve a expanded', () => {
+  it('ESTADO B: el MISMO control sigue accesible en la barra compacta y expande', () => {
     useUIStore.setState({ sidebarState: 'rail' });
     mountSidebar();
-    fireEvent.click(screen.getByRole('button', { name: 'Expandir menú lateral' }));
+    const btn = screen.getByRole('button', { name: 'Expandir menú lateral' });
+    expect(btn.closest('#sidebar-logo-container')).toBeTruthy();
+    expect(btn.getAttribute('title')).toBe('Expandir menú');
+    fireEvent.click(btn);
     expect(setSidebarStateMock).toHaveBeenCalledWith('expanded');
     expect(useUIStore.getState().sidebarState).toBe('expanded');
+    // De nuevo un solo control
+    expect(screen.getAllByRole('button', { name: /menú lateral/ })).toHaveLength(1);
   });
 
-  it('rail: indicador de sección activa — OPERACIÓN resaltada cuando la vista actual es pos', () => {
+  it('rail: indicador de sección activa — OPERACIÓN resaltada cuando la vista es pos', () => {
     useUIStore.setState({ sidebarState: 'rail', currentView: 'pos' });
     mountSidebar();
     expect(screen.getByRole('button', { name: 'OPERACIÓN' }).getAttribute('aria-current')).toBe('true');
-    // Otra sección sin relación con 'pos' NO está activa
     expect(screen.getByRole('button', { name: 'AYUDA' }).getAttribute('aria-current')).toBeNull();
+  });
+
+  it('rail: clic en un icono raíz NAVEGA sin expandir (expansión solo vía el control único)', () => {
+    useUIStore.setState({ sidebarState: 'rail', currentView: 'dashboard' });
+    mountSidebar();
+    fireEvent.click(screen.getByRole('button', { name: 'OPERACIÓN' }));
+    expect(setSidebarStateMock).not.toHaveBeenCalledWith('expanded');
+    expect(useUIStore.getState().sidebarState).toBe('rail');
+  });
+
+  it('desktop: NO existen pin, desfijar, mostrar/ocultar ni cierre temporal', () => {
+    mountSidebar();
+    expect(screen.queryByRole('button', { name: /Fijar menú lateral/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Desfijar menú lateral/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Mostrar menú lateral' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Ocultar menú lateral' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cerrar menú temporal' })).toBeNull();
+    useUIStore.setState({ sidebarState: 'rail' });
+    cleanup();
+    mountSidebar();
+    expect(screen.queryByRole('button', { name: /Fijar menú lateral/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cerrar menú temporal' })).toBeNull();
+  });
+
+  it('desktop: navegar a una vista funcional NUNCA cierra el menú (siempre visible)', () => {
+    mountSidebar();
+    fireEvent.click(screen.getByRole('button', { name: 'Inicio' }));
+    expect(closedCalls()).toHaveLength(0);
   });
 });
 
-describe('CP-UX-NAVIGATION-POS-REPAIR-001 · Menú lateral — §1.2 comportamiento móvil', () => {
+describe('CP-SIDEBAR-RESTORATION-001 · §7 comportamiento móvil (drawer temporal)', () => {
   beforeEach(() => {
     mockUserHolder.current = ADMIN;
     isMobileFlag.current = true;
     setSidebarStateMock.mockClear();
-    setSidebarPinnedMock.mockClear();
-    useUIStore.setState({ sidebarState: 'expanded', currentView: 'pos', sidebarPinned: true });
+    useUIStore.setState({ sidebarState: 'expanded', currentView: 'pos' });
   });
   afterEach(() => cleanup());
+
+  it('drawer abierto: el ÚNICO control del panel es «Cerrar menú»', () => {
+    mountSidebar();
+    const btn = screen.getByRole('button', { name: 'Cerrar menú' });
+    expect(btn.closest('#sidebar-logo-container')).toBeTruthy();
+    fireEvent.click(btn);
+    expect(setSidebarStateMock).toHaveBeenCalledWith('closed');
+    // El drawer móvil no ofrece rail ni pin
+    expect(screen.queryByRole('button', { name: 'Contraer menú lateral' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Fijar menú lateral/ })).toBeNull();
+  });
 
   it('clic en sección raíz (Operación) NO cierra el drawer (muestra opciones secundarias)', () => {
     mountSidebar();
     fireEvent.click(screen.getByRole('button', { name: /OPERACIÓN/i }));
-    const closedCalls = setSidebarStateMock.mock.calls.filter((c) => c[0] === 'closed');
-    expect(closedCalls).toHaveLength(0);
+    expect(closedCalls()).toHaveLength(0);
   });
 
   it('clic en vista funcional concreta (Inicio) cierra el drawer', () => {
@@ -158,98 +189,5 @@ describe('CP-UX-NAVIGATION-POS-REPAIR-001 · Menú lateral — §1.2 comportamie
     mountSidebar();
     fireEvent.click(screen.getByRole('button', { name: 'Mi perfil' }));
     expect(setSidebarStateMock).toHaveBeenCalledWith('closed');
-  });
-
-  it('CP-UX-SINGLE-TOGGLE: el panel NO tiene X propia — el cierre vive en el toggle único de la barra', () => {
-    mountSidebar();
-    expect(screen.queryByRole('button', { name: 'Cerrar menú lateral' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Contraer menú lateral' })).toBeNull();
-  });
-
-  it('móvil NO muestra el control pin (el drawer es SIEMPRE temporal — misión §1.2)', () => {
-    mountSidebar();
-    expect(screen.queryByRole('button', { name: /Fijar menú lateral/ })).toBeNull();
-    expect(screen.queryByRole('button', { name: /Desfijar menú lateral/ })).toBeNull();
-  });
-});
-
-describe('CP-UX-POLISH-002 · Estados A/B/C — fijar (pin), contraer y temporal', () => {
-  beforeEach(() => {
-    mockUserHolder.current = ADMIN;
-    isMobileFlag.current = false;
-    setSidebarStateMock.mockClear();
-    setSidebarPinnedMock.mockClear();
-    useUIStore.setState({ sidebarState: 'expanded', currentView: 'dashboard', sidebarPinned: true });
-  });
-  afterEach(() => cleanup());
-
-  it('Estado A — fijo expandido: el pin está activo (aria-pressed) y convive con el toggle contraer', () => {
-    mountSidebar();
-    const pin = screen.getByRole('button', { name: 'Desfijar menú lateral (hacer temporal)' });
-    expect(pin.getAttribute('aria-pressed')).toBe('true');
-    expect(pin.closest('#sidebar-logo-container')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Contraer menú lateral' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Cerrar menú temporal' })).toBeNull();
-  });
-
-  it('Desfijar → Estado C: registra sidebarPinned=false (comportamiento real, no apariencia)', () => {
-    mountSidebar();
-    fireEvent.click(screen.getByRole('button', { name: 'Desfijar menú lateral (hacer temporal)' }));
-    expect(setSidebarPinnedMock).toHaveBeenCalledTimes(1);
-    expect(setSidebarPinnedMock).toHaveBeenCalledWith(false);
-    expect(useUIStore.getState().sidebarPinned).toBe(false);
-  });
-
-  it('Estado C — temporal: muestra PinOff y ya NO ofrece toggle rail ni X propia (cierre en la barra)', () => {
-    useUIStore.setState({ sidebarPinned: false });
-    mountSidebar();
-    const pin = screen.getByRole('button', { name: 'Fijar menú lateral' });
-    expect(pin.getAttribute('aria-pressed')).toBe('false');
-    expect(screen.queryByRole('button', { name: 'Cerrar menú temporal' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Contraer menú lateral' })).toBeNull();
-  });
-
-  it('Estado C — clic en una vista funcional (Inicio) CIERRA el menú temporal', () => {
-    useUIStore.setState({ sidebarPinned: false });
-    mountSidebar();
-    fireEvent.click(screen.getByRole('button', { name: 'Inicio' }));
-    expect(setSidebarStateMock).toHaveBeenCalledWith('closed');
-  });
-
-  it('Estado A — clic en una vista funcional NO cierra el menú fijo (permanece al navegar)', () => {
-    mountSidebar();
-    fireEvent.click(screen.getByRole('button', { name: 'Inicio' }));
-    const closedCalls = setSidebarStateMock.mock.calls.filter((c) => c[0] === 'closed');
-    expect(closedCalls).toHaveLength(0);
-  });
-
-  it('Estado C — fijar de nuevo vuelve al comportamiento fijo (sidebarPinned=true)', () => {
-    useUIStore.setState({ sidebarPinned: false });
-    mountSidebar();
-    fireEvent.click(screen.getByRole('button', { name: 'Fijar menú lateral' }));
-    expect(setSidebarPinnedMock).toHaveBeenCalledWith(true);
-    expect(useUIStore.getState().sidebarPinned).toBe(true);
-  });
-
-  it('Estado B — rail: sin pin ni X de cierre (rail ≡ fijo); expandir vuelve a expanded y el pin reaparece', () => {
-    useUIStore.setState({ sidebarState: 'rail' });
-    mountSidebar();
-    // En la barra compacta NO existe ni el pin (implícito: fijo) ni la X del temporal
-    expect(screen.queryByRole('button', { name: /Desfijar menú lateral/ })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Cerrar menú temporal' })).toBeNull();
-    // Expandir desde rail → estado A de nuevo (el pin vuelve a estar activo)
-    fireEvent.click(screen.getByRole('button', { name: 'Expandir menú lateral' }));
-    expect(setSidebarStateMock).toHaveBeenCalledWith('expanded');
-    expect(useUIStore.getState().sidebarState).toBe('expanded');
-    expect(screen.getByRole('button', { name: 'Desfijar menú lateral (hacer temporal)' }).getAttribute('aria-pressed')).toBe('true');
-  });
-
-  it('CP-UX-SINGLE-TOGGLE: ni en fijo ni en temporal existe «Cerrar menú temporal» — visibilidad solo en la barra', () => {
-    mountSidebar();
-    expect(screen.queryByRole('button', { name: 'Cerrar menú temporal' })).toBeNull();
-    useUIStore.setState({ sidebarPinned: false });
-    cleanup();
-    mountSidebar();
-    expect(screen.queryByRole('button', { name: 'Cerrar menú temporal' })).toBeNull();
   });
 });

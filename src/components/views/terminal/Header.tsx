@@ -28,13 +28,17 @@ import { cn } from '@/lib/utils';
 import { isAdminLevel } from '@/lib/roles';
 import { UserContract } from '@/contracts/user';
 import { NavigationItem } from '@/hooks/ui/useTerminalNavigation';
-import { ViewType, SidebarState, useUIStore } from '@/store';
+import { ViewType, useUIStore } from '@/store';
+import { useIsMobile } from '@/hooks/ui/useMobile';
 import { HelpLauncher } from './views/help/HelpLauncher';
 import { getBreadcrumbForView } from '@/config/navigation/navigation-map';
 
 interface HeaderProps {
-  sidebarState: SidebarState;
-  toggleSidebar: () => void;
+  // CP-SIDEBAR-RESTORATION-001 (2026-11-24): el Header ya NO alterna la
+  // visibilidad del menú en desktop — el ÚNICO control vive en el encabezado
+  // del propio menú. Aquí queda SOLO el control de navegación móvil (§7 de la
+  // misión), que abre el drawer temporal; el cierre vive dentro del panel.
+  onOpenMobileSidebar: () => void;
   currentView: string;
   navigationItems: NavigationItem[];
   onViewChange: (view: ViewType) => void;
@@ -42,23 +46,10 @@ interface HeaderProps {
   handleSetActiveStore: (id: string) => void;
   allStores?: any[];
   onLogout?: () => void;
-  /** CP-UX-SINGLE-TOGGLE: el menú está superpuesto a la barra (drawer móvil
-   *  o temporal desktop). La barra se eleva sobre el panel para que el
-   *  MISMO botón toggle siga siendo alcanzable y sirva de cierre. */
-  sidebarOverlaysHeader?: boolean;
-}
-
-function SidebarIcon({ sidebarState }: { sidebarState: string }) {
-  switch (sidebarState) {
-    case 'expanded': return <X className="w-5 h-5" />;
-    case 'rail': return <X className="w-5 h-5" />;
-    case 'closed': return <Menu className="w-5 h-5" />;
-  }
 }
 
 export const Header = ({
-  sidebarState,
-  toggleSidebar,
+  onOpenMobileSidebar,
   currentView,
   navigationItems,
   onViewChange,
@@ -66,8 +57,12 @@ export const Header = ({
   handleSetActiveStore,
   allStores = [],
   onLogout,
-  sidebarOverlaysHeader = false,
 }: HeaderProps) => {
+  // CP-SIDEBAR-RESTORATION-001 (§7): el control de navegación existe SOLO en
+  // móvil (<768px). Se condiciona por JS (useIsMobile) y no solo por CSS:
+  // en desktop el botón NO existe en el DOM — la inspección (manual o
+  // automatizada) encuentra un único control en toda la aplicación.
+  const isMobile = useIsMobile();
   // F1-T04: estado de búsqueda para el dropdown del selector de tienda.
   // Permite filtrar tiendas por nombre cuando hay 10+ (antes era una lista plana sin filtro).
   const [storeSearch, setStoreSearch] = useState('');
@@ -101,33 +96,28 @@ export const Header = ({
   const activeStoreName = activeStore?.name || 'Seleccionar Tienda';
 
   return (
-    // CP-UX-SINGLE-TOGGLE (2026-11-24): cuando el menú se superpone a la barra
-    // (drawer móvil o temporal desktop) la barra se ELEVA (z-50, fondo sólido)
-    // por encima del panel (z-40) — el mismo botón toggle queda alcanzable y
-    // actúa de cierre, como en ChatGPT/Claude. Sin superposición se mantiene
-    // el z-30 translúcido clásico.
+    // CP-SIDEBAR-RESTORATION-001: sin elevaciones condicionales — el header
+    // mantiene su z-30 clásico; el drawer móvil (z-40) lo cubre temporalmente
+    // y el cierre vive dentro del propio panel.
     <header className={cn(
       "backdrop-blur-xl p-1.5 sm:px-4 sm:py-2 sticky top-0 w-full pt-[env(safe-area-inset-top)] shrink-0 border-b border-border/50",
-      sidebarOverlaysHeader ? "z-50 bg-background" : "z-30 bg-background/80",
+      "z-30 bg-background/80",
     )}>
       <div className="flex items-center justify-between gap-2 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-4 flex-1 overflow-hidden">
-          {/* CP-UX-SINGLE-TOGGLE (2026-11-24): práctica internacional (patrón
-              ChatGPT/Claude) — UN SOLO botón fijo en la barra superior alterna
-              mostrar/ocultar el menú lateral por clic. Visible SIEMPRE (desktop
-              y móvil, con el menú abierto o cerrado); sustituye al modelo
-              anterior de abrir con hamburguesa y cerrar con X internas del
-              panel. El control interno del menú (contraer→rail) sigue vivo
-              para el eje expanded↔rail, que es un ajuste de ancho, no de
-              visibilidad. Ctrl+B conserva el atajo. */}
-          <button
-            onClick={toggleSidebar}
-            className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all"
-            aria-label={sidebarState === 'closed' ? 'Mostrar menú lateral' : 'Ocultar menú lateral'}
-            aria-expanded={sidebarState !== 'closed'}
-          >
-            <SidebarIcon sidebarState={sidebarState} />
-          </button>
+          {/* CP-SIDEBAR-RESTORATION-001 (§7): control de navegación MÓVIL —
+              abre el drawer temporal. En desktop NO se renderiza: única
+              inspección visual = UN SOLO control en toda la app (el toggle
+              del encabezado del menú). */}
+          {isMobile && (
+            <button
+              onClick={onOpenMobileSidebar}
+              className="w-11 h-11 flex items-center justify-center shrink-0 rounded-xl border border-border/50 bg-muted/50 hover:bg-muted active:scale-90 transition-all"
+              aria-label="Abrir menú lateral"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
 
           <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto min-w-0 flex-1 no-scrollbar pr-2">
             <h1 className="text-[clamp(0.75rem,3.5vw,1.25rem)] font-label font-bold capitalize tracking-tight text-primary whitespace-nowrap shrink-0">
