@@ -15,27 +15,27 @@
     "baseline_sha": "6485e17",
     "baseline_branch": "feat/cp-agent-foundation-001-20261121",
     "baseline_note": "Mediciones BASELINE/ESLINT tomadas sobre la infra CP-AGENT-FOUNDATION-001 (6485e17), en base main@281d1df. last_validated_sha se actualiza al cerrar cada ciclo con el SHA del PR validado.",
-    "last_validated_sha": "5ef4cc13f7062dd0a95b8ac8581d06ebde420e2d"
+    "last_validated_sha": "65f7eb8ed2ca284ad895bb6c42bc75132d6f336a"
   },
   "current_cycle": {
-    "number": 2,
+    "number": 3,
     "status": "queued",
     "mission_id": null,
     "started_at": null,
-    "note": "Ciclo 1 cerrado (U1 de CP-CI-001): informe cycles/cycle-001-CP-CI-001.md. Status queued = sin ejecución activa.",
+    "note": "Ciclo 2 cerrado (U1 de CP-CI-006): informe cycles/cycle-002-CP-CI-006.md. Status queued = sin ejecución activa.",
     "last_completed": {
-      "number": 1,
-      "mission_id": "CP-CI-001",
+      "number": 2,
+      "mission_id": "CP-CI-006",
       "unit": "U1",
-      "started_at": "2026-11-21T16:58:00Z",
-      "completed_at": "2026-11-21T17:22:00Z"
+      "started_at": "2026-11-24T00:10:00Z",
+      "completed_at": "2026-11-24T00:36:00Z"
     }
   },
-  "cycles_completed": 1,
+  "cycles_completed": 2,
   "last_run": {
-    "at": "2026-11-21T17:22:00Z",
+    "at": "2026-11-24T00:36:00Z",
     "outcome": "APROBADA CON OBSERVACIONES",
-    "cycle_report": "automation/continuous-improvement/cycles/cycle-001-CP-CI-001.md"
+    "cycle_report": "automation/continuous-improvement/cycles/cycle-002-CP-CI-006.md"
   },
   "agent_lock": {
     "locked": false,
@@ -49,15 +49,15 @@
     { "id": "CP-CI-003", "title": "Consistencia del design system en vistas (tokens vs hardcodes, jerarquía, light/dark)", "area": "design-system", "priority": 4, "status": "queued", "file": "backlog/CP-CI-003-design-system-consistency.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "Hardcodes conocidos: PageHeader.badgeVariantMap, atomic/ProductCard (border-white/5 decisión consciente — no tocar sin decisión)." },
     { "id": "CP-CI-004", "title": "Accesibilidad: auditoría con herramientas reales y corrección de bloqueantes", "area": "accesibilidad", "priority": 3, "status": "queued", "file": "backlog/CP-CI-004-accessibility.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "axe-core ya instalado; specs e2e/accessibility.spec.ts y fc-accessibility.spec.ts existentes." },
     { "id": "CP-CI-005", "title": "Responsive: auditoría multi-viewport y desbordamientos", "area": "responsive", "priority": 4, "status": "queued", "file": "backlog/CP-CI-005-responsive-design.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "e2e/mobile-viewport-audit.spec.ts (375/390/360/768) como regla base; hardening CSS ≤375/≤420 existente." },
-    { "id": "CP-CI-006", "title": "Calidad de interacción: estados de carga/vacío/error, feedback, confirmaciones", "area": "interaccion", "priority": 3, "status": "queued", "file": "backlog/CP-CI-006-interaction-quality.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "StateRenderer solo en 22/57 vistas: primera unidad = cobertura de estados en vistas de datos." },
+    { "id": "CP-CI-006", "title": "Calidad de interacción: estados de carga/vacío/error, feedback, confirmaciones", "area": "interaccion", "priority": 3, "status": "in_progress", "file": "backlog/CP-CI-006-interaction-quality.md", "attempts": 1, "last_run_at": "2026-11-24T00:36:00Z", "pr": { "url": "https://github.com/Nardian90/Costpro/pull/1696", "number": 1696, "note": "Ciclo 2 — unidad U1 (estados canónicos cxc/cxp): 2 vistas migradas a StateRenderer + test E4 de 9 casos; saldo ESLint 1624→1623" }, "certificate": "APROBADA CON OBSERVACIONES (ciclo 2, unidad U1)", "notes": "U1 ejecutada en ciclo 2: AccountsPayableView + AccountsReceivableView sobre el canon StateRenderer (splash de marca, error con Reintentar funcional vía refetch/fetchData, vacíos contextuales preservados, empties internos muertos retirados). Hallazgos para unidades siguientes: U2 — confirm() nativo en handleBulkPay (cxp) y alert() en errores de export/bulk-pay (cxp) → DestructiveConfirmModal/toasts; U3 — feedback de acciones (exporting/bulkPaying ya con disabled, revisar restos); U4 — animaciones. E2 navegador pendiente (entorno sin credenciales de sesión; producción no es banco de pruebas). PR ajeno #1694 (CP-UX-POLISH-002) verificado sin solape con cxc/cxp al iniciar el ciclo." },
     { "id": "CP-CI-007", "title": "Rendimiento: oportunidades medidas, no especulativas", "area": "rendimiento", "priority": 6, "status": "queued", "file": "backlog/CP-CI-007-performance.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "gate:bundle + analyze disponibles; reglas react-best-practices async-*/bundle-*/rerender-*. Prohibido optimizar sin medición." },
     { "id": "CP-CI-008", "title": "Fiabilidad funcional: auditoría de flujos y regresiones (preservando reglas financieras)", "area": "fiabilidad", "priority": 2, "status": "queued", "file": "backlog/CP-CI-008-functional-reliability.md", "attempts": 0, "last_run_at": null, "pr": null, "certificate": null, "notes": "priority=2 corresponde al ÁREA (flujos de negocio), no a un hallazgo crítico activo: al baseline no hay defecto P1/P2 identificado. Sin hallazgo crítico nuevo, se ejecuta según orden del programa (primero next_recommended)." }
   ],
   "next_recommended": {
-    "mission_id": "CP-CI-006",
-    "justification": "Regla PROGRAM.md §3.4: evitar dos ciclos consecutivos en la misma área (ciclo 1 = deuda-tecnica) si hay otras de importancia comparable. CP-CI-006 (área interaccion, P3 > P5) es comparable o superior: StateRenderer cubre 22/57 vistas — primera unidad = cobertura de estados (vacío/error/carga) en vistas de datos, sin tocar reglas financieras. Tras ese ciclo, continuar CP-CI-001 con U2a (ProductionOrdersView) y luego los 5 disables muertos remanentes cuando #1682/#1683 se resuelvan. Nota: U1 excluyó 5 disables por conflicto con PRs abiertos; verificar su estado al iniciar cualquier unidad futura que los toque.",
-    "set_at": "2026-11-21",
-    "set_by": "ciclo-001-CP-CI-001"
+    "mission_id": "CP-CI-001",
+    "justification": "Regla PROGRAM.md §3.4: evitar dos ciclos consecutivos en la misma área (ciclo 2 = interaccion/CP-CI-006) si hay otras de importancia comparable. Volver a deuda-tecnica con CP-CI-001 U2a (ProductionOrdersView.tsx, ~58 avisos V2.12.25 — medir saldo vigente al iniciar). Añadido vigente: los 5 disables muertos excluidos en el ciclo 1 (PaymentRowsEditor.tsx:152 y ReceivedServicesView.tsx:1090/1111/1263, ReconciliationTab.tsx:160) quedaron LIBRES al mergearse #1682/#1683 — pueden integrarse a esa misma unidad de deuda-técnica verificando solape con PRs abiertos (al cierre del ciclo 2, #1694 no toca ninguno de esos archivos). Tras ese ciclo, continuar CP-CI-006 con U2 (confirmaciones destructivas).",
+    "set_at": "2026-11-24",
+    "set_by": "ciclo-002-CP-CI-006"
   },
   "priorities_reference": {
     "P1": "Crítico: seguridad, multi-tenant, integridad financiera, corrupción de datos",
