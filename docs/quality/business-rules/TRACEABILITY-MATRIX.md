@@ -60,13 +60,13 @@
 | Elemento | Contenido |
 |---|---|
 | Regla | El saldo CxC mostrado = realidad de pagos del mayor |
-| Implementación | R-01 REMEDIADO (2026-11-25): trigger `update_payment_status` con las TRES ramas — OT restaurada con neteo de contra-filas + guard voided + recomputo en DELETE (20261126140000); gate/lock de OT en `register_supplier_payment`. R-02 ABIERTO: tasa 450 fija (route.ts:123) → remediación en curso (PR CxC) |
+| Implementación | R-01 REMEDIADO (2026-11-25): trigger `update_payment_status` con las TRES ramas — OT restaurada con neteo de contra-filas + guard voided + recomputo en DELETE (20261126140000); gate/lock de OT en `register_supplier_payment`. R-02 REMEDIADO (2026-11-25): helper canónico `src/lib/accounts-receivable/rates.ts` (tasa de tienda vía `store_exchange_rates`; sin tasa → saldo en moneda original + bloque `unrated`; ×450 eliminado) |
 | Control | Trigger autoritativo en BD (fail-closed; no depende del frontend) + contrato de migración (13 pruebas) + marcas de aplicación re-ejecutables |
 | P+ | Prueba funcional en aislada (rollback): pago 400→partial; +600→paid; reversa 100→900 partial (neteo) — docs/audits/CP-BRA-REMEDIATION-001/ |
 | P− | Contrato: rama OT ausente = fallo; gate ERR_ORDER_NOT_PAYABLE; 9/9 marcas de producción |
 | P=R | cpbra-r01-r14-payment-engine-migration.test.ts + replay 216 en CI |
 | Evidencia | APLICACION-MIGRACION-20261126140000-PRODUCCION.md (9/9 marcas, surface 232 fn re-certificado) |
-| Estado certificación | **CONDICIONAL (R-01 REMEDIADO; R-02 abierto → tasa fija 450)** |
+| Estado certificación | **VERIFICADA en código (R-01+R-02 remediados; certificación plena pendiente de E2E aislado)** |
 
 ### TR-INV-003 (INV-003) · Costo de venta server-side (WAC)
 | Elemento | Contenido |
@@ -161,7 +161,7 @@
 | TR-POS-001 | POS | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-POS-006 | POS | CRÍTICA | ✓ | ✗ | ✗ | RECHAZADA (R-11) |
 | TR-FIN-002 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (CxP) |
-| TR-FIN-011 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CONDICIONAL (R-01 remediado; R-02 abierto) |
+| TR-FIN-011 | FIN | CRÍTICA | ✓ | ✓ | ✓ | VERIFICADA (R-01+R-02 remediados; E2E pendiente) |
 | TR-INV-003 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-INV-007 | INV | CRÍTICA | ✗ | ✗ | ✗ | RECHAZADA (R-05) |
 | TR-TEN-001 | TEN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
@@ -174,4 +174,4 @@
 | TR-PRO-001 | PRO | CRÍTICA | ✗ | ✗ | ✗ | RECHAZADA (R-15) |
 | TR-FIN-009 | FIN/REP | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (caja) |
 
-**Resumen de certificación de reglas críticas (16 auditadas en profundidad):** 10 CERTIFICADAS · 4 CONDICIONALES · 2 RECHAZADAS (R-01/02 → R-01 REMEDIADO 2026-11-25, R-02 en curso; quedan R-11, R-05, R-15 abiertos en RISK-REGISTER). El sistema global NO obtiene el sello CERTIFICADO mientras existan reglas críticas RECHAZADAS (ver CERTIFICATION-POLICY.md).
+**Resumen de certificación de reglas críticas (16 auditadas en profundidad):** 10 CERTIFICADAS · 4 CONDICIONALES · 2 RECHAZADAS (R-01/02 → R-01 REMEDIADO 2026-11-25, R-02 en curso; R-01 y R-02 remediados; quedan R-11, R-05, R-15 abiertos en RISK-REGISTER). El sistema global NO obtiene el sello CERTIFICADO mientras existan reglas críticas RECHAZADAS (ver CERTIFICATION-POLICY.md).
