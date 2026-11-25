@@ -45,6 +45,12 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "can_manage_store_as",
+      "reason": "ADN-009 (2026-11-21, PR #1672 post-merge hardening) · Helper de GESTIÓN por tienda (espejo DB de canManageStore en src/lib/roles.ts: is_admin_check transversal O membresía activa admin/manager/encargado). Patrón idéntico a can_manage_payroll_as y has_store_access_as: helper booleano STABLE SECURITY DEFINER de consulta que NO toca datos y cuya firma recibe el actor por parámetro — la identidad real la resuelve el llamador con el patrón v2.12.9 (los RPC de borradores pasan auth.uid()); ACL service_role-only para invocación directa. Consumidores: create_received_service_draft, update_received_service_draft (20261121190000).",
+      "expires": "2027-12-31",
+      "added_by": "ADN-SR-POSTMERGE-HARDENING-009 (PR #1672, 2026-11-21) — misión post-merge hardening"
+    },
+    {
       "function": "can_pos_undo_transaction",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
@@ -99,10 +105,22 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "cp_catmaestro001_renumber_auto_masters",
+      "reason": "CP-CATMAESTRO-001 · mantenimiento del Catálogo Maestro · Renumeración de masters con p_dry_run por defecto true. ACL verificada EN VIVO 2026-11-25: ejecutores {postgres, service_role} — sin exposición anon/authenticated/public; invocada por scripts gobernados del ciclo (CP-AP-FORENSIC-RECONCILIATION-001, drift del allowlist detectado por el gate).",
+      "added_by": "cxap-forensic-reconciliation-20261125",
+      "expires": "2027-06-30"
+    },
+    {
       "function": "cp_fin004_normalize_enervida_payments",
       "reason": "CP-FIN-004 (2026-11-20, migraciones 20261120200000/20261120210000/20261120220000) · Normalizador histórico idempotente del contrato external_transfer para ENERVIDA (declaración del propietario: 3 ventas Transf. Exterior, demás ventas USD en efectivo): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado con fixtures), REVOKE explícito de anon/authenticated/PUBLIC y GRANT a service_role en la migración; guardas por tienda/venta, idempotencia por auditoría (CP_FIN004_NORMALIZE) y post-condición fail-closed sin zelle residual.",
       "added_by": "CP-FIN-004 2026-11-20",
       "expires": "2027-01-31"
+    },
+    {
+      "function": "cp_recep001_backfill_confirm_notes",
+      "reason": "CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (PR #1706, 2026-11-25) · Herramienta PUNTUAL de backfill del enlace documental notes=receipt_id en movimientos 'Confirmacion recepcion' huérfanos (causa raíz auditada: confirm_pending_reception históricos insertaban notes=NULL → «s/d» injustificado en el SC-2-04 aunque el inventario sí se actualizó). Sin verificación de identidad PROPIA por diseño de herramienta de mantenimiento invocada por scripts con service_role: ACL EXCLUSIVA service_role (REVOKE PUBLIC/anon/authenticated + GRANT solo service_role en migración 20261125120000 — el REVOKE de authenticated es explícito porque los default privileges de Supabase lo conceden en la creación; verificado en Capa C), modo dry-run para auditoría previa (p_dry_run), emparejamiento INEQUÍVOCO multi-condición (lote por tienda+created_at ∧ única recepción activa con updated_at==created_at ∧ multiset producto+cantidad 1-a-1 entre movimientos y receipt_items) y trazabilidad completa en audit_logs por lote enlazado. Idempotente (re-ejecución=0 cambios). Ejecutada UNA VEZ en producción 2026-11-25: 2 lotes/12 movimientos (cd921832 ×10 + 41b16484 ×2); 101 huérfanos históricos sin enlace real conservados intactos.",
+      "added_by": "CP-RECEP-001 (PR #1706, agente)",
+      "expires": "2027-06-30"
     },
     {
       "function": "create_pre_restore_snapshot",
@@ -183,10 +201,22 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "fin_post_payment_annulment",
+      "reason": "CP-OPS-ENERVIDA §3 (2026-11-24, migración 20261124120000) · helper-interno · Asiento compensatorio de UN pago anulado (variante por pago de fin_post_document_annulment, ya listada). Sin verificación de identidad PROPIA por diseño: no es punto de entrada — solo alcanzable desde reverse_supplier_payment (service_role exclusiva, autorizada en /api/payments con canManageStore) y triggers del motor. ACL verificada EN VIVO 2026-11-25: ejecutores {postgres, service_role} — sin anon/authenticated/public (CP-AP-FORENSIC-RECONCILIATION-001, drift del allowlist detectado por el gate).",
+      "added_by": "cxap-forensic-reconciliation-20261125",
+      "expires": "2027-06-30"
+    },
+    {
       "function": "fin_reclassify_sale_payment_currency",
       "reason": "CP-FIN-002 (2026-11-19, migración 20261119150000 aplicada a producción) · Escritor canónico de RECLASIFICACIÓN DE MONEDA de cobro: canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), REVOKE explícito de anon/authenticated/public. Autorización gobernada por el propietario; fail-closed (venta completed, débito único del cobro en la categoría origen o caso documentado asiento_obsoleto, coherencia con pagos, categorías del catálogo). Idempotente por (venta, método, moneda_origen). Laguna detectada por CP-FIN-003: el gate de main fallaba desde la aplicación de la 20261119150000 (run 44550488760) sin esta entrada.",
       "added_by": "CP-FIN-003 2026-11-20",
       "expires": "2027-01-31"
+    },
+    {
+      "function": "fin_rectification_apply",
+      "reason": "CP-FIN-111-POSTREVIEW-HARDENING (2026-11-21) · RPC-motor · fin_rectification_apply: ejecución ATÓMICA de rectificaciones (asiento + movimientos + partida doble pre/post + documento de auditoría en UNA transacción; idempotencia completa por generación; registro parcial → ERR_RECTIFICACION_PARCIAL o reparación controlada con traza). Sin verificación de identidad PROPIA por diseño — ACL pura (patrón fin_generation_build/fin_rectify_*): REVOKE EXECUTE a PUBLIC/anon/authenticated + GRANT EXCLUSIVO a service_role (migración 20261122130000 §3, verificado 0 grants a anon/authenticated). Canal gobernado: scripts m110/m111 con guard CP-INFRA-019 (doble flag) + writers manifest; escritura de datos SOLO vía asientos de rectificación autorizados en expediente. Validada en BD aislada: 8 escenarios P0-4 (52/52 PASS m111-validate-isolated) incl. atomicidad y concurrencia; auditoría de impacto global read-only (solo ENERVIDA tiene órdenes service/work — 0 efectos sobre saldos vigentes).",
+      "added_by": "CP-FIN-111-POSTREVIEW-HARDENING",
+      "expires": "2027-06-30"
     },
     {
       "function": "fin_rectify_sale_payment_method",
@@ -323,12 +353,6 @@
     {
       "function": "get_global_max_operation_date",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
-      "added_by": "cp-sec-027-f7",
-      "expires": "2027-06-30"
-    },
-    {
-      "function": "get_inventory_report",
-      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
       "expires": "2027-06-30"
     },
@@ -609,6 +633,18 @@
       "expires": "2027-06-30"
     },
     {
+      "function": "register_supplier_payment_batch",
+      "reason": "ADN-009 (2026-11-21, PR post-merge hardening) · RPC de lote de pagos a proveedor (1-20 componentes, idempotente por bloque, delega CADA componente al canónico register_supplier_payment). ACL service_role EXCLUSIVA (REVOKE authenticated, declarada en la migración 20261121190000 — alineada a CP-FIN-004 y al canal exclusivo del motor que envuelve): /api/payments autoriza con canManageStore y ejecuta la llamada privilegiada por el cliente service_role. Contrato canónico CP-FIN-004 en el cuerpo (external_transfer; zelle heredado normalizado, jamás persistido) + SELECT ... FOR UPDATE del documento compartido con el camino individual. El gate de identidad NO aplica al cuerpo por diseño service_role-only (la identidad del actor la aporta el endpoint desde la sesión; p_paid_by nunca es parámetro libre del cliente).",
+      "added_by": "ADN-008 (PR #1670, agente)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_supplier_payment_multi",
+      "reason": "CP-OPS-ENERVIDA §6 (2026-11-24, migración 20261124120300) · RPC de liquidación múltiple CxP · Hermana de register_supplier_payment/_batch (ya listadas): delega cada componente al canónico register_supplier_payment, lote atómico e idempotente. ACL verificada EN VIVO 2026-11-25: ejecutores {postgres, service_role} — la identidad del actor la aporta /api/payments/multi desde la sesión (canManageStore); p_paid_by nunca es parámetro libre (CP-AP-FORENSIC-RECONCILIATION-001, drift del allowlist detectado por el gate).",
+      "added_by": "cxap-forensic-reconciliation-20261125",
+      "expires": "2027-06-30"
+    },
+    {
       "function": "regularize_sale_payment",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
@@ -720,42 +756,6 @@
       "function": "void_reception_with_reversal",
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
-      "expires": "2027-06-30"
-    },
-    {
-      "function": "register_supplier_payment_batch",
-      "reason": "ADN-009 (2026-11-21, PR post-merge hardening) · RPC de lote de pagos a proveedor (1-20 componentes, idempotente por bloque, delega CADA componente al canónico register_supplier_payment). ACL service_role EXCLUSIVA (REVOKE authenticated, declarada en la migración 20261121190000 — alineada a CP-FIN-004 y al canal exclusivo del motor que envuelve): /api/payments autoriza con canManageStore y ejecuta la llamada privilegiada por el cliente service_role. Contrato canónico CP-FIN-004 en el cuerpo (external_transfer; zelle heredado normalizado, jamás persistido) + SELECT ... FOR UPDATE del documento compartido con el camino individual. El gate de identidad NO aplica al cuerpo por diseño service_role-only (la identidad del actor la aporta el endpoint desde la sesión; p_paid_by nunca es parámetro libre del cliente).",
-      "added_by": "ADN-008 (PR #1670, agente)",
-      "expires": "2026-12-31"
-    },
-    {
-      "function": "can_manage_store_as",
-      "reason": "ADN-009 (2026-11-21, PR #1672 post-merge hardening) · Helper de GESTIÓN por tienda (espejo DB de canManageStore en src/lib/roles.ts: is_admin_check transversal O membresía activa admin/manager/encargado). Patrón idéntico a can_manage_payroll_as y has_store_access_as: helper booleano STABLE SECURITY DEFINER de consulta que NO toca datos y cuya firma recibe el actor por parámetro — la identidad real la resuelve el llamador con el patrón v2.12.9 (los RPC de borradores pasan auth.uid()); ACL service_role-only para invocación directa. Consumidores: create_received_service_draft, update_received_service_draft (20261121190000).",
-      "expires": "2027-12-31",
-      "added_by": "ADN-SR-POSTMERGE-HARDENING-009 (PR #1672, 2026-11-21) — misión post-merge hardening"
-    },
-    {
-      "function": "fin_rectification_apply",
-      "reason": "CP-FIN-111-POSTREVIEW-HARDENING (2026-11-21) · RPC-motor · fin_rectification_apply: ejecución ATÓMICA de rectificaciones (asiento + movimientos + partida doble pre/post + documento de auditoría en UNA transacción; idempotencia completa por generación; registro parcial → ERR_RECTIFICACION_PARCIAL o reparación controlada con traza). Sin verificación de identidad PROPIA por diseño — ACL pura (patrón fin_generation_build/fin_rectify_*): REVOKE EXECUTE a PUBLIC/anon/authenticated + GRANT EXCLUSIVO a service_role (migración 20261122130000 §3, verificado 0 grants a anon/authenticated). Canal gobernado: scripts m110/m111 con guard CP-INFRA-019 (doble flag) + writers manifest; escritura de datos SOLO vía asientos de rectificación autorizados en expediente. Validada en BD aislada: 8 escenarios P0-4 (52/52 PASS m111-validate-isolated) incl. atomicidad y concurrencia; auditoría de impacto global read-only (solo ENERVIDA tiene órdenes service/work — 0 efectos sobre saldos vigentes).",
-      "added_by": "CP-FIN-111-POSTREVIEW-HARDENING",
-      "expires": "2027-06-30"
-    },
-    {
-      "function": "cp_recep001_backfill_confirm_notes",
-      "reason": "CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (PR #1706, 2026-11-25) · Herramienta PUNTUAL de backfill del enlace documental notes=receipt_id en movimientos 'Confirmacion recepcion' huérfanos (causa raíz auditada: confirm_pending_reception históricos insertaban notes=NULL → «s/d» injustificado en el SC-2-04 aunque el inventario sí se actualizó). Sin verificación de identidad PROPIA por diseño de herramienta de mantenimiento invocada por scripts con service_role: ACL EXCLUSIVA service_role (REVOKE PUBLIC/anon/authenticated + GRANT solo service_role en migración 20261125120000 — el REVOKE de authenticated es explícito porque los default privileges de Supabase lo conceden en la creación; verificado en Capa C), modo dry-run para auditoría previa (p_dry_run), emparejamiento INEQUÍVOCO multi-condición (lote por tienda+created_at ∧ única recepción activa con updated_at==created_at ∧ multiset producto+cantidad 1-a-1 entre movimientos y receipt_items) y trazabilidad completa en audit_logs por lote enlazado. Idempotente (re-ejecución=0 cambios). Ejecutada UNA VEZ en producción 2026-11-25: 2 lotes/12 movimientos (cd921832 ×10 + 41b16484 ×2); 101 huérfanos históricos sin enlace real conservados intactos.",
-      "added_by": "CP-RECEP-001 (PR #1706, agente)",
-      "expires": "2027-06-30"
-    },
-    {
-      "function": "fin_post_payment_annulment",
-      "reason": "CP-OPS-ENERVIDA (20261124120000 §3, aplicado a producción por PR #1707 SR-CREATE-BLOCK-20261125) · Función-MOTOR interna de BD (no RPC de app): asiento compensatorio de UN pago — variante por pago de fin_post_document_annulment (20261113120100 §6, ya en allowlist), mismo patrón: entrada 'anulacion' enlazada por reversal_of, sentidos invertidos, jamás UPDATE del histórico, idempotente (SKIP si ya tiene compensatorio — doble clic/reintento/annulment integral concurrente) y bajo pg_advisory_xact_lock. Sin verificación de identidad PROPIA por diseño ACL-puro (patrón fin_*): REVOKE EXECUTE a PUBLIC/anon/authenticated + GRANT EXCLUSIVO a service_role (migración §3, verificado). Invocada SOLO por funciones-motor service_role-only vía PERFORM: reverse_supplier_payment (§4 misma migración) y anulación de servicios (20261124120100). La identidad del actor la aporta el RPC llamador desde la sesión.",
-      "added_by": "CP-POS-CI-FIX (declaración tardía heredada de PR #1707 — el gate no corrió en #1707 por filtro de paths)",
-      "expires": "2027-06-30"
-    },
-    {
-      "function": "register_supplier_payment_multi",
-      "reason": "CP-OPS-ENERVIDA (20261124120300 §6, aplicado a producción por PR #1707 SR-CREATE-BLOCK-20261125) · RPC-motor de liquidación MÚLTIPLE en Cuentas por Pagar: un MISMO lote (un método, una moneda, una tasa) aplicado a varios documentos con asignación explícita por ítem, ATÓMICO (una transacción) e idempotente (replay por bloque + claves por componente, patrón ADN-008), delega cada componente al canónico register_supplier_payment (ya en allowlist). Reglas fail-closed: saldo pendiente validado BAJO bloqueo del documento, sin mezcla de medios/monedas, sin tasas inventadas; audit_logs por lote (SUPPLIER_PAYMENT_MULTI) con trazabilidad completa. Sin verificación de identidad PROPIA por diseño service_role-only (patrón idéntico a register_supplier_payment_batch en allowlist): el endpoint /api/payments/multi autoriza sesión + canManageStore y ejecuta la llamada privilegiada con cliente service_role; ACL EXCLUSIVA service_role (REVOKE PUBLIC/anon/authenticated + GRANT solo service_role en la migración).",
-      "added_by": "CP-POS-CI-FIX (declaración tardía heredada de PR #1707 — el gate no corrió en #1707 por filtro de paths)",
       "expires": "2027-06-30"
     }
   ],
@@ -1019,5 +1019,6 @@
       "added_by": "CP-OPS-ENERVIDA",
       "expires": "2026-12-31"
     }
-  ]
+  ],
+  "_updated": "2026-11-25 — fusión CP-AP-FORENSIC-RECONCILIATION-001 + main (PR #1708-1710): union de allowlists. Entradas de la mision (fin_post_payment_annulment, register_supplier_payment_multi, cp_catmaestro001_renumber_auto_masters — ACL verificada en vivo {postgres, service_role}) + las de main."
 }

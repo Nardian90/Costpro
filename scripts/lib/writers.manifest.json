@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-25 — merge con main: (a) CP-POS declara cp-pos-apply-migration-prod.mjs; (b) CP-RECEPCIONES-CATALOGO-MAESTRO-001 declara renumeración gobernada, 4 auditorías read-only de fase 0, 2 validadores E2E y el ciclo fase-5 (setup/playwright/cleanup) con assert-isolated-db.",
+  "_updated": "2026-11-25 — fusion CP-AP-FORENSIC-RECONCILIATION-001 + main (PR #1708-1710): union de manifiestos de escritores.",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -10,12 +10,16 @@
     "scripts/apply_migration_20260824000002.mjs",
     "scripts/auditoria-17-1-servicios-usd.mjs",
     "scripts/cp-catmaestro001-apply-prod.mjs",
+    "scripts/cp-catmaestro001-cable-apply.mjs",
+    "scripts/cp-catmaestro001-gatefix-apply.mjs",
     "scripts/cp-log-unif-001-apply-prod.mjs",
     "scripts/cp-pos-apply-migration-prod.mjs",
     "scripts/cp-security-backlog-001-aplicar-produccion.mjs",
     "scripts/cp-security-backlog-001-fix-ledger-versions.mjs",
     "scripts/cp-security-backlog-001-fix2-ledger.mjs",
     "scripts/cpops-apply-migrations-prod.mjs",
+    "scripts/cxap-apply-revoke-legacy-fns.mjs",
+    "scripts/e2e/cp-catmaestro001-cable-fase0-audit.mjs",
     "scripts/e2e/cp-catmaestro001-fase0-prod-audit.mjs",
     "scripts/e2e/cp-catmaestro001-fase0b-prod-audit.mjs",
     "scripts/e2e/cp-catmaestro001-fase0c-prod-audit.mjs",
@@ -94,10 +98,7 @@
     "scripts/validar-ciclo-divisa-devoluciones.mjs",
     "scripts/validar-fix-17-1-servicios-usd.mjs",
     "scripts/validar-fix-dryrun-pagos.mjs",
-    "scripts/validar-semantica-ventas-usd.mjs",
-    "scripts/cp-catmaestro001-cable-apply.mjs",
-    "scripts/cp-catmaestro001-gatefix-apply.mjs",
-    "scripts/e2e/cp-catmaestro001-cable-fase0-audit.mjs"
+    "scripts/validar-semantica-ventas-usd.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
@@ -112,8 +113,6 @@
     "scripts/e2e/cp-recep001-apply-e2e.mjs",
     "scripts/e2e/cpfin001-b-apply-e2e.mjs",
     "scripts/e2e/cpfin002-apply-e2e.mjs",
-    "scripts/e2e/cpfin002-apply-e2e.mjs",
-    "scripts/e2e/cpfin002-e2e-debug.mjs",
     "scripts/e2e/cpfin002-e2e-debug.mjs",
     "scripts/e2e/cpfin004-apply-e2e.mjs",
     "scripts/e2e/fc-e2e-clean-orphans.mjs",
@@ -296,6 +295,8 @@
     "scripts/m070-receipt-full-valuation-extract.mjs": "CP-FIN-RECEIPT-FULL-VALUATION-010 (2026-11-17): extracción integral read-only de las 101 líneas de FAC-VITALLCONS-001 (capas, kardex, WAC, ventas/COGS, vales, asientos, CXP, tasas, controles T12) — solo SELECT por Management API con guard de ref de producción y guard anti-escritura en cliente (rechaza SQL no SELECT/WITH). Ni un write. Alcance restringido a receipt_id fd9d6c88-5db8-49ea-b185-8bc96cc93e63. Re-ejecutable.",
     "scripts/m070b-receipt-valuation-maestro-audit.mjs": "CP-FIN-RECEIPT-FULL-VALUATION-010 (2026-11-17): sonda complementaria read-only (audit_logs del maestro SKU111/112, venta post-RECT-2 documentada, tasa USD 2026-07-01) — solo SELECT por Management API con guard de ref de producción y guard anti-escritura. Ni un write. Re-ejecutable.",
     "scripts/test-rpc-as-user.mjs": "Diagnóstico LIVE re-ejecutable de CP-LOG-UNIFICATION-001: llama SOLO a RPCs de lectura (get_products_for_pos / get_products_for_reception / get_paginated_products_v2) vía POST REST con token de sesión para reproducir lo que ve un usuario autenticado. Sin INSERT/UPDATE/DELETE ni RPC de escritura; evidencia en download/cp-log-unif-001/evidencia-fase1/. Re-ejecutarlo es seguro (read-only).",
-    "scripts/cp-log-unif-001-apply-prod.mjs": "CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (2026-11-21): ESCRITOR GOBERNADO — aplicador de las migraciones 20261121200000/20261121200100 a producción según patrón runbook m055 / m-log-reception-apply (doble flag ALLOW_PROD, SHA-256 working-tree==blob aprobado, pre-chequeo del libro y prerrequisitos ADN-009, un único POST exacto por migración, NOTIFY pgrst, registro en production_migration_ledger). --pre-check re-ejecutable read-only. Guard de ref de producción en línea."
+    "scripts/cp-log-unif-001-apply-prod.mjs": "CP-LOG-RECEPTIONS-SERVICES-POS-UNIFICATION-001 (2026-11-21): ESCRITOR GOBERNADO — aplicador de las migraciones 20261121200000/20261121200100 a producción según patrón runbook m055 / m-log-reception-apply (doble flag ALLOW_PROD, SHA-256 working-tree==blob aprobado, pre-chequeo del libro y prerrequisitos ADN-009, un único POST exacto por migración, NOTIFY pgrst, registro en production_migration_ledger). --pre-check re-ejecutable read-only. Guard de ref de producción en línea.",
+    "scripts/cxap-forensic-audit.mjs": "Auditoría forense CP-AP-FORENSIC-RECONCILIATION-001: SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT; el método POST dispara la heurística de escritor pero el script no contiene ninguna operación INSERT/UPDATE/DELETE/DDL). Evidencia re-ejecutable del expediente docs/audits/CP-AP-FORENSIC-RECONCILIATION-001/.",
+    "scripts/cxap-forensic-detail.mjs": "Auditoría forense CP-AP-FORENSIC-RECONCILIATION-001: SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT; el método POST dispara la heurística de escritor pero el script no contiene ninguna operación INSERT/UPDATE/DELETE/DDL). Evidencia re-ejecutable del expediente docs/audits/CP-AP-FORENSIC-RECONCILIATION-001/."
   }
 }

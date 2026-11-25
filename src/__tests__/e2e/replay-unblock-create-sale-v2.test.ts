@@ -565,9 +565,15 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   (hallazgo secdef_public_grant del SQL Security Gate) y 20261125133000
     //   retira la herramienta one-shot de renumeración ya usada (hallazgo
     //   secdef_no_auth; al FINAL del orden lexicográfico) = 211
-    expect(m.total_incluidos).toBe(211);
+    // CP-AP-FORENSIC-RECONCILIATION-001 (2026-11-25): +1 —
+    //   20261125153000_cxap_revoke_legacy_reception_fns (REVOKE idempotente de
+    //   EXECUTE anon/authenticated en add_reception_items y
+    //   save_pending_reception_changes — mismo hallazgo cerrado de forma
+    //   independiente y coincidente con 20261125132000; al FINAL del orden
+    //   lexicográfico — posiciones previas intactas) = 212
+    expect(m.total_incluidos).toBe(212);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(211);
+    expect(incluidos.length).toBe(212);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

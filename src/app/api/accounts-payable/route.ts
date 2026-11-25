@@ -2,70 +2,116 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
+import {
+  computeAccountsPayable,
+  havanaDate,
+  type PayableReceiptRow,
+  type PayableServiceRow,
+  type PayableCommissionRow,
+  type PayableTxnRow,
+} from '@/lib/accounts-payable/calculator';
 
-import { uuidLoose } from '@/validation/api-schemas';
 /**
  * GET /api/accounts-payable
  *
- * Endpoint consolidado para Cuentas por Pagar.
- * Consulta receipts + received_services (Fase 3: + commission_payments),
- * normaliza campos, calcula aging buckets server-side, y devuelve:
- *   - data: UnifiedPayable[] (array de obligaciones normalizadas)
- *   - kpis: { totalOverdue, totalUpcoming, totalPending, totalPaid } en CUP
- *   - summary: totales por tipo de documento
+ * Endpoint consolidado para Cuentas por Pagar — CP-AP-FORENSIC-RECONCILIATION-001.
+ *
+ * FUENTE ÚNICA DE VERDAD: toda la aritmética (KPIs, aging, agrupación por
+ * proveedor, conciliación Total−Pagado=Saldo) la realiza el calculador puro
+ * `src/lib/accounts-payable/calculator.ts` — la misma que usa la exportación
+ * Excel. Esta ruta solo: valida, consulta y pagina.
+ *
+ * Contrato contable (misión §4.1):
+ *   - Total   = Σ importes originales de las obligaciones incluidas en el filtro.
+ *   - Pagado  = Σ pagos APLICADOS a esas obligaciones a la fecha de corte
+ *               (Σ neta de payment_transactions con reversión; comisiones por
+ *               su canal propio status/paid_at).
+ *   - Saldo   = Total − Pagado. La antigüedad distribuye el SALDO, nunca el total.
+ *
+ * Fecha de corte (misión §6.2): date_to ?? hoy (día de negocio America/Havana).
+ * Los pagos ≤ corte cuentan aunque sean anteriores a date_from; los posteriores
+ * al corte no afectan la reconstrucción histórica.
  *
  * Query params:
  *   - store_id: UUID (requerido)
- *   - tab: 'all' | 'overdue' | '30' | '60' | '90' | '120' | 'paid' (default: 'all')
- *   - method: 'cash' | 'transfer' | 'zelle' (filtro por método de pago)
- *   - currency: 'CUP' | 'USD' | 'MLC' (filtro por moneda del documento)
- *   - search: string (búsqueda por proveedor)
- *
- * FASE 1 (2026-07-13): receipts + received_services
- * FASE 3 (próximo): + commission_payments (comisiones approved)
+ *   - tab: 'all' | 'overdue' | '30' | '60' | '90' | '120' | 'paid' (default 'all')
+ *     NOTA: 'all' incluye documentos totalmente pagados — es lo que hace
+ *     verificable Total − Pagado = Saldo contra el indicador «Pagado».
+ *   - category: 'all' | 'receipts' | 'services' | 'commissions' (default 'all')
+ *   - method: 'cash' | 'transfer' | 'zelle' | 'external_transfer' (zelle/external
+ *     se expanden a ambos — CP-FIN-004)
+ *   - currency: 'CUP' | 'USD' | 'MLC'
+ *   - search: texto (proveedor, contiene insensible)
+ *   - supplier: proveedor EXACTO (drill-down desde Por proveedor)
+ *   - date_from / date_to: 'YYYY-MM-DD' — período de DOCUMENTOS por fecha
+ *     contable (receipts.reception_date, received_services.service_date,
+ *     comisiones created_at). date_to = fecha de corte.
+ *   - mode: 'list' | 'grouped' (default 'list')
+ *   - limit / offset: paginación SOLO del resultado en modo list (los KPIs y la
+ *     agrupación siempre se calculan sobre el alcance completo del filtro).
  */
 
-// FIX (2026-07-14): usar regex simple en vez de uuidLoose
-// porque el store_id de Tienda Central Costpro (d1c4ba0e-5767-4ba0-e576-7d1c4ba0e576)
-// no es UUID v4 estricto y uuidLoose lo rechaza.
+// FIX (2026-07-14, conservado): regex simple en vez de uuidLoose porque el
+// store_id de Tienda Central Costpro no es UUID v4 estricto.
 const uuidLooseRegex = z.string().regex(
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
-  'UUID inválido'
+  'UUID inválido',
 );
 
-const querySchema = z.object({
-  store_id: uuidLooseRegex,
-  tab: z.enum(['all', 'overdue', '30', '60', '90', '120', 'paid']).default('all'),
-  // CP-FIN-004: canónico external_transfer + heredado zelle.
-  method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']).optional(),
-  currency: z.string().optional(),
-  search: z.string().optional(),
-  mode: z.enum(['list', 'grouped']).default('list'),
-  limit: z.coerce.number().min(1).max(500).default(200),
-  offset: z.coerce.number().min(0).default(0),
-});
+const dateRegex = z.string().regex(
+  /^\d{4}-\d{2}-\d{2}$/,
+  'Fecha inválida (formato esperado YYYY-MM-DD)',
+);
 
-interface UnifiedPayable {
-  id: string;
-  ref_type: 'receipt' | 'service' | 'commission';
-  ref_id: string;
-  supplier: string | null;
-  reference: string | null;
-  total: number;
-  total_cup: number;
-  paid_amount: number;
-  paid_cup: number;
-  balance: number;
-  balance_cup: number;
-  currency: string;
-  exchange_rate: number;
-  payment_status: 'unpaid' | 'partial' | 'paid';
-  payment_method: string | null;
-  due_date: string | null;
-  days_until_due: number | null;
-  is_overdue: boolean;
-  aging_bucket: 'current' | '30' | '60' | '90' | '120' | '120+' | 'paid';
-  created_at: string;
+const querySchema = z
+  .object({
+    store_id: uuidLooseRegex,
+    tab: z.enum(['all', 'overdue', '30', '60', '90', '120', 'paid']).default('all'),
+    category: z.enum(['all', 'receipts', 'services', 'commissions']).default('all'),
+    // CP-FIN-004: canónico external_transfer + heredado zelle.
+    method: z.enum(['cash', 'transfer', 'external_transfer', 'zelle']).optional(),
+    currency: z.string().optional(),
+    search: z.string().optional(),
+    supplier: z.string().optional(),
+    date_from: dateRegex.optional(),
+    date_to: dateRegex.optional(),
+    mode: z.enum(['list', 'grouped']).default('list'),
+    limit: z.coerce.number().min(1).max(500).default(200),
+    offset: z.coerce.number().min(0).default(0),
+  })
+  .refine(q => !q.date_from || !q.date_to || q.date_from <= q.date_to, {
+    message: 'La fecha inicial no puede ser posterior a la fecha final',
+    path: ['date_from'],
+  });
+
+interface ChunkRow { [k: string]: unknown }
+
+/**
+ * Fetch paginado COMPLETO por chunks (1000 filas) — elimina el defecto D5 de
+ * la versión anterior (range() por fuente truncaba silenciosamente a 200 filas
+ * y `has_more` quedaba roto: 3 fuentes × limit). Los KPIs exigen el alcance
+ * completo del filtro; la paginación del RESULTADO se aplica después.
+ */
+async function fetchAll(
+  supabase: ReturnType<typeof getSupabaseForSession>,
+  table: string,
+  select: string,
+  eq: Record<string, string>,
+  neq: Record<string, string> | null,
+): Promise<ChunkRow[]> {
+  const out: ChunkRow[] = [];
+  const PAGE = 1000;
+  for (let offset = 0; ; offset += PAGE) {
+    let q = supabase.from(table).select(select).range(offset, offset + PAGE - 1);
+    for (const [k, v] of Object.entries(eq)) q = q.eq(k, v);
+    if (neq) for (const [k, v] of Object.entries(neq)) q = q.neq(k, v);
+    const { data, error } = await q;
+    if (error) throw new Error(`[${table}] ${error.message}`);
+    const rows = (data || []) as unknown as ChunkRow[];
+    out.push(...rows);
+    if (rows.length < PAGE) break;
+  }
+  return out;
 }
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
@@ -74,434 +120,140 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     const parsed = querySchema.safeParse({
       store_id: searchParams.get('store_id'),
       tab: searchParams.get('tab') || 'all',
+      category: searchParams.get('category') || 'all',
       method: searchParams.get('method') || undefined,
       currency: searchParams.get('currency') || undefined,
       search: searchParams.get('search') || undefined,
-      mode: searchParams.get('mode') || 'list',  // FIX-AUD4-2: mode no se parseaba
+      supplier: searchParams.get('supplier') || undefined,
+      date_from: searchParams.get('date_from') || undefined,
+      date_to: searchParams.get('date_to') || undefined,
+      mode: searchParams.get('mode') || 'list',
+      limit: searchParams.get('limit') || undefined,
+      offset: searchParams.get('offset') || undefined,
     });
 
     if (!parsed.success) {
       return NextResponse.json(
         { error: 'Parámetros inválidos', details: parsed.error.flatten() },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const { store_id, tab, method, currency, search, mode, limit, offset } = parsed.data;
+    const { store_id, tab, category, method, currency, search, supplier, date_from, date_to, mode, limit, offset } =
+      parsed.data;
     // CP-FIN-004: el filtro de Transf. Exterior cubre ambos identificadores.
-    const methodFilter = method === 'zelle' || method === 'external_transfer'
-      ? ['zelle', 'external_transfer']
-      : method;
+    const methodFilter =
+      method === 'zelle' || method === 'external_transfer'
+        ? ['zelle', 'external_transfer']
+        : method
+          ? [method]
+          : undefined;
+
     const supabase = getSupabaseForSession(session);
 
-    // ── Fecha de hoy en zona horaria del servidor (UTC) ──
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // ── Consultar receipts ──
-    let receiptsQuery = supabase
-      .from('receipts')
-      .select('id, supplier, total_cost, paid_amount, due_date, payment_status, payment_method, reference_doc, status, created_at')
-      .eq('store_id', store_id)
-      .neq('status', 'voided')
-      .order('due_date', { ascending: true, nullsFirst: false });
-
-    // ── Consultar received_services ──
-    let servicesQuery = supabase
-      .from('received_services')
-      .select('id, supplier, total_amount, paid_amount, due_date, payment_status, payment_method, reference_doc, status, currency, exchange_rate, created_at')
-      .eq('store_id', store_id)
-      .neq('status', 'voided')
-      .order('due_date', { ascending: true, nullsFirst: false });
-
-    // Filtro por búsqueda de proveedor
-    if (search) {
-      receiptsQuery = receiptsQuery.ilike('supplier', `%${search}%`);
-      servicesQuery = servicesQuery.ilike('supplier', `%${search}%`);
-    }
-
-    // Filtro por moneda
-    if (currency) {
-      if (currency === 'CUP') {
-        servicesQuery = servicesQuery.eq('currency', 'CUP');
-        // Comisiones siempre son CUP, no filtrar
-      } else {
-        // receipts no tienen currency en header (siempre CUP), excluir si filtra por otra moneda
-        receiptsQuery = receiptsQuery.eq('supplier', '__NONEXISTENT__');
-        servicesQuery = servicesQuery.eq('currency', currency);
-        // Comisiones son CUP, excluir si filtra por otra moneda
-      }
-    }
-
-    // ── FASE 3: Consultar commission_payments (comisiones approved o paid) ──
-    // R2: comisiones se pagan completo en CUP (efectivo/transferencia/mixto)
-    // status 'approved' = pendiente de pago, 'paid' = pagada
-    let commissionsQuery = supabase
-      .from('commission_payments')
-      .select(`
-        id,
-        worker_id,
-        period_start,
-        period_end,
-        due_date,
-        final_amount,
-        calculated_amount,
-        status,
-        payment_method,
-        payment_reference,
-        paid_at,
-        created_at,
-        worker:workers!inner(first_name, last_name, ci)
-      `)
-      .eq('store_id', store_id)
-      .in('status', ['approved', 'paid'])
-      .order('due_date', { ascending: true, nullsFirst: false });
-
-    // Excluir comisiones si filtra por moneda no-CUP
-    if (currency && currency !== 'CUP') {
-      commissionsQuery = commissionsQuery.eq('id', '00000000-0000-0000-0000-000000000000');
-    }
-
-    // FIX-AUD5-M1: aplicar paginación a cada query
-    const [receiptsResult, servicesResult, commissionsResult] = await Promise.all([
-      receiptsQuery.range(offset, offset + limit - 1),
-      servicesQuery.range(offset, offset + limit - 1),
-      commissionsQuery.range(offset, offset + limit - 1),
+    // ── Consulta de las 3 fuentes de obligaciones + transacciones de pago ──
+    // (RLS activo: cliente con el JWT de la sesión; store_id obligatorio.)
+    const [receiptsRaw, servicesRaw, commissionsRaw, txnsRaw] = await Promise.all([
+      fetchAll(supabase, 'receipts',
+        'id, supplier, total_cost, paid_amount, payment_status, payment_method, reference_doc, due_date, reception_date, created_at',
+        { store_id }, { status: 'voided' }),
+      fetchAll(supabase, 'received_services',
+        'id, supplier, total_amount, paid_amount, payment_status, payment_method, reference_doc, due_date, service_date, currency, exchange_rate, created_at',
+        { store_id }, { status: 'voided' }),
+      fetchAll(supabase, 'commission_payments',
+        'id, final_amount, status, due_date, paid_at, payment_method, period_start, period_end, created_at, worker:workers!inner(first_name, last_name)',
+        { store_id }, null),
+      fetchAll(supabase, 'payment_transactions',
+        'ref_type, ref_id, amount_cup, currency, payment_method, direction, payment_date, reference',
+        { store_id }, null),
     ]);
 
-    if (receiptsResult.error) {
-      console.error('[accounts-payable] Error receipts:', receiptsResult.error);
-      return NextResponse.json({ error: receiptsResult.error.message }, { status: 500 });
-    }
-    if (servicesResult.error) {
-      console.error('[accounts-payable] Error services:', servicesResult.error);
-      return NextResponse.json({ error: servicesResult.error.message }, { status: 500 });
-    }
-    if (commissionsResult.error) {
-      console.error('[accounts-payable] Error commissions:', commissionsResult.error);
-      return NextResponse.json({ error: commissionsResult.error.message }, { status: 500 });
-    }
-
-    // ── Normalizar a UnifiedPayable[] ──
-    const payables: UnifiedPayable[] = [];
-
-    // Procesar receipts (CUP, exchange_rate=1)
-    for (const r of receiptsResult.data || []) {
-      const total = Number(r.total_cost) || 0;
-      const paid = Number(r.paid_amount) || 0;
-      const balance = total - paid;
-      const dueDate = r.due_date ? new Date(r.due_date) : null;
-      const daysUntilDue = dueDate
-        ? Math.ceil((dueDate.getTime() - today.getTime()) / 86400000)
-        : null;
-      const isOverdue = dueDate ? dueDate < today && r.payment_status !== 'paid' : false;
-
-      let agingBucket: UnifiedPayable['aging_bucket'] = 'current';
-      if (r.payment_status === 'paid') {
-        agingBucket = 'paid';
-      } else if (isOverdue) {
-        const overdueDays = daysUntilDue !== null ? Math.abs(daysUntilDue) : 0;
-        if (overdueDays > 120) agingBucket = '120+';
-        else if (overdueDays > 90) agingBucket = '120';
-        else if (overdueDays > 60) agingBucket = '90';
-        else if (overdueDays > 30) agingBucket = '60';
-        else agingBucket = '30';
-      }
-
-      payables.push({
-        id: `receipt-${r.id}`,
-        ref_type: 'receipt',
-        ref_id: r.id,
-        supplier: r.supplier,
-        reference: r.reference_doc,
-        total,
-        total_cup: total,
-        paid_amount: paid,
-        paid_cup: paid,
-        balance,
-        balance_cup: balance,
-        currency: 'CUP',
-        exchange_rate: 1.0,
-        payment_status: r.payment_status || 'unpaid',
-        payment_method: r.payment_method,
-        due_date: r.due_date,
-        days_until_due: daysUntilDue,
-        is_overdue: isOverdue,
-        aging_bucket: agingBucket,
-        created_at: r.created_at,
-      });
-    }
-
-    // Procesar received_services (tienen currency y exchange_rate en header)
-    for (const s of servicesResult.data || []) {
-      const total = Number(s.total_amount) || 0;
-      const paid = Number(s.paid_amount) || 0;
-      const balance = total - paid;
-      const exRate = Number(s.exchange_rate) || 1.0;
-      const cur = s.currency || 'CUP';
-      const totalCup = cur === 'CUP' ? total : total * exRate;
-      const paidCup = cur === 'CUP' ? paid : paid * exRate;
-      const balanceCup = totalCup - paidCup;
-      const dueDate = s.due_date ? new Date(s.due_date) : null;
-      const daysUntilDue = dueDate
-        ? Math.ceil((dueDate.getTime() - today.getTime()) / 86400000)
-        : null;
-      const isOverdue = dueDate ? dueDate < today && s.payment_status !== 'paid' : false;
-
-      let agingBucket: UnifiedPayable['aging_bucket'] = 'current';
-      if (s.payment_status === 'paid') {
-        agingBucket = 'paid';
-      } else if (isOverdue) {
-        const overdueDays = daysUntilDue !== null ? Math.abs(daysUntilDue) : 0;
-        if (overdueDays > 120) agingBucket = '120+';
-        else if (overdueDays > 90) agingBucket = '120';
-        else if (overdueDays > 60) agingBucket = '90';
-        else if (overdueDays > 30) agingBucket = '60';
-        else agingBucket = '30';
-      }
-
-      payables.push({
-        id: `service-${s.id}`,
-        ref_type: 'service',
-        ref_id: s.id,
-        supplier: s.supplier,
-        reference: s.reference_doc,
-        total,
-        total_cup: totalCup,
-        paid_amount: paid,
-        paid_cup: paidCup,
-        balance,
-        balance_cup: balanceCup,
-        currency: cur,
-        exchange_rate: exRate,
-        payment_status: s.payment_status || 'unpaid',
-        payment_method: s.payment_method,
-        due_date: s.due_date,
-        days_until_due: daysUntilDue,
-        is_overdue: isOverdue,
-        aging_bucket: agingBucket,
-        created_at: s.created_at,
-      });
-    }
-
-    // ── FASE 3: Procesar commission_payments ──
-    // R2: comisiones en CUP, pago completo, efectivo/transferencia/mixto
-    // status 'approved' → unpaid (pendiente), 'paid' → paid
-    for (const c of commissionsResult.data || []) {
-      const total = Number(c.final_amount) || 0;
-      const paid = c.status === 'paid' ? total : 0;
-      const balance = total - paid;
-      const workerData = Array.isArray(c.worker) ? c.worker[0] : c.worker;
-      const workerName = workerData
-        ? `${workerData.first_name || ''} ${workerData.last_name || ''}`.trim()
-        : 'Trabajador desconocido';
-      const dueDate = c.due_date ? new Date(c.due_date) : null;
-      const daysUntilDue = dueDate
-        ? Math.ceil((dueDate.getTime() - today.getTime()) / 86400000)
-        : null;
-      const isOverdue = dueDate ? dueDate < today && c.status !== 'paid' : false;
-      const paymentStatus = c.status === 'paid' ? 'paid' : 'unpaid';
-
-      let agingBucket: UnifiedPayable['aging_bucket'] = 'current';
-      if (c.status === 'paid') {
-        agingBucket = 'paid';
-      } else if (isOverdue) {
-        const overdueDays = daysUntilDue !== null ? Math.abs(daysUntilDue) : 0;
-        if (overdueDays > 120) agingBucket = '120+';
-        else if (overdueDays > 90) agingBucket = '120';
-        else if (overdueDays > 60) agingBucket = '90';
-        else if (overdueDays > 30) agingBucket = '60';
-        else agingBucket = '30';
-      }
-
-      payables.push({
-        id: `commission-${c.id}`,
-        ref_type: 'commission',
-        ref_id: c.id,
-        supplier: workerName,
-        reference: `Comisión ${c.period_start} a ${c.period_end}`,
-        total,
-        total_cup: total, // comisiones siempre CUP
-        paid_amount: paid,
-        paid_cup: paid,
-        balance,
-        balance_cup: balance,
-        currency: 'CUP',
-        exchange_rate: 1.0,
-        payment_status: paymentStatus,
-        payment_method: c.payment_method,
-        due_date: c.due_date,
-        days_until_due: daysUntilDue,
-        is_overdue: isOverdue,
-        aging_bucket: agingBucket,
-        created_at: c.created_at,
-      });
-    }
-
-    // ── Filtrar por método de pago ──
-    // Para comisiones, payment_method puede ser 'mixed' — incluir si filtra por cash o transfer
-    let filtered = payables;
-    if (method) {
-      // CP-FIN-004: methodFilter ya cubre el exterior dual (zelle + external_transfer).
-      filtered = filtered.filter(p => {
-        const matches = (pm: string | null): boolean =>
-          Array.isArray(methodFilter)
-            ? methodFilter.includes(pm ?? '')
-            : pm === methodFilter;
-        if (p.ref_type === 'commission') {
-          // Comisiones: 'mixed' contiene ambos métodos
-          return matches(p.payment_method) || p.payment_method === 'mixed';
-        }
-        return matches(p.payment_method);
-      });
-    }
-
-    // ── Filtrar por tab ──
-    if (tab === 'all') {
-      filtered = filtered.filter(p => p.payment_status !== 'paid');
-    } else if (tab === 'overdue') {
-      filtered = filtered.filter(p => p.is_overdue);
-    } else if (tab === 'paid') {
-      filtered = filtered.filter(p => p.payment_status === 'paid');
-    } else {
-      filtered = filtered.filter(p => p.aging_bucket === tab && p.payment_status !== 'paid');
-    }
-
-    // ── KPIs (sobre TODOS los payables, no los filtrados por tab) ──
-    const kpis = {
-      totalOverdue: payables
-        .filter(p => p.is_overdue && p.payment_status !== 'paid')
-        .reduce((s, p) => s + p.balance_cup, 0),
-      totalUpcoming: payables
-        .filter(p => !p.is_overdue && p.payment_status !== 'paid' && p.days_until_due !== null && p.days_until_due <= 7)
-        .reduce((s, p) => s + p.balance_cup, 0),
-      totalPending: payables
-        .filter(p => p.payment_status !== 'paid')
-        .reduce((s, p) => s + p.balance_cup, 0),
-      totalPaid: payables
-        .filter(p => p.payment_status === 'paid')
-        .reduce((s, p) => s + p.total_cup, 0),
-    };
-
-    // ── Summary por tipo ──
-    const summary = {
-      receipts: {
-        count: payables.filter(p => p.ref_type === 'receipt').length,
-        balance_cup: payables
-          .filter(p => p.ref_type === 'receipt' && p.payment_status !== 'paid')
-          .reduce((s, p) => s + p.balance_cup, 0),
-      },
-      services: {
-        count: payables.filter(p => p.ref_type === 'service').length,
-        balance_cup: payables
-          .filter(p => p.ref_type === 'service' && p.payment_status !== 'paid')
-          .reduce((s, p) => s + p.balance_cup, 0),
-      },
-      commissions: {
-        count: payables.filter(p => p.ref_type === 'commission').length,
-        balance_cup: payables
-          .filter(p => p.ref_type === 'commission' && p.payment_status !== 'paid')
-          .reduce((s, p) => s + p.balance_cup, 0),
-      },
-    };
-
-    // ── FIX-EXCEL-VIEW: mode='grouped' agrupa por proveedor con columnas aging ──
-    // Estructura estilo Excel: una fila por proveedor, columnas por rango de vencimiento.
-    // Columnas: Proveedor | Total | Pagado | Saldo | 0-30d | 31-60d | 61-90d | 91-120d | 120+ | Vencido
-    if (mode === 'grouped') {
-      const supplierMap = new Map<string, {
-        supplier: string;
-        total_cup: number;
-        paid_cup: number;
-        balance_cup: number;
-        aging: {
-          current: number;
-          upcoming7: number;  // FIX: vence en próximos 7 días
-          overdue: number;
-          '30': number;
-          '60': number;
-          '90': number;
-          '120': number;
-          '120+': number;
+    // Comisiones: solo approved/paid (pendiente de pago o pagada) — misma
+    // selección histórica de la vista.
+    const commissions: PayableCommissionRow[] = (commissionsRaw as unknown as Array<Record<string, unknown>>)
+      .filter(c => c.status === 'approved' || c.status === 'paid')
+      .map(c => {
+        const worker = Array.isArray(c.worker) ? c.worker[0] : c.worker;
+        const w = (worker ?? {}) as { first_name?: string | null; last_name?: string | null };
+        return {
+          id: String(c.id),
+          final_amount: c.final_amount as number | null,
+          status: c.status as string | null,
+          due_date: (c.due_date as string | null) ?? null,
+          paid_at: (c.paid_at as string | null) ?? null,
+          payment_method: (c.payment_method as string | null) ?? null,
+          period_start: (c.period_start as string | null) ?? null,
+          period_end: (c.period_end as string | null) ?? null,
+          worker_name: `${w.first_name || ''} ${w.last_name || ''}`.trim() || null,
+          created_at: (c.created_at as string | null) ?? null,
         };
-        count: number;
-      }>();
+      });
 
-      for (const p of payables) {
-        if (p.payment_status === 'paid') continue;
+    // payment_transactions: la tabla es compartida con POS/producción — solo
+    // las de proveedores (receipt/service) alimentan Cuentas por Pagar.
+    const txns: PayableTxnRow[] = (txnsRaw as unknown as Array<Record<string, unknown>>)
+      .filter(t => t.ref_type === 'receipt' || t.ref_type === 'service')
+      .map(t => ({
+        ref_type: t.ref_type as 'receipt' | 'service',
+        ref_id: String(t.ref_id),
+        amount_cup: t.amount_cup as number,
+        currency: (t.currency as string | null) ?? null,
+        payment_method: (t.payment_method as string | null) ?? null,
+        direction: (t.direction as string | null) ?? null,
+        payment_date: String(t.payment_date),
+        reference: (t.reference as string | null) ?? null,
+      }));
 
-        const key = p.supplier || 'Sin proveedor';
-        if (!supplierMap.has(key)) {
-          supplierMap.set(key, {
-            supplier: key,
-            total_cup: 0,
-            paid_cup: 0,
-            balance_cup: 0,
-            aging: { current: 0, upcoming7: 0, overdue: 0, '30': 0, '60': 0, '90': 0, '120': 0, '120+': 0 },
-            count: 0,
-          });
-        }
+    // ── Cálculo único (fuente de verdad compartida con el export) ──
+    const result = computeAccountsPayable(
+      receiptsRaw as unknown as PayableReceiptRow[],
+      servicesRaw as unknown as PayableServiceRow[],
+      commissions,
+      txns,
+      {
+        tab,
+        category,
+        method: methodFilter,
+        currency,
+        search,
+        supplier,
+        date_from,
+        date_to,
+        now: havanaDate(), // día de negocio Habana (corte por defecto)
+      },
+    );
 
-        const entry = supplierMap.get(key)!;
-        entry.total_cup += p.total_cup;
-        entry.paid_cup += p.paid_cup;
-        entry.balance_cup += p.balance_cup;
-        entry.count += 1;
-
-        // Distribuir el saldo en la columna de aging correspondiente
-        if (p.is_overdue) {
-          entry.aging.overdue += p.balance_cup;
-          // Bucket específico de vencido
-          if (p.aging_bucket === '30') entry.aging['30'] += p.balance_cup;
-          else if (p.aging_bucket === '60') entry.aging['60'] += p.balance_cup;
-          else if (p.aging_bucket === '90') entry.aging['90'] += p.balance_cup;
-          else if (p.aging_bucket === '120') entry.aging['120'] += p.balance_cup;
-          else if (p.aging_bucket === '120+') entry.aging['120+'] += p.balance_cup;
-        } else if (p.days_until_due !== null && p.days_until_due <= 7) {
-          // No vencido pero vence en los próximos 7 días
-          entry.aging.upcoming7 += p.balance_cup;
-        } else {
-          // No vencido = "corriente" (próximo a vencer > 7 días o sin vencimiento)
-          entry.aging.current += p.balance_cup;
-        }
-      }
-
-      const groupedData = Array.from(supplierMap.values()).sort((a, b) => b.balance_cup - a.balance_cup);
-
-      // Totales generales (fila de totales)
-      const totals = {
-        total_cup: groupedData.reduce((s, g) => s + g.total_cup, 0),
-        paid_cup: groupedData.reduce((s, g) => s + g.paid_cup, 0),
-        balance_cup: groupedData.reduce((s, g) => s + g.balance_cup, 0),
-        aging: {
-          current: groupedData.reduce((s, g) => s + g.aging.current, 0),
-          upcoming7: groupedData.reduce((s, g) => s + g.aging.upcoming7, 0),
-          overdue: groupedData.reduce((s, g) => s + g.aging.overdue, 0),
-          '30': groupedData.reduce((s, g) => s + g.aging['30'], 0),
-          '60': groupedData.reduce((s, g) => s + g.aging['60'], 0),
-          '90': groupedData.reduce((s, g) => s + g.aging['90'], 0),
-          '120': groupedData.reduce((s, g) => s + g.aging['120'], 0),
-          '120+': groupedData.reduce((s, g) => s + g.aging['120+'], 0),
-        },
-      };
-
+    // ── Respuesta ──
+    if (mode === 'grouped') {
       return NextResponse.json({
-        data: groupedData,
-        totals,
-        kpis,
-        summary,
-        count: groupedData.length,
+        data: result.grouped,
+        totals: result.totals,
+        kpis: result.kpis,
+        summary: result.summary,
+        count: result.grouped.length,
         mode: 'grouped',
+        meta: result.meta,
       });
     }
+
+    // Paginación del resultado FINAL (no por fuente): pedir limit+1 para
+    // calcular has_more sin una consulta extra.
+    const page = result.payables.slice(offset, offset + limit + 1);
+    const hasMore = page.length > limit;
 
     return NextResponse.json({
-      data: filtered,
-      kpis,
-      summary,
-      count: filtered.length,
+      data: page.slice(0, limit),
+      kpis: result.kpis,
+      summary: result.summary,
+      count: result.payables.length,
       mode: 'list',
-      pagination: { limit, offset, has_more: filtered.length === limit },  // FIX-AUD5-M1
+      meta: result.meta,
+      pagination: {
+        limit,
+        offset,
+        has_more: hasMore,
+        total: result.payables.length,
+      },
     });
   } catch (error: any) {
     console.error('[accounts-payable] Error:', error);
