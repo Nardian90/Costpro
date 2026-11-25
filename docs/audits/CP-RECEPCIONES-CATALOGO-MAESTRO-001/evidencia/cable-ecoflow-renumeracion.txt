@@ -1,0 +1,48 @@
+=== CP-RECEPCIONES-CATALOGO-MAESTRO-001 · CONTINUACIÓN (2026-11-25, sesión de cierre CI PR #1710) ===
+Destino: producción wthkddeleylijmonclxg · Regla de oro: validado primero en BD aislada.
+
+=== 1. FASE 0-C (read-only) — estado del gate + Cable para Ecoflow (ANTES de actuar) ===
+[1] Hallazgos del SQL Security Gate (estado vivo):
+    secdef_no_auth → cp_catmaestro001_renumber_auto_masters(...)
+    proacl → add_reception_items: {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+    proacl → save_pending_reception_changes: {=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+[2] Recepción ENT-000003-2026:
+    id=2b74e9cf-0c98-4fd2-b5e2-ef274d82ece7 tienda=ENERVIDA-VITALLCONS (5e6fe821-5465-48b1-b3f1-3aa3182edc38) status=active total=1 creada=2026-11-23 17:02:19.308+00
+[3] Ítems de la recepción (1):
+    >> CABLE: item=ad5505eb-ef8c-46d2-aafb-199d3344a130 qty=1.0000 costo=1
+       local: id=a69286d3-fd2b-4f80-a1d5-e7e2e4b634e1 sku=AUTO-MWTIJE8Y-1 nombre="Cable para Ecoflow"
+       maestro: id=59935685-f96a-4e41-a86e-eb7738768104 sku=AUTO-MWTIJE8Y-1 nombre="Cable para Ecoflow"
+[4] Maestros AUTO-* restantes en el tenant (1): 59935685-f96a-4e41-a86e-eb7738768104  AUTO-MWTIJE8Y-1
+[5] Consecutivo: numéricos=274 min=1 max=999; huecos en 1..300 desde 273; outliers: 999, 998 → siguiente oficial = 273
+[6] Filas locales del maestro (1): ENERVIDA-VITALLCONS únicamente (0 en otras tiendas)
+[7] Línea base de integridad: receipt_items=1 stock_movements=1 kardex(asociados)=2
+
+=== 2. RENUMERACIÓN «Cable para Ecoflow» en PRODUCCIÓN (one-shot, misma maquinaria auditable de fase 1) ===
+[cp-catmaestro001-cable-apply] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+=== CABLE PARA ECOFLOW · RENUMERACIÓN PRODUCCIÓN (wthkddeleylijmonclxg) ===
+
+[1] DRY-RUN:
+    AUTO-MWTIJE8Y-1 → 273 (Cable para Ecoflow) [to_renumber]
+    to_renumber=1 receipt_items=1 stock_movements=1
+
+[2] APLICACIÓN (transacción única):
+    AUTO-MWTIJE8Y-1 → 273 [renumbered] applied=1 already=0
+
+[3] POST-VERIFICACIÓN de integridad:
+    maestro: sku=273 nombre="Cable para Ecoflow"
+    local:   sku=273
+    ítem:    qty=1.0000 costo=1
+    movimientos=1 kardex=2 (línea base fase 0: 1 y 2)
+    AUTO-* restantes=0 | numéricos=275 max=999
+    recepción: total=1 status=active
+
+=== RESULTADO: OK — renumerado e íntegro ===
+
+=== 3. VERIFICACIÓN post-renumeración (read-only, re-ejecutable en cualquier momento) ===
+    maestro sku=273 | local sku=273 | AUTO-* restantes=0
+
+=== 4. PRUEBA DE IDEMPOTENCIA (re-ejecución del one-shot tras el retiro de la herramienta) ===
+Re-ejecutar el dry-run de cp_catmaestro001_renumber_auto_masters tras aplicar 20261125133000 (DROP):
+    ERROR: function public.cp_catmaestro001_renumber_auto_masters(...) does not exist
+Esperado y correcto: la herramienta one-shot fue retirada de producción una vez completada
+su última renumeración; su re-ejecución no encuentra la función (no hay doble aplicación posible).

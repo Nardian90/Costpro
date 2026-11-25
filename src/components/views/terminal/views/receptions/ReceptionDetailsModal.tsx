@@ -24,6 +24,10 @@ import PaymentRowsEditor, {
   newPaymentRow, rowsCupTotal, rowsToPayload, rowsAreValid, payRowsFingerprint,
   type PaymentEditorRow,
 } from '@/components/payments/PaymentRowsEditor';
+// CP-RECEPCIONES-CATALOGO-MAESTRO-001 (fase 3): panel de altas para
+// recepciones pendientes — buscar existentes / producto nuevo con código
+// oficial; las líneas se guardan con el resto del modal (atómico).
+import { ReceptionAddItemsPanel, type StagedReceptionLine } from './ReceptionAddItemsPanel';
 
 interface ReceptionDetailsModalProps {
   receipt: Receipt | null;
@@ -42,7 +46,23 @@ interface ReceptionDetailsModalProps {
   onToggleSc204Values?: (next: boolean) => void;
   // Nuevas props para edición y anulación:
   isEditMode?: boolean;
-  onUpdateSubmit?: (updates: { supplier?: string; referenceDoc?: string; itemUpdates?: Array<{ id: string; quantity: number; unit_cost: number; deleted: boolean }> }) => void;
+  onUpdateSubmit?: (updates: {
+    supplier?: string;
+    referenceDoc?: string;
+    itemUpdates?: Array<{ id: string; quantity: number; unit_cost: number; deleted: boolean }>;
+    newItems?: Array<{
+      product_id?: string | null;
+      sku?: string | null;
+      name?: string | null;
+      barcode?: string | null;
+      quantity: number;
+      unit_cost: number;
+      unit_of_measure?: string | null;
+      sale_price?: number | null;
+      moneda_recepcion?: string;
+      tasa_cambio_recepcion?: number;
+    }>;
+  }) => void;
   onVoidRequest?: () => void;
   isUpdating?: boolean;
   isVoiding?: boolean;
@@ -86,6 +106,19 @@ export function ReceptionDetailsModal({
   const [batchLoading, setBatchLoading] = useState(false);
   // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
   const dialogs = useDialogs();
+
+  // CP-RECEPCIONES-CATALOGO-MAESTRO-001 (fase 3): líneas nuevas del borrador.
+  // Se reinician al cambiar de recepción o cerrar el modal.
+  const [newLines, setNewLines] = useState<StagedReceptionLine[]>([]);
+  const lastReceiptIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const currentId = receipt?.id ?? null;
+    if (lastReceiptIdRef.current !== currentId) {
+      lastReceiptIdRef.current = currentId;
+      setNewLines([]);
+    }
+    if (!isOpen) setNewLines([]);
+  }, [receipt?.id, isOpen]);
 
   // FIX-BACKFILL: Función para actualizar moneda/tasa de un item individual.
   // CP-RECEIPT-INTEGRITY-001: solo recepciones PENDIENTES son editables; la
@@ -290,6 +323,25 @@ export function ReceptionDetailsModal({
                 onClick={() => {
                   const supplier = (document.getElementById('edit-supplier') as HTMLInputElement)?.value;
                   const referenceDoc = (document.getElementById('edit-reference-doc') as HTMLInputElement)?.value;
+                  // CP-RECEPCIONES-CATALOGO-MAESTRO-001 (fase 3): validar las
+                  // líneas nuevas ANTES de enviar (fail-fast claro para el
+                  // usuario; el backend revalida con los mismos criterios).
+                  const invalidLine = newLines.find(l => !(l.quantity > 0) || !(l.unit_cost > 0));
+                  if (invalidLine) {
+                    toast.error(
+                      `La línea nueva "${invalidLine.name}" necesita cantidad y costo unitario mayores que 0`,
+                    );
+                    return;
+                  }
+                  const fxInvalid = newLines.find(
+                    l => l.moneda_recepcion !== 'CUP' && !(l.tasa_cambio_recepcion > 1.5)
+                  );
+                  if (fxInvalid) {
+                    toast.error(
+                      `La línea nueva "${fxInvalid.name}" en ${fxInvalid.moneda_recepcion} necesita una tasa mayor que 1.5`,
+                    );
+                    return;
+                  }
                   // R2: recolectar cambios de items si la recepción está pendiente
                   const itemUpdates: Array<{ id: string; quantity: number; unit_cost: number; deleted: boolean }> = [];
                   if (receipt?.status === 'pending') {
@@ -313,13 +365,26 @@ export function ReceptionDetailsModal({
                       }
                     });
                   }
-                  onUpdateSubmit?.({ supplier, referenceDoc, itemUpdates });
+                  // Fase 3: líneas nuevas → payload para el guardado atómico.
+                  const newItems = newLines.map(l => ({
+                    product_id: l.product_id,
+                    sku: l.sku || null,
+                    name: l.name,
+                    barcode: l.barcode ?? null,
+                    quantity: l.quantity,
+                    unit_cost: l.unit_cost,
+                    unit_of_measure: l.unit_of_measure || 'unidad',
+                    sale_price: l.sale_price ?? null,
+                    moneda_recepcion: l.moneda_recepcion,
+                    tasa_cambio_recepcion: l.tasa_cambio_recepcion,
+                  }));
+                  onUpdateSubmit?.({ supplier, referenceDoc, itemUpdates, newItems });
                 }}
                 disabled={isUpdating}
                 className="px-8 py-3 bg-primary text-white border border-primary rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50"
                 aria-label="Guardar cambios de la recepción"
               >
-                {isUpdating ? 'Guardando...' : 'Guardar cambios'}
+                {isUpdating ? 'Guardando...' : newLines.length > 0 ? `Guardar cambios (+${newLines.length})` : 'Guardar cambios'}
               </button>
             )}
           </div>
@@ -516,6 +581,19 @@ export function ReceptionDetailsModal({
                   ? 'Los ítems son editables porque la recepción está pendiente (no ha afectado inventario).'
                   : 'Nota: Los ítems no pueden editarse porque el inventario ya fue afectado al momento de la recepción original.'}
               </p>
+
+              {/* CP-RECEPCIONES-CATALOGO-MAESTRO-001 (fase 3): altas de
+                  productos para borradores — búsqueda de existentes, filas
+                  del Catálogo Maestro y producto nuevo con código oficial. */}
+              {receipt?.status === 'pending' && receipt?.store_id && (
+                <ReceptionAddItemsPanel
+                  storeId={receipt.store_id}
+                  existingProductIds={items.map(i => i.product_id).filter(Boolean) as string[]}
+                  lines={newLines}
+                  onLinesChange={setNewLines}
+                  disabled={isUpdating}
+                />
+              )}
             </div>
           ) : (
             /* Metadata Grid */

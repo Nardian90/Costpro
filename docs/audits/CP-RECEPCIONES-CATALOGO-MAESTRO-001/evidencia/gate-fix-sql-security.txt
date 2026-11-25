@@ -1,0 +1,59 @@
+=== CI PR #1710 — SQL DB Security Checks: hallazgos y corrección (2026-11-25) ===
+
+=== A. Estado del job del CI (GitHub Actions, SHA 45d63f674b) ANTES del fix ===
+❌ secdef_no_auth: 127 hallazgo(s), 126 en allowlist, 1 NO permitidos
+     ❌ cp_catmaestro001_renumber_auto_masters (p_dry_run boolean DEFAULT true, ...)
+❌ secdef_public_grant: 2 hallazgo(s), 0 en allowlist, 2 NO permitidos
+     ❌ add_reception_items
+     ❌ save_pending_reception_changes
+✅ tables_no_rls: 0 hallazgo(s)
+❌ Resultado: FALLO
+
+=== B. Aplicación en BD AISLADA primero (regla de oro) — lguovmvrozxgssupkwpf ===
+=== GATE-FIX CP-CATMAESTRO-001 · APLICACIÓN · isolated (lguovmvrozxgssupkwpf) ===
+[apply] 20261125132000_cp_catmaestro001_reception_rpc_acl.sql
+[apply] 20261125133000_cp_catmaestro001_drop_renumber_tool.sql
+    migraciones aplicadas (idempotentes)
+[verify] ACL final de las 3 funciones:
+    add_reception_items: {postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+    save_pending_reception_changes: {postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+    cp_catmaestro001_renumber_auto_masters viva: 0 (esperado 0)
+[verify] Ejecución del gate de CI (misma maquinaria que el workflow):
+    gate: 138 hallazgo(s)
+🔒 SQL Security Checks — evaluación de resultados
+❌ secdef_no_auth: 129 hallazgo(s), 126 en allowlist, 3 NO permitidos
+     ❌ e2e_hard_delete_store (p_store_id uuid)
+     ❌ e2e_hard_delete_user (p_user_id uuid)
+     ❌ is_party_store_connected (p_tenant_id uuid, p_store_id uuid)
+❌ secdef_public_grant: 9 hallazgo(s), 0 en allowlist, 9 NO permitidos
+     ❌ can_read_master_parties
+     ❌ current_user_tenant_id
+     ❌ e2e_hard_delete_store
+     ❌ e2e_hard_delete_user
+     ❌ get_cash_balances_by_currency
+     ❌ get_cash_currency_summary
+     ❌ get_cash_ledger
+     ❌ has_store_role
+     ❌ is_party_store_connected
+✅ tables_no_rls: 0 hallazgo(s), 0 en allowlist, 0 NO permitidos
+❌ Resultado: FALLO — ver hallazgos arriba (o canario/check_id inválidos)
+=== RESULTADO: GATE CON HALLAZGOS — REVISAR ===
+
+=== C. Aplicación en PRODUCCIÓN (una sola vez) + verificación con la MISMA maquinaria del gate de CI ===
+[cp-catmaestro001-gatefix-apply] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+=== GATE-FIX CP-CATMAESTRO-001 · APLICACIÓN · prod (wthkddeleylijmonclxg) ===
+[apply] 20261125132000_cp_catmaestro001_reception_rpc_acl.sql
+[apply] 20261125133000_cp_catmaestro001_drop_renumber_tool.sql
+    migraciones aplicadas (idempotentes)
+[verify] ACL final de las 3 funciones:
+    add_reception_items: {postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+    save_pending_reception_changes: {postgres=X/postgres,service_role=X/postgres,authenticated=X/postgres}
+    cp_catmaestro001_renumber_auto_masters viva: 0 (esperado 0)
+[verify] Ejecución del gate de CI (misma maquinaria que el workflow):
+    gate: 126 hallazgo(s)
+🔒 SQL Security Checks — evaluación de resultados
+✅ secdef_no_auth: 126 hallazgo(s), 126 en allowlist, 0 NO permitidos
+✅ secdef_public_grant: 0 hallazgo(s), 0 en allowlist, 0 NO permitidos
+✅ tables_no_rls: 0 hallazgo(s), 0 en allowlist, 0 NO permitidos
+✅ Resultado: TODO PASS — 3 checks ejecutados completos, 0 hallazgos fuera de allowlist
+=== RESULTADO: GATE EN VERDE (estado vivo limpio) ===

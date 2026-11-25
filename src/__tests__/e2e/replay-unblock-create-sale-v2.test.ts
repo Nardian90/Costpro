@@ -550,15 +550,24 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261125120000_cp_pos_per_item_payments (transaction_items.
     //   payment_distributions + create_sale_v2 con p_customer_ci y validación
     //   items[].payments; al FINAL del orden lexicográfico)
-    // CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (merge de main, PR #1706,
-    // 2026-11-25): +2 — 20261125120000_cp_recep001_confirm_notes_link (enlace
-    //   documental del saldo en confirm_pending_reception + backfill
-    //   conservador) y 20261125120100_cp_recep001_master_sku_consecutivo
-    //   (consecutivo oficial del Catálogo Maestro; al FINAL del orden
-    //   lexicográfico). Total fusionado = 207
-    expect(m.total_incluidos).toBe(207);
+    // CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (PR #1706, 2026-11-25): +2 —
+    //   20261125120000_cp_recep001_confirm_notes_link (enlace documental del
+    //   saldo en confirm_pending_reception + backfill conservador) y
+    //   20261125120100_cp_recep001_master_sku_consecutivo (consecutivo oficial
+    //   del Catálogo Maestro; al FINAL del orden lexicográfico)
+    // CP-RECEPCIONES-CATALOGO-MAESTRO-001 (2026-11-25): +2 —
+    //   20261125130000 renumeración supervisada de los 16 AUTO-* de
+    //   ENT-000005-2026 y 20261125131000 altas de productos en borradores
+    //   (add_reception_items + save_pending_reception_changes; al FINAL del
+    //   orden lexicográfico — posiciones previas intactas) = 209
+    // CP-RECEPCIONES-CATALOGO-MAESTRO-001 · CIERRE CI PR #1710 (2026-11-25): +2 —
+    //   20261125132000 revoca PUBLIC/anon EXECUTE en las RPC de borradores
+    //   (hallazgo secdef_public_grant del SQL Security Gate) y 20261125133000
+    //   retira la herramienta one-shot de renumeración ya usada (hallazgo
+    //   secdef_no_auth; al FINAL del orden lexicográfico) = 211
+    expect(m.total_incluidos).toBe(211);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(207);
+    expect(incluidos.length).toBe(211);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
