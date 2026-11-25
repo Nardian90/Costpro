@@ -32,7 +32,11 @@ import type { CashSettlement } from "@/lib/pos/cash-settlement";
 import { buildPaymentComponents, requiresPaymentComponents } from "@/lib/pos/payment-components";
 // CP-FIN-004: reconocedor dual del medio «Transf. Exterior» (canónico
 // 'external_transfer' + heredado 'zelle').
-import { isExteriorMethod } from "@/lib/payments/methods";
+// normalizePaymentMethod (CP-FIN-004): normaliza el medio heredado 'zelle' de
+// carritos persistidos al canónico 'external_transfer' para ENVÍOS al backend
+// (doble defensa: el RPC también normaliza). TS no puede ver los valores
+// heredados del storage — el tipo de PaymentRow.method ya es canónico.
+import { isExteriorMethod, normalizePaymentMethod } from "@/lib/payments/methods";
 // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): agregación de medios de pago para el
 // comprobante POS — suma las filas YA cobradas (misma fuente que viaja al RPC),
 // sin recálculo de importes.
@@ -426,7 +430,12 @@ export function usePOSCheckout() {
                 // resolución que getItemPaidCup: globalRates > tasa del item).
                 ...(i.payments && i.payments.length > 0 ? {
                   payments: i.payments.map((p) => {
-                    const method = p.method === 'zelle' ? 'external_transfer' : p.method;
+                    // Normalización defensaria (CP-FIN-004): una fila heredada
+                    // 'zelle' de un carrito persistido nunca debe salir al
+                    // backend sin normalizar. Con PaymentRow.method tipado
+                    // canónico, TS marcaba esta comparación como muerta
+                    // (TS2367) — el valor heredado solo existe en runtime.
+                    const method = normalizePaymentMethod(p.method);
                     const currency = p.currency || 'CUP';
                     const isTransfer = method === 'transfer' || method === 'external_transfer';
                     const rate = currency === 'CUP'

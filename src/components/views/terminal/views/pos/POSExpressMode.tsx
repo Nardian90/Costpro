@@ -647,8 +647,16 @@ export function POSExpressMode({
     const lineCount = items.length;
     if (lineCount > prevLineCountRef.current) {
       // Espera al commit del layout (AnimatePresence/motion) antes de scrollear.
+      // Guard de método: el temporizador es DIFERIDO y puede disparar después
+      // del teardown de un test — jsdom no implementa scrollIntoView y un
+      // TypeError en un timer suelto se reporta como error no manejado que
+      // falla el job de CI aunque los tests pasen. En el navegador el método
+      // siempre existe: el guard no altera el comportamiento real.
       const t = setTimeout(() => {
-        itemsEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        const endEl = itemsEndRef.current;
+        if (endEl && typeof endEl.scrollIntoView === 'function') {
+          endEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
       }, 80);
       prevLineCountRef.current = lineCount;
       return () => clearTimeout(t);
