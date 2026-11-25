@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
 import { toast } from 'sonner';
 import {
-  Lock, Headphones, X, Cookie,
+  Lock, Headphones, X, Cookie, Newspaper,
 } from 'lucide-react';
 import type { MotionValue } from 'framer-motion';
 
@@ -31,6 +32,7 @@ import FeaturesSection from '@/components/landing/FeaturesSection';
 import PricingSection from '@/components/landing/PricingSection';
 import FAQSection from '@/components/landing/FAQSection';
 import FinalCTASection from '@/components/landing/FinalCTASection';
+import NovedadesCard from '@/components/landing/NovedadesCard';
 import FooterSection from '@/components/landing/FooterSection';
 import type { FooterLinkId } from '@/components/landing/FooterSection';
 import FooterModals from '@/components/landing/FooterModals';
@@ -694,6 +696,14 @@ export default function LandingPage() {
 
           <SectionDivider />
 
+          {/* ── NOVEDADES (CP-LANDING-NEWS-ACCESS-001) — tarjeta destacada de
+              acceso a la vista pública existente /gaceta (El Diario Contable,
+              ADN-011): Gaceta Oficial de Cuba + Actualizaciones de ADNegocio.
+              En modo cine la escena de cierre lleva su versión compacta. ── */}
+          <NovedadesCard />
+
+          <SectionDivider />
+
           {/* ── FINAL CTA (compacto: convive con el FAQ en el capítulo 5) ── */}
           <FinalCTASection
             compact
@@ -814,6 +824,26 @@ export default function LandingPage() {
                 </button>
               </div>
               <nav aria-label="Navegación principal" className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+                {/* CP-LANDING-NEWS-ACCESS-001 — «Novedades» primero: en móvil el
+                    acceso debe estar disponible desde el menú SIN desplazamientos
+                    innecesarios (§3). Ruta real a /gaceta (El Diario Contable),
+                    diferenciada con acento verde + icono; los capítulos siguen
+                    debajo en su orden original. */}
+                <Link
+                  href="/gaceta"
+                  data-testid="drawer-novedades"
+                  onClick={() => setShowMobileNav(false)}
+                  className="mb-2 flex w-full items-center gap-3 rounded-lg border border-[#22c55e]/25 bg-[#22c55e]/[0.08] px-4 py-3.5 text-sm font-semibold text-[#22c55e] transition-colors min-h-[44px] hover:bg-[#22c55e]/15"
+                >
+                  <Newspaper className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Novedades
+                  <span
+                    aria-hidden="true"
+                    className="ml-auto relative flex h-1.5 w-1.5 rounded-full bg-[#22c55e]"
+                  >
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-60 motion-reduce:hidden" />
+                  </span>
+                </Link>
                 {sectionLabels.map((label, idx) => (
                   <button
                     key={sectionIds[idx]}
