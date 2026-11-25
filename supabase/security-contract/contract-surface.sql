@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-24T20:43:30.025Z
+-- Captured  : 2026-11-25T18:07:41.419Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 224 (SECURITY DEFINER write functions, public schema)
+-- Functions : 232 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -269,6 +269,263 @@ BEGIN
     'cost_average', 1, 'nominal_cost_assigned', true,
     'cost_average_origin', 'nominal_1cup_owner_policy');
 END;
+$function$
+
+
+-- @contract-function name=add_reception_items args="p_receipt_id uuid, p_items jsonb, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.add_reception_items(p_receipt_id uuid, p_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_store_id uuid;
+  v_status text;
+  v_tenant uuid;
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_item jsonb;
+  v_res jsonb;
+  v_product_id uuid;
+  v_sku text;
+  v_name text;
+  v_qty numeric;
+  v_cost numeric;
+  v_uom text;
+  v_moneda text;
+  v_tasa numeric;
+  v_resolve_rows jsonb := '[]'::jsonb;
+  v_resolve_res jsonb;
+  v_pos_map jsonb := '[]'::jsonb;
+  v_map_entry jsonb;
+  v_resolve_cursor int := 0;
+  v_added jsonb := '[]'::jsonb;
+  v_added_count int := 0;
+  v_idem_count int := 0;
+  v_seen uuid[] := ARRAY[]::uuid[];
+  v_blocked_list text[] := ARRAY[]::text[];
+  v_new_total numeric;
+  v_row jsonb;
+  v_local_sku text;
+  v_local_id uuid;
+  v_dup record;
+BEGIN
+  SELECT store_id, status INTO v_store_id, v_status
+    FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
+
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF v_status <> 'pending' THEN
+    RAISE EXCEPTION 'ERR_NOT_EDITABLE: solo se pueden agregar productos a recepciones pendientes (estado actual: %)', v_status;
+  END IF;
+  IF p_items IS NULL OR jsonb_typeof(p_items) <> 'array' OR jsonb_array_length(p_items) = 0 THEN
+    RAISE EXCEPTION 'ERR_EMPTY_ITEMS: se requiere al menos una línea';
+  END IF;
+  IF jsonb_array_length(p_items) > 200 THEN
+    RAISE EXCEPTION 'ERR_BULK_LIMIT: máximo 200 líneas por lote';
+  END IF;
+
+  -- Fase A: validar forma de cada línea y clasificar (directas vs a resolver).
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+    v_qty := COALESCE((v_item->>'quantity')::numeric, 0);
+    v_cost := COALESCE((v_item->>'unit_cost')::numeric, 0);
+    v_moneda := COALESCE(NULLIF(btrim(COALESCE(v_item->>'moneda_recepcion', '')), ''), 'CUP');
+    v_tasa := COALESCE((v_item->>'tasa_cambio_recepcion')::numeric, 1);
+    v_uom := NULLIF(btrim(COALESCE(v_item->>'unit_of_measure', '')), '');
+
+    IF v_qty IS NULL OR v_qty <= 0 THEN
+      RAISE EXCEPTION 'ERR_INVALID_QUANTITY: la cantidad debe ser > 0 (recibido %)', v_qty;
+    END IF;
+    IF v_cost IS NULL OR v_cost <= 0 THEN
+      RAISE EXCEPTION 'ERR_INVALID_UNIT_COST: el costo unitario debe ser > 0 (recibido %)', v_cost;
+    END IF;
+    IF v_moneda NOT IN ('CUP','USD','EUR','MLC') THEN
+      RAISE EXCEPTION 'ERR_INVALID_CURRENCY: moneda % no soportada', v_moneda;
+    END IF;
+    IF v_moneda = 'CUP' AND v_tasa <> 1 THEN
+      RAISE EXCEPTION 'ERR_INVALID_TASA: la tasa de CUP debe ser 1 (recibido %)', v_tasa;
+    END IF;
+    IF v_moneda <> 'CUP' AND (v_tasa IS NULL OR v_tasa <= 1.5) THEN
+      RAISE EXCEPTION 'ERR_INVALID_TASA: la tasa de % debe ser > 1.5 (recibido %)', v_moneda, v_tasa;
+    END IF;
+
+    IF (v_item->>'product_id') IS NULL OR btrim(COALESCE(v_item->>'product_id', '')) = '' THEN
+      v_name := NULLIF(btrim(COALESCE(v_item->>'name', '')), '');
+      IF v_name IS NULL THEN
+        RAISE EXCEPTION 'ERR_PRODUCT_WITHOUT_NAME: la línea sin product_id exige nombre';
+      END IF;
+      v_resolve_rows := v_resolve_rows || jsonb_build_object(
+        'sku', COALESCE(NULLIF(btrim(COALESCE(v_item->>'sku', '')), ''), ''),
+        'name', v_name,
+        'barcode', COALESCE(NULLIF(btrim(COALESCE(v_item->>'barcode', '')), ''), ''),
+        'quantity', v_qty,
+        'unit_cost', v_cost,
+        'unit_of_measure', COALESCE(v_uom, 'unidad'),
+        'sale_price', v_item->>'sale_price'
+      );
+    ELSE
+      v_product_id := (v_item->>'product_id')::uuid;
+      IF v_product_id = ANY(v_seen) THEN
+        RAISE EXCEPTION 'ERR_DUPLICATE_IN_BATCH: el producto % aparece dos veces en el lote', v_product_id;
+      END IF;
+      v_seen := array_append(v_seen, v_product_id);
+    END IF;
+  END LOOP;
+
+  -- Fase B: resolver las líneas sin product_id con el ESCRITOR CANÓNICO
+  -- (misma transacción: si algo posterior falla, todo se revierte y no
+  -- quedan maestros/filas locales huérfanas — misión §4).
+  IF jsonb_array_length(v_resolve_rows) > 0 THEN
+    v_resolve_res := public.resolve_reception_import_rows(
+      p_store_id := v_store_id,
+      p_rows := v_resolve_rows,
+      p_confirm_reactivation := '[]'::jsonb,
+      p_user_id := v_caller_uid
+    );
+    -- Mapa POSICIONAL resultado⇄fila (results[i] ↔ v_resolve_rows[i]).
+    FOR v_res IN SELECT * FROM jsonb_array_elements(COALESCE(v_resolve_res->'results', '[]'::jsonb)) LOOP
+      IF (v_res->>'action') = 'blocked' THEN
+        v_blocked_list := array_append(v_blocked_list,
+          COALESCE(NULLIF(v_res->>'sku', ''), '(sin código)') || ': ' ||
+          COALESCE(v_res->'reasons'->>0, 'requiere revisión'));
+        v_pos_map := v_pos_map || 'null'::jsonb;
+      ELSIF (v_res->>'product_id') IS NOT NULL AND btrim(COALESCE(v_res->>'product_id', '')) <> '' THEN
+        v_pos_map := v_pos_map || jsonb_build_object(
+          'product_id', v_res->>'product_id', 'sku', v_res->>'sku');
+      ELSE
+        -- new_local (tienda NO conectada): se resuelve en Fase C.
+        v_pos_map := v_pos_map || 'null'::jsonb;
+        v_blocked_list := array_append(v_blocked_list, '__NEW_LOCAL__');
+      END IF;
+    END LOOP;
+    -- Ninguna fila puede quedar bloqueada (fail-closed, misión §10).
+    IF EXISTS (SELECT 1 FROM unnest(v_blocked_list) b WHERE b <> '__NEW_LOCAL__') THEN
+      RAISE EXCEPTION 'ERR_ROWS_BLOCKED: no se agregó nada (transacción revertida): %',
+        array_to_string(ARRAY(SELECT b FROM unnest(v_blocked_list) b WHERE b <> '__NEW_LOCAL__'), ' | ');
+    END IF;
+  END IF;
+
+  -- Fase C: tienda NO conectada — filas new_local crean su fila local con
+  -- el código canónico del tenant (paridad del flujo de borradores nuevo).
+  IF jsonb_array_length(v_resolve_rows) > 0
+     AND EXISTS (SELECT 1 FROM jsonb_array_elements(v_pos_map) m WHERE jsonb_typeof(m) = 'null') THEN
+    SELECT tenant_id INTO v_tenant FROM public.stores WHERE id = v_store_id;
+    IF v_tenant IS NULL THEN
+      RAISE EXCEPTION 'ERR_STORE_WITHOUT_TENANT';
+    END IF;
+    FOR v_i IN 1..jsonb_array_length(v_resolve_rows) LOOP
+      IF (v_pos_map->(v_i - 1)) IS NULL THEN
+        v_row := v_resolve_rows->(v_i - 1);
+        v_local_sku := NULLIF(btrim(COALESCE(v_row->>'sku', '')), '');
+        IF v_local_sku IS NULL THEN
+          v_local_sku := public.next_master_catalog_sku(v_tenant);
+        END IF;
+        INSERT INTO public.products (
+          store_id, tenant_id, sku, name, price, cost_price, cost_average,
+          unit_of_measure, is_active, is_complete, stock_current, min_stock
+        ) VALUES (
+          v_store_id, v_tenant, v_local_sku,
+          COALESCE(NULLIF(btrim(COALESCE(v_row->>'name', '')), ''), v_local_sku),
+          COALESCE(NULLIF(v_row->>'sale_price', '')::numeric, 0),
+          COALESCE((v_row->>'unit_cost')::numeric, 0), 1,
+          COALESCE(NULLIF(btrim(COALESCE(v_row->>'unit_of_measure', '')), ''), 'unidad'),
+          true, false, 0, 1
+        ) RETURNING id INTO v_local_id;
+        v_pos_map := jsonb_set(v_pos_map, ARRAY[(v_i - 1)::text],
+          jsonb_build_object('product_id', v_local_id, 'sku', v_local_sku));
+        INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+        VALUES (v_caller_uid, v_store_id, 'RECEPTION_ADD_ITEM_LOCAL_CREATED', 'products', v_local_id,
+          jsonb_build_object('sku', v_local_sku, 'origin', 'add_reception_items',
+            'receipt_id', p_receipt_id, 'store_connected', false,
+            'sku_assigned_by_server', (v_row->>'sku') IS NULL));
+      END IF;
+    END LOOP;
+  END IF;
+
+  -- Fase D: insertar TODAS las líneas (orden original del lote; el mapa
+  -- posicional avanza SOLO en las líneas que fueron a resolución).
+  v_resolve_cursor := 0;
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+    v_qty := COALESCE((v_item->>'quantity')::numeric, 0);
+    v_cost := COALESCE((v_item->>'unit_cost')::numeric, 0);
+    v_moneda := COALESCE(NULLIF(btrim(COALESCE(v_item->>'moneda_recepcion', '')), ''), 'CUP');
+    v_tasa := COALESCE((v_item->>'tasa_cambio_recepcion')::numeric, 1);
+
+    IF (v_item->>'product_id') IS NOT NULL AND btrim(COALESCE(v_item->>'product_id', '')) <> '' THEN
+      v_product_id := (v_item->>'product_id')::uuid;
+    ELSE
+      v_resolve_cursor := v_resolve_cursor + 1;
+      v_map_entry := v_pos_map->(v_resolve_cursor - 1);
+      IF v_map_entry IS NULL OR (v_map_entry->>'product_id') IS NULL THEN
+        RAISE EXCEPTION 'ERR_RESOLUTION_MISMATCH: la línea "%" no pudo resolverse con el escritor canónico', COALESCE(v_item->>'name', '(sin nombre)');
+      END IF;
+      v_product_id := (v_map_entry->>'product_id')::uuid;
+    END IF;
+
+    -- El producto debe existir y pertenecer a ESTA tienda (re-verificación
+    -- en runtime — también cubre las filas creadas por la resolución).
+    SELECT p.sku, p.name INTO v_sku, v_name
+      FROM public.products p
+      WHERE p.id = v_product_id AND p.store_id = v_store_id;
+    IF v_sku IS NULL THEN
+      RAISE EXCEPTION 'ERR_PRODUCT_NOT_IN_STORE: el producto % no pertenece a la tienda de la recepción', v_product_id;
+    END IF;
+
+    -- Duplicados: línea idéntica ya presente → salto idempotente; distinta
+    -- → error con remedio (misión §4: reintentos sin duplicar).
+    SELECT ri.quantity, ri.unit_cost, ri.moneda_recepcion, ri.tasa_cambio_recepcion
+      INTO v_dup
+      FROM public.receipt_items ri
+      WHERE ri.receipt_id = p_receipt_id AND ri.product_id = v_product_id
+      LIMIT 1;
+    IF FOUND THEN
+      IF v_dup.quantity = v_qty AND v_dup.unit_cost = v_cost
+         AND COALESCE(v_dup.moneda_recepcion, 'CUP') = v_moneda
+         AND COALESCE(v_dup.tasa_cambio_recepcion, 1) = v_tasa THEN
+        v_idem_count := v_idem_count + 1;
+        v_added := v_added || jsonb_build_object('product_id', v_product_id, 'sku', v_sku,
+          'name', v_name, 'state', 'already_present_idempotent');
+        CONTINUE;
+      END IF;
+      RAISE EXCEPTION 'ERR_PRODUCT_ALREADY_IN_RECEIPT: "%" (producto %) ya está en la recepción con otros datos — edite su cantidad/costo en la tabla en lugar de agregarlo de nuevo', v_name, v_sku;
+    END IF;
+
+    INSERT INTO public.receipt_items
+      (receipt_id, product_id, quantity, unit_cost, moneda_recepcion, tasa_cambio_recepcion)
+    VALUES
+      (p_receipt_id, v_product_id, v_qty, v_cost, v_moneda, v_tasa);
+
+    v_added_count := v_added_count + 1;
+    v_added := v_added || jsonb_build_object(
+      'product_id', v_product_id, 'sku', v_sku, 'name', v_name,
+      'quantity', v_qty, 'unit_cost', v_cost, 'moneda', v_moneda,
+      'sku_assigned_by_server', COALESCE(NULLIF(btrim(COALESCE(v_item->>'sku', '')), ''), '') = '');
+  END LOOP;
+
+  -- Total recalculado con la doctrina del módulo (valida coherencia global).
+  v_new_total := public.calculate_receipt_total_cup(p_receipt_id);
+  UPDATE public.receipts SET total_cost = v_new_total, updated_at = now()
+    WHERE id = p_receipt_id;
+
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (v_caller_uid, v_store_id, 'reception_items_added', 'receipts', p_receipt_id,
+    jsonb_build_object(
+      'added', v_added_count, 'idempotent_skipped', v_idem_count,
+      'new_total', v_new_total,
+      'origin', 'cp_recepciones_catalogo_maestro_001_fase3',
+      'items', v_added));
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'added_count', v_added_count,
+    'idempotent_skipped', v_idem_count,
+    'new_total', v_new_total,
+    'items', v_added
+  );
+END
 $function$
 
 
@@ -3233,6 +3490,180 @@ END;
 $function$
 
 
+-- @contract-function name=consolidate_local_party args="p_kind text, p_local_id uuid, p_mode text, p_master_party_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.consolidate_local_party(p_kind text, p_local_id uuid, p_mode text, p_master_party_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_kind text := lower(btrim(COALESCE(p_kind, '')));
+  v_mode text := lower(btrim(COALESCE(p_mode, '')));
+  v_local record;
+  v_local_tax text;
+  v_store_id uuid;
+  v_tenant uuid;
+  v_master record;
+  v_master_id uuid;
+  v_code text;
+  v_max_seq integer;
+  v_name_dups jsonb := '[]'::jsonb;
+  v_is_client boolean;
+  v_is_supplier boolean;
+BEGIN
+  IF v_caller_uid IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+  IF v_kind NOT IN ('supplier', 'customer') THEN
+    RAISE EXCEPTION 'ERR_KIND_INVALID: esperaba supplier|customer (recibido: %)', v_kind;
+  END IF;
+  IF v_mode NOT IN ('link', 'promote') THEN
+    RAISE EXCEPTION 'ERR_MODE_INVALID: esperaba link|promote (recibido: %)', v_mode;
+  END IF;
+
+  -- Fila local + tienda (la gestión es por tienda, como create_master_party).
+  IF v_kind = 'supplier' THEN
+    SELECT * INTO v_local FROM public.suppliers WHERE id = p_local_id FOR UPDATE;
+    SELECT NULLIF(btrim(COALESCE(tax_id, '')), '') INTO v_local_tax FROM public.suppliers WHERE id = p_local_id;
+  ELSE
+    SELECT * INTO v_local FROM public.customers WHERE id = p_local_id FOR UPDATE;
+    SELECT NULLIF(btrim(COALESCE(ci, '')), '') INTO v_local_tax FROM public.customers WHERE id = p_local_id;
+  END IF;
+  IF v_local.id IS NULL THEN
+    RAISE EXCEPTION 'ERR_LOCAL_PARTY_NOT_FOUND: % %', v_kind, p_local_id;
+  END IF;
+
+  v_store_id := v_local.store_id;
+  SELECT s.tenant_id INTO v_tenant FROM public.stores s WHERE s.id = v_store_id;
+  IF v_tenant IS NULL THEN
+    RAISE EXCEPTION 'ERR_STORE_NOT_FOUND';
+  END IF;
+  IF NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: sin acceso a la tienda del tercero local';
+  END IF;
+  IF NOT public.is_admin_check(v_caller_uid)
+     AND NOT public.has_store_role_as(v_caller_uid, v_store_id, ARRAY['admin','manager','encargado']) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: rol insuficiente para consolidar terceros';
+  END IF;
+
+  -- Idempotencia: ya vinculado al mismo maestro.
+  IF v_local.master_party_id IS NOT NULL THEN
+    IF p_mode = 'link' AND p_master_party_id = v_local.master_party_id THEN
+      RETURN jsonb_build_object('status', 'no_change',
+        'master_party_id', v_local.master_party_id,
+        'already_linked', true);
+    END IF;
+    RAISE EXCEPTION
+      'ERR_LOCAL_ALREADY_LINKED: el registro local ya está vinculado al maestro % (desvincule antes o edite desde el maestro)',
+      v_local.master_party_id;
+  END IF;
+
+  IF v_mode = 'link' THEN
+    ------------------------------------------------------------------
+    -- VINCULAR a un maestro EXISTENTE (decisión humana explícita: la UI
+    -- propone candidatos, nunca se auto-fusiona por nombre).
+    ------------------------------------------------------------------
+    SELECT * INTO v_master FROM public.master_parties
+    WHERE id = p_master_party_id FOR UPDATE;
+    IF v_master.id IS NULL THEN
+      RAISE EXCEPTION 'ERR_PARTY_NOT_FOUND: %', p_master_party_id;
+    END IF;
+    IF v_master.tenant_id <> v_tenant THEN
+      RAISE EXCEPTION 'ERR_TENANT_MISMATCH: el maestro pertenece a otra organización (aislamiento entre tenants)';
+    END IF;
+    IF v_master.status <> 'active' THEN
+      RAISE EXCEPTION 'ERR_PARTY_NOT_ACTIVE: el maestro está %', v_master.status;
+    END IF;
+    v_master_id := v_master.id;
+
+  ELSE
+    ------------------------------------------------------------------
+    -- PROMOVER el local a maestro (el local no tiene equivalente y es
+    -- válido). Mismas reglas duras de create_master_party: código auto
+    -- CP-####, tax_id único por tenant, duplicados suaves de nombre solo
+    -- se INFORMAN (nunca fusión automática).
+    ------------------------------------------------------------------
+    IF COALESCE(btrim(v_local.name), '') = '' OR btrim(v_local.name) = '—' THEN
+      RAISE EXCEPTION 'ERR_PARTY_NAME_REQUIRED: el registro local no tiene nombre suficiente para promoverlo (caso pendiente de depuración)';
+    END IF;
+
+    PERFORM pg_advisory_xact_lock(hashtextextended('master_parties:' || v_tenant::text, 0));
+    SELECT COALESCE(max(NULLIF(regexp_replace(m.code, '\D', '', 'g'), '')::integer), 0) + 1
+      INTO v_max_seq
+      FROM public.master_parties m
+     WHERE m.tenant_id = v_tenant AND m.code ~ '^CP-\d+$';
+    v_code := 'CP-' || lpad(COALESCE(v_max_seq, 1)::text, 4, '0');
+
+    IF v_local_tax IS NOT NULL AND EXISTS (
+      SELECT 1 FROM public.master_parties m
+       WHERE m.tenant_id = v_tenant AND upper(btrim(m.tax_id)) = upper(v_local_tax)) THEN
+      RAISE EXCEPTION 'ERR_PARTY_TAX_ID_EXISTS: la identificación % ya pertenece a un tercero del maestro (vincúlelo en su lugar)', v_local_tax;
+    END IF;
+
+    SELECT coalesce(jsonb_agg(jsonb_build_object('id', m2.id, 'code', m2.code, 'name', m2.name)), '[]'::jsonb)
+      INTO v_name_dups
+      FROM (SELECT id, code, name FROM public.master_parties
+             WHERE tenant_id = v_tenant AND lower(btrim(name)) = lower(btrim(v_local.name))
+               AND status = 'active' LIMIT 5) m2;
+
+    v_is_client := (v_kind = 'customer');
+    v_is_supplier := (v_kind = 'supplier');
+
+    INSERT INTO public.master_parties
+      (tenant_id, code, name, address, phone, email, tax_id, party_type,
+       is_client, is_supplier, status, notes, created_by)
+    VALUES
+      (v_tenant, v_code, btrim(v_local.name),
+       v_local.address, v_local.phone, v_local.email,
+       v_local_tax,
+       'natural',
+       v_is_client, v_is_supplier, 'active',
+       'Promovido desde registro local de la tienda ' || v_store_id::text,
+       v_caller_uid)
+    RETURNING id INTO v_master_id;
+
+    INSERT INTO public.party_change_log
+      (master_party_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
+    VALUES
+      (v_master_id, v_tenant, 'code', NULL, v_code, v_caller_uid, v_store_id),
+      (v_master_id, v_tenant, 'name', NULL, btrim(v_local.name), v_caller_uid, v_store_id);
+  END IF;
+
+  -- Vinculación del local (el registro local SE CONSERVA — trazabilidad).
+  IF v_kind = 'supplier' THEN
+    UPDATE public.suppliers SET master_party_id = v_master_id WHERE id = p_local_id;
+  ELSE
+    UPDATE public.customers SET master_party_id = v_master_id WHERE id = p_local_id;
+  END IF;
+
+  INSERT INTO public.party_change_log
+    (master_party_id, tenant_id, field, old_value, new_value, actor_id, origin_store_id)
+  VALUES
+    (v_master_id, v_tenant, 'local_link', NULL, v_kind || ':' || p_local_id::text, v_caller_uid, v_store_id);
+
+  INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
+  VALUES (
+    CASE WHEN v_mode = 'promote' THEN 'PARTY_PROMOTED_TO_MASTER' ELSE 'PARTY_LINKED_TO_MASTER' END,
+    CASE WHEN v_kind = 'supplier' THEN 'suppliers' ELSE 'customers' END,
+    p_local_id, v_store_id, v_caller_uid,
+    jsonb_build_object(
+      'kind', v_kind, 'local_id', p_local_id, 'local_name', v_local.name,
+      'master_party_id', v_master_id, 'mode', v_mode,
+      'name_duplicates_in_master', v_name_dups
+    ));
+
+  RETURN jsonb_build_object(
+    'status', 'success', 'master_party_id', v_master_id,
+    'kind', v_kind, 'local_id', p_local_id, 'mode', v_mode,
+    'name_duplicates_in_master', v_name_dups
+  );
+END;
+$function$
+
+
 -- @contract-function name=cp_fin004_normalize_enervida_payments args="p_store_id uuid, p_exterior_sales uuid[], p_actor uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cp_fin004_normalize_enervida_payments(p_store_id uuid DEFAULT '5e6fe821-5465-48b1-b3f1-3aa3182edc38'::uuid, p_exterior_sales uuid[] DEFAULT ARRAY['9033864b-2c13-4aa3-b2b8-2fd645a190db'::uuid, '3d19e5e7-2080-4eb1-8eca-cf7e391f30b9'::uuid, '1a03c37f-3a9b-4c5a-912c-3958ebbaf91c'::uuid], p_actor uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -5809,6 +6240,156 @@ END;
 $function$
 
 
+-- @contract-function name=create_received_service_v2 args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid, p_production_order_ids jsonb, p_creation_key text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid, p_production_order_ids jsonb, p_creation_key text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE
+  v_service_id uuid;
+  v_service_number text;
+  v_count integer;
+  v_link_count integer;
+  v_allocated_per_receipt numeric;
+  v_receipt_id uuid;
+  v_order_id uuid;
+  v_ot_count integer := 0;
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_created_by, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_key text := NULLIF(btrim(COALESCE(p_creation_key, '')), '');
+  v_existing_service_id uuid;
+  v_existing_number text;
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
+  IF v_caller_uid IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- CP-OPS-ENERVIDA §4: idempotencia por creation_key ANTES de cualquier
+  -- escritura (mismo contrato que create_received_service_draft). Un
+  -- reintento de confirmación devuelve el servicio ya creado en lugar de
+  -- crear un duplicado.
+  IF v_key IS NOT NULL THEN
+    SELECT al.record_id, al.metadata->>'service_number'
+      INTO v_existing_service_id, v_existing_number
+    FROM public.audit_logs al
+    WHERE al.store_id = p_store_id
+      AND al.action = 'SERVICE_CREATED'
+      AND al.metadata->>'creation_key' = v_key
+    ORDER BY al.created_at DESC
+    LIMIT 1;
+    IF v_existing_service_id IS NOT NULL THEN
+      RETURN jsonb_build_object(
+        'status', 'idempotent', 'service_id', v_existing_service_id,
+        'service_number', v_existing_number, 'link_count', 0,
+        'production_order_link_count', 0
+      );
+    END IF;
+  END IF;
+
+  IF p_supplier IS NULL OR p_supplier = '' THEN
+    RAISE EXCEPTION 'ERR_SUPPLIER_REQUIRED';
+  END IF;
+
+  IF p_total_amount <= 0 THEN
+    RAISE EXCEPTION 'ERR_INVALID_AMOUNT: total_amount must be > 0';
+  END IF;
+
+  IF p_exchange_rate < 0.01 OR p_exchange_rate > 10000 THEN
+    RAISE EXCEPTION 'ERR_INVALID_EXCHANGE_RATE: % out of range [0.01, 10000]', p_exchange_rate;
+  END IF;
+
+  IF p_payment_terms_days < 1 OR p_payment_terms_days > 365 THEN
+    RAISE EXCEPTION 'ERR_INVALID_PAYMENT_TERMS: % out of range [1, 365]', p_payment_terms_days;
+  END IF;
+
+  IF p_distribution_method NOT IN ('amount', 'quantity', 'manual') THEN
+    RAISE EXCEPTION 'ERR_INVALID_DISTRIBUTION_METHOD';
+  END IF;
+
+  IF p_service_type_id IS NOT NULL THEN
+    SELECT COUNT(*) INTO v_count FROM service_types
+    WHERE id = p_service_type_id AND store_id = p_store_id AND is_active = true;
+    IF v_count = 0 THEN
+      RAISE EXCEPTION 'ERR_SERVICE_TYPE_NOT_FOUND';
+    END IF;
+  END IF;
+
+  PERFORM public.validate_operation_date(COALESCE(p_service_date, CURRENT_DATE)::timestamp with time zone, p_store_id);
+
+  SELECT 'SRV-' || to_char(COALESCE(p_service_date, CURRENT_DATE), 'YYYYMMDD') || '-' ||
+         LPAD(nextval('service_number_seq')::text, 5, '0')
+  INTO v_service_number;
+
+  INSERT INTO received_services (
+    store_id, service_number, service_date, service_type_id, service_type_name,
+    supplier, reference_doc, currency, exchange_rate, total_amount,
+    observations, status, distribution_method, created_by,
+    payment_terms_days, due_date
+  ) VALUES (
+    p_store_id, v_service_number, COALESCE(p_service_date, CURRENT_DATE),
+    p_service_type_id, p_service_type_name, p_supplier, p_reference_doc,
+    p_currency, p_exchange_rate, p_total_amount, p_observations,
+    'draft', p_distribution_method, v_caller_uid,
+    p_payment_terms_days, (COALESCE(p_service_date, CURRENT_DATE) + p_payment_terms_days)::date
+  ) RETURNING id INTO v_service_id;
+
+  v_link_count := jsonb_array_length(p_receipt_ids);
+  IF v_link_count > 0 THEN
+    v_allocated_per_receipt := p_total_amount / v_link_count;
+    FOR v_receipt_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_receipt_ids) LOOP
+      IF NOT EXISTS (SELECT 1 FROM receipts WHERE id = v_receipt_id AND store_id = p_store_id AND status = 'active') THEN
+        RAISE EXCEPTION 'ERR_RECEIPT_INVALID: % no pertenece a la store o no esta activo', v_receipt_id;
+      END IF;
+      INSERT INTO service_reception_links (service_id, receipt_id, allocation_percentage, allocated_amount)
+      VALUES (v_service_id, v_receipt_id, 100.0 / v_link_count, v_allocated_per_receipt);
+    END LOOP;
+  END IF;
+
+  IF jsonb_array_length(p_production_order_ids) > 0 THEN
+    FOR v_order_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_production_order_ids) LOOP
+      IF NOT EXISTS (
+        SELECT 1 FROM production_orders
+        WHERE id = v_order_id
+          AND store_id = p_store_id
+          AND status NOT IN ('voided', 'closed')
+      ) THEN
+        RAISE EXCEPTION 'ERR_PRODUCTION_ORDER_INVALID: % no pertenece a la tienda o su estado no admite vinculación', v_order_id;
+      END IF;
+      INSERT INTO service_production_order_links (service_id, production_order_id)
+      VALUES (v_service_id, v_order_id)
+      ON CONFLICT (service_id, production_order_id) DO NOTHING;
+      v_ot_count := v_ot_count + 1;
+    END LOOP;
+  END IF;
+
+  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (v_caller_uid, p_store_id, 'SERVICE_CREATED', 'received_services', v_service_id,
+    jsonb_build_object(
+      'service_number', v_service_number, 'supplier', p_supplier,
+      'total_amount', p_total_amount, 'currency', p_currency,
+      'receipt_ids_linked', v_link_count,
+      'production_order_ids_linked', v_ot_count,
+      'creation_key', v_key
+    ));
+
+  RETURN jsonb_build_object(
+    'status', 'success', 'service_id', v_service_id,
+    'service_number', v_service_number, 'link_count', v_link_count,
+    'production_order_link_count', v_ot_count
+  );
+END;
+$function$
+
+
 -- @contract-function name=create_received_service_v2 args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid, p_production_order_ids jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid DEFAULT NULL::uuid, p_service_type_name text DEFAULT 'Otro'::text, p_service_date date DEFAULT NULL::date, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_payment_terms_days integer DEFAULT 30, p_distribution_method text DEFAULT 'amount'::text, p_reference_doc text DEFAULT NULL::text, p_observations text DEFAULT NULL::text, p_receipt_ids jsonb DEFAULT '[]'::jsonb, p_created_by uuid DEFAULT NULL::uuid, p_production_order_ids jsonb DEFAULT '[]'::jsonb)
  RETURNS jsonb
@@ -5948,8 +6529,8 @@ END;
 $function$
 
 
--- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text, p_payment_components jsonb, p_customer_code text, p_customer_address text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text, p_payment_components jsonb DEFAULT NULL::jsonb, p_customer_code text DEFAULT NULL::text, p_customer_address text DEFAULT NULL::text)
+-- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text, p_payment_components jsonb, p_customer_code text, p_customer_address text, p_customer_ci text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text, p_payment_components jsonb DEFAULT NULL::jsonb, p_customer_code text DEFAULT NULL::text, p_customer_address text DEFAULT NULL::text, p_customer_ci text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6013,6 +6594,10 @@ DECLARE
   v_comp_cur text;
   v_comp_amt numeric;
   v_components_ok boolean := false;
+  -- CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 4): validación estructural de
+  -- la distribución de pago por línea (items[].payments).
+  v_pay jsonb;
+  v_pay_method text;
   v_usd_rate numeric := NULL;
   v_usd_rate_source text := NULL;
   v_usd_rate_eff timestamptz := NULL;
@@ -6117,6 +6702,7 @@ BEGIN
       '|customer_code=' || COALESCE(p_customer_code, '') ||
       '|customer_address=' || COALESCE(p_customer_address, '') ||
       '|customer_name=' || COALESCE(p_customer_name, '') ||
+      '|customer_ci=' || COALESCE(p_customer_ci, '') ||
       '|operation_date=' || COALESCE(NULLIF(FLOOR(EXTRACT(EPOCH FROM p_operation_date))::text, ''), '') ||
       '|total_amount=' || COALESCE(p_total_amount::text, '') ||
       '|subtotal=' || COALESCE(p_subtotal::text, '') ||
@@ -6335,6 +6921,39 @@ BEGIN
         'discount_value', ROUND(GREATEST(0, v_reference_price - v_price) * v_qty, 2),
         'discount_pct', ROUND(v_line_pct, 2)
       );
+    END IF;
+
+    -- CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 4): validación ESTRUCTURAL de
+    -- la distribución de pago REAL de esta línea (items[].payments).
+    -- Fail-closed: método canónico ('zelle' heredado se normaliza y jamás se
+    -- persiste), amount >= 0, <= 8 filas por línea, y referencia OBLIGATORIA en
+    -- toda fila de transferencia con monto > 0 (misma regla §5.1 que el cliente
+    -- ya aplica). NO altera pools, componentes, totales ni inventario: la
+    -- autoridad financiera sigue siendo §13.7 + I1b/PT011.
+    IF v_item ? 'payments' THEN
+      IF jsonb_typeof(v_item->'payments') <> 'array' THEN
+        RAISE EXCEPTION 'ERR_ITEM_PAYMENTS_INVALID: payments debe ser un array de filas de pago';
+      END IF;
+      IF jsonb_array_length(v_item->'payments') > 8 THEN
+        RAISE EXCEPTION 'ERR_ITEM_PAYMENTS_INVALID: máximo 8 filas de pago por línea';
+      END IF;
+      FOR v_pay IN SELECT * FROM jsonb_array_elements(v_item->'payments') LOOP
+        v_pay_method := COALESCE(v_pay->>'method', '');
+        IF v_pay_method = 'zelle' THEN
+          v_pay_method := 'external_transfer';
+        END IF;
+        IF v_pay_method NOT IN ('cash', 'transfer', 'external_transfer') THEN
+          RAISE EXCEPTION 'ERR_ITEM_PAYMENTS_INVALID: método de pago inválido (%)', COALESCE(v_pay->>'method', '');
+        END IF;
+        IF COALESCE((v_pay->>'amount')::numeric, -1) < 0 THEN
+          RAISE EXCEPTION 'ERR_ITEM_PAYMENTS_INVALID: importe de pago negativo';
+        END IF;
+        IF v_pay_method IN ('transfer', 'external_transfer')
+           AND COALESCE((v_pay->>'amount')::numeric, 0) > 0
+           AND COALESCE(btrim(COALESCE(v_pay->>'reference', '')), '') = '' THEN
+          RAISE EXCEPTION 'ERR_ITEM_PAYMENTS_INVALID: toda fila de transferencia con monto > 0 requiere su número de operación';
+        END IF;
+      END LOOP;
     END IF;
 
     -- FIX-USD-CUP-RATE: el total de la venta es CUP = Σ precio nativo × tasa del item × qty
@@ -6830,7 +7449,7 @@ BEGIN
     discount_type, discount_value, subtotal, tax_amount, applied_taxes,
     sale_currency, sale_exchange_rate, completed_at, idempotency_key, created_at,
     cash_amount, transfer_amount, external_transfer_amount,
-    customer_id, customer_name,
+    customer_id, customer_name, customer_ci,
     -- CLASIFICATOR-PARTIES (2026-11-04): snapshot histórico del comprador
     customer_code, customer_address,
     -- MISIÓN-FLEX: nota (manual + incidencia) e incidencias estructuradas
@@ -6845,7 +7464,7 @@ BEGIN
     v_calculated_subtotal, v_calculated_tax, v_applied_taxes_canonical,
     p_sale_currency, v_server_rate, v_eff, p_idempotency_key, v_eff,
     v_cash_amt, v_transfer_amt, v_zelle_amt,
-    p_customer_id, p_customer_name,
+    p_customer_id, p_customer_name, p_customer_ci,
     p_customer_code, p_customer_address,
     v_notes_final, v_incidents,
     p_cash_received_cup, p_cash_received_usd, p_change_given_cup, p_change_given_usd,
@@ -6930,7 +7549,11 @@ BEGIN
       transfer_discount_type, transfer_discount_value, transfer_discount_currency,
       external_transfer_discount_type, external_transfer_discount_value, external_transfer_discount_currency,
       discount_type, discount_value, price_currency, price_at_sale_cup,
-      catalog_price_at_sale, item_discount_value, item_discount_pct
+      catalog_price_at_sale, item_discount_value, item_discount_pct,
+      -- CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 4): distribución de pago REAL
+      -- de la línea (método, moneda, importe, referencia, ajuste, tasa informativa).
+      -- NULL en ausencia (históricos y ventas sin el dato — compatibilidad total).
+      payment_distributions
     ) VALUES (
       v_tx_id, v_pid, v_variant_id, v_qty, v_price, v_cost, v_eff,
       COALESCE(NULLIF(v_item->>'cash_paid','')::numeric, NULL),
@@ -6961,7 +7584,35 @@ BEGIN
       v_price * v_item_rate,
       (v_snap->>'catalog_price')::numeric,
       COALESCE((v_snap->>'discount_value')::numeric, 0),
-      COALESCE((v_snap->>'discount_pct')::numeric, 0)
+      COALESCE((v_snap->>'discount_pct')::numeric, 0),
+      -- CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 4): distribución de pago REAL
+      -- de esta línea, normalizada (zelle→external_transfer; referencia SOLO en
+      -- filas de transferencia — §5.1; moneda en mayúsculas; tasa informativa).
+      -- La estructura ya fue validada en la primera pasada (fail-closed).
+      CASE
+        WHEN jsonb_typeof(v_item->'payments') = 'array'
+             AND jsonb_array_length(v_item->'payments') > 0
+        THEN (
+          SELECT COALESCE(jsonb_agg(
+            jsonb_build_object(
+              'method', CASE WHEN v_comp_pay->>'method' = 'zelle' THEN 'external_transfer' ELSE v_comp_pay->>'method' END,
+              'currency', UPPER(COALESCE(NULLIF(v_comp_pay->>'currency', ''), 'CUP')),
+              'amount', COALESCE((v_comp_pay->>'amount')::numeric, 0),
+              'reference', CASE WHEN v_comp_pay->>'reference' IS NOT NULL
+                                AND btrim(v_comp_pay->>'reference') <> ''
+                           THEN btrim(v_comp_pay->>'reference') END,
+              'discount_type', v_comp_pay->>'discount_type',
+              'discount_value', COALESCE((v_comp_pay->>'discount_value')::numeric, 0),
+              'discount_currency', COALESCE(NULLIF(v_comp_pay->>'discount_currency', ''),
+                                            UPPER(COALESCE(NULLIF(v_comp_pay->>'currency', ''), 'CUP'))),
+              'exchange_rate', CASE WHEN COALESCE((v_comp_pay->>'exchange_rate')::numeric, 0) > 0
+                               THEN (v_comp_pay->>'exchange_rate')::numeric END
+            ) ORDER BY v_comp_pay_ord),
+            '[]'::jsonb)
+          FROM jsonb_array_elements(v_item->'payments') WITH ORDINALITY AS t_pay(v_comp_pay, v_comp_pay_ord)
+        )
+        ELSE NULL
+      END
     );
   END LOOP;
 
@@ -7143,6 +7794,13 @@ BEGIN
       'change_rate_source', v_chg_rate_src,
       -- MISIÓN PAGOS MIXTOS (2026-10-24): desglose por moneda auditado
       'payment_components', COALESCE(p_payment_components, 'null'::jsonb),
+      -- CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 3/4): CI presente (sin PII
+      -- en el log: solo la bandera) y líneas con distribución persistida
+      'customer_ci_present', COALESCE(p_customer_ci IS NOT NULL, false),
+      'items_with_payment_distributions', (
+        SELECT count(*) FROM jsonb_array_elements(COALESCE(p_items, '[]'::jsonb)) it_pay
+        WHERE jsonb_typeof(it_pay->'payments') = 'array'
+          AND jsonb_array_length(it_pay->'payments') > 0),
       'usd_operation_rate', v_usd_rate,
       'usd_operation_rate_source', v_usd_rate_source
     ));
@@ -7677,7 +8335,7 @@ END;
 $function$
 
 
--- @contract-function name=delete_master_party args="p_party_id uuid, p_origin_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+-- @contract-function name=delete_master_party args="p_party_id uuid, p_origin_store_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.delete_master_party(p_party_id uuid, p_origin_store_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -7700,7 +8358,6 @@ BEGIN
     RAISE EXCEPTION 'ERR_PARTY_NOT_FOUND: %', p_party_id;
   END IF;
 
-  -- Misma autorización que la edición
   IF NOT public.is_catalog_governor(v_party.tenant_id, v_caller_uid) THEN
     IF p_origin_store_id IS NULL THEN
       RAISE EXCEPTION 'ERR_UNAUTHORIZED: se requiere tienda de origen';
@@ -7718,30 +8375,35 @@ BEGIN
     END IF;
   END IF;
 
-  -- REGLA DE LA MISIÓN: historial = OPERACIONES reales (ventas o recepciones).
-  -- Los vínculos locales vacíos (customers/suppliers.master_party_id sin
-  -- operaciones) NO son historial: se DESVINCULAN (master_party_id = NULL,
-  -- conservando los datos locales) y el maestro puede eliminarse.
-  -- Historial = ventas (customer_id) o recepciones (snapshot textual del
-  -- proveedor dentro de la organización: receipts no porta FK).
-  SELECT EXISTS (SELECT 1 FROM public.transactions t WHERE t.customer_id = p_party_id)
+  -- CP-OPS-ENERVIDA: historial = OPERACIONES reales. Ahora incluye las
+  -- ventas de los CUSTOMERS VINCULADOS al maestro (mismo espacio de UUID) y
+  -- las recepciones cuyo snapshot de proveedor coincide con el maestro O
+  -- con cualquiera de sus SUPPLIERS VINCULADOS.
+  SELECT
+      EXISTS (SELECT 1 FROM public.transactions t
+               WHERE t.customer_id = p_party_id
+                  OR t.customer_id IN (SELECT c.id FROM public.customers c
+                                        WHERE c.master_party_id = p_party_id))
       OR EXISTS (
         SELECT 1 FROM public.receipts r
           JOIN public.stores st ON st.id = r.store_id
          WHERE st.tenant_id = v_party.tenant_id
-           AND (r.supplier = v_party.name
-                OR (COALESCE(v_party.tax_id,'') <> '' AND r.supplier_tax_id = v_party.tax_id))
+           AND (
+             r.supplier = v_party.name
+             OR (COALESCE(v_party.tax_id,'') <> '' AND r.supplier_tax_id = v_party.tax_id)
+             OR r.supplier IN (SELECT s.name FROM public.suppliers s
+                                WHERE s.master_party_id = p_party_id)
+             OR EXISTS (SELECT 1 FROM public.suppliers s2
+                         WHERE s2.master_party_id = p_party_id
+                           AND COALESCE(s2.tax_id, '') <> ''
+                           AND r.supplier_tax_id = s2.tax_id)
+           )
       )
     INTO v_history;
   IF v_history THEN
     RAISE EXCEPTION 'ERR_PARTY_HAS_HISTORY: el tercero % tiene ventas o recepciones históricas; solo puede desactivarse (status=archived)', p_party_id;
   END IF;
 
-  -- Sin operaciones → eliminación permitida. Las filas locales vinculadas se
-  -- conservan con master_party_id = NULL (la identidad compartida desaparece,
-  -- los datos de la tienda quedan intactos). party_change_log (FK sin
-  -- CASCADE) se elimina primero: es la traza del propio registro; la huella
-  -- transversal permanece en audit_logs (sin FK).
   UPDATE public.customers SET master_party_id = NULL WHERE master_party_id = p_party_id;
   UPDATE public.suppliers SET master_party_id = NULL WHERE master_party_id = p_party_id;
   DELETE FROM public.party_change_log WHERE master_party_id = p_party_id;
@@ -9560,6 +10222,59 @@ BEGIN
       substr(SQLERRM, 1, 80), substr(SQLERRM || ' | ' || coalesce(SQLSTATE, ''), 1, 2000));
     RETURN NULL;
   END;
+END $function$
+
+
+-- @contract-function name=fin_post_payment_annulment args="p_doctype text, p_document_id uuid, p_payment_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.fin_post_payment_annulment(p_doctype text, p_document_id uuid, p_payment_id uuid)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  e record; m record; v_new uuid;
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext('fin:' || p_doctype || ':' || p_document_id::text));
+
+  FOR e IN
+    SELECT * FROM public.fin_entries
+    WHERE document_type = p_doctype AND document_id = p_document_id
+      AND payment_ref = p_payment_id
+      AND status = 'posted' AND event = 'pago'
+    ORDER BY posted_at
+  LOOP
+    -- Idempotente: ¿ya tiene compensatorio? (doble clic, reintento, y el
+    -- annulment integral del documento que llega primero).
+    IF EXISTS (SELECT 1 FROM public.fin_entries x WHERE x.reversal_of = e.id) THEN
+      CONTINUE;
+    END IF;
+
+    INSERT INTO public.fin_entries (
+      store_id, document_type, document_id, document_number, event, payment_ref,
+      economic_date, rule_version_id, movements_snapshot, reversal_of, description, created_by)
+    VALUES (
+      e.store_id, e.document_type, e.document_id, e.document_number, 'anulacion', e.payment_ref,
+      e.economic_date, e.rule_version_id, e.movements_snapshot, e.id,
+      'Anulación de pago: ' || coalesce(e.description, ''), e.created_by)
+    RETURNING id INTO v_new;
+
+    FOR m IN SELECT * FROM public.fin_movements WHERE entry_id = e.id LOOP
+      INSERT INTO public.fin_movements (
+        entry_id, store_id, category_code, sense, amount, currency, exchange_rate,
+        economic_date, document_number, description, currency_origin, traza)
+      VALUES (
+        v_new, m.store_id, m.category_code,
+        CASE WHEN m.sense = 'debito' THEN 'credito' ELSE 'debito' END,
+        m.amount, m.currency, m.exchange_rate, m.economic_date, m.document_number,
+        'Anulación de pago: ' || coalesce(m.description, ''), m.currency_origin,
+        m.traza || jsonb_build_object('anulacion_de', m.id));
+    END LOOP;
+
+    RETURN v_new;
+  END LOOP;
+
+  RETURN NULL;
 END $function$
 
 
@@ -14075,6 +14790,98 @@ END;
 $function$
 
 
+-- @contract-function name=prevent_received_service_edit args="" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.prevent_received_service_edit()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_paid_amount NUMERIC;
+  v_sum_distributions NUMERIC;
+BEGIN
+  -- 1. Bloquear edicion de servicio voided (excepto RPCs via set_config)
+  IF OLD.status = 'voided' AND TG_OP = 'UPDATE' THEN
+    IF current_setting('app.is_void_rpc', true) IS DISTINCT FROM 'true'
+       AND current_setting('app.is_status_change_rpc', true) IS DISTINCT FROM 'true' THEN
+      -- CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001: excepción
+      -- QUIRÚRGICA para el MOTOR DE PAGOS. Sin configs de RPC, un UPDATE sobre
+      -- un servicio voided solo se admite si NO cambia el estado y NO toca
+      -- ningún campo de negocio — únicamente el neteo de los campos de
+      -- seguimiento de pago (que update_payment_status realiza al procesar
+      -- contra-filas de reverse_supplier_payment). Cualquier otra variación
+      -- sigue siendo inmutable (auditoría del documento anulado intacta).
+      IF NEW.status IS DISTINCT FROM OLD.status
+         OR NEW.id IS DISTINCT FROM OLD.id
+         OR NEW.store_id IS DISTINCT FROM OLD.store_id
+         OR NEW.service_number IS DISTINCT FROM OLD.service_number
+         OR NEW.service_date IS DISTINCT FROM OLD.service_date
+         OR NEW.service_type_id IS DISTINCT FROM OLD.service_type_id
+         OR NEW.service_type_name IS DISTINCT FROM OLD.service_type_name
+         OR NEW.supplier IS DISTINCT FROM OLD.supplier
+         OR NEW.supplier_id IS DISTINCT FROM OLD.supplier_id
+         OR NEW.supplier_master_party_id IS DISTINCT FROM OLD.supplier_master_party_id
+         OR NEW.supplier_code IS DISTINCT FROM OLD.supplier_code
+         OR NEW.supplier_tax_id IS DISTINCT FROM OLD.supplier_tax_id
+         OR NEW.supplier_phone IS DISTINCT FROM OLD.supplier_phone
+         OR NEW.supplier_address IS DISTINCT FROM OLD.supplier_address
+         OR NEW.reference_doc IS DISTINCT FROM OLD.reference_doc
+         OR NEW.currency IS DISTINCT FROM OLD.currency
+         OR NEW.exchange_rate IS DISTINCT FROM OLD.exchange_rate
+         OR NEW.total_amount IS DISTINCT FROM OLD.total_amount
+         OR NEW.observations IS DISTINCT FROM OLD.observations
+         OR NEW.distribution_method IS DISTINCT FROM OLD.distribution_method
+         OR NEW.due_date IS DISTINCT FROM OLD.due_date
+         OR NEW.payment_terms_days IS DISTINCT FROM OLD.payment_terms_days
+         OR NEW.created_by IS DISTINCT FROM OLD.created_by
+         OR NEW.created_at IS DISTINCT FROM OLD.created_at THEN
+        RAISE EXCEPTION 'ERR_SERVICE_VOIDED: no se puede editar un servicio anulado (solo el motor de pagos netea sus campos de pago)';
+      END IF;
+      -- Solo cambian payment_status / payment_method / paid_amount / paid_at /
+      -- updated_at → neteo del motor de pagos: PERMITIR (continúa las demás
+      -- validaciones estructurales, que con total_amount intacto pasan).
+    END IF;
+  END IF;
+
+  -- 2. service_number inmutable post-creacion
+  IF NEW.service_number IS DISTINCT FROM OLD.service_number THEN
+    RAISE EXCEPTION 'ERR_SERVICE_NUMBER_IMMUTABLE: service_number no puede cambiarse post-creacion';
+  END IF;
+
+  -- 3. store_id inmutable (cross-tenant protection)
+  IF NEW.store_id IS DISTINCT FROM OLD.store_id THEN
+    RAISE EXCEPTION 'ERR_STORE_ID_IMMUTABLE: store_id no puede cambiarse';
+  END IF;
+
+  -- 4. total_amount no puede reducirse por debajo de paid_amount
+  --    FIX §17.1: tras la corrección de update_payment_status, paid_amount
+  --    está EN LA MONEDA DEL DOCUMENTO → la comparación es homogénea.
+  SELECT COALESCE(paid_amount, 0) INTO v_paid_amount
+  FROM received_services WHERE id = OLD.id;
+  IF NEW.total_amount < v_paid_amount THEN
+    RAISE EXCEPTION 'ERR_TOTAL_BELOW_PAID: total_amount (%) no puede ser menor que paid_amount (%)',
+      NEW.total_amount, v_paid_amount;
+  END IF;
+
+  -- 5. total_amount no puede reducirse por debajo de la suma de distribuciones
+  SELECT COALESCE(SUM(distribution_amount), 0) INTO v_sum_distributions
+  FROM service_cost_distributions WHERE service_id = OLD.id;
+  IF NEW.total_amount < v_sum_distributions THEN
+    RAISE EXCEPTION 'ERR_TOTAL_BELOW_DISTRIBUTIONS: total_amount (%) no puede ser menor que la suma de distribuciones (%)',
+      NEW.total_amount, v_sum_distributions;
+  END IF;
+
+  -- 6. service_date no puede back-date fuera del periodo fiscal
+  IF NEW.service_date IS DISTINCT FROM OLD.service_date THEN
+    PERFORM public.validate_operation_date(NEW.service_date::timestamp with time zone, NEW.store_id);
+  END IF;
+
+  RETURN NEW;
+END;
+$function$
+
+
 -- @contract-function name=process_inventory_adjustment args="p_store_id uuid, p_cashier_id uuid, p_items adjustment_item[], p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.process_inventory_adjustment(p_store_id uuid, p_cashier_id uuid, p_items adjustment_item[], p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS uuid
@@ -15841,7 +16648,7 @@ END
 $function$
 
 
--- @contract-function name=register_supplier_payment args="p_store_id uuid, p_ref_type text, p_ref_id uuid, p_amount numeric, p_payment_method text, p_paid_by uuid, p_currency text, p_exchange_rate numeric, p_reference text, p_notes text, p_idempotency_key text, p_payment_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+-- @contract-function name=register_supplier_payment args="p_store_id uuid, p_ref_type text, p_ref_id uuid, p_amount numeric, p_payment_method text, p_paid_by uuid, p_currency text, p_exchange_rate numeric, p_reference text, p_notes text, p_idempotency_key text, p_payment_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.register_supplier_payment(p_store_id uuid, p_ref_type text, p_ref_id uuid, p_amount numeric, p_payment_method text, p_paid_by uuid, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_reference text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text, p_payment_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -15864,17 +16671,8 @@ DECLARE
   v_rate numeric := p_exchange_rate;
   v_store_rate numeric;
 BEGIN
-  -- ── ADN-009 (F2/§4): BLOQUEO COMPARTIDO — la fila del documento se bloquea
-  --    SIEMPRE antes de consultar saldo o idempotencia. Mismo mecanismo que
-  --    register_supplier_payment_batch (que además invoca esta función dentro
-  --    de su propia transacción: el re-bloqueo es un no-op). Orden de
-  --    adquisición documentado: UNA sola fila de documento por transacción
-  --    (receipts | received_services | production_orders); el camino de pagos
-  --    NO toma advisory locks → sin ciclos advisory↔row ni deadlocks entre
-  --    caminos. Las liquidaciones concurrentes del mismo documento quedan
-  --    SERIALIZADAS: la segunda lee el saldo ya actualizado.
+  -- ADN-009 (F2/§4): BLOQUEO COMPARTIDO del documento SIEMPRE primero.
   IF p_ref_type = 'receipt' THEN
-    -- CP-LOG-UNIFICATION-001 (§3): el estado de la recepción entra al lock.
     SELECT store_id, total_cost, 'CUP', 1, status
       INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate, v_doc_status
     FROM public.receipts WHERE id = p_ref_id FOR UPDATE;
@@ -15898,18 +16696,12 @@ BEGIN
     RAISE EXCEPTION 'El documento no pertenece a la tienda especificada';
   END IF;
 
-  -- CP-LOG-UNIFICATION-001 (§3): gate de estado de recepciones (espejo del
-  -- batch): una recepción ANULADA o REVERTIDA no admite pagos nuevos (la
-  -- reversión ya revirtió sus pagos). Pending/confirmed/active/partial
-  -- siguen admitidos — comportamiento histórico intacto.
   IF p_ref_type = 'receipt' AND COALESCE(v_doc_status, 'active') IN ('voided', 'reversed') THEN
     RAISE EXCEPTION
       'ERR_RECEIPT_NOT_PAYABLE: la recepción está % y no admite pagos nuevos',
       v_doc_status;
   END IF;
 
-  -- Idempotencia (DESPUÉS del lock: dos envíos con la misma clave quedan
-  -- serializados y el segundo encuentra el pago del primero).
   IF p_idempotency_key IS NOT NULL THEN
     SELECT id INTO v_existing_id
     FROM public.payment_transactions
@@ -15920,30 +16712,20 @@ BEGIN
     END IF;
   END IF;
 
-  -- CP-FIN-003: monedas y medios del catálogo canónico solamente.
   IF p_currency NOT IN ('CUP', 'USD', 'EUR', 'MLC') THEN
     RAISE EXCEPTION 'Moneda de pago no soportada: %', p_currency;
   END IF;
-  -- CP-FIN-004: normalización del heredado 'zelle' al canónico
   IF lower(btrim(COALESCE(p_payment_method, ''))) = 'zelle' THEN p_payment_method := 'external_transfer'; END IF;
   IF p_payment_method NOT IN ('cash', 'transfer', 'external_transfer') THEN
     RAISE EXCEPTION 'Medio de pago no soportado: %', p_payment_method;
   END IF;
 
-  -- ADN-009 (F11/§3): restricción de moneda de Transferencia Exterior, en
-  -- espejo del POS (create_sale_v2: riel de divisa) y de fin_account_mapping
-  -- (filas activas USD/EUR → ACT_TRANSF_EXTERIOR; CUP/MLC inactivas). Rechazo
-  -- TEMPRANO y accionable; fin_resolve_financial_account queda como backstop.
   IF p_payment_method = 'external_transfer' AND p_currency NOT IN ('USD', 'EUR') THEN
     RAISE EXCEPTION
       'ERR_COMBINACION_NO_SOPORTADA: Transf. Exterior (external_transfer) es un riel de divisa (USD/EUR); combinación con % no soportada',
       p_currency;
   END IF;
 
-  -- ADN-009 (F12/§4): estado comprobado DESPUÉS de adquirir el bloqueo. Solo
-  -- un servicio ACTIVO admite pagos (un borrador no genera obligación; un
-  -- anulado no admite liquidación). receipts/production_orders: fuera del
-  -- alcance de la misión — sin cambio de semántica.
   IF p_ref_type = 'service' AND COALESCE(v_doc_status, 'active') <> 'active' THEN
     RAISE EXCEPTION
       'ERR_SERVICE_NOT_ACTIVE: solo un servicio ACTIVO admite pagos (estado actual: %)',
@@ -15952,10 +16734,6 @@ BEGIN
 
   PERFORM public.validate_operation_date(v_eff_payment_date, p_store_id);
 
-  -- CP-FIN-003 (anexo §2): tasa de conversión REAL para moneda ≠ CUP.
-  -- El equivalente contable (amount_cup) es columna GENERATED: la tasa debe
-  -- llegar correcta a la INSERT. Sin tasa del llamante → tasa manual de la
-  -- tienda; sin ninguna → fail-closed (jamás tasa 1 para divisa).
   IF p_currency <> 'CUP' THEN
     IF coalesce(v_rate, 0) <= 1 THEN
       SELECT rate INTO v_store_rate
@@ -15974,18 +16752,21 @@ BEGIN
     v_rate := 1;
   END IF;
 
-  -- Monto en CUP (para payment_transactions.amount_cup — invariante)
   v_amount_cup := CASE
     WHEN p_currency = 'CUP' THEN p_amount
     ELSE round(p_amount * v_rate, 2)
   END;
 
-  -- R3: Validar overpay — todo en la MONEDA DEL DOCUMENTO (20261113120800).
-  -- Lectura DESPUÉS del lock (ADN-009): el saldo incluye los pagos de
-  -- cualquier liquidación concurrente que ya confirmó.
+  -- R3: overpay en la MONEDA DEL DOCUMENTO. CP-OPS-ENERVIDA: el saldo pagado
+  -- NETEA las contra-filas (direction='reversal' resta) — una obligación con
+  -- pago revertido vuelve a admitir pagos por el importe restablecido.
   SELECT COALESCE(SUM(
-         CASE WHEN pt.currency = v_doc_currency THEN pt.amount
-              ELSE pt.amount_cup / v_doc_rate
+         CASE WHEN COALESCE(pt.direction, 'in') = 'reversal' THEN
+                -CASE WHEN pt.currency = v_doc_currency THEN pt.amount
+                      ELSE pt.amount_cup / v_doc_rate END
+              ELSE
+                CASE WHEN pt.currency = v_doc_currency THEN pt.amount
+                     ELSE pt.amount_cup / v_doc_rate END
          END), 0) INTO v_paid
   FROM public.payment_transactions pt
   WHERE pt.ref_type = p_ref_type AND pt.ref_id = p_ref_id;
@@ -16002,7 +16783,6 @@ BEGIN
       v_amount_in_doc_currency, v_balance;
   END IF;
 
-  -- Insertar pago con payment_date personalizada (o now() por defecto)
   INSERT INTO public.payment_transactions (
     store_id, ref_type, ref_id, amount, payment_method,
     currency, exchange_rate, reference, notes, paid_by, idempotency_key,
@@ -16015,6 +16795,251 @@ BEGIN
   RETURNING id INTO v_id;
 
   RETURN v_id;
+END;
+$function$
+
+
+-- @contract-function name=register_supplier_payment_multi args="p_store_id uuid, p_items jsonb, p_payment_method text, p_currency text, p_exchange_rate numeric, p_paid_by uuid, p_payment_date timestamp with time zone, p_reference text, p_notes text, p_idempotency_key text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.register_supplier_payment_multi(p_store_id uuid, p_items jsonb, p_payment_method text, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_paid_by uuid DEFAULT NULL::uuid, p_payment_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_reference text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE
+  v_count integer;
+  v_idx integer;
+  v_item jsonb;
+  v_ref_type text;
+  v_ref_id uuid;
+  v_amount numeric;
+  v_method text := p_payment_method;
+  v_rate numeric := p_exchange_rate;
+  v_payment_id uuid;
+  v_doc record;
+  v_paid numeric;
+  v_doc_balance numeric;
+  v_doc_curr text;
+  v_doc_rate numeric;
+  v_amount_in_doc numeric;
+  v_amount_cup numeric;
+  v_sum_doc numeric;
+  v_total_amount numeric := 0;
+  v_total_cup numeric := 0;
+  v_ids jsonb := '[]'::jsonb;
+  v_block_key text := NULLIF(btrim(COALESCE(p_idempotency_key, '')), '');
+  v_replay_complete boolean := true;
+  v_eff_payment_date timestamptz := COALESCE(p_payment_date, now());
+  v_store_rate numeric;
+BEGIN
+  -- Catálogos canónicos (mismo contrato que register_supplier_payment).
+  IF lower(btrim(COALESCE(v_method, ''))) = 'zelle' THEN v_method := 'external_transfer'; END IF;
+  IF v_method NOT IN ('cash', 'transfer', 'external_transfer') THEN
+    RAISE EXCEPTION 'ERR_METHOD_INVALID: medio de pago no soportado (%)', v_method;
+  END IF;
+  IF p_currency NOT IN ('CUP', 'USD', 'EUR', 'MLC') THEN
+    RAISE EXCEPTION 'ERR_CURRENCY_INVALID: moneda no soportada (%)', p_currency;
+  END IF;
+  IF v_method = 'external_transfer' AND p_currency NOT IN ('USD', 'EUR') THEN
+    RAISE EXCEPTION 'ERR_COMBINACION_NO_SOPORTADA: Transf. Exterior es un riel de divisa (USD/EUR); combinación con % no soportada', p_currency;
+  END IF;
+
+  v_count := jsonb_array_length(COALESCE(p_items, '[]'::jsonb));
+  IF v_count < 1 OR v_count > 50 THEN
+    RAISE EXCEPTION 'ERR_MULTI_SIZE: el lote debe tener entre 1 y 50 documentos (recibidos: %)', v_count;
+  END IF;
+
+  -- Validación estructural de TODOS los ítems ANTES de tocar la BD.
+  FOR v_idx IN 0 .. v_count - 1 LOOP
+    v_item := p_items -> v_idx;
+    v_ref_type := lower(btrim(COALESCE(v_item->>'ref_type', '')));
+    v_ref_id := NULLIF(btrim(COALESCE(v_item->>'ref_id', '')), '')::uuid;
+    v_amount := NULLIF(v_item->>'amount', '')::numeric;
+    IF v_ref_type NOT IN ('receipt', 'service') THEN
+      RAISE EXCEPTION 'ERR_ITEM_INVALID: ref_type % no soportado en liquidación múltiple (ítem %)', v_ref_type, v_idx + 1;
+    END IF;
+    IF v_ref_id IS NULL THEN
+      RAISE EXCEPTION 'ERR_ITEM_INVALID: ref_id ausente (ítem %)', v_idx + 1;
+    END IF;
+    IF v_amount IS NULL OR v_amount <= 0 THEN
+      RAISE EXCEPTION 'ERR_ITEM_INVALID: importe debe ser > 0 (ítem %)', v_idx + 1;
+    END IF;
+  END LOOP;
+
+  -- Fast path de replay (patrón ADN-008): si TODOS los componentes del
+  -- bloque ya existen, devolver sus ids sin escribir nada.
+  IF v_block_key IS NOT NULL THEN
+    FOR v_idx IN 0 .. v_count - 1 LOOP
+      IF NOT EXISTS (
+        SELECT 1 FROM public.payment_transactions
+        WHERE idempotency_key = v_block_key || ':' || v_idx
+      ) THEN
+        v_replay_complete := false;
+        EXIT;
+      END IF;
+    END LOOP;
+    IF v_replay_complete THEN
+      FOR v_idx IN 0 .. v_count - 1 LOOP
+        SELECT id INTO v_payment_id
+        FROM public.payment_transactions
+        WHERE idempotency_key = v_block_key || ':' || v_idx
+        LIMIT 1;
+        v_ids := v_ids || jsonb_build_object(
+          'id', v_payment_id, 'index', v_idx,
+          'ref_type', p_items -> v_idx ->> 'ref_type',
+          'ref_id', p_items -> v_idx ->> 'ref_id',
+          'amount', (p_items -> v_idx ->> 'amount')::numeric,
+          'replayed', true
+        );
+      END LOOP;
+      RETURN jsonb_build_object('payments', v_ids, 'count', v_count, 'replayed', true);
+    END IF;
+  END IF;
+
+  -- Bloqueo determinista de TODOS los documentos (orden ref_type, ref_id):
+  -- dos lotes concurrentes con documentos solapados se serializan sin
+  -- deadlocks. Validación de tienda y estado pagable bajo el bloqueo.
+  FOR v_doc IN
+    SELECT DISTINCT (it->>'ref_type') AS ref_type, (it->>'ref_id')::uuid AS ref_id
+    FROM jsonb_array_elements(p_items) it
+    ORDER BY (it->>'ref_type'), ((it->>'ref_id')::uuid)
+  LOOP
+    IF v_doc.ref_type = 'receipt' THEN
+      IF NOT EXISTS (
+        SELECT 1 FROM public.receipts r
+        WHERE r.id = v_doc.ref_id AND r.store_id = p_store_id
+          AND r.status NOT IN ('voided', 'reversed')
+        FOR UPDATE
+      ) THEN
+        RAISE EXCEPTION 'ERR_DOC_NOT_PAYABLE: la recepción % no pertenece a la tienda o no admite pagos', v_doc.ref_id;
+      END IF;
+    ELSE
+      IF NOT EXISTS (
+        SELECT 1 FROM public.received_services s
+        WHERE s.id = v_doc.ref_id AND s.store_id = p_store_id
+          AND s.status = 'active'
+        FOR UPDATE
+      ) THEN
+        RAISE EXCEPTION 'ERR_DOC_NOT_PAYABLE: el servicio % no pertenece a la tienda o no está activo', v_doc.ref_id;
+      END IF;
+    END IF;
+  END LOOP;
+
+  PERFORM public.validate_operation_date(v_eff_payment_date, p_store_id);
+
+  -- Tasa fail-closed (mismo contrato del motor individual).
+  IF p_currency <> 'CUP' THEN
+    IF coalesce(v_rate, 0) <= 1 THEN
+      SELECT rate INTO v_store_rate
+      FROM public.store_exchange_rates
+      WHERE store_id = p_store_id AND currency = p_currency
+      ORDER BY updated_at DESC LIMIT 1;
+      IF coalesce(v_store_rate, 0) > 1 THEN
+        v_rate := v_store_rate;
+      ELSE
+        RAISE EXCEPTION 'ERR_TASA_NO_DISPONIBLE: el pago en % requiere tasa de conversión (> 1).', p_currency;
+      END IF;
+    END IF;
+  ELSE
+    v_rate := 1;
+  END IF;
+
+  -- Pre-check de overpay POR DOCUMENTO (suma de los ítems del lote contra
+  -- ese documento + pagos existentes, neteando contra-filas).
+  FOR v_doc IN
+    SELECT (it->>'ref_type') AS ref_type, (it->>'ref_id')::uuid AS ref_id,
+           SUM((it->>'amount')::numeric) AS lot_amount
+    FROM jsonb_array_elements(p_items) it
+    GROUP BY (it->>'ref_type'), ((it->>'ref_id')::uuid)
+  LOOP
+    IF v_doc.ref_type = 'receipt' THEN
+      -- Recepciones: documento en CUP, tasa 1 (contrato del motor individual).
+      SELECT r.total_cost INTO v_doc_balance
+      FROM public.receipts r WHERE r.id = v_doc.ref_id;
+      v_amount_in_doc := v_doc.lot_amount;
+      SELECT COALESCE(SUM(
+             CASE WHEN COALESCE(pt.direction, 'in') = 'reversal' THEN -pt.amount_cup
+                  ELSE pt.amount_cup END), 0) INTO v_paid
+      FROM public.payment_transactions pt
+      WHERE pt.ref_type = 'receipt' AND pt.ref_id = v_doc.ref_id;
+    ELSE
+      SELECT s.total_amount, s.currency, COALESCE(s.exchange_rate, 1)
+        INTO v_doc_balance, v_doc_curr, v_doc_rate
+      FROM public.received_services s WHERE s.id = v_doc.ref_id;
+      -- Importe del lote en la MONEDA DEL DOCUMENTO (misma aritmética del
+      -- motor individual: via CUP si las monedas difieren).
+      v_amount_in_doc := CASE
+        WHEN p_currency = v_doc_curr THEN v_doc.lot_amount
+        ELSE (round(v_doc.lot_amount * v_rate, 2)) / v_doc_rate
+      END;
+      SELECT COALESCE(SUM(
+             CASE WHEN COALESCE(pt.direction, 'in') = 'reversal' THEN
+                    -CASE WHEN pt.currency = v_doc_curr THEN pt.amount
+                          ELSE pt.amount_cup / v_doc_rate END
+                  ELSE
+                    CASE WHEN pt.currency = v_doc_curr THEN pt.amount
+                         ELSE pt.amount_cup / v_doc_rate END
+             END), 0) INTO v_paid
+      FROM public.payment_transactions pt
+      WHERE pt.ref_type = 'service' AND pt.ref_id = v_doc.ref_id;
+    END IF;
+
+    IF v_amount_in_doc > (v_doc_balance - v_paid) THEN
+      RAISE EXCEPTION
+        'ERR_MULTI_OVERPAY: el importe asignado (%) excede el saldo pendiente (%) del documento %',
+        v_amount_in_doc, (v_doc_balance - v_paid), v_doc.ref_id;
+    END IF;
+  END LOOP;
+
+  -- Inserción por componente (misma transacción ⇒ ATÓMICA). El motor
+  -- individual re-valida estado/tasa/overpay con la fila ya bloqueada.
+  FOR v_idx IN 0 .. v_count - 1 LOOP
+    v_item := p_items -> v_idx;
+    v_payment_id := public.register_supplier_payment(
+      p_store_id => p_store_id,
+      p_ref_type => v_item->>'ref_type',
+      p_ref_id => (v_item->>'ref_id')::uuid,
+      p_amount => (v_item->>'amount')::numeric,
+      p_payment_method => v_method,
+      p_paid_by => p_paid_by,
+      p_currency => p_currency,
+      p_exchange_rate => v_rate,
+      p_reference => p_reference,
+      p_notes => p_notes,
+      p_idempotency_key => CASE WHEN v_block_key IS NOT NULL THEN v_block_key || ':' || v_idx ELSE NULL END,
+      p_payment_date => v_eff_payment_date
+    );
+    v_amount := (v_item->>'amount')::numeric;
+    v_amount_cup := CASE WHEN p_currency = 'CUP' THEN v_amount ELSE round(v_amount * v_rate, 2) END;
+    v_total_amount := v_total_amount + v_amount;
+    v_total_cup := v_total_cup + v_amount_cup;
+    v_ids := v_ids || jsonb_build_object(
+      'id', v_payment_id, 'index', v_idx,
+      'ref_type', v_item->>'ref_type', 'ref_id', v_item->>'ref_id',
+      'amount', v_amount, 'amount_cup', v_amount_cup
+    );
+  END LOOP;
+
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (p_paid_by, p_store_id, 'SUPPLIER_PAYMENT_MULTI', 'payment_transactions', NULL,
+    jsonb_build_object(
+      'count', v_count,
+      'payment_method', v_method,
+      'currency', p_currency,
+      'exchange_rate', v_rate,
+      'total_amount', v_total_amount,
+      'total_cup', v_total_cup,
+      'reference', p_reference,
+      'payment_date', v_eff_payment_date,
+      'idempotency_key', v_block_key,
+      'payments', v_ids
+    ));
+
+  RETURN jsonb_build_object(
+    'payments', v_ids, 'count', v_count,
+    'total_amount', v_total_amount, 'total_cup', v_total_cup,
+    'replayed', false
+  );
 END;
 $function$
 
@@ -16336,6 +17361,81 @@ END;
 $function$
 
 
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
+$function$
+
+
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -16559,81 +17659,6 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
-$function$
-
-
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
 $function$
 
 
@@ -18254,6 +19279,8 @@ DECLARE
   v_unit_cost_cup numeric;
   v_items_processed int := 0;
   v_reversed_payments int := 0;
+  v_live_payments bigint := 0;
+  v_live_paid_cup numeric := 0;
 BEGIN
   SELECT * INTO v_receipt FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
@@ -18271,6 +19298,23 @@ BEGIN
   -- encargado/warehouse en la tienda del receipt) o admin global transversal.
   IF NOT public.can_reverse_document(v_caller_uid, v_receipt.store_id, 'receipt') THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED: reversion de recepcion requiere rol admin/manager/encargado/warehouse en la tienda';
+  END IF;
+
+  -- CP-AP-ACCOUNTING-INTEGRITY-001 §FASE2/4: GUARD de pagos vivos. Una
+  -- recepción con pagos confirmados/aplicados (filas 'in' sin contra-fila)
+  -- NO se revierte ignorando sus pagos: primero se resuelve cada pago con el
+  -- procedimiento oficial (reverse_supplier_payment) y después se revierte.
+  SELECT count(*), COALESCE(sum(t.amount_cup), 0)
+    INTO v_live_payments, v_live_paid_cup
+    FROM public.payment_transactions t
+   WHERE t.ref_type = 'receipt' AND t.ref_id = p_receipt_id
+     AND COALESCE(t.direction, 'in') = 'in'
+     AND NOT EXISTS (SELECT 1 FROM public.payment_transactions c
+                      WHERE c.reverses_payment_id = t.id);
+  IF v_live_payments > 0 THEN
+    RAISE EXCEPTION 'ERR_RECEIPT_HAS_UNRESOLVED_PAYMENTS: pagos_vivos=% importe_vivo=% total_documento=% saldo_actual=% — anule primero los pagos desde el historial de pagos del documento y luego revierta la recepción',
+      v_live_payments, v_live_paid_cup, v_receipt.total_cost,
+      COALESCE(v_receipt.total_cost, 0) - COALESCE(v_receipt.paid_amount, 0);
   END IF;
 
   FOR v_item IN SELECT * FROM public.receipt_items WHERE receipt_id = p_receipt_id LOOP
@@ -18319,7 +19363,8 @@ BEGIN
       paid_at = NULL
   WHERE id = p_receipt_id;
 
-  -- R3: mark related payment transactions (notes marker, canonical pattern)
+  -- R3: mark related payment transactions (notes marker, canonical pattern).
+  -- Con el guard activo aquí solo llegan filas ya revertidas (trazabilidad).
   UPDATE public.payment_transactions
   SET notes = COALESCE(notes, '') || ' [REVERSED by reverse_receipt_v2 '
               || p_receipt_id::text || ' at ' || now()::text || ']'
@@ -18344,6 +19389,127 @@ BEGIN
                             'payments_reversed', v_reversed_payments);
 END
 $function$
+
+
+-- @contract-function name=reverse_supplier_payment args="p_payment_id uuid, p_reason text, p_user_id uuid, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reverse_supplier_payment(p_payment_id uuid, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE
+  v_orig record;
+  v_reversal_id uuid;
+  v_existing_reversal_id uuid;
+  v_doctype text;
+  v_parent_status text;
+  v_parent_number text;
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_eff_date timestamptz := COALESCE(p_operation_date, NOW());
+  v_reason text := btrim(COALESCE(p_reason, ''));
+BEGIN
+  IF v_caller_uid IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext('revpay:' || p_payment_id::text));
+
+  SELECT * INTO v_orig FROM public.payment_transactions
+  WHERE id = p_payment_id FOR UPDATE;
+  IF v_orig.id IS NULL THEN
+    RAISE EXCEPTION 'ERR_PAYMENT_NOT_FOUND: %', p_payment_id;
+  END IF;
+  IF v_orig.ref_type NOT IN ('receipt', 'service') THEN
+    RAISE EXCEPTION 'ERR_REVERSAL_NOT_SUPPORTED: ref_type % (solo receipt|service)', v_orig.ref_type;
+  END IF;
+  IF COALESCE(v_orig.direction, 'in') <> 'in' THEN
+    RAISE EXCEPTION 'ERR_PAYMENT_NOT_REVERSIBLE: la fila ya es una contra-fila (direction=%)', v_orig.direction;
+  END IF;
+
+  -- Idempotencia: una sola reversión por pago original (índice único §1).
+  SELECT id INTO v_existing_reversal_id
+  FROM public.payment_transactions
+  WHERE reverses_payment_id = p_payment_id
+  LIMIT 1;
+  IF v_existing_reversal_id IS NOT NULL THEN
+    RETURN jsonb_build_object(
+      'status', 'idempotent',
+      'reversal_payment_id', v_existing_reversal_id,
+      'original_payment_id', p_payment_id
+    );
+  END IF;
+
+  IF NOT public.has_store_access_as(v_caller_uid, v_orig.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  PERFORM public.validate_operation_date(v_eff_date, v_orig.store_id);
+
+  -- Documento padre: SOLO informativo/doctype — la reversión del pago NO
+  -- anula el documento (misión §5: no confundir anular pago con anular
+  -- recepción). Se admite también sobre padres ya anulados (limpieza de
+  -- anomalías históricas: pagos huérfanos de documentos anulados).
+  IF v_orig.ref_type = 'receipt' THEN
+    v_doctype := 'RECEPCION';
+    SELECT status, COALESCE(document_number, reference_doc) INTO v_parent_status, v_parent_number
+    FROM public.receipts WHERE id = v_orig.ref_id;
+  ELSE
+    v_doctype := 'SERVICIO_RECIBIDO';
+    SELECT status, service_number INTO v_parent_status, v_parent_number
+    FROM public.received_services WHERE id = v_orig.ref_id;
+  END IF;
+
+  -- Contra-fila: MISMO importe/medio/moneda/tasa del original, fecha de la
+  -- reversión, usuario que la ejecuta, motivo trazable y clave idempotente.
+  INSERT INTO public.payment_transactions (
+    store_id, ref_type, ref_id, amount, payment_method,
+    currency, exchange_rate, reference, notes, paid_by, idempotency_key,
+    payment_date, direction, reverses_payment_id
+  ) VALUES (
+    v_orig.store_id, v_orig.ref_type, v_orig.ref_id, v_orig.amount, v_orig.payment_method,
+    v_orig.currency, v_orig.exchange_rate,
+    'Reversión de pago' || CASE WHEN COALESCE(v_orig.reference, '') <> '' THEN ' · ' || v_orig.reference ELSE '' END,
+    CASE
+      WHEN v_reason <> '' THEN 'Reversión de pago ' || p_payment_id::text || ' — ' || v_reason
+      ELSE 'Reversión de pago ' || p_payment_id::text
+    END,
+    v_caller_uid,
+    'reversal:' || p_payment_id::text,
+    v_eff_date,
+    'reversal',
+    p_payment_id
+  ) RETURNING id INTO v_reversal_id;
+
+  -- Asiento compensatorio del 'pago' original (nunca UPDATE del histórico).
+  PERFORM public.fin_post_payment_annulment(v_doctype, v_orig.ref_id, p_payment_id);
+
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (v_caller_uid, v_orig.store_id, 'PAYMENT_REVERSED', 'payment_transactions', v_reversal_id,
+    jsonb_build_object(
+      'original_payment_id', p_payment_id,
+      'ref_type', v_orig.ref_type,
+      'ref_id', v_orig.ref_id,
+      'document_number', v_parent_number,
+      'amount', v_orig.amount,
+      'currency', v_orig.currency,
+      'amount_cup', v_orig.amount_cup,
+      'payment_method', v_orig.payment_method,
+      'reason', NULLIF(v_reason, ''),
+      'parent_status_at_reversal', v_parent_status,
+      'operation_date', v_eff_date
+    ));
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'reversal_payment_id', v_reversal_id,
+    'original_payment_id', p_payment_id,
+    'parent_status', v_parent_status
+  );
+END $function$
 
 
 -- @contract-function name=reverse_transaction_v2 args="p_transaction_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
@@ -18758,6 +19924,86 @@ END;
 $function$
 
 
+-- @contract-function name=save_pending_reception_changes args="p_receipt_id uuid, p_header jsonb, p_item_updates jsonb, p_new_items jsonb, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.save_pending_reception_changes(p_receipt_id uuid, p_header jsonb DEFAULT '{}'::jsonb, p_item_updates jsonb DEFAULT '[]'::jsonb, p_new_items jsonb DEFAULT '[]'::jsonb, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_store_id uuid;
+  v_status text;
+  v_caller_uid uuid := CASE WHEN auth.role() = 'service_role'
+    THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+  v_supplier text;
+  v_reference_doc text;
+  v_notes text;
+  v_has_economic boolean := FALSE;
+  v_header_update jsonb := '{}'::jsonb;
+  v_update_res jsonb := NULL;
+  v_add_res jsonb := NULL;
+  v_new_total numeric;
+BEGIN
+  SELECT store_id, status INTO v_store_id, v_status
+    FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
+
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  v_supplier := NULLIF(btrim(COALESCE(p_header->>'supplier', '')), '');
+  v_reference_doc := NULLIF(btrim(COALESCE(p_header->>'reference_doc', '')), '');
+  v_notes := p_header->>'notes';
+
+  IF (p_item_updates IS NOT NULL AND jsonb_typeof(p_item_updates) = 'array' AND jsonb_array_length(p_item_updates) > 0)
+     OR (p_new_items IS NOT NULL AND jsonb_typeof(p_new_items) = 'array' AND jsonb_array_length(p_new_items) > 0)
+     OR v_supplier IS NOT NULL OR v_reference_doc IS NOT NULL THEN
+    v_has_economic := TRUE;
+  END IF;
+  IF v_has_economic AND v_status <> 'pending' THEN
+    RAISE EXCEPTION 'ERR_NOT_EDITABLE: los datos económicos/documentales solo son editables en recepciones pendientes (estado actual: %)', v_status;
+  END IF;
+
+  -- 1. Cabecera.
+  IF v_supplier IS NOT NULL THEN v_header_update := v_header_update || jsonb_build_object('supplier', v_supplier); END IF;
+  IF v_reference_doc IS NOT NULL THEN v_header_update := v_header_update || jsonb_build_object('reference_doc', v_reference_doc); END IF;
+  IF v_notes IS NOT NULL THEN v_header_update := v_header_update || jsonb_build_object('notes', v_notes); END IF;
+  IF v_header_update <> '{}'::jsonb THEN
+    UPDATE public.receipts SET
+      supplier = COALESCE(v_header_update->>'supplier', supplier),
+      reference_doc = COALESCE(v_header_update->>'reference_doc', reference_doc),
+      notes = COALESCE(v_header_update->>'notes', notes),
+      updated_at = now()
+    WHERE id = p_receipt_id;
+  END IF;
+
+  -- 2. Actualizaciones de líneas existentes (RPC canónica, misma transacción).
+  IF p_item_updates IS NOT NULL AND jsonb_typeof(p_item_updates) = 'array' AND jsonb_array_length(p_item_updates) > 0 THEN
+    v_update_res := public.update_reception_items(p_receipt_id, p_item_updates, v_caller_uid);
+  END IF;
+
+  -- 3. Líneas nuevas (RPC canónica, misma transacción).
+  IF p_new_items IS NOT NULL AND jsonb_typeof(p_new_items) = 'array' AND jsonb_array_length(p_new_items) > 0 THEN
+    v_add_res := public.add_reception_items(p_receipt_id, p_new_items, v_caller_uid);
+  END IF;
+
+  SELECT total_cost INTO v_new_total FROM public.receipts WHERE id = p_receipt_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'updated_count', COALESCE(v_update_res->>'updated_count', '0'),
+    'failed_count', COALESCE(v_update_res->>'failed_count', '0'),
+    'added_count', COALESCE(v_add_res->>'added_count', '0'),
+    'idempotent_skipped', COALESCE(v_add_res->>'idempotent_skipped', '0'),
+    'new_total', v_new_total,
+    'added', COALESCE(v_add_res->'items', '[]'::jsonb)
+  );
+END
+$function$
+
+
 -- @contract-function name=save_product_cost_sheet args="p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_calculated_data jsonb, p_cost_price numeric" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.save_product_cost_sheet(p_product_id uuid, p_store_id uuid, p_template_id text, p_modalidad text, p_calculated_data jsonb, p_cost_price numeric)
  RETURNS jsonb
@@ -19021,21 +20267,25 @@ DECLARE
   v_service_number text;
   v_supplier text;
   v_total numeric;
+  v_paid_amount numeric;
   v_allowed text[];
   v_caller_uid uuid := CASE
     WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
     ELSE auth.uid()
   END;
+  v_pay record;
+  v_reversed_count integer := 0;
+  v_live_payments bigint := 0;
+  v_live_paid_cup numeric := 0;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext(p_service_id::text));
 
-  SELECT store_id, status, service_number, supplier, total_amount
-  INTO v_store_id, v_current, v_service_number, v_supplier, v_total
-  FROM received_services WHERE id = p_service_id FOR UPDATE;
+  SELECT rs.store_id, rs.status, rs.service_number, rs.supplier, rs.total_amount, rs.paid_amount
+  INTO v_store_id, v_current, v_service_number, v_supplier, v_total, v_paid_amount
+  FROM received_services rs WHERE rs.id = p_service_id FOR UPDATE;
 
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_SERVICE_NOT_FOUND'; END IF;
 
-  -- FIX D1: autorización del ACTOR sobre la tienda REAL del servicio.
   IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
@@ -19055,14 +20305,30 @@ BEGIN
       v_current, p_new_status, array_to_string(v_allowed, ', ');
   END IF;
 
-  -- ADN-008: la CONFIRMACIÓN (draft→active) exige los datos obligatorios del
-  -- documento operativo. El borrador pudo guardarse incompleto a propósito.
   IF v_current = 'draft' AND p_new_status = 'active' THEN
     IF COALESCE(btrim(COALESCE(v_supplier, '')), '') = '' THEN
       RAISE EXCEPTION 'ERR_SUPPLIER_REQUIRED: completa el proveedor antes de confirmar el servicio';
     END IF;
     IF v_total IS NULL OR v_total <= 0 THEN
       RAISE EXCEPTION 'ERR_INVALID_AMOUNT: el importe del servicio debe ser > 0 para confirmar';
+    END IF;
+  END IF;
+
+  -- CP-AP-ACCOUNTING-INTEGRITY-001 §FASE2/4: GUARD de pagos vivos antes de
+  -- cualquier transición a estado terminal (cancelled/voided). Cubre también
+  -- los borradores con pagos por caminos históricos.
+  IF p_new_status IN ('cancelled', 'voided') THEN
+    SELECT count(*), COALESCE(sum(t.amount_cup), 0)
+      INTO v_live_payments, v_live_paid_cup
+      FROM payment_transactions t
+     WHERE t.ref_type = 'service' AND t.ref_id = p_service_id
+       AND COALESCE(t.direction, 'in') = 'in'
+       AND NOT EXISTS (SELECT 1 FROM payment_transactions c
+                        WHERE c.reverses_payment_id = t.id);
+    IF v_live_payments > 0 THEN
+      RAISE EXCEPTION 'ERR_SERVICE_HAS_UNRESOLVED_PAYMENTS: pagos_vivos=% importe_vivo=% total_documento=% saldo_actual=% — anule primero los pagos desde el historial de pagos del servicio y luego cancele/anule',
+        v_live_payments, v_live_paid_cup, v_total,
+        COALESCE(v_total, 0) - COALESCE(v_paid_amount, 0);
     END IF;
   END IF;
 
@@ -19073,14 +20339,53 @@ BEGIN
 
   PERFORM set_config('app.is_status_change_rpc', 'false', true);
 
+  -- CP-OPS-ENERVIDA (defensa en profundidad): reversión explícita de pagos
+  -- en transiciones terminales. Con el guard activo es inalcanzable para
+  -- pagos vivos; para pagos ya revertidos es un no-op idempotente.
+  IF p_new_status IN ('cancelled', 'voided') THEN
+    FOR v_pay IN
+      SELECT * FROM payment_transactions
+      WHERE ref_type = 'service' AND ref_id = p_service_id
+        AND COALESCE(direction, 'in') = 'in'
+      ORDER BY payment_date, id
+    LOOP
+      IF NOT EXISTS (SELECT 1 FROM payment_transactions WHERE reverses_payment_id = v_pay.id) THEN
+        INSERT INTO payment_transactions (
+          store_id, ref_type, ref_id, amount, payment_method,
+          currency, exchange_rate, reference, notes, paid_by, idempotency_key,
+          payment_date, direction, reverses_payment_id
+        ) VALUES (
+          v_store_id, 'service', p_service_id, v_pay.amount, v_pay.payment_method,
+          v_pay.currency, v_pay.exchange_rate,
+          'Reversión (' || CASE WHEN p_new_status = 'cancelled' THEN 'cancelación' ELSE 'anulación' END || ' de servicio ' || v_service_number || ')',
+          'Reversión automática por ' ||
+            CASE WHEN p_new_status = 'cancelled' THEN 'cancelación' ELSE 'anulación' END ||
+            ' del servicio ' || v_service_number || ' — pago ' || v_pay.id::text,
+          v_caller_uid,
+          'reversal:' || v_pay.id::text,
+          now(),
+          'reversal',
+          v_pay.id
+        );
+        v_reversed_count := v_reversed_count + 1;
+      END IF;
+      PERFORM public.fin_post_payment_annulment('SERVICIO_RECIBIDO', p_service_id, v_pay.id);
+    END LOOP;
+
+    UPDATE received_services
+    SET payment_status = 'unpaid', paid_amount = 0, paid_at = NULL
+    WHERE id = p_service_id;
+  END IF;
+
   INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
   VALUES (v_caller_uid, v_store_id, 'SERVICE_STATUS_CHANGED', 'received_services', p_service_id,
     jsonb_build_object(
       'service_number', v_service_number,
-      'from_status', v_current, 'to_status', p_new_status, 'reason', p_reason
+      'from_status', v_current, 'to_status', p_new_status, 'reason', p_reason,
+      'payments_reversed', v_reversed_count
     ));
 
-  RETURN jsonb_build_object('status', 'success', 'service_status', p_new_status, 'previous_status', v_current);
+  RETURN jsonb_build_object('status', 'success', 'service_status', p_new_status, 'previous_status', v_current, 'payments_reversed', v_reversed_count);
 END;
 $function$
 
@@ -21145,6 +22450,8 @@ DECLARE
                        ELSE auth.uid() END;
   v_eff_date timestamptz := COALESCE(p_operation_date, NOW());
   v_reversed_payments integer;
+  v_live_payments bigint := 0;
+  v_live_paid_cup numeric := 0;
 BEGIN
   -- 1. Lock receipt (FOR UPDATE para concurrencia)
   SELECT * INTO v_receipt FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
@@ -21174,6 +22481,22 @@ BEGIN
 
   -- 5. Operation date validation (política forward-only)
   PERFORM public.validate_operation_date(p_operation_date, v_receipt.store_id);
+
+  -- 5b. CP-AP-ACCOUNTING-INTEGRITY-001 §FASE2/4: GUARD de pagos vivos (las
+  -- recepciones pending sí pueden pagarse — register_supplier_payment solo
+  -- bloquea voided/reversed — así que el guard es operativo aquí también).
+  SELECT count(*), COALESCE(sum(t.amount_cup), 0)
+    INTO v_live_payments, v_live_paid_cup
+    FROM public.payment_transactions t
+   WHERE t.ref_type = 'receipt' AND t.ref_id = p_receipt_id
+     AND COALESCE(t.direction, 'in') = 'in'
+     AND NOT EXISTS (SELECT 1 FROM public.payment_transactions c
+                      WHERE c.reverses_payment_id = t.id);
+  IF v_live_payments > 0 THEN
+    RAISE EXCEPTION 'ERR_RECEIPT_HAS_UNRESOLVED_PAYMENTS: pagos_vivos=% importe_vivo=% total_documento=% saldo_actual=% — anule primero los pagos desde el historial de pagos del documento y luego anule la recepción',
+      v_live_payments, v_live_paid_cup, v_receipt.total_cost,
+      COALESCE(v_receipt.total_cost, 0) - COALESCE(v_receipt.paid_amount, 0);
+  END IF;
 
   -- 6. Mark payment_transactions as REVERSED (if any exist)
   UPDATE public.payment_transactions
@@ -21269,30 +22592,52 @@ DECLARE
   v_service_number text;
   v_payment_status text;
   v_paid_amount numeric;
+  v_total numeric;
   v_caller_uid uuid := CASE
     WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
     ELSE auth.uid()
   END;
   v_eff_date timestamp with time zone := COALESCE(p_operation_date, NOW());
+  v_pay record;
+  v_reversed_count integer := 0;
+  v_live_payments bigint := 0;
+  v_live_paid_cup numeric := 0;
 BEGIN
   PERFORM pg_advisory_xact_lock(hashtext(p_service_id::text));
 
-  SELECT store_id, status, service_number, payment_status, paid_amount
-  INTO v_store_id, v_status, v_service_number, v_payment_status, v_paid_amount
-  FROM received_services
-  WHERE id = p_service_id AND status = 'active'
+  SELECT rs.store_id, rs.status, rs.service_number, rs.payment_status, rs.paid_amount, rs.total_amount
+  INTO v_store_id, v_status, v_service_number, v_payment_status, v_paid_amount, v_total
+  FROM received_services rs
+  WHERE rs.id = p_service_id AND rs.status = 'active'
   FOR UPDATE;
 
   IF NOT FOUND THEN
     RAISE EXCEPTION 'ERR_SERVICE_NOT_FOUND_OR_NOT_ACTIVE';
   END IF;
 
-  -- FIX D1: autorización del ACTOR sobre la tienda REAL del servicio.
   IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
   END IF;
 
   PERFORM public.validate_operation_date(p_operation_date, v_store_id);
+
+  -- CP-AP-ACCOUNTING-INTEGRITY-001 §FASE2/4: GUARD de pagos vivos. La
+  -- anulación de un servicio con pagos confirmados/aplicados exige resolver
+  -- PRIMERO cada pago con el procedimiento oficial (reverse_supplier_payment:
+  -- contra-fila + asiento compensatorio + audit) — la resolución financiera
+  -- no puede quedar oculta dentro de la operación administrativa.
+  SELECT count(*), COALESCE(sum(t.amount_cup), 0)
+    INTO v_live_payments, v_live_paid_cup
+    FROM payment_transactions t
+   WHERE t.ref_type = 'service' AND t.ref_id = p_service_id
+     AND COALESCE(t.direction, 'in') = 'in'
+     AND NOT EXISTS (SELECT 1 FROM payment_transactions c
+                      WHERE c.reverses_payment_id = t.id);
+  IF v_live_payments > 0 THEN
+    RAISE EXCEPTION 'ERR_SERVICE_HAS_UNRESOLVED_PAYMENTS: pagos_vivos=% importe_vivo=% total_documento=% saldo_actual=% — anule primero los pagos desde el historial de pagos del servicio y luego anúlelo',
+      v_live_payments, v_live_paid_cup, v_total,
+      COALESCE(v_total, 0) - COALESCE(v_paid_amount, 0);
+  END IF;
 
   PERFORM set_config('app.is_void_rpc', 'true', true);
 
@@ -21308,9 +22653,44 @@ BEGIN
       updated_at = v_eff_date
   WHERE id = p_service_id;
 
-  UPDATE payment_transactions
-  SET notes = COALESCE(notes, '') || ' [REVERSED by service void ' || p_service_id::text || ' at ' || v_eff_date::text || ']'
-  WHERE ref_type = 'service' AND ref_id = p_service_id;
+  -- CP-OPS-ENERVIDA (P0, defensa en profundidad): contra-filas por pago.
+  -- Con el guard activo solo llegan aquí pagos ya revertidos (no-op
+  -- idempotente por uq_payment_reversal_origin / idempotency_key).
+  FOR v_pay IN
+    SELECT * FROM payment_transactions
+    WHERE ref_type = 'service' AND ref_id = p_service_id
+      AND COALESCE(direction, 'in') = 'in'
+    ORDER BY payment_date, id
+  LOOP
+    UPDATE payment_transactions
+    SET notes = COALESCE(notes, '') || ' [REVERSED by service void ' || p_service_id::text || ' at ' || v_eff_date::text || ']'
+    WHERE id = v_pay.id;
+
+    IF NOT EXISTS (SELECT 1 FROM payment_transactions WHERE reverses_payment_id = v_pay.id) THEN
+      INSERT INTO payment_transactions (
+        store_id, ref_type, ref_id, amount, payment_method,
+        currency, exchange_rate, reference, notes, paid_by, idempotency_key,
+        payment_date, direction, reverses_payment_id
+      ) VALUES (
+        v_store_id, 'service', p_service_id, v_pay.amount, v_pay.payment_method,
+        v_pay.currency, v_pay.exchange_rate,
+        'Reversión (anulación de servicio ' || v_service_number || ')',
+        'Reversión automática por anulación del servicio ' || v_service_number ||
+          ' — pago ' || v_pay.id::text ||
+          CASE WHEN COALESCE(btrim(p_reason), '') <> '' THEN ' — ' || btrim(p_reason) ELSE '' END,
+        v_caller_uid,
+        'reversal:' || v_pay.id::text,
+        v_eff_date,
+        'reversal',
+        v_pay.id
+      );
+      v_reversed_count := v_reversed_count + 1;
+    END IF;
+
+    -- Asiento compensatorio del 'pago' (idempotente; el annulment integral
+    -- del trigger del documento suele llegar primero — belt and suspenders).
+    PERFORM public.fin_post_payment_annulment('SERVICIO_RECIBIDO', p_service_id, v_pay.id);
+  END LOOP;
 
   INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
   VALUES (v_caller_uid, v_store_id, 'SERVICE_VOIDED', 'received_services', p_service_id,
@@ -21321,14 +22701,16 @@ BEGIN
       'after_status', 'voided',
       'before_payment_status', v_payment_status,
       'before_paid_amount', v_paid_amount,
-      'payment_transactions_reversed', (SELECT COUNT(*) FROM payment_transactions WHERE ref_type='service' AND ref_id=p_service_id)
+      'payment_transactions_reversed', v_reversed_count,
+      'operation_date', v_eff_date
     ));
 
   PERFORM set_config('app.is_void_rpc', 'false', true);
 
   RETURN jsonb_build_object(
     'status', 'success', 'service_id', p_service_id,
-    'service_number', v_service_number, 'new_status', 'voided'
+    'service_number', v_service_number, 'new_status', 'voided',
+    'payments_reversed', v_reversed_count
   );
 END;
 $function$
