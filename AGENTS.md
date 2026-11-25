@@ -38,6 +38,18 @@ Las skills se complementan (p. ej. calidad define el criterio, visual-qa aporta 
 
 **PROHIBIDO modificar por iniciativa propia de un agente**: fórmulas de costos; reglas de valoración de inventarios; cálculos de ventas; reglas de caja; fórmulas contables; redondeos financieros (Decimal.js); reglas de moneda y tipo de cambio; comisiones; documentos comerciales (FC, remisiones, vales, devoluciones) y su secuenciación; relaciones entre entidades; políticas RLS; aislamiento multi-tenant; autorizaciones (`canManageStore`, `withAuth`, `withRole`, `withStoreAccess`); contratos API; migraciones de base de datos. Si una mejora toca alguno de estos elementos: identifica el conflicto, explica el impacto y **separa la propuesta de la implementación** — decide el propietario. Nunca sacrifiques integridad contable por simplicidad de interfaz. Nunca introduzcas datos ficticios en operaciones reales.
 
+## CP-BRA-001 — Aseguramiento de reglas de negocio (OBLIGATORIO desde 2026-11-26)
+
+**Estándar permanente:** `docs/quality/business-rules/STANDARD-CP-BRA-001.md` · Catálogo: `BUSINESS-RULES-CATALOG.md` · Riesgos: `RISK-REGISTER.md` · Política: `CERTIFICATION-POLICY.md`.
+
+Ninguna misión ni PR puede declararse COMPLETO si altera reglas empresariales sin:
+
+1. **Declarar las reglas afectadas** en la sección «Reglas de negocio afectadas (CP-BRA-001)» del PR con IDs del catálogo (p. ej. `FIN-002, POS-001`) — la puerta `scripts/ci-gate-business-rules.js` en CI lo EXIGE automáticamente cuando el diff toca dominios críticos (finanzas, POS, inventario, compras/servicios, datos maestros, migraciones, contratos de seguridad) y falla con IDs inexistentes.
+2. Si introduces o alteras una regla: **actualizar el catálogo y su fila de trazabilidad** y añadir prueba positiva + negativa (+ regresión si es crítica). La compilación/lint/tests verdes NO constituyen certificación empresarial.
+3. Si tocas writers de invariantes multi-ruta (saldos desnormalizados, tasas, conversión CUP, elegibilidad de reportes): listar TODAS las rutas consumidoras y re-ejecutar sus pruebas (§7 del estándar).
+4. Si no puedes identificar una regla, decláralo; si no puedes probarla, no la certifies; si encuentras contradicción entre módulos, detén la implementación afectada y documenta el conflicto; si una regla depende de una decisión del negocio, solicita esa decisión antes de inventar una interpretación.
+5. Hallazgos de auditoría: se registran en `RISK-REGISTER.md` con ID permanente; los CRÍTICOS se remedian en misiones independientes, nunca «de colateral».
+
 ## Supabase — lo no negociable
 
 1. **Producción (CostproBD, ref `wthkddeleylijmonclxg`) no es banco de pruebas.** Pruebas, fixtures y seeds van a **CostproE2E** o a **Supabase local**. Regla completa: `docs/OPERATIONS/REGLA_PRODUCCION_NO_ES_BANCO_DE_PRUEBAS.md`.

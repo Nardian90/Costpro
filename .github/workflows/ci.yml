@@ -74,6 +74,32 @@ jobs:
       - name: Destructive guard gate (CP-INFRA-020)
         run: node scripts/ci/check-destructive-guard.cjs
 
+      # CP-BRA-001 (2026-11-26): puerta de certificación de reglas de negocio.
+      # Integridad del manifiesto (siempre, estático) + en PRs, exige la
+      # sección «Reglas de negocio afectadas» con IDs válidos cuando el diff
+      # toca dominios críticos (finanzas, POS, inventario, compras, maestros,
+      # migraciones, contratos de seguridad). Fail-closed. Sin credenciales
+      # propias (usa github.token de solo lectura para el cuerpo del PR).
+      - name: Business Rules gate (CP-BRA-001) — integridad del catálogo
+        run: node scripts/ci-gate-business-rules.js
+
+      - name: Business Rules gate (CP-BRA-001) — declaración del PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          REPO_SLUG: ${{ github.repository }}
+        run: |
+          for i in 1 2 3; do
+            if curl -sf -H "Authorization: Bearer ${GH_TOKEN}" \
+              "https://api.github.com/repos/${REPO_SLUG}/pulls/${PR_NUMBER}" \
+              -o /tmp/pr-body.json; then break; fi
+            sleep 3
+            if [ "$i" = "3" ]; then echo "No se pudo leer el cuerpo del PR (fail-closed)"; exit 1; fi
+          done
+          node scripts/ci-gate-business-rules.js --pr-body /tmp/pr-body.json --changed-from "${BASE_SHA}"
+
       - name: Build
         run: NODE_OPTIONS="--max-old-space-size=4096" bun run build
 

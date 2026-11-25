@@ -1,0 +1,132 @@
+{
+  "version": 1,
+  "standard": "CP-BRA-001",
+  "catalog_doc": "docs/quality/business-rules/BUSINESS-RULES-CATALOG.md",
+  "policy_doc": "docs/quality/business-rules/CERTIFICATION-POLICY.md",
+  "families": ["FIN", "INV", "PUR", "POS", "DOC", "PRO", "CAT", "TEN", "SEC", "HR", "REP", "SYS"],
+  "critical_rules": [
+    { "id": "FIN-001", "severity": "CRITICA", "tests": ["src/__tests__/migrations"] },
+    { "id": "FIN-002", "severity": "CRITICA", "tests": ["src/lib/accounts-payable"] },
+    { "id": "FIN-003", "severity": "CRITICA", "tests": [] },
+    { "id": "FIN-004", "severity": "CRITICA", "tests": [] },
+    { "id": "FIN-005", "severity": "CRITICA", "tests": [] },
+    { "id": "FIN-006", "severity": "CRITICA", "tests": [] },
+    { "id": "FIN-007", "severity": "CRITICA", "tests": [] },
+    { "id": "FIN-009", "severity": "CRITICA", "tests": ["src/lib/cash-report"] },
+    { "id": "FIN-012", "severity": "CRITICA", "tests": ["src/__tests__/migrations"] },
+    { "id": "FIN-017", "severity": "CRITICA", "tests": [] },
+    { "id": "POS-001", "severity": "CRITICA", "tests": ["e2e/flows"] },
+    { "id": "POS-002", "severity": "CRITICA", "tests": [] },
+    { "id": "POS-004", "severity": "CRITICA", "tests": ["e2e/flows"] },
+    { "id": "POS-005", "severity": "CRITICA", "tests": [] },
+    { "id": "POS-007", "severity": "ALTA", "tests": ["src/lib/roles.ts"] },
+    { "id": "INV-001", "severity": "CRITICA", "tests": [] },
+    { "id": "INV-003", "severity": "CRITICA", "tests": [] },
+    { "id": "INV-005", "severity": "CRITICA", "tests": [] },
+    { "id": "INV-006", "severity": "CRITICA", "tests": [] },
+    { "id": "PUR-001", "severity": "CRITICA", "tests": ["src/__tests__/migrations"] },
+    { "id": "PUR-003", "severity": "CRITICA", "tests": [] },
+    { "id": "DOC-001", "severity": "CRITICA", "tests": [] },
+    { "id": "DOC-004", "severity": "CRITICA", "tests": [] },
+    { "id": "TEN-001", "severity": "CRITICA", "tests": ["e2e"] },
+    { "id": "TEN-002", "severity": "CRITICA", "tests": [] },
+    { "id": "TEN-005", "severity": "CRITICA", "tests": [] },
+    { "id": "SEC-001", "severity": "CRITICA", "tests": [] },
+    { "id": "SEC-002", "severity": "CRITICA", "tests": ["scripts/ci-gate-sql-checks.js"] },
+    { "id": "SEC-003", "severity": "CRITICA", "tests": ["src/lib/auth.ts"] },
+    { "id": "SEC-004", "severity": "CRITICA", "tests": [] },
+    { "id": "SEC-005", "severity": "ALTA", "tests": ["src/app/api/pos"] },
+    { "id": "CAT-001", "severity": "CRITICA", "tests": ["e2e"] },
+    { "id": "CAT-003", "severity": "ALTA", "tests": [] },
+    { "id": "SYS-001", "severity": "CRITICA", "tests": [] },
+    { "id": "SYS-002", "severity": "ALTA", "tests": ["scripts/lib/check-writers.mjs"] },
+    { "id": "SYS-003", "severity": "CRITICA", "tests": ["e2e/fixtures/assert-isolated-db.ts"] }
+  ],
+  "other_rules": [
+    "FIN-008", "FIN-010", "FIN-011", "FIN-013", "FIN-014", "FIN-015", "FIN-016",
+    "INV-002", "INV-004", "INV-007", "INV-008", "INV-009",
+    "PUR-002", "PUR-004",
+    "POS-003", "POS-006", "POS-008",
+    "DOC-002", "DOC-003", "DOC-005",
+    "PRO-001", "PRO-002", "PRO-003", "PRO-004",
+    "CAT-002", "CAT-004", "CAT-005",
+    "TEN-003", "TEN-004",
+    "SEC-006",
+    "HR-001",
+    "REP-001", "REP-002",
+    "SYS-004", "SYS-005", "SYS-006"
+  ],
+  "critical_domains": [
+    {
+      "domain": "finanzas",
+      "paths": [
+        "src/lib/accounts-payable/",
+        "src/app/api/accounts-payable/",
+        "src/app/api/accounts-receivable/",
+        "src/app/api/fin/",
+        "src/app/api/payments/",
+        "src/app/api/cash-flow/",
+        "src/app/api/cash-closures/",
+        "src/app/api/cash-report/",
+        "src/app/api/commissions/",
+        "src/lib/cash-report/"
+      ]
+    },
+    {
+      "domain": "pos-ventas",
+      "paths": [
+        "src/app/api/pos/",
+        "src/app/api/sales/",
+        "src/app/api/transactions/",
+        "src/components/views/terminal/views/pos/",
+        "src/components/payments/",
+        "src/store/cart.ts",
+        "src/hooks/usePOSCheckout.ts"
+      ]
+    },
+    {
+      "domain": "inventario",
+      "paths": [
+        "src/app/api/inventory/",
+        "src/app/api/reverse",
+        "src/app/api/vale-salida/",
+        "src/app/api/transfers/",
+        "src/app/api/physical-inventory/",
+        "src/app/api/devolutions/",
+        "src/app/api/ipv-ventas/",
+        "src/lib/inventory/"
+      ]
+    },
+    {
+      "domain": "compras-servicios",
+      "paths": [
+        "src/app/api/purchase-orders/",
+        "src/app/api/received-services/",
+        "src/app/api/receive-to-warehouse/",
+        "src/components/views/terminal/views/received_services/"
+      ]
+    },
+    {
+      "domain": "datos-maestros",
+      "paths": [
+        "src/app/api/customers/",
+        "src/app/api/catalog/",
+        "src/app/api/exchange-rates/"
+      ]
+    },
+    {
+      "domain": "migraciones-bd",
+      "paths": [
+        "supabase/migrations/"
+      ]
+    },
+    {
+      "domain": "seguridad-contratos",
+      "paths": [
+        "supabase/security-contract/",
+        "ci-gate-allowlist.json",
+        "scripts/lib/writers.manifest.json"
+      ]
+    }
+  ]
+}
