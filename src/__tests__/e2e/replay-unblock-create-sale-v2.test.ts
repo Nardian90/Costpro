@@ -327,17 +327,26 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(prohibidos.test(sql)).toBe(false);
   });
 
-  it('4. simulación con desbloqueo: ningún COMMENT ambiguo; estado final = firma única vigente (/34, FASE 4 clasificador)', () => {
+  it('4. simulación con desbloqueo: ningún COMMENT ambiguo; estado final = firma única vigente (/35, CP-POS per-item payments)', () => {
     const r = simularStream(true);
     expect(r.fallo).toBeNull();
     expect(r.firmasFinales.length).toBe(1);
     // MISIÓN CLASIFICADOR MAESTRO (FASE 4, 20261105140000): la firma se amplió
     // a /34 (snapshot del comprador customer_address/customer_code) con DROP
-    // sin calificado previo — el stream termina con UNA firma viva, ahora /34.
+    // sin calificado previo.
+    // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (20261125120000): la firma se
+    // amplió a /35 (p_customer_ci + persistencia items[].payments en
+    // transaction_items.payment_distributions) con DROP sin calificar previo —
+    // el stream termina con UNA firma viva, ahora /35.
+    const ev35 = eventosCreateSaleV2('20261125120000_cp_pos_per_item_payments.sql',
+      leerMigracion('20261125120000_cp_pos_per_item_payments.sql')).filter((e) => e.tipo === 'create');
+    const f35 = ev35[0] as EventoCreate;
+    expect(r.firmasFinales[0]).toBe(f35.firmas.join(','));
+    // La firma /34 (clasificador) quedó absorbida por el DROP sin calificar.
     const ev34 = eventosCreateSaleV2('20261105140000_cp_clasificador_fase4_snapshots.sql',
       leerMigracion('20261105140000_cp_clasificador_fase4_snapshots.sql')).filter((e) => e.tipo === 'create');
     const f34 = ev34[0] as EventoCreate;
-    expect(r.firmasFinales[0]).toBe(f34.firmas.join(','));
+    expect(r.firmasFinales[0]).not.toBe(f34.firmas.join(','));
     // La firma histórica /32 (RECONCILE-004) quedó absorbida por el DROP sin calificar.
     const ev32 = eventosCreateSaleV2(VIEJA75, leerMigracion(VIEJA75)).filter((e) => e.tipo === 'create');
     const f32 = ev32[0] as EventoCreate;
@@ -537,19 +546,34 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // ADN-011 · EL DIARIO CONTABLE (PR #1699, 2026-11-24): +1 —
     //   20261124120000_adn011_gaceta_diario_publico (tabla gaceta_posts +
     //   vista pública public_gaceta_v; al FINAL del orden lexicográfico) = 204
-    // CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (2026-11-25): +2 —
+    // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (2026-11-25): +1 —
+    //   20261125120000_cp_pos_per_item_payments (transaction_items.
+    //   payment_distributions + create_sale_v2 con p_customer_ci y validación
+    //   items[].payments; al FINAL del orden lexicográfico)
+    // CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (PR #1706, 2026-11-25): +2 —
     //   20261125120000_cp_recep001_confirm_notes_link (enlace documental del
     //   saldo en confirm_pending_reception + backfill conservador) y
     //   20261125120100_cp_recep001_master_sku_consecutivo (consecutivo oficial
-    //   del Catálogo Maestro; al FINAL del orden lexicográfico) = 206
+    //   del Catálogo Maestro; al FINAL del orden lexicográfico)
+    // CP-RECEPCIONES-CATALOGO-MAESTRO-001 (2026-11-25): +2 —
+    //   20261125130000 renumeración supervisada de los 16 AUTO-* de
+    //   ENT-000005-2026 y 20261125131000 altas de productos en borradores
+    //   (add_reception_items + save_pending_reception_changes; al FINAL del
+    //   orden lexicográfico — posiciones previas intactas) = 209
+    // CP-RECEPCIONES-CATALOGO-MAESTRO-001 · CIERRE CI PR #1710 (2026-11-25): +2 —
+    //   20261125132000 revoca PUBLIC/anon EXECUTE en las RPC de borradores
+    //   (hallazgo secdef_public_grant del SQL Security Gate) y 20261125133000
+    //   retira la herramienta one-shot de renumeración ya usada (hallazgo
+    //   secdef_no_auth; al FINAL del orden lexicográfico) = 211
     // CP-AP-FORENSIC-RECONCILIATION-001 (2026-11-25): +1 —
-    //   20261125153000_cxap_revoke_legacy_reception_fns (REVOKE de EXECUTE
-    //   anon/authenticated en 2 funciones legado huérfanas — cierre del
-    //   hallazgo secdef_public_grant del SQL Security Gate; al FINAL del
-    //   orden lexicográfico — posiciones previas intactas) = 207
-    expect(m.total_incluidos).toBe(207);
+    //   20261125153000_cxap_revoke_legacy_reception_fns (REVOKE idempotente de
+    //   EXECUTE anon/authenticated en add_reception_items y
+    //   save_pending_reception_changes — mismo hallazgo cerrado de forma
+    //   independiente y coincidente con 20261125132000; al FINAL del orden
+    //   lexicográfico — posiciones previas intactas) = 212
+    expect(m.total_incluidos).toBe(212);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(207);
+    expect(incluidos.length).toBe(212);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

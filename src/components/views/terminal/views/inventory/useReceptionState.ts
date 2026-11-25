@@ -2215,9 +2215,16 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     ocrSupplier?: string | null,
     ocrInvoice?: string | null,
   ) => {
+    // CP-RECEPCIONES-CATALOGO-MAESTRO-001 (fase 2): eliminado el generador
+    // client-side `OCR-${Date.now()}-${idx}`. Ese placeholder viajaba como
+    // SKU LITERAL hasta el escritor canónico y creaba maestros OCR-* fuera
+    // del consecutivo oficial (mismo defecto clase que los AUTO-*). Sin SKU
+    // detectado por el OCR, la fila llega sin código y el servidor asigna el
+    // siguiente código OFICIAL del Catálogo Maestro (auto_sku), igual que el
+    // alta manual y el importador Excel.
     const newItems: ReceptionItem[] = ocrItems.map((item, idx) => ({
       product_id: null,
-      sku: item.sku || `OCR-${Date.now()}-${idx}`,
+      sku: item.sku || '',
       name: item.name,
       quantity: item.quantity || 1,
       unit_cost: item.unit_cost || 0,
@@ -2235,9 +2242,16 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       tasa_cambio_recepcion: newTasa,
     }));
 
-    // Evitar duplicados por SKU
-    const existingSkus = new Set(items.map(i => i.sku.toLowerCase()));
-    const toAdd = newItems.filter(ni => !existingSkus.has(ni.sku.toLowerCase()));
+    // Evitar duplicados: por SKU cuando existe y por nombre para filas sin
+    // código (mismo criterio anti-duplicados del alta manual).
+    const existingSkus = new Set(items.map(i => i.sku.toLowerCase()).filter(Boolean));
+    const existingNames = new Set(items.map(i => (i.name || '').trim().toLowerCase()));
+    const toAdd = newItems.filter(ni => {
+      const niSku = (ni.sku || '').toLowerCase();
+      if (niSku && existingSkus.has(niSku)) return false;
+      if (!niSku && existingNames.has((ni.name || '').trim().toLowerCase())) return false;
+      return true;
+    });
 
     if (toAdd.length === 0) {
       toast.warning('Todos los items del OCR ya están en la recepción');

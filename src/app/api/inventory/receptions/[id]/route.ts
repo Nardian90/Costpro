@@ -23,8 +23,25 @@ import { withSecurity } from '@/lib/with-security';
  *   supplier?: string,
  *   referenceDoc?: string,
  *   notes?: string,
- *   itemUpdates?: Array<{ id, quantity, unit_cost, deleted }>
+ *   itemUpdates?: Array<{ id, quantity, unit_cost, deleted }>,
+ *   newItems?: Array<{
+ *     product_id?: string,          — producto existente de la tienda
+ *     sku?: string, name?: string,  — producto a resolver por el escritor
+ *                                    canónico (existente/maestro/nuevo; sin
+ *                                    SKU el servidor asigna el código OFICIAL)
+ *     barcode?: string,
+ *     quantity: number, unit_cost: number,
+ *     unit_of_measure?: string, sale_price?: number,
+ *     moneda_recepcion?: string, tasa_cambio_recepcion?: number
+ *   }>
  * }
+ *
+ * CP-RECEPCIONES-CATALOGO-MAESTRO-001 (fase 3): con newItems el guardado es
+ * UNA sola transacción server-side vía save_pending_reception_changes
+ * (cabecera + actualizaciones + altas atómicas; las altas pasan por el
+ * escritor canónico y obtienen códigos oficiales del Catálogo Maestro).
+ * Sin newItems, el flujo histórico (header + update_reception_items) se
+ * conserva idéntico.
  */
 
 function extractIdFromUrl(req: NextRequest): string | null {
@@ -49,15 +66,79 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     referenceDoc: z.string().nullable().optional(),
     notes: z.string().nullable().optional(),
     itemUpdates: z.unknown().optional(),
+    newItems: z.array(z.unknown()).optional(),
   }).passthrough();
   const parsedBody = ReceptionPatchSchema.safeParse(body);
   if (!parsedBody.success) {
     return NextResponse.json({ error: 'Cuerpo de solicitud inválido', details: parsedBody.error.issues.map(i => `${i.path.join('.')}: ${i.message}`) }, { status: 400 });
   }
 
-  const { supplier, referenceDoc, notes, itemUpdates } = body;
+  const { supplier, referenceDoc, notes, itemUpdates, newItems } = body;
   const supabase = getSupabaseForSession(session);
   const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
+
+  // CP-RECEPCIONES-CATALOGO-MAESTRO-001 (fase 3): lote con líneas nuevas →
+  // UNA transacción server-side (save_pending_reception_changes) que aplica
+  // cabecera + actualizaciones + altas atómicamente. Sin líneas nuevas se
+  // conserva el flujo histórico exactamente igual.
+  const hasNewItems = Array.isArray(newItems) && newItems.length > 0;
+  if (hasNewItems) {
+    // Guard de estado: las altas son campos económicos → pendiente-only.
+    const { data: receiptRow, error: receiptErr } = await supabase
+      .from('receipts')
+      .select('status')
+      .eq('id', id)
+      .single();
+    if (receiptErr && String(receiptErr.code || '') !== 'PGRST116') {
+      return NextResponse.json({ error: `Error consultando recepción: ${receiptErr.message}` }, { status: 500 });
+    }
+    const status = receiptRow?.status;
+    if (!status) {
+      return NextResponse.json({ error: 'Recepción no encontrada' }, { status: 404 });
+    }
+    if (status !== 'pending') {
+      return NextResponse.json({
+        error: `La recepción está '${status}': sus datos económicos/documentales son inmutables (solo 'notes' es editable)`,
+        code: 'ERR_NOT_EDITABLE',
+        remedio: 'Use reversión/anulación controlada + recepción correctiva.',
+      }, { status: 409 });
+    }
+
+    const { data: saveRes, error: saveErr } = await supabase.rpc('save_pending_reception_changes', {
+      p_receipt_id: id,
+      p_header: { supplier: supplier ?? null, reference_doc: referenceDoc ?? null, notes: notes ?? null },
+      p_item_updates: Array.isArray(itemUpdates) ? itemUpdates : [],
+      p_new_items: newItems,
+      p_user_id: userId,
+    });
+    if (saveErr) {
+      const msg = saveErr.message || '';
+      if (msg.includes('ERR_NOT_EDITABLE')) {
+        return NextResponse.json({ error: 'Solo se pueden editar recepciones pendientes', code: 'ERR_NOT_EDITABLE' }, { status: 409 });
+      }
+      if (msg.includes('ERR_UNAUTHORIZED')) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      if (msg.includes('ERR_ROWS_BLOCKED')) {
+        return NextResponse.json({ error: msg, code: 'ERR_ROWS_BLOCKED' }, { status: 422 });
+      }
+      if (msg.includes('ERR_PRODUCT_ALREADY_IN_RECEIPT') || msg.includes('ERR_DUPLICATE_IN_BATCH')) {
+        return NextResponse.json({ error: msg, code: 'ERR_DUPLICATE' }, { status: 409 });
+      }
+      return NextResponse.json({ error: msg }, { status: 422 });
+    }
+    return NextResponse.json({
+      success: true,
+      updated_count: saveRes?.updated_count,
+      failed_count: saveRes?.failed_count,
+      added_count: saveRes?.added_count,
+      idempotent_skipped: saveRes?.idempotent_skipped,
+      added: saveRes?.added ?? [],
+      new_total: saveRes?.new_total,
+    });
+  }
+
+  // ─── Flujo histórico (sin líneas nuevas) — sin cambios de comportamiento ───
 
   // CP-RECEIPT-INTEGRITY-001: cargar estado ANTES de mutar. Los campos
   // económicos/documentales son inmutables salvo en 'pending'; `notes` es

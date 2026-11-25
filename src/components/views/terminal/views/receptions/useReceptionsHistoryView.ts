@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store';
 import { useReceptions, useReceptionDetails, useUpdateReception, useVoidReception, useConfirmPendingReception, useDeletePendingReception } from '@/hooks/api/useReceptions';
 import { Receipt, ReceiptItem } from '@/types';
@@ -14,6 +15,7 @@ import { supabase } from '@/lib/supabaseClient';
 
 export function useReceptionsHistoryView() {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -216,22 +218,53 @@ export function useReceptionsHistoryView() {
     referenceDoc?: string;
     notes?: string;
     itemUpdates?: Array<{ id: string; quantity: number; unit_cost: number; deleted: boolean }>;
+    // CP-RECEPCIONES-CATALOGO-MAESTRO-001 (fase 3): líneas nuevas del borrador.
+    newItems?: Array<{
+      product_id?: string | null;
+      sku?: string | null;
+      name?: string | null;
+      barcode?: string | null;
+      quantity: number;
+      unit_cost: number;
+      unit_of_measure?: string | null;
+      sale_price?: number | null;
+      moneda_recepcion?: string;
+      tasa_cambio_recepcion?: number;
+    }>;
   }) => {
     try {
       // FIX R-1+R-2: Una sola llamada API route que hace header + items atómicamente en una transacción.
       // Antes: 2 llamadas separadas (mutation header + RPC items) → estado parcial si la 2ª fallaba.
       // Ahora: la API route /api/inventory/receptions/[id] PATCH actualiza header + items en una transacción.
+      // CP-RECEPCIONES-CATALOGO-MAESTRO-001 (fase 3): con newItems la ruta usa
+      // save_pending_reception_changes (transacción única server-side que
+      // también crea/activa productos con código oficial del Catálogo Maestro).
       const { apiFetch } = await import('@/lib/api-fetch');
-      await apiFetch(`/api/inventory/receptions/${receiptId}`, {
+      const res = await apiFetch(`/api/inventory/receptions/${receiptId}`, {
         method: 'PATCH',
         body: JSON.stringify(updates),
       });
 
       setEditingReceiptId(null);
-      toast.success('Recepción actualizada');
+      // Refresco de las dos vistas afectadas (líneas del modal + listado con
+      // el total nuevo) — sin esto la UI mostraba datos previos al guardado.
+      await queryClient.invalidateQueries({ queryKey: ['receipt-items', receiptId] });
+      await queryClient.invalidateQueries({ queryKey: ['receptions'] });
+      await queryClient.invalidateQueries({ queryKey: ['reception-product-lines'] });
+
+      // Mensaje con los códigos asignados por el servidor (fase 2/3: el
+      // consecutivo oficial del Catálogo Maestro viaja en la respuesta).
+      const added = Array.isArray((res as { added?: unknown[] })?.added) ? (res as { added: { name?: string; sku?: string; state?: string }[] }).added : [];
+      const addedNew = added.filter(a => a.state !== 'already_present_idempotent');
+      if (addedNew.length > 0) {
+        const withSku = addedNew.map(a => `${a.name ?? ''} (${a.sku ?? 'sin código'})`).join(', ');
+        toast.success(`Recepción actualizada — agregado${addedNew.length > 1 ? 's' : ''}: ${withSku}`, { duration: 7000 });
+      } else {
+        toast.success('Recepción actualizada');
+      }
     } catch (error) {
       logger.error('DATABASE', 'RECEPTION_UPDATE_FAILED', { error });
-      toast.error(error instanceof Error ? error.message : 'Error al actualizar la recepción');
+      toast.error(error instanceof Error ? error.message : 'Error al actualizar la recepción', { duration: 9000 });
     }
   };
 
