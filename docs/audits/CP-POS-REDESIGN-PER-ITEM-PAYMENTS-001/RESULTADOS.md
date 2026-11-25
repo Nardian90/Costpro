@@ -209,3 +209,17 @@ Modificados:
 - BD de producción intacta: la migración se aplicó SOLO a la aislada y viaja al pipeline del PR.
 - PII: el CI del cliente se guarda en `transactions.customer_ci` (columna existente, mismo acceso
   RLS del resto de la venta); en Auditoría solo la bandera de presencia, no el dato.
+
+
+---
+
+## 13. Certificación funcional posterior (CP-POS-SMOKE-PRODUCTION-001, 2026-11-25)
+
+Cierre funcional del ciclo: certificación E2E **desde la interfaz real** (7/7 en aislada), conciliación
+financiera independiente (**44/44**), inventario/caja/idempotencia UI/móvil — y un **defecto real corregido**
+(el modal «Configurar pago» montaba el snapshot del ítem; fix vivo vía selector reactivo + regresión §FIX-SMOKE-001,
+desplegado a producción con el PR #1712, merge `b82e53e41`, deploy success). Informe completo con matriz de
+resultados, condiciones de cierre y runbook del smoke transaccional de producción (único hito pendiente):
+
+→ `docs/audits/CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001/CERTIFICACION_SMOKE_PROD_001.md`
+→ Actas de conciliación: `evidencia/certificacion/CONCILIACION_*.md` · Capturas: `evidencia/certificacion/cert-*.png`
