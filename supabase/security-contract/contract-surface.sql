@@ -1,9 +1,9 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-25T19:36:05.284Z
+-- Captured  : 2026-11-25T19:49:18.523Z
 -- Project   : wthkddeleylijmonclxg
--- Functions : 232 (SECURITY DEFINER write functions, public schema)
+-- Functions : 233 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
 -- =====================================================================
 -- scripts/security-contract-test-static.cjs (CI, no secrets) replays this
@@ -2047,6 +2047,43 @@ BEGIN
 END $function$
 
 
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
+END;
+$function$
+
+
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -2083,43 +2120,6 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
-END;
-$function$
-
-
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
 END;
 $function$
 
@@ -6240,6 +6240,145 @@ END;
 $function$
 
 
+-- @contract-function name=create_received_service_v2 args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid, p_production_order_ids jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid DEFAULT NULL::uuid, p_service_type_name text DEFAULT 'Otro'::text, p_service_date date DEFAULT NULL::date, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_payment_terms_days integer DEFAULT 30, p_distribution_method text DEFAULT 'amount'::text, p_reference_doc text DEFAULT NULL::text, p_observations text DEFAULT NULL::text, p_receipt_ids jsonb DEFAULT '[]'::jsonb, p_created_by uuid DEFAULT NULL::uuid, p_production_order_ids jsonb DEFAULT '[]'::jsonb)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE
+  v_service_id uuid;
+  v_service_number text;
+  v_receipt_id uuid;
+  v_order_id uuid;
+  v_count integer;
+  v_allocated_per_receipt numeric;
+  v_link_count integer;
+  v_ot_count integer := 0;
+  -- Doctrina actor-explícito (create_sale_v2 §3.1 / v2.17.0): bajo
+  -- service_role el actor llega EXPLÍCITO por parámetro derivado server-side
+  -- de la sesión verificada; bajo JWT de usuario manda auth.uid().
+  v_caller_uid uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_created_by, auth.uid())
+    ELSE auth.uid()
+  END;
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
+
+  -- FIX D1: autorización del ACTOR (no de auth.uid() del contexto service_role).
+  IF v_caller_uid IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+  IF NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  IF p_supplier IS NULL OR p_supplier = '' THEN
+    RAISE EXCEPTION 'ERR_SUPPLIER_REQUIRED';
+  END IF;
+
+  IF p_total_amount <= 0 THEN
+    RAISE EXCEPTION 'ERR_INVALID_AMOUNT: total_amount must be > 0';
+  END IF;
+
+  IF p_exchange_rate < 0.01 OR p_exchange_rate > 10000 THEN
+    RAISE EXCEPTION 'ERR_INVALID_EXCHANGE_RATE: % out of range [0.01, 10000]', p_exchange_rate;
+  END IF;
+
+  IF p_payment_terms_days < 1 OR p_payment_terms_days > 365 THEN
+    RAISE EXCEPTION 'ERR_INVALID_PAYMENT_TERMS: % out of range [1, 365]', p_payment_terms_days;
+  END IF;
+
+  IF p_distribution_method NOT IN ('amount', 'quantity', 'manual') THEN
+    RAISE EXCEPTION 'ERR_INVALID_DISTRIBUTION_METHOD';
+  END IF;
+
+  -- 20261015000001: el catálogo de tipos es GLOBAL (store_id IS NULL) con
+  -- soporte de variantes por tienda. Se acepta el tipo si pertenece a la
+  -- tienda activa O es global, y está activo. (Antes: solo store_id =
+  -- p_store_id, lo que excluía a todos los tipos del catálogo oficial.)
+  IF p_service_type_id IS NOT NULL THEN
+    SELECT COUNT(*) INTO v_count FROM service_types
+    WHERE id = p_service_type_id
+      AND (store_id = p_store_id OR store_id IS NULL)
+      AND is_active = true;
+    IF v_count = 0 THEN
+      RAISE EXCEPTION 'ERR_SERVICE_TYPE_NOT_FOUND';
+    END IF;
+  END IF;
+
+  PERFORM public.validate_operation_date(COALESCE(p_service_date, CURRENT_DATE)::timestamp with time zone, p_store_id);
+
+  SELECT 'SRV-' || to_char(COALESCE(p_service_date, CURRENT_DATE), 'YYYYMMDD') || '-' ||
+         LPAD(nextval('service_number_seq')::text, 5, '0')
+  INTO v_service_number;
+
+  INSERT INTO received_services (
+    store_id, service_number, service_date, service_type_id, service_type_name,
+    supplier, reference_doc, currency, exchange_rate, total_amount,
+    observations, status, distribution_method, created_by,
+    payment_terms_days, due_date
+  ) VALUES (
+    p_store_id, v_service_number, COALESCE(p_service_date, CURRENT_DATE),
+    p_service_type_id, p_service_type_name, p_supplier, p_reference_doc,
+    p_currency, p_exchange_rate, p_total_amount, p_observations,
+    'draft', p_distribution_method, v_caller_uid,
+    p_payment_terms_days, (COALESCE(p_service_date, CURRENT_DATE) + p_payment_terms_days)::date
+  ) RETURNING id INTO v_service_id;
+
+  -- Vinculación documental con recepciones (validación server-side: misma
+  -- tienda + recepción activa). NO distribuye costos ni toca inventario.
+  v_link_count := jsonb_array_length(p_receipt_ids);
+  IF v_link_count > 0 THEN
+    v_allocated_per_receipt := p_total_amount / v_link_count;
+    FOR v_receipt_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_receipt_ids) LOOP
+      IF NOT EXISTS (SELECT 1 FROM receipts WHERE id = v_receipt_id AND store_id = p_store_id AND status = 'active') THEN
+        RAISE EXCEPTION 'ERR_RECEIPT_INVALID: % no pertenece a la store o no esta activo', v_receipt_id;
+      END IF;
+      INSERT INTO service_reception_links (service_id, receipt_id, allocation_percentage, allocated_amount)
+      VALUES (v_service_id, v_receipt_id, 100.0 / v_link_count, v_allocated_per_receipt);
+    END LOOP;
+  END IF;
+
+  -- FIX D2: vinculación documental con Órdenes de Trabajo/Producción.
+  -- Validación: la OT debe existir, pertenecer a la MISMA tienda y no estar
+  -- anulada ni cerrada (draft/approved/in_progress/paused/completed ok).
+  IF jsonb_array_length(p_production_order_ids) > 0 THEN
+    FOR v_order_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_production_order_ids) LOOP
+      IF NOT EXISTS (
+        SELECT 1 FROM production_orders
+        WHERE id = v_order_id
+          AND store_id = p_store_id
+          AND status NOT IN ('voided', 'closed')
+      ) THEN
+        RAISE EXCEPTION 'ERR_PRODUCTION_ORDER_INVALID: % no pertenece a la tienda o su estado no admite vinculación', v_order_id;
+      END IF;
+      INSERT INTO service_production_order_links (service_id, production_order_id)
+      VALUES (v_service_id, v_order_id)
+      ON CONFLICT (service_id, production_order_id) DO NOTHING;
+      v_ot_count := v_ot_count + 1;
+    END LOOP;
+  END IF;
+
+  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (v_caller_uid, p_store_id, 'SERVICE_CREATED', 'received_services', v_service_id,
+    jsonb_build_object(
+      'service_number', v_service_number, 'supplier', p_supplier,
+      'total_amount', p_total_amount, 'currency', p_currency,
+      'receipt_ids_linked', v_link_count,
+      'production_order_ids_linked', v_ot_count
+    ));
+
+  RETURN jsonb_build_object(
+    'status', 'success', 'service_id', v_service_id,
+    'service_number', v_service_number, 'link_count', v_link_count,
+    'production_order_link_count', v_ot_count
+  );
+END;
+$function$
+
+
 -- @contract-function name=create_received_service_v2 args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid, p_production_order_ids jsonb, p_creation_key text" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid, p_production_order_ids jsonb, p_creation_key text DEFAULT NULL::text)
  RETURNS jsonb
@@ -6379,145 +6518,6 @@ BEGIN
       'receipt_ids_linked', v_link_count,
       'production_order_ids_linked', v_ot_count,
       'creation_key', v_key
-    ));
-
-  RETURN jsonb_build_object(
-    'status', 'success', 'service_id', v_service_id,
-    'service_number', v_service_number, 'link_count', v_link_count,
-    'production_order_link_count', v_ot_count
-  );
-END;
-$function$
-
-
--- @contract-function name=create_received_service_v2 args="p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid, p_service_type_name text, p_service_date date, p_currency text, p_exchange_rate numeric, p_payment_terms_days integer, p_distribution_method text, p_reference_doc text, p_observations text, p_receipt_ids jsonb, p_created_by uuid, p_production_order_ids jsonb" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_received_service_v2(p_store_id uuid, p_supplier text, p_total_amount numeric, p_service_type_id uuid DEFAULT NULL::uuid, p_service_type_name text DEFAULT 'Otro'::text, p_service_date date DEFAULT NULL::date, p_currency text DEFAULT 'CUP'::text, p_exchange_rate numeric DEFAULT 1.0, p_payment_terms_days integer DEFAULT 30, p_distribution_method text DEFAULT 'amount'::text, p_reference_doc text DEFAULT NULL::text, p_observations text DEFAULT NULL::text, p_receipt_ids jsonb DEFAULT '[]'::jsonb, p_created_by uuid DEFAULT NULL::uuid, p_production_order_ids jsonb DEFAULT '[]'::jsonb)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'extensions'
-AS $function$
-DECLARE
-  v_service_id uuid;
-  v_service_number text;
-  v_receipt_id uuid;
-  v_order_id uuid;
-  v_count integer;
-  v_allocated_per_receipt numeric;
-  v_link_count integer;
-  v_ot_count integer := 0;
-  -- Doctrina actor-explícito (create_sale_v2 §3.1 / v2.17.0): bajo
-  -- service_role el actor llega EXPLÍCITO por parámetro derivado server-side
-  -- de la sesión verificada; bajo JWT de usuario manda auth.uid().
-  v_caller_uid uuid := CASE
-    WHEN auth.role() = 'service_role' THEN COALESCE(p_created_by, auth.uid())
-    ELSE auth.uid()
-  END;
-BEGIN
-  PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
-
-  -- FIX D1: autorización del ACTOR (no de auth.uid() del contexto service_role).
-  IF v_caller_uid IS NULL THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-  IF NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  IF p_supplier IS NULL OR p_supplier = '' THEN
-    RAISE EXCEPTION 'ERR_SUPPLIER_REQUIRED';
-  END IF;
-
-  IF p_total_amount <= 0 THEN
-    RAISE EXCEPTION 'ERR_INVALID_AMOUNT: total_amount must be > 0';
-  END IF;
-
-  IF p_exchange_rate < 0.01 OR p_exchange_rate > 10000 THEN
-    RAISE EXCEPTION 'ERR_INVALID_EXCHANGE_RATE: % out of range [0.01, 10000]', p_exchange_rate;
-  END IF;
-
-  IF p_payment_terms_days < 1 OR p_payment_terms_days > 365 THEN
-    RAISE EXCEPTION 'ERR_INVALID_PAYMENT_TERMS: % out of range [1, 365]', p_payment_terms_days;
-  END IF;
-
-  IF p_distribution_method NOT IN ('amount', 'quantity', 'manual') THEN
-    RAISE EXCEPTION 'ERR_INVALID_DISTRIBUTION_METHOD';
-  END IF;
-
-  -- 20261015000001: el catálogo de tipos es GLOBAL (store_id IS NULL) con
-  -- soporte de variantes por tienda. Se acepta el tipo si pertenece a la
-  -- tienda activa O es global, y está activo. (Antes: solo store_id =
-  -- p_store_id, lo que excluía a todos los tipos del catálogo oficial.)
-  IF p_service_type_id IS NOT NULL THEN
-    SELECT COUNT(*) INTO v_count FROM service_types
-    WHERE id = p_service_type_id
-      AND (store_id = p_store_id OR store_id IS NULL)
-      AND is_active = true;
-    IF v_count = 0 THEN
-      RAISE EXCEPTION 'ERR_SERVICE_TYPE_NOT_FOUND';
-    END IF;
-  END IF;
-
-  PERFORM public.validate_operation_date(COALESCE(p_service_date, CURRENT_DATE)::timestamp with time zone, p_store_id);
-
-  SELECT 'SRV-' || to_char(COALESCE(p_service_date, CURRENT_DATE), 'YYYYMMDD') || '-' ||
-         LPAD(nextval('service_number_seq')::text, 5, '0')
-  INTO v_service_number;
-
-  INSERT INTO received_services (
-    store_id, service_number, service_date, service_type_id, service_type_name,
-    supplier, reference_doc, currency, exchange_rate, total_amount,
-    observations, status, distribution_method, created_by,
-    payment_terms_days, due_date
-  ) VALUES (
-    p_store_id, v_service_number, COALESCE(p_service_date, CURRENT_DATE),
-    p_service_type_id, p_service_type_name, p_supplier, p_reference_doc,
-    p_currency, p_exchange_rate, p_total_amount, p_observations,
-    'draft', p_distribution_method, v_caller_uid,
-    p_payment_terms_days, (COALESCE(p_service_date, CURRENT_DATE) + p_payment_terms_days)::date
-  ) RETURNING id INTO v_service_id;
-
-  -- Vinculación documental con recepciones (validación server-side: misma
-  -- tienda + recepción activa). NO distribuye costos ni toca inventario.
-  v_link_count := jsonb_array_length(p_receipt_ids);
-  IF v_link_count > 0 THEN
-    v_allocated_per_receipt := p_total_amount / v_link_count;
-    FOR v_receipt_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_receipt_ids) LOOP
-      IF NOT EXISTS (SELECT 1 FROM receipts WHERE id = v_receipt_id AND store_id = p_store_id AND status = 'active') THEN
-        RAISE EXCEPTION 'ERR_RECEIPT_INVALID: % no pertenece a la store o no esta activo', v_receipt_id;
-      END IF;
-      INSERT INTO service_reception_links (service_id, receipt_id, allocation_percentage, allocated_amount)
-      VALUES (v_service_id, v_receipt_id, 100.0 / v_link_count, v_allocated_per_receipt);
-    END LOOP;
-  END IF;
-
-  -- FIX D2: vinculación documental con Órdenes de Trabajo/Producción.
-  -- Validación: la OT debe existir, pertenecer a la MISMA tienda y no estar
-  -- anulada ni cerrada (draft/approved/in_progress/paused/completed ok).
-  IF jsonb_array_length(p_production_order_ids) > 0 THEN
-    FOR v_order_id IN SELECT value::uuid FROM jsonb_array_elements_text(p_production_order_ids) LOOP
-      IF NOT EXISTS (
-        SELECT 1 FROM production_orders
-        WHERE id = v_order_id
-          AND store_id = p_store_id
-          AND status NOT IN ('voided', 'closed')
-      ) THEN
-        RAISE EXCEPTION 'ERR_PRODUCTION_ORDER_INVALID: % no pertenece a la tienda o su estado no admite vinculación', v_order_id;
-      END IF;
-      INSERT INTO service_production_order_links (service_id, production_order_id)
-      VALUES (v_service_id, v_order_id)
-      ON CONFLICT (service_id, production_order_id) DO NOTHING;
-      v_ot_count := v_ot_count + 1;
-    END LOOP;
-  END IF;
-
-  INSERT INTO audit_logs (user_id, store_id, action, table_name, record_id, metadata)
-  VALUES (v_caller_uid, p_store_id, 'SERVICE_CREATED', 'received_services', v_service_id,
-    jsonb_build_object(
-      'service_number', v_service_number, 'supplier', p_supplier,
-      'total_amount', p_total_amount, 'currency', p_currency,
-      'receipt_ids_linked', v_link_count,
-      'production_order_ids_linked', v_ot_count
     ));
 
   RETURN jsonb_build_object(
@@ -7987,6 +7987,115 @@ BEGIN
 END;
 
 $function$
+
+
+-- @contract-function name=create_supplier_local args="p_store_id uuid, p_name text, p_tax_id text, p_phone text, p_email text, p_address text, p_notes text, p_confirm_duplicate boolean, p_duplicate_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_supplier_local(p_store_id uuid, p_name text, p_tax_id text DEFAULT NULL::text, p_phone text DEFAULT NULL::text, p_email text DEFAULT NULL::text, p_address text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_confirm_duplicate boolean DEFAULT false, p_duplicate_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_caller uuid := CASE
+    WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid())
+    ELSE auth.uid()
+  END;
+  v_name text := btrim(COALESCE(p_name, ''));
+  v_norm text := lower(btrim(COALESCE(p_name, '')));
+  v_created public.suppliers;
+  v_suspects jsonb;
+  v_n_suspects integer := 0;
+BEGIN
+  -- Validación de entrada (espejo del hook: nombre obligatorio no vacío).
+  IF v_name = '' THEN
+    RAISE EXCEPTION 'ERR_SUPPLIER_NAME_REQUIRED';
+  END IF;
+
+  -- Autorización fail-closed (canon ADN-009: actor de la sesión, nunca del
+  -- parámetro del cliente salvo canal service_role).
+  IF v_caller IS NULL THEN
+    RAISE EXCEPTION 'ERR_UNAUTHENTICATED';
+  END IF;
+  IF NOT (public.is_admin_check(v_caller)
+            OR public.has_store_access_as(v_caller, p_store_id)) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  -- 1) Reuso EXACTO (case-insensitive): comportamiento vigente del hook —
+  --    la coincidencia exacta reutiliza, no inserta.
+  SELECT s.* INTO v_created
+  FROM public.suppliers s
+  WHERE s.store_id = p_store_id
+    AND COALESCE(s.is_active, true)
+    AND lower(btrim(s.name)) = lower(v_name)
+  ORDER BY s.created_at
+  LIMIT 1;
+  IF v_created.id IS NOT NULL THEN
+    RETURN jsonb_build_object('status', 'reused', 'supplier', to_jsonb(v_created));
+  END IF;
+
+  -- 2) Sospechosos R-15: nombre normalizado (espaciado/caso — la causa raíz
+  --    del quirk «TiendaPueblo»), NIT o teléfono de un proveedor ACTIVO de
+  --    la misma tienda. La coincidencia exacta ya se descartó arriba.
+  SELECT COALESCE(jsonb_agg(row_to_json(x) ORDER BY x.created_at), '[]'::jsonb)
+    INTO v_suspects
+  FROM (
+    SELECT s.id, s.name, s.tax_id, s.phone, s.email, s.created_at
+    FROM public.suppliers s
+    WHERE s.store_id = p_store_id
+      AND COALESCE(s.is_active, true)
+      AND (
+        regexp_replace(lower(btrim(s.name)), '\s', '', 'g') = regexp_replace(v_norm, '\s', '', 'g')
+        OR (COALESCE(btrim(p_tax_id), '') <> ''
+            AND lower(btrim(COALESCE(s.tax_id, ''))) = lower(btrim(p_tax_id)))
+        OR (COALESCE(btrim(p_phone), '') <> ''
+            AND btrim(COALESCE(s.phone, '')) = btrim(p_phone))
+      )
+  ) x;
+  v_n_suspects := jsonb_array_length(COALESCE(v_suspects, '[]'::jsonb));
+
+  IF v_n_suspects > 0 THEN
+    -- Duplicación sospechada: fail-closed salvo confirmación EXPLÍCITA con
+    -- motivo (la decisión del usuario de la UI queda verificada aquí).
+    IF NOT (p_confirm_duplicate
+            AND length(btrim(COALESCE(p_duplicate_reason, ''))) >= 3) THEN
+      RAISE EXCEPTION
+        'ERR_SUPPLIER_DUPLICATE_SUSPECTED: hay % proveedor(es) activo(s) coincidente(s) por nombre normalizado/NIT/teléfono en la tienda. Reutilice el existente o confirme la creación deliberada (p_confirm_duplicate=true + p_duplicate_reason). candidatos=%',
+        v_n_suspects, v_suspects;
+    END IF;
+  END IF;
+
+  -- 3) Alta local (normaliza campos opcionales: NULL en vez de cadena vacía).
+  INSERT INTO public.suppliers (
+    store_id, name, tax_id, phone, email, address, notes, is_active
+  ) VALUES (
+    p_store_id,
+    v_name,
+    NULLIF(btrim(COALESCE(p_tax_id, '')), ''),
+    NULLIF(btrim(COALESCE(p_phone, '')), ''),
+    NULLIF(btrim(COALESCE(p_email, '')), ''),
+    NULLIF(btrim(COALESCE(p_address, '')), ''),
+    NULLIF(btrim(COALESCE(p_notes, '')), ''),
+    true
+  )
+  RETURNING * INTO v_created;
+
+  -- 4) Trazabilidad: la duplicación deliberada se audita SIEMPRE (nunca
+  --    silenciosa). Sin sospechos: alta normal (sin ruido de auditoría).
+  IF v_n_suspects > 0 THEN
+    INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+    VALUES (v_caller, p_store_id, 'SUPPLIER_DUPLICATE_CONFIRMED', 'suppliers', v_created.id,
+      jsonb_build_object(
+        'name', v_name,
+        'reason', btrim(COALESCE(p_duplicate_reason, '')),
+        'candidates', v_suspects,
+        'decision', 'explicit_user_confirmation'
+      ));
+  END IF;
+
+  RETURN jsonb_build_object('status', 'created', 'supplier', to_jsonb(v_created));
+END $function$
 
 
 -- @contract-function name=create_transfer args="p_origin_store_id uuid, p_destination_store_id uuid, p_items jsonb, p_notes text, p_transaction_id uuid, p_operation_date timestamp with time zone, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}

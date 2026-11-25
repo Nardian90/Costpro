@@ -304,10 +304,24 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
         setIsOpen(false);
       } else {
         // Fallback legacy: alta local en la tabla suppliers de la tienda.
+        // R-15 (CP-BRA-REMEDIATION-001): si llegamos aquí tras la advertencia
+        // de duplicados (dupWarning activo = el usuario confirmó «crear de
+        // todos modos»), se envía la confirmación explícita que exige el guard
+        // server-side (create_supplier_local audita SUPPLIER_DUPLICATE_CONFIRMED).
+        const confirmedDup = !!dupWarning
+          && dupWarning.name === name
+          && dupWarning.phone === newSupplierPhone.trim()
+          && dupWarning.taxId === newSupplierTaxId.trim();
         const created = await createSupplier.mutateAsync({
           name,
           phone: newSupplierPhone.trim() || undefined,
           tax_id: newSupplierTaxId.trim() || undefined,
+          ...(confirmedDup
+            ? {
+                confirmDuplicate: true,
+                duplicateReason: `Confirmado por el usuario tras advertencia de ${dupWarning.rows.length} coincidencia(s) (nombre normalizado/NIT/teléfono) en SupplierSelector`,
+              }
+            : {}),
         });
         handleSelect({
           key: `local-${created.id}`,

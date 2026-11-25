@@ -309,10 +309,11 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 ## 8. FAMILIA PRO — Clientes y proveedores
 
 ### PRO-001 · Proveedores duplicables: sin unicidad ni dedup en alta
-- **Estado:** AUSENTE (regla faltante con incidente real) · **Severidad:** CRÍTICA · **Cumplimiento:** FALTA
+- **Estado:** AUSENTE → REMEDIADA · **Severidad:** CRÍTICA · **Cumplimiento:** VERIFICADA en BD (guard RPC; duplicación deliberada posible pero jamás silenciosa)
 - **Descripción:** `suppliers` sin UNIQUE (búsqueda exhaustiva = 0 resultados); INSERT RLS abierto a admin/manager/encargado; sin validación anti-duplicado en BD ni UI; dedup por texto ya produjo el incidente CP-AP («Tienda Pueblo» 25 docs vs «TiendaPueblo» 1 doc; 3 recepciones con `supplier='—'` por $19,435).
 - **Mitigación parcial:** maestro de terceros `master_parties` con `UNIQUE(tenant,code)` y `UNIQUE(upper(btrim(tax_id)))` parcial; consolidación manual `consolidate_local_party` con guard `ERR_PARTY_HAS_HISTORY` (aplicada 2026-11-25).
 - **Evidencia:** `20261101120000_suppliers_visibilidad_multiusuario.sql:148-163`; `20261105130000:65-71`; `20261124120400`; `docs/audits/CP-AP-FORENSIC-RECONCILIATION-001/DIAGNOSTICO.md` §4.2; R-15.
+- **Remediación (2026-11-25, CP-BRA-REMEDIATION-001):** RPC `create_supplier_local` (20261126160000) — reuso exacto; sospechosos por nombre normalizado/NIT/teléfono → `ERR_SUPPLIER_DUPLICATE_SUSPECTED` salvo confirmación explícita con motivo, audita `SUPPLIER_DUPLICATE_CONFIRMED`. Hook migrado al RPC (la última barrera es la BD). Prueba funcional 6/6 en aislada + 30 pruebas de contrato/hook. Respeta la decisión §8.4 (unicidad NO estricta); UNIQUE parcial queda como opción documentada del propietario.
 
 ### PRO-002 · Clientes duplicables (mismo patrón)
 - **Estado:** AUSENTE · **Severidad:** ALTA · **Cumplimiento:** FALTA

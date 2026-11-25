@@ -93,6 +93,17 @@ const MIGRATIONS = [
       gate_pt011_intacto: `pg_get_functiondef('public.create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid,text,jsonb,text,text,jsonb,numeric,numeric,numeric,numeric,text,jsonb,text,text,text)'::regprocedure) LIKE '%ERR_PAYMENT_INVARIANT_VIOLATED%'`,
     },
   },
+  {
+    file: '20261126160000_cpbra_r15_supplier_dedup_guard.sql',
+    marks: {
+      fn_dedup_existe: `(SELECT count(*) = 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname='public' AND p.proname='create_supplier_local' AND array_length(p.proargnames,1) = 10)`,
+      guard_reuso_exacto: `pg_get_functiondef('public.create_supplier_local(uuid,text,text,text,text,text,text,boolean,text,uuid)'::regprocedure) LIKE '%reused%'`,
+      guard_sospechosos: `pg_get_functiondef('public.create_supplier_local(uuid,text,text,text,text,text,text,boolean,text,uuid)'::regprocedure) LIKE '%ERR_SUPPLIER_DUPLICATE_SUSPECTED%'`,
+      guard_confirmacion_auditada: `pg_get_functiondef('public.create_supplier_local(uuid,text,text,text,text,text,text,boolean,text,uuid)'::regprocedure) LIKE '%SUPPLIER_DUPLICATE_CONFIRMED%'`,
+      insert_returning_valido: `NOT (pg_get_functiondef('public.create_supplier_local(uuid,text,text,text,text,text,text,boolean,text,uuid)'::regprocedure) LIKE '%RETURNING s.*%')`,
+    },
+  },
 ];
 
 async function checkMarks(mig) {
