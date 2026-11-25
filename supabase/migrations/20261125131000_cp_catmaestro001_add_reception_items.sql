@@ -386,6 +386,14 @@ $function$;
 
 -- Exposición controlada: API route con sesión de usuario (authenticated)
 -- y service_role. Cada RPC verifica has_store_access_as internamente.
+-- ACL canónica endurecida (2026-11-25, cierre CI PR #1710 — hallazgo
+-- secdef_public_grant del SQL Security Gate): revocar PRIMERO el grant
+-- implícito de PUBLIC y el de anon — una SECURITY DEFINER ejecutable por
+-- anónimos es vector de escalada aunque verifique acceso internamente.
+REVOKE EXECUTE ON FUNCTION public.add_reception_items(uuid, jsonb, uuid)
+  FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.save_pending_reception_changes(uuid, jsonb, jsonb, jsonb, uuid)
+  FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.add_reception_items(uuid, jsonb, uuid) TO authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.save_pending_reception_changes(uuid, jsonb, jsonb, jsonb, uuid) TO authenticated, service_role;
 

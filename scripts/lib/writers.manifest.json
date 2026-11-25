@@ -94,7 +94,10 @@
     "scripts/validar-ciclo-divisa-devoluciones.mjs",
     "scripts/validar-fix-17-1-servicios-usd.mjs",
     "scripts/validar-fix-dryrun-pagos.mjs",
-    "scripts/validar-semantica-ventas-usd.mjs"
+    "scripts/validar-semantica-ventas-usd.mjs",
+    "scripts/cp-catmaestro001-cable-apply.mjs",
+    "scripts/cp-catmaestro001-gatefix-apply.mjs",
+    "scripts/e2e/cp-catmaestro001-cable-fase0-audit.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",

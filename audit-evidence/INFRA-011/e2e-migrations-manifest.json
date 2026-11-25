@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 624,
-  "total_incluidos": 209,
+  "total_considerados": 626,
+  "total_incluidos": 211,
   "total_excluidos": 415,
-  "digest": "f8140be9a0126095726865b55586aff69327a46d9774e54cf8ebbd5241423801",
+  "digest": "6b244d3d4b071313bb5009e9eb1293c20367489cdd1deea513a9380ce4b24ab0",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6171,14 +6171,36 @@
     },
     {
       "nombre": "20261125131000_cp_catmaestro001_add_reception_items.sql",
-      "bytes": 21557,
-      "sha256_original": "30b325a55452a145fe9a08b9914fea23df68a7fbbbf4f5d530f3274b0780c2b7",
+      "bytes": 22065,
+      "sha256_original": "fb3692bc163b3737a14beccf88ce59eee047bded8dbd8fada38fe39285e04208",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261125",
       "observaciones": [],
       "posicion": 209,
-      "sha256_generado": "30b325a55452a145fe9a08b9914fea23df68a7fbbbf4f5d530f3274b0780c2b7"
+      "sha256_generado": "fb3692bc163b3737a14beccf88ce59eee047bded8dbd8fada38fe39285e04208"
+    },
+    {
+      "nombre": "20261125132000_cp_catmaestro001_reception_rpc_acl.sql",
+      "bytes": 3145,
+      "sha256_original": "bfe1bc9587ba9b481312a6d0ade6996b2e66275ae80114414a0cc7a8a77f8146",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261125",
+      "observaciones": [],
+      "posicion": 210,
+      "sha256_generado": "bfe1bc9587ba9b481312a6d0ade6996b2e66275ae80114414a0cc7a8a77f8146"
+    },
+    {
+      "nombre": "20261125133000_cp_catmaestro001_drop_renumber_tool.sql",
+      "bytes": 2742,
+      "sha256_original": "44015d2781b52f2f56969d9bb9a4c26106073cba30558b3aaa191f7878f60715",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261125",
+      "observaciones": [],
+      "posicion": 211,
+      "sha256_generado": "44015d2781b52f2f56969d9bb9a4c26106073cba30558b3aaa191f7878f60715"
     },
     {
       "nombre": "AUDIT_FIXES.md",

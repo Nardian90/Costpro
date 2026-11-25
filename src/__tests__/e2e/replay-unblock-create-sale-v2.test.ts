@@ -560,9 +560,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   ENT-000005-2026 y 20261125131000 altas de productos en borradores
     //   (add_reception_items + save_pending_reception_changes; al FINAL del
     //   orden lexicográfico — posiciones previas intactas) = 209
-    expect(m.total_incluidos).toBe(209);
+    // CP-RECEPCIONES-CATALOGO-MAESTRO-001 · CIERRE CI PR #1710 (2026-11-25): +2 —
+    //   20261125132000 revoca PUBLIC/anon EXECUTE en las RPC de borradores
+    //   (hallazgo secdef_public_grant del SQL Security Gate) y 20261125133000
+    //   retira la herramienta one-shot de renumeración ya usada (hallazgo
+    //   secdef_no_auth; al FINAL del orden lexicográfico) = 211
+    expect(m.total_incluidos).toBe(211);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(209);
+    expect(incluidos.length).toBe(211);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

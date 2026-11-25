@@ -35,6 +35,8 @@ import { resolve } from 'node:path';
 
 const M_RENUM = 'supabase/migrations/20261125130000_cp_catmaestro001_renumber_enervida_auto.sql';
 const M_ADD = 'supabase/migrations/20261125131000_cp_catmaestro001_add_reception_items.sql';
+const M_ACL = 'supabase/migrations/20261125132000_cp_catmaestro001_reception_rpc_acl.sql';
+const M_DROP = 'supabase/migrations/20261125133000_cp_catmaestro001_drop_renumber_tool.sql';
 const USE_RECEPTION_STATE = 'src/components/views/terminal/views/inventory/useReceptionState.ts';
 const DETAILS_MODAL = 'src/components/views/terminal/views/receptions/ReceptionDetailsModal.tsx';
 const ADD_PANEL = 'src/components/views/terminal/views/receptions/ReceptionAddItemsPanel.tsx';
@@ -144,6 +146,68 @@ describe('20261125131000 — altas de productos en borradores (add_reception_ite
     expect(s).toMatch(/public\.add_reception_items\(p_receipt_id, p_new_items, v_caller_uid\)/);
     expect(s).toMatch(/GRANT EXECUTE ON FUNCTION public\.add_reception_items\(uuid, jsonb, uuid\) TO authenticated, service_role/);
     expect(s).toMatch(/GRANT EXECUTE ON FUNCTION public\.save_pending_reception_changes\(uuid, jsonb, jsonb, jsonb, uuid\) TO authenticated, service_role/);
+  });
+
+  it('ACL endurecida desde el origen (cierre CI PR #1710): revoca PUBLIC/anon antes de los grants', () => {
+    // Hallazgo secdef_public_grant del SQL Security Gate: el grant implícito
+    // de PUBLIC/anon sobre SECURITY DEFINER es vector de escalada.
+    expect(s).toMatch(/REVOKE EXECUTE ON FUNCTION public\.add_reception_items\(uuid, jsonb, uuid\)\s*\n?\s*FROM PUBLIC, anon/);
+    expect(s).toMatch(/REVOKE EXECUTE ON FUNCTION public\.save_pending_reception_changes\(uuid, jsonb, jsonb, jsonb, uuid\)\s*\n?\s*FROM PUBLIC, anon/);
+  });
+});
+
+describe('20261125132000 — cierre CI PR #1710: ACL canónica de las RPC de borradores', () => {
+  const s = read(M_ACL);
+
+  it('revoca PUBLIC y anon de AMBAS RPC (raíz del hallazgo secdef_public_grant)', () => {
+    expect(s).toMatch(/REVOKE EXECUTE ON FUNCTION public\.add_reception_items\(uuid, jsonb, uuid\)\s*\n?\s*FROM PUBLIC, anon/);
+    expect(s).toMatch(/REVOKE EXECUTE ON FUNCTION public\.save_pending_reception_changes\(uuid, jsonb, jsonb, jsonb, uuid\)\s*\n?\s*FROM PUBLIC, anon/);
+  });
+
+  it('re-declara la superficie canónica (authenticated + service_role únicamente)', () => {
+    expect(s).toMatch(/GRANT EXECUTE ON FUNCTION public\.add_reception_items\(uuid, jsonb, uuid\)\s*\n?\s*TO authenticated, service_role/);
+    expect(s).toMatch(/GRANT EXECUTE ON FUNCTION public\.save_pending_reception_changes\(uuid, jsonb, jsonb, jsonb, uuid\)\s*\n?\s*TO authenticated, service_role/);
+  });
+
+  it('guard fail-closed que verifica el estado de ACL (proacl sin =X ni anon=X)', () => {
+    expect(s).toMatch(/CP-CATMAESTRO001-ACL-GUARD/);
+    expect(s).toMatch(/unnest\(p\.proacl\)/);
+    expect(s).toMatch(/RAISE EXCEPTION 'CP-CATMAESTRO001-ACL-GUARD/);
+  });
+
+  it('idempotente y sin DDL destructivo (solo REVOKE/GRANT/GUARD)', () => {
+    expect(s).not.toMatch(/DROP FUNCTION/);
+    expect(s).not.toMatch(/INSERT INTO/);
+    expect(s).not.toMatch(/UPDATE public\./);
+  });
+});
+
+describe('20261125133000 — cierre CI PR #1710: retiro de la herramienta one-shot de renumeración', () => {
+  const s = read(M_DROP);
+
+  it('DROP idempotente de la función one-shot (hallazgo secdef_no_auth)', () => {
+    expect(s).toMatch(/DROP FUNCTION IF EXISTS public\.cp_catmaestro001_renumber_auto_masters\(\s*\n?\s*boolean, uuid, uuid, uuid, uuid, jsonb\)/);
+  });
+
+  it('guard fail-closed: la función ya no existe tras la migración', () => {
+    expect(s).toMatch(/CP-CATMAESTRO001-DROP-GUARD/);
+    expect(s).toMatch(/RAISE EXCEPTION 'CP-CATMAESTRO001-DROP-GUARD/);
+  });
+
+  it('documenta la trazabilidad (historial en migración 20261125130000 + audit_logs)', () => {
+    // La herramienta queda versionada (recreable) y su historial de aplicación
+    // vive en master_change_log + audit_logs + docs/audits (texto del header).
+    expect(s).toMatch(/20261125130000/);
+    expect(s).toMatch(/master_change_log \+ audit_logs/);
+  });
+
+  it('sin efectos colaterales: no toca datos ni otras funciones', () => {
+    expect(s).not.toMatch(/INSERT INTO/);
+    expect(s).not.toMatch(/UPDATE /);
+    expect(s).not.toMatch(/GRANT EXECUTE/);
+    // Solo el DROP de la herramienta one-shot — nada más.
+    const drops = s.match(/DROP FUNCTION IF EXISTS public\.[a-z0-9_]+/g) || [];
+    expect(drops).toHaveLength(1);
   });
 });
 

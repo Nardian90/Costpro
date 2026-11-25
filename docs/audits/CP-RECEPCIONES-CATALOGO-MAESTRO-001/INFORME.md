@@ -104,3 +104,76 @@ La recepción ENT-000005-2026 (Fact24112026-II, Laudelina Olivera (Lary), 756 CU
 1. Se corrigieron los **16** productos de la recepción objetivo (los 15 de la tabla + el 16.º del mismo instante y documento); el criterio §8 se interpretó como «ajenos = otros documentos/sucursales» (Cable para Ecoflow y QA antiguos intactos).
 2. El generador oficial ya existía (PR #1706); esta misión cerró el resquicio OCR, aplicó la renumeración pendiente y construyó la capacidad de altas en borradores con el MISMO escritor canónico — **cero segunda fuente de verdad**.
 3. `.env*` jamás commiteado (verificado con `git check-ignore`); réplica legible en `download/costpro-env.txt`.
+
+---
+
+# ADENDA (2026-11-25, cierre del CI del PR #1710)
+
+Autorización del propietario en la misma sesión de entrega: «si es correcto renumera Cable para
+Ecoflow» (recepción ENT-000003-2026) «y además revisa los CI del PR 1710 que están fallando».
+
+## A. Renumeración del «Cable para Ecoflow» (ENT-000003-2026)
+
+El único SKU AUTO-* restante de todo el catálogo (antes fuera de alcance por §8, ajeno a la
+recepción objetivo) fue renumerado con la MISMA maquinaria auditable de la fase 1
+(`cp_catmaestro001_renumber_auto_masters`, parámetros explícitos, dry-run validado primero):
+
+| Registro | Antes | Después |
+|---|---|---|
+| Maestro 59935685 (Catálogo Maestro, tenant 5364ccf8) | `AUTO-MWTIJE8Y-1` | **273** |
+| Fila local a69286d3 (ENERVIDA-VITALLCONS) | `AUTO-MWTIJE8Y-1` | **273** |
+
+Integridad verificada post-renombrado: ítem de recepción qty=1 costo=1 intacto;
+stock_movements=1 y kardex=2 idénticos a la línea base; total de la recepción (1) y estado
+(active) intactos; **cero SKU AUTO-* en toda la base**; consecutivo 1..273 contiguo (+ outliers
+998/999 preexistentes). Evidencia: `evidencia/cable-ecoflow-renumeracion.txt`.
+
+## B. Causa raíz de los checks rojos del CI (SQL DB Security Checks)
+
+El gate lee el estado VIVO de producción. Los 3 hallazgos provenían de las 2 migraciones de
+esta misión:
+
+1. **secdef_no_auth (1)**: `cp_catmaestro001_renumber_auto_masters` — SECURITY DEFINER sin
+   auth-check interno (por diseño one-shot: solo Management API/service_role; ACL exclusiva).
+2. **secdef_public_grant (2)**: `add_reception_items` y `save_pending_reception_changes` — la
+   migración 20261125131000 otorgó EXECUTE a `authenticated, service_role` pero NO revocó el
+   grant implícito de **PUBLIC** ni el materializado de `anon` → una SECURITY DEFINER ejecutable
+   por anónimos (vector de escalada aunque la RPC verifique `has_store_access_as` internamente).
+
+## C. Corrección (raíz, sin excepciones en allowlist)
+
+| Migración | Contenido | Aplicada |
+|---|---|---|
+| **20261125132000** | `REVOKE EXECUTE ... FROM PUBLIC, anon` en ambas RPC + re-grant canónico (`authenticated, service_role`) + guard fail-closed sobre `proacl` | BD aislada y producción (2026-11-25, verificado TODO PASS) |
+| **20261125133000** | `DROP FUNCTION IF EXISTS` de la herramienta one-shot (ya usada por completo: 16+1 renumeraciones; firma con UUIDs de producción hard-coded) + guard fail-closed | BD aislada y producción |
+
+Además, la migración original 20261125131000 se endureció en origen (REVOKE antes de los
+GRANTs) para que los replays futuros nazcan con la ACL canónica. La retirada de la herramienta
+one-shot se prefirió a una entrada en allowlist: mejor postura de seguridad que documentar una
+excepción permanente para código muerto; la herramienta sigue versionada en 20261125130000
+(recreable) y su historial vive en `master_change_log`/`audit_logs`/este expediente.
+
+## D. Verificación con la MISMA maquinaria del gate de CI
+
+`node scripts/ci-gate-sql-checks.js` + ejecución contra producción + `scripts/ci-gate-evaluate.js`
+(canario incluido) — resultado idéntico al que hará el workflow:
+
+```
+✅ secdef_no_auth: 126 hallazgo(s), 126 en allowlist, 0 NO permitidos
+✅ secdef_public_grant: 0 hallazgo(s), 0 en allowlist, 0 NO permitidos
+✅ tables_no_rls: 0 hallazgo(s), 0 en allowlist, 0 NO permitidos
+✅ Resultado: TODO PASS
+```
+
+Evidencia completa: `evidencia/gate-fix-sql-security.txt` (incluye la aplicación en la BD
+aislada PRIMERO — regla de oro — y la prueba de idempotencia de la re-ejecución).
+
+## E. Contrato de pruebas actualizado
+
+- `src/__tests__/migrations/cp-catmaestro001-migrations.test.ts`: +9 pruebas (ACL endurecida
+  en origen, contrato de ambas migraciones nuevas, guard fail-closed, idempotencia, ausencia de
+  efectos colaterales) — 23 en verde.
+- Manifiesto de replay E2E regenerado (209 → **211**) y conteo del test replay-unblock
+  actualizado con la entrada histórica del cierre.
+- `scripts/lib/writers.manifest.json`: los 3 scripts nuevos de la continuación declarados
+  `guardProtected` (check-writers OK).
