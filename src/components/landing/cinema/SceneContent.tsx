@@ -17,6 +17,7 @@
  */
 
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { Check, Minus, MessageCircle, Sparkles, type LucideIcon } from 'lucide-react';
 import { BrandWordmark } from '../BrandWordmark';
 import FeatureVisual from '../FeatureVisual';
@@ -565,6 +566,27 @@ export function SceneCierre({
         <p className="mt-6 text-xs text-white/35">
           WhatsApp +53 53183215 · adrianpompasantana@gmail.com
         </p>
+
+        {/* CP-LANDING-NEWS-ACCESS-001 — acceso «Novedades» en la escena de
+            cierre del modo cine: tira compacta a la vista pública /gaceta
+            (El Diario Contable · ADN-011). Sin desplazamiento extra: un solo
+            renglón bajo el contacto. */}
+        <div className="mt-5 flex justify-center">
+          <Link
+            href="/gaceta"
+            data-testid="cierre-novedades"
+            className="group inline-flex min-h-[44px] items-center gap-2.5 rounded-xl border border-white/[0.12] px-5 py-2 text-xs font-semibold text-white/70 transition-all hover:border-[#22c55e]/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#22c55e]/70"
+          >
+            <span
+              aria-hidden="true"
+              className="relative flex h-1.5 w-1.5 rounded-full bg-[#22c55e]"
+            >
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-60 motion-reduce:hidden" />
+            </span>
+            Novedades — Gaceta Oficial de Cuba y actualizaciones de ADNegocio
+            <span aria-hidden="true" className="text-[#22c55e] transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transform-none">→</span>
+          </Link>
+        </div>
       </div>
     </SceneFrame>
   );

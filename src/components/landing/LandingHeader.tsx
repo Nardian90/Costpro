@@ -19,6 +19,7 @@
  */
 
 import React from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from 'framer-motion';
 import { entrarACostpro } from '@/lib/auth-recovery';
@@ -51,7 +52,12 @@ export default function LandingHeader({
 
   void reduceMotion;
 
-  const navLinks = [
+  /* CP-LANDING-NEWS-ACCESS-001: «Novedades» es RUTA REAL (/gaceta, El Diario
+     Contable · ADN-011), no un ancla de sección — se diferencia con el punto
+     vivo de «nuevo». Primera posición = máxima descubribilidad; el resto
+     del menú sigue siendo scroll interno al mismo capítulo. */
+  const navLinks: Array<{ label: string; href: string; route?: boolean }> = [
+    { label: 'Novedades', href: '/gaceta', route: true },
     { label: 'Funcionalidades', href: '#features' },
     { label: 'Plataforma', href: '#como-funciona' },
     { label: 'Ayuda', href: '#faq' },
@@ -98,16 +104,37 @@ export default function LandingHeader({
 
       {/* Center nav links — desktop */}
       <div className="hidden md:flex items-center gap-1">
-        {navLinks.map((link, idx) => (
-          <a
-            key={`${link.href}-${idx}`}
-            href={link.href}
-            onClick={(e) => { e.preventDefault(); document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' }); }}
-            className="nav-link-hover px-4 py-2.5 text-[13px] font-medium text-white/60 hover:text-white/80 transition-colors duration-200" /* FIX-ACC-014 */
-          >
-            {link.label}
-          </a>
-        ))}
+        {navLinks.map((link, idx) =>
+          link.route ? (
+            <Link
+              key={`${link.href}-${idx}`}
+              href="/gaceta"
+              data-testid="nav-novedades"
+              className="nav-link-hover px-4 py-2.5 text-[13px] font-medium text-white/60 hover:text-white/80 transition-colors duration-200 inline-flex items-center gap-1.5"
+            >
+              {/* Diferenciador visual: punto vivo «nuevo» — sin texto extra
+                  para no robar espacio al menú */}
+              <span
+                aria-hidden="true"
+                className="relative flex h-1.5 w-1.5"
+                title="Nuevo"
+              >
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#22c55e] opacity-60 motion-reduce:hidden" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#22c55e]" />
+              </span>
+              {link.label}
+            </Link>
+          ) : (
+            <a
+              key={`${link.href}-${idx}`}
+              href={link.href}
+              onClick={(e) => { e.preventDefault(); document.querySelector(link.href)?.scrollIntoView({ behavior: 'smooth' }); }}
+              className="nav-link-hover px-4 py-2.5 text-[13px] font-medium text-white/60 hover:text-white/80 transition-colors duration-200" /* FIX-ACC-014 */
+            >
+              {link.label}
+            </a>
+          )
+        )}
       </div>
 
       <div className="flex items-center gap-2">
