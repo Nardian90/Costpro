@@ -584,9 +584,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   fiscal cerrado/locked en reverse_supplier_payment con excepción admin
     //   auditada). Al FINAL del orden lexicográfico — posiciones previas
     //   intactas = 216
-    expect(m.total_incluidos).toBe(216);
+    expect(m.total_incluidos).toBe(217);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(216);
+    expect(incluidos.length).toBe(217);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -678,8 +678,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // ADN-011 (PR #1699): la gaceta comparte timestamp 20261124120000 con
     //   CP-OPS-ENERVIDA; el sufijo _adn011 la coloca ANTES de las 5 de cp_ops.
     expect(pos('20261124120000_adn011_gaceta_diario_publico.sql')).toBe(199);
-    // CP-BRA-REMEDIATION-001: motor de pagos R-01/R-14 — última del tramo.
+    // CP-BRA-REMEDIATION-001: motor de pagos R-01/R-14.
     expect(pos('20261126140000_cpbra_r01_r14_payment_engine.sql')).toBe(216);
+    // CP-BRA-REMEDIATION-001: R-11 incidencias POS validadas server-side —
+    // última del tramo (posiciones previas intactas).
+    expect(pos('20261126150000_cpbra_r11_pos_incidents_validation.sql')).toBe(217);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

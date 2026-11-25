@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-25T19:12:26.573Z
+-- Captured  : 2026-11-25T19:36:05.284Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 232 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -7084,6 +7084,34 @@ BEGIN
         END IF;
       END IF;
     END LOOP;
+    -- R-11 (CP-BRA-REMEDIATION-001): verificación server-side de cada
+    -- incidencia (estructura + coherencia aritmética). La puerta
+    -- MISIÓN-FLEX sigue abierta, pero ya NO es evadible con un array
+    -- arbitrario: cada incidencia es un objeto tipado y coherente.
+    FOR v_it IN SELECT * FROM jsonb_array_elements(p_payment_incidents) LOOP
+      IF jsonb_typeof(v_it) <> 'object' THEN
+        RAISE EXCEPTION 'ERR_INCIDENT_INVALID_STRUCTURE: cada incidencia debe ser un objeto (recibido: %)', jsonb_typeof(v_it);
+      END IF;
+      IF COALESCE(v_it->>'type', '') NOT IN
+           ('insufficient_payment', 'overpayment', 'mixed_breakdown_mismatch', 'rate_difference') THEN
+        RAISE EXCEPTION 'ERR_INCIDENT_INVALID_STRUCTURE: type=% no es un tipo soportado', COALESCE(v_it->>'type', '(ausente)');
+      END IF;
+      IF COALESCE(v_it->>'expected_cup', '') = '' OR COALESCE(v_it->>'received_cup', '') = ''
+         OR COALESCE(v_it->>'difference_cup', '') = '' THEN
+        RAISE EXCEPTION 'ERR_INCIDENT_INVALID_STRUCTURE: la incidencia type=% exige expected_cup, received_cup y difference_cup numéricos', v_it->>'type';
+      END IF;
+      IF (v_it->>'expected_cup')::numeric < 0 OR (v_it->>'received_cup')::numeric < 0 THEN
+        RAISE EXCEPTION 'ERR_INCIDENT_INVALID_STRUCTURE: expected_cup/received_cup no pueden ser negativos (type=%)', v_it->>'type';
+      END IF;
+      -- Coherencia aritmética: difference_cup = received_cup - expected_cup (±0.01).
+      IF abs((v_it->>'difference_cup')::numeric
+             - ((v_it->>'received_cup')::numeric - (v_it->>'expected_cup')::numeric)) > 0.01 THEN
+        RAISE EXCEPTION 'ERR_INCIDENT_ARITHMETIC_MISMATCH: difference_cup=% pero received_cup - expected_cup = % (type=%)',
+          (v_it->>'difference_cup')::numeric,
+          (v_it->>'received_cup')::numeric - (v_it->>'expected_cup')::numeric,
+          v_it->>'type';
+      END IF;
+    END LOOP;
     v_incidents := p_payment_incidents;
   END IF;
 
@@ -7729,6 +7757,19 @@ BEGIN
     IF v_incidents IS NULL THEN
       RAISE EXCEPTION 'ERR_PAYMENT_INVARIANT_VIOLATED: SUM(amount_cup)=% != total_amount=% (POS requires full payment)',
         v_sum_payments, v_calculated_total USING ERRCODE = 'PT011';
+    END IF;
+    -- R-11 (CP-BRA-REMEDIATION-001): la puerta solo abre si una incidencia
+    -- EXPLICA la diferencia real (|difference_cup - (pagado - total)| <= 0.01).
+    -- Antes, un array no vacío arbitrario desactivaba PT011 por completo:
+    -- venta 'completed' con ledger descuadrado sin causa verificable
+    -- (evidencia producción: 3 ventas con Σpagos != total, R-11).
+    IF NOT EXISTS (
+      SELECT 1 FROM jsonb_array_elements(v_incidents) i
+      WHERE abs((i->>'difference_cup')::numeric - (v_sum_payments - v_calculated_total)) <= 0.01
+    ) THEN
+      RAISE EXCEPTION 'ERR_INCIDENT_DOES_NOT_EXPLAIN_DIFFERENCE: Σpagos=% != total=% y ninguna incidencia declara esa diferencia (Σdifference_cup declaradas: %)',
+        v_sum_payments, v_calculated_total,
+        (SELECT COALESCE(SUM((i->>'difference_cup')::numeric), 0) FROM jsonb_array_elements(v_incidents) i);
     END IF;
     -- MISIÓN-FLEX: venta con incidencia de pago documentada — la diferencia
     -- entre lo recibido y el total queda registrada en notes +
@@ -17373,81 +17414,6 @@ END;
 $function$
 
 
--- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
- RETURNS void
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public', 'pg_temp'
-AS $function$
-DECLARE
-  target_store_id uuid := p_store_id;
-BEGIN
-  -- Validación de acceso
-  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
-  END IF;
-
-  -- Activar restore_mode para bypassear triggers de validación
-  PERFORM set_config('app.restore_mode', 'true', true);
-
-  BEGIN
-    -- ── 1. Datos transaccionales ──
-    DELETE FROM payment_transactions WHERE store_id = target_store_id;
-    DELETE FROM transaction_items WHERE transaction_id IN (
-      SELECT id FROM transactions WHERE store_id = target_store_id
-    );
-    DELETE FROM transactions WHERE store_id = target_store_id;
-    DELETE FROM stock_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_movements WHERE store_id = target_store_id;
-    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
-    DELETE FROM receipts WHERE store_id = target_store_id;
-    DELETE FROM inventory WHERE store_id = target_store_id;
-    DELETE FROM cash_closures WHERE store_id = target_store_id;
-
-    -- ── 2. Catálogo de productos ──
-    IF p_keep_catalog THEN
-      UPDATE products
-      SET
-        stock_current = 0,
-        cost_average = 0,
-        updated_at = NOW()
-      WHERE store_id = target_store_id;
-    ELSE
-      DELETE FROM product_variants WHERE product_id IN (
-        SELECT id FROM products WHERE store_id = target_store_id
-      );
-      DELETE FROM products WHERE store_id = target_store_id;
-    END IF;
-
-    -- ── 3. Reconciliación post-restore ──
-    -- Después de bypassear triggers, sincronizar products.stock_current
-    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
-    -- así que todos los productos tendrán stock_current = 0 (correcto para
-    -- un reset). La reconciliación es defensiva: si en el futuro se
-    -- reconstruye inventory SIN disparar triggers (otro restore), este
-    -- código asegura consistencia.
-    UPDATE products p
-    SET stock_current = COALESCE(
-      (SELECT SUM(inv.quantity) FROM inventory inv
-       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
-      0
-    )
-    WHERE p.store_id = target_store_id;
-
-    -- Desactivar restore_mode
-    PERFORM set_config('app.restore_mode', 'false', true);
-
-    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
-  EXCEPTION WHEN OTHERS THEN
-    -- Asegurar que restore_mode se desactiva incluso si hay error
-    PERFORM set_config('app.restore_mode', 'false', true);
-    RAISE;
-  END;
-END;
-$function$
-
-
 -- @contract-function name=reset_store_data args="target_store_id uuid, p_keep_catalog boolean, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.reset_store_data(target_store_id uuid, p_keep_catalog boolean DEFAULT false, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS void
@@ -17671,6 +17637,81 @@ BEGIN
     jsonb_build_object('reset_by', v_caller_uid, 'reset_at', now(), 'keep_catalog', p_keep_catalog));
 END;
 
+$function$
+
+
+-- @contract-function name=reset_store_data args="p_store_id uuid, p_keep_catalog boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reset_store_data(p_store_id uuid, p_keep_catalog boolean DEFAULT false)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'pg_temp'
+AS $function$
+DECLARE
+  target_store_id uuid := p_store_id;
+BEGIN
+  -- Validación de acceso
+  IF NOT public.has_management_access_as(auth.uid(), target_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: Caller must be admin, manager or encargado of the store.';
+  END IF;
+
+  -- Activar restore_mode para bypassear triggers de validación
+  PERFORM set_config('app.restore_mode', 'true', true);
+
+  BEGIN
+    -- ── 1. Datos transaccionales ──
+    DELETE FROM payment_transactions WHERE store_id = target_store_id;
+    DELETE FROM transaction_items WHERE transaction_id IN (
+      SELECT id FROM transactions WHERE store_id = target_store_id
+    );
+    DELETE FROM transactions WHERE store_id = target_store_id;
+    DELETE FROM stock_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_movements WHERE store_id = target_store_id;
+    DELETE FROM inventory_adjustments WHERE store_id = target_store_id;
+    DELETE FROM receipts WHERE store_id = target_store_id;
+    DELETE FROM inventory WHERE store_id = target_store_id;
+    DELETE FROM cash_closures WHERE store_id = target_store_id;
+
+    -- ── 2. Catálogo de productos ──
+    IF p_keep_catalog THEN
+      UPDATE products
+      SET
+        stock_current = 0,
+        cost_average = 0,
+        updated_at = NOW()
+      WHERE store_id = target_store_id;
+    ELSE
+      DELETE FROM product_variants WHERE product_id IN (
+        SELECT id FROM products WHERE store_id = target_store_id
+      );
+      DELETE FROM products WHERE store_id = target_store_id;
+    END IF;
+
+    -- ── 3. Reconciliación post-restore ──
+    -- Después de bypassear triggers, sincronizar products.stock_current
+    -- con inventory.quantity. En este punto inventory fue borrado (step 1),
+    -- así que todos los productos tendrán stock_current = 0 (correcto para
+    -- un reset). La reconciliación es defensiva: si en el futuro se
+    -- reconstruye inventory SIN disparar triggers (otro restore), este
+    -- código asegura consistencia.
+    UPDATE products p
+    SET stock_current = COALESCE(
+      (SELECT SUM(inv.quantity) FROM inventory inv
+       WHERE inv.product_id = p.id AND inv.store_id = p.store_id),
+      0
+    )
+    WHERE p.store_id = target_store_id;
+
+    -- Desactivar restore_mode
+    PERFORM set_config('app.restore_mode', 'false', true);
+
+    RAISE NOTICE 'Store % reset completed. Keep catalog: %. Post-restore reconciliation done.', target_store_id, p_keep_catalog;
+  EXCEPTION WHEN OTHERS THEN
+    -- Asegurar que restore_mode se desactiva incluso si hay error
+    PERFORM set_config('app.restore_mode', 'false', true);
+    RAISE;
+  END;
+END;
 $function$
 
 
