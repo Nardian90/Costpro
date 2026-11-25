@@ -64,6 +64,45 @@ export function isSupplierDuplicateError(err: unknown): boolean {
 }
 
 /**
+ * CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE 6.4 —
+ * normalización de nombre para detección de duplicados: minúsculas, sin
+ * diacríticos y sin separadores. «Tienda Pueblo» ≡ «TiendaPueblo» ≡
+ * «TIENDA PUEBLO.» — la causa raíz del quirk auditado era una variante de
+ * espaciado. NO impone unicidad (misión: «no imponer unicidad estricta
+ * basada exclusivamente en el nombre»): solo habilita coincidencias para
+ * ADVERTIR al usuario antes de crear.
+ */
+export function normalizeSupplierName(name: string | null | undefined): string {
+  return (name ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * CP-AP-ACCOUNTING-INTEGRITY-001 §FASE 6.4 — coincidencias posibles de un
+ * proveedor nuevo contra los existentes de la tienda: nombre normalizado,
+ * identificación fiscal o teléfono. Devuelve los candidatos a ADVERTIR
+ * (la decisión final sigue siendo del usuario).
+ */
+export function findSupplierMatches(
+  candidates: Supplier[],
+  input: { name: string; tax_id?: string | null; phone?: string | null },
+): Supplier[] {
+  const nn = normalizeSupplierName(input.name);
+  const tax = (input.tax_id ?? "").trim();
+  const phone = (input.phone ?? "").replace(/\D/g, "");
+  if (!nn) return [];
+  return candidates.filter(s => {
+    if (normalizeSupplierName(s.name) === nn && nn.length > 0) return true;
+    if (tax && (s.tax_id ?? "").trim().toUpperCase() === tax.toUpperCase()) return true;
+    if (phone && (s.phone ?? "").replace(/\D/g, "") === phone && phone.length >= 6) return true;
+    return false;
+  });
+}
+
+/**
  * REC-2 MM-R3 / CP-PROVEEDORES-001: Hook para gestión de proveedores.
  *
  * - Lista proveedores de la tienda activa (cacheado con React Query)
@@ -118,11 +157,17 @@ export function useCreateSupplier() {
 
       // CP-PROVEEDORES-001 — anti-duplicado por reintento: si ya existe un
       // proveedor ACTIVO con el mismo nombre en la tienda activa, se
-      // REUTILIZA en vez de insertar (comparación exacta case-insensitive;
-      // el patrón ilike se escapa para que nombres con % o _ no actúen de
-      // comodines). La unicidad real de la BD no cambia (no existe
-      // constraint único sobre suppliers; añadirla exigiría auditar datos
-      // históricos y está fuera del alcance mínimo de este fix).
+      // REUTILIZA en vez de insertar. CP-AP-ACCOUNTING-INTEGRITY-001 §6.4:
+      // la comparación pasa a ser NORMALIZADA (sin espacios/diacríticos/caso
+      // — «TiendaPueblo» ≡ «Tienda Pueblo», causa raíz del quirk auditado) y
+      // también por identificación fiscal o teléfono. La unicidad real de la
+      // BD no cambia (no existe constraint único sobre suppliers; añadirla
+      // exigiría auditar datos históricos y está fuera del alcance mínimo).
+      // El REUSE automático sigue siendo SOLO por coincidencia EXACTA
+      // (case-insensitive) — las coincidencias NORMALIZADAS (espaciado/
+      // diacríticos) o por NIT/teléfono NO se reutilizan en silencio: la UI
+      // las advierte y decide el usuario (misión §8.4: «no imponer unicidad
+      // estricta basada exclusivamente en el nombre»).
       const likeEscaped = name.replace(/[\\%_]/g, (c) => `\\${c}`);
       const { data: candidates, error: lookupError } = await supabase
         .from("suppliers")
@@ -133,7 +178,7 @@ export function useCreateSupplier() {
         .limit(5);
       if (lookupError) throw lookupError;
       const exact = (candidates ?? []).find(
-        (row) => (row as Supplier).name.trim().toLowerCase() === name.toLowerCase()
+        (row) => (row as Supplier).name.trim().toLowerCase() === name.toLowerCase(),
       );
       if (exact) {
         return exact as Supplier;

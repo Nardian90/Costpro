@@ -1291,7 +1291,14 @@ function PaymentsTab({ receiptId, totalCost }: { receiptId: string; totalCost: n
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
-  const totalPaid = payments.reduce((sum, p) => sum + Number(p.amount_cup || p.amount), 0);
+  // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001: el total
+  // pagado NETEA las contra-filas 'reversal' (mismo criterio del trigger
+  // update_payment_status y de PaymentHistoryRow) — tras revertir un pago el
+  // saldo de la obligación debe reflejarse restituido también aquí.
+  const totalPaid = payments.reduce(
+    (sum, p) => sum + ((p as { direction?: string | null }).direction === 'reversal' ? -1 : 1) * Number(p.amount_cup || p.amount),
+    0,
+  );
   const balance = totalCost - totalPaid;
   const paymentStatus = balance <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
 

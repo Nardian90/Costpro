@@ -42,6 +42,10 @@ export interface PayableReceiptRow {
   due_date: string | null;
   reception_date: string | null;
   created_at: string | null;
+  /** CP-AP-ACCOUNTING-INTEGRITY-001: filtro defensivo — el calculador
+   * excluye por sí mismo documentos no pagables aunque la fuente no lo
+   * haya hecho (paridad con los gates de pago del backend). */
+  status?: string | null;
 }
 
 export interface PayableServiceRow {
@@ -57,6 +61,8 @@ export interface PayableServiceRow {
   currency: string | null;
   exchange_rate: number | string | null;
   created_at: string | null;
+  /** CP-AP-ACCOUNTING-INTEGRITY-001: filtro defensivo (ver PayableReceiptRow). */
+  status?: string | null;
 }
 
 export interface PayableCommissionRow {
@@ -302,6 +308,10 @@ export function computeAccountsPayable(
 
   // ── Recepciones (CUP, tasa 1) ──
   for (const r of receipts) {
+    // CP-AP-ACCOUNTING-INTEGRITY-001: filtro defensivo de estado — misma
+    // regla que el gate de pago (register_supplier_payment): una recepción
+    // voided/reversed no es obligación pagable, venga de donde venga la fila.
+    if (r.status === 'voided' || r.status === 'reversed') continue;
     const docDate = toDateStr(r.reception_date) ?? toDateStr(r.created_at);
     if (!inPeriod(docDate)) continue;
     const total = num(r.total_cost);
@@ -333,6 +343,10 @@ export function computeAccountsPayable(
 
   // ── Servicios recibidos (con moneda/tasa de header) ──
   for (const s of services) {
+    // CP-AP-ACCOUNTING-INTEGRITY-001: filtro defensivo de estado — misma
+    // regla que el gate de pago (ERR_SERVICE_NOT_ACTIVE): solo un servicio
+    // active es obligación pagable (draft/cancelled/voided quedan fuera).
+    if (s.status !== undefined && s.status !== null && s.status !== 'active') continue;
     const docDate = toDateStr(s.service_date) ?? toDateStr(s.created_at);
     if (!inPeriod(docDate)) continue;
     const total = num(s.total_amount);

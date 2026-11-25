@@ -33,6 +33,8 @@ import { toast } from 'sonner';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
 import {canReverseDocumentInStore, isAdminLevel } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
+// CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE4: diálogo del guard de pagos vivos.
+import { UnresolvedPaymentsDialog } from '@/components/payments/UnresolvedPaymentsDialog';
 import { useAuthStore } from '@/store';
 import { useUIStore } from '@/store';
 import { useReceptionsHistoryView } from './useReceptionsHistoryView';
@@ -122,6 +124,11 @@ export default function ReceptionsHistoryView() {
     handleInvertConfirm,
     setInvertConfirmReceipt,
     isInverting,
+    // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001: guard de pagos vivos
+    unresolvedPayments,
+    clearUnresolvedPayments,
+    openReceiptPayments,
+    checkUnresolvedPayments,
   } = useReceptionsHistoryView();
 
   // FIX-WIZARD: Estado del wizard de backfill masivo
@@ -469,10 +476,15 @@ export default function ReceptionsHistoryView() {
                             <>
                               {/* ESTÁNDAR: Revertir — única forma de deshacer recepción confirmada */}
                               <button type="button"
-                                onClick={() => setReverseTarget({
+                                onClick={async () => {
+                                // CP-AP-ACCOUNTING-INTEGRITY-001 §FASE4: guard de
+                                // pagos vivos antes de revertir una recepción confirmada.
+                                if (await checkUnresolvedPayments(rec)) return;
+                                setReverseTarget({
                                   id: rec.id,
                                   label: `Recepción ${rec.reference_doc || rec.id.split('-')[0]} • ${formatCurrency(rec.total_cost)}`,
-                                })}
+                                });
+                              }}
                                 className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-purple-500/40 bg-purple-500/5 text-purple-500 dark:text-purple-400 hover:bg-purple-500 hover:text-white dark:hover:text-black transition-all active:scale-95"
                                 title="Revertir Recepción (descuenta stock + kardex)"
                                 aria-label="Revertir recepción"
@@ -572,7 +584,13 @@ export default function ReceptionsHistoryView() {
         onToggleSc204Values={setIncludeSc204Values}
         isEditMode={isEditMode}
         onUpdateSubmit={(updates) => selectedReceipt && handleUpdateSubmit(selectedReceipt.id, updates)}
-        onVoidRequest={() => selectedReceipt && handleVoidConfirm(selectedReceipt!)}
+        onVoidRequest={async () => {
+          // CP-AP-ACCOUNTING-INTEGRITY-001 §FASE4: guard de pagos vivos antes de
+          // ejecutar la anulación desde el modal de detalles (pendientes).
+          if (!selectedReceipt) return;
+          if (await checkUnresolvedPayments(selectedReceipt)) return;
+          handleVoidConfirm(selectedReceipt);
+        }}
         isUpdating={isUpdating}
         isVoiding={isVoiding}
         // Reception-Flow-Fix: pasar props para confirmar pendiente.
@@ -761,6 +779,21 @@ export default function ReceptionsHistoryView() {
         type="receipt"
         docId={reverseTarget?.id || ''}
         docLabel={reverseTarget?.label}
+      />
+
+      {/* CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE4:
+          diálogo informativo del guard de pagos vivos — el documento no se
+          anula/revierte hasta resolver sus pagos con la reversión oficial. */}
+      <UnresolvedPaymentsDialog
+        open={!!unresolvedPayments}
+        onClose={clearUnresolvedPayments}
+        docKind="receipt"
+        docLabel={unresolvedPayments?.receipt?.reference_doc || unresolvedPayments?.receipt?.id?.split('-')[0] || ''}
+        supplier={unresolvedPayments?.receipt?.supplier}
+        totalCup={Number(unresolvedPayments?.receipt?.total_cost ?? 0)}
+        summary={unresolvedPayments?.summary ?? { liveCount: 0, liveTotalCup: 0, netPaidCup: 0 }}
+        liveRows={unresolvedPayments?.liveRows}
+        onViewPayments={unresolvedPayments?.receipt ? () => openReceiptPayments(unresolvedPayments.receipt!.id) : undefined}
       />
     </>
   );

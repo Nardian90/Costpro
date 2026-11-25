@@ -213,6 +213,11 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     else if (msg.includes('ERR_DEVOLUTION_REFUND_NOT_RECOVERED')) status = 422;
     else if (msg.includes('ERR_DEVOLUTION_RECOVERY')) status = 422;
     else if (msg.includes('ERR_DEVOLUTION_ALREADY_RECOVERED')) status = 409;
+    // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE2/4:
+    // guard de pagos vivos — una recepción con pagos confirmados/aplicados
+    // no se revierte ignorando sus pagos → 409 accionable con el mensaje
+    // estructurado del RPC (pagos_vivos=… importe_vivo=… total_documento=…).
+    else if (msg.includes('ERR_RECEIPT_HAS_UNRESOLVED_PAYMENTS')) status = 409;
     return NextResponse.json({ error: msg }, { status });
   }
 

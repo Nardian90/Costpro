@@ -19,13 +19,20 @@
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Plus, X, Check, Building2, Share2, HardDrive } from "lucide-react";
+import { Search, Plus, X, Check, Building2, Share2, HardDrive, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useSuppliers, useCreateSupplier, type Supplier } from "@/hooks/api/useSuppliers";
+import { useSuppliers, useCreateSupplier, findSupplierMatches, type Supplier } from "@/hooks/api/useSuppliers";
 import { useCreateMasterParty, translateClassifierError } from "@/hooks/api/useClassifier";
 import { useAuthStore } from "@/store";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
 
 /** Snapshot de identificación entregado a la recepción (se congela en receipts). */
 export interface SupplierSelection {
@@ -75,6 +82,15 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
   const [newSupplierName, setNewSupplierName] = useState("");
   const [newSupplierPhone, setNewSupplierPhone] = useState("");
   const [newSupplierTaxId, setNewSupplierTaxId] = useState("");
+  // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE 6.4:
+  // advertencia de posibles duplicados ANTES de crear (nombre normalizado,
+  // NIT o teléfono). La decisión sigue siendo del usuario (misión §8.4).
+  const [dupWarning, setDupWarning] = useState<{
+    name: string;
+    phone: string;
+    taxId: string;
+    rows: { key: string; kind: "master" | "local"; id: string; name: string; code: string | null; tax_id: string | null; phone: string | null }[];
+  } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -198,7 +214,55 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
     setShowCreateForm(false);
   };
 
+  /**
+   * CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE 6.4 —
+   * coincidencias posibles antes de crear: nombre NORMALIZADO (espaciado/
+   * diacríticos/caso — la causa raíz del quirk «TiendaPueblo» auditado),
+   * NIT/CI o teléfono, contra los proveedores locales de la tienda y contra
+   * las filas del clasificador maestro ya cargadas por la búsqueda. La
+   * coincidencia EXACTA de nombre local la reutiliza useCreateSupplier.
+   */
+  const buildDupCandidates = (name: string, phone: string, taxId: string) => {
+    const input = { name, tax_id: taxId || null, phone: phone || null };
+    const exactNn = (n: string | null | undefined) => (n ?? "").trim().toLowerCase() === name.toLowerCase();
+    const out: { key: string; kind: "master" | "local"; id: string; name: string; code: string | null; tax_id: string | null; phone: string | null }[] = [];
+    for (const s of findSupplierMatches(suppliers as unknown as Supplier[], input)) {
+      if (exactNn(s.name)) continue; // exacta local → la reutiliza el hook
+      out.push({ key: `local-${s.id}`, kind: "local", id: s.id, name: s.name, code: null, tax_id: s.tax_id ?? null, phone: s.phone ?? null });
+    }
+    const seenLocal = new Set(out.map(r => r.id));
+    for (const mp of masterParties) {
+      const mpAsSupplier: Supplier = {
+        id: mp.id, store_id: "", name: mp.name,
+        tax_id: mp.tax_id, phone: mp.phone, email: mp.email ?? null,
+        address: mp.address ?? null, notes: null,
+        is_active: true, created_at: "", updated_at: "",
+      };
+      if (!findSupplierMatches([mpAsSupplier], input).length) continue;
+      if (exactNn(mp.name) && mp.source === "local" && seenLocal.has(mp.id)) continue;
+      if (out.some(r => r.id === mp.id)) continue;
+      out.push({ key: mp.source === "master" ? `master-${mp.id}` : `local-${mp.id}`, kind: mp.source, id: mp.id, name: mp.name, code: mp.code || null, tax_id: mp.tax_id, phone: mp.phone });
+    }
+    return out;
+  };
+
   const handleCreateNew = async () => {
+    const name = newSupplierName.trim();
+    if (!name) {
+      return;
+    }
+    // CP-AP-ACCOUNTING-INTEGRITY-001 §6.4: advertir ANTES de crear cuando hay
+    // coincidencias razonables (nombre normalizado/NIT/teléfono). El usuario
+    // decide: usar el existente o crear de todos modos (unicidad NO estricta).
+    const dups = buildDupCandidates(name, newSupplierPhone.trim(), newSupplierTaxId.trim());
+    if (dups.length > 0 && !dupWarning) {
+      setDupWarning({ name, phone: newSupplierPhone.trim(), taxId: newSupplierTaxId.trim(), rows: dups });
+      return;
+    }
+    await doCreateNew();
+  };
+
+  const doCreateNew = async () => {
     const name = newSupplierName.trim();
     if (!name) {
       return;
@@ -432,6 +496,96 @@ export function SupplierSelector({ value, onChange, className }: SupplierSelecto
           </div>
         </div>
       )}
+
+      {/* CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE 6.4:
+          advertencia de posibles duplicados ANTES de crear. Muestra las
+          coincidencias (nombre normalizado, NIT, teléfono) y deja decidir al
+          usuario — unicidad NO estricta basada solo en el nombre (misión §8.4). */}
+      <AlertDialog open={!!dupWarning} onOpenChange={(o) => { if (!o) setDupWarning(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5 text-amber-500" aria-hidden="true" />
+              Posible proveedor duplicado
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="text-sm space-y-2">
+                <p>
+                  Antes de crear <strong>«{dupWarning?.name}»</strong> revisa si ya existe:
+                  coincide por nombre similar, NIT/CI o teléfono con {dupWarning?.rows.length}
+                  {' '}{dupWarning?.rows.length === 1 ? 'registro' : 'registros'} existente
+                  {dupWarning?.rows.length === 1 ? '' : 's'}.
+                </p>
+                <ul className="space-y-2">
+                  {dupWarning?.rows.map((r) => (
+                    <li key={r.key} className="rounded-lg border border-border p-2 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold truncate">{r.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">
+                          {r.kind === "master" ? "Clasificador maestro" : "Local de la tienda"}
+                          {r.code ? ` · ${r.code}` : ""}
+                          {r.tax_id ? ` · NIT: ${r.tax_id}` : ""}
+                          {r.phone ? ` · ${r.phone}` : ""}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDupWarning(null);
+                          onChange(r.name, {
+                            supplierId: r.kind === "local" ? r.id : null,
+                            masterPartyId: r.kind === "master" ? r.id : null,
+                            code: r.code,
+                            tax_id: r.tax_id,
+                            phone: r.phone,
+                            address: null,
+                            email: null,
+                            source: r.kind,
+                          });
+                          setIsOpen(false);
+                          setShowCreateForm(false);
+                        }}
+                        className="shrink-0 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90"
+                      >
+                        Usar
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[11px] text-muted-foreground">
+                  Si son empresas distintas, puedes crear el registro de todos modos.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setDupWarning(null)}
+              className="px-4 py-2 rounded-xl border border-border hover:bg-muted text-sm font-bold"
+            >
+              Revisar de nuevo
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                const w = dupWarning;
+                setDupWarning(null);
+                if (w && (w.name !== newSupplierName.trim() || w.phone !== newSupplierPhone.trim() || w.taxId !== newSupplierTaxId.trim())) {
+                  // El usuario editó el formulario tras la advertencia → re-chequear.
+                  handleCreateNew();
+                  return;
+                }
+                await doCreateNew();
+              }}
+              disabled={createSupplier.isPending || createMasterParty.isPending}
+              className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-bold disabled:opacity-50"
+            >
+              {createSupplier.isPending || createMasterParty.isPending ? "Creando..." : "Crear de todos modos"}
+            </button>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

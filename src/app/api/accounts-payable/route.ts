@@ -98,6 +98,7 @@ async function fetchAll(
   select: string,
   eq: Record<string, string>,
   neq: Record<string, string> | null,
+  notIn?: { column: string; values: string[] },
 ): Promise<ChunkRow[]> {
   const out: ChunkRow[] = [];
   const PAGE = 1000;
@@ -105,6 +106,9 @@ async function fetchAll(
     let q = supabase.from(table).select(select).range(offset, offset + PAGE - 1);
     for (const [k, v] of Object.entries(eq)) q = q.eq(k, v);
     if (neq) for (const [k, v] of Object.entries(neq)) q = q.neq(k, v);
+    // CP-AP-ACCOUNTING-INTEGRITY-001: exclusión por conjunto (notIn) para
+    // reflejar EXACTAMENTE los gates de pago del backend.
+    if (notIn) q = q.not(notIn.column, 'in', `(${notIn.values.map(v => `"${v}"`).join(',')})`);
     const { data, error } = await q;
     if (error) throw new Error(`[${table}] ${error.message}`);
     const rows = (data || []) as unknown as ChunkRow[];
@@ -153,13 +157,22 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
     // ── Consulta de las 3 fuentes de obligaciones + transacciones de pago ──
     // (RLS activo: cliente con el JWT de la sesión; store_id obligatorio.)
+    // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 — FASE 7:
+    // los filtros de estado replican EXACTAMENTE los gates de pago del
+    // backend (register_supplier_payment / register_supplier_payment_multi):
+    // · receipts: todo salvo voided/reversed (antes solo se excluía voided —
+    //   una recepción reversed figuraba como obligación pagable que el RPC
+    //   de pago rechazaba con ERR_RECEIPT_NOT_PAYABLE).
+    // · services: SOLO active (antes solo se excluía voided — servicios
+    //   cancelled/draft figuraban como obligaciones que el RPC rechazaba
+    //   con ERR_SERVICE_NOT_ACTIVE). Paridad total con el gate de pago.
     const [receiptsRaw, servicesRaw, commissionsRaw, txnsRaw] = await Promise.all([
       fetchAll(supabase, 'receipts',
-        'id, supplier, total_cost, paid_amount, payment_status, payment_method, reference_doc, due_date, reception_date, created_at',
-        { store_id }, { status: 'voided' }),
+        'id, supplier, total_cost, paid_amount, payment_status, payment_method, reference_doc, due_date, reception_date, created_at, status',
+        { store_id }, null, { column: 'status', values: ['voided', 'reversed'] }),
       fetchAll(supabase, 'received_services',
-        'id, supplier, total_amount, paid_amount, payment_status, payment_method, reference_doc, due_date, service_date, currency, exchange_rate, created_at',
-        { store_id }, { status: 'voided' }),
+        'id, supplier, total_amount, paid_amount, payment_status, payment_method, reference_doc, due_date, service_date, currency, exchange_rate, created_at, status',
+        { store_id, status: 'active' }, null),
       fetchAll(supabase, 'commission_payments',
         'id, final_amount, status, due_date, paid_at, payment_method, period_start, period_end, created_at, worker:workers!inner(first_name, last_name)',
         { store_id }, null),
