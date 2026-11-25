@@ -1,0 +1,64 @@
+# REGISTRO DE RIESGOS — COSTPRO 4 (CP-BRA-001)
+**Versión:** 1.0 · **Fecha:** 2026-11-26 · **Commit:** main `0e684d6c1`
+**Clasificación:** CRÍTICO (dinero/movimientos incorrectos/corrupción de inventario/aislamiento/trazabilidad/operaciones ilegítimas) · ALTO (documentos, saldos, relaciones, reportes; duplicados; reconstrucción manual) · MEDIO (funcional sin impacto directo demostrado) · BAJO (usabilidad/docs/mantenimiento).
+**Política:** este registro se entrega ANTES de corregir. Ningún hallazgo se corrige automáticamente; los CRÍTICOS requieren misión de remediación independiente (ver CERTIFICATION-POLICY.md §remediación). Probabilidad: A=alta, M=media, B=baja.
+
+## CRÍTICOS
+
+| ID | Regla afectada | Hallazgo | Causa raíz | Impacto | Prob. | Evidencia | Corrección recomendada | Prioridad |
+|---|---|---|---|---|---|---|---|---|
+| R-01 | FIN-002/REP-001 | Rama `production_order\|work` de `update_payment_status` PERDIDA al reemitir el trigger (20261124120000:67-141); `paid_amount` de OT desactualizado; CxC la lee | Reemisión de trigger sin reemisión completa de las ramas previas (writer nuevo sin declarar reglas afectadas) | Saldo CxC mostrado ≠ realidad de pagos; reportes divergentes; reconstrucción manual | A | `20261124120000:67-141` vs `20261113120800:127-145`; `accounts-receivable/route.ts:114` | Migración aditiva que re-restaura la rama OT con neteo de reversas + prueba positiva/negativa de trigger; misión independiente | P1 |
+| R-02 | FIN-009/REP-001 | Conversión con tasa fija 450 hardcodeada en CxC (route.ts:123) ignora tasa documental y `store_exchange_rates` | Implementación ad-hoc de vista sin usar la jerarquía canónica | Importes distintos para la misma realidad contable (motivo fundacional de esta misión) | A | `src/app/api/accounts-receivable/route.ts:123`; `20261122130000:419-420` | Usar tasa canónica/documental server-side + prueba de equivalencia entre vistas | P1 |
+| R-04 | PUR-003/FIN-005 | `void_reception_with_reversal` NO revierte pagos de recepciones anuladas (pagos 'in' activos sobre doc voided) | Reversión de pagos implementada solo para servicios (20261124120100) | Pagos huérfanos; sobrepago no detectable; misma clase del incidente SRV-20261123-00146 | M | `20260916000001:3670-3712`; `20261124120200:65-111` | Reversión de pagos en anulación de recepción (patrón servicios) + prueba negativa | P1 |
+| R-05 | INV-005 | `confirm_inventory_adjustment` sobrescribe stock a valor arbitrario con solo `has_store_access_as` (sin rol/supervisor/tope de desviación) | Diseño inicial sin segundo control | Corrupción de inventario sin trazabilidad de autorización; fraude operativo posible | M | `20260726000027_v2_11:38-40` | Segunda aprobación o tope de desviación con supervisor (patrón POS ≥15%) + prueba negativa | P1 |
+| R-11 | POS-006 | `payment_incidents[]` no vacío desactiva PT011 y tolerancia ±1.00 sin verificación server de causa/monto/autorización | Puerta deliberada (MISIÓN-FLEX) sin control | Venta `completed` con Σcobros < total; ledger subestima cobro; evasión deliberada posible | B-M | `20261125120000:798-805,1230-1238` | Verificación server-side de incidencia (tope, motivo, autorización, auditoría) o fail-closed | P1 |
+| R-15 | PRO-001 | Proveedores duplicables: sin UNIQUE en alta local, sin dedup; incidente real CP-AP («Tienda Pueblo» vs «TiendaPueblo», `supplier='—'` $19,435) | `suppliers` en esquema base sin constraints; dedup por texto | Duplicación de terceros y documentos; obligaciones/partes inconsistentes; consolidación manual costosa | A | `20261101120000:148-163`; CP-AP-FORENSIC §4.2 | UNIQUE parcial `(store_id, lower(btrim(name)))` + dedup server en alta + test; decisión del propietario sobre histórico | P1 |
+| R-14 | FIN-008/004 | Reversión de pago sin guard de período: permite revertir pagos ya incluidos en cierres/arqueos (el efecto cae en el turno vigente) | Reversión diseñada sin consulta de cierres/generación | Manipulación del corte actual; KPIs de período sin reemisión coherente | M | `20261124120000:264-283` | Guard de período cerrado (patrón validate_operation_date extendido) con excepción admin auditada | P2 |
+
+## ALTOS
+
+| ID | Regla | Hallazgo | Causa raíz | Impacto | Prob. | Evidencia | Corrección | Prioridad |
+|---|---|---|---|---|---|---|---|---|
+| R-03 | FIN-013 | Pagos a OT vía loop no atómico sin asiento 'pago' ni actualización de saldo; sin reversión de pagos OT | Trigger contable solo receipt\|service; loop /api/payments:136 | CxC sin asiento; sobrepagos irreversibles con contra-fila | M | `20261113120100:703-719`; `20261124120000:244-246,375-381` | Unificar pagos OT en motor atómico + asiento + reversión | P2 |
+| R-06 | PUR-001 | Confirmación/anulación de recepciones sin gate de rol (cualquier miembro) | Autorización mínima por defecto | WAC/inventario modificables sin segundo nivel | M | `20261125120000_cp_recep001:70-72` | Definir roles de confirmación (decisión propietario) | P2 |
+| R-07 | PUR-002 | Dedup de factura por `'supplier \| invoice'` sensible a grafías | Identidad por concatenación de texto | Facturas duplicadas con proveedor grafíado distinto | A | `20260124:117-125`; CP-AP §4.2 | Normalización (trim/lower) + FK a proveedor | P2 |
+| R-08 | POS-002 | Σ payment_distributions por línea sin reconciliación server-side contra total/componentes | Distribución validada solo estructuralmente | Datos por línea falsos en histórico sin detección automática | M | `20261125120000:435-459,787-793` | Validación server Σ(line)=Σ(line payments) + detector en conciliación | P2 |
+| R-09 | POS-003 | Referencia de transferencia no exigida server-side en `p_payment_components` (ledger) | Regla §5.1 solo en frontend | Transferencias sin número de operación en ledger financiero | M | `20261125120000:1138,1159-1169` vs `:453-457` | Extender `ERR_ITEM_PAYMENTS_INVALID` a componentes | P2 |
+| R-12 | DOC-001 | `received_services`, `issue_slips`, `purchase_orders`, cash_flow fuera del trigger global de transiciones | Trigger global no extendido | Transiciones ilegales solo impedidas en RPC (superficie frágil) | M | `20260913000001:68-77` | Añadir entidades al mapa del trigger | P3 |
+| R-13 | DOC-003 | Vale de salida directo en 1 paso sigue abierto (sin aprobación) | Flujo legacy conservado | Salida de inventario sin venta ni segundo nivel | M | `20261031120100:15-17` | Cerrar flujo directo o exigir aprobación (decisión propietario) | P2 |
+| R-16 | PRO-002 | Clientes duplicables (sin UNIQUE name/CI; alta sin dedup) | Igual que R-15 en customers | Historial de cliente fragmentado | A | `20260726000002:26-28`; `customers/route.ts:57-75` | UNIQUE parcial + dedup server | P2 |
+| R-17 | PRO-004/DOC-004 | `suppliers`/`customers` borrados FÍSICAMENTE en resets; soft delete asimétrico | Reset store script antiguo | Pérdida de trazabilidad con docs que referencian proveedor TEXT | B | `20260817000002:155` | Soft delete + referencias suaves (patrón 20261108140000) | P3 |
+| R-18 | CAT-004 | Variantes mutables por upsert directo del cliente sin RPC/auditoría; `price_change_history` solo client-side | Falta de RPC de dominio | Cambios de precio/unidad sin trazabilidad server | M | `useProducts.ts:600-614` | RPC de actualización con auditoría + trigger de historial | P2 |
+| R-19 | CAT-005 | Precios editables por cualquier rol de tienda (clerk incluido) | `products_tenant_update` sin filtro de rol | Cambio de precio sin autorización (solo freno: supervisor en venta ≥15%) | M | `20260827000005:128` | Filtro de rol en policy + prueba negativa (decisión propietario) | P2 |
+| R-21 | SEC-002 | ~63 funciones SECURITY DEFINER sin primitiva de auth (defensa solo por ACL); entre ellas `reset_store_data`, `process_inventory_adjustment`, `create_pre_restore_snapshot` | Patrones históricos + churn 1165 CREATE FUNCTION | GRANT erróneo = bypass total (precedentes de drift reales) | B-M | allowlist v2 (126); `20261125132000/153000` | Auth-check o ACL exclusiva documentada en cada una; rotación de allowlist con expires | P2 |
+| R-22 | SEC-003 | 102 rutas API sin zod; CSRF en 88; rate-limit en 107; dev bypass con doble guardia | Evolución orgánica | Entrada no validada depende de constraints BD; superficie inconsistente | M | inventario 1-A §4-5 | Zod en rutas mutantes restantes; cerrar dev bypass en preview | P3 |
+| R-23 | INV-007 | `conversion_factor` sin CHECK>0; fallback silencioso COALESCE(conv,1) en ~8 RPCs; unidades sin catálogo | Datos maestros débiles | Cantidades distorsionadas en ventas/recepciones | B | `20260803000002:158-227`; `20261116140000:780-820` | CHECK + validación en RPC | P3 |
+| R-24 | INV-004/INV-006 | Reserva de transferencia expira a 24 h con doc PENDIENTE → sobreventa y confirmación atascada | Caducidad desalineada con ciclo documental | Atasco operativo; cancelación manual | M | `20260802000002` | Expiración ligada al ciclo de la transferencia o re-reserva al confirmar | P3 |
+| R-25 | REP-001/FIN-002 | Tres definiciones coexistentes de «pagado» (columna desnormalizada, calculador TS, elegibilidad SQL Reporte Entrega) | Writers sucesivos sin fuente única | Cualquier writer nuevo rompe coherencia (ya ocurrió: R-01) | A | `20261124120200:65-111`; calculator | Vista canónica compartida o contrato de writers | P2 |
+| R-26 | SYS-001 | 4 tablas sin ENABLE RLS: `roles`, `tax_configurations`, `bulk_confirmation_tokens`, `idempotency_keys` | Creación pre-RLS | Superficie write si un GRANT futuro abre escritura | B | inventario 1-A §3 | ENABLE RLS + policy service_role-only | P3 |
+| R-28 | SYS-006 | Esquema base fuera de migraciones (products/stores/profiles/transactions/suppliers...) + drift prod documentado | Historia pre-baseline | Fresh deploy roto; políticas históricas divergentes | B | `audit-evidence/T0-DERIVA` | Snapshot canónico versionado (decisión propietario) | P4 |
+
+## MEDIOS
+
+| ID | Hallazgo | Evidencia | Corrección | Prioridad |
+|---|---|---|---|---|
+| R-10 | CI/nombre del cliente con transferencia exigidos solo en frontend (route.ts lo documenta) | `route.ts:139-143`; `POSExpressMode.tsx:353-361` | Validación server condicional con transferencia | P3 |
+| R-14b | Asimetría idempotencia contable: `fin_post_payment_annulment` no marca `status='reversed'` del asiento original (a diferencia de document_annulment) | `20261124120000:169-180` | Marcar original o documentar decisión | P3 |
+| R-20 | Whitelist constraint en audit_logs puede rechazar inserts con store_id NULL de tablas nuevas → pérdida silenciosa de auditoría (23523) | `20260726000001:149`; `20261030143000` | Ampliar whitelist con proceso formal o fallback auditable | P3 |
+| R-27 | Split-brain realtime/cron: cron de auto-publish sin scheduler activo (funcionalidad muerta en silencio); 2 stacks realtime | `vercel.json`; ecosystem comentado | Activar o eliminar rutas cron muertas | P4 |
+| R-29 | Fragilidad PostgREST por claves condicionales de firma (p_customer_ci/p_payment_components) — dependencia operativo-deployment | `route.ts:353,399` | Probing con verify-remote + test de firma en replay | P4 |
+
+## BAJOS
+
+| ID | Hallazgo | Evidencia | Corrección | Prioridad |
+|---|---|---|---|---|
+| R-30 | `docs/branch-protection.md` obsoleto (thresholds y job names no coinciden) | vs vitest.config.ts 50/40/40/45 | Actualizar documento | P4 |
+| R-31 | Churn extremo de funciones (1165 CREATE vs 456 únicas) hace frágil el análisis estático | inventario 1-A §5 | Convención: DROP+CREATE+ACL por re-emisión (ya vigente; reforzar en CP-BRA-001) | P4 |
+| R-32 | `withAuth` degrada con warning de consola si falta service_role (detección por logs, no alerta) | `auth-middleware.ts:137` | Fail-fast con alerta | P4 |
+
+## DISTRIBUCIÓN Y LECTURA
+
+- **CRÍTICOS: 7** (R-01, R-02, R-04, R-05, R-11, R-14, R-15) → 4 de ellos son exactamente la clase de defecto que motivó la misión (importes divergentes R-01/R-02, anulación con pagos R-04, duplicados R-15).
+- **ALTOS: 15** · **MEDIOS: 5** · **BAJOS: 3**.
+- Patrón dominante de causa raíz (4/7 críticos): **writer nuevo o re-emisión que no reemitió todas las rutas de una regla ya existente** → respaldo empírico para el requisito §7 del estándar (declaración de reglas afectadas + pruebas transversales).
+- Ningún hallazgo CRÍTICO permite pérdida directa de dinero en la vía principal de venta/pago (esa cadena está certificada); los críticos afectan CxC/reportes, anulación de recepciones, autorización de ajustes, incidencias POS y duplicación de terceros.
