@@ -8,6 +8,18 @@
 
 ---
 
+## 0-bis. CIERRE DOCUMENTAL DEL CICLO (registro final)
+
+| Hito | Valor |
+|---|---|
+| PR de certificación y fix | **PR #1712** (`fix/cp-pos-modal-pago-vivo-20261125`, commit `4a90a1df6`) — 5/5 checks success (E2E Aislado, Security Audit, TypeCheck+Lint+Unit+Build, Unit & Integration Tests, Vercel Preview) |
+| Merge del PR #1712 | `b82e53e41` (fusionado por el propietario, 2026-11-25) |
+| Despliegue en producción | Vercel sobre `b82e53e41` → **success**; `GET /api/health` → **200** — el **fix del modal «Configurar pago» VIVO ya está en producción** |
+| Ciclo completo | #1708 (implementación) → migración 20261125120000 aplicada en producción (acta propia) → #1709 (script+acta de aplicación) → #1710 (recepciones/catálogo, ciclo paralelo) → #1712 (certificación + fix) |
+| Estado final del ciclo CP-POS | **CIERRE FUNCIONAL COMPLETADO** — certificación E2E desde la interfaz 7/7, conciliación financiera independiente 44/44, defecto del modal corregido y desplegado; smoke transaccional de producción PENDIENTE (único hito abierto, runbook en §5) |
+
+---
+
 ## 0. Principio de la certificación
 
 Las pruebas **API/integración** del ciclo ya estaban documentadas (E2E-POS-001…018, 21/21 en BD aislada;
