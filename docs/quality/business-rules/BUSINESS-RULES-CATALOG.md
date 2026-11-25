@@ -68,7 +68,7 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 - **Estado:** CONFIRMADA · **Severidad:** CRÍTICA · **Cumplimiento:** PARCIAL
 - **Descripción:** `reverse_supplier_payment` inserta contra-fila con mismo importe/medio/moneda/tasa, idempotencia por índice único parcial `uq_payment_reversal_origin` + key `reversal:<id>`; audita `PAYMENT_REVERSED`.
 - **Controles:** RPC service_role, valida actor `has_store_access_as`, fecha operativa forward-only.
-- **Límite conocido (excepción deliberada):** NO comprueba estado del padre (permite revertir pagos de documentos anulados, para limpiar anomalías) y NO protege contra revertir pagos ya incluidos en cierres → ver FIN-008 y RISK-REGISTER R-14.
+- **Límite conocido (excepción deliberada):** NO comprueba estado del padre (permite revertir pagos de documentos anulados, para limpiar anomalías) → ver FIN-008. **R-14 RESUELTO (2026-11-25, CP-BRA-REMEDIATION-001):** la reversión ya bloquea pagos en períodos fiscales cerrados/locked (`ERR_PAYMENT_IN_CLOSED_FISCAL_PERIOD`, 20261126140000) salvo excepción administrativa auditada.
 - **Restricción:** solo `ref_type` receipt|service; pagos de OT/CxC son irreversibles (ver FIN-013).
 - **Evidencia:** `supabase/migrations/20261124120000:211-336,244-246,51-53,264-283`.
 
@@ -94,7 +94,7 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 ### FIN-008 · Los cierres históricos no se reabren; el dinero vuelve en el turno vigente
 - **Estado:** CONFIRMADA · **Severidad:** ALTA · **Cumplimiento:** CUMPLE (con riesgo documentado)
 - **Descripción:** `prevent_cash_closure_edit` y `prevent_fiscal_closing_edit` congelan cierres; reversiones de pagos ya liquidados registran su efecto en la ventana vigente.
-- **Riesgo:** ningún control impide revertir un pago que ya cayó en un cierre/arqueo — el corte actual puede manipularse → R-14.
+- **Riesgo R-14 RESUELTO (2026-11-25, CP-BRA-REMEDIATION-001):** `reverse_supplier_payment` bloquea la reversión de pagos cuyo período fiscal está cerrado/locked (patrón v2_19_3) salvo excepción admin auditada (`PAYMENT_REVERSED_CLOSED_PERIOD`) — migración 20261126140000 aplicada en producción.
 - **Evidencia:** triggers en `cash_closures`, `fiscal_closings` (20260213+); `20261124120000:264-283`.
 
 ### FIN-009 · Monedas distintas nunca se suman entre sí
@@ -109,8 +109,9 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 - **Evidencia:** `20261021000001:119+`; `src/app/api/cash-flow/reverse/route.ts:37-67`; `reverse_cash_flow_document`.
 
 ### FIN-011 · CxC: saldo por columnas desnormalizadas `paid_amount` de production_orders
-- **Estado:** CONTRADICTORIA · **Severidad:** CRÍTICA · **Cumplimiento:** FALTA (divergencia garantizada)
+- **Estado:** CONTRADICTORIA · **Severidad:** CRÍTICA · **Cumplimiento:** PARCIAL (R-01 remediado; R-02 abierto)
 - **Descripción:** la ruta CxC usa `production_orders.paid_amount` desactualizada (el trigger que la mantenía perdió la rama `production_order|work` al reemitirse `update_payment_status` en 20261124120000:67-141) y convierte con tasa fija 450 en vez de la tasa documental/canónica.
+- **Remediación R-01 (2026-11-25, CP-BRA-REMEDIATION-001):** la migración 20261126140000 reemite `update_payment_status` con las TRES ramas (OT restaurada con neteo de contra-filas + guard voided + recomputo en DELETE) y añade gate/lock de OT en `register_supplier_payment` — aplicada en producción, 9/9 marcas, prueba funcional en aislada. El saldo `paid_amount` vuelve a mantenerse por el trigger para pagos nuevos. **R-02 (tasa 450 fija) sigue abierto → remediación en curso.**
 - **Consecuencia:** importes distintos para la misma realidad contable (la clase exacta de defecto que motivó esta misión).
 - **Evidencia:** `src/app/api/accounts-receivable/route.ts:88-96,114,123`; `20261113120800:127-145` (rama perdida); `20261124120000:67-141` (reemisión sin la rama).
 - **Remediación requerida:** R-01/R-02 en RISK-REGISTER (misión de remediación independiente).

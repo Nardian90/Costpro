@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-25 — fusion CP-AP-FORENSIC-RECONCILIATION-001 + main (PR #1708-1710): union de manifiestos de escritores.",
+  "_updated": "2026-11-25 — CP-BRA-REMEDIATION-001: alta de scripts/cpbra-apply-migration-prod.mjs (guardProtected, assert-not-production con doble flag).",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -17,6 +17,7 @@
     "scripts/cp-security-backlog-001-aplicar-produccion.mjs",
     "scripts/cp-security-backlog-001-fix-ledger-versions.mjs",
     "scripts/cp-security-backlog-001-fix2-ledger.mjs",
+    "scripts/cpbra-apply-migration-prod.mjs",
     "scripts/cpops-apply-migrations-prod.mjs",
     "scripts/cxap-apply-revoke-legacy-fns.mjs",
     "scripts/e2e/cp-catmaestro001-cable-fase0-audit.mjs",
@@ -301,6 +302,7 @@
     "scripts/cpai-forensic-investigation.mjs": "Auditoría CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001: SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT; el método POST dispara la heurística de escritor pero el script no contiene ninguna operación INSERT/UPDATE/DELETE/DDL). Expedientes: Pixelarte F-23112026, recepciones sin proveedor, Tienda Pueblo/TiendaPueblo, víctimas de la asimetría. Evidencia re-ejecutable.",
     "scripts/cpai-apply-pixelarte-reversal.mjs": "CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 (2026-11-26): ESCRITOR GOBERNADO — remediación del pago $1,800 del servicio anulado F-23112026 (caso 1 de la misión §5.2) por el CANAL CANÓNICO de la aplicación: POST /api/payments/[id] con sesión admin real (la MISMA ruta del botón Anular del historial de pagos) → RPC reverse_supplier_payment. Snapshots antes/después + verificaciones misión §5.4 con evidencia en download/cpai-evidencia/. Idempotente por diseño del RPC. Las únicas escrituras a Supabase del script son de LECTURA (Management API SELECT) para los snapshots.",
     "scripts/cpai-apply-migrations-governed.mjs": "CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 (2026-11-26): ESCRITOR GOBERNADO — aplicador de las migraciones 20261125153000 + 20261126120000/120100/120200 (guards del ciclo de vida de pagos, saneamiento TiendaPueblo, fix del trigger del motor de pagos) por Management API con patrón de doble flag: --target prod exige --confirm-prod explícito, --check es read-only, sonda de estado previo (idempotente: salta lo aplicado) y verificación post-aplicación. Preparación de la BD aislada E2E con el mismo script (--target e2e).",
-    "scripts/cpai-verify-financials.mjs": "CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 (2026-11-26): SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT; el método POST dispara la heurística de escritor pero el script no contiene ninguna operación INSERT/UPDATE/DELETE/DDL). Comprobaciones FASE 7 post-corrección re-ejecutables: caja, TiendaPueblo, recomputo CxP e integridad. Evidencia en download/cpai-evidencia/."
+    "scripts/cpai-verify-financials.mjs": "CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 (2026-11-26): SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT; el método POST dispara la heurística de escritor pero el script no contiene ninguna operación INSERT/UPDATE/DELETE/DDL). Comprobaciones FASE 7 post-corrección re-ejecutables: caja, TiendaPueblo, recomputo CxP e integridad. Evidencia en download/cpai-evidencia/.",
+    "scripts/cpbra-forensic-7criticals.mjs": "CP-BRA-REMEDIATION-001 (2026-11-25): SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT; el método POST dispara la heurística de escritor pero el script no contiene ninguna operación INSERT/UPDATE/DELETE/DDL). Auditoría forense re-ejecutable de los 7 hallazgos críticos del RISK-REGISTER CP-BRA-001 (R-01/02/04/05/11/14/15) contra producción: evidencia de saldos OT, tasas, pagos vivos sobre documentos anulados, ajustes confirmados, ventas con incidencias, reversiones en períodos cerrados y duplicados de terceros."
   }
 }

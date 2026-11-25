@@ -992,16 +992,6 @@
       "expires": "2026-12-31"
     },
     {
-      "function": "register_supplier_payment/12",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION",
-        "UNEXPECTED_ACL_DRIFT"
-      ],
-      "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120000_cp_ops_enervida_payment_reversals.sql re-emite la función con la corrección de la misión (neteo del saldo del documento al revertir el pago (restaura la obligación por el trigger, riel PT007 intacto); ACL authenticated CONSERVADA). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
-      "added_by": "CP-OPS-ENERVIDA",
-      "expires": "2026-12-31"
-    },
-    {
       "function": "set_received_service_status/4",
       "rules": [
         "BODY_DRIFT_FROM_MIGRATION"
@@ -1020,5 +1010,5 @@
       "expires": "2026-12-31"
     }
   ],
-  "_updated": "2026-11-25 — fusión CP-AP-FORENSIC-RECONCILIATION-001 + main (PR #1708-1710): union de allowlists. Entradas de la mision (fin_post_payment_annulment, register_supplier_payment_multi, cp_catmaestro001_renumber_auto_masters — ACL verificada en vivo {postgres, service_role}) + las de main."
+  "_updated": "2026-11-25 — CP-BRA-REMEDIATION-001: surface re-certificado tras aplicar 20261126140000 (R-01/R-14); entrada register_supplier_payment/12 retirada (drift resuelto)."
 }

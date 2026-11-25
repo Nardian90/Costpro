@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-25T18:07:41.419Z
+-- Captured  : 2026-11-25T19:12:26.573Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 232 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -16681,9 +16681,12 @@ BEGIN
       INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate, v_doc_status
     FROM public.received_services WHERE id = p_ref_id FOR UPDATE;
   ELSIF p_ref_type IN ('production_order', 'work') THEN
-    SELECT store_id, budget_total, 'CUP', 1
-      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate
-    FROM public.production_orders WHERE id = p_ref_id;
+    -- R-01 (CP-BRA-REMEDIATION-001): lock + estado — igual que receipt|service.
+    -- El documento OT se sigue tratando como CUP/tasa 1 (contrato vigente del
+    -- motor; alignarlo a budget_currency es decisión de negocio posterior).
+    SELECT store_id, budget_total, 'CUP', 1, status
+      INTO v_doc_store_id, v_total, v_doc_currency, v_doc_rate, v_doc_status
+    FROM public.production_orders WHERE id = p_ref_id FOR UPDATE;
   ELSE
     RAISE EXCEPTION 'ref_type no soportado: %', p_ref_type;
   END IF;
@@ -16729,6 +16732,15 @@ BEGIN
   IF p_ref_type = 'service' AND COALESCE(v_doc_status, 'active') <> 'active' THEN
     RAISE EXCEPTION
       'ERR_SERVICE_NOT_ACTIVE: solo un servicio ACTIVO admite pagos (estado actual: %)',
+      v_doc_status;
+  END IF;
+
+  -- R-01 (CP-BRA-REMEDIATION-001): gate de estado de la OT — una orden
+  -- anulada no admite pagos nuevos (fail-closed). Draft sigue permitido:
+  -- es la realidad operativa (anticipos sobre órdenes en elaboración).
+  IF p_ref_type IN ('production_order', 'work') AND COALESCE(v_doc_status, 'draft') = 'voided' THEN
+    RAISE EXCEPTION
+      'ERR_ORDER_NOT_PAYABLE: la orden de trabajo está voided y no admite pagos nuevos (estado actual: %)',
       v_doc_status;
   END IF;
 
@@ -19391,8 +19403,8 @@ END
 $function$
 
 
--- @contract-function name=reverse_supplier_payment args="p_payment_id uuid, p_reason text, p_user_id uuid, p_operation_date timestamp with time zone" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.reverse_supplier_payment(p_payment_id uuid, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone)
+-- @contract-function name=reverse_supplier_payment args="p_payment_id uuid, p_reason text, p_user_id uuid, p_operation_date timestamp with time zone, p_allow_closed_period boolean" owner=postgres proacl={postgres=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.reverse_supplier_payment(p_payment_id uuid, p_reason text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_allow_closed_period boolean DEFAULT false)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -19411,6 +19423,7 @@ DECLARE
   END;
   v_eff_date timestamptz := COALESCE(p_operation_date, NOW());
   v_reason text := btrim(COALESCE(p_reason, ''));
+  v_fc record;
 BEGIN
   IF v_caller_uid IS NULL THEN
     RAISE EXCEPTION 'ERR_UNAUTHORIZED';
@@ -19448,6 +19461,39 @@ BEGIN
   END IF;
 
   PERFORM public.validate_operation_date(v_eff_date, v_orig.store_id);
+
+  -- R-14 (CP-BRA-REMEDIATION-001): guard de período fiscal cerrado/locked.
+  -- Si el pago ORIGINAL cayó en un cierre fiscal confirmado, revertirlo
+  -- reabre historia financiera: el compensatorio caería en el turno vigente
+  -- (FIN-008). Bloqueado salvo excepción administrativa auditada
+  -- (p_allow_closed_period + admin + motivo).
+  SELECT fc.period_year, fc.period_month, fc.status INTO v_fc
+  FROM public.fiscal_closings fc
+  WHERE fc.store_id = v_orig.store_id
+    AND fc.status IN ('closed', 'locked')
+    AND v_orig.payment_date >= make_date(fc.period_year, fc.period_month, 1)
+    AND v_orig.payment_date < make_date(fc.period_year, fc.period_month, 1) + interval '1 month'
+  LIMIT 1;
+  IF v_fc.period_year IS NOT NULL THEN
+    IF NOT (p_allow_closed_period
+            AND public.is_admin_check(v_caller_uid)
+            AND v_reason <> '') THEN
+      RAISE EXCEPTION
+        'ERR_PAYMENT_IN_CLOSED_FISCAL_PERIOD: el pago % (fecha %) cayó en el período fiscal %-% en estado % — su reversión reabriría un cierre histórico. Requiere excepción administrativa explícita (p_allow_closed_period + motivo) autorizada por el propietario.',
+        p_payment_id, v_orig.payment_date, v_fc.period_year, v_fc.period_month, v_fc.status;
+    END IF;
+    INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+    VALUES (v_caller_uid, v_orig.store_id, 'PAYMENT_REVERSED_CLOSED_PERIOD', 'payment_transactions', p_payment_id,
+      jsonb_build_object(
+        'original_payment_id', p_payment_id,
+        'period_year', v_fc.period_year,
+        'period_month', v_fc.period_month,
+        'fiscal_closing_status', v_fc.status,
+        'payment_date', v_orig.payment_date,
+        'reason', v_reason,
+        'authorized_by', 'admin_exception'
+      ));
+  END IF;
 
   -- Documento padre: SOLO informativo/doctype — la reversión del pago NO
   -- anula el documento (misión §5: no confundir anular pago con anular

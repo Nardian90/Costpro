@@ -115,6 +115,11 @@ async function reverseHandler(req: NextRequest, session: AuthenticatedSession) {
       if (msg.includes('ERR_FUTURE_DATED_DOCUMENT') || msg.includes('ERR_BACKDATED_DOCUMENT')) {
         return NextResponse.json({ error: 'Fecha de la reversión no admisible', message: msg, code: 'ERR_OPERATION_DATE' }, { status: 422 });
       }
+      // CP-BRA-REMEDIATION-001 (R-14): el pago cayó en un período fiscal
+      // cerrado/locked — la reversión requiere excepción administrativa.
+      if (msg.includes('ERR_PAYMENT_IN_CLOSED_FISCAL_PERIOD')) {
+        return NextResponse.json({ error: msg, code: 'ERR_PAYMENT_IN_CLOSED_FISCAL_PERIOD' }, { status: 409 });
+      }
       console.error('[payments/reverse] Error RPC:', rpcError);
       return NextResponse.json({ error: msg || 'Error al revertir el pago' }, { status: 500 });
     }
