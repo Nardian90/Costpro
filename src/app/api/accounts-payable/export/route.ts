@@ -2,236 +2,218 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import * as XLSX from '@e965/xlsx';
+import { z } from 'zod';
+import {
+  computeAccountsPayable,
+  havanaDate,
+  type PayableReceiptRow,
+  type PayableServiceRow,
+  type PayableCommissionRow,
+  type PayableTxnRow,
+} from '@/lib/accounts-payable/calculator';
 
 /**
  * GET /api/accounts-payable/export
  *
  * Exporta la antigüedad de saldos (Cuentas por Pagar) a Excel.
- * Genera un archivo .xlsx con:
- *   - Hoja 1: Resumen por proveedor (estilo Excel con columnas aging)
- *   - Hoja 2: Detalle por documento
+ * CP-AP-FORENSIC-RECONCILIATION-001: usa el MISMO calculador que la vista
+ * (fuente única de verdad) — el Excel ya no puede divergir de la pantalla.
+ *
+ * Hoja 1: Resumen por proveedor (incluye pagados → Total − Pagado = Saldo).
+ * Hoja 2: Detalle por documento (fecha contable, vencimiento, aging a corte).
  *
  * Query params:
  *   - store_id: UUID (requerido)
- *
- * FASE 4.1 (2026-07-13): exportación Excel del aging consolidado.
+ *   - date_from / date_to: 'YYYY-MM-DD' — período de documentos por fecha
+ *     contable; date_to es la fecha de corte de saldos/antigüedad (misma
+ *     semántica que la vista).
  */
+
+const uuidLooseRegex = z.string().regex(
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i,
+  'UUID inválido',
+);
+const dateRegex = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida (YYYY-MM-DD)');
+
+const querySchema = z
+  .object({
+    store_id: uuidLooseRegex,
+    date_from: dateRegex.optional(),
+    date_to: dateRegex.optional(),
+  })
+  .refine(q => !q.date_from || !q.date_to || q.date_from <= q.date_to, {
+    message: 'La fecha inicial no puede ser posterior a la fecha final',
+    path: ['date_from'],
+  });
+
+interface ChunkRow { [k: string]: unknown }
+
+async function fetchAll(
+  supabase: ReturnType<typeof getSupabaseForSession>,
+  table: string,
+  select: string,
+  eq: Record<string, string>,
+  neq: Record<string, string> | null,
+): Promise<ChunkRow[]> {
+  const out: ChunkRow[] = [];
+  const PAGE = 1000;
+  for (let offset = 0; ; offset += PAGE) {
+    let q = supabase.from(table).select(select).range(offset, offset + PAGE - 1);
+    for (const [k, v] of Object.entries(eq)) q = q.eq(k, v);
+    if (neq) for (const [k, v] of Object.entries(neq)) q = q.neq(k, v);
+    const { data, error } = await q;
+    if (error) throw new Error(`[${table}] ${error.message}`);
+    const rows = (data || []) as ChunkRow[];
+    out.push(...rows);
+    if (rows.length < PAGE) break;
+  }
+  return out;
+}
 
 async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
     const { searchParams } = new URL(req.url);
-    const store_id = searchParams.get('store_id');
-
-    if (!store_id) {
-      return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
-    }
-
-    const supabase = getSupabaseForSession(session);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Consultar las 3 fuentes
-    const [receiptsResult, servicesResult, commissionsResult] = await Promise.all([
-      supabase
-        .from('receipts')
-        .select('id, supplier, total_cost, paid_amount, due_date, payment_status, payment_method, reference_doc, status, created_at')
-        .eq('store_id', store_id)
-        .neq('status', 'voided')
-        .order('due_date', { ascending: true, nullsFirst: false }),
-      supabase
-        .from('received_services')
-        .select('id, supplier, total_amount, paid_amount, due_date, payment_status, payment_method, reference_doc, status, currency, exchange_rate, created_at')
-        .eq('store_id', store_id)
-        .neq('status', 'voided')
-        .order('due_date', { ascending: true, nullsFirst: false }),
-      supabase
-        .from('commission_payments')
-        .select('id, period_start, period_end, due_date, final_amount, status, payment_method, created_at, worker:workers!inner(first_name, last_name)')
-        .eq('store_id', store_id)
-        .in('status', ['approved', 'paid'])
-        .order('due_date', { ascending: true, nullsFirst: false }),
-    ]);
-
-    interface Row {
-      proveedor: string;
-      tipo: string;
-      total: number;
-      pagado: number;
-      saldo: number;
-      moneda: string;
-      vencimiento: string;
-      dias_vencido: number;
-      rango: string;
-      estado: string;
-    }
-
-    const rows: Row[] = [];
-
-    for (const r of receiptsResult.data || []) {
-      const total = Number(r.total_cost) || 0;
-      const paid = Number(r.paid_amount) || 0;
-      const balance = total - paid;
-      const dueDate = r.due_date ? new Date(r.due_date) : null;
-      const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / 86400000) : null;
-      const isOverdue = dueDate ? dueDate < today && r.payment_status !== 'paid' : false;
-
-      let rango = 'Corriente';
-      if (r.payment_status === 'paid') rango = 'Pagado';
-      else if (isOverdue) {
-        const od = daysUntilDue !== null ? Math.abs(daysUntilDue) : 0;
-        if (od > 120) rango = '+120d';
-        else if (od > 90) rango = '91-120d';
-        else if (od > 60) rango = '61-90d';
-        else if (od > 30) rango = '31-60d';
-        else rango = '0-30d';
-      }
-
-      rows.push({
-        proveedor: r.supplier || 'Sin proveedor',
-        tipo: 'Recepción',
-        total, pagado: paid, saldo: balance,
-        moneda: 'CUP',
-        vencimiento: r.due_date || '',
-        dias_vencido: daysUntilDue ?? 0,
-        rango,
-        estado: r.payment_status || 'unpaid',
-      });
-    }
-
-    for (const s of servicesResult.data || []) {
-      const total = Number(s.total_amount) || 0;
-      const paid = Number(s.paid_amount) || 0;
-      const balance = total - paid;
-      const dueDate = s.due_date ? new Date(s.due_date) : null;
-      const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / 86400000) : null;
-      const isOverdue = dueDate ? dueDate < today && s.payment_status !== 'paid' : false;
-
-      let rango = 'Corriente';
-      if (s.payment_status === 'paid') rango = 'Pagado';
-      else if (isOverdue) {
-        const od = daysUntilDue !== null ? Math.abs(daysUntilDue) : 0;
-        if (od > 120) rango = '+120d';
-        else if (od > 90) rango = '91-120d';
-        else if (od > 60) rango = '61-90d';
-        else if (od > 30) rango = '31-60d';
-        else rango = '0-30d';
-      }
-
-      rows.push({
-        proveedor: s.supplier || 'Sin proveedor',
-        tipo: 'Servicio',
-        total, pagado: paid, saldo: balance,
-        moneda: s.currency || 'CUP',
-        vencimiento: s.due_date || '',
-        dias_vencido: daysUntilDue ?? 0,
-        rango,
-        estado: s.payment_status || 'unpaid',
-      });
-    }
-
-    for (const c of commissionsResult.data || []) {
-      const total = Number(c.final_amount) || 0;
-      const paid = c.status === 'paid' ? total : 0;
-      const balance = total - paid;
-      const workerData = Array.isArray(c.worker) ? c.worker[0] : c.worker;
-      const workerName = workerData ? `${workerData.first_name} ${workerData.last_name}`.trim() : 'Trabajador';
-      const dueDate = c.due_date ? new Date(c.due_date) : null;
-      const daysUntilDue = dueDate ? Math.ceil((dueDate.getTime() - today.getTime()) / 86400000) : null;
-      const isOverdue = dueDate ? dueDate < today && c.status !== 'paid' : false;
-
-      let rango = 'Corriente';
-      if (c.status === 'paid') rango = 'Pagado';
-      else if (isOverdue) {
-        const od = daysUntilDue !== null ? Math.abs(daysUntilDue) : 0;
-        if (od > 120) rango = '+120d';
-        else if (od > 90) rango = '91-120d';
-        else if (od > 60) rango = '61-90d';
-        else if (od > 30) rango = '31-60d';
-        else rango = '0-30d';
-      }
-
-      rows.push({
-        proveedor: workerName,
-        tipo: 'Comisión',
-        total, pagado: paid, saldo: balance,
-        moneda: 'CUP',
-        vencimiento: c.due_date || '',
-        dias_vencido: daysUntilDue ?? 0,
-        rango,
-        estado: c.status === 'paid' ? 'paid' : 'unpaid',
-      });
-    }
-
-    // Hoja 1: Resumen por proveedor
-    const supplierMap = new Map<string, any>();
-    for (const r of rows) {
-      if (r.estado === 'paid') continue;
-      const key = r.proveedor;
-      if (!supplierMap.has(key)) {
-        supplierMap.set(key, {
-          Proveedor: key, Docs: 0, Total: 0, Pagado: 0, Saldo: 0,
-          Corriente: 0, '0-30d': 0, '31-60d': 0, '61-90d': 0, '91-120d': 0, '+120d': 0,
-        });
-      }
-      const e = supplierMap.get(key)!;
-      e.Total += r.total; e.Pagado += r.pagado; e.Saldo += r.saldo; e.Docs += 1;
-      if (r.rango === 'Corriente') e.Corriente += r.saldo;
-      else if (r.rango === '0-30d') e['0-30d'] += r.saldo;
-      else if (r.rango === '31-60d') e['31-60d'] += r.saldo;
-      else if (r.rango === '61-90d') e['61-90d'] += r.saldo;
-      else if (r.rango === '91-120d') e['91-120d'] += r.saldo;
-      else if (r.rango === '+120d') e['+120d'] += r.saldo;
-    }
-
-    const summaryData = Array.from(supplierMap.values()).sort((a, b) => b.Saldo - a.Saldo);
-    summaryData.push({
-      Proveedor: 'TOTALES',
-      Docs: summaryData.reduce((s, g) => s + g.Docs, 0),
-      Total: summaryData.reduce((s, g) => s + g.Total, 0),
-      Pagado: summaryData.reduce((s, g) => s + g.Pagado, 0),
-      Saldo: summaryData.reduce((s, g) => s + g.Saldo, 0),
-      Corriente: summaryData.reduce((s, g) => s + g.Corriente, 0),
-      '0-30d': summaryData.reduce((s, g) => s + g['0-30d'], 0),
-      '31-60d': summaryData.reduce((s, g) => s + g['31-60d'], 0),
-      '61-90d': summaryData.reduce((s, g) => s + g['61-90d'], 0),
-      '91-120d': summaryData.reduce((s, g) => s + g['91-120d'], 0),
-      '+120d': summaryData.reduce((s, g) => s + g['+120d'], 0),
+    const parsed = querySchema.safeParse({
+      store_id: searchParams.get('store_id'),
+      date_from: searchParams.get('date_from') || undefined,
+      date_to: searchParams.get('date_to') || undefined,
     });
 
-    // Hoja 2: Detalle
-    const detailData = rows.map(r => ({
-      Proveedor: r.proveedor,
-      Tipo: r.tipo,
-      Total: r.total,
-      Pagado: r.pagado,
-      Saldo: r.saldo,
-      Moneda: r.moneda,
-      Vencimiento: r.vencimiento,
-      'Días hasta vencimiento': r.dias_vencido,
-      'Rango Aging': r.rango,
-      Estado: r.estado === 'paid' ? 'Pagado' : r.estado === 'partial' ? 'Parcial' : 'Pendiente',
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Parámetros inválidos', details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const { store_id, date_from, date_to } = parsed.data;
+
+    const supabase = getSupabaseForSession(session);
+
+    const [receiptsRaw, servicesRaw, commissionsRaw, txnsRaw] = await Promise.all([
+      fetchAll(supabase, 'receipts',
+        'id, supplier, total_cost, paid_amount, payment_status, payment_method, reference_doc, due_date, reception_date, created_at',
+        { store_id }, { status: 'voided' }),
+      fetchAll(supabase, 'received_services',
+        'id, supplier, total_amount, paid_amount, payment_status, payment_method, reference_doc, due_date, service_date, currency, exchange_rate, created_at',
+        { store_id }, { status: 'voided' }),
+      fetchAll(supabase, 'commission_payments',
+        'id, final_amount, status, due_date, paid_at, payment_method, period_start, period_end, created_at, worker:workers!inner(first_name, last_name)',
+        { store_id }, null),
+      fetchAll(supabase, 'payment_transactions',
+        'ref_type, ref_id, amount_cup, currency, payment_method, direction, payment_date, reference',
+        { store_id }, null),
+    ]);
+
+    const commissions: PayableCommissionRow[] = (commissionsRaw as unknown as Array<Record<string, unknown>>)
+      .filter(c => c.status === 'approved' || c.status === 'paid')
+      .map(c => {
+        const worker = Array.isArray(c.worker) ? c.worker[0] : c.worker;
+        const w = (worker ?? {}) as { first_name?: string | null; last_name?: string | null };
+        return {
+          id: String(c.id),
+          final_amount: c.final_amount as number | null,
+          status: c.status as string | null,
+          due_date: (c.due_date as string | null) ?? null,
+          paid_at: (c.paid_at as string | null) ?? null,
+          payment_method: (c.payment_method as string | null) ?? null,
+          period_start: (c.period_start as string | null) ?? null,
+          period_end: (c.period_end as string | null) ?? null,
+          worker_name: `${w.first_name || ''} ${w.last_name || ''}`.trim() || null,
+          created_at: (c.created_at as string | null) ?? null,
+        };
+      });
+
+    const txns: PayableTxnRow[] = (txnsRaw as unknown as Array<Record<string, unknown>>)
+      .filter(t => t.ref_type === 'receipt' || t.ref_type === 'service')
+      .map(t => ({
+        ref_type: t.ref_type as 'receipt' | 'service',
+        ref_id: String(t.ref_id),
+        amount_cup: t.amount_cup as number,
+        currency: (t.currency as string | null) ?? null,
+        payment_method: (t.payment_method as string | null) ?? null,
+        direction: (t.direction as string | null) ?? null,
+        payment_date: String(t.payment_date),
+        reference: (t.reference as string | null) ?? null,
+      }));
+
+    // Mismo calculador, mismos criterios que la vista (alcance completo).
+    const result = computeAccountsPayable(
+      receiptsRaw as unknown as PayableReceiptRow[],
+      servicesRaw as unknown as PayableServiceRow[],
+      commissions,
+      txns,
+      { tab: 'all', category: 'all', date_from, date_to, now: havanaDate() },
+    );
+
+    // ── Hoja 1: Resumen por proveedor (aging del saldo a corte) ──
+    const summaryData: Array<Record<string, string | number>> = result.grouped.map(g => ({
+      Proveedor: g.supplier,
+      Docs: g.count,
+      Total: round2(g.total_cup),
+      Pagado: round2(g.paid_cup),
+      Saldo: round2(g.balance_cup),
+      Corriente: round2(g.aging.current),
+      'Próx 7d': round2(g.aging.upcoming7),
+      '0-30d': round2(g.aging['30']),
+      '31-60d': round2(g.aging['60']),
+      '61-90d': round2(g.aging['90']),
+      '91-120d': round2(g.aging['120']),
+      '+120d': round2(g.aging['120+']),
+    }));
+    summaryData.push({
+      Proveedor: 'TOTALES',
+      Docs: result.grouped.reduce((s, g) => s + g.count, 0),
+      Total: round2(result.totals.total_cup),
+      Pagado: round2(result.totals.paid_cup),
+      Saldo: round2(result.totals.balance_cup),
+      Corriente: round2(result.totals.aging.current),
+      'Próx 7d': round2(result.totals.aging.upcoming7),
+      '0-30d': round2(result.totals.aging['30']),
+      '31-60d': round2(result.totals.aging['60']),
+      '61-90d': round2(result.totals.aging['90']),
+      '91-120d': round2(result.totals.aging['120']),
+      '+120d': round2(result.totals.aging['120+']),
+    });
+
+    // ── Hoja 2: Detalle por documento ──
+    const TIPO_LABEL: Record<string, string> = { receipt: 'Recepción', service: 'Servicio', commission: 'Comisión' };
+    const BUCKET_LABEL: Record<string, string> = {
+      current: 'Corriente', upcoming7: 'Próx 7d', '30': '0-30d', '60': '31-60d',
+      '90': '61-90d', '120': '91-120d', '120+': '+120d', paid: 'Pagado',
+    };
+    const detailData = result.payables.map(p => ({
+      Proveedor: p.supplier,
+      Tipo: TIPO_LABEL[p.ref_type],
+      Documento: p.reference || '—',
+      'Fecha documento': p.doc_date || '—',
+      Vencimiento: p.due_date || '—',
+      Total: round2(p.total_cup),
+      Pagado: round2(p.paid_cup),
+      Saldo: round2(Math.max(0, p.balance_cup)),
+      'Rango Aging': BUCKET_LABEL[p.aging_bucket],
+      Estado: PAYMENT_STATUS_LABEL[p.payment_status],
     }));
 
-    // Generar Excel
+    // ── Generar Excel ──
     const wb = XLSX.utils.book_new();
 
     const ws1 = XLSX.utils.json_to_sheet(summaryData);
     ws1['!cols'] = [
-      { wch: 30 }, { wch: 8 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
-      { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+      { wch: 32 }, { wch: 8 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
+      { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
     ];
     XLSX.utils.book_append_sheet(wb, ws1, 'Resumen por Proveedor');
 
     const ws2 = XLSX.utils.json_to_sheet(detailData);
     ws2['!cols'] = [
-      { wch: 30 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 14 },
-      { wch: 8 }, { wch: 14 }, { wch: 10 }, { wch: 12 }, { wch: 12 },
+      { wch: 32 }, { wch: 12 }, { wch: 18 }, { wch: 16 }, { wch: 14 }, { wch: 14 },
+      { wch: 14 }, { wch: 14 }, { wch: 12 }, { wch: 12 },
     ];
     XLSX.utils.book_append_sheet(wb, ws2, 'Detalle');
 
     const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
-    const dateStr = new Date().toISOString().slice(0, 10);
+    const dateStr = result.meta.cutoff;
     const filename = `cuentas_por_pagar_${dateStr}.xlsx`;
 
     return new NextResponse(buffer, {
@@ -245,6 +227,16 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     console.error('[accounts-payable/export] Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+}
+
+const PAYMENT_STATUS_LABEL: Record<string, string> = {
+  unpaid: 'Pendiente',
+  partial: 'Parcial',
+  paid: 'Pagado',
+};
+
+function round2(n: number): number {
+  return Math.round((n + Number.EPSILON) * 100) / 100;
 }
 
 export const GET = withAuth(getHandler);

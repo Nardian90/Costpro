@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useMemo, Fragment } from 'react';
-import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List, CreditCard, User, Download, CheckSquare, Square } from 'lucide-react';
+import { AlertTriangle, Clock, CheckCircle2, Wallet, TrendingDown, Search, Table2, List, CreditCard, Download, CheckSquare, Square, Calendar, X, ArrowLeft, User } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
-import { apiFetch } from '@/lib/api-fetch';
-import { useAccountsPayable, type AgingTab, type GroupedPayable, type UnifiedPayable } from '@/hooks/api/useAccountsPayable';
+import { useAccountsPayable, type AgingTab, type PayableCategory, type GroupedPayable, type UnifiedPayable } from '@/hooks/api/useAccountsPayable';
 import { StateRenderer } from '@/components/ui/StateRenderer'; // CP-CI-006 U1: estados canónicos
 import PaymentModal, { type PayableDocument } from './PaymentModal';
 import PaymentHistoryRow from './PaymentHistoryRow';
@@ -28,6 +27,13 @@ const AGING_TABS: { id: AgingTab; label: string }[] = [
   { id: 'paid', label: 'Pagadas' },
 ];
 
+const CATEGORY_FILTERS: { id: PayableCategory; label: string }[] = [
+  { id: 'all', label: 'Todos' },
+  { id: 'receipts', label: 'Recepciones' },
+  { id: 'services', label: 'Servicios' },
+  { id: 'commissions', label: 'Comisiones' },
+];
+
 const METHOD_FILTERS = [
   { id: '', label: 'Todos los métodos' },
   { id: 'cash', label: 'Efectivo' },
@@ -42,10 +48,20 @@ const CURRENCY_FILTERS = [
   { id: 'MLC', label: 'MLC' },
 ];
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** dd/MM/yyyy legible para el banner de corte. */
+function fmtDay(iso: string | null | undefined): string {
+  if (!iso || !DATE_RE.test(iso)) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 export default function AccountsPayableView() {
   // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin alert() nativo).
   const dialogs = useDialogs();
   const [tab, setTab] = useState<AgingTab>('all');
+  const [category, setCategory] = useState<PayableCategory>('all');
   const [methodFilter, setMethodFilter] = useState('');
   const [currencyFilter, setCurrencyFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,28 +69,75 @@ export default function AccountsPayableView() {
   const [paymentModalDoc, setPaymentModalDoc] = useState<PayableDocument | null>(null);
   const [exporting, setExporting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkPaying, setBulkPaying] = useState(false);
-  const [bulkMethod, setBulkMethod] = useState<'cash' | 'transfer' | 'mixed'>('cash');
   const [showBulkBar, setShowBulkBar] = useState(false);
   const { user } = useAuthStore();
 
-  const { data, totals, kpis, summary, count, loading, error, refetch } = useAccountsPayable({
+  // ── Filtro personalizado por fechas (misión FASE 4) ──
+  // Inputs locales → «Aplicar» los confirma → mueve la consulta. La fecha
+  // final es además la FECHA DE CORTE de saldos y antigüedad (§6.2).
+  const [dateFromInput, setDateFromInput] = useState('');
+  const [dateToInput, setDateToInput] = useState('');
+  const [dateFrom, setDateFrom] = useState<string | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<string | undefined>(undefined);
+
+  const datesValid =
+    (!dateFromInput || DATE_RE.test(dateFromInput)) &&
+    (!dateToInput || DATE_RE.test(dateToInput)) &&
+    (!dateFromInput || !dateToInput || dateFromInput <= dateToInput);
+  const datesDirty = dateFromInput !== (dateFrom ?? '') || dateToInput !== (dateTo ?? '');
+
+  // ── Drill-down Por proveedor → Detalles (misión FASE 5/6) ──
+  const [supplierDrill, setSupplierDrill] = useState<string | null>(null);
+
+  const applyDates = () => {
+    if (!datesValid) return;
+    setDateFrom(dateFromInput || undefined);
+    setDateTo(dateToInput || undefined);
+  };
+  const clearDates = () => {
+    setDateFromInput('');
+    setDateToInput('');
+    setDateFrom(undefined);
+    setDateTo(undefined);
+  };
+
+  const { data, totals, kpis, summary, meta, count, loading, error, refetch } = useAccountsPayable({
     tab,
+    category,
     // CP-FIN-004: el filtro 'zelle' (Transf. Exterior) consulta ambos valores
     // (canónico external_transfer + heredado) — el hook expande el alias.
     method: (methodFilter || undefined) as 'cash' | 'transfer' | 'zelle' | 'external_transfer' | undefined,
     currency: currencyFilter || undefined,
     search: searchQuery || undefined,
+    supplier: supplierDrill ?? undefined,
+    dateFrom,
+    dateTo,
     mode: viewMode,
   });
+
+  // El hook ya reporta loading durante la ventana de carrera (stale) — la
+  // guarda de FORMA aquí es defensa en profundidad: nunca renderizar la tabla
+  // agrupada con filas sin .aging (crash original de «volver a Por proveedor»).
+  const groupedRows = useMemo(() => {
+    if (viewMode !== 'grouped') return null;
+    const rows = (data as unknown as GroupedPayable[]) ?? [];
+    return rows.length > 0 && typeof rows[0].aging === 'object' && rows[0].aging !== null ? rows : null;
+  }, [data, viewMode]);
+  const listRows = useMemo(() => {
+    if (viewMode !== 'list') return null;
+    const rows = (data as unknown as UnifiedPayable[]) ?? [];
+    return rows.length > 0 && typeof rows[0].ref_type === 'string' ? rows : null;
+  }, [data, viewMode]);
 
   const handleExport = async () => {
     if (!user?.activeStoreId) return;
     setExporting(true);
     try {
-      // FIX-M9 (2026-07-13): usar token JWT via apiFetch pattern (no fetch directo)
       const token = useAuthStore.getState().token;
-      const response = await fetch(`/api/accounts-payable/export?store_id=${user.activeStoreId}`, {
+      const qp = new URLSearchParams({ store_id: user.activeStoreId });
+      if (dateFrom) qp.set('date_from', dateFrom);
+      if (dateTo) qp.set('date_to', dateTo);
+      const response = await fetch(`/api/accounts-payable/export?${qp.toString()}`, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
@@ -87,7 +150,7 @@ export default function AccountsPayableView() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `cuentas_por_pagar_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.download = `cuentas_por_pagar_${(dateTo || new Date().toISOString().slice(0, 10))}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -122,7 +185,7 @@ export default function AccountsPayableView() {
   };
 
   const toggleSelectAll = (items: UnifiedPayable[]) => {
-    const payableItems = items.filter(p => p.payment_status !== 'paid');
+    const payableItems = items.filter(p => !p.is_settled);
     if (selectedIds.size === payableItems.length && payableItems.length > 0) {
       setSelectedIds(new Set());
       setShowBulkBar(false);
@@ -133,14 +196,14 @@ export default function AccountsPayableView() {
   };
 
   // CP-OPS-ENERVIDA §6: liquidación múltiple EXPLÍCITA — el botón de estados
-  // en bloque (bulk-pay «Marcar Pagadas») se sustituye por un flujo contable
-  // verificable: panel por documento con importe total/parcial, un método y
-  // una moneda por lote, lote ATÓMICO e idempotente (/api/payments/multi).
+  // en bloque se sustituyó por un flujo contable verificable: panel por
+  // documento con importe total/parcial, un método y una moneda por lote,
+  // lote ATÓMICO e idempotente (/api/payments/multi).
   const [liquidationOpen, setLiquidationOpen] = useState(false);
   const liquidationItems: LiquidationItem[] = useMemo(() => {
-    const listData = (data as UnifiedPayable[] | undefined) ?? [];
+    const listData = listRows ?? [];
     return listData
-      .filter(p => selectedIds.has(p.id) && p.payment_status !== 'paid' && p.balance > 0)
+      .filter(p => selectedIds.has(p.id) && !p.is_settled && p.balance_cup > 0)
       .map(p => ({
         id: p.id,
         ref_type: p.ref_type as 'receipt' | 'service',
@@ -150,12 +213,12 @@ export default function AccountsPayableView() {
         balance: p.balance_cup ?? p.balance,
         currency: p.currency,
       }));
-  }, [data, selectedIds]);
+  }, [listRows, selectedIds]);
   const selectedTotalPending = liquidationItems.reduce((s, it) => s + it.balance, 0);
 
   const openLiquidation = () => {
-    const listData = (data as UnifiedPayable[] | undefined) ?? [];
-    const invalid = listData.filter(p => selectedIds.has(p.id) && (p.payment_status === 'paid' || p.ref_type === 'commission'));
+    const listData = listRows ?? [];
+    const invalid = listData.filter(p => selectedIds.has(p.id) && (p.is_settled || p.ref_type === 'commission'));
     if (invalid.length > 0) {
       // CP-UX-FINAL-POLISH-003 §3.1: aviso propio (antes alert() nativo). El
       // flujo termina aquí igual que antes (return) sin bloquear la UI.
@@ -172,6 +235,28 @@ export default function AccountsPayableView() {
 
   const closeBulk = () => { setSelectedIds(new Set()); setShowBulkBar(false); };
 
+  // Navegación interna (misión FASE 5): Por proveedor → Detalles → Por proveedor
+  // sin recargar, preservando sucursal, filtros, fechas y categoría.
+  const openSupplierDetails = (supplier: string) => {
+    setSelectedIds(new Set());
+    setShowBulkBar(false);
+    setSupplierDrill(supplier);
+    setViewMode('list');
+  };
+  const backToSuppliers = () => {
+    setSelectedIds(new Set());
+    setShowBulkBar(false);
+    setSupplierDrill(null);
+    setViewMode('grouped');
+  };
+  const switchViewMode = (mode: 'grouped' | 'list') => {
+    if (mode === 'grouped') setSupplierDrill(null); // la vista agrupada es global
+    setViewMode(mode);
+  };
+
+  const periodActive = Boolean(dateFrom || dateTo);
+  const historical = Boolean(dateTo);
+
   return (
     <div className="space-y-4 p-4">
       {/* Header */}
@@ -179,15 +264,25 @@ export default function AccountsPayableView() {
         <div>
           <h2 className="text-2xl font-black uppercase tracking-tight">Cuentas por Pagar</h2>
           <p className="text-xs text-muted-foreground mt-1">
-            Antigüedad de saldos: recepciones y servicios recibidos
+            Antigüedad de saldos: recepciones, servicios recibidos y comisiones
           </p>
         </div>
 
         {/* View mode toggle + Export */}
         <div className="flex items-center gap-2">
+          {supplierDrill && (
+            <button
+              onClick={backToSuppliers}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted"
+              data-testid="cxp-volver-proveedores"
+              title="Volver a la vista Por proveedor"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Por proveedor
+            </button>
+          )}
           <div className="flex rounded-lg border border-border/40 overflow-hidden">
             <button
-              onClick={() => setViewMode('grouped')}
+              onClick={() => switchViewMode('grouped')}
               className={cn(
                 "px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5",
                 viewMode === 'grouped' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
@@ -196,7 +291,7 @@ export default function AccountsPayableView() {
               <Table2 className="w-3.5 h-3.5" /> Por Proveedor
             </button>
             <button
-              onClick={() => setViewMode('list')}
+              onClick={() => switchViewMode('list')}
               className={cn(
                 "px-3 py-1.5 text-[10px] font-black uppercase flex items-center gap-1.5",
                 viewMode === 'list' ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-muted"
@@ -218,7 +313,35 @@ export default function AccountsPayableView() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* Banner de fecha de corte (misión §6.2: la antigüedad corresponde al
+          corte seleccionado y debe verse en pantalla) */}
+      <div className={cn(
+        "flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border px-3 py-2 text-xs",
+        historical ? "border-primary/40 bg-primary/5" : "border-border/40 bg-muted/20"
+      )} data-testid="cxp-corte-banner">
+        <span className="flex items-center gap-1.5 font-black uppercase text-[10px] text-muted-foreground">
+          <Calendar className="w-3.5 h-3.5" /> Corte
+        </span>
+        <span className="font-mono font-bold tabular-nums">{fmtDay(meta?.cutoff)}</span>
+        {periodActive && (
+          <span className="text-muted-foreground">
+            Período de documentos: <span className="font-mono tabular-nums">{dateFrom ? fmtDay(dateFrom) : 'inicio'}</span> → <span className="font-mono tabular-nums">{dateTo ? fmtDay(dateTo) : 'hoy'}</span>
+          </span>
+        )}
+        {historical && (
+          <span className="text-[10px] font-black uppercase text-primary">
+            Vista histórica — pagos posteriores al corte no se contabilizan
+          </span>
+        )}
+        {!historical && (
+          <span className="text-[10px] text-muted-foreground">
+            Saldo y antigüedad calculados a esta fecha (pagos aplicados hasta el corte)
+          </span>
+        )}
+      </div>
+
+      {/* KPI Cards — conciliados: Pagado = Σ pagos aplicados a las obligaciones
+          incluidas (misma base que la columna «Pagado» de Por proveedor). */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className={cn("rounded-xl border p-3", (kpis?.totalOverdue ?? 0) > 0 ? "border-destructive/30 bg-destructive/5" : "border-border/30")}>
           <div className="flex items-center gap-2 mb-1">
@@ -258,6 +381,9 @@ export default function AccountsPayableView() {
           <p className="text-lg font-mono font-black tabular-nums text-success">
             {formatCurrency(kpis?.totalPaid ?? 0)}
           </p>
+          <p className="text-[9px] text-muted-foreground mt-0.5">
+            Aplicado a las obligaciones en vista
+          </p>
         </div>
       </div>
 
@@ -279,8 +405,64 @@ export default function AccountsPayableView() {
         ))}
       </div>
 
-      {/* Filters */}
+      {/* Filters: fechas personalizadas + categoría + método/moneda + búsqueda */}
       <div className="flex flex-wrap gap-2 items-center">
+        {/* Filtro por fechas (misión FASE 4) */}
+        <div className={cn(
+          "flex flex-wrap items-center gap-1.5 rounded-lg border px-2 py-1.5",
+          datesValid ? "border-border/40" : "border-destructive/60 bg-destructive/5"
+        )} data-testid="cxp-filtro-fechas">
+          <Calendar className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <input
+            type="date"
+            aria-label="Fecha inicial del período de documentos"
+            value={dateFromInput}
+            max={dateToInput || undefined}
+            onChange={(e) => setDateFromInput(e.target.value)}
+            className="px-1.5 py-1 rounded border border-border/40 bg-background text-xs outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          <span className="text-muted-foreground text-xs">→</span>
+          <input
+            type="date"
+            aria-label="Fecha final del período (fecha de corte)"
+            value={dateToInput}
+            min={dateFromInput || undefined}
+            onChange={(e) => setDateToInput(e.target.value)}
+            className="px-1.5 py-1 rounded border border-border/40 bg-background text-xs outline-none focus:ring-2 focus:ring-primary/30"
+          />
+          <button
+            onClick={applyDates}
+            disabled={!datesValid || !datesDirty}
+            className="px-2.5 py-1 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:bg-primary/90 disabled:opacity-50"
+            data-testid="cxp-fechas-aplicar"
+          >
+            Aplicar
+          </button>
+          <button
+            onClick={clearDates}
+            disabled={!dateFrom && !dateTo}
+            className="px-2.5 py-1 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted disabled:opacity-50"
+            data-testid="cxp-fechas-limpiar"
+          >
+            Limpiar
+          </button>
+          {!datesValid && (
+            <span className="text-[10px] font-bold text-destructive">Inicial &gt; final</span>
+          )}
+        </div>
+
+        {/* Categoría (misión §6.3) */}
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value as PayableCategory)}
+          aria-label="Categoría de documentos"
+          className="px-3 py-2 rounded-lg border border-border/40 bg-background text-xs outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          {CATEGORY_FILTERS.map(c => (
+            <option key={c.id} value={c.id}>{c.label}</option>
+          ))}
+        </select>
+
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <input
@@ -298,6 +480,7 @@ export default function AccountsPayableView() {
         <select
           value={methodFilter}
           onChange={(e) => setMethodFilter(e.target.value)}
+          aria-label="Método de pago"
           className="px-3 py-2 rounded-lg border border-border/40 bg-background text-xs outline-none focus:ring-2 focus:ring-primary/30"
         >
           {METHOD_FILTERS.map(m => (
@@ -308,6 +491,7 @@ export default function AccountsPayableView() {
         <select
           value={currencyFilter}
           onChange={(e) => setCurrencyFilter(e.target.value)}
+          aria-label="Moneda del documento"
           className="px-3 py-2 rounded-lg border border-border/40 bg-background text-xs outline-none focus:ring-2 focus:ring-primary/30"
         >
           {CURRENCY_FILTERS.map(c => (
@@ -316,12 +500,33 @@ export default function AccountsPayableView() {
         </select>
       </div>
 
-      {/* Content — estados canónicos cargando/vacío/error vía StateRenderer (CP-CI-006 U1) */}
+      {/* Chip de proveedor en drill-down */}
+      {supplierDrill && viewMode === 'list' && (
+        <div className="flex items-center gap-2" data-testid="cxp-chip-proveedor">
+          <span className="flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/5 px-3 py-1 text-xs font-bold">
+            <User className="w-3 h-3" /> {supplierDrill}
+            <button
+              onClick={backToSuppliers}
+              aria-label="Quitar filtro de proveedor"
+              className="ml-1 text-muted-foreground hover:text-destructive"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </span>
+          <span className="text-[10px] text-muted-foreground uppercase font-black">
+            Detalles del proveedor
+          </span>
+        </div>
+      )}
+
+      {/* Content — estados canónicos cargando/vacío/error vía StateRenderer (CP-CI-006 U1).
+          El hook mantiene loading=true durante la ventana de carrera (stale):
+          nunca se renderiza una tabla con datos del otro modo. */}
       <StateRenderer
         isLoading={loading}
         error={error ? new Error(error) : null}
         onRetry={refetch}
-        data={data as UnifiedPayable[]}
+        data={(groupedRows ?? listRows ?? []) as UnifiedPayable[]}
         emptyComponent={
           <div className="flex flex-col items-center justify-center py-12 gap-2 text-center text-muted-foreground bg-muted/20 border border-border rounded-2xl">
             <Wallet className="w-8 h-8 opacity-30 mb-1" />
@@ -333,10 +538,14 @@ export default function AccountsPayableView() {
       >
         {() =>
           viewMode === 'grouped' ? (
-            <GroupedTableView data={data as GroupedPayable[]} totals={totals} />
+            <GroupedTableView
+              data={groupedRows ?? []}
+              totals={totals}
+              onSupplierClick={openSupplierDetails}
+            />
           ) : (
             <ListView
-              data={data as UnifiedPayable[]}
+              data={listRows ?? []}
               onPay={(doc) => setPaymentModalDoc(doc)}
               selectedIds={selectedIds}
               onToggleSelect={toggleSelect}
@@ -400,8 +609,19 @@ export default function AccountsPayableView() {
 
 // ═════════════════════════════════════════════════════════════════
 // GROUPED TABLE VIEW — estilo Excel con columnas por aging
+// CP-AP-FORENSIC-RECONCILIATION-001: incluye documentos totalmente pagados
+// (saldo 0) para que Total − Pagado = Saldo sea verificable por fila y global;
+// cada proveedor abre sus Detalles (drill-down) preservando los filtros.
 // ═════════════════════════════════════════════════════════════════
-function GroupedTableView({ data, totals }: { data: GroupedPayable[]; totals: any }) {
+function GroupedTableView({
+  data,
+  totals,
+  onSupplierClick,
+}: {
+  data: GroupedPayable[];
+  totals: any;
+  onSupplierClick?: (supplier: string) => void;
+}) {
   // Estado vacío canónico manejado por StateRenderer en la vista madre (CP-CI-006 U1)
   const fmt = (n: number) => formatCurrency(n, 'CUP');
   const cellClass = (n: number) => cn(
@@ -434,7 +654,16 @@ function GroupedTableView({ data, totals }: { data: GroupedPayable[]; totals: an
         </thead>
         <tbody>
           {data.map((row, idx) => (
-            <tr key={idx} className="border-t border-border/20 hover:bg-muted/10">
+            <tr
+              key={idx}
+              onClick={onSupplierClick ? () => onSupplierClick(row.supplier) : undefined}
+              className={cn(
+                "border-t border-border/20 hover:bg-muted/10",
+                onSupplierClick && "cursor-pointer"
+              )}
+              title={onSupplierClick ? `Ver detalles de ${row.supplier}` : undefined}
+              data-testid="cxp-fila-proveedor"
+            >
               <td className="p-2 text-xs font-bold sticky left-0 bg-background z-10">
                 {row.supplier}
               </td>
@@ -478,7 +707,8 @@ function GroupedTableView({ data, totals }: { data: GroupedPayable[]; totals: an
 }
 
 // ═════════════════════════════════════════════════════════════════
-// LIST VIEW — detalle por documento (vista original mejorada)
+// LIST VIEW — detalle por documento (misión FASE 6: cada importe
+// verificable — original, aplicado, saldo, vencimiento y estado a corte)
 // ═════════════════════════════════════════════════════════════════
 function ListView({
   data,
@@ -494,7 +724,7 @@ function ListView({
   onToggleSelectAll: (items: UnifiedPayable[]) => void;
 }) {
   // Estado vacío canónico manejado por StateRenderer en la vista madre (CP-CI-006 U1)
-  const payableItems = data.filter(p => p.payment_status !== 'paid');
+  const payableItems = data.filter(p => !p.is_settled);
   const allSelected = payableItems.length > 0 && selectedIds.size === payableItems.length;
 
   return (
@@ -513,6 +743,7 @@ function ListView({
             </th>
             <th className="p-3 text-left">Proveedor</th>
             <th className="p-3 text-center">Tipo</th>
+            <th className="p-3 text-center">Fecha doc.</th>
             <th className="p-3 text-right">Total</th>
             <th className="p-3 text-right">Pagado</th>
             <th className="p-3 text-right">Saldo CUP</th>
@@ -529,7 +760,7 @@ function ListView({
                 selectedIds.has(p.id) && "bg-primary/5"
               )}>
                 <td className="p-3 text-center">
-                  {p.payment_status !== 'paid' && (
+                  {!p.is_settled && (
                     <button
                       onClick={() => onToggleSelect(p.id)}
                       aria-label="Seleccionar"
@@ -542,11 +773,14 @@ function ListView({
                   )}
                 </td>
                 <td className="p-3">
-                  <p className="font-bold text-xs">{p.supplier || 'Sin proveedor'}</p>
+                  <p className="font-bold text-xs">{p.supplier}</p>
                   <p className="text-[10px] text-muted-foreground">{p.reference || 'Sin ref'}</p>
                 </td>
                 <td className="p-3 text-center text-xs">
                   {p.ref_type === 'receipt' ? '📦 Recepción' : p.ref_type === 'service' ? '🔧 Servicio' : '👤 Comisión'}
+                </td>
+                <td className="p-3 text-center text-xs text-muted-foreground">
+                  {p.doc_date ?? '—'}
                 </td>
                 <td className="p-3 text-right">
                   <p className="font-mono font-bold tabular-nums text-xs">{formatCurrency(p.total, p.currency)}</p>
@@ -558,10 +792,10 @@ function ListView({
                   {formatCurrency(p.paid_cup, 'CUP')}
                 </td>
                 <td className="p-3 text-right">
-                  <p className="font-mono font-black tabular-nums text-xs text-primary">
-                    {formatCurrency(p.balance_cup, 'CUP')}
+                  <p className={cn("font-mono font-black tabular-nums text-xs", p.is_settled ? "text-muted-foreground" : "text-primary")}>
+                    {formatCurrency(Math.max(0, p.balance_cup), 'CUP')}
                   </p>
-                  {p.currency !== 'CUP' && p.balance > 0 && (
+                  {p.currency !== 'CUP' && p.balance_cup > 0 && (
                     <p className="text-[9px] text-muted-foreground font-mono">{formatCurrency(p.balance, p.currency)}</p>
                   )}
                 </td>
@@ -569,9 +803,9 @@ function ListView({
                   {p.due_date ? (
                     <div>
                       <p className={cn("text-xs font-bold", p.is_overdue ? "text-destructive" : "")}>
-                        {new Date(p.due_date).toLocaleDateString('es-CU')}
+                        {fmtDay(p.due_date)}
                       </p>
-                      {p.payment_status !== 'paid' && p.days_until_due !== null && (
+                      {!p.is_settled && p.days_until_due !== null && (
                         <p className={cn(
                           "text-[10px]",
                           p.is_overdue ? "text-destructive font-bold" : p.days_until_due <= 7 ? "text-amber-500" : "text-muted-foreground"
@@ -594,7 +828,7 @@ function ListView({
                 </td>
                 <td className="p-3 text-center">
                   <div className="flex items-center justify-center gap-1">
-                    {p.payment_status !== 'paid' && (
+                    {!p.is_settled && (
                       <button
                         onClick={() => onPay({
                           ref_type: p.ref_type,
@@ -617,6 +851,7 @@ function ListView({
                       refType={p.ref_type}
                       refId={p.ref_id}
                       paidAmount={p.paid_cup}
+                      totalCup={p.total_cup}
                     />
                   </div>
                 </td>
