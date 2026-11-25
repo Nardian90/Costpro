@@ -135,6 +135,13 @@ interface CartState {
   // POS-2 MM-7: Customer attached to the sale (null = walk-in)
   customerId: string | null;
   customerName: string | null;
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 3): CI del cliente — se recoge
+  // en la pestaña «Datos de transferencia» cuando la venta tiene pagos por
+  // transferencia. Viaja al RPC create_sale_v2 (p_customer_ci) y se persiste en
+  // transactions.customer_ci (columna ya existente). Transitorio del carrito:
+  // NO se persiste en localStorage (mismo criterio que customerId — un CI viejo
+  // en una sesión fresca es peor que pedirlo de nuevo).
+  customerCi: string | null;
   // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot COMPRADOR para la Factura
   // SC-2-12 (Nombre/Dirección/Código). Se congela en la venta — históricos
   // JAMÁS consultan el maestro dinámicamente.
@@ -201,6 +208,8 @@ interface CartState {
   clearCartOnStoreSwitch: (newStoreId: string | null) => void;
   setSelectedPayment: (method: PaymentMethod) => void;
   setCustomer: (customerId: string | null, customerName: string | null, customerAddress?: string | null, customerCode?: string | null) => void;
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 3): CI del cliente de la venta.
+  setCustomerCi: (ci: string | null) => void;
   // FIX-MULTI-MONEDA
   setSaleCurrency: (currency: string, exchangeRate: number) => void;
   getTotalCup: () => number;
@@ -478,6 +487,7 @@ export const useCartStore = create<CartState>()(
       selectedPayment: "cash" as PaymentMethod,
       customerId: null,
       customerName: null,
+      customerCi: null,
       customerAddress: null,
       customerCode: null,
       // FIX-GLOBAL-RATES: tasas manuales (default vacío, se llenan al editar)
@@ -510,6 +520,7 @@ export const useCartStore = create<CartState>()(
               }
               state.customerId = null;
               state.customerName = null;
+              state.customerCi = null;
               state.discount = null;
               state.appliedTaxes = [];
               state.saleCurrency = 'CUP';
@@ -573,6 +584,12 @@ export const useCartStore = create<CartState>()(
           customerCode: customerCode ?? null,
           lastUpdated: Date.now(),
         }),
+
+      // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 3): CI del cliente.
+      // Se establece desde la pestaña «Datos de transferencia» del Cajero
+      // Express; se limpia con el carrito (clearCart / cambio de tienda / TTL).
+      setCustomerCi: (ci) =>
+        set({ customerCi: ci && ci.trim() ? ci.trim().slice(0, 20) : null, lastUpdated: Date.now() }),
 
       // FIX-MULTI-MONEDA: cambiar moneda de venta + tasa
       setSaleCurrency: (currency, exchangeRate) =>
@@ -1646,6 +1663,7 @@ export const useCartStore = create<CartState>()(
         // repeatedly sell with the same method) but drop the customer.
         customerId: null,
         customerName: null,
+        customerCi: null,
         customerAddress: null,
         customerCode: null,
         // FIX-MULTI-MONEDA: resetear moneda de venta a CUP al limpiar
@@ -1708,6 +1726,7 @@ export const useCartStore = create<CartState>()(
           state.selectedPayment = "cash";
           state.customerId = null;
           state.customerName = null;
+          state.customerCi = null;
           // Vale: reset al expirar TTL
           state.operationType = 'sale';
           state.productionOrderId = null;

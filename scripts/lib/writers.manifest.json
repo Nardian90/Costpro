@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-25 — CP-RECEPCIONES-CATALOGO-MAESTRO-001: renumeración gobernada de los 16 maestros AUTO-* (guard CP-INFRA-019 + doble flag), 4 auditorías read-only de fase 0 y 2 validadores E2E con assert-isolated-db (renumeración y altas de borradores).",
+  "_updated": "2026-11-25 — merge con main: (a) CP-POS declara cp-pos-apply-migration-prod.mjs; (b) CP-RECEPCIONES-CATALOGO-MAESTRO-001 declara renumeración gobernada, 4 auditorías read-only de fase 0, 2 validadores E2E y el ciclo fase-5 (setup/playwright/cleanup) con assert-isolated-db.",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -11,6 +11,7 @@
     "scripts/auditoria-17-1-servicios-usd.mjs",
     "scripts/cp-catmaestro001-apply-prod.mjs",
     "scripts/cp-log-unif-001-apply-prod.mjs",
+    "scripts/cp-pos-apply-migration-prod.mjs",
     "scripts/cp-security-backlog-001-aplicar-produccion.mjs",
     "scripts/cp-security-backlog-001-fix-ledger-versions.mjs",
     "scripts/cp-security-backlog-001-fix2-ledger.mjs",
@@ -99,6 +100,8 @@
     "scripts/cleanup-e2e-offers-manual.mjs",
     "scripts/cp-log-unif-001-cleanup.mjs",
     "scripts/dev-price-list-e2e-evidence.ts",
+    "scripts/e2e/cp-catmaestro001-f5-cleanup.mjs",
+    "scripts/e2e/cp-catmaestro001-f5-setup.mjs",
     "scripts/e2e/cp-catmaestro001-fase3-validate-e2e.mjs",
     "scripts/e2e/cp-catmaestro001-validate-e2e.mjs",
     "scripts/e2e/cp-log-reception-apply-e2e.mjs",

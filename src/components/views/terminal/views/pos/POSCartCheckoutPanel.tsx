@@ -27,6 +27,8 @@ import { getPaymentLabel as getPaymentLabelUnified, getPaymentIcon, getPaymentCo
 import { POSOperationDateSection, usePosSaleDate } from "./POSOperationDateSection";
 import { format } from "date-fns";
 import type { PaymentMethod } from "@/types";
+// CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 2): helper compartido de derivación.
+import { deriveCartPaymentMethod } from "@/lib/pos/derive-payment-method";
 // MISIÓN CAJA v2.24.0 (D6): liquidación del cobro — vuelto multimoneda
 // persistido ENLAZADO a la venta (sin fila de caja aparte).
 import { buildCashSettlement, settlementErrorMessage, type CashSettlement } from "@/lib/pos/cash-settlement";
@@ -408,26 +410,10 @@ export function POSCartCheckoutPanel({
   //   2. If no overrides → 'cash' (default — most common, supports denomination breakdown)
   //   3. If cashReceived > 0 from breakdown → still 'cash'
   // The derived method is used for both display and checkout.
-  const derivedPaymentMethod: PaymentMethod = (() => {
-    const cartItems = useCartStore.getState().items;
-    const hasManualOverride = cartItems.some(i => i.payment_manual_override === true);
-    if (!hasManualOverride) return 'cash';
-
-    const methodsUsed = new Set<string>();
-    cartItems.forEach(i => {
-      if (i.payments && i.payments.length > 0) {
-        i.payments.forEach(p => { if (p.amount > 0) methodsUsed.add(p.method); });
-      } else {
-        if ((i.cash_paid || 0) > 0) methodsUsed.add('cash');
-        if ((i.transfer_paid || 0) > 0) methodsUsed.add('transfer');
-        if ((i.zelle_paid || 0) > 0) methodsUsed.add('zelle');
-      }
-    });
-
-    if (methodsUsed.size === 0) return 'cash';
-    if (methodsUsed.size === 1) return Array.from(methodsUsed)[0] as PaymentMethod;
-    return 'mixed';
-  })();
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 2): lógica EXTRAÍDA a
+  // derive-payment-method.ts y compartida con Cajero Express — mismo
+  // contrato, cero duplicación.
+  const derivedPaymentMethod: PaymentMethod = deriveCartPaymentMethod(useCartStore.getState().items);
 
   // ── MISIÓN CAJA v2.24.0 (D6): liquidación del cobro (vuelto multimoneda) ──
   // Identidad canónica revalidada por el RPC: (recibido − vuelto) = cash de la

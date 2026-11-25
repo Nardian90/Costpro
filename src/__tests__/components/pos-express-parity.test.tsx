@@ -79,6 +79,9 @@ vi.mock('@/components/views/terminal/views/pos/POSOperationDateSection', () => (
 }));
 vi.mock('@/components/views/terminal/views/pos/PaymentMethodSelector', () => ({
   PaymentMethodSelector: () => <div data-testid="payment-selector-mock" />,
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: Express usa la etiqueta del método
+  // derivado; el mock expone el mismo contrato (método → label).
+  getPaymentLabel: (m: string | null | undefined) => String(m ?? 'Sin especificar'),
 }));
 // Edición de línea: el MISMO modal del carrito — se verifica el wiring (item
 // correcto); sus reglas internas (decimales/gate supervisor) se prueban en el
@@ -354,7 +357,11 @@ describe('MISIÓN VENDER-EXPRESS — Caso G: confirmación de venta', () => {
     const { input, submit } = renderExpress({ onAddToCart: undefined });
     fireEvent.change(input, { target: { value: 'PROD-030' } });
     submit();
-    fireEvent.click(screen.getByRole('button', { name: 'Cobrar venta' }));
+    // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: el Cobrar del carrito desktop
+    // (la barra inferior móvil añade un segundo botón «Cobrar venta» — mismo
+    // flujo, otra superficie).
+    const cartDesktop = document.body.querySelector('[data-testid="express-cart-desktop"]')!;
+    fireEvent.click(within(cartDesktop as HTMLElement).getByRole('button', { name: 'Cobrar venta' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Confirmar' }));
     expect(startCheckout).toHaveBeenCalledTimes(1);
   });

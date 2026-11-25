@@ -88,6 +88,9 @@ vi.mock('@/components/views/terminal/views/pos/POSOperationDateSection', () => (
 }));
 vi.mock('@/components/views/terminal/views/pos/PaymentMethodSelector', () => ({
   PaymentMethodSelector: () => <div data-testid="payment-selector-mock" />,
+  // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: Express usa la etiqueta del método
+  // derivado; el mock expone el mismo contrato (método → label).
+  getPaymentLabel: (m: string | null | undefined) => String(m ?? 'Sin especificar'),
 }));
 vi.mock('@/components/views/terminal/views/pos/usePOSCartExports', () => ({
   usePOSCartExports: () => ({
