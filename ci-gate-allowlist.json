@@ -745,6 +745,18 @@
       "reason": "CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (PR #1706, 2026-11-25) · Herramienta PUNTUAL de backfill del enlace documental notes=receipt_id en movimientos 'Confirmacion recepcion' huérfanos (causa raíz auditada: confirm_pending_reception históricos insertaban notes=NULL → «s/d» injustificado en el SC-2-04 aunque el inventario sí se actualizó). Sin verificación de identidad PROPIA por diseño de herramienta de mantenimiento invocada por scripts con service_role: ACL EXCLUSIVA service_role (REVOKE PUBLIC/anon/authenticated + GRANT solo service_role en migración 20261125120000 — el REVOKE de authenticated es explícito porque los default privileges de Supabase lo conceden en la creación; verificado en Capa C), modo dry-run para auditoría previa (p_dry_run), emparejamiento INEQUÍVOCO multi-condición (lote por tienda+created_at ∧ única recepción activa con updated_at==created_at ∧ multiset producto+cantidad 1-a-1 entre movimientos y receipt_items) y trazabilidad completa en audit_logs por lote enlazado. Idempotente (re-ejecución=0 cambios). Ejecutada UNA VEZ en producción 2026-11-25: 2 lotes/12 movimientos (cd921832 ×10 + 41b16484 ×2); 101 huérfanos históricos sin enlace real conservados intactos.",
       "added_by": "CP-RECEP-001 (PR #1706, agente)",
       "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_post_payment_annulment",
+      "reason": "CP-OPS-ENERVIDA (20261124120000 §3, aplicado a producción por PR #1707 SR-CREATE-BLOCK-20261125) · Función-MOTOR interna de BD (no RPC de app): asiento compensatorio de UN pago — variante por pago de fin_post_document_annulment (20261113120100 §6, ya en allowlist), mismo patrón: entrada 'anulacion' enlazada por reversal_of, sentidos invertidos, jamás UPDATE del histórico, idempotente (SKIP si ya tiene compensatorio — doble clic/reintento/annulment integral concurrente) y bajo pg_advisory_xact_lock. Sin verificación de identidad PROPIA por diseño ACL-puro (patrón fin_*): REVOKE EXECUTE a PUBLIC/anon/authenticated + GRANT EXCLUSIVO a service_role (migración §3, verificado). Invocada SOLO por funciones-motor service_role-only vía PERFORM: reverse_supplier_payment (§4 misma migración) y anulación de servicios (20261124120100). La identidad del actor la aporta el RPC llamador desde la sesión.",
+      "added_by": "CP-POS-CI-FIX (declaración tardía heredada de PR #1707 — el gate no corrió en #1707 por filtro de paths)",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "register_supplier_payment_multi",
+      "reason": "CP-OPS-ENERVIDA (20261124120300 §6, aplicado a producción por PR #1707 SR-CREATE-BLOCK-20261125) · RPC-motor de liquidación MÚLTIPLE en Cuentas por Pagar: un MISMO lote (un método, una moneda, una tasa) aplicado a varios documentos con asignación explícita por ítem, ATÓMICO (una transacción) e idempotente (replay por bloque + claves por componente, patrón ADN-008), delega cada componente al canónico register_supplier_payment (ya en allowlist). Reglas fail-closed: saldo pendiente validado BAJO bloqueo del documento, sin mezcla de medios/monedas, sin tasas inventadas; audit_logs por lote (SUPPLIER_PAYMENT_MULTI) con trazabilidad completa. Sin verificación de identidad PROPIA por diseño service_role-only (patrón idéntico a register_supplier_payment_batch en allowlist): el endpoint /api/payments/multi autoriza sesión + canManageStore y ejecuta la llamada privilegiada con cliente service_role; ACL EXCLUSIVA service_role (REVOKE PUBLIC/anon/authenticated + GRANT solo service_role en la migración).",
+      "added_by": "CP-POS-CI-FIX (declaración tardía heredada de PR #1707 — el gate no corrió en #1707 por filtro de paths)",
+      "expires": "2027-06-30"
     }
   ],
   "tables_without_rls": [],
@@ -951,6 +963,15 @@
     }
   ],
   "source_of_truth_baseline": [
+    {
+      "function": "create_sale_v2/34",
+      "rules": [
+        "LIVE_FUNCTION_NOT_REPRESENTED"
+      ],
+      "reason": "CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (PR #1708): la migración 20261125120000_cp_pos_per_item_payments.sql retira INTENCIONALMENTE la firma /34 del stream — DROP sin calificar (evita el 42725 del patrón 20261105140000/20261106100000) y re-emisión canónica create_sale_v2/35 con p_customer_ci al final (Cajero Express: datos del cliente para operaciones con transferencia) + payment_distributions por línea en transaction_items y validación items[].payments. ACL del LIVE conservada (REVOKE PUBLIC/anon + GRANT authenticated, service_role). Divergencia INTENCIONAL LIVE(/34) vs replay(/35) hasta el deploy en producción; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E: E2E pos-checkout 21/21 (workers=1) + manifiesto replay /35 7/7 + unidad 33 pruebas de la misión.",
+      "added_by": "CP-POS-CI-FIX (declaración tardía — el CI del PR nunca corrió por la anomalía de GitHub)",
+      "expires": "2026-12-31"
+    },
     {
       "function": "create_devolution_v2/12",
       "rules": [

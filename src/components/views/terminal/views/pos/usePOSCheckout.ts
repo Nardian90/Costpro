@@ -32,7 +32,11 @@ import type { CashSettlement } from "@/lib/pos/cash-settlement";
 import { buildPaymentComponents, requiresPaymentComponents } from "@/lib/pos/payment-components";
 // CP-FIN-004: reconocedor dual del medio «Transf. Exterior» (canónico
 // 'external_transfer' + heredado 'zelle').
-import { isExteriorMethod } from "@/lib/payments/methods";
+// normalizePaymentMethod (CP-FIN-004): normaliza el medio heredado 'zelle' de
+// carritos persistidos al canónico 'external_transfer' para ENVÍOS al backend
+// (doble defensa: el RPC también normaliza). TS no puede ver los valores
+// heredados del storage — el tipo de PaymentRow.method ya es canónico.
+import { isExteriorMethod, normalizePaymentMethod } from "@/lib/payments/methods";
 // MISIÓN IMPRESIÓN TÉRMICA (2026-10-20): agregación de medios de pago para el
 // comprobante POS — suma las filas YA cobradas (misma fuente que viaja al RPC),
 // sin recálculo de importes.
@@ -172,6 +176,10 @@ export function usePOSCheckout() {
         const cartState = useCartStore.getState();
         const customerId = cartState.customerId;
         const customerName = cartState.customerName;
+        // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 3): CI del cliente — se
+        // recoge en la pestaña «Datos de transferencia» de Cajero Express y
+        // viaja al RPC (p_customer_ci → transactions.customer_ci).
+        const customerCi = cartState.customerCi;
         // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot COMPRADOR (SC-2-12)
         const customerAddress = cartState.customerAddress;
         const customerCode = cartState.customerCode;
@@ -330,6 +338,10 @@ export function usePOSCheckout() {
               sale_exchange_rate: zelleAmount > 0 ? (useCartStore.getState().saleExchangeRate > 1 ? useCartStore.getState().saleExchangeRate : USD_CUP_RATE) : 1.0,
               customer_id: safeCustomerId,
               customer_name: customerName || null,
+              // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 3): CI del cliente
+              // (solo se recoge cuando la venta tiene transferencia; null ⇒
+              // ventas sin el dato — comportamiento idéntico al previo).
+              customer_ci: customerCi || null,
               // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot del comprador —
               // create_sale_v2 (CLASIFICATOR-PARTIES) lo congela en la venta.
               customer_address: customerAddress || null,
@@ -407,6 +419,43 @@ export function usePOSCheckout() {
                 external_transfer_discount_type: i.zelle_discount_type || null,
                 external_transfer_discount_value: i.zelle_discount_value || 0,
                 external_transfer_discount_currency: i.zelle_discount_currency || 'USD',
+                // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 4): distribución
+                // de pago REAL de esta línea (filas de pago del carrito). Viaja
+                // dentro del item al RPC, que la valida y la persiste en
+                // transaction_items.payment_distributions — la atribución por
+                // línea deja de ser lossy (un importe por método) y queda
+                // enlazada a la línea de venta correspondiente. Los espejos
+                // legacy de arriba se mantienen EXACTAMENTE igual (lectores
+                // financieros sin cambios). Tasa informativa por fila (misma
+                // resolución que getItemPaidCup: globalRates > tasa del item).
+                ...(i.payments && i.payments.length > 0 ? {
+                  payments: i.payments.map((p) => {
+                    // Normalización defensaria (CP-FIN-004): una fila heredada
+                    // 'zelle' de un carrito persistido nunca debe salir al
+                    // backend sin normalizar. Con PaymentRow.method tipado
+                    // canónico, TS marcaba esta comparación como muerta
+                    // (TS2367) — el valor heredado solo existe en runtime.
+                    const method = normalizePaymentMethod(p.method);
+                    const currency = p.currency || 'CUP';
+                    const isTransfer = method === 'transfer' || method === 'external_transfer';
+                    const rate = currency === 'CUP'
+                      ? undefined
+                      : (cartState.globalRates[currency]
+                        || (currency === (i.currency || 'CUP') ? (i.exchange_rate || 1) : 1));
+                    return {
+                      method,
+                      currency,
+                      amount: p.amount || 0,
+                      // §5.1 CP-LOG-UNIFICATION: la referencia viaja SOLO en
+                      // filas de transferencia (en efectivo se ignora).
+                      ...(isTransfer && p.reference ? { reference: p.reference.trim().slice(0, 400) } : {}),
+                      discount_type: p.discount_type || null,
+                      discount_value: p.discount_value || 0,
+                      discount_currency: p.discount_currency || currency,
+                      ...(rate !== undefined ? { exchange_rate: rate } : {}),
+                    };
+                  }),
+                } : {}),
               })),
           });
 

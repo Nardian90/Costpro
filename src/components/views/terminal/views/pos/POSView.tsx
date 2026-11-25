@@ -605,8 +605,11 @@ export default function POSView() {
             )}
             {/* POS-3b EM-1: Toggle Modo Cajero Express.
                 Layout full-screen alternativo optimizado para venta de alto volumen.
-                FIX (2026-07-23): oculto en móvil — no es útil en pantalla pequeña. */}
-            {!isMobile && (
+                CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (2026-11-25): VISIBLE también
+                en móvil (§1.4 de la misión: Cajero Express mobile-first — la vista
+                Express tiene barra inferior con total + carrito a pantalla
+                completa). El guard !isMobile de 2026-07-23 se retira: la decisión
+                de usar Express en pantalla pequeña es del operador, no del layout. */}
             <button
               type="button"
               onClick={() => setExpressMode(true)}
@@ -617,7 +620,6 @@ export default function POSView() {
               <Zap className="w-4 h-4" />
               <span className="hidden sm:inline">Express</span>
             </button>
-            )}
             {/* ESTÁNDAR: botón Registro — navega al Historial de Ventas (sales), NO a kardex (history) */}
             <button
               type="button"
