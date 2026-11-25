@@ -1,0 +1,149 @@
+{
+  "mision": "CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001",
+  "caso": "F-23112026 Pixelarte $1,800 (caso 1)",
+  "payment_id": "4783f9ae-6121-467e-b95b-1836d51d5d7d",
+  "service_id": "fedb7c40-8f10-48fd-8356-cc7e6a7ce0e7",
+  "reason": "Reversión gobernada CP-AP-ACCOUNTING-INTEGRITY-001: pago $1,800 del servicio anulado F-23112026 (SRV-20261123-00146, Pixelarte) registrado antes del void del 23/11 21:35. El desembolso real está representado por el servicio de reemplazo activo (SRV-20261123-00147) con sus asientos posted — caso 1 de la misión §5.2 (sin desembolso propio del documento anulado). Ledger ya compensado al momento del void; esta reversión cancela la aplicación y deja la fila viva en cero.",
+  "before": {
+    "label": "ANTES",
+    "at": "2026-11-25T17:52:08.034Z",
+    "pay": [
+      {
+        "id": "4783f9ae-6121-467e-b95b-1836d51d5d7d",
+        "amount": "1800",
+        "amount_cup": "1800",
+        "currency": "CUP",
+        "payment_method": "cash",
+        "direction": "in",
+        "reverses_payment_id": null,
+        "payment_date": "2026-11-23 21:34:51.233835+00",
+        "idempotency_key": "cfc629e0-162a-49c8-9420-66f6d910d111:0",
+        "notes": null
+      }
+    ],
+    "svc": [
+      {
+        "id": "fedb7c40-8f10-48fd-8356-cc7e6a7ce0e7",
+        "service_number": "SRV-20261123-00146",
+        "reference_doc": "F-23112026",
+        "status": "voided",
+        "payment_status": "paid",
+        "paid_amount": "1800",
+        "total_amount": "1800"
+      }
+    ],
+    "entries": [
+      {
+        "event": "anulacion",
+        "status": "posted",
+        "n": 2
+      },
+      {
+        "event": "pago",
+        "status": "reversed",
+        "n": 1
+      },
+      {
+        "event": "reconocimiento",
+        "status": "reversed",
+        "n": 1
+      }
+    ]
+  },
+  "api": {
+    "status": 201,
+    "body": "{\"success\":true,\"idempotent\":false,\"status\":\"success\",\"reversal_payment_id\":\"db3b6ced-413c-4884-b04f-6e617cd13b1d\",\"original_payment_id\":\"4783f9ae-6121-467e-b95b-1836d51d5d7d\",\"message\":\"Pago revertido: se registró el movimiento compensatorio y la obligación quedará restablecida.\"}"
+  },
+  "after": {
+    "label": "DESPUÉS",
+    "at": "2026-11-25T17:52:20.370Z",
+    "pay": [
+      {
+        "id": "4783f9ae-6121-467e-b95b-1836d51d5d7d",
+        "amount": "1800",
+        "amount_cup": "1800",
+        "currency": "CUP",
+        "payment_method": "cash",
+        "direction": "in",
+        "reverses_payment_id": null,
+        "payment_date": "2026-11-23 21:34:51.233835+00",
+        "idempotency_key": "cfc629e0-162a-49c8-9420-66f6d910d111:0",
+        "notes": null
+      },
+      {
+        "id": "db3b6ced-413c-4884-b04f-6e617cd13b1d",
+        "amount": "1800",
+        "amount_cup": "1800",
+        "currency": "CUP",
+        "payment_method": "cash",
+        "direction": "reversal",
+        "reverses_payment_id": "4783f9ae-6121-467e-b95b-1836d51d5d7d",
+        "payment_date": "2026-11-25 17:52:14.17987+00",
+        "idempotency_key": "reversal:4783f9ae-6121-467e-b95b-1836d51d5d7d",
+        "notes": "Reversión de pago 4783f9ae-6121-467e-b95b-1836d51d5d7d — Reversión gobernada CP-AP-ACCOUNTING-INTEGRITY-001: pago $1,800 del servicio anulado F-23112026 (SRV-20261123-00146, Pixelarte) registrado antes del void del 23/11 21:35. El desembolso real está representado por el servicio de reemplazo activo (SRV-20261123-00147) con sus asientos posted — caso 1 de"
+      }
+    ],
+    "svc": [
+      {
+        "id": "fedb7c40-8f10-48fd-8356-cc7e6a7ce0e7",
+        "service_number": "SRV-20261123-00146",
+        "reference_doc": "F-23112026",
+        "status": "voided",
+        "payment_status": "unpaid",
+        "paid_amount": "0",
+        "total_amount": "1800"
+      }
+    ],
+    "entries": [
+      {
+        "event": "anulacion",
+        "status": "posted",
+        "n": 2
+      },
+      {
+        "event": "pago",
+        "status": "reversed",
+        "n": 1
+      },
+      {
+        "event": "reconocimiento",
+        "status": "reversed",
+        "n": 1
+      }
+    ]
+  },
+  "checks": [
+    {
+      "check": "1. El servicio conserva su anulación histórica (voided)",
+      "pass": true
+    },
+    {
+      "check": "2. La obligación quedó cancelada: paid_amount=0 / unpaid",
+      "pass": true
+    },
+    {
+      "check": "3. El pago ya no está aplicado: existe contra-fila reversal",
+      "pass": true
+    },
+    {
+      "check": "4. La contra-fila enlaza al original (reverses_payment_id)",
+      "pass": true
+    },
+    {
+      "check": "5. El movimiento original se CONSERVA (no borrado, PT007)",
+      "pass": true
+    },
+    {
+      "check": "6. Importe de la contra-fila espeja el original",
+      "pass": true
+    },
+    {
+      "check": "7. Sin asientos nuevos: el pago del anulado no tenía entries posted (idempotente)",
+      "pass": true
+    },
+    {
+      "check": "8. fin_entries del documento sin cambios",
+      "pass": true
+    }
+  ]
+}
