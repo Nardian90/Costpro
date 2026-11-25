@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-25 — SR-CREATE-BLOCK-20261125 (PR #1707): aplicador gobernado del ciclo CP-OPS-ENERVIDA en producción (guard CP-INFRA-019 + doble flag + marcas re-ejecutables), prueba seca de la RPC create_received_service_v2 sin escrituras y flujo funcional de creación de Servicios Recibidos contra la BD aislada (net-zero). Los 3 invocan assert-not-production.",
+  "_updated": "2026-11-25 — CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 cierre: se declara scripts/cp-pos-apply-migration-prod.mjs (guardProtected) — aplicación controlada de 20261125120000_cp_pos_per_item_payments en producción (canal Management API + doble flag, patrón cpops/m012).",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -10,6 +10,7 @@
     "scripts/apply_migration_20260824000002.mjs",
     "scripts/auditoria-17-1-servicios-usd.mjs",
     "scripts/cp-log-unif-001-apply-prod.mjs",
+    "scripts/cp-pos-apply-migration-prod.mjs",
     "scripts/cp-security-backlog-001-aplicar-produccion.mjs",
     "scripts/cp-security-backlog-001-fix-ledger-versions.mjs",
     "scripts/cp-security-backlog-001-fix2-ledger.mjs",
