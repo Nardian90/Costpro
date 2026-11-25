@@ -19,6 +19,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+// CP-UX-FINAL-POLISH-003 §3.1: provider del sistema unificado de diálogos.
+import { DialogProvider } from '@/components/ui/dialogs';
 
 const h = vi.hoisted(() => {
   return {
@@ -91,7 +93,13 @@ const PARTY_FIXTURE = [
 
 function Wrapper({ children }: { children: React.ReactNode }) {
   const [qc] = React.useState(() => new QueryClient({ defaultOptions: { queries: { retry: false } } }));
-  return <QueryClientProvider client={qc}>{children}</QueryClientProvider>;
+  // CP-UX-FINAL-POLISH-003 §3.1: la vista usa el sistema unificado de diálogos
+  // (useDialogs) — el provider se monta como en src/app/layout.tsx.
+  return (
+    <QueryClientProvider client={qc}>
+      <DialogProvider>{children}</DialogProvider>
+    </QueryClientProvider>
+  );
 }
 
 const renderView = async (props: { storeId?: string | null } = {}) => {

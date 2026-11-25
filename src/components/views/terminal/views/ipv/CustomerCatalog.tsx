@@ -53,6 +53,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { propagateIdentity, getAllCustomerStats, deleteCustomer, type CustomerStats, syncCatalogFromTransactions } from '@/lib/ipv/identity/registry';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 import { CustomerFormDialog } from './CustomerFormDialog';
 import { CustomerDetailsModal } from './CustomerDetailsModal';
 import { IdentityConflictPanel } from './IdentityConflictPanel';
@@ -61,6 +62,8 @@ type SortKey = 'nombre' | 'transactions' | 'amount';
 type SortDirection = 'asc' | 'desc';
 
 export function CustomerCatalog() {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const [searchTerm, setSearchTerm] = useState('');
   const [isPropagating, setIsPropagating] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -150,10 +153,16 @@ export function CustomerCatalog() {
   };
 
   const handleDelete = async (ci: string) => {
-    if (window.confirm('¿Está seguro de eliminar este cliente?')) {
-      await deleteCustomer(ci);
-      toast.success('Cliente eliminado');
-    }
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes window.confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Eliminar cliente',
+      message: '¿Está seguro de eliminar este cliente?',
+      variant: 'destructive',
+      confirmLabel: 'Eliminar',
+    });
+    if (!ok) return;
+    await deleteCustomer(ci);
+    toast.success('Cliente eliminado');
   };
 
   const handleExport = () => {

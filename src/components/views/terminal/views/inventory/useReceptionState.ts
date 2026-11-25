@@ -165,13 +165,14 @@ interface SuccessData {
 // Hook
 // ────────────────────────────────────────────────────────────
 
-// FIX FLAKY (useReceptionSearch-ux «devuelve null con unidades de medida mixtas»):
-// el SKU AUTO- de "Date.now()" colisionaba cuando dos altas manuales ocurrían
-// en el mismo milisegundo (CI con carga paralela) — la segunda línea se
-// rechazaba como «SKU duplicado» y el resumen de unidades mezclaba líneas.
-// Secuencia monotónica por módulo: SKU determinísticamente único incluso
-// dentro del mismo ms.
-let autoSkuSeq = 0;
+// CP-RECEP-001 (2026-11-25): el generador AUTO-* del cliente fue ELIMINADO.
+// Historial: era un fallback `AUTO-${Date.now()36}-${seq36}` para altas sin
+// SKU — colisionaba en el mismo milisegundo (FIX FLAKY) y, sobre todo,
+// producía códigos FUERA del consecutivo del Catálogo Maestro (17 maestros
+// AUTO-* verificados en producción con la recepción 47380573 de ENERVIDA).
+// Ahora el servidor asigna el siguiente código oficial vía RPC
+// next_master_catalog_sku (advisory lock por tenant) — el frontend nunca
+// inventa códigos.
 
 interface UseReceptionStateOptions {
   preselectedProduct?: Product | null;
@@ -837,10 +838,19 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     const name = manualName.trim();
     if (!name) { toast.error('El nombre del producto es obligatorio'); return; }
 
-    const sku = manualSku.trim() || `AUTO-${Date.now().toString(36).toUpperCase()}-${(++autoSkuSeq).toString(36).toUpperCase()}`;
+    // CP-RECEP-001: SKU OPCIONAL. Si el usuario no lo teclea, el producto se
+    // crea al registrar con el siguiente código del consecutivo OFICIAL del
+    // Catálogo Maestro (asignación server-side transaccional). El generador
+    // AUTO-* del cliente fue eliminado: producía códigos fuera del consecutivo
+    // (17 maestros AUTO-* detectados en producción, recepción 47380573).
+    const sku = manualSku.trim();
 
-    if (items.some(i => i.sku.toLowerCase() === sku.toLowerCase())) {
+    if (sku && items.some(i => i.sku.toLowerCase() === sku.toLowerCase())) {
       toast.error(`Ya existe un producto con SKU "${sku}" en esta recepcion`);
+      return;
+    }
+    if (!sku && items.some(i => !i.sku && i.name.trim().toLowerCase() === name.toLowerCase())) {
+      toast.error(`Ya existe un producto sin SKU llamado "${name}" en esta recepcion`);
       return;
     }
 
@@ -1360,12 +1370,14 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
     ];
 
     // ── Resolución canónica (escritor backend) para B/C/D ──
-    let resolvedByIndex = new Map<number, { product_id: string | null; blocked?: string[] }>();
+    let resolvedByIndex = new Map<number, { product_id: string | null; sku?: string; blocked?: string[] }>();
     if (needsResolve.length > 0) {
       setIsImporting(true);
       try {
         const resolvePayload = needsResolve.map(r => ({
-          sku: r.sku,
+          // CP-RECEP-001: sku '' → null (el servidor la trata como fila sin
+          // código y le asignará el siguiente del consecutivo oficial).
+          sku: r.sku || null,
           name: r.name,
           quantity: r.quantity,
           unit_cost: r.unitCost,
@@ -1402,7 +1414,12 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
             resolvedByIndex.set(idx, { product_id: null, blocked: reasons });
             blockedRows.push({ sku: String(res.sku ?? ''), reason: reasons.join(' · ') });
           } else {
-            resolvedByIndex.set(idx, { product_id: (res.product_id as string | null) ?? null });
+            // CP-RECEP-001: el código puede haber sido asignado por el servidor
+            // (fila nueva sin SKU) — viaja en res.sku y adopta la línea.
+            resolvedByIndex.set(idx, {
+              product_id: (res.product_id as string | null) ?? null,
+              sku: String(res.sku ?? '') || undefined,
+            });
           }
         });
       } finally {
@@ -1429,6 +1446,8 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
         if (!resolved || !resolved.product_id) continue; // bloqueada por el servidor
         productId = resolved.product_id;
         isNew = false; // ya existe (creado/activado por el escritor canónico)
+        // CP-RECEP-001: la fila adopta el código oficial si el servidor lo asignó.
+        if (resolved.sku) (r as { sku?: string }).sku = resolved.sku;
       }
 
       newItems.push({
@@ -1686,7 +1705,9 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
       const pendingNewItems = finalItems.filter(i => i.is_new && !i.product_id);
       if (pendingNewItems.length > 0 && user?.activeStoreId) {
         const resolvePayload = pendingNewItems.map(i => ({
-          sku: i.sku,
+          // CP-RECEP-001: sku '' → null (el servidor la trata como fila sin
+          // código y le asignará el siguiente del consecutivo oficial).
+          sku: i.sku || null,
           name: i.name,
           quantity: i.quantity,
           unit_cost: i.unit_cost,
@@ -1708,20 +1729,30 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           return;
         }
         const results = ((resolveRes as { results?: Record<string, unknown>[] }).results ?? []) as Record<string, unknown>[];
-        const resolvedIds = new Map<string, string>();
+        // CP-RECEP-001: el mapeo es POR ÍNDICE (results[i].index === i+1 sobre
+        // p_rows, denso) y no por SKU: varias filas pueden llegar sin código
+        // ('' antes) y el escritor les asigna el código oficial del servidor.
+        const resolvedByLocalId = new Map<string, { product_id: string; sku: string }>();
         const blockedSkus: string[] = [];
-        results.forEach((res) => {
-          const sku = String(res.sku ?? '');
+        results.forEach((res, i) => {
+          const idx = Number(res.index ?? (i + 1)) - 1;
+          const source = pendingNewItems[idx];
           const action = String(res.action ?? '');
+          const displaySku = String(res.sku ?? '') || source?.sku || '(sin código)';
           if (action === 'blocked') {
             const reasons = Array.isArray(res.reasons) ? (res.reasons as string[]).map(String) : [];
-            blockedSkus.push(`${sku}: ${reasons[0] ?? 'requiere revisión'}`);
-          } else if (res.product_id) {
-            // Identificada/activada/creada por el escritor canónico → usar el product_id.
-            resolvedIds.set(sku.toLowerCase(), String(res.product_id));
+            blockedSkus.push(`${displaySku}: ${reasons[0] ?? 'requiere revisión'}`);
+          } else if (res.product_id && source) {
+            // Identificada/activada/creada por el escritor canónico. El SKU
+            // asignado por el servidor (fila nueva sin código) viaja en res.sku.
+            resolvedByLocalId.set(source.local_id, {
+              product_id: String(res.product_id),
+              sku: String(res.sku ?? ''),
+            });
           }
           // new_local (tienda no conectada): sin product_id — el flujo legacy
-          // new_product de register_reception se conserva.
+          // new_product de register_reception se conserva (también asigna
+          // código oficial cuando la fila llega sin SKU).
         });
         // Fail-closed: conflicto fatal ⇒ la recepción NO se procesa en
         // silencio (misión §10). Se informa y se detiene.
@@ -1735,11 +1766,12 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
           setIsSubmitting(false);
           return;
         }
-        // Items resueltos → referencian su product_id (sin new_product).
+        // Items resueltos → referencian su product_id y adoptan el código
+        // oficial asignado por el servidor (sin new_product).
         finalItems = finalItems.map(i => {
-          const pid = i.product_id ?? (i.is_new ? resolvedIds.get(i.sku.toLowerCase()) : undefined);
-          if (pid) {
-            return { ...i, product_id: pid, is_new: false };
+          const r = i.is_new && !i.product_id ? resolvedByLocalId.get(i.local_id) : undefined;
+          if (r) {
+            return { ...i, product_id: r.product_id, sku: r.sku || i.sku, is_new: false };
           }
           return i;
         });

@@ -11,6 +11,7 @@ import { Camera, ImagePlus, X, Upload, Loader2, Package, Plus, Trash2, Info, Wre
 import { compressImage, validateImageFile } from '@/lib/image-compress';
 import { generateEAN13FromSKU } from '@/lib/barcode-utils';
 import { findMasterBySku, useActivateMasterProduct, useCatalogStoreLink, useCreateMasterProduct } from '@/hooks/api/useMasterCatalog';
+import { useDialogs } from '@/components/ui/dialogs';
 import { supabase } from '@/lib/supabaseClient';
 import type { ProductOperationalClass } from '@/types';
 import { OPERATIONAL_CLASS_OPTIONS, operationalClassLabel } from '@/lib/product-operational-class';
@@ -23,6 +24,8 @@ interface VariantForm {
 }
 
 export const CreateProductModal = () => {
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const { isCreateProductModalOpen, setIsCreateProductModalOpen, initialProductName, setInitialProductName } = useUIStore();
   const { user } = useAuthStore();
   const createProductMutation = useCreateProduct();
@@ -233,12 +236,16 @@ export const CreateProductModal = () => {
           toast.error(`El SKU ${master.sku} ya existe en esta tienda como producto vinculado al catálogo.`);
           return;
         }
-        const aceptar = window.confirm(
-          `El SKU «${master.sku}» ya existe en el catálogo de la organización como «${master.name}».\n\n` +
-          '¿Activarlo en esta tienda? Se creará el producto local vinculado con el nombre del catálogo ' +
-          'y los valores de esta pantalla (precio/costo) como valores propios; existencia 0 y sin movimientos.\n\n' +
-          'Cancelar: no se creará nada.'
-        );
+        // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes window.confirm() nativo).
+        const aceptar = await dialogs.confirm({
+          title: 'El SKU ya existe en el catálogo',
+          message:
+            `El SKU «${master.sku}» ya existe en el catálogo de la organización como «${master.name}».\n\n` +
+            '¿Activarlo en esta tienda? Se creará el producto local vinculado con el nombre del catálogo ' +
+            'y los valores de esta pantalla (precio/costo) como valores propios; existencia 0 y sin movimientos.\n\n' +
+            'Cancelar: no se creará nada.',
+          variant: 'default',
+        });
         if (!aceptar) return;
         // CP-OPERATIONAL-CLASS-002 §6: la clasificación elegida viaja EN el
         // RPC (p_operational_class): se persiste en la MISMA TRANSACCIÓN que

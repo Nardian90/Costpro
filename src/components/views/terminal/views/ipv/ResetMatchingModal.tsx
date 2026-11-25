@@ -22,6 +22,7 @@ import {
 import { AlertCircle, RotateCcw, Filter, Calendar } from 'lucide-react';
 import { MatchingResetService } from '@/lib/ipv/reset';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 
 interface ResetMatchingModalProps {
     open: boolean;
@@ -30,15 +31,22 @@ interface ResetMatchingModalProps {
 }
 
 export function ResetMatchingModal({ open, onOpenChange, rules }: ResetMatchingModalProps) {
+    // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+    const dialogs = useDialogs();
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [selectedRule, setSelectedRule] = useState('ALL');
     const [isResetting, setIsResetting] = useState(false);
 
     const handleReset = async () => {
-        if (!confirm("¿Está seguro de que desea resetear el matching? Esta acción borrará las líneas de conciliación y devolverá las transacciones a estado PENDIENTE.")) {
-            return;
-        }
+        // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+        const ok = await dialogs.confirm({
+            title: 'Reset de matching',
+            message: '¿Está seguro de que desea resetear el matching? Esta acción borrará las líneas de conciliación y devolverá las transacciones a estado PENDIENTE.',
+            variant: 'destructive',
+            confirmLabel: 'Resetear',
+        });
+        if (!ok) return;
 
         setIsResetting(true);
         try {
@@ -60,9 +68,14 @@ export function ResetMatchingModal({ open, onOpenChange, rules }: ResetMatchingM
     };
 
     const handleResetAll = async () => {
-        if (!confirm("PELIGRO: Esto borrará ABSOLUTAMENTE TODA la conciliación del sistema. ¿Desea continuar?")) {
-            return;
-        }
+        // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+        const ok = await dialogs.confirm({
+            title: 'PELIGRO: Reset total del sistema',
+            message: 'PELIGRO: Esto borrará ABSOLUTAMENTE TODA la conciliación del sistema. ¿Desea continuar?',
+            variant: 'destructive',
+            confirmLabel: 'Resetear Todo',
+        });
+        if (!ok) return;
 
         setIsResetting(true);
         try {

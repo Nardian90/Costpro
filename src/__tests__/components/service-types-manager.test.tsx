@@ -5,7 +5,7 @@
  *  · SR-03  crear un tipo → POST con nombre trimado; notifica preselección.
  *  · SR-04  duplicado (case/espacio) → error visible, SIN llamada de red.
  *  · SR-05  editar → PATCH por id (identidad preservada).
- *  · SR-06  desactivar tipo en uso → confirm() explica consecuencias
+ *  · SR-06  desactivar tipo en uso → el diálogo propio explica consecuencias
  *           (historial intacto) y envía is_active:false.
  *  · SR-08  fallo de red → mensaje útil, formulario conserva los datos.
  *  · SR-11  usuario sin rol admin global → modo lectura (sin controles de
@@ -33,6 +33,9 @@ vi.mock('@/store', () => ({
 
 import { ServiceTypesManagerModal } from '@/components/views/terminal/views/received_services/ServiceTypesManagerModal';
 import type { ServiceType } from '@/hooks/useServiceTypes';
+import { renderWithDialogs } from '../helpers/render-with-dialogs';
+import { DialogProvider } from '@/components/ui/dialogs';
+import { within } from '@testing-library/react';
 
 const TYPES: ServiceType[] = [
   { id: 't-1', store_id: null, name: 'Transporte', code: 'TRANSP', description: 'Transporte de mercancía', is_active: true, created_at: '2026-06-25', usage_count: 4 },
@@ -48,7 +51,7 @@ function setup(admin: boolean) {
 }
 
 function renderModal(overrides: Partial<Parameters<typeof ServiceTypesManagerModal>[0]> = {}) {
-  return render(
+  return renderWithDialogs(
     <ServiceTypesManagerModal
       isOpen
       onClose={vi.fn()}
@@ -81,9 +84,11 @@ describe('ServiceTypesManagerModal', () => {
 
     // SR-12 — catálogo vacío
     rerender(
-      <ServiceTypesManagerModal
-        isOpen onClose={vi.fn()} types={[]} loading={false}
-        onRefresh={vi.fn()} onTypeCreated={vi.fn()} />,
+      <DialogProvider>
+        <ServiceTypesManagerModal
+          isOpen onClose={vi.fn()} types={[]} loading={false}
+          onRefresh={vi.fn()} onTypeCreated={vi.fn()} />
+      </DialogProvider>,
     );
     expect(screen.getByText(/El catálogo está vacío/)).toBeInTheDocument();
   });
@@ -151,26 +156,31 @@ describe('ServiceTypesManagerModal', () => {
     expect(body.name).toBe('Transporte Express');
   });
 
-  it('SR-06: desactivar tipo EN USO → confirm explica consecuencias (historial intacto) y envía is_active:false', async () => {
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+  it('SR-06: desactivar tipo EN USO → el diálogo propio explica consecuencias (historial intacto) y envía is_active:false', async () => {
     const user = userEvent.setup();
     renderModal();
 
     await user.click(screen.getByLabelText('Desactivar tipo Transporte'));
 
+    // CP-UX-FINAL-POLISH-003: el diálogo propio de COSTPRO (no confirm() nativo)
+    // explica las consecuencias antes de aplicar.
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent(/está asociado a 4 servicio\(s\)/);
+    expect(dialog).toHaveTextContent(/el historial NO se pierde/i);
+    await user.click(screen.getByRole('button', { name: 'Desactivar' }));
+
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(confirmSpy.mock.calls[0][0]).toMatch(/está asociado a 4 servicio\(s\)/);
-    expect(confirmSpy.mock.calls[0][0]).toMatch(/el historial NO se pierde/i);
     const [url, opts] = fetchMock.mock.calls[0];
     expect(opts.method).toBe('PATCH');
     expect(JSON.parse(opts.body)).toEqual({ id: 't-1', is_active: false });
   });
 
-  it('SR-06b: cancelar el confirm → NO se envía ninguna operación', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
+  it('SR-06b: cancelar el diálogo propio → NO se envía ninguna operación', async () => {
     const user = userEvent.setup();
     renderModal();
     await user.click(screen.getByLabelText('Desactivar tipo Transporte'));
+    const dialog = await screen.findByRole('alertdialog');
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

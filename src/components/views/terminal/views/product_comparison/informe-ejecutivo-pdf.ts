@@ -34,6 +34,7 @@ import type { CellHook } from 'jspdf-autotable';
 import { createPDFDocument } from '@/lib/export/lazy-pdf';
 import type {
   InformeEjecutivo,
+  InformeIndicador,
   InformePrioridad,
   InformeTabla,
 } from '@/lib/product-comparison/informe';
@@ -56,6 +57,7 @@ const C_PREV_BG: [number, number, number] = [233, 237, 241];
 const C_PREV_TX: [number, number, number] = [68, 81, 91];
 const C_BAR_ANT: [number, number, number] = [191, 199, 209]; // barra tramo anterior
 const C_BAR_ACT: [number, number, number] = [31, 78, 121];   // barra período actual
+const C_POS: [number, number, number] = [4, 120, 87];        // variación positiva (verde sobrio de impresión)
 
 // ── Retícula del documento (A4: 210 × 297 mm) ────────────────────────────────
 const M = 20;                 // márgenes laterales (§3: 20-22 mm)
@@ -537,6 +539,241 @@ async function drawAnexoTabla(
 
 // ── PORTADA (§4) ─────────────────────────────────────────────────────────────
 
+/** Etiqueta de grupo editorial: versalitas en acento + regla fina. Devuelve la Y inicial del contenido. */
+function drawGrupoKicker(doc: jsPDF, texto: string, y: number): number {
+  const pw = pageW(doc);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(...C_ACCENT);
+  doc.text(texto, M, y, { charSpace: 0.5 });
+  doc.setDrawColor(...C_RULE);
+  doc.setLineWidth(0.2);
+  doc.line(M, y + 2.2, pw - M, y + 2.2);
+  return y + 7;
+}
+
+/**
+ * Tarjeta destacada (Ingresos / Variación): banda suave con filete de acento a
+ * la izquierda, etiqueta pequeña en versalitas, valor protagonista y descriptor.
+ * CP-UX-FINAL-POLISH-003 §1.1-1.2: jerarquía y aire para los dos indicadores
+ * principales; sin comprimir tipografías.
+ */
+function drawTarjetaDestacada(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  etiqueta: string,
+  valor: string,
+  valorColor: [number, number, number],
+  secundario: string | null,
+  descriptor: string,
+): void {
+  const valueSize = 14.5;
+  doc.setFillColor(...C_BAND);
+  doc.rect(x, y, w, h, 'F');
+  doc.setDrawColor(...C_ACCENT);
+  doc.setLineWidth(0.9);
+  doc.line(x, y, x, y + h);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.setTextColor(...C_MUTED);
+  doc.text(etiqueta, x + 5, y + 7.2, { charSpace: 0.35 });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(valueSize);
+  doc.setTextColor(...valorColor);
+  doc.text(truncar(doc, valor, w - 10), x + 5, y + 16.5);
+  const yDesc = y + 20.5;
+  if (secundario) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(...valorColor);
+    doc.text(secundario, x + 5, yDesc);
+    const wSec = doc.getTextWidth(secundario);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.8);
+    doc.setTextColor(...C_MUTED);
+    doc.text(truncar(doc, descriptor, w - 10 - wSec - 2.5), x + 5 + wSec + 2.5, yDesc);
+  } else {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.8);
+    doc.setTextColor(...C_MUTED);
+    doc.text(truncar(doc, descriptor, w - 10), x + 5, yDesc);
+  }
+}
+
+/** Tarjeta de cifra (grupos comercial e inventario): número protagonista + etiqueta inferior. */
+function drawTarjetaCifra(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  cifra: string,
+  etiqueta: string,
+): void {
+  doc.setDrawColor(...C_BORDER);
+  doc.setLineWidth(0.2);
+  doc.rect(x, y, w, h, 'S');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(15);
+  doc.setTextColor(...C_BLACK);
+  doc.text(truncar(doc, cifra, w - 6), x + w / 2, y + 9.3, { align: 'center' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(6.6);
+  doc.setTextColor(...C_MUTED);
+  const lineas = doc.splitTextToSize(etiqueta, w - 6) as string[];
+  let ye = y + 13.2;
+  for (const linea of lineas.slice(0, 3)) {
+    doc.text(linea, x + w / 2, ye, { align: 'center' });
+    ye += 3.2;
+  }
+}
+
+/** Banda del producto líder: acento institucional a todo el ancho, discreta (10 mm). */
+function drawBandaLider(doc: jsPDF, y: number, contentW: number, nombre: string, participacion: string): void {
+  const h = 9.5;
+  doc.setFillColor(...C_ACCENT);
+  doc.rect(M, y, contentW, h, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.8);
+  doc.setTextColor(255, 255, 255);
+  doc.text('LÍDER DEL PERÍODO', M + 5, y + 4, { charSpace: 0.5 });
+  doc.setFontSize(10);
+  doc.text(truncar(doc, nombre, contentW * 0.55), M + 5, y + 7.9);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.5);
+  doc.text(participacion, M + contentW - 5, y + 6.5, { align: 'right' });
+}
+
+/**
+ * Composición editorial de los indicadores ejecutivos en la portada
+ * (CP-UX-FINAL-POLISH-003 §1.1/1.2). Sustituye la lista compacta de líneas por:
+ *   1. Bloque destacado: Ingresos y Variación, lado a lado, con jerarquía.
+ *   2. Grupo «Desempeño comercial»: crecimiento, contracción, sin ventas.
+ *   3. Grupo «Disponibilidad e inventario»: agotados con antecedente, cobertura.
+ *   4. Banda diferenciada del producto líder (sin desproporción).
+ * Los indicadores no reconocidos se listan al pie del bloque (defensa de
+ * integridad §9: NINGÚN indicador se pierde jamás).
+ * NO recalc NI reescribe cifras: solo distribuye informe.indicadores.
+ */
+function drawIndicadoresEditorial(doc: jsPDF, informe: InformeEjecutivo, yKicker: number): number {
+  const pw = pageW(doc);
+  const contentW = pw - 2 * M;
+  const inds = informe.indicadores;
+  const GAP = 4.5; // aire entre grupos (§1.2)
+
+  // Clasificación presentacional por etiqueta (fuente única: buildInformeEjecutivo).
+  const usados = new Set<number>();
+  const buscar = (re: RegExp): InformeIndicador | undefined => {
+    const idx = inds.findIndex((ind, i) => !usados.has(i) && re.test(ind.label));
+    if (idx >= 0) usados.add(idx);
+    return idx >= 0 ? inds[idx] : undefined;
+  };
+  const ingresos = buscar(/^Ingresos del conjunto/i);
+  const variacion = buscar(/^Variación vs/i);
+  const crecimiento = buscar(/crecimiento relevante/i);
+  const contraccion = buscar(/contracción/i);
+  const sinVentas = buscar(/sin ventas en el tramo/i);
+  const agotados = buscar(/agotados con antecedentes/i);
+  const cobertura = buscar(/cobertura estimada insuficiente/i);
+  const lider = buscar(/^Lider del período/i);
+
+  // ── Bloque destacado ──
+  let y = drawGrupoKicker(doc, 'RESUMEN DE INDICADORES', yKicker);
+  if (ingresos || variacion) {
+    const cardW = (contentW - 4) / 2;
+    const h = 23;
+    if (ingresos) {
+      drawTarjetaDestacada(doc, M, y, cardW, h, 'INGRESOS DEL CONJUNTO', ingresos.value, C_ACCENT, null, 'Ventas del conjunto en el período analizado');
+    }
+    if (variacion) {
+      const mVar = variacion.value.match(/^(.*?)\s*\((.+)\)\s*$/);
+      const principal = mVar ? mVar[1] : variacion.value;
+      const pct = mVar ? mVar[2] : null;
+      const esNegativa = principal.trim().startsWith('-');
+      const colorVar = esNegativa ? C_ALTA_TX : principal.trim().startsWith('+') || /^\$?\d/.test(principal.trim()) ? C_POS : C_DARK;
+      drawTarjetaDestacada(
+        doc,
+        M + cardW + 4,
+        y,
+        cardW,
+        h,
+        'VARIACIÓN VS. TRAMO COMPARABLE',
+        principal,
+        colorVar,
+        pct,
+        'Frente al tramo equivalente del período anterior',
+      );
+    }
+    y += h + GAP + 1.5;
+  }
+
+  // ── Grupo: desempeño comercial ──
+  const comerciales = [crecimiento, contraccion, sinVentas].filter((i): i is InformeIndicador => !!i);
+  if (comerciales.length > 0) {
+    y = drawGrupoKicker(doc, 'DESEMPEÑO COMERCIAL DEL CONJUNTO', y);
+    const gapCard = 4;
+    const cardW = (contentW - gapCard * (comerciales.length - 1)) / comerciales.length;
+    let maxLines = 1;
+    comerciales.forEach((c) => {
+      const lineas = doc.splitTextToSize(c.label, cardW - 6) as string[];
+      maxLines = Math.max(maxLines, lineas.length);
+    });
+    const h = 13.2 + maxLines * 3.2 + 1.3;
+    comerciales.forEach((c, i) => {
+      drawTarjetaCifra(doc, M + i * (cardW + gapCard), y, cardW, h, c.value, c.label);
+    });
+    y += h + GAP;
+  }
+
+  // ── Grupo: disponibilidad e inventario ──
+  const inventario = [agotados, cobertura].filter((i): i is InformeIndicador => !!i);
+  if (inventario.length > 0) {
+    y = drawGrupoKicker(doc, 'DISPONIBILIDAD E INVENTARIO', y);
+    const gapCard = 4;
+    const cardW = (contentW - gapCard * (inventario.length - 1)) / inventario.length;
+    let maxLines = 1;
+    inventario.forEach((c) => {
+      const lineas = doc.splitTextToSize(c.label, cardW - 6) as string[];
+      maxLines = Math.max(maxLines, lineas.length);
+    });
+    const h = 13.2 + maxLines * 3.2 + 1.3;
+    inventario.forEach((c, i) => {
+      drawTarjetaCifra(doc, M + i * (cardW + gapCard), y, cardW, h, c.value, c.label);
+    });
+    y += h + GAP;
+  }
+
+  // ── Líder del período (tratamiento diferenciado, sin desproporción) ──
+  if (lider) {
+    const mLider = lider.value.match(/^(.+?)\s+—\s+(.+)$/);
+    drawBandaLider(doc, y, contentW, mLider ? mLider[1].trim() : lider.value, mLider ? mLider[2].trim() : '');
+    y += 9.5 + GAP - 1;
+  }
+
+  // ── Defensa de integridad §9: cualquier indicador no clasificado NO se pierde ──
+  const restantes = inds.filter((_, i) => !usados.has(i));
+  if (restantes.length > 0) {
+    y = drawGrupoKicker(doc, 'OTROS INDICADORES', y);
+    const vw = 62;
+    for (const ind of restantes) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.8);
+      doc.setTextColor(...C_DARK);
+      doc.text(truncar(doc, ind.label, contentW - vw - 4), M, y);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...C_BLACK);
+      doc.text(ind.value, pw - M, y, { align: 'right' });
+      y += 5.2;
+    }
+    y += GAP - 4;
+  }
+
+  return y;
+}
+
 function drawPortada(doc: jsPDF, informe: InformeEjecutivo): void {
   const pw = pageW(doc);
   const contentW = pw - 2 * M;
@@ -592,34 +829,16 @@ function drawPortada(doc: jsPDF, informe: InformeEjecutivo): void {
     yf += 9;
   }
 
-  // Resumen de indicadores principales
-  y += 44 + 10;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...C_ACCENT);
-  doc.text('RESUMEN DE INDICADORES', M, y, { charSpace: 0.5 });
-  y += 2.5;
-  doc.setDrawColor(...C_RULE);
-  doc.setLineWidth(0.2);
-  doc.line(M, y, pw - M, y);
-  y += 6.5;
-  const vw = 62; // ancho reservado a los valores
-  for (const ind of informe.indicadores) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.8);
-    doc.setTextColor(...C_DARK);
-    doc.text(truncar(doc, ind.label, contentW - vw - 4), M, y);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C_BLACK);
-    doc.text(ind.value, pw - M, y, { align: 'right' });
-    y += 5.2;
-    doc.setDrawColor(...C_BORDER);
-    doc.setLineWidth(0.1);
-    doc.line(M, y - 2.2, pw - M, y - 2.2);
-  }
+  // Resumen de indicadores — composición editorial (CP-UX-FINAL-POLISH-003 §1.1):
+  // bloque destacado de ingresos/variación, grupos semánticos y banda del líder,
+  // con aire y jerarquía en lugar de líneas consecutivas.
+  y += 44 + 7;
+  y = drawIndicadoresEditorial(doc, informe, y);
 
-  // Contenido del documento
-  y += 7;
+  // Contenido del documento (fila compacta si el bloque editorial creció,
+  // p. ej. etiquetas a 3 líneas — la portada JAMÁS invade el pie, §4)
+  y += 8;
+  const filaContenido = y > 226 ? 5.2 : 6;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
   doc.setTextColor(...C_ACCENT);
@@ -643,7 +862,7 @@ function drawPortada(doc: jsPDF, informe: InformeEjecutivo): void {
   for (let i = 0; i < mitad; i++) {
     const fila = secciones[i];
     const fila2 = secciones[i + mitad];
-    const yy = y + i * 6;
+    const yy = y + i * filaContenido;
     for (const [col, item] of [[0, fila], [1, fila2]] as Array<[number, [string, string] | undefined]>) {
       if (!item) continue;
       const x = M + col * (colW + 8);

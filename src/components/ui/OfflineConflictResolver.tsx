@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { AlertTriangle, RefreshCw, X, Loader2, CheckCircle2, Ban } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+// CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+import { useDialogs } from '@/components/ui/dialogs';
 
 interface FailedOp {
   id: string;
@@ -27,6 +29,8 @@ export function OfflineConflictResolver({ className }: OfflineConflictResolverPr
   const [failedOps, setFailedOps] = useState<FailedOp[]>([]);
   const [loading, setLoading] = useState(true);
   const [resolving, setResolving] = useState<string | null>(null);
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+  const dialogs = useDialogs();
 
   useEffect(() => {
     loadFailedOps();
@@ -79,7 +83,14 @@ export function OfflineConflictResolver({ className }: OfflineConflictResolverPr
   }
 
   async function handleDiscard(op: FailedOp) {
-    if (!confirm('¿Descartar esta operación? No se podrá recuperar.')) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Descartar operación',
+      message: '¿Descartar esta operación? No se podrá recuperar.',
+      variant: 'destructive',
+      confirmLabel: 'Descartar',
+    });
+    if (!ok) return;
     removeOp(op.id);
     toast.success('Operación descartada');
   }

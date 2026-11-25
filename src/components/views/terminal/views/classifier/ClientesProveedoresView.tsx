@@ -30,6 +30,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+// CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+import { useDialogs } from '@/components/ui/dialogs';
 import { useAuthStore } from '@/store';
 import { isAdminLevel } from '@/lib/roles';
 import {
@@ -363,17 +365,26 @@ function PartyActions({ p, onDetail, onEdit, onDelete, storeId }: {
  *  (historial intacto) y deja de aparecer como tercero independiente. */
 function LocalConsolidateButtons({ p, storeId }: { p: MasterPartyRow; storeId: string | null }) {
   const [linkOpen, setLinkOpen] = useState(false);
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+  const dialogs = useDialogs();
   const mut = useConsolidateLocalParty(storeId);
   const kind: 'customer' | 'supplier' = p.is_client && !p.is_supplier ? 'customer' : 'supplier';
   const nameBlank = !p.name || p.name.trim() === '' || p.name === '—';
   const insufficientData = nameBlank && !p.tax_id && !p.phone;
 
-  const promote = () => {
+  const promote = async () => {
     if (nameBlank) {
       toast.error('Registro pendiente de depuración: sin nombre suficiente no puede promoverse al Maestro (identifícalo primero).');
       return;
     }
-    if (!window.confirm(`¿Promover «${p.name}» al Maestro compartido de la organización? Se creará su identidad maestra y este registro local quedará VINCULADO (el historial se conserva; deja de aparecer como tercero independiente).`)) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes window.confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Promover al Maestro',
+      message: `¿Promover «${p.name}» al Maestro compartido de la organización? Se creará su identidad maestra y este registro local quedará VINCULADO (el historial se conserva; deja de aparecer como tercero independiente).`,
+      variant: 'warning',
+      confirmLabel: 'Promover',
+    });
+    if (!ok) return;
     mut.mutate({ kind, localId: p.id, mode: 'promote' }, {
       onSuccess: (d) => {
         const dups = d?.name_duplicates_in_master ?? [];
@@ -420,6 +431,8 @@ function LocalConsolidateButtons({ p, storeId }: { p: MasterPartyRow; storeId: s
 /** Selector de candidatos del Maestro para VINCULAR un registro local. */
 function LinkPartyModal({ p, kind, storeId, onClose }: { p: MasterPartyRow; kind: 'customer' | 'supplier'; storeId: string | null; onClose: () => void }) {
   const [q, setQ] = useState(p.name === '—' ? '' : p.name);
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+  const dialogs = useDialogs();
   const { data: rows = [], isLoading } = useSearchMasterParties(storeId, q, kind === 'customer' ? 'client' : 'supplier');
   const mut = useConsolidateLocalParty(storeId);
   const candidates = rows.filter(r => r.source === 'master' && r.id !== p.id).slice(0, 8);
@@ -454,8 +467,15 @@ function LinkPartyModal({ p, kind, storeId, onClose }: { p: MasterPartyRow; kind
           ) : candidates.map(c => (
             <button
               key={c.id}
-              onClick={() => {
-                if (!window.confirm(`¿Vincular «${p.name}» con ${c.code} · ${c.name}? El registro local quedará asociado al maestro (el historial se conserva).`)) return;
+              onClick={async () => {
+                // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes window.confirm() nativo).
+                const ok = await dialogs.confirm({
+                  title: 'Vincular al Maestro',
+                  message: `¿Vincular «${p.name}» con ${c.code} · ${c.name}? El registro local quedará asociado al maestro (el historial se conserva).`,
+                  variant: 'warning',
+                  confirmLabel: 'Vincular',
+                });
+                if (!ok) return;
                 mut.mutate({ kind, localId: p.id, mode: 'link', masterPartyId: c.id }, {
                   onSuccess: () => { toast.success('Registro local vinculado al Maestro.'); onClose(); },
                   onError: (e: { message?: string }) => toast.error(translateClassifierError(e?.message ?? '') || e?.message || 'Error al vincular'),

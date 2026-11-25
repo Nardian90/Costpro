@@ -13,6 +13,8 @@ import { canReverse } from '@/components/ui/DocumentStatusBadge';
 import { canReverseDocumentInStore } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 import { DuplicateDocumentModal } from '@/components/ui/DuplicateDocumentModal';
+// CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+import { useDialogs } from '@/components/ui/dialogs';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   draft:       { label: 'Borrador',     color: 'bg-muted text-muted-foreground border-border', icon: Clock },
@@ -455,6 +457,8 @@ function CreateOrderModal({ onClose, onCreated }: { onClose: () => void; onCreat
 // ============================================================================
 function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder; onClose: () => void; onUpdate: () => void }) {
   const { user } = useAuthStore();
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+  const dialogs = useDialogs();
   const [activeTab, setActiveTab] = useState<'info' | 'items' | 'payments'>('info');
   const [items, setItems] = useState<ProductionOrderItem[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
@@ -751,7 +755,14 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
 
   // Fase 3: eliminar material
   const handleDeleteItem = async (itemId: string, itemName: string) => {
-    if (!confirm(`¿Eliminar "${itemName}" de los materiales?`)) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Eliminar material',
+      message: `¿Eliminar "${itemName}" de los materiales?`,
+      variant: 'destructive',
+      confirmLabel: 'Eliminar',
+    });
+    if (!ok) return;
     try {
       const { token } = useAuthStore.getState();
       const res = await fetch(`/api/production-orders/${order.id}/items?item_id=${itemId}`, {
@@ -765,7 +776,15 @@ function OrderDetailModal({ order, onClose, onUpdate }: { order: ProductionOrder
 
   // Fase 4: anular orden
   const handleVoid = async () => {
-    const reason = prompt('Motivo de anulación:', 'Anulación manual');
+    // CP-UX-FINAL-POLISH-003 §3.1: motivo con diálogo propio (antes prompt() nativo).
+    // El original abortaba con cancel O texto vacío (reason falsy) → optional:false
+    // conserva esa semántica; el valor se usa tal cual más abajo.
+    const reason = await dialogs.prompt({
+      title: 'Motivo de anulación',
+      label: 'Motivo',
+      initialValue: 'Anulación manual',
+      confirmLabel: 'Anular',
+    });
     if (!reason) return;
     setVoiding(true);
     try {

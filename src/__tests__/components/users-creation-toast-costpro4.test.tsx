@@ -16,10 +16,13 @@
  * central del mandato COSTPRO 4.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+// CP-UX-FINAL-POLISH-003 §3.1: useUsersView usa el sistema unificado de diálogos
+// (useDialogs) — el helper envuelve el render en <DialogProvider> como el layout raíz.
+import { renderWithDialogs } from '../helpers/render-with-dialogs';
 
 // ── Fronteras externas ────────────────────────────────────────────────────
 
@@ -77,7 +80,7 @@ function Harness({ onReady }: { onReady: (api: ReturnType<typeof useUsersView>) 
 function renderHarness() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   let api: ReturnType<typeof useUsersView>;
-  render(
+  renderWithDialogs(
     <QueryClientProvider client={qc}>
       <Harness onReady={(a) => { api = a; }} />
     </QueryClientProvider>

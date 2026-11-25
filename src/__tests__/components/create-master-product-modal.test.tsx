@@ -23,7 +23,7 @@
  *    no gobernador → propose_master_change (pendiente de aprobación).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -71,10 +71,13 @@ vi.mock('@/lib/image-compress', () => ({
 }));
 
 import { CreateMasterProductModal } from '@/components/views/terminal/views/catalog/CreateMasterProductModal';
+import { renderWithDialogs } from '../helpers/render-with-dialogs';
 
 function renderForm(isGovernor: boolean) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
-  return render(
+  // CP-UX-FINAL-POLISH-003: el modal usa useDialogs → render dentro de <DialogProvider>
+  // (igual que src/app/layout.tsx en producción).
+  return renderWithDialogs(
     <QueryClientProvider client={qc}>
       <CreateMasterProductModal
         open
@@ -187,16 +190,20 @@ describe('CreateMasterProductModal — MISMO servicio que la pestaña Catálogo 
 describe('CreateMasterProductModal — dedup previo (misma verificación que Inventario)', () => {
   it('SKU existente NO activado → ofrece ACTIVAR el maestro existente en lugar de duplicar la identidad', async () => {
     findMasterBySkuMock.mockResolvedValueOnce({ id: 'mm-existing', sku: 'SKU-EXISTE', name: 'Existente', activated: false });
-    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     renderForm(true);
     fillForm('SKU-EXISTE', 'Nombre nuevo');
     fireEvent.click(screen.getByRole('button', { name: /Crear producto/i }));
 
+    // CP-UX-FINAL-POLISH-003: el diálogo propio de COSTPRO (no confirm() nativo)
+    // explica el dedup antes de ofrecer la activación.
+    const dialog = await screen.findByRole('alertdialog');
+    expect(dialog).toHaveTextContent(/El SKU «SKU-EXISTE» ya existe en el catálogo de la organización como «Existente»/);
+    fireEvent.click(screen.getByTestId('dialog-confirm'));
+
     await waitFor(() => expect(activateMutate).toHaveBeenCalledWith('mm-existing'));
     expect(createMutate).not.toHaveBeenCalled();
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('activado en esta tienda')));
-    confirmSpy.mockRestore();
   });
 
   it('SKU existente YA activado en esta tienda → error claro, sin crear ni activar', async () => {

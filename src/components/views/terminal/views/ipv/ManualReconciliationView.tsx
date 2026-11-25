@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { formatCurrencyCents } from '../../../../../lib/utils';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 import { v4 as uuidv4 } from 'uuid';
 
 interface ManualReconciliationViewProps {
@@ -28,6 +29,8 @@ interface ManualReconciliationViewProps {
 }
 
 export default function ManualReconciliationView({ transaction, onBack }: ManualReconciliationViewProps) {
+    // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+    const dialogs = useDialogs();
     const [searchTerm, setSearchTerm] = useState('');
     const [manualLines, setManualLines] = useState<Partial<ReconciliationLine>[]>([]);
 
@@ -110,24 +113,30 @@ export default function ManualReconciliationView({ transaction, onBack }: Manual
 
     const removeExistingLine = async (id: string) => {
         if (!transaction) return;
-        if (confirm("¿Revertir esta línea de conciliación?")) {
-            try {
-                const line = await db.reconciliation_lines.get(id);
-                if (!line) return;
+        // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+        const ok = await dialogs.confirm({
+            title: 'Revertir línea de conciliación',
+            message: '¿Revertir esta línea de conciliación?',
+            variant: 'destructive',
+            confirmLabel: 'Revertir',
+        });
+        if (!ok) return;
+        try {
+            const line = await db.reconciliation_lines.get(id);
+            if (!line) return;
 
-                const snapshot = await StockService.takeSnapshot(line.product_cod);
-                await StockService.revertReconciliationLine(id, snapshot);
+            const snapshot = await StockService.takeSnapshot(line.product_cod);
+            await StockService.revertReconciliationLine(id, snapshot);
 
-                const lines = await db.reconciliation_lines.where('parent_transaction_id').equals(transaction.referencia_origen).toArray();
-                const totalTransfer = lines.reduce((sum, l) => sum + l.transfer_amount_cents, 0);
-                const status = totalTransfer >= targetAmount - 0.001 ? 'COMPLETO' : (totalTransfer > 0 ? 'PARCIAL' : 'PENDIENTE');
-                await db.bank_statements.update(transaction.referencia_origen, { estado_conciliacion: status });
+            const lines = await db.reconciliation_lines.where('parent_transaction_id').equals(transaction.referencia_origen).toArray();
+            const totalTransfer = lines.reduce((sum, l) => sum + l.transfer_amount_cents, 0);
+            const status = totalTransfer >= targetAmount - 0.001 ? 'COMPLETO' : (totalTransfer > 0 ? 'PARCIAL' : 'PENDIENTE');
+            await db.bank_statements.update(transaction.referencia_origen, { estado_conciliacion: status });
 
-                toast.success("Línea revertida exitosamente");
-            } catch (error: unknown) {
-                const message = error instanceof Error ? error.message : "Error al revertir la línea";
-                toast.error(message);
-            }
+            toast.success("Línea revertida exitosamente");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Error al revertir la línea";
+            toast.error(message);
         }
     };
 

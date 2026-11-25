@@ -7,6 +7,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
+import { useDialogs } from '@/components/ui/dialogs';
 import { useTranslations } from 'next-intl';
 import { BaseModal } from '@/components/ui/BaseModal';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,8 @@ const SERVICE_ICONS: Record<string, any> = {
 
 export default function ReceivedServicesView() {
   const t = useTranslations();
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin alert/confirm/prompt nativos).
+  const dialogs = useDialogs();
   const { user } = useAuthStore();
   // MISIÓN POLÍTICA TEMPORAL (2026-10-18), descubrimiento FASE A: los fetch
   // crudos de este módulo (crear/activar/anular) NO llevaban Authorization
@@ -343,7 +346,14 @@ export default function ReceivedServicesView() {
   };
 
   const handleVoid = async (id: string) => {
-    if (!confirm('¿Anular este servicio? Se eliminarán sus distribuciones.')) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    const ok = await dialogs.confirm({
+      title: 'Anular servicio',
+      message: '¿Anular este servicio? Se eliminarán sus distribuciones.',
+      variant: 'destructive',
+      confirmLabel: 'Anular',
+    });
+    if (!ok) return;
     try {
       const res = await fetch('/api/received-services', {
         method: 'PATCH',
@@ -796,6 +806,8 @@ function ServiceDetailModal({
   onEditDraft?: (svc: ReceivedService) => void;
 }) {
   const { user } = useAuthStore();
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
+  const dialogs = useDialogs();
   // MISIÓN SERVICIOS RECIBIDOS (2026-10-23), causa raíz del «Error al
   // registrar el pago»: los fetch de este modal NO llevaban Authorization
   // Bearer y el backend (getServerSession, SEC-024 fail-closed) SOLO
@@ -1105,8 +1117,25 @@ function ServiceDetailModal({
                     // CP-OPS-ENERVIDA §5: REVERSIÓN contable (antes DELETE
                     // físico, prohibido por PT007). Fila contraria + asiento
                     // compensatorio; la obligación del servicio se restablece.
-                    if (!confirm('¿Anular este pago? Se registrará un movimiento compensatorio y la obligación del servicio quedará restablecida por el importe revertido.')) return;
-                    const reason = prompt('Motivo de la anulación (opcional):') ?? '';
+                    // CP-UX-FINAL-POLISH-003 §3.1: confirmación + motivo con diálogos propios
+                    // (antes confirm()/prompt() nativos).
+                    const ok = await dialogs.confirm({
+                      title: 'Anular pago',
+                      message: '¿Anular este pago? Se registrará un movimiento compensatorio y la obligación del servicio quedará restablecida por el importe revertido.',
+                      variant: 'destructive',
+                      confirmLabel: 'Anular pago',
+                    });
+                    if (!ok) return;
+                    const reason = await dialogs.prompt({
+                      title: 'Motivo de la anulación',
+                      message: 'Documento contable de la reversión (opcional).',
+                      label: 'Motivo',
+                      placeholder: 'Motivo de la anulación (opcional)',
+                      optional: true,
+                      type: 'textarea',
+                      confirmLabel: 'Anular pago',
+                    });
+                    if (reason === null) return;
                     const res = await fetch(`/api/payments/${p.id}`, {
                       method: 'POST',
                       headers: {
@@ -1281,6 +1310,8 @@ function ServiceTypeCombobox({
 // Exportado para pruebas (misma pantalla en modo creación y edición).
 export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, editService, activeTypes, typesLoading, onOpenManager, preselectTypeId }: CreateServiceModalProps) {
   const { user } = useAuthStore();
+  // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm() nativo).
+  const dialogs = useDialogs();
   const isEdit = !!editService;
   // Selección por IDENTIDAD (id del catálogo), no por texto: renombrar un tipo
   // no rompe lo que el usuario tiene en la mano al crear el servicio.
@@ -1593,7 +1624,14 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
     const message = isEdit
       ? '¿Guardar los cambios del BORRADOR? Sin confirmar el servicio y sin efectos financieros.'
       : '¿Guardar como BORRADOR? No se confirmará el servicio ni se generarán efectos financieros (obligación, gasto o pagos).';
-    if (!window.confirm(message)) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    const okConfirm = await dialogs.confirm({
+      title: isEdit ? 'Guardar cambios' : 'Guardar borrador',
+      message,
+      variant: 'default',
+      confirmLabel: isEdit ? 'Guardar cambios' : 'Guardar borrador',
+    });
+    if (!okConfirm) return;
     setSubmitting(true);
     try {
       if (isEdit && editService && onSaveEdit) {
@@ -1625,7 +1663,16 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
     const message = nComp > 0
       ? `¿CONFIRMAR el servicio y LIQUIDAR al confirmar (${nComp} componente${nComp === 1 ? '' : 's'} de pago)? Se registrará la obligación y sus pagos.`
       : '¿CONFIRMAR el servicio? Quedará pendiente de pago: se registra la obligación y NO se genera ningún egreso de caja o banco.';
-    if (!window.confirm(message)) return;
+    // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
+    // La operación se procesa DESPUÉS de aceptar; el éxito/fracaso real se
+    // comunica con toasts tras la respuesta del servidor (nunca antes).
+    const okConfirm = await dialogs.confirm({
+      title: 'Confirmar servicio',
+      message,
+      variant: 'default',
+      confirmLabel: nComp > 0 ? 'Confirmar y liquidar' : 'Confirmar servicio',
+    });
+    if (!okConfirm) return;
     setSubmitting(true);
     let confirmOk = false;
     try {
@@ -1959,10 +2006,10 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
           <Button type="button" variant="outline" onClick={onClose} className="flex-1 h-11 min-h-[44px] rounded-xl font-black uppercase tracking-widest text-xs">Cancelar</Button>
           <Button
             type="button"
-            variant="secondary"
+            variant="outline"
             onClick={handleSaveDraft}
             disabled={submitting}
-            className="flex-1 h-11 min-h-[44px] rounded-xl font-black uppercase tracking-widest text-xs gap-2 border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+            className="flex-1 h-11 min-h-[44px] rounded-xl font-black uppercase tracking-widest text-xs gap-2 border-warning/50 text-warning hover:bg-warning/10 hover:border-warning disabled:opacity-50"
             data-testid="save-draft-button"
           >
             {submitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Pencil className="w-4 h-4" />}

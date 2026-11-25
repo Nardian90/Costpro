@@ -549,10 +549,16 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (2026-11-25): +1 —
     //   20261125120000_cp_pos_per_item_payments (transaction_items.
     //   payment_distributions + create_sale_v2 con p_customer_ci y validación
-    //   items[].payments; al FINAL del orden lexicográfico) = 205
-    expect(m.total_incluidos).toBe(205);
+    //   items[].payments; al FINAL del orden lexicográfico)
+    // CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (merge de main, PR #1706,
+    // 2026-11-25): +2 — 20261125120000_cp_recep001_confirm_notes_link (enlace
+    //   documental del saldo en confirm_pending_reception + backfill
+    //   conservador) y 20261125120100_cp_recep001_master_sku_consecutivo
+    //   (consecutivo oficial del Catálogo Maestro; al FINAL del orden
+    //   lexicográfico). Total fusionado = 207
+    expect(m.total_incluidos).toBe(207);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(205);
+    expect(incluidos.length).toBe(207);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
