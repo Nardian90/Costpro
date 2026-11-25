@@ -1,6 +1,6 @@
 # EXPEDIENTE — MISIÓN CP-SAAS-BUSINESS-RULES-CERTIFICATION-001
 **Auditoría integral de reglas de negocio, invariantes, procesos transversales y certificación de calidad de COSTPRO 4 Multitienda**
-**Fecha:** 2026-11-26 · **Commit examinado:** main `0e684d6c1` · **Rama de entrega:** `feat/cp-bra-001-20261126` · **PR:** (enlazar al crear)
+**Fecha:** 2026-11-26 · **Commit examinado:** main `0e684d6c1` · **Rama de entrega:** `feat/cp-bra-001-20261126` · **PR:** https://github.com/Nardian90/Costpro/pull/1715
 
 ---
 
