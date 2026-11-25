@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-25 — CP-AP-FORENSIC-RECONCILIATION-001: 2 scripts de auditoría forense SOLO LECTURA (SELECT vía Management API POST /database/query) declarados como exceptions con justificación — cero escrituras.",
+  "_updated": "2026-11-25 — CP-AP-FORENSIC-RECONCILIATION-001: aplicador gobernado del REVOKE de las 2 funciones legado huérfanas con grant público (cierre del hallazgo secdef_public_grant del SQL Security Gate; validado en aislada, aplicado UNA vez en producción con doble flag, marca re-ejecutable). Invoca assert-not-production.",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -14,6 +14,7 @@
     "scripts/cp-security-backlog-001-fix-ledger-versions.mjs",
     "scripts/cp-security-backlog-001-fix2-ledger.mjs",
     "scripts/cpops-apply-migrations-prod.mjs",
+    "scripts/cxap-apply-revoke-legacy-fns.mjs",
     "scripts/f8-verify-todos.mjs",
     "scripts/f9-controles.mjs",
     "scripts/fin-backfill-dryrun.mjs",
