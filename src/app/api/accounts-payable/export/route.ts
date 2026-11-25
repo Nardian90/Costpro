@@ -63,7 +63,7 @@ async function fetchAll(
     if (neq) for (const [k, v] of Object.entries(neq)) q = q.neq(k, v);
     const { data, error } = await q;
     if (error) throw new Error(`[${table}] ${error.message}`);
-    const rows = (data || []) as ChunkRow[];
+    const rows = (data || []) as unknown as ChunkRow[];
     out.push(...rows);
     if (rows.length < PAGE) break;
   }
