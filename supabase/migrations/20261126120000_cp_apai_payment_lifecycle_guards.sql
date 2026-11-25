@@ -1,5 +1,5 @@
 -- ============================================================================
--- CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 — Migración 1/2.
+-- CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 — Migración 1/2 (20261126120000).
 --
 -- FASE 2/4 — Regla empresarial (misión §2):
 --   «Un documento con pagos confirmados o liquidados no puede devolverse ni

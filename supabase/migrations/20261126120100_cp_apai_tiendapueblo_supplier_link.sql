@@ -1,5 +1,5 @@
 -- ============================================================================
--- CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 — Migración 2/2.
+-- CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 — Migración 2/2 (20261126120100).
 --
 -- FASE 6 — Saneamiento del quirk de identificación «Tienda Pueblo» /
 -- «TiendaPueblo» (auditoría forense previa, Cuentas por Pagar por proveedor).
