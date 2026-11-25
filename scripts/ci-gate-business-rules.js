@@ -132,22 +132,41 @@ function validateManifest(m) {
   }
 }
 
-function changedFiles(baseRef) {
-  const args = ['diff', '--name-only', `${baseRef}...HEAD`];
+function runGitDiff(args) {
   try {
-    const out = execFileSync('git', args, { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-    return out.split('\n').map((s) => s.trim()).filter(Boolean);
+    return execFileSync('git', ['diff', '--name-only'].concat(args), { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   } catch (e) {
-    // Intento de recuperación: fetch superficial del SHA base y reintento
-    try {
-      execFileSync('git', ['fetch', '--no-tags', '--depth=1', 'origin', baseRef], { cwd: REPO_ROOT, encoding: 'utf8' });
-      const out = execFileSync('git', ['diff', '--name-only', `${baseRef}...HEAD`], { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-      return out.split('\n').map((s) => s.trim()).filter(Boolean);
-    } catch (e2) {
-      fail(`No se pudo calcular el diff contra ${baseRef}: ${e2.message}`);
-      return null;
-    }
+    return null;
   }
+}
+
+function toLines(out) {
+  return out.split('\n').map((s) => s.trim()).filter(Boolean);
+}
+
+function changedFiles(baseRef) {
+  // 1) Tres puntos (merge-base): correcto con historial completo.
+  let out = runGitDiff([`${baseRef}...HEAD`]);
+  if (out !== null) return toLines(out);
+  // 2) Checkout superficial (depth=1, default de actions/checkout): fetch
+  //    superficial del SHA base y reintento.
+  try {
+    execFileSync('git', ['fetch', '--no-tags', '--depth=1', 'origin', baseRef], { cwd: REPO_ROOT, encoding: 'utf8' });
+  } catch (e) {
+    fail(`No se pudo obtener el SHA base ${baseRef}: ${e.message}`);
+    return null;
+  }
+  out = runGitDiff([`${baseRef}...HEAD`]);
+  if (out !== null) return toLines(out);
+  // 3) Sin base común en shallow: dos puntos (árboles directos, sin merge-base).
+  //    Con el checkout de merge-commit de GitHub, base..HEAD es exactamente el diff del PR.
+  out = runGitDiff([baseRef, 'HEAD']);
+  if (out !== null) {
+    console.log('[CP-BRA-001] Diff calculado en modo dos puntos (checkout superficial sin base común).');
+    return toLines(out);
+  }
+  fail(`No se pudo calcular el diff contra ${baseRef}`);
+  return null;
 }
 
 function detectCriticalDomains(files, manifest) {
