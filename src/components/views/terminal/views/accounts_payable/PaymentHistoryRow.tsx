@@ -169,12 +169,12 @@ export default function PaymentHistoryRow({ refType, refId, paidAmount, totalCup
         {paidAmount > 0 ? `${payments.length || ''} pago(s)` : 'Ver pagos'}
       </button>
 
-      {/* Expanded content */}
+      {/* Expanded content — CP-AP-FORENSIC-RECONCILIATION-001: bloque <div>
+          (el <tr> anidado en un <td>/<div> era HTML inválido y disparaba el
+          warning de hidratación "<tr> cannot be a child of <div>"). */}
       {expanded && (
-        <tr>
-          <td colSpan={8} className="p-0">
-            <div className="bg-muted/10 border-t border-border/20 p-3">
-              {displayLoading ? (
+        <div className="bg-muted/10 border-t border-border/20 p-3 w-max min-w-[420px] max-w-full">
+          {displayLoading ? (
                 <p className="text-xs text-muted-foreground text-center py-2">Cargando historial...</p>
               ) : error && refType !== 'commission' ? (
                 <p className="text-xs text-destructive text-center py-2">Error: {error}</p>
@@ -284,9 +284,7 @@ export default function PaymentHistoryRow({ refType, refId, paidAmount, totalCup
                   </div>
                 </div>
               )}
-            </div>
-          </td>
-        </tr>
+        </div>
       )}
     </>
   );
