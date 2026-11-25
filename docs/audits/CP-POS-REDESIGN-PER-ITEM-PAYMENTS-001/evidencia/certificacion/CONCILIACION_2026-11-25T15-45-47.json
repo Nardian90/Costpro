@@ -1,0 +1,712 @@
+{
+  "run": {},
+  "ref": "lguovmvrozxgssupkwpf",
+  "stamp": "2026-11-25T15-45-47",
+  "verdict": "CONCILIACION_EXACTA",
+  "findings": [
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C1",
+      "ok": true,
+      "detail": "Σ líneas (3) 700 vs total 700"
+    },
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C2",
+      "ok": true,
+      "detail": "Σ distribuciones en CUP 700 vs total 700 (3 filas)"
+    },
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C3",
+      "ok": true,
+      "detail": "Σ ledger amount_cup 700 vs total 700 (3 filas)"
+    },
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C4",
+      "ok": true,
+      "detail": "por método dist={\"cash\":100,\"transfer\":150,\"external_transfer\":450} ledger={\"cash\":100,\"external_transfer\":450,\"transfer\":150}"
+    },
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C5",
+      "ok": true,
+      "detail": "por moneda (origen) dist={\"CUP\":250,\"USD\":1} ledger={\"CUP\":250,\"USD\":1}"
+    },
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C6",
+      "ok": true,
+      "detail": "todas las distribuciones vinculadas a líneas (3 productos)"
+    },
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C7",
+      "ok": true,
+      "detail": "referencia de operación presente en cada fila de transferencia con monto>0"
+    },
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C8",
+      "ok": true,
+      "detail": "CERT-A Efectivo: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48 · CERT-B Transferencia: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=49 · CERT-C Exterior USD: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=49"
+    },
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C9",
+      "ok": true,
+      "detail": "filas de ledger sin distribución origen: 0"
+    },
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C10",
+      "ok": true,
+      "detail": "cash/CUP: 100 → amount_cup 100 · external_transfer/USD: 1 → amount_cup 450 · transfer/CUP: 150 → amount_cup 150"
+    },
+    {
+      "sale": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "id": "C11",
+      "ok": true,
+      "detail": "cliente Cliente Certificacion A/91020304050"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C1",
+      "ok": true,
+      "detail": "Σ líneas (3) 300 vs total 300"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C2",
+      "ok": true,
+      "detail": "Σ distribuciones en CUP 300 vs total 300 (3 filas)"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C3",
+      "ok": true,
+      "detail": "Σ ledger amount_cup 300 vs total 300 (1 filas)"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C4",
+      "ok": true,
+      "detail": "por método dist={\"cash\":300} ledger={\"cash\":300}"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C5",
+      "ok": true,
+      "detail": "por moneda (origen) dist={\"CUP\":300} ledger={\"CUP\":300}"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C6",
+      "ok": true,
+      "detail": "todas las distribuciones vinculadas a líneas (3 productos)"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C7",
+      "ok": true,
+      "detail": "referencia de operación presente en cada fila de transferencia con monto>0"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C8",
+      "ok": true,
+      "detail": "CERT-D Contado: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48 · CERT-A Efectivo: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48 · CERT-E Mixto: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C9",
+      "ok": true,
+      "detail": "filas de ledger sin distribución origen: 0"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C10",
+      "ok": true,
+      "detail": "cash/CUP: 300 → amount_cup 300"
+    },
+    {
+      "sale": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "id": "C11",
+      "ok": true,
+      "detail": "sin datos personales (null)"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C1",
+      "ok": true,
+      "detail": "Σ líneas (2) 200 vs total 200"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C2",
+      "ok": true,
+      "detail": "Σ distribuciones en CUP 200 vs total 200 (2 filas)"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C3",
+      "ok": true,
+      "detail": "Σ ledger amount_cup 200 vs total 200 (2 filas)"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C4",
+      "ok": true,
+      "detail": "por método dist={\"cash\":120,\"transfer\":80} ledger={\"cash\":120,\"transfer\":80}"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C5",
+      "ok": true,
+      "detail": "por moneda (origen) dist={\"CUP\":200} ledger={\"CUP\":200}"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C6",
+      "ok": true,
+      "detail": "todas las distribuciones vinculadas a líneas (2 productos)"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C7",
+      "ok": true,
+      "detail": "referencia de operación presente en cada fila de transferencia con monto>0"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C8",
+      "ok": true,
+      "detail": "CERT-D Contado: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48 · CERT-E Mixto: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C9",
+      "ok": true,
+      "detail": "filas de ledger sin distribución origen: 0"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C10",
+      "ok": true,
+      "detail": "cash/CUP: 120 → amount_cup 120 · transfer/CUP: 80 → amount_cup 80"
+    },
+    {
+      "sale": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "id": "C11",
+      "ok": true,
+      "detail": "cliente Cliente Certificacion C/92030405060"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C1",
+      "ok": true,
+      "detail": "Σ líneas (1) 60 vs total 60"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C2",
+      "ok": true,
+      "detail": "Σ distribuciones en CUP 60 vs total 60 (1 filas)"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C3",
+      "ok": true,
+      "detail": "Σ ledger amount_cup 60 vs total 60 (1 filas)"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C4",
+      "ok": true,
+      "detail": "por método dist={\"cash\":60} ledger={\"cash\":60}"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C5",
+      "ok": true,
+      "detail": "por moneda (origen) dist={\"CUP\":60} ledger={\"CUP\":60}"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C6",
+      "ok": true,
+      "detail": "todas las distribuciones vinculadas a líneas (1 productos)"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C7",
+      "ok": true,
+      "detail": "referencia de operación presente en cada fila de transferencia con monto>0"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C8",
+      "ok": true,
+      "detail": "CERT-F Movil: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=49"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C9",
+      "ok": true,
+      "detail": "filas de ledger sin distribución origen: 0"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C10",
+      "ok": true,
+      "detail": "cash/CUP: 60 → amount_cup 60"
+    },
+    {
+      "sale": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "id": "C11",
+      "ok": true,
+      "detail": "sin datos personales (null)"
+    }
+  ],
+  "reports": [
+    {
+      "test": "CERT-UI-A",
+      "sale_id": "2a88b4ec-6fa7-4e89-944e-4d4d8b524087",
+      "created_at": "2026-11-25T15:43:44.427392+00:00",
+      "checks": [
+        {
+          "id": "C1",
+          "ok": true,
+          "detail": "Σ líneas 700 = total 700"
+        }
+      ],
+      "tables": {
+        "transaccion": {
+          "total": 700,
+          "payment_method": "mixed",
+          "status": "completed",
+          "customer": "Cliente Certificacion A / 91020304050"
+        },
+        "lineas": [
+          {
+            "product_id": "40ea1f7a-8572-431a-adc2-20a6135b9084",
+            "qty": 1,
+            "price": 100,
+            "distribuciones": [
+              {
+                "amount": 100,
+                "method": "cash",
+                "currency": "CUP",
+                "reference": null,
+                "discount_type": null,
+                "exchange_rate": null,
+                "discount_value": 0,
+                "discount_currency": "CUP"
+              }
+            ]
+          },
+          {
+            "product_id": "b7c78ef1-75f3-49ae-b767-020f3dc0025f",
+            "qty": 1,
+            "price": 150,
+            "distribuciones": [
+              {
+                "amount": 150,
+                "method": "transfer",
+                "currency": "CUP",
+                "reference": "TRF-CERT-A-B-001",
+                "discount_type": null,
+                "exchange_rate": null,
+                "discount_value": 0,
+                "discount_currency": "CUP"
+              }
+            ]
+          },
+          {
+            "product_id": "cc2ea412-ea9b-44ba-aeb0-0f2f2e18bb64",
+            "qty": 1,
+            "price": 450,
+            "distribuciones": [
+              {
+                "amount": 1,
+                "method": "external_transfer",
+                "currency": "USD",
+                "reference": "TRF-CERT-A-C-002",
+                "discount_type": null,
+                "exchange_rate": 450,
+                "discount_value": 0,
+                "discount_currency": "USD"
+              }
+            ]
+          }
+        ],
+        "ledger": [
+          {
+            "payment_method": "cash",
+            "currency": "CUP",
+            "amount": 100,
+            "amount_cup": 100,
+            "reference": null,
+            "exchange_rate": 1
+          },
+          {
+            "payment_method": "external_transfer",
+            "currency": "USD",
+            "amount": 1,
+            "amount_cup": 450,
+            "reference": "TRF-CERT-A-C-002",
+            "exchange_rate": 450
+          },
+          {
+            "payment_method": "transfer",
+            "currency": "CUP",
+            "amount": 150,
+            "amount_cup": 150,
+            "reference": "TRF-CERT-A-B-001",
+            "exchange_rate": 1
+          }
+        ],
+        "por_metodo": {
+          "distribuciones": {
+            "cash": 100,
+            "transfer": 150,
+            "external_transfer": 450
+          },
+          "ledger": {
+            "cash": 100,
+            "external_transfer": 450,
+            "transfer": 150
+          }
+        },
+        "por_moneda": {
+          "distribuciones": {
+            "CUP": 250,
+            "USD": 1
+          },
+          "ledger": {
+            "CUP": 250,
+            "USD": 1
+          }
+        },
+        "inventario": [
+          "CERT-A Efectivo: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48",
+          "CERT-B Transferencia: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=49",
+          "CERT-C Exterior USD: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=49"
+        ]
+      }
+    },
+    {
+      "test": "CERT-UI-B",
+      "sale_id": "1e777282-873c-4200-9aa7-c6c58046c8cb",
+      "created_at": "2026-11-25T15:44:37.882494+00:00",
+      "checks": [
+        {
+          "id": "C1",
+          "ok": true,
+          "detail": "Σ líneas 300 = total 300"
+        }
+      ],
+      "tables": {
+        "transaccion": {
+          "total": 300,
+          "payment_method": "cash",
+          "status": "completed",
+          "customer": "— / —"
+        },
+        "lineas": [
+          {
+            "product_id": "30321d76-053c-454b-9733-cc26a23df5b0",
+            "qty": 1,
+            "price": 120,
+            "distribuciones": [
+              {
+                "amount": 120,
+                "method": "cash",
+                "currency": "CUP",
+                "reference": null,
+                "discount_type": null,
+                "exchange_rate": null,
+                "discount_value": 0,
+                "discount_currency": "CUP"
+              }
+            ]
+          },
+          {
+            "product_id": "40ea1f7a-8572-431a-adc2-20a6135b9084",
+            "qty": 1,
+            "price": 100,
+            "distribuciones": [
+              {
+                "amount": 100,
+                "method": "cash",
+                "currency": "CUP",
+                "reference": null,
+                "discount_type": null,
+                "exchange_rate": null,
+                "discount_value": 0,
+                "discount_currency": "CUP"
+              }
+            ]
+          },
+          {
+            "product_id": "5cc2fd24-48ac-4a7d-abd2-d1aab9adb7fa",
+            "qty": 1,
+            "price": 80,
+            "distribuciones": [
+              {
+                "amount": 80,
+                "method": "cash",
+                "currency": "CUP",
+                "reference": null,
+                "discount_type": null,
+                "exchange_rate": null,
+                "discount_value": 0,
+                "discount_currency": "CUP"
+              }
+            ]
+          }
+        ],
+        "ledger": [
+          {
+            "payment_method": "cash",
+            "currency": "CUP",
+            "amount": 300,
+            "amount_cup": 300,
+            "reference": null,
+            "exchange_rate": 1
+          }
+        ],
+        "por_metodo": {
+          "distribuciones": {
+            "cash": 300
+          },
+          "ledger": {
+            "cash": 300
+          }
+        },
+        "por_moneda": {
+          "distribuciones": {
+            "CUP": 300
+          },
+          "ledger": {
+            "CUP": 300
+          }
+        },
+        "inventario": [
+          "CERT-D Contado: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48",
+          "CERT-A Efectivo: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48",
+          "CERT-E Mixto: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48"
+        ]
+      }
+    },
+    {
+      "test": "CERT-UI-I+C",
+      "sale_id": "8f72ee99-e8ae-4dea-a9c3-ab6a3740f073",
+      "created_at": "2026-11-25T15:44:59.47496+00:00",
+      "checks": [
+        {
+          "id": "C1",
+          "ok": true,
+          "detail": "Σ líneas 200 = total 200"
+        }
+      ],
+      "tables": {
+        "transaccion": {
+          "total": 200,
+          "payment_method": "mixed",
+          "status": "completed",
+          "customer": "Cliente Certificacion C / 92030405060"
+        },
+        "lineas": [
+          {
+            "product_id": "30321d76-053c-454b-9733-cc26a23df5b0",
+            "qty": 1,
+            "price": 120,
+            "distribuciones": [
+              {
+                "amount": 120,
+                "method": "cash",
+                "currency": "CUP",
+                "reference": null,
+                "discount_type": null,
+                "exchange_rate": null,
+                "discount_value": 0,
+                "discount_currency": "CUP"
+              }
+            ]
+          },
+          {
+            "product_id": "5cc2fd24-48ac-4a7d-abd2-d1aab9adb7fa",
+            "qty": 1,
+            "price": 80,
+            "distribuciones": [
+              {
+                "amount": 80,
+                "method": "transfer",
+                "currency": "CUP",
+                "reference": "TRF-CERT-C-E-003",
+                "discount_type": null,
+                "exchange_rate": null,
+                "discount_value": 0,
+                "discount_currency": "CUP"
+              }
+            ]
+          }
+        ],
+        "ledger": [
+          {
+            "payment_method": "cash",
+            "currency": "CUP",
+            "amount": 120,
+            "amount_cup": 120,
+            "reference": null,
+            "exchange_rate": 1
+          },
+          {
+            "payment_method": "transfer",
+            "currency": "CUP",
+            "amount": 80,
+            "amount_cup": 80,
+            "reference": "TRF-CERT-C-E-003",
+            "exchange_rate": 1
+          }
+        ],
+        "por_metodo": {
+          "distribuciones": {
+            "cash": 120,
+            "transfer": 80
+          },
+          "ledger": {
+            "cash": 120,
+            "transfer": 80
+          }
+        },
+        "por_moneda": {
+          "distribuciones": {
+            "CUP": 200
+          },
+          "ledger": {
+            "CUP": 200
+          }
+        },
+        "inventario": [
+          "CERT-D Contado: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48",
+          "CERT-E Mixto: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=48"
+        ]
+      }
+    },
+    {
+      "test": "CERT-UI-M",
+      "sale_id": "a9d6e314-765b-4fd2-8147-199f3dc9fc81",
+      "created_at": "2026-11-25T15:45:32.542138+00:00",
+      "checks": [
+        {
+          "id": "C1",
+          "ok": true,
+          "detail": "Σ líneas 60 = total 60"
+        }
+      ],
+      "tables": {
+        "transaccion": {
+          "total": 60,
+          "payment_method": "cash",
+          "status": "completed",
+          "customer": "— / —"
+        },
+        "lineas": [
+          {
+            "product_id": "6328a7df-770c-4846-a7ce-9e43a8d494b0",
+            "qty": 1,
+            "price": 60,
+            "distribuciones": [
+              {
+                "amount": 60,
+                "method": "cash",
+                "currency": "CUP",
+                "reference": null,
+                "discount_type": null,
+                "exchange_rate": null,
+                "discount_value": 0,
+                "discount_currency": "CUP"
+              }
+            ]
+          }
+        ],
+        "ledger": [
+          {
+            "payment_method": "cash",
+            "currency": "CUP",
+            "amount": 60,
+            "amount_cup": 60,
+            "reference": null,
+            "exchange_rate": 1
+          }
+        ],
+        "por_metodo": {
+          "distribuciones": {
+            "cash": 60
+          },
+          "ledger": {
+            "cash": 60
+          }
+        },
+        "por_moneda": {
+          "distribuciones": {
+            "CUP": 60
+          },
+          "ledger": {
+            "CUP": 60
+          }
+        },
+        "inventario": [
+          "CERT-F Movil: Δ-1 (esp -1), movimientos 'sale'=1, stock_actual=49"
+        ]
+      }
+    }
+  ]
+}
