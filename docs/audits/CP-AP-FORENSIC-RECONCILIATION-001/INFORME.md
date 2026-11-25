@@ -112,8 +112,12 @@ Antigüedad del saldo (partición exacta): Corriente $54,977.20 · Próx. 7d $55
 | `src/__tests__/lib/accounts-payable-calculator.test.ts` | **NUEVO** — 34 pruebas contables (escenarios A, B, C, E de la misión) |
 | `src/__tests__/components/accounts-payable-navegacion.test.tsx` | **NUEVO** — 7 pruebas de navegación/filtros (escenario D) |
 | `scripts/cxap-forensic-audit.mjs`, `scripts/cxap-forensic-detail.mjs` | **NUEVOS** — auditoría forense solo lectura, re-ejecutable |
+| `supabase/migrations/20261125153000_cxap_revoke_legacy_reception_fns.sql` | **NUEVO** — cierre del hallazgo preexistente `secdef_public_grant` del SQL Security Gate: REVOKE de EXECUTE anon/authenticated en 2 funciones legado huérfanas (ver §11b) |
+| `scripts/cxap-apply-revoke-legacy-fns.mjs` | **NUEVO** — aplicador gobernado del REVOKE (guard CP-INFRA-019 + doble flag, validación previa en aislada, marca re-ejecutable) |
+| `ci-gate-allowlist.json` | 3 funciones service_role-exclusive añadidas a `security_definer_without_auth_check` (drift de misiones previas: fin_post_payment_annulment, register_supplier_payment_multi, cp_catmaestro001_renumber_auto_masters — ACL verificada en vivo {postgres, service_role}) |
+| `scripts/lib/writers.manifest.json` | 2 scripts forenses (exceptions justificadas) + 1 aplicador gobernado (guardProtected) |
 
-**Base de datos: CERO cambios.** Sin migraciones, sin DDL, sin toques a RLS, sin modificaciones de datos históricos. Toda la corrección es de la capa de consulta/presentación sobre los registros reales.
+**Base de datos: UN ÚNICO cambio de seguridad, gobernado (ver §11b).** Fuera de ese REVOKE, cero migraciones, cero toques a RLS, cero modificaciones de datos históricos. Toda la corrección funcional es de la capa de consulta/presentación sobre los registros reales.
 
 ## 9. Nueva lógica de filtros personalizados y fecha de corte
 
@@ -143,10 +147,19 @@ Antigüedad del saldo (partición exacta): Corriente $54,977.20 · Próx. 7d $55
 
 ## 11. Evidencia de que no se alteraron movimientos históricos
 
-- **Cero migraciones**, cero DDL, cero UPDATE/INSERT/DELETE sobre producción: todos los scripts forenses son SELECT de solo lectura vía Management API (`scripts/cxap-forensic-audit.mjs`, `cxap-forensic-detail.mjs`, re-ejecutables).
+- **Cero migraciones de datos**, cero UPDATE/INSERT/DELETE sobre producción: todos los scripts forenses son SELECT de solo lectura vía Management API (`scripts/cxap-forensic-audit.mjs`, `cxap-forensic-detail.mjs`, re-ejecutables).
 - Las pruebas de navegador fueron 100% lectura (navegación, filtros, expansión de historial); no se registró ni anuló ningún pago.
 - El único hallazgo de datos (pago $1,800 sobre servicio voided) queda **documentado con propuesta contable** (§5) sin ejecutar — requiere aprobación del propietario.
 - RLS intacto: la ruta sigue usando el cliente con el JWT de la sesión (`getSupabaseForSession`) y `store_id` obligatorio; sin cambios de políticas.
+
+## 11b. Único cambio de BD: REVOKE de seguridad, gobernado (2026-11-25)
+
+El SQL Security Gate (checks en vivo, read-only) venía fallando en **todos los PR corrientes** (incluido el #1708, previo a esta misión) por dos hallazgos PREEXISTENTES de producción, ajenos al diff de CxP (cero SQL):
+
+1. **`secdef_no_auth` (drift de allowlist):** `fin_post_payment_annulment`, `register_supplier_payment_multi` (ciclo CP-OPS-ENERVIDA aplicado a producción el 2026-11-24) y `cp_catmaestro001_renumber_auto_masters` nunca fueron alistadas. ACL verificada EN VIVO: ejecutores **{postgres, service_role}** — el patrón de sus hermanas ya listadas. → Añadidas a `ci-gate-allowlist.json` con justificación (cero exposición anon/authenticated).
+2. **`secdef_public_grant` (no admite allowlist por diseño del gate):** `add_reception_items` y `save_pending_reception_changes` — SECURITY DEFINER legado con el EXECUTE default de PostgreSQL para anon/authenticated, **cero llamadores en toda la aplicación** (verificado exhaustivamente en src/, e2e/, tests/, scripts/, docs/; el flujo real de recepciones usa confirm/void/delete_pending_reception y reverse_receipt_v2). → Cerrado con el patrón establecido del repo (precedentes 20261025130000, 20261026180000, 20261113120700, 20261120215000): migración `20261125153000` de REVOKE.
+
+**Canal gobernado (regla de oro §11g):** validación PREVIA en la BD aislada CostproE2E (aplicada y verificada: ACL {postgres, service_role}) → aplicación en producción UNA sola vez con el doble flag del guard CP-INFRA-019 (`ALLOW_PROD=read-only ALLOW_PROD_WRITE=I_UNDERSTAND node scripts/cxap-apply-revoke-legacy-fns.mjs`) → verificación post-aplicación re-ejecutable (`--check` OK) → evidencia del estado anterior y posterior registrada arriba y en el script. **No elimina funciones ni datos; endurece** (reduce superficie de ataque). Reversión si algún flujo no descubierto lo requiriera: `GRANT EXECUTE ... TO authenticated` (documentado).
 
 ## 12. Commit, PR y CI
 
@@ -165,7 +178,9 @@ En `download/evidencia/` (también referenciadas en el PR):
 
 ## 14. Instrucciones de reversión
 
-No hay migraciones que revertir (cero cambios de BD). La reversión del código es `git revert` de los commits de la rama (o no-merge del PR). Los scripts forenses son de solo lectura y pueden eliminarse sin impacto.
+- Código funcional (CxP): `git revert` de los commits de la rama (o no-merge del PR).
+- REVOKE de seguridad (§11b): `GRANT EXECUTE ON FUNCTION public.add_reception_items(uuid, jsonb, uuid) TO authenticated;` y `GRANT EXECUTE ON FUNCTION public.save_pending_reception_changes(uuid, jsonb, jsonb, jsonb, uuid) TO authenticated;` — SOLO si se descubriera un llamador no detectado (hoy: cero en toda la app).
+- Los scripts forenses son de solo lectura y pueden eliminarse sin impacto.
 
 ---
 
