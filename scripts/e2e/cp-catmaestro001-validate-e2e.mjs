@@ -26,11 +26,23 @@
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const E2E_REF = 'lguovmvrozxgssupkwpf';
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 if (!TOKEN) { console.error('FALLO: SUPABASE_ACCESS_TOKEN requerido'); process.exit(2); }
+
+// CP-INFRA-011: guard fail-closed de BD aislada (el script solo opera sobre
+// el proyecto CostproE2E — nunca producción). Requiere E2E_TARGET_KIND,
+// E2E_ALLOWED_REMOTE_REF y centinela true.
+const require2 = createRequire(import.meta.url);
+const { assertIsolatedDb } = require2('../../e2e/fixtures/assert-isolated-db.cjs');
+if (process.env.E2E_ALLOWED_REMOTE_REF && process.env.E2E_ALLOWED_REMOTE_REF !== E2E_REF) {
+  console.error('FALLO: E2E_ALLOWED_REMOTE_REF no coincide con el ref del script');
+  process.exit(2);
+}
+await assertIsolatedDb();
 if (E2E_REF === 'wthkddeleylijmonclxg') { console.error('FALLO: guard — ref de producción'); process.exit(2); }
 
 const api = `https://api.supabase.com/v1/projects/${E2E_REF}/database/query`;

@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 621,
-  "total_incluidos": 206,
+  "total_considerados": 623,
+  "total_incluidos": 208,
   "total_excluidos": 415,
-  "digest": "fb86edfd95019956fb04754d95c233cf460aa2a82dbc5ce1b048acee7ca65d1f",
+  "digest": "cd5211c69a16c9dace46c11f1120c53372a27c840b1985a972adb7d42fdec96c",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6146,6 +6146,28 @@
       "observaciones": [],
       "posicion": 206,
       "sha256_generado": "5b3ef59988e5aecdc4df644d88e87113aa8bc9c697058ef86855545127f8409d"
+    },
+    {
+      "nombre": "20261125130000_cp_catmaestro001_renumber_enervida_auto.sql",
+      "bytes": 18398,
+      "sha256_original": "f79c30a6b8f051f4bd4c18f13febe9666f5b7e1b327e0cae2f7ba882df070cd8",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261125",
+      "observaciones": [],
+      "posicion": 207,
+      "sha256_generado": "f79c30a6b8f051f4bd4c18f13febe9666f5b7e1b327e0cae2f7ba882df070cd8"
+    },
+    {
+      "nombre": "20261125131000_cp_catmaestro001_add_reception_items.sql",
+      "bytes": 21557,
+      "sha256_original": "30b325a55452a145fe9a08b9914fea23df68a7fbbbf4f5d530f3274b0780c2b7",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261125",
+      "observaciones": [],
+      "posicion": 208,
+      "sha256_generado": "30b325a55452a145fe9a08b9914fea23df68a7fbbbf4f5d530f3274b0780c2b7"
     },
     {
       "nombre": "AUDIT_FIXES.md",

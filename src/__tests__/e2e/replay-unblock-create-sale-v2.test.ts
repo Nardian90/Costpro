@@ -542,9 +542,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   saldo en confirm_pending_reception + backfill conservador) y
     //   20261125120100_cp_recep001_master_sku_consecutivo (consecutivo oficial
     //   del Catálogo Maestro; al FINAL del orden lexicográfico) = 206
-    expect(m.total_incluidos).toBe(206);
+    // CP-RECEPCIONES-CATALOGO-MAESTRO-001 (2026-11-25): +2 —
+    //   20261125130000 renumeración supervisada de los 16 AUTO-* de
+    //   ENT-000005-2026 y 20261125131000 altas de productos en borradores
+    //   (add_reception_items + save_pending_reception_changes; al FINAL del
+    //   orden lexicográfico — posiciones previas intactas) = 208
+    expect(m.total_incluidos).toBe(208);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(206);
+    expect(incluidos.length).toBe(208);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
