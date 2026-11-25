@@ -602,6 +602,11 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
         if (msg.includes('ERR_INVALID_TRANSITION')) return NextResponse.json({ error: msg.replace(/^.*ERR_INVALID_TRANSITION:\s*/, '') }, { status: 400 });
         if (msg.includes('ERR_SUPPLIER_REQUIRED')) return NextResponse.json({ error: 'Completa el proveedor antes de confirmar el servicio' }, { status: 400 });
         if (msg.includes('ERR_INVALID_AMOUNT')) return NextResponse.json({ error: 'El importe del servicio debe ser > 0 para confirmar' }, { status: 400 });
+        // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE2/4:
+        // guard de pagos vivos en cancelaciones (set_received_service_status).
+        if (msg.includes('ERR_SERVICE_HAS_UNRESOLVED_PAYMENTS')) {
+          return NextResponse.json({ error: msg, code: 'ERR_SERVICE_HAS_UNRESOLVED_PAYMENTS' }, { status: 409 });
+        }
         return NextResponse.json({ error: msg }, { status: 500 });
       }
       return NextResponse.json({ success: true, data: rpcResult });
@@ -619,6 +624,12 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
           const msg = rpcErr.message;
           if (msg.includes('ERR_SERVICE_NOT_FOUND_OR_NOT_ACTIVE')) return NextResponse.json({ error: 'Servicio no encontrado o no activo' }, { status: 404 });
           if (msg.includes('ERR_UNAUTHORIZED')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+          // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE2/4:
+          // guard de pagos vivos — 409 accionable con el mensaje estructurado
+          // del RPC (pagos_vivos=… importe_vivo=… total_documento=… saldo_actual=…).
+          if (msg.includes('ERR_SERVICE_HAS_UNRESOLVED_PAYMENTS')) {
+            return NextResponse.json({ error: msg, code: 'ERR_SERVICE_HAS_UNRESOLVED_PAYMENTS' }, { status: 409 });
+          }
           return NextResponse.json({ error: msg }, { status: 500 });
         }
         return NextResponse.json({ success: true, data: rpcResult });

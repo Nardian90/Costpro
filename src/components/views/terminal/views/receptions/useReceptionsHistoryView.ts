@@ -12,6 +12,21 @@ import { useDuplicateDocumentV2 } from '@/hooks/api/useDuplicateDocumentV2';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabaseClient';
+// CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 — FASE 4: guard
+// de pagos vivos antes de anular/revertir un documento con pagos aplicados.
+import {
+  fetchDocumentPayments,
+  computeLivePayments,
+  parseUnresolvedPaymentsError,
+  type LivePaymentsSummary,
+  type DocumentPaymentRow,
+} from '@/lib/payments/live-payments';
+
+export interface UnresolvedPaymentsState {
+  receipt: Receipt;
+  summary: Pick<LivePaymentsSummary, 'liveCount' | 'liveTotalCup' | 'netPaidCup'>;
+  liveRows: DocumentPaymentRow[];
+}
 
 export function useReceptionsHistoryView() {
   const { user } = useAuthStore();
@@ -37,6 +52,10 @@ export function useReceptionsHistoryView() {
   const deletePendingMutation = useDeletePendingReception();
   // MISIÓN RECEPCIONES: recepción pendiente cuya eliminación se confirma.
   const [deletingReceipt, setDeletingReceipt] = useState<Receipt | null>(null);
+  // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE4:
+  // recepción con pagos vivos cuya anulación/reversión queda bloqueada hasta
+  // resolver sus pagos (reversión oficial por pago).
+  const [unresolvedPayments, setUnresolvedPayments] = useState<UnresolvedPaymentsState | null>(null);
 
   // Document Actions Hooks
   const invertDocumentMutation = useInvertDocument();
@@ -125,7 +144,34 @@ export function useReceptionsHistoryView() {
     setSelectedReceiptId(receipt.id); // abre el modal existente en modo edición
   };
 
-  const handleVoidRequest = (receipt: Receipt) => {
+  /**
+   * CP-AP-ACCOUNTING-INTEGRITY-001 §FASE4 — pre-chequeo reutilizable de pagos
+   * vivos. Devuelve true (y abre el diálogo informativo) si el documento
+   * tiene pagos aplicados sin resolver; false si puede continuarse. El
+   * pre-chequeo NO es la barrera (el guard del RPC lo es, fail-closed en
+   * servidor): solo enriquece la experiencia antes de la confirmación.
+   */
+  const checkUnresolvedPayments = useCallback(async (receipt: Receipt): Promise<boolean> => {
+    if (!user?.activeStoreId) return false;
+    try {
+      const rows = await fetchDocumentPayments('receipt', receipt.id, user.activeStoreId);
+      const summary = computeLivePayments(rows);
+      if (summary.liveCount > 0) {
+        setUnresolvedPayments({ receipt, summary, liveRows: summary.liveRows });
+        return true;
+      }
+    } catch (e) {
+      logger.warn('DATABASE', 'RECEPTION_PAYMENTS_PRECHECK_FAILED', { e, receiptId: receipt.id });
+    }
+    return false;
+  }, [user?.activeStoreId]);
+
+  const handleVoidRequest = async (receipt: Receipt) => {
+    // CP-AP-ACCOUNTING-INTEGRITY-001 §FASE4: pre-chequeo de pagos vivos. Un
+    // documento con pagos confirmados/aplicados no se anula ignorando sus
+    // pagos: se guía al usuario a resolverlos primero (reversión oficial) y
+    // después vuelve a completar la anulación (misión §2 regla empresarial).
+    if (await checkUnresolvedPayments(receipt)) return;
     setSelectedReceiptId(receipt.id); // abre modal en modo anulación
     setEditingReceiptId(null);
     setVoidConfirmInput('');
@@ -146,6 +192,18 @@ export function useReceptionsHistoryView() {
     } catch (error) {
       logger.error('DATABASE', 'RECEPTION_VOID_FAILED', { error });
       const msg = error instanceof Error ? error.message : String(error);
+      // CP-AP-ACCOUNTING-INTEGRITY-001: backstop del guard server-side (la
+      // carrera cliente/servidor puede cambiar el estado entre ambos).
+      const guard = parseUnresolvedPaymentsError(msg);
+      if (guard) {
+        setUnresolvedPayments({
+          receipt,
+          summary: { liveCount: guard.liveCount, liveTotalCup: guard.liveTotalCup, netPaidCup: guard.totalDocumento - guard.saldoActual },
+          liveRows: [],
+        });
+        setSelectedReceiptId(null);
+        return;
+      }
       if (msg.includes('ERR_BACKDATED_DOCUMENT')) {
         toast.error('No se puede retroceder en el tiempo operativo. Revisa la "Fecha de Operación" en el dashboard MULTI-TIENDA.', { duration: 8000 });
       } else {
@@ -271,11 +329,14 @@ export function useReceptionsHistoryView() {
   // R2: state para modal de inversión estilado (reemplaza confirm() nativo)
   const [invertConfirmReceipt, setInvertConfirmReceipt] = useState<Receipt | null>(null);
 
-  const handleInvert = (receipt: Receipt) => {
+  const handleInvert = async (receipt: Receipt) => {
     if (receipt.status === 'voided') {
       toast.error('Esta recepción ya ha sido anulada.');
       return;
     }
+    // CP-AP-ACCOUNTING-INTEGRITY-001 §FASE4: pre-chequeo de pagos vivos — la
+    // reversión de una recepción con pagos aplicados exige resolverlos antes.
+    if (await checkUnresolvedPayments(receipt)) return;
     // Abrir modal estilado en vez de confirm() nativo
     setInvertConfirmReceipt(receipt);
   };
@@ -293,7 +354,19 @@ export function useReceptionsHistoryView() {
       setInvertConfirmReceipt(null);
     } catch (error) {
       logger.error('DATABASE', 'RECEPTION_INVERT_FAILED', { error });
+      // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001: backstop
+      // del guard server-side (carrera cliente/servidor tras el pre-chequeo).
+      const msg = error instanceof Error ? error.message : String(error);
+      const guard = parseUnresolvedPaymentsError(msg);
       setInvertConfirmReceipt(null);
+      if (guard) {
+        setUnresolvedPayments({
+          receipt: invertConfirmReceipt,
+          summary: { liveCount: guard.liveCount, liveTotalCup: guard.liveTotalCup, netPaidCup: guard.totalDocumento - guard.saldoActual },
+          liveRows: [],
+        });
+        return;
+      }
     }
   };
 
@@ -483,6 +556,17 @@ export function useReceptionsHistoryView() {
     // R2: modal de inversión estilado
     invertConfirmReceipt,
     handleInvertConfirm,
-    setInvertConfirmReceipt
+    setInvertConfirmReceipt,
+
+    // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001: guard de
+    // pagos vivos (diálogo informativo + acceso al historial de pagos).
+    unresolvedPayments,
+    clearUnresolvedPayments: () => setUnresolvedPayments(null),
+    openReceiptPayments: (receiptId: string) => {
+      setUnresolvedPayments(null);
+      setSelectedReceiptId(receiptId);
+      setEditingReceiptId(null);
+    },
+    checkUnresolvedPayments,
   };
 }

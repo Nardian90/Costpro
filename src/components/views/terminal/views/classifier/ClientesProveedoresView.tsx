@@ -26,13 +26,18 @@ import React, { useMemo, useState } from 'react';
 import {
   Plus, Search, RotateCcw, Loader2, Users, X, Phone, Mail, MapPin,
   Building2, User, Share2, HardDrive, Pencil, Eye, Power, Trash2,
-  Link2, Unlink, History, ShieldAlert, CheckCircle2,
+  Link2, Unlink, History, ShieldAlert, CheckCircle2, AlertTriangle,
 } from 'lucide-react';
+// CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE 6.4:
+// advertencia de duplicados ANTES de crear un tercero maestro.
+import { normalizeSupplierName } from '@/hooks/api/useSuppliers';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 // CP-UX-FINAL-POLISH-003 §3.1: sistema unificado de diálogos (sin confirm/prompt nativos).
 import { useDialogs } from '@/components/ui/dialogs';
 import { useAuthStore } from '@/store';
+import { supabase } from '@/lib/supabaseClient';
 import { isAdminLevel } from '@/lib/roles';
 import {
   useSearchMasterParties, usePartyStoreLink, usePartyChangeLog,
@@ -596,6 +601,10 @@ function PartyFormModal({ party, onClose, storeId }: {
   const createMut = useCreateMasterParty(storeId);
   const updateMut = useUpdateMasterParty(storeId);
   const [submitting, setSubmitting] = useState(false);
+  // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE 6.4:
+  // coincidencias posibles detectadas ANTES de crear (nombre normalizado,
+  // NIT/CI o teléfono) — advertencia previa; la decisión es del usuario.
+  const [dupWarning, setDupWarning] = useState<{ name: string; rows: { id: string; name: string; code: string | null; tax_id: string | null; phone: string | null }[] } | null>(null);
   const [form, setForm] = useState({
     name: party?.name || '',
     code: party?.code || '',
@@ -611,9 +620,65 @@ function PartyFormModal({ party, onClose, storeId }: {
 
   const set = (k: keyof typeof form, v: string | boolean) => setForm(prev => ({ ...prev, [k]: v }));
 
+  /**
+   * CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE 6.4 —
+   * busca coincidencias razonables ANTES de crear: nombre NORMALIZADO
+   * (espaciado/diacríticos/caso), NIT/CI o teléfono, contra el clasificador
+   * (maestro + locales de la tienda). La unicidad NO es estricta: el usuario
+   * decide tras la advertencia (misión §8.4).
+   */
+  async function findPartyDuplicates(): Promise<{ id: string; name: string; code: string | null; tax_id: string | null; phone: string | null }[]> {
+    if (!storeId) return [];
+    const nn = normalizeSupplierName(form.name);
+    if (!nn) return [];
+    const tax = form.tax_id.trim();
+    const phone = form.phone.replace(/\D/g, '');
+    const { data, error } = await supabase.rpc('search_master_parties', {
+      p_store_id: storeId,
+      p_search: form.name.trim(),
+      p_kind: 'ambos',
+      p_status: 'active',
+      p_limit: 30,
+      p_offset: 0,
+    });
+    if (error || !Array.isArray(data)) return [];
+    const rows = data as Array<Record<string, unknown>>;
+    const isExact = (r: Record<string, unknown>) =>
+      String(r.name ?? '').trim().toLowerCase() === form.name.trim().toLowerCase();
+    return rows
+      .filter(r => {
+        if (isExact(r)) return true; // la exacta también se advierte (el maestro permite repetir nombre)
+        if (normalizeSupplierName(String(r.name ?? '')) === nn) return true;
+        if (tax && String(r.tax_id ?? '').trim().toUpperCase() === tax.toUpperCase()) return true;
+        if (phone.length >= 6 && String(r.phone ?? '').replace(/\D/g, '') === phone) return true;
+        return false;
+      })
+      .map(r => ({
+        id: String(r.id),
+        name: String(r.name ?? ''),
+        code: (r.code as string | null) ?? null,
+        tax_id: (r.tax_id as string | null) ?? null,
+        phone: (r.phone as string | null) ?? null,
+      }));
+  }
+
   async function handleSubmit() {
     if (!form.name.trim()) { toast.error('El nombre es obligatorio'); return; }
     if (!form.is_client && !form.is_supplier) { toast.error('Marca al menos un rol: cliente o proveedor'); return; }
+    // CP-AP-ACCOUNTING-INTEGRITY-001 §6.4: advertencia previa de duplicados
+    // SOLO en creación (la edición de un existente es legítima).
+    if (!isEdit) {
+      const dups = await findPartyDuplicates();
+      if (dups.length > 0) {
+        setDupWarning({ name: form.name.trim(), rows: dups });
+        return;
+      }
+    }
+    await doSubmit();
+  }
+
+  /** Creación/edición real (tras superar —o decidir continuar— la advertencia). */
+  async function doSubmit() {
     setSubmitting(true);
     try {
       if (isEdit) {
@@ -751,6 +816,53 @@ function PartyFormModal({ party, onClose, storeId }: {
           className={cn('w-full rounded-xl bg-primary text-primary-foreground text-sm font-black uppercase hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2', touch)}>
           {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</> : <><Plus className="w-4 h-4" /> {isEdit ? 'Guardar Cambios' : 'Crear Tercero'}</>}
         </button>
+
+        {/* CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE 6.4:
+            advertencia de posibles duplicados ANTES de crear el tercero. */}
+        <AlertDialog open={!!dupWarning} onOpenChange={(o) => { if (!o) setDupWarning(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500" aria-hidden="true" />
+                Posible tercero duplicado
+              </AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="text-sm space-y-2">
+                  <p>
+                    Antes de crear <strong>«{dupWarning?.name}»</strong> revisa si ya existe:
+                    coincide por nombre similar, NIT/CI o teléfono con {dupWarning?.rows.length}
+                    {' '}{dupWarning?.rows.length === 1 ? 'registro' : 'registros'} del clasificador.
+                  </p>
+                  <ul className="space-y-2">
+                    {dupWarning?.rows.map((r) => (
+                      <li key={r.id} className="rounded-lg border border-border p-2">
+                        <p className="text-sm font-bold">{r.name}</p>
+                        <p className="text-[11px] text-muted-foreground">
+                          {r.code ? `Código ${r.code}` : 'Sin código'}
+                          {r.tax_id ? ` · NIT: ${r.tax_id}` : ''}
+                          {r.phone ? ` · ${r.phone}` : ''}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-[11px] text-muted-foreground">
+                    Si son personas o empresas distintas, puedes crear el registro de todos modos.
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+              <button type="button" onClick={() => setDupWarning(null)}
+                className="px-4 py-2 rounded-xl border border-border hover:bg-muted text-sm font-bold">
+                Cancelar y revisar
+              </button>
+              <button type="button" onClick={() => { setDupWarning(null); doSubmit(); }} disabled={submitting}
+                className="px-4 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-bold disabled:opacity-50">
+                {submitting ? 'Creando...' : 'Crear de todos modos'}
+              </button>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

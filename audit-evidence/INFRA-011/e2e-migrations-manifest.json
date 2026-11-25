@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 627,
-  "total_incluidos": 212,
+  "total_considerados": 630,
+  "total_incluidos": 215,
   "total_excluidos": 415,
-  "digest": "d098fa275e60011365b4b0a73382ec2ff1e21ee64470ebbc9c21cd6bba04c121",
+  "digest": "4f3c8333872cbb6c70701f33043aba314aa0f257998ab0c530928d755c403197",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6212,6 +6212,39 @@
       "observaciones": [],
       "posicion": 212,
       "sha256_generado": "cc960246fa67e385daa554686da39b361f3cf1544bfc223de96dc447d11680ac"
+    },
+    {
+      "nombre": "20261126120000_cp_apai_payment_lifecycle_guards.sql",
+      "bytes": 26900,
+      "sha256_original": "f20fc03ce23de48821365c2062e586954b2f1507d1346f2ae6409549364b8fba",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261126",
+      "observaciones": [],
+      "posicion": 213,
+      "sha256_generado": "f20fc03ce23de48821365c2062e586954b2f1507d1346f2ae6409549364b8fba"
+    },
+    {
+      "nombre": "20261126120100_cp_apai_tiendapueblo_supplier_link.sql",
+      "bytes": 5048,
+      "sha256_original": "9d2984b312a2195179238188efdda818d0ae37a1f9453b1a1d5ef34dd084ca7b",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261126",
+      "observaciones": [],
+      "posicion": 214,
+      "sha256_generado": "9d2984b312a2195179238188efdda818d0ae37a1f9453b1a1d5ef34dd084ca7b"
+    },
+    {
+      "nombre": "20261126120200_cp_apai_void_service_payment_engine_fix.sql",
+      "bytes": 6649,
+      "sha256_original": "c36cfa7a0cac0acbeb09fa1cad8e856871dffcc2be5927869dfa57c3fb8c5f90",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261126",
+      "observaciones": [],
+      "posicion": 215,
+      "sha256_generado": "c36cfa7a0cac0acbeb09fa1cad8e856871dffcc2be5927869dfa57c3fb8c5f90"
     },
     {
       "nombre": "AUDIT_FIXES.md",

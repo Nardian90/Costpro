@@ -1,0 +1,64 @@
+{
+  "mision": "CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001",
+  "fase": "7 — verificación post-corrección",
+  "at": "2026-11-25T17:53:28.785Z",
+  "checks": [
+    {
+      "name": "Contra-fila Pixelarte existe (1)",
+      "pass": true,
+      "detail": "reversals=1"
+    },
+    {
+      "name": "La contra-fila es sobre documento anulado (excluida de caja por regla)",
+      "pass": true
+    },
+    {
+      "name": "SRV-20261026-00087 vinculado al canónico",
+      "pass": true,
+      "detail": "supplier=Tienda Pueblo → Tienda Pueblo (03988f54)"
+    },
+    {
+      "name": "Importes intactos (total=400, pagado=400, active)",
+      "pass": true
+    },
+    {
+      "name": "Audit SR_SUPPLIER_NORMALIZED registrado",
+      "pass": true
+    },
+    {
+      "name": "Identidad contable Total − Pagado = Saldo",
+      "pass": true
+    },
+    {
+      "name": "Suma por documentos == suma por proveedores",
+      "pass": true
+    },
+    {
+      "name": "Cero pagos vivos sobre servicios anulados (caso Pixelarte cerrado)",
+      "pass": true,
+      "detail": "vivos=0 Σ=$0.00"
+    },
+    {
+      "name": "Una sola reversión por pago (uq_payment_reversal_origin)",
+      "pass": true
+    },
+    {
+      "name": "Cero pagos huérfanos (service)",
+      "pass": true
+    },
+    {
+      "name": "F-23112026: obligación cancelada (paid=0, unpaid)",
+      "pass": true
+    },
+    {
+      "name": "La variante «TiendaPueblo» desapareció (todos bajo Tienda Pueblo)",
+      "pass": true,
+      "detail": "servicios pueblo=21 (esperado 21 = 20 + 1 saneado)"
+    },
+    {
+      "name": "Las 3 recepciones sin proveedor se conservan como excepción documentada",
+      "pass": true,
+      "detail": "$19,435.00 pendientes de identificación"
+    }
+  ]
+}

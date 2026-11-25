@@ -30,6 +30,15 @@ import PaymentRowsEditor, {
 // búsqueda, misma alta al vuelo y mismo snapshot de identificación.
 import { SupplierSelector, type SupplierSelection } from '@/components/views/terminal/views/inventory/SupplierSelector';
 import { ServiceTypesManagerModal } from './ServiceTypesManagerModal';
+// CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 — FASE 4: guard
+// de pagos vivos antes de anular un servicio con pagos aplicados.
+import { UnresolvedPaymentsDialog } from '@/components/payments/UnresolvedPaymentsDialog';
+import {
+  fetchDocumentPayments,
+  computeLivePayments,
+  parseUnresolvedPaymentsError,
+  type DocumentPaymentRow,
+} from '@/lib/payments/live-payments';
 // MISIÓN POLÍTICA TEMPORAL (2026-10-18): fecha del servicio seleccionable —
 // el RPC create_received_service_v2 ya aceptaba/validaba p_service_date,
 // pero la UI nunca lo exponía y el default CURRENT_DATE (UTC del servidor
@@ -121,6 +130,13 @@ export default function ReceivedServicesView() {
   const [deleteTarget, setDeleteTarget] = useState<ReceivedService | null>(null);
   const [draftActionReason, setDraftActionReason] = useState('');
   const [draftActionBusy, setDraftActionBusy] = useState(false);
+  // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE4:
+  // servicio con pagos vivos cuya anulación queda bloqueada hasta resolverlos.
+  const [unresolvedPayments, setUnresolvedPayments] = useState<{
+    service: ReceivedService;
+    summary: { liveCount: number; liveTotalCup: number; netPaidCup: number };
+    liveRows: DocumentPaymentRow[];
+  } | null>(null);
 
   const fetchServices = useCallback(async () => {
     if (!user?.activeStoreId) return;
@@ -346,6 +362,24 @@ export default function ReceivedServicesView() {
   };
 
   const handleVoid = async (id: string) => {
+    // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE4:
+    // pre-chequeo de pagos vivos — un servicio con pagos confirmados o
+    // aplicados NO se anula ignorando sus pagos: primero se resuelve cada pago
+    // con la reversión oficial y después se completa la anulación (misión §2).
+    const svc = services.find(s => s.id === id);
+    if (svc && user?.activeStoreId) {
+      try {
+        const rows = await fetchDocumentPayments('service', id, user.activeStoreId);
+        const summary = computeLivePayments(rows);
+        if (summary.liveCount > 0) {
+          setUnresolvedPayments({ service: svc, summary, liveRows: summary.liveRows });
+          return;
+        }
+      } catch {
+        // El pre-chequeo NO bloquea: el guard del RPC (fail-closed servidor)
+        // es la barrera real; aquí solo se enriquece la UX.
+      }
+    }
     // CP-UX-FINAL-POLISH-003 §3.1: confirmación propia (antes confirm() nativo).
     const ok = await dialogs.confirm({
       title: 'Anular servicio',
@@ -360,7 +394,21 @@ export default function ReceivedServicesView() {
         headers: authHeaders,
         body: JSON.stringify({ service_id: id, action: 'void' }),
       });
-      if (!res.ok) throw new Error('Error al anular');
+      if (!res.ok) {
+        // CP-AP-ACCOUNTING-INTEGRITY-001: backstop del guard server-side con
+        // guía accionable (nunca error genérico — misión §6).
+        const err = await res.json().catch(() => ({}));
+        const guard = parseUnresolvedPaymentsError(err.error || err.message || '');
+        if (guard && svc) {
+          setUnresolvedPayments({
+            service: svc,
+            summary: { liveCount: guard.liveCount, liveTotalCup: guard.liveTotalCup, netPaidCup: guard.totalDocumento - guard.saldoActual },
+            liveRows: [],
+          });
+          return;
+        }
+        throw new Error(err.error || 'Error al anular');
+      }
       toast.success('Servicio anulado');
       fetchServices();
     } catch (e: any) {
@@ -693,6 +741,25 @@ export default function ReceivedServicesView() {
         />
       )}
 
+      {/* CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE4:
+          diálogo del guard de pagos vivos — el servicio no se anula hasta
+          resolver cada pago con la reversión oficial; el botón lleva al
+          historial de pagos del propio servicio (pestaña Pagos). */}
+      <UnresolvedPaymentsDialog
+        open={!!unresolvedPayments}
+        onClose={() => setUnresolvedPayments(null)}
+        docKind="service"
+        docLabel={unresolvedPayments?.service?.service_number || unresolvedPayments?.service?.reference_doc || ''}
+        supplier={unresolvedPayments?.service?.supplier}
+        totalCup={Number(unresolvedPayments?.service?.total_amount ?? 0)}
+        summary={unresolvedPayments?.summary ?? { liveCount: 0, liveTotalCup: 0, netPaidCup: 0 }}
+        liveRows={unresolvedPayments?.liveRows}
+        onViewPayments={unresolvedPayments?.service ? () => {
+          setDetailService(unresolvedPayments!.service);
+          setUnresolvedPayments(null);
+        } : undefined}
+      />
+
       {/* ── ADN-010: confirmación de CANCELAR borrador ──
           El documento se conserva con su trazabilidad (estado Cancelado);
           la operación viaja por el flujo oficial set_received_service_status. */}
@@ -890,7 +957,14 @@ function ServiceDetailModal({
 
   useEffect(() => { fetchPayments(); fetchLinks(); }, [fetchPayments, fetchLinks]);
 
-  const totalPaid = payments.reduce((s, p) => s + Number(p.amount_cup || p.amount), 0);
+  // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001: el total
+  // pagado NETEA las contra-filas 'reversal' (mismo criterio del trigger
+  // update_payment_status y de PaymentHistoryRow) — sin esto, tras revertir
+  // un pago el modal sobreestimaba lo pagado y subestimaba el saldo.
+  const totalPaid = payments.reduce(
+    (s, p) => s + ((p as { direction?: string | null }).direction === 'reversal' ? -1 : 1) * Number(p.amount_cup || p.amount),
+    0,
+  );
   const balance = service.total_amount - totalPaid;
   const paymentStatus = balance <= 0 ? 'paid' : totalPaid > 0 ? 'partial' : 'unpaid';
 
@@ -1062,9 +1136,14 @@ function ServiceDetailModal({
             <div className="flex items-center justify-between">
               <span className={cn("px-3 py-1 rounded-full text-[10px] font-black uppercase border", statusBadge.color)}>{statusBadge.label}</span>
               {/* ADN-008 §7.3: los pagos existen SOLO tras la confirmación —
-                  un borrador no admite registros de pago (no hay obligación). */}
+                  un borrador no admite registros de pago (no hay obligación).
+                  CP-AP-ACCOUNTING-INTEGRITY-001: tampoco un documento anulado o
+                  cancelado (el RPC lo bloquea con ERR_SERVICE_NOT_ACTIVE; la UI
+                  no debe ofrecer el botón — deuda detectada en la auditoría). */}
               {service.status === 'draft' ? (
                 <span className="text-[10px] font-bold text-muted-foreground">Confirma el servicio para registrar pagos</span>
+              ) : service.status !== 'active' ? (
+                <span className="text-[10px] font-bold text-muted-foreground">Documento {service.status === 'voided' ? 'anulado' : 'cancelado'} — sin obligación pagable</span>
               ) : (
                 <button onClick={() => setShowForm(!showForm)} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-[10px] font-black uppercase hover:opacity-90 flex items-center gap-1">
                   <Plus className="w-3 h-3" /> Registrar Pago

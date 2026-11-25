@@ -494,18 +494,47 @@ test.describe.serial('CP-FIN-003 — generaciones contables + pagos universales 
     expect(movsOf(caja, id).filter((m) => m.sense === 'credito')).toHaveLength(1);
   });
 
-  // §12.14 — Anulación del documento: asiento compensatorio, pagos tratados
-  test('A14 · anulación de servicio pagado: compensatorio reversa gasto y obligación/pago', async ({ request }) => {
+  // §12.14 — Anulación del documento con pagos: MISIÓN
+  // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 (regla §2):
+  // un documento con pagos vivos NO se anula ignorándolos. Orden oficial:
+  // 1) el intento directo queda BLOQUEADO (409 ERR_SERVICE_HAS_UNRESOLVED_PAYMENTS),
+  // 2) se resuelve el pago con la reversión oficial (POST /api/payments/[id]
+  //    → contra-fila + compensatorio del asiento del pago),
+  // 3) con el documento sin pagos vivos, la anulación procede y su
+  //    compensatorio revierte el reconocimiento — neto 0 en gasto,
+  //    obligación y caja.
+  test('A14 · anulación de servicio pagado: bloqueo → reversión oficial del pago → anulación → neto 0', async ({ request }) => {
     const id = await createService(request, { total: 600, type: 'Otros' });
     const r = await pay(request, 'service', id, [
       { payment_method: 'cash', amount: 600, currency: 'CUP', exchange_rate: 1 },
     ]);
     expect(r.ok).toBe(true);
+
+    // 1) El intento directo de anulación queda bloqueado por el guard.
+    const blocked = await withRlBackoff(() => request.patch('/api/received-services', {
+      headers: apiHeaders(adminToken),
+      data: { service_id: id, action: 'void', reason: `cpfin003 anulación ${SFX}` },
+    }));
+    expect(blocked.status()).toBe(409);
+    const blockedBody = await blocked.json();
+    expect(blockedBody.code ?? blockedBody.error).toContain('ERR_SERVICE_HAS_UNRESOLVED_PAYMENTS');
+
+    // 2) Reversión oficial del pago (canal canónico de la misión).
+    const payRows = await sb.select<{ id: string }>('payment_transactions', `ref_id=eq.${id}&select=id&order=created_at.asc&limit=1`);
+    expect(payRows.length).toBe(1);
+    const rev = await withRlBackoff(() => request.post(`/api/payments/${payRows[0].id}`, {
+      headers: apiHeaders(adminToken),
+      data: { reason: `cpfin003 reversión oficial previa a anulación ${SFX}` },
+    }));
+    expect(rev.ok(), await rev.text()).toBe(true);
+
+    // 3) Con el pago resuelto, la anulación procede.
     const res = await withRlBackoff(() => request.patch('/api/received-services', {
       headers: apiHeaders(adminToken),
       data: { service_id: id, action: 'void', reason: `cpfin003 anulación ${SFX}` },
     }));
     expect(res.ok(), await res.text()).toBe(true);
+
     // El compensatorio revierte TODO: neto 0 en gasto, obligación y caja
     const gas = await detail(adminToken, storeA, 'GAS_SERVICIOS');
     expect(netOf(gas, id)).toBe(0);
