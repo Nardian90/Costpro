@@ -571,14 +571,16 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   save_pending_reception_changes — mismo hallazgo cerrado de forma
     //   independiente y coincidente con 20261125132000; al FINAL del orden
     //   lexicográfico — posiciones previas intactas) = 212
-    // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 (2026-11-26): +2 —
+    // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 (2026-11-26): +3 —
     //   20261126120000 guards del ciclo de vida de pagos (4 RPCs reemitidas
-    //   con guard de pagos vivos) y 20261126120100 normalización gobernada
-    //   del proveedor del SRV-20261026-00087 (ambas al FINAL del orden
-    //   lexicográfico — posiciones previas intactas) = 214
-    expect(m.total_incluidos).toBe(214);
+    //   con guard de pagos vivos), 20261126120100 normalización gobernada
+    //   del proveedor del SRV-20261026-00087 y 20261126120200 fix del bug
+    //   latente del trigger de inmutabilidad (motor de pagos netea campos
+    //   de pago de servicios voided — habilita la remediación F-23112026).
+    //   Todas al FINAL del orden lexicográfico — posiciones previas intactas = 215
+    expect(m.total_incluidos).toBe(215);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(214);
+    expect(incluidos.length).toBe(215);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

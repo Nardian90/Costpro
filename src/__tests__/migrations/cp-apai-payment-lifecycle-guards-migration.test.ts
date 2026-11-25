@@ -134,3 +134,36 @@ describe('migración 20261126120100 — saneamiento Tienda Pueblo / TiendaPueblo
     expect(sqlTienda).toContain('rollback_hint');
   });
 });
+
+describe('migración 20261126120200 — fix del trigger de inmutabilidad (motor de pagos sobre voided)', () => {
+  const sqlFix = readFileSync(resolve(process.cwd(), 'supabase/migrations/20261126120200_cp_apai_void_service_payment_engine_fix.sql'), 'utf8');
+
+  it('existe, transaccional y reemite prevent_received_service_edit', () => {
+    expect(sqlFix).toContain('20261126120200');
+    expect(sqlFix).toMatch(/^BEGIN;/m);
+    expect(sqlFix).toMatch(/COMMIT;/m);
+    expect(sqlFix).toContain('CREATE OR REPLACE FUNCTION public.prevent_received_service_edit');
+  });
+
+  it('habilita la reversión oficial sobre servicios voided (bug latente F-23112026)', () => {
+    // La cadena del fallo: reverse_supplier_payment → contra-fila →
+    // update_payment_status → UPDATE del voided → ERR_SERVICE_VOIDED.
+    // El fix permite el neteo SOLO de campos de pago con estado intacto.
+    expect(sqlFix).toContain('solo el motor de pagos netea sus campos de pago');
+    expect(sqlFix).toContain('NEW.status IS DISTINCT FROM OLD.status');
+    expect(sqlFix).toContain('NEW.total_amount IS DISTINCT FROM OLD.total_amount');
+    expect(sqlFix).toContain('NEW.supplier IS DISTINCT FROM OLD.supplier');
+    expect(sqlFix).toContain('NEW.service_number IS DISTINCT FROM OLD.service_number');
+  });
+
+  it('conserva el resto del contrato del trigger (inmutabilidad estructural)', () => {
+    expect(sqlFix).toContain('ERR_SERVICE_NUMBER_IMMUTABLE');
+    expect(sqlFix).toContain('ERR_STORE_ID_IMMUTABLE');
+    expect(sqlFix).toContain('ERR_TOTAL_BELOW_PAID');
+    expect(sqlFix).toContain('ERR_TOTAL_BELOW_DISTRIBUTIONS');
+    expect(sqlFix).toContain('PERFORM public.validate_operation_date(NEW.service_date::timestamp with time zone, NEW.store_id)');
+    // Las configs de escape de los RPCs se conservan.
+    expect(sqlFix).toContain("current_setting('app.is_void_rpc', true)");
+    expect(sqlFix).toContain("current_setting('app.is_status_change_rpc', true)");
+  });
+});

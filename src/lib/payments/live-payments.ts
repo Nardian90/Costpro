@@ -98,9 +98,17 @@ export interface UnresolvedPaymentsErrorDetail {
  *   ERR_RECEIPT_HAS_UNRESOLVED_PAYMENTS: pagos_vivos=2 importe_vivo=1800.00
  *   total_documento=1800.00 saldo_actual=0.00 — ...
  * Devuelve null si el error no es del guard (los demás flujos siguen su curso).
+ * Acepta string, Error o objeto plano tipo PostgrestError ({message}).
  */
 export function parseUnresolvedPaymentsError(message: unknown): UnresolvedPaymentsErrorDetail | null {
-  const msg = typeof message === 'string' ? message : message instanceof Error ? message.message : '';
+  const raw = typeof message === 'string'
+    ? message
+    : message instanceof Error
+      ? message.message
+      : typeof (message as { message?: unknown } | null)?.message === 'string'
+        ? ((message as { message: string }).message)
+        : '';
+  const msg = raw;
   const m = msg.match(/ERR_(RECEIPT|SERVICE)_HAS_UNRESOLVED_PAYMENTS/);
   if (!m) return null;
   const pick = (key: string): number => {
