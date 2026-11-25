@@ -17,10 +17,8 @@ import {
   type DocumentPaymentRow,
 } from '@/lib/payments/live-payments';
 
-const row = (over: Partial<DocumentPaymentRow> & Pick<DocumentPaymentRow, 'id' | 'payment_date'>): DocumentPaymentRow => ({
-  amount: 100,
-  amount_cup: 100,
-  payment_date: '2026-11-23T21:34:51Z',
+const row = (over: Partial<DocumentPaymentRow> & { id: string }): DocumentPaymentRow => ({
+  ...({ amount: 100, amount_cup: 100, payment_date: '2026-11-23T21:34:51Z' } as DocumentPaymentRow),
   ...over,
 });
 

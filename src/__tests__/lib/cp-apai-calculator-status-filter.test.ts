@@ -40,7 +40,7 @@ const service = (over: Partial<PayableServiceRow> & Pick<PayableServiceRow, 'id'
 
 const noTxns: PayableTxnRow[] = [];
 const noCommissions: PayableCommissionRow[] = [];
-const query = { tab: 'all', category: 'all', now: '2026-11-26' } as unknown as Parameters<typeof computeAccountsPayable>[3];
+const query = { tab: 'all', category: 'all', now: '2026-11-26' } as unknown as Parameters<typeof computeAccountsPayable>[4];
 
 describe('calculador CxP — filtro defensivo de estado (misión §FASE 7/8.E)', () => {
   it('receipts voided y reversed quedan FUERA de las obligaciones', () => {
