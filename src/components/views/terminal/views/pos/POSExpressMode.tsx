@@ -195,7 +195,23 @@ export function POSExpressMode({
   // del proceso de cobro — viaja como saleNotes al RPC transactions.notes).
   const [saleNotes, setSaleNotes] = useState("");
   // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: línea con «Configurar pago» abierto.
+  // `payingItem` conserva la IDENTIDAD de la línea al abrir (snapshot).
+  // FIX CP-POS-SMOKE-PRODUCTION-001 (cert E2E): el modal debe reflejar el
+  // estado VIVO de la fila de pago — el snapshot congelaba select/validación/
+  // campo de referencia (el cajero no veía lo que seleccionaba y «Agregar
+  // Pago» no mostraba la fila nueva). El item renderizado se resuelve del
+  // store con suscripción reactiva: cada cambio (método/moneda/importe/
+  // referencia/filas) re-renderiza el modal con los valores reales.
   const [payingItem, setPayingItem] = useState<CartItem | null>(null);
+  const livePayingItem = useCartStore((s) =>
+    payingItem
+      ? s.items.find(
+          (i) =>
+            i.product_id === payingItem.product_id
+            && (i.variant_id ?? null) === (payingItem.variant_id ?? null),
+        ) ?? null
+      : null,
+  );
   // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: carrito a pantalla completa en móvil.
   const [cartOpenMobile, setCartOpenMobile] = useState(false);
   // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001: resumen de pagos desplegable.
@@ -1894,9 +1910,10 @@ export function POSExpressMode({
       )}
 
       {/* CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (FASE 2): «Configurar pago»
-          de una línea — el MISMO editor de filas de pago del carrito clásico. */}
+          de una línea — el MISMO editor de filas de pago del carrito clásico.
+          FIX CP-POS-SMOKE-PRODUCTION-001: item VIVO del store (ver arriba). */}
       <POSExpressPaymentModal
-        item={payingItem}
+        item={livePayingItem}
         onClose={() => setPayingItem(null)}
       />
 

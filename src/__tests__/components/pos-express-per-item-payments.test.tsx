@@ -193,6 +193,28 @@ describe('CP-POS-PER-ITEM-PAYMENTS — carrito Express con pagos por producto', 
     expect(within(modal).getByText(/Importe del producto/i)).toBeTruthy();
   });
 
+  it('§FIX-SMOKE-001 · el modal refleja el estado VIVO de la fila (CP-POS-SMOKE-PRODUCTION-001)', () => {
+    // Regresión: el modal montaba el snapshot del item al abrir — el cajero
+    // no veía sus cambios (método/importe/validación/referencia congelados).
+    // El fix resuelve el item del store con suscripción reactiva.
+    useCartStore.setState({ items: [makeItem(P_CAFE, [row('cash', 700)])] });
+    const { cart } = renderExpress();
+    fireEvent.click(within(cart).getAllByRole('button', { name: /Configurar pago/i })[0]);
+
+    const modal = document.body.querySelector('[data-testid="pos-express-payment-modal"]') as HTMLElement;
+    expect(modal).toBeTruthy();
+    expect(within(modal).getByText(/Pago completo/i)).toBeTruthy();
+
+    // Ajuste del importe a 900 (sobrepago +200) SIN cerrar ni reabrir el modal
+    const amountInput = within(modal).getByRole('spinbutton', { name: /Monto fila 1/i }) as HTMLInputElement;
+    fireEvent.change(amountInput, { target: { value: '900' } });
+
+    // Valor vivo en el input (no el snapshot 700)
+    expect((within(modal).getByRole('spinbutton', { name: /Monto fila 1/i }) as HTMLInputElement).value).toBe('900');
+    // Validación canónica reactiva: Sobrepago visible
+    expect(within(modal).getByText(/Sobrepago/i)).toBeTruthy();
+  });
+
   it('D · método DERIVADO: cash + transfer en líneas → «mixed» en el carrito (sin selector global)', () => {
     useCartStore.setState({ items: [
       makeItem(P_CAFE, [row('cash', 700)]),
