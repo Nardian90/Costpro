@@ -28,10 +28,13 @@ vi.mock('@/lib/with-security', () => ({
 }));
 
 const rpcMock = vi.fn();
+const sessionRpcMock = vi.fn();
 
 // ADN-009 (§5): la RPC batch es service_role EXCLUSIVA → el lote de 'service'
-// viaja por getSupabaseAdminSafe() (mockeado aquí); el rpcMock captura TODAS
-// las llamadas (batch por el cliente admin y loop receipt por el de sesión).
+// viaja por getSupabaseAdminSafe() (mockeado aquí). R-25/F011-001: el loop de
+// production_order|work TAMBIÉN usa el cliente ADMIN tras el gate
+// canManageStore (antes usaba el cliente de sesión y la ACL service_role de
+// la función lo denegaba — pagos OT rotos desde REM-INV-6).
 const adminClientMock = { rpc: rpcMock };
 
 vi.mock('@/lib/supabase-admin', () => ({
@@ -49,11 +52,21 @@ const sessionClientMock = {
         }),
       };
     }
+    // R-25: pre-check de pertenencia OT↔tienda vía cliente de sesión (RLS)
+    if (table === 'production_orders') {
+      return {
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: { id: 'x', store_id: 'a1111111-1111-4111-8111-111111111111' }, error: null }),
+          }),
+        }),
+      };
+    }
     throw new Error(`tabla inesperada en el test: ${table}`);
   },
-  // Loop histórico (receipt/production_order/work): el RPC se llama con el
-  // cliente de SESIÓN. Mismo rpcMock para verificar el recuento global.
-  rpc: rpcMock,
+  // Solo lecturas (RLS). NINGÚN rpc privilegiado va por el cliente de sesión:
+  // batch (service|receipt) y loop OT (production_order|work) van por el admin.
+  rpc: sessionRpcMock,
 };
 
 vi.mock('@/lib/supabase-session', () => ({
@@ -287,7 +300,7 @@ describe('POST /api/payments · ADN-008 §5 liquidación atómica', () => {
     expect(json.code).toBe('ERR_RECEIPT_NOT_PAYABLE');
   });
 
-  it('REGRESIÓN: production_order conserva el loop histórico con el cliente de SESIÓN', async () => {
+  it('REGRESIÓN R-25/F011-001: production_order usa el cliente ADMINISTRATIVO tras el gate (el cliente de sesión NO invoca RPCs privilegiados)', async () => {
     rpcMock.mockResolvedValue({ data: 'payment-id-1', error: null });
     const res = await POST(makeRequest({
       ref_type: 'production_order',
@@ -300,12 +313,43 @@ describe('POST /api/payments · ADN-008 §5 liquidación atómica', () => {
     }));
     expect(res.status).toBe(201);
 
+    // El loop OT invoca el RPC por el cliente ADMIN (service_role server-side)
     expect(rpcMock).toHaveBeenCalledTimes(2);
+    expect(sessionRpcMock).not.toHaveBeenCalled(); // sin privilegios por el cliente de sesión
     const [fn1, args1] = rpcMock.mock.calls[0];
     const [fn2, args2] = rpcMock.mock.calls[1];
     expect(fn1).toBe('register_supplier_payment');
     expect(fn2).toBe('register_supplier_payment');
     expect(args1.p_idempotency_key).toBe('legacy-block-1:0');
     expect(args2.p_idempotency_key).toBe('legacy-block-1:1');
+    // El actor auditado sigue siendo el usuario de la sesión (no el técnico)
+    expect(args1.p_paid_by).toBe('11111111-2222-4111-8111-111111111111');
+  });
+
+  it('R-25: OT de OTRA tienda → 403 sin invocar el RPC (pre-check de pertenencia vía RLS)', async () => {
+    // El mock de sessionClientMock.from('production_orders') devuelve store A;
+    // para este caso, un OT en la tienda B debe ser rechazado sin llamar al RPC
+    const { getSupabaseForSession } = await import('@/lib/supabase-session');
+    (getSupabaseForSession as any).mockImplementationOnce(() => ({
+      from: (table: string) => {
+        if (table === 'profiles') {
+          return { select: () => ({ eq: () => ({ single: async () => ({ data: { active_store_id: STORE_A }, error: null }) }) }) };
+        }
+        if (table === 'production_orders') {
+          return { select: () => ({ eq: () => ({ single: async () => ({ data: { id: 'x', store_id: 'b2222222-2222-4222-8222-222222222222' }, error: null }) }) }) };
+        }
+        throw new Error(`tabla inesperada: ${table}`);
+      },
+      rpc: sessionRpcMock,
+    }));
+    const res = await POST(makeRequest({
+      ref_type: 'production_order',
+      ref_id: '11111111-1111-4111-8111-111111111177',
+      amount: 100,
+      payment_method: 'cash',
+    }));
+    expect(res.status).toBe(403);
+    expect(rpcMock).not.toHaveBeenCalled();
+    expect(sessionRpcMock).not.toHaveBeenCalled();
   });
 });

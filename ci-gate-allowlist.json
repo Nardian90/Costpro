@@ -1010,7 +1010,5 @@
       "expires": "2026-12-31"
     }
   ],
-  "_updated": [
-    "2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada confirm_inventory_adjustment/2 RETIRADA (PR #1723 fusionado 819c0adca; migración 20261126170000 aplicada a producción §11g — body_hash 26657592d2e4e846991d71166a48eb90 idéntico en E2E y producción; surface re-certificado dd68efe6...; drift resuelto)."
-  ]
+  "_updated": "2026-11-26 — CP-BRA-INV005-FIN011-CLOSURE-001: entrada confirm_inventory_adjustment/2 añadida (drift intencional LIVE-vs-replay del guard R-05, PR sin fusionar pendiente de aprobación del propietario).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 añadida (drift intencional LIVE-vs-replay de la migración R-26, PR sin fusionar).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 RETIRADA (PR #1729 fusionado c9350fb421; migración 20261127120000 aplicada a producción §11g — body_hash 9ab5db94537d7152e9b38ffebd191558 idéntico en E2E y producción; surface re-certificado; drift resuelto).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (cierre): entrada confirm_inventory_adjustment/2 también RETIRADA en main (PR #1725 contiene el mismo retiro; surface re-certificado con el cuerpo R-05 en producción)."
 }
