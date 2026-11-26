@@ -146,6 +146,10 @@ export function useCreateSupplier() {
       email?: string;
       address?: string;
       notes?: string;
+      /** R-15 (CP-BRA-REMEDIATION-001): confirmación explícita de duplicado
+       *  tras la advertencia de la UI — el guard server-side la exige. */
+      confirmDuplicate?: boolean;
+      duplicateReason?: string;
     }): Promise<Supplier> => {
       if (!user?.activeStoreId) {
         throw new Error("ERR_NO_ACTIVE_STORE");
@@ -155,51 +159,44 @@ export function useCreateSupplier() {
         throw new Error("ERR_SUPPLIER_NAME_REQUIRED");
       }
 
-      // CP-PROVEEDORES-001 — anti-duplicado por reintento: si ya existe un
-      // proveedor ACTIVO con el mismo nombre en la tienda activa, se
-      // REUTILIZA en vez de insertar. CP-AP-ACCOUNTING-INTEGRITY-001 §6.4:
-      // la comparación pasa a ser NORMALIZADA (sin espacios/diacríticos/caso
-      // — «TiendaPueblo» ≡ «Tienda Pueblo», causa raíz del quirk auditado) y
-      // también por identificación fiscal o teléfono. La unicidad real de la
-      // BD no cambia (no existe constraint único sobre suppliers; añadirla
-      // exigiría auditar datos históricos y está fuera del alcance mínimo).
-      // El REUSE automático sigue siendo SOLO por coincidencia EXACTA
-      // (case-insensitive) — las coincidencias NORMALIZADAS (espaciado/
-      // diacríticos) o por NIT/teléfono NO se reutilizan en silencio: la UI
-      // las advierte y decide el usuario (misión §8.4: «no imponer unicidad
-      // estricta basada exclusivamente en el nombre»).
-      const likeEscaped = name.replace(/[\\%_]/g, (c) => `\\${c}`);
-      const { data: candidates, error: lookupError } = await supabase
-        .from("suppliers")
-        .select("*")
-        .eq("store_id", user.activeStoreId)
-        .eq("is_active", true)
-        .ilike("name", likeEscaped)
-        .limit(5);
-      if (lookupError) throw lookupError;
-      const exact = (candidates ?? []).find(
-        (row) => (row as Supplier).name.trim().toLowerCase() === name.toLowerCase(),
+      // CP-BRA-REMEDIATION-001 (R-15): la alta local pasa por el RPC
+      // autoritativo create_supplier_local — la advertencia de la UI
+      // (SupplierSelector) ya existe, pero la última barrera es la BD
+      // (SEC-001: la UI es conveniencia; la última barrera SIEMPRE es la DB).
+      // El RPC conserva el contrato vigente del hook:
+      //   · coincidencia EXACTA (case-insensitive, espaciado normalizado)
+      //     → REUTILIZA el existente (status='reused');
+      //   · sospechosos por nombre normalizado/NIT/teléfono → rechazo
+      //     ERR_SUPPLIER_DUPLICATE_SUSPECTED con los candidatos, SALVO
+      //     confirmación explícita (confirmDuplicate + duplicateReason)
+      //     → crea y audita SUPPLIER_DUPLICATE_CONFIRMED (nunca silencioso);
+      //   · sin coincidencias → alta normal.
+      // (Unicidad NO estricta por decisión del propietario §8.4 CP-AP.)
+      const { data: rpcResult, error: rpcError } = await supabase.rpc(
+        "create_supplier_local",
+        {
+          p_store_id: user.activeStoreId,
+          p_name: name,
+          p_tax_id: input.tax_id?.trim() || null,
+          p_phone: input.phone?.trim() || null,
+          p_email: input.email?.trim() || null,
+          p_address: input.address?.trim() || null,
+          p_notes: input.notes?.trim() || null,
+          p_confirm_duplicate: input.confirmDuplicate ?? false,
+          p_duplicate_reason: input.duplicateReason?.trim() || null,
+        },
       );
-      if (exact) {
-        return exact as Supplier;
+      if (rpcError) {
+        // El rechazo R-15 lleva los candidatos en el mensaje: se propaga
+        // tal cual para que la UI pueda ofrecer la confirmación explícita.
+        throw rpcError;
       }
-
-      const { data, error } = await supabase
-        .from("suppliers")
-        .insert({
-          store_id: user.activeStoreId,
-          name,
-          tax_id: input.tax_id?.trim() || null,
-          phone: input.phone?.trim() || null,
-          email: input.email?.trim() || null,
-          address: input.address?.trim() || null,
-          notes: input.notes?.trim() || null,
-          is_active: true,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data as Supplier;
+      const supplier = (rpcResult as { status: string; supplier: Supplier })
+        ?.supplier;
+      if (!supplier?.id) {
+        throw new Error("ERR_SUPPLIER_CREATE_UNEXPECTED_RESULT");
+      }
+      return supplier;
     },
     onSuccess: (created) => {
       // Refresco del listado ANTES del toast: si esto fallara, no debe

@@ -171,7 +171,7 @@
 | TR-FIN-003 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-PUR-001 | PUR | CRÍTICA | ✓ | △ | ✓ | CONDICIONAL (R-06) |
 | TR-CAT-001 | CAT | CRÍTICA | ✓ | △ | ✓ | CERTIFICADA |
-| TR-PRO-001 | PRO | CRÍTICA | ✗ | ✗ | ✗ | RECHAZADA (R-15) |
+| TR-PRO-001 | PRO | CRÍTICA | ✓ | ✓ | ✓ | VERIFICADA (R-15 remediado vía RPC; UNIQUE opcional) |
 | TR-FIN-009 | FIN/REP | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (caja) |
 
-**Resumen de certificación de reglas críticas (16 auditadas en profundidad):** 11 VERIFICADAS/CERTIFICADAS · 3 CONDICIONALES · 1 RECHAZADA (R-01, R-02 y R-11 remediados en CP-BRA-REMEDIATION-001; quedan R-05 y R-15 abiertos en RISK-REGISTER). El sistema global NO obtiene el sello CERTIFICADO mientras existan reglas críticas RECHAZADAS (ver CERTIFICATION-POLICY.md).
+**Resumen de certificación de reglas críticas (16 auditadas en profundidad):** 12 VERIFICADAS/CERTIFICADAS · 3 CONDICIONALES · 0 RECHAZADAS (R-01, R-02, R-11 y R-15 remediados en CP-BRA-REMEDIATION-001; queda R-05 abierto — decisión del propietario). El sistema global NO obtiene el sello CERTIFICADO mientras existan reglas críticas RECHAZADAS (ver CERTIFICATION-POLICY.md).

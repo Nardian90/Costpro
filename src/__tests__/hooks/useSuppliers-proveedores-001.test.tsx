@@ -34,11 +34,12 @@ import React from 'react';
 // ── Mocks hoisted ───────────────────────────────────────────────────────────
 const h = vi.hoisted(() => ({
   fromMock: vi.fn(),
+  rpcMock: vi.fn(),
   useAuthStoreState: { user: null as null | { id: string; activeStoreId: string | null } },
 }));
 
 vi.mock('@/lib/supabaseClient', () => ({
-  supabase: { from: h.fromMock, rpc: vi.fn() },
+  supabase: { from: h.fromMock, rpc: h.rpcMock },
 }));
 
 vi.mock('@/lib/logger', () => ({
@@ -125,11 +126,12 @@ describe('CP-PROVEEDORES-001 — describeSupplierError (adiós «desconocido»)'
   });
 });
 
-// ── useCreateSupplier: validaciones y anti-duplicado ────────────────────────
-describe('CP-PROVEEDORES-001 — useCreateSupplier', () => {
+// ── useCreateSupplier: vía RPC autoritativa (R-15, CP-BRA-REMEDIATION-001) ──
+describe('CP-BRA-REMEDIATION-001 — useCreateSupplier vía create_supplier_local', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     h.fromMock.mockReset();
+    h.rpcMock.mockReset();
   });
 
   it('sin tienda activa → ERR_NO_ACTIVE_STORE con mensaje controlado (no «desconocido»)', async () => {
@@ -154,32 +156,14 @@ describe('CP-PROVEEDORES-001 — useCreateSupplier', () => {
     });
 
     expect(toast.error).toHaveBeenCalledWith('El nombre del proveedor es obligatorio.');
-    expect(h.fromMock).not.toHaveBeenCalled();
+    expect(h.rpcMock).not.toHaveBeenCalled();
   });
 
-  it('reintento con nombre ya existente → REUTILIZA el proveedor (0 INSERT, sin duplicado)', async () => {
+  it('reintento con nombre ya existente → el RPC REUTILIZA (status=reused, sin duplicado)', async () => {
     h.useAuthStoreState.user = { id: 'u1', activeStoreId: STORE_ENERVIDA };
-    let insertCalled = false;
-    h.fromMock.mockImplementation((table: string) => {
-      if (table !== 'suppliers') throw new Error('tabla inesperada');
-      const terminal = {
-        then: (resolve: (v: unknown) => void) => resolve({ data: [SUPPLIER_EXISTING], error: null }),
-      };
-      return {
-        select: () => ({
-          eq: () => ({
-            eq: () => ({
-              ilike: () => ({
-                limit: () => terminal,
-              }),
-            }),
-          }),
-        }),
-        insert: () => {
-          insertCalled = true;
-          return { select: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) };
-        },
-      };
+    h.rpcMock.mockResolvedValueOnce({
+      data: { status: 'reused', supplier: SUPPLIER_EXISTING },
+      error: null,
     });
 
     const { result } = renderCreateHook();
@@ -188,62 +172,79 @@ describe('CP-PROVEEDORES-001 — useCreateSupplier', () => {
       created = await result.current.mutateAsync({ name: 'Proveedor General' });
     });
 
-    expect(insertCalled).toBe(false); // NO insertó: devolvió el existente
     expect(created?.id).toBe(SUPPLIER_EXISTING.id); // queda seleccionable en la recepción
     expect(toast.success).toHaveBeenCalled();
+    // El guard server-side recibió la tienda y el nombre normalizados.
+    const args = h.rpcMock.mock.calls[0][1];
+    expect(h.rpcMock.mock.calls[0][0]).toBe('create_supplier_local');
+    expect(args.p_store_id).toBe(STORE_ENERVIDA);
+    expect(args.p_name).toBe('Proveedor General');
+    expect(args.p_confirm_duplicate).toBe(false);
   });
 
-  it('el lookup existente ESCAPA comodines de ilike (nombre con % no matchea de más)', async () => {
+  it('R-15: sospecha de duplicado → el rechazo del guard server se propaga con los candidatos', async () => {
     h.useAuthStoreState.user = { id: 'u1', activeStoreId: STORE_ENERVIDA };
-    const captured: Record<string, unknown> = {};
-    h.fromMock.mockImplementation(() => ({
-      select: () => ({
-        eq: () => ({
-          eq: () => ({
-            ilike: (_col: string, pattern: string) => {
-              captured.pattern = pattern;
-              return { limit: () => ({ then: (r: (v: unknown) => void) => r({ data: [], error: null }) }) };
-            },
-          }),
-        }),
-      }),
-      insert: () => ({
-        select: () => ({
-          single: () => Promise.resolve({ data: { ...SUPPLIER_EXISTING, id: 'nuevo', name: '100% Natural' }, error: null }),
-        }),
-      }),
-    }));
+    const rejection = {
+      code: 'P0001',
+      message:
+        'ERR_SUPPLIER_DUPLICATE_SUSPECTED: hay 1 proveedor(es) activo(s) coincidente(s) por nombre normalizado/NIT/teléfono en la tienda. Reutilice el existente o confirme la creación deliberada (p_confirm_duplicate=true + p_duplicate_reason). candidatos=[{"id":"x","name":"Tienda Pueblo"}]',
+      details: null, hint: null,
+    };
+    h.rpcMock.mockResolvedValueOnce({ data: null, error: rejection });
 
     const { result } = renderCreateHook();
+    let caught: unknown = null;
     await act(async () => {
-      await result.current.mutateAsync({ name: '100% Natural' });
+      caught = await result.current.mutateAsync({ name: 'TiendaPueblo' }).catch((e: unknown) => e);
     });
 
-    // el patrón enviado a ilike lleva el % escapado → no actúa de comodín
-    expect(captured.pattern).toBe('100\\% Natural');
+    // La mutación rechaza con el error del guard (la UI puede ofrecer la
+    // confirmación explícita a partir de los candidatos del mensaje).
+    expect((caught as { message?: string })?.message).toContain('ERR_SUPPLIER_DUPLICATE_SUSPECTED');
   });
 
-  it('error RLS del INSERT → toast con causa real traducida + log con contexto', async () => {
+  it('R-15: confirmación explícita → el RPC crea y audita (p_confirm_duplicate + motivo viajan al guard)', async () => {
+    h.useAuthStoreState.user = { id: 'u1', activeStoreId: STORE_ENERVIDA };
+    const created = { ...SUPPLIER_EXISTING, id: 'nuevo-dup', name: 'TiendaPueblo' };
+    h.rpcMock.mockResolvedValueOnce({ data: { status: 'created', supplier: created }, error: null });
+
+    const { result } = renderCreateHook();
+    let out: { id?: string } | undefined;
+    await act(async () => {
+      out = await result.current.mutateAsync({
+        name: 'TiendaPueblo',
+        confirmDuplicate: true,
+        duplicateReason: 'Confirmado por el usuario tras advertencia de 1 coincidencia',
+      });
+    });
+
+    expect(out?.id).toBe('nuevo-dup');
+    const args = h.rpcMock.mock.calls[0][1];
+    expect(args.p_confirm_duplicate).toBe(true);
+    expect(args.p_duplicate_reason).toContain('Confirmado por el usuario');
+  });
+
+  it('respuesta inesperada del RPC (sin supplier) → error controlado, no «desconocido»', async () => {
+    h.useAuthStoreState.user = { id: 'u1', activeStoreId: STORE_ENERVIDA };
+    h.rpcMock.mockResolvedValueOnce({ data: { status: 'weird' }, error: null });
+
+    const { result } = renderCreateHook();
+    let caught: unknown = null;
+    await act(async () => {
+      caught = await result.current.mutateAsync({ name: 'Algo' }).catch((e: unknown) => e);
+    });
+
+    expect((caught as Error)?.message).toBe('ERR_SUPPLIER_CREATE_UNEXPECTED_RESULT');
+  });
+
+  it('error RLS del RPC → toast con causa real traducida + sin exponer detalles internos', async () => {
     h.useAuthStoreState.user = { id: 'u1', activeStoreId: STORE_ENERVIDA };
     const rlsError = {
       code: '42501',
       message: 'new row violates row-level security policy for table "suppliers"',
       details: null, hint: null,
     };
-    h.fromMock.mockImplementation(() => ({
-      select: () => ({
-        eq: () => ({
-          eq: () => ({
-            ilike: () => ({
-              limit: () => ({ then: (r: (v: unknown) => void) => r({ data: [], error: null }) }),
-            }),
-          }),
-        }),
-      }),
-      insert: () => ({
-        select: () => ({ single: () => Promise.resolve({ data: null, error: rlsError }) }),
-      }),
-    }));
+    h.rpcMock.mockResolvedValueOnce({ data: null, error: rlsError });
 
     const { result } = renderCreateHook();
     let caught = false;
