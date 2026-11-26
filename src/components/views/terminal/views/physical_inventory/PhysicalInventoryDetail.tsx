@@ -358,7 +358,7 @@ export const PhysicalInventoryDetail: React.FC<Props> = ({ piId, onBack }) => {
       )}
 
       {tab === 'adjustments' && (
-        <AdjustmentsPanel pi={pi} onChanged={refreshAll} />
+        <AdjustmentsPanel pi={pi} onChanged={refreshAll} canConfirm={canAuthorize} />
       )}
 
       {tab === 'audit' && (
@@ -1014,7 +1014,7 @@ function ReconciliationPanel({
 // Panel de AJUSTES — documentos generados
 // ──────────────────────────────────────────────────────────────────────────
 
-function AdjustmentsPanel({ pi, onChanged }: { pi: PIHeader; onChanged: () => void }) {
+function AdjustmentsPanel({ pi, onChanged, canConfirm = false }: { pi: PIHeader; onChanged: () => void; /** R-05/INV-005: gate de gestión (admin|manager|encargado — canAuthorize del padre, espejo del guard server-side 20261126170000). */ canConfirm?: boolean }) {
   const queryClient = useQueryClient();
   const links = pi.adjustments || [];
 
@@ -1037,7 +1037,13 @@ function AdjustmentsPanel({ pi, onChanged }: { pi: PIHeader; onChanged: () => vo
       queryClient.invalidateQueries({ queryKey: ['inventory-adjustments'] });
       onChanged();
     } catch (e) {
-      toast.error('No se pudo confirmar', { id: tid, description: e instanceof Error ? e.message : undefined });
+      const msg = e instanceof Error ? e.message : String(e);
+      // R-05/INV-005: mensaje comprensible para el rechazo de autorización
+      if (msg.includes('ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED')) {
+        toast.error('No autorizado: la confirmación requiere rol de gestión (admin, manager o encargado en esta tienda)', { id: tid });
+      } else {
+        toast.error('No se pudo confirmar', { id: tid, description: msg });
+      }
     }
   };
 
@@ -1108,9 +1114,18 @@ function AdjustmentsPanel({ pi, onChanged }: { pi: PIHeader; onChanged: () => vo
 
             {adj?.status === 'pending' && (
               <div className="mt-3 flex justify-end">
-                <PrimaryButton onClick={() => confirmAdjustment(link.adjustment_id)}>
-                  <ShieldCheck className="h-4 w-4" /> Confirmar y aplicar al inventario
-                </PrimaryButton>
+                {canConfirm ? (
+                  <PrimaryButton onClick={() => confirmAdjustment(link.adjustment_id)}>
+                    <ShieldCheck className="h-4 w-4" /> Confirmar y aplicar al inventario
+                  </PrimaryButton>
+                ) : (
+                  <span
+                    className="inline-flex items-center gap-2 rounded-lg border border-border/40 px-3 py-2 text-xs font-bold text-muted-foreground"
+                    title="No autorizado: la confirmación requiere rol de gestión (admin, manager o encargado en esta tienda)"
+                  >
+                    <ShieldCheck className="h-4 w-4 opacity-50" /> Confirmación restringida a gestión
+                  </span>
+                )}
               </div>
             )}
           </div>
