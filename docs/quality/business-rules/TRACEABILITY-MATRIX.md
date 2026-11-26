@@ -62,11 +62,11 @@
 | Regla | El saldo CxC mostrado = realidad de pagos del mayor |
 | Implementación | R-01 REMEDIADO (2026-11-25): trigger `update_payment_status` con las TRES ramas — OT restaurada con neteo de contra-filas + guard voided + recomputo en DELETE (20261126140000); gate/lock de OT en `register_supplier_payment`. R-02 REMEDIADO (2026-11-25): helper canónico `src/lib/accounts-receivable/rates.ts` (tasa de tienda vía `store_exchange_rates`; sin tasa → saldo en moneda original + bloque `unrated`; ×450 eliminado) |
 | Control | Trigger autoritativo en BD (fail-closed; no depende del frontend) + contrato de migración (13 pruebas) + marcas de aplicación re-ejecutables |
-| P+ | Prueba funcional en aislada (rollback): pago 400→partial; +600→paid; reversa 100→900 partial (neteo) — docs/audits/CP-BRA-REMEDIATION-001/ |
+| P+ | Prueba funcional en aislada (rollback): pago 400→partial; +600→paid; reversa 100→900 partial (neteo) — docs/audits/CP-BRA-REMEDIATION-001/. **E2E dedicado del ciclo (2026-11-26): `e2e/fin011-financial-cycle.spec.ts` 16/16 PASS en CostproE2E — pagos parciales/completos, reversiones con asientos compensatorios, monedas/tasas canónicas, conciliación motor=mayor=app cero diferencias; integrado al smoke set del workflow E2E Aislado — docs/audits/CP-BRA-INV005-FIN011-CLOSURE-001/ |
 | P− | Contrato: rama OT ausente = fallo; gate ERR_ORDER_NOT_PAYABLE; 9/9 marcas de producción |
 | P=R | cpbra-r01-r14-payment-engine-migration.test.ts + replay 216 en CI |
 | Evidencia | APLICACION-MIGRACION-20261126140000-PRODUCCION.md (9/9 marcas, surface 232 fn re-certificado) |
-| Estado certificación | **VERIFICADA en código (R-01+R-02 remediados; certificación plena pendiente de E2E aislado)** |
+| Estado certificación | **VERIFICADA — evidencia E2E dedicada COMPLETA (16/16, net-zero); elevación a CERTIFICADA BLOQUEADA por política: 2 defectos críticos abiertos en el alcance (R-25/R-26, descubiertos por esta suite; pins N6/N7)** |
 
 ### TR-INV-003 (INV-003) · Costo de venta server-side (WAC)
 | Elemento | Contenido |
