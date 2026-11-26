@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-26 — CP-BRA-FINAL-VERIFICATION-AND-INV005-001: 4 sondas de auditoría SOLO LECTURA declaradas en exceptions (Management API, solo SELECT).",
+  "_updated": "2026-11-26 — CP-BRA-FINAL-VERIFICATION-AND-INV005-001: 4 sondas de auditoría SOLO LECTURA declaradas en exceptions (Management API, solo SELECT).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: cpbra-r05-apply-prod.mjs añadido a guardProtected (aplicación gobernada §11g con doble flag); cpbra-r05-prod-verify.mjs declarado como excepción read-only.",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -18,6 +18,7 @@
     "scripts/cp-security-backlog-001-fix-ledger-versions.mjs",
     "scripts/cp-security-backlog-001-fix2-ledger.mjs",
     "scripts/cpbra-apply-migration-prod.mjs",
+    "scripts/cpbra-r05-apply-prod.mjs",
     "scripts/cpops-apply-migrations-prod.mjs",
     "scripts/cxap-apply-revoke-legacy-fns.mjs",
     "scripts/e2e/cp-catmaestro001-cable-fase0-audit.mjs",
@@ -310,6 +311,7 @@
     "scripts/cpbra-verify-prod-migrations.mjs": "CP-BRA-FINAL-VERIFICATION-AND-INV005-001 (2026-11-26): SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT; el método POST dispara la heurística de escritor pero el script no contiene ninguna operación INSERT/UPDATE/DELETE/DDL). Verifica 27 artefactos DDL de las migraciones CP-BRA-REMEDIATION-001 (firmas, guards, ACLs, triggers, índices) contra producción; re-ejecutable.",
     "scripts/cpbra-r11-historical-sales.mjs": "CP-BRA-FINAL-VERIFICATION-AND-INV005-001 (2026-11-26): SOLO LECTURA vía Management API (solo SELECT). Analiza las 3 ventas históricas con payment_incidents y Σpagos≠total (sin modificarlas): validez estructural de incidencias y cobertura de la diferencia real según las reglas R-11.",
     "scripts/cpbra-r05-inventory-adjustments.mjs": "CP-BRA-FINAL-VERIFICATION-AND-INV005-001 (2026-11-26): SOLO LECTURA vía Management API (solo SELECT). Análisis R-05: contrato real de confirm_inventory_adjustment, roles, historial de ajustes y distribución de desviaciones (sin modificar nada).",
-    "scripts/cpbra-historical-exceptions.mjs": "CP-BRA-FINAL-VERIFICATION-AND-INV005-001 (2026-11-26): SOLO LECTURA vía Management API (solo SELECT). Excepciones históricas: recepciones sin proveedor («—», $19.435), inventario afectado, efectos contables, duplicados potenciales."
+    "scripts/cpbra-historical-exceptions.mjs": "CP-BRA-FINAL-VERIFICATION-AND-INV005-001 (2026-11-26): SOLO LECTURA vía Management API (solo SELECT). Excepciones históricas: recepciones sin proveedor («—», $19.435), inventario afectado, efectos contables, duplicados potenciales.",
+    "scripts/cpbra-r05-prod-verify.mjs": "CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (2026-11-27): SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT) + guard assert-not-production modo read. Verificación productiva §2.4 de R-05: estados de ajustes, auditoría, constraint, historial, ACL y kardex; re-ejecutable."
   }
 }
