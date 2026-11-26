@@ -82,6 +82,12 @@ export default function InventoryAdjustmentsView() {
   const storeId = user?.activeStoreId;
   // W9.5 B-10: gate de rol (espejo de can_reverse_document) — admin/manager/encargado
   const canReverseAdj = canReverseDocumentInStore(user, storeId ?? '', 'adjustment');
+  // R-05/INV-005 (CP-BRA-INV005-FIN011-CLOSURE-001): la CONFIRMACIÓN exige el
+  // MISMO rol de gestión que la reversión (admin/superadmin o membresía activa
+  // admin|manager|encargado en la tienda). Espejo del guard server-side en
+  // confirm_inventory_adjustment (has_store_role_as, migración 20261126170000).
+  // La UI es conveniencia: la última barrera SIEMPRE es el RPC.
+  const canConfirmAdj = canReverseDocumentInStore(user, storeId ?? '', 'adjustment');
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'confirmed' | 'reversed' | 'voided'>('all');
@@ -149,6 +155,8 @@ export default function InventoryAdjustmentsView() {
   }, [user?.id, queryClient]);
 
   // Fase 1 C1+C2: usar RPC correcta (no apply_physical_count)
+  // R-05: el RPC ahora rechaza con ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED a
+  // quien no tenga rol de gestión — mensaje comprensible y accionable.
   const handleConfirm = useCallback(async (doc: AdjustmentDoc) => {
     try {
       const { data, error } = await supabase.rpc('confirm_inventory_adjustment', {
@@ -161,7 +169,13 @@ export default function InventoryAdjustmentsView() {
       queryClient.invalidateQueries({ queryKey: ['inventory'] });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      toast.error('Error: ' + msg);
+      if (msg.includes('ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED')) {
+        toast.error('No autorizado: la confirmación de ajustes requiere rol de gestión (admin, manager o encargado en esta tienda)');
+      } else if (msg.includes('ERR_NOT_PENDING')) {
+        toast.error('El ajuste ya no está pendiente — refresca la lista');
+      } else {
+        toast.error('Error: ' + msg);
+      }
     }
   }, [user?.id, queryClient]);
 
@@ -279,6 +293,7 @@ export default function InventoryAdjustmentsView() {
         <TablaAjustes
           docs={filtered}
           canReverseAdj={canReverseAdj}
+          canConfirmAdj={canConfirmAdj}
           isExportingSc216Id={isExportingSc216Id}
           expandedDoc={expandedDoc}
           onToggleExpand={(id) => setExpandedDoc(expandedDoc === id ? null : id)}
@@ -383,14 +398,25 @@ export default function InventoryAdjustmentsView() {
                       >
                         <Ban className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => setConfirmTarget(d)}
-                        className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-success/40 bg-success/5 text-success hover:bg-success hover:text-white transition-all active:scale-95"
-                        title="Confirmar ajuste (aplica al inventario)"
-                        aria-label="Confirmar ajuste"
-                      >
-                        <CheckCircle2 className="w-4 h-4" />
-                      </button>
+                      {canConfirmAdj ? (
+                        <button
+                          onClick={() => setConfirmTarget(d)}
+                          className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-success/40 bg-success/5 text-success hover:bg-success hover:text-white transition-all active:scale-95"
+                          title="Confirmar ajuste (aplica al inventario)"
+                          aria-label="Confirmar ajuste"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          className="w-10 h-10 inline-flex items-center justify-center rounded-lg border border-border/40 text-muted-foreground/50 cursor-not-allowed"
+                          title="No autorizado: la confirmación requiere rol de gestión (admin, manager o encargado en esta tienda)"
+                          aria-label="Confirmar ajuste no disponible: requiere rol de gestión"
+                        >
+                          <CheckCircle2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </>
                   )}
                   {canReverse('adjustment', d.status) && canReverseAdj && (
@@ -530,6 +556,7 @@ export default function InventoryAdjustmentsView() {
 interface TablaAjustesProps {
   docs: AdjustmentDoc[];
   canReverseAdj: boolean;
+  canConfirmAdj: boolean;
   isExportingSc216Id: string | null;
   expandedDoc: string | null;
   onToggleExpand: (id: string) => void;
@@ -541,7 +568,7 @@ interface TablaAjustesProps {
 }
 
 function TablaAjustes({
-  docs, canReverseAdj, isExportingSc216Id, expandedDoc,
+  docs, canReverseAdj, canConfirmAdj, isExportingSc216Id, expandedDoc,
   onToggleExpand, onExportSc216, onVoid, onConfirm, onReverse, onDuplicate,
 }: TablaAjustesProps) {
   return (
@@ -620,15 +647,27 @@ function TablaAjustes({
                         >
                           <Ban className="w-4 h-4" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => onConfirm(d)}
-                          className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-success/40 bg-success/5 text-success hover:bg-success hover:text-white transition-all active:scale-95"
-                          title="Confirmar ajuste (aplica al inventario)"
-                          aria-label="Confirmar ajuste"
-                        >
-                          <CheckCircle2 className="w-4 h-4" />
-                        </button>
+                        {canConfirmAdj ? (
+                          <button
+                            type="button"
+                            onClick={() => onConfirm(d)}
+                            className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-success/40 bg-success/5 text-success hover:bg-success hover:text-white transition-all active:scale-95"
+                            title="Confirmar ajuste (aplica al inventario)"
+                            aria-label="Confirmar ajuste"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled
+                            className="w-9 h-9 inline-flex items-center justify-center rounded-lg border border-border/40 text-muted-foreground/50 cursor-not-allowed"
+                            title="No autorizado: la confirmación requiere rol de gestión (admin, manager o encargado en esta tienda)"
+                            aria-label="Confirmar ajuste no disponible: requiere rol de gestión"
+                          >
+                            <CheckCircle2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </>
                     )}
                     {canReverse('adjustment', d.status) && canReverseAdj && (
