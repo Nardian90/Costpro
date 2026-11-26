@@ -60,9 +60,13 @@
 | Elemento | Contenido |
 |---|---|
 | Regla | El saldo CxC mostrado = realidad de pagos del mayor |
-| Implementación | HOY: paid_amount desnormalizado con rama OT del trigger PERDIDA (20261124120000:67-141 vs 20261113120800:127-145) + tasa 450 fija (route.ts:123) |
-| Control | Ninguno que evite divergencia |
-| Estado certificación | **RECHAZADA (defectos críticos abiertos R-01/R-02)** |
+| Implementación | R-01 REMEDIADO (2026-11-25): trigger `update_payment_status` con las TRES ramas — OT restaurada con neteo de contra-filas + guard voided + recomputo en DELETE (20261126140000); gate/lock de OT en `register_supplier_payment`. R-02 ABIERTO: tasa 450 fija (route.ts:123) → remediación en curso (PR CxC) |
+| Control | Trigger autoritativo en BD (fail-closed; no depende del frontend) + contrato de migración (13 pruebas) + marcas de aplicación re-ejecutables |
+| P+ | Prueba funcional en aislada (rollback): pago 400→partial; +600→paid; reversa 100→900 partial (neteo) — docs/audits/CP-BRA-REMEDIATION-001/ |
+| P− | Contrato: rama OT ausente = fallo; gate ERR_ORDER_NOT_PAYABLE; 9/9 marcas de producción |
+| P=R | cpbra-r01-r14-payment-engine-migration.test.ts + replay 216 en CI |
+| Evidencia | APLICACION-MIGRACION-20261126140000-PRODUCCION.md (9/9 marcas, surface 232 fn re-certificado) |
+| Estado certificación | **CONDICIONAL (R-01 REMEDIADO; R-02 abierto → tasa fija 450)** |
 
 ### TR-INV-003 (INV-003) · Costo de venta server-side (WAC)
 | Elemento | Contenido |
@@ -157,7 +161,7 @@
 | TR-POS-001 | POS | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-POS-006 | POS | CRÍTICA | ✓ | ✗ | ✗ | RECHAZADA (R-11) |
 | TR-FIN-002 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (CxP) |
-| TR-FIN-011 | FIN | CRÍTICA | ✗ | ✗ | ✗ | RECHAZADA (R-01/02) |
+| TR-FIN-011 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CONDICIONAL (R-01 remediado; R-02 abierto) |
 | TR-INV-003 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-INV-007 | INV | CRÍTICA | ✗ | ✗ | ✗ | RECHAZADA (R-05) |
 | TR-TEN-001 | TEN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
@@ -170,4 +174,4 @@
 | TR-PRO-001 | PRO | CRÍTICA | ✗ | ✗ | ✗ | RECHAZADA (R-15) |
 | TR-FIN-009 | FIN/REP | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (caja) |
 
-**Resumen de certificación de reglas críticas (16 auditadas en profundidad):** 10 CERTIFICADAS · 3 CONDICIONALES · 3 RECHAZADAS (R-11, R-01/02, R-05, R-15 → defectos críticos abiertos en RISK-REGISTER). El sistema global NO obtiene el sello CERTIFICADO mientras existan reglas críticas RECHAZADAS (ver CERTIFICATION-POLICY.md).
+**Resumen de certificación de reglas críticas (16 auditadas en profundidad):** 10 CERTIFICADAS · 4 CONDICIONALES · 2 RECHAZADAS (R-01/02 → R-01 REMEDIADO 2026-11-25, R-02 en curso; quedan R-11, R-05, R-15 abiertos en RISK-REGISTER). El sistema global NO obtiene el sello CERTIFICADO mientras existan reglas críticas RECHAZADAS (ver CERTIFICATION-POLICY.md).
