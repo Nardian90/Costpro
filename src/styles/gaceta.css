@@ -1,0 +1,289 @@
+/* ==========================================================================
+   GACETA — «El Diario Contable» (ADNEGOCIO-GACETA-EDITORIAL-UX-001)
+   --------------------------------------------------------------------------
+   Sistema de tema ACOTADO a /gaceta. No depende del `.dark` global de
+   next-themes (cuyo default de la app es oscuro): la gaceta exige default
+   CLARO y selector propio (Claro / Oscuro / Sistema, localStorage
+   'gaceta-theme', sin requerir sesión).
+
+   Mecanismo replicado del patrón #landing-root (landing-shield.css):
+     1. #gaceta-root re-declara los tokens semánticos (--background,
+        --foreground, --muted, --border, --primary…) para TODO su subárbol:
+        cualquier utilidad Tailwind de color (bg-, text-, border-) que
+        descienda de él resuelve a los valores editoriales de la gaceta,
+        sin importar la clase que <html> tenga.
+     2. html/body con :has(#gaceta-root) fijan color-scheme y los tokens al
+        nivel del documento para que los overlays globales (CookieConsent,
+        Toaster, PWAUpdateBanner) y el fondo del body acompañen al tema de la
+        gaceta. La app interna nunca monta #gaceta-root ⇒ estas reglas no la
+        alcanzan jamás.
+     3. data-theme="dark" SOLO lo aplican el script anti-flash y
+        GacetaThemeToggle (ambos leen 'gaceta-theme' en localStorage).
+        Ausencia del atributo = tema claro (papel), el default de primera
+        visita exigido por la misión.
+
+   Identidad: publicación impresa trasladada a digital — papel marfil,
+   tinta casi negra, filetes dobles, acentos sobrios (rojo institucional
+   para la Gaceta Oficial, verde de marca para ADNegocio).
+   Contrastes verificados WCAG AA (mínimo 5.75:1; ver INFORME de la misión).
+   ========================================================================== */
+
+/* ── Nivel 1: documento mientras la gaceta está montada ── */
+html:has(#gaceta-root) {
+  color-scheme: light;
+}
+
+html:has(#gaceta-root[data-theme='dark']) {
+  color-scheme: dark;
+}
+
+/* ── Nivel 2: overlays globales + fondo detrás de la gaceta ── */
+body:has(#gaceta-root) {
+  --background: #faf9f5;
+  --background-solid: #faf9f5;
+  --foreground: #1c1917;
+  --card: #ffffff;
+  --card-foreground: #1c1917;
+  --muted: #f0eee8;
+  --muted-foreground: #57534e;
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
+  --border: #e2ded4;
+  --input: #d6d2c6;
+  --primary: #15803d;
+  --primary-foreground: #ffffff;
+  --accent: #f0eee8;
+  --accent-foreground: #1c1917;
+  --ring: rgba(21, 128, 61, 0.45);
+  --selection: rgba(21, 128, 61, 0.12);
+}
+
+body:has(#gaceta-root[data-theme='dark']) {
+  --background: #161513;
+  --background-solid: #161513;
+  --foreground: #ece7de;
+  --card: #1d1b18;
+  --card-foreground: #ece7de;
+  --muted: #232019;
+  --muted-foreground: #a8a094;
+  --popover: #1d1b18;
+  --popover-foreground: #ece7de;
+  --border: #35312a;
+  --input: #3a362e;
+  --primary: #22c55e;
+  --primary-foreground: #052e16;
+  --accent: #232019;
+  --accent-foreground: #ece7de;
+  --ring: rgba(34, 197, 94, 0.45);
+  --selection: rgba(34, 197, 94, 0.18);
+}
+
+/* ── Nivel 3: muro de la gaceta (tema claro = papel; default) ── */
+#gaceta-root {
+  color-scheme: light;
+
+  /* Tokens semánticos del subárbol gaceta */
+  --background: #faf9f5;          /* papel marfil cálido */
+  --background-solid: #faf9f5;
+  --foreground: #1c1917;          /* tinta */
+  --card: #ffffff;
+  --card-foreground: #1c1917;
+  --muted: #f0eee8;
+  --muted-foreground: #57534e;    /* 7.24:1 sobre papel */
+  --popover: #ffffff;
+  --popover-foreground: #1c1917;
+  --border: #e2ded4;
+  --input: #d6d2c6;
+  --primary: #15803d;
+  --primary-foreground: #ffffff;
+  --accent: #f0eee8;
+  --accent-foreground: #1c1917;
+  --ring: rgba(21, 128, 61, 0.45);
+  --selection: rgba(21, 128, 61, 0.12);
+  --radius: 2px;                  /* imprenta: esquinas casi rectas */
+
+  /* Voz editorial propia (fuente serif cargada por gaceta/layout.tsx) */
+  --gaceta-serif: 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+
+  /* Acentos editoriales sobrios */
+  --gaceta-oficial: #8f1d1d;             /* rojo institucional (8.44:1) */
+  --gaceta-oficial-soft: rgba(143, 29, 29, 0.08);
+  --gaceta-plataforma: #166534;          /* verde marca ADNegocio (6.77:1) */
+  --gaceta-plataforma-soft: rgba(22, 101, 52, 0.09);
+  --gaceta-kicker: #6b6156;              /* fechas/epígrafes (5.75:1) */
+  --gaceta-rule: #d8d3c6;                /* filetes */
+
+  background: var(--background);
+  color: var(--foreground);
+  min-height: 100vh;
+}
+
+/* ── Nivel 3: tema oscuro de la gaceta (carbón cálido, no negro puro) ── */
+#gaceta-root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --background: #161513;
+  --background-solid: #161513;
+  --foreground: #ece7de;
+  --card: #1d1b18;
+  --card-foreground: #ece7de;
+  --muted: #232019;
+  --muted-foreground: #a8a094;    /* 7.06:1 sobre carbón */
+  --popover: #1d1b18;
+  --popover-foreground: #ece7de;
+  --border: #35312a;
+  --input: #3a362e;
+  --primary: #22c55e;
+  --primary-foreground: #052e16;
+  --accent: #232019;
+  --accent-foreground: #ece7de;
+  --ring: rgba(34, 197, 94, 0.45);
+  --selection: rgba(34, 197, 94, 0.18);
+
+  --gaceta-oficial: #f1a9a2;             /* terracota clara (9.50:1) */
+  --gaceta-oficial-soft: rgba(241, 169, 162, 0.1);
+  --gaceta-plataforma: #86efac;          /* verde menta (13.0:1) */
+  --gaceta-plataforma-soft: rgba(134, 239, 172, 0.09);
+  --gaceta-kicker: #9c948a;              /* 6.10:1 */
+  --gaceta-rule: #3a352c;
+}
+
+/* ── Tipografía editorial ──
+   La voz serif (fuente real con pesos 400/600/700/900) la provee
+   next/font en gaceta/layout.tsx vía --font-gaceta-serif. Clase explícita
+   en vez de utilidades arbitrarias: inmune a quirks de compilación. */
+.gaceta-serif {
+  font-family: var(--font-gaceta-serif), 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+}
+
+/* Titulares equilibrados (mejora progresiva; degrada a normal) */
+.gaceta-balance {
+  text-wrap: balance;
+}
+
+/* Párrafos de artículo: medida y ritmo de lectura prolongada */
+.gaceta-cuerpo p {
+  margin: 1.15rem 0;
+  line-height: 1.75;
+  text-wrap: pretty;
+}
+
+/* Volada tipográfica (drop cap) del primer párrafo de la noticia */
+.gaceta-dropcap::first-letter {
+  float: left;
+  font-size: 3.3em;
+  line-height: 0.82;
+  padding-right: 0.09em;
+  padding-top: 0.04em;
+  font-weight: 700;
+}
+
+/* ── Acentos semánticos de fuente informativa ── */
+.gaceta-oficial {
+  color: var(--gaceta-oficial);
+}
+
+.gaceta-oficial-chip {
+  background: var(--gaceta-oficial-soft);
+  color: var(--gaceta-oficial);
+}
+
+.gaceta-plataforma {
+  color: var(--gaceta-plataforma);
+}
+
+.gaceta-plataforma-chip {
+  background: var(--gaceta-plataforma-soft);
+  color: var(--gaceta-plataforma);
+}
+
+.gaceta-kicker {
+  color: var(--gaceta-kicker);
+}
+
+/* ── Selector de tema: control segmentado compacto ── */
+.gaceta-theme-group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: inline-flex;
+  background: var(--background);
+}
+
+.gaceta-theme-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 40px;
+  padding: 0 0.65rem;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  user-select: none;
+  transition: color 120ms ease, background-color 120ms ease;
+}
+
+.gaceta-theme-opt + .gaceta-theme-opt {
+  border-left: 1px solid var(--border);
+}
+
+.gaceta-theme-opt:hover {
+  color: var(--foreground);
+}
+
+.gaceta-theme-opt[data-active='true'] {
+  background: var(--foreground);
+  color: var(--background);
+}
+
+.gaceta-theme-opt:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+/* ── Contra-reglas del modo performance (modes.css) ──
+   modes.css fuerza fondos sólidos dark (#141414/#1a1a1a) con !important para
+   [class*="bg-*"] cuando html tiene .dark + mode-performance, y solo excluye
+   al landing. Eso alcanzaba a la gaceta (banner de cookies, toasts, skeletons)
+   pisando sus tokens. Esta contra-regla, escopada al subárbol de la gaceta y
+   con especificidad mayor (body + :has(#id) + :not(:has(#id)) = 2,1,1 frente a
+   1,2,1), restaura el valor del TOKEN correspondiente. Solido a propósito: el
+   periódico no usa transparencias. La app interna nunca monta #gaceta-root. */
+body:has(#gaceta-root):not(:has(#landing-root)) [class*="bg-card"]:not([class*="bg-card-foreground"]),
+body:has(#gaceta-root):not(:has(#landing-root)) [class*="bg-card/"] {
+  background-color: var(--card) !important;
+}
+
+body:has(#gaceta-root):not(:has(#landing-root)) [class*="bg-muted"]:not([class*="bg-muted-foreground"]),
+body:has(#gaceta-root):not(:has(#landing-root)) [class*="bg-muted/"] {
+  background-color: var(--muted) !important;
+}
+
+body:has(#gaceta-root):not(:has(#landing-root)) [class*="bg-popover"]:not([class*="bg-popover-foreground"]),
+body:has(#gaceta-root):not(:has(#landing-root)) [class*="bg-popover/"] {
+  background-color: var(--popover) !important;
+}
+
+body:has(#gaceta-root):not(:has(#landing-root)) [class*="bg-background"]:not([class*="bg-background-foreground"]),
+body:has(#gaceta-root):not(:has(#landing-root)) [class*="bg-background/"] {
+  background-color: var(--background) !important;
+}
+
+/* ── Selección de texto con la voz de la marca ── */
+#gaceta-root ::selection {
+  background: var(--selection);
+}
+
+/* ── Respeto a prefers-reduced-motion dentro de la gaceta ── */
+@media (prefers-reduced-motion: reduce) {
+  #gaceta-root *,
+  #gaceta-root *::before,
+  #gaceta-root *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

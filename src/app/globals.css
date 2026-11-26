@@ -52,6 +52,10 @@ main[data-help-scroll] {
 /* BLINDAJE DEL LANDING: el escudo se importa AL FINAL para ganar empates
    de cascada y fijar los tokens del landing por encima de cualquier modo. */
 @import "../styles/landing-shield.css";
+/* BLINDAJE DE LA GACETA (ADNEGOCIO-GACETA-EDITORIAL-UX-001): tokens y tema
+   acotados a #gaceta-root (default CLARO). Al final, mismo criterio que el
+   landing: gaceta, landing y app interna son mutuamente excluyentes. */
+@import "../styles/gaceta.css";
 
 /* ── Tailwind Custom Variant ──
    BLINDAJE DEL LANDING: además de .dark / [data-theme='dark'], las
