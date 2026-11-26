@@ -1,31 +1,46 @@
 /**
- * CP-PDF-EXECUTIVE-REPORT-001 2026-11-24 · INFORME EJECUTIVO DE DESEMPEÑO
- * COMERCIAL Y ABASTECIMIENTO — reconstrucción editorial del documento oficial
- * (misión de rediseño del PDF de «Comparar Productos»).
+ * ADN-ANALISIS-COMPARAR-PRODUCTOS-EXECUTIVE-PDF-001 (2026-11-26)
+ * INFORME EJECUTIVO DE COMPARACIÓN DE PRODUCTOS — rediseño ejecutivo premium.
  * ===========================================================================
- * MECANISMO (diagnóstico CP-PDF-EXECUTIVE-REPORT-001): el documento se genera
- * en cliente con jsPDF + jspdf-autotable (carga diferida vía
- * createPDFDocument/lazy-pdf) y se consume en DOS salidas idénticas:
- *  · vista preliminar → doc.output('bloburl') en iframe;
- *  · descarga → doc.save(nombre oficial).
- * La única fuente de contenido es src/lib/product-comparison/informe.ts
- * (buildInformeEjecutivo): este generador NO recalcula ni redacta nada (§9).
+ * Evolución del sistema editorial CP-PDF-EXECUTIVE-REPORT-001 (PR #1702/#1705):
+ * se conserva el mecanismo probado (jsPDF + jspdf-autotable con carga diferida
+ * vía createPDFDocument/lazy-pdf; mismas DOS salidas: vista preliminar bloburl
+ * y descarga) y se eleva a estándar de inteligencia empresarial:
  *
- * SISTEMA EDITORIAL (misión §2-§8):
- *  · Papel A4 vertical (antes Letter); márgenes 20 mm; Anexo I en horizontal
- *    (orientación justificada por la tabla de 10 columnas, §5).
- *  · Tipografía jerárquica: portada 21 pt, títulos de sección 13 pt,
- *    subtítulos 10.5 pt, cuerpo 9.3 pt, auxiliar 8.2 pt, tablas 7.2-7.6 pt.
- *  · PORTADA ejecutiva (§4): identificación, períodos, elaboración, resumen
- *    de indicadores y contenido del documento — sin numeración visible.
- *  · PAGINACIÓN (§6): encabezado institucional de páginas continuas, guardas
- *    anti-huérfanos por bloque (título+intro+tabla), filas que no se parten
- *    (rowPageBreak 'avoid'), encabezados de tabla repetidos por autoTable en
- *    cada página y pie «Página X de Y» con identificación del documento.
- *  · ANEXOS (§7-§8): CADA anexo comienza en página nueva mediante addPage()
- *    REAL del motor (nunca espacios vacíos), con identificación ANEXO I-IV,
- *    título, introducción y nota; los anexos extensos continúan ordenados.
- *  · Integridad (§9): ninguna cifra ni texto del análisis se altera.
+ *  · TIPOGRAFÍA (§7): portada 26 pt, indicadores protagonistas 26 pt,
+ *    secciones 17.5 pt, subtítulos 12.5 pt, cuerpo 11.3 pt, auxiliar 9.8 pt,
+ *    notas 9 pt, tablas 10.5 pt — legible también para personas mayores.
+ *  · GRÁFICOS ANALÍTICOS (§4) con TOKENS del gráfico de referencia de Estados
+ *    Financieros «Evolución acumulada de ventas» (SalesRhythmDashboard /
+ *    chart-theme.ts CHART_THEME_LIGHT — coherencia estética entre módulos):
+ *      A · barras horizontales agrupadas (anterior vs. actual, valores al
+ *          final de cada barra, marcador de tendencia por producto),
+ *      B · divergente de variaciones (incrementos/reducciones, «nuevo» sin %),
+ *      C · cobertura estimada en días con umbrales D/2 y D y etiqueta textual
+ *          de estado (nunca solo color, §7).
+ *    Representación vectorial jsPDF (sin rasterización); cero series
+ *    inventadas: si la fuente no da evolución diaria, NO se simula (§4.D).
+ *  · PORTADA EJECUTIVA (§3): ficha institucional, dashboard de indicadores con
+ *    jerarquía, banda del líder y «La situación en un minuto» (resumen
+ *    gerencial <1 min), índice con páginas e ENLACES internos.
+ *  · NARRATIVA (§5): el diagnóstico responde ¿qué ocurrió / qué riesgo u
+ *    oportunidad / qué decisión se recomienda?; las recomendaciones se
+ *    presentan como bloques CRÍTICA-ALTA / MEDIA / PREVENTIVA con evidencia y
+ *    acción separados (etiquetas EVIDENCIA E INTERPRETACIÓN / ACCIÓN
+ *    RECOMENDADA sobre el contenido real del motor).
+ *  · TABLAS (§6): 10.5 pt, cabeceras diferenciadas, filas alternas, anchos
+ *    proporcionados; el Anexo I se separa en I-A (ranking comercial) e I-B
+ *    (cantidades) para no comprimir columnas; encabezados repetidos en
+ *    multipágina y filas que nunca se parten (rowPageBreak 'avoid').
+ *  · SEO/DOCUMENTO (§9): metadatos (título/asunto/autor/keywords), marcadores
+ *    de navegación (outline), enlaces internos desde el índice y texto 100 %
+ *    seleccionable/buscable. Informe privado: sin exposición pública.
+ *
+ * INTEGRIDAD (§10): la única fuente de contenido sigue siendo
+ * src/lib/product-comparison/informe.ts (buildInformeEjecutivo): este
+ * generador NO recalcula ni redacta nada; las extensiones del motor
+ * (variaciones, riesgoCobertura, resumenGerencial) son derivaciones de los
+ * MISMOS cálculos y evaluaciones existentes.
  */
 
 import { format } from 'date-fns';
@@ -37,9 +52,12 @@ import type {
   InformeIndicador,
   InformePrioridad,
   InformeTabla,
+  InformeVariacion,
+  InformeCoberturaItem,
 } from '@/lib/product-comparison/informe';
+import { fmtPctSign } from '@/lib/product-comparison/informe';
 
-// ── Paleta editorial de impresión (sobria: blanco, grafito, azul institucional) ──
+// ── Paleta editorial de impresión (estructura del documento) ─────────────────
 const C_DARK: [number, number, number] = [31, 41, 55];       // grafito (texto)
 const C_BLACK: [number, number, number] = [16, 24, 40];      // títulos
 const C_MUTED: [number, number, number] = [100, 116, 139];   // secundario
@@ -47,33 +65,87 @@ const C_BORDER: [number, number, number] = [203, 213, 225];  // líneas de tabla
 const C_RULE: [number, number, number] = [148, 163, 184];    // reglas editoriales
 const C_HEADER_BG: [number, number, number] = [238, 242, 247];
 const C_BAND: [number, number, number] = [248, 250, 252];    // banda suave
-const C_STRIPE: [number, number, number] = [246, 248, 250];  // fila alternada
+const C_STRIPE: [number, number, number] = [239, 243, 247];  // fila alternada (contraste visible)
 const C_ACCENT: [number, number, number] = [31, 78, 121];    // azul institucional
-const C_ALTA_BG: [number, number, number] = [250, 232, 229];
-const C_ALTA_TX: [number, number, number] = [153, 42, 27];
-const C_MEDIA_BG: [number, number, number] = [250, 240, 219];
-const C_MEDIA_TX: [number, number, number] = [146, 104, 14];
-const C_PREV_BG: [number, number, number] = [233, 237, 241];
-const C_PREV_TX: [number, number, number] = [68, 81, 91];
-const C_BAR_ANT: [number, number, number] = [191, 199, 209]; // barra tramo anterior
-const C_BAR_ACT: [number, number, number] = [31, 78, 121];   // barra período actual
-const C_POS: [number, number, number] = [4, 120, 87];        // variación positiva (verde sobrio de impresión)
+const C_WHITE: [number, number, number] = [255, 255, 255];
+
+// ── Tokens de gráficos — REUTILIZADOS del gráfico de referencia de Estados
+//    Financieros (src/lib/sales-dashboard/chart-theme.ts · CHART_THEME_LIGHT):
+//    series[0] #15803d (período actual), axis #475569 (tramo comparable),
+//    negative #dc2626 (reducciones), grid #cbd5e1, series[2] #b45309
+//    (moderada). Un único idioma visual entre módulos (misión §2). ──────────
+const GR_ACTUAL: [number, number, number] = [21, 128, 61];    // #15803d series[0]
+const GR_ANTERIOR: [number, number, number] = [71, 85, 105];  // #475569 axis
+const GR_NEGATIVO: [number, number, number] = [220, 38, 38];  // #dc2626 negative
+const GR_GRID: [number, number, number] = [203, 213, 225];    // #cbd5e1 grid
+const GR_MODERADA: [number, number, number] = [180, 83, 9];   // #b45309 series[2]
+const GR_SIN_DATO: [number, number, number] = [148, 163, 184];// slate auxiliar
+
+// Estados de cobertura (color + etiqueta textual SIEMPRE visible, §7).
+const ESTADO_COBERTURA: Record<InformeCoberturaItem['estado'], { etiqueta: string; color: [number, number, number] }> = {
+  agotado: { etiqueta: 'AGOTADO', color: GR_NEGATIVO },
+  cobertura_insuficiente: { etiqueta: 'Cobertura insuficiente', color: GR_NEGATIVO },
+  cobertura_moderada: { etiqueta: 'Cobertura moderada', color: GR_MODERADA },
+  baja_rotacion: { etiqueta: 'Baja rotación', color: GR_ANTERIOR },
+  sin_movimiento: { etiqueta: 'Sin movimiento', color: GR_SIN_DATO },
+  sin_dato: { etiqueta: 'Sin dato suficiente', color: GR_SIN_DATO },
+};
+
+// Prioridades (misma semántica del motor; presentación por bloques).
+const PRIORIDAD_TXT: Record<InformePrioridad['nivel'], string> = {
+  alta: 'ALTA',
+  media: 'MEDIA',
+  preventiva: 'PREVENTIVA',
+};
+const PRIORIDAD_COLOR: Record<InformePrioridad['nivel'], { bg: [number, number, number]; tx: [number, number, number] }> = {
+  alta: { bg: [254, 226, 226], tx: [153, 27, 27] },
+  media: { bg: [254, 243, 199], tx: [146, 104, 14] },
+  preventiva: { bg: [233, 237, 241], tx: [68, 81, 91] },
+};
+const GRUPO_PRIORIDAD: Record<InformePrioridad['nivel'], { titulo: string; descripcion: string }> = {
+  alta: { titulo: 'CRÍTICA / ALTA', descripcion: 'Interrupciones comerciales relevantes y riesgos inmediatos de disponibilidad.' },
+  media: { titulo: 'MEDIA', descripcion: 'Seguimiento, reposición anticipada o revisión de condiciones comerciales.' },
+  preventiva: { titulo: 'PREVENTIVA', descripcion: 'Baja rotación, acumulación de inventario y oportunidades de optimización.' },
+};
+
+// ── Sistema tipográfico (§7) ─────────────────────────────────────────────────
+const T_PORTADA = 26;        // título principal (24-30)
+const T_PORTADA_SUB = 12.5;
+const T_HERO_VALOR = 26;     // indicadores protagonistas (22-30)
+const T_CIFRA = 16.5;        // cifras de grupos
+const T_SECCION = 17.5;      // títulos de sección (17-20)
+const T_SUBTITULO = 12.5;    // subtítulos
+const T_CUERPO = 11.3;       // texto general (~12)
+const LH_CUERPO = 5.9;
+const T_AUX = 9.8;           // secundario
+const LH_AUX = 4.9;
+const T_NOTA = 9.0;          // notas (nunca < 9 pt)
+const LH_NOTA = 4.3;
+const T_TABLA = 10.5;        // contenido de tablas (mínimo 10.5-11)
+const T_TABLA_HEAD = 10.2;
+const T_FOOT = 8.2;
 
 // ── Retícula del documento (A4: 210 × 297 mm) ────────────────────────────────
-const M = 20;                 // márgenes laterales (§3: 20-22 mm)
-const BOTTOM_RESERVE = 20;    // reserva inferior (pie incluido)
-const PAGE_TOP_CONT = 24;     // inicio de contenido en páginas continuas
+const M = 20;                 // márgenes laterales
+const BOTTOM_RESERVE = 22;    // reserva inferior (pie incluido)
+const PAGE_TOP_CONT = 26;     // inicio de contenido en páginas continuas
 const TITULO_DOC = 'Informe Ejecutivo de Desempeño Comercial y Abastecimiento';
+const TITULO_SEO = 'Informe ejecutivo de comparación de productos';
 
 const fmtCup = (n: number): string =>
   `${n.toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-/** Número compacto para etiquetas del gráfico (1,53 M / 74,7 k / 300). */
+/** Número compacto para etiquetas de gráfico (1,53 M / 74,7 k / 300). */
 function fmtCompact(n: number): string {
   const abs = Math.abs(n);
   if (abs >= 1_000_000) return `${(n / 1_000_000).toLocaleString('es-CU', { maximumFractionDigits: 2 })} M`;
   if (abs >= 1_000) return `${(n / 1_000).toLocaleString('es-CU', { maximumFractionDigits: 1 })} k`;
   return n.toLocaleString('es-CU', { maximumFractionDigits: 0 });
+}
+
+/** Días compactos para la escala del gráfico de cobertura (30 d / 1,5 k d). */
+function fmtDias(n: number): string {
+  return `${fmtCompact(n)} d`;
 }
 
 /** Truncado con «…» verificado por ancho real. */
@@ -101,20 +173,20 @@ function pageH(doc: jsPDF): number {
   return doc.internal.pageSize.getHeight();
 }
 
-/** Encabezado institucional de páginas continuas (con o sin anexos). */
+/** Encabezado institucional de páginas continuas. */
 function drawContinuationHeader(doc: jsPDF, informe: InformeEjecutivo): void {
   const pw = pageW(doc);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setTextColor(...C_BLACK);
-  doc.text(TITULO_DOC, M, 11);
+  doc.text(TITULO_DOC, M, 12);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
+  doc.setFontSize(8.4);
   doc.setTextColor(...C_MUTED);
-  doc.text(informe.meta.entidadNombre, pw - M, 11, { align: 'right' });
+  doc.text(informe.meta.entidadNombre, pw - M, 12, { align: 'right' });
   doc.setDrawColor(...C_RULE);
   doc.setLineWidth(0.25);
-  doc.line(M, 15, pw - M, 15);
+  doc.line(M, 16.5, pw - M, 16.5);
 }
 
 /** Nueva página VERTICAL con encabezado institucional. */
@@ -152,46 +224,97 @@ function drawWrapped(
   return y;
 }
 
-/** Párrafo de cuerpo (9.3 pt, interlineado cómodo para lectura prolongada). */
+/**
+ * Anchos automáticos por contenido (ADN-ANALISIS-…-PDF-001 §6): mide el texto
+ * natural de cada columna (cabecera + celdas) y reparte el ancho proporcional-
+ * mente con cotas mín/máx. Evita que montos y cabeceras se partan a mitad de
+ * dígito cuando el motor no define anchos propios. Es SOLO presentación: no
+ * altera ningún cálculo del motor (§10).
+ */
+function anchosAuto(
+  doc: jsPDF,
+  head: string[],
+  body: string[][],
+  contentW: number,
+): number[] {
+  const PAD = 2.6;   // aire de celda (no infla el reparto)
+  const headFs = T_TABLA - 0.3;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(headFs); // medir como se dibuja la cabecera (bold)
+  const natural = head.map((h) => Math.min(doc.getTextWidth(h) + PAD, contentW * 0.32));
+  doc.setFont('helvetica', 'normal');
+  for (const fila of body) {
+    fila.forEach((celda, i) => {
+      if (i >= natural.length) return;
+      const w = doc.getTextWidth(String(celda));
+      // Celdas largas (descripciones/lecturas) no elevan la natural por encima
+      // del cap: se envuelven dentro de su columna.
+      natural[i] = Math.max(natural[i], Math.min(w + PAD, contentW * 0.32));
+    });
+  }
+  const min = contentW * 0.05;
+  const aj = natural.map((w) => Math.max(w, min));
+  const suma = aj.reduce((s, w) => s + w, 0);
+  const prop = aj.map((w) => w / suma);
+  // Normalizar a 1 con cotas: mínimo 5 %, máximo 32 %.
+  const clamp = prop.map((v) => Math.min(Math.max(v, 0.05), 0.32));
+  const sumaClamp = clamp.reduce((s, v) => s + v, 0);
+  return clamp.map((v) => v / sumaClamp);
+}
+
+/** Altura estimada (mm) de un texto envuelto a ancho fijo. */
+function alturaTexto(doc: jsPDF, text: string, maxWidth: number, lineH: number): number {
+  const lines = doc.splitTextToSize(text, maxWidth) as string[];
+  return lines.length * lineH;
+}
+
+/** Párrafo de cuerpo (11.3 pt — estándar §7 para lectura prolongada). */
 function drawParrafo(doc: jsPDF, texto: string, y: number, informe: InformeEjecutivo): number {
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9.3);
+  doc.setFontSize(T_CUERPO);
   doc.setTextColor(...C_DARK);
-  return drawWrapped(doc, texto, M, y, pageW(doc) - 2 * M, 4.9, informe) + 2;
+  return drawWrapped(doc, texto, M, y, pageW(doc) - 2 * M, LH_CUERPO, informe) + 2.5;
 }
 
-/** Párrafo auxiliar (8.2 pt, secundario: introducciones y notas). */
+/** Párrafo auxiliar (9.8 pt: introducciones y contexto). */
 function drawAuxiliar(doc: jsPDF, texto: string, y: number, informe: InformeEjecutivo): number {
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.2);
+  doc.setFontSize(T_AUX);
   doc.setTextColor(...C_MUTED);
-  return drawWrapped(doc, texto, M, y, pageW(doc) - 2 * M, 4.0, informe) + 1.5;
+  return drawWrapped(doc, texto, M, y, pageW(doc) - 2 * M, LH_AUX, informe) + 2;
 }
 
-/** Título de sección numerado (13 pt + regla editorial). Guarda anti-huérfanos:
- *  `need` reserva espacio para el título MÁS el primer bloque de contenido
- *  (§3: nunca un encabezado aislado al pie de página). */
-function drawSectionTitle(doc: jsPDF, titulo: string, y: number, informe: InformeEjecutivo, need = 46): number {
+/** Nota al pie de bloque (9 pt mín., §7). */
+function drawNota(doc: jsPDF, texto: string, y: number, informe: InformeEjecutivo): number {
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(T_NOTA);
+  doc.setTextColor(...C_MUTED);
+  return drawWrapped(doc, texto, M, y + 1.6, pageW(doc) - 2 * M, LH_NOTA, informe) + 2;
+}
+
+/** Título de sección numerado (17.5 pt + regla de acento). Guarda
+ *  anti-huérfanos: `need` reserva el título MÁS el primer bloque. */
+function drawSectionTitle(doc: jsPDF, titulo: string, y: number, informe: InformeEjecutivo, need = 58): number {
   const pw = pageW(doc);
   const yy = ensureSpace(doc, y, need, informe);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(T_SECCION);
   doc.setTextColor(...C_BLACK);
-  doc.text(titulo, M, yy + 2.5);
+  doc.text(titulo, M, yy + 4.5);
   doc.setDrawColor(...C_ACCENT);
-  doc.setLineWidth(0.5);
-  doc.line(M, yy + 5, pw - M, yy + 5);
-  return yy + 9.5;
+  doc.setLineWidth(0.7);
+  doc.line(M, yy + 7.2, pw - M, yy + 7.2);
+  return yy + 13;
 }
 
-/** Subtítulo interno (10.5 pt bold grafito). Guarda anti-huérfanos. */
-function drawSubTitle(doc: jsPDF, titulo: string, y: number, informe: InformeEjecutivo, need = 14): number {
+/** Subtítulo interno (12.5 pt bold grafito). Guarda anti-huérfanos. */
+function drawSubTitle(doc: jsPDF, titulo: string, y: number, informe: InformeEjecutivo, need = 18): number {
   const yy = ensureSpace(doc, y, need, informe);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10.5);
+  doc.setFontSize(T_SUBTITULO);
   doc.setTextColor(...C_DARK);
-  doc.text(titulo, M, yy + 1.5);
-  return yy + 6;
+  doc.text(titulo, M, yy + 2.2);
+  return yy + 8.5;
 }
 
 // ── Tablas (autoTable dinámico — encabezados repetidos en multipágina) ───────
@@ -202,8 +325,16 @@ interface TablaOpts {
   colWidths: number[];   // proporciones (suman 1)
   aligns: Array<'left' | 'right' | 'center'>;
   fontSize?: number;
-  /** Hook oficial de jspdf-autotable (p. ej., colorear la celda de prioridad). */
+  headFontSize?: number;
+  cellPadding?: number;
   didParseCell?: CellHook;
+  /**
+   * Columnas numéricas SIN puntos de ruptura natural (montos, porcentajes,
+   * velocidades): si la celda no cabe, se reduce SOLO su tamaño de fuente
+   * (mínimo 7.6 pt) antes de partir un dígito — la cifra exacta se conserva
+   * íntegra y legible (§10-§11). Última instancia tras el reparto de anchos.
+   */
+  fitColumnos?: number[];
 }
 
 async function drawTabla(
@@ -216,9 +347,7 @@ async function drawTabla(
   const contentW = pageW(doc) - 2 * M;
   // Páginas que YA llevan el encabezado institucional al empezar la tabla.
   // autoTable añade páginas por salto y las detectamos con getCurrentPageInfo
-  // (ABSOLUTO y fiable) dentro de didDrawPage; data.pageNumber es relativo a
-  // la propia tabla y no sirve para comparar (defecto detectado en escenarios
-  // de estrés E/F: páginas internas sin encabezado).
+  // (ABSOLUTO y fiable) dentro de didDrawPage (lección de los escenarios E/F).
   const paginasConHeader = new Set<number>([doc.getCurrentPageInfo().pageNumber]);
   autoTable(doc, {
     startY,
@@ -227,8 +356,8 @@ async function drawTabla(
     theme: 'grid',
     styles: {
       font: 'helvetica',
-      fontSize: opts.fontSize ?? 7.4,
-      cellPadding: 1.7,
+      fontSize: opts.fontSize ?? T_TABLA,
+      cellPadding: opts.cellPadding ?? 2.1,
       lineColor: C_BORDER,
       lineWidth: 0.12,
       textColor: C_DARK,
@@ -239,10 +368,10 @@ async function drawTabla(
       fillColor: C_HEADER_BG,
       textColor: C_BLACK,
       fontStyle: 'bold',
-      fontSize: (opts.fontSize ?? 7.4) - 0.2,
+      fontSize: opts.headFontSize ?? (opts.fontSize ?? T_TABLA) - 0.3,
       lineWidth: 0.2,
       lineColor: C_RULE,
-      // La alineación del encabezado sigue la de su columna (consistencia §5).
+      valign: 'middle',
     },
     alternateRowStyles: { fillColor: C_STRIPE },
     columnStyles: Object.fromEntries(
@@ -257,353 +386,733 @@ async function drawTabla(
     margin: { left: M, right: M, top: PAGE_TOP_CONT, bottom: BOTTOM_RESERVE },
     rowPageBreak: 'avoid',
     didDrawPage: () => {
-      // Encabezado institucional en las páginas de CONTINUACIÓN de la tabla
-      // (la primera ya lo trae dibujado por el flujo del documento).
+      // Encabezado institucional en las páginas de CONTINUACIÓN de la tabla.
       const pn = doc.getCurrentPageInfo().pageNumber;
       if (!paginasConHeader.has(pn)) {
         drawContinuationHeader(doc, informe);
         paginasConHeader.add(pn);
       }
     },
-    ...(opts.didParseCell ? { didParseCell: opts.didParseCell } : {}),
+    // El ajuste tipográfico de columnas numéricas DEBE ejecutarse en
+    // didParseCell (antes del cálculo de saltos de línea del autotable): en
+    // willDrawCell el texto ya viene envuelto y reducir la fuente no repara
+    // el corte del dígito. Si la llamada aporta su propio didParseCell, se
+    // encadenan ambos (fit primero, decoración después).
+    ...((opts.fitColumnos && opts.fitColumnos.length > 0) || opts.didParseCell
+      ? {
+          didParseCell: (data: Parameters<CellHook>[0]) => {
+            if (data.row.section === 'head' && opts.fitColumnos?.includes(data.column.index)) {
+              // La cabecera no debe partir palabras ('Existenci/a'): mismo
+              // mecanismo de ajuste, con base en el tamaño de cabecera.
+              const raw = String(data.cell.raw ?? '');
+              if (raw) {
+                const wCol =
+                  (opts.colWidths[data.column.index] ?? 1 / opts.head.length) * (pageW(doc) - 2 * M)
+                  - 2 * (opts.cellPadding ?? 2.1);
+                let fs = opts.headFontSize ?? (opts.fontSize ?? T_TABLA) - 0.3;
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(fs);
+                while (fs > 8.4 && doc.getTextWidth(raw) > wCol) {
+                  fs -= 0.2;
+                  doc.setFontSize(fs);
+                }
+                data.cell.styles.fontSize = fs;
+              }
+            }
+            if (data.row.section === 'body' && opts.fitColumnos?.includes(data.column.index)) {
+              const raw = String(data.cell.raw ?? '');
+              if (raw) {
+                const wCol =
+                  (opts.colWidths[data.column.index] ?? 1 / opts.head.length) * (pageW(doc) - 2 * M)
+                  - 2 * (opts.cellPadding ?? 2.1);
+                let fs = opts.fontSize ?? T_TABLA;
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(fs);
+                while (fs > 7.6 && doc.getTextWidth(raw) > wCol) {
+                  fs -= 0.3;
+                  doc.setFontSize(fs);
+                }
+                data.cell.styles.fontSize = fs;
+              }
+            }
+            opts.didParseCell?.(data);
+          },
+        }
+      : {}),
   });
   const docAny = doc as unknown as { lastAutoTable?: { finalY: number } };
   return docAny.lastAutoTable?.finalY ?? startY;
 }
 
-// ── Gráfico ejecutivo (barras horizontales comparativas — primitivas jsPDF) ──
+// ── Marcadores y metadatos (§9) ──────────────────────────────────────────────
 
-function alturaGrafico(informe: InformeEjecutivo): number {
-  const g = informe.grafico;
-  if (!g) return 0;
-  const barH = 3.4;
-  const gapBar = 1.1;
-  const gapProd = 2.6;
-  const headerH = 5;
-  const legendH = 6;
-  return headerH + g.series.length * (barH * 2 + gapBar + gapProd) - gapProd + legendH + 8;
+interface SeccionNavegable {
+  titulo: string;
+  pagina: number;
 }
 
-function drawGrafico(doc: jsPDF, informe: InformeEjecutivo, y0: number): number {
+function registrarSeccion(secciones: SeccionNavegable[], titulo: string, doc: jsPDF): void {
+  secciones.push({ titulo, pagina: doc.getCurrentPageInfo().pageNumber });
+}
+
+function aplicarMetadatos(doc: jsPDF, informe: InformeEjecutivo): void {
+  const { meta } = informe;
+  doc.setProperties({
+    title: `${TITULO_SEO} — ${meta.entidadNombre}`,
+    subject: `${TITULO_DOC} · ${meta.periodoActual.desde} a ${meta.periodoActual.hasta} vs. ${meta.periodoComparacion.desde} a ${meta.periodoComparacion.hasta}`,
+    author: 'ADNegocio (CostPro)',
+    keywords: 'comparación de productos, ventas, inventario, cobertura, desabastecimiento, informe ejecutivo, inteligencia comercial, CUP',
+    creator: 'ADNegocio — plataforma CostPro',
+  });
+}
+
+function aplicarMarcadores(doc: jsPDF, secciones: SeccionNavegable[]): void {
+  try {
+    for (const s of secciones) {
+      doc.outline.add(null, s.titulo, { pageNumber: s.pagina });
+    }
+  } catch {
+    // El outline es un enriquecimiento: si el visor no lo soporta, el documento
+    // sigue siendo válido y navegable por el índice con enlaces internos.
+  }
+}
+
+/** Fila del índice de portada: numeral + título con ENLACE interno a la página. */
+function drawIndiceFila(
+  doc: jsPDF,
+  numeral: string,
+  titulo: string,
+  pagina: number | null,
+  x: number,
+  y: number,
+  colW: number,
+): void {
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9.2);
+  doc.setTextColor(...C_ACCENT);
+  doc.text(numeral, x, y);
+  const wNum = doc.getTextWidth(numeral);
+  const texto = truncar(doc, titulo, colW - wNum - 9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...C_DARK);
+  if (pagina !== null) {
+    doc.textWithLink(texto, x + wNum + 2, y, { pageNumber: pagina });
+  } else {
+    doc.text(texto, x + wNum + 2, y);
+  }
+  if (pagina !== null) {
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...C_MUTED);
+    doc.text(`${pagina}`, x + colW - 2, y, { align: 'right' });
+  }
+}
+
+// ── GRÁFICO A · Comparación de ventas por producto (§4.A) ────────────────────
+// Barras horizontales AGRUPADAS con los tokens del gráfico de referencia de
+// Estados Financieros: tramo comparable en gris pizarra (#475569) y período
+// analizado en verde institucional (#15803d). Valores al final de cada barra,
+// leyenda diferenciada y marcador de tendencia por producto (▲/▼/●).
+
+function alturaGraficoComparativo(informe: InformeEjecutivo): number {
+  const g = informe.grafico;
+  if (!g) return 0;
+  const barH = 5.0;
+  const gapBar = 1.6;
+  const gapProd = 3.4;
+  const headerH = 6;
+  const legendH = 7.5;
+  const notaH = 11;
+  return headerH + g.series.length * (barH * 2 + gapBar + gapProd) - gapProd + legendH + notaH + 4;
+}
+
+/**
+ * Marcador de tendencia VECTORIAL (glifos ▲/▼/● no existen en WinAnsi y el
+ * motor de fuentes estándar los sustituiría por basura — lección 29d185c55):
+ * triángulo arriba (verde, sube), abajo (rojo, baja) o punto (gris, estable).
+ * Devuelve el ancho total consumido (mm).
+ */
+function tendenciaMarca(
+  doc: jsPDF,
+  anterior: number,
+  actual: number,
+  x: number,
+  y: number,
+  maxW: number,
+): number {
+  const dif = actual - anterior;
+  const up = dif > 0;
+  const down = dif < 0;
+  const color = up ? GR_ACTUAL : down ? GR_NEGATIVO : C_MUTED;
+  doc.setFillColor(...color);
+  if (up) {
+    doc.triangle(x, y - 1.3, x + 1.8, y - 1.3, x + 0.9, y - 2.9, 'F');
+  } else if (down) {
+    doc.triangle(x, y - 2.9, x + 1.8, y - 2.9, x + 0.9, y - 1.3, 'F');
+  } else {
+    doc.circle(x + 0.9, y - 2, 0.9, 'F');
+  }
+  const wSim = 2.6;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.6);
+  doc.setTextColor(...color);
+  const texto = `${dif > 0 ? '+' : dif < 0 ? '-' : ''}${fmtCompact(Math.abs(dif))}`;
+  doc.text(truncar(doc, texto, maxW - wSim - 1.5), x + wSim + 1.5, y);
+  return wSim + 1.5 + doc.getTextWidth(texto);
+}
+
+function drawGraficoComparativo(doc: jsPDF, informe: InformeEjecutivo, y0: number): number {
   const g = informe.grafico;
   if (!g) return y0;
   const contentW = pageW(doc) - 2 * M;
-  const labelW = contentW * 0.30;
-  const barArea = contentW - labelW - 18; // reserva para la etiqueta de valor
+  const labelW = contentW * 0.33;
+  const valorReserva = 20;
+  const barArea = contentW - labelW - valorReserva;
   const maxVal = Math.max(...g.series.flatMap((s) => [s.anterior, s.actual]), 1);
-  const barH = 3.4;
-  const gapBar = 1.1;
-  const gapProd = 2.6;
-  const headerH = 5;
-  const legendH = 6;
-  const alto = alturaGrafico(informe);
+  const barH = 5.0;
+  const gapBar = 1.6;
+  const gapProd = 3.4;
+  const headerH = 6;
+  const legendH = 7.5;
+  const notaH = 11;
+  const alto = alturaGraficoComparativo(informe);
 
   const yStart = ensureSpace(doc, y0, alto, informe);
 
+  // Título del gráfico (10.5 pt bold) — nunca huérfano (reserva garantizada).
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.6);
+  doc.setFontSize(10.5);
   doc.setTextColor(...C_DARK);
-  doc.text(g.titulo, M, yStart + 2);
+  doc.text(g.titulo, M, yStart + 3);
 
-  let y = yStart + headerH + 2;
+  let y = yStart + headerH + 2.5;
   for (const s of g.series) {
-    // Etiqueta del producto (una línea, truncada con verificación real)
+    const dif = s.actual - s.anterior;
+    // Etiqueta del producto (10 pt, hasta 2 líneas — legibilidad §6/§7).
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.6);
+    doc.setFontSize(10);
     doc.setTextColor(...C_DARK);
-    doc.text(truncar(doc, s.name, labelW - 2), M, y + barH);
+    const nombre = truncar(doc, s.name, labelW - 2);
+    const lineasNombre = doc.splitTextToSize(nombre, labelW - 2) as string[];
+    doc.text(lineasNombre[0], M, y + barH);
+    if (lineasNombre[1]) {
+      doc.setFontSize(8.4);
+      doc.setTextColor(...C_MUTED);
+      doc.text(lineasNombre[1], M, y + barH + 3.4);
+    }
 
-    // Barras: anterior (gris) y actual (azul institucional), escala común.
-    const wAnt = Math.max((s.anterior / maxVal) * barArea, s.anterior > 0 ? 0.8 : 0);
-    const wAct = Math.max((s.actual / maxVal) * barArea, s.actual > 0 ? 0.8 : 0);
-    doc.setFillColor(...C_BAR_ANT);
-    doc.rect(M + labelW, y, wAnt, barH, 'F');
-    doc.setFillColor(...C_BAR_ACT);
-    doc.rect(M + labelW, y + barH + gapBar, wAct, barH, 'F');
+    // Barras: escala común del conjunto comparado.
+    const wAnt = Math.max((s.anterior / maxVal) * barArea, s.anterior > 0 ? 0.9 : 0);
+    const wAct = Math.max((s.actual / maxVal) * barArea, s.actual > 0 ? 0.9 : 0);
+    const xBar = M + labelW;
+    doc.setFillColor(...GR_ANTERIOR);
+    doc.rect(xBar, y, wAnt, barH, 'F');
+    doc.setFillColor(...GR_ACTUAL);
+    doc.rect(xBar, y + barH + gapBar, wAct, barH, 'F');
 
-    doc.setFontSize(6.8);
+    // Valores al final de cada barra (§4.A).
+    doc.setFontSize(8.6);
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(...C_MUTED);
-    if (s.anterior > 0) doc.text(fmtCompact(s.anterior), M + labelW + wAnt + 1.2, y + barH);
+    if (s.anterior > 0) doc.text(fmtCompact(s.anterior), xBar + wAnt + 1.4, y + barH);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...C_BAR_ACT);
-    if (s.actual > 0) doc.text(fmtCompact(s.actual), M + labelW + wAct + 1.2, y + barH + gapBar + barH);
+    doc.setFontSize(9.4);
+    doc.setTextColor(...GR_ACTUAL);
+    if (s.actual > 0) doc.text(fmtCompact(s.actual), xBar + wAct + 1.4, y + barH + gapBar + barH);
+
+    // Marcador de tendencia alineado bajo la etiqueta (▲/▼ + diferencia).
+    tendenciaMarca(doc, s.anterior, s.actual, M + 1.5, y + barH * 2 + gapBar + 2.4, labelW - 3);
+
     y += barH * 2 + gapBar + gapProd;
   }
 
-  // Leyenda
-  y += 0.4;
-  doc.setFillColor(...C_BAR_ANT);
-  doc.rect(M, y, 4, 2.2, 'F');
+  // Leyenda claramente diferenciada (§4.A).
+  y += 0.6;
+  const legY = y + 2.2;
+  doc.setFillColor(...GR_ANTERIOR);
+  doc.rect(M, legY - 1.8, 4.4, 2.6, 'F');
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.4);
-  doc.setTextColor(...C_MUTED);
-  doc.text('Tramo comparable (mes anterior)', M + 5.5, y + 2);
-  doc.setFillColor(...C_BAR_ACT);
-  doc.rect(M + 52, y, 4, 2.2, 'F');
+  doc.setFontSize(9.4);
   doc.setTextColor(...C_DARK);
-  doc.text('Período analizado', M + 57.5, y + 2);
+  doc.text('Tramo comparable (mes anterior)', M + 6, legY);
+  const w1 = doc.getTextWidth('Tramo comparable (mes anterior)');
+  doc.setFillColor(...GR_ACTUAL);
+  doc.rect(M + 6 + w1 + 7, legY - 1.8, 4.4, 2.6, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.text('Período analizado', M + 6 + w1 + 13.4, legY);
 
-  // Nota metodológica corta
-  doc.setFontSize(6.9);
+  // Nota metodológica del motor (9 pt mín., §7) + lectura de barras ausentes.
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(T_NOTA);
   doc.setTextColor(...C_MUTED);
-  const notaLines = doc.splitTextToSize(g.nota, contentW) as string[];
-  let yn = y + 5.5;
-  for (const line of notaLines.slice(0, 2)) {
+  let yn = legY + 5;
+  const notaLines = doc.splitTextToSize(
+    `${g.nota} La ausencia de una barra indica que el producto no registró ventas en ese período (nuevo en el ranking o que dejó de venderse).`,
+    contentW,
+  ) as string[];
+  for (const line of notaLines.slice(0, 3)) {
     doc.text(line, M, yn);
-    yn += 3;
+    yn += LH_NOTA;
   }
   return yStart + alto + 3;
 }
 
-// ── Matriz de prioridades y decisiones ───────────────────────────────────────
+// ── GRÁFICO B · Variaciones divergentes (§4.B) ───────────────────────────────
+// Barras divergentes: incrementos a la derecha (verde), reducciones a la
+// izquierda (rojo). Los productos NUEVOS en el ranking se identifican con la
+// etiqueta «NUEVO» y NO reciben porcentaje (sin base comparable, §4.D/§10).
 
-const PRIORIDAD_TXT: Record<InformePrioridad['nivel'], string> = {
-  alta: 'ALTA',
-  media: 'MEDIA',
-  preventiva: 'PREVENTIVA',
-};
-
-async function drawMatrizPrioridades(
-  doc: jsPDF,
-  informe: InformeEjecutivo,
-  startY: number,
-): Promise<number> {
-  const styleFor = (nivel: InformePrioridad['nivel']) => {
-    if (nivel === 'alta') return { bg: C_ALTA_BG, tx: C_ALTA_TX };
-    if (nivel === 'media') return { bg: C_MEDIA_BG, tx: C_MEDIA_TX };
-    return { bg: C_PREV_BG, tx: C_PREV_TX };
-  };
-
-  // El nivel de cada fila viaja en el texto para colorear en didParseCell.
-  const body = informe.prioridades.map((p) => [
-    PRIORIDAD_TXT[p.nivel],
-    p.producto,
-    p.situacion,
-    p.decision,
-  ]);
-
-  return drawTabla(
-    doc,
-    {
-      head: ['Prioridad', 'Producto', 'Situación', 'Decisión recomendada'],
-      body,
-      colWidths: [0.10, 0.17, 0.365, 0.365],
-      aligns: ['center', 'left', 'left', 'left'],
-      fontSize: 7.6,
-      didParseCell: (data) => {
-        if (data.row.section !== 'body') return;
-        if (data.column.index !== 0) {
-          data.cell.styles.fontSize = 7.6;
-          return;
-        }
-        const nivel = String(data.cell.raw ?? '').toLowerCase();
-        const s = nivel.includes('alta')
-          ? styleFor('alta')
-          : nivel.includes('media')
-            ? styleFor('media')
-            : styleFor('preventiva');
-        data.cell.styles.fillColor = s.bg;
-        data.cell.styles.textColor = s.tx;
-        data.cell.styles.fontStyle = 'bold';
-      },
-    },
-    informe,
-    startY,
-  );
+function alturaGraficoVariaciones(v: InformeVariacion[]): number {
+  if (v.length === 0) return 14;
+  const barH = 5.2;
+  const gapProd = 3.8;
+  const headerH = 6;
+  const legendH = 13;      // leyenda + línea de escala con etiquetas
+  return headerH + v.length * (barH + gapProd) - gapProd + legendH + 4;
 }
 
-// ── Anexos (§7: cada anexo en página nueva; §8: identificación completa) ─────
+function drawGraficoVariaciones(doc: jsPDF, informe: InformeEjecutivo, y0: number): number {
+  const v = informe.variaciones;
+  if (v.length === 0) return y0;
+  const contentW = pageW(doc) - 2 * M;
+  const labelW = contentW * 0.34;
+  const chartW = contentW - labelW - 4;
+  // El eje cero deja espacio a la izquierda para las reducciones.
+  const maxAbs = Math.max(...v.map((s) => Math.abs(s.difCup)), 1);
+  const zeroX = M + labelW + chartW * 0.45;
+  const halfPos = chartW * 0.55 - 2;
+  const halfNeg = chartW * 0.45 - 2;
+  const barH = 5.2;
+  const gapProd = 3.8;
+  const headerH = 6;
+  const alto = alturaGraficoVariaciones(v);
 
-/** Cabecera de anexo: identificación ANEXO n + título + introducción. */
-function drawAnnexHeader(
-  doc: jsPDF,
-  informe: InformeEjecutivo,
-  ident: string,
-  titulo: string,
-  intro: string | undefined,
-): number {
+  const yStart = ensureSpace(doc, y0, alto, informe);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(...C_DARK);
+  doc.text('Variación de ingresos por producto (CUP) — mayores movimientos del período', M, yStart + 3);
+
+  let y = yStart + headerH + 2;
+  for (const s of v) {
+    // Nombre (10 pt, una línea).
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...C_DARK);
+    doc.text(truncar(doc, s.name, labelW - 2), M, y + barH);
+
+    // Barra divergente desde el eje cero.
+    const w = (Math.abs(s.difCup) / maxAbs) * (s.difCup >= 0 ? halfPos : halfNeg);
+    const color = s.difCup >= 0 ? GR_ACTUAL : GR_NEGATIVO;
+    doc.setFillColor(...color);
+    doc.rect(s.difCup >= 0 ? zeroX : zeroX - Math.max(w, 0.9), y, Math.max(w, 0.9), barH, 'F');
+
+    // Etiqueta de valor: FUERA de la barra cuando cabe; DENTRO (texto blanco)
+    // cuando el margen no alcanza — nunca solapada ni cortada (§11).
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.8);
+    const valor = `${s.difCup > 0 ? '+' : '-'}${fmtCompact(Math.abs(s.difCup))}`;
+    const pct = s.varPct !== null && !s.esNuevo ? ` (${fmtPctSign(s.varPct)})` : '';
+    const etiqueta = valor + pct;
+    const wEt = doc.getTextWidth(etiqueta);
+    const espacioDerecho = pageW(doc) - M - (zeroX + w + 1.6);
+    const espacioIzquierdo = zeroX - w - 1.6 - (M + labelW);
+    if (s.difCup >= 0) {
+      if (wEt <= espacioDerecho) {
+        doc.setTextColor(...color);
+        doc.text(valor, zeroX + w + 1.4, y + barH);
+        const wV = doc.getTextWidth(valor);
+        if (s.esNuevo) {
+          // «Nuevo» se identifica textualmente (nunca % ficticio, §4.D).
+          doc.setFillColor(...[254, 243, 199] as [number, number, number]);
+          doc.rect(zeroX + w + 1.4 + wV + 2.5, y + barH - 3.6, 13, 4.6, 'F');
+          doc.setFontSize(7.6);
+          doc.setTextColor(...[146, 104, 14] as [number, number, number]);
+          doc.text('NUEVO', zeroX + w + 1.4 + wV + 5, y + barH);
+        } else if (pct) {
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.2);
+          doc.setTextColor(...C_MUTED);
+          doc.text(pct, zeroX + w + 1.4 + wV + 2.5, y + barH);
+        }
+      } else {
+        // Dentro de la barra, alineado al extremo interior (texto blanco).
+        doc.setTextColor(...C_WHITE);
+        doc.text(etiqueta, zeroX + w - 2, y + barH, { align: 'right' });
+      }
+    } else {
+      if (wEt <= espacioIzquierdo) {
+        doc.setTextColor(...color);
+        doc.text(etiqueta, zeroX - w - 1.4, y + barH, { align: 'right' });
+      } else {
+        doc.setTextColor(...C_WHITE);
+        doc.text(etiqueta, zeroX - w + 2, y + barH, { align: 'left' });
+      }
+    }
+    y += barH + gapProd;
+  }
+
+  // Leyenda + línea de escala del eje cero.
+  const legY = y + 1.5;
+  doc.setFillColor(...GR_ACTUAL);
+  doc.rect(M, legY - 1.8, 4.4, 2.6, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.2);
+  doc.setTextColor(...C_DARK);
+  doc.text('Incremento', M + 6, legY);
+  const w1 = doc.getTextWidth('Incremento');
+  doc.setFillColor(...GR_NEGATIVO);
+  doc.rect(M + 6 + w1 + 6, legY - 1.8, 4.4, 2.6, 'F');
+  doc.text('Reducción', M + 6 + w1 + 12, legY);
+  const w2 = doc.getTextWidth('Reducción');
+  doc.setFontSize(8.6);
+  doc.setTextColor(...C_MUTED);
+  doc.text('NUEVO = entra al ranking sin ventas comparables; sin porcentaje (sin base).', M + 6 + w1 + 18 + w2 + 4, legY);
+
+  // Eje cero vertical con su rótulo.
+  doc.setDrawColor(...C_RULE);
+  doc.setLineWidth(0.3);
+  doc.line(zeroX, yStart + headerH, zeroX, y - gapProd + 1);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.2);
+  doc.setTextColor(...C_MUTED);
+  doc.text('eje 0', zeroX, yStart + headerH - 1, { align: 'center' });
+  return yStart + alto + 3;
+}
+
+// ── GRÁFICO C · Disponibilidad y cobertura (§4.C) ────────────────────────────
+// Barras horizontales de cobertura estimada en días con UMBRALES D/2 y D (los
+// mismos del motor: UMBRAL_COBERTURA_ALTA/BAJA). Agotado, riesgo de
+// desabastecimiento y acumulación quedan diferenciados por color Y etiqueta
+// textual (§7: nunca solo color). Selección razonable anti-saturación: hasta
+// 12 casos por severidad; el detalle completo vive en el Anexo II.
+
+const COBERTURA_MAX_FILAS = 12;
+
+function seleccionCobertura(items: InformeCoberturaItem[]): InformeCoberturaItem[] {
+  const orden: InformeCoberturaItem['estado'][] = [
+    'agotado',
+    'cobertura_insuficiente',
+    'cobertura_moderada',
+    'baja_rotacion',
+    'sin_movimiento',
+  ];
+  const seleccion: InformeCoberturaItem[] = [];
+  for (const estado of orden) {
+    const delEstado = items
+      .filter((i) => i.estado === estado)
+      .sort((a, b) => (a.coberturaDias ?? Number.POSITIVE_INFINITY) - (b.coberturaDias ?? Number.POSITIVE_INFINITY));
+    seleccion.push(...delEstado);
+  }
+  return seleccion.slice(0, COBERTURA_MAX_FILAS);
+}
+
+function alturaGraficoCobertura(items: InformeCoberturaItem[]): number {
+  if (items.length === 0) return 14;
+  const barH = 5.0;
+  const gapProd = 4.0;
+  const headerH = 6;
+  const legendH = 16; // leyenda de estados + escala en días
+  return headerH + items.length * (barH + gapProd) - gapProd + legendH + 4;
+}
+
+function drawGraficoCobertura(doc: jsPDF, informe: InformeEjecutivo, y0: number, diasPeriodo: number): number {
+  const items = seleccionCobertura(informe.riesgoCobertura);
+  if (items.length === 0) return y0;
+  const contentW = pageW(doc) - 2 * M;
+  const labelW = contentW * 0.36;
+  const barArea = contentW - labelW;
+  const conDias = items.filter((i) => i.coberturaDias !== null && i.coberturaDias > 0);
+  const maxCobertura = Math.max(...conDias.map((i) => i.coberturaDias as number), diasPeriodo * 1.15);
+  const barH = 5.0;
+  const gapProd = 4.0;
+  const headerH = 6;
+  const alto = alturaGraficoCobertura(items);
+
+  const yStart = ensureSpace(doc, y0, alto, informe);
+  const rowsEndY = yStart + headerH + items.length * (barH + gapProd) - gapProd + 1;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10.5);
+  doc.setTextColor(...C_DARK);
+  doc.text('Riesgo de inventario: cobertura estimada (días) frente al umbral del tramo', M, yStart + 3);
+
+  // Umbrales verticales D/2 y D (mismos umbrales del motor, §10).
+  const xBar = M + labelW;
+  const escala = (dias: number): number => (dias / maxCobertura) * barArea;
+  const xUmbral1 = xBar + escala(diasPeriodo * 0.5);
+  const xUmbral2 = xBar + escala(diasPeriodo);
+  for (const [xUm, etiqueta] of [[xUmbral1, 'D/2'], [xUmbral2, 'D']] as Array<[number, string]>) {
+    doc.setDrawColor(...C_RULE);
+    doc.setLineWidth(0.35);
+    doc.setLineDashPattern([1.4, 1.2], 0);
+    doc.line(xUm, yStart + headerH + 1, xUm, rowsEndY);
+    doc.setLineDashPattern([], 0);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.4);
+    doc.setTextColor(...C_MUTED);
+    doc.text(etiqueta, xUm, yStart + headerH - 0.5, { align: 'center' });
+  }
+
+  let y = yStart + headerH + 2;
+  for (const item of items) {
+    const st = ESTADO_COBERTURA[item.estado];
+    // Nombre (10 pt) + estado textual junto a la barra (§7).
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.setTextColor(...C_DARK);
+    doc.text(truncar(doc, item.name, labelW - 2), M, y + barH);
+
+    if (item.estado === 'agotado' || item.coberturaDias === null) {
+      // Sin cobertura calculable: marca textual (sin barras ficticias, §4.D).
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.4);
+      doc.setTextColor(...st.color);
+      doc.text(`${st.etiqueta.toUpperCase()} — ${item.coberturaTexto}`, xBar + 1.5, y + barH);
+    } else {
+      const w = Math.max(escala(item.coberturaDias), 0.9);
+      doc.setFillColor(...st.color);
+      doc.rect(xBar, y, w, barH, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9.2);
+      doc.setTextColor(...C_DARK);
+      const diasTxt = `${fmtCompact(item.coberturaDias)} d`;
+      doc.text(diasTxt, xBar + w + 1.4, y + barH);
+      const wDias = doc.getTextWidth(diasTxt); // medir en el tamaño de dibujo (9.2)
+      // Etiqueta de estado: tras el valor si cabe; DENTRO de la barra (blanco)
+      // si no hay margen; truncada como último recurso — nunca cortada (§11).
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.6);
+      const xTag = xBar + w + 1.4 + wDias + 2.4;
+      const disponible = pageW(doc) - M - xTag;
+      if (disponible >= doc.getTextWidth(st.etiqueta)) {
+        doc.setTextColor(...st.color);
+        doc.text(st.etiqueta, xTag, y + barH);
+      } else if (w > doc.getTextWidth(st.etiqueta) + 5) {
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...C_WHITE);
+        doc.text(st.etiqueta, xBar + w - 2, y + barH, { align: 'right' });
+      } else {
+        doc.setTextColor(...st.color);
+        doc.text(truncar(doc, st.etiqueta, Math.max(disponible, 8)), xTag, y + barH);
+      }
+    }
+    y += barH + gapProd;
+  }
+
+  // Leyenda de estados (color + texto — coherencia visual con el token).
+  const legY = y + 1;
+  let xLeg = M;
+  const estados = ['agotado', 'cobertura_insuficiente', 'cobertura_moderada', 'baja_rotacion'] as const;
+  for (const e of estados) {
+    const st = ESTADO_COBERTURA[e];
+    doc.setFillColor(...st.color);
+    doc.rect(xLeg, legY - 1.7, 4.4, 2.6, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.8);
+    doc.setTextColor(...C_DARK);
+    doc.text(st.etiqueta, xLeg + 5.8, legY);
+    xLeg += 5.8 + doc.getTextWidth(st.etiqueta) + 6;
+  }
+
+  // Escala en días (0 → máximo) al pie del área de barras.
+  const ejY = legY + 5.5;
+  doc.setDrawColor(...GR_GRID);
+  doc.setLineWidth(0.25);
+  doc.line(xBar, ejY - 2.4, xBar + barArea, ejY - 2.4);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.2);
+  doc.setTextColor(...C_MUTED);
+  doc.text('0 d', xBar, ejY, { align: 'left' });
+  doc.text(fmtDias(maxCobertura), xBar + barArea, ejY, { align: 'right' });
+  doc.text('D = días del tramo analizado', xBar + barArea / 2, ejY, { align: 'center' });
+  return yStart + alto + 3;
+}
+
+// ── RECOMENDACIONES por bloques (§5) ─────────────────────────────────────────
+// Cada recomendación = chip de prioridad + producto + EVIDENCIA E
+// INTERPRETACIÓN (situación del motor) + ACCIÓN RECOMENDADA (decisión del
+// motor). Agrupadas por severidad: CRÍTICA/ALTA · MEDIA · PREVENTIVA. Bloques
+// breves — nunca celdas de párrafo gigantes (§6).
+
+/** Altura estimada del bloque de una recomendación (para la guarda anti-huérfanos). */
+function alturaBloquePrioridad(doc: jsPDF, p: InformePrioridad, contentW: number): number {
+  const textoW = contentW - 9;
+  const lineasSit = (doc.splitTextToSize(p.situacion, textoW) as string[]).length;
+  const lineasDec = (doc.splitTextToSize(p.decision, textoW) as string[]).length;
+  return 10.5 + lineasSit * 4.7 + 3.2 + lineasDec * 4.7 + 5.5;
+}
+
+function drawBloquePrioridad(doc: jsPDF, p: InformePrioridad, y: number, informe: InformeEjecutivo): number {
   const pw = pageW(doc);
-  let y = PAGE_TOP_CONT;
+  const contentW = pw - 2 * M;
+  const color = PRIORIDAD_COLOR[p.nivel];
+  const alto = alturaBloquePrioridad(doc, p, contentW);
+  const yy = ensureSpace(doc, y, alto + 2, informe);
+
+  // Barra de acento a la izquierda (identificación del nivel, también por posición).
+  doc.setFillColor(...color.bg);
+  doc.rect(M, yy, contentW, alto, 'F');
+  doc.setFillColor(...color.tx);
+  doc.rect(M, yy, 1.4, alto, 'F');
+
+  // Chip de prioridad + nombre del producto.
+  const chipW = p.nivel === 'preventiva' ? 24 : p.nivel === 'media' ? 14.5 : 11.5;
+  doc.setFillColor(...color.tx);
+  doc.rect(M + 4.5, yy + 3.4, chipW, 6.4, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...C_ACCENT);
-  doc.text(ident, M, y + 1, { charSpace: 0.5 });
-  y += 5;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(8.6);
+  doc.setTextColor(...C_WHITE);
+  doc.text(PRIORIDAD_TXT[p.nivel], M + 4.5 + chipW / 2, yy + 7.5, { align: 'center' });
+  doc.setFontSize(12);
   doc.setTextColor(...C_BLACK);
-  doc.text(titulo, M, y + 2.5);
-  doc.setDrawColor(...C_ACCENT);
-  doc.setLineWidth(0.5);
-  doc.line(M, y + 5, pw - M, y + 5);
-  y += 9.5;
-  if (intro) {
-    y = drawAuxiliar(doc, intro, y, informe) + 1.5;
+  doc.text(truncar(doc, p.producto, contentW - chipW - 16), M + 4.5 + chipW + 4, yy + 7.8);
+
+  // EVIDENCIA E INTERPRETACIÓN (contenido real del motor).
+  let yb = yy + 14;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.4);
+  doc.setTextColor(...color.tx);
+  doc.text('EVIDENCIA E INTERPRETACIÓN', M + 4.5, yb);
+  yb += 4.7;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10.4);
+  doc.setTextColor(...C_DARK);
+  const lineasSit = doc.splitTextToSize(p.situacion, contentW - 9) as string[];
+  for (const line of lineasSit) {
+    doc.text(line, M + 4.5, yb);
+    yb += 4.7;
+  }
+
+  // ACCIÓN RECOMENDADA.
+  yb += 3.2;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.4);
+  doc.setTextColor(...color.tx);
+  doc.text('ACCIÓN RECOMENDADA', M + 4.5, yb);
+  yb += 4.7;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10.4);
+  doc.setTextColor(...C_BLACK);
+  const lineasDec = doc.splitTextToSize(p.decision, contentW - 9) as string[];
+  for (const line of lineasDec) {
+    doc.text(line, M + 4.5, yb);
+    yb += 4.7;
+  }
+  return yy + alto + 5.5;
+}
+
+async function drawSeccionPrioridades(doc: jsPDF, informe: InformeEjecutivo, y0: number): Promise<number> {
+  let y = y0;
+  const niveles: InformePrioridad['nivel'][] = ['alta', 'media', 'preventiva'];
+  y = drawParrafo(
+    doc,
+    'Bloques ordenados por severidad. CRÍTICA / ALTA agrupa interrupciones comerciales relevantes y riesgos inmediatos de disponibilidad; MEDIA exige seguimiento o reposición anticipada; PREVENTIVA identifica baja rotación y oportunidades. Cada bloque muestra la evidencia cuantitativa del motor y la acción recomendada; el detalle operativo completo está en el análisis complementario y los anexos.',
+    y,
+    informe,
+  );
+  y += 1;
+  for (const nivel of niveles) {
+    const grupo = informe.prioridades.filter((p) => p.nivel === nivel);
+    if (grupo.length === 0) continue;
+    const g = GRUPO_PRIORIDAD[nivel];
+    // Cabecera de grupo (nunca huérfana: reserva del primer bloque).
+    // El ancho del título se mide ANTES de cambiar el tamaño de fuente:
+    // getTextWidth usa el tamaño vigente y medir después daría un ancho
+    // menor al dibujado (solape título/descripción — defecto detectado en
+    // la revisión visual).
+    const primera = grupo[0];
+    const yy = ensureSpace(doc, y, 12 + alturaBloquePrioridad(doc, primera, pageW(doc) - 2 * M), informe);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12.5);
+    doc.setTextColor(...PRIORIDAD_COLOR[nivel].tx);
+    doc.text(g.titulo, M, yy + 3);
+    const wTitulo = doc.getTextWidth(g.titulo);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.6);
+    doc.setTextColor(...C_MUTED);
+    doc.text(truncar(doc, g.descripcion, pageW(doc) - 2 * M - wTitulo - 4), M + wTitulo + 3.5, yy + 3);
+    y = yy + 8;
+    for (const p of grupo) {
+      y = drawBloquePrioridad(doc, p, y, informe);
+    }
+    y += 2;
   }
   return y;
 }
 
-/** Sección/tabla interna con introducción y nota (análisis complementario). */
-async function drawSeccionTabla(
-  doc: jsPDF,
-  tabla: InformeTabla,
-  informe: InformeEjecutivo,
-  y0: number,
-  opts: { colWidths?: number[]; aligns?: Array<'left' | 'right' | 'center'>; fontSize?: number } = {},
-): Promise<number> {
-  let y = y0;
-  // Guarda anti-huérfanos: el subtítulo nunca queda aislado al pie de página.
-  y = drawSubTitle(doc, tabla.titulo, y, informe, 30);
-  if (tabla.intro) {
-    y = drawAuxiliar(doc, tabla.intro, y, informe) + 1;
-  }
-  if (tabla.filas.length === 0) {
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(8.6);
-    doc.setTextColor(...C_MUTED);
-    y = drawWrapped(doc, 'Sin casos en este período.', M, y, pageW(doc) - 2 * M, 4.4, informe) + 2;
-    return y;
-  }
-  const n = tabla.columnas.length;
-  const widths =
-    opts.colWidths ??
-    tabla.anchos ??
-    Array.from({ length: n }, (_, i) =>
-      // La primera columna (descripción) respira; las numéricas se reparten.
-      i === 0 ? 0.26 : (0.74 / (n - 1)),
-    );
-  const aligns =
-    opts.aligns ??
-    tabla.alineaciones ??
-    Array.from({ length: n }, (_, i) => (i === 0 ? 'left' : 'right') as 'left' | 'right');
-  const body = tabla.filas;
-  y = await drawTabla(
-    doc,
-    {
-      head: tabla.columnas,
-      body,
-      colWidths: widths,
-      aligns,
-      fontSize: opts.fontSize ?? 7.4,
-    },
-    informe,
-    y,
-  );
-  if (tabla.nota) {
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(7.4);
-    doc.setTextColor(...C_MUTED);
-    y = drawWrapped(doc, `Nota: ${tabla.nota}`, M, y + 1.8, pageW(doc) - 2 * M, 3.8, informe) + 1.5;
-  }
-  return y + 4;
-}
+// ── PORTADA EJECUTIVA (§3) ───────────────────────────────────────────────────
 
-/** Dibuja un anexo tabular (InformeTabla) en página nueva con identidad propia. */
-async function drawAnexoTabla(
-  doc: jsPDF,
-  informe: InformeEjecutivo,
-  anexo: InformeTabla,
-  ident: string,
-  orientacion: 'portrait' | 'landscape',
-  layout: { colWidths: number[]; aligns: Array<'left' | 'right' | 'center'>; fontSize: number },
-): Promise<void> {
-  doc.addPage('a4', orientacion);
-  drawContinuationHeader(doc, informe);
-  let y = drawAnnexHeader(doc, informe, ident, anexo.titulo, anexo.intro);
-  if (anexo.filas.length === 0) {
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(8.6);
-    doc.setTextColor(...C_MUTED);
-    y = drawWrapped(doc, 'Sin casos en este período.', M, y, pageW(doc) - 2 * M, 4.4, informe) + 2;
-  } else {
-    y = await drawTabla(
-      doc,
-      {
-        head: anexo.columnas,
-        body: anexo.filas,
-        colWidths: layout.colWidths,
-        aligns: layout.aligns,
-        fontSize: layout.fontSize,
-      },
-      informe,
-      y,
-    );
-  }
-  if (anexo.nota) {
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(7.4);
-    doc.setTextColor(...C_MUTED);
-    y = drawWrapped(doc, `Nota: ${anexo.nota}`, M, y + 1.8, pageW(doc) - 2 * M, 3.8, informe) + 1.5;
-  }
-}
-
-// ── PORTADA (§4) ─────────────────────────────────────────────────────────────
-
-/** Etiqueta de grupo editorial: versalitas en acento + regla fina. Devuelve la Y inicial del contenido. */
+/** Etiqueta de grupo editorial: versalitas en acento + regla fina. */
 function drawGrupoKicker(doc: jsPDF, texto: string, y: number): number {
   const pw = pageW(doc);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
+  doc.setFontSize(8.6);
   doc.setTextColor(...C_ACCENT);
-  doc.text(texto, M, y, { charSpace: 0.5 });
+  doc.text(texto, M, y, { charSpace: 0.55 });
   doc.setDrawColor(...C_RULE);
   doc.setLineWidth(0.2);
-  doc.line(M, y + 2.2, pw - M, y + 2.2);
-  return y + 7;
+  doc.line(M, y + 2.4, pw - M, y + 2.4);
+  return y + 7.5;
 }
 
-/**
- * Tarjeta destacada (Ingresos / Variación): banda suave con filete de acento a
- * la izquierda, etiqueta pequeña en versalitas, valor protagonista y descriptor.
- * CP-UX-FINAL-POLISH-003 §1.1-1.2: jerarquía y aire para los dos indicadores
- * principales; sin comprimir tipografías.
- */
-function drawTarjetaDestacada(
+/** Tarjeta hero (Ingresos / Variación): cifra protagonista 26 pt + contexto.
+ *  La cifra NUNCA se trunca (integridad numérica §10): si el valor exacto no
+ *  cabe, se reduce el tamaño hasta 17 pt y, en el límite, se muestra la cifra
+ *  compacta con el valor EXACTO trasladado a la línea de contexto. */
+function drawTarjetaHero(
   doc: jsPDF,
   x: number,
   y: number,
   w: number,
   h: number,
   etiqueta: string,
-  valor: string,
+  valorExacto: string,
   valorColor: [number, number, number],
-  secundario: string | null,
   descriptor: string,
 ): void {
-  const valueSize = 14.5;
   doc.setFillColor(...C_BAND);
   doc.rect(x, y, w, h, 'F');
   doc.setDrawColor(...C_ACCENT);
-  doc.setLineWidth(0.9);
+  doc.setLineWidth(1.1);
   doc.line(x, y, x, y + h);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7);
+  doc.setFontSize(8);
   doc.setTextColor(...C_MUTED);
-  doc.text(etiqueta, x + 5, y + 7.2, { charSpace: 0.35 });
+  doc.text(etiqueta, x + 5, y + 5.5, { charSpace: 0.3 });
+
+  // Cifra protagonista con ajuste adaptativo (sin truncar números).
+  let texto = valorExacto;
+  let size = T_HERO_VALOR;
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(valueSize);
+  while (size > 17 && doc.getTextWidth(texto) > w - 10) {
+    size -= 1.5;
+    doc.setFontSize(size);
+  }
+  if (doc.getTextWidth(texto) > w - 10) {
+    // Límite: compacta + valor exacto en el contexto (la cifra exacta vive
+    // también en la tabla de indicadores y en la conciliación del cuerpo).
+    // Formato es-CU: miles con coma, decimales con punto (p. ej. -529,200.00).
+    texto = fmtCompact(Number(valorExacto.replace(/[^0-9.,-]/g, '').replace(/,/g, '')));
+    size = 21;
+    descriptor = `${descriptor} Valor exacto: ${valorExacto} CUP.`;
+  }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(size);
   doc.setTextColor(...valorColor);
-  doc.text(truncar(doc, valor, w - 10), x + 5, y + 16.5);
-  const yDesc = y + 20.5;
-  if (secundario) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.setTextColor(...valorColor);
-    doc.text(secundario, x + 5, yDesc);
-    const wSec = doc.getTextWidth(secundario);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.8);
-    doc.setTextColor(...C_MUTED);
-    doc.text(truncar(doc, descriptor, w - 10 - wSec - 2.5), x + 5 + wSec + 2.5, yDesc);
-  } else {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.8);
-    doc.setTextColor(...C_MUTED);
-    doc.text(truncar(doc, descriptor, w - 10), x + 5, yDesc);
+  doc.text(texto, x + 5, y + 14.8);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...C_MUTED);
+  const lineas = doc.splitTextToSize(descriptor, w - 10) as string[];
+  let ye = y + 17.8;
+  for (const linea of lineas.slice(0, 2)) {
+    doc.text(linea, x + 5, ye);
+    ye += 3.3;
   }
 }
 
-/** Tarjeta de cifra (grupos comercial e inventario): número protagonista + etiqueta inferior. */
+/** Tarjeta de cifra de grupo: número 16.5 pt + etiqueta + explicación breve. */
 function drawTarjetaCifra(
   doc: jsPDF,
   x: number,
@@ -611,60 +1120,154 @@ function drawTarjetaCifra(
   w: number,
   h: number,
   cifra: string,
+  cifraColor: [number, number, number],
   etiqueta: string,
+  explicacion: string,
 ): void {
   doc.setDrawColor(...C_BORDER);
   doc.setLineWidth(0.2);
   doc.rect(x, y, w, h, 'S');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
-  doc.setTextColor(...C_BLACK);
-  doc.text(truncar(doc, cifra, w - 6), x + w / 2, y + 9.3, { align: 'center' });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.6);
-  doc.setTextColor(...C_MUTED);
+  doc.setFontSize(15.5);
+  doc.setTextColor(...cifraColor);
+  doc.text(truncar(doc, cifra, w - 6), x + w / 2, y + 8.8, { align: 'center' });
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.9);
+  doc.setTextColor(...C_DARK);
   const lineas = doc.splitTextToSize(etiqueta, w - 6) as string[];
-  let ye = y + 13.2;
-  for (const linea of lineas.slice(0, 3)) {
+  let ye = y + 12.2;
+  for (const linea of lineas.slice(0, 2)) {
     doc.text(linea, x + w / 2, ye, { align: 'center' });
+    ye += 3.5;
+  }
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.4);
+  doc.setTextColor(...C_MUTED);
+  const exp = doc.splitTextToSize(explicacion, w - 6) as string[];
+  for (const linea of exp.slice(0, 1)) {
+    doc.text(linea, x + w / 2, ye + 0.4, { align: 'center' });
     ye += 3.2;
   }
 }
 
-/** Banda del producto líder: acento institucional a todo el ancho, discreta (10 mm). */
+/** Banda del producto líder (acento institucional, 12 mm). */
 function drawBandaLider(doc: jsPDF, y: number, contentW: number, nombre: string, participacion: string): void {
-  const h = 9.5;
+  const h = 10.5;
   doc.setFillColor(...C_ACCENT);
   doc.rect(M, y, contentW, h, 'F');
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(6.8);
-  doc.setTextColor(255, 255, 255);
-  doc.text('LÍDER DEL PERÍODO', M + 5, y + 4, { charSpace: 0.5 });
-  doc.setFontSize(10);
-  doc.text(truncar(doc, nombre, contentW * 0.55), M + 5, y + 7.9);
+  doc.setFontSize(7.2);
+  doc.setTextColor(...C_WHITE);
+  doc.text('PRODUCTO LÍDER DEL PERÍODO', M + 5, y + 4, { charSpace: 0.45 });
+  doc.setFontSize(11.5);
+  doc.text(truncar(doc, nombre, contentW * 0.62), M + 5, y + 8.6);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text(participacion, M + contentW - 5, y + 6.5, { align: 'right' });
+  doc.setFontSize(10.5);
+  doc.text(participacion, M + contentW - 5, y + 7.2, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.2);
+  doc.text('participación oficial del período', M + contentW - 5, y + 9.7, { align: 'right' });
 }
 
-/**
- * Composición editorial de los indicadores ejecutivos en la portada
- * (CP-UX-FINAL-POLISH-003 §1.1/1.2). Sustituye la lista compacta de líneas por:
- *   1. Bloque destacado: Ingresos y Variación, lado a lado, con jerarquía.
- *   2. Grupo «Desempeño comercial»: crecimiento, contracción, sin ventas.
- *   3. Grupo «Disponibilidad e inventario»: agotados con antecedente, cobertura.
- *   4. Banda diferenciada del producto líder (sin desproporción).
- * Los indicadores no reconocidos se listan al pie del bloque (defensa de
- * integridad §9: NINGÚN indicador se pierde jamás).
- * NO recalc NI reescribe cifras: solo distribuye informe.indicadores.
- */
-function drawIndicadoresEditorial(doc: jsPDF, informe: InformeEjecutivo, yKicker: number): number {
+/** Banda «La situación en un minuto» — resumen gerencial del motor (§3).
+ *  NUNCA se superpone: la altura se calcula ANTES y quien la llama decide si
+ *  cabe en la página actual o si continúa en la siguiente (flujo real). */
+function alturaResumenMinuto(doc: jsPDF, informe: InformeEjecutivo): number {
+  const contentW = pageW(doc) - 2 * M;
+  let alto = 10.5;
+  for (const s of informe.resumenGerencial) {
+    alto += alturaTexto(doc, s, contentW - 14, 4.3) + 1.8;
+  }
+  return alto;
+}
+
+function drawResumenMinuto(doc: jsPDF, informe: InformeEjecutivo, y: number): number {
+  const contentW = pageW(doc) - 2 * M;
+  const items = informe.resumenGerencial;
+  const alto = alturaResumenMinuto(doc, informe);
+  const yy = ensureSpace(doc, y, alto + 2, informe);
+  doc.setFillColor(...C_BAND);
+  doc.rect(M, yy, contentW, alto, 'F');
+  doc.setDrawColor(...C_ACCENT);
+  doc.setLineWidth(1.1);
+  doc.line(M, yy, M, yy + alto);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.8);
+  doc.setTextColor(...C_ACCENT);
+  doc.text('LA SITUACIÓN EN UN MINUTO', M + 5, yy + 5.8, { charSpace: 0.4 });
+  let yb = yy + 10.5;
+  for (const s of items) {
+    doc.setFillColor(...C_ACCENT);
+    doc.circle(M + 6.5, yb - 1.2, 0.7, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.2);
+    doc.setTextColor(...C_DARK);
+    yb = drawWrapped(doc, s, M + 10, yb, contentW - 14, 4.3, informe) + 1.8;
+  }
+  return yy + alto;
+}
+
+/** Portada (página 1). El índice se rellena al FINAL del documento (dos
+ *  pasos: el cuerpo registra las páginas reales y luego el ancla que aquí se
+ *  devuelve completa las filas con enlaces internos). */
+function drawPortada(doc: jsPDF, informe: InformeEjecutivo): { pagina: number; yFilas: number } {
   const pw = pageW(doc);
   const contentW = pw - 2 * M;
-  const inds = informe.indicadores;
-  const GAP = 4.5; // aire entre grupos (§1.2)
+  const { meta } = informe;
+  const f = (iso: string): string => {
+    const [yy, mm, dd] = iso.split('-');
+    return yy && mm && dd ? `${dd}/${mm}/${yy}` : iso;
+  };
 
-  // Clasificación presentacional por etiqueta (fuente única: buildInformeEjecutivo).
+  // Identificación editorial
+  let y = 24;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.6);
+  doc.setTextColor(...C_ACCENT);
+  doc.text('ANÁLISIS COMERCIAL · COMPARACIÓN DE PRODUCTOS', M, y, { charSpace: 0.7 });
+  y += 5.5;
+  doc.setDrawColor(...C_ACCENT);
+  doc.setLineWidth(1);
+  doc.line(M, y, M + 36, y);
+  y += 12.5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(T_PORTADA);
+  doc.setTextColor(...C_BLACK);
+  doc.text('COMPARACIÓN DE PRODUCTOS', M, y);
+  y += 8;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(T_PORTADA_SUB);
+  doc.setTextColor(...C_DARK);
+  doc.text(TITULO_DOC, M, y);
+
+  // Ficha institucional
+  y += 9.5;
+  doc.setFillColor(...C_BAND);
+  doc.setDrawColor(...C_BORDER);
+  doc.setLineWidth(0.2);
+  doc.rect(M, y, contentW, 31, 'S');
+  const filas: Array<[string, string]> = [
+    ['ENTIDAD', meta.entidadNombre],
+    ['PERÍODO ANALIZADO', `${f(meta.periodoActual.desde)} a ${f(meta.periodoActual.hasta)} (${meta.diasPeriodo} días)`],
+    ['PERÍODO COMPARATIVO', `${f(meta.periodoComparacion.desde)} a ${f(meta.periodoComparacion.hasta)}`],
+    ['ELABORACIÓN', `${format(new Date(meta.generadoEl), 'dd/MM/yyyy HH:mm')} · Ámbito: ${meta.ambito}`],
+  ];
+  let yf = y + 6;
+  for (const [etiqueta, valor] of filas) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...C_MUTED);
+    doc.text(etiqueta, M + 4.5, yf);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.8);
+    doc.setTextColor(...C_DARK);
+    doc.text(valor, M + 48, yf);
+    yf += 7.2;
+  }
+  y += 31 + 4.5;
+
+  // ── Dashboard de indicadores (§3) ──
+  const inds = informe.indicadores;
   const usados = new Set<number>();
   const buscar = (re: RegExp): InformeIndicador | undefined => {
     const idx = inds.findIndex((ind, i) => !usados.has(i) && re.test(ind.label));
@@ -680,217 +1283,293 @@ function drawIndicadoresEditorial(doc: jsPDF, informe: InformeEjecutivo, yKicker
   const cobertura = buscar(/cobertura estimada insuficiente/i);
   const lider = buscar(/^Lider del período/i);
 
-  // ── Bloque destacado ──
-  let y = drawGrupoKicker(doc, 'RESUMEN DE INDICADORES', yKicker);
-  if (ingresos || variacion) {
-    const cardW = (contentW - 4) / 2;
-    const h = 23;
-    if (ingresos) {
-      drawTarjetaDestacada(doc, M, y, cardW, h, 'INGRESOS DEL CONJUNTO', ingresos.value, C_ACCENT, null, 'Ventas del conjunto en el período analizado');
-    }
-    if (variacion) {
-      const mVar = variacion.value.match(/^(.*?)\s*\((.+)\)\s*$/);
-      const principal = mVar ? mVar[1] : variacion.value;
-      const pct = mVar ? mVar[2] : null;
-      const esNegativa = principal.trim().startsWith('-');
-      const colorVar = esNegativa ? C_ALTA_TX : principal.trim().startsWith('+') || /^\$?\d/.test(principal.trim()) ? C_POS : C_DARK;
-      drawTarjetaDestacada(
-        doc,
-        M + cardW + 4,
-        y,
-        cardW,
-        h,
-        'VARIACIÓN VS. TRAMO COMPARABLE',
-        principal,
-        colorVar,
-        pct,
-        'Frente al tramo equivalente del período anterior',
-      );
-    }
-    y += h + GAP + 1.5;
+  // Fila hero: Ingresos + Variación (cifras protagonistas con contexto).
+  y = drawGrupoKicker(doc, 'RESULTADO DEL CONJUNTO COMPARADO', y);
+  const heroH = 22;
+  const cardW = (contentW - 4.5) / 2;
+  if (ingresos) {
+    drawTarjetaHero(
+      doc, M, y, cardW, heroH,
+      'INGRESOS DEL CONJUNTO COMPARADO (CUP)',
+      ingresos.value.replace(' CUP', ''),
+      C_ACCENT,
+      'Suma de los ingresos del período analizado para los productos incluidos en ambos cortes.',
+    );
   }
+  if (variacion) {
+    const mVar = variacion.value.match(/^([+-][^()]+?)\s*(?:\((.+)\))?$/);
+    const principal = mVar ? mVar[1].trim() : variacion.value;
+    const pct = mVar && mVar[2] ? mVar[2] : null;
+    const esNegativa = principal.trim().startsWith('-');
+    const colorVar = esNegativa ? GR_NEGATIVO : principal.trim().startsWith('+') ? GR_ACTUAL : C_DARK;
+    drawTarjetaHero(
+      doc, M + cardW + 4.5, y, cardW, heroH,
+      'VARIACIÓN VS. TRAMO COMPARABLE (CUP)',
+      principal.replace(/\s*CUP$/, ''),
+      colorVar,
+      pct
+        ? `Frente al tramo equivalente del período anterior: ${pct}. Mide solo el conjunto comparado, no la tienda completa.`
+        : 'Frente al tramo equivalente del período anterior; mide solo el conjunto comparado, no la tienda completa.',
+    );
+  }
+  y += heroH + 4;
 
-  // ── Grupo: desempeño comercial ──
+  // Grupo: desempeño comercial del conjunto.
   const comerciales = [crecimiento, contraccion, sinVentas].filter((i): i is InformeIndicador => !!i);
   if (comerciales.length > 0) {
-    y = drawGrupoKicker(doc, 'DESEMPEÑO COMERCIAL DEL CONJUNTO', y);
+    y = drawGrupoKicker(doc, 'DESEMPEÑO COMERCIAL DEL RANKING', y);
     const gapCard = 4;
-    const cardW = (contentW - gapCard * (comerciales.length - 1)) / comerciales.length;
-    let maxLines = 1;
+    const wCard = (contentW - gapCard * (comerciales.length - 1)) / comerciales.length;
+    const explicaciones: Record<string, string> = {
+      'crecimiento relevante': 'Variación de +50% o más sobre su propia base del tramo comparable.',
+      'contracción': 'Variación de -50% o más sobre su propia base del tramo comparable.',
+      'sin ventas en el tramo': 'Vendían en el tramo comparable y el mayor del período no registra salidas.',
+    };
+    let maxH = 0;
     comerciales.forEach((c) => {
-      const lineas = doc.splitTextToSize(c.label, cardW - 6) as string[];
-      maxLines = Math.max(maxLines, lineas.length);
+      const exp = Object.entries(explicaciones).find(([k]) => c.label.toLowerCase().includes(k))?.[1] ?? 'Indicador del conjunto comparado.';
+      const lineasEt = (doc.splitTextToSize(c.label, wCard - 6) as string[]).length;
+      maxH = Math.max(maxH, 15.5 + lineasEt * 3.5 + 3.2 + 2);
     });
-    const h = 13.2 + maxLines * 3.2 + 1.3;
+    const hC = maxH;
     comerciales.forEach((c, i) => {
-      drawTarjetaCifra(doc, M + i * (cardW + gapCard), y, cardW, h, c.value, c.label);
+      const exp = Object.entries(explicaciones).find(([k]) => c.label.toLowerCase().includes(k))?.[1] ?? 'Indicador del conjunto comparado.';
+      const esRiesgo = c.label.toLowerCase().includes('contracción') || c.label.toLowerCase().includes('sin ventas');
+      drawTarjetaCifra(
+        doc, M + i * (wCard + gapCard), y, wCard, hC,
+        c.value,
+        esRiesgo ? GR_NEGATIVO : GR_ACTUAL,
+        c.label,
+        exp,
+      );
     });
-    y += h + GAP;
+    y += hC + 4;
   }
 
-  // ── Grupo: disponibilidad e inventario ──
+  // Grupo: disponibilidad e inventario.
   const inventario = [agotados, cobertura].filter((i): i is InformeIndicador => !!i);
   if (inventario.length > 0) {
     y = drawGrupoKicker(doc, 'DISPONIBILIDAD E INVENTARIO', y);
     const gapCard = 4;
-    const cardW = (contentW - gapCard * (inventario.length - 1)) / inventario.length;
-    let maxLines = 1;
+    const wCard = (contentW - gapCard * (inventario.length - 1)) / inventario.length;
+    let maxH = 0;
     inventario.forEach((c) => {
-      const lineas = doc.splitTextToSize(c.label, cardW - 6) as string[];
-      maxLines = Math.max(maxLines, lineas.length);
+      const lineasEt = (doc.splitTextToSize(c.label, wCard - 6) as string[]).length;
+      maxH = Math.max(maxH, 15.5 + lineasEt * 3.5 + 3.2 + 2);
     });
-    const h = 13.2 + maxLines * 3.2 + 1.3;
+    const hC = maxH;
     inventario.forEach((c, i) => {
-      drawTarjetaCifra(doc, M + i * (cardW + gapCard), y, cardW, h, c.value, c.label);
+      const exp = c.label.toLowerCase().includes('agotados')
+        ? 'Sin existencia al corte teniendo ventas en el tramo comparable: interrupción comercial.'
+        : 'La existencia no alcanza la mitad del tramo al ritmo de venta actual: riesgo de desabastecimiento.';
+      drawTarjetaCifra(
+        doc, M + i * (wCard + gapCard), y, wCard, hC,
+        c.value,
+        GR_NEGATIVO,
+        c.label,
+        exp,
+      );
     });
-    y += h + GAP;
+    y += hC + 4;
   }
 
-  // ── Líder del período (tratamiento diferenciado, sin desproporción) ──
+  // Producto líder.
   if (lider) {
     const mLider = lider.value.match(/^(.+?)\s+—\s+(.+)$/);
     drawBandaLider(doc, y, contentW, mLider ? mLider[1].trim() : lider.value, mLider ? mLider[2].trim() : '');
-    y += 9.5 + GAP - 1;
+    y += 10.5 + 4.5;
   }
 
-  // ── Defensa de integridad §9: cualquier indicador no clasificado NO se pierde ──
+  // Indicadores no clasificados — defensa de integridad §9 (ninguno se pierde).
   const restantes = inds.filter((_, i) => !usados.has(i));
   if (restantes.length > 0) {
     y = drawGrupoKicker(doc, 'OTROS INDICADORES', y);
     const vw = 62;
     for (const ind of restantes) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.8);
+      doc.setFontSize(9.8);
       doc.setTextColor(...C_DARK);
       doc.text(truncar(doc, ind.label, contentW - vw - 4), M, y);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(...C_BLACK);
       doc.text(ind.value, pw - M, y, { align: 'right' });
-      y += 5.2;
+      y += 5.6;
     }
-    y += GAP - 4;
+    y += 1;
   }
 
+  // Resumen gerencial (<1 min) — §3. ensureSpace lo mantiene íntegro: si la
+  // portada no lo acomoda, continúa en la página siguiente sin solaparse.
+  y += 3;
+  const yResumen = drawResumenMinuto(doc, informe, y);
+  y = yResumen + 6;
+
+  // CONTENIDO (índice): las páginas y los enlaces internos se completan al
+  // final del build (dos pasos — drawIndiceFinal). 9 entradas en 2 columnas.
+  if (y + 6.5 + 5 * 6.2 > pageH(doc) - BOTTOM_RESERVE) {
+    nuevaPaginaVertical(doc, informe);
+    y = PAGE_TOP_CONT;
+  }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.6);
+  doc.setTextColor(...C_ACCENT);
+  doc.text('CONTENIDO', M, y, { charSpace: 0.55 });
+  return { pagina: doc.getCurrentPageInfo().pageNumber, yFilas: y + 7 };
+}
+
+// ── Índice de portada (dos pasos: se rellena al final con páginas reales) ────
+
+const INDICE_ENTRADAS: Array<{ numeral: string; titulo: string; seccion: string }> = [
+  { numeral: '1.', titulo: 'Diagnóstico ejecutivo', seccion: 'diagnostico' },
+  { numeral: '2.', titulo: 'Prioridades y decisiones recomendadas', seccion: 'prioridades' },
+  { numeral: '3.', titulo: 'Gráficos analíticos', seccion: 'graficos' },
+  { numeral: '4.', titulo: 'Análisis complementario', seccion: 'complementario' },
+  { numeral: '', titulo: 'ANEXO I-A · Ranking comercial', seccion: 'anexoIA' },
+  { numeral: '', titulo: 'ANEXO I-B · Cantidades del ranking', seccion: 'anexoIB' },
+  { numeral: '', titulo: 'ANEXO II · Disponibilidad y cobertura', seccion: 'anexoII' },
+  { numeral: '', titulo: 'ANEXO III · Productos sin ventas', seccion: 'anexoIII' },
+  { numeral: '', titulo: 'ANEXO IV · Metodología y fuentes', seccion: 'anexoIV' },
+];
+
+function drawIndiceFinal(
+  doc: jsPDF,
+  paginas: Record<string, number | undefined>,
+  ancla: { pagina: number; yFilas: number },
+): void {
+  doc.setPage(ancla.pagina);
+  const colW = (pageW(doc) - 2 * M - 8) / 2;
+  INDICE_ENTRADAS.forEach((e, i) => {
+    const col = i < 5 ? 0 : 1;
+    const fila = i < 5 ? i : i - 5;
+    const x = M + col * (colW + 8);
+    const y = ancla.yFilas + fila * 6.2;
+    drawIndiceFila(doc, e.numeral, e.titulo, paginas[e.seccion] ?? null, x, y, colW);
+  });
+}
+
+// ── Anexos (§6-§8: página nueva; Anexo I separado en I-A / I-B) ──────────────
+
+/** Cabecera de anexo: identificación ANEXO n + título + introducción. */
+function drawAnnexHeader(
+  doc: jsPDF,
+  informe: InformeEjecutivo,
+  ident: string,
+  titulo: string,
+  intro: string | undefined,
+): number {
+  const pw = pageW(doc);
+  let y = PAGE_TOP_CONT;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.6);
+  doc.setTextColor(...C_ACCENT);
+  doc.text(ident, M, y + 1, { charSpace: 0.55 });
+  y += 5.5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(T_SECCION);
+  doc.setTextColor(...C_BLACK);
+  doc.text(titulo, M, y + 3.5);
+  doc.setDrawColor(...C_ACCENT);
+  doc.setLineWidth(0.7);
+  doc.line(M, y + 6.2, pw - M, y + 6.2);
+  y += 12.5;
+  if (intro) {
+    y = drawAuxiliar(doc, intro, y, informe) + 1.5;
+  }
   return y;
 }
 
-function drawPortada(doc: jsPDF, informe: InformeEjecutivo): void {
-  const pw = pageW(doc);
-  const contentW = pw - 2 * M;
-  const { meta } = informe;
-  const f = (iso: string): string => {
-    const [yy, mm, dd] = iso.split('-');
-    return yy && mm && dd ? `${dd}/${mm}/${yy}` : iso;
-  };
-
-  // Bloque superior: identificación editorial (kicker + título + subtítulo)
-  let y = 30;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...C_ACCENT);
-  doc.text('ANÁLISIS COMERCIAL · COMPARACIÓN DE PRODUCTOS', M, y, { charSpace: 0.7 });
-  y += 6;
-  doc.setDrawColor(...C_ACCENT);
-  doc.setLineWidth(0.9);
-  doc.line(M, y, M + 34, y);
-  y += 16;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(21);
-  doc.setTextColor(...C_BLACK);
-  doc.text('COMPARACIÓN DE PRODUCTOS', M, y);
-  y += 8;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(11.5);
-  doc.setTextColor(...C_DARK);
-  doc.text(TITULO_DOC, M, y);
-
-  // Ficha institucional (entidad, períodos, elaboración)
-  y += 12;
-  doc.setFillColor(...C_BAND);
-  doc.setDrawColor(...C_BORDER);
-  doc.setLineWidth(0.2);
-  doc.rect(M, y, contentW, 44, 'S');
-  const filas: Array<[string, string]> = [
-    ['ENTIDAD', meta.entidadNombre],
-    ['PERÍODO ANALIZADO', `${f(meta.periodoActual.desde)} a ${f(meta.periodoActual.hasta)} (${meta.diasPeriodo} días)`],
-    ['PERÍODO COMPARATIVO', `${f(meta.periodoComparacion.desde)} a ${f(meta.periodoComparacion.hasta)}`],
-    ['ELABORACIÓN', `${format(new Date(meta.generadoEl), 'dd/MM/yyyy HH:mm')} · Ámbito: ${meta.ambito}`],
-  ];
-  let yf = y + 8;
-  for (const [etiqueta, valor] of filas) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7);
+/** Sección/tabla interna con introducción y nota (análisis complementario). */
+async function drawSeccionTabla(
+  doc: jsPDF,
+  tabla: InformeTabla,
+  informe: InformeEjecutivo,
+  y0: number,
+  opts: { colWidths?: number[]; aligns?: Array<'left' | 'right' | 'center'>; fontSize?: number } = {},
+): Promise<number> {
+  let y = y0;
+  y = drawSubTitle(doc, tabla.titulo, y, informe, 32);
+  if (tabla.intro) {
+    y = drawAuxiliar(doc, tabla.intro, y, informe) + 1;
+  }
+  if (tabla.filas.length === 0) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(T_AUX);
     doc.setTextColor(...C_MUTED);
-    doc.text(etiqueta, M + 5, yf);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9.6);
-    doc.setTextColor(...C_DARK);
-    doc.text(valor, M + 48, yf);
-    yf += 9;
+    y = drawWrapped(doc, 'Sin casos en este período.', M, y, pageW(doc) - 2 * M, LH_AUX, informe) + 2;
+    return y;
   }
-
-  // Resumen de indicadores — composición editorial (CP-UX-FINAL-POLISH-003 §1.1):
-  // bloque destacado de ingresos/variación, grupos semánticos y banda del líder,
-  // con aire y jerarquía en lugar de líneas consecutivas.
-  y += 44 + 7;
-  y = drawIndicadoresEditorial(doc, informe, y);
-
-  // Contenido del documento (fila compacta si el bloque editorial creció,
-  // p. ej. etiquetas a 3 líneas — la portada JAMÁS invade el pie, §4)
-  y += 8;
-  const filaContenido = y > 226 ? 5.2 : 6;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...C_ACCENT);
-  doc.text('CONTENIDO', M, y, { charSpace: 0.5 });
-  y += 6.5;
-  const secciones: Array<[string, string]> = [
-    ['1.', 'Diagnóstico ejecutivo'],
-    ['2.', 'Prioridades y decisiones recomendadas'],
-    ['3.', 'Análisis complementario'],
-    // (el ancho del numeral se mide al dibujar; véase más abajo)
-    ...informe.anexos.map((a, i) => {
-      const m = a.titulo.match(/^(Anexo\s+[IVX]+)\.\s*(.+)$/i);
-      const ident = m ? m[1].replace('Anexo', 'ANEXO').toUpperCase() : `ANEXO ${i + 1}`;
-      const resto = m ? m[2] : a.titulo;
-      return [ident.replace(/\.?\s*$/, ''), resto] as [string, string];
-    }),
-    ['ANEXO IV', 'Metodología y fuentes'],
-  ];
-  const mitad = Math.ceil(secciones.length / 2);
-  const colW = (contentW - 8) / 2;
-  for (let i = 0; i < mitad; i++) {
-    const fila = secciones[i];
-    const fila2 = secciones[i + mitad];
-    const yy = y + i * filaContenido;
-    for (const [col, item] of [[0, fila], [1, fila2]] as Array<[number, [string, string] | undefined]>) {
-      if (!item) continue;
-      const x = M + col * (colW + 8);
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(8.6);
-      doc.setTextColor(...C_ACCENT);
-      doc.text(item[0], x, yy);
-      // El título se coloca tras el ancho REAL del numeral en mm
-      // (getTextWidth ya devuelve unidades del documento), sin solapes.
-      const wNum = doc.getTextWidth(item[0]);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(...C_DARK);
-      doc.text(truncar(doc, item[1], colW - wNum - 2), x + wNum + 2, yy);
-    }
-  }
-
-  // Identificación al pie de la portada (sin numeración de página, §4)
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.6);
-  doc.setTextColor(...C_MUTED);
-  doc.setDrawColor(...C_RULE);
-  doc.setLineWidth(0.2);
-  doc.line(M, 273, pw - M, 273);
-  doc.text(
-    `${meta.entidadNombre} · ${TITULO_DOC} · Generado el ${format(new Date(meta.generadoEl), 'dd/MM/yyyy HH:mm')}`,
-    M,
-    278,
+  const n = tabla.columnas.length;
+  const widths =
+    opts.colWidths ??
+    tabla.anchos ??
+    anchosAuto(doc, tabla.columnas, tabla.filas, pageW(doc) - 2 * M);
+  const aligns =
+    opts.aligns ??
+    tabla.alineaciones ??
+    Array.from({ length: n }, (_, i) => (i === 0 ? 'left' : 'right') as 'left' | 'right');
+  // Columnas numéricas (sin puntos de ruptura): >60 % de celdas con forma de
+  // cifra/magnitud → ajuste tipográfico por celda si el ancho no alcanza.
+  const esNumerica = tabla.columnas.map((_, ci) => {
+    const celdas = tabla.filas.map((f) => (f[ci] ?? '').trim()).filter(Boolean);
+    if (celdas.length === 0) return false;
+    const conForma = celdas.filter((c) => /^[+\-]?\$?[\d.,%()\s]+[a-zA-Záéíóúñ/\d]*$/.test(c) && /\d/.test(c)).length;
+    return conForma / celdas.length > 0.6;
+  });
+  y = await drawTabla(
+    doc,
+    {
+      head: tabla.columnas,
+      body: tabla.filas,
+      colWidths: widths,
+      aligns,
+      fontSize: opts.fontSize ?? T_TABLA,
+      fitColumnos: esNumerica.map((v, i) => (v ? i : -1)).filter((i) => i >= 0),
+    },
+    informe,
+    y,
   );
+  if (tabla.nota) {
+    y = drawNota(doc, `Nota: ${tabla.nota}`, y + 1.4, informe) + 1.5;
+  }
+  return y + 4;
+}
+
+/** Dibuja un anexo tabular en página nueva con identidad propia. */
+async function drawAnexoTabla(
+  doc: jsPDF,
+  informe: InformeEjecutivo,
+  ident: string,
+  titulo: string,
+  intro: string | undefined,
+  anexo: Pick<InformeTabla, 'columnas' | 'filas' | 'nota'>,
+  orientacion: 'portrait' | 'landscape',
+  layout: { colWidths: number[]; aligns: Array<'left' | 'right' | 'center'>; fontSize: number },
+): Promise<void> {
+  doc.addPage('a4', orientacion);
+  drawContinuationHeader(doc, informe);
+  let y = drawAnnexHeader(doc, informe, ident, titulo, intro);
+  if (anexo.filas.length === 0) {
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(T_AUX);
+    doc.setTextColor(...C_MUTED);
+    y = drawWrapped(doc, 'Sin casos en este período.', M, y, pageW(doc) - 2 * M, LH_AUX, informe) + 2;
+  } else {
+    y = await drawTabla(
+      doc,
+      {
+        head: anexo.columnas,
+        body: anexo.filas,
+        colWidths: layout.colWidths,
+        aligns: layout.aligns,
+        fontSize: layout.fontSize,
+      },
+      informe,
+      y,
+    );
+  }
+  if (anexo.nota) {
+    y = drawNota(doc, `Nota: ${anexo.nota}`, y + 1.4, informe) + 1.5;
+  }
 }
 
 // ── Builder principal ────────────────────────────────────────────────────────
@@ -898,85 +1577,93 @@ function drawPortada(doc: jsPDF, informe: InformeEjecutivo): void {
 export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promise<jsPDF> {
   const doc = await createPDFDocument('p', 'mm', 'a4');
   const { meta } = informe;
+  const dias = meta.diasPeriodo;
+  const secciones: SeccionNavegable[] = [];
+  const paginas: Record<string, number | undefined> = {};
 
-  const f = (iso: string): string => {
-    const [yy, mm, dd] = iso.split('-');
-    return yy && mm && dd ? `${dd}/${mm}/${yy}` : iso;
-  };
+  // ── PÁGINA 1 · PORTADA EJECUTIVA (sin numeración, §4) ──
+  const indice = drawPortada(doc, informe);
 
-  // ── PÁGINA 1 · PORTADA (sin numeración visible, §4) ──
-  drawPortada(doc, informe);
+  // ── CUERPO ── Si el resumen/índice saltaron a la página 2, el cuerpo continúa
+  // en esa misma página bajo el índice (evita páginas vacías, §8); si el índice
+  // quedó en la portada, el cuerpo arranca en página nueva.
+  let y: number;
+  if (indice.pagina === 1) {
+    nuevaPaginaVertical(doc, informe);
+    y = PAGE_TOP_CONT;
+  } else {
+    doc.setPage(indice.pagina);
+    y = indice.yFilas + 5 * 6.2 + 7;
+    if (y + 60 > pageH(doc) - BOTTOM_RESERVE) {
+      nuevaPaginaVertical(doc, informe);
+      y = PAGE_TOP_CONT;
+    }
+  }
 
-  // ── PÁGINA 2 · CUERPO ──
-  nuevaPaginaVertical(doc, informe);
-  let y = PAGE_TOP_CONT;
+  // 1. DIAGNÓSTICO EJECUTIVO (§5: responde qué ocurrió / riesgo / decisión)
+  registrarSeccion(secciones, '1. Diagnóstico ejecutivo', doc);
+  paginas.diagnostico = doc.getCurrentPageInfo().pageNumber;
+  y = drawSectionTitle(doc, '1. Diagnóstico ejecutivo', y, informe, 52);
 
-  // 1. DIAGNÓSTICO EJECUTIVO
-  y = drawSectionTitle(doc, '1. Diagnóstico ejecutivo', y, informe, 40);
-  y = drawSubTitle(doc, 'Situación general', y, informe);
+  y = drawSubTitle(doc, '¿Qué ocurrió en el período?', y, informe);
   for (const parrafo of informe.situacionGeneral) {
     y = drawParrafo(doc, parrafo, y, informe);
     y += 0.5;
   }
 
-  // Conclusión gerencial destacada (banda editorial sobria)
+  y = drawSubTitle(doc, '¿Qué riesgo u oportunidad representa?', y, informe);
+  {
+    const nAlta = informe.prioridades.filter((p) => p.nivel === 'alta').length;
+    const nMedia = informe.prioridades.filter((p) => p.nivel === 'media').length;
+    const nPrev = informe.prioridades.filter((p) => p.nivel === 'preventiva').length;
+    const total = informe.prioridades.length;
+    const lectura = total > 0
+      ? `El análisis clasifica ${total} situación${total !== 1 ? 'es' : ''} que amerita${total !== 1 ? 'n' : ''} decisión: ${nAlta} de nivel CRÍTICA/ALTA, ${nMedia} de nivel MEDIA y ${nPrev} de nivel PREVENTIVA. Las ALTA comprometen ventas o disponibilidad y se atienden primero; las MEDIA exigen seguimiento o reposición anticipada; las PREVENTIVA señalan baja rotación y oportunidades de optimización.`
+      : 'El conjunto comparado opera sin situaciones que superen los umbrales de revisión del informe: no hay riesgos de desabastecimiento ni contracciones relevantes que exijan decisión inmediata.';
+    y = drawParrafo(doc, lectura, y, informe);
+    y += 1;
+  }
+
+  y = drawSubTitle(doc, '¿Qué decisión se recomienda?', y, informe);
   {
     const contentW = pageW(doc) - 2 * M;
-    const lines = doc.splitTextToSize(informe.conclusionGerencial, contentW - 8) as string[];
-    const altoBanda = lines.length * 4.6 + 8;
+    const lines = doc.splitTextToSize(informe.conclusionGerencial, contentW - 9) as string[];
+    const altoBanda = lines.length * 5.4 + 11;
     y = ensureSpace(doc, y + 1, altoBanda + 3, informe);
     doc.setFillColor(...C_BAND);
     doc.rect(M, y, contentW, altoBanda, 'F');
     doc.setDrawColor(...C_ACCENT);
-    doc.setLineWidth(0.9);
+    doc.setLineWidth(1.1);
     doc.line(M, y, M, y + altoBanda);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8);
+    doc.setFontSize(8.6);
     doc.setTextColor(...C_ACCENT);
-    doc.text('CONCLUSIÓN GERENCIAL', M + 4, y + 5);
+    doc.text('CONCLUSIÓN GERENCIAL', M + 4.5, y + 6);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9.3);
+    doc.setFontSize(T_CUERPO);
     doc.setTextColor(...C_DARK);
-    let yc = y + 10;
+    let yc = y + 12;
     for (const line of lines) {
-      doc.text(line, M + 4, yc);
-      yc += 4.6;
+      doc.text(line, M + 4.5, yc);
+      yc += 5.4;
     }
-    y += altoBanda + 5;
+    y += altoBanda + 3;
+    y = drawNota(
+      doc,
+      'Las decisiones completas, con su evidencia cuantitativa, están en la sección 2. El alcance estadístico del conjunto comparado se declara en el Anexo IV.',
+      y,
+      informe,
+    );
   }
+  y += 4;
 
-  // Indicadores relevantes (detalle completo del resumen de portada)
-  y = drawSubTitle(doc, 'Indicadores relevantes', y, informe);
-  y = await drawTabla(
-    doc,
-    {
-      head: ['Indicador', 'Valor'],
-      body: informe.indicadores.map((i) => [i.label, i.value]),
-      colWidths: [0.62, 0.38],
-      aligns: ['left', 'right'],
-      fontSize: 8.0,
-    },
-    informe,
-    y,
-  );
+  // 2. PRIORIDADES Y DECISIONES (bloques por severidad — §5). Flujo natural:
+  // drawSectionTitle salta de página por sí solo cuando el título + primer
+  // bloque no caben (sin páginas casi vacías, §8).
   y += 6;
-
-  // Gráfico ejecutivo — el subtítulo NUNCA queda huérfano: se reserva el
-  // espacio del gráfico completo ANTES de dibujar el título (defecto del
-  // generador anterior detectado en la portada del baseline).
-  {
-    const alto = informe.grafico ? alturaGrafico(informe) : 12;
-    y = ensureSpace(doc, y, Math.min(alto + 10, pageH(doc) - PAGE_TOP_CONT - BOTTOM_RESERVE), informe);
-    y = drawSubTitle(doc, 'Comportamiento comparado de los productos principales', y, informe, alto + 8);
-  }
-  if (informe.grafico) {
-    y = drawGrafico(doc, informe, y);
-  } else {
-    y = drawParrafo(doc, 'Sin datos suficientes para construir el gráfico comparativo en este período.', y, informe);
-  }
-
-  // 2. PRIORIDADES Y DECISIONES
-  y = drawSectionTitle(doc, '2. Prioridades y decisiones recomendadas', y, informe);
+  registrarSeccion(secciones, '2. Prioridades y decisiones recomendadas', doc);
+  paginas.prioridades = doc.getCurrentPageInfo().pageNumber;
+  y = drawSectionTitle(doc, '2. Prioridades y decisiones recomendadas', y, informe, 52);
   if (informe.prioridades.length === 0) {
     y = drawParrafo(
       doc,
@@ -985,98 +1672,288 @@ export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promi
       informe,
     );
   } else {
-    y = drawParrafo(
+    y = await drawSeccionPrioridades(doc, informe, y);
+    y += 4;
+  }
+
+  // 3. GRÁFICOS ANALÍTICOS (§4: A comparación, B variaciones, C cobertura)
+  y += 6;
+  registrarSeccion(secciones, '3. Gráficos analíticos', doc);
+  paginas.graficos = doc.getCurrentPageInfo().pageNumber;
+  y = drawSectionTitle(doc, '3. Gráficos analíticos', y, informe, 50);
+  y = drawAuxiliar(
+    doc,
+    'Tres lecturas visuales sobre los MISMOS datos del motor: comparación de ingresos por producto, variaciones del período y riesgo de cobertura. La paleta y el lenguaje visual siguen al gráfico de referencia de Estados Financieros (Evolución acumulada de ventas). Ningún gráfico inventa datos: cuando la fuente no provee una serie diaria, no se simula evolución.',
+    y,
+    informe,
+  );
+  y += 2;
+
+  // 3.A — comparación por producto (el subtítulo reserva el gráfico COMPLETO:
+  // nunca un título huérfano al pie de página — defecto del baseline).
+  {
+    const alto = informe.grafico ? alturaGraficoComparativo(informe) : 14;
+    y = drawSubTitle(doc, '3.A · Comparación de ventas por producto', y, informe, alto + 10);
+  }
+  if (informe.grafico) {
+    y = drawGraficoComparativo(doc, informe, y);
+    y += 4;
+  } else {
+    y = drawParrafo(doc, 'Sin datos suficientes para construir el gráfico comparativo en este período.', y, informe);
+  }
+
+  // 3.B — variaciones divergentes (misma guarda anti-huérfanos)
+  {
+    const alto = alturaGraficoVariaciones(informe.variaciones);
+    y = drawSubTitle(doc, '3.B · Evolución de las variaciones', y, informe, alto + 12);
+  }
+  if (informe.variaciones.length > 0) {
+    y = drawGraficoVariaciones(doc, informe, y);
+    y = drawNota(
       doc,
-      'Matriz ordenada por severidad: ALTA compromete ventas o disponibilidad; MEDIA exige seguimiento o ajuste; PREVENTIVA identifica oportunidades y riesgos latentes. Cada decisión incluye su justificación cuantitativa; las restantes situaciones operativas se detallan en el análisis complementario y los anexos.',
+      'Representación divergente: incrementos a la derecha (verde) y reducciones a la izquierda (rojo), en CUP. Los porcentajes solo aparecen con base comparable; los productos nuevos se marcan como NUEVO y no reciben porcentaje.',
       y,
       informe,
     );
-    y += 1.5;
-    y = await drawMatrizPrioridades(doc, informe, y);
-    y += 6;
+    y += 3;
+  } else {
+    y = drawParrafo(doc, 'Sin variaciones que mostrar: los productos del conjunto registran los mismos ingresos en ambos tramos.', y, informe);
   }
 
-  // 3. ANÁLISIS COMPLEMENTARIO
+  // 3.C — disponibilidad y cobertura (misma guarda anti-huérfanos)
+  const coberturaSeleccion = seleccionCobertura(informe.riesgoCobertura);
+  {
+    const alto = coberturaSeleccion.length > 0 ? alturaGraficoCobertura(coberturaSeleccion) : 14;
+    y = drawSubTitle(doc, '3.C · Disponibilidad y cobertura', y, informe, alto + 12);
+  }
+  if (coberturaSeleccion.length > 0) {
+    y = drawGraficoCobertura(doc, informe, y, dias);
+    y = drawNota(
+      doc,
+      `Cobertura estimada en días frente a los umbrales del tramo (D = ${dias} días; D/2 = mitad). Agotamiento, riesgo de desabastecimiento y acumulación quedan diferenciados por color y por etiqueta textual. Se muestran hasta ${COBERTURA_MAX_FILAS} casos por severidad; el detalle completo está en el Anexo II. La cobertura no incorpora plazos de reposición: no se fijan fechas de agotamiento.`,
+      y,
+      informe,
+    );
+    y += 3;
+  } else {
+    y = drawParrafo(
+      doc,
+      'Sin casos de cobertura que mostrar en este período: no hay agotados con demanda activa, ni coberturas por debajo de los umbrales, ni baja rotación con existencia.',
+      y,
+      informe,
+    );
+  }
+
+  // 4. ANÁLISIS COMPLEMENTARIO
   if (informe.complementarias.length > 0) {
-    y = drawSectionTitle(doc, '3. Análisis complementario', y, informe);
+    y += 6;
+    registrarSeccion(secciones, '4. Análisis complementario', doc);
+    paginas.complementario = doc.getCurrentPageInfo().pageNumber;
+    y = drawSectionTitle(doc, '4. Análisis complementario', y, informe, 50);
     for (const tabla of informe.complementarias) {
       y = await drawSeccionTabla(doc, tabla, informe, y);
     }
   }
 
-  // ── ANEXOS (§7): CADA anexo comienza en página nueva mediante addPage real.
-  //    No se simula la separación con espacios ni saltos de línea.
-
-  // Anexo I — ranking comparativo completo (10 columnas → orientación
-  // horizontal justificada, §5). Los saltos internos de autoTable conservan
-  // la orientación y repiten el encabezado en cada página.
+  // ── ANEXOS (§7: cada anexo en página nueva mediante addPage real) ──
   const anexoI = informe.anexos[0];
-  if (anexoI) {
-    await drawAnexoTabla(doc, informe, anexoI, 'ANEXO I', 'landscape', {
-      colWidths: [0.08, 0.28, 0.05, 0.05, 0.11, 0.11, 0.10, 0.08, 0.07, 0.07],
-      aligns: ['left', 'left', 'center', 'center', 'right', 'right', 'right', 'right', 'right', 'right'],
-      fontSize: 7.4,
-    });
+  if (anexoI && anexoI.filas.length > 0) {
+    // I-A · Ranking comercial (horizontal): código, descripción, posiciones,
+    // ventas y variaciones — separado de las cantidades (§6).
+    doc.addPage('a4', 'landscape');
+    drawContinuationHeader(doc, informe);
+    registrarSeccion(secciones, 'ANEXO I-A · Ranking comercial', doc);
+    paginas.anexoIA = doc.getCurrentPageInfo().pageNumber;
+    let yI = drawAnnexHeader(
+      doc, informe, 'ANEXO I-A', 'Ranking comparativo completo — comercial',
+      'Productos de la unión de ambos cortes del Top, ordenados por su posición en el período analizado: ingresos y variaciones (información comercial). Las cantidades y existencias están en el Anexo I-B y el Anexo II.',
+    );
+    const colI = anexoI.columnas.slice(0, 8); // Código..Variación %
+    const filasIA = anexoI.filas.map((r) => r.slice(0, 8));
+    // Anchura por columna calibrada para magnitudes reales; para cifras
+    // excepcionales (magnitudes de estrés E/F) el tamaño de la celda se
+    // ajusta ADAPTATIVAMENTE (mínimo 7.6 pt) sin truncar ni partir dígitos:
+    // la cifra exacta se conserva íntegra (§10) y la fila sigue legible.
+    const contentWL = pageW(doc) - 2 * M;
+    const anchosIA = [0.095, 0.24, 0.06, 0.06, 0.13, 0.13, 0.145, 0.14];
+    const padCelda = 2.1;
+    yI = await drawTabla(
+      doc,
+      {
+        head: colI,
+        body: filasIA,
+        colWidths: anchosIA,
+        aligns: ['left', 'left', 'center', 'center', 'right', 'right', 'right', 'right'],
+        fontSize: T_TABLA,
+        didParseCell: (data) => {
+          if (data.row.section !== 'body') return;
+          const ci = data.column.index;
+          if (ci < 4) return;
+          const raw = String(data.cell.raw ?? '');
+          if (!raw) return;
+          const wCol = anchosIA[ci] * contentWL - 2 * padCelda;
+          let fs = T_TABLA;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(fs);
+          while (fs > 7.6 && doc.getTextWidth(raw) > wCol) {
+            fs -= 0.4;
+            doc.setFontSize(fs);
+          }
+          if (doc.getTextWidth(raw) > wCol) {
+            // Límite tipográfico: sigue siendo más legible reducir que partir
+            // un dígito; se marca negrita para conservar el énfasis.
+            data.cell.styles.fontStyle = 'bold';
+          }
+          data.cell.styles.fontSize = fs;
+        },
+      },
+      informe,
+      yI,
+    );
+    yI = drawNota(
+      doc,
+      'Variación CUP = ventas del período analizado − ventas del tramo comparable, por producto. «sin base» = el tramo comparable no registró ventas de ese producto; no se calcula porcentaje.',
+      yI + 1.4,
+      informe,
+    );
   }
-  // Anexo II — disponibilidad y cobertura (vertical)
+  if (anexoI && anexoI.filas.length > 0) {
+    // I-B · Cantidades (vertical): código, descripción, cantidades por U.M.
+    doc.addPage('a4', 'portrait');
+    drawContinuationHeader(doc, informe);
+    registrarSeccion(secciones, 'ANEXO I-B · Cantidades del ranking', doc);
+    paginas.anexoIB = doc.getCurrentPageInfo().pageNumber;
+    let yI = drawAnnexHeader(
+      doc, informe, 'ANEXO I-B', 'Ranking comparativo — cantidades',
+      'Mismas filas del Anexo I-A en su unidad de medida propia: cantidades vendidas de cada tramo. Las cantidades nunca se suman entre productos con unidades distintas.',
+    );
+    const colIB = ['Código', 'Descripción', anexoI.columnas[8], anexoI.columnas[9]];
+    const filasIB = anexoI.filas.map((r) => [r[0], r[1], r[8], r[9]]);
+    yI = await drawTabla(
+      doc,
+      {
+        head: colIB,
+        body: filasIB,
+        colWidths: [0.14, 0.42, 0.22, 0.22],
+        aligns: ['left', 'left', 'right', 'right'],
+        fontSize: T_TABLA,
+      },
+      informe,
+      yI,
+    );
+    yI = drawNota(
+      doc,
+      'Cada cantidad incluye su unidad de medida oficial (u, m, Kg, L, cajas, según catálogo).',
+      yI + 1.4,
+      informe,
+    );
+  }
   const anexoII = informe.anexos[1];
   if (anexoII) {
-    await drawAnexoTabla(doc, informe, anexoII, 'ANEXO II', 'portrait', {
-      colWidths: [0.23, 0.10, 0.13, 0.14, 0.15, 0.25],
-      aligns: ['left', 'right', 'right', 'right', 'left', 'left'],
-      fontSize: 7.2,
-    });
+    doc.addPage('a4', 'portrait');
+    drawContinuationHeader(doc, informe);
+    registrarSeccion(secciones, 'ANEXO II · Disponibilidad y cobertura', doc);
+    paginas.anexoII = doc.getCurrentPageInfo().pageNumber;
+    let yI = drawAnnexHeader(doc, informe, 'ANEXO II', anexoII.titulo.replace(/^Anexo II\.\s*/i, ''), anexoII.intro);
+    if (anexoII.filas.length === 0) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(T_AUX);
+      doc.setTextColor(...C_MUTED);
+      yI = drawWrapped(doc, 'Sin casos en este período.', M, yI, pageW(doc) - 2 * M, LH_AUX, informe) + 2;
+    } else {
+      yI = await drawTabla(
+        doc,
+        {
+          head: anexoII.columnas,
+          body: anexoII.filas,
+          colWidths: [0.18, 0.14, 0.13, 0.15, 0.16, 0.24],
+          aligns: ['left', 'right', 'right', 'right', 'left', 'left'],
+          fontSize: T_TABLA,
+          fitColumnos: [1, 2, 3],
+        },
+        informe,
+        yI,
+      );
+    }
+    if (anexoII.nota) {
+      yI = drawNota(doc, `Nota: ${anexoII.nota}`, yI + 1.4, informe) + 1.5;
+    }
   }
-  // Anexo III — productos sin ventas (vertical)
   const anexoIII = informe.anexos[2];
   if (anexoIII) {
-    await drawAnexoTabla(doc, informe, anexoIII, 'ANEXO III', 'portrait', {
-      colWidths: [0.19, 0.14, 0.13, 0.11, 0.12, 0.31],
-      aligns: ['left', 'left', 'right', 'right', 'right', 'left'],
-      fontSize: 7.2,
-    });
+    doc.addPage('a4', 'portrait');
+    drawContinuationHeader(doc, informe);
+    registrarSeccion(secciones, 'ANEXO III · Productos sin ventas', doc);
+    paginas.anexoIII = doc.getCurrentPageInfo().pageNumber;
+    let yI = drawAnnexHeader(doc, informe, 'ANEXO III', anexoIII.titulo.replace(/^Anexo III\.\s*/i, ''), anexoIII.intro);
+    if (anexoIII.filas.length === 0) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(T_AUX);
+      doc.setTextColor(...C_MUTED);
+      yI = drawWrapped(doc, 'Sin casos en este período.', M, yI, pageW(doc) - 2 * M, LH_AUX, informe) + 2;
+    } else {
+      yI = await drawTabla(
+        doc,
+        {
+          head: anexoIII.columnas,
+          body: anexoIII.filas,
+          colWidths: [0.19, 0.14, 0.13, 0.11, 0.12, 0.31],
+          aligns: ['left', 'left', 'right', 'right', 'right', 'left'],
+          fontSize: T_TABLA,
+        },
+        informe,
+        yI,
+      );
+    }
+    if (anexoIII.nota) {
+      yI = drawNota(doc, `Nota: ${anexoIII.nota}`, yI + 1.4, informe) + 1.5;
+    }
   }
 
   // Anexo IV — metodología y fuentes (página nueva propia).
   doc.addPage('a4', 'portrait');
   drawContinuationHeader(doc, informe);
+  registrarSeccion(secciones, 'ANEXO IV · Metodología y fuentes', doc);
+  paginas.anexoIV = doc.getCurrentPageInfo().pageNumber;
   {
     let ym = drawAnnexHeader(doc, informe, 'ANEXO IV', 'Metodología y fuentes', undefined);
     const contentW = pageW(doc) - 2 * M;
     for (const bloque of informe.metodologia) {
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.2);
+      doc.setFontSize(T_AUX);
       const lineasBloque = bloque.parrafos.reduce(
         (acc, parrafo) => acc + (doc.splitTextToSize(parrafo, contentW) as string[]).length + 0.3,
         0,
       );
-      const altoBloque = 4.6 + lineasBloque * 4.0 + 3;
-      ym = ensureSpace(doc, ym, Math.min(altoBloque, 120), informe);
+      const altoBloque = 6 + lineasBloque * 4.7 + 3;
+      ym = ensureSpace(doc, ym, Math.min(altoBloque, 140), informe);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9.4);
+      doc.setFontSize(10.5);
       doc.setTextColor(...C_DARK);
-      doc.text(bloque.titulo, M, ym + 1.5);
-      ym += 6;
+      doc.text(bloque.titulo, M, ym + 2);
+      ym += 7.5;
       for (const parrafo of bloque.parrafos) {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8.4);
+        doc.setFontSize(9.4);
         doc.setTextColor(...C_DARK);
-        ym = drawWrapped(doc, parrafo, M, ym, contentW, 4.1, informe) + 1.4;
+        ym = drawWrapped(doc, parrafo, M, ym, contentW, 4.7, informe) + 1.6;
       }
-      ym += 2.5;
+      ym += 3;
     }
   }
 
-  // ── Pie institucional + numeración «Página X de Y» (loop final; la portada
-  //    queda libre de numeración visible, §4). Dimensiones SIEMPRE de la
-  //    página actual para convivir con las páginas horizontales del Anexo I.
+  // ── Índice de portada (páginas reales + enlaces internos) + marcadores ──
+  drawIndiceFinal(doc, paginas, indice);
+  aplicarMarcadores(doc, secciones);
+
+  // ── Pie institucional + numeración «Página X de Y» (portada libre, §4) ──
   const total = doc.getNumberOfPages();
   for (let p = 2; p <= total; p++) {
     doc.setPage(p);
     const pw = pageW(doc);
     const ph = pageH(doc);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.2);
+    doc.setFontSize(T_FOOT);
     doc.setTextColor(...C_MUTED);
     doc.setDrawColor(...C_RULE);
     doc.setLineWidth(0.15);
@@ -1091,6 +1968,7 @@ export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promi
     doc.setFont('helvetica', 'normal');
   }
 
+  aplicarMetadatos(doc, informe);
   return doc;
 }
 
