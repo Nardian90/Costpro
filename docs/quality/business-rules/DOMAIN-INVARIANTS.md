@@ -30,7 +30,7 @@ Un invariante es una condición que debe permanecer verdadera **independientemen
 | INV-INV-04 | Costo de venta = WAC server-side, nunca del cliente | `create_sale_v2` DF-02; confirm relee costo (vale) | e2e inventory-integrity | **GARANTIZADO** en ventas/vales; variantes con `conversion_factor` sin CHECK (R-23) |
 | INV-INV-05 | Transferencia genera exactamente OUT+IN emparejados atómicos | confirm atómica por SKU destino con rollback | pruebas transfer | **GARANTIZADO** |
 | INV-INV-06 | Reserva activa no permite doble consumo | `get_available_stock = stock − reservas` + expiración 24h | — | **PARCIAL** — expiración con doc PENDIENTE produce atasco/riesgo de sobreventa (R-24) |
-| INV-INV-07 | Ajuste confirmado solo por persona autorizada para sobrescribir stock | `has_store_access_as` (sin rol) | — | **NO GARANTIZADO** (R-05 CRÍTICO) |
+| INV-INV-07 | Ajuste confirmado solo por persona autorizada para sobrescribir stock | HOY: `has_store_access_as` (sin rol). REMEDIACIÓN EN PR 20261126170000: `has_store_role_as({admin,manager,encargado})` + auditoría | batería E2E aislada 16/16 (PR no fusionado) | **NO GARANTIZADO en main/producción** (R-05 CRÍTICO) — remediación preparada pendiente de aprobación del propietario |
 
 ## C. INVARIANTES DOCUMENTALES
 

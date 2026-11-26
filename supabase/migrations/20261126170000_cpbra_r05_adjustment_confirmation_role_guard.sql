@@ -235,8 +235,10 @@ BEGIN
     RAISE EXCEPTION 'R05-VERIFY: el cuerpo reemitido no contiene el guard R-05 ni la auditoría';
   END IF;
 
-  -- El hueco anterior NO puede persistir: sin has_store_access_as en el cuerpo
-  IF v_def LIKE '%has_store_access_as%' THEN
+  -- El hueco anterior NO puede persistir: sin has_store_access_as en el
+  -- CÓDIGO — los comentarios documentales (que citan el nombre histórico)
+  -- se excluyen de la comparación con regexp_replace
+  IF regexp_replace(v_def, '--[^\n]*', '', 'g') LIKE '%has_store_access_as%' THEN
     RAISE EXCEPTION 'R05-VERIFY: el cuerpo aún usa has_store_access_as (hueco INV-005 sin cerrar)';
   END IF;
 

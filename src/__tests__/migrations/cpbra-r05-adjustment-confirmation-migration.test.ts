@@ -146,7 +146,7 @@ describe('migración 20261126170000 — R-05: guard de rol en confirm_inventory_
     // y detecta la persistencia del hueco (LIKE positivo → error)
     expect(sql).toMatch(/v_def NOT LIKE '%has_store_role_as%'/);
     expect(sql).toMatch(/v_def NOT LIKE '%ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED%'/);
-    expect(sql).toMatch(/IF v_def LIKE '%has_store_access_as%' THEN/);
+    expect(sql).toMatch(/IF regexp_replace\(v_def, '--\[\^\\n\]\*', '', 'g'\) LIKE '%has_store_access_as%' THEN/);
   });
 
   it('sin secretos en el SQL', () => {

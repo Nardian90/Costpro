@@ -79,9 +79,9 @@
 ### TR-INV-007 (INV-005/R-05) · Ajuste de inventario con autorización suficiente
 | Elemento | Contenido |
 |---|---|
-| Implementación | HOY: solo `has_store_access_as` (20260726000027:38-40) |
-| P− | ✗ no existe prueba negativa de rol |
-| Estado certificación | **RECHAZADA (defecto crítico abierto R-05)** |
+| Implementación | HOY en main/producción: solo `has_store_access_as` (20260726000027:38-40). REMEDIACIÓN EN PR `fix/inventory-adjustment-role-guard-20261126` (mig 20261126170000): `has_store_role_as({admin,manager,encargado})` fail-closed + `ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED` + auditoría `ADJUSTMENT_CONFIRMED` transaccional |
+| P− | ✓ batería E2E aislada con pruebas negativas de rol (clerk/usuario/otra tienda/anon/spoofing → rechazo; admin/manager/encargado → OK; fallo del mecanismo → rechazo seguro) 16/16 PASS |
+| Estado certificación | **RECHAZADA (defecto R-05 abierto en main/producción) — remediación PRONTA pendiente de aprobación del propietario, fusión y aplicación §11g** |
 
 ### TR-TEN-001 (TEN-001) · Aislamiento multitienda
 | Elemento | Contenido |

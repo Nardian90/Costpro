@@ -174,10 +174,11 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 - **Descripción:** `inventory_reservations` expiran a 24h (`release_expired_reservations`); riesgo: transferencia PENDIENTE cuya reserva expira → sobreventa y confirmación bloqueada por guard negativo (atasco operativo; cancelación manual).
 - **Evidencia:** `20260802000002`, `20260803000006`, `20260802000004`; RISK-REGISTER R-24.
 
-### INV-005 · Ajustes: confirmación requiere segundo control (decisión requerida)
-- **Estado:** AUSENTE · **Severidad:** CRÍTICA · **Cumplimiento:** FALTA
-- **Descripción:** `confirm_inventory_adjustment` sobrescribe `stock_current` a valor arbitrario con autorización mínima `has_store_access_as` (cualquier miembro, sin rol ni supervisor).
-- **Evidencia:** `20260726000027_v2_11:23-90,38-40`; R-05 CRÍTICO.
+### INV-005 · Ajustes: confirmación requiere segundo control (remediación en PR, pendiente de aprobación)
+- **Estado:** REMEDIACIÓN PREPARADA · **Severidad:** CRÍTICA · **Cumplimiento:** FALTA EN MAIN/PRODUCCIÓN — PR abierto sin fusionar
+- **Descripción:** `confirm_inventory_adjustment` sobrescribe `stock_current` a valor arbitrario con autorización mínima `has_store_access_as` (cualquier miembro, sin rol ni supervisor). Remediación preparada (alternativa A, incremento 1 de DECISION-R05): guard `has_store_role_as(uid, store, {admin,manager,encargado})` fail-closed con `ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED` + auditoría transaccional `ADJUSTMENT_CONFIRMED`; sin umbrales/motivo/doble autorización (decisiones reservadas al propietario).
+- **Evidencia:** migración `20261126170000_cpbra_r05_adjustment_confirmation_role_guard.sql` (PR `fix/inventory-adjustment-role-guard-20261126`, NO fusionada); batería E2E aislada 16/16 PASS (`R05-TEST-EVIDENCE.md`); UI alineada (3 vistas gated).
+- **Nota:** NO implementa umbral 15 %, motivo obligatorio ni doble autorización (incremento 2 de la opción C — decisión del propietario). La regla NO está garantizada en main ni producción hasta aprobación expresa, fusión y aplicación gobernada §11g.
 
 ### INV-006 · Transferencias entre sucursales: confirmación atómica doble movimiento
 - **Estado:** CONFIRMADA · **Severidad:** CRÍTICA · **Cumplimiento:** CUMPLE
