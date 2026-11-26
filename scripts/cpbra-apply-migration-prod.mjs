@@ -2,11 +2,10 @@
 /**
  * cpbra-apply-migration-prod.mjs — CP-BRA-REMEDIATION-001 (PR fix/cpbra-r01-r14).
  * ───────────────────────────────────────────────────────────────────────────
- * Aplica a PRODUCCIÓN (CostproBD, wthkddeleylijmonclxg) la migración
- * 20261126140000_cpbra_r01_r14_payment_engine.sql (motor de pagos: R-01 rama
- * OT del trigger + gate/lock de OT en register_supplier_payment + R-14 guard
- * de período fiscal en reverse_supplier_payment), UNA SOLA VEZ (regla de oro
- * §11g), por el canal gobernado:
+ * Aplica a PRODUCCIÓN (CostproBD, wthkddeleylijmonclxg) las migraciones de
+ * CP-BRA-REMEDIATION-001 (20261126140000 motor de pagos R-01/R-14 y
+ * 20261126150000 R-11 validación server-side de incidencias POS), UNA SOLA
+ * VEZ cada una (regla de oro §11g), por el canal gobernado:
  *   · guard scripts/lib/assert-not-production.mjs (CP-INFRA-019) con el
  *     doble flag explícito del operador;
  *   · verificación PREVIA de marcas (si están, se SALTA — idempotente);
@@ -81,6 +80,17 @@ const MIGRATIONS = [
         WHERE n.nspname='public' AND p.proname='reverse_supplier_payment' AND array_length(p.proargnames,1) = 4)`,
       reversal_guard_periodo: `pg_get_functiondef('public.reverse_supplier_payment(uuid,text,uuid,timestamp with time zone,boolean)'::regprocedure) LIKE '%ERR_PAYMENT_IN_CLOSED_FISCAL_PERIOD%'`,
       reversal_excepcion_auditada: `pg_get_functiondef('public.reverse_supplier_payment(uuid,text,uuid,timestamp with time zone,boolean)'::regprocedure) LIKE '%PAYMENT_REVERSED_CLOSED_PERIOD%'`,
+    },
+  },
+  {
+    file: '20261126150000_cpbra_r11_pos_incidents_validation.sql',
+    marks: {
+      incidentes_estructura: `pg_get_functiondef('public.create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid,text,jsonb,text,text,jsonb,numeric,numeric,numeric,numeric,text,jsonb,text,text,text)'::regprocedure) LIKE '%ERR_INCIDENT_INVALID_STRUCTURE%'`,
+      incidentes_aritmetica: `pg_get_functiondef('public.create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid,text,jsonb,text,text,jsonb,numeric,numeric,numeric,numeric,text,jsonb,text,text,text)'::regprocedure) LIKE '%ERR_INCIDENT_ARITHMETIC_MISMATCH%'`,
+      incidentes_cobertura: `pg_get_functiondef('public.create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid,text,jsonb,text,text,jsonb,numeric,numeric,numeric,numeric,text,jsonb,text,text,text)'::regprocedure) LIKE '%ERR_INCIDENT_DOES_NOT_EXPLAIN_DIFFERENCE%'`,
+      firma_35_args: `(SELECT count(*) = 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+        WHERE n.nspname='public' AND p.proname='create_sale_v2' AND array_length(p.proargnames,1) = 35)`,
+      gate_pt011_intacto: `pg_get_functiondef('public.create_sale_v2(uuid,uuid,jsonb,text,text,numeric,jsonb,numeric,numeric,numeric,numeric,numeric,numeric,text,numeric,uuid,text,uuid,text,timestamp with time zone,uuid,text,jsonb,text,text,jsonb,numeric,numeric,numeric,numeric,text,jsonb,text,text,text)'::regprocedure) LIKE '%ERR_PAYMENT_INVARIANT_VIOLATED%'`,
     },
   },
 ];

@@ -40,10 +40,10 @@
 |---|---|
 | Regla | Venta completed ⇔ Σ cobros = total (± tolerancias autorizadas y verificadas) |
 | Entidades | create_sale_v2, payment_transactions |
-| Implementación | HOY: `payment_incidents[]` desactiva PT011 sin verificación server (L798-805,1230-1238) |
-| Control | **NINGUNO server-side** |
+| Implementación | REMEDIADO (2026-11-25): create_sale_v2 §11.6 valida estructura tipada + coherencia aritmética de cada incidencia; §18 exige que una incidencia EXPLIQUE el descuadre real (20261126150000, ERR_INCIDENT_*) |
+| Control | RPC autoritativo fail-closed: ERR_INCIDENT_INVALID_STRUCTURE / ERR_INCIDENT_ARITHMETIC_MISMATCH / ERR_INCIDENT_DOES_NOT_EXPLAIN_DIFFERENCE; PT011 intacto sin incidencias |
 | P− | ✗ no existe |
-| Estado certificación | **RECHAZADA (defecto crítico abierto R-11)** — misión de remediación independiente |
+| Estado certificación | **VERIFICADA en BD (R-11 remediado; E2E aislado POS-015b PASS: la puerta sigue funcionando con validación). Tope por incidencia + supervisor: decisión del propietario pendiente** |
 
 ### TR-FIN-002 (FIN-002) · Fuente única de cálculo CxP
 | Elemento | Contenido |
@@ -159,7 +159,7 @@
 |---|---|---|---|---|---|---|
 | TR-FIN-012 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-POS-001 | POS | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
-| TR-POS-006 | POS | CRÍTICA | ✓ | ✗ | ✗ | RECHAZADA (R-11) |
+| TR-POS-006 | POS | CRÍTICA | ✓ | ✓ | ✓ | VERIFICADA (R-11 remediado; tope/supervisor pendientes) |
 | TR-FIN-002 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (CxP) |
 | TR-FIN-011 | FIN | CRÍTICA | ✓ | ✓ | ✓ | VERIFICADA (R-01+R-02 remediados; E2E pendiente) |
 | TR-INV-003 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
@@ -174,4 +174,4 @@
 | TR-PRO-001 | PRO | CRÍTICA | ✗ | ✗ | ✗ | RECHAZADA (R-15) |
 | TR-FIN-009 | FIN/REP | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (caja) |
 
-**Resumen de certificación de reglas críticas (16 auditadas en profundidad):** 10 CERTIFICADAS · 4 CONDICIONALES · 2 RECHAZADAS (R-01/02 → R-01 REMEDIADO 2026-11-25, R-02 en curso; R-01 y R-02 remediados; quedan R-11, R-05, R-15 abiertos en RISK-REGISTER). El sistema global NO obtiene el sello CERTIFICADO mientras existan reglas críticas RECHAZADAS (ver CERTIFICATION-POLICY.md).
+**Resumen de certificación de reglas críticas (16 auditadas en profundidad):** 11 VERIFICADAS/CERTIFICADAS · 3 CONDICIONALES · 1 RECHAZADA (R-01, R-02 y R-11 remediados en CP-BRA-REMEDIATION-001; quedan R-05 y R-15 abiertos en RISK-REGISTER). El sistema global NO obtiene el sello CERTIFICADO mientras existan reglas críticas RECHAZADAS (ver CERTIFICATION-POLICY.md).

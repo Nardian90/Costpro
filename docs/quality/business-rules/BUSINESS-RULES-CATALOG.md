@@ -256,10 +256,11 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 - **Descripción:** identidad `recibido−vuelto = cash` ±0.01 con tasa servidor; sobrepago sin liquidación → `ERR_OVERPAYMENT_UNREGISTERED_CHANGE`.
 - **Evidencia:** `20261125120000:879-943,942-945`.
 
-### POS-006 · Incidencias de pago desactivan el invariante PT011 sin verificación server-side
-- **Estado:** AUSENTE (control faltante sobre puerta deliberada) · **Severidad:** CRÍTICA · **Cumplimiento:** FALTA
-- **Descripción:** un payload con `payment_incidents[]` no vacío desactiva PT011 (Σamount_cup = total) y el mismatch ±1.00, sin verificar la causa ni tope de monto/autorización → venta `completed` con Σcobros < total; el ledger subestima el cobro.
-- **Evidencia:** `20261125120000:798-805,1230-1238`; R-11 CRÍTICO.
+### POS-006 · Incidencias de pago: la puerta MISIÓN-FLEX exige verificación server-side
+- **Estado:** AUSENTE → REMEDIADA · **Severidad:** CRÍTICA · **Cumplimiento:** VERIFICADA en BD (control estructural; tope/supervisor pendientes de decisión del propietario)
+- **Descripción:** un payload con `payment_incidents[]` no vacío desactivaba PT011 (Σamount_cup = total) sin verificar la causa ni tope de monto/autorización → venta `completed` con Σcobros < total; el ledger subestima el cobro (evidencia producción: 3 ventas con difs −200/−12 000/+8 100).
+- **Remediación (2026-11-25, CP-BRA-REMEDIATION-001):** 20261126150000 — cada incidencia debe ser objeto tipado (enum + importes no negativos + coherencia difference = received − expected) y el descuadre real (Σpagos − total) debe estar EXPLICADO por una incidencia con esa diferencia exacta (ERR_INCIDENT_INVALID_STRUCTURE / ERR_INCIDENT_ARITHMETIC_MISMATCH / ERR_INCIDENT_DOES_NOT_EXPLAIN_DIFFERENCE). Compatibilidad probada: las 3 ventas históricas y el payload del checkout cumplen el contrato (E2E aislado POS-015b PASS).
+- **Evidencia:** `20261126150000` (reemisión verbatim de create_sale_v2 con §11.6/§18 validados); R-11 CRÍTICO RESUELTO.
 
 ### POS-007 · Undo de venta: 30 s, propia, con rol POS (Modelo C Nivel 1)
 - **Estado:** CONFIRMADA · **Severidad:** ALTA · **Cumplimiento:** CUMPLE
