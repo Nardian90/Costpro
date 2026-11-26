@@ -1,0 +1,29 @@
+
+═══ BATERÍA R-26 — fixtures R26-QA-1795724152834 ═══
+
+  ✓ [A] batch paga 1.000 sobre obligación 1.000 sin reversión → paid
+  ✓ [B] reversión + resto 300 → batch paga el pendiente legítimo (700) → neto 1.000 paid
+  ✓ [C] reversión total → registro posterior válido por batch (neto 500)
+  ✓ [D] reversas múltiples neteadas — batch consistente con el mayor (neto 500 = paid 500)
+  ✓ [E] sobrepago verdadero (701 > saldo NETO 600 con reversa en el mayor) rechazado, sin filas nuevas
+  ✓ [E+] pago exacto al saldo neto (600) aceptado → paid
+  ✓ [F] reintento mismo bloque → replay, mismos ids, sin duplicados
+  ✓ [G] concurrencia: serialización FOR UPDATE — ambos lotes de sobrepago rechazados, saldo intacto
+  ✓ [H] individual y batch sobre obligaciones equivalentes → MISMO saldo neto (700, partial)
+  ✓ [I] integridad contable: contra-filas y asientos compensatorios intactos tras pagos batch posteriores
+  ✓ [APP] liquidación batch vía API real tras reversión → 201, saldo neto 200 (actor: 1 componente(s))
+
+═══ RESUMEN R-26 ═══
+  PASS  [A] batch paga 1.000 sobre obligación 1.000 sin reversión → paid
+  PASS  [B] reversión + resto 300 → batch paga el pendiente legítimo (700) → neto 1.000 paid
+  PASS  [C] reversión total → registro posterior válido por batch (neto 500)
+  PASS  [D] reversas múltiples neteadas — batch consistente con el mayor (neto 500 = paid 500)
+  PASS  [E] sobrepago verdadero (701 > saldo NETO 600 con reversa en el mayor) rechazado, sin filas nuevas
+  PASS  [E+] pago exacto al saldo neto (600) aceptado → paid
+  PASS  [F] reintento mismo bloque → replay, mismos ids, sin duplicados
+  PASS  [G] concurrencia: serialización FOR UPDATE — ambos lotes de sobrepago rechazados, saldo intacto
+  PASS  [H] individual y batch sobre obligaciones equivalentes → MISMO saldo neto (700, partial)
+  PASS  [I] integridad contable: contra-filas y asientos compensatorios intactos tras pagos batch posteriores
+  PASS  [APP] liquidación batch vía API real tras reversión → 201, saldo neto 200 (actor: 1 componente(s))
+
+11 PASS · 0 FAIL · limpieza OK (baseline restaurado)

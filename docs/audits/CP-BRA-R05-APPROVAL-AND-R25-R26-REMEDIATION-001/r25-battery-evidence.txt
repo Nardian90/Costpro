@@ -1,0 +1,40 @@
+
+═══ BATERÍA R-25 — fixtures R25-QA-1795722762818 (tiendas A/B, 5 usuarios, 4 OT) ═══
+═══ BASE app real: http://localhost:3000 ═══
+
+  ✓ [A1] pago OT vía /api/payments OK (vía single reparada) — actor real en paid_by
+  ✓ [A2] pago OT vía ruta production-orders OK
+  ✓ [R1] clerk rechazado (403) por gate canManageStore
+  ✓ [R2] usuario ordinario rechazado (403)
+  ✓ [R3] usuario ordinario rechazado (403) vía /api/payments
+  ✓ [R4] miembro de otra tienda rechazado (HTTP 404)
+  ✓ [R5] OT de otra tienda rechazada (HTTP 404, sin fuga de datos)
+  ✓ [R6] OT anulada rechazada (409 ERR_ORDER_NOT_PAYABLE, guard del RPC)
+  ✓ [R7] solicitud no autenticada rechazada (401)
+  ✓ [M1] manipulación de actor ignorada — paid_by = usuario real de la sesión
+  ✓ [M2] manipulación de tienda ignorada — store_id = tienda real del contexto
+  ✓ [I1] reintento con misma clave → mismo pago, sin duplicado
+  ✓ [C1] concurrencia: serialización FOR UPDATE — 1 entra, 1 rechazado (sin sobrepago)
+  ✓ [P1] pago parcial → payment_status=partial, trigger recalculó el saldo
+  ✓ [P2] pago completo → payment_status=paid + paid_at
+  ✓ [AUD1] auditoría: actor real en todos los pagos + entrada fin ORDEN_TRABAJO (5) con 10 movimiento(s)
+
+═══ RESUMEN R-25 ═══
+  PASS  [A1] pago OT vía /api/payments OK (vía single reparada) — actor real en paid_by
+  PASS  [A2] pago OT vía ruta production-orders OK
+  PASS  [R1] clerk rechazado (403) por gate canManageStore
+  PASS  [R2] usuario ordinario rechazado (403)
+  PASS  [R3] usuario ordinario rechazado (403) vía /api/payments
+  PASS  [R4] miembro de otra tienda rechazado (HTTP 404)
+  PASS  [R5] OT de otra tienda rechazada (HTTP 404, sin fuga de datos)
+  PASS  [R6] OT anulada rechazada (409 ERR_ORDER_NOT_PAYABLE, guard del RPC)
+  PASS  [R7] solicitud no autenticada rechazada (401)
+  PASS  [M1] manipulación de actor ignorada — paid_by = usuario real de la sesión
+  PASS  [M2] manipulación de tienda ignorada — store_id = tienda real del contexto
+  PASS  [I1] reintento con misma clave → mismo pago, sin duplicado
+  PASS  [C1] concurrencia: serialización FOR UPDATE — 1 entra, 1 rechazado (sin sobrepago)
+  PASS  [P1] pago parcial → payment_status=partial, trigger recalculó el saldo
+  PASS  [P2] pago completo → payment_status=paid + paid_at
+  PASS  [AUD1] auditoría: actor real en todos los pagos + entrada fin ORDEN_TRABAJO (5) con 10 movimiento(s)
+
+16 PASS · 0 FAIL · limpieza OK (baseline restaurado)

@@ -68,7 +68,7 @@ Modelo de eventos (no columna status): fila activa `direction in (in,out,refund,
 
 | Operación | Actor | Precondiciones | Efecto |
 |---|---|---|---|
-| registrar pago | service_role vía RPC (batch/multi) | doc activo, lock FOR UPDATE, overpay prohibido neteando reversas, idempotencia por clave | asiento 'pago' (solo receipt\|service con in) + `paid_amount` por trigger |
+| registrar pago | service_role vía RPC (single tras gate canManageStore server-side — R-25; batch/multi tras canManageStore) | doc activo, lock FOR UPDATE, overpay prohibido neteando reversas (R-26: batch con la misma fórmula del motor single), idempotencia por clave | asiento 'pago' (solo receipt\|service con in; ORDEN_TRABAJO por fin) + `paid_amount` por trigger |
 | revertir pago | actor validado `has_store_access_as` | ref_type receipt\|service (OT excluida — R-03), fecha operativa | contra-fila + asiento anulacion; **no protege pagos ya liquidados en cierres** (R-14) |
 | DELETE | nadie | 409 PT007 | — |
 
