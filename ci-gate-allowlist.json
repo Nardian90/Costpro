@@ -1,1023 +1,1029 @@
 {
- "version": 2,
- "description": "Excepciones documentadas para el Security CI Gate. Cada excepción debe tener razón, autor y fecha de expiración.",
- "security_definer_without_auth_check": [
-  {
-   "function": "adjust_total_amount",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "bulk_update_products",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "calculate_receipt_total_cup",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "calculate_service_distribution",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "can_admin_reverse_transaction",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "can_create_user_with_role",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "can_manage_payroll_as",
-   "reason": "CP-SECURITY-BACKLOG-CLOSURE-001 (2026-11-14) · helper-interno · Helper de autorización de nóminas (misma clase que has_store_access_as/is_admin_check, ya allowlisted): resuelve la identidad server-side desde profiles/user_store_memberships por p_user_id explícito que los 7 RPC de nómina SÍ validan antes (patrón anti-spoofing v2.12.9 intacto en cada caller). Sin EXECUTE para anon/authenticated (REVOKE explícito en 20261114180000); solo service_role. Clasificación: gate de los RPC create/update/confirm/account/mark_paid/void/set_worker_salary_rate — verificados por scripts/e2e/verify-payroll-privacy-pg.mjs (matriz por rol).",
-   "added_by": "cp-security-backlog-closure-001",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "can_manage_store_as",
-   "reason": "ADN-009 (2026-11-21, PR #1672 post-merge hardening) · Helper de GESTIÓN por tienda (espejo DB de canManageStore en src/lib/roles.ts: is_admin_check transversal O membresía activa admin/manager/encargado). Patrón idéntico a can_manage_payroll_as y has_store_access_as: helper booleano STABLE SECURITY DEFINER de consulta que NO toca datos y cuya firma recibe el actor por parámetro — la identidad real la resuelve el llamador con el patrón v2.12.9 (los RPC de borradores pasan auth.uid()); ACL service_role-only para invocación directa. Consumidores: create_received_service_draft, update_received_service_draft (20261121190000).",
-   "expires": "2027-12-31",
-   "added_by": "ADN-SR-POSTMERGE-HARDENING-009 (PR #1672, 2026-11-21) — misión post-merge hardening"
-  },
-  {
-   "function": "can_pos_undo_transaction",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "can_reverse_document",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "can_safely_delete_user",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "can_void_receipt",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "check_bulk_ops_hourly_limit",
-   "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
-   "added_by": "Iteración 9",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "check_idempotency",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "check_tenant_store_quota",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "cleanup_expired_idempotency_keys",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "cleanup_old_aggregates",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "cp_catmaestro001_renumber_auto_masters",
-   "reason": "CP-CATMAESTRO-001 · mantenimiento del Catálogo Maestro · Renumeración de masters con p_dry_run por defecto true. ACL verificada EN VIVO 2026-11-25: ejecutores {postgres, service_role} — sin exposición anon/authenticated/public; invocada por scripts gobernados del ciclo (CP-AP-FORENSIC-RECONCILIATION-001, drift del allowlist detectado por el gate).",
-   "added_by": "cxap-forensic-reconciliation-20261125",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "cp_fin004_normalize_enervida_payments",
-   "reason": "CP-FIN-004 (2026-11-20, migraciones 20261120200000/20261120210000/20261120220000) · Normalizador histórico idempotente del contrato external_transfer para ENERVIDA (declaración del propietario: 3 ventas Transf. Exterior, demás ventas USD en efectivo): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado con fixtures), REVOKE explícito de anon/authenticated/PUBLIC y GRANT a service_role en la migración; guardas por tienda/venta, idempotencia por auditoría (CP_FIN004_NORMALIZE) y post-condición fail-closed sin zelle residual.",
-   "added_by": "CP-FIN-004 2026-11-20",
-   "expires": "2027-01-31"
-  },
-  {
-   "function": "cp_recep001_backfill_confirm_notes",
-   "reason": "CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (PR #1706, 2026-11-25) · Herramienta PUNTUAL de backfill del enlace documental notes=receipt_id en movimientos 'Confirmacion recepcion' huérfanos (causa raíz auditada: confirm_pending_reception históricos insertaban notes=NULL → «s/d» injustificado en el SC-2-04 aunque el inventario sí se actualizó). Sin verificación de identidad PROPIA por diseño de herramienta de mantenimiento invocada por scripts con service_role: ACL EXCLUSIVA service_role (REVOKE PUBLIC/anon/authenticated + GRANT solo service_role en migración 20261125120000 — el REVOKE de authenticated es explícito porque los default privileges de Supabase lo conceden en la creación; verificado en Capa C), modo dry-run para auditoría previa (p_dry_run), emparejamiento INEQUÍVOCO multi-condición (lote por tienda+created_at ∧ única recepción activa con updated_at==created_at ∧ multiset producto+cantidad 1-a-1 entre movimientos y receipt_items) y trazabilidad completa en audit_logs por lote enlazado. Idempotente (re-ejecución=0 cambios). Ejecutada UNA VEZ en producción 2026-11-25: 2 lotes/12 movimientos (cd921832 ×10 + 41b16484 ×2); 101 huérfanos históricos sin enlace real conservados intactos.",
-   "added_by": "CP-RECEP-001 (PR #1706, agente)",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "create_pre_restore_snapshot",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "create_purchase_order",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "detect_orphan_users",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "discover_backup_tables",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "ensure_fiscal_period",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_apply_templates",
-   "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
-   "added_by": "cp-fin-auditoria-final",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_compute_metrics",
-   "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
-   "added_by": "cp-fin-auditoria-final",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_entry_reversal_residual",
-   "reason": "CP-FIN-T12-PRIVILEGE-HARDENING-001 (2026-11-16) · helper-interno · Helper de cálculo (SQL STABLE, SOLO lectura) del residual de cobertura de reversiones enlazadas por reversal_of (guard T12, migración 20261115100000): sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public desde la migración correctiva de privilegio mínimo 20261116120000 (REVOKE authenticated/anon/PUBLIC, GRANT conservado a service_role) — cumple la recomendación documentada por CP-VALUATION-NOMINAL-ACTIVATION-004 (2026-11-15); idéntica clase que la familia fin_* (fin_apply_templates/fin_eval_condition/...). Solo alcanzable desde fin_post_document_annulment y el trigger fin_t12_receipt_annulment_block (ambos SECURITY DEFINER owner postgres con sus propios cauces de autorización) y desde service_role. Evidencia: diagnóstico read-only de producción (Q3/Q4/Q5) + batería SQL de denegación real en BD aislada + PostgREST (anon 401 / authenticated 403 / service_role 200).",
-   "added_by": "CP-FIN-T12-PRIVILEGE-HARDENING-001 (fusiona entrada de CP-VALUATION-NOMINAL-ACTIVATION-004)",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_eval_condition",
-   "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
-   "added_by": "cp-fin-auditoria-final",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_post_annulment_safe",
-   "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
-   "added_by": "cp-fin-auditoria-final",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_post_document",
-   "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
-   "added_by": "cp-fin-auditoria-final",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_post_document_annulment",
-   "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
-   "added_by": "cp-fin-auditoria-final",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_post_document_safe",
-   "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
-   "added_by": "cp-fin-auditoria-final",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_post_payment_annulment",
-   "reason": "CP-OPS-ENERVIDA §3 (2026-11-24, migración 20261124120000) · helper-interno · Asiento compensatorio de UN pago anulado (variante por pago de fin_post_document_annulment, ya listada). Sin verificación de identidad PROPIA por diseño: no es punto de entrada — solo alcanzable desde reverse_supplier_payment (service_role exclusiva, autorizada en /api/payments con canManageStore) y triggers del motor. ACL verificada EN VIVO 2026-11-25: ejecutores {postgres, service_role} — sin anon/authenticated/public (CP-AP-FORENSIC-RECONCILIATION-001, drift del allowlist detectado por el gate).",
-   "added_by": "cxap-forensic-reconciliation-20261125",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_reclassify_sale_payment_currency",
-   "reason": "CP-FIN-002 (2026-11-19, migración 20261119150000 aplicada a producción) · Escritor canónico de RECLASIFICACIÓN DE MONEDA de cobro: canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), REVOKE explícito de anon/authenticated/public. Autorización gobernada por el propietario; fail-closed (venta completed, débito único del cobro en la categoría origen o caso documentado asiento_obsoleto, coherencia con pagos, categorías del catálogo). Idempotente por (venta, método, moneda_origen). Laguna detectada por CP-FIN-003: el gate de main fallaba desde la aplicación de la 20261119150000 (run 44550488760) sin esta entrada.",
-   "added_by": "CP-FIN-003 2026-11-20",
-   "expires": "2027-01-31"
-  },
-  {
-   "function": "fin_rectification_apply",
-   "reason": "CP-FIN-111-POSTREVIEW-HARDENING (2026-11-21) · RPC-motor · fin_rectification_apply: ejecución ATÓMICA de rectificaciones (asiento + movimientos + partida doble pre/post + documento de auditoría en UNA transacción; idempotencia completa por generación; registro parcial → ERR_RECTIFICACION_PARCIAL o reparación controlada con traza). Sin verificación de identidad PROPIA por diseño — ACL pura (patrón fin_generation_build/fin_rectify_*): REVOKE EXECUTE a PUBLIC/anon/authenticated + GRANT EXCLUSIVO a service_role (migración 20261122130000 §3, verificado 0 grants a anon/authenticated). Canal gobernado: scripts m110/m111 con guard CP-INFRA-019 (doble flag) + writers manifest; escritura de datos SOLO vía asientos de rectificación autorizados en expediente. Validada en BD aislada: 8 escenarios P0-4 (52/52 PASS m111-validate-isolated) incl. atomicidad y concurrencia; auditoría de impacto global read-only (solo ENERVIDA tiene órdenes service/work — 0 efectos sobre saldos vigentes).",
-   "added_by": "CP-FIN-111-POSTREVIEW-HARDENING",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_rectify_sale_payment_method",
-   "reason": "CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-19) · Escritor canónico de rectificación de medio de cobro (patrón T12): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), sin EXECUTE para anon/authenticated/public (REVOKE explícito + GRANT service_role en la migración 20261119120000). La autorización de la rectificación es gobernada (§6 de la misión: confirmación del propietario del hecho económico); la función verifica fail-closed venta completed, pagos del método origen, moneda única, categorías del catálogo y localización EXACTA sin ambigüedad del movimiento de cobro original. Idempotente (RECTIFICACION_FIN por venta + advisory lock).",
-   "added_by": "CP-FIN-001 2026-11-19",
-   "expires": "2027-01-31"
-  },
-  {
-   "function": "fin_resolve_rule",
-   "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
-   "added_by": "cp-fin-auditoria-final",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fin_validate_rule_movements",
-   "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
-   "added_by": "cp-fin-auditoria-final",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fn_classify_reception_import_row",
-   "reason": "CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 · helper-interno · Helper interno STABLE SECURITY DEFINER del importador de recepciones (20261116140100). NO llama a auth.uid() por diseño: recibe p_caller_uid de su RPC envolvente; la verificación de acceso (has_store_access_as) la ejecutan classify_reception_import_rows y resolve_reception_import_rows. Exposición: EXECUTE revocado a PUBLIC/anon/authenticated (solo postgres+service_role); no invocable por clientes. Verificación viva 2026-11-16 en producción (recertificación §15.5, ACL grants=[postgres,service_role]).",
-   "added_by": "cp-log-reception-001-cierre",
-   "expires": "2027-11-30"
-  },
-  {
-   "function": "fn_log_system_health",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "fn_master_apply_identity_changes",
-   "reason": "MISIÓN CATÁLOGO MAESTRO PR 3 · helper-interno · Aplica cambios de identidad sobre el maestro; SOLO invocable por las RPC gobernadas update_master_product/review_master_proposal (gobernador verificado antes). EXECUTE revocado a PUBLIC/anon/authenticated (20261028112100), GRANT solo service_role.",
-   "added_by": "cp-catalogo-pr3",
-   "expires": "2027-10-28"
-  },
-  {
-   "function": "fn_void_receipt",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "generate_confirmation_token",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "generate_internal_barcode",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "generate_inventory_snapshot",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_available_stock",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_backup_table_list",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_batch_store_daily_kpis",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_cash_balances_by_currency",
-   "reason": "MISIÓN CAJA MULTIMONEDA v2.24 2026-10-23 · REM-R2-READ · Función de lectura STABLE SECURITY DEFINER con barrera por tienda real: IF auth.role() <> 'service_role' THEN IF NOT has_store_access(p_store_id) RAISE ERR_UNAUTHORIZED_STORE (42501). El detector literal del gate busca 'auth.uid'/'ERR_PERMISSION_DENIED' y no reconoce el patrón REM-R2-READ — mismo caso documentado que get_cash_flow_summary. Sin exposición anon (EXECUTE solo authenticated/postgres/service_role). Definición viva certificada 2026-10-24 (pg_get_functiondef).",
-   "added_by": "mision-caja-multimoneda-v224",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_cash_closures",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_cash_currency_summary",
-   "reason": "MISIÓN CAJA MULTIMONEDA v2.24 2026-10-23 · READ-SERVICE-ROLE-ONLY · Función de lectura STABLE SECURITY DEFINER sin exposición autenticada: REVOKE de PUBLIC/anon/authenticated y GRANT EXECUTE únicamente a service_role (migración 20261023230000 §ACLs). Llamada exclusiva desde rutas servidor (/api/cash-flow/ledger) con service role; nunca expuesta al cliente ni a anon. El detector literal del gate exige patrones auth.uid/ERR_PERMISSION_DENIED que no aplican a una función sin exposición autenticada. Clasificación viva 2026-10-24 (pg_get_functiondef).",
-   "added_by": "mision-caja-multimoneda-v224",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_cash_flow_summary",
-   "reason": "MISIÓN INGRESOS/EGRESOS 2026-10 · REM-R2-READ · Función de lectura STABLE SECURITY DEFINER con barrera por tienda real: IF auth.role() <> 'service_role' THEN IF NOT has_store_access(p_store_id) RAISE ERR_UNAUTHORIZED_STORE (42501). El detector literal del gate busca 'auth.uid'/'ERR_PERMISSION_DENIED' y no reconoce el patrón REM-R2-READ — mismo caso documentado que get_cash_shift_expected. Sin exposición anon (REVOKE de PUBLIC/anon). Clasificación viva 2026-10-21.",
-   "added_by": "fix-caja-migracion-compat-live",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_cash_ledger",
-   "reason": "MISIÓN CAJA MULTIMONEDA v2.24 2026-10-23 · REM-R2-READ · Función de lectura STABLE SECURITY DEFINER con barrera por tienda real: IF auth.role() <> 'service_role' THEN IF NOT has_store_access(p_store_id) RAISE ERR_UNAUTHORIZED_STORE (42501). El detector literal del gate busca 'auth.uid'/'ERR_PERMISSION_DENIED' y no reconoce el patrón REM-R2-READ — mismo caso documentado que get_cash_flow_summary. Sin exposición anon (EXECUTE solo authenticated/postgres/service_role). Definición viva certificada 2026-10-24 (pg_get_functiondef).",
-   "added_by": "mision-caja-multimoneda-v224",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_cash_shift_expected",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_current_user_store_id",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_daily_expenses_aggregated",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_daily_income_aggregated",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_global_max_operation_date",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_inventory_report",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_inventory_with_costs",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_low_stock_count",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_new_academy_cards",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_or_create_product_cost_sheet",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_paginated_products",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_product_cost_analysis",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_product_stock_ledger",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_product_stock_ledger_paginated",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_product_variants_counts",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_products_for_reception",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_profit_report",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_purchases_book",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_sales_book",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_sales_since_last_closure",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_store_analytics_advanced",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_table_writable_columns",
-   "reason": "STABLE read-only helper. No modifica datos. REVOKE anon/PUBLIC aplicado.",
-   "added_by": "Iteración 7",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "get_tax_report",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_transfers",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_usage_forecast",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_usage_summary",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_user_audit_history",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "get_worker_commission_summary",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "has_management_access_as",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "has_role",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "has_store_access_as",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "has_store_role_as",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "increment_user_usage",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "is_admin_check",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "is_admin_with_access",
-   "reason": "CP-SEC-027 F7 · b · RPC admin UI con guard is_admin()||has_store_access — categoría (b) ratificada por el propietario. Exposición anon=True; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "is_catalog_governor",
-   "reason": "MISIÓN CATÁLOGO MAESTRO PR 3 · helper-capacidad · SQL STABLE SECURITY DEFINER sin auth.uid(): recibe p_user_id explícito y lo evalúan los llamadores tras el anti-spoofing v2.12.9 (RPCs de gobernanza) y las políticas RLS (como llamante autenticado). EXECUTE revocado a PUBLIC/anon (migración 20261028112200). Misma clase que is_admin_check.",
-   "added_by": "cp-catalogo-pr3",
-   "expires": "2027-10-28"
-  },
-  {
-   "function": "is_catalog_store_connected",
-   "reason": "MISIÓN CATÁLOGO MAESTRO PR 3 · helper-capacidad · SQL STABLE SECURITY DEFINER sin auth.uid(): evalúa el estado del enlace (tenant, store) para políticas RLS y guardas de RPC; los llamadores validan identidad antes de invocarla. EXECUTE revocado a PUBLIC/anon (20261028112200).",
-   "added_by": "cp-catalogo-pr3",
-   "expires": "2027-10-28"
-  },
-  {
-   "function": "is_role_not_changed",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "is_tenant_member",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "mark_expired_lots",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "next_document_number",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "process_inventory_adjustment",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "process_pick3_transaction",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "process_stock_adjustment",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "purge_old_reset_snapshots",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "rate_limit_take",
-   "reason": "CP-SECURITY-BACKLOG-CLOSURE-001 (2026-11-14) · RPC service-only · Incremento atómico del contador de rate limit distribuido (UPSERT sobre rate_limit_buckets). Sin verificación de identidad PROPIA por diseño: la autorización es por ACL, no por claims — REVOKE EXECUTE de PUBLIC/anon/authenticated y GRANT solo a service_role (20261114180400, verificación fail-closed incluida). La tabla es RLS FORCED sin políticas. Solo alcanzable desde el servidor Next.js con service role. Pruebas: src/__tests__/lib/rate-limit-distributed.test.ts + scripts/rate-limit-concurrency-proof.mjs.",
-   "added_by": "cp-security-backlog-closure-001",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "receive_against_po",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "receive_production_output_deprecated_4arg",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "register_idempotency",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "register_stock_movement",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "register_supplier_payment",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=4. Clasificación viva 2026-10-20. · ADN-009: serialización FOR UPDATE del documento + estado del servicio tras el lock + pre-check combinación (cuerpo certificado en migración 20261121190000).",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "register_supplier_payment_batch",
-   "reason": "ADN-009 (2026-11-21, PR post-merge hardening) · RPC de lote de pagos a proveedor (1-20 componentes, idempotente por bloque, delega CADA componente al canónico register_supplier_payment). ACL service_role EXCLUSIVA (REVOKE authenticated, declarada en la migración 20261121190000 — alineada a CP-FIN-004 y al canal exclusivo del motor que envuelve): /api/payments autoriza con canManageStore y ejecuta la llamada privilegiada por el cliente service_role. Contrato canónico CP-FIN-004 en el cuerpo (external_transfer; zelle heredado normalizado, jamás persistido) + SELECT ... FOR UPDATE del documento compartido con el camino individual. El gate de identidad NO aplica al cuerpo por diseño service_role-only (la identidad del actor la aporta el endpoint desde la sesión; p_paid_by nunca es parámetro libre del cliente).",
-   "added_by": "ADN-008 (PR #1670, agente)",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "register_supplier_payment_multi",
-   "reason": "CP-OPS-ENERVIDA §6 (2026-11-24, migración 20261124120300) · RPC de liquidación múltiple CxP · Hermana de register_supplier_payment/_batch (ya listadas): delega cada componente al canónico register_supplier_payment, lote atómico e idempotente. ACL verificada EN VIVO 2026-11-25: ejecutores {postgres, service_role} — la identidad del actor la aporta /api/payments/multi desde la sesión (canManageStore); p_paid_by nunca es parámetro libre (CP-AP-FORENSIC-RECONCILIATION-001, drift del allowlist detectado por el gate).",
-   "added_by": "cxap-forensic-reconciliation-20261125",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "regularize_sale_payment",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "release_expired_reservations",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "restore_transaction_snapshot",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "save_product_cost_sheet",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "sync_inventory_from_products",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "transfer_requires_approval",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "update_transaction_taxes",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "upsert_manual_exchange_rate_with_audit",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "upsert_store_cost_template",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "upsert_usage_aggregate",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "validate_backup_registry_drift",
-   "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
-   "added_by": "Iteración 7",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "validate_operation_date",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "validate_post_restore",
-   "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
-   "added_by": "Iteración 7",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "validate_pre_restore_fk_integrity",
-   "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
-   "added_by": "Iteración 7",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "validate_store_can_be_modified",
-   "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
-   "added_by": "Iteración 9",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "validate_tenant_access",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "validate_transfer_operation_date",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "verify_audit_chain",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  },
-  {
-   "function": "void_reception_with_reversal",
-   "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
-   "added_by": "cp-sec-027-f7",
-   "expires": "2027-06-30"
-  }
- ],
- "tables_without_rls": [],
- "security_contract_static_baseline": [
-  {
-   "function": "create_quotation/10",
-   "rules": [
-    "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
-   ],
-   "reason": "REM-INV-5: definicion historica en migraciones; el fix LIVE esta fuera de banda y certificado (security contract LIVE 134/134). La definicion vigente en produccion cumple el contrato.",
-   "added_by": "REM-INV-5",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "create_sale/16",
-   "rules": [
-    "ANTI_SPOOFING_GUARD_MISSING",
-    "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
-   ],
-   "reason": "REM-INV-5: version historica 16-args en migraciones; LIVE usa la version corregida out-of-band (certificada 134/134). Nueva regla sobre esta funcion sierra el build.",
-   "added_by": "REM-INV-5",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "duplicate_inventory_adjustment/2",
-   "rules": [
-    "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
-   ],
-   "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
-   "added_by": "REM-INV-5",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "perform_inventory_adjustment/7",
-   "rules": [
-    "ANTI_SPOOFING_GUARD_MISSING",
-    "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
-   ],
-   "reason": "REM-INV-5: version historica en migraciones; LIVE usa version corregida out-of-band (certificada 134/134).",
-   "added_by": "REM-INV-5",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "receive_production_output/6",
-   "rules": [
-    "ANTI_SPOOFING_GUARD_MISSING"
-   ],
-   "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
-   "added_by": "REM-INV-5",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "record_counted_quantity/5",
-   "rules": [
-    "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
-   ],
-   "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
-   "added_by": "REM-INV-5",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "register_stock_movement/7",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-5: overload historica en migraciones; la version LIVE (out-of-band) tiene SET search_path (certificada 134/134).",
-   "added_by": "REM-INV-5",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "register_stock_movement/8",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-5: overload historica en migraciones; la version LIVE (out-of-band) tiene SET search_path (certificada 134/134).",
-   "added_by": "REM-INV-5",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "withdraw_production_item/6",
-   "rules": [
-    "ANTI_SPOOFING_GUARD_MISSING"
-   ],
-   "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
-   "added_by": "REM-INV-5",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "confirm_pending_reception/2",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "confirm_transfer/2",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "create_sale/8",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "create_sale/10",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "create_sale/11",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "create_transfer/4",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "ensure_fiscal_period/3",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "managed_create_user/6",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "managed_create_user/7",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "mark_expired_lots/1",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "process_inventory_adjustment/3",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "register_stock_movement/9",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "void_reception_with_reversal/3",
-   "rules": [
-    "SEARCH_PATH_NOT_SET"
-   ],
-   "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
-   "added_by": "REM-INV-6",
-   "expires": "2026-12-31"
-  }
- ],
- "source_of_truth_baseline": [
-  {
-   "function": "create_sale_v2/34",
-   "rules": [
-    "LIVE_FUNCTION_NOT_REPRESENTED"
-   ],
-   "reason": "CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (PR #1708): la migración 20261125120000_cp_pos_per_item_payments.sql retira INTENCIONALMENTE la firma /34 del stream — DROP sin calificar (evita el 42725 del patrón 20261105140000/20261106100000) y re-emisión canónica create_sale_v2/35 con p_customer_ci al final (Cajero Express: datos del cliente para operaciones con transferencia) + payment_distributions por línea en transaction_items y validación items[].payments. ACL del LIVE conservada (REVOKE PUBLIC/anon + GRANT authenticated, service_role). Divergencia INTENCIONAL LIVE(/34) vs replay(/35) hasta el deploy en producción; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E: E2E pos-checkout 21/21 (workers=1) + manifiesto replay /35 7/7 + unidad 33 pruebas de la misión.",
-   "added_by": "CP-POS-CI-FIX (declaración tardía — el CI del PR nunca corrió por la anomalía de GitHub)",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "create_devolution_v2/12",
-   "rules": [
-    "BODY_DRIFT_FROM_MIGRATION"
-   ],
-   "reason": "PR #1616 (ciclo devolución en divisa): migración 20261114140000 redefine create_devolution_v2 (tasa efectiva exacta en filas de reembolso USD/AS_PAID) CON AUTORIZACIÓN PENDIENTE — producción no debe tocarse sin decisión del propietario. El replay del PR diverge del surface certificado (vivo) hasta que la migración se aplique con autorización; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/nominas). El cuerpo propuesto está validado íntegro en BD E2E aislada (37/37 PASS + net delta 0).",
-   "added_by": "CP-FIN misión final 2026-11-13 (PR #1616)",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "delete_master_party/3",
-   "rules": [
-    "BODY_DRIFT_FROM_MIGRATION",
-    "UNEXPECTED_ACL_DRIFT"
-   ],
-   "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120400_cp_ops_enervida_parties_consolidation.sql re-emite la función con la corrección de la misión (guard de historial corregido + desvinculación de locales al borrar maestro sin historial; ACL authenticated CONSERVADA para igualar el LIVE). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
-   "added_by": "CP-OPS-ENERVIDA",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "set_received_service_status/4",
-   "rules": [
-    "BODY_DRIFT_FROM_MIGRATION"
-   ],
-   "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120100_cp_ops_enervida_service_void_idempotency.sql re-emite la función con la corrección de la misión (la cancelación/anulación revierte los pagos activos del documento (contra-filas reversal) en lugar de dejar salidas fantasma). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
-   "added_by": "CP-OPS-ENERVIDA",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "void_received_service_with_reversal/4",
-   "rules": [
-    "BODY_DRIFT_FROM_MIGRATION"
-   ],
-   "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120100_cp_ops_enervida_service_void_idempotency.sql re-emite la función con la corrección de la misión (el void genera contra-filas direction=reversal enlazadas (reverses_payment_id) en vez de solo anotar notas). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
-   "added_by": "CP-OPS-ENERVIDA",
-   "expires": "2026-12-31"
-  },
-  {
-   "function": "confirm_inventory_adjustment/2",
-   "rules": [
-    "BODY_DRIFT_FROM_MIGRATION"
-   ],
-   "reason": "CP-BRA-INV005-FIN011-CLOSURE-001 (PR R-05, NO fusionado): la migración 20261126170000_cpbra_r05_adjustment_confirmation_role_guard.sql re-emite la función con el primer incremento de la alternativa A de DECISION-R05 — sustituye is_admin_check OR has_store_access_as (cualquier membresía activa, hueco INV-005) por has_store_role_as(uid, store, {admin,manager,encargado}) fail-closed con ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED y añade auditoría transaccional ADJUSTMENT_CONFIRMED en audit_logs (misión §2.4). Firma/ACL/kardex INVARIABLES. Divergencia INTENCIONAL cuerpo-LIVE (sin guard) vs replay (con guard) HASTA la aprobación expresa del propietario, fusión del PR, aplicación gobernada §11g en producción y re-certificación del surface — entonces esta entrada se RETIRA (patrón register_supplier_payment/12). Validado en BD aislada CostproE2E con batería de autorización (14 casos).",
-   "added_by": "CP-BRA-INV005-FIN011-CLOSURE-001",
-   "expires": "2026-12-31"
-  }
- ],
- "_updated": "2026-11-26 — CP-BRA-INV005-FIN011-CLOSURE-001: entrada confirm_inventory_adjustment/2 añadida (drift intencional LIVE-vs-replay del guard R-05, PR sin fusionar pendiente de aprobación del propietario)."
+  "version": 2,
+  "description": "Excepciones documentadas para el Security CI Gate. Cada excepción debe tener razón, autor y fecha de expiración.",
+  "security_definer_without_auth_check": [
+    {
+      "function": "adjust_total_amount",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "bulk_update_products",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "calculate_receipt_total_cup",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "calculate_service_distribution",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_admin_reverse_transaction",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_create_user_with_role",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_manage_payroll_as",
+      "reason": "CP-SECURITY-BACKLOG-CLOSURE-001 (2026-11-14) · helper-interno · Helper de autorización de nóminas (misma clase que has_store_access_as/is_admin_check, ya allowlisted): resuelve la identidad server-side desde profiles/user_store_memberships por p_user_id explícito que los 7 RPC de nómina SÍ validan antes (patrón anti-spoofing v2.12.9 intacto en cada caller). Sin EXECUTE para anon/authenticated (REVOKE explícito en 20261114180000); solo service_role. Clasificación: gate de los RPC create/update/confirm/account/mark_paid/void/set_worker_salary_rate — verificados por scripts/e2e/verify-payroll-privacy-pg.mjs (matriz por rol).",
+      "added_by": "cp-security-backlog-closure-001",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_manage_store_as",
+      "reason": "ADN-009 (2026-11-21, PR #1672 post-merge hardening) · Helper de GESTIÓN por tienda (espejo DB de canManageStore en src/lib/roles.ts: is_admin_check transversal O membresía activa admin/manager/encargado). Patrón idéntico a can_manage_payroll_as y has_store_access_as: helper booleano STABLE SECURITY DEFINER de consulta que NO toca datos y cuya firma recibe el actor por parámetro — la identidad real la resuelve el llamador con el patrón v2.12.9 (los RPC de borradores pasan auth.uid()); ACL service_role-only para invocación directa. Consumidores: create_received_service_draft, update_received_service_draft (20261121190000).",
+      "expires": "2027-12-31",
+      "added_by": "ADN-SR-POSTMERGE-HARDENING-009 (PR #1672, 2026-11-21) — misión post-merge hardening"
+    },
+    {
+      "function": "can_pos_undo_transaction",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_reverse_document",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_safely_delete_user",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "can_void_receipt",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "check_bulk_ops_hourly_limit",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 9",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "check_idempotency",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "check_tenant_store_quota",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "cleanup_expired_idempotency_keys",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "cleanup_old_aggregates",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "cp_catmaestro001_renumber_auto_masters",
+      "reason": "CP-CATMAESTRO-001 · mantenimiento del Catálogo Maestro · Renumeración de masters con p_dry_run por defecto true. ACL verificada EN VIVO 2026-11-25: ejecutores {postgres, service_role} — sin exposición anon/authenticated/public; invocada por scripts gobernados del ciclo (CP-AP-FORENSIC-RECONCILIATION-001, drift del allowlist detectado por el gate).",
+      "added_by": "cxap-forensic-reconciliation-20261125",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "cp_fin004_normalize_enervida_payments",
+      "reason": "CP-FIN-004 (2026-11-20, migraciones 20261120200000/20261120210000/20261120220000) · Normalizador histórico idempotente del contrato external_transfer para ENERVIDA (declaración del propietario: 3 ventas Transf. Exterior, demás ventas USD en efectivo): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado con fixtures), REVOKE explícito de anon/authenticated/PUBLIC y GRANT a service_role en la migración; guardas por tienda/venta, idempotencia por auditoría (CP_FIN004_NORMALIZE) y post-condición fail-closed sin zelle residual.",
+      "added_by": "CP-FIN-004 2026-11-20",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "cp_recep001_backfill_confirm_notes",
+      "reason": "CP-RECEPCIONES-PDF-STOCK-MASTER-SKU-001 (PR #1706, 2026-11-25) · Herramienta PUNTUAL de backfill del enlace documental notes=receipt_id en movimientos 'Confirmacion recepcion' huérfanos (causa raíz auditada: confirm_pending_reception históricos insertaban notes=NULL → «s/d» injustificado en el SC-2-04 aunque el inventario sí se actualizó). Sin verificación de identidad PROPIA por diseño de herramienta de mantenimiento invocada por scripts con service_role: ACL EXCLUSIVA service_role (REVOKE PUBLIC/anon/authenticated + GRANT solo service_role en migración 20261125120000 — el REVOKE de authenticated es explícito porque los default privileges de Supabase lo conceden en la creación; verificado en Capa C), modo dry-run para auditoría previa (p_dry_run), emparejamiento INEQUÍVOCO multi-condición (lote por tienda+created_at ∧ única recepción activa con updated_at==created_at ∧ multiset producto+cantidad 1-a-1 entre movimientos y receipt_items) y trazabilidad completa en audit_logs por lote enlazado. Idempotente (re-ejecución=0 cambios). Ejecutada UNA VEZ en producción 2026-11-25: 2 lotes/12 movimientos (cd921832 ×10 + 41b16484 ×2); 101 huérfanos históricos sin enlace real conservados intactos.",
+      "added_by": "CP-RECEP-001 (PR #1706, agente)",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "create_pre_restore_snapshot",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "create_purchase_order",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "detect_orphan_users",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "discover_backup_tables",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "ensure_fiscal_period",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_apply_templates",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_compute_metrics",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_entry_reversal_residual",
+      "reason": "CP-FIN-T12-PRIVILEGE-HARDENING-001 (2026-11-16) · helper-interno · Helper de cálculo (SQL STABLE, SOLO lectura) del residual de cobertura de reversiones enlazadas por reversal_of (guard T12, migración 20261115100000): sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public desde la migración correctiva de privilegio mínimo 20261116120000 (REVOKE authenticated/anon/PUBLIC, GRANT conservado a service_role) — cumple la recomendación documentada por CP-VALUATION-NOMINAL-ACTIVATION-004 (2026-11-15); idéntica clase que la familia fin_* (fin_apply_templates/fin_eval_condition/...). Solo alcanzable desde fin_post_document_annulment y el trigger fin_t12_receipt_annulment_block (ambos SECURITY DEFINER owner postgres con sus propios cauces de autorización) y desde service_role. Evidencia: diagnóstico read-only de producción (Q3/Q4/Q5) + batería SQL de denegación real en BD aislada + PostgREST (anon 401 / authenticated 403 / service_role 200).",
+      "added_by": "CP-FIN-T12-PRIVILEGE-HARDENING-001 (fusiona entrada de CP-VALUATION-NOMINAL-ACTIVATION-004)",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_eval_condition",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_post_annulment_safe",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_post_document",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_post_document_annulment",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_post_document_safe",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_post_payment_annulment",
+      "reason": "CP-OPS-ENERVIDA §3 (2026-11-24, migración 20261124120000) · helper-interno · Asiento compensatorio de UN pago anulado (variante por pago de fin_post_document_annulment, ya listada). Sin verificación de identidad PROPIA por diseño: no es punto de entrada — solo alcanzable desde reverse_supplier_payment (service_role exclusiva, autorizada en /api/payments con canManageStore) y triggers del motor. ACL verificada EN VIVO 2026-11-25: ejecutores {postgres, service_role} — sin anon/authenticated/public (CP-AP-FORENSIC-RECONCILIATION-001, drift del allowlist detectado por el gate).",
+      "added_by": "cxap-forensic-reconciliation-20261125",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_reclassify_sale_payment_currency",
+      "reason": "CP-FIN-002 (2026-11-19, migración 20261119150000 aplicada a producción) · Escritor canónico de RECLASIFICACIÓN DE MONEDA de cobro: canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), REVOKE explícito de anon/authenticated/public. Autorización gobernada por el propietario; fail-closed (venta completed, débito único del cobro en la categoría origen o caso documentado asiento_obsoleto, coherencia con pagos, categorías del catálogo). Idempotente por (venta, método, moneda_origen). Laguna detectada por CP-FIN-003: el gate de main fallaba desde la aplicación de la 20261119150000 (run 44550488760) sin esta entrada.",
+      "added_by": "CP-FIN-003 2026-11-20",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "fin_rectification_apply",
+      "reason": "CP-FIN-111-POSTREVIEW-HARDENING (2026-11-21) · RPC-motor · fin_rectification_apply: ejecución ATÓMICA de rectificaciones (asiento + movimientos + partida doble pre/post + documento de auditoría en UNA transacción; idempotencia completa por generación; registro parcial → ERR_RECTIFICACION_PARCIAL o reparación controlada con traza). Sin verificación de identidad PROPIA por diseño — ACL pura (patrón fin_generation_build/fin_rectify_*): REVOKE EXECUTE a PUBLIC/anon/authenticated + GRANT EXCLUSIVO a service_role (migración 20261122130000 §3, verificado 0 grants a anon/authenticated). Canal gobernado: scripts m110/m111 con guard CP-INFRA-019 (doble flag) + writers manifest; escritura de datos SOLO vía asientos de rectificación autorizados en expediente. Validada en BD aislada: 8 escenarios P0-4 (52/52 PASS m111-validate-isolated) incl. atomicidad y concurrencia; auditoría de impacto global read-only (solo ENERVIDA tiene órdenes service/work — 0 efectos sobre saldos vigentes).",
+      "added_by": "CP-FIN-111-POSTREVIEW-HARDENING",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_rectify_sale_payment_method",
+      "reason": "CP-FIN-FINANCIAL-STATEMENTS-SOURCE-AND-CURRENCY-ACCURACY-001 (2026-11-19) · Escritor canónico de rectificación de medio de cobro (patrón T12): canal EXCLUSIVO service_role/postgres (Management API / E2E aislado), sin EXECUTE para anon/authenticated/public (REVOKE explícito + GRANT service_role en la migración 20261119120000). La autorización de la rectificación es gobernada (§6 de la misión: confirmación del propietario del hecho económico); la función verifica fail-closed venta completed, pagos del método origen, moneda única, categorías del catálogo y localización EXACTA sin ambigüedad del movimiento de cobro original. Idempotente (RECTIFICACION_FIN por venta + advisory lock).",
+      "added_by": "CP-FIN-001 2026-11-19",
+      "expires": "2027-01-31"
+    },
+    {
+      "function": "fin_resolve_rule",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fin_validate_rule_movements",
+      "reason": "CP-FIN partida doble (2026-11-13) · helper-interno · Función interna del motor de contabilización: sin verificación de identidad PROPIA por diseño (no es punto de entrada). Sin EXECUTE para authenticated/anon/public (REVOKE en la migración del motor, re-verificado por 20261113120700); solo alcanzable desde los triggers fin_trg_% y las RPCs públicas fin_* que SÍ verifican autorización (has_store_role_as/is_admin_check/anti-spoofing auth.uid). Auditoría integral 34/34 + gate m014/m015.",
+      "added_by": "cp-fin-auditoria-final",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fn_classify_reception_import_row",
+      "reason": "CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 · helper-interno · Helper interno STABLE SECURITY DEFINER del importador de recepciones (20261116140100). NO llama a auth.uid() por diseño: recibe p_caller_uid de su RPC envolvente; la verificación de acceso (has_store_access_as) la ejecutan classify_reception_import_rows y resolve_reception_import_rows. Exposición: EXECUTE revocado a PUBLIC/anon/authenticated (solo postgres+service_role); no invocable por clientes. Verificación viva 2026-11-16 en producción (recertificación §15.5, ACL grants=[postgres,service_role]).",
+      "added_by": "cp-log-reception-001-cierre",
+      "expires": "2027-11-30"
+    },
+    {
+      "function": "fn_log_system_health",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "fn_master_apply_identity_changes",
+      "reason": "MISIÓN CATÁLOGO MAESTRO PR 3 · helper-interno · Aplica cambios de identidad sobre el maestro; SOLO invocable por las RPC gobernadas update_master_product/review_master_proposal (gobernador verificado antes). EXECUTE revocado a PUBLIC/anon/authenticated (20261028112100), GRANT solo service_role.",
+      "added_by": "cp-catalogo-pr3",
+      "expires": "2027-10-28"
+    },
+    {
+      "function": "fn_void_receipt",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "generate_confirmation_token",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "generate_internal_barcode",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "generate_inventory_snapshot",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_available_stock",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_backup_table_list",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_batch_store_daily_kpis",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_cash_balances_by_currency",
+      "reason": "MISIÓN CAJA MULTIMONEDA v2.24 2026-10-23 · REM-R2-READ · Función de lectura STABLE SECURITY DEFINER con barrera por tienda real: IF auth.role() <> 'service_role' THEN IF NOT has_store_access(p_store_id) RAISE ERR_UNAUTHORIZED_STORE (42501). El detector literal del gate busca 'auth.uid'/'ERR_PERMISSION_DENIED' y no reconoce el patrón REM-R2-READ — mismo caso documentado que get_cash_flow_summary. Sin exposición anon (EXECUTE solo authenticated/postgres/service_role). Definición viva certificada 2026-10-24 (pg_get_functiondef).",
+      "added_by": "mision-caja-multimoneda-v224",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_cash_closures",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_cash_currency_summary",
+      "reason": "MISIÓN CAJA MULTIMONEDA v2.24 2026-10-23 · READ-SERVICE-ROLE-ONLY · Función de lectura STABLE SECURITY DEFINER sin exposición autenticada: REVOKE de PUBLIC/anon/authenticated y GRANT EXECUTE únicamente a service_role (migración 20261023230000 §ACLs). Llamada exclusiva desde rutas servidor (/api/cash-flow/ledger) con service role; nunca expuesta al cliente ni a anon. El detector literal del gate exige patrones auth.uid/ERR_PERMISSION_DENIED que no aplican a una función sin exposición autenticada. Clasificación viva 2026-10-24 (pg_get_functiondef).",
+      "added_by": "mision-caja-multimoneda-v224",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_cash_flow_summary",
+      "reason": "MISIÓN INGRESOS/EGRESOS 2026-10 · REM-R2-READ · Función de lectura STABLE SECURITY DEFINER con barrera por tienda real: IF auth.role() <> 'service_role' THEN IF NOT has_store_access(p_store_id) RAISE ERR_UNAUTHORIZED_STORE (42501). El detector literal del gate busca 'auth.uid'/'ERR_PERMISSION_DENIED' y no reconoce el patrón REM-R2-READ — mismo caso documentado que get_cash_shift_expected. Sin exposición anon (REVOKE de PUBLIC/anon). Clasificación viva 2026-10-21.",
+      "added_by": "fix-caja-migracion-compat-live",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_cash_ledger",
+      "reason": "MISIÓN CAJA MULTIMONEDA v2.24 2026-10-23 · REM-R2-READ · Función de lectura STABLE SECURITY DEFINER con barrera por tienda real: IF auth.role() <> 'service_role' THEN IF NOT has_store_access(p_store_id) RAISE ERR_UNAUTHORIZED_STORE (42501). El detector literal del gate busca 'auth.uid'/'ERR_PERMISSION_DENIED' y no reconoce el patrón REM-R2-READ — mismo caso documentado que get_cash_flow_summary. Sin exposición anon (EXECUTE solo authenticated/postgres/service_role). Definición viva certificada 2026-10-24 (pg_get_functiondef).",
+      "added_by": "mision-caja-multimoneda-v224",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_cash_shift_expected",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_current_user_store_id",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_daily_expenses_aggregated",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_daily_income_aggregated",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_global_max_operation_date",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_inventory_report",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_inventory_with_costs",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_low_stock_count",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_new_academy_cards",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_or_create_product_cost_sheet",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_paginated_products",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_product_cost_analysis",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_product_stock_ledger",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_product_stock_ledger_paginated",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_product_variants_counts",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_products_for_reception",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_profit_report",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_purchases_book",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_sales_book",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_sales_since_last_closure",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_store_analytics_advanced",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_table_writable_columns",
+      "reason": "STABLE read-only helper. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 7",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "get_tax_report",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_transfers",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_usage_forecast",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_usage_summary",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_user_audit_history",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "get_worker_commission_summary",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "has_management_access_as",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "has_role",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "has_store_access_as",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "has_store_role_as",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "increment_user_usage",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "is_admin_check",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "is_admin_with_access",
+      "reason": "CP-SEC-027 F7 · b · RPC admin UI con guard is_admin()||has_store_access — categoría (b) ratificada por el propietario. Exposición anon=True; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "is_catalog_governor",
+      "reason": "MISIÓN CATÁLOGO MAESTRO PR 3 · helper-capacidad · SQL STABLE SECURITY DEFINER sin auth.uid(): recibe p_user_id explícito y lo evalúan los llamadores tras el anti-spoofing v2.12.9 (RPCs de gobernanza) y las políticas RLS (como llamante autenticado). EXECUTE revocado a PUBLIC/anon (migración 20261028112200). Misma clase que is_admin_check.",
+      "added_by": "cp-catalogo-pr3",
+      "expires": "2027-10-28"
+    },
+    {
+      "function": "is_catalog_store_connected",
+      "reason": "MISIÓN CATÁLOGO MAESTRO PR 3 · helper-capacidad · SQL STABLE SECURITY DEFINER sin auth.uid(): evalúa el estado del enlace (tenant, store) para políticas RLS y guardas de RPC; los llamadores validan identidad antes de invocarla. EXECUTE revocado a PUBLIC/anon (20261028112200).",
+      "added_by": "cp-catalogo-pr3",
+      "expires": "2027-10-28"
+    },
+    {
+      "function": "is_role_not_changed",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "is_tenant_member",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "mark_expired_lots",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "next_document_number",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "process_inventory_adjustment",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "process_pick3_transaction",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=2. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "process_stock_adjustment",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "purge_old_reset_snapshots",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "rate_limit_take",
+      "reason": "CP-SECURITY-BACKLOG-CLOSURE-001 (2026-11-14) · RPC service-only · Incremento atómico del contador de rate limit distribuido (UPSERT sobre rate_limit_buckets). Sin verificación de identidad PROPIA por diseño: la autorización es por ACL, no por claims — REVOKE EXECUTE de PUBLIC/anon/authenticated y GRANT solo a service_role (20261114180400, verificación fail-closed incluida). La tabla es RLS FORCED sin políticas. Solo alcanzable desde el servidor Next.js con service role. Pruebas: src/__tests__/lib/rate-limit-distributed.test.ts + scripts/rate-limit-concurrency-proof.mjs.",
+      "added_by": "cp-security-backlog-closure-001",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "receive_against_po",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "receive_production_output_deprecated_4arg",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "register_idempotency",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "register_stock_movement",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "register_supplier_payment",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=4. Clasificación viva 2026-10-20. · ADN-009: serialización FOR UPDATE del documento + estado del servicio tras el lock + pre-check combinación (cuerpo certificado en migración 20261121190000).",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "register_supplier_payment_batch",
+      "reason": "ADN-009 (2026-11-21, PR post-merge hardening) · RPC de lote de pagos a proveedor (1-20 componentes, idempotente por bloque, delega CADA componente al canónico register_supplier_payment). ACL service_role EXCLUSIVA (REVOKE authenticated, declarada en la migración 20261121190000 — alineada a CP-FIN-004 y al canal exclusivo del motor que envuelve): /api/payments autoriza con canManageStore y ejecuta la llamada privilegiada por el cliente service_role. Contrato canónico CP-FIN-004 en el cuerpo (external_transfer; zelle heredado normalizado, jamás persistido) + SELECT ... FOR UPDATE del documento compartido con el camino individual. El gate de identidad NO aplica al cuerpo por diseño service_role-only (la identidad del actor la aporta el endpoint desde la sesión; p_paid_by nunca es parámetro libre del cliente).",
+      "added_by": "ADN-008 (PR #1670, agente)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_supplier_payment_multi",
+      "reason": "CP-OPS-ENERVIDA §6 (2026-11-24, migración 20261124120300) · RPC de liquidación múltiple CxP · Hermana de register_supplier_payment/_batch (ya listadas): delega cada componente al canónico register_supplier_payment, lote atómico e idempotente. ACL verificada EN VIVO 2026-11-25: ejecutores {postgres, service_role} — la identidad del actor la aporta /api/payments/multi desde la sesión (canManageStore); p_paid_by nunca es parámetro libre (CP-AP-FORENSIC-RECONCILIATION-001, drift del allowlist detectado por el gate).",
+      "added_by": "cxap-forensic-reconciliation-20261125",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "regularize_sale_payment",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "release_expired_reservations",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "restore_transaction_snapshot",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "save_product_cost_sheet",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "sync_inventory_from_products",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "transfer_requires_approval",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "update_transaction_taxes",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "upsert_manual_exchange_rate_with_audit",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "upsert_store_cost_template",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "upsert_usage_aggregate",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=1. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "validate_backup_registry_drift",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 7",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "validate_operation_date",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "validate_post_restore",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 7",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "validate_pre_restore_fk_integrity",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 7",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "validate_store_can_be_modified",
+      "reason": "STABLE read-only function. No modifica datos. REVOKE anon/PUBLIC aplicado.",
+      "added_by": "Iteración 9",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "validate_tenant_access",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "validate_transfer_operation_date",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "verify_audit_chain",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    },
+    {
+      "function": "void_reception_with_reversal",
+      "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
+      "added_by": "cp-sec-027-f7",
+      "expires": "2027-06-30"
+    }
+  ],
+  "tables_without_rls": [],
+  "security_contract_static_baseline": [
+    {
+      "function": "create_quotation/10",
+      "rules": [
+        "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
+      ],
+      "reason": "REM-INV-5: definicion historica en migraciones; el fix LIVE esta fuera de banda y certificado (security contract LIVE 134/134). La definicion vigente en produccion cumple el contrato.",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_sale/16",
+      "rules": [
+        "ANTI_SPOOFING_GUARD_MISSING",
+        "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
+      ],
+      "reason": "REM-INV-5: version historica 16-args en migraciones; LIVE usa la version corregida out-of-band (certificada 134/134). Nueva regla sobre esta funcion sierra el build.",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "duplicate_inventory_adjustment/2",
+      "rules": [
+        "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
+      ],
+      "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "perform_inventory_adjustment/7",
+      "rules": [
+        "ANTI_SPOOFING_GUARD_MISSING",
+        "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
+      ],
+      "reason": "REM-INV-5: version historica en migraciones; LIVE usa version corregida out-of-band (certificada 134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "receive_production_output/6",
+      "rules": [
+        "ANTI_SPOOFING_GUARD_MISSING"
+      ],
+      "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "record_counted_quantity/5",
+      "rules": [
+        "VULNERABLE_PATTERN_IS_NOT_NULL_AND_NOT"
+      ],
+      "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_stock_movement/7",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-5: overload historica en migraciones; la version LIVE (out-of-band) tiene SET search_path (certificada 134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_stock_movement/8",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-5: overload historica en migraciones; la version LIVE (out-of-band) tiene SET search_path (certificada 134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "withdraw_production_item/6",
+      "rules": [
+        "ANTI_SPOOFING_GUARD_MISSING"
+      ],
+      "reason": "REM-INV-5: definicion historica en migraciones; fix LIVE out-of-band certificado (134/134).",
+      "added_by": "REM-INV-5",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "confirm_pending_reception/2",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "confirm_transfer/2",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_sale/8",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_sale/10",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_sale/11",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_transfer/4",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "ensure_fiscal_period/3",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "managed_create_user/6",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "managed_create_user/7",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "mark_expired_lots/1",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "process_inventory_adjustment/3",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_stock_movement/9",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "void_reception_with_reversal/3",
+      "rules": [
+        "SEARCH_PATH_NOT_SET"
+      ],
+      "reason": "REM-INV-6: overload historica retirada/superada (ausente del surface certificado 134) o search_path fijado posteriormente via ALTER FUNCTION (migration 20260902205210 H1). El detector de REM-INV-5 no veia estas definiciones (bug lastIndex/$$ corregido en Gate O); quedan como historico revisado, sin efecto en el estado LIVE.",
+      "added_by": "REM-INV-6",
+      "expires": "2026-12-31"
+    }
+  ],
+  "source_of_truth_baseline": [
+    {
+      "function": "create_sale_v2/34",
+      "rules": [
+        "LIVE_FUNCTION_NOT_REPRESENTED"
+      ],
+      "reason": "CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (PR #1708): la migración 20261125120000_cp_pos_per_item_payments.sql retira INTENCIONALMENTE la firma /34 del stream — DROP sin calificar (evita el 42725 del patrón 20261105140000/20261106100000) y re-emisión canónica create_sale_v2/35 con p_customer_ci al final (Cajero Express: datos del cliente para operaciones con transferencia) + payment_distributions por línea en transaction_items y validación items[].payments. ACL del LIVE conservada (REVOKE PUBLIC/anon + GRANT authenticated, service_role). Divergencia INTENCIONAL LIVE(/34) vs replay(/35) hasta el deploy en producción; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E: E2E pos-checkout 21/21 (workers=1) + manifiesto replay /35 7/7 + unidad 33 pruebas de la misión.",
+      "added_by": "CP-POS-CI-FIX (declaración tardía — el CI del PR nunca corrió por la anomalía de GitHub)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "create_devolution_v2/12",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "PR #1616 (ciclo devolución en divisa): migración 20261114140000 redefine create_devolution_v2 (tasa efectiva exacta en filas de reembolso USD/AS_PAID) CON AUTORIZACIÓN PENDIENTE — producción no debe tocarse sin decisión del propietario. El replay del PR diverge del surface certificado (vivo) hasta que la migración se aplique con autorización; al aplicarla se REGENERARÁ el surface y se RETIRARÁ esta excepción (patrón cierre-1605/nominas). El cuerpo propuesto está validado íntegro en BD E2E aislada (37/37 PASS + net delta 0).",
+      "added_by": "CP-FIN misión final 2026-11-13 (PR #1616)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "delete_master_party/3",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION",
+        "UNEXPECTED_ACL_DRIFT"
+      ],
+      "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120400_cp_ops_enervida_parties_consolidation.sql re-emite la función con la corrección de la misión (guard de historial corregido + desvinculación de locales al borrar maestro sin historial; ACL authenticated CONSERVADA para igualar el LIVE). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
+      "added_by": "CP-OPS-ENERVIDA",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "set_received_service_status/4",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120100_cp_ops_enervida_service_void_idempotency.sql re-emite la función con la corrección de la misión (la cancelación/anulación revierte los pagos activos del documento (contra-filas reversal) en lugar de dejar salidas fantasma). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
+      "added_by": "CP-OPS-ENERVIDA",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "void_received_service_with_reversal/4",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120100_cp_ops_enervida_service_void_idempotency.sql re-emite la función con la corrección de la misión (el void genera contra-filas direction=reversal enlazadas (reverses_payment_id) en vez de solo anotar notas). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
+      "added_by": "CP-OPS-ENERVIDA",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "confirm_inventory_adjustment/2",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-INV005-FIN011-CLOSURE-001 (PR R-05, NO fusionado): la migración 20261126170000_cpbra_r05_adjustment_confirmation_role_guard.sql re-emite la función con el primer incremento de la alternativa A de DECISION-R05 — sustituye is_admin_check OR has_store_access_as (cualquier membresía activa, hueco INV-005) por has_store_role_as(uid, store, {admin,manager,encargado}) fail-closed con ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED y añade auditoría transaccional ADJUSTMENT_CONFIRMED en audit_logs (misión §2.4). Firma/ACL/kardex INVARIABLES. Divergencia INTENCIONAL cuerpo-LIVE (sin guard) vs replay (con guard) HASTA la aprobación expresa del propietario, fusión del PR, aplicación gobernada §11g en producción y re-certificación del surface — entonces esta entrada se RETIRA (patrón register_supplier_payment/12). Validado en BD aislada CostproE2E con batería de autorización (14 casos).",
+      "added_by": "CP-BRA-INV005-FIN011-CLOSURE-001",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_supplier_payment_batch/7",
+      "reason": "CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (migración R-26, PR sin fusionar): 20261127120000 re-emite register_supplier_payment_batch con neteo de contra-filas (F011-002) — drift LIVE-vs-replay INTENCIONAL hasta fusión + aplicación productiva §11g + re-certificación del surface. Patrón confirm_inventory_adjustment/2 (R-05).",
+      "added_by": "CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001",
+      "expires": "2026-12-31"
+    }
+  ],
+  "_updated": "2026-11-26 — CP-BRA-INV005-FIN011-CLOSURE-001: entrada confirm_inventory_adjustment/2 añadida (drift intencional LIVE-vs-replay del guard R-05, PR sin fusionar pendiente de aprobación del propietario).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 añadida (drift intencional LIVE-vs-replay de la migración R-26, PR sin fusionar)."
 }
