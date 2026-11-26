@@ -49,7 +49,9 @@ interface Receivable {
   budget_currency: string;
   paid_amount: number;
   balance: number;
-  balance_cup: number;
+  /** null cuando la divisa del documento no tiene tasa canónica vigente (R-02). */
+  balance_cup: number | null;
+  exchange_rate_used: number | null;
   payment_status: string;
   status: string;
   order_date: string;
@@ -383,15 +385,21 @@ export default function AccountsReceivableView() {
 function GroupedReceivablesView({ data }: { data: Receivable[] }) {
   // Agrupar por customer_name
   const grouped = useMemo(() => {
-    const map = new Map<string, { customer_name: string; customer_phone: string | null; orders: Receivable[]; totalBalance: number; totalBudget: number; totalPaid: number }>();
+    const map = new Map<string, { customer_name: string; customer_phone: string | null; orders: Receivable[]; totalBalance: number; totalBudget: number; totalPaid: number; unrated: number }>();
     for (const r of data) {
       const key = r.customer_name || 'Sin cliente';
       if (!map.has(key)) {
-        map.set(key, { customer_name: key, customer_phone: r.customer_phone, orders: [], totalBalance: 0, totalBudget: 0, totalPaid: 0 });
+        map.set(key, { customer_name: key, customer_phone: r.customer_phone, orders: [], totalBalance: 0, totalBudget: 0, totalPaid: 0, unrated: 0 });
       }
       const g = map.get(key)!;
       g.orders.push(r);
-      g.totalBalance += r.balance_cup;
+      // R-02 (CP-BRA-REMEDIATION-001): solo los saldos CON tasa canónica entran
+      // al total CUP (FIN-009: monedas distintas nunca se suman entre sí).
+      if (r.balance_cup !== null) {
+        g.totalBalance += r.balance_cup;
+      } else {
+        g.unrated += 1;
+      }
       g.totalBudget += r.budget_total;
       g.totalPaid += r.paid_amount;
     }
@@ -410,7 +418,7 @@ function GroupedReceivablesView({ data }: { data: Receivable[] }) {
               </div>
             </div>
             <div className="text-right shrink-0">
-              <p className="text-[10px] text-muted-foreground uppercase">Saldo</p>
+              <p className="text-[10px] text-muted-foreground uppercase">Saldo{g.unrated > 0 ? ` (+${g.unrated} sin tasa)` : ''}</p>
               <p className="font-mono font-black text-sm text-destructive">{formatCurrency(g.totalBalance)}</p>
             </div>
           </summary>

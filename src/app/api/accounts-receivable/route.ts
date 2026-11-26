@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { z } from 'zod';
+import { resolveCanonicalRate, convertBalanceToCup, round2 } from '@/lib/accounts-receivable/rates';
 
 /**
  * GET /api/accounts-receivable
@@ -13,11 +14,18 @@ import { z } from 'zod';
  * Fuentes:
  *   - production_orders (order_type IN 'service', 'work') con status != voided
  *   - payment_transactions (ref_type IN 'production_order', 'work') para saldos
+ *     (saldo pagado mantenido por el trigger update_payment_status — R-01
+ *     remediado en 20261126140000)
+ *   - store_exchange_rates para la conversión canónica a CUP (R-02: NUNCA una
+ *     tasa fija; sin tasa vigente el saldo se expone en moneda del documento
+ *     y NO entra en los totales CUP — FIN-009 «monedas distintas nunca se suman»)
  *
  * Devuelve:
  *   - data: UnifiedReceivable[]
  *   - kpis: { totalOverdue, totalUpcoming, totalPending, totalPaid } en CUP
+ *     (solo saldos con tasa canónica disponible)
  *   - summary: totales por estado de pago
+ *   - unrated: { count, total_by_currency } — saldos sin tasa canónica (transparencia)
  */
 
 const uuidLooseRegex = z.string().regex(
@@ -43,7 +51,11 @@ interface UnifiedReceivable {
   budget_currency: string;
   paid_amount: number;
   balance: number;
-  balance_cup: number;
+  /** null cuando no hay tasa canónica vigente para la divisa del documento
+   *  (R-02: el saldo NO se convierte con constantes ad-hoc). */
+  balance_cup: number | null;
+  /** Tasa canónica usada para la conversión (null = sin tasa disponible). */
+  exchange_rate_used: number | null;
   payment_status: string;
   status: string;
   order_date: string;
@@ -105,9 +117,25 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // R-02 (CP-BRA-REMEDIATION-001): tasa canónica de la tienda — se resuelve
+    // UNA vez por request y NUNCA se convierte con constantes ad-hoc (la tasa
+    // fija 450 anterior producía importes distintos para la misma realidad
+    // contable — FIN-009/FIN-011). Sin tasa vigente: saldo en moneda original
+    // (fail-closed, sin fallback inventado).
+    const { data: rateRows } = await supabase
+      .from('store_exchange_rates')
+      .select('currency, rate')
+      .eq('store_id', store_id);
+    const storeRates = (rateRows ?? []).map((r: { currency: string; rate: number | string }) => ({
+      currency: r.currency,
+      rate: Number(r.rate),
+    }));
+
     // Calcular aging buckets y filtrar por tab
     const now = new Date();
     const receivables: UnifiedReceivable[] = [];
+    const unratedTotalByCurrency = new Map<string, number>();
+    let unratedCount = 0;
 
     for (const order of orders || []) {
       const budgetTotal = Number(order.budget_total || 0);
@@ -119,8 +147,14 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
       if (tab === 'paid' && !isPaid) continue;
       if (tab !== 'paid' && isPaid) continue;
 
-      // Convertir balance a CUP
-      const balanceCup = order.budget_currency === 'CUP' ? balance : balance * 450;
+      // R-02: conversión canónica server-side (tasa de la tienda; CUP → 1).
+      const rate = resolveCanonicalRate(storeRates, order.budget_currency);
+      const balanceCup = convertBalanceToCup(balance, order.budget_currency, rate);
+      if (balanceCup === null) {
+        unratedCount++;
+        const cur = (order.budget_currency || 'CUP').toUpperCase();
+        unratedTotalByCurrency.set(cur, round2((unratedTotalByCurrency.get(cur) ?? 0) + balance));
+      }
 
       // Calcular age_days desde order_date
       const orderDate = new Date(order.order_date || order.created_at);
@@ -153,6 +187,7 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
         paid_amount: paidAmount,
         balance,
         balance_cup: balanceCup,
+        exchange_rate_used: rate,
         payment_status: order.payment_status || 'unpaid',
         status: order.status,
         order_date: order.order_date || order.created_at,
@@ -162,28 +197,37 @@ async function getHandler(request: NextRequest, session: AuthenticatedSession) {
       });
     }
 
-    // KPIs
+    // KPIs — SOLO saldos con tasa canónica (FIN-009: monedas distintas nunca
+    // se suman entre sí; los saldos sin tasa se reportan aparte en `unrated`).
+    const rated = receivables.filter((r) => r.balance_cup !== null);
     const kpis = {
-      totalOverdue: receivables.filter(r => r.age_days > 30).reduce((s, r) => s + r.balance_cup, 0),
-      totalUpcoming: receivables.filter(r => r.age_days <= 30).reduce((s, r) => s + r.balance_cup, 0),
-      totalPending: receivables.reduce((s, r) => s + r.balance_cup, 0),
+      totalOverdue: rated.filter(r => r.age_days > 30).reduce((s, r) => s + (r.balance_cup ?? 0), 0),
+      totalUpcoming: rated.filter(r => r.age_days <= 30).reduce((s, r) => s + (r.balance_cup ?? 0), 0),
+      totalPending: rated.reduce((s, r) => s + (r.balance_cup ?? 0), 0),
       totalPaid: 0, // se calcularía separadamente si se necesita
     };
 
-    // Summary por aging bucket
+    // Summary por aging bucket (solo saldos con tasa canónica)
     const summary = {
-      '0-30d': receivables.filter(r => r.aging_bucket === '0-30d').reduce((s, r) => s + r.balance_cup, 0),
-      '31-60d': receivables.filter(r => r.aging_bucket === '31-60d').reduce((s, r) => s + r.balance_cup, 0),
-      '61-90d': receivables.filter(r => r.aging_bucket === '61-90d').reduce((s, r) => s + r.balance_cup, 0),
-      '91-120d': receivables.filter(r => r.aging_bucket === '91-120d').reduce((s, r) => s + r.balance_cup, 0),
-      '+120d': receivables.filter(r => r.aging_bucket === '+120d').reduce((s, r) => s + r.balance_cup, 0),
+      '0-30d': rated.filter(r => r.aging_bucket === '0-30d').reduce((s, r) => s + (r.balance_cup ?? 0), 0),
+      '31-60d': rated.filter(r => r.aging_bucket === '31-60d').reduce((s, r) => s + (r.balance_cup ?? 0), 0),
+      '61-90d': rated.filter(r => r.aging_bucket === '61-90d').reduce((s, r) => s + (r.balance_cup ?? 0), 0),
+      '91-120d': rated.filter(r => r.aging_bucket === '91-120d').reduce((s, r) => s + (r.balance_cup ?? 0), 0),
+      '+120d': rated.filter(r => r.aging_bucket === '+120d').reduce((s, r) => s + (r.balance_cup ?? 0), 0),
       count: receivables.length,
+    };
+
+    // Transparencia R-02: saldos SIN tasa canónica (nunca ocultos, nunca inventados)
+    const unrated = {
+      count: unratedCount,
+      total_by_currency: Object.fromEntries(unratedTotalByCurrency),
     };
 
     return NextResponse.json({
       data: receivables,
       kpis,
       summary,
+      unrated,
       count: receivables.length,
     });
   } catch (error: any) {
