@@ -213,6 +213,44 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       }, { status: 201 });
     }
 
+    // ─── R-25 / F011-001 (CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001):
+    // la vía single para production_order|work usaba el CLIENTE DE SESIÓN para
+    // invocar register_supplier_payment, cuya ACL es service_role EXCLUSIVA
+    // (REM-INV-6, 20260916000002) → permission denied para toda sesión real:
+    // los pagos a OT desde la app estaban ROTOS. Corrección (Alternativa del
+    // flujo batch, §3.3 de la misión): mismo patrón canónico que service|receipt
+    // (arriba) y que la reversión (POST /api/payments/[id]):
+    //   1) usuario autenticado server-side (withAuth) 2) identidad desde la
+    //   sesión verificada (session.user.id — NUNCA parámetro del cliente)
+    //   3) tienda real del contexto validado (profiles.active_store_id)
+    //   4) autorización canManageStore (gate de gestión, arriba)
+    //   5) la OT se valida contra la tienda (pre-check RLS abajo + el RPC
+    //      re-valida autoritativamente con FOR UPDATE)
+    //   6) cliente ADMINISTRATIVO creado exclusivamente server-side
+    //   7) RPC autorizado con actor real (p_paid_by) y 8) idempotencia intacta.
+    // El cliente service_role nunca llega al navegador.
+    const adminSingle = getSupabaseAdminSafe();
+    if (!adminSingle) {
+      return NextResponse.json({ error: 'CONFIG_ERROR' }, { status: 500 });
+    }
+
+    // R-25: pre-check de pertenencia de la OT a la tienda activa (RLS del
+    // cliente de sesión — sin fuga de información entre tiendas). El RPC
+    // re-valida autoritativamente ('El documento no pertenece a la tienda').
+    if (ref_type === 'production_order' || ref_type === 'work') {
+      const { data: orderRow, error: orderErr } = await supabase
+        .from('production_orders')
+        .select('id, store_id')
+        .eq('id', ref_id)
+        .single();
+      if (orderErr || !orderRow) {
+        return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
+      }
+      if (orderRow.store_id !== storeId) {
+        return NextResponse.json({ error: 'La orden no pertenece a esta tienda' }, { status: 403 });
+      }
+    }
+
     // Registrar cada pago dentro de la misma idempotency key (con sufijo por índice)
     // Esto permite que un pago mixto de 3 filas sea idempotente como bloque.
     // NOTA ADN-008: para ref_type='service' este loop fue sustituido por el RPC
@@ -225,7 +263,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
         ? `${idempotency_key}:${i}`
         : null;
 
-      const { data, error } = await supabase.rpc('register_supplier_payment', {
+      // R-25: llamada privilegiada vía cliente administrativo server-side
+      // (tras el gate canManageStore y el pre-check de tienda). El actor
+      // auditado (p_paid_by) es el usuario de la sesión real, no el técnico.
+      const { data, error } = await adminSingle.rpc('register_supplier_payment', {
         p_store_id: storeId,
         p_ref_type: ref_type,
         p_ref_id: ref_id,
@@ -258,6 +299,16 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
             { error: `Pago ${i + 1}: excede el saldo pendiente. Overpay no permitido.`, payment_index: i },
             { status: 400 }
           );
+        }
+        // R-25: mapeo de rechazos del motor con paridad con la vía batch.
+        if (error.message?.includes('ERR_ORDER_NOT_PAYABLE')) {
+          return NextResponse.json({ error: error.message, code: 'ERR_ORDER_NOT_PAYABLE' }, { status: 409 });
+        }
+        if (error.message?.includes('ERR_TASA_NO_DISPONIBLE')) {
+          return NextResponse.json({ error: error.message, code: 'ERR_TASA_NO_DISPONIBLE' }, { status: 422 });
+        }
+        if (error.message?.includes('ERR_COMBINACION_NO_SOPORTADA')) {
+          return NextResponse.json({ error: error.message, code: 'ERR_COMBINACION_NO_SOPORTADA' }, { status: 400 });
         }
         console.error('[payments] Error RPC:', error);
         return NextResponse.json(

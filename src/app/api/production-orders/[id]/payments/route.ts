@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { withSecurity } from '@/lib/with-security';
+import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
 import crypto from 'crypto';
 // MISIÓN POLÍTICA TEMPORAL (2026-10-18): tope HOY (Habana) para payment_date
@@ -44,6 +46,12 @@ const paymentSchema = z.object({
   // V2.12.32: payment_date opcional para soportar fechas históricas.
   // Si se omite, el RPC usa NOW(). Formato ISO 8601 (ej: "2026-07-20T12:00:00Z").
   payment_date: z.string().datetime().optional(),
+  // R-25 (paridad con POST /api/payments): idempotency_key opcional del
+  // cliente. Si el cliente lo envía, el MISMO reintento (misma clave) devuelve
+  // el pago existente en vez de duplicarlo (semántica del motor: la clave
+  // existe → RETURN id existente). Si se omite, la ruta genera una clave única
+  // por request (comportamiento previo — cada request es una operación nueva).
+  idempotency_key: z.string().optional(),
 });
 
 async function postHandler(request: NextRequest, session: AuthenticatedSession) {
@@ -61,7 +69,7 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
       );
     }
 
-    const { amount, payment_method, currency, exchange_rate, payment_type, reference, notes, payment_date } = validated.data;
+    const { amount, payment_method, currency, exchange_rate, payment_type, reference, notes, payment_date, idempotency_key: clientIdemKey } = validated.data;
 
     // MISIÓN POLÍTICA TEMPORAL (2026-10-18): la fecha financiera del pago es
     // un dato de cliente NO confiable. El backdating legítimo («fechas
@@ -107,6 +115,16 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
       return NextResponse.json({ error: 'La orden no pertenece a esta tienda' }, { status: 403 });
     }
 
+    // ─── R-25 / F011-001 (CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001):
+    // gate de GESTIÓN canónico (canManageStore) ANTES de cualquier privilegio.
+    // Esta ruta invoca register_supplier_payment (ACL service_role exclusiva,
+    // REM-INV-6) con privilegios administrativos server-side — la autorización
+    // ocurre AQUÍ, con el mismo patrón que /api/payments, /api/payments/multi y
+    // la reversión (deny por defecto: clerk/warehouse/usuario/costo → 403).
+    if (!canManageStore(session.user, userData.active_store_id)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     // No permitir pagos en órdenes cerradas o anuladas
     if (order.status === 'closed' || order.status === 'voided') {
       return NextResponse.json(
@@ -120,8 +138,10 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
     // (el cash report suma ambos como ingresos)
     const ref_type = order.order_type === 'work' ? 'work' : 'production_order';
 
-    // Generar idempotency key para evitar doble-click
-    const idempotencyKey = `${session_user.id}-${orderId}-${Date.now()}-${crypto.randomUUID()}`;
+    // Generar idempotency key si el cliente no envió una (R-25: si envió una,
+    // se usa TAL CUAL → el reintento del MISMO pago devuelve el ID existente
+    // en vez de duplicar; semántica del motor register_supplier_payment).
+    const idempotencyKey = clientIdemKey || `${session_user.id}-${orderId}-${Date.now()}-${crypto.randomUUID()}`;
 
     // Determinar el monto en CUP para validación de overpay
     const amountCup = currency === 'CUP' ? amount : amount * exchange_rate;
@@ -168,7 +188,20 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
       rpcParams.p_payment_date = payment_date;
     }
 
-    const { data: paymentId, error: payError } = await supabase.rpc('register_supplier_payment', rpcParams);
+    // ─── R-25 / F011-001: la llamada privilegiada pasa al CLIENTE
+    // ADMINISTRATIVO server-side (getSupabaseAdminSafe) — el cliente de sesión
+    // recibía permission denied de la ACL service_role del RPC, rompiendo TODO
+    // pago a OT desde la app. La autorización ya ocurrió (canManageStore arriba)
+    // y la OT ya está contrastada contra la tienda (pre-check arriba + re-valida
+    // el RPC con FOR UPDATE). El actor auditado (p_paid_by) sigue siendo el
+    // usuario de la sesión real — NUNCA el usuario técnico del cliente admin.
+    // El cliente service_role nunca llega al navegador.
+    const admin = getSupabaseAdminSafe();
+    if (!admin) {
+      return NextResponse.json({ error: 'CONFIG_ERROR' }, { status: 500 });
+    }
+
+    const { data: paymentId, error: payError } = await admin.rpc('register_supplier_payment', rpcParams);
 
     if (payError) {
       console.error('[production-orders/payments] RPC error:', payError);
@@ -176,6 +209,16 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
       // MISIÓN POLÍTICA TEMPORAL: rechazos del gate de fechas → 422 accionable.
       if (payMsg.includes('ERR_FUTURE_DATED_DOCUMENT') || payMsg.includes('ERR_BACKDATED_DOCUMENT')) {
         return NextResponse.json({ error: 'Fecha del pago no admisible', message: payMsg, code: payMsg.includes('ERR_FUTURE') ? 'ERR_FUTURE_DATED_DOCUMENT' : 'ERR_BACKDATED_DOCUMENT' }, { status: 422 });
+      }
+      // R-25: mapeo de rechazos del motor con paridad con la vía /api/payments.
+      if (payMsg.includes('ERR_ORDER_NOT_PAYABLE')) {
+        return NextResponse.json({ error: payMsg, code: 'ERR_ORDER_NOT_PAYABLE' }, { status: 409 });
+      }
+      if (payMsg.includes('ERR_TASA_NO_DISPONIBLE')) {
+        return NextResponse.json({ error: payMsg, code: 'ERR_TASA_NO_DISPONIBLE' }, { status: 422 });
+      }
+      if (payMsg.includes('excede el saldo')) {
+        return NextResponse.json({ error: payMsg, code: 'ERR_OVERPAY' }, { status: 400 });
       }
       return NextResponse.json(
         { error: 'Error al registrar pago: ' + payError.message },
