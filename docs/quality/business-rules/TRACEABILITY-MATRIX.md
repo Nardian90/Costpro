@@ -141,17 +141,16 @@
 ### TR-PRO-001 (PRO-001/R-15) · No duplicar proveedores
 | Elemento | Contenido |
 |---|---|
-| Implementación | HOY: sin UNIQUE ni dedup local; maestro con tax_id único parcial; consolidación manual |
-| P− | ✗ en alta local |
-| Estado certificación | **RECHAZADA (defecto abierto con incidente real)** |
+| Implementación | RPC `create_supplier_local` (20261126160000, CP-BRA-REMEDIATION #1720): reuso exacto; sospechosos por nombre normalizado/NIT/teléfono → `ERR_SUPPLIER_DUPLICATE_SUSPECTED` salvo confirmación explícita + motivo → auditoría `SUPPLIER_DUPLICATE_CONFIRMED`; hook migrado al RPC. UNIQUE NO añadido (decisión §8.4 del propietario) |
+| P− | ✅ `ERR_SUPPLIER_DUPLICATE_SUSPECTED` sin confirmación (8 tests contrato + 6/6 funcional aislada) |
+| Estado certificación | **VERIFICADA** (vía RPC; duplicado deliberado jamás silencioso) — alineada con la vista consolidada 2026-11-26 |
 
 ### TR-FIN-009 (FIN-009) · Monedas no sumables entre sí
 | Elemento | Contenido |
 |---|---|
-| Implementación | cash-report por moneda; regla anti-duplicación #1479; amount_cup por fila |
-| P+ | cash-report-selection «regla crítica»; clasificacion-monetaria «regla P1»; IPV §2-3 |
-| Brecha | vistas con tasa fija (R-02) |
-| Estado certificación | **CERTIFICADA en reportes de caja** · EXCLUIR CxC |
+| Implementación | cash-report por moneda; regla anti-duplicación #1479; amount_cup por fila; CxC: helper canónico `src/lib/accounts-receivable/rates.ts` (tasa de tienda, CUP→1, sin tasa → null + bloque `unrated`) — R-02 remediado (#1718, 2026-11-26) |
+| P+ | cash-report-selection «regla crítica»; clasificacion-monetaria «regla P1»; IPV §2-3; 9 pruebas de rates (regresión ×450 eliminado) |
+| Estado certificación | **CERTIFICADA** (reportes de caja + CxC; la exclusión de CxC quedó sin efecto al remediarse R-02) |
 
 ## B. VISTA CONSOLIDADA
 
