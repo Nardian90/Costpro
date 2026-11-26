@@ -19,11 +19,13 @@ Versión examinada:  main 33ec0975c (merge #1720); producción: artefactos DDL v
 Reglas identificadas: 72 (BUSINESS-RULES-CATALOG.md, 12 familias FIN/INV/PUR/POS/DOC/PRO/
                     CAT/TEN/SEC/HR/REP/SYS) · 32 invariantes (DOMAIN-INVARIANTS.md) ·
                     13+ máquinas de estados (STATE-MACHINES.md §1-15).
-Reglas críticas auditadas en profundidad: 16 → certificadas 12 · condicionales 3 ·
-                    rechazada-pendiente-de-decisión 1 (INV-005/R-05).
-Defectos abiertos:   R-05 (CRÍTICO → política pendiente de decisión del propietario,
-                    propuesta en DECISION-R05.md) · altos/medios no bloqueantes: R-03, R-06,
-                    R-07, R-08, R-09, R-12, R-13, R-16, R-17, R-18, R-19, R-25, R-14b, R-10.
+Reglas críticas auditadas en profundidad: 16 → **certificadas 15 · condicionales 1**
+                    (actualización 2026-11-27, ver §6: FIN-011 elevada a CERTIFICADA;
+                    INV-005/R-05 certificada tras aprobación y despliegue §11g;
+                    FIN-002 consolidada con R-25/R-26). Condicionales restantes: SEC-003 (P−).
+Defectos críticos abiertos: **NINGUNO** (R-05 RESUELTO 2026-11-27; R-25/R-26 RESUELTOS
+                    2026-11-27). Altos/medios no bloqueantes: R-03, R-06, R-07, R-08, R-09,
+                    R-12, R-13, R-16, R-17, R-18, R-19, R-14b, R-10.
 Pruebas ejecutadas:  CI 9/9 × 4 heads (TypeCheck+Lint+Unit+Build, TS Security, SQL DB
                     Security, SQL Static, Security Audit, Allowlist, E2E Aislado (project),
                     Unit & Integration, Vercel) · local: 724 tests en 59 archivos de
@@ -32,10 +34,10 @@ Pruebas ejecutadas:  CI 9/9 × 4 heads (TypeCheck+Lint+Unit+Build, TS Security, 
 Exclusiones:         módulos no auditados en profundidad en esta misión (HR completo,
                     Nómina, Reportes avanzados, ADNegocio no-financiero); rendimiento;
                     carga; UI no crítica. La certificación global queda CONDICIONADA.
-Limitaciones:        la suite E2E aislada de CI es la de humo del workflow oficial
-                    (pos-checkout, inventory-integrity, health, isolation, auth); no existe
-                    E2E dedicado de reversiones×monedas×conciliación — FIN-011 conserva su
-                    estado por esa evidencia faltante (misión §9.1).
+Limitaciones:        ~~la suite E2E aislada de CI es la de humo...~~ RESUELTO 2026-11-27:
+                    existe E2E dedicado del ciclo (fin011 16/16) integrado al smoke set y
+                    los defectos del alcance (R-25/R-26) fueron remediados y desplegados
+                    (ver §6 — elevación de certificación de esta misión).
 ```
 
 ## 2. Matriz profunda de reglas críticas (los 14 ítems exigidos por la misión §9)
@@ -49,12 +51,12 @@ Leyenda de columnas abreviadas: **Punto de imposición server-side** (SS), **Ais
 | 3 | **FIN-004** · Reversión solo con contra-fila única (idempotencia) | dirección='reversal' única por `reverses_payment_id`; re-intento → idempotent | `reverse_supplier_payment` 5-args + índice único + advisory lock | ✅ `has_store_access_as` | ✅ | ✅/✅ | ✅ 1 reversa histórica correcta (Pixelarte) | PAYMENT_REVERSED + metadata completa | bajo | 2ª llamada → idempotent sin doble contra-fila | **CERTIFICADA** |
 | 4 | **FIN-008** · Los cierres históricos no se reabren | pago en período closed/locked → reversión BLOQUEADA; excepción: admin+motivo+flag, con evento | guard R-14 en `reverse_supplier_payment` | ✅ (período por tienda) | ✅ | ✅/✅ (contrato) | ✅ 0 cierres hoy, guard activo | PAYMENT_REVERSED_CLOSED_PERIOD | bajo (0 cierres aún) | excepción sin auditoría = imposible | **CERTIFICADA** |
 | 5 | **FIN-009** · Monedas distintas nunca se suman | saldos convertidos solo con tasa canónica; sin tasa → null + bloque `unrated` | `rates.ts` (helper puro) + ruta CxC server-side | ✅ tasa por tienda | ✅ | ✅/✅ (9 tests, regresión ×450) | ✅ 0 OTs no-CUP activas hoy | n/a (cálculo) | medio: tasas desactualizadas en tienda | ninguna constante; sin tasa → visible, no sumada | **CERTIFICADA** (caja+CxC; R-02 remediado) |
-| 6 | **FIN-011** · CxC coherente entre pagos y columnas desnormalizadas | paid_amount = Σ neta de pagos por el trigger SIEMPRE | trigger R-01 (rama OT restaurada) + rate server-side | ✅ | ✅ | ✅/✅ | ✅ 18/18 OTs, diffs 0.00 | CREATE_SALE/audit motor | **evidencia E2E dedicada de reversiones×monedas×conciliación falta** | E2E dedicado + conciliación cero diferencias | **VERIFICADA** (no elevada: ver §3) |
+| 6 | **FIN-011** · CxC coherente entre pagos y columnas desnormalizadas | paid_amount = Σ neta de pagos por el trigger SIEMPRE | trigger R-01 (rama OT restaurada) + rate server-side + R-25/R-26 remediados (2026-11-27) | ✅ | ✅ | ✅/✅ | ✅ E2E dedicado 16/16 + baterías R-25 16/16 y R-26 11/11 | CREATE_SALE/audit motor | ~~evidencia E2E dedicada falta~~ COMPLETA (16/16, net-zero, smoke CI verde) | E2E dedicado + conciliación cero diferencias | **CERTIFICADA** (elevación 2026-11-27: camino §3 ejecutado) |
 | 7 | **FIN-012** · Anulación de servicio con pagos → reversión completa obligatoria | servicio con pagos vivos NO se anula (`ERR_SERVICE_HAS_UNRESOLVED_PAYMENTS`) | guard 20261126120000 en las 4 vías | ✅ | ✅ | ✅/✅ | ✅ 0 anulados con pagos vivos (forense) | audit de reversas | bajo | primera resolver pagos por el procedimiento oficial | **CERTIFICADA** |
 | 8 | **POS-001** · Venta atómica con lock de tienda y seller binding | create_sale_v2 única vía; sin partial; idempotencia por hash | RPC /35 con idempotency_registry | ✅ store lock | ✅ | ✅/✅ (692 tests) | ✅ CI E2E pos-checkout PASS | CREATE_SALE_V2 con param_hash | bajo | retry = mismo id, nunca doble venta | **CERTIFICADA** |
 | 9 | **POS-006** · Incidencias: la puerta exige verificación server-side | incidencia tipada + aritmética coherente + EXPLICA el descuadre real; sin incidencia → PT011 estricto | `ERR_INCIDENT_*` en create_sale_v2 (§11.6+§18) | ✅ | ✅ | ✅/✅ (contrato + E2E POS-015b) | ✅ 3 ventas históricas compatibles y trazadas | SALE_PAYMENT_INCIDENT | medio: sin tope por incidencia ni supervisor (decisión del propietario, INFORME §5.2) | array arbitrario NO desactiva PT011 | **VERIFICADA** (control estructural; política de tope pendiente) |
 | 10 | **INV-003** · Costo de venta server-side (WAC) | costo desde WAC sin fallback cliente; kardex valorado | `create_sale_v2` + `update_product_wac` | ✅ | ✅ | ✅/✅ | ✅ (CI inventory-integrity) | kardex automático | medio: costos unitarios «$1» en recepciones históricas (calidad de datos) | venta con costo cliente = rechazada | **CERTIFICADA** |
-| 11 | **INV-005 (R-05)** · Confirmación de ajustes exige segundo control | pending→confirmed por miembro activo de la tienda (sin rol/umbral/motivo/audit — GAP) | ❌ solo `has_store_access_as` (cualquier membresía) | ✅ tienda | ✅ | UI sin gate en Confirmar (asimétrico con Anular) | ✅ 1 caso histórico (encargado) | ❌ sin audit_logs en el RPC | **alto** (ver DECISION-R05.md) | RPC+UI con rol, motivo, auditoría y (opcional) umbral | **RECHAZADA → propuesta formal presentada; decisión del propietario** |
+| 11 | **INV-005 (R-05)** · Confirmación de ajustes exige rol de gestión | pending→confirmed exigía solo membresía activa (GAP cerrado) | ✅ `has_store_role_as({admin,manager,encargado})` fail-closed (mig 20261126170000) | ✅ tienda | ✅ | ✅ UI alineada en 3 vistas (simétrico con Anular) | ✅ caso histórico (encargado) compatible | ✅ auditoría `ADJUSTMENT_CONFIRMED` transaccional | ~~alto~~ resuelto | Aprobación del propietario + fusión + aplicación §11g | **CERTIFICADA** (2026-11-27: alternativa A aprobada §0.1; PR #1723 fusionado; producción verificada — expediente CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001/R05-APPROVAL-AND-DEPLOY.md) |
 | 12 | **PUR-001** · Ciclo compra→recepción→inventario→obligación→pago | draft→confirmed; anulación solo sin pagos vivos | guards 20261126120000 + motor | ✅ | ✅ | ✅/△ (negativa de rol pendiente R-06) | ✅ 0 anuladas con pagos vivos | audit de reversas | medio (R-06 gate de rol sin decisión) | flujo dos pasos verificable | **CONDICIONAL** (R-06) |
 | 13 | **PRO-001** · Alta de proveedor sin duplicados silenciosos | reuso exacto; sospechoso → fail-closed con candidatos; confirmación deliberada auditada | RPC `create_supplier_local` (R-15) | ✅ por tienda | ✅ | ✅/✅ (8+7 tests + 6/6 funcional aislada) | ✅ 0 duplicados (forense) | SUPPLIER_DUPLICATE_CONFIRMED | bajo (UNIQUE opcional queda documentado) | duplicado jamás silencioso | **VERIFICADA** (vía RPC; decisión §8.4 respetada) |
 | 14 | **CAT-001** · Maestro = identidad; precio/costo/stock por tienda | sin precios en maestro; variantes referenciadas por SKU | esquema + RPC de alta (R-18/R-19 abiertos) | ✅ | ✅ | ✅/△ | ✅ | parcial (R-18: upsert cliente sin auditoría) | medio (R-18/R-19) | sin escritura cliente de identidad | **CERTIFICADA** con RR R-18/R-19 |
@@ -91,3 +93,31 @@ Leyenda de columnas abreviadas: **Punto de imposición server-side** (SS), **Ais
 1. `RISK-REGISTER.md` — fila R-04 actualizada a RESUELTO (guards `ERR_RECEIPT/SERVICE_HAS_UNRESOLVED_PAYMENTS` verificados en producción + forense 0 anulados con pagos vivos; cerrada por #1716).
 2. `TRACEABILITY-MATRIX.md` — tarjeta TR-PRO-001 alineada con la vista consolidada (VERIFICADA vía RPC) y tarjeta TR-FIN-009 actualizada (R-02 remediado; CxC ya no se excluye).
 3. `RISK-REGISTER.md` — nota R-05 remite a `DECISION-R05.md` de esta misión.
+
+---
+
+## 6. ELEVACIÓN DE CERTIFICACIÓN — 2026-11-27 (misión CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001)
+
+Camino de elevación definido en CP-BRA-INV005-FIN011-CLOSURE-001/CERTIFICATION-UPDATE.md §1 y **ejecutado íntegramente**:
+
+| Condición definida | Evidencia de cumplimiento |
+|---|---|
+| 1. Decisión del propietario sobre R-05 + implementación | **APRUEBO alternativa A** (misión §0.1) · PR #1723 revisado conforme, fusionado `819c0adca` · migración 20261126170000 aplicada en producción §11g (11/11 marcas, body_hash 26657592 idéntico en E2E/prod) · verificación productiva read-only (caso histórico encargado compatible, 0 pendientes) · surface re-certificado, entrada allowlist retirada |
+| 2. Remediar F011-001/F011-002 (R-25/R-26) con pruebas positivas/negativas y actualizar pins | PR #1728 fusionado `8c3dbf815` (R-25: cliente administrativo tras gate canManageStore en las 3 rutas; batería API real 16/16) · PR #1729 fusionado `c9350fb421` (R-26: migración 20261127120000 — único SUM del pre-check con el CASE del motor single; batería §4.4 A–H 11/11) · **pines N6/N7 convertidos a regresiones positivas conservando los negativos** · suite FIN-011 16/16 PASS · R-26 aplicada en producción §11g (6/6 marcas, body_hash 9ab5db94 idéntico en E2E/prod, histórico intacto) |
+| 3. Re-ejecución verde del smoke set | CI de #1728 (7/7 success) y #1729 (9/9 success) — incl. `E2E Aislado (project)` con la suite fin011 en el smoke set |
+
+**Estados resultantes:**
+- **FIN-011: VERIFICADA → CERTIFICADA** (la política §2 exigía «no hay defectos críticos abiertos en el alcance» — R-25/R-26 resueltos con evidencia de producción).
+- **INV-005 (R-05): RECHAZADA-pendiente → CERTIFICADA** (aprobación expresa + despliegue gobernado + verificación productiva).
+- **FIN-002: CERTIFICADA consolidada** (una sola fórmula de saldo pendiente: motor single = batch = trigger; canales de invocación alineados con el patrón canónico).
+- **RISK-REGISTER: 0 defectos CRÍTICOS abiertos.**
+
+**Sello global:** ~~CERTIFICACIÓN GLOBAL CONDICIONADA~~ → **`COSTPRO — BUSINESS RULES COMPLIANCE: CERTIFIED`** (alcance: las 16 reglas críticas de CP-BRA-001 + los 32 invariantes del alcance auditado; exclusiones documentadas en el encabezado).
+
+**Excepciones que NO bloquean el sello (decisiones reservadas del propietario, no defectos):**
+- SEC-003 CONDICIONAL (cobertura P− de wrappers — alcance de auditoría).
+- PUR-001/R-06 (gate de rol en anulación de compras), R-11 (tope por incidencia POS), R-15 (UNIQUE de proveedores): políticas opcionales pendientes de decisión del propietario.
+- Identidad del proveedor de las 3 recepciones «—» ($19.435): requiere documentación externa.
+- R-03 (loop OT multi-fila no atómico): mitigado (trigger + fin garantizan la verdad contable; asiento ORDEN_TRABAJO verificado por AUD1); la atomicidad multi-fila para OT es decisión del propietario.
+
+**Evidencia de regresión general (2026-11-27):** Vitest 5.335 tests PASS / 0 FAIL (5 chunks) · ESLint 0 errores · ci-gate PASS · check-writers OK · security-contract 0 divergencias · replay MATCH (220) · guardrail net-zero ×3 · PM2 online + /api/health 200 con el .env principal restaurado.

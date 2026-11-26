@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-25T19:49:18.523Z
+-- Captured  : 2026-11-26T20:57:54.858Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 233 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -2931,6 +2931,7 @@ DECLARE
   v_count INTEGER := 0;
   v_pi_number TEXT;
   v_reason TEXT;
+  v_items_ctx JSONB;
 BEGIN
   SELECT * INTO v_adj FROM public.inventory_adjustments WHERE id = p_adjustment_id FOR UPDATE;
   IF v_adj IS NULL THEN RAISE EXCEPTION 'ERR_ADJUSTMENT_NOT_FOUND'; END IF;
@@ -2938,15 +2939,26 @@ BEGIN
     RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden confirmar ajustes pendientes (estado actual: %)', v_adj.status;
   END IF;
 
-  -- Autorización por tienda (fail-closed: sin usuario autenticado no se confirma)
+  -- Fail-closed: sin usuario autenticado no se confirma (verbatim R-PI)
   IF v_caller_uid IS NULL THEN RAISE EXCEPTION 'ERR_UNAUTHENTICATED'; END IF;
-  IF NOT (public.is_admin_check(v_caller_uid)
-            OR public.has_store_access_as(v_caller_uid, v_adj.store_id)) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+
+  -- [R-05 20261126] INV-005 — barrera definitiva en el servidor (SECURITY
+  -- DEFINER): la confirmación exige ROL DE GESTIÓN en la tienda del ajuste.
+  -- Antes: is_admin_check OR has_store_access_as (cualquier membresía activa,
+  -- incl. clerk). Ahora: perfiles admin/superadmin de plataforma, o membresía
+  -- ACTIVA con rol admin|manager|encargado EN ESA TIENDA — un solo check vía
+  -- la función existente has_store_role_as (espejo canManageStore).
+  -- Usuario de otra tienda / clerk / sin membresía → mismo error (fail-closed,
+  -- sin filtrar el motivo exacto).
+  IF NOT public.has_store_role_as(v_caller_uid, v_adj.store_id,
+                                  ARRAY['admin','manager','encargado']::text[]) THEN
+    RAISE EXCEPTION 'ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED: la confirmación de ajustes de inventario exige rol de gestión en la tienda (admin, manager o encargado)';
   END IF;
 
   -- Trazabilidad: si el ajuste proviene de un inventario físico, el kardex
   -- lo referencia explícitamente (campo persistido, no texto manual).
+  -- [R-05 20261126] lógica VERBATIM — el cálculo de diferencias y el kardex
+  -- NO se modifican en esta misión.
   SELECT pi.pi_number INTO v_pi_number
   FROM public.physical_inventories pi
   WHERE pi.id = v_adj.source_physical_inventory_id;
@@ -2954,7 +2966,7 @@ BEGIN
                    THEN 'Ajuste por inventario físico ' || v_pi_number
                    ELSE 'Ajuste documental confirmado' END;
 
-  -- Aplicar cada item: actualizar stock + kardex
+  -- Aplicar cada item: actualizar stock + kardex (loop VERBATIM R-PI)
   FOR v_item IN
     SELECT product_id, expected_quantity, counted_quantity
     FROM public.inventory_adjustment_items
@@ -2977,18 +2989,53 @@ BEGIN
       p_unit_cost := 0,
       p_reason := v_reason,
       p_operation_date := NOW(),
-      p_skip_access_check := TRUE  -- ya validamos con has_store_access_as
+      p_skip_access_check := TRUE  -- ya validamos acceso+rol vía has_store_role_as
     );
 
     v_count := v_count + 1;
   END LOOP;
 
-  -- Marcar como confirmed
+  -- Marcar como confirmed (VERBATIM R-PI)
   UPDATE public.inventory_adjustments
     SET status = 'confirmed',
         confirmed_at = NOW(),
         confirmed_by = v_caller_uid
     WHERE id = p_adjustment_id;
+
+  -- [R-05 20261126] Auditoría transaccional (misión §2.4) — reconstruible:
+  -- tienda, actor autenticado, ajuste, fecha (created_at), operación
+  -- (ADJUSTMENT_CONFIRMED), resultado y contexto de investigación (items con
+  -- desviación por ítem, origen PI, motivo del kardex). Misma transacción:
+  -- un fallo del INSERT revierte TODA la confirmación (sin confirmación
+  -- silenciosa sin trazabilidad).
+  SELECT COALESCE(jsonb_agg(
+           jsonb_build_object(
+             'product_id', product_id,
+             'expected_quantity', expected_quantity,
+             'counted_quantity', counted_quantity,
+             'deviation', counted_quantity - expected_quantity
+           ) ORDER BY product_id
+         ), '[]'::jsonb)
+    INTO v_items_ctx
+    FROM public.inventory_adjustment_items
+    WHERE adjustment_id = p_adjustment_id;
+
+  INSERT INTO public.audit_logs (user_id, action, table_name, record_id, old_data, new_data, store_id)
+  VALUES (
+    v_caller_uid,
+    'ADJUSTMENT_CONFIRMED',
+    'inventory_adjustments',
+    p_adjustment_id,
+    jsonb_build_object('status', v_adj.status),
+    jsonb_build_object(
+      'status', 'confirmed',
+      'items_applied', v_count,
+      'items', v_items_ctx,
+      'source_physical_inventory_id', v_adj.source_physical_inventory_id,
+      'kardex_reason', v_reason
+    ),
+    v_adj.store_id
+  );
 
   RETURN jsonb_build_object(
     'status', 'success',

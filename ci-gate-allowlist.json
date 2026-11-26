@@ -1008,22 +1008,7 @@
       "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120100_cp_ops_enervida_service_void_idempotency.sql re-emite la función con la corrección de la misión (el void genera contra-filas direction=reversal enlazadas (reverses_payment_id) en vez de solo anotar notas). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
       "added_by": "CP-OPS-ENERVIDA",
       "expires": "2026-12-31"
-    },
-    {
-      "function": "confirm_inventory_adjustment/2",
-      "rules": [
-        "BODY_DRIFT_FROM_MIGRATION"
-      ],
-      "reason": "CP-BRA-INV005-FIN011-CLOSURE-001 (PR R-05, NO fusionado): la migración 20261126170000_cpbra_r05_adjustment_confirmation_role_guard.sql re-emite la función con el primer incremento de la alternativa A de DECISION-R05 — sustituye is_admin_check OR has_store_access_as (cualquier membresía activa, hueco INV-005) por has_store_role_as(uid, store, {admin,manager,encargado}) fail-closed con ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED y añade auditoría transaccional ADJUSTMENT_CONFIRMED en audit_logs (misión §2.4). Firma/ACL/kardex INVARIABLES. Divergencia INTENCIONAL cuerpo-LIVE (sin guard) vs replay (con guard) HASTA la aprobación expresa del propietario, fusión del PR, aplicación gobernada §11g en producción y re-certificación del surface — entonces esta entrada se RETIRA (patrón register_supplier_payment/12). Validado en BD aislada CostproE2E con batería de autorización (14 casos).",
-      "added_by": "CP-BRA-INV005-FIN011-CLOSURE-001",
-      "expires": "2026-12-31"
-    },
-    {
-      "function": "register_supplier_payment_batch/7",
-      "reason": "CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (migración R-26, PR sin fusionar): 20261127120000 re-emite register_supplier_payment_batch con neteo de contra-filas (F011-002) — drift LIVE-vs-replay INTENCIONAL hasta fusión + aplicación productiva §11g + re-certificación del surface. Patrón confirm_inventory_adjustment/2 (R-05).",
-      "added_by": "CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001",
-      "expires": "2026-12-31"
     }
   ],
-  "_updated": "2026-11-26 — CP-BRA-INV005-FIN011-CLOSURE-001: entrada confirm_inventory_adjustment/2 añadida (drift intencional LIVE-vs-replay del guard R-05, PR sin fusionar pendiente de aprobación del propietario).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 añadida (drift intencional LIVE-vs-replay de la migración R-26, PR sin fusionar)."
+  "_updated": "2026-11-26 — CP-BRA-INV005-FIN011-CLOSURE-001: entrada confirm_inventory_adjustment/2 añadida (drift intencional LIVE-vs-replay del guard R-05, PR sin fusionar pendiente de aprobación del propietario).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 añadida (drift intencional LIVE-vs-replay de la migración R-26, PR sin fusionar).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 RETIRADA (PR #1729 fusionado c9350fb421; migración 20261127120000 aplicada a producción §11g — body_hash 9ab5db94537d7152e9b38ffebd191558 idéntico en E2E y producción; surface re-certificado; drift resuelto).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (cierre): entrada confirm_inventory_adjustment/2 también RETIRADA en main (PR #1725 contiene el mismo retiro; surface re-certificado con el cuerpo R-05 en producción)."
 }
