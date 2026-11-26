@@ -170,14 +170,23 @@ describe('migración 20261126170000 — alineación contractual del repo', () =>
   const ALLOWLIST = resolve(process.cwd(), 'ci-gate-allowlist.json');
   const allowlist = JSON.parse(readFileSync(ALLOWLIST, 'utf8'));
 
-  it('drift LIVE-vs-replay declarado en source_of_truth_baseline con expiración', () => {
+  it('ciclo de vida del drift LIVE-vs-replay: declarado con expiración (pre-deploy); retirado documentado (post-deploy §11g)', () => {
     const entry = allowlist.source_of_truth_baseline.find(
       (e: { function: string }) => e.function === 'confirm_inventory_adjustment/2',
     );
-    expect(entry).toBeDefined();
-    expect(entry.rules).toContain('BODY_DRIFT_FROM_MIGRATION');
-    expect(entry.reason).toContain('INTENCIONAL');
-    expect(entry.added_by).toBe('CP-BRA-INV005-FIN011-CLOSURE-001');
-    expect(entry.expires).toBeTruthy();
+    if (entry) {
+      // Fase 1 (PR abierto, pre-despliegue): el drift está declarado con expiración
+      expect(entry.rules).toContain('BODY_DRIFT_FROM_MIGRATION');
+      expect(entry.reason).toContain('INTENCIONAL');
+      expect(entry.added_by).toBe('CP-BRA-INV005-FIN011-CLOSURE-001');
+      expect(entry.expires).toBeTruthy();
+    } else {
+      // Fase 2 (después de la aplicación productiva §11g — PR #1725): la
+      // entrada fue RETIRADA y el retiro queda documentado en el registro de
+      // la allowlist con el body_hash del despliegue
+      const log = JSON.stringify(allowlist._updated ?? '');
+      expect(log).toContain('confirm_inventory_adjustment/2');
+      expect(log).toContain('RETIRADA');
+    }
   });
 });
