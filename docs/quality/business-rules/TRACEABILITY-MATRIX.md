@@ -80,6 +80,17 @@
 | Evidencia | scripts/e2e/cpbra-r03-ot-batch-battery-e2e.mjs (re-ejecutable) + cpbra-r03-apply-e2e.mjs (PRE/POST 5/5) — expediente CP-BRA-FINAL-COMPLIANCE-CLOSURE-001/R03-PARTIAL-PAYMENTS.md |
 | Estado certificación | **CERTIFICADA (2026-11-27)** — riesgo residual bajo: sin reversión de pagos OT (decisión vigente FIN-003); canal UI multi-OT pendiente de producto (el canal API está disponible) |
 
+### TR-FIN-014 (FIN-014/§0.2) · Pago de comisiones: barrera autoritativa por roles de tienda
+| Elemento | Contenido |
+|---|---|
+| Regla | DECISIÓN DEL PROPIETARIO (§0.2): autorizados admin, manager y ENCARGADO dentro de su tienda; clerk/usuario/sin membresía/otra tienda NO. Verificación server-side + barrera autoritativa de BD. Compat de admin de plataforma sin privilegios implícitos |
+| Implementación | RPC `pay_commission` (20261127150000): gate único `has_store_role_as(v_uid, tienda, ARRAY['admin','manager','encargado'])` (patrón R-05) + protocolo del cajón intacto (advisory por tienda, guard físico de moneda para efectivo, idempotencia natural paid→replay, gate de estado, fechas). Ruta `/api/commissions/payments/[id]`: action='pay' → canManageStore (membresía); approve/cancel sin cambios. bulk-pay: fallback legacy a UPDATE directo eliminado (FIN-014 bypass cerrado) |
+| P+ | Batería E2E 15/15 vía API real en CostproE2E (admin/manager/ENCARGADO pagan con actor real; replay idempotente; concurrencia advisory; auditoría paid_by) |
+| P− | clerk 403 · usuario 403 · otra tienda 404/ERR_FORBIDDEN_ROLE · sin sesión 401 · comisión inexistente 404 · ya pagada → replay sin doble pago · spoofing de actor (p_user_id con sesión clerk) → ERR_FORBIDDEN_ROLE · caja vacía + efectivo → 422 ERR_INSUFFICIENT_CURRENCY |
+| P=R | replay 222 (posición 222) · contrato estático migración 11 casos · PC-VERIFY fail-closed (gate tres roles + cajón + actor + ACL) en migración y aplicación |
+| Evidencia | scripts/e2e/cpbra-pay-commission-battery-e2e.mjs (re-ejecutable) + cpbra-pc-apply-e2e.mjs (PRE/POST 7/7) — expediente CP-BRA-FINAL-COMPLIANCE-CLOSURE-001/PAY-COMMISSION-AUTHORIZATION.md |
+| Estado certificación | **CERTIFICADA (2026-11-27)** |
+
 ### TR-INV-003 (INV-003) · Costo de venta server-side (WAC)
 | Elemento | Contenido |
 |---|---|
@@ -174,6 +185,7 @@
 | TR-FIN-002 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (CxP) |
 | TR-FIN-011 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (R-25/R-26 remediados 2026-11-27) |
 | TR-FIN-013 | FIN | ALTA | ✓ | ✓ | ✓ | CERTIFICADA (R-03 con decisión §0.1 del propietario — lote atómico por orden + operación parcial) |
+| TR-FIN-014 | FIN | ALTA | ✓ | ✓ | ✓ | CERTIFICADA (§0.2 pay_commission — gate admin/manager/encargado; fallback legacy eliminado) |
 | TR-INV-003 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-INV-007 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (R-05 aplicada §11g 2026-11-27) |
 | TR-TEN-001 | TEN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |

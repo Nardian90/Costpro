@@ -590,9 +590,11 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // UI desde 20261124120100). Al FINAL del orden lexicográfico — posición 221
     // CP-BRA-FINAL-COMPLIANCE-CLOSURE-001 (2026-11-27): +1 — 20261127140000
     //   lote atómico por orden para pagos de OT (R-03) — posición 222
-    expect(m.total_incluidos).toBe(222);
+    // §0.2 pay_commission (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): +1 — gate
+    //   admin/manager/encargado en 20261127150000. Posiciones previas intactas = 223
+    expect(m.total_incluidos).toBe(223);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(222);
+    expect(incluidos.length).toBe(223);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -703,6 +705,8 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // R-03 (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): lote atómico por orden OT —
     // posición 222 (última del tramo)
     expect(pos('20261127140000_cpbra_r03_ot_payment_batch.sql')).toBe(222);
+    // §0.2 pay_commission: posición 223 del stream
+    expect(pos('20261127150000_cpbra_pay_commission_encargado.sql')).toBe(223);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

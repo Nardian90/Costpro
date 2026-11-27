@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
-import { isAdminLevel } from '@/lib/roles';
+import { isAdminLevel, canManageStore } from '@/lib/roles';
 import { z } from 'zod';
 import {
   businessDayOf,
@@ -96,11 +96,6 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 // ── PATCH: Aprobar / Pagar / Cancelar ──
 async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   try {
-    // FIX-C3 (2026-07-14): validar rol admin/manager (defense in depth)
-    if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
-      return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
-    }
-
     const commissionId = extractIdFromUrl(req);
     if (!commissionId) {
       return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
@@ -131,6 +126,27 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     const storeId = userData.active_store_id;
+
+    // ── Autorización (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001 §0.2/§5.3): la
+    // capacidad de PAGAR comisiones es POR TIENDA (membresía activa
+    // admin/manager/encargado) o admin de plataforma (compat) — canon
+    // canManageStore. El gate por rol GLOBAL previo (FIX-C3) rechazaba al
+    // encargado de tienda ANTES de llegar a la barrera autoritativa (el RPC
+    // pay_commission con has_store_role_as ARRAY['admin','manager','encargado'],
+    // migración 20261127150000) — nunca llegaba. La barrera final sigue siendo
+    // la BD: el RPC re-verifica rol, tienda, estado y cajón por sí mismo.
+    if (action === 'pay') {
+      if (!canManageStore(session.user, storeId)) {
+        return NextResponse.json({ error: 'Forbidden — pagar comisiones requiere rol de gestión en la tienda (admin, manager o encargado)' }, { status: 403 });
+      }
+    } else {
+      // approve/cancel: política vigente SIN decisión del propietario — sin
+      // cambios (FIX-C3 2026-07-14: rol global admin/manager; el UPDATE directo
+      // queda además regido por el RLS de commission_payments).
+      if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
+        return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
+      }
+    }
 
     const { data: commission, error: fetchError } = await supabase
       .from('commission_payments')

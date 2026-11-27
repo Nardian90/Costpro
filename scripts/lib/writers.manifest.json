@@ -115,6 +115,8 @@
     "scripts/e2e/cp-log-reception-apply-e2e.mjs",
     "scripts/e2e/cp-log-unification-apply-e2e.mjs",
     "scripts/e2e/cp-recep001-apply-e2e.mjs",
+    "scripts/e2e/cpbra-pay-commission-battery-e2e.mjs",
+    "scripts/e2e/cpbra-pc-apply-e2e.mjs",
     "scripts/e2e/cpbra-r03-apply-e2e.mjs",
     "scripts/e2e/cpbra-r03-ot-batch-battery-e2e.mjs",
     "scripts/e2e/cpbra-r05-apply-e2e.mjs",

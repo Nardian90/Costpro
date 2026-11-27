@@ -117,32 +117,16 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
               errorCount++;
               continue;
             }
-            // Entorno sin el RPC (migración 20261026000000 pendiente): fallback
-            // al UPDATE directo previo.
-            if (msg.includes('does not exist') || msg.includes('PGRST202')) {
-              const { error: commissionError } = await supabase
-                .from('commission_payments')
-                .update({
-                  status: 'paid',
-                  paid_at: new Date().toISOString(),
-                  paid_by: session.user.id,
-                  payment_method,
-                  payment_reference: payment_reference || null,
-                })
-                .eq('id', item.ref_id)
-                .eq('store_id', storeId)
-                .eq('status', 'approved');
-
-              if (commissionError) {
-                results.push({ ...item, success: false, error: commissionError.message });
-                errorCount++;
-                continue;
-              }
-            } else {
-              results.push({ ...item, success: false, error: rpcError.message });
-              errorCount++;
-              continue;
-            }
+            // FIN-014 (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001 §5.2/§5.3): el
+            // fallback legacy a UPDATE directo se ELIMINA — era un bypass del
+            // protocolo del cajón (sin advisory por tienda, sin guard físico
+            // de moneda, RLS de rol global en vez del gate de membresía del
+            // RPC). El RPC pay_commission existe en E2E y producción; un
+            // entorno sin él es un fallo de despliegue que DEBE fallar por
+            // ítem (jamás consolidarse por la vía silenciosa).
+            results.push({ ...item, success: false, error: rpcError.message });
+            errorCount++;
+            continue;
           }
           if (rpcData?.idempotent_replay) {
             // Ya estaba pagada: éxito idempotente (misma semántica previa).
