@@ -1014,7 +1014,97 @@
       "reason": "CP-OPS-ENERVIDA (PR #1698): la migración 20261124120100_cp_ops_enervida_service_void_idempotency.sql re-emite la función con la corrección de la misión (el void genera contra-filas direction=reversal enlazadas (reverses_payment_id) en vez de solo anotar notas). Divergencia INTENCIONAL cuerpo-LIVE vs replay hasta el deploy; el surface certificado se re-certificará con el snapshot de producción posterior. Integración verificada en BD aislada CostproE2E (28/28) con net-zero.",
       "added_by": "CP-OPS-ENERVIDA",
       "expires": "2026-12-31"
+    },
+    {
+      "function": "add_reception_items/3",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): la migración 20261128120000 re-emite add_reception_items con el gate de autorización R-06 (borradores: agregar líneas) — cuerpo byte-idéntico salvo el bloque de autorización, extraído de pg_get_functiondef y re-emitido con reemplazo exacto. Divergencia INTENCIONAL LIVE vs replay hasta la aplicación §11g post-fusión de #1739 (script scripts/cpbra-r06-apply-prod.mjs) + re-exportación del surface certificado; la entrada se RETIRA al re-exportar (patrón pay_commission/7 de la misión precedente). Verificada en BD aislada CostproE2E: batería 40/40 + contrato estático 14/14.",
+      "added_by": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "confirm_pending_reception/3",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): la migración 20261128120000 re-emite confirm_pending_reception con el gate de autorización R-06 (confirmación de pendiente) — cuerpo byte-idéntico salvo el bloque de autorización, extraído de pg_get_functiondef y re-emitido con reemplazo exacto. Divergencia INTENCIONAL LIVE vs replay hasta la aplicación §11g post-fusión de #1739 (script scripts/cpbra-r06-apply-prod.mjs) + re-exportación del surface certificado; la entrada se RETIRA al re-exportar (patrón pay_commission/7 de la misión precedente). Verificada en BD aislada CostproE2E: batería 40/40 + contrato estático 14/14.",
+      "added_by": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "delete_pending_reception/2",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): la migración 20261128120000 re-emite delete_pending_reception con el gate de autorización R-06 (borrado de borrador) — cuerpo byte-idéntico salvo el bloque de autorización, extraído de pg_get_functiondef y re-emitido con reemplazo exacto. Divergencia INTENCIONAL LIVE vs replay hasta la aplicación §11g post-fusión de #1739 (script scripts/cpbra-r06-apply-prod.mjs) + re-exportación del surface certificado; la entrada se RETIRA al re-exportar (patrón pay_commission/7 de la misión precedente). Verificada en BD aislada CostproE2E: batería 40/40 + contrato estático 14/14.",
+      "added_by": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "receive_against_po/5",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): la migración 20261128120000 re-emite receive_against_po con el gate de autorización R-06 (recepción contra OC) — cuerpo byte-idéntico salvo el bloque de autorización, extraído de pg_get_functiondef y re-emitido con reemplazo exacto. Divergencia INTENCIONAL LIVE vs replay hasta la aplicación §11g post-fusión de #1739 (script scripts/cpbra-r06-apply-prod.mjs) + re-exportación del surface certificado; la entrada se RETIRA al re-exportar (patrón pay_commission/7 de la misión precedente). Verificada en BD aislada CostproE2E: batería 40/40 + contrato estático 14/14.",
+      "added_by": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "register_reception/11",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): la migración 20261128120000 re-emite register_reception con el gate de autorización R-06 (creación de recepción) — cuerpo byte-idéntico salvo el bloque de autorización, extraído de pg_get_functiondef y re-emitido con reemplazo exacto. Divergencia INTENCIONAL LIVE vs replay hasta la aplicación §11g post-fusión de #1739 (script scripts/cpbra-r06-apply-prod.mjs) + re-exportación del surface certificado; la entrada se RETIRA al re-exportar (patrón pay_commission/7 de la misión precedente). Verificada en BD aislada CostproE2E: batería 40/40 + contrato estático 14/14.",
+      "added_by": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "reverse_receipt_v2/3",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): la migración 20261128120000 re-emite reverse_receipt_v2 con el gate de autorización R-06 (reversión de confirmada) — cuerpo byte-idéntico salvo el bloque de autorización, extraído de pg_get_functiondef y re-emitido con reemplazo exacto. Divergencia INTENCIONAL LIVE vs replay hasta la aplicación §11g post-fusión de #1739 (script scripts/cpbra-r06-apply-prod.mjs) + re-exportación del surface certificado; la entrada se RETIRA al re-exportar (patrón pay_commission/7 de la misión precedente). Verificada en BD aislada CostproE2E: batería 40/40 + contrato estático 14/14.",
+      "added_by": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "save_pending_reception_changes/5",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): la migración 20261128120000 re-emite save_pending_reception_changes con el gate de autorización R-06 (edición de borrador) — cuerpo byte-idéntico salvo el bloque de autorización, extraído de pg_get_functiondef y re-emitido con reemplazo exacto. Divergencia INTENCIONAL LIVE vs replay hasta la aplicación §11g post-fusión de #1739 (script scripts/cpbra-r06-apply-prod.mjs) + re-exportación del surface certificado; la entrada se RETIRA al re-exportar (patrón pay_commission/7 de la misión precedente). Verificada en BD aislada CostproE2E: batería 40/40 + contrato estático 14/14.",
+      "added_by": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "update_receipt_item_tasa/5",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): la migración 20261128120000 re-emite update_receipt_item_tasa con el gate de autorización R-06 (corrección de tasa de línea) — cuerpo byte-idéntico salvo el bloque de autorización, extraído de pg_get_functiondef y re-emitido con reemplazo exacto. Divergencia INTENCIONAL LIVE vs replay hasta la aplicación §11g post-fusión de #1739 (script scripts/cpbra-r06-apply-prod.mjs) + re-exportación del surface certificado; la entrada se RETIRA al re-exportar (patrón pay_commission/7 de la misión precedente). Verificada en BD aislada CostproE2E: batería 40/40 + contrato estático 14/14.",
+      "added_by": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "update_reception_items/3",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): la migración 20261128120000 re-emite update_reception_items con el gate de autorización R-06 (modificación de líneas) — cuerpo byte-idéntico salvo el bloque de autorización, extraído de pg_get_functiondef y re-emitido con reemplazo exacto. Divergencia INTENCIONAL LIVE vs replay hasta la aplicación §11g post-fusión de #1739 (script scripts/cpbra-r06-apply-prod.mjs) + re-exportación del surface certificado; la entrada se RETIRA al re-exportar (patrón pay_commission/7 de la misión precedente). Verificada en BD aislada CostproE2E: batería 40/40 + contrato estático 14/14.",
+      "added_by": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739)",
+      "expires": "2026-12-31"
+    },
+    {
+      "function": "void_pending_reception/4",
+      "rules": [
+        "BODY_DRIFT_FROM_MIGRATION"
+      ],
+      "reason": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): la migración 20261128120000 re-emite void_pending_reception con el gate de autorización R-06 (anulación de pendiente) — cuerpo byte-idéntico salvo el bloque de autorización, extraído de pg_get_functiondef y re-emitido con reemplazo exacto. Divergencia INTENCIONAL LIVE vs replay hasta la aplicación §11g post-fusión de #1739 (script scripts/cpbra-r06-apply-prod.mjs) + re-exportación del surface certificado; la entrada se RETIRA al re-exportar (patrón pay_commission/7 de la misión precedente). Verificada en BD aislada CostproE2E: batería 40/40 + contrato estático 14/14.",
+      "added_by": "CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739)",
+      "expires": "2026-12-31"
     }
   ],
-  "_updated": "2026-11-26 — CP-BRA-INV005-FIN011-CLOSURE-001: entrada confirm_inventory_adjustment/2 añadida (drift intencional LIVE-vs-replay del guard R-05, PR sin fusionar pendiente de aprobación del propietario).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 añadida (drift intencional LIVE-vs-replay de la migración R-26, PR sin fusionar).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 RETIRADA (PR #1729 fusionado c9350fb421; migración 20261127120000 aplicada a producción §11g — body_hash 9ab5db94537d7152e9b38ffebd191558 idéntico en E2E y producción; surface re-certificado; drift resuelto).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (cierre): entrada confirm_inventory_adjustment/2 también RETIRADA en main (PR #1725 contiene el mismo retiro; surface re-certificado con el cuerpo R-05 en producción).\n2026-11-27 — CP-BRA-FINAL-COMPLIANCE-CLOSURE-001: entrada register_ot_payment_batch añadida (SD sin auth-check por diseño — autorización en la ruta tras canManageStore, ACL service_role exclusiva verificada por R03-VERIFY).\n2026-11-27 — CP-BRA-FINAL-COMPLIANCE-CLOSURE-001: entrada pay_commission/7 BODY_DRIFT_FROM_MIGRATION añadida (drift intencional LIVE-vs-replay del gate §0.2, PR #1733 pendiente de aplicación §11g).\n2026-11-27 — CP-BRA-FINAL-COMPLIANCE-CLOSURE-001: entrada pay_commission/7 RETIRADA (PR #1733 fusionado 3b7364756; migración 20261127150000 aplicada a producción §11g — body_hash 7b08c5d52d66de6e41a17332d04119e5 idéntico a la aislada; surface re-certificado)."
+  "_updated": "2026-11-26 — CP-BRA-INV005-FIN011-CLOSURE-001: entrada confirm_inventory_adjustment/2 añadida (drift intencional LIVE-vs-replay del guard R-05, PR sin fusionar pendiente de aprobación del propietario).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 añadida (drift intencional LIVE-vs-replay de la migración R-26, PR sin fusionar).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 RETIRADA (PR #1729 fusionado c9350fb421; migración 20261127120000 aplicada a producción §11g — body_hash 9ab5db94537d7152e9b38ffebd191558 idéntico en E2E y producción; surface re-certificado; drift resuelto).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (cierre): entrada confirm_inventory_adjustment/2 también RETIRADA en main (PR #1725 contiene el mismo retiro; surface re-certificado con el cuerpo R-05 en producción).\n2026-11-27 — CP-BRA-FINAL-COMPLIANCE-CLOSURE-001: entrada register_ot_payment_batch añadida (SD sin auth-check por diseño — autorización en la ruta tras canManageStore, ACL service_role exclusiva verificada por R03-VERIFY).\n2026-11-27 — CP-BRA-FINAL-COMPLIANCE-CLOSURE-001: entrada pay_commission/7 BODY_DRIFT_FROM_MIGRATION añadida (drift intencional LIVE-vs-replay del gate §0.2, PR #1733 pendiente de aplicación §11g).\n2026-11-27 — CP-BRA-FINAL-COMPLIANCE-CLOSURE-001: entrada pay_commission/7 RETIRADA (PR #1733 fusionado 3b7364756; migración 20261127150000 aplicada a producción §11g — body_hash 7b08c5d52d66de6e41a17332d04119e5 idéntico a la aislada; surface re-certificado).\n2026-11-28 — CP-BRA-R06-FINAL-CERTIFICATION-001 (PR #1739): 10 entradas BODY_DRIFT (10 RPC de recepciones re-emitidos con gate R-06) hasta §11g + re-exportación del surface; se retiran al re-certificar."
 }

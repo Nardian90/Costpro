@@ -181,7 +181,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'receivedItems requerido (array)' }, { status: 400 });
   }
 
-
+  // Identidad del servidor (CP-BRA-R06 §2.1: el creador se asigna desde la
+  // sesión autenticada, nunca del body).
+  const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
   const rpcItems = receivedItems.map((item: { poItemId: string; quantityReceived: number }) => ({
     po_item_id: item.poItemId,
