@@ -184,8 +184,17 @@ test.describe.serial('ADN-008 · borradores, proveedores y liquidación multipag
     // §4.3: la identidad REAL del proveedor queda guardada (no solo el nombre).
     expect(row.supplier_id).toBe(supplierId);
     if (masterPartyId) expect(row.supplier_master_party_id).toBe(masterPartyId);
-    expect(row.supplier_code).toBe('ADN008');
-    expect(row.supplier_tax_id).toBe('NIT-B3');
+    // ADN-009 §6 (doctrina vigente desde 20261121190000): el snapshot NO se
+    // toma del cliente (supplier_meta) sino de la FUENTE AUTORIZADA (filas de
+    // la BD). El PATCH envía meta {code:'ADN008', tax_id:'NIT-B3'} a propósito:
+    // el servidor debe IGNORARLA y congelar lo que dice la fila de `suppliers`.
+    const srcSupplier = (await sb.select<{ tax_id: string | null; phone: string | null; address: string | null }[]>(
+      'suppliers', `id=eq.${supplierId}&select=tax_id,phone,address`))[0];
+    expect(srcSupplier).toBeTruthy();
+    expect(row.supplier_code).toBeNull(); // suppliers no tiene columna code (es del Maestro)
+    expect(row.supplier_tax_id).toBe(srcSupplier!.tax_id);
+    expect(row.supplier_phone).toBe(srcSupplier!.phone);
+    expect(row.supplier_address).toBe(srcSupplier!.address);
 
     // No se creó un proveedor duplicado en la tienda.
     const dups = await sb.select<{ c: number }>('suppliers',
