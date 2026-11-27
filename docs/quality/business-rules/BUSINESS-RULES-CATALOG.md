@@ -206,8 +206,8 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 ### PUR-001 · Ciclo compra→recepción→inventario→obligación→pago con estados explícitos
 - **Estado:** CONFIRMADA · **Severidad:** CRÍTICA · **Cumplimiento:** CUMPLE
 - **Descripción:** PO `draft|sent|partial|received|cancelled`; `partial/received` SOLO vía `receive_against_po_final` (que crea receipt vía `register_reception` y obligación CxP); recepción `pending→active` por `confirm_pending_reception` con WAC primero y movimiento después, `ERR_RECEIPT_ALREADY_CONFIRMED`, enlace documental `notes=receipt_id` (CP-RECEP-001).
-- **Brecha de autorización:** cualquier miembro de tienda confirma/void sin gate de rol ni segundo aprobador (R-06).
-- **Evidencia:** `20260808000004_v2_24_g4`; `20260808000003_v2_24_g3:64-71,152-155`; `20261125120000_cp_recep001_confirm_notes_link.sql:50-101,109-213,218-243`.
+- **Autorización R-06 (DECIDIDA e implementada, CP-BRA-R06-FINAL-CERTIFICATION-001):** CREAR = encargado con membresía activa en la tienda o superadmin de plataforma (§0.1; el acceso/admin/manager/almacenero/clerk NO concede); CONFIRMAR/ANULAR = creador original con membresía activa o superadmin (§0.2, sin exigencia de rol sobre recepción propia); superadmin global conservando identidad real y sujeto a todos los invariantes (§0.3/§0.4); históricos sin creador verificable reservados al superadmin, creador inmutable por trigger (§0.5/§2.1). Barrera autoritativa en BD (gates en 10 RPC + RLS + trigger) + espejo en rutas + UI alineada; pruebas positiva y negativa por rol en la batería 40/40.
+- **Evidencia:** `20260808000004_v2_24_g4`; `20260808000003_v2_24_g3:64-71,152-155`; `20261125120000_cp_recep001_confirm_notes_link.sql:50-101,109-213,218-243`; `20261128120000_cpbra_r06_reception_authorization.sql`; `e2e/creation/r06-reception-authorization.spec.ts` (40/40); `docs/audits/CP-BRA-R06-FINAL-CERTIFICATION-001/`.
 
 ### PUR-002 · Dedup de factura por concatenación de texto — vulnerable a grafías
 - **Estado:** CONTRADICTORIA (frágil vs datos reales) · **Severidad:** ALTA · **Cumplimiento:** PARCIAL
