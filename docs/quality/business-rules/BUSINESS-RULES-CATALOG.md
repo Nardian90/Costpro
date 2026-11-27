@@ -127,10 +127,10 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 - **Evidencia:** `20261127140000_cpbra_r03_ot_payment_batch.sql` (guard R03 + VERIFY fail-closed, ACL service_role exclusiva); batería E2E 17/17 vía API real en aislada (operación parcial §3.2, atomicidad §3.3, idempotencia/concurrencia §3.5, conciliación §3.6.14); contrato estático 54/54 (pin R-25 convertido).
 - **Riesgo residual:** bajo — sin reversión de pagos OT (FIN-003 nota); sin canal UI multi-OT aún (el canal API queda disponible para el flujo).
 
-### FIN-014 · Comisiones: pago vía RPC con fallback legacy directo
-- **Estado:** TÉCNICA · **Severidad:** ALTA · **Cumplimiento:** PARCIAL
-- **Descripción:** `pay_commission` es el canal canónico; `POST /api/accounts-payable/bulk-pay` conserva fallback a UPDATE directo si el RPC no existe — bypass del protocolo de cajón en entornos con drift.
-- **Evidencia:** `src/app/api/accounts-payable/bulk-pay/route.ts:100-110`.
+### FIN-014 · Comisiones: pago vía RPC con roles de tienda admin/manager/encargado
+- **Estado:** CERTIFICADA POR DECISIÓN DEL PROPIETARIO (2026-11-27, §0.2) · **Severidad:** ALTA · **Cumplimiento:** CUMPLE
+- **Descripción:** `pay_commission` es el canal canónico ÚNICO (fallback legacy a UPDATE directo ELIMINADO de bulk-pay — bypass del protocolo de cajón sin advisory ni guard físico). La barrera autoritativa es el gate del propio RPC (SECURITY DEFINER): `has_store_role_as(v_uid, tienda, ARRAY['admin','manager','encargado'])` — patrón R-05 (migración 20261127150000) — con compat de admin de plataforma preservada. Clerk/usuario/otra tienda → ERR_FORBIDDEN_ROLE. La ruta `/api/commissions/payments/[id]` autoriza action='pay' por membresía (canManageStore) en vez de rol global (el encargado ya no se rechaza antes de la barrera DB). Regla de actor intacta: p_user_id SOLO para service_role (anti-spoofing), paid_by = usuario real.
+- **Evidencia:** `20261127150000_cpbra_pay_commission_encargado.sql` (PC-GUARD/PC-VERIFY 7/7); batería E2E 15/15 §5.4 vía API real (encargado OK, clerk/usuario 403, otra tienda, anti-spoofing, advisory concurrente, guard físico de caja, auditoría del actor) — expediente CP-BRA-FINAL-COMPLIANCE-CLOSURE-001/PAY-COMMISSION-AUTHORIZATION.md.
 
 ### FIN-015 · Reportes financieros leen solo del mayor de la generación activa
 - **Estado:** CONFIRMADA · **Severidad:** ALTA · **Cumplimiento:** CUMPLE
