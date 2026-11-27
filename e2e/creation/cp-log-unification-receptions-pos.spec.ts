@@ -38,7 +38,7 @@
 import { test, expect, type APIRequestContext } from '@playwright/test';
 import {
   signIn, apiHeaders, sb, rpcAsUser, requireIsolatedCreation,
-  ADMIN_EMAIL, ADMIN_PASS, num,
+  ADMIN_EMAIL, ADMIN_PASS, num, ensureEncargadoSession,
 } from '../fixtures/session.fixture';
 import { hardDeleteTestStore } from '../fixtures/hard-cleanup';
 
@@ -53,6 +53,11 @@ const MASTER_A = { sku: `CPLOG-A-${SFX}`, name: `Tornillo Maestro A ${SFX}`, uom
 const MASTER_B = { sku: `CPLOG-B-${SFX}`, name: `Losa Maestra B ${SFX}`, uom: 'm2' };
 
 let adminToken = '';
+// CP-BRA-R06: el actor de las recepciones es un ENCARGADO con membresía
+// activa en la tienda efímera (creación = encargado|superadmin). El admin del
+// run conecta el catálogo (gobernador) pero ya NO puede crear recepciones.
+let encToken = '';
+let encUserId = '';
 let adminUserId = '';
 let tenantId = '';
 let storeId = '';
@@ -82,6 +87,11 @@ test.describe.serial('CP-LOG-UNIFICATION-001 · carga maestra, liquidación de r
       slug: `e2e-cplog-${SFX}`,
     }]);
     storeId = String(store.id);
+
+    // CP-BRA-R06: encargado de la tienda para las recepciones del spec.
+    const enc = await ensureEncargadoSession(storeId);
+    encToken = enc.token;
+    encUserId = enc.userId;
 
     // Conectar la tienda al catálogo de la organización (RPC real, gobernador).
     const c = await rpcAsUser('connect_store_catalog', adminToken, { p_store_id: storeId });
@@ -214,7 +224,7 @@ test.describe.serial('CP-LOG-UNIFICATION-001 · carga maestra, liquidación de r
     expect(prod.store_id).toBe(storeId);
 
     // 2) Recepción real del producto local (Express: register_reception).
-    const reg = await rpcAsUser<any>('register_reception', adminToken, {
+    const reg = await rpcAsUser<any>('register_reception', encToken, {
       p_store_id: storeId,
       p_supplier: `Proveedor CPLOG ${SFX}`,
       p_reception_date: new Date().toISOString(),
@@ -225,7 +235,7 @@ test.describe.serial('CP-LOG-UNIFICATION-001 · carga maestra, liquidación de r
         sale_price: RECEPTION_PRICE, variant_id: null,
         moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0, price_currency: 'CUP',
       }],
-      p_user_id: adminUserId, p_po_id: null,
+      p_user_id: encUserId, p_po_id: null,
       p_supplier_code: null, p_supplier_tax_id: null, p_supplier_phone: null, p_supplier_address: null,
     });
     expect(reg.ok, `register_reception: ${reg.error}`).toBe(true);
@@ -284,7 +294,7 @@ test.describe.serial('CP-LOG-UNIFICATION-001 · carga maestra, liquidación de r
   });
 
   test('C2 · segunda recepción + liquidación PARCIAL por transferencia (con referencia) → partial + saldo; luego completar → paid', async ({ request }) => {
-    const reg = await rpcAsUser<any>('register_reception', adminToken, {
+    const reg = await rpcAsUser<any>('register_reception', encToken, {
       p_store_id: storeId,
       p_supplier: `Proveedor CPLOG ${SFX}`,
       p_reception_date: new Date().toISOString(),
@@ -295,7 +305,7 @@ test.describe.serial('CP-LOG-UNIFICATION-001 · carga maestra, liquidación de r
         sale_price: RECEPTION_PRICE, variant_id: null,
         moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0, price_currency: 'CUP',
       }],
-      p_user_id: adminUserId, p_po_id: null,
+      p_user_id: encUserId, p_po_id: null,
       p_supplier_code: null, p_supplier_tax_id: null, p_supplier_phone: null, p_supplier_address: null,
     });
     expect(reg.ok).toBe(true);
@@ -361,7 +371,7 @@ test.describe.serial('CP-LOG-UNIFICATION-001 · carga maestra, liquidación de r
   });
 
   test('C4 · gate de estado: recepción ANULADA no admite pagos → 409 ERR_RECEIPT_NOT_PAYABLE', async ({ request }) => {
-    const reg = await rpcAsUser<any>('register_reception', adminToken, {
+    const reg = await rpcAsUser<any>('register_reception', encToken, {
       p_store_id: storeId,
       p_supplier: `Proveedor CPLOG ${SFX}`,
       p_reception_date: new Date().toISOString(),
@@ -372,7 +382,7 @@ test.describe.serial('CP-LOG-UNIFICATION-001 · carga maestra, liquidación de r
         sale_price: RECEPTION_PRICE, variant_id: null,
         moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0, price_currency: 'CUP',
       }],
-      p_user_id: adminUserId, p_po_id: null,
+      p_user_id: encUserId, p_po_id: null,
       p_supplier_code: null, p_supplier_tax_id: null, p_supplier_phone: null, p_supplier_address: null,
     });
     expect(reg.ok).toBe(true);

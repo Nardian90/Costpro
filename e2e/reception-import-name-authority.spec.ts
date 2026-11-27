@@ -30,10 +30,20 @@ import { test, expect, type Page } from '@playwright/test';
 import {
   signIn, sb, rpcAsUser,
   ADMIN_EMAIL, ADMIN_PASS, CLERK_EMAIL, CLERK_PASS,
+  ensureEncargadoSession,
 } from './fixtures/session.fixture';
 import { readRunContext } from './fixtures/run-env';
 
 let adminToken = '';
+// CP-BRA-R06: token de ENCARGADO por tienda (política: creación de
+// recepciones = encargado con membresía activa | superadmin).
+const encTokens = new Map<string, string>();
+async function encTokenFor(storeId: string): Promise<string> {
+  if (!encTokens.has(storeId)) {
+    encTokens.set(storeId, (await ensureEncargadoSession(storeId)).token);
+  }
+  return encTokens.get(storeId)!;
+}
 let adminId = '';
 let clerkToken = '';
 let clerkId = '';
@@ -255,7 +265,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 — 16 escenari
     expect(res.summary.identified).toBe(1);
     expect(res.results[0].product_name).toBe(MASTER);
 
-    const reg = await registerReception(adminToken, storeA, [
+    const reg = await registerReception(await encTokenFor(storeA), storeA, [
       { product_id: res.results[0].product_id, quantity: 8, unit_cost: 3 },
     ], `RNAU-02-${SFX}`);
     expect(reg.ok).toBe(true);
@@ -533,7 +543,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 — 16 escenari
       row(S_NEW, 'PRODUCTO CICLO COMPLETO 17'),
     ]);
     expect(r.summary.masters_created).toBe(1);
-    const reg = await registerReception(adminToken, storeA, [
+    const reg = await registerReception(await encTokenFor(storeA), storeA, [
       { product_id: r.results.find(x => x.sku === S_EXIST)!.product_id, quantity: 4, unit_cost: 6 },
       { product_id: r.results.find(x => x.sku === S_NEW)!.product_id, quantity: 2, unit_cost: 10 },
     ], `RNAU-17-${SFX}`);
@@ -576,7 +586,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-NAME-AUTHORITY-001 — 16 escenari
     expect(c.rows[0].effective_name).toBe('Producto Local Sin Catalogo');
 
     // La recepción legacy crea la fila local con el nombre del alta (no hay maestro).
-    const reg = await registerReception(adminToken, storeC, [
+    const reg = await registerReception(await encTokenFor(storeC), storeC, [
       { new_product: { sku: S, name: 'Producto Local Sin Catalogo', cost_price: 2, price: 5, unit_of_measure: 'unidad', is_complete: true }, quantity: 3, unit_cost: 2 },
     ], `RNAU-18-${SFX}`);
     expect(reg.ok).toBe(true);

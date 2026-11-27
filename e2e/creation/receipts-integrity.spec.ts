@@ -47,7 +47,7 @@
  * Higiene: node e2e/scripts/data-hygiene-guard.cjs → "PASS — net delta = 0".
  */
 import { test, expect, type APIRequestContext } from '@playwright/test';
-import { signIn, apiHeaders, rpcAsUser, sb, requireIsolatedCreation, seedProduct, type Session } from '../fixtures/session.fixture';
+import { signIn, apiHeaders, rpcAsUser, sb, requireIsolatedCreation, seedProduct, ensureEncargadoSession, type Session } from '../fixtures/session.fixture';
 
 const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || process.env.ADMIN_EMAIL || 'admin@costpro.com';
 const ADMIN_PASS = process.env.E2E_ADMIN_PASS || process.env.ADMIN_PASS || 'costpro123';
@@ -78,6 +78,10 @@ test.beforeAll(() => {
 });
 
 let admin: Session;
+// CP-BRA-R06: el actor de las recepciones es un ENCARGADO con membresía
+// activa en la tienda piloto (política del propietario: creación =
+// encargado|superadmin). El admin del run solo siembra/verifica vía sb.
+let enc: Session;
 // Tienda piloto EFÍMERA del run (global-setup la crea en modo aislado y el
 // teardown global la elimina → net-zero). NO creamos otra tienda: el
 // rate-limit de POST /api/stores (429) se agota tras las pilotos del run.
@@ -89,8 +93,9 @@ let pCup = '', pUsd = '', pMixedA = '', pMixedB = '', pBack = '', pDraft = '', p
  *  API + RPC). El middleware withStoreAccess exige store_id raíz además del
  *  p_store_id del contrato Zod. */
 async function createReception(request: APIRequestContext, payload: Record<string, unknown>) {
+  // CP-BRA-R06: creación como encargado de la tienda (política vigente).
   return request.post('/api/inventory/receptions', {
-    headers: apiHeaders(admin.token),
+    headers: apiHeaders(enc.token),
     data: { ...payload, store_id: store.id },
   });
 }
@@ -98,7 +103,7 @@ async function createReception(request: APIRequestContext, payload: Record<strin
 /** Flujo REAL online del navegador (useRegisterReception): supabase.rpc(
  *  register_reception) con el Bearer del usuario. */
 async function createReceptionRpc(payload: Record<string, unknown>): Promise<string> {
-  const r = await rpcAsUser('register_reception', admin.token, { ...payload, p_user_id: admin.userId });
+  const r = await rpcAsUser('register_reception', enc.token, { ...payload, p_user_id: enc.userId });
   if (!r.ok) throw new Error(`register_reception RPC: ${r.error}`);
   return String(r.data);
 }
@@ -124,6 +129,7 @@ test.beforeAll(async ({ request }) => {
   admin = await signIn(ADMIN_EMAIL, ADMIN_PASS);
   store = { id: process.env.E2E_TEST_STORE_ID || '' };
   if (!store.id) throw new Error('[receipts-integrity] E2E_TEST_STORE_ID no configurado (global-setup del modo aislado)');
+  enc = await ensureEncargadoSession(store.id);
 
   // 7 productos deterministas (idempotentes por run: misma semilla → mismo sku)
   const seeds: Array<[string, string]> = [
@@ -293,7 +299,7 @@ test('S5/S6 — cambio posterior de costo y moneda del producto: la recepción a
 // ═══════════════ S7: modificación de un BORRADOR (pending) ════════════════
 test('S7 — borrador: cambiar moneda/tasa por línea recalcula la cabecera', async ({ request }) => {
   // Sembrar borrador como lo hace useSavePendingReception (cliente del usuario)
-  const INS = { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${admin.token}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+  const INS = { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${enc.token}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
   const rres = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/receipts`, {
     method: 'POST', headers: INS,
     body: JSON.stringify({ store_id: store.id, supplier: 'Prov Borrador', reception_date: TODAY, reference_doc: INV.draft, status: 'pending', total_cost: 200, payment_status: 'unpaid', payment_terms_days: 30 }),
@@ -313,7 +319,7 @@ test('S7 — borrador: cambiar moneda/tasa por línea recalcula la cabecera', as
 
   // Editar la línea: CUP→USD a 700 — la ruta debe aceptarlo (pending) y RECALCULAR
   const pres = await request.patch(`/api/inventory/receptions/${draft.id}/items/${draftItem.id}`, {
-    headers: apiHeaders(admin.token),
+    headers: apiHeaders(enc.token),
     data: { moneda_recepcion: 'USD', tasa_cambio_recepcion: 700, motivo: 'E2E: corrección de borrador' },
   });
   expect(pres.status(), `editar borrador: ${await pres.text()}`).toBe(200);
@@ -338,7 +344,7 @@ test('S8 — recepción confirmada: 409 ERR_NOT_EDITABLE + trigger bloquea servi
 
   // (a) La ruta rechaza con 409 y remedio
   const pres = await request.patch(`/api/inventory/receptions/${active.id}/items/${line.id}`, {
-    headers: apiHeaders(admin.token),
+    headers: apiHeaders(enc.token),
     data: { tasa_cambio_recepcion: 999, motivo: 'E2E: intento prohibido' },
   });
   expect(pres.status(), `editar confirmada: ${await pres.text()}`).toBe(409);
@@ -352,12 +358,12 @@ test('S8 — recepción confirmada: 409 ERR_NOT_EDITABLE + trigger bloquea servi
 
   // (c) La cabecera PATCH rechaza campos económicos (solo notes)
   const hres = await request.patch(`/api/inventory/receptions/${active.id}`, {
-    headers: apiHeaders(admin.token),
+    headers: apiHeaders(enc.token),
     data: { referenceDoc: 'E2E-FACTURA-FALSA' },
   });
   expect(hres.status()).toBe(409);
   const nres = await request.patch(`/api/inventory/receptions/${active.id}`, {
-    headers: apiHeaders(admin.token),
+    headers: apiHeaders(enc.token),
     data: { notes: 'Nota posterior sin efecto económico' },
   });
   expect(nres.status()).toBe(200);
@@ -375,9 +381,9 @@ test('S9 — anulación de borrador (voided) + recepción correctiva nueva', asy
   expect(draft, 'el borrador de S7 debe existir').toBeDefined();
 
   // Anular el borrador por la RPC canónica (como la UI)
-  const voided = await rpcAsUser('void_pending_reception', admin.token, {
+  const voided = await rpcAsUser('void_pending_reception', enc.token, {
     p_receipt_id: draft.id,
-    p_user_id: admin.userId,
+    p_user_id: enc.userId,
     p_reason: 'E2E: anulación para correctiva',
   });
   expect(voided.ok, `void: ${voided.error}`).toBe(true);
@@ -469,13 +475,13 @@ test('S12 — WAC registra uc_in = uc·tasa (conversión única) y CP-FIN contab
 // ═══════════════ S13: reintento e idempotencia ═══════════════════════════
 test('S13 — factura duplicada rechazada y PATCH no-op devuelve no_change sin alterar totales', async ({ request }) => {
   // (a) Duplicado de factura del S1 — la RPC debe rechazarlo (ERR_INVOICE_DUPLICATE)
-  const dup = await rpcAsUser('register_reception', admin.token, {
+  const dup = await rpcAsUser('register_reception', enc.token, {
     p_store_id: store.id,
     p_supplier: 'Prov CUP',
     p_reception_date: `${TODAY}T12:00:00.000Z`,
     p_invoice_number: INV.cup, // MISMA factura (sufijo estable del run) → rechazo
     p_items: [item(pCup, 1, 250)],
-    p_user_id: admin.userId,
+    p_user_id: enc.userId,
   });
   expect(dup.ok, `duplicado debe rechazarse: ${JSON.stringify(dup)}`).toBe(false);
   if (dup.ok) {
@@ -492,7 +498,7 @@ test('S13 — factura duplicada rechazada y PATCH no-op devuelve no_change sin a
   expect(byRef.length).toBe(1);
 
   // (b) PATCH no-op sobre un borrador VIVO: mismo valor → no_change, totales estables
-  const INS = { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${admin.token}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+  const INS = { apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, Authorization: `Bearer ${enc.token}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
   const rres = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/receipts`, {
     method: 'POST', headers: INS,
     body: JSON.stringify({ store_id: store.id, supplier: 'Prov Idempotencia', reception_date: TODAY, reference_doc: INV.idem, status: 'pending', total_cost: 200, payment_status: 'unpaid', payment_terms_days: 30 }),
@@ -508,7 +514,7 @@ test('S13 — factura duplicada rechazada y PATCH no-op devuelve no_change sin a
 
   const before = await receiptByInvoice(INV.idem);
   const nop = await request.patch(`/api/inventory/receptions/${idem.id}/items/${idemItem.id}`, {
-    headers: apiHeaders(admin.token),
+    headers: apiHeaders(enc.token),
     data: { tasa_cambio_recepcion: 1 }, // mismo valor → no-op
   });
   expect(nop.status(), `no-op: ${await nop.text()}`).toBe(200);

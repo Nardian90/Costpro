@@ -10,7 +10,24 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const sessionState = { value: { user: { id: 'a1111111-1111-1111-1111-111111111111', role: 'admin' } } as any };
+// CP-BRA-R06 (§0.2): editar una recepción pertenece al CREADOR original
+// con membresía activa (o superadmin). El actor de estas pruebas de guard
+// económico es el creador — así la ruta pasa el gate de autorización y los
+// tests siguen verificando EXACTAMENTE lo mismo (guards de estado).
+const CREATOR_ID = 'a1111111-1111-1111-1111-111111111111';
+const STORE_ID = 'st-1';
+const creatorSession = () => ({
+  user: {
+    id: CREATOR_ID,
+    role: 'encargado',
+    memberships: [{ store_id: STORE_ID, role: 'encargado', status: 'active' }],
+  },
+});
+const receiptRow = (status: string) => ({
+  data: { id: 'rc-1', store_id: STORE_ID, user_id: CREATOR_ID, status },
+  error: null,
+});
+const sessionState = { value: creatorSession() as any };
 vi.mock('@/lib/auth-middleware', () => ({
   withAuth: (fn: any) => async (req: any) => fn(req, sessionState.value),
   AuthenticatedSession: {},
@@ -71,9 +88,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   updateCalls.length = 0;
   rpcCalls.length = 0;
-  receiptState.value = { data: { status: 'active' }, error: null };
+  receiptState.value = receiptRow('active');
   rpcState.value = { data: { updated_count: 1, new_total: 100 }, error: null };
-  sessionState.value = { user: { id: 'a1111111-1111-1111-1111-111111111111', role: 'admin' } };
+  sessionState.value = creatorSession() as any;
 });
 
 describe('PATCH /api/inventory/receptions/[id] — guard de estado de cabecera', () => {
@@ -101,7 +118,7 @@ describe('PATCH /api/inventory/receptions/[id] — guard de estado de cabecera',
   });
 
   it('campos económicos + notes juntos: pending los acepta todos', async () => {
-    receiptState.value = { data: { status: 'pending' }, error: null };
+    receiptState.value = receiptRow('pending');
     const { status } = await call({ supplier: 'Prov', referenceDoc: 'F-2', notes: 'n' });
     expect(status).toBe(200);
     expect(updateCalls).toHaveLength(1);
@@ -109,7 +126,7 @@ describe('PATCH /api/inventory/receptions/[id] — guard de estado de cabecera',
   });
 
   it('itemUpdates en pending delega en update_reception_items', async () => {
-    receiptState.value = { data: { status: 'pending' }, error: null };
+    receiptState.value = receiptRow('pending');
     const updates = [{ id: 'x', quantity: 2, unit_cost: 5, deleted: false }];
     const { status, data } = await call({ itemUpdates: updates });
     expect(status).toBe(200);
@@ -119,7 +136,7 @@ describe('PATCH /api/inventory/receptions/[id] — guard de estado de cabecera',
   });
 
   it('ERR_NOT_EDITABLE de la RPC ahora es 409 (antes 400)', async () => {
-    receiptState.value = { data: { status: 'pending' }, error: null };
+    receiptState.value = receiptRow('pending');
     rpcState.value = { data: null, error: { message: 'ERR_NOT_EDITABLE: solo recepciones pendientes' } };
     const { status, data } = await call({ itemUpdates: [{ id: 'x', quantity: 1, unit_cost: 5, deleted: false }] });
     expect(status).toBe(409);
@@ -132,15 +149,17 @@ describe('PATCH /api/inventory/receptions/[id] — guard de estado de cabecera',
     expect(status).toBe(404);
   });
 
-  it('403 para rol sin privilegio', async () => {
-    sessionState.value = { user: { id: 'a1111111-1111-1111-1111-111111111111', role: 'cajero' } };
+  it('403 para actor distinto del creador (R-06 §0.2: cajero no es el creador)', async () => {
+    // CP-BRA-R06: la autorización de edición es propiedad del creador; un
+    // cajero (ni encargado/admin ajeno) puede intervenir recepción ajena.
+    sessionState.value = { user: { id: 'b2222222-2222-4222-8222-222222222222', role: 'cajero', memberships: [{ store_id: STORE_ID, role: 'cajero', status: 'active' }] } } as any;
     expect((await call({ notes: 'x' })).status).toBe(403);
   });
 
   it('voided/reversed también bloquean campos económicos', async () => {
-    receiptState.value = { data: { status: 'voided' }, error: null };
+    receiptState.value = receiptRow('voided');
     expect((await call({ supplier: 'X' })).status).toBe(409);
-    receiptState.value = { data: { status: 'reversed' }, error: null };
+    receiptState.value = receiptRow('reversed');
     expect((await call({ referenceDoc: 'F' })).status).toBe(409);
   });
 });

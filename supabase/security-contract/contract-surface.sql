@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-27T14:51:42.849Z
+-- Captured  : 2026-11-27T20:45:55.972Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 233 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -315,8 +315,10 @@ BEGIN
     FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
 
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2): agregar líneas a un borrador es intervenir la
+  -- recepción → creador original con membresía activa, o superadministrador.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede modificar el borrador';
   END IF;
   IF v_status <> 'pending' THEN
     RAISE EXCEPTION 'ERR_NOT_EDITABLE: solo se pueden agregar productos a recepciones pendientes (estado actual: %)', v_status;
@@ -2047,43 +2049,6 @@ BEGIN
 END $function$
 
 
--- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS jsonb
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO 'public'
-AS $function$
-DECLARE
-  v_transfer RECORD;
-  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
-BEGIN
-  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
-  END IF;
-  IF v_transfer.status != 'PENDIENTE' THEN
-    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
-  END IF;
-
-  -- V2.5 H3: autorización — caller debe tener acceso al origen
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
-  END IF;
-
-  UPDATE public.transfers
-    SET status = 'CANCELADA', updated_at = NOW()
-    WHERE id = p_transfer_id;
-
-  RETURN jsonb_build_object(
-    'status', 'success',
-    'transfer_id', p_transfer_id,
-    'new_status', 'CANCELADA'
-  );
-END;
-$function$
-
-
 -- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_reason text, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
 CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_reason text DEFAULT 'Cancelada'::text, p_user_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -2120,6 +2085,43 @@ BEGIN
       (SELECT count(*) FROM public.inventory_reservations WHERE reference_id = p_transfer_id AND status = 'RELEASED')));
 
   RETURN jsonb_build_object('status', 'success', 'transfer_id', p_transfer_id);
+END;
+$function$
+
+
+-- @contract-function name=cancel_transfer args="p_transfer_id uuid, p_user_id uuid" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.cancel_transfer(p_transfer_id uuid, p_user_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_transfer RECORD;
+  v_caller_uid UUID := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
+BEGIN
+  SELECT * INTO v_transfer FROM public.transfers WHERE id = p_transfer_id FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'ERR_TRANSFER_NOT_FOUND';
+  END IF;
+  IF v_transfer.status != 'PENDIENTE' THEN
+    RAISE EXCEPTION 'ERR_NOT_PENDING: solo se pueden cancelar transferencias PENDIENTE (estado actual: %)', v_transfer.status;
+  END IF;
+
+  -- V2.5 H3: autorización — caller debe tener acceso al origen
+  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_transfer.origin_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  END IF;
+
+  UPDATE public.transfers
+    SET status = 'CANCELADA', updated_at = NOW()
+    WHERE id = p_transfer_id;
+
+  RETURN jsonb_build_object(
+    'status', 'success',
+    'transfer_id', p_transfer_id,
+    'new_status', 'CANCELADA'
+  );
 END;
 $function$
 
@@ -3177,15 +3179,22 @@ DECLARE
   v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
   v_unit_cost_cup numeric;
   v_units_to_add numeric;
+  -- CP-BRA-R06 §FASE 5: fuente de autorización para la auditoría transaccional.
+  v_auth_source text;
 BEGIN
   SELECT * INTO v_receipt FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
   IF v_receipt.status <> 'pending' THEN RAISE EXCEPTION 'ERR_RECEIPT_ALREADY_CONFIRMED: status=%', v_receipt.status; END IF;
 
   v_store_id := v_receipt.store_id;
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2, decisión del propietario): confirmar es derecho del
+  -- CREADOR ORIGINAL con membresía activa, o del superadministrador (global).
+  -- El acceso a la tienda NO concede confirmar recepciones ajenas; no se
+  -- añade exigencia de rol encargado sobre una recepción propia.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede confirmarla';
   END IF;
+  v_auth_source := CASE WHEN public.is_superadmin_uid(v_caller_uid) THEN 'platform_superadmin' ELSE 'creator_membership' END;
 
   FOR v_item IN SELECT * FROM public.receipt_items WHERE receipt_id = p_receipt_id LOOP
     v_unit_cost_cup := v_item.unit_cost * COALESCE(v_item.tasa_cambio_recepcion, 1.0);
@@ -3210,6 +3219,27 @@ BEGIN
   SET status = 'active', reception_date = v_effective_date,
       total_cost = public.calculate_receipt_total_cup(p_receipt_id), updated_at = v_effective_date
   WHERE id = p_receipt_id AND status = 'pending';
+
+  -- CP-BRA-R06 §FASE 5: auditoría transaccional de la confirmación (antes la
+  -- confirmación no dejaba entrada en BD): actor real, tienda, recepción,
+  -- estados previo/nuevo, creador original y fuente de autorización.
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (
+    v_caller_uid,
+    v_store_id,
+    'RECEPTION_CONFIRMED_PENDING',
+    'receipts',
+    p_receipt_id,
+    jsonb_build_object(
+      'authorization_source', v_auth_source,
+      'superadmin_global', public.is_superadmin_uid(v_caller_uid),
+      'creator_id', v_receipt.user_id,
+      'old_status', 'pending',
+      'new_status', 'active',
+      'items_confirmed', (SELECT COUNT(*) FROM public.receipt_items WHERE receipt_id = p_receipt_id),
+      'operation_date', v_effective_date
+    )
+  );
 END $function$
 
 
@@ -6578,8 +6608,8 @@ END;
 $function$
 
 
--- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text, p_payment_components jsonb, p_customer_code text, p_customer_address text, p_customer_ci text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
-CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text, p_payment_components jsonb DEFAULT NULL::jsonb, p_customer_code text DEFAULT NULL::text, p_customer_address text DEFAULT NULL::text, p_customer_ci text DEFAULT NULL::text)
+-- @contract-function name=create_sale_v2 args="p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text, p_payment_components jsonb, p_customer_code text, p_customer_address text, p_customer_ci text, p_customer_phone text" owner=postgres proacl={postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}
+CREATE OR REPLACE FUNCTION public.create_sale_v2(p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text DEFAULT 'cash'::text, p_discount_type text DEFAULT 'fixed'::text, p_discount_value numeric DEFAULT 0, p_applied_taxes jsonb DEFAULT '[]'::jsonb, p_tax_amount numeric DEFAULT 0, p_total_amount numeric DEFAULT 0, p_subtotal numeric DEFAULT 0, p_cash_amount numeric DEFAULT 0, p_transfer_amount numeric DEFAULT 0, p_zelle_amount numeric DEFAULT 0, p_sale_currency text DEFAULT 'CUP'::text, p_sale_exchange_rate numeric DEFAULT 1, p_customer_id uuid DEFAULT NULL::uuid, p_customer_name text DEFAULT NULL::text, p_supervisor_user_id uuid DEFAULT NULL::uuid, p_idempotency_key text DEFAULT NULL::text, p_operation_date timestamp with time zone DEFAULT NULL::timestamp with time zone, p_user_id uuid DEFAULT NULL::uuid, p_supervisor_token_jti text DEFAULT NULL::text, p_supervisor_scope jsonb DEFAULT NULL::jsonb, p_discount_reason text DEFAULT NULL::text, p_notes text DEFAULT NULL::text, p_payment_incidents jsonb DEFAULT NULL::jsonb, p_cash_received_cup numeric DEFAULT NULL::numeric, p_cash_received_usd numeric DEFAULT NULL::numeric, p_change_given_cup numeric DEFAULT NULL::numeric, p_change_given_usd numeric DEFAULT NULL::numeric, p_change_currency text DEFAULT NULL::text, p_payment_components jsonb DEFAULT NULL::jsonb, p_customer_code text DEFAULT NULL::text, p_customer_address text DEFAULT NULL::text, p_customer_ci text DEFAULT NULL::text, p_customer_phone text DEFAULT NULL::text)
  RETURNS jsonb
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -6695,6 +6725,11 @@ DECLARE
   v_incidence_note text;
   v_notes_final text;
   v_it jsonb;
+  -- MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: puerta de
+  -- identidad del pagador en ventas con transferencia (canal canónico).
+  v_has_transfer_channel boolean := false;
+  v_gate_pay_row jsonb;
+  v_gate_missing text;
 BEGIN
   -- 1. Advisory lock por store (serializa ventas concurrentes) — sin cambio
   PERFORM pg_advisory_xact_lock(hashtext(p_store_id::text));
@@ -6717,6 +6752,64 @@ BEGIN
   -- 4. Operation date validation — sin cambio
   IF p_operation_date IS NOT NULL THEN
     PERFORM public.validate_operation_date(p_operation_date, p_store_id);
+  END IF;
+
+  -- ── 4.bis MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 ──
+  -- IDENTIDAD DEL PAGADOR en ventas con transferencia. Fail-closed ANTES de
+  -- CUALQUIER escritura (incl. idempotency_registry): toda venta cuyo canal
+  -- canónico incluya transferencia exige nombre, carné de identidad y
+  -- teléfono del pagador (la referencia POR FILA ya se exige en la
+  -- validación estructural §5.1 items[].payments). Canal canónico = filas de
+  -- pago por línea (items[].payments) o componentes por moneda
+  -- (p_payment_components); los pools SOLOS sin filas ni componentes son el
+  -- flujo legado del Catálogo de ventas y NO activan esta puerta (fuera del
+  -- alcance; las ventas históricas y ese flujo quedan intactos).
+  IF p_items IS NOT NULL AND jsonb_typeof(p_items) = 'array' THEN
+    FOR v_gate_pay_row IN SELECT * FROM jsonb_array_elements(p_items) LOOP
+      IF v_gate_pay_row ? 'payments' AND jsonb_typeof(v_gate_pay_row->'payments') = 'array' THEN
+        IF EXISTS (
+          SELECT 1 FROM jsonb_array_elements(v_gate_pay_row->'payments') gp
+          WHERE COALESCE(gp.value->>'method', '') IN ('transfer', 'external_transfer', 'zelle')
+            AND COALESCE((gp.value->>'amount')::numeric, 0) > 0
+        ) THEN
+          v_has_transfer_channel := true;
+        END IF;
+      END IF;
+      EXIT WHEN v_has_transfer_channel;
+    END LOOP;
+  END IF;
+  IF NOT v_has_transfer_channel AND p_payment_components IS NOT NULL
+     AND jsonb_typeof(p_payment_components) = 'array' THEN
+    IF EXISTS (
+      SELECT 1 FROM jsonb_array_elements(p_payment_components) gc
+      WHERE COALESCE(gc.value->>'method', '') IN ('transfer', 'external_transfer', 'zelle')
+    ) THEN
+      v_has_transfer_channel := true;
+    END IF;
+  END IF;
+  IF NOT v_has_transfer_channel AND p_items IS NOT NULL
+     AND jsonb_typeof(p_items) = 'array'
+     AND (COALESCE(p_transfer_amount, 0) > 0 OR COALESCE(p_zelle_amount, 0) > 0) THEN
+    IF EXISTS (SELECT 1 FROM jsonb_array_elements(p_items) gi WHERE gi.value ? 'payments') THEN
+      v_has_transfer_channel := true;
+    END IF;
+  END IF;
+
+  IF v_has_transfer_channel THEN
+    v_gate_missing := '';
+    IF COALESCE(btrim(COALESCE(p_customer_name, '')), '') = '' THEN
+      v_gate_missing := v_gate_missing || 'nombre; ';
+    END IF;
+    IF COALESCE(btrim(COALESCE(p_customer_ci, '')), '') = '' THEN
+      v_gate_missing := v_gate_missing || 'carné de identidad; ';
+    END IF;
+    IF COALESCE(btrim(COALESCE(p_customer_phone, '')), '') = '' THEN
+      v_gate_missing := v_gate_missing || 'teléfono; ';
+    END IF;
+    IF v_gate_missing <> '' THEN
+      RAISE EXCEPTION 'ERR_TRANSFER_IDENTITY_REQUIRED: la venta incluye transferencia y exige los datos de quien transfiere (faltan: %). Ninguna venta con transferencia se confirma sin N.º de transferencia, nombre, carné de identidad y teléfono.',
+        left(v_gate_missing, length(v_gate_missing) - 2);
+    END IF;
   END IF;
 
   -- 5. IDEMPOTENCIA (§7 — DESPUÉS de auth/seller; identidad = clave + actor +
@@ -6769,6 +6862,10 @@ BEGIN
       -- MISIÓN PAGOS MIXTOS (2026-10-24): los componentes por moneda forman
       -- parte de la identidad de idempotencia (misma clave + componentes
       -- distintos = conflicto limpio, sin duplicar filas del ledger).
+      -- MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001:
+      -- el teléfono del pagador forma parte de la identidad de
+      -- idempotencia (mismo criterio que p_customer_ci).
+      '|customer_phone=' || COALESCE(p_customer_phone, '') ||
       '|payment_components=' || COALESCE(p_payment_components::text, '')
     );
 
@@ -7527,6 +7624,10 @@ BEGIN
     sale_currency, sale_exchange_rate, completed_at, idempotency_key, created_at,
     cash_amount, transfer_amount, external_transfer_amount,
     customer_id, customer_name, customer_ci,
+    -- MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001:
+    -- teléfono del pagador (obligatorio con transferencia; columna
+    -- transactions.customer_phone existente desde 20260731000001).
+    customer_phone,
     -- CLASIFICATOR-PARTIES (2026-11-04): snapshot histórico del comprador
     customer_code, customer_address,
     -- MISIÓN-FLEX: nota (manual + incidencia) e incidencias estructuradas
@@ -7541,7 +7642,7 @@ BEGIN
     v_calculated_subtotal, v_calculated_tax, v_applied_taxes_canonical,
     p_sale_currency, v_server_rate, v_eff, p_idempotency_key, v_eff,
     v_cash_amt, v_transfer_amt, v_zelle_amt,
-    p_customer_id, p_customer_name, p_customer_ci,
+    p_customer_id, p_customer_name, p_customer_ci, p_customer_phone,
     p_customer_code, p_customer_address,
     v_notes_final, v_incidents,
     p_cash_received_cup, p_cash_received_usd, p_change_given_cup, p_change_given_usd,
@@ -8654,8 +8755,10 @@ BEGIN
   v_store_id := v_receipt.store_id;
 
   -- 3. Autorización multitienda (mismo guard que void_pending_reception).
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2): eliminar un borrador es intervenir la recepción →
+  -- creador original con membresía activa, o superadministrador.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede eliminar el borrador';
   END IF;
 
   -- 4. Defense-in-depth: un borrador nunca tocó inventario ni pagos, pero si
@@ -15414,9 +15517,12 @@ BEGIN
     RAISE EXCEPTION 'ERR_PO_NOT_FOUND';
   END IF;
 
-  -- ─── 2. Validar acceso (tenant-aware via has_store_access) ───
-  IF NOT public.has_store_access(v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- ─── 2. Validar autorización de CREACIÓN de recepción (CP-BRA-R06 §0.1):
+  --        recibir contra OC crea una recepción → mismo permiso que
+  --        register_reception: encargado con membresía activa o superadmin.
+  --        (register_reception re-verifica el gate en su propia barrera.)
+  IF NOT public.can_create_reception(auth.uid(), v_store_id) THEN
+    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: recibir contra una orden de compra requiere rol encargado con membresía activa en la tienda (o superadministrador de plataforma)';
   END IF;
 
   -- ─── 3. Validar estado de la OC ───
@@ -16473,8 +16579,13 @@ DECLARE
 BEGIN
   PERFORM public.validate_operation_date(p_reception_date, p_store_id);
 
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
-    RAISE EXCEPTION 'Unauthorized store access';
+  -- CP-BRA-R06 (§0.1, decisión del propietario): creación de recepciones =
+  -- membresía ACTIVA con rol exacto 'encargado' en la tienda, o
+  -- superadministrador de plataforma. El acceso a la tienda con cualquier
+  -- otro rol (warehouse/almacenero, clerk/facturadora, usuario, manager,
+  -- admin de tienda o de plataforma) NO concede permiso de creación.
+  IF v_caller_uid IS NULL OR NOT public.can_create_reception(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: la creación de recepciones requiere rol encargado con membresía activa en la tienda (o superadministrador de plataforma)';
   END IF;
 
   IF p_supplier IS NULL OR p_supplier = '' THEN
@@ -16783,6 +16894,8 @@ BEGIN
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
   VALUES ('REGISTER_RECEPTION', 'receipts', v_receipt_id, p_store_id, v_caller_uid,
     jsonb_build_object(
+      'authorization_source', CASE WHEN public.is_superadmin_uid(v_caller_uid) THEN 'platform_superadmin' ELSE 'encargado_membership' END,
+      'superadmin_global', public.is_superadmin_uid(v_caller_uid),
       'supplier', p_supplier,
       'total_cost', v_total_cost,
       'items_count', jsonb_array_length(p_items),
@@ -19505,16 +19618,18 @@ BEGIN
   END IF;
 
   -- R1 [P1]: tenant/store isolation. Mirrors V1 model + PR-4 guard.
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_receipt.store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2): la reversión ES la anulación de una recepción
+  -- confirmada → derecho del CREADOR ORIGINAL con membresía activa, o del
+  -- superadministrador global. Sustituye el par has_store_access_as +
+  -- can_reverse_document (rol admin/manager/encargado/warehouse) que
+  -- permitía intervenir recepciones ajenas. Guardas financieras intactas.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_receipt.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede revertirla';
   END IF;
 
   -- W9.5 B-10: capa normativa de rol (fuente unica can_reverse_document).
   -- Politica congelada: operadores de recepciones (membership admin/manager/
   -- encargado/warehouse en la tienda del receipt) o admin global transversal.
-  IF NOT public.can_reverse_document(v_caller_uid, v_receipt.store_id, 'receipt') THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: reversion de recepcion requiere rol admin/manager/encargado/warehouse en la tienda';
-  END IF;
 
   -- CP-AP-ACCOUNTING-INTEGRITY-001 §FASE2/4: GUARD de pagos vivos. Una
   -- recepción con pagos confirmados/aplicados (filas 'in' sin contra-fila)
@@ -19593,6 +19708,9 @@ BEGIN
   VALUES
     (v_caller_uid, v_receipt.store_id, 'REVERSE_RECEIPT_V2', 'receipts', p_receipt_id,
      jsonb_build_object('reason', p_reason,
+                        'authorization_source', CASE WHEN public.is_superadmin_uid(v_caller_uid) THEN 'platform_superadmin' ELSE 'creator_membership' END,
+                        'superadmin_global', public.is_superadmin_uid(v_caller_uid),
+                        'creator_id', v_receipt.user_id,
                         'items_processed', v_items_processed,
                         'payments_reversed', v_reversed_payments,
                         'old_status', v_receipt.status, 'new_status', 'reversed',
@@ -20199,8 +20317,10 @@ BEGIN
     FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
 
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2): editar un borrador es intervenir la recepción →
+  -- creador original con membresía activa, o superadministrador.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede editar el borrador';
   END IF;
 
   v_supplier := NULLIF(btrim(COALESCE(p_header->>'supplier', '')), '');
@@ -21627,6 +21747,7 @@ BEGIN
     ri.moneda_recepcion,
     ri.tasa_cambio_recepcion,
     r.store_id,
+    r.user_id AS receipt_creator,
     r.status AS receipt_status
   INTO v_item
   FROM public.receipt_items ri
@@ -21643,9 +21764,11 @@ BEGIN
   v_old_tasa := v_item.tasa_cambio_recepcion;
   v_old_moneda := v_item.moneda_recepcion;
 
-  -- (2) Authorization
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- (2) Authorization — CP-BRA-R06 (§0.2): la corrección de tasa/moneda de
+  --        una línea de borrador es intervenir la recepción → creador
+  --        original con membresía activa, o superadministrador.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_item.receipt_creator, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede corregir el borrador';
   END IF;
 
   -- (3) Status guard
@@ -22054,9 +22177,11 @@ BEGIN
 
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
 
-  -- PR-2 C4: alinear auth con patrón v2.12.12 (has_store_access_as + v_caller_uid)
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06: gate reescrito (antes patrón v2.12.12 has_store_access_as)
+  -- CP-BRA-R06 (§0.2): actualizar líneas de un borrador es intervenir la
+  -- recepción → creador original con membresía activa, o superadministrador.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede modificar el borrador';
   END IF;
 
   IF v_status != 'pending' THEN
@@ -22725,8 +22850,10 @@ BEGIN
   END IF;
 
   -- 4. Authorization (patrón v2.12.12: OR no AND)
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_receipt.store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2): anular es derecho del CREADOR ORIGINAL con membresía
+  -- activa, o del superadministrador. Guardas de estado/pagos intactas.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_receipt.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede anularla';
   END IF;
 
   -- 5. Operation date validation (política forward-only)
@@ -22772,6 +22899,11 @@ BEGIN
     'receipts',
     p_receipt_id,
     jsonb_build_object(
+      'authorization_source', CASE WHEN public.is_superadmin_uid(v_caller_uid) THEN 'platform_superadmin' ELSE 'creator_membership' END,
+      'superadmin_global', public.is_superadmin_uid(v_caller_uid),
+      'creator_id', v_receipt.user_id,
+      'old_status', 'pending',
+      'new_status', 'voided',
       'reason', p_reason,
       'payments_reversed', v_reversed_payments,
       'items_preserved', (SELECT COUNT(*) FROM public.receipt_items WHERE receipt_id = p_receipt_id)

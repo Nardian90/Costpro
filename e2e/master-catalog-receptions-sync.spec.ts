@@ -25,10 +25,19 @@ import { test, expect } from '@playwright/test';
 import {
   signIn, sb, rpcAsUser,
   ADMIN_EMAIL, ADMIN_PASS, CLERK_EMAIL, CLERK_PASS,
+  ensureEncargadoSession,
 } from './fixtures/session.fixture';
 import { readRunContext } from './fixtures/run-env';
 
 let adminToken = '';
+// CP-BRA-R06: token de ENCARGADO por tienda (creación = encargado|superadmin).
+const encTokens = new Map<string, string>();
+async function encTokenFor(storeId: string): Promise<string> {
+  if (!encTokens.has(storeId)) {
+    encTokens.set(storeId, (await ensureEncargadoSession(storeId)).token);
+  }
+  return encTokens.get(storeId)!;
+}
 let adminId = '';
 let clerkToken = '';
 let tenantId = '';
@@ -168,7 +177,7 @@ test.describe.serial('Catálogo maestro ← Recepciones + reconciliación', () =
   // ══════════════════════════════════════════════════════════════════════
   test('P2 — Recepción en tienda conectada, SKU nuevo: maestro + vínculo + auditoría', async () => {
     const S = sku('P2');
-    const r = await rpcAsUser('register_reception', adminToken, {
+    const r = await rpcAsUser('register_reception', await encTokenFor(storeA), {
       p_store_id: storeA,
       p_supplier: `Proveedor ${NS}`,
       p_invoice_number: `${NS}-R2`,
@@ -206,11 +215,13 @@ test.describe.serial('Catálogo maestro ← Recepciones + reconciliación', () =
     // Vínculo persistido
     expect(locales[0].master_product_id).toBe(masters[0].id);
 
-    // Auditoría: identidad compartida + operación
+    // Auditoría: identidad compartida + operación. CP-BRA-R06: el actor de la
+    // recepción es el ENCARGADO de la tienda (antes admin del run) — la
+    // auditoría se identifica por acción+SKU, no por el usuario.
     const logs = await sb.select<{ action: string; metadata: Record<string, unknown> }>(
-      'audit_logs', `user_id=eq.${adminId}&action=eq.RECEPTION_PRODUCT_LINKED_MASTER&select=action,metadata`,
+      'audit_logs', `action=eq.RECEPTION_PRODUCT_LINKED_MASTER&metadata->>sku=eq.${S}&select=action,metadata`,
     );
-    expect(logs.some(l => (l.metadata as { sku?: string }).sku === S)).toBeTruthy();
+    expect(logs.length).toBeGreaterThan(0);
     const identity = await sb.select<{ field: string; new_value: string }>(
       'master_change_log', `master_product_id=eq.${masters[0].id}&select=field,new_value`,
     );
@@ -229,7 +240,7 @@ test.describe.serial('Catálogo maestro ← Recepciones + reconciliación', () =
     expect(m0?.id).toBeTruthy();
 
     // Recepción con el MISMO SKU (nombre solicitado distinto a propósito)
-    const r = await rpcAsUser('register_reception', adminToken, {
+    const r = await rpcAsUser('register_reception', await encTokenFor(storeA), {
       p_store_id: storeA,
       p_supplier: `Proveedor ${NS}`,
       p_invoice_number: `${NS}-R3`,
@@ -262,7 +273,7 @@ test.describe.serial('Catálogo maestro ← Recepciones + reconciliación', () =
   // ══════════════════════════════════════════════════════════════════════
   test('P4 — Tienda NO conectada: alta local pura, sin maestro ni vínculo', async () => {
     const S = sku('P4');
-    const r = await rpcAsUser('register_reception', adminToken, {
+    const r = await rpcAsUser('register_reception', await encTokenFor(storeC), {
       p_store_id: storeC,
       p_supplier: `Proveedor ${NS}`,
       p_invoice_number: `${NS}-R4`,
@@ -333,7 +344,7 @@ test.describe.serial('Catálogo maestro ← Recepciones + reconciliación', () =
     const S2 = sku('P6B');
     // Recepción con DOS productos nuevos donde el segundo viola B4 (costo 0):
     // la RPC debe fallar COMPLETA (producto 1 + maestro 1 incluidos).
-    const bad = await rpcAsUser('register_reception', adminToken, {
+    const bad = await rpcAsUser('register_reception', await encTokenFor(storeA), {
       p_store_id: storeA,
       p_supplier: `Proveedor ${NS}`,
       p_invoice_number: `${NS}-R6`,
@@ -354,7 +365,7 @@ test.describe.serial('Catálogo maestro ← Recepciones + reconciliación', () =
     expect(await sb.select('receipts', `store_id=eq.${storeA}&reference_doc=eq.${NS}-R6&select=id`)).toHaveLength(0);
 
     // Reintento VÁLIDO de la misma recepción: prospera sin duplicados.
-    const retry = await rpcAsUser('register_reception', adminToken, {
+    const retry = await rpcAsUser('register_reception', await encTokenFor(storeA), {
       p_store_id: storeA,
       p_supplier: `Proveedor ${NS}`,
       p_invoice_number: `${NS}-R6`,
@@ -372,7 +383,7 @@ test.describe.serial('Catálogo maestro ← Recepciones + reconciliación', () =
     expect(await sb.select('master_products', `tenant_id=eq.${tenantId}&sku=eq.${S2}&select=id`)).toHaveLength(1);
 
     // Reenvío con factura duplicada: error accionable, sin efectos residuales.
-    const dup = await rpcAsUser('register_reception', adminToken, {
+    const dup = await rpcAsUser('register_reception', await encTokenFor(storeA), {
       p_store_id: storeA,
       p_supplier: `Proveedor ${NS}`,
       p_invoice_number: `${NS}-R6`,
@@ -389,7 +400,7 @@ test.describe.serial('Catálogo maestro ← Recepciones + reconciliación', () =
   test('P1 — Reconciliación: backfill idempotente + datos compartidos con la tienda como referencia', async () => {
     // Producto propio de P1 (autocontenido): recepción válida en tienda conectada.
     const SA = sku('P1A');
-    const reg = await rpcAsUser('register_reception', adminToken, {
+    const reg = await rpcAsUser('register_reception', await encTokenFor(storeA), {
       p_store_id: storeA,
       p_supplier: `Proveedor ${NS}`,
       p_invoice_number: `${NS}-R1`,

@@ -15,7 +15,19 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const sessionState = { value: { user: { id: 'a1111111-1111-1111-1111-111111111111', role: 'admin' } } as any };
+// CP-BRA-R06 (§0.2): corregir una línea es intervenir la recepción → el
+// actor legítimo de estas pruebas (guard de estado económico) es el CREADOR
+// original con membresía activa; la ruta pasa el gate y el test sigue
+// verificando EXACTAMENTE lo mismo (inmutabilidad económica).
+const CREATOR_ID = 'a1111111-1111-1111-1111-111111111111';
+const creatorSession = () => ({
+  user: {
+    id: CREATOR_ID,
+    role: 'encargado',
+    memberships: [{ store_id: 'store-1', role: 'encargado', status: 'active' }],
+  },
+});
+const sessionState = { value: creatorSession() as any };
 vi.mock('@/lib/auth-middleware', () => ({
   withAuth: (fn: any) => async (req: any) => fn(req, sessionState.value),
   AuthenticatedSession: {},
@@ -41,6 +53,7 @@ type ItemRow = {
   receipts: { status: string; store_id: string };
 };
 const itemLookup = { value: { data: null as ItemRow | null, error: null as any } };
+const receiptAuthLookup = { value: { data: { user_id: CREATOR_ID, store_id: 'store-1' } as { user_id: string; store_id: string } | null, error: null as any } };
 const rpcState = { value: { data: null as any, error: null as any } };
 const rpcCalls: Array<{ name: string; args: any }> = [];
 
@@ -50,6 +63,14 @@ const mockAdminClient = {
     return Promise.resolve(rpcState.value);
   },
   from: (table: string) => {
+    if (table === 'receipts') {
+      // Lookup de autorización R-06 de la ruta (creador + tienda de la cabecera).
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue(receiptAuthLookup.value),
+      };
+    }
     if (table !== 'receipt_items') throw new Error(`tabla inesperada en admin mock: ${table}`);
     return {
       select: vi.fn().mockReturnThis(),
@@ -89,7 +110,8 @@ beforeEach(() => {
     },
     error: null,
   };
-  sessionState.value = { user: { id: 'a1111111-1111-1111-1111-111111111111', role: 'admin' } };
+  sessionState.value = creatorSession() as any;
+  receiptAuthLookup.value = { data: { user_id: CREATOR_ID, store_id: 'store-1' }, error: null };
 });
 
 describe('PATCH items/[itemId] — inmutabilidad económica (CP-RECEIPT-INTEGRITY-001)', () => {
@@ -160,8 +182,8 @@ describe('PATCH items/[itemId] — inmutabilidad económica (CP-RECEIPT-INTEGRIT
     expect(data.error).toContain('Debe proporcionar');
   });
 
-  it('403 para rol sin privilegio (cajero)', async () => {
-    sessionState.value = { user: { id: 'a1111111-1111-1111-1111-111111111111', role: 'cajero' } };
+  it('403 para actor distinto del creador (R-06 §0.2: cajero no es el creador)', async () => {
+    sessionState.value = { user: { id: 'b2222222-2222-4222-8222-222222222222', role: 'cajero', memberships: [{ store_id: 'store-1', role: 'cajero', status: 'active' }] } } as any;
     const { status } = await call({ tasa_cambio_recepcion: 700 });
     expect(status).toBe(403);
   });

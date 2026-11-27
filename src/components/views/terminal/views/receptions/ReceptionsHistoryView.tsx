@@ -20,6 +20,7 @@ import {
   DollarSign,
   Loader2,
   Package,
+  Lock,
 } from 'lucide-react';
 import { cn, formatCurrency, formatDate, formatTime } from '@/lib/utils';
 import SearchBar from '@/components/ui/SearchBar';
@@ -31,7 +32,7 @@ import { BaseModal } from '@/components/ui/BaseModal';
 import { apiFetch } from '@/lib/api-fetch';
 import { toast } from 'sonner';
 import { DocumentStatusBadge, canReverse } from '@/components/ui/DocumentStatusBadge';
-import {canReverseDocumentInStore, isAdminLevel } from '@/lib/roles';
+import { canCreateReceptionInStore, canManageOwnReception, isAdminLevel, isSuperAdmin } from '@/lib/roles';
 import { ReverseDocumentModal } from '@/components/ui/ReverseDocumentModal';
 // CP-AP-ACCOUNTING-INTEGRITY-AND-SUPPLIER-RECONCILIATION-001 §FASE4: diálogo del guard de pagos vivos.
 import { UnresolvedPaymentsDialog } from '@/components/payments/UnresolvedPaymentsDialog';
@@ -134,8 +135,16 @@ export default function ReceptionsHistoryView() {
   // FIX-WIZARD: Estado del wizard de backfill masivo
   const user = useAuthStore((s) => s.user);
   const storeId = (user as any)?.activeStoreId;
-  // W9.5 B-10: gate de rol (espejo de can_reverse_document) — operadores de recepciones
-  const canReverseReceipt = canReverseDocumentInStore(user, storeId, 'receipt');
+  // W9.5 B-10: (histórico) el gate de reversión por rol fue sustituido por
+  // CP-BRA-R06: revertir/anular pertenece al creador original o al superadmin
+  // (canManageOwnReception por fila, decisión del propietario §0.2).
+  // CP-BRA-R06 (CP-BRA-R06-FINAL-CERTIFICATION-001, decisión del propietario):
+  // · CREAR recepción → encargado con membresía activa en la tienda o superadmin.
+  // · CONFIRMAR/ANULAR/EDITAR una recepción → su creador original con membresía
+  //   activa, o superadmin global. La BD impone exactamente esta política
+  //   (migración 20261128120000); esto es su espejo visual.
+  const canCreateReception = canCreateReceptionInStore(user, storeId);
+  const actingAsSuperadmin = isSuperAdmin(user);
   // CP-ORG-001 ciclo 5: nivel administrativo transversal (admin|superadmin)
   const isAdmin = isAdminLevel(user?.role) || (user as any)?.role === 'manager';
   const [showBackfillWizard, setShowBackfillWizard] = useState(false);
@@ -195,23 +204,44 @@ export default function ReceptionsHistoryView() {
         {/* F4 (IA-F11): encabezado migrado a PageHeader (F2) — título/description/acciones
             en la jerarquía canónica; título 1:1 "Recepciones" (label de menú).
             Antes: h2 self-made uppercase + fila de acciones ad-hoc. */}
+        {actingAsSuperadmin && (
+          <div
+            role="note"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-primary/30 bg-primary/5 text-[11px] font-bold text-primary"
+          >
+            <Building2 className="w-3.5 h-3.5 shrink-0" />
+            Superadministrador: interviniendo en la tienda activa (acceso global de autorización, sujetas a estados y guards financieros).
+          </div>
+        )}
         <PageHeader
           title="Recepciones"
           description="Historial de recepciones de mercancía"
           icon={Warehouse}
           primaryAction={
-            <button
-              type="button"
-              onClick={() => setCurrentView('recepcion')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              aria-label="Crear nueva recepción"
-            >
-              <Plus className="w-4 h-4" />
-              Nueva
-            </button>
+            canCreateReception ? (
+              <button
+                type="button"
+                onClick={() => setCurrentView('recepcion')}
+                className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest hover:opacity-90 transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                aria-label="Crear nueva recepción"
+              >
+                <Plus className="w-4 h-4" />
+                Nueva
+              </button>
+            ) : (
+              <span
+                role="note"
+                title="Solo un encargado con membresía activa en esta tienda (o el superadministrador) puede crear recepciones"
+                className="inline-flex items-center gap-2 px-3 py-2 min-h-[44px] rounded-xl border border-border bg-muted/40 text-muted-foreground text-[10px] font-bold uppercase tracking-wider"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                Crear recepciones: solo encargado
+              </span>
+            )
           }
           secondaryActions={
             <>
+              {canCreateReception && (
               <button
                 type="button"
                 onClick={() => {
@@ -225,6 +255,7 @@ export default function ReceptionsHistoryView() {
                 <Zap className="w-4 h-4" />
                 <span className="hidden sm:inline">Express</span>
               </button>
+              )}
               {/* FIX-WIZARD: Botón de wizard de backfill masivo */}
               {isAdmin && (
                 <button
@@ -459,7 +490,9 @@ export default function ReceptionsHistoryView() {
                           </button>
                           {/* Reception-Flow-Fix: botón "Confirmar" solo para pendientes.
                               Aplica los cambios de stock y vuelve la recepción no editable. */}
-                          {rec.status === 'pending' && (
+                          {/* CP-BRA-R06: confirmar pertenece al creador original
+                              (con membresía activa) o al superadmin. */}
+                          {rec.status === 'pending' && canManageOwnReception(user, rec) && (
                             <button type="button"
                               onClick={() => handleConfirmPendingRequest(rec)}
                               className="w-11 h-11 inline-flex items-center justify-center rounded-lg border-2 border-success/40 bg-success/90 text-white dark:text-black hover:bg-success transition-all active:scale-95"
@@ -472,7 +505,9 @@ export default function ReceptionsHistoryView() {
                           {/* ESTÁNDAR: para confirmadas (active) SOLO Revertir + Duplicar.
                               "Invertir" se eliminó — era redundante con Revertir y sin trazabilidad.
                               Revertir descuenta stock + crea kardex entries + pide motivo + audita. */}
-                          {rec.status === 'active' && canReverseReceipt && (
+                          {/* CP-BRA-R06: revertir/anular una recepción confirmada
+                              pertenece a su creador original o al superadmin. */}
+                          {rec.status === 'active' && canManageOwnReception(user, rec) && (
                             <>
                               {/* ESTÁNDAR: Revertir — única forma de deshacer recepción confirmada */}
                               <button type="button"
@@ -502,7 +537,7 @@ export default function ReceptionsHistoryView() {
                           )}
                           {/* Editar — SOLO para pendientes. Las confirmadas no son editables
                               (requiere Invertir + nueva recepción para corregir). */}
-                          {rec.status === 'pending' && (
+                          {rec.status === 'pending' && canManageOwnReception(user, rec) && (
                             <button type="button"
                               onClick={() => handleEdit(rec)}
                               className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-warning hover:text-foreground transition-all active:scale-95"
@@ -513,7 +548,7 @@ export default function ReceptionsHistoryView() {
                           )}
                           {/* Anular — SOLO para pendientes. Las confirmadas se invierten
                               (no se anulan directamente) para mantener trazabilidad. */}
-                          {rec.status === 'pending' && (
+                          {rec.status === 'pending' && canManageOwnReception(user, rec) && (
                             <button type="button"
                               onClick={() => handleVoidRequest(rec)}
                               className="w-11 h-11 inline-flex items-center justify-center rounded-lg border border-border hover:bg-destructive hover:text-foreground transition-all active:scale-95"
@@ -527,7 +562,7 @@ export default function ReceptionsHistoryView() {
                               recepción pendiente y sus líneas (RPC
                               delete_pending_reception con guard de estado +
                               auditoría). Solo visible para pending. */}
-                          {rec.status === 'pending' && (
+                          {rec.status === 'pending' && canManageOwnReception(user, rec) && (
                             <button type="button"
                               onClick={() => handleDeleteDraftRequest(rec as any)}
                               disabled={isDeletingDraft}
@@ -584,13 +619,16 @@ export default function ReceptionsHistoryView() {
         onToggleSc204Values={setIncludeSc204Values}
         isEditMode={isEditMode}
         onUpdateSubmit={(updates) => selectedReceipt && handleUpdateSubmit(selectedReceipt.id, updates)}
-        onVoidRequest={async () => {
+        // CP-BRA-R06: la acción de anular desde el modal de detalles solo se
+        // ofrece al creador original (con membresía activa) o al superadmin —
+        // nadie más debe recibir acciones sobre recepciones ajenas.
+        onVoidRequest={canManageOwnReception(user, selectedReceipt) ? async () => {
           // CP-AP-ACCOUNTING-INTEGRITY-001 §FASE4: guard de pagos vivos antes de
           // ejecutar la anulación desde el modal de detalles (pendientes).
           if (!selectedReceipt) return;
           if (await checkUnresolvedPayments(selectedReceipt)) return;
           handleVoidConfirm(selectedReceipt);
-        }}
+        } : undefined}
         isUpdating={isUpdating}
         isVoiding={isVoiding}
         // Reception-Flow-Fix: pasar props para confirmar pendiente.

@@ -588,9 +588,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   lote atómico por orden para pagos de OT (R-03); +1 — 20261127150000
     //   gate admin/manager/encargado de pay_commission (§0.2); +1 — FASE 4
     //   Tienda Pueblo (regularización gobernada). Posiciones previas intactas = 223
-    expect(m.total_incluidos).toBe(224);
+    expect(m.total_incluidos).toBe(225);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(224);
+    expect(incluidos.length).toBe(225);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -704,6 +704,10 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // FASE 4 Tienda Pueblo (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): regularización
     // gobernada OWNER_CONFIRMATION — posición 224 del stream (replay-safe)
     expect(pos('20261127160000_cpbra_tienda_pueblo_receipts.sql')).toBe(224);
+    // CP-BRA-R06 (CP-BRA-R06-FINAL-CERTIFICATION-001): autorización de
+    // recepciones (crear=encargado|superadmin; confirmar/anular=creador|
+    // superadmin) — posición 225 del stream
+    expect(pos('20261128120000_cpbra_r06_reception_authorization.sql')).toBe(225);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

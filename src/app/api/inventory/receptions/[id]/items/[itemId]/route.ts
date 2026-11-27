@@ -1,4 +1,4 @@
-import { isAdminLevel } from '@/lib/roles';
+import { sessionCanManageReception } from '@/lib/reception-authorization';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, type AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
@@ -75,8 +75,28 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'Receipt ID e Item ID son requeridos' }, { status: 400 });
   }
 
-  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager') {
-    return NextResponse.json({ error: 'Forbidden — requiere rol admin o manager' }, { status: 403 });
+  // CP-BRA-R06 (CP-BRA-R06-FINAL-CERTIFICATION-001 §0.2): corregir la
+  // tasa/moneda de una línea de borrador es intervenir la recepción →
+  // creador original con membresía activa, o superadministrador. La RPC
+  // update_receipt_item_tasa re-verifica el mismo gate (migración
+  // 20261128120000) con el creador de la cabecera.
+  const authCheck = await getSupabaseAdminSafe()
+    ?.from('receipts')
+    .select('user_id, store_id')
+    .eq('id', receiptId)
+    .single();
+  if (!authCheck?.data) {
+    return NextResponse.json({ error: 'Recepción no encontrada' }, { status: 404 });
+  }
+  if (!sessionCanManageReception(session, { user_id: authCheck.data.user_id, store_id: authCheck.data.store_id })) {
+    return NextResponse.json(
+      {
+        error: 'Forbidden',
+        message: 'Solo el creador original de la recepción (con membresía activa) o el superadministrador puede corregir el borrador',
+        code: 'ERR_UNAUTHORIZED',
+      },
+      { status: 403 },
+    );
   }
 
   const body = await req.json().catch(() => ({}));
