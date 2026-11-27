@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-27T11:51:09.043Z
+-- Captured  : 2026-11-27T14:51:42.849Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 233 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -14750,9 +14750,14 @@ BEGIN
     RAISE EXCEPTION 'ERR_COMMISSION_NOT_FOUND: %', p_payment_id;
   END IF;
 
-  IF NOT public.has_store_role_as(v_uid, v_comm.store_id, 'admin')
-     AND NOT public.has_store_role_as(v_uid, v_comm.store_id, 'manager') THEN
-    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: pagar comisiones requiere admin o manager';
+  -- §0.2 (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): rol de GESTIÓN autorizado a
+  -- pagar comisiones en su tienda = admin, manager O ENCARGADO (membresía
+  -- activa vía has_store_role_as; compat de admin de plataforma preservada
+  -- dentro de la propia función — sin privilegios implícitos nuevos). Un solo
+  -- gate con el patrón canónico R-05 (mismo helper que
+  -- confirm_inventory_adjustment). Clerk/usuario/otra tienda → rechazo.
+  IF NOT public.has_store_role_as(v_uid, v_comm.store_id, ARRAY['admin', 'manager', 'encargado']::text[]) THEN
+    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: pagar comisiones requiere rol de gestión (admin, manager o encargado)';
   END IF;
 
   -- Idempotencia natural (misma semántica que la ruta: ya pagada → replay)
