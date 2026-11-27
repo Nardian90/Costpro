@@ -708,3 +708,43 @@ export function num(v: unknown, fallback = 0): number {
   const n = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(n) ? n : fallback;
 }
+
+// ── CP-BRA-R06 (CP-BRA-R06-FINAL-CERTIFICATION-001) ──────────────────────────
+/**
+ * Sesión de ENCARGADO para specs que crean recepciones.
+ *
+ * Política del propietario (vinculante): CREAR recepciones exige membresía
+ * activa con rol exacto 'encargado' en la tienda, o superadmin de plataforma.
+ * Los specs históricos creaban recepciones con el admin del run (rol 'admin'
+ * sin membresía) — tras la migración 20261128120000 la BD los rechaza.
+ * Este helper garantiza (idempotente) la membresía encargado del usuario
+ * encargado del run en la tienda indicada y devuelve su sesión firmada.
+ */
+export async function ensureEncargadoSession(storeId: string): Promise<Session> {
+  const email = process.env.E2E_ENCARGADO_EMAIL || 'encargado@demo.com';
+  const pass = process.env.E2E_ENCARGADO_PASS || 'demo123';
+  // resolver el user_id por email (auth.users no es legible por service REST;
+  // el id via E2E_ENCARGADO_ID en modo aislado, o por profiles)
+  let userId = process.env.E2E_ENCARGADO_ID || '';
+  if (!userId) {
+    const rows = await sb.select('profiles', `email=eq.${encodeURIComponent(email)}&select=id&limit=1`);
+    userId = (rows[0] as { id: string } | undefined)?.id || '';
+  }
+  if (!storeId || !userId) {
+    throw new Error('[ensureEncargadoSession] faltan storeId o el usuario encargado del run');
+  }
+  // membresía idempotente (si ya existe activa encargado, no duplicar)
+  const existing = await sb.select(
+    'user_store_memberships',
+    `user_id=eq.${userId}&store_id=eq.${storeId}&select=user_id,store_id,role,status&limit=1`,
+  );
+  const already = (existing[0] as { role: string; status: string } | undefined);
+  if (!already || already.role !== 'encargado' || already.status !== 'active') {
+    if (already) {
+      await sb.update('user_store_memberships', `user_id=eq.${userId}&store_id=eq.${storeId}`, { role: 'encargado', status: 'active' });
+    } else {
+      await sb.insert('user_store_memberships', [{ user_id: userId, store_id: storeId, role: 'encargado', status: 'active' }]);
+    }
+  }
+  return signIn(email, pass);
+}

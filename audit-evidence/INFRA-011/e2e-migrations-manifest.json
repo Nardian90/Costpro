@@ -165,7 +165,7 @@
   "total_considerados": 640,
   "total_incluidos": 225,
   "total_excluidos": 415,
-  "digest": "4b03f4d0935c616c47cb7632966cc80237a86a489d6d611a1f1b19c33b1250e5",
+  "digest": "cb65199a043929531f9f7e859dc708fe5a19afd20909872981f0922fcb40846d",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6347,14 +6347,14 @@
     },
     {
       "nombre": "20261128120000_cpbra_r06_reception_authorization.sql",
-      "bytes": 80304,
-      "sha256_original": "9ac6f7287d94abfa6c0512be13cdd99937726163de05dc690e91ec780d698d9a",
+      "bytes": 85738,
+      "sha256_original": "be4a4c8d77bfbfa5442e6bc31f8d1ef42071c35ec816abeac70bab301476d575",
       "estado": "incluido",
       "razon": null,
       "timestamp": "20261128",
       "observaciones": [],
       "posicion": 225,
-      "sha256_generado": "9ac6f7287d94abfa6c0512be13cdd99937726163de05dc690e91ec780d698d9a"
+      "sha256_generado": "be4a4c8d77bfbfa5442e6bc31f8d1ef42071c35ec816abeac70bab301476d575"
     },
     {
       "nombre": "AUDIT_FIXES.md",
