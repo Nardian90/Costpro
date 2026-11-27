@@ -14,6 +14,14 @@ import { verifySupervisorToken } from '@/lib/supervisor-token';
 // proyecto); el tope estricto del flujo Vender es HOY (el gate BD canónico
 // validate_operation_date permite hoy+1 para TODOS los flujos y no se altera).
 import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
+// MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2):
+// obligatoriedad SERVER-SIDE de la identidad del pagador en ventas con
+// transferencia (función pura compartida y testeable).
+import {
+  saleIncludesTransferChannel,
+  missingTransferIdentityFields,
+  missingTransferRowReferences,
+} from '@/lib/pos/transfer-identity';
 
 /**
  * Iteración 11.2 — POST /api/pos/checkout
@@ -142,6 +150,11 @@ const checkoutSchema = z.object({
   // (columna ya existente). La OBLIGATORIEDAD se valida en el cliente y el RPC
   // no la exige (compatibilidad con ventas sin transferencia).
   customer_ci: z.string().max(20).nullable().optional(),
+  // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2):
+  // teléfono del pagador — obligatorio (server-side, más abajo) cuando la
+  // venta incluye transferencia por el canal canónico. Se persiste en
+  // transactions.customer_phone (columna existente desde 20260731000001).
+  customer_phone: z.string().max(20).nullable().optional(),
   // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot COMPRADOR (SC-2-12)
   customer_address: z.string().max(200).nullable().optional(),
   customer_code: z.string().max(30).nullable().optional(),
@@ -234,6 +247,45 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const d = parsed.data;
+
+  // ── MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2) ──
+  // IDENTIDAD DEL PAGADOR en ventas con transferencia: No. de transferencia
+  // (por fila) + Nombre + Carné de identidad + Teléfono. La UI ya lo exige en
+  // ambos modos (Cajero Express y Modo Carrito); esta revalidación server-side
+  // garantiza que la obligatoriedad NUNCA dependa solo del frontend. Fail-
+  // closed: 422 con mensaje accionable ANTES de llamar al RPC (sin efectos).
+  // El flujo legado del Catálogo (pools sin filas ni componentes) no se toca.
+  const transferChannel = saleIncludesTransferChannel(d);
+  if (transferChannel.hasTransfer) {
+    const missingIdentity = missingTransferIdentityFields(d);
+    const missingRowRef = missingTransferRowReferences(d);
+    if (missingIdentity.length > 0 || missingRowRef) {
+      const parts: string[] = [];
+      if (missingIdentity.length > 0) {
+        parts.push(`faltan datos del pagador: ${missingIdentity.join(', ')}`);
+      }
+      if (missingRowRef) {
+        parts.push('hay pagos por transferencia sin su número de operación');
+      }
+      logger.warn('POS', 'TRANSFER_IDENTITY_REJECTED', {
+        storeId: d.store_id,
+        missing: missingIdentity,
+        missingRowReference: missingRowRef,
+        perItemPayments: transferChannel.declaresPerItemPayments,
+      });
+      return NextResponse.json(
+        {
+          error: `Venta con transferencia incompleta: ${parts.join('; ')}. ` +
+            'Toda venta cuyo método incluya transferencia exige N.º de transferencia, nombre, carné de identidad y teléfono del pagador.',
+          details: {
+            missing_identity: missingIdentity,
+            missing_transfer_reference: missingRowRef,
+          },
+        },
+        { status: 422 },
+      );
+    }
+  }
 
   // ── MISIÓN FECHA OPERATIVA: revalidación server-side de la fecha ──
   // No se confía ni en el atributo max del selector ni en la validación del
@@ -351,6 +403,13 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     // contra la firma previa del RPC (BD sin migrar); con CI exige la BD
     // migrada (fail-closed correcto — el dato solo existe con transferencia).
     ...(d.customer_ci ? { p_customer_ci: d.customer_ci } : {}),
+    // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2):
+    // teléfono del pagador. Clave CONDICIONAL (patrón CP-MONEY-002): sin
+    // teléfono la llamada resuelve también contra la firma previa del RPC
+    // (BD sin migrar); con teléfono exige la BD migrada (fail-closed correcto
+    // — la puerta de obligatoriedad solo aplica a ventas con transferencia,
+    // que ya pasaron la revalidación server-side de arriba).
+    ...(d.customer_phone ? { p_customer_phone: d.customer_phone } : {}),
     // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot del comprador
     p_customer_address: d.customer_address ?? null,
     p_customer_code: d.customer_code ?? null,

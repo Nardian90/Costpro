@@ -45,7 +45,7 @@ function resetStores() {
   useCartStore.setState({
     items: [], discount: null, appliedTaxes: [], storeId: STORE, globalRates: {},
     saleCurrency: 'CUP', saleExchangeRate: 1.0, selectedPayment: 'cash',
-    customerId: null, customerName: null, customerCi: null, customerAddress: null, customerCode: null,
+    customerId: null, customerName: null, customerCi: null, customerPhone: null, customerAddress: null, customerCode: null,
     operationType: 'sale', lastUpdated: Date.now(),
   });
   useAuthStore.setState({
@@ -171,7 +171,7 @@ describe('usePOSCheckout — pagos independientes por producto (CP-POS-PER-ITEM-
     expect(totalDistribuido).toBe(body.total_amount);
   });
 
-  it('F · venta con transferencia y datos del cliente: customer_name + customer_ci viajan al RPC', async () => {
+  it('F · venta con transferencia y datos del cliente: nombre + CI + teléfono viajan al RPC', async () => {
     useCartStore.getState().addItem(pB);
     // La fila cash por defecto pasa a 0 (la línea se paga SOLO por transferencia)
     const stF = useCartStore.getState();
@@ -182,10 +182,14 @@ describe('usePOSCheckout — pagos independientes por producto (CP-POS-PER-ITEM-
     }));
     useCartStore.getState().setCustomer(null, 'Cliente QA Transferencia');
     useCartStore.getState().setCustomerCi('92031112345');
+    // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2):
+    // el teléfono del pagador viaja junto al nombre y al CI.
+    useCartStore.getState().setCustomerPhone('+53 51234567');
 
     const body = await checkout();
     expect(body.customer_name).toBe('Cliente QA Transferencia');
     expect(body.customer_ci).toBe('92031112345');
+    expect(body.customer_phone).toBe('+53 51234567');
     // La referencia viaja SOLO en la fila de transferencia (§5.1)
     const transferFila = body.items[0].payments.find((p: { method: string }) => p.method === 'transfer');
     expect(transferFila.reference).toBe('TR-777');
@@ -193,10 +197,11 @@ describe('usePOSCheckout — pagos independientes por producto (CP-POS-PER-ITEM-
     expect(body.transfer_amount).toBe(700);
   });
 
-  it('sin transferencia NI cliente: customer_ci va null y no se exige nada personal', async () => {
+  it('sin transferencia NI cliente: customer_ci/customer_phone van null y no se exige nada personal', async () => {
     useCartStore.getState().addItem(pA);
     const body = await checkout();
     expect(body.customer_ci).toBeNull();
+    expect(body.customer_phone).toBeNull();
     expect(body.customer_name).toBeNull();
   });
 

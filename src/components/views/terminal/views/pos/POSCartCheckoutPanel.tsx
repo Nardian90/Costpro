@@ -22,6 +22,10 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCartStore } from "@/store/cart";
 import { POSPortalModal } from "./POSPortalModal";
+// MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2/3):
+// identidad del pagador (nombre/CI/teléfono) — el MISMO componente que Cajero
+// Express: una sola implementación, misma conducta garantizada (FASE 3).
+import { TransferIdentityFields } from "./TransferIdentityFields";
 import { getPaymentLabel as getPaymentLabelUnified, getPaymentIcon, getPaymentColor } from "./PaymentMethodSelector";
 // MISIÓN FECHA OPERATIVA (2026-10-17): selector de fecha económica + estado de turno.
 import { POSOperationDateSection, usePosSaleDate } from "./POSOperationDateSection";
@@ -139,6 +143,14 @@ export function POSCartCheckoutPanel({
   isMobile,
 }: POSCartCheckoutPanelProps) {
   const prefersReducedMotion = useReducedMotion();
+  // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2/3):
+  // identidad del pagador para ventas con transferencia. Suscripción REACTIVA
+  // a los tres campos del store (fuente única compartida con Cajero Express):
+  // sin esto el gate del botón Confirmar quedaría stale al rellenar los
+  // campos (el store cambia pero el panel no se re-renderiza).
+  const customerName = useCartStore((s) => s.customerName);
+  const customerCi = useCartStore((s) => s.customerCi);
+  const customerPhone = useCartStore((s) => s.customerPhone);
   // MISIÓN FECHA OPERATIVA: fecha económica elegida en Vender (cart store).
   // Gobierna el gate del botón Confirmar y se muestra en el modal de cobro.
   const { value: saleDateValue, validation: saleDateValidation } = usePosSaleDate();
@@ -474,7 +486,25 @@ export function POSCartCheckoutPanel({
       ),
     );
   })();
-  const confirmBlocked = Boolean(settlementError) || noSettlementOverpay || missingTransferReferences;
+  // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2/3):
+  // la venta incluye transferencia → identidad del pagador OBLIGATORIA
+  // (nombre + carné + teléfono, espacios como único contenido = vacío).
+  // MISMA regla que Cajero Express (transferDataOk) — FASE 3.
+  const saleHasTransfer = (() => {
+    const its = useCartStore.getState().items;
+    return its.some(i =>
+      (i.payments || []).some(p =>
+        (p.method === 'transfer' || p.method === 'external_transfer' || (p as any).method === 'zelle')
+        && (p.amount || 0) > 0,
+      ),
+    );
+  })();
+  const missingTransferIdentity = saleHasTransfer && (
+    !(customerName || '').trim()
+    || !(customerCi || '').trim()
+    || !(customerPhone || '').trim()
+  );
+  const confirmBlocked = Boolean(settlementError) || noSettlementOverpay || missingTransferReferences || missingTransferIdentity;
 
   // Auto-sync store's selectedPayment with derived method (for backward compat with usePOSCheckout)
   // This ensures the store always reflects the real payment state.
@@ -1196,6 +1226,29 @@ export function POSCartCheckoutPanel({
                 </p>
               </div>
             )}
+            {/* MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001
+                (FASE 2/3): identidad del pagador — OBLIGATORIA cuando la venta
+                incluye transferencia. El campo vive EN este modal (no se
+                cierra por validación fallida y los datos se conservan); los
+                mensajes van junto a cada campo (TransferIdentityFields). */}
+            {saleHasTransfer && (
+              <div className="mt-3 text-left rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5">
+                <p className="text-[11px] font-black text-amber-600 dark:text-amber-400">
+                  Datos de transferencia (obligatorios)
+                </p>
+                <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5 mb-2">
+                  Esta venta incluye pago por transferencia: el nombre, el carné
+                  de identidad y el teléfono de quien transfiere quedan
+                  asociados a la venta y a sus pagos.
+                </p>
+                <TransferIdentityFields idPrefix="pos-cart-transfer" />
+                {missingTransferIdentity && (
+                  <p role="alert" className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-2">
+                    Completa los tres datos para confirmar la venta.
+                  </p>
+                )}
+              </div>
+            )}
             {/* CP-LOG-UNIFICATION-001 (§5.2): nota general de la venta —
                 observación opcional de toda la operación (cliente, entrega,
                 aclaraciones del vendedor). Persiste con el documento. */}
@@ -1236,7 +1289,10 @@ export function POSCartCheckoutPanel({
               disabled={isProcessing || !saleDateValidation.valid || confirmBlocked}
               title={noSettlementOverpay
                 ? "El vuelto no sería registrable: ajusta el desglose o cobra simple en efectivo"
-                : settlementError ? settlementErrorMessage(settlementError) : (!saleDateValidation.valid ? saleDateValidation.error : undefined)}
+                : settlementError ? settlementErrorMessage(settlementError)
+                : missingTransferIdentity ? "Completa nombre, carné de identidad y teléfono del pagador"
+                : missingTransferReferences ? "Cada pago por transferencia requiere su número de operación"
+                : (!saleDateValidation.valid ? saleDateValidation.error : undefined)}
               className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary/30"
             >
               {isProcessing ? "Procesando..." : "Confirmar"}
