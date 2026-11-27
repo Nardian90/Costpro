@@ -36,3 +36,22 @@ guardia del watchdog, salida literal del instrumento, resultado
   2026-11-25 y 2026-11-26 sin edición — decisión editorial: rellenar o
   dejar; (2) rotación de credenciales recomendada (el expediente del ciclo
   CP-CI 2 ya lo recomendaba; reiterada por esta misión).
+
+## 2026-11-27T21:30Z — auditoría fundacional, adenda de CI (PR #1741)
+
+- El primer commit (37fbb781) rompió el check «Security Audit»: el gate
+  CP-INFRA-019-FOLLOWUP detectó `scripts/gaceta/insert-edicion-20261127.mjs`
+  como NUEVO ESCRITOR SIN DECLARAR (señal de endpoint Supabase + POST).
+- Corrección en el segundo commit (90245550): script declarado en
+  `scripts/lib/writers.manifest.json` → `exceptions` con justificación
+  (publicación del Diario Contable: escribe SOLO en gaceta_posts, superficie
+  designada ADN-011 para el editor automático). `node scripts/lib/check-writers.mjs`
+  local → **CHECK-WRITERS OK: todos los escritores declarados y verificados**
+  (318 escritores: 103 guardProtected + 55 isolationProtected + 162 exceptions).
+- Check-runs del commit final 90245550 (GitHub Actions):
+  - Unit & Integration Tests → success
+  - TypeCheck + Lint + Unit Tests + Build → success
+  - Security Audit → success
+  - Vercel Preview Comments → success
+- Resultado de la adenda: **CI-OK** (PR #1741 con todos los checks verdes
+  en el head; el propietario decide el merge).
