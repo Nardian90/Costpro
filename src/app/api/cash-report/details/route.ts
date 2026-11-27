@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+// MISIÓN SRV-PAYMENT-DATE (FASE 2): elegibilidad del detalle de pagos — misma
+// regla que el grupo `payments` del RPC (fuente única, testeada en el módulo).
+import { filterEligiblePaymentDetailRows } from '@/lib/cash-report/payments-selection';
 
 /**
  * GET /api/cash-report/details
@@ -133,7 +136,7 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
     } else {
       let query = supabase
         .from('payment_transactions')
-        .select('id, payment_date, amount, amount_cup, payment_method, currency, reference, notes, ref_type, ref_id')
+        .select('id, payment_date, amount, amount_cup, payment_method, currency, reference, notes, ref_type, ref_id, direction')
         .eq('store_id', storeId)
         .eq('payment_method', method)
         .eq('currency', currency)
@@ -146,7 +149,35 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
 
       const { data, error } = await query;
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-      return NextResponse.json(data || []);
+
+      // MISIÓN SRV-PAYMENT-DATE-AND-DELIVERY-REPORT-FILTERS-001 (FASE 2):
+      // el detalle del acordeón debe ser EXACTAMENTE el universo que suma el
+      // grupo `payments` del RPC get_cash_report (migración 20261124120200):
+      // solo filas direction='in' de documentos VÁLIDOS. Antes el detalle podía
+      // listar reversiones/pagos de documentos anulados que el grupo NO suma —
+      // una divergencia pantalla↔grupo que además rompería el DELTA de la
+      // selección de pagos (restar filas que el grupo nunca incluyó).
+      // La elegibilidad vive en el módulo puro (testeado): filterEligiblePaymentDetailRows.
+      const rows = (data || []) as Array<Record<string, unknown>>;
+      const svcIds = rows.filter(r => r.ref_type === 'service').map(r => String(r.ref_id));
+      const rcptIds = rows.filter(r => r.ref_type === 'receipt').map(r => String(r.ref_id));
+      const serviceStatusById = new Map<string, string>();
+      const receiptStatusById = new Map<string, string>();
+      if (svcIds.length > 0) {
+        const { data: svcRows } = await supabase
+          .from('received_services')
+          .select('id, status')
+          .in('id', svcIds);
+        for (const s of (svcRows || []) as Array<{ id: string; status: string }>) serviceStatusById.set(s.id, s.status);
+      }
+      if (rcptIds.length > 0) {
+        const { data: rcptRows } = await supabase
+          .from('receipts')
+          .select('id, status')
+          .in('id', rcptIds);
+        for (const r of (rcptRows || []) as Array<{ id: string; status: string }>) receiptStatusById.set(r.id, r.status);
+      }
+      return NextResponse.json(filterEligiblePaymentDetailRows(rows, { serviceStatusById, receiptStatusById }));
     }
   } catch (error: any) {
     console.error('[cash-report/details] Error:', error);

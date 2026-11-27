@@ -72,7 +72,16 @@ vi.mock('@/hooks/ui/useWorkDateDefault', () => ({
 }));
 
 vi.mock('@/components/ui/OperationDatePicker', () => ({
-  OperationDatePicker: ({ label }: any) => <div data-testid="operation-date-picker">{label}</div>,
+  // Stub con INPUT real (aria-label = label) para que los tests de la misión
+  // SRV-PAYMENT-DATE puedan elegir/leer la fecha del pago como lo haría el DOM.
+  OperationDatePicker: ({ label, value, onChange }: any) => (
+    <input
+      data-testid="operation-date-picker"
+      aria-label={label}
+      value={value ?? ''}
+      onChange={(e) => onChange?.(e.target.value)}
+    />
+  ),
   useOperationDateValidation: () => ({ valid: true, error: null }),
   formatOperationDateForRPC: (d: string) => `${d}T12:00:00Z`,
 }));
@@ -363,7 +372,7 @@ describe('ADN-008 §3.3 — edición de borrador (recuperación)', () => {
     expect(payload.service_type_name).toBe('Manipulación');
   });
 
-  it('confirmar el borrador → onSaveEdit(mode=confirm) con fecha financiera del pago', async () => {
+  it('confirmar el borrador SIN liquidar → NO envía payment_date (sin pagos no hay fecha financiera)', async () => {
     const onSaveEdit = vi.fn();
     renderModal({ editService: DRAFT, onSaveEdit });
     fireEvent.click(screen.getByTestId('supplier-stub-select'));
@@ -375,7 +384,54 @@ describe('ADN-008 §3.3 — edición de borrador (recuperación)', () => {
     expect(id).toBe('srv-1');
     expect(mode).toBe('confirm');
     expect(payload.supplier_id).toBe('11111111-1111-4111-8111-111111111101');
+    // MISIÓN SRV-PAYMENT-DATE (FASE 1): sin «Liquidar al confirmar» no hay
+    // pago → sin fecha financiera (antes se forzaba HOY sin sentido contable).
+    expect(payload.payment_date).toBeUndefined();
+  });
+
+  it('confirmar el borrador CON liquidación → envía la fecha del pago ELEGIDA en el selector', async () => {
+    const onSaveEdit = vi.fn();
+    renderModal({ editService: DRAFT, onSaveEdit });
+    fireEvent.click(screen.getByTestId('supplier-stub-select'));
+    // Liquidar al confirmar → el editor de pago + selector «Fecha del pago»
+    fireEvent.click(screen.getByTestId('pay-now-toggle'));
+    // Elegir una fecha histórica legítima (backdating — el defecto que corregía
+    // la misión: antes se forzaba HOY y el pago quedaba mal fechado).
+    const dateInput = await screen.findByLabelText('Fecha del pago') as HTMLInputElement;
+    fireEvent.change(dateInput, { target: { value: '2026-11-20' } });
+    fireEvent.click(screen.getByTestId('confirm-service-button'));
+    fireEvent.click(await screen.findByTestId('dialog-confirm'));
+
+    await waitFor(() => expect(onSaveEdit).toHaveBeenCalledTimes(1));
+    const [id, payload, mode] = onSaveEdit.mock.calls[0];
+    expect(id).toBe('srv-1');
+    expect(mode).toBe('confirm');
+    expect(payload.supplier_id).toBe('11111111-1111-4111-8111-111111111101');
     expect(payload.payment_date).toBeTruthy();
+    // formatOperationDateForRPC('2026-11-20') = mediodía → mediodía UTC en el
+    // entorno de test (UTC): 2026-11-20T12:00:00.000Z. El día de negocio debe
+    // ser SIEMPRE el elegido, nunca HOY.
+    expect(new Date(payload.payment_date as string).toISOString().slice(0, 10)).toBe('2026-11-20');
+  });
+
+  it('crear con liquidación: el selector «Fecha del pago» existe con default HOY (Habana) y viaja al payload', async () => {
+    const onCreate = vi.fn();
+    renderModal({ onCreate });
+    fillBase('1040');
+    fireEvent.click(screen.getByTestId('pay-now-toggle'));
+    // MISIÓN SRV-PAYMENT-DATE (FASE 1, causa raíz): el modal de creación ahora
+    // TIENE el selector (antes el pago viajaba sin fecha y el RPC estampaba NOW()).
+    const dateInput = await screen.findByLabelText('Fecha del pago') as HTMLInputElement;
+    expect(dateInput.value).toBeTruthy();
+    fireEvent.click(screen.getByTestId('confirm-service-button'));
+    fireEvent.click(await screen.findByTestId('dialog-confirm'));
+    await waitFor(() => expect(onCreate).toHaveBeenCalledTimes(1));
+    const payload = onCreate.mock.calls[0][0];
+    expect(payload.payment_date).toBeTruthy();
+    expect(new Date(payload.payment_date as string).toISOString().slice(0, 10)).toBe(
+      // HOY en el día de negocio Habana (la conversión del selector es determinista)
+      new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Havana' }).format(new Date()),
+    );
   });
 
   it('los vínculos guardados del borrador se recuperan (badge Configurado al abrir)', async () => {
