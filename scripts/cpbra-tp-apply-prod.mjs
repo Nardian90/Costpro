@@ -66,7 +66,7 @@ const pre = await runSql(`
     (SELECT count(*) FROM public.payment_transactions WHERE ref_type='receipt' AND ref_id IN (${IDS_SQL})) AS pagos,
     (SELECT count(*) FROM public.suppliers s
        WHERE s.store_id = (SELECT store_id FROM public.receipts WHERE id IN (${IDS_SQL}) LIMIT 1)
-         AND s.is_active AND lower(regexp_replace(btrim(s.name), '\s', '', 'g')) = 'tiendapueblo') AS canonicos,
+         AND s.is_active AND lower(regexp_replace(btrim(s.name), '\\s', '', 'g')) = 'tiendapueblo') AS canonicos,
     (SELECT coalesce(sum(total_cost),0) FROM public.receipts WHERE status='active' AND btrim(COALESCE(supplier,'')) IN ('', '—')) AS bucket_dash_total,
     (SELECT count(*) FROM public.audit_logs WHERE action='RECEIPT_SUPPLIER_REGULARIZED' AND record_id::text IN (${IDS_SQL})) AS auditoria;
 `);
