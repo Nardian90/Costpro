@@ -82,13 +82,6 @@ const pre = await runSql(`
 console.log('\n=== PRE (evidencia del estado previo en producción) ===');
 console.log(JSON.stringify(pre[0], null, 1));
 const p = pre[0];
-
-if (p.helpers_presentes >= 1 && p.trigger_previo === 1) {
-  console.log('\n→ R-06 YA APLICADA en producción (helpers + trigger presentes). Nada que hacer.');
-  const ok = await checkMarks();
-  process.exit(ok ? 0 : 1);
-}
-
 /* ── POST: marcas re-ejecutables ────────────────────────────────────────── */
 const MARKS = {
   helper_superadmin_uid: `(SELECT count(*) = 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
@@ -140,6 +133,12 @@ async function checkMarks() {
     console.log(`  ${ok ? 'OK  ' : 'FAIL'} ${k}`);
   }
   return allOk;
+}
+
+if (p.helpers_presentes >= 1 && p.trigger_previo === 1) {
+  console.log('\n→ R-06 YA APLICADA en producción (helpers + trigger presentes). Nada que hacer.');
+  const ok = await checkMarks();
+  process.exit(ok ? 0 : 1);
 }
 
 console.log('\nDestino: wthkddeleylijmonclxg (PRODUCCIÓN CostproBD)');
