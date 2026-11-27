@@ -133,12 +133,22 @@ async function createTestUser(role, globalRole) {
 
 const FIXTURE = { storeAId: null, storeBId: null, users: {}, workerA: null, commissions: {}, baselineStores: 0 };
 
+let PC_PERIOD_SEQ = 0;
 async function createCommission(storeId, suffix, status, amount = 500) {
+  // El índice único (worker, período) exige un período DISTINTO por comisión.
+  // Exclusión NO OVERLAP por worker: días consecutivos sin solape (2 días por
+  // comisión — día 1 al 2, 3 al 4, ...). El RPC no exige período específico.
+  const startDay = 1 + PC_PERIOD_SEQ * 2;
+  const d = new Date(Date.UTC(2026, 9, startDay));
+  const de = new Date(Date.UTC(2026, 9, startDay + 1));
+  PC_PERIOD_SEQ++;
+  const periodStart = d.toISOString().slice(0, 10);
+  const periodEnd = de.toISOString().slice(0, 10);
   const { data: c, error } = await admin.from('commission_payments').insert({
     store_id: storeId,
     worker_id: FIXTURE.workerA,
-    period_start: '2026-11-01',
-    period_end: '2026-11-30',
+    period_start: periodStart,
+    period_end: periodEnd,
     calculated_amount: amount,
     final_amount: amount,
     amount_cup: amount,
@@ -230,6 +240,13 @@ async function teardownFixtures() {
     try {
       const commIds = Object.values(FIXTURE.commissions).filter(Boolean);
       if (commIds.length) await admin.from('commission_payments').delete().in('id', commIds);
+      // Cinturón y tirantes: TODA comisión que referencie usuarios del fixture
+      // (approved_by/paid_by — FK que bloquearía e2e_hard_delete_user)
+      const userIds = Object.values(FIXTURE.users).filter(Boolean);
+      if (userIds.length) {
+        await admin.from('commission_payments').delete().in('approved_by', userIds);
+        await admin.from('commission_payments').delete().in('paid_by', userIds);
+      }
       if (FIXTURE.workerA) await admin.from('workers').delete().eq('id', FIXTURE.workerA);
       await admin.from('user_store_memberships').delete().in('store_id', [FIXTURE.storeAId, FIXTURE.storeBId].filter(Boolean));
       await admin.from('audit_logs').delete().in('store_id', [FIXTURE.storeAId, FIXTURE.storeBId].filter(Boolean));
@@ -266,10 +283,10 @@ async function commissionOf(id) {
 }
 
 async function main() {
-  await setupFixtures();
   const payBody = (method = 'transfer') => ({ action: 'pay', payment_method: method, currency: 'CUP', exchange_rate: 1.0 });
 
   try {
+    await setupFixtures();
     // ── A1: admin de tienda paga ────────────────────────────────────────
     const a1 = await apiFetch('adminA', 'PATCH', `/api/commissions/payments/${FIXTURE.commissions.c1}`, payBody());
     const c1 = await commissionOf(FIXTURE.commissions.c1);
