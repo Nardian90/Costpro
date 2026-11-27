@@ -106,11 +106,11 @@
 ### TR-SEC-003 (SEC-003) · Autenticación fail-closed server-side
 | Elemento | Contenido |
 |---|---|
-| Implementación | getServerSession firma verificada; 213/228 rutas con wrappers |
-| Control | SEC-TS gate (Check 4 zod); BOLA contract; security-contract estático |
-| P− | Sin token → 401 (FIX-AUDIT-AUTH-1 eliminó JWT sin verificar) |
-| Brecha | 102 rutas sin zod; dev bypass con doble guardia (R-22) |
-| Estado certificación | **CONDICIONAL** |
+| Implementación | getServerSession firma verificada (FIX-AUDIT-AUTH-1); 229/229 rutas clasificadas: WRAPPER 214 (withAuth/withRole/withStoreAccess) · SESSION 4 (getServerSession+401) · CRON 5 (CRON_SECRET/x-vercel-signature) · WEBHOOK 2 (firma) · PUBLIC 4 (allowlist documentada con expiración) |
+| Control | **`scripts/audit-route-auth.cjs` EN CI (job Security Audit)** — «sin wrapper = no merge» automatizado; BOLA contract; security-contract estático |
+| P− | **Batería dedicada 22/22 vía HTTP real**: 9 rutas sin token → 401; token falsificado → 401; cron sin/incorrecto secreto → 401; webhooks sin firma → rechazo; + baterías de dominio (rol/otra tienda: R-25 16/16, R-03 17/17, pay_commission 15/15, FIN-011 16/16) |
+| Brecha | 102 rutas sin zod; dev bypass con doble guardia (R-22 — riesgo SEPARADO, no criterio de SEC-003) |
+| Estado certificación | **CERTIFICADA (2026-11-27, CP-BRA-FINAL-COMPLIANCE-CLOSURE-001)** — diag-splash corregido (último hallazgo de entrada); cobertura completa y automatizada |
 
 ### TR-CON-01 (INV-CON-01/02) · Idempotencia de operaciones monetarias
 | Elemento | Contenido |
@@ -177,7 +177,7 @@
 | TR-INV-003 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-INV-007 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (R-05 aplicada §11g 2026-11-27) |
 | TR-TEN-001 | TEN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
-| TR-SEC-003 | SEC | CRÍTICA | ✓ | △ | ✓ | CONDICIONAL |
+| TR-SEC-003 | SEC | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (cobertura completa automatizada + batería P− 22/22) |
 | TR-CON-01 | SYS | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (monetarias) |
 | TR-DOC-004 | DOC | CRÍTICA | ✓ | ✓ | ✓ | CONDICIONAL (R-17) |
 | TR-FIN-003 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
