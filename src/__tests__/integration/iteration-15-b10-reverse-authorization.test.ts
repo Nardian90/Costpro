@@ -175,8 +175,11 @@ describe('PT-B10.3 — API /api/reverse: boundary extendida a los 6 tipos', () =
 });
 
 describe('PT-B10.4 — UI: botones Revertir gated por rol espejo', () => {
+  // CP-BRA-R06 (§0.2, decisión del propietario — CP-BRA-R06-FINAL-CERTIFICATION-001):
+  // para RECEPCIONES la reversión/anulación YA NO es role-mirror: es propiedad
+  // del CREADOR original (con membresía activa) o superadmin, evaluada POR FILA
+  // (canManageOwnReception). Los otros 4 módulos conservan el role-mirror.
   const cases: Array<[string, string, string]> = [
-    ['src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx', 'canReverseReceipt', "'receipt'"],
     ['src/components/views/terminal/views/transfers/TransferenciasView.tsx', "canReverseDocumentInStore(user, user?.activeStoreId ?? '', 'transfer')", "'transfer'"],
     ['src/components/views/terminal/views/inventory/InventoryAdjustmentsView.tsx', 'canReverseAdj', "'adjustment'"],
     ['src/components/views/terminal/views/devolutions/DevolutionsView.tsx', "canReverseDocumentInStore(user, storeId ?? '', 'devolution')", "'devolution'"],
@@ -187,6 +190,14 @@ describe('PT-B10.4 — UI: botones Revertir gated por rol espejo', () => {
     expect(src).toContain('canReverseDocumentInStore');
     expect(src).toContain(gate);
     expect(src).toContain(type);
+  });
+
+  it('ReceptionsHistoryView gated por fila con canManageOwnReception (R-06 §0.2: creador o superadmin)', () => {
+    const src = readSrc('src/components/views/terminal/views/receptions/ReceptionsHistoryView.tsx');
+    expect(src).toContain('canManageOwnReception(user, rec)');
+    expect(src).toContain('canManageOwnReception(user, selectedReceipt)');
+    expect(src).toContain('canCreateReceptionInStore');
+    expect(src).toContain('isSuperAdmin(user)');
   });
 });
 
