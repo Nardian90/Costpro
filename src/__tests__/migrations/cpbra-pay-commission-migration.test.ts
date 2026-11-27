@@ -115,11 +115,11 @@ describe('CP-BRA §0.2 — 20261127150000_cpbra_pay_commission_encargado.sql', (
     for (const p of patterns) expect(PC).not.toContain(p);
   });
 
-  it('11. el manifiesto replay incluye la migración (posición 223 tras integrar main #1731/#1734)', () => {
+  it('11. el manifiesto replay incluye la migración (posición 222; baseline 223 desde FASE 4)', () => {
     const manifest = JSON.parse(
       readFileSync(join(process.cwd(), 'audit-evidence', 'INFRA-011', 'e2e-migrations-manifest.json'), 'utf8')
     );
-    expect(manifest.total_incluidos).toBe(223);
+    expect(manifest.total_incluidos).toBe(224);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127150000_cpbra_pay_commission_encargado.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

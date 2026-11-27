@@ -143,14 +143,11 @@ describe('CP-BRA R-03 — 20261127140000_cpbra_r03_ot_payment_batch.sql', () => 
     for (const p of patterns) expect(R03).not.toContain(p);
   });
 
-  it('13. el manifiesto replay incluye la migración en la posición 222 (total 222 con CP-CPOP-FIX)', () => {
+  it('13. el manifiesto replay incluye la migración (posición 221; baseline 222 desde §0.2 pay_commission)', () => {
     const manifest = JSON.parse(
       readFileSync(join(process.cwd(), 'audit-evidence', 'INFRA-011', 'e2e-migrations-manifest.json'), 'utf8')
     );
-    // CP-CPOP-FIX (20261127130000, merge de #1731) se intercaló en la posición
-    // 221 (orden lexicográfico): R-03 sigue incluida y pasa a la 222; el total
-    // del manifiesto es 222.
-    expect(manifest.total_incluidos).toBe(223);
+    expect(manifest.total_incluidos).toBe(224);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127140000_cpbra_r03_ot_payment_batch.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');
