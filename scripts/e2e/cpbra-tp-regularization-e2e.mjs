@@ -170,11 +170,14 @@ async function auditRows() {
 
 async function main() {
   try {
-    // ── T1: migración SIN fixtures → no-op idempotente (replay-safe) ────
+    // ── T1: migración SIN fixtures → no-op idempotente (replay-safe).
+    // Los RAISE NOTICE no viajan en la respuesta HTTP (van al log de BD) —
+    // la verificación es estructural: ok + cero recepciones de la lista.
     const t1 = await runSql(MIGRATION_SQL);
-    if (t1.ok && t1.text.includes('la excepción histórica no existe en este entorno')) {
-      ok('T1', 'migración sin excepción (entorno limpio) → no-op idempotente (replay-safe)');
-    } else bad('T1', 'esperado no-op', (t1.text || '').slice(0, 200));
+    const pre1 = await receiptRows();
+    if (t1.ok && pre1.length === 0) {
+      ok('T1', 'migración sin excepción (entorno limpio) → sin error y sin filas tocadas (replay-safe)');
+    } else bad('T1', 'esperado no-op sin error', JSON.stringify({ ok: t1.ok, err: (t1.text || '').slice(0, 160), n: pre1.length }));
 
     // ── T2: fixtures PRE ────────────────────────────────────────────────
     await setupFixtures();
@@ -208,9 +211,11 @@ async function main() {
     // ── T5: re-aplicación → no-op idempotente (sin duplicar auditoría) ──
     const t5 = await runSql(MIGRATION_SQL);
     const aud5 = await auditRows();
-    if (t5.ok && t5.text.includes('no-op idempotente') && aud5.length === 3) {
-      ok('T5', 're-aplicación → no-op idempotente; auditoría sigue en 3 filas');
-    } else bad('T5', 'esperado no-op con auditoría intacta', JSON.stringify({ t: (t5.text || '').slice(0, 150), n: aud5.length }));
+    const post5 = await receiptRows();
+    const stillOk = post5.every((r) => r.supplier === 'Tienda Pueblo');
+    if (t5.ok && aud5.length === 3 && stillOk) {
+      ok('T5', 're-aplicación → sin error; corrección intacta; auditoría sigue en 3 filas');
+    } else bad('T5', 'esperado no-op con auditoría intacta', JSON.stringify({ ok: t5.ok, err: (t5.text || '').slice(0, 150), n: aud5.length, stillOk }));
 
     // ── T6: estado PARCIAL → detención automática ───────────────────────
     await admin.from('receipts').update({ supplier: '—' }).eq('id', IDS[0]);
@@ -220,13 +225,15 @@ async function main() {
       ok('T6', 'estado PARCIAL (1 de 3 en «—») → TP-GUARD-G1b DETIENE automáticamente sin tocar nada');
     } else bad('T6', 'esperado abort TP-GUARD-G1b', JSON.stringify({ t: (t6.text || '').slice(0, 200), state6 }));
 
-    // ── T7: sin proveedor canónico → TP-GUARD-G3 detiene (no inventa alta) ─
-    await admin.from('receipts').update({ supplier: 'Tienda Pueblo' }).eq('id', IDS[0]); // restaurar estado consistente
+    // ── T7: pendiente completo + SIN proveedor canónico → TP-GUARD-G3 detiene
+    // (G3 solo alcanza con trabajo pendiente: la rama ya-corregida retorna antes)
+    for (const id of IDS) await admin.from('receipts').update({ supplier: '—' }).eq('id', id);
     await admin.from('suppliers').delete().eq('id', FIX.supplierId);
     const t7 = await runSql(MIGRATION_SQL);
-    if (expectErr(t7, 'TP-GUARD-G3', 'T7')) {
-      ok('T7', 'sin proveedor canónico → TP-GUARD-G3 DETIENE (no se inventa alta)');
-    } else bad('T7', 'esperado abort TP-GUARD-G3', JSON.stringify({ t: (t7.text || '').slice(0, 200) }));
+    const state7 = (await receiptRows()).map((r) => r.supplier).join('|');
+    if (!t7.ok && t7.text.includes('TP-GUARD-G3') && state7 === '—|—|—') {
+      ok('T7', 'pendiente + sin proveedor canónico → TP-GUARD-G3 DETIENE (no se inventa alta; nada tocado)');
+    } else bad('T7', 'esperado abort TP-GUARD-G3', JSON.stringify({ ok: t7.ok, t: (t7.text || '').slice(0, 200), state7 }));
     // restaurar proveedor para la conciliación
     const { data: sup2, error: e2 } = await admin.from('suppliers').insert({
       store_id: FIX.storeId, name: 'Tienda Pueblo', is_active: true,
@@ -235,7 +242,7 @@ async function main() {
     FIX.supplierId = sup2.id;
 
     // ── T8: conciliación CxP por proveedor (agregado 19,435 en Tienda Pueblo) ─
-    const t8 = await runSql(MIGRATION_SQL); // re-aplicar tras T6/T7 (deja las 3 corregidas)
+    const t8 = await runSql(MIGRATION_SQL); // corrige el estado pendiente que dejó T7
     const { data: agg } = await admin.from('receipts')
       .select('supplier, total_cost').in('id', IDS);
     const tpSum = (agg || []).filter((r) => r.supplier === 'Tienda Pueblo').reduce((s, r) => s + Number(r.total_cost), 0);
