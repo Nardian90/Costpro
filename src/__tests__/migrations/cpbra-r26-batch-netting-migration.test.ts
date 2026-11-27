@@ -153,8 +153,8 @@ describe('CP-BRA R-26 — 20261127120000_cpbra_r26_batch_reversal_netting.sql', 
     // (20261127150000) la 222 al stream → baseline 222. La posición de R-26
     // (220) permanece intacta.
     // COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: el stream creció
-    // a 225 con 20261128120000 (create_sale_v2 /36, transfer identity).
-    expect(manifest.total_incluidos).toBe(225);
+    // a 226 con 20261128120000 (+1 R-06 de main) (create_sale_v2 /36, transfer identity).
+    expect(manifest.total_incluidos).toBe(226);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127120000_cpbra_r26_batch_reversal_netting.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

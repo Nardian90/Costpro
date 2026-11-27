@@ -20,6 +20,9 @@ import { rateLimit } from "@/lib/rate-limit";
 import { withStoreAccess, AuthenticatedSession } from "@/lib/auth-middleware";
 import { withTracing } from "@/lib/observability";
 import { registerReceptionParamsSchema } from "@/validation/schemas";
+// CP-BRA-R06 (CP-BRA-R06-FINAL-CERTIFICATION-001): política de autorización
+// de CREACIÓN de recepciones — encargado con membresía activa o superadmin.
+import { sessionCanCreateReception } from "@/lib/reception-authorization";
 // F-21: validar tasa_cambio_recepcion antes de llamar a la RPC
 import { validateReceiptItemsTasa } from "@/lib/receipt-items-validation";
 // MISIÓN POLÍTICA TEMPORAL (2026-10-18): revalidación server-side del tope
@@ -122,6 +125,24 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
         { status: 403 }
       );
     }
+  }
+
+  // CP-BRA-R06 (§0.1 — decisión del propietario): la CREACIÓN de recepciones
+  // exige membresía ACTIVA con rol exacto 'encargado' en la tienda, o
+  // superadministrador de plataforma. El acceso a la tienda con cualquier
+  // otro rol (warehouse/almacenero, clerk/facturadora, usuario, manager,
+  // admin de tienda o de plataforma) NO concede permiso de creación.
+  // La BD re-verifica el mismo gate en register_reception (migración
+  // 20261128120000): la política es idéntica en ambas barreras.
+  if (!sessionCanCreateReception(session, params.p_store_id)) {
+    return NextResponse.json(
+      {
+        error: "Forbidden",
+        message: "La creación de recepciones requiere rol encargado con membresía activa en la tienda (o superadministrador de plataforma)",
+        code: "ERR_FORBIDDEN_ROLE",
+      },
+      { status: 403 }
+    );
   }
 
   // Llamar a la RPC register_reception

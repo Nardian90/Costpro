@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-27T19:55:40.825Z
+-- Captured  : 2026-11-27T21:41:19.476Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 233 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -315,8 +315,10 @@ BEGIN
     FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
 
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2): agregar líneas a un borrador es intervenir la
+  -- recepción → creador original con membresía activa, o superadministrador.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede modificar el borrador';
   END IF;
   IF v_status <> 'pending' THEN
     RAISE EXCEPTION 'ERR_NOT_EDITABLE: solo se pueden agregar productos a recepciones pendientes (estado actual: %)', v_status;
@@ -3177,15 +3179,22 @@ DECLARE
   v_caller_uid uuid := CASE WHEN auth.role() = 'service_role' THEN COALESCE(p_user_id, auth.uid()) ELSE auth.uid() END;
   v_unit_cost_cup numeric;
   v_units_to_add numeric;
+  -- CP-BRA-R06 §FASE 5: fuente de autorización para la auditoría transaccional.
+  v_auth_source text;
 BEGIN
   SELECT * INTO v_receipt FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
   IF v_receipt.status <> 'pending' THEN RAISE EXCEPTION 'ERR_RECEIPT_ALREADY_CONFIRMED: status=%', v_receipt.status; END IF;
 
   v_store_id := v_receipt.store_id;
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2, decisión del propietario): confirmar es derecho del
+  -- CREADOR ORIGINAL con membresía activa, o del superadministrador (global).
+  -- El acceso a la tienda NO concede confirmar recepciones ajenas; no se
+  -- añade exigencia de rol encargado sobre una recepción propia.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede confirmarla';
   END IF;
+  v_auth_source := CASE WHEN public.is_superadmin_uid(v_caller_uid) THEN 'platform_superadmin' ELSE 'creator_membership' END;
 
   FOR v_item IN SELECT * FROM public.receipt_items WHERE receipt_id = p_receipt_id LOOP
     v_unit_cost_cup := v_item.unit_cost * COALESCE(v_item.tasa_cambio_recepcion, 1.0);
@@ -3210,6 +3219,27 @@ BEGIN
   SET status = 'active', reception_date = v_effective_date,
       total_cost = public.calculate_receipt_total_cup(p_receipt_id), updated_at = v_effective_date
   WHERE id = p_receipt_id AND status = 'pending';
+
+  -- CP-BRA-R06 §FASE 5: auditoría transaccional de la confirmación (antes la
+  -- confirmación no dejaba entrada en BD): actor real, tienda, recepción,
+  -- estados previo/nuevo, creador original y fuente de autorización.
+  INSERT INTO public.audit_logs (user_id, store_id, action, table_name, record_id, metadata)
+  VALUES (
+    v_caller_uid,
+    v_store_id,
+    'RECEPTION_CONFIRMED_PENDING',
+    'receipts',
+    p_receipt_id,
+    jsonb_build_object(
+      'authorization_source', v_auth_source,
+      'superadmin_global', public.is_superadmin_uid(v_caller_uid),
+      'creator_id', v_receipt.user_id,
+      'old_status', 'pending',
+      'new_status', 'active',
+      'items_confirmed', (SELECT COUNT(*) FROM public.receipt_items WHERE receipt_id = p_receipt_id),
+      'operation_date', v_effective_date
+    )
+  );
 END $function$
 
 
@@ -8725,8 +8755,10 @@ BEGIN
   v_store_id := v_receipt.store_id;
 
   -- 3. Autorización multitienda (mismo guard que void_pending_reception).
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2): eliminar un borrador es intervenir la recepción →
+  -- creador original con membresía activa, o superadministrador.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede eliminar el borrador';
   END IF;
 
   -- 4. Defense-in-depth: un borrador nunca tocó inventario ni pagos, pero si
@@ -15485,9 +15517,12 @@ BEGIN
     RAISE EXCEPTION 'ERR_PO_NOT_FOUND';
   END IF;
 
-  -- ─── 2. Validar acceso (tenant-aware via has_store_access) ───
-  IF NOT public.has_store_access(v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- ─── 2. Validar autorización de CREACIÓN de recepción (CP-BRA-R06 §0.1):
+  --        recibir contra OC crea una recepción → mismo permiso que
+  --        register_reception: encargado con membresía activa o superadmin.
+  --        (register_reception re-verifica el gate en su propia barrera.)
+  IF NOT public.can_create_reception(auth.uid(), v_store_id) THEN
+    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: recibir contra una orden de compra requiere rol encargado con membresía activa en la tienda (o superadministrador de plataforma)';
   END IF;
 
   -- ─── 3. Validar estado de la OC ───
@@ -16544,8 +16579,13 @@ DECLARE
 BEGIN
   PERFORM public.validate_operation_date(p_reception_date, p_store_id);
 
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, p_store_id) THEN
-    RAISE EXCEPTION 'Unauthorized store access';
+  -- CP-BRA-R06 (§0.1, decisión del propietario): creación de recepciones =
+  -- membresía ACTIVA con rol exacto 'encargado' en la tienda, o
+  -- superadministrador de plataforma. El acceso a la tienda con cualquier
+  -- otro rol (warehouse/almacenero, clerk/facturadora, usuario, manager,
+  -- admin de tienda o de plataforma) NO concede permiso de creación.
+  IF v_caller_uid IS NULL OR NOT public.can_create_reception(v_caller_uid, p_store_id) THEN
+    RAISE EXCEPTION 'ERR_FORBIDDEN_ROLE: la creación de recepciones requiere rol encargado con membresía activa en la tienda (o superadministrador de plataforma)';
   END IF;
 
   IF p_supplier IS NULL OR p_supplier = '' THEN
@@ -16854,6 +16894,8 @@ BEGIN
   INSERT INTO public.audit_logs (action, table_name, record_id, store_id, user_id, metadata)
   VALUES ('REGISTER_RECEPTION', 'receipts', v_receipt_id, p_store_id, v_caller_uid,
     jsonb_build_object(
+      'authorization_source', CASE WHEN public.is_superadmin_uid(v_caller_uid) THEN 'platform_superadmin' ELSE 'encargado_membership' END,
+      'superadmin_global', public.is_superadmin_uid(v_caller_uid),
       'supplier', p_supplier,
       'total_cost', v_total_cost,
       'items_count', jsonb_array_length(p_items),
@@ -19576,16 +19618,18 @@ BEGIN
   END IF;
 
   -- R1 [P1]: tenant/store isolation. Mirrors V1 model + PR-4 guard.
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_receipt.store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2): la reversión ES la anulación de una recepción
+  -- confirmada → derecho del CREADOR ORIGINAL con membresía activa, o del
+  -- superadministrador global. Sustituye el par has_store_access_as +
+  -- can_reverse_document (rol admin/manager/encargado/warehouse) que
+  -- permitía intervenir recepciones ajenas. Guardas financieras intactas.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_receipt.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede revertirla';
   END IF;
 
   -- W9.5 B-10: capa normativa de rol (fuente unica can_reverse_document).
   -- Politica congelada: operadores de recepciones (membership admin/manager/
   -- encargado/warehouse en la tienda del receipt) o admin global transversal.
-  IF NOT public.can_reverse_document(v_caller_uid, v_receipt.store_id, 'receipt') THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED: reversion de recepcion requiere rol admin/manager/encargado/warehouse en la tienda';
-  END IF;
 
   -- CP-AP-ACCOUNTING-INTEGRITY-001 §FASE2/4: GUARD de pagos vivos. Una
   -- recepción con pagos confirmados/aplicados (filas 'in' sin contra-fila)
@@ -19664,6 +19708,9 @@ BEGIN
   VALUES
     (v_caller_uid, v_receipt.store_id, 'REVERSE_RECEIPT_V2', 'receipts', p_receipt_id,
      jsonb_build_object('reason', p_reason,
+                        'authorization_source', CASE WHEN public.is_superadmin_uid(v_caller_uid) THEN 'platform_superadmin' ELSE 'creator_membership' END,
+                        'superadmin_global', public.is_superadmin_uid(v_caller_uid),
+                        'creator_id', v_receipt.user_id,
                         'items_processed', v_items_processed,
                         'payments_reversed', v_reversed_payments,
                         'old_status', v_receipt.status, 'new_status', 'reversed',
@@ -20270,8 +20317,10 @@ BEGIN
     FROM public.receipts WHERE id = p_receipt_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
 
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2): editar un borrador es intervenir la recepción →
+  -- creador original con membresía activa, o superadministrador.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede editar el borrador';
   END IF;
 
   v_supplier := NULLIF(btrim(COALESCE(p_header->>'supplier', '')), '');
@@ -21698,6 +21747,7 @@ BEGIN
     ri.moneda_recepcion,
     ri.tasa_cambio_recepcion,
     r.store_id,
+    r.user_id AS receipt_creator,
     r.status AS receipt_status
   INTO v_item
   FROM public.receipt_items ri
@@ -21714,9 +21764,11 @@ BEGIN
   v_old_tasa := v_item.tasa_cambio_recepcion;
   v_old_moneda := v_item.moneda_recepcion;
 
-  -- (2) Authorization
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- (2) Authorization — CP-BRA-R06 (§0.2): la corrección de tasa/moneda de
+  --        una línea de borrador es intervenir la recepción → creador
+  --        original con membresía activa, o superadministrador.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_item.receipt_creator, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede corregir el borrador';
   END IF;
 
   -- (3) Status guard
@@ -22125,9 +22177,11 @@ BEGIN
 
   IF NOT FOUND THEN RAISE EXCEPTION 'ERR_RECEIPT_NOT_FOUND'; END IF;
 
-  -- PR-2 C4: alinear auth con patrón v2.12.12 (has_store_access_as + v_caller_uid)
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06: gate reescrito (antes patrón v2.12.12 has_store_access_as)
+  -- CP-BRA-R06 (§0.2): actualizar líneas de un borrador es intervenir la
+  -- recepción → creador original con membresía activa, o superadministrador.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede modificar el borrador';
   END IF;
 
   IF v_status != 'pending' THEN
@@ -22796,8 +22850,10 @@ BEGIN
   END IF;
 
   -- 4. Authorization (patrón v2.12.12: OR no AND)
-  IF v_caller_uid IS NULL OR NOT public.has_store_access_as(v_caller_uid, v_receipt.store_id) THEN
-    RAISE EXCEPTION 'ERR_UNAUTHORIZED';
+  -- CP-BRA-R06 (§0.2): anular es derecho del CREADOR ORIGINAL con membresía
+  -- activa, o del superadministrador. Guardas de estado/pagos intactas.
+  IF v_caller_uid IS NULL OR NOT public.can_manage_reception(v_caller_uid, v_receipt.user_id, v_receipt.store_id) THEN
+    RAISE EXCEPTION 'ERR_UNAUTHORIZED: solo el creador original de la recepción (con membresía activa) o el superadministrador puede anularla';
   END IF;
 
   -- 5. Operation date validation (política forward-only)
@@ -22843,6 +22899,11 @@ BEGIN
     'receipts',
     p_receipt_id,
     jsonb_build_object(
+      'authorization_source', CASE WHEN public.is_superadmin_uid(v_caller_uid) THEN 'platform_superadmin' ELSE 'creator_membership' END,
+      'superadmin_global', public.is_superadmin_uid(v_caller_uid),
+      'creator_id', v_receipt.user_id,
+      'old_status', 'pending',
+      'new_status', 'voided',
       'reason', p_reason,
       'payments_reversed', v_reversed_payments,
       'items_preserved', (SELECT COUNT(*) FROM public.receipt_items WHERE receipt_id = p_receipt_id)

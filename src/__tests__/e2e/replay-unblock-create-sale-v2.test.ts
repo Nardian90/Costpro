@@ -600,9 +600,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261128120000_cp_pos_transfer_identity_validation (create_sale_v2 /36:
     //   p_customer_phone + puerta ERR_TRANSFER_IDENTITY_REQUIRED; al FINAL del
     //   orden lexicográfico — posiciones previas intactas) = 225
-    expect(m.total_incluidos).toBe(225);
+    expect(m.total_incluidos).toBe(226);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(225);
+    expect(incluidos.length).toBe(226);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -716,6 +716,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // FASE 4 Tienda Pueblo (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): regularización
     // gobernada OWNER_CONFIRMATION — posición 224 del stream (replay-safe)
     expect(pos('20261127160000_cpbra_tienda_pueblo_receipts.sql')).toBe(224);
+    // CP-BRA-R06 (CP-BRA-R06-FINAL-CERTIFICATION-001): autorización de
+    // COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: identidad del
+    // pagador en transferencias (create_sale_v2 /36) — posición 225 del stream
+    // (lexicográfico: '_cp_pos' < 'cpbra')
+    expect(pos('20261128120000_cp_pos_transfer_identity_validation.sql')).toBe(225);
+    // R-06 recepciones (crear=encargado|superadmin; confirmar/anular=creador|
+    // superadmin) — posición 226 del stream
+    expect(pos('20261128120000_cpbra_r06_reception_authorization.sql')).toBe(226);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

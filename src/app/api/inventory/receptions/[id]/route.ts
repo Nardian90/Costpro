@@ -1,9 +1,12 @@
-import { isAdminLevel } from '@/lib/roles';
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
+// CP-BRA-R06 (CP-BRA-R06-FINAL-CERTIFICATION-001): editar un borrador es
+// intervenir la recepción → creador original con membresía activa, o
+// superadministrador de plataforma (misma política de la BD).
+import { sessionCanManageReception } from '@/lib/reception-authorization';
 
 /**
  * PATCH /api/inventory/receptions/[id]
@@ -53,8 +56,33 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   const id = extractIdFromUrl(req);
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
-  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager' && session.user.role !== 'encargado') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  // CP-BRA-R06 (§0.2): la edición de una recepción pertenece al CREADOR
+  // ORIGINAL con membresía activa, o al superadministrador. Se carga la
+  // cabecera (tienda + creador + estado) ANTES de mutar: la misma política
+  // la imponen los RPC (save_pending_reception_changes /
+  // update_reception_items, migración 20261128120000) y el trigger de
+  // inmutabilidad del creador.
+  const supabase = getSupabaseForSession(session);
+  const { data: authReceipt, error: authReceiptErr } = await supabase
+    .from('receipts')
+    .select('id, store_id, user_id, status')
+    .eq('id', id)
+    .single();
+  if (authReceiptErr && String(authReceiptErr.code || '') !== 'PGRST116') {
+    return NextResponse.json({ error: `Error consultando recepción: ${authReceiptErr.message}` }, { status: 500 });
+  }
+  if (!authReceipt) {
+    return NextResponse.json({ error: 'Recepción no encontrada' }, { status: 404 });
+  }
+  if (!sessionCanManageReception(session, { user_id: authReceipt.user_id, store_id: authReceipt.store_id })) {
+    return NextResponse.json(
+      {
+        error: 'Forbidden',
+        message: 'Solo el creador original de la recepción (con membresía activa) o el superadministrador puede editarla',
+        code: 'ERR_UNAUTHORIZED',
+      },
+      { status: 403 },
+    );
   }
 
   const body = await req.json();
@@ -74,7 +102,6 @@ async function patchHandler(req: NextRequest, session: AuthenticatedSession) {
   }
 
   const { supplier, referenceDoc, notes, itemUpdates, newItems } = body;
-  const supabase = getSupabaseForSession(session);
   const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
   // CP-RECEPCIONES-CATALOGO-MAESTRO-001 (fase 3): lote con líneas nuevas →

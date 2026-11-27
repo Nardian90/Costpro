@@ -21,10 +21,19 @@ import { test, expect } from '@playwright/test';
 import {
   signIn, sb, rpcAsUser,
   ADMIN_EMAIL, ADMIN_PASS, CLERK_EMAIL, CLERK_PASS,
+  ensureEncargadoSession,
 } from './fixtures/session.fixture';
 import { readRunContext } from './fixtures/run-env';
 
 let adminToken = '';
+// CP-BRA-R06: token de ENCARGADO por tienda (creación = encargado|superadmin).
+const encTokens = new Map<string, string>();
+async function encTokenFor(storeId: string): Promise<string> {
+  if (!encTokens.has(storeId)) {
+    encTokens.set(storeId, (await ensureEncargadoSession(storeId)).token);
+  }
+  return encTokens.get(storeId)!;
+}
 let adminId = '';
 let clerkToken = '';
 let clerkId = '';
@@ -451,7 +460,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     const res1 = await resolve(adminToken, storeA, rows);
     expect(res1.summary.masters_created).toBe(1);
     const pid = res1.results[0].product_id!;
-    const rec1 = await registerReception(adminToken, storeA, [{
+    const rec1 = await registerReception(await encTokenFor(storeA), storeA, [{
       product_id: pid, sku: S, quantity: 10, unit_cost: 5, unit_of_measure: 'unidad',
       moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0,
     }], `${NS}-F9`);
@@ -474,7 +483,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     expect(prods.length).toBe(1);
 
     // La MISMA factura no puede registrarse dos veces (recepciones sin duplicado):
-    const recDup = await registerReception(adminToken, storeA, [{
+    const recDup = await registerReception(await encTokenFor(storeA), storeA, [{
       product_id: pid, sku: S, quantity: 10, unit_cost: 5, unit_of_measure: 'unidad',
       moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0,
     }], `${NS}-F9`);
@@ -482,7 +491,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     expect(recDup.error).toContain('ERR_INVOICE_DUPLICATE');
 
     // Y una segunda recepción con factura distinta NO duplica productos:
-    const rec2 = await registerReception(adminToken, storeA, [{
+    const rec2 = await registerReception(await encTokenFor(storeA), storeA, [{
       product_id: pid, sku: S, quantity: 10, unit_cost: 5, unit_of_measure: 'unidad',
       moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0,
     }], `${NS}-F9B`);
@@ -527,8 +536,8 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     const pidB = resB.results[0].product_id!;
 
     // Recepciones con costos distintos por tienda:
-    const rA = await registerReception(adminToken, storeA, [{ product_id: pidA, sku: S, quantity: 4, unit_cost: 5, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F11A`);
-    const rB = await registerReception(adminToken, storeB, [{ product_id: pidB, sku: S, quantity: 2, unit_cost: 8, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F11B`);
+    const rA = await registerReception(await encTokenFor(storeA), storeA, [{ product_id: pidA, sku: S, quantity: 4, unit_cost: 5, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F11A`);
+    const rB = await registerReception(await encTokenFor(storeB), storeB, [{ product_id: pidB, sku: S, quantity: 2, unit_cost: 8, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F11B`);
     expect(rA.ok && rB.ok).toBeTruthy();
 
     const [pa] = await sb.select<{ price: number; cost_average: number; stock_current: number; master_product_id: string }>(
@@ -557,7 +566,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     expect(Number(before.cost_average)).toBe(1);
 
     // Primera recepción REAL: 10 × 4.50 CUP → WAC exacto 4.50 (el nominal NO contamina).
-    const rec = await registerReception(adminToken, storeA, [{ product_id: pid, sku: S, quantity: 10, unit_cost: 4.5, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F12`);
+    const rec = await registerReception(await encTokenFor(storeA), storeA, [{ product_id: pid, sku: S, quantity: 10, unit_cost: 4.5, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F12`);
     expect(rec.ok).toBeTruthy();
 
     const [after] = await sb.select<{ cost_average: number; stock_current: number }>('products', `id=eq.${pid}&select=cost_average,stock_current`);
@@ -571,8 +580,8 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     const res = await resolve(adminToken, storeA, [row(S, 'Producto WAC Segunda', 10, 1, 0)]);
     const pid = res.results[0].product_id!;
 
-    await registerReception(adminToken, storeA, [{ product_id: pid, sku: S, quantity: 10, unit_cost: 5, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F13A`);
-    await registerReception(adminToken, storeA, [{ product_id: pid, sku: S, quantity: 10, unit_cost: 10, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F13B`);
+    await registerReception(await encTokenFor(storeA), storeA, [{ product_id: pid, sku: S, quantity: 10, unit_cost: 5, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F13A`);
+    await registerReception(await encTokenFor(storeA), storeA, [{ product_id: pid, sku: S, quantity: 10, unit_cost: 10, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F13B`);
 
     // WAC = (10×5 + 10×10) / 20 = 7.5
     const [p] = await sb.select<{ cost_average: number; stock_current: number }>('products', `id=eq.${pid}&select=cost_average,stock_current`);
@@ -589,7 +598,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     // por la vía canónica —una recepción previa— porque stock_current se
     // deriva de los movimientos).
     await sb.update('products', `id=eq.${seed.product_id}`, { price: 123.45, cost_price: 100 });
-    const recSeed = await registerReception(adminToken, storeA, [{ product_id: seed.product_id, sku: S, quantity: 5, unit_cost: 4, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F14SEED`);
+    const recSeed = await registerReception(await encTokenFor(storeA), storeA, [{ product_id: seed.product_id, sku: S, quantity: 5, unit_cost: 4, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F14SEED`);
     expect(recSeed.ok).toBeTruthy();
 
     const c = await classify(adminToken, storeA, [row(S, 'Historico Vinculado', 2, 7, 123.45)]);
@@ -600,7 +609,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     expect(res.summary.locals_created).toBe(0);
     expect(res.summary.locals_activated).toBe(0);
 
-    const rec = await registerReception(adminToken, storeA, [{ product_id: seed.product_id, sku: S, quantity: 2, unit_cost: 7, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F14`);
+    const rec = await registerReception(await encTokenFor(storeA), storeA, [{ product_id: seed.product_id, sku: S, quantity: 2, unit_cost: 7, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F14`);
     expect(rec.ok).toBeTruthy();
 
     // Precio de venta INTACTO (no se contamina con el costo de recepción):
@@ -639,7 +648,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     expect(cInact.rows[0].reasons.join(' ')).toContain('ERR_INACTIVE_ORPHAN_LOCAL');
 
     // register_reception con new_product del SKU huérfano → bloqueado (sin duplicado):
-    const rec = await registerReception(adminToken, storeD, [{
+    const rec = await registerReception(await encTokenFor(storeD), storeD, [{
       product_id: null, sku: sku('H15'), quantity: 1, unit_cost: 1, unit_of_measure: 'unidad',
       moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0,
       new_product: { sku: sku('H15'), name: 'Historico Activo sin maestro', cost_price: 1, price: 0, unit_of_measure: 'unidad', is_complete: false },
@@ -701,7 +710,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     expect(res.summary.masters_created).toBe(0);
     expect(res.summary.locals_created).toBe(0);
 
-    const rec = await registerReception(adminToken, storeC, [{
+    const rec = await registerReception(await encTokenFor(storeC), storeC, [{
       product_id: null, sku: S, quantity: 3, unit_cost: 2, unit_of_measure: 'unidad',
       moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0,
       new_product: { sku: S, name: 'Producto Local Historico', cost_price: 2, price: 4, unit_of_measure: 'unidad', is_complete: true },
@@ -735,14 +744,18 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     expect(res.results[0].action).toBe('blocked');
     expect(res.summary.masters_created).toBe(0);
 
-    // (c) register_reception directo con new_product en conectada → denegado (A5 rol):
+    // (c) register_reception directo con new_product en conectada → denegado.
+    // CP-BRA-R06: el clerk es rechazado ANTES por el gate de CREACIÓN
+    // (migración 20261128120000): no llega al permiso de crear maestros. El
+    // rechazo A5 del rol de maestro sigue demostrado en (a)/(b) vía
+    // classify/resolve; «nada se creó» (d) es la invariante de este caso:
     const rec = await registerReception(clerkToken, storeA, [{
       product_id: null, sku: S, quantity: 1, unit_cost: 2, unit_of_measure: 'unidad',
       moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0,
       new_product: { sku: S, name: 'Producto Sin Permiso', cost_price: 2, price: 3, unit_of_measure: 'unidad', is_complete: true },
     }], `${NS}-F18`);
     expect(rec.ok).toBeFalsy();
-    expect(rec.error).toContain('ERR_UNAUTHORIZED_MASTER_CREATE');
+    expect(rec.error).toContain('ERR_FORBIDDEN_ROLE');
 
     // (d) nada se creó:
     const masters = await sb.select('master_products', `tenant_id=eq.${tenantId}&sku=eq.${S}&select=id`);
@@ -773,7 +786,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     // (b) Atomicidad de register_reception: si un item falla, NO queda NADA
     // (ni maestro, ni fila local, ni recepción):
     const S3 = sku('E19C');
-    const rec = await registerReception(adminToken, storeA, [
+    const rec = await registerReception(await encTokenFor(storeA), storeA, [
       { product_id: null, sku: S3, quantity: 1, unit_cost: 2, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0,
         new_product: { sku: S3, name: 'Producto Que Revertira', cost_price: 2, price: 3, unit_of_measure: 'unidad', is_complete: true } },
       { product_id: null, sku: S1, quantity: 1, unit_cost: 2, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0,
@@ -816,7 +829,7 @@ test.describe.serial('CP-LOG-RECEPTION-MASTER-CATALOG-INTEGRITY-001 — 20 escen
     expect(created?.metadata?.sku).toBe(S);
 
     // (c) recepción posterior con contadores canónicos:
-    const rec = await registerReception(adminToken, storeA, [{ product_id: pid, sku: S, quantity: 5, unit_cost: 5, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F20`);
+    const rec = await registerReception(await encTokenFor(storeA), storeA, [{ product_id: pid, sku: S, quantity: 5, unit_cost: 5, unit_of_measure: 'unidad', moneda_recepcion: 'CUP', tasa_cambio_recepcion: 1.0 }], `${NS}-F20`);
     expect(rec.ok).toBeTruthy();
     const regAudit = await sb.select<{ action: string; metadata: Record<string, unknown> }>(
       'audit_logs', `user_id=eq.${adminId}&action=eq.REGISTER_RECEPTION&record_id=eq.${rec.data}&select=action,metadata`);

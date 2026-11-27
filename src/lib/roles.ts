@@ -279,3 +279,54 @@ export const canConfirmMaterialRequestInStore = (
     m.status === 'active'
   ) || false;
 };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CP-BRA-R06 (CP-BRA-R06-FINAL-CERTIFICATION-001) — autorización de
+// RECEPCIONES. Decisión expresa del propietario (vinculante):
+//   · CREAR: membresía ACTIVA + rol exacto 'encargado' en la tienda, o
+//     superadmin de plataforma. Tener acceso a la tienda con cualquier otro
+//     rol (warehouse/almacenero, clerk/facturadora, usuario, manager, admin
+//     de tienda o de plataforma) NO concede permiso de creación.
+//   · CONFIRMAR / ANULAR / EDITAR BORRADOR: el CREADOR ORIGINAL con
+//     membresía activa en la tienda propietaria, o superadmin global.
+//   · Creadores no verificables (históricos NULL/centinela) → superadmin.
+// La barrera autoritativa es la BD (RPC + RLS, migración 20261128120000);
+// estas helpers solo reflejan la MISMA política en la interfaz.
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** CREAR recepción — encargado con membresía activa en la tienda, o superadmin. */
+export const canCreateReceptionInStore = (
+  user: (StoreAccessUser & { id?: string | null }) | null,
+  storeId: string | null | undefined,
+): boolean => {
+  if (!user || !storeId) return false;
+  if (user.role === 'superadmin') return true;
+  return user.memberships?.some(m =>
+    m.store_id === storeId &&
+    m.role === 'encargado' &&
+    m.status === 'active'
+  ) || false;
+};
+
+/** Creador histórico no verificable (centinela legacy de register_reception). */
+export const RECEPTION_NULL_CREATOR_SENTINEL = '00000000-0000-0000-0000-000000000000';
+
+/**
+ * CONFIRMAR/ANULAR/EDITAR una recepción — su creador original con membresía
+ * activa en la tienda, o superadmin. Sin exigencia de rol encargado sobre una
+ * recepción propia (§0.2: la autorización de intervenir es del creador).
+ */
+export const canManageOwnReception = (
+  user: (StoreAccessUser & { id?: string | null }) | null,
+  receipt: { user_id?: string | null; store_id?: string | null } | null,
+): boolean => {
+  if (!user || !receipt) return false;
+  if (user.role === 'superadmin') return true;
+  const creatorId = receipt.user_id ?? null;
+  if (!creatorId || creatorId === RECEPTION_NULL_CREATOR_SENTINEL) return false;
+  if (!user.id || creatorId !== user.id) return false;
+  return user.memberships?.some(m =>
+    m.store_id === receipt.store_id &&
+    m.status === 'active'
+  ) || false;
+};
