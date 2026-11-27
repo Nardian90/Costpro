@@ -20,7 +20,6 @@ import { checkNotFutureOperationDate } from '@/lib/pos/operation-date';
 import {
   saleIncludesTransferChannel,
   missingTransferIdentityFields,
-  missingTransferRowReferences,
 } from '@/lib/pos/transfer-identity';
 
 /**
@@ -249,37 +248,29 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const d = parsed.data;
 
   // ── MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2) ──
-  // IDENTIDAD DEL PAGADOR en ventas con transferencia: No. de transferencia
-  // (por fila) + Nombre + Carné de identidad + Teléfono. La UI ya lo exige en
-  // ambos modos (Cajero Express y Modo Carrito); esta revalidación server-side
-  // garantiza que la obligatoriedad NUNCA dependa solo del frontend. Fail-
-  // closed: 422 con mensaje accionable ANTES de llamar al RPC (sin efectos).
-  // El flujo legado del Catálogo (pools sin filas ni componentes) no se toca.
+  // IDENTIDAD DEL PAGADOR en ventas con transferencia: Nombre + Carné de
+  // identidad + Teléfono (el 4.º dato, el N.º de transferencia por fila, es
+  // autoridad EXCLUSIVA del RPC — regla §5.1 canónica, sin duplicar aquí).
+  // La UI ya lo exige en ambos modos (Cajero Express y Modo Carrito); esta
+  // revalidación server-side garantiza que la obligatoriedad NUNCA dependa
+  // solo del frontend. Fail-closed: 422 con mensaje accionable ANTES de
+  // llamar al RPC (sin efectos). El flujo legado del Catálogo (pools sin
+  // filas ni componentes) no se toca.
   const transferChannel = saleIncludesTransferChannel(d);
   if (transferChannel.hasTransfer) {
     const missingIdentity = missingTransferIdentityFields(d);
-    const missingRowRef = missingTransferRowReferences(d);
-    if (missingIdentity.length > 0 || missingRowRef) {
-      const parts: string[] = [];
-      if (missingIdentity.length > 0) {
-        parts.push(`faltan datos del pagador: ${missingIdentity.join(', ')}`);
-      }
-      if (missingRowRef) {
-        parts.push('hay pagos por transferencia sin su número de operación');
-      }
+    if (missingIdentity.length > 0) {
       logger.warn('POS', 'TRANSFER_IDENTITY_REJECTED', {
         storeId: d.store_id,
         missing: missingIdentity,
-        missingRowReference: missingRowRef,
         perItemPayments: transferChannel.declaresPerItemPayments,
       });
       return NextResponse.json(
         {
-          error: `Venta con transferencia incompleta: ${parts.join('; ')}. ` +
+          error: `Venta con transferencia incompleta: faltan datos del pagador (${missingIdentity.join(', ')}). ` +
             'Toda venta cuyo método incluya transferencia exige N.º de transferencia, nombre, carné de identidad y teléfono del pagador.',
           details: {
             missing_identity: missingIdentity,
-            missing_transfer_reference: missingRowRef,
           },
         },
         { status: 422 },
