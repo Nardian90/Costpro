@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-26T20:57:54.858Z
+-- Captured  : 2026-11-27T11:51:09.043Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 233 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)
@@ -6503,7 +6503,9 @@ BEGIN
 
   IF p_service_type_id IS NOT NULL THEN
     SELECT COUNT(*) INTO v_count FROM service_types
-    WHERE id = p_service_type_id AND store_id = p_store_id AND is_active = true;
+    WHERE id = p_service_type_id
+      AND (store_id = p_store_id OR store_id IS NULL)
+      AND is_active = true;
     IF v_count = 0 THEN
       RAISE EXCEPTION 'ERR_SERVICE_TYPE_NOT_FOUND';
     END IF;

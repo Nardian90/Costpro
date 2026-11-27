@@ -584,12 +584,15 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   fiscal cerrado/locked en reverse_supplier_payment con excepción admin
     //   auditada). Al FINAL del orden lexicográfico — posiciones previas
     //   intactas = 216
+    // CP-CPOP-FIX (2026-11-27): +1 — 20261127130000_cpop_fix_v2_global_service_type
+    // (create_received_service_v2/16 vuelve a aceptar tipos GLOBALES del
+    // catálogo; corrige el ERR_SERVICE_TYPE_NOT_FOUND de la creación desde la
+    // UI desde 20261124120100). Al FINAL del orden lexicográfico — posición 221
     // CP-BRA-FINAL-COMPLIANCE-CLOSURE-001 (2026-11-27): +1 — 20261127140000
-    //   lote atómico por orden para pagos de OT (R-03). Posiciones previas
-    //   intactas = 221
-    expect(m.total_incluidos).toBe(221);
+    //   lote atómico por orden para pagos de OT (R-03) — posición 222
+    expect(m.total_incluidos).toBe(222);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(221);
+    expect(incluidos.length).toBe(222);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -694,9 +697,12 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // R-26 (CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001): neteo de
     // contra-filas en el pre-check del batch — posición 220 del stream
     expect(pos('20261127120000_cpbra_r26_batch_reversal_netting.sql')).toBe(220);
+    // CP-CPOP-FIX (2026-11-27): aceptación de tipos GLOBALES en el overload
+    // 16-args de create_received_service_v2 — posición 221
+    expect(pos('20261127130000_cpop_fix_v2_global_service_type.sql')).toBe(221);
     // R-03 (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): lote atómico por orden OT —
-    // posición 221 del stream
-    expect(pos('20261127140000_cpbra_r03_ot_payment_batch.sql')).toBe(221);
+    // posición 222 (última del tramo)
+    expect(pos('20261127140000_cpbra_r03_ot_payment_batch.sql')).toBe(222);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

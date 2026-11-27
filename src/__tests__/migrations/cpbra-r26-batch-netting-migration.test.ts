@@ -145,13 +145,14 @@ describe('CP-BRA R-26 — 20261127120000_cpbra_r26_batch_reversal_netting.sql', 
     for (const p of patterns) expect(R26).not.toContain(p);
   });
 
-  it('12. el manifiesto replay incluye la migración (posición 220 hasta R-03; baseline 221 desde CP-BRA-FINAL-COMPLIANCE-CLOSURE-001)', () => {
+  it('12. el manifiesto replay incluye la migración en la posición 220 (total 222 con CP-CPOP-FIX + R-03)', () => {
     const manifest = JSON.parse(
       readFileSync(join(process.cwd(), 'audit-evidence', 'INFRA-011', 'e2e-migrations-manifest.json'), 'utf8')
     );
-    // R-03 (20261127140000) añadió la posición 221 al stream → baseline 221.
-    // La posición de R-26 (220) permanece intacta.
-    expect(manifest.total_incluidos).toBe(221);
+    // CP-CPOP-FIX (2026-11-27) añade 20261127130000 en la posición 221 y
+    // R-03 (20261127140000) la 222: R-26 conserva SU posición 220 y el total
+    // del manifiesto pasa a 222.
+    expect(manifest.total_incluidos).toBe(222);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127120000_cpbra_r26_batch_reversal_netting.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 636,
-  "total_incluidos": 221,
+  "total_considerados": 637,
+  "total_incluidos": 222,
   "total_excluidos": 415,
-  "digest": "7e33f5a583fff2b2978bf94a287d2475f267f4efab7c587da240d95dd0ff7b76",
+  "digest": "f7ae52956153ecabb9fc38e579832ab21be7cdbe6518bdf0ca6b07d67349715a",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6302,6 +6302,17 @@
       "sha256_generado": "e6a1fc8b36ace1e7451b673150d800b72816a181cf4f4857209283887c57d9a8"
     },
     {
+      "nombre": "20261127130000_cpop_fix_v2_global_service_type.sql",
+      "bytes": 9863,
+      "sha256_original": "59909ae43081db2729d1f5d9fd2701b32c026ec08f4ba38cec8575cb6bd2595b",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261127",
+      "observaciones": [],
+      "posicion": 221,
+      "sha256_generado": "59909ae43081db2729d1f5d9fd2701b32c026ec08f4ba38cec8575cb6bd2595b"
+    },
+    {
       "nombre": "20261127140000_cpbra_r03_ot_payment_batch.sql",
       "bytes": 18604,
       "sha256_original": "2ac21b5e34b7613d8f6106ba8a05b1b57d123df0c8c6f8068e27474262008358",
@@ -6309,7 +6320,7 @@
       "razon": null,
       "timestamp": "20261127",
       "observaciones": [],
-      "posicion": 221,
+      "posicion": 222,
       "sha256_generado": "2ac21b5e34b7613d8f6106ba8a05b1b57d123df0c8c6f8068e27474262008358"
     },
     {
