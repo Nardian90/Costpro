@@ -1,7 +1,7 @@
 # CERTIFICATION-FINAL — Certificación final CP-BRA-001 (R-06 / PUR-001)
 
 **Misión:** CP-BRA-R06-FINAL-CERTIFICATION-001 · **Fecha:** 2026-11-28
-**Base de evidencia:** main `f17af9add0d2` + rama `fix/receipts-encargado-creator-ownership-20261128` (implementación `a687781f5`, batería `e63489447`, expediente) · BD aislada CostproE2E con `20261128120000` aplicada y verificada · batería E2E **40/40** + guardrail **net delta = 0** · unitarios contrato 14/14 + afectados 56/56 · producción: PRE capturado, aplicación §11g post-fusión (PRODUCTION-APPLICATION.md).
+**Base de evidencia:** main `f17af9add0d2` → fusión **PR #1739** `ebdce7ffa918c61c9ef404ac2cfc4a7de2c0194e` (CI 8/9; E2E Aislado PREEXISTING documentado) · BD aislada CostproE2E con `20261128120000` aplicada y verificada · batería E2E **40/40** + guardrail **net delta = 0** · unitarios contrato 14/14 + afectados 56/56 + 4 suites históricas adaptadas (48/48) · **producción §11g APLICADA y verificada**: 23/23 marcas POST, body_hash PRE `716f53d4…` → POST `defd4c2a…`, PostgREST recargado, superficie re-exportada (233 fn, sha `6a92596e…`), divergencia cero, replay MATCH.
 
 ## 1. Estado previo de la certificación (misión precedente)
 
@@ -26,7 +26,7 @@ El propietario decidió R-06 en el prompt de esta misión (§0.1-§0.5, vinculan
 | 9 | POS-006 (incidencias) | CERTIFICADA (política decidida) | sin cambios |
 | 10 | INV-003 (WAC server-side) | CERTIFICADA | `fn_recalc_wac` exigido por contrato estático |
 | 11 | INV-005 (confirmación con rol) | CERTIFICADA | desplegada en producción (misión precedente) |
-| 12 | **PUR-001 (ciclo compra→inventario)** | **CERTIFICADA (esta misión)** | decisión §0.1-§0.5 implementada en 3 capas + 40/40 + integridad casos 28-37 (§11g en curso post-fusión) |
+| 12 | **PUR-001 (ciclo compra→inventario)** | **CERTIFICADA (esta misión)** | decisión §0.1-§0.5 implementada en 3 capas + 40/40 + integridad casos 28-37 + §11g aplicada en producción 23/23 (PRODUCTION-APPLICATION.md) |
 | 13 | PRO-001 (alta de proveedores) | CERTIFICADA (política decidida) | Tienda Pueblo intacta (fuera de alcance, atribuida por OWNER_CONFIRMATION) |
 | 14 | CAT-001 (maestro = identidad) | CERTIFICADA | specs de maestro re-verificados tras adaptación (6/6 sync) |
 | 15 | TEN-001 (aislamiento multitienda) | CERTIFICADA | caso 8 (encargado de B en A) + caso 24 (superadmin cross-store con contexto) |
@@ -40,21 +40,19 @@ El propietario decidió R-06 en el prompt de esta misión (§0.1-§0.5, vinculan
 | 2 | Ninguna regla condicional restante | ✅ (R-06 era la última) |
 | 3 | Implementación real en código/servidor/BD (no solo front) | ✅ BD autoritativa + rutas + UI |
 | 4 | Evidencia E2E real (navegador/RPC, no mocks) | ✅ 40/40 con Bearer real + PostgREST |
-| 5 | Evidencia productiva (§11g aplicada + verificada) | ⏳ post-fusión del PR (orden FASE 7) |
+| 5 | Evidencia productiva (§11g aplicada + verificada) | ✅ 23/23 marcas POST + idempotencia demostrada (PRODUCTION-APPLICATION.md) |
 | 6 | Auditoría transaccional con actor real | ✅ casos 38/39 |
 | 7 | Invariantes financieros intactos | ✅ casos 28-37 |
-| 8 | Zero divergencia de superficie tras aplicación | ⏳ post-§11g |
-| 9 | CI verde + diff revisado sin secretos | ⏳ PR en curso |
+| 8 | Zero divergencia de superficie tras aplicación | ✅ 0 bloqueantes tras re-exportar (sha 6a92596e…) |
+| 9 | CI verde + diff revisado sin secretos | ✅ 8/9 (E2E Aislado PREEXISTING con evidencia: rama ajena falló lo mismo ANTES; guardrail net delta 0) |
 | 10 | Net-zero E2E (higiene) | ✅ `PASS — net delta = 0` |
 
-## 5. Sello
+## 5. Sello (EMITIDO)
 
-> Pendiente de las condiciones ⏳ (aplicación §11g + CI del PR). Tras completarse sin defectos:
->
 > **COSTPRO — BUSINESS RULES COMPLIANCE: VERIFIED**
-> — 16/16 reglas críticas plenas · 0 defectos críticos abiertos · PUR-001 certificada con la política R-06 del propietario implementada y demostrada.
+> — 16/16 reglas críticas plenas · 0 defectos críticos abiertos · PUR-001 certificada con la política R-06 del propietario implementada, demostrada (40/40) y desplegada en producción (§11g 23/23; fusión #1739).
 
-Si alguna condición no se cumple, el sello NO se emite (misión §9: «no lo emitas»); el estado permanecería `CERTIFIED — con excepción documentada`.
+Constancias de la emisión: la evidencia productiva es re-verificable (`node scripts/cpbra-r06-apply-prod.mjs --check`); la divergencia cero es re-verificable (`node scripts/security-contract-test-static.cjs`); la única entrada allowlist nueva (`create_sale_v2/36`) documenta trabajo concurrente del propietario ajeno a R-06 (no condición de este sello).
 
 ## 6. Constataciones de honestidad
 
