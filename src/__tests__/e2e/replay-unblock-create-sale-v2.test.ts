@@ -327,7 +327,7 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(prohibidos.test(sql)).toBe(false);
   });
 
-  it('4. simulación con desbloqueo: ningún COMMENT ambiguo; estado final = firma única vigente (/35, CP-POS per-item payments)', () => {
+  it('4. simulación con desbloqueo: ningún COMMENT ambiguo; estado final = firma única vigente (/36, misión TRANSFER-VALIDATION)', () => {
     const r = simularStream(true);
     expect(r.fallo).toBeNull();
     expect(r.firmasFinales.length).toBe(1);
@@ -336,12 +336,20 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // sin calificado previo.
     // CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001 (20261125120000): la firma se
     // amplió a /35 (p_customer_ci + persistencia items[].payments en
-    // transaction_items.payment_distributions) con DROP sin calificar previo —
-    // el stream termina con UNA firma viva, ahora /35.
+    // transaction_items.payment_distributions) con DROP sin calificar previo.
+    // COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (20261128120000):
+    // la firma se amplió a /36 (p_customer_phone + puerta fail-closed
+    // ERR_TRANSFER_IDENTITY_REQUIRED para ventas con transferencia) con DROP
+    // explícito de la /35 — el stream termina con UNA firma viva, ahora /36.
+    const ev36 = eventosCreateSaleV2('20261128120000_cp_pos_transfer_identity_validation.sql',
+      leerMigracion('20261128120000_cp_pos_transfer_identity_validation.sql')).filter((e) => e.tipo === 'create');
+    const f36 = ev36[0] as EventoCreate;
+    expect(r.firmasFinales[0]).toBe(f36.firmas.join(','));
+    // La firma /35 (per-item payments) quedó absorbida por el DROP explícito.
     const ev35 = eventosCreateSaleV2('20261125120000_cp_pos_per_item_payments.sql',
       leerMigracion('20261125120000_cp_pos_per_item_payments.sql')).filter((e) => e.tipo === 'create');
     const f35 = ev35[0] as EventoCreate;
-    expect(r.firmasFinales[0]).toBe(f35.firmas.join(','));
+    expect(r.firmasFinales[0]).not.toBe(f35.firmas.join(','));
     // La firma /34 (clasificador) quedó absorbida por el DROP sin calificar.
     const ev34 = eventosCreateSaleV2('20261105140000_cp_clasificador_fase4_snapshots.sql',
       leerMigracion('20261105140000_cp_clasificador_fase4_snapshots.sql')).filter((e) => e.tipo === 'create');
@@ -588,9 +596,13 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   lote atómico por orden para pagos de OT (R-03); +1 — 20261127150000
     //   gate admin/manager/encargado de pay_commission (§0.2); +1 — FASE 4
     //   Tienda Pueblo (regularización gobernada). Posiciones previas intactas = 223
-    expect(m.total_incluidos).toBe(224);
+    // COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (2026-11-28): +1 —
+    //   20261128120000_cp_pos_transfer_identity_validation (create_sale_v2 /36:
+    //   p_customer_phone + puerta ERR_TRANSFER_IDENTITY_REQUIRED; al FINAL del
+    //   orden lexicográfico — posiciones previas intactas) = 225
+    expect(m.total_incluidos).toBe(225);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(224);
+    expect(incluidos.length).toBe(225);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
