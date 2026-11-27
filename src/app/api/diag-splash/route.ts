@@ -1,7 +1,18 @@
 // Diagnostic endpoint — tests Supabase connectivity
-import { NextResponse } from 'next/server';
+// SEC-003 (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001 §4.2): autenticación fail-closed
+// server-side — el diagnóstico solo se ejecuta con sesión verificada (mecanismo
+// propio de la raíz /api: getServerSession + 401). Antes era un endpoint
+// público sin auth ni rate-limit (hallazgo del audit-route-auth.cjs; sin
+// llamador en el producto — orphan diagnostic).
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from '@/lib/auth';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const session = await getServerSession(req);
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const results: Record<string, any> = {};
   const start = Date.now();
 

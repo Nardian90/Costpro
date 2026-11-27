@@ -404,10 +404,11 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 - **Evidencia:** `scripts/ci-gate-sql-checks.js`; `ci-gate-allowlist.json`; `scripts/security-contract-test-static.cjs` (3 capas); R-21.
 
 ### SEC-003 · Autenticación fail-closed server-side con wrappers únicos
-- **Estado:** CONFIRMADA · **Severidad:** CRÍTICA · **Cumplimiento:** PARCIAL
-- **Descripción:** `getServerSession` con verificación firmada (FIX-AUDIT-AUTH-1 eliminó decodificación sin firma); wrappers `withAuth/withRole/withStoreAccess` en 213/228 rutas; 12 rutas sin HOF con mecanismo propio (webhooks firmados, CRON_SECRET fail-closed, públicos con rate-limit).
-- **Brechas:** ~102 rutas sin zod; CSRF 88 rutas; rate-limit 107; dev bypass `dev-token-bypass` con doble guardia de env; `withAuth` degrada con warning si falta service_role.
-- **Evidencia:** `src/lib/auth.ts:19,37,46,82-91`; `src/lib/auth-middleware.ts:99,137,224,321`; inventario 1-A §4-5; R-22.
+- **Estado:** CONFIRMADA · **Severidad:** CRÍTICA · **Cumplimiento:** CUMPLE (2026-11-27, CP-BRA-FINAL-COMPLIANCE-CLOSURE-001)
+- **Descripción:** `getServerSession` con verificación firmada (FIX-AUDIT-AUTH-1); wrappers `withAuth/withRole/withStoreAccess` + mecanismos propios verificados — **229/229 rutas clasificadas por `scripts/audit-route-auth.cjs`, integrado en CI (job Security Audit): una ruta nueva sin clase BLOQUEA el build («sin wrapper = no merge» automatizado)**. Allowlist PUBLIC documentada con expiración.
+- **P−:** batería dedicada 22/22 vía HTTP real (sin token, token falsificado, cron sin/incorrecto secreto, webhooks sin firma, públicos OK) + baterías de dominio (rol/otra tienda/anti-spoofing).
+- **Brechas (riesgo SEPARADO R-22, no criterio de SEC-003):** ~102 rutas sin zod; CSRF 88; rate-limit 107; dev bypass con doble guardia de env; `withAuth` degrada con warning si falta service_role (R-32).
+- **Evidencia:** `scripts/audit-route-auth.cjs`; `scripts/e2e/cpbra-sec003-failclosed-battery-e2e.mjs`; expediente `docs/audits/CP-BRA-FINAL-COMPLIANCE-CLOSURE-001/SEC003-REMEDIATION.md`; `src/lib/auth.ts:19,37,46,82-91`; `src/lib/auth-middleware.ts:99,137,224,321`; R-22.
 
 ### SEC-004 · Preventivo de escalada de privilegios
 - **Estado:** CONFIRMADA · **Severidad:** CRÍTICA · **Cumplimiento:** CUMPLE
