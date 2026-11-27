@@ -165,7 +165,7 @@
   "total_considerados": 638,
   "total_incluidos": 223,
   "total_excluidos": 415,
-  "digest": "0accdd3fe605c0fa880503156e2fe56352a3741298b162277661bf0e661d5196",
+  "digest": "1c148981094d608c506615826aba6ee6783991fe6b96b25720465f8647dc64dd",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6302,17 +6302,6 @@
       "sha256_generado": "e6a1fc8b36ace1e7451b673150d800b72816a181cf4f4857209283887c57d9a8"
     },
     {
-      "nombre": "20261127130000_cpop_fix_v2_global_service_type.sql",
-      "bytes": 9863,
-      "sha256_original": "59909ae43081db2729d1f5d9fd2701b32c026ec08f4ba38cec8575cb6bd2595b",
-      "estado": "incluido",
-      "razon": null,
-      "timestamp": "20261127",
-      "observaciones": [],
-      "posicion": 221,
-      "sha256_generado": "59909ae43081db2729d1f5d9fd2701b32c026ec08f4ba38cec8575cb6bd2595b"
-    },
-    {
       "nombre": "20261127140000_cpbra_r03_ot_payment_batch.sql",
       "bytes": 18604,
       "sha256_original": "2ac21b5e34b7613d8f6106ba8a05b1b57d123df0c8c6f8068e27474262008358",
@@ -6320,7 +6309,7 @@
       "razon": null,
       "timestamp": "20261127",
       "observaciones": [],
-      "posicion": 222,
+      "posicion": 221,
       "sha256_generado": "2ac21b5e34b7613d8f6106ba8a05b1b57d123df0c8c6f8068e27474262008358"
     },
     {
@@ -6331,8 +6320,19 @@
       "razon": null,
       "timestamp": "20261127",
       "observaciones": [],
-      "posicion": 223,
+      "posicion": 222,
       "sha256_generado": "b906b5de4bfdb40ddd450df1fcdef696676ccebdd7e9e5b535b7aa18f05ae032"
+    },
+    {
+      "nombre": "20261127160000_cpbra_tienda_pueblo_receipts.sql",
+      "bytes": 9355,
+      "sha256_original": "765c41bf4c788f9410bc04a1dd68bfcf46bd2987ae5741d28fa1c495ce8699c8",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261127",
+      "observaciones": [],
+      "posicion": 223,
+      "sha256_generado": "765c41bf4c788f9410bc04a1dd68bfcf46bd2987ae5741d28fa1c495ce8699c8"
     },
     {
       "nombre": "AUDIT_FIXES.md",
