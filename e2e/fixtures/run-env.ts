@@ -210,18 +210,29 @@ async function adminCreateUser(
   return { id: data.id };
 }
 
-/** Password grant contra Supabase Auth (mismo contrato que session.fixture). */
+/** Password grant contra Supabase Auth (mismo contrato que session.fixture).
+ *  REINTENTO ACOTADO (fix CI PR #1738, 2026-11-27): el password grant puede
+ *  responder 400 invalid_credentials de forma TRANSITORIA cuando llega antes
+ *  de la propagación completa del usuario recién creado por adminCreateUser
+ *  (flake real en 2 de 3 corridas del PR: run 19:01 y run 19:19 UTC).
+ *  4 intentos con backoff corto; el último error preservado para diagnóstico. */
+const SIGNIN_REINTENTOS = 4;
 export async function signInRunUser(email: string, password: string): Promise<{ token: string; userId: string }> {
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-    method: 'POST',
-    headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  if (!res.ok) {
-    throw new Error(`[run-env] signIn falló para ${email}: HTTP ${res.status} ${await res.text()}`);
+  let ultimoError: Error | null = null;
+  for (let intento = 1; intento <= SIGNIN_REINTENTOS; intento++) {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+      method: 'POST',
+      headers: { apikey: ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (res.ok) {
+      const data = (await res.json()) as { access_token: string; user: { id: string } };
+      return { token: data.access_token, userId: data.user.id };
+    }
+    ultimoError = new Error(`[run-env] signIn falló para ${email} (intento ${intento}/${SIGNIN_REINTENTOS}): HTTP ${res.status} ${await res.text()}`);
+    if (intento < SIGNIN_REINTENTOS) await new Promise((r) => setTimeout(r, 750 * intento));
   }
-  const data = (await res.json()) as { access_token: string; user: { id: string } };
-  return { token: data.access_token, userId: data.user.id };
+  throw ultimoError!;
 }
 
 /** Crea una tienda vía la API REAL (POST /api/stores → RPC con membership). */
