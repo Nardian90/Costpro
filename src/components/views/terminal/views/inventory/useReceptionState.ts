@@ -10,6 +10,8 @@ import { useRegisterReception } from '@/hooks/api/useInventory';
 import { useReceptionCatalogSearch } from '@/hooks/api/useReceptionCatalogSearch';
 // Reception-Flow-Fix: hooks para guardar/confirmar recepciones pendientes.
 import { useSavePendingReception, useConfirmPendingReception } from '@/hooks/api/useReceptions';
+// CP-BRA-R06: gate de creación de recepciones (encargado con membresía activa o superadmin).
+import { canCreateReceptionInStore } from '@/lib/roles';
 // CP-CAT-MAESTRO-003: verificación de identidad compartida (Catálogo Maestro)
 import { findMasterBySku } from '@/hooks/api/useMasterCatalog';
 // Política de secuencia global (forward-only locking)
@@ -1661,6 +1663,13 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
 
   const handleSubmit = async () => {
     if (!user?.activeStoreId || !user?.id) { toast.error('No hay una tienda activa o sesión válida'); return; }
+    // CP-BRA-R06 (§0.1): solo un encargado con membresía activa en esta tienda
+    // (o el superadministrador) puede crear recepciones. La BD impone el mismo
+    // gate en register_reception; esto evita el envío y explica el motivo.
+    if (!canCreateReceptionInStore(user, user?.activeStoreId)) {
+      toast.error('La creación de recepciones requiere rol encargado con membresía activa en esta tienda (o superadministrador de plataforma).', { duration: 8000 });
+      return;
+    }
     if (!supplier.trim()) { toast.error('El nombre del proveedor es obligatorio'); return; }
     if (!invoiceNumber.trim()) { toast.error('El numero de factura es obligatorio'); return; }
     if (items.length === 0) { toast.error('Agrega al menos un producto'); return; }
@@ -2063,6 +2072,12 @@ export function useReceptionState({ preselectedProduct, onCancel }: UseReception
   const handleSavePending = async () => {
     if (!user?.activeStoreId || !user?.id) {
       toast.error('No hay una tienda activa o sesión válida');
+      return;
+    }
+    // CP-BRA-R06 (§0.1): guardar un borrador es CREAR una recepción pendiente
+    // → mismo permiso (encargado activo o superadmin).
+    if (!canCreateReceptionInStore(user, user?.activeStoreId)) {
+      toast.error('La creación de recepciones requiere rol encargado con membresía activa en esta tienda (o superadministrador de plataforma).', { duration: 8000 });
       return;
     }
     if (items.length === 0) {

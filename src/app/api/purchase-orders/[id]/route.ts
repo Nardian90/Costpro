@@ -4,6 +4,10 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { z } from 'zod';
 import { getSupabaseForSession } from '@/lib/supabase-session';
 import { withSecurity } from '@/lib/with-security';
+// CP-BRA-R06 (CP-BRA-R06-FINAL-CERTIFICATION-001): recibir contra OC crea una
+// recepción → mismo permiso de creación: encargado con membresía activa o
+// superadmin (la BD re-verifica en receive_against_po + register_reception).
+import { sessionCanCreateReception } from '@/lib/reception-authorization';
 
 /**
  * /api/purchase-orders/[id]
@@ -131,8 +135,30 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
   const id = extractIdFromUrl(req);
   if (!id) return NextResponse.json({ error: 'ID requerido' }, { status: 400 });
 
-  if (!isAdminLevel(session.user.role) && session.user.role !== 'manager' && session.user.role !== 'encargado' && session.user.role !== 'warehouse') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  const supabase = getSupabaseForSession(session);
+
+  // CP-BRA-R06 (§0.1): recibir contra OC CREA una recepción → se exige el
+  // mismo permiso de creación: encargado con membresía activa en la tienda
+  // de la OC, o superadministrador. Antes el gate de ruta permitía
+  // admin|manager|encargado|warehouse; la BD imponía solo membresía. Ahora
+  // ambas barreras aplican la política del propietario.
+  const { data: poRow } = await supabase
+    .from('purchase_orders')
+    .select('store_id')
+    .eq('id', id)
+    .single();
+  if (!poRow) {
+    return NextResponse.json({ error: 'OC no encontrada' }, { status: 404 });
+  }
+  if (!sessionCanCreateReception(session, poRow.store_id)) {
+    return NextResponse.json(
+      {
+        error: 'Forbidden',
+        message: 'Recibir contra una orden de compra requiere rol encargado con membresía activa en la tienda (o superadministrador de plataforma)',
+        code: 'ERR_FORBIDDEN_ROLE',
+      },
+      { status: 403 },
+    );
   }
 
   const body = await req.json();
@@ -155,7 +181,8 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     return NextResponse.json({ error: 'receivedItems requerido (array)' }, { status: 400 });
   }
 
-  const supabase = getSupabaseForSession(session);
+  // Identidad del servidor (CP-BRA-R06 §2.1: el creador se asigna desde la
+  // sesión autenticada, nunca del body).
   const userId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(session.user.id || '') ? session.user.id : null;
 
   const rpcItems = receivedItems.map((item: { poItemId: string; quantityReceived: number }) => ({

@@ -152,7 +152,7 @@ describe('CP-BRA R-26 — 20261127120000_cpbra_r26_batch_reversal_netting.sql', 
     // R-03 (20261127140000) añadió la posición 221 y §0.2 pay_commission
     // (20261127150000) la 222 al stream → baseline 222. La posición de R-26
     // (220) permanece intacta.
-    expect(manifest.total_incluidos).toBe(224);
+    expect(manifest.total_incluidos).toBe(225);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127120000_cpbra_r26_batch_reversal_netting.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

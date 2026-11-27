@@ -19,12 +19,16 @@ import { POST as syncBatchPOST } from '@/app/api/sync/batch/route';
 const UUID = 'a1111111-1111-4111-8111-111111111111';
 const rpcCalls: Array<{ name: string; args: any }> = [];
 
+// CP-BRA-R06 (§0.1): los workflows de recepción los conduce un actor
+// legítimamente autorizado a CREAR — encargado con membresía activa en la
+// tienda (o superadmin). El test de alcanzabilidad dinámica de RPC sigue
+// verificando EXACTAMENTE lo mismo (qué RPC invoca cada flujo).
 const session = {
   user: {
     id: '11111111-2222-4333-8444-555555555555',
-    role: 'admin',
+    role: 'encargado',
     token: 'staging-token',
-    memberships: [{ store_id: UUID, status: 'active' }],
+    memberships: [{ store_id: UUID, role: 'encargado', status: 'active' }],
   },
 } as any;
 
@@ -52,13 +56,20 @@ const { mockClient } = vi.hoisted(() => ({
       rpcCalls.push({ name, args });
       return Promise.resolve({ data: RECEIPT_ID, error: null });
     },
-    from: () => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),
-      maybeSingle: vi.fn().mockResolvedValue({ data: { store_id: UUID }, error: null }),
-      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
-    }),
+    from: (table: string) => {
+      // CP-BRA-R06: la ruta de OC consulta la cabecera (store_id) para el gate
+      // de creación antes de invocar receive_against_po.
+      const isPoHeader = table === 'purchase_orders';
+      return {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue(
+          isPoHeader ? { data: { store_id: 'a1111111-1111-4111-8111-111111111111' }, error: null } : { data: null, error: null },
+        ),
+        maybeSingle: vi.fn().mockResolvedValue({ data: { store_id: 'a1111111-1111-4111-8111-111111111111' }, error: null }),
+        upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+      };
+    },
   },
 }));
 
