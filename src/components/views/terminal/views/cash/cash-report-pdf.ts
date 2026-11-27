@@ -974,7 +974,7 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     `Ventas: ${estandarCounts.seleccionadas} incluidas de ${estandarCounts.validas} válidas del período`
       + (ctx.selectionMeta?.filterLabel ? ` · Filtro: ${ctx.selectionMeta.filterLabel}` : '')
       + (ctx.selectionMeta?.userLabel && ctx.selectionMeta.userLabel !== 'Todos los usuarios' ? ` · Usuarios: ${ctx.selectionMeta.userLabel}` : '')
-      + (ctx.selectionMeta && ctx.selectionMeta.paymentsTotal !== undefined && ctx.selectionMeta.paymentsIncluded < ctx.selectionMeta.paymentsTotal ? ` · Pagos: ${ctx.selectionMeta.paymentsIncluded} de ${ctx.selectionMeta.paymentsTotal} seleccionados` : ''),
+      + (ctx.selectionMeta && ctx.selectionMeta.paymentsTotal !== undefined && ctx.selectionMeta.paymentsIncluded !== undefined && ctx.selectionMeta.paymentsIncluded < ctx.selectionMeta.paymentsTotal ? ` · Pagos: ${ctx.selectionMeta.paymentsIncluded} de ${ctx.selectionMeta.paymentsTotal} seleccionados` : ''),
     'Convención de signos: diferencia = personalizado − oficial (positivo: el personalizado excede al oficial)',
   ]) {
     doc.text(line, m, y); y += 3.4;

@@ -808,7 +808,13 @@ export default function CashReportView() {
         // el endpoint ahora). Es la fuente de los checkboxes y del DELTA exacto
         // de los grupos ajustados; una fila solo puede desmarcarse si es visible.
         if (type === 'payment') {
-          const eligible = (rows as Array<Record<string, unknown>>).filter(isSelectablePaymentRow);
+          // Filtro booleano + cast explícito: el predicate del módulo no puede
+          // estrechar Record<string, unknown> directamente (TS2677 — la
+          // interfaz no lleva index signature) y el filter sin predicate cae a
+          // la sobrecarga booleana devolviendo el elemento original.
+          const eligible = (rows as Array<Record<string, unknown>>).filter(
+            r => isSelectablePaymentRow(r as unknown as PaymentSelectionRow),
+          ) as unknown as PaymentSelectionRow[];
           setPaymentDocs(prev => ({ ...prev, [key]: eligible }));
         }
       } catch {
@@ -2524,7 +2530,9 @@ function ResultadosPanel(p: ResultadosPanelProps) {
     // acordeón y del pie reflejan SOLO los documentos incluidos (los
     // desmarcados permanecen visibles con opacidad, sin afectar el total).
     const selectableDocs = selection
-      ? docs.filter((d: unknown) => isSelectablePaymentRow(d as PaymentSelectionRow))
+      ? (docs as unknown[]).filter(
+          (d): d is PaymentSelectionRow => isSelectablePaymentRow(d as unknown as PaymentSelectionRow),
+        )
       : [];
     const docsTotal = docs.reduce((s: number, d: unknown) => s + Number((d as Record<string, unknown>).amount_cup || (d as Record<string, unknown>).amount || (d as Record<string, unknown>).total || (d as Record<string, unknown>).total_amount || 0), 0);
     const docsIncludedTotal = selection
