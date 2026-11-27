@@ -10,7 +10,7 @@ Un invariante es una condición que debe permanecer verdadera **independientemen
 | ID | Invariante | Imposición real | Verificación | Estado |
 |---|---|---|---|---|
 | INV-FIN-01 | Total = Pagado + Saldo (por documento, en su moneda) | Calculador único CxP `calculator.ts` (API+Excel); trigger `update_payment_status` en receipt\|service | 34 pruebas calculador + e2e accounts-payable; conciliación v3 | **PARCIAL** — CxC/OT usa columna desactualizada + tasa 450 (R-01/R-02) |
-| INV-FIN-02 | Σ pagos activos de un documento ≤ Total (neteando reversas) | `register_supplier_payment[_batch|_multi]` overpay check con lock FOR UPDATE | pruebas de migraciones; replay batch | **GARANTIZADO en CxP receipt\|service; NO en OT** (FIN-013) |
+| INV-FIN-02 | Σ pagos NETOS de un documento ≤ Total (las contra-filas direction='reversal' RESTAN) | `register_supplier_payment[_batch|_multi]` overpay check con lock FOR UPDATE — **batch con el MISMO CASE de neteo del motor single desde 20261127120000 (R-26): una sola fórmula de saldo pendiente** | pruebas de migraciones 12/12; batería R-26 11/11 (A–H); replay batch | **GARANTIZADO en CxP receipt\|service (R-26); OT por vía single/batch-equivalente (FIN-013 vigente)** |
 | INV-FIN-03 | Σ amount_cup del ledger de venta (PT011) = total ±0.01 | `create_sale_v2` L1227-1238 | e2e pos-checkout (015/016/017 fail-closed); conciliación CP-POS 44/44 | **PARCIAL** — `payment_incidents[]` desactiva el invariante sin verificación (R-11) |
 | INV-FIN-04 | Todo pago tiene contra-fila de reversión con mismo importe/moneda/tasa | `reverse_supplier_payment` + unicidad `uq_payment_reversal_origin` | pruebas + idempotencia replay | **GARANTIZADO** (receipt\|service) |
 | INV-FIN-05 | Toda anulación de documento deja asientos compensatorios trazables | triggers `fin_trg_*` → `fin_post_document_annulment` | conciliación v3 detectores | **PARCIAL** — recepciones no revierten pagos (R-04); pagos OT sin asiento (R-03) |
@@ -30,7 +30,7 @@ Un invariante es una condición que debe permanecer verdadera **independientemen
 | INV-INV-04 | Costo de venta = WAC server-side, nunca del cliente | `create_sale_v2` DF-02; confirm relee costo (vale) | e2e inventory-integrity | **GARANTIZADO** en ventas/vales; variantes con `conversion_factor` sin CHECK (R-23) |
 | INV-INV-05 | Transferencia genera exactamente OUT+IN emparejados atómicos | confirm atómica por SKU destino con rollback | pruebas transfer | **GARANTIZADO** |
 | INV-INV-06 | Reserva activa no permite doble consumo | `get_available_stock = stock − reservas` + expiración 24h | — | **PARCIAL** — expiración con doc PENDIENTE produce atasco/riesgo de sobreventa (R-24) |
-| INV-INV-07 | Ajuste confirmado solo por persona autorizada para sobrescribir stock | `has_store_access_as` (sin rol) | — | **NO GARANTIZADO** (R-05 CRÍTICO) |
+| INV-INV-07 | Ajuste confirmado solo por persona autorizada para sobrescribir stock | HOY: `has_store_access_as` (sin rol). REMEDIACIÓN EN PR 20261126170000: `has_store_role_as({admin,manager,encargado})` + auditoría | batería E2E aislada 16/16 (PR no fusionado) | **NO GARANTIZADO en main/producción** (R-05 CRÍTICO) — remediación preparada pendiente de aprobación del propietario |
 
 ## C. INVARIANTES DOCUMENTALES
 

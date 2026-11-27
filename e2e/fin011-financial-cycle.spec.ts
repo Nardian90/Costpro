@@ -32,23 +32,16 @@
  *                                DELETE prohibido, OT voided no pagable,
  *                                overpay rechazado
  *
- * NOTA de alcance (verificada en BD): el motor de partida doble (fin_entries)
- * cubre RECEPCION|SERVICIO_RECIBIDO|VENTA|NOMINA — las OT (production_order)
- * NO generan asientos fin: su registro financiero es la fila de
- * payment_transactions + columnas del trigger update_payment_status.
- * Las aserciones de asientos se limitan a la familia SERVICIO_RECIBIDO.
- *
- * ⚠️ DEFECTO CONOCIDO F011-001 (descubierto POR esta suite, pendiente de
- * remediación en misión independiente — PR B no altera código productivo):
- * las rutas `POST /api/payments` (vía single: ref_type production_order|work)
- * y `POST /api/production-orders/[id]/payments` llaman register_supplier_payment
- * con el CLIENTE DE SESIÓN (JWT del usuario) cuya ACL es service_role-only
- * (re-certificación REM-INV-6: {postgres,service_role}) → «permission denied»
- * para cualquier sesión real. El camino batch (service|receipt) y la reversa
- * usan el cliente ADMIN tras el gate canManageStore → funcionan. Mientras no
- * se remedie, el ciclo de OT se ejercita por el RPC autoritativo (service_role
- * — la barrera definitiva del motor) y un test-pin documenta la denegación
- * app-path para forzar la actualización al remediar.
+ * REMEDIACIONES R-25/R-26 (misión CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001):
+ * los dos defectos descubiertos POR esta suite fueron remediados y los pines
+ * N6/N7 se convirtieron en pruebas positivas de comportamiento correcto:
+ *   R-25/F011-001 → las vías single de pagos OT usan cliente administrativo
+ *     tras el gate canManageStore (patrón del batch/reversión) — la vía app
+ *     para sesiones reales funciona (prueba positiva N6 + batería dedicada).
+ *   R-26/F011-002 → el pre-check del batch NETEA las contra-filas
+ *     direction='reversal' con el mismo CASE del motor single (migración
+ *     20261127120000) — tras una reversión el lote admite los pagos
+ *     restablecidos y sigue rechazando sobrepagos verdaderos (N7).
  *
  * Fixtures efímeros namespace FIN011-<runId>, limpieza verificada en afterAll
  * (el guard de higiene exige net delta = 0). SOLO modo aislado.
@@ -71,6 +64,7 @@ const F = {
   otUsdId: '',
   otVoidId: '',
   otBId: '',
+  otR25Id: '',
   svcId: '',
   rateRowCreated: false,
   rateBackup: null as number | null,
@@ -391,8 +385,10 @@ test.describe.serial('FIN-011 — ciclo financiero pagos→reversiones→monedas
 
   // ════════════════════ ESCENARIO D — reversión total ══════════════════
   test('D — reversión total: saldo 0, saldo restablecido admite nuevo pago', async () => {
-    // Pago 500 vía motor (RPC autoritativo): la vía app batch está bloqueada
-    // por el DEFECTO F011-002 (pin N7) — su pre-check no netea contra-filas
+    // Pago 500 vía motor (RPC autoritativo del motor — barrera definitiva).
+    // NOTA histórica: antes de R-26 esta vía app batch estaba bloqueada por el
+    // defecto F011-002 (pre-check sin neteo); con la migración 20261127120000
+    // el batch y el motor comparten la misma fórmula de saldo (ver N7).
     const pr = await engineRegisterPayment({
       store_id: ctx!.pilotStoreA.id, ref_type: 'service', ref_id: F.svcId,
       amount: 500, payment_method: 'transfer', paid_by: ctx!.users.admin.id,
@@ -434,30 +430,59 @@ test.describe.serial('FIN-011 — ciclo financiero pagos→reversiones→monedas
     expect(srow.payment_status).toBe('partial');
   });
 
-  test('N7 — PIN de regresión del DEFECTO F011-002: el pre-check del batch no netea contra-filas', async () => {
-    // DEFECTO DOCUMENTADO (descubierto por esta suite): el pre-check de saldo
-    // de register_supplier_payment_batch (20261121190000:279-284 y 462-468)
-    // suma TODAS las filas SIN restar direction='reversal' — contradice el
-    // neteo del motor single (20261126140000:296-306) y su diseño documentado
-    // («una obligación con pago revertido vuelve a admitir pagos por el
-    // importe restablecido»). Efecto real: tras una reversión, cualquier
-    // liquidación vía app (servicio/recepción) es rechazada con
-    // ERR_BATCH_OVERPAY y saldo pendiente negativo. La verdad en BD (trigger)
-    // permanece correcta: es un bloqueo de pagos legítimos, no un saldo
-    // corrupto. Al remediar (mismo CASE de neteo del motor single), ESTE PIN
-    // FALLA intencionadamente y debe sustituirse por la prueba positiva.
+  test('N7 — REGRESIÓN POSITIVA R-26/F011-002: el batch netea contra-filas y admite el saldo restablecido (y sigue rechazando el sobrepago verdadero)', async () => {
+    // HISTORIA DEL PIN (defecto descubierto POR esta suite y remediado en la
+    // migración 20261127120000): el pre-check de saldo del batch sumaba TODAS
+    // las filas SIN restar direction='reversal' → tras las reversiones de C y D
+    // el saldo calculado era NEGATIVO y todo lote legítimo era rechazado con
+    // ERR_BATCH_OVERPAY (antes: pagaba 1 CUP y esperaba 400). La verdad en BD
+    // (trigger) siempre neteó bien. Con R-26 el batch usa el MISMO CASE de
+    // neteo del motor single — este test DEMUESTRA el comportamiento correcto:
+    //   1) el pago vía batch por el saldo restablecido PROSPERA;
+    //   2) el saldo neto del motor crece exactamente lo pagado (una sola
+    //      fórmula para el concepto de saldo pendiente);
+    //   3) un sobrepago VERDADERO (excede el saldo NETO) sigue rechazado
+    //      con ERR_BATCH_OVERPAY (negativo de regresión conservado).
+    const srow0 = await svcRow(F.svcId);
+    // Historia: 300 (revertido) + 500 (revertido) + 100 activo → neto 100, saldo 400
+    expect(srow0.paid_amount).toBe(100);
+    const saldo = srow0.total_amount - srow0.paid_amount;
+    expect(saldo).toBe(400);
+
+    // 1) Pago legítimo vía batch (vía app real, cliente admin tras gate)
     const r = await apiPostPayment(adminToken, {
       ref_type: 'service', ref_id: F.svcId,
-      payment_method: 'cash', amount: 1, currency: 'CUP',
+      payment_method: 'cash', amount: 100, currency: 'CUP',
       idempotency_key: `fin011-n7-${ctx!.runId}`,
     });
-    expect(r.status).toBe(400);
-    expect(JSON.stringify(r.json)).toContain('ERR_BATCH_OVERPAY');
+    expect(r.status, JSON.stringify(r.json)).toBe(201);
+    const pid = paymentIdOf(r.json);
+    expect(pid).toBeTruthy();
+    F.paymentIds.push(pid);
+
+    // 2) El saldo neto del motor = saldo calculado por el batch (misma fórmula)
+    const srow = await svcRow(F.svcId);
+    expect(srow.paid_amount).toBe(200);
+    expect(srow.payment_status).toBe('partial');
+
+    // 3) Sobrepago VERDADERO rechazado (excede el saldo NETO restante, 300)
+    const ro = await apiPostPayment(adminToken, {
+      ref_type: 'service', ref_id: F.svcId,
+      payment_method: 'cash', amount: saldo, currency: 'CUP',
+      idempotency_key: `fin011-n7-overpay-${ctx!.runId}`,
+    });
+    expect(ro.status).toBe(400);
+    expect(JSON.stringify(ro.json)).toContain('ERR_BATCH_OVERPAY');
+    // Sin fila de sobrepago ni mutación del histórico (contra-filas intactas)
+    const rows = await txRows(F.svcId);
+    const contra = rows.filter(x => (x.direction ?? 'in') === 'reversal');
+    expect(contra).toHaveLength(2);
+    expect(contra.map(c => c.amount).sort()).toEqual([300, 500]);
   });
 
   test('N2 — reversión concurrente del mismo pago: exactamente 1 contra-fila (§3.3)', async () => {
-    // Pago base vía motor (la vía batch está bloqueada por F011-002 tras las
-    // reversiones del ciclo — ver pin N7)
+    // Pago base vía motor (RPC autoritativo del motor — barrera definitiva;
+    // desde R-26 la vía batch comparte la misma fórmula de saldo, ver N7)
     const pr = await engineRegisterPayment({
       store_id: ctx!.pilotStoreA.id, ref_type: 'service', ref_id: F.svcId,
       amount: 50, payment_method: 'cash', paid_by: ctx!.users.admin.id,
@@ -626,21 +651,46 @@ test.describe.serial('FIN-011 — ciclo financiero pagos→reversiones→monedas
     expect(JSON.stringify(error)).toContain('excede el saldo');
   });
 
-  test('N6 — PIN de regresión del DEFECTO F011-001: pagos a OT por app denegados por ACL', async () => {
-    // DEFECTO DOCUMENTADO (descubierto por esta suite): la vía single de
-    // POST /api/payments (production_order|work) llama register_supplier_payment
-    // con el cliente de sesión (ACL service_role-only desde REM-INV-6) →
-    // «permission denied» para cualquier sesión real. Al remediar (cliente
-    // admin tras canManageStore, patrón del camino batch), ESTE PIN FALLA
-    // intencionadamente y debe sustituirse por la prueba positiva app-path.
+  test('N6 — REGRESIÓN POSITIVA R-25/F011-001: el pago a OT vía app funciona (y la OT de otra tienda sigue sin fugas)', async () => {
+    // HISTORIA DEL PIN (defecto descubierto POR esta suite y remediado en la
+    // rama R-25): la vía single de POST /api/payments (production_order|work)
+    // usaba el cliente de sesión (ACL service_role-only) → «permission denied»
+    // para toda sesión real. Con R-25 la llamada privilegiada usa el cliente
+    // administrativo server-side TRAS el gate canManageStore — este test
+    // DEMUESTRA el comportamiento correcto vía app real:
+    //   1) un pago OT vía /api/payments PROSPERA para un usuario autorizado;
+    //   2) el actor auditado (paid_by) es el usuario de la sesión;
+    //   3) la OT de OTRA tienda sigue inaccesible (404 por RLS, sin fuga) —
+    //      negativo conservado del pin original (sin filas de pago en OT B).
+    // OT nueva en la tienda activa del admin (presupuesto 100 CUP)
+    const ns = `FIN011-${ctx!.runId}`;
+    const otR25 = await svc.from('production_orders').insert({
+      store_id: ctx!.pilotStoreA.id, order_number: `${ns}-OT-R25`, budget_total: 100,
+      status: 'draft', description: `${ns} vía app reparada por R-25`,
+    }).select('id').single();
+    expect(otR25.error, 'fixture OT R25: ' + otR25.error?.message).toBeNull();
+    F.otR25Id = otR25.data!.id;
+
     const r = await apiPostPayment(adminToken, {
-      ref_type: 'production_order', ref_id: F.otBId,
-      payment_method: 'cash', amount: 5, currency: 'CUP',
+      ref_type: 'production_order', ref_id: F.otR25Id,
+      payment_method: 'cash', amount: 60, currency: 'CUP',
       idempotency_key: `fin011-n6-${ctx!.runId}`,
     });
-    expect(r.status).toBeGreaterThanOrEqual(400);
-    expect(JSON.stringify(r.json)).toContain('permission denied for function register_supplier_payment');
-    // Sin efectos colaterales: la OT B sigue sin filas de pago
+    expect(r.status, JSON.stringify(r.json)).toBe(201);
+    const pid = paymentIdOf(r.json);
+    expect(pid).toBeTruthy();
+    F.paymentIds.push(pid);
+    const { data: pay } = await svc.from('payment_transactions').select('paid_by, amount, store_id').eq('id', pid).single();
+    expect(pay?.paid_by).toBe(ctx!.users.admin.id);
+    expect(Number(pay?.amount)).toBe(60);
+
+    // La OT de otra tienda (B, budget USD) sigue sin fuga: 404/403 y SIN filas
+    const rx = await apiPostPayment(adminToken, {
+      ref_type: 'production_order', ref_id: F.otBId,
+      payment_method: 'cash', amount: 5, currency: 'CUP',
+      idempotency_key: `fin011-n6-cross-${ctx!.runId}`,
+    });
+    expect(rx.status).toBeGreaterThanOrEqual(400);
     const { data: rows } = await svc.from('payment_transactions').select('id').eq('ref_id', F.otBId);
     expect((rows || []).length).toBe(0);
   });
@@ -649,13 +699,13 @@ test.describe.serial('FIN-011 — ciclo financiero pagos→reversiones→monedas
   test.afterAll(async () => {
     if (!ctx || !svc) return;
     try {
-      for (const refId of [F.otCupId, F.otUsdId, F.otVoidId, F.otBId, F.svcId].filter(Boolean)) {
+      for (const refId of [F.otCupId, F.otUsdId, F.otVoidId, F.otBId, F.otR25Id, F.svcId].filter(Boolean)) {
         const entries = await finEntries(refId).catch(() => []);
         for (const e of entries) await svc.from('fin_movements').delete().eq('entry_id', e.id);
         await svc.from('fin_entries').delete().eq('document_id', refId);
         await svc.from('payment_transactions').delete().eq('ref_id', refId);
       }
-      for (const id of [F.otCupId, F.otUsdId, F.otVoidId, F.otBId]) {
+      for (const id of [F.otCupId, F.otUsdId, F.otVoidId, F.otBId, F.otR25Id]) {
         if (id) await svc.from('production_orders').delete().eq('id', id);
       }
       if (F.svcId) await svc.from('received_services').delete().eq('id', F.svcId);

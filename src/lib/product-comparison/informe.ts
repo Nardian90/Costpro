@@ -142,6 +142,32 @@ export interface InformeMetodologia {
   parrafos: string[];
 }
 
+/** ADN-ANALISIS-COMPARAR-PRODUCTOS-EXECUTIVE-PDF-001 · Serie del gráfico divergente
+ *  de variaciones. DERIVADA de los campos ya calculados por buildComparison
+ *  (difCup/varPct/evolucion): no introduce reglas ni cifras nuevas (§10). */
+export interface InformeVariacion {
+  name: string;
+  /** Variación absoluta del período (actual − anterior), CUP. */
+  difCup: number;
+  /** Variación % — null SIN base comparable (los «nuevos» no llevan % ficticio). */
+  varPct: number | null;
+  /** Certificado por evolucion==='nuevo': entra al ranking sin ventas comparables. */
+  esNuevo: boolean;
+}
+
+/** ADN-ANALISIS-COMPARAR-PRODUCTOS-EXECUTIVE-PDF-001 · Elemento del gráfico de
+ *  disponibilidad y cobertura. DERIVADO de evaluarRotacion (MISMOS umbrales y
+ *  clasificación — sin reglas nuevas; §10). */
+export interface InformeCoberturaItem {
+  name: string;
+  /** Estado operativo para la visualización (etiqueta textual siempre visible). */
+  estado: 'agotado' | 'cobertura_insuficiente' | 'cobertura_moderada' | 'baja_rotacion' | 'sin_movimiento' | 'sin_dato';
+  /** Cobertura estimada en días (existencia ÷ velocidad) — null cuando no es calculable. */
+  coberturaDias: number | null;
+  /** Texto oficial de cobertura ya formateado por el motor. */
+  coberturaTexto: string;
+}
+
 export interface InformeEjecutivo {
   meta: InformeMeta;
   /** Diagnóstico ejecutivo: situación general (párrafos sustantivos). */
@@ -152,6 +178,12 @@ export interface InformeEjecutivo {
   indicadores: InformeIndicador[];
   /** Gráfico ejecutivo (barras comparativas de los productos de impacto). */
   grafico: InformeGrafico | null;
+  /** Gráfico divergente de variaciones (mayores incrementos/reducciones). */
+  variaciones: InformeVariacion[];
+  /** Disponibilidad y cobertura para la visualización de riesgo de inventario. */
+  riesgoCobertura: InformeCoberturaItem[];
+  /** Resumen gerencial (<1 min): síntesis derivada de las cifras existentes. */
+  resumenGerencial: string[];
   /** Matriz de prioridades y decisiones (Página 2 del documento). */
   prioridades: InformePrioridad[];
   /** Análisis complementario — solo secciones con contenido. */
@@ -594,6 +626,68 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
     ? `La decisión más urgente que este informe pone sobre la mesa es la de ${prioridades[0].producto}: ${prioridades[0].decision.split('. ')[0]}.`
     : `El conjunto comparado opera sin desviaciones que superen los umbrales de revisión; el ciclo comercial del período no exige decisiones de reposición o de abastecimiento fuera del seguimiento habitual.`;
 
+  // ── 1.bis. Resumen gerencial (<1 min) — ADN-ANALISIS-…-PDF-001 §3 ──
+  // Síntesis DERIVADA exclusivamente de las variables ya calculadas arriba
+  // (ingresosActual/Anterior, variacion, variacionPct, lider, crecen/contraen,
+  // agotadosConAntecedente, coberturaInsuficiente, prioridades): cero cálculos
+  // ni reglas nuevas.
+  const resumenGerencial: string[] = [
+    `El conjunto comparado facturó ${fmtCup(ingresosActual)} CUP en el período analizado: ${fmtCupSign(variacion)} CUP${variacionPct !== null ? ` (${fmtPctSign(variacionPct)})` : ''} frente al tramo comparable, medido sobre ${rows.length} productos de la unión de ambos cortes.` +
+      (variacion < 0
+        ? ' El descenso corresponde al conjunto comparado y no certifica una caída de todas las ventas de la tienda: el alcance exacto se declara en el Anexo IV.'
+        : ''),
+    lider ? `El producto líder del período es ${lider.name}${participacionLider !== null ? `, con ${num(participacionLider)}% de participación oficial` : ''}.` : '',
+    `Movimiento del ranking: ${crecen.length} producto${crecen.length !== 1 ? 's crecen' : ' crece'} y ${contraen.length} ${contraen.length !== 1 ? 'se contraen' : 'se contrae'}; ${nuevos.length} ${nuevos.length !== 1 ? 'entran' : 'entra'} nuevos sin base comparable y ${dejaron.length} ${dejaron.length !== 1 ? 'dejan' : 'deja'} de registrar salidas.`,
+    agotadosConAntecedente.length + coberturaInsuficiente.length > 0
+      ? `Disponibilidad: ${agotadosConAntecedente.length} agotado${agotadosConAntecedente.length !== 1 ? 's' : ''} con antecedente comercial y ${coberturaInsuficiente.length} con cobertura insuficiente — atención inmediata para evitar interrupciones.`
+      : 'Disponibilidad sin alertas que superen los umbrales del informe.',
+    conclusionGerencial,
+  ].filter((s) => s.length > 0);
+
+  // ── Gráfico divergente de variaciones — ADN-ANALISIS-…-PDF-001 §4.B ──
+  // DERIVADO de los campos ya calculados por buildComparison (difCup/varPct/
+  // evolucion): mayores incrementos y mayores reducciones por valor absoluto;
+  // los «nuevos» se marcan y NO reciben porcentaje ficticio (sin base).
+  const VARIACION_MAX_LADOS = 7;
+  const conDif = rows.filter((r) => r.difCup !== 0);
+  const subidas = conDif.filter((r) => r.difCup > 0).sort((a, b) => b.difCup - a.difCup).slice(0, VARIACION_MAX_LADOS);
+  const bajadas = conDif.filter((r) => r.difCup < 0).sort((a, b) => a.difCup - b.difCup).slice(0, VARIACION_MAX_LADOS);
+  const variaciones: InformeVariacion[] = [
+    ...subidas.map((r) => ({ name: r.name, difCup: r.difCup, varPct: r.varPct, esNuevo: r.evolucion === 'nuevo' })),
+    ...bajadas.map((r) => ({ name: r.name, difCup: r.difCup, varPct: r.varPct, esNuevo: r.evolucion === 'nuevo' })),
+  ];
+
+  // ── Disponibilidad y cobertura para visualización — §4.C ──
+  // DERIVADO de evaluarRotacion (MISMOS umbrales): agotado (sin existencia con
+  // demanda activa o con antecedente comercial), cobertura_insuficiente (< D/2),
+  // cobertura_moderada (D/2..D), baja_rotacion (> D o sin salidas con stock).
+  const riesgoCobertura: InformeCoberturaItem[] = [];
+  for (const r of rows) {
+    const ev = evaluaciones.find((e) => e.row.productId === r.productId);
+    if (!ev) continue;
+    const agotadoConDemanda = ev.velocidad !== null && ev.existencia !== null && ev.existencia <= 0;
+    const agotadoConAntecedente = r.ventasActuales === 0 && r.ventasAnteriores > 0 && ev.existencia !== null && ev.existencia <= 0;
+    if (agotadoConDemanda || agotadoConAntecedente) {
+      riesgoCobertura.push({ name: r.name, estado: 'agotado', coberturaDias: null, coberturaTexto: ev.coberturaTexto });
+      continue;
+    }
+    if (ev.velocidad !== null && ev.coberturaDias !== null && ev.row.ventasActuales > 0) {
+      if (ev.coberturaDias < dias * UMBRAL_COBERTURA_ALTA) {
+        riesgoCobertura.push({ name: r.name, estado: 'cobertura_insuficiente', coberturaDias: ev.coberturaDias, coberturaTexto: ev.coberturaTexto });
+      } else if (ev.coberturaDias <= dias * UMBRAL_COBERTURA_BAJA) {
+        riesgoCobertura.push({ name: r.name, estado: 'cobertura_moderada', coberturaDias: ev.coberturaDias, coberturaTexto: ev.coberturaTexto });
+      } else {
+        riesgoCobertura.push({ name: r.name, estado: 'baja_rotacion', coberturaDias: ev.coberturaDias, coberturaTexto: ev.coberturaTexto });
+      }
+      continue;
+    }
+    if (ev.clasificacion === 'sin_movimiento') {
+      riesgoCobertura.push({ name: r.name, estado: 'sin_movimiento', coberturaDias: null, coberturaTexto: ev.coberturaTexto });
+      continue;
+    }
+    riesgoCobertura.push({ name: r.name, estado: 'sin_dato', coberturaDias: null, coberturaTexto: ev.coberturaTexto });
+  }
+
   // ── 2. Indicadores relevantes ──
   const indicadores: InformeIndicador[] = [
     { label: 'Ingresos del conjunto comparado', value: `${fmtCup(ingresosActual)} CUP` },
@@ -909,8 +1003,11 @@ export function buildInformeEjecutivo(input: InformeInput): InformeEjecutivo {
     },
     situacionGeneral,
     conclusionGerencial,
+    resumenGerencial,
     indicadores,
     grafico,
+    variaciones,
+    riesgoCobertura,
     prioridades,
     complementarias,
     anexos: [anexoI, anexoII, anexoIII],

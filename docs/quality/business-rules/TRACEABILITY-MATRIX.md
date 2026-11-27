@@ -66,7 +66,7 @@
 | P− | Contrato: rama OT ausente = fallo; gate ERR_ORDER_NOT_PAYABLE; 9/9 marcas de producción |
 | P=R | cpbra-r01-r14-payment-engine-migration.test.ts + replay 216 en CI |
 | Evidencia | APLICACION-MIGRACION-20261126140000-PRODUCCION.md (9/9 marcas, surface 232 fn re-certificado) |
-| Estado certificación | **VERIFICADA — evidencia E2E dedicada COMPLETA (16/16, net-zero); elevación a CERTIFICADA BLOQUEADA por política: 2 defectos críticos abiertos en el alcance (R-25/R-26, descubiertos por esta suite; pins N6/N7)** |
+| Estado certificación | **CERTIFICADA (2026-11-27): R-25/R-26 remediados y desplegados (PR #1728/#1729 fusionados; R-26 en producción §11g — body_hash 9ab5db94 idéntico en E2E y producción); pines N6/N7 convertidos a regresiones positivas; suite 16/16 + baterías dedicadas R-25 (16 casos) y R-26 (11 casos §4.4 A–H) — expediente docs/audits/CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001/** |
 
 ### TR-INV-003 (INV-003) · Costo de venta server-side (WAC)
 | Elemento | Contenido |
@@ -79,9 +79,9 @@
 ### TR-INV-007 (INV-005/R-05) · Ajuste de inventario con autorización suficiente
 | Elemento | Contenido |
 |---|---|
-| Implementación | HOY: solo `has_store_access_as` (20260726000027:38-40) |
-| P− | ✗ no existe prueba negativa de rol |
-| Estado certificación | **RECHAZADA (defecto crítico abierto R-05)** |
+| Implementación | EN PRODUCCIÓN (2026-11-27, §11g): `has_store_role_as({admin,manager,encargado})` fail-closed + `ERR_ADJUSTMENT_CONFIRMATION_NOT_ALLOWED` + auditoría `ADJUSTMENT_CONFIRMED` transaccional (mig 20261126170000; PR #1723 fusionado `819c0adca`; body_hash 26657592 idéntico en E2E y producción; UI alineada en 3 vistas; surface re-certificado) |
+| P− | ✓ batería E2E aislada con pruebas negativas de rol (clerk/usuario/otra tienda/anon/spoofing → rechazo; admin/manager/encargado → OK; fallo del mecanismo → rechazo seguro) 16/16 PASS |
+| Estado certificación | **CERTIFICADA (2026-11-27): política alternativa A APROBADA por el propietario (misión CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 §0.1), fusionada (PR #1723) y aplicada en producción §11g con verificación productiva read-only (caso histórico encargado compatible; batería de autorización 16/16 en aislada)** |
 
 ### TR-TEN-001 (TEN-001) · Aislamiento multitienda
 | Elemento | Contenido |
@@ -160,9 +160,9 @@
 | TR-POS-001 | POS | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-POS-006 | POS | CRÍTICA | ✓ | ✓ | ✓ | VERIFICADA (R-11 remediado; tope/supervisor pendientes) |
 | TR-FIN-002 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (CxP) |
-| TR-FIN-011 | FIN | CRÍTICA | ✓ | ✓ | ✓ | VERIFICADA (R-01+R-02 remediados; E2E pendiente) |
+| TR-FIN-011 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (R-25/R-26 remediados 2026-11-27) |
 | TR-INV-003 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
-| TR-INV-007 | INV | CRÍTICA | ✗ | ✗ | ✗ | RECHAZADA (R-05) |
+| TR-INV-007 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (R-05 aplicada §11g 2026-11-27) |
 | TR-TEN-001 | TEN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-SEC-003 | SEC | CRÍTICA | ✓ | △ | ✓ | CONDICIONAL |
 | TR-CON-01 | SYS | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (monetarias) |

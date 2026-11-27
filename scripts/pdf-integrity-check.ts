@@ -115,7 +115,6 @@ async function main(): Promise<void> {
   const pdfPath = join(tmp, 'integridad.pdf');
   writeFileSync(pdfPath, Buffer.from(doc.output('arraybuffer') as ArrayBuffer));
   const texto = norm(execFileSync('pdftotext', ['-layout', pdfPath, '-']).toString());
-  rmSync(tmp, { recursive: true, force: true });
 
   const fallas: string[] = [];
   /**
@@ -166,19 +165,63 @@ async function main(): Promise<void> {
     for (const [ci, celda] of ultima.entries()) chequear(`Anexo ${idx + 2} última fila · ${anexo.columnas[ci]}`, celda);
   }
 
-  // 6. Estructura del documento
-  for (const t of ['1. Diagnóstico ejecutivo', '2. Prioridades y decisiones recomendadas', '3. Análisis complementario']) {
+  // 6. Estructura del documento (ADN-ANALISIS-…-PDF-001: 4 secciones ejecutivas)
+  for (const t of [
+    '1. Diagnóstico ejecutivo',
+    '2. Prioridades y decisiones recomendadas',
+    '3. Gráficos analíticos',
+    '4. Análisis complementario',
+  ]) {
     chequear(`sección «${t}»`, t);
   }
-  chequear('identificación ANEXO I', 'Anexo I');
-  chequear('identificación ANEXO II', 'Anexo II');
-  chequear('identificación ANEXO III', 'Anexo III');
+  chequear('identificación ANEXO I-A', 'ANEXO I-A');
+  chequear('identificación ANEXO I-B', 'ANEXO I-B');
+  chequear('identificación ANEXO II', 'ANEXO II');
+  chequear('identificación ANEXO III', 'ANEXO III');
   chequear('Anexo IV (metodología)', 'Metodología y fuentes');
+  // 7. Portada ejecutiva (dashboard + resumen <1 min + índice)
   chequear('portada: título del documento', 'COMPARACIÓN DE PRODUCTOS');
   chequear('portada: entidad', informe.meta.entidadNombre);
+  chequear('portada: kicker dashboard', 'RESULTADO DEL CONJUNTO COMPARADO');
+  chequear('portada: banda resumen gerencial', 'LA SITUACIÓN EN UN MINUTO');
+  chequear('portada: índice', 'CONTENIDO');
   chequear('períodos en portada (formateado dd/mm/aaaa)', '01/11/2026');
   chequear('período comparativo en portada', '01/10/2026');
+  // 8. Resumen gerencial — cada viñeta presente (deriva del modelo, §3)
+  for (const [ri, s] of informe.resumenGerencial.entries()) {
+    chequear(`resumen gerencial viñeta ${ri + 1}`, s);
+  }
+  // 9. Bloques de recomendaciones: evidencia y acción separadas (§5)
+  chequear('etiqueta evidencia de recomendaciones', 'EVIDENCIA E INTERPRETACIÓN');
+  chequear('etiqueta acción recomendada', 'ACCIÓN RECOMENDADA');
+  for (const [pi, pr] of informe.prioridades.slice(0, 4).entries()) {
+    chequear(`prioridad ${pi + 1} (${pr.nivel}) producto`, pr.producto);
+    chequear(`prioridad ${pi + 1} evidencia`, pr.situacion);
+    chequear(`prioridad ${pi + 1} decisión`, pr.decision);
+  }
+  // 10. Metadatos PDF (§9) — title/subject/author/keywords vía pdfinfo
+  try {
+    const info = execFileSync("pdfinfo", [pdfPath], { encoding: 'utf8' });
+    const leer = (k: string): string => {
+      const m = info.match(new RegExp(`^${k}:\\s*(.*)$`, 'm'));
+      return m ? m[1].trim() : '';
+    };
+    const metas: Array<[string, string]> = [
+      ['Title', 'Informe ejecutivo de comparación de productos'],
+      ['Author', 'ADNegocio (CostPro)'],
+      ['Keywords', 'comparación de productos'],
+    ];
+    for (const [k, esperado] of metas) {
+      const v = leer(k);
+      const ok = v.includes(esperado);
+      console.log(`${ok ? 'PASS' : 'FAIL'} · metadato ${k} → «${v.slice(0, 80)}»`);
+      if (!ok) fallas.push(`metadato ${k}`);
+    }
+  } catch (e) {
+    console.log('WARN · pdfinfo no disponible para metadatos (no bloquea)');
+  }
 
+  rmSync(tmp, { recursive: true, force: true });
   console.log('');
   if (fallas.length > 0) {
     console.log(`INTEGRIDAD: FAIL — ${fallas.length} verificación(es) fallida(s)`);

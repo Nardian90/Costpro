@@ -1,0 +1,35 @@
+[cpbra-r26-apply-prod.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+[sha256] supabase/migrations/20261127120000_cpbra_r26_batch_reversal_netting.sql
+  e6a1fc8b36ace1e7451b673150d800b72816a181cf4f4857209283887c57d9a8
+
+=== PRE (evidencia del estado previo) ===
+[
+ {
+  "body_hash_prev": "c4fd6cc7147fa0b6704d1cf3bcc3f5ca",
+  "security_definer": true,
+  "ya_netea": false,
+  "firma": "p_store_id uuid, p_ref_type text, p_ref_id uuid, p_payments jsonb, p_paid_by uuid, p_payment_date timestamp with time zone, p_idempotency_key text",
+  "acl_execute": "postgres,service_role"
+ }
+]
+
+Destino: wthkddeleylijmonclxg (PRODUCCIÓN CostproBD)
+
+== Aplicando (UNA SOLA VEZ) ==
+SQL ejecutado sin error.
+
+== Recarga PostgREST (mecanismo canónico) ==
+NOTIFY pgrst 'reload schema' enviado.
+
+== POST: verificación de marcas ==
+  OK   firma_preservada
+  OK   neteo_contrafilas_en_codigo
+  OK   overpay_intacto
+  OK   replay_fast_path_intacto
+  OK   acl_service_role_exclusiva
+  OK   security_definer
+
+body_hash prev (defecto F011-002): c4fd6cc7147fa0b6704d1cf3bcc3f5ca
+body_hash post (neteo R-26):      9ab5db94537d7152e9b38ffebd191558
+
+→ R-26 aplicada y verificada en producción.
