@@ -231,7 +231,7 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 
 ### POS-001 · La venta es atómica, con lock de tienda y seller binding
 - **Estado:** CONFIRMADA · **Severidad:** CRÍTICA · **Cumplimiento:** CUMPLE
-- **Descripción:** `create_sale_v2` (/35 args): advisory lock por tienda → `has_store_access_as` (`ERR_UNAUTHORIZED`) → seller binding `p_seller_id == auth.uid()` (`ERR_SELLER_MISMATCH`) → fecha operativa → idempotencia por `param_hash` exhaustivo (incluye payments y `p_customer_ci`) → whitelist de métodos con normalización `zelle→external_transfer` → lock FOR UPDATE producto por tienda → stock → precios → impuestos server-side → tasa canónica → `ERR_NEGATIVE_SALE` → `ERR_TOTAL_MISMATCH` ±0.01 → gate supervisor ≥15% con token single-use (jti + scope por línea).
+- **Descripción:** `create_sale_v2` (/36 args desde 20261128120000 — +p_customer_phone; antes /35): advisory lock por tienda → `has_store_access_as` (`ERR_UNAUTHORIZED`) → seller binding `p_seller_id == auth.uid()` (`ERR_SELLER_MISMATCH`) → fecha operativa → idempotencia por `param_hash` exhaustivo (incluye payments y `p_customer_ci`) → whitelist de métodos con normalización `zelle→external_transfer` → lock FOR UPDATE producto por tienda → stock → precios → impuestos server-side → tasa canónica → `ERR_NEGATIVE_SALE` → `ERR_TOTAL_MISMATCH` ±0.01 → gate supervisor ≥15% con token single-use (jti + scope por línea).
 - **Evidencia:** `supabase/migrations/20261125120000:35,153-171,182-226,63-65,278,334-350,353-361,435-459,486-515,525-556,566,593,605-667`; ACL `authenticated, service_role` (:1346-1347).
 
 ### POS-002 · Pagos por producto: distribución real por línea, reconciliación externa
@@ -240,11 +240,11 @@ Método de construcción (resumen; detalle en STANDARD-CP-BRA-001.md §1):
 - **Brecha:** Σ(distribuciones por línea) NO se cruza server-side contra pools/componentes/total — los datos por línea falsos quedan sin detección automática (la conciliación es proceso externo: script `scripts/cert-pos-conciliacion.mjs` 44/44 de CP-POS-SMOKE-PRODUCTION-001).
 - **Evidencia:** `20261125120000:27-28,1094-1117,435-459,787-793`; R-08.
 
-### POS-003 · Referencia de transferencia y datos de cliente con transferencia: regla solo-frontend en componentes de pago
-- **Estado:** CONTRADICTORIA · **Severidad:** ALTA · **Cumplimiento:** FALTA (server)
-- **Descripción:** en `items[].payments` la referencia se valida server-side; en `p_payment_components` (filas del ledger) NO se exige; el nombre/CI del cliente con transferencia se exige solo en el cliente (route.ts lo documenta explícitamente).
-- **Consecuencia:** un cliente no estándar registra transferencias sin número de operación en el ledger financiero.
-- **Evidencia:** `20261125120000:453-457` vs `:1138,1159-1169`; `src/app/api/pos/checkout/route.ts:139-143,353,399`; `src/hooks/usePOSCheckout.ts:686-699`; `POSExpressMode.tsx:353-361`; R-09/R-10.
+### POS-003 · Identidad del pagador y referencia en ventas con transferencia: obligatoriedad en las tres capas
+- **Estado:** CONTRADICTORIA → REMEDIADA (2026-11-28, COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001, PR #1742) · **Severidad:** ALTA · **Cumplimiento:** CUMPLE
+- **Descripción:** toda venta cuyo canal canónico incluya transferencia (filas por línea `items[].payments` o `p_payment_components`) exige N.º de operación por fila + nombre + carné de identidad + teléfono del pagador: (1) UI compartida `TransferIdentityFields` (Express y Carrito) con gate del botón Confirmar; (2) route `/api/pos/checkout` 422 fail-closed (`saleIncludesTransferChannel`/`missingTransferIdentityFields`, log TRANSFER_IDENTITY_REJECTED); (3) `create_sale_v2` `ERR_TRANSFER_IDENTITY_REQUIRED` antes de cualquier escritura (incl. idempotency_registry). El teléfono se persiste en `transactions.customer_phone` y forma parte del hash de idempotencia. Espacios como único contenido = vacío. Sin transferencia no se exige nada personal; el flujo legado del Catálogo (pools sin filas ni componentes) queda fuera de la puerta (seguimiento documentado).
+- **Pruebas:** positivas — batería RPC 8/8 (ERR sin identidad/espacios/solo teléfono/componentes; éxito con los 4 datos + persistencia), E2E-POS-019/019b (422 route), 014 (persistencia teléfono); negativas — B4 efectivo sin identidad → éxito, B5 pools legados → éxito, B6 §5.1 intacta; UI pos-transfer-identity-{cart,express} + foco (pos-portal-modal-focus).
+- **Evidencia:** `20261128120000` (§4.bis); `src/lib/pos/transfer-identity.ts`; `src/app/api/pos/checkout/route.ts` (puerta server-side); `TransferIdentityFields.tsx`; `POSExpressMode.tsx`/`POSCartCheckoutPanel.tsx`.
 
 ### POS-004 · Anti doble-clic en 3 capas + idempotencia por intención
 - **Estado:** CONFIRMADA · **Severidad:** CRÍTICA · **Cumplimiento:** CUMPLE
