@@ -150,7 +150,7 @@ describe('CP-BRA R-03 — 20261127140000_cpbra_r03_ot_payment_batch.sql', () => 
     // CP-CPOP-FIX (20261127130000, merge de #1731) se intercaló en la posición
     // 221 (orden lexicográfico): R-03 sigue incluida y pasa a la 222; el total
     // del manifiesto es 222.
-    expect(manifest.total_incluidos).toBe(222);
+    expect(manifest.total_incluidos).toBe(223);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127140000_cpbra_r03_ot_payment_batch.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

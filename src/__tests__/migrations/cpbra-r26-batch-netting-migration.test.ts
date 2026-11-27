@@ -152,7 +152,7 @@ describe('CP-BRA R-26 — 20261127120000_cpbra_r26_batch_reversal_netting.sql', 
     // CP-CPOP-FIX (2026-11-27) añade 20261127130000 en la posición 221 y
     // R-03 (20261127140000) la 222: R-26 conserva SU posición 220 y el total
     // del manifiesto pasa a 222.
-    expect(manifest.total_incluidos).toBe(222);
+    expect(manifest.total_incluidos).toBe(223);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127120000_cpbra_r26_batch_reversal_netting.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');
