@@ -757,6 +757,12 @@
       "reason": "CP-SEC-027 F7 · helper-interno · Helper interno sin exposición anon ni llamadores estáticos detectados. Exposición anon=False; invocada por BD=0; uso app rpc=0. Clasificación viva 2026-10-20.",
       "added_by": "cp-sec-027-f7",
       "expires": "2027-06-30"
+    },
+    {
+      "function": "register_ot_payment_batch",
+      "reason": "CP-BRA-FINAL-COMPLIANCE-CLOSURE-001 R-03 (20261127140000): lote atómico por orden para pagos de OT. SECURITY DEFINER sin primitiva de auth POR DISEÑO — la autorización ocurre en la ruta server-side /api/payments/ot-batch (withAuth + canManageStore antes de cualquier privilegio) y el actor real viaja en p_paid_by. ACL service_role EXCLUSIVA (REVOKE PUBLIC/anon/authenticated, verificado por R03-VERIFY fail-closed); authenticated/anon no pueden invocarla directamente. Espejo estructural del batch receipt|service certificado (mismo estándar ACL).",
+      "added_by": "cpbra-final-compliance-closure-001-r03",
+      "expires": "2027-06-30"
     }
   ],
   "tables_without_rls": [],
@@ -1010,5 +1016,5 @@
       "expires": "2026-12-31"
     }
   ],
-  "_updated": "2026-11-26 — CP-BRA-INV005-FIN011-CLOSURE-001: entrada confirm_inventory_adjustment/2 añadida (drift intencional LIVE-vs-replay del guard R-05, PR sin fusionar pendiente de aprobación del propietario).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 añadida (drift intencional LIVE-vs-replay de la migración R-26, PR sin fusionar).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 RETIRADA (PR #1729 fusionado c9350fb421; migración 20261127120000 aplicada a producción §11g — body_hash 9ab5db94537d7152e9b38ffebd191558 idéntico en E2E y producción; surface re-certificado; drift resuelto).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (cierre): entrada confirm_inventory_adjustment/2 también RETIRADA en main (PR #1725 contiene el mismo retiro; surface re-certificado con el cuerpo R-05 en producción)."
+  "_updated": "2026-11-26 — CP-BRA-INV005-FIN011-CLOSURE-001: entrada confirm_inventory_adjustment/2 añadida (drift intencional LIVE-vs-replay del guard R-05, PR sin fusionar pendiente de aprobación del propietario).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 añadida (drift intencional LIVE-vs-replay de la migración R-26, PR sin fusionar).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001: entrada register_supplier_payment_batch/7 RETIRADA (PR #1729 fusionado c9350fb421; migración 20261127120000 aplicada a producción §11g — body_hash 9ab5db94537d7152e9b38ffebd191558 idéntico en E2E y producción; surface re-certificado; drift resuelto).\n2026-11-27 — CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (cierre): entrada confirm_inventory_adjustment/2 también RETIRADA en main (PR #1725 contiene el mismo retiro; surface re-certificado con el cuerpo R-05 en producción).\n2026-11-27 — CP-BRA-FINAL-COMPLIANCE-CLOSURE-001: entrada register_ot_payment_batch añadida (SD sin auth-check por diseño — autorización en la ruta tras canManageStore, ACL service_role exclusiva verificada por R03-VERIFY)."
 }
