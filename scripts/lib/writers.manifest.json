@@ -17,6 +17,7 @@
     "scripts/cp-security-backlog-001-aplicar-produccion.mjs",
     "scripts/cp-security-backlog-001-fix-ledger-versions.mjs",
     "scripts/cp-security-backlog-001-fix2-ledger.mjs",
+    "scripts/cp-srv-payment-date-fix-prod.mjs",
     "scripts/cpbra-apply-migration-prod.mjs",
     "scripts/cpbra-pc-apply-prod.mjs",
     "scripts/cpbra-r03-apply-prod.mjs",
