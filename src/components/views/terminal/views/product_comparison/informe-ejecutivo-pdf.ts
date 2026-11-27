@@ -63,6 +63,7 @@ const C_BLACK: [number, number, number] = [16, 24, 40];      // títulos
 const C_MUTED: [number, number, number] = [100, 116, 139];   // secundario
 const C_BORDER: [number, number, number] = [203, 213, 225];  // líneas de tabla
 const C_RULE: [number, number, number] = [148, 163, 184];    // reglas editoriales
+const C_SEPARADOR: [number, number, number] = [226, 232, 240]; // línea suave entre productos (slate-200)
 const C_HEADER_BG: [number, number, number] = [238, 242, 247];
 const C_BAND: [number, number, number] = [248, 250, 252];    // banda suave
 const C_STRIPE: [number, number, number] = [239, 243, 247];  // fila alternada (contraste visible)
@@ -524,7 +525,7 @@ function alturaGraficoComparativo(informe: InformeEjecutivo): number {
   if (!g) return 0;
   const barH = 5.0;
   const gapBar = 1.6;
-  const gapProd = 3.4;
+  const gapProd = 5.0; // banda + marcador de tendencia + hairline entre productos
   const headerH = 6;
   const legendH = 7.5;
   const notaH = 11;
@@ -576,7 +577,7 @@ function drawGraficoComparativo(doc: jsPDF, informe: InformeEjecutivo, y0: numbe
   const maxVal = Math.max(...g.series.flatMap((s) => [s.anterior, s.actual]), 1);
   const barH = 5.0;
   const gapBar = 1.6;
-  const gapProd = 3.4;
+  const gapProd = 5.0;
   const headerH = 6;
   const legendH = 7.5;
   const notaH = 11;
@@ -591,8 +592,15 @@ function drawGraficoComparativo(doc: jsPDF, informe: InformeEjecutivo, y0: numbe
   doc.text(g.titulo, M, yStart + 3);
 
   let y = yStart + headerH + 2.5;
-  for (const s of g.series) {
-    const dif = s.actual - s.anterior;
+  const H_GRUPO = barH * 2 + gapBar;
+  g.series.forEach((s, idx) => {
+    // Banda de asociación visual (índices alternos): encierra nombre + ambas
+    // barras + marcador de tendencia del MISMO producto — la lectura por
+    // producto queda inequívoca (auditoría 2026-11-27, petición del propietario).
+    if (idx % 2 === 0) {
+      doc.setFillColor(...C_BAND);
+      doc.rect(M, y - 1.6, contentW, H_GRUPO + 5.0, 'F');
+    }
     // Etiqueta del producto (10 pt, hasta 2 líneas — legibilidad §6/§7).
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
@@ -615,21 +623,30 @@ function drawGraficoComparativo(doc: jsPDF, informe: InformeEjecutivo, y0: numbe
     doc.setFillColor(...GR_ACTUAL);
     doc.rect(xBar, y + barH + gapBar, wAct, barH, 'F');
 
-    // Valores al final de cada barra (§4.A).
+    // Valores PEGADOS al extremo de cada barra (§4.A — 1.0 mm desde el fin).
     doc.setFontSize(8.6);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...C_MUTED);
-    if (s.anterior > 0) doc.text(fmtCompact(s.anterior), xBar + wAnt + 1.4, y + barH);
+    if (s.anterior > 0) doc.text(fmtCompact(s.anterior), xBar + wAnt + 1.0, y + barH);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9.4);
     doc.setTextColor(...GR_ACTUAL);
-    if (s.actual > 0) doc.text(fmtCompact(s.actual), xBar + wAct + 1.4, y + barH + gapBar + barH);
+    if (s.actual > 0) doc.text(fmtCompact(s.actual), xBar + wAct + 1.0, y + barH + gapBar + barH);
 
     // Marcador de tendencia alineado bajo la etiqueta (▲/▼ + diferencia).
-    tendenciaMarca(doc, s.anterior, s.actual, M + 1.5, y + barH * 2 + gapBar + 2.4, labelW - 3);
+    tendenciaMarca(doc, s.anterior, s.actual, M + 1.5, y + H_GRUPO + 2.4, labelW - 3);
 
-    y += barH * 2 + gapBar + gapProd;
-  }
+    // Línea separadora SUAVE entre productos (no cruza contenido: nace bajo el
+    // marcador de tendencia y muere en la banda siguiente — mismo plano que la
+    // banda alterna, delimita sin confundir).
+    if (idx < g.series.length - 1) {
+      doc.setDrawColor(...C_SEPARADOR);
+      doc.setLineWidth(0.2);
+      doc.line(M, y + H_GRUPO + 3.4, M + contentW, y + H_GRUPO + 3.4);
+    }
+
+    y += H_GRUPO + gapProd;
+  });
 
   // Leyenda claramente diferenciada (§4.A).
   y += 0.6;
@@ -670,7 +687,7 @@ function drawGraficoComparativo(doc: jsPDF, informe: InformeEjecutivo, y0: numbe
 function alturaGraficoVariaciones(v: InformeVariacion[]): number {
   if (v.length === 0) return 14;
   const barH = 5.2;
-  const gapProd = 3.8;
+  const gapProd = 4.6; // banda + hairline entre productos
   const headerH = 6;
   const legendH = 13;      // leyenda + línea de escala con etiquetas
   return headerH + v.length * (barH + gapProd) - gapProd + legendH + 4;
@@ -688,7 +705,7 @@ function drawGraficoVariaciones(doc: jsPDF, informe: InformeEjecutivo, y0: numbe
   const halfPos = chartW * 0.55 - 2;
   const halfNeg = chartW * 0.45 - 2;
   const barH = 5.2;
-  const gapProd = 3.8;
+  const gapProd = 4.6;
   const headerH = 6;
   const alto = alturaGraficoVariaciones(v);
 
@@ -700,7 +717,13 @@ function drawGraficoVariaciones(doc: jsPDF, informe: InformeEjecutivo, y0: numbe
   doc.text('Variación de ingresos por producto (CUP) — mayores movimientos del período', M, yStart + 3);
 
   let y = yStart + headerH + 2;
-  for (const s of v) {
+  v.forEach((s, idx) => {
+    // Banda de asociación visual (índices alternos) — nombre + barra + etiqueta
+    // del MISMO producto quedan encerrados (auditoría 2026-11-27).
+    if (idx % 2 === 0) {
+      doc.setFillColor(...C_BAND);
+      doc.rect(M, y - 1.4, contentW, barH + 2.8, 'F');
+    }
     // Nombre (10 pt, una línea).
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
@@ -726,20 +749,20 @@ function drawGraficoVariaciones(doc: jsPDF, informe: InformeEjecutivo, y0: numbe
     if (s.difCup >= 0) {
       if (wEt <= espacioDerecho) {
         doc.setTextColor(...color);
-        doc.text(valor, zeroX + w + 1.4, y + barH);
+        doc.text(valor, zeroX + w + 1.0, y + barH);
         const wV = doc.getTextWidth(valor);
         if (s.esNuevo) {
           // «Nuevo» se identifica textualmente (nunca % ficticio, §4.D).
           doc.setFillColor(...[254, 243, 199] as [number, number, number]);
-          doc.rect(zeroX + w + 1.4 + wV + 2.5, y + barH - 3.6, 13, 4.6, 'F');
+          doc.rect(zeroX + w + 1.0 + wV + 2.0, y + barH - 3.6, 13, 4.6, 'F');
           doc.setFontSize(7.6);
           doc.setTextColor(...[146, 104, 14] as [number, number, number]);
-          doc.text('NUEVO', zeroX + w + 1.4 + wV + 5, y + barH);
+          doc.text('NUEVO', zeroX + w + 1.0 + wV + 4.5, y + barH);
         } else if (pct) {
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(8.2);
           doc.setTextColor(...C_MUTED);
-          doc.text(pct, zeroX + w + 1.4 + wV + 2.5, y + barH);
+          doc.text(pct, zeroX + w + 1.0 + wV + 2.0, y + barH);
         }
       } else {
         // Dentro de la barra, alineado al extremo interior (texto blanco).
@@ -749,14 +772,23 @@ function drawGraficoVariaciones(doc: jsPDF, informe: InformeEjecutivo, y0: numbe
     } else {
       if (wEt <= espacioIzquierdo) {
         doc.setTextColor(...color);
-        doc.text(etiqueta, zeroX - w - 1.4, y + barH, { align: 'right' });
+        doc.text(etiqueta, zeroX - w - 1.0, y + barH, { align: 'right' });
       } else {
         doc.setTextColor(...C_WHITE);
         doc.text(etiqueta, zeroX - w + 2, y + barH, { align: 'left' });
       }
     }
+
+    // Línea separadora SUAVE entre productos (en el blanco entre bandas —
+    // nunca cruza la barra ni la etiqueta de valor).
+    if (idx < v.length - 1) {
+      doc.setDrawColor(...C_SEPARADOR);
+      doc.setLineWidth(0.2);
+      doc.line(M, y + barH + 2.3, M + contentW, y + barH + 2.3);
+    }
+
     y += barH + gapProd;
-  }
+  });
 
   // Leyenda + línea de escala del eje cero.
   const legY = y + 1.5;
