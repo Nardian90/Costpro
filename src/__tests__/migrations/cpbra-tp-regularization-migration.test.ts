@@ -109,7 +109,7 @@ describe('CP-BRA FASE 4 — 20261127160000_cpbra_tienda_pueblo_receipts.sql', ()
     const manifest = JSON.parse(
       readFileSync(join(process.cwd(), 'audit-evidence', 'INFRA-011', 'e2e-migrations-manifest.json'), 'utf8')
     );
-    expect(manifest.total_incluidos).toBe(224);
+    expect(manifest.total_incluidos).toBe(225);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127160000_cpbra_tienda_pueblo_receipts.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

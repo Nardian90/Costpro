@@ -147,7 +147,7 @@ describe('CP-BRA R-03 — 20261127140000_cpbra_r03_ot_payment_batch.sql', () => 
     const manifest = JSON.parse(
       readFileSync(join(process.cwd(), 'audit-evidence', 'INFRA-011', 'e2e-migrations-manifest.json'), 'utf8')
     );
-    expect(manifest.total_incluidos).toBe(224);
+    expect(manifest.total_incluidos).toBe(225);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127140000_cpbra_r03_ot_payment_batch.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

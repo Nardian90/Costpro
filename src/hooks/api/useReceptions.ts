@@ -264,7 +264,7 @@ export function useVoidReception() {
         const { error } = await supabase.rpc('void_pending_reception', {
           p_receipt_id: params.receiptId,
           p_user_id: user?.id || null,
-          p_reason: params.reason || 'Anulada por encargado',
+          p_reason: params.reason || 'Anulada por su creador',
           p_operation_date: params.operationDate || null,
         });
 
@@ -273,7 +273,7 @@ export function useVoidReception() {
         // PR-3: usar reverse_receipt_v2 (PR-2) en lugar de void_reception_with_reversal
         const { error } = await supabase.rpc('reverse_receipt_v2', {
           p_receipt_id: params.receiptId,
-          p_reason: params.reason || 'Anulada por encargado',
+          p_reason: params.reason || 'Anulada por su creador',
           p_user_id: user?.id || null,
         });
 
@@ -583,11 +583,14 @@ export function useSavePendingReception() {
       }, 0);
 
       // 1. Insertar la recepción con status='pending'
+      // CP-BRA-R06 (§2.1): el creador (user_id) NO viaja desde el navegador:
+      // el trigger receipts_pin_creator lo fija a la identidad autenticada
+      // (migración 20261128120000). params.userId queda solo para referencia
+      // del flujo (rollback/auditoría cliente), nunca como dato de la fila.
       const { data: receipt, error: receiptErr } = await supabase
         .from('receipts')
         .insert({
           store_id: params.storeId,
-          user_id: params.userId,
           supplier: params.supplier || null,
           reference_doc: params.invoiceNumber || null,
           reception_date: params.receptionDate,

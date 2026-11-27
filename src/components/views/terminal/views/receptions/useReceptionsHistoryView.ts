@@ -183,7 +183,7 @@ export function useReceptionsHistoryView() {
       await voidReceptionMutation.mutateAsync({
         receiptId: receipt.id,
         storeId: user?.activeStoreId || '',
-        reason: 'Anulada por encargado'
+        reason: 'Anulada por su creador'
         // operationDate se omite intencionalmente: las anulaciones usan NOW()
         // (que siempre pasa la validación forward-only).
       });
