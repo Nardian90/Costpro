@@ -588,9 +588,9 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   lote atómico por orden para pagos de OT (R-03); +1 — 20261127150000
     //   gate admin/manager/encargado de pay_commission (§0.2); +1 — FASE 4
     //   Tienda Pueblo (regularización gobernada). Posiciones previas intactas = 223
-    expect(m.total_incluidos).toBe(223);
+    expect(m.total_incluidos).toBe(224);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(223);
+    expect(incluidos.length).toBe(224);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
