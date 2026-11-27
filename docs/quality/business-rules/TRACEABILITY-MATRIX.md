@@ -68,6 +68,18 @@
 | Evidencia | APLICACION-MIGRACION-20261126140000-PRODUCCION.md (9/9 marcas, surface 232 fn re-certificado) |
 | Estado certificación | **CERTIFICADA (2026-11-27): R-25/R-26 remediados y desplegados (PR #1728/#1729 fusionados; R-26 en producción §11g — body_hash 9ab5db94 idéntico en E2E y producción); pines N6/N7 convertidos a regresiones positivas; suite 16/16 + baterías dedicadas R-25 (16 casos) y R-26 (11 casos §4.4 A–H) — expediente docs/audits/CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001/** |
 
+### TR-FIN-013 (FIN-013/R-03) · Pagos múltiples de OT: operación parcial con atomicidad por orden
+| Elemento | Contenido |
+|---|---|
+| Regla | DECISIÓN DEL PROPIETARIO (§0.1, CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): independencia ENTRE órdenes (operación parcial), atomicidad DENTRO de cada orden (sin pagos parciales en una OT) |
+| Implementación | `register_ot_payment_batch` (20261127140000) — lote OT EXCLUSIVO: lock FOR UPDATE de la OT, gate ERR_ORDER_NOT_PAYABLE, aritmética CP-FIN-004, pre-check NETEADO (mismo CASE del motor single), fast-path de replay por bloque `<key>:<i>`, inserción vía register_supplier_payment; ACL service_role exclusiva (R03-VERIFY fail-closed) |
+| Canales | `/api/payments` multi-componente OT → lote atómico por orden (defecto FIN-013 residual cerrado) · `POST /api/payments/ot-batch` → operación parcial multi-OT (una transacción independiente por OT; status all_success/partial/all_failed; error_code + retryable por ítem; ERR_BATCH_DUPLICATE) · reglas generales de pago single intactas |
+| P+ | Batería E2E 17/17 vía API real en CostproE2E (§3.6: 5 OT válidas, 4+anulada, otra tienda, overpay, todas fallidas, reintentos, duplicado, concurrencia FOR UPDATE, pago mixto válido, conciliación pagos↔mayor con partida doble) · pin R-25 convertido (pago mixto = UNA llamada al lote) · contrato estático ruta 8/8 + migración 13/13 |
+| P− | Anulada → 409 ERR_ORDER_NOT_PAYABLE sin movimientos · overpay → 400 ERR_BATCH_OVERPAY · otra tienda → rechazo por ítem sin fuga RLS · clerk → 403 · no auth → 401 · duplicado → 400 |
+| P=R | replay 221 (posición 221) · allowlist +1 (SD sin auth-check por diseño, service_role exclusiva) · writers manifest isolationProtected |
+| Evidencia | scripts/e2e/cpbra-r03-ot-batch-battery-e2e.mjs (re-ejecutable) + cpbra-r03-apply-e2e.mjs (PRE/POST 5/5) — expediente CP-BRA-FINAL-COMPLIANCE-CLOSURE-001/R03-PARTIAL-PAYMENTS.md |
+| Estado certificación | **CERTIFICADA (2026-11-27)** — riesgo residual bajo: sin reversión de pagos OT (decisión vigente FIN-003); canal UI multi-OT pendiente de producto (el canal API está disponible) |
+
 ### TR-INV-003 (INV-003) · Costo de venta server-side (WAC)
 | Elemento | Contenido |
 |---|---|
@@ -161,6 +173,7 @@
 | TR-POS-006 | POS | CRÍTICA | ✓ | ✓ | ✓ | VERIFICADA (R-11 remediado; tope/supervisor pendientes) |
 | TR-FIN-002 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (CxP) |
 | TR-FIN-011 | FIN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (R-25/R-26 remediados 2026-11-27) |
+| TR-FIN-013 | FIN | ALTA | ✓ | ✓ | ✓ | CERTIFICADA (R-03 con decisión §0.1 del propietario — lote atómico por orden + operación parcial) |
 | TR-INV-003 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |
 | TR-INV-007 | INV | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA (R-05 aplicada §11g 2026-11-27) |
 | TR-TEN-001 | TEN | CRÍTICA | ✓ | ✓ | ✓ | CERTIFICADA |

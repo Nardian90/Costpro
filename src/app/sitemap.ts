@@ -1,16 +1,18 @@
 import type { MetadataRoute } from 'next';
+import { createServerClient } from '@/lib/supabaseClient';
 
 /**
- * Sitemap.xml — CostPro
+ * Sitemap.xml — ADNegocio
  *
  * Lista todas las páginas públicas indexables.
  * Las rutas de API y panel de administración se excluyen (requieren auth).
  *
- * Las vitrinas públicas (/tienda/[slug]) se incluyen dinámicamente
- * consultando Supabase, pero para evitar latencia en el build,
- * se incluyen las tiendas conocidas estáticamente.
+ * ADNEGOCIO-GACETA-EDITORIAL-UX-001: las notas del Diario Contable
+ * (/gaceta/[slug]) se agregan dinámicamente desde la vista pública
+ * public_gaceta_v (misma superficie anon que las páginas). Ante error de
+ * lectura, el sitemap se sirve con las páginas estáticas (fail-open seguro).
  */
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://costpro4.vercel.app';
 
   // Páginas estáticas principales
@@ -42,5 +44,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  return staticPages;
+  // ADNEGOCIO-GACETA-EDITORIAL-UX-001 — notas publicadas del Diario Contable
+  const gacetaNotas: MetadataRoute.Sitemap = [];
+  try {
+    const supabase = createServerClient();
+    const { data, error } = await supabase
+      .from('public_gaceta_v')
+      .select('fecha, slug')
+      .order('fecha', { ascending: false })
+      .limit(200);
+    if (error) throw error;
+    for (const nota of data || []) {
+      gacetaNotas.push({
+        url: `${baseUrl}/gaceta/${nota.slug}`,
+        lastModified: new Date(`${nota.fecha}T12:00:00`),
+        changeFrequency: 'monthly',
+        priority: 0.6,
+      });
+    }
+  } catch (e) {
+    console.warn('[Sitemap] public_gaceta_v no disponible; se omite el archivo de la gaceta', e);
+  }
+
+  return [...staticPages, ...gacetaNotas];
 }

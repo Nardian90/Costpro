@@ -251,10 +251,77 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
       }
     }
 
+    // R-03 (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001 §0.1): ATOMICIDAD dentro de
+    // cada orden. El pago MIXTO multi-componente de UNA OT ya NO se inserta
+    // componente a componente en transacciones separadas (defecto FIN-013
+    // residual: si el componente i fallaba, los componentes 0..i-1 quedaban
+    // confirmados — pago parcial dentro de la orden). Ahora el bloque
+    // completo pasa por register_ot_payment_batch (migración 20261127140000):
+    // UNA transacción confirma todos los componentes de esta OT o ninguno
+    // (lock FOR UPDATE + pre-check neteado + replay idempotente por bloque).
+    // La fila única conserva el motor single sin cambios (reglas generales de
+    // pago de una OT intactas) y la operación MULTI-OT PARCIAL (independencia
+    // entre órdenes) vive en /api/payments/ot-batch.
+    if (payments.length > 1) {
+      const { data: otBatch, error: otBatchErr } = await adminSingle.rpc('register_ot_payment_batch', {
+        p_store_id: storeId,
+        p_ref_type: ref_type,
+        p_ref_id: ref_id,
+        p_payments: payments.map((p) => ({
+          payment_method: p.payment_method,
+          amount: p.amount,
+          currency: p.currency,
+          exchange_rate: p.exchange_rate,
+          reference: p.reference || null,
+          notes: p.notes || null,
+        })),
+        p_paid_by: session.user.id,
+        ...(payment_date ? { p_payment_date: payment_date } : {}),
+        p_idempotency_key: idempotency_key || null,
+      });
+
+      if (otBatchErr) {
+        const msg = otBatchErr.message || '';
+        if (otBatchErr.code === 'P0001' && (msg.includes('ERR_FUTURE_DATED_DOCUMENT') || msg.includes('ERR_BACKDATED_DOCUMENT'))) {
+          return NextResponse.json(
+            { error: 'Fecha del pago no admisible', message: msg, code: msg.includes('ERR_FUTURE') ? 'ERR_FUTURE_DATED_DOCUMENT' : 'ERR_BACKDATED_DOCUMENT' },
+            { status: 422 }
+          );
+        }
+        if (msg.includes('ERR_BATCH_OVERPAY') || msg.includes('excede el saldo')) {
+          return NextResponse.json({ error: msg, code: 'ERR_BATCH_OVERPAY' }, { status: 400 });
+        }
+        if (msg.includes('ERR_ORDER_NOT_PAYABLE')) {
+          return NextResponse.json({ error: msg, code: 'ERR_ORDER_NOT_PAYABLE' }, { status: 409 });
+        }
+        if (msg.includes('ERR_TASA_NO_DISPONIBLE')) {
+          return NextResponse.json({ error: msg, code: 'ERR_TASA_NO_DISPONIBLE' }, { status: 422 });
+        }
+        if (msg.includes('ERR_COMBINACION_NO_SOPORTADA')) {
+          return NextResponse.json({ error: msg, code: 'ERR_COMBINACION_NO_SOPORTADA' }, { status: 400 });
+        }
+        if (msg.includes('ERR_COMPONENT_INVALID') || msg.includes('ERR_BATCH_SIZE')) {
+          return NextResponse.json({ error: msg, code: 'ERR_BATCH_INVALID' }, { status: 400 });
+        }
+        console.error('[payments] Error RPC batch OT:', otBatchErr);
+        return NextResponse.json({ error: msg || 'Error al registrar el pago' }, { status: 500 });
+      }
+
+      const otRows = (otBatch?.payments ?? []) as { id: string; index: number; payment_method: string; currency: string; amount: number; replayed?: boolean }[];
+      return NextResponse.json({
+        success: true,
+        payments: otRows.map((r) => ({ id: r.id, method: r.payment_method, amount: r.amount, currency: r.currency })),
+        count: otBatch?.count ?? otRows.length,
+        replayed: otBatch?.replayed === true,
+      }, { status: 201 });
+    }
+
     // Registrar cada pago dentro de la misma idempotency key (con sufijo por índice)
     // Esto permite que un pago mixto de 3 filas sea idempotente como bloque.
     // NOTA ADN-008: para ref_type='service' este loop fue sustituido por el RPC
-    // transaccional register_supplier_payment_batch (arriba).
+    // transaccional register_supplier_payment_batch (arriba). R-03: para OT,
+    // el multi-componente fue sustituido por register_ot_payment_batch
+    // (arriba); el loop SOLO ejecuta la fila única (motor single intacto).
     const results: { id: string; method: string; amount: number; currency: string }[] = [];
 
     for (let i = 0; i < payments.length; i++) {
