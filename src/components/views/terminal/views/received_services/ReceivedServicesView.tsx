@@ -1443,6 +1443,15 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
   useApplyWorkDateDefault('received_service', !serviceDateTouched && serviceDate === todayBusinessDay(), setServiceDate, user?.activeStoreId);
   const maxServiceDate = todayBusinessDay();
   const serviceDateValidation = useOperationDateValidation(serviceDate, user?.activeStoreId, maxServiceDate);
+  // MISIÓN SRV-PAYMENT-DATE (FASE 1, causa raíz): fecha financiera del pago
+  // cuando el operador liquida al confirmar. ANTES el flujo crear/confirmar
+  // NO llevaba fecha (el RPC estampaba NOW()) o forzaba HOY — el pago quedaba
+  // fechado en el día del REGISTRO y no en el día real del dinero. Mismo
+  // contrato V2.12.32 del modal de pago del detalle: default HOY (día de
+  // negocio Habana), tope HOY — nunca futura; backdating legítimo validado.
+  const [paymentDate, setPaymentDate] = useState<string>(todayBusinessDay());
+  const maxPaymentDate = todayBusinessDay();
+  const paymentDateValidation = useOperationDateValidation(paymentDate, user?.activeStoreId, maxPaymentDate);
 
   // ── Vinculación operativa (complemento §1: acordeón CONTRAÍDO por defecto) ──
   const [linksOpen, setLinksOpen] = useState(false);
@@ -1679,6 +1688,13 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
           toast.error(`El pago (${rowsCupTotal(payRows).toFixed(2)} CUP) excede el importe del servicio (${totalNum.toFixed(2)} CUP).`);
           return null;
         }
+        // MISIÓN SRV-PAYMENT-DATE (FASE 1): la fecha del pago es obligatoria y
+        // válida antes de enviar (never future, tope HOY Habana).
+        if (!paymentDateValidation.valid) {
+          toast.error(paymentDateValidation.error || 'Fecha del pago no válida');
+          return null;
+        }
+        payload.payment_date = formatOperationDateForRPC(paymentDate);
         // ADN-009 (§8): clave estable del intento de liquidación.
         payload.payment_idempotency_key = payAttemptKeyRef.current || crypto.randomUUID();
       }
@@ -1756,8 +1772,11 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
     let confirmOk = false;
     try {
       if (isEdit && editService && onSaveEdit) {
-        // ADN-008 §3.3: fecha financiera del pago al confirmar el borrador.
-        confirmOk = (await onSaveEdit(editService.id, { ...payload, payment_date: formatOperationDateForRPC(todayBusinessDay()) }, 'confirm')) !== false;
+        // ADN-008 §3.3 + MISIÓN SRV-PAYMENT-DATE (FASE 1): la fecha financiera
+        // del pago al confirmar el borrador es la ELEGIDA por el operador en
+        // el modal (selector «Fecha del pago») — antes se forzaba HOY y un
+        // pago ejecutado en un día anterior quedaba mal fechado.
+        confirmOk = (await onSaveEdit(editService.id, { ...payload, payment_date: payNow ? formatOperationDateForRPC(paymentDate) : undefined }, 'confirm')) !== false;
       } else {
         confirmOk = (await onCreate(payload)) !== false;
       }
@@ -1770,6 +1789,7 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
       setSupplier(''); setSupplierSelection(null); setAmount(''); setReferenceDoc(''); setObservations('');
       setServiceDate(todayBusinessDay());
       setPayNow(false); setPayRows([newPaymentRow(storeRates)]);
+      setPaymentDate(todayBusinessDay());
       setOtSelected([]); setRcptSelected([]); setOtSearch(''); setRcptSearch('');
       setLinksOpen(false);
       // CP-OPS-ENERVIDA §4: la confirmación exitosa consume su creation_key —
@@ -1901,6 +1921,17 @@ export function CreateServiceModal({ isOpen, onClose, onCreate, onSaveEdit, edit
                 onChange={setPayRows}
                 storeRates={storeRates}
                 maxCupTotal={parseFloat(amount) || undefined}
+              />
+              {/* MISIÓN SRV-PAYMENT-DATE (FASE 1, causa raíz): fecha financiera
+                  del pago con el MISMO componente y contrato V2.12.32 del modal
+                  de pago del detalle — never future, backdating legítimo. */}
+              <OperationDatePicker
+                label="Fecha del pago"
+                value={paymentDate}
+                onChange={setPaymentDate}
+                storeId={user?.activeStoreId}
+                max={maxPaymentDate}
+                inputId="payment-date-service-create"
               />
               {(() => {
                 const totalNum = parseFloat(amount) || 0;
