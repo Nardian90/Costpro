@@ -69,11 +69,12 @@ Modelo de eventos (no columna status): fila activa `direction in (in,out,refund,
 | Operación | Actor | Precondiciones | Efecto |
 |---|---|---|---|
 | registrar pago | service_role vía RPC (single tras gate canManageStore server-side — R-25; batch/multi tras canManageStore) | doc activo, lock FOR UPDATE, overpay prohibido neteando reversas (R-26: batch con la misma fórmula del motor single), idempotencia por clave | asiento 'pago' (solo receipt\|service con in; ORDEN_TRABAJO por fin) + `paid_amount` por trigger |
+| registrar lote de OT (R-03) | service_role vía `register_ot_payment_batch` tras gate canManageStore (ruta /api/payments/ot-batch) | **ATOMICIDAD POR ORDEN**: todos los componentes de UNA OT se confirman en UNA transacción o ninguno (lock FOR UPDATE de la OT, pre-check neteado, replay por bloque `<key>:<i>`); la operación MULTI-OT es PARCIAL (una transacción independiente por orden — un fallo NO revierte las demás) | asiento ORDEN_TRABAJO por componente (fin) + `paid_amount` por trigger |
 | revertir pago | actor validado `has_store_access_as` | ref_type receipt\|service (OT excluida — R-03), fecha operativa | contra-fila + asiento anulacion; **no protege pagos ya liquidados en cierres** (R-14) |
 | DELETE | nadie | 409 PT007 | — |
 
-**Transiciones ILEGALES detectadas:** (a) revertir pago de doc ya anulado (permitido por diseño para limpieza — DOCUMENTAR como excepción formal, R-14); (b) pagos OT sin asiento ni saldo (FIN-013).
-**Evidencia:** `20261124120000:211-336,244-246,264-283`; `20260812000001:120-121`; `20261113120100:703-719`.
+**Transiciones ILEGALES detectadas:** (a) revertir pago de doc ya anulado (permitido por diseño para limpieza — DOCUMENTAR como excepción formal, R-14); (b) ~~pagos OT sin asiento ni saldo (FIN-013)~~ RESUELTO: el asiento ORDEN_TRABAJO existe (20261121120000) y la rama OT del trigger restaura `paid_amount` (20261126140000); (c) R-03: pago PARCIAL dentro de una OT — prohibido desde 20261127140000 (el pago mixto de una OT pasa por el lote atómico por orden).
+**Evidencia:** `20261124120000:211-336,244-246,264-283`; `20260812000001:120-121`; `20261113120100:703-719`; `20261127140000_cpbra_r03_ot_payment_batch.sql` (R-03).
 
 ## 6. TRANSFERENCIA (transfers)
 
@@ -106,8 +107,8 @@ pending ──confirm_inventory_adjustment──▶ confirmed ──reverse_inve
 ```
 draft→approved→in_progress→(paused↔in_progress)→completed→closed; (+voided/reversed desde estados válidos)
 ```
-Cobros → CxC (ver FIN-011/FIN-013: trigger de saldo perdió la rama OT; pagos OT sin asiento; sin reversión de pagos OT).
-**Evidencia:** `20260913000001:68-77`; RPCs v2_26_g2/g4/g5/g6/g7/g8.
+Cobros → CxC (FIN-011/FIN-013: el trigger conserva la rama OT con neteo de reversas desde 20261126140000 — R-01 remediado; asiento ORDEN_TRABAJO por fin desde 20261121120000; pagos múltiples de OT = operación parcial con atomicidad por orden — R-03, 20261127140000; la reversión de pagos OT sigue excluida de `reverse_supplier_payment` — decisión vigente).
+**Evidencia:** `20260913000001:68-77`; `20261126140000` (R-01); `20261121120000:534-555`; `20261127140000` (R-03); RPCs v2_26_g2/g4/g5/g6/g7/g8.
 
 ## 9. DEVOLUCIÓN (devolutions)
 
@@ -173,10 +174,10 @@ Vínculo tienda desconecta sin borrar (`catalog_store_links`); consolidación ma
 | receipts | pending/active/voided/reversed | SÍ | SÍ | SÍ | Sí | pagos sin reversión al anular (R-04) |
 | received_services | draft/active/cancelled/voided | NO | SÍ | SÍ | Sí | replay fuera de orden revive defecto |
 | transactions | completed/voided/reversed | SÍ | SÍ | SÍ | Sí | — |
-| payment_transactions | (eventos) | parciales (no DELETE) | SÍ | Sí | — | OT sin asiento (R-03); sin guard de cierre (R-14) |
+| payment_transactions | (eventos) | parciales (no DELETE) | SÍ | Sí | — | ~~OT sin asiento (R-03)~~ RESUELTO (fin ORDEN_TRABAJO + lote atómico por orden); sin guard de cierre (R-14) |
 | transfers | PENDIENTE/CONFIRMADA/CANCELADA/REVERSADA | SÍ | SÍ | Sí | Sí | atasco reserva 24 h (R-24) |
 | inventory_adjustments | pending/confirmed/voided/reversed | SÍ | SÍ (sin rol) | Sí | Sí | sin segundo aprobador (R-05) |
-| production_orders | draft..closed (+voided/reversed) | SÍ | SÍ | parcial | — | CxC/OT divergente (R-01/02/03) |
+| production_orders | draft..closed (+voided/reversed) | SÍ | SÍ | parcial | — | ~~CxC/OT divergente (R-01/02/03)~~ R-01/R-26 remediados; R-03: lote parcial por orden con atomicidad interna |
 | devolutions | pending/completed/voided/reversed | SÍ | SÍ | SÍ | Sí | — |
 | issue_slips | pending/completed/voided/reversed | NO | SÍ | Sí | Sí | flujo directo sin aprobación (R-13) |
 | purchase_orders | draft/sent/partial/received/cancelled | NO | SÍ | Sí | Sí | sin gate de rol (menor) |
