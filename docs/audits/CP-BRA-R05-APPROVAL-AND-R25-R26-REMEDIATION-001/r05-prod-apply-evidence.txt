@@ -1,0 +1,44 @@
+[cpbra-r05-apply-prod.mjs] AUTORIZADO (explícito): escritura contra producción https://wthkddeleylijmonclxg.supabase.co — ALLOW_PROD_WRITE=I_UNDERSTAND presente.
+[sha256] supabase/migrations/20261126170000_cpbra_r05_adjustment_confirmation_role_guard.sql
+  5f5fe8a87ab0ea7e9e46b99dc093e3c44b7b31dd5fe127ea71664b0bef56e37a
+  esperado (manifest INFRA-011): 5f5fe8a87ab0ea7e9e46b99dc093e3c44b7b31dd5fe127ea71664b0bef56e37a
+
+=== PRE (evidencia del estado previo) ===
+[
+ {
+  "body_hash_prev": "192e59ea6e8fa673bc970e24ea134f3b",
+  "security_definer": true,
+  "search_path_fijo": true,
+  "firma": "p_adjustment_id uuid, p_user_id uuid",
+  "guard_r05_ya": false,
+  "hueco_vigente": true,
+  "acl_execute": "authenticated,postgres,service_role",
+  "helper_ok": 1
+ }
+]
+
+Destino: wthkddeleylijmonclxg (PRODUCCIÓN CostproBD)
+
+== Aplicando (UNA SOLA VEZ) ==
+SQL ejecutado sin error.
+
+== Recarga PostgREST (mecanismo canónico) ==
+NOTIFY pgrst 'reload schema' enviado.
+
+== POST: verificación de marcas ==
+  OK   firma_preservada
+  OK   guard_rol_en_codigo
+  OK   err_not_allowed
+  OK   auditoria_transaccional
+  OK   hueco_eliminado
+  OK   maquina_estados
+  OK   kardex_invariante
+  OK   acl_certificada
+  OK   security_definer
+  OK   search_path_fijo
+  OK   helper_existe
+
+body_hash prev: 192e59ea6e8fa673bc970e24ea134f3b
+body_hash post: 26657592d2e4e846991d71166a48eb90
+
+→ R-05 aplicada y verificada en producción.

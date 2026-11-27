@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
+import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
 
 // FIX (2026-07-14): regex simple para aceptar UUIDs no-v4
@@ -65,6 +67,24 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     }
 
     const storeId = userData.active_store_id;
+
+    // ─── R-25 / F011-001 (CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001):
+    // gate de GESTIÓN canónico (canManageStore) para TODA la ruta. Esta ruta
+    // registra pagos privilegiados (register_supplier_payment, ACL
+    // service_role exclusiva vía cliente administrativo server-side — mismo
+    // patrón que /api/payments, /api/payments/multi y la reversión) y paga
+    // comisiones (pay_commission). Deny por defecto: clerk/warehouse/usuario/
+    // costo → 403 (canon roles.ts para toda ruta que escribe recursos
+    // financieros scoped por tienda).
+    if (!canManageStore(session.user, storeId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const admin = getSupabaseAdminSafe();
+    if (!admin) {
+      return NextResponse.json({ error: 'CONFIG_ERROR' }, { status: 500 });
+    }
+
     const results: { ref_type: string; ref_id: string; success: boolean; error?: string }[] = [];
     let successCount = 0;
     let errorCount = 0;
@@ -181,7 +201,10 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
             const methods: Array<'cash' | 'transfer'> = ['cash', 'transfer'];
 
             for (const m of methods) {
-              const { error: rpcError } = await supabase.rpc('register_supplier_payment', {
+              // R-25: RPC privilegiado vía cliente administrativo server-side,
+              // tras el gate canManageStore. Actor auditado = usuario de la
+              // sesión real (p_paid_by) — nunca el usuario técnico.
+              const { error: rpcError } = await admin.rpc('register_supplier_payment', {
                 p_store_id: storeId,
                 p_ref_type: item.ref_type,
                 p_ref_id: item.ref_id,
@@ -208,7 +231,9 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
               successCount++;
             }
           } else {
-            const { error: rpcError } = await supabase.rpc('register_supplier_payment', {
+            // R-25: RPC privilegiado vía cliente administrativo server-side,
+            // tras el gate canManageStore (mismo patrón que la vía batch).
+            const { error: rpcError } = await admin.rpc('register_supplier_payment', {
               p_store_id: storeId,
               p_ref_type: item.ref_type,
               p_ref_id: item.ref_id,
