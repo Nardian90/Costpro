@@ -82,11 +82,17 @@ const GR_MODERADA: [number, number, number] = [180, 83, 9];   // #b45309 series[
 const GR_SIN_DATO: [number, number, number] = [148, 163, 184];// slate auxiliar
 
 // Estados de cobertura (color + etiqueta textual SIEMPRE visible, §7).
+// ADNEGOCIO-PDF-REPORT-POLISH-002 §1: correspondencia visual INEQUÍVOCA —
+// cada clasificación con su propio color de los tokens reutilizados de
+// Estados Financieros (NINGÚN color nuevo): agotado = negative #dc2626,
+// insuficiente = moderada #b45309 (riesgo alto), moderada = axis #475569
+// (vigilancia), baja rotación = series[0] #15803d (sin riesgo inmediato),
+// sin movimiento / sin dato = slate auxiliar (sin información).
 const ESTADO_COBERTURA: Record<InformeCoberturaItem['estado'], { etiqueta: string; color: [number, number, number] }> = {
   agotado: { etiqueta: 'AGOTADO', color: GR_NEGATIVO },
-  cobertura_insuficiente: { etiqueta: 'Cobertura insuficiente', color: GR_NEGATIVO },
-  cobertura_moderada: { etiqueta: 'Cobertura moderada', color: GR_MODERADA },
-  baja_rotacion: { etiqueta: 'Baja rotación', color: GR_ANTERIOR },
+  cobertura_insuficiente: { etiqueta: 'Cobertura insuficiente', color: GR_MODERADA },
+  cobertura_moderada: { etiqueta: 'Cobertura moderada', color: GR_ANTERIOR },
+  baja_rotacion: { etiqueta: 'Baja rotación', color: GR_ACTUAL },
   sin_movimiento: { etiqueta: 'Sin movimiento', color: GR_SIN_DATO },
   sin_dato: { etiqueta: 'Sin dato suficiente', color: GR_SIN_DATO },
 };
@@ -807,126 +813,260 @@ function seleccionCobertura(items: InformeCoberturaItem[]): InformeCoberturaItem
   return seleccion.slice(0, COBERTURA_MAX_FILAS);
 }
 
+// ADNEGOCIO-PDF-REPORT-POLISH-002 §1 · ARQUITECTURA POR ZONAS:
+//   1) columna de nombres; 2) zona de cobertura CUANTITATIVA (barras + escala
+//   + umbrales D/2 y D SOLO dentro de esta zona); 3) zona de estados
+//   CUALITATIVOS (etiquetas textuales de los casos no calculables, sin
+//   posicionarse sobre una escala numérica); 4) escala al pie de la zona
+//   cuantitativa; 5) leyenda con SOLO los estados presentes.
+// Regla fundamental: las guías D/2 y D nunca atraviesan nombres, etiquetas de
+// estado ni textos; se limitan al EXTENSIÓN VERTICAL de las filas cuantitativas
+// y cualquier texto que conviva con ellas se dibuja sobre un apagado blanco.
+// Caso todo-agotado (ningún valor cuantificable): sin escala, sin umbrales ni
+// eje — título y categorías textuales adaptados. Nunca se inventan valores
+// para dibujar barras (§4.D).
+
+const COB_BAR_H = 5.0;
+const COB_GAP_PROD = 4.0;
+const COB_HEADER_H = 6;
+const COB_SUB_H = 5.2;    // subtítulo de zona (solo cuando conviven ambas)
+const COB_ESCALA_H = 6.8; // eje al pie de la zona cuantitativa
+
+interface ZonasCobertura {
+  numericos: InformeCoberturaItem[];
+  textuales: InformeCoberturaItem[];
+  mixto: boolean;
+}
+
+function zonasCobertura(items: InformeCoberturaItem[]): ZonasCobertura {
+  const numericos = items.filter((i) => i.coberturaDias !== null && i.coberturaDias > 0);
+  const textuales = items.filter((i) => !(i.coberturaDias !== null && i.coberturaDias > 0));
+  return { numericos, textuales, mixto: numericos.length > 0 && textuales.length > 0 };
+}
+
 function alturaGraficoCobertura(items: InformeCoberturaItem[]): number {
   if (items.length === 0) return 14;
-  const barH = 5.0;
-  const gapProd = 4.0;
-  const headerH = 6;
-  const legendH = 16; // leyenda de estados + escala en días
-  return headerH + items.length * (barH + gapProd) - gapProd + legendH + 4;
+  const { numericos, textuales, mixto } = zonasCobertura(items);
+  // Contabilidad IDÉNTICA al dibujo (ADNEGOCIO-PDF-REPORT-POLISH-002):
+  // cabecera (título + arranque) 8 + zona cuantitativa (subtítulo si mixto +
+  // filas de 9 mm + eje 7.6) + zona cualitativa (subtítulo + filas de 9 mm) +
+  // leyenda (2.5 de aire + 3.4 de cuerpo) + aire final 2.0 para la nota.
+  let alto = 8;
+  if (numericos.length > 0) {
+    alto += (mixto ? COB_SUB_H : 0) + numericos.length * (COB_BAR_H + COB_GAP_PROD) + 7.6;
+  }
+  if (textuales.length > 0) {
+    alto += COB_SUB_H + textuales.length * (COB_BAR_H + COB_GAP_PROD);
+  }
+  return alto + 2.5 + 3.4 + 2.0;
+}
+
+/** Apagado blanco bajo un texto que convive con las guías (nunca cruzado). */
+function apagarGuiaBajoTexto(doc: jsPDF, x: number, y: number, w: number, barH: number): void {
+  doc.setFillColor(...C_WHITE);
+  doc.rect(x - 0.8, y - 0.5, w + 1.6, barH + 1.0, 'F');
 }
 
 function drawGraficoCobertura(doc: jsPDF, informe: InformeEjecutivo, y0: number, diasPeriodo: number): number {
   const items = seleccionCobertura(informe.riesgoCobertura);
   if (items.length === 0) return y0;
+  const { numericos, textuales, mixto } = zonasCobertura(items);
   const contentW = pageW(doc) - 2 * M;
   const labelW = contentW * 0.36;
   const barArea = contentW - labelW;
-  const conDias = items.filter((i) => i.coberturaDias !== null && i.coberturaDias > 0);
-  const maxCobertura = Math.max(...conDias.map((i) => i.coberturaDias as number), diasPeriodo * 1.15);
-  const barH = 5.0;
-  const gapProd = 4.0;
-  const headerH = 6;
+  const xBar = M + labelW;
+  const barH = COB_BAR_H;
+  const gapProd = COB_GAP_PROD;
   const alto = alturaGraficoCobertura(items);
 
   const yStart = ensureSpace(doc, y0, alto, informe);
-  const rowsEndY = yStart + headerH + items.length * (barH + gapProd) - gapProd + 1;
 
+  // Título ADAPTADO a la información disponible (§1).
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);
   doc.setTextColor(...C_DARK);
-  doc.text('Riesgo de inventario: cobertura estimada (días) frente al umbral del tramo', M, yStart + 3);
+  doc.text(
+    numericos.length > 0
+      ? 'Riesgo de inventario: cobertura estimada (días) frente al umbral del tramo'
+      : 'Riesgo de inventario: disponibilidad — sin cobertura calculable en los casos mostrados',
+    M,
+    yStart + 3,
+  );
 
-  // Umbrales verticales D/2 y D (mismos umbrales del motor, §10).
-  const xBar = M + labelW;
-  const escala = (dias: number): number => (dias / maxCobertura) * barArea;
-  const xUmbral1 = xBar + escala(diasPeriodo * 0.5);
-  const xUmbral2 = xBar + escala(diasPeriodo);
-  for (const [xUm, etiqueta] of [[xUmbral1, 'D/2'], [xUmbral2, 'D']] as Array<[number, string]>) {
-    doc.setDrawColor(...C_RULE);
-    doc.setLineWidth(0.35);
-    doc.setLineDashPattern([1.4, 1.2], 0);
-    doc.line(xUm, yStart + headerH + 1, xUm, rowsEndY);
-    doc.setLineDashPattern([], 0);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.4);
-    doc.setTextColor(...C_MUTED);
-    doc.text(etiqueta, xUm, yStart + headerH - 0.5, { align: 'center' });
-  }
+  let y = yStart + COB_HEADER_H + 2;
 
-  let y = yStart + headerH + 2;
-  for (const item of items) {
-    const st = ESTADO_COBERTURA[item.estado];
-    // Nombre (10 pt) + estado textual junto a la barra (§7).
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.setTextColor(...C_DARK);
-    doc.text(truncar(doc, item.name, labelW - 2), M, y + barH);
-
-    if (item.estado === 'agotado' || item.coberturaDias === null) {
-      // Sin cobertura calculable: marca textual (sin barras ficticias, §4.D).
+  // ── ZONA CUANTITATIVA (barras; umbrales D/2 y D SOLO aquí dentro) ──
+  if (numericos.length > 0) {
+    if (mixto) {
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9.4);
-      doc.setTextColor(...st.color);
-      doc.text(`${st.etiqueta.toUpperCase()} — ${item.coberturaTexto}`, xBar + 1.5, y + barH);
-    } else {
-      const w = Math.max(escala(item.coberturaDias), 0.9);
+      doc.setFontSize(8.8);
+      doc.setTextColor(...C_MUTED);
+      doc.text('CON COBERTURA CALCULABLE (días)', M, y);
+      y += COB_SUB_H;
+    }
+    const conDias = numericos.map((i) => i.coberturaDias as number);
+    const maxCobertura = Math.max(...conDias, diasPeriodo * 1.15);
+    const escala = (dias: number): number => (dias / maxCobertura) * barArea;
+
+    // Extensión VERTICAL de la zona cuantitativa: las guías solo viven aquí.
+    const zonaTop = y - 1;
+    const zonaBottom = y + numericos.length * (barH + gapProd) - gapProd + 1;
+    const xUmbral1 = xBar + escala(diasPeriodo * 0.5);
+    const xUmbral2 = xBar + escala(diasPeriodo);
+    for (const [xUm, etiqueta] of [[xUmbral1, 'D/2'], [xUmbral2, 'D']] as Array<[number, string]>) {
+      doc.setDrawColor(...C_RULE);
+      doc.setLineWidth(0.35);
+      doc.setLineDashPattern([1.4, 1.2], 0);
+      doc.line(xUm, zonaTop, xUm, zonaBottom);
+      doc.setLineDashPattern([], 0);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.4);
+      doc.setTextColor(...C_MUTED);
+      doc.text(etiqueta, xUm, zonaTop - 1.5, { align: 'center' });
+    }
+
+    for (const item of numericos) {
+      const st = ESTADO_COBERTURA[item.estado];
+      // 1) Nombre del producto (columna de nombres, nunca sobre la escala).
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(...C_DARK);
+      doc.text(truncar(doc, item.name, labelW - 2), M, y + barH);
+
+      // 2) Barra de cobertura (días).
+      const w = Math.max(escala(item.coberturaDias as number), 0.9);
       doc.setFillColor(...st.color);
       doc.rect(xBar, y, w, barH, 'F');
+
+      // 3) Valor numérico al final de la barra — con apagado blanco para que
+      //    las guías no crucen el texto; si el margen no alcanza (barra
+      //    máxima), el valor entra en la barra en blanco (§11).
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(9.2);
-      doc.setTextColor(...C_DARK);
-      const diasTxt = `${fmtCompact(item.coberturaDias)} d`;
-      doc.text(diasTxt, xBar + w + 1.4, y + barH);
-      const wDias = doc.getTextWidth(diasTxt); // medir en el tamaño de dibujo (9.2)
-      // Etiqueta de estado: tras el valor si cabe; DENTRO de la barra (blanco)
-      // si no hay margen; truncada como último recurso — nunca cortada (§11).
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8.6);
-      const xTag = xBar + w + 1.4 + wDias + 2.4;
-      const disponible = pageW(doc) - M - xTag;
-      if (disponible >= doc.getTextWidth(st.etiqueta)) {
-        doc.setTextColor(...st.color);
-        doc.text(st.etiqueta, xTag, y + barH);
-      } else if (w > doc.getTextWidth(st.etiqueta) + 5) {
-        doc.setFont('helvetica', 'bold');
-        doc.setTextColor(...C_WHITE);
-        doc.text(st.etiqueta, xBar + w - 2, y + barH, { align: 'right' });
+      const diasTxt = `${fmtCompact(item.coberturaDias as number)} d`;
+      const wDias = doc.getTextWidth(diasTxt); // medido en el tamaño de dibujo
+      const xVal = xBar + w + 1.4;
+      if (xVal + wDias <= pageW(doc) - M) {
+        apagarGuiaBajoTexto(doc, xVal, y, wDias, barH);
+        doc.setTextColor(...C_DARK);
+        doc.text(diasTxt, xVal, y + barH);
+        // 4) Etiqueta de estado textual tras el valor (nunca solo color, §7).
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.6);
+        const wTag = doc.getTextWidth(st.etiqueta);
+        const xTag = xVal + wDias + 2.4;
+        const disponible = pageW(doc) - M - xTag;
+        if (disponible >= wTag) {
+          apagarGuiaBajoTexto(doc, xTag, y, wTag, barH);
+          doc.setTextColor(...st.color);
+          doc.text(st.etiqueta, xTag, y + barH);
+        } else if (w > wTag + 5) {
+          // Dentro de la barra (blanco sobre color sólido; sin guías debajo).
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...C_WHITE);
+          doc.text(st.etiqueta, xBar + w - 2, y + barH, { align: 'right' });
+        } else {
+          apagarGuiaBajoTexto(doc, xTag, y, Math.min(wTag, Math.max(disponible, 8)), barH);
+          doc.setTextColor(...st.color);
+          doc.text(truncar(doc, st.etiqueta, Math.max(disponible, 8)), xTag, y + barH);
+        }
       } else {
-        doc.setTextColor(...st.color);
-        doc.text(truncar(doc, st.etiqueta, Math.max(disponible, 8)), xTag, y + barH);
+        // Barra máxima: valor dentro de la barra (extremo derecho, blanco).
+        doc.setTextColor(...C_WHITE);
+        doc.text(diasTxt, xBar + w - 2, y + barH, { align: 'right' });
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.6);
+        const wTag = doc.getTextWidth(st.etiqueta);
+        if (w > wTag + wDias + 8) {
+          doc.setFont('helvetica', 'normal');
+          doc.text(st.etiqueta, xBar + 2, y + barH);
+        }
       }
+      y += barH + gapProd;
     }
-    y += barH + gapProd;
+
+    // Escala en días (0 → máximo) al PIE de la zona cuantitativa (pertenece
+    // solo a ella; nunca se dibuja sin valores cuantificables, §1).
+    const ejY = y + 0.8;
+    doc.setDrawColor(...GR_GRID);
+    doc.setLineWidth(0.25);
+    doc.line(xBar, ejY, xBar + barArea, ejY);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.2);
+    doc.setTextColor(...C_MUTED);
+    doc.text('0 d', xBar, ejY + 3.4, { align: 'left' });
+    doc.text(fmtDias(maxCobertura), xBar + barArea, ejY + 3.4, { align: 'right' });
+    doc.text('D = días del tramo analizado', xBar + barArea / 2, ejY + 3.4, { align: 'center' });
+    // Consumo EXACTO del tramo de escala (etiqueta a ejY+3.4 + descensor +
+    // aire) — coincide con lo asignado por alturaGraficoCobertura.
+    y = ejY + COB_ESCALA_H;
   }
 
-  // Leyenda de estados (color + texto — coherencia visual con el token).
-  const legY = y + 1;
+  // ── ZONA CUALITATIVA (estados textuales, SIN escala numérica) ──
+  if (textuales.length > 0) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.8);
+    doc.setTextColor(...C_MUTED);
+    doc.text(
+      mixto
+        ? 'SIN COBERTURA CALCULABLE — ESTADO OPERATIVO'
+        : 'ESTADO OPERATIVO (SIN ESCALA DE COBERTURA APLICABLE)',
+      M,
+      y,
+    );
+    y += COB_SUB_H;
+    for (const item of textuales) {
+      const st = ESTADO_COBERTURA[item.estado];
+      // Nombre del producto (columna de nombres).
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(...C_DARK);
+      doc.text(truncar(doc, item.name, labelW - 2), M, y + barH);
+      // Chip de estado (categoría textual independiente — no es posición de
+      // escala) + texto oficial de cobertura del motor (§4.D).
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7.6);
+      const chipTxt = st.etiqueta.toUpperCase();
+      const chipW = doc.getTextWidth(chipTxt) + 3.6;
+      doc.setFillColor(...st.color);
+      doc.rect(xBar + 1.5, y + barH - 3.6, chipW, 4.8, 'F');
+      doc.setTextColor(...C_WHITE);
+      doc.text(chipTxt, xBar + 1.5 + chipW / 2, y + barH, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.8);
+      doc.setTextColor(...C_DARK);
+      const xTxt = xBar + 1.5 + chipW + 2.8;
+      doc.text(truncar(doc, item.coberturaTexto, pageW(doc) - M - xTxt), xTxt, y + barH);
+      y += barH + gapProd;
+    }
+  }
+
+  // Leyenda de estados (color + texto) — SOLO los estados presentes. El aire
+  // (2.5 mm) separa la leyenda de la última fila (nunca pegada, §2).
+  const legY = y + 2.5;
   let xLeg = M;
-  const estados = ['agotado', 'cobertura_insuficiente', 'cobertura_moderada', 'baja_rotacion'] as const;
-  for (const e of estados) {
+  const presentes = new Set(items.map((i) => i.estado));
+  const ordenLeyenda: InformeCoberturaItem['estado'][] = [
+    'agotado',
+    'cobertura_insuficiente',
+    'cobertura_moderada',
+    'baja_rotacion',
+    'sin_movimiento',
+    'sin_dato',
+  ];
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.8);
+  for (const e of ordenLeyenda) {
+    if (!presentes.has(e)) continue;
     const st = ESTADO_COBERTURA[e];
     doc.setFillColor(...st.color);
     doc.rect(xLeg, legY - 1.7, 4.4, 2.6, 'F');
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.8);
     doc.setTextColor(...C_DARK);
     doc.text(st.etiqueta, xLeg + 5.8, legY);
     xLeg += 5.8 + doc.getTextWidth(st.etiqueta) + 6;
   }
 
-  // Escala en días (0 → máximo) al pie del área de barras.
-  const ejY = legY + 5.5;
-  doc.setDrawColor(...GR_GRID);
-  doc.setLineWidth(0.25);
-  doc.line(xBar, ejY - 2.4, xBar + barArea, ejY - 2.4);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8.2);
-  doc.setTextColor(...C_MUTED);
-  doc.text('0 d', xBar, ejY, { align: 'left' });
-  doc.text(fmtDias(maxCobertura), xBar + barArea, ejY, { align: 'right' });
-  doc.text('D = días del tramo analizado', xBar + barArea / 2, ejY, { align: 'center' });
-  return yStart + alto + 3;
+  return yStart + alto + 1;
 }
 
 // ── RECOMENDACIONES por bloques (§5) ─────────────────────────────────────────
@@ -934,72 +1074,165 @@ function drawGraficoCobertura(doc: jsPDF, informe: InformeEjecutivo, y0: number,
 // INTERPRETACIÓN (situación del motor) + ACCIÓN RECOMENDADA (decisión del
 // motor). Agrupadas por severidad: CRÍTICA/ALTA · MEDIA · PREVENTIVA. Bloques
 // breves — nunca celdas de párrafo gigantes (§6).
+//
+// ADNEGOCIO-PDF-REPORT-POLISH-002 §2 · EL FONDO CUBRE EL CONTENIDO REAL:
+// la altura se calcula midendo el texto EXACTAMENTE con la fuente con que se
+// dibuja (helvetica normal 10.4). Antes se medía con el tamaño vigente del
+// documento al llegar a cada bloque (variable: 9.6/8.6/12…), la cuenta de
+// líneas difería del dibujo y la última línea quedaba fuera del sombreado;
+// además la contabilidad vertical reservaba 10.5 arriba donde el dibujo usa
+// 14 (etiqueta EVIDENCIA) y el colchón inferior no cubría el descensor.
+// Ahora medición y dibujo comparten la MISMA función y constantes.
 
-/** Altura estimada del bloque de una recomendación (para la guarda anti-huérfanos). */
-function alturaBloquePrioridad(doc: jsPDF, p: InformePrioridad, contentW: number): number {
+const BLOQUE_TEXTO = 10.4;          // cuerpo de los bloques (igual al dibujo)
+const BLOQUE_LH = 4.7;              // interlínea de los bloques
+const BLOQUE_TOP_EVIDENCIA = 14;    // baseline de la etiqueta EVIDENCIA desde yy
+const BLOQUE_GAP_ACCION = 3.2;      // separación evidencia → acción
+const BLOQUE_DESCENSOR = 0.9;       // por debajo del baseline (≈10.4 pt)
+const BLOQUE_PAD_INFERIOR = 4.0;    // colchón bajo la última línea (§2)
+
+interface BloqueMedido {
+  lineasSit: string[];
+  lineasDec: string[];
+  alto: number;
+}
+
+/** Medición ÚNICA del bloque: las líneas y la altura que usa el dibujo son
+ *  SIEMPRE las mismas que se pintan (fuente fijada explícitamente). */
+function medirBloquePrioridad(doc: jsPDF, p: InformePrioridad, contentW: number): BloqueMedido {
   const textoW = contentW - 9;
-  const lineasSit = (doc.splitTextToSize(p.situacion, textoW) as string[]).length;
-  const lineasDec = (doc.splitTextToSize(p.decision, textoW) as string[]).length;
-  return 10.5 + lineasSit * 4.7 + 3.2 + lineasDec * 4.7 + 5.5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(BLOQUE_TEXTO);
+  const lineasSit = doc.splitTextToSize(p.situacion, textoW) as string[];
+  const lineasDec = doc.splitTextToSize(p.decision, textoW) as string[];
+  const alto =
+    BLOQUE_TOP_EVIDENCIA +
+    BLOQUE_LH + Math.max(lineasSit.length - 1, 0) * BLOQUE_LH +
+    BLOQUE_GAP_ACCION +
+    BLOQUE_LH + Math.max(lineasDec.length - 1, 0) * BLOQUE_LH +
+    BLOQUE_DESCENSOR + BLOQUE_PAD_INFERIOR;
+  return { lineasSit, lineasDec, alto };
+}
+
+/** Pinta el fondo de un segmento del bloque (fondo suave + barra de acento). */
+function pintarSegmentoBloque(
+  doc: jsPDF,
+  color: { bg: [number, number, number]; tx: [number, number, number] },
+  yTop: number,
+  yBottom: number,
+  contentW: number,
+): void {
+  const h = Math.max(yBottom - yTop, 0.1);
+  doc.setFillColor(...color.bg);
+  doc.rect(M, yTop, contentW, h, 'F');
+  doc.setFillColor(...color.tx);
+  doc.rect(M, yTop, 1.4, h, 'F');
 }
 
 function drawBloquePrioridad(doc: jsPDF, p: InformePrioridad, y: number, informe: InformeEjecutivo): number {
   const pw = pageW(doc);
   const contentW = pw - 2 * M;
   const color = PRIORIDAD_COLOR[p.nivel];
-  const alto = alturaBloquePrioridad(doc, p, contentW);
-  const yy = ensureSpace(doc, y, alto + 2, informe);
+  const { lineasSit, lineasDec, alto } = medirBloquePrioridad(doc, p, contentW);
+  const usableH = pageH(doc) - PAGE_TOP_CONT - BOTTOM_RESERVE;
+  const limInf = (): number => pageH(doc) - BOTTOM_RESERVE;
 
-  // Barra de acento a la izquierda (identificación del nivel, también por posición).
-  doc.setFillColor(...color.bg);
-  doc.rect(M, yy, contentW, alto, 'F');
-  doc.setFillColor(...color.tx);
-  doc.rect(M, yy, 1.4, alto, 'F');
+  // Chip de prioridad + nombre del producto (cabecera del bloque).
+  const dibujarChip = (yy: number): void => {
+    const chipW = p.nivel === 'preventiva' ? 24 : p.nivel === 'media' ? 14.5 : 11.5;
+    doc.setFillColor(...color.tx);
+    doc.rect(M + 4.5, yy + 3.4, chipW, 6.4, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.6);
+    doc.setTextColor(...C_WHITE);
+    doc.text(PRIORIDAD_TXT[p.nivel], M + 4.5 + chipW / 2, yy + 7.5, { align: 'center' });
+    doc.setFontSize(12);
+    doc.setTextColor(...C_BLACK);
+    doc.text(truncar(doc, p.producto, contentW - chipW - 16), M + 4.5 + chipW + 4, yy + 7.8);
+  };
 
-  // Chip de prioridad + nombre del producto.
-  const chipW = p.nivel === 'preventiva' ? 24 : p.nivel === 'media' ? 14.5 : 11.5;
-  doc.setFillColor(...color.tx);
-  doc.rect(M + 4.5, yy + 3.4, chipW, 6.4, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.6);
-  doc.setTextColor(...C_WHITE);
-  doc.text(PRIORIDAD_TXT[p.nivel], M + 4.5 + chipW / 2, yy + 7.5, { align: 'center' });
-  doc.setFontSize(12);
-  doc.setTextColor(...C_BLACK);
-  doc.text(truncar(doc, p.producto, contentW - chipW - 16), M + 4.5 + chipW + 4, yy + 7.8);
+  // Etiqueta de sección interna (EVIDENCIA / ACCIÓN).
+  const dibujarEtiqueta = (texto: string, yy: number): void => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8.4);
+    doc.setTextColor(...color.tx);
+    doc.text(texto, M + 4.5, yy);
+  };
 
-  // EVIDENCIA E INTERPRETACIÓN (contenido real del motor).
-  let yb = yy + 14;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.4);
-  doc.setTextColor(...color.tx);
-  doc.text('EVIDENCIA E INTERPRETACIÓN', M + 4.5, yb);
-  yb += 4.7;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10.4);
-  doc.setTextColor(...C_DARK);
-  const lineasSit = doc.splitTextToSize(p.situacion, contentW - 9) as string[];
+  // Línea de texto del bloque.
+  const dibujarLinea = (line: string, yy: number, negro: boolean): void => {
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(BLOQUE_TEXTO);
+    doc.setTextColor(...(negro ? C_BLACK : C_DARK));
+    doc.text(line, M + 4.5, yy);
+  };
+
+  if (alto + 2 <= usableH) {
+    // Caso normal: el bloque completo cabe en una página — los bloques
+    // pequeños NO se parten entre páginas (§4).
+    const yy = ensureSpace(doc, y, alto + 2, informe);
+    pintarSegmentoBloque(doc, color, yy, yy + alto, contentW);
+    dibujarChip(yy);
+    let yb = yy + BLOQUE_TOP_EVIDENCIA;
+    dibujarEtiqueta('EVIDENCIA E INTERPRETACIÓN', yb);
+    yb += BLOQUE_LH;
+    for (const line of lineasSit) {
+      dibujarLinea(line, yb, false);
+      yb += BLOQUE_LH;
+    }
+    yb += BLOQUE_GAP_ACCION;
+    dibujarEtiqueta('ACCIÓN RECOMENDADA', yb);
+    yb += BLOQUE_LH;
+    for (const line of lineasDec) {
+      dibujarLinea(line, yb, true);
+      yb += BLOQUE_LH;
+    }
+    return yy + alto + 5.5;
+  }
+
+  // Bloque mayor que una página: el salto se gestiona DE MANERA CONTROLADA
+  // (fondo por segmentos de página, sin recortar contenido — §4). Solo exige
+  // aire para la cabecera + primeras líneas: si hay sitio, arranca bajo lo
+  // ya dibujado (p. ej. bajo el título de grupo) sin dejar títulos huérfanos.
+  let yy = ensureSpace(doc, y, Math.min(40, usableH), informe);
+  pintarSegmentoBloque(doc, color, yy, limInf(), contentW);
+  dibujarChip(yy);
+  let yb = yy + BLOQUE_TOP_EVIDENCIA;
+  const abreSegmento = (): void => {
+    nuevaPaginaVertical(doc, informe);
+    yb = PAGE_TOP_CONT;
+    pintarSegmentoBloque(doc, color, yb, limInf(), contentW);
+  };
+  const cabe = (): boolean => yb + BLOQUE_LH <= limInf();
+
+  dibujarEtiqueta('EVIDENCIA E INTERPRETACIÓN', yb);
+  yb += BLOQUE_LH;
   for (const line of lineasSit) {
-    doc.text(line, M + 4.5, yb);
-    yb += 4.7;
+    if (!cabe()) abreSegmento();
+    dibujarLinea(line, yb, false);
+    yb += BLOQUE_LH;
   }
-
-  // ACCIÓN RECOMENDADA.
-  yb += 3.2;
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8.4);
-  doc.setTextColor(...color.tx);
-  doc.text('ACCIÓN RECOMENDADA', M + 4.5, yb);
-  yb += 4.7;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10.4);
-  doc.setTextColor(...C_BLACK);
-  const lineasDec = doc.splitTextToSize(p.decision, contentW - 9) as string[];
+  yb += BLOQUE_GAP_ACCION;
+  if (!cabe()) {
+    abreSegmento();
+    yb += BLOQUE_GAP_ACCION;
+  }
+  dibujarEtiqueta('ACCIÓN RECOMENDADA', yb);
+  yb += BLOQUE_LH;
   for (const line of lineasDec) {
-    doc.text(line, M + 4.5, yb);
-    yb += 4.7;
+    if (!cabe()) abreSegmento();
+    dibujarLinea(line, yb, true);
+    yb += BLOQUE_LH;
   }
-  return yy + alto + 5.5;
+  // El segmento final se cierra en el contenido real (no hasta el pie): el
+  // blanco tapa fondo y barra de acento del segmento sobrante — el bloque
+  // termina limpio y el contenido siguiente no encuentra restos (§4).
+  const fin = yb - BLOQUE_LH + BLOQUE_DESCENSOR + BLOQUE_PAD_INFERIOR;
+  if (fin < limInf()) {
+    doc.setFillColor(...C_WHITE);
+    doc.rect(M, fin, contentW, limInf() - fin, 'F');
+  }
+  return fin + 5.5;
 }
 
 async function drawSeccionPrioridades(doc: jsPDF, informe: InformeEjecutivo, y0: number): Promise<number> {
@@ -1022,7 +1255,15 @@ async function drawSeccionPrioridades(doc: jsPDF, informe: InformeEjecutivo, y0:
     // menor al dibujado (solape título/descripción — defecto detectado en
     // la revisión visual).
     const primera = grupo[0];
-    const yy = ensureSpace(doc, y, 12 + alturaBloquePrioridad(doc, primera, pageW(doc) - 2 * M), informe);
+    // Guarda anti-huérfanos: título + primer bloque (limitado al alto útil de
+    // una página — un bloque mayor que una página arranca bajo el título y
+    // continúa por segmentos; sin el límite el título quedaría solo, §4).
+    const yy = ensureSpace(
+      doc,
+      y,
+      12 + Math.min(medirBloquePrioridad(doc, primera, pageW(doc) - 2 * M).alto, pageH(doc) - PAGE_TOP_CONT - BOTTOM_RESERVE),
+      informe,
+    );
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12.5);
     doc.setTextColor(...PRIORIDAD_COLOR[nivel].tx);
@@ -1056,10 +1297,44 @@ function drawGrupoKicker(doc: jsPDF, texto: string, y: number): number {
   return y + 7.5;
 }
 
+/** Ajuste adaptativo del valor de la tarjeta hero (SIN truncar números, §10):
+ *  si el valor exacto no cabe ni a 17 pt se muestra la cifra compacta y el
+ *  valor EXACTO se traslada a la línea de contexto. Devuelve TAMBIÉN el
+ *  tamaño con que debe dibujarse (el dibujo NUNCA lo recalcula). */
+function heroValor(doc: jsPDF, valorExacto: string, w: number): { texto: string; size: number; compactado: boolean } {
+  let texto = valorExacto;
+  let size = T_HERO_VALOR;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(size); // ADNEGOCIO-PDF-REPORT-POLISH-002: medir SIEMPRE en el tamaño de dibujo (antes heredaba el tamaño vigente — p. ej. 8.6 del kicker — y el ajuste nunca entraba: la cifra desbordaba la tarjeta)
+  while (size > 17 && doc.getTextWidth(texto) > w - 10) {
+    size -= 1.5;
+    doc.setFontSize(size);
+  }
+  if (doc.getTextWidth(texto) > w - 10) {
+    // Límite: compacta + valor exacto en el contexto (la cifra exacta vive
+    // también en la tabla de indicadores y en la conciliación del cuerpo).
+    // Formato es-CU: miles con coma, decimales con punto (p. ej. -529,200.00).
+    return { texto: fmtCompact(Number(valorExacto.replace(/[^0-9.,-]/g, '').replace(/,/g, ''))), size: 21, compactado: true };
+  }
+  return { texto: valorExacto, size, compactado: false };
+}
+
+/** Altura necesaria de la tarjeta hero para su descriptor FINAL (hasta 3
+ *  líneas — ADNEGOCIO-PDF-REPORT-POLISH-002 §3: antes se recortaba a 2 y la
+ *  tercera línea se perdía cuando el motor añadía «Valor exacto: … CUP.»). */
+function alturaTarjetaHero(doc: jsPDF, descriptor: string, w: number): number {
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  const lineas = Math.max((doc.splitTextToSize(descriptor, w - 10) as string[]).slice(0, 3).length, 1);
+  return Math.max(22, 17.8 + lineas * 3.3 + 1.2);
+}
+
 /** Tarjeta hero (Ingresos / Variación): cifra protagonista 26 pt + contexto.
  *  La cifra NUNCA se trunca (integridad numérica §10): si el valor exacto no
  *  cabe, se reduce el tamaño hasta 17 pt y, en el límite, se muestra la cifra
- *  compacta con el valor EXACTO trasladado a la línea de contexto. */
+ *  compacta con el valor EXACTO trasladado a la línea de contexto.
+ *  `valor`/`size` ya vienen ajustados por heroValor y `descriptor` es el texto
+ *  FINAL (con el valor exacto incorporado cuando la cifra se compactó). */
 function drawTarjetaHero(
   doc: jsPDF,
   x: number,
@@ -1067,7 +1342,7 @@ function drawTarjetaHero(
   w: number,
   h: number,
   etiqueta: string,
-  valorExacto: string,
+  valor: { texto: string; size: number },
   valorColor: [number, number, number],
   descriptor: string,
 ): void {
@@ -1081,32 +1356,16 @@ function drawTarjetaHero(
   doc.setTextColor(...C_MUTED);
   doc.text(etiqueta, x + 5, y + 5.5, { charSpace: 0.3 });
 
-  // Cifra protagonista con ajuste adaptativo (sin truncar números).
-  let texto = valorExacto;
-  let size = T_HERO_VALOR;
   doc.setFont('helvetica', 'bold');
-  while (size > 17 && doc.getTextWidth(texto) > w - 10) {
-    size -= 1.5;
-    doc.setFontSize(size);
-  }
-  if (doc.getTextWidth(texto) > w - 10) {
-    // Límite: compacta + valor exacto en el contexto (la cifra exacta vive
-    // también en la tabla de indicadores y en la conciliación del cuerpo).
-    // Formato es-CU: miles con coma, decimales con punto (p. ej. -529,200.00).
-    texto = fmtCompact(Number(valorExacto.replace(/[^0-9.,-]/g, '').replace(/,/g, '')));
-    size = 21;
-    descriptor = `${descriptor} Valor exacto: ${valorExacto} CUP.`;
-  }
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(size);
+  doc.setFontSize(valor.size); // tamaño ADAPTATIVO calculado por heroValor
   doc.setTextColor(...valorColor);
-  doc.text(texto, x + 5, y + 14.8);
+  doc.text(valor.texto, x + 5, y + 14.8);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(...C_MUTED);
   const lineas = doc.splitTextToSize(descriptor, w - 10) as string[];
   let ye = y + 17.8;
-  for (const linea of lineas.slice(0, 2)) {
+  for (const linea of lineas.slice(0, 3)) {
     doc.text(linea, x + 5, ye);
     ye += 3.3;
   }
@@ -1144,10 +1403,25 @@ function drawTarjetaCifra(
   doc.setFontSize(7.4);
   doc.setTextColor(...C_MUTED);
   const exp = doc.splitTextToSize(explicacion, w - 6) as string[];
-  for (const linea of exp.slice(0, 1)) {
+  for (const linea of exp.slice(0, 2)) {
     doc.text(linea, x + w / 2, ye + 0.4, { align: 'center' });
     ye += 3.2;
   }
+}
+
+/** Altura de la tarjeta de cifra medida con las fuentes EXACTAS de dibujo
+ *  (etiqueta negrita 7.9, explicación normal 7.4) y hasta 2 líneas de
+ *  explicación — ADNEGOCIO-PDF-REPORT-POLISH-002 §3: antes se medía con la
+ *  fuente vigente y se dibujaba solo 1 línea de explicación (pérdida de
+ *  contenido cuando el texto necesita dos). */
+function alturaTarjetaCifra(doc: jsPDF, etiqueta: string, explicacion: string, wCard: number): number {
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(7.9);
+  const lineasEt = Math.max((doc.splitTextToSize(etiqueta, wCard - 6) as string[]).slice(0, 2).length, 1);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.4);
+  const lineasExp = Math.max((doc.splitTextToSize(explicacion, wCard - 6) as string[]).slice(0, 2).length, 1);
+  return 12.6 + lineasEt * 3.5 + lineasExp * 3.2 + 2.2;
 }
 
 /** Banda del producto líder (acento institucional, 12 mm). */
@@ -1171,10 +1445,15 @@ function drawBandaLider(doc: jsPDF, y: number, contentW: number, nombre: string,
 
 /** Banda «La situación en un minuto» — resumen gerencial del motor (§3).
  *  NUNCA se superpone: la altura se calcula ANTES y quien la llama decide si
- *  cabe en la página actual o si continúa en la siguiente (flujo real). */
+ *  cabe en la página actual o si continúa en la siguiente (flujo real).
+ *  ADNEGOCIO-PDF-REPORT-POLISH-002 §3: la medición se hace en la MISMA fuente
+ *  con que se dibuja (normal 9.2) — antes heredaba el estado vigente (p. ej.
+ *  negrita 9.8) y la altura difería del contenido real. */
 function alturaResumenMinuto(doc: jsPDF, informe: InformeEjecutivo): number {
   const contentW = pageW(doc) - 2 * M;
   let alto = 10.5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9.2);
   for (const s of informe.resumenGerencial) {
     alto += alturaTexto(doc, s, contentW - 14, 4.3) + 1.8;
   }
@@ -1285,31 +1564,45 @@ function drawPortada(doc: jsPDF, informe: InformeEjecutivo): { pagina: number; y
 
   // Fila hero: Ingresos + Variación (cifras protagonistas con contexto).
   y = drawGrupoKicker(doc, 'RESULTADO DEL CONJUNTO COMPARADO', y);
-  const heroH = 22;
   const cardW = (contentW - 4.5) / 2;
-  if (ingresos) {
+  // Altura de la fila hero medida sobre los descriptores FINALES (los mismos
+  // textos que se dibujan — sin líneas perdidas, §3).
+  const DESC_INGRESOS = 'Suma de los ingresos del período analizado para los productos incluidos en ambos cortes.';
+  const DESC_VARIACION = 'Frente al tramo equivalente del período anterior; mide solo el conjunto comparado, no la tienda completa.';
+  const heroI = ingresos ? heroValor(doc, ingresos.value.replace(' CUP', ''), cardW) : null;
+  const heroV = variacion ? heroValor(doc, (variacion.value.match(/^([+-][^()]+?)\s*(?:\((.+)\))?$/)?.[1] ?? variacion.value).replace(/\s*CUP$/, ''), cardW) : null;
+  const descI = heroI?.compactado ? `${DESC_INGRESOS} Valor exacto: ${ingresos?.value} CUP.` : DESC_INGRESOS;
+  const pctV = variacion ? variacion.value.match(/^(.+)\((.+)\)$/)?.[2] ?? null : null;
+  const descV = heroV?.compactado
+    ? `${pctV ? `Frente al tramo equivalente del período anterior: ${pctV}. Mide solo el conjunto comparado, no la tienda completa.` : DESC_VARIACION} Valor exacto: ${variacion?.value} CUP.`
+    : pctV
+      ? `Frente al tramo equivalente del período anterior: ${pctV}. Mide solo el conjunto comparado, no la tienda completa.`
+      : DESC_VARIACION;
+  const heroH = Math.max(
+    22,
+    heroI ? alturaTarjetaHero(doc, descI, cardW) : 0,
+    heroV ? alturaTarjetaHero(doc, descV, cardW) : 0,
+  );
+  if (ingresos && heroI) {
     drawTarjetaHero(
       doc, M, y, cardW, heroH,
       'INGRESOS DEL CONJUNTO COMPARADO (CUP)',
-      ingresos.value.replace(' CUP', ''),
+      { texto: heroI.texto, size: heroI.size },
       C_ACCENT,
-      'Suma de los ingresos del período analizado para los productos incluidos en ambos cortes.',
+      descI,
     );
   }
-  if (variacion) {
+  if (variacion && heroV) {
     const mVar = variacion.value.match(/^([+-][^()]+?)\s*(?:\((.+)\))?$/);
     const principal = mVar ? mVar[1].trim() : variacion.value;
-    const pct = mVar && mVar[2] ? mVar[2] : null;
     const esNegativa = principal.trim().startsWith('-');
     const colorVar = esNegativa ? GR_NEGATIVO : principal.trim().startsWith('+') ? GR_ACTUAL : C_DARK;
     drawTarjetaHero(
       doc, M + cardW + 4.5, y, cardW, heroH,
       'VARIACIÓN VS. TRAMO COMPARABLE (CUP)',
-      principal.replace(/\s*CUP$/, ''),
+      { texto: heroV.texto, size: heroV.size },
       colorVar,
-      pct
-        ? `Frente al tramo equivalente del período anterior: ${pct}. Mide solo el conjunto comparado, no la tienda completa.`
-        : 'Frente al tramo equivalente del período anterior; mide solo el conjunto comparado, no la tienda completa.',
+      descV,
     );
   }
   y += heroH + 4;
@@ -1328,8 +1621,7 @@ function drawPortada(doc: jsPDF, informe: InformeEjecutivo): { pagina: number; y
     let maxH = 0;
     comerciales.forEach((c) => {
       const exp = Object.entries(explicaciones).find(([k]) => c.label.toLowerCase().includes(k))?.[1] ?? 'Indicador del conjunto comparado.';
-      const lineasEt = (doc.splitTextToSize(c.label, wCard - 6) as string[]).length;
-      maxH = Math.max(maxH, 15.5 + lineasEt * 3.5 + 3.2 + 2);
+      maxH = Math.max(maxH, alturaTarjetaCifra(doc, c.label, exp, wCard));
     });
     const hC = maxH;
     comerciales.forEach((c, i) => {
@@ -1354,8 +1646,10 @@ function drawPortada(doc: jsPDF, informe: InformeEjecutivo): { pagina: number; y
     const wCard = (contentW - gapCard * (inventario.length - 1)) / inventario.length;
     let maxH = 0;
     inventario.forEach((c) => {
-      const lineasEt = (doc.splitTextToSize(c.label, wCard - 6) as string[]).length;
-      maxH = Math.max(maxH, 15.5 + lineasEt * 3.5 + 3.2 + 2);
+      const exp = c.label.toLowerCase().includes('agotados')
+        ? 'Sin existencia al corte teniendo ventas en el tramo comparable: interrupción comercial.'
+        : 'La existencia no alcanza la mitad del tramo al ritmo de venta actual: riesgo de desabastecimiento.';
+      maxH = Math.max(maxH, alturaTarjetaCifra(doc, c.label, exp, wCard));
     });
     const hC = maxH;
     inventario.forEach((c, i) => {
@@ -1730,7 +2024,9 @@ export async function buildInformeEjecutivoPdf(informe: InformeEjecutivo): Promi
     y = drawGraficoCobertura(doc, informe, y, dias);
     y = drawNota(
       doc,
-      `Cobertura estimada en días frente a los umbrales del tramo (D = ${dias} días; D/2 = mitad). Agotamiento, riesgo de desabastecimiento y acumulación quedan diferenciados por color y por etiqueta textual. Se muestran hasta ${COBERTURA_MAX_FILAS} casos por severidad; el detalle completo está en el Anexo II. La cobertura no incorpora plazos de reposición: no se fijan fechas de agotamiento.`,
+      zonasCobertura(coberturaSeleccion).numericos.length > 0
+        ? `Cobertura estimada en días frente a los umbrales del tramo (D = ${dias} días; D/2 = mitad). Las guías D/2 y D solo aparecen dentro de la zona cuantitativa; los casos sin cobertura calculable se presentan como categoría textual propia. Agotamiento, riesgo de desabastecimiento y acumulación quedan diferenciados por color y por etiqueta textual. Se muestran hasta ${COBERTURA_MAX_FILAS} casos por severidad; el detalle completo está en el Anexo II. La cobertura no incorpora plazos de reposición: no se fijan fechas de agotamiento.`
+        : `Estado operativo de disponibilidad de los casos mostrados: ninguno tiene existencia y velocidad simultáneas, por lo que no se genera cobertura ficticia y no se dibuja escala numérica (no se inventan valores para dibujar barras). Se muestran hasta ${COBERTURA_MAX_FILAS} casos por severidad; el detalle completo está en el Anexo II.`,
       y,
       informe,
     );
