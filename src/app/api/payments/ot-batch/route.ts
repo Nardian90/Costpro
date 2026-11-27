@@ -270,5 +270,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
 export const POST = withAuth(withSecurity(postHandler, {
   rateLimitKey: 'payments:ot-batch',
-  maxRequests: 10,
+  // V2.12.32 (precedente de /api/production-orders/[id]/payments): 30/min —
+  // flujos de múltiples pagos (reintentos por ítem tras un lote parcial) sin 429.
+  maxRequests: 30,
 }));
