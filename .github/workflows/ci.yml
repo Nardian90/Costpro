@@ -158,6 +158,15 @@ jobs:
         # /api/production-orders/ y /api/accounts-receivable tengan el guard
         # explícito de store_id (defense-in-depth sobre RLS)
 
+      - name: Route auth coverage (SEC-003 — sin wrapper = no merge)
+        run: node scripts/audit-route-auth.cjs
+        # CP-BRA-FINAL-COMPLIANCE-CLOSURE-001 FASE 2: cobertura completa de
+        # autenticación fail-closed de las rutas API — wrapper canónico
+        # (withAuth/withRole/withStoreAccess), mecanismo propio verificado
+        # (getServerSession+401 / CRON_SECRET / firma de webhook) o público
+        # documentado en la allowlist con expires. Una ruta nueva sin clase
+        # BLOQUEA el build.
+
       - name: Security contract (static, CI-safe)
         run: node scripts/security-contract-test-static.cjs
         # REM-INV-5: engancha el security contract a CI sin secretos de producción.
