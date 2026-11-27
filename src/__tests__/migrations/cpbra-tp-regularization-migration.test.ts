@@ -105,11 +105,11 @@ describe('CP-BRA FASE 4 — 20261127160000_cpbra_tienda_pueblo_receipts.sql', ()
     for (const p of patterns) expect(TP).not.toContain(p);
   });
 
-  it('10. el manifiesto replay incluye la migración (baseline 223 desde FASE 4)', () => {
+  it('10. el manifiesto replay incluye la migración (posición 224 tras integrar PC/main; baseline 224)', () => {
     const manifest = JSON.parse(
       readFileSync(join(process.cwd(), 'audit-evidence', 'INFRA-011', 'e2e-migrations-manifest.json'), 'utf8')
     );
-    expect(manifest.total_incluidos).toBe(223);
+    expect(manifest.total_incluidos).toBe(224);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127160000_cpbra_tienda_pueblo_receipts.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');
