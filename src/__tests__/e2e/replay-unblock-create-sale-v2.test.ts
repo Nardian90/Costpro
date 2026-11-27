@@ -696,14 +696,14 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     // contra-filas en el pre-check del batch — posición 220 del stream
     expect(pos('20261127120000_cpbra_r26_batch_reversal_netting.sql')).toBe(220);
     // R-03 (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): lote atómico por orden OT —
-    // posición 221 del stream
-    expect(pos('20261127140000_cpbra_r03_ot_payment_batch.sql')).toBe(221);
+    // posición 222 del stream (20261127130000 cpop intercalada en 221 por #1731)
+    expect(pos('20261127140000_cpbra_r03_ot_payment_batch.sql')).toBe(222);
     // §0.2 pay_commission (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): gate
-    // admin/manager/encargado — posición 222 del stream
-    expect(pos('20261127150000_cpbra_pay_commission_encargado.sql')).toBe(222);
+    // admin/manager/encargado — posición 223 del stream
+    expect(pos('20261127150000_cpbra_pay_commission_encargado.sql')).toBe(223);
     // FASE 4 Tienda Pueblo (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): regularización
-    // gobernada OWNER_CONFIRMATION — posición 223 del stream (replay-safe)
-    expect(pos('20261127160000_cpbra_tienda_pueblo_receipts.sql')).toBe(223);
+    // gobernada OWNER_CONFIRMATION — posición 224 del stream (replay-safe)
+    expect(pos('20261127160000_cpbra_tienda_pueblo_receipts.sql')).toBe(224);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }
