@@ -300,8 +300,12 @@ describe('POST /api/payments · ADN-008 §5 liquidación atómica', () => {
     expect(json.code).toBe('ERR_RECEIPT_NOT_PAYABLE');
   });
 
-  it('REGRESIÓN R-25/F011-001: production_order usa el cliente ADMINISTRATIVO tras el gate (el cliente de sesión NO invoca RPCs privilegiados)', async () => {
-    rpcMock.mockResolvedValue({ data: 'payment-id-1', error: null });
+  it('REGRESIÓN R-25/F011-001 + R-03 (§0.1): el pago MIXTO de una OT usa el cliente ADMINISTRATIVO tras el gate, en UNA llamada ATÓMICA al lote por orden (el cliente de sesión NO invoca RPCs privilegiados)', async () => {
+    // R-03 (CP-BRA-FINAL-COMPLIANCE-CLOSURE-001): el loop multi-componente de
+    // UNA OT (2 llamadas separadas = riesgo de pago parcial dentro de la orden)
+    // fue SUSTITUIDO por register_ot_payment_batch — UNA transacción confirma
+    // todos los componentes de la OT o ninguno (decisión del propietario §0.1).
+    rpcMock.mockResolvedValue({ data: { payments: [{ id: 'p-1', amount: 100 }, { id: 'p-2', amount: 200 }], count: 2, replayed: false }, error: null });
     const res = await POST(makeRequest({
       ref_type: 'production_order',
       ref_id: '11111111-1111-4111-8111-111111111177',
@@ -313,17 +317,19 @@ describe('POST /api/payments · ADN-008 §5 liquidación atómica', () => {
     }));
     expect(res.status).toBe(201);
 
-    // El loop OT invoca el RPC por el cliente ADMIN (service_role server-side)
-    expect(rpcMock).toHaveBeenCalledTimes(2);
-    expect(sessionRpcMock).not.toHaveBeenCalled(); // sin privilegios por el cliente de sesión
-    const [fn1, args1] = rpcMock.mock.calls[0];
-    const [fn2, args2] = rpcMock.mock.calls[1];
-    expect(fn1).toBe('register_supplier_payment');
-    expect(fn2).toBe('register_supplier_payment');
-    expect(args1.p_idempotency_key).toBe('legacy-block-1:0');
-    expect(args2.p_idempotency_key).toBe('legacy-block-1:1');
+    // UNA sola llamada al lote OT atómico, por el cliente ADMIN (service_role
+    // server-side) — el cliente de sesión nunca invoca RPCs privilegiados.
+    expect(rpcMock).toHaveBeenCalledTimes(1);
+    expect(sessionRpcMock).not.toHaveBeenCalled();
+    const [fn, args] = rpcMock.mock.calls[0];
+    expect(fn).toBe('register_ot_payment_batch');
+    expect(args.p_ref_type).toBe('production_order');
+    expect(args.p_idempotency_key).toBe('legacy-block-1');
+    expect(args.p_payments).toHaveLength(2);
+    expect(args.p_payments[0].payment_method).toBe('cash');
+    expect(args.p_payments[1].payment_method).toBe('transfer');
     // El actor auditado sigue siendo el usuario de la sesión (no el técnico)
-    expect(args1.p_paid_by).toBe('11111111-2222-4111-8111-111111111111');
+    expect(args.p_paid_by).toBe('11111111-2222-4111-8111-111111111111');
   });
 
   it('R-25: OT de OTRA tienda → 403 sin invocar el RPC (pre-check de pertenencia vía RLS)', async () => {
