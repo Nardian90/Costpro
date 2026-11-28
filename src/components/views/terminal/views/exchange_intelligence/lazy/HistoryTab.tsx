@@ -27,6 +27,7 @@ import {
   CandlestickChart,
   ChevronDown,
   Settings2,
+  RefreshCw,
 } from 'lucide-react';
 import { format, parseISO, differenceInCalendarDays, addDays } from 'date-fns';
 import { es as esLocale } from 'date-fns/locale';
@@ -39,7 +40,22 @@ import {
 } from '@/lib/exchange-history';
 // IC-UX-HISTORY-004 §3: consulta del archivo COMPLETA y COMPARTIDA entre
 // tabs (caché en memoria + deduplicación en vuelo — sin peticiones dobles).
-import { loadExchangeArchive, getCachedArchiveRows } from '@/lib/exchange-intelligence/archive-loader';
+import { loadExchangeArchive, getCachedArchiveRows, getArchiveMeta } from '@/lib/exchange-intelligence/archive-loader';
+// CP-FX-UX-002 (FASE 1): filtros persistentes — misma infraestructura de
+// preferencias de COSTPRO (Supabase user_preferences + localStorage);
+// rango por defecto = MES ACTUAL; «Todo el período» eliminado.
+import { useUserPreferences } from '@/hooks/useUserPreferences';
+import { useIntervalWhenVisible } from '@/hooks/ui/use-interval-when-visible';
+import { BUSINESS_TIMEZONE, getOperativeDate } from '@/lib/operative-date';
+import {
+  RANGE_PRESETS,
+  defaultHistoryFilters,
+  resetHistoryFilters,
+  sanitizeHistoryFilters,
+  filterSeriesByFilters,
+  getCurrentMonthRange,
+  type HistoryFilters,
+} from '@/lib/exchange-intelligence/history-filters';
 
 // ═══ Paleta de colores coordinada con el primer tab ═══
 // Asignación categórica consistente entre tabs (IC-DIVIZA 2026-10-26):
@@ -210,12 +226,21 @@ function InfoTooltip({ title, children }: { title: string; children: React.React
 function HistoryTab({
   data,
   bccSegment = '3',
+  activeNewestRateDate,
+  ratesFetchedAt,
 }: {
   /** Fallback inicial (serie 90d de fuentes activas de la vista) — forma
    * estructural mínima: la vista pasa HistoryPoint[] y aquí se completa con
    * procedencia nula mientras llega el archivo completo. */
   data?: Array<{ date: string; oficial: number | null; informal: number | null }>;
   bccSegment?: string;
+  /** CP-FX-UX-002 (FASE 2): mayor rate_date REAL reportado por la consulta
+   * activa de la vista — si el archivo en caché es más viejo, se revalida
+   * (convergencia gráfica ↔ tarjeta, caso 910 vs 980 del 28/11/2026). */
+  activeNewestRateDate?: string | null;
+  /** CP-FX-UX-002 (FASE 2): momento (epoch ms) de la última consulta activa
+   * exitosa de la vista — sello de frescura cuando el archivo aún no llegó. */
+  ratesFetchedAt?: number | null;
 }) {
   // ─── Consulta del archivo completo (IC-UX-HISTORY-004) ───
   // El Histórico se auto-abastece: days=all&source=all trae TODO el rango
@@ -269,6 +294,41 @@ function HistoryTab({
     setReloadKey(k => k + 1);
   }, []);
 
+  // ─── CP-FX-UX-002 (FASE 2): convergencia gráfica ↔ tarjeta ───
+  // La consulta activa de la vista (cadencia 5 min) puede traer filas más
+  // nuevas que el archivo en caché (p. ej. la captura ADNegocio de las
+  // 10:14 a.m. del 28/11/2026 corrigió las filas rancias de la mañana).
+  // Cuando la vista reporta un rate_date REAL mayor que el del archivo en
+  // caché, la caché se BYPASSEA y el gráfico converge en el ciclo visible.
+  useEffect(() => {
+    if (!activeNewestRateDate) return;
+    const meta = getArchiveMeta(bccSegment);
+    if (meta?.newestRateDate && meta.newestRateDate < activeNewestRateDate) {
+      loadExchangeArchive(bccSegment, { force: true })
+        .then(rows => {
+          setArchiveRows(rows);
+          setArchiveError(null);
+        })
+        .catch(() => {
+          /* el error queda marcado por el flujo principal (banner) */
+        });
+    }
+  }, [activeNewestRateDate, bccSegment]);
+
+  // CP-FX-UX-002 (FASE 2): revalidación periódica mientras el tab es visible.
+  // loadExchangeArchive respeta el TTL interno y deduplica en vuelo: a cadencia
+  // 5 min la petición real sale solo cuando la caché expiró — sin martillear.
+  useIntervalWhenVisible(() => {
+    loadExchangeArchive(bccSegment)
+      .then(rows => {
+        setArchiveRows(rows);
+        setArchiveError(null);
+      })
+      .catch(() => {
+        /* silencioso: el banner de error existente mantiene el estado honesto */
+      });
+  }, 5 * 60 * 1000);
+
   // ─── Serie unificada: del archivo cuando está; si no, la prop (90d) ───
   const series: UnifiedHistoryPoint[] = useMemo(() => {
     if (archiveRows) {
@@ -288,20 +348,53 @@ function HistoryTab({
   const provenance = useMemo(() => summarizeInformalProvenance(series), [series]);
 
   // ─── Rango: presets + fecha inicio/fin custom ───
-  // IC-UX-HISTORY-004 §4: default «Todo» — mostrar el histórico informal
-  // COMPLETO disponible, sin recortar a 7/30/90 sin pedirlo el usuario.
-  const presets = [
-    { label: '7 días', value: 7 },
-    { label: '30 días', value: 30 },
-    { label: '90 días', value: 90 },
-    { label: 'Todo', value: 9999 },
-  ];
-  const [preset, setPreset] = useState(9999);
-  const [useCustomRange, setUseCustomRange] = useState(false);
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  // CP-FX-UX-002 §1.2 — filtros PERSISTENTES con la infraestructura de
+  // preferencias de COSTPRO (useUserPreferences: Supabase user_preferences
+  // RLS + fallback localStorage + migración transparente). La selección se
+  // conserva al cambiar de tab, navegar, recargar y reabrir la app con el
+  // mismo usuario. §1.1 — default = MES ACTUAL (primer día del mes → fecha
+  // operativa de Cuba, calculado dinámicamente). §1.3 — «Todo el período»
+  // ELIMINADO: el preset 9999 ya no existe y los valores legados se
+  // rechazan al restaurar (sanitizeHistoryFilters vuelve al mes actual).
+  const { value: savedFilters, update: saveFilters } = useUserPreferences<HistoryFilters>(
+    'inteligencia-cambiaria:historico-filtros',
+    defaultHistoryFilters(),
+  );
+  const filters = useMemo(() => sanitizeHistoryFilters(savedFilters), [savedFilters]);
+  const updateFilters = useCallback(
+    (next: HistoryFilters) => {
+      void saveFilters(next);
+    },
+    [saveFilters],
+  );
   const [startPickerOpen, setStartPickerOpen] = useState(false);
   const [endPickerOpen, setEndPickerOpen] = useState(false);
+  // Al entrar a Personalizado sin fecha final, el «hasta» parte de HOY (Cuba)
+  // — nunca un rango abierto ni el histórico completo por omisión.
+  const openCustomRange = useCallback(() => {
+    if (filters.preset === 'custom' && filters.useCustomRange && filters.startDate && filters.endDate) {
+      updateFilters(filters);
+      return;
+    }
+    const month = getCurrentMonthRange();
+    updateFilters({
+      preset: 'custom',
+      useCustomRange: true,
+      startDate: filters.startDate ?? month.start,
+      endDate: filters.endDate ?? month.end,
+    });
+  }, [filters, updateFilters]);
+  const setCustomDates = useCallback(
+    (patch: { startDate?: string | null; endDate?: string | null }) => {
+      updateFilters({
+        preset: 'custom',
+        useCustomRange: true,
+        startDate: patch.startDate !== undefined ? patch.startDate : filters.startDate,
+        endDate: patch.endDate !== undefined ? patch.endDate : filters.endDate,
+      });
+    },
+    [filters, updateFilters],
+  );
 
   // ─── Panel Avanzado colapsable (Modo / Tendencia / Proyectar al futuro) ───
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -328,19 +421,28 @@ function HistoryTab({
   const [variationSource, setVariationSource] = useState<VariationSource>('both');
 
   // ─── Filtrado de datos (sobre la serie unificada) ───
-  const filtered = useMemo(() => {
-    if (useCustomRange && startDate && endDate) {
-      return series.filter((d: UnifiedHistoryPoint) => {
-        try {
-          const date = parseISO(d.date);
-          return date >= startDate && date <= endDate;
-        } catch {
-          return false;
-        }
+  // CP-FX-UX-002 §1: comparación por STRING ISO (inclusiva, sin desfases de
+  // zona horaria); presets 7/30/90; mes actual; personalizado validado.
+  const filtered = useMemo(
+    () => filterSeriesByFilters(series, filters),
+    [series, filters],
+  );
+
+  // ─── CP-FX-UX-002 §2 (FASE 2): sello de frescura de los datos del gráfico ───
+  const archiveFetchedAt = archiveRows ? (getArchiveMeta(bccSegment)?.fetchedAt ?? null) : null;
+  const dataUpdatedAtMs = archiveFetchedAt ?? ratesFetchedAt ?? null;
+  const dataUpdatedAtLabel = useMemo(() => {
+    if (!dataUpdatedAtMs) return null;
+    try {
+      return new Date(dataUpdatedAtMs).toLocaleTimeString('es-CU', {
+        timeZone: BUSINESS_TIMEZONE,
+        hour: 'numeric',
+        minute: '2-digit',
       });
+    } catch {
+      return null;
     }
-    return series.slice(-preset);
-  }, [series, preset, useCustomRange, startDate, endDate]);
+  }, [dataUpdatedAtMs]);
 
   // ─── Calcular R² de cada método para elegir el default y mostrar info de confiabilidad ───
   const trendR2Info = useMemo(() => {
@@ -664,6 +766,18 @@ function HistoryTab({
           </div>
           {/* Estado de la consulta del archivo */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* CP-FX-UX-002 (FASE 2): sello de frescura — el usuario siempre
+                sabe cuándo se actualizaron los datos que mira (Cuba). */}
+            {dataUpdatedAtLabel && (
+              <span
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground"
+                data-testid="history-data-updated-at"
+                title="Momento de la última consulta exitosa de la serie (hora de Cuba)"
+              >
+                <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
+                Datos actualizados: {dataUpdatedAtLabel} (Cuba)
+              </span>
+            )}
             {archiveLoading && (
               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground" data-testid="archive-loading">
                 <span className="inline-block w-3.5 h-3.5 rounded-full border-2 border-border border-t-primary animate-spin" aria-hidden="true" />
@@ -697,38 +811,49 @@ function HistoryTab({
         )}
       </div>
 
-      {/* ─── Controles básicos: presets + custom range ─── */}
-      <div className="bg-card rounded-2xl border-2 border-border p-4 space-y-3">
+      {/* ─── Controles básicos: presets + custom range (CP-FX-UX-002 §1) ─── */}
+      <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-black uppercase tracking-widest text-muted-foreground mr-1">Rango:</span>
-          {presets.map(r => (
+          {RANGE_PRESETS.map(r => (
             <button
-              key={r.value}
-              onClick={() => {
-                setPreset(r.value);
-                setUseCustomRange(false);
-              }}
+              key={String(r.id)}
+              onClick={() =>
+                updateFilters({ preset: r.id, useCustomRange: false, startDate: null, endDate: null })
+              }
               className={cn(
                 'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border',
-                !useCustomRange && preset === r.value
+                !filters.useCustomRange && filters.preset === r.id
                   ? 'bg-primary text-primary-foreground shadow-md border-primary'
                   : 'bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary border-border',
               )}
+              aria-pressed={!filters.useCustomRange && filters.preset === r.id}
             >
               {r.label}
             </button>
           ))}
           <button
-            onClick={() => setUseCustomRange(!useCustomRange)}
+            onClick={openCustomRange}
             className={cn(
               'px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border flex items-center gap-1.5',
-              useCustomRange
+              filters.useCustomRange
                 ? 'bg-primary text-primary-foreground shadow-md border-primary'
                 : 'bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary border-border',
             )}
+            aria-pressed={filters.useCustomRange}
           >
             <CalendarIcon className="w-3.5 h-3.5" />
             Personalizado
+          </button>
+
+          {/* CP-FX-UX-002 §1.4: Restablecer = volver al MES ACTUAL (no al
+              histórico completo — el preset «Todo» fue eliminado). */}
+          <button
+            onClick={() => updateFilters(resetHistoryFilters())}
+            title="Vuelve al mes actual (primer día del mes → hoy)"
+            className="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all min-h-[36px] border bg-background text-muted-foreground hover:bg-primary/10 hover:text-primary border-border"
+          >
+            Restablecer
           </button>
 
           {/* Botón Avanzado colapsable */}
@@ -748,8 +873,20 @@ function HistoryTab({
           </button>
         </div>
 
+        {/* Etiqueta del rango activo — el usuario siempre sabe qué ventana mira */}
+        <p className="text-xs text-muted-foreground" data-testid="history-active-range">
+          Período activo:{' '}
+          <strong className="text-foreground font-mono">
+            {filters.useCustomRange && filters.startDate && filters.endDate
+              ? `${filters.startDate} → ${filters.endDate}`
+              : filters.preset === 'current-month'
+                ? `${getCurrentMonthRange().start} → ${getCurrentMonthRange().end} (mes actual)`
+                : `últimos ${filters.preset} días`}
+          </strong>
+        </p>
+
         {/* Date pickers (solo si custom range activo) */}
-        {useCustomRange && (
+        {filters.useCustomRange && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border/50">
             <div className="flex items-center gap-2">
               <span className="text-xs font-black uppercase tracking-widest text-muted-foreground shrink-0">Desde:</span>
@@ -757,20 +894,23 @@ function HistoryTab({
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="h-9 flex-1 justify-start text-left font-mono text-xs border-border">
                     <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
-                    {startDate ? format(startDate, 'dd MMM yyyy', { locale: esLocale }) : 'Seleccionar…'}
+                    {filters.startDate ? format(parseISO(filters.startDate), 'dd MMM yyyy', { locale: esLocale }) : 'Seleccionar…'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 border-border bg-popover" align="start">
                   <Calendar
                     mode="single"
-                    selected={startDate}
+                    selected={filters.startDate ? parseISO(filters.startDate) : undefined}
                     onSelect={(d) => {
-                      setStartDate(d);
+                      if (d) setCustomDates({ startDate: format(d, 'yyyy-MM-dd') });
                       setStartPickerOpen(false);
                     }}
                     initialFocus
                     locale={esLocale}
-                    disabled={(d) => (endDate ? d > endDate : false)}
+                    disabled={(d) =>
+                      (filters.endDate ? d > parseISO(filters.endDate) : false) ||
+                      d > parseISO(getOperativeDate())
+                    }
                   />
                 </PopoverContent>
               </Popover>
@@ -781,20 +921,23 @@ function HistoryTab({
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="h-9 flex-1 justify-start text-left font-mono text-xs border-border">
                     <CalendarIcon className="w-3.5 h-3.5 mr-1.5" />
-                    {endDate ? format(endDate, 'dd MMM yyyy', { locale: esLocale }) : 'Seleccionar…'}
+                    {filters.endDate ? format(parseISO(filters.endDate), 'dd MMM yyyy', { locale: esLocale }) : 'Seleccionar…'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 border-border bg-popover" align="end">
                   <Calendar
                     mode="single"
-                    selected={endDate}
+                    selected={filters.endDate ? parseISO(filters.endDate) : undefined}
                     onSelect={(d) => {
-                      setEndDate(d);
+                      if (d) setCustomDates({ endDate: format(d, 'yyyy-MM-dd') });
                       setEndPickerOpen(false);
                     }}
                     initialFocus
                     locale={esLocale}
-                    disabled={(d) => (startDate ? d < startDate : false)}
+                    disabled={(d) =>
+                      (filters.startDate ? d < parseISO(filters.startDate) : false) ||
+                      d > parseISO(getOperativeDate())
+                    }
                   />
                 </PopoverContent>
               </Popover>
@@ -966,12 +1109,18 @@ function HistoryTab({
       </div>
 
       {/* ─── Gráfico principal (histórico + proyección) ─── */}
-      <div className="bg-card rounded-2xl border-2 border-border p-6">
+      <div className="bg-card rounded-2xl border border-border p-4 sm:p-6">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <h3 className="text-base font-black uppercase tracking-widest text-foreground">
             USD — Oficial vs Informal ({filtered.length} fechas{forecastDays > 0 ? ` + ${forecastDays}d proy.` : ''})
           </h3>
-          {forecastModel.informal && (
+          <div className="flex items-center gap-3 flex-wrap">
+            {dataUpdatedAtLabel && (
+              <span className="text-xs font-bold text-muted-foreground" data-testid="chart-data-updated-at">
+                Datos hasta {dataUpdatedAtLabel} (Cuba)
+              </span>
+            )}
+            {forecastModel.informal && (
             <div className="flex items-center gap-3 text-xs font-bold flex-wrap">
               <div className="flex items-center gap-1.5">
                 <Target className="w-3.5 h-3.5 text-orange-500" />
@@ -992,7 +1141,8 @@ function HistoryTab({
                 </div>
               )}
             </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* ─── Leyenda accesible ─── */}

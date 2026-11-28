@@ -186,6 +186,12 @@ export function ExchangeIntelligenceView() {
   // Fuente única de verdad para etiquetas de antigüedad — el fallback local
   // (getOperativeDate) aplica solo si la respuesta no la trae.
   const [operativeDateFromServer, setOperativeDateFromServer] = useState<string | null>(null);
+  // CP-FX-UX-002 (FASE 2): frescura de la consulta activa — mayor rate_date
+  // REAL servido (newest_rate_date de la API) y momento de la respuesta.
+  // El tab Histórico los usa para converger con esta consulta (gráfica =
+  // tarjeta) y para el sello «Datos actualizados a las HH:MM».
+  const [newestRateDate, setNewestRateDate] = useState<string | null>(null);
+  const [ratesFetchedAt, setRatesFetchedAt] = useState<number | null>(null);
 
   // IC-EXCEL-BULK-UPLOAD: carga masiva por Excel (admin only).
   // El botón solo se muestra si el usuario es admin; el endpoint valida
@@ -227,6 +233,10 @@ export function ExchangeIntelligenceView() {
       const json = await res.json();
       const data = json.rates || [];
       setRates(data);
+
+      // CP-FX-UX-002 (FASE 2): metadatos de frescura de la respuesta.
+      setNewestRateDate(typeof json.newest_rate_date === 'string' ? json.newest_rate_date : null);
+      setRatesFetchedAt(Date.now());
 
       // IC-DIVIZA-002 (misión §3): el backend reporta la fecha operativa
       // (civil de Cuba) que gobierna vigencia/carry-forward — la adoptamos
@@ -362,14 +372,22 @@ export function ExchangeIntelligenceView() {
   // ACTIVO (Diviza); el archivo elToque no se mezcla en la visualización por
   // defecto (misión §3: si no puede mostrarse sin confusión, se excluye,
   // preservando los registros originales en la BD).
+  // CP-FX-UX-002 (FASE 2, C4): el punto OFICIAL del día ahora toma la captura
+  // más FRESCA (antes rates.find devolvía la más ANTIGUA del día — la gráfica
+  // podía diferir de la tarjeta el día de una recaptura). Misma regla que
+  // pickOfficialRow de exchange-history.ts (serie unificada).
   const historyData: HistoryPoint[] = useCallback(() => {
     const dates = [...new Set(rates.map(r => r.rate_date))].sort((a, b) => a.localeCompare(b));
+    const pickFreshest = (rows: ExchangeRate[]): ExchangeRate | undefined =>
+      [...rows].sort((a, b) => (b.captured_at || '').localeCompare(a.captured_at || ''))[0];
     return dates.map(date => {
-      const oficial = rates.find(r => r.rate_date === date && r.source === 'BCC' && r.currency === 'USD' && r.segment === bccSegment)?.rate ?? null;
+      const oficialRow = pickFreshest(
+        rates.filter(r => r.rate_date === date && r.source === 'BCC' && r.currency === 'USD' && r.segment === bccSegment),
+      );
       const informalRow = pickInformalRow(
         rates.filter(r => r.rate_date === date && isInformalSource(r.source) && r.currency === 'USD'),
       );
-      return { date, oficial, informal: informalRow?.rate ?? null };
+      return { date, oficial: oficialRow?.rate ?? null, informal: informalRow?.rate ?? null };
     });
   }, [rates, bccSegment])();
 
@@ -740,7 +758,7 @@ export function ExchangeIntelligenceView() {
                 capturing={capturing}
               />
             )}
-            {activeTab === 'history' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><HistoryTab data={historyData} bccSegment={bccSegment} /></Suspense>}
+            {activeTab === 'history' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><HistoryTab data={historyData} bccSegment={bccSegment} activeNewestRateDate={newestRateDate} ratesFetchedAt={ratesFetchedAt} /></Suspense>}
             {activeTab === 'variations' && <Suspense fallback={<div className="flex items-center justify-center py-24"><RefreshCw className="w-8 h-8 animate-spin text-primary" /></div>}><VariationsTab data={historyData} /></Suspense>}
             {/* IC-UX-HISTORY-004 §2: sin pestaña «impact» — el análisis del
                 efecto cambiario sobre un producto vive SOLO en Mi Producto

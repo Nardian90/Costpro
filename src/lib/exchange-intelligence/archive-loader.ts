@@ -41,6 +41,29 @@ export function getCachedArchiveRows(segment: string): any[] | undefined {
 }
 
 /**
+ * CP-FX-UX-002 (FASE 2): metadatos de frescura de la caché — momento de la
+ * última respuesta aceptada y mayor rate_date REAL (sin virtuales de
+ * arrastre) presente en ella. El tab Histórico los usa para (a) mostrar
+ * «Datos actualizados a las HH:MM» y (b) converger con la consulta activa
+ * de la vista cuando esta trajo filas más nuevas (p. ej. tras una captura).
+ */
+export function getArchiveMeta(segment: string): { fetchedAt: number; newestRateDate: string | null } | null {
+  const hit = cache.get(segment);
+  if (!hit) return null;
+  let newest: string | null = null;
+  for (const r of hit.rows) {
+    // Los virtuales carry-forward (id cf-*) replican la fecha operativa en
+    // el momento de la consulta: no cuentan como dato nuevo.
+    if (typeof r?.id === 'string' && r.id.startsWith('cf-')) continue;
+    if (r?.capture_method === 'carry_forward') continue;
+    if (typeof r?.rate_date === 'string' && (newest === null || r.rate_date > newest)) {
+      newest = r.rate_date;
+    }
+  }
+  return { fetchedAt: hit.fetchedAt, newestRateDate: newest };
+}
+
+/**
  * Trae TODA la serie disponible (days=all&source=all) para el segmento BCC
  * consultado. Devuelve las filas crudas con su procedencia — la serie diaria
  * unificada se construye con buildUnifiedHistorySeries (src/lib/exchange-history).
