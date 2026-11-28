@@ -1,0 +1,10 @@
+{
+  "generated": "2026-11-28T17:20Z",
+  "target": "produccion wthkddeleylijmonclxg (solo lectura)",
+  "prueba": "SELECT anon REST sobre la tabla (read-only permitido; sin intentos de mutación en producción)",
+  "resultado": {
+    "GET /rest/v1/exchange_rates_backup_cpfx001?select=id&limit=3": "HTTP 200, cuerpo []",
+    "GET ...?select=id (Prefer: count=exact)": "HTTP 200, content-range */0"
+  },
+  "interpretacion": "RLS habilitada SIN policies (deny-all) → 0 filas expuestas vía anon. Grants residuales anon/authenticated persistían (riesgo si RLS se desactivara de nuevo)."
+}
