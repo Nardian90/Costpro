@@ -1,0 +1,226 @@
+[
+ {
+  "tablename": "fin_account_mapping",
+  "policyname": "fin_account_mapping_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "true",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_categories",
+  "policyname": "fin_categories_insert",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": null,
+  "with_check": "((store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text]))"
+ },
+ {
+  "tablename": "fin_categories",
+  "policyname": "fin_categories_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "true",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_categories",
+  "policyname": "fin_categories_update",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "((is_system AND is_admin()) OR ((NOT is_system) AND (store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text])))",
+  "with_check": "((is_system AND is_admin()) OR ((NOT is_system) AND (store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text])))"
+ },
+ {
+  "tablename": "fin_document_types",
+  "policyname": "fin_document_types_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "true",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_document_types",
+  "policyname": "fin_document_types_update",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "is_admin()",
+  "with_check": "is_admin()"
+ },
+ {
+  "tablename": "fin_entries",
+  "policyname": "fin_entries_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(is_admin() OR has_store_access(store_id))",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_metric_catalog",
+  "policyname": "fin_metric_catalog_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "true",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_movements",
+  "policyname": "fin_movements_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(is_admin() OR has_store_access(store_id))",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_opening_balances",
+  "policyname": "fin_opening_insert",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": null,
+  "with_check": "has_store_role(store_id, ARRAY['admin'::text])"
+ },
+ {
+  "tablename": "fin_opening_balances",
+  "policyname": "fin_opening_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(is_admin() OR has_store_access(store_id))",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_opening_balances",
+  "policyname": "fin_opening_update",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "(is_admin() OR has_store_role(store_id, ARRAY['admin'::text]))",
+  "with_check": "(is_admin() OR has_store_role(store_id, ARRAY['admin'::text]))"
+ },
+ {
+  "tablename": "fin_posting_errors",
+  "policyname": "fin_post_err_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((store_id IS NULL) OR is_admin() OR has_store_access(store_id))",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_posting_errors",
+  "policyname": "fin_post_err_update",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "((store_id IS NULL) OR is_admin() OR has_store_role(store_id, ARRAY['admin'::text]))",
+  "with_check": "((store_id IS NULL) OR is_admin() OR has_store_role(store_id, ARRAY['admin'::text]))"
+ },
+ {
+  "tablename": "fin_posting_generations",
+  "policyname": "fin_posting_generations_select",
+  "cmd": "SELECT",
+  "roles": "{public}",
+  "qual": "(is_admin_check(auth.uid()) OR has_store_access_as(auth.uid(), store_id))",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_reconciliation_config",
+  "policyname": "fin_reconciliation_config_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "true",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_reconciliation_snapshots",
+  "policyname": "fin_reconciliation_snapshots_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(is_admin_check(auth.uid()) OR has_store_access_as(auth.uid(), store_id))",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_rule_versions",
+  "policyname": "fin_rules_insert",
+  "cmd": "INSERT",
+  "roles": "{authenticated}",
+  "qual": null,
+  "with_check": "(((store_id IS NULL) AND is_admin()) OR ((store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text])))"
+ },
+ {
+  "tablename": "fin_rule_versions",
+  "policyname": "fin_rules_select",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "((store_id IS NULL) OR has_store_access(store_id))",
+  "with_check": null
+ },
+ {
+  "tablename": "fin_rule_versions",
+  "policyname": "fin_rules_update",
+  "cmd": "UPDATE",
+  "roles": "{authenticated}",
+  "qual": "((store_id IS NULL) OR has_store_access(store_id))",
+  "with_check": "(((store_id IS NULL) AND is_admin()) OR ((store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text])))"
+ },
+ {
+  "tablename": "payroll_item_concepts",
+  "policyname": "payroll_item_concepts_admin_privacy",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM (payroll_items i\n     JOIN payrolls p ON ((p.id = i.payroll_id)))\n  WHERE ((i.id = payroll_item_concepts.item_id) AND can_read_payroll_store(p.store_id))))",
+  "with_check": null
+ },
+ {
+  "tablename": "payroll_item_concepts",
+  "policyname": "payroll_item_concepts_admin_privacy_write",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM (payroll_items i\n     JOIN payrolls p ON ((p.id = i.payroll_id)))\n  WHERE ((i.id = payroll_item_concepts.item_id) AND can_read_payroll_store(p.store_id))))",
+  "with_check": "(EXISTS ( SELECT 1\n   FROM (payroll_items i\n     JOIN payrolls p ON ((p.id = i.payroll_id)))\n  WHERE ((i.id = payroll_item_concepts.item_id) AND can_read_payroll_store(p.store_id))))"
+ },
+ {
+  "tablename": "payroll_items",
+  "policyname": "payroll_items_admin_privacy",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM payrolls p\n  WHERE ((p.id = payroll_items.payroll_id) AND can_read_payroll_store(p.store_id))))",
+  "with_check": null
+ },
+ {
+  "tablename": "payroll_items",
+  "policyname": "payroll_items_admin_privacy_write",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "(EXISTS ( SELECT 1\n   FROM payrolls p\n  WHERE ((p.id = payroll_items.payroll_id) AND can_read_payroll_store(p.store_id))))",
+  "with_check": "(EXISTS ( SELECT 1\n   FROM payrolls p\n  WHERE ((p.id = payroll_items.payroll_id) AND can_read_payroll_store(p.store_id))))"
+ },
+ {
+  "tablename": "payrolls",
+  "policyname": "payrolls_admin_privacy",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "can_read_payroll_store(store_id)",
+  "with_check": null
+ },
+ {
+  "tablename": "payrolls",
+  "policyname": "payrolls_admin_privacy_write",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "can_read_payroll_store(store_id)",
+  "with_check": "can_read_payroll_store(store_id)"
+ },
+ {
+  "tablename": "worker_salary_rates",
+  "policyname": "worker_salary_rates_admin_privacy",
+  "cmd": "SELECT",
+  "roles": "{authenticated}",
+  "qual": "can_read_payroll_store(store_id)",
+  "with_check": null
+ },
+ {
+  "tablename": "worker_salary_rates",
+  "policyname": "worker_salary_rates_admin_privacy_write",
+  "cmd": "ALL",
+  "roles": "{authenticated}",
+  "qual": "can_read_payroll_store(store_id)",
+  "with_check": "can_read_payroll_store(store_id)"
+ }
+]

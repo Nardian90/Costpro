@@ -1,0 +1,17 @@
+[
+ {
+  "version": "20261121200100",
+  "applied_at": "2026-11-21 16:22:00.901143+00",
+  "mechanism": "management_api"
+ },
+ {
+  "version": "20261121200000",
+  "applied_at": "2026-11-21 16:21:58.974581+00",
+  "mechanism": "management_api"
+ },
+ {
+  "version": "20261121130100",
+  "applied_at": "2026-11-21 16:10:35.366014+00",
+  "mechanism": "management_api"
+ }
+]
