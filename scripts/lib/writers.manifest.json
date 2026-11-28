@@ -329,14 +329,8 @@
     "scripts/cpbra-r11-historical-sales.mjs": "CP-BRA-FINAL-VERIFICATION-AND-INV005-001 (2026-11-26): SOLO LECTURA vía Management API (solo SELECT). Analiza las 3 ventas históricas con payment_incidents y Σpagos≠total (sin modificarlas): validez estructural de incidencias y cobertura de la diferencia real según las reglas R-11.",
     "scripts/cpbra-r05-inventory-adjustments.mjs": "CP-BRA-FINAL-VERIFICATION-AND-INV005-001 (2026-11-26): SOLO LECTURA vía Management API (solo SELECT). Análisis R-05: contrato real de confirm_inventory_adjustment, roles, historial de ajustes y distribución de desviaciones (sin modificar nada).",
     "scripts/cpbra-historical-exceptions.mjs": "CP-BRA-FINAL-VERIFICATION-AND-INV005-001 (2026-11-26): SOLO LECTURA vía Management API (solo SELECT). Excepciones históricas: recepciones sin proveedor («—», $19.435), inventario afectado, efectos contables, duplicados potenciales.",
-<<<<<<< HEAD
-    "scripts/cpbra-r05-prod-verify.mjs": "CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (2026-11-27): SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT) + guard assert-not-production modo read. Verificación productiva §2.4 de R-05; re-ejecutable."
+    "scripts/cpbra-r05-prod-verify.mjs": "CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (2026-11-27): SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT) + guard assert-not-production modo read. Verificación productiva §2.4 de R-05; re-ejecutable.",
+    "scripts/gaceta/insert-edicion-20261127.mjs": "ADN-GACETA-WATCHDOG-001: publicación de la edición diaria del Diario Contable (ADN-011). Escribe SOLO en public.gaceta_posts vía service_role con INSERT idempotente (slug único, ON CONFLICT implícito por REST 409). La tabla es la superficie designada para el editor automático (migración 20261124120000: RLS sin policies para anon/auth, escritura exclusiva de service_role). No es un script de migración ni de operaciones sobre datos de negocio: la escritura acotada a esta tabla ES el propósito de la función. El guard de producción no aplica porque el destino real ES producción legítima del editor, no una escritura accidental."
   },
   "_doc_note_cpfx": "CP-FX-001: canal gobernado de recuperación histórica (assertNotProduction + doble flag)."
 }
-=======
-    "scripts/cpbra-r05-prod-verify.mjs": "CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (2026-11-27): SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT) + guard assert-not-production modo read. Verificación productiva §2.4 de R-05; re-ejecutable.",
-    "scripts/gaceta/insert-edicion-20261127.mjs": "ADN-GACETA-WATCHDOG-001: publicación de la edición diaria del Diario Contable (ADN-011). Escribe SOLO en public.gaceta_posts vía service_role con INSERT idempotente (slug único, ON CONFLICT implícito por REST 409). La tabla es la superficie designada para el editor automático (migración 20261124120000: RLS sin policies para anon/auth, escritura exclusiva de service_role). No es un script de migración ni de operaciones sobre datos de negocio: la escritura acotada a esta tabla ES el propósito de la función. El guard de producción no aplica porque el destino real ES producción legítima del editor, no una escritura accidental."
-  }
-}
->>>>>>> origin/main
