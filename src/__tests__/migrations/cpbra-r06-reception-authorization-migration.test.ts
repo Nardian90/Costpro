@@ -187,10 +187,11 @@ describe('CP-BRA-R06 — 20261128120000_cpbra_r06_reception_authorization.sql', 
     ) as { archivos: Array<{ nombre: string; estado: string }>; total_incluidos: number };
     const incluidos = manifest.archivos.filter((m) => m.estado === 'incluido');
     const idx = incluidos.findIndex((m) => m.nombre === '20261128120000_cpbra_r06_reception_authorization.sql');
-    // CP-FX-001 (2026-11-28): la migración 20261128120000_cp_fx_recovery_traceability
-    // (posición 225: '_cp_f' < '_cp_p' < '_cpb') desplaza +1 a las previas.
     expect(idx).toBe(226); // índice 0-based → posición 227 del stream (tras cp_fx y cp_pos)
-    expect(manifest.total_incluidos).toBe(227);
-    expect(incluidos.length).toBe(227);
+    // ASERCION DINAMICA (CP-E2E-RECONCILE-004, rebase 44b2ff27b): el total se verifica CONTRA el
+    // manifiesto (consistencia interna + suelo monótono) en vez de congelar el literal —
+    // el stream legítimo crece con cada misión y el literal chocaba en cada rebase.
+    expect(manifest.total_incluidos).toBe(incluidos.length);
+    expect(incluidos.length).toBeGreaterThanOrEqual(233); // suelo: stream monótono (nunca encoger)
   });
 });

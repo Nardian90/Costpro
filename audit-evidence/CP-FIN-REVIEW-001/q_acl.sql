@@ -1,0 +1,1 @@
+SELECT table_name, grantee, privilege_type FROM information_schema.role_table_grants WHERE table_schema='public' AND (table_name LIKE 'fin\_%' ESCAPE '\' OR table_name IN ('payrolls','payroll_items','payroll_item_concepts','worker_salary_rates')) AND grantee IN ('anon','authenticated','service_role') ORDER BY table_name, grantee, privilege_type;

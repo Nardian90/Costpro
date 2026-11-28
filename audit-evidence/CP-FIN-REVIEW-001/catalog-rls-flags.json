@@ -1,0 +1,167 @@
+[
+ {
+  "relname": "fin_account_mapping",
+  "relrowsecurity": true,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_account_mapping_key",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_account_mapping_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_categories",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "fin_categories_code_key",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_categories_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_document_types",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "fin_document_types_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_entries",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "fin_entries_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_metric_catalog",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "fin_metric_catalog_key",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_metric_catalog_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_movements",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "fin_movements_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_opening_balances",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "fin_opening_balances_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_posting_errors",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "fin_posting_errors_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_posting_generations",
+  "relrowsecurity": true,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_posting_generations_code_key",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_posting_generations_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_reconciliation_config",
+  "relrowsecurity": true,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_reconciliation_config_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_reconciliation_snapshots",
+  "relrowsecurity": true,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_reconciliation_snapshots_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_rule_versions",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "fin_rule_versions_pkey",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "fin_rule_versions_scope_version_key",
+  "relrowsecurity": false,
+  "relforcerowsecurity": false
+ },
+ {
+  "relname": "payroll_item_concepts",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "payroll_items",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "payrolls",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ },
+ {
+  "relname": "worker_salary_rates",
+  "relrowsecurity": true,
+  "relforcerowsecurity": true
+ }
+]

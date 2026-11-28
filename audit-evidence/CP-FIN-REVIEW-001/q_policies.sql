@@ -1,0 +1,1 @@
+SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check FROM pg_policies WHERE schemaname='public' AND (tablename LIKE 'fin\_%' ESCAPE '\' OR tablename IN ('payrolls','payroll_items','payroll_item_concepts','worker_salary_rates')) ORDER BY tablename, cmd, policyname;

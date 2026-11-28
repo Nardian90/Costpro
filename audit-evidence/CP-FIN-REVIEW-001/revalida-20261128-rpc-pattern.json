@@ -1,0 +1,44 @@
+[
+ {
+  "proname": "fin_get_balance_sheet",
+  "usa_helper_debil": true,
+  "patron_null_abierto": true,
+  "usa_gestion": false,
+  "execute_acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+ },
+ {
+  "proname": "fin_get_category_detail",
+  "usa_helper_debil": true,
+  "patron_null_abierto": true,
+  "usa_gestion": false,
+  "execute_acl": "postgres=X/postgres,service_role=X/postgres"
+ },
+ {
+  "proname": "fin_get_dashboard",
+  "usa_helper_debil": true,
+  "patron_null_abierto": true,
+  "usa_gestion": false,
+  "execute_acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+ },
+ {
+  "proname": "fin_get_document_types_status",
+  "usa_helper_debil": true,
+  "patron_null_abierto": true,
+  "usa_gestion": false,
+  "execute_acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+ },
+ {
+  "proname": "fin_get_income_statement",
+  "usa_helper_debil": true,
+  "patron_null_abierto": true,
+  "usa_gestion": false,
+  "execute_acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+ },
+ {
+  "proname": "fin_get_reconciliation",
+  "usa_helper_debil": true,
+  "patron_null_abierto": true,
+  "usa_gestion": false,
+  "execute_acl": "postgres=X/postgres,service_role=X/postgres"
+ }
+]

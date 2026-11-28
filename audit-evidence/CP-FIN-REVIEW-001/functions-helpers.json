@@ -1,0 +1,67 @@
+[
+ {
+  "proname": "block_truncate",
+  "args": "",
+  "prosrc": "\nbegin\n    -- Bypass ÚNICO y DOBLEMENTE restringido:\n    --   (a) GUC explícita de sesión/transacción: costpro.allow_truncate='on'\n    --   (b) current_user NO es un rol de aplicación (anon/authenticated).\n    -- current_setting(..., true) devuelve NULL si no está definida\n    -- (fail-closed: cualquier error → bloquea).\n    if coalesce(current_setting('costpro.allow_truncate', true), 'off') <> 'on'\n       or current_user in ('anon', 'authenticated') then\n        raise exception 'ERR_TRUNCATE_BLOQUEADO: TRUNCATE sobre % está bloqueado por CP-INFRA-020 (freno anti-borrado-masivo; los roles de aplicación no pueden eludirlo). Mantenimiento consciente del propietario: BEGIN; SET LOCAL costpro.allow_truncate = ''on''; TRUNCATE ...; COMMIT; con rol administrativo, y registrar el acto en production_migration_ledger o en un acta.',\n            tg_table_name\n            using errcode = 'P0001',\n            hint = 'Ver docs/OPERATIONS/BYPASS_FRENO_TRUNCATE.md';\n    end if;\n    return null;  -- BEFORE TRUNCATE ... FOR EACH STATEMENT: el valor se ignora\nend;\n"
+ },
+ {
+  "proname": "can_manage_store_as",
+  "args": "p_user_id uuid, p_store_id uuid",
+  "prosrc": "\nBEGIN\n  IF p_user_id IS NULL OR p_store_id IS NULL THEN RETURN false; END IF;\n  -- Nivel administrativo de plataforma (admin|superadmin) delegado al check\n  -- central is_admin_check — la misma fuente confiable de is_admin()/RLS\n  -- (20261027120000 has_store_access_as_superadmin_policy).\n  IF public.is_admin_check(p_user_id) THEN RETURN true; END IF;\n  -- Membresía operativa de GESTIÓN en la tienda específica (canManageStore):\n  -- clerk/warehouse/usuario/costo NO gestionan.\n  RETURN EXISTS (\n    SELECT 1 FROM public.user_store_memberships m\n    WHERE m.user_id = p_user_id\n      AND m.store_id = p_store_id\n      AND m.status = 'active'\n      AND m.role IN ('admin', 'manager', 'encargado')\n  );\nEND;\n"
+ },
+ {
+  "proname": "can_read_payroll_store",
+  "args": "p_store_id uuid",
+  "prosrc": "\nBEGIN\n  IF auth.uid() IS NULL OR p_store_id IS NULL THEN RETURN false; END IF;\n  -- superadmin de plataforma: alcance GLOBAL (incluye tiendas inactivas;\n  -- privilegio administrativo legítimo de plataforma)\n  IF public.is_superadmin() THEN RETURN true; END IF;\n  -- admin de plataforma: EXCLUSIVAMENTE tiendas activas de su tenant\n  -- (el alcance lo codifica current_user_store_ids(): admin → su tenant)\n  IF public.is_admin() AND p_store_id = ANY(public.current_user_store_ids()) THEN\n    RETURN true;\n  END IF;\n  -- admin de tienda: membresía ACTIVA con rol 'admin' en esa tienda\n  RETURN EXISTS (\n    SELECT 1 FROM public.user_store_memberships m\n    WHERE m.user_id = auth.uid()\n      AND m.store_id = p_store_id\n      AND m.status = 'active'\n      AND m.role = 'admin'\n  );\nEND;\n"
+ },
+ {
+  "proname": "fin_active_generation",
+  "args": "p_store_id uuid",
+  "prosrc": "\n  SELECT g.id FROM public.fin_posting_generations g\n  WHERE g.store_id = p_store_id AND g.status = 'active'\n  LIMIT 1\n"
+ },
+ {
+  "proname": "fin_entry_reversal_residual",
+  "args": "p_entry_id uuid",
+  "prosrc": "\n  SELECT GREATEST(\n    abs(coalesce((SELECT sum(m.amount) FROM public.fin_movements m\n                   WHERE m.entry_id = p_entry_id AND m.sense = 'debito'), 0)\n      - coalesce((SELECT sum(rm.amount) FROM public.fin_entries r\n                   JOIN public.fin_movements rm ON rm.entry_id = r.id\n                  WHERE r.reversal_of = p_entry_id AND rm.sense = 'credito'), 0)),\n    abs(coalesce((SELECT sum(m.amount) FROM public.fin_movements m\n                   WHERE m.entry_id = p_entry_id AND m.sense = 'credito'), 0)\n      - coalesce((SELECT sum(rm.amount) FROM public.fin_entries r\n                   JOIN public.fin_movements rm ON rm.entry_id = r.id\n                  WHERE r.reversal_of = p_entry_id AND rm.sense = 'debito'), 0))\n  );\n"
+ },
+ {
+  "proname": "fin_t12_block_receipt_annulment",
+  "args": "",
+  "prosrc": "\nDECLARE\n  v_entry uuid;\n  v_residual numeric;\nBEGIN\n  -- Solo transiciones de anulación (estado previo vivo → voided/reversed).\n  IF NEW.status NOT IN ('voided', 'reversed') OR OLD.status IN ('voided', 'reversed') THEN\n    RETURN NEW;\n  END IF;\n  -- ¿Algún asiento posted (reconocimiento/pago) con reversión parcial enlazada?\n  -- (las recepciones pending no tienen asientos → flujo ordinario intacto)\n  SELECT e.id, public.fin_entry_reversal_residual(e.id)\n    INTO v_entry, v_residual\n  FROM public.fin_entries e\n  WHERE e.document_type = 'RECEPCION' AND e.document_id = NEW.id\n    AND e.status = 'posted' AND e.event IN ('reconocimiento', 'pago')\n    AND EXISTS (SELECT 1 FROM public.fin_entries r WHERE r.reversal_of = e.id)\n    AND public.fin_entry_reversal_residual(e.id) > 0.01\n  LIMIT 1;\n  IF v_entry IS NOT NULL THEN\n    RAISE WARNING 'ERR_PARTIAL_REVERSAL_PENDING (intento bloqueado): recepción % con asiento % en reversión parcial y residual % CUP pendiente. Regularice el residual contable antes de anular (runbook RECT004 §regularización).',\n      NEW.id, v_entry, v_residual;\n    RAISE EXCEPTION 'ERR_PARTIAL_REVERSAL_PENDING: la recepción % tiene el asiento % con reversión parcial enlazada (residual % CUP sin compensar). Regularice primero el residual contable con un asiento explícito documentado (runbook RECT004 §regularización); después la anulación funcionará por el cauce ordinario.',\n      NEW.id, v_entry, v_residual;\n  END IF;\n  RETURN NEW;\nEND;\n"
+ },
+ {
+  "proname": "has_management_access_as",
+  "args": "p_user_id uuid, p_store_id uuid",
+  "prosrc": "\n  SELECT CASE WHEN auth.role() = 'service_role' THEN true\n    ELSE\n      -- [HSAA-20261027] plataforma (admin|superadmin) vía check central\n      public.is_admin_check(p_user_id)\n      OR EXISTS (\n        SELECT 1 FROM profiles\n        WHERE id = p_user_id\n        AND role IN ('manager', 'encargado')\n      )\n      OR EXISTS (\n        SELECT 1 FROM user_store_memberships\n        WHERE user_id = p_user_id\n        AND store_id = p_store_id\n        AND status = 'active'\n        AND role IN ('admin', 'manager')\n      )\n  END\n"
+ },
+ {
+  "proname": "has_store_access",
+  "args": "p_store_id uuid",
+  "prosrc": "\nDECLARE\n  v_user_id uuid := auth.uid();\nBEGIN\n  IF v_user_id IS NULL OR p_store_id IS NULL THEN\n    RETURN false;\n  END IF;\n\n  -- Admin global tiene acceso a todo\n  IF public.is_admin() THEN\n    RETURN true;\n  END IF;\n\n  -- Verificar membership activa en la tienda\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.user_store_memberships m\n    JOIN public.stores s\n      ON s.id = m.store_id\n    JOIN public.profiles p\n      ON p.id = m.user_id\n    WHERE m.user_id = v_user_id\n      AND m.store_id = p_store_id\n      AND m.status::text = 'active'\n      AND (\n        p.tenant_id IS NULL\n        OR s.tenant_id IS NULL\n        OR p.tenant_id = s.tenant_id\n      )\n  );\nEND;\n"
+ },
+ {
+  "proname": "has_store_access_as",
+  "args": "p_user_id uuid, p_store_id uuid",
+  "prosrc": "\nBEGIN\n    IF p_user_id IS NULL OR p_store_id IS NULL THEN RETURN false; END IF;\n\n    -- [HSAA-20261027] Nivel administrativo de plataforma (admin|superadmin)\n    -- delegado al check central is_admin_check(p_user_id) — la misma fuente\n    -- confiable de is_admin()/RLS. Antes: v_role = 'admin' estricto, que\n    -- rechazaba falsamente al superadmin (sin membresías por diseño).\n    IF public.is_admin_check(p_user_id) THEN RETURN true; END IF;\n\n    -- Check membership (usuarios operativos — semántica sin cambios)\n    RETURN EXISTS (\n        SELECT 1 FROM public.user_store_memberships\n        WHERE user_id = p_user_id AND store_id = p_store_id AND status = 'active'\n    );\nEND;\n"
+ },
+ {
+  "proname": "has_store_role",
+  "args": "p_store_id uuid, p_roles text[]",
+  "prosrc": "\nBEGIN\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.user_store_memberships m\n    WHERE m.user_id = auth.uid()\n      AND m.store_id = p_store_id\n      AND m.status = 'active'\n      AND m.role::text = ANY(p_roles)\n  );\nEND;\n"
+ },
+ {
+  "proname": "has_store_role",
+  "args": "p_user_id uuid, p_store_id uuid, p_roles text[]",
+  "prosrc": "\n  SELECT CASE WHEN auth.role() = 'service_role' THEN\n    EXISTS (\n      SELECT 1 FROM public.user_store_memberships m\n      WHERE m.user_id = p_user_id\n        AND m.store_id = p_store_id\n        AND m.status = 'active'\n        AND m.role::text = ANY(p_roles)\n    )\n  ELSE\n    EXISTS (\n      SELECT 1 FROM public.user_store_memberships m\n      WHERE m.user_id = auth.uid()\n        AND m.store_id = p_store_id\n        AND m.status = 'active'\n        AND m.role::text = ANY(p_roles)\n    )\n  END\n"
+ },
+ {
+  "proname": "is_admin",
+  "args": "",
+  "prosrc": "\nBEGIN\n  RETURN EXISTS (\n    SELECT 1\n    FROM public.profiles\n    WHERE id = auth.uid()\n      AND role IN ('admin', 'superadmin')\n  );\nEND;\n"
+ },
+ {
+  "proname": "is_admin_check",
+  "args": "p_user_id uuid",
+  "prosrc": "\n  SELECT EXISTS (\n    SELECT 1 FROM public.profiles\n    WHERE id = p_user_id\n      AND role IN ('admin', 'superadmin')\n  );\n"
+ }
+]

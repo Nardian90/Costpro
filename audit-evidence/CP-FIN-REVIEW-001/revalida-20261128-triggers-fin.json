@@ -1,0 +1,8 @@
+[
+ {
+  "tabla": "fin_entries",
+  "tgname": "fin_trg_entries_generation",
+  "tgenabled": "O",
+  "funcion": "fin_trg_entries_generation_default"
+ }
+]

@@ -1,0 +1,32 @@
+{
+  "expediente": "CP-FIN-REVIEW-001",
+  "mision": "CP-FIN-REM-001 — Remediación revisión financiera independiente (F1–F7)",
+  "fecha_revalidacion": "2026-11-23",
+  "repositorio": {
+    "remoto": "github.com/Nardian90/Costpro",
+    "rama_base": "main",
+    "sha_referencia_mision": "39168098270d93682e847da19bb00160ebd34fae (2026-11-22)",
+    "sha_vigente_usado": "11e6e69e427ed24f017889a14a1c37255cf8f1b6",
+    "nota_sha": "main avanzó respecto al SHA de referencia (merge PR #1690, 2026-11-23). Regla misión 3.1: se usa el SHA vigente y se reporta.",
+    "ramas_mision_previas": "NINGUNA (fix/cp-fin-hardening-f2-f5 y feat/cp-fin-cobertura-f1 no existían al iniciar)",
+    "prs_mision_previos": "NINGUNO"
+  },
+  "proyectos": [
+    { "rol": "PRODUCCIÓN", "nombre": "CostproBD", "ref": "wthkddeleylijmonclxg", "region": "us-east-1", "estado": "ACTIVE_HEALTHY", "postgres": "PostgreSQL 17.6", "uso_sesion": "SOLO LECTURA (compuertas G1/G2/G3 no recibidas)" },
+    { "rol": "PRUEBAS AISLADAS", "nombre": "CostproE2E", "ref": "lguovmvrozxgssupkwpf", "region": "us-east-1", "estado": "ACTIVE_HEALTHY", "postgres": "PostgreSQL 17.11", "uso_sesion": "verificación previa guard; pruebas por fases" }
+  ],
+  "banco_local": {
+    "descripcion": "PostgreSQL 17.5 embebido, privado y desechable (puerto 5433, directorio tools/pgdata). Nada se sube a ningún sitio.",
+    "replay": "capa .e2e-migrations (baseline 2026-08-28 + pre-tail W7 + 198 migraciones > cutoff)",
+    "resultado_replay": "202/209 archivos OK; 7 fallos de guards históricos sensibles a ACL/RLS de plataforma (ver environment-notes.md). El motor financiero completo aplicó correctamente.",
+    "notas": "7 fallos son deriva del ENTORNO local (estado ACL previo distinto), no defectos del repo. Documentados honestamente."
+  },
+  "libro_de_migraciones": {
+    "schema_migrations_publica": "NO EXISTE en producción",
+    "supabase_migrations.schema_migrations": "último registro 20260615000003 (12 registros antiguos; no refleja producción)",
+    "production_migration_ledger": "última entrada aplicada: 20261121200100 (2026-11-21 16:22 UTC, mechanism=management_api)",
+    "deriva_detectada": "objetos de las migraciones 20261121230000, 20261121230100, 20261121240000, 20261122100000, 20261122120000, 20261122130000 EXISTEN en el catálogo en vivo pero NO están en el ledger (hallazgo nuevo N1)"
+  },
+  "consultas_usadas": "todas de solo lectura vía Management API (guard: primera palabra SELECT/WITH); catálogo en catalog-*.json",
+  "pii": "ninguna fila personal; solo metadatos de catálogo y conteos agregados"
+}

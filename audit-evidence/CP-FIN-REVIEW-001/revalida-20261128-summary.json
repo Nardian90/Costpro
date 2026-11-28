@@ -1,0 +1,394 @@
+{
+ "policies": [
+  {
+   "tablename": "fin_account_mapping",
+   "policyname": "fin_account_mapping_select",
+   "cmd": "SELECT",
+   "roles": "{public}",
+   "qual": "true",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_categories",
+   "policyname": "fin_categories_insert",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "qual": null,
+   "with_check": "((store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text]))"
+  },
+  {
+   "tablename": "fin_categories",
+   "policyname": "fin_categories_select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "true",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_categories",
+   "policyname": "fin_categories_update",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "qual": "((is_system AND is_admin()) OR ((NOT is_system) AND (store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text])))",
+   "with_check": "((is_system AND is_admin()) OR ((NOT is_system) AND (store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text])))"
+  },
+  {
+   "tablename": "fin_document_types",
+   "policyname": "fin_document_types_select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "true",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_document_types",
+   "policyname": "fin_document_types_update",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "qual": "is_admin()",
+   "with_check": "is_admin()"
+  },
+  {
+   "tablename": "fin_entries",
+   "policyname": "fin_entries_select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "(is_admin() OR has_store_access(store_id))",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_metric_catalog",
+   "policyname": "fin_metric_catalog_select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "true",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_movements",
+   "policyname": "fin_movements_select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "(is_admin() OR has_store_access(store_id))",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_opening_balances",
+   "policyname": "fin_opening_insert",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "qual": null,
+   "with_check": "has_store_role(store_id, ARRAY['admin'::text])"
+  },
+  {
+   "tablename": "fin_opening_balances",
+   "policyname": "fin_opening_select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "(is_admin() OR has_store_access(store_id))",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_opening_balances",
+   "policyname": "fin_opening_update",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "qual": "(is_admin() OR has_store_role(store_id, ARRAY['admin'::text]))",
+   "with_check": "(is_admin() OR has_store_role(store_id, ARRAY['admin'::text]))"
+  },
+  {
+   "tablename": "fin_posting_errors",
+   "policyname": "fin_post_err_select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "((store_id IS NULL) OR is_admin() OR has_store_access(store_id))",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_posting_errors",
+   "policyname": "fin_post_err_update",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "qual": "((store_id IS NULL) OR is_admin() OR has_store_role(store_id, ARRAY['admin'::text]))",
+   "with_check": "((store_id IS NULL) OR is_admin() OR has_store_role(store_id, ARRAY['admin'::text]))"
+  },
+  {
+   "tablename": "fin_posting_generations",
+   "policyname": "fin_posting_generations_select",
+   "cmd": "SELECT",
+   "roles": "{public}",
+   "qual": "(is_admin_check(auth.uid()) OR has_store_access_as(auth.uid(), store_id))",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_reconciliation_config",
+   "policyname": "fin_reconciliation_config_select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "true",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_reconciliation_snapshots",
+   "policyname": "fin_reconciliation_snapshots_select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "(is_admin_check(auth.uid()) OR has_store_access_as(auth.uid(), store_id))",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_rule_versions",
+   "policyname": "fin_rules_insert",
+   "cmd": "INSERT",
+   "roles": "{authenticated}",
+   "qual": null,
+   "with_check": "(((store_id IS NULL) AND is_admin()) OR ((store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text])))"
+  },
+  {
+   "tablename": "fin_rule_versions",
+   "policyname": "fin_rules_select",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "((store_id IS NULL) OR has_store_access(store_id))",
+   "with_check": null
+  },
+  {
+   "tablename": "fin_rule_versions",
+   "policyname": "fin_rules_update",
+   "cmd": "UPDATE",
+   "roles": "{authenticated}",
+   "qual": "((store_id IS NULL) OR has_store_access(store_id))",
+   "with_check": "(((store_id IS NULL) AND is_admin()) OR ((store_id IS NOT NULL) AND has_store_role(store_id, ARRAY['admin'::text])))"
+  },
+  {
+   "tablename": "payroll_item_concepts",
+   "policyname": "payroll_item_concepts_admin_privacy",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "(EXISTS ( SELECT 1\n   FROM (payroll_items i\n     JOIN payrolls p ON ((p.id = i.payroll_id)))\n  WHERE ((i.id = payroll_item_concepts.item_id) AND can_read_payroll_store(p.store_id))))",
+   "with_check": null
+  },
+  {
+   "tablename": "payroll_item_concepts",
+   "policyname": "payroll_item_concepts_admin_privacy_write",
+   "cmd": "ALL",
+   "roles": "{authenticated}",
+   "qual": "(EXISTS ( SELECT 1\n   FROM (payroll_items i\n     JOIN payrolls p ON ((p.id = i.payroll_id)))\n  WHERE ((i.id = payroll_item_concepts.item_id) AND can_read_payroll_store(p.store_id))))",
+   "with_check": "(EXISTS ( SELECT 1\n   FROM (payroll_items i\n     JOIN payrolls p ON ((p.id = i.payroll_id)))\n  WHERE ((i.id = payroll_item_concepts.item_id) AND can_read_payroll_store(p.store_id))))"
+  },
+  {
+   "tablename": "payroll_items",
+   "policyname": "payroll_items_admin_privacy",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "(EXISTS ( SELECT 1\n   FROM payrolls p\n  WHERE ((p.id = payroll_items.payroll_id) AND can_read_payroll_store(p.store_id))))",
+   "with_check": null
+  },
+  {
+   "tablename": "payroll_items",
+   "policyname": "payroll_items_admin_privacy_write",
+   "cmd": "ALL",
+   "roles": "{authenticated}",
+   "qual": "(EXISTS ( SELECT 1\n   FROM payrolls p\n  WHERE ((p.id = payroll_items.payroll_id) AND can_read_payroll_store(p.store_id))))",
+   "with_check": "(EXISTS ( SELECT 1\n   FROM payrolls p\n  WHERE ((p.id = payroll_items.payroll_id) AND can_read_payroll_store(p.store_id))))"
+  },
+  {
+   "tablename": "payrolls",
+   "policyname": "payrolls_admin_privacy",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "can_read_payroll_store(store_id)",
+   "with_check": null
+  },
+  {
+   "tablename": "payrolls",
+   "policyname": "payrolls_admin_privacy_write",
+   "cmd": "ALL",
+   "roles": "{authenticated}",
+   "qual": "can_read_payroll_store(store_id)",
+   "with_check": "can_read_payroll_store(store_id)"
+  },
+  {
+   "tablename": "worker_salary_rates",
+   "policyname": "worker_salary_rates_admin_privacy",
+   "cmd": "SELECT",
+   "roles": "{authenticated}",
+   "qual": "can_read_payroll_store(store_id)",
+   "with_check": null
+  },
+  {
+   "tablename": "worker_salary_rates",
+   "policyname": "worker_salary_rates_admin_privacy_write",
+   "cmd": "ALL",
+   "roles": "{authenticated}",
+   "qual": "can_read_payroll_store(store_id)",
+   "with_check": "can_read_payroll_store(store_id)"
+  }
+ ],
+ "rpc_pattern": [
+  {
+   "proname": "fin_get_balance_sheet",
+   "usa_helper_debil": true,
+   "patron_null_abierto": true,
+   "usa_gestion": false,
+   "execute_acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+  },
+  {
+   "proname": "fin_get_category_detail",
+   "usa_helper_debil": true,
+   "patron_null_abierto": true,
+   "usa_gestion": false,
+   "execute_acl": "postgres=X/postgres,service_role=X/postgres"
+  },
+  {
+   "proname": "fin_get_dashboard",
+   "usa_helper_debil": true,
+   "patron_null_abierto": true,
+   "usa_gestion": false,
+   "execute_acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+  },
+  {
+   "proname": "fin_get_document_types_status",
+   "usa_helper_debil": true,
+   "patron_null_abierto": true,
+   "usa_gestion": false,
+   "execute_acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+  },
+  {
+   "proname": "fin_get_income_statement",
+   "usa_helper_debil": true,
+   "patron_null_abierto": true,
+   "usa_gestion": false,
+   "execute_acl": "postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres"
+  },
+  {
+   "proname": "fin_get_reconciliation",
+   "usa_helper_debil": true,
+   "patron_null_abierto": true,
+   "usa_gestion": false,
+   "execute_acl": "postgres=X/postgres,service_role=X/postgres"
+  }
+ ],
+ "triggers_fin": [
+  {
+   "tabla": "fin_entries",
+   "tgname": "fin_trg_entries_generation",
+   "tgenabled": "O",
+   "funcion": "fin_trg_entries_generation_default"
+  }
+ ],
+ "truncate_brake": [
+  {
+   "triggers_block_truncate": 34,
+   "cubre_fin_payroll": 0
+  }
+ ],
+ "truncate_fin_tables": [
+  {
+   "tablas_fin_o_payroll_con_freno": null
+  }
+ ],
+ "coverage": [
+  {
+   "total_completadas": "1023",
+   "total_sin_asiento_activa": "282",
+   "tiendas_sin_cobertura": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1=213/213 | 899d2503-d000-41d2-89f0-0827f4ac37ab=79/69"
+  }
+ ],
+ "sales_recientes": [
+  {
+   "completadas_72h": 5,
+   "con_asiento_activa": 5
+  }
+ ],
+ "posting_errors": [
+  {
+   "filas": 0
+  }
+ ],
+ "ledger": [
+  {
+   "filas": 79,
+   "ultima_version": "BASELINE-2026-11-06",
+   "ultima_aplicada": "2026-11-21 16:22:00.901143+00"
+  }
+ ],
+ "ledger_last3": [
+  {
+   "version": "20261121200100",
+   "applied_at": "2026-11-21 16:22:00.901143+00",
+   "mechanism": "management_api"
+  },
+  {
+   "version": "20261121200000",
+   "applied_at": "2026-11-21 16:21:58.974581+00",
+   "mechanism": "management_api"
+  },
+  {
+   "version": "20261121130100",
+   "applied_at": "2026-11-21 16:10:35.366014+00",
+   "mechanism": "management_api"
+  }
+ ],
+ "applied_markers": [
+  {
+   "proname": "create_sale_v2",
+   "firma": "p_store_id uuid, p_seller_id uuid, p_items jsonb, p_payment_method text, p_discount_type text, p_discount_value numeric, p_applied_taxes jsonb, p_tax_amount numeric, p_total_amount numeric, p_subtotal numeric, p_cash_amount numeric, p_transfer_amount numeric, p_zelle_amount numeric, p_sale_currency text, p_sale_exchange_rate numeric, p_customer_id uuid, p_customer_name text, p_supervisor_user_id uuid, p_idempotency_key text, p_operation_date timestamp with time zone, p_user_id uuid, p_supervisor_token_jti text, p_supervisor_scope jsonb, p_discount_reason text, p_notes text, p_payment_incidents jsonb, p_cash_received_cup numeric, p_cash_received_usd numeric, p_change_given_cup numeric, p_change_given_usd numeric, p_change_currency text, p_payment_components jsonb, p_customer_code text, p_customer_address text, p_customer_ci text, p_customer_phone text"
+  },
+  {
+   "proname": "create_supplier_local",
+   "firma": "p_store_id uuid, p_name text, p_tax_id text, p_phone text, p_email text, p_address text, p_notes text, p_confirm_duplicate boolean, p_duplicate_reason text, p_user_id uuid"
+  },
+  {
+   "proname": "register_ot_payment_batch",
+   "firma": "p_store_id uuid, p_ref_type text, p_ref_id uuid, p_payments jsonb, p_paid_by uuid, p_payment_date timestamp with time zone, p_idempotency_key text"
+  }
+ ],
+ "generales": [
+  {
+   "asientos_total": 4423,
+   "asientos_aprox_activos": 1224,
+   "tiendas_total": 7,
+   "funciones_secdef_public": 406,
+   "tablas_publicas_sin_rls": 1
+  }
+ ],
+ "stores": [
+  {
+   "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+   "name": "COSTPRO (Prueba)",
+   "is_active": true
+  },
+  {
+   "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+   "name": "ENERVIDA-VITALLCONS",
+   "is_active": true
+  },
+  {
+   "id": "8eb56fa3-7e22-408e-a44b-8f14cdd7f52f",
+   "name": "FERROCARRIL VITALLCONS",
+   "is_active": true
+  },
+  {
+   "id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+   "name": "PUERTO PADRE",
+   "is_active": true
+  },
+  {
+   "id": "6691b866-a7cd-409b-b1e5-dd9bc2ad9d7a",
+   "name": "QA UI Icons Store",
+   "is_active": true
+  },
+  {
+   "id": "30c3a373-2012-4728-8f51-d8d8ad73eb17",
+   "name": "QA-Release-1593-Plantillas",
+   "is_active": false
+  },
+  {
+   "id": "bc94e3d0-32c3-4f2f-8e42-d46a341f9451",
+   "name": "SHADDAI",
+   "is_active": true
+  }
+ ],
+ "role_check": []
+}

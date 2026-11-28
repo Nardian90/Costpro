@@ -1,0 +1,37 @@
+[
+ {
+  "id": "43a4dabc-b8b4-4b66-82b3-0c75335ca5d1",
+  "name": "COSTPRO (Prueba)",
+  "is_active": true
+ },
+ {
+  "id": "5e6fe821-5465-48b1-b3f1-3aa3182edc38",
+  "name": "ENERVIDA-VITALLCONS",
+  "is_active": true
+ },
+ {
+  "id": "8eb56fa3-7e22-408e-a44b-8f14cdd7f52f",
+  "name": "FERROCARRIL VITALLCONS",
+  "is_active": true
+ },
+ {
+  "id": "899d2503-d000-41d2-89f0-0827f4ac37ab",
+  "name": "PUERTO PADRE",
+  "is_active": true
+ },
+ {
+  "id": "6691b866-a7cd-409b-b1e5-dd9bc2ad9d7a",
+  "name": "QA UI Icons Store",
+  "is_active": true
+ },
+ {
+  "id": "30c3a373-2012-4728-8f51-d8d8ad73eb17",
+  "name": "QA-Release-1593-Plantillas",
+  "is_active": false
+ },
+ {
+  "id": "bc94e3d0-32c3-4f2f-8e42-d46a341f9451",
+  "name": "SHADDAI",
+  "is_active": true
+ }
+]

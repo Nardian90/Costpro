@@ -12,6 +12,7 @@ import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { withSecurity } from '@/lib/with-security';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { getSupabaseForSession } from '@/lib/supabase-session';
+import { canManageStore } from '@/lib/roles';
 import { z } from 'zod';
 import { uuidLoose } from '@/validation/api-schemas';
 
@@ -39,6 +40,15 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
   const storeId = searchParams.get('store_id');
   if (!storeId) {
     return NextResponse.json({ error: 'store_id es requerido' }, { status: 400 });
+  }
+  // CP-FIN-REM-001 F2 (hallazgo N6): saldos de apertura solo para gestión.
+  // Con la RLS endurecida el clerk ya no lee filas; aquí se hace explícito y
+  // sin romperse (403 en lugar de lista vacía silenciosa).
+  if (!canManageStore(session.user, storeId)) {
+    return NextResponse.json(
+      { error: 'Sin permiso: los saldos de apertura son visibles solo para roles de gestión (admin, manager, encargado)' },
+      { status: 403 },
+    );
   }
   const supabase = getSupabaseForSession(session);
   const { data, error } = await supabase
@@ -81,6 +91,16 @@ async function postHandler(request: NextRequest, session: AuthenticatedSession) 
     return NextResponse.json({ error: 'Usuario sin tienda activa configurada' }, { status: 400 });
   }
   const storeId = profile.active_store_id;
+  // CP-FIN-REM-001 F2 (hallazgo N6): el POST usaba cliente admin SIN gate de
+  // rol → create/apply/void eludían RLS para cualquier usuario autenticado con
+  // tienda activa. Se exige gestión (can_manage_store_as) antes de todo POST;
+  // no se amplía el acceso (apply conserva su gate interno de admin de tienda).
+  if (!canManageStore(session.user, storeId)) {
+    return NextResponse.json(
+      { error: 'Sin permiso: la apertura financiera es operativa solo para roles de gestión (admin, manager, encargado)' },
+      { status: 403 },
+    );
+  }
 
   if (parsed.data.action === 'create') {
     const b = parsed.data;
