@@ -165,13 +165,18 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
             // fecha operativa. Las filas con rate_date FUTURO (legado del bug
             // UTC anterior a IC-DIVIZA-002) no se arrastran hacia atrás: se
             // devuelven como filas reales tal cual, sin duplicar el punto.
+            // CP-FX-001: la base del arrastre es SOLO una OBSERVACIÓN REAL
+            // (capture_method='real') — una fila ESTIMADA (reconstrucción
+            // estadística) jamás se arrastra como si fuera observación del
+            // mercado (misión §4.3: «arrastre del último valor OBSERVADO»).
             const lastReal = data
               ?.filter(
                 (r: any) =>
                   r.source === src &&
                   r.currency === cur &&
                   r.segment === seg &&
-                  r.rate_date <= operativeDate
+                  r.rate_date <= operativeDate &&
+                  r.capture_method === 'real'
               )
               .sort((a: any, b: any) => {
                 if (a.rate_date !== b.rate_date) return b.rate_date.localeCompare(a.rate_date);
@@ -229,7 +234,12 @@ async function getHandler(req: NextRequest, session: AuthenticatedSession) {
           (r: any) =>
             isActiveInformalSource(r.source) &&
             r.currency === currency &&
-            r.capture_method !== 'carry_forward',
+            // CP-FX-001: la vigente es SIEMPRE una OBSERVACIÓN REAL del
+            // proveedor activo. Las reconstrucciones estadísticas
+            // (capture_method='estimated', importadas para continuidad
+            // histórica) y las virtuales ('carry_forward') quedan excluidas:
+            // una estimación jamás se presenta como tasa actual del mercado.
+            r.capture_method === 'real',
         )
         .sort(byOperativeDateFirstThenFreshness(operativeDate));
       const latest = informalRows[0];

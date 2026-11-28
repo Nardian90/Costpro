@@ -55,6 +55,10 @@ export interface InformalHistoryRowLike {
   capture_method?: 'real' | 'estimated' | 'carry_forward' | string | null;
   /** Fecha real de la fila de la que deriva una virtual carry_forward. */
   original_rate_date?: string | null;
+  /** CP-FX-001: nivel de confianza de una reconstrucción ('alta'|'media'|'baja'). */
+  confidence_level?: string | null;
+  /** CP-FX-001: método de reconstrucción (ej. 'interpolacion_lineal'). */
+  reconstruction_method?: string | null;
 }
 
 /** Fila oficial (BCC) mínima. */
@@ -76,12 +80,16 @@ export interface UnifiedHistoryPoint {
   date: string;
   oficial: number | null;
   informal: number | null;
-  /** Proveedor que aportó el valor informal del día ('Diviza' | 'elToque' | …). */
+  /** Proveedor que aportó el valor informal del día ('Diviza' | 'elToque' | 'Cuba Clara' | …). */
   informalSource: string | null;
   /** Método del registro seleccionado ('real' | 'estimated' | 'carry_forward'). */
   informalCaptureMethod: string | null;
   /** En virtuales: fecha real de la fila origen del arrastre. */
   informalOriginalRateDate?: string | null;
+  /** CP-FX-001: confianza declarada de una reconstrucción (null en reales/arrastres). */
+  informalConfidence?: string | null;
+  /** CP-FX-001: método de reconstrucción de una estimación. */
+  informalReconstructionMethod?: string | null;
 }
 
 /** Prioridad de CALIDAD del registro (regla §1: real > estimated > virtual). */
@@ -192,6 +200,8 @@ export function buildUnifiedHistorySeries<
       informalSource: informalRow ? informalRow.source : null,
       informalCaptureMethod: informalRow ? (informalRow.capture_method ?? 'estimated') : null,
       informalOriginalRateDate: informalRow?.original_rate_date ?? null,
+      informalConfidence: informalRow?.confidence_level ?? null,
+      informalReconstructionMethod: informalRow?.reconstruction_method ?? null,
     };
   });
 }
