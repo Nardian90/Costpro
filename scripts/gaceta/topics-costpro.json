@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "description": "Temas de plataforma (tipo costpro) para el publicador del Diario Contable: cada tema se redacta desde la fuente citada (knowledge/help o changelog del repo). Actualizado 2026-11-27 (restaurado tras reciclaje del sandbox — misión ADN-GACETA-WATCHDOG-001).",
+  "temas": [
+    {
+      "id": "tema-cerrar-caja",
+      "fuente": "knowledge/help/02-como-hacer/03-como-cerrar-caja.md",
+      "titular": "Cerrar la caja no es apagar el punto de venta: el chequeo que evita descuadres de fin de día",
+      "etiquetas": [
+        "caja",
+        "pos",
+        "cierre",
+        "adnegocio"
+      ]
+    },
+    {
+      "id": "tema-ipv-ventas",
+      "fuente": "knowledge/help/02-como-hacer/28-como-consultar-ipv-ventas.md",
+      "titular": "El IPv por producto: el número que dice si tu ganancia real se está quedando en el camino",
+      "etiquetas": [
+        "reportes",
+        "precios",
+        "margen",
+        "adnegocio"
+      ]
+    },
+    {
+      "id": "tema-devoluciones",
+      "fuente": "knowledge/help/02-como-hacer/19-como-procesar-devolucion.md",
+      "titular": "Una devolución bien procesada protege tu inventario y tu margen: así se hace en ADNegocio",
+      "etiquetas": [
+        "devoluciones",
+        "inventario",
+        "pos",
+        "adnegocio"
+      ]
+    },
+    {
+      "id": "tema-inventario-fisico",
+      "fuente": "knowledge/help/02-como-hacer/25-como-hacer-inventario-fisico.md",
+      "titular": "Inventario físico sin drama: el método de conteo que ADNegocio recomienda para tiendas con surtido grande",
+      "etiquetas": [
+        "inventario",
+        "conteo",
+        "adnegocio"
+      ]
+    },
+    {
+      "id": "tema-tasa-cambio",
+      "fuente": "knowledge/help/02-como-hacer/12-como-usar-tasa-cambio.md",
+      "titular": "Cuando el dólar se mueve: cómo registrar la tasa de cambio sin descuadrar tus costos",
+      "etiquetas": [
+        "tasa-cambio",
+        "costos",
+        "adnegocio"
+      ]
+    },
+    {
+      "id": "tema-comisiones",
+      "fuente": "knowledge/help/02-como-hacer/13-como-pagar-comisiones.md",
+      "titular": "Comisiones claras, vendedores tranquilos: cómo liquidarlas sin errores de cálculo",
+      "etiquetas": [
+        "comisiones",
+        "nomina",
+        "adnegocio"
+      ]
+    },
+    {
+      "id": "tema-pagos-por-linea",
+      "fuente": "docs/audits/CP-POS-REDESIGN-PER-ITEM-PAYMENTS-001/ (PR #1708, desplegado 25/11/2026)",
+      "titular": "ADNegocio ya reparte cada pago a su línea de venta: qué cambia para tus conciliaciones",
+      "etiquetas": [
+        "pos",
+        "pagos",
+        "novedades",
+        "adnegocio"
+      ]
+    },
+    {
+      "id": "tema-ofertas",
+      "fuente": "knowledge/help/02-como-hacer/22-como-crear-oferta.md",
+      "titular": "Ofertas que no se comen el margen: cómo crearlas en ADNegocio mirando el costo real",
+      "etiquetas": [
+        "ofertas",
+        "precios",
+        "margen",
+        "adnegocio"
+      ]
+    },
+    {
+      "id": "tema-ordenes-compra",
+      "fuente": "knowledge/help/02-como-hacer/06-como-crear-orden-compra.md",
+      "titular": "Reponer mercancía sin sorpresas: la orden de compra que cuadra proveedor, costo y bodega",
+      "etiquetas": [
+        "ordenes",
+        "inventario",
+        "proveedores",
+        "adnegocio"
+      ]
+    },
+    {
+      "id": "tema-conciliacion-bancaria",
+      "fuente": "knowledge/help/03-referencia/01-glosario.md (matching de extractos, 9 reglas)",
+      "titular": "Conciliar el extracto del banco en minutos: las 9 reglas de matching que hace ADNegocio por ti",
+      "etiquetas": [
+        "conciliacion",
+        "bancos",
+        "adnegocio"
+      ]
+    }
+  ]
+}
