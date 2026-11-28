@@ -1,6 +1,6 @@
 {
   "_doc": "Manifiesto de scripts ESCRITORES Supabase en scripts/ (CP-INFRA-019-FOLLOWUP fix D). Lo verifica scripts/lib/check-writers.mjs en CI: todo archivo con señal de endpoint Supabase + operación de escritura (SQL/RPC/método POST-PATCH-PUT-DELETE) DEBE estar aquí. guardProtected = invoca assert-not-production con el destino real; isolationProtected = protegido por assert-isolated-db (CP-INFRA-011); exceptions = no protegido, justificación obligatoria. Un script NUEVO con señal de escritor y sin entrada aquí rompe CI.",
-  "_updated": "2026-11-28 — ADN-GACETA-WATCHDOG-001: scripts/gaceta/insert-edicion-20261127.mjs en exceptions (publicación del Diario Contable en gaceta_posts, superficie designada ADN-011). CP-BRA-POST-CERTIFICATION-VALIDATION-001: scripts/probe-stray-table-r06v.mjs en exceptions (sondeo read-only del hallazgo exchange_rates_backup_cpfx001).",
+  "_updated": "2026-11-28 — ADN-GACETA-WATCHDOG-001: scripts/gaceta/insert-edicion-20261127.mjs en exceptions (publicación del Diario Contable en gaceta_posts, superficie designada ADN-011). CP-BRA-POST-CERTIFICATION-VALIDATION-001: scripts/probe-stray-table-r06v.mjs en exceptions (sondeo read-only del hallazgo exchange_rates_backup_cpfx001).\n2026-11-28 — CP-SEC-EXCHANGE-RATES-BACKUP-HARDENING-001: scripts/cpsec-fx-apply-prod.mjs en guardProtected (aplicación §11g del endurecimiento ACL de exchange_rates_backup_cpfx001 a producción con doble flag); scripts/cpsec-fx-e2e-posture.mjs en isolationProtected (batería E2E exclusivamente contra la BD aislada con guard assertIsolatedDb + net-zero); scripts/cpsec-fx-table-forensic.mjs en exceptions (sondeo forense READ-ONLY).",
   "guardProtected": [
     "scripts/apply-migration-mgmt.ts",
     "scripts/apply-migration.cjs",
@@ -107,7 +107,8 @@
     "scripts/validar-fix-17-1-servicios-usd.mjs",
     "scripts/validar-fix-dryrun-pagos.mjs",
     "scripts/validar-semantica-ventas-usd.mjs",
-    "scripts/fx-apply-recovery.mjs"
+    "scripts/fx-apply-recovery.mjs",
+    "scripts/cpsec-fx-apply-prod.mjs"
   ],
   "isolationProtected": [
     "scripts/cleanup-e2e-offers-manual.mjs",
@@ -167,7 +168,8 @@
     "scripts/sc006-real-reception-evidence.mjs",
     "scripts/val004-apply-e2e.mjs",
     "scripts/val004-e2e-prototype.mjs",
-    "scripts/e2e/cp-fin-hardening-battery.mjs"
+    "scripts/e2e/cp-fin-hardening-battery.mjs",
+    "scripts/cpsec-fx-e2e-posture.mjs"
   ],
   "exceptions": {
     "scripts/audit_kardex_live.cjs": "Herramienta histórica de una misión puntual ya ejecutada (one-shot, evidenciada en docs/audits/): señales de escritura en SQL/strings/fetch pero sin flujo productivo recurrente. No se cablea el guard en este PR (alcance limitado a los defectos demostrados); re-ejecutarla contra producción exige hoy revisión manual explícita.",
@@ -332,7 +334,8 @@
     "scripts/cpbra-historical-exceptions.mjs": "CP-BRA-FINAL-VERIFICATION-AND-INV005-001 (2026-11-26): SOLO LECTURA vía Management API (solo SELECT). Excepciones históricas: recepciones sin proveedor («—», $19.435), inventario afectado, efectos contables, duplicados potenciales.",
     "scripts/cpbra-r05-prod-verify.mjs": "CP-BRA-R05-APPROVAL-AND-R25-R26-REMEDIATION-001 (2026-11-27): SOLO LECTURA vía Management API (POST /database/query exclusivamente con SELECT) + guard assert-not-production modo read. Verificación productiva §2.4 de R-05; re-ejecutable.",
     "scripts/probe-stray-table-r06v.mjs": "Sondeo ESTRICTAMENTE READ-ONLY (SELECT) de la misión CP-BRA-POST-CERTIFICATION-VALIDATION-001: censo de la tabla residual exchange_rates_backup_cpfx001 en la BD aislada y en producción vía Management API (endpoint SQL). No ejecuta INSERT/UPDATE/DELETE/DDL alguno; producción se consulta sin modificarla (misma política del export del surface). Re-ejecutable para re-verificar el hallazgo y su remediación.",
-    "scripts/gaceta/insert-edicion-20261127.mjs": "ADN-GACETA-WATCHDOG-001: publicación de la edición diaria del Diario Contable (ADN-011). Escribe SOLO en public.gaceta_posts vía service_role con INSERT idempotente (slug único, ON CONFLICT implícito por REST 409). La tabla es la superficie designada para el editor automático (migración 20261124120000: RLS sin policies para anon/auth, escritura exclusiva de service_role). No es un script de migración ni de operaciones sobre datos de negocio: la escritura acotada a esta tabla ES el propósito de la función. El guard de producción no aplica porque el destino real ES producción legítima del editor, no una escritura accidental."
+    "scripts/gaceta/insert-edicion-20261127.mjs": "ADN-GACETA-WATCHDOG-001: publicación de la edición diaria del Diario Contable (ADN-011). Escribe SOLO en public.gaceta_posts vía service_role con INSERT idempotente (slug único, ON CONFLICT implícito por REST 409). La tabla es la superficie designada para el editor automático (migración 20261124120000: RLS sin policies para anon/auth, escritura exclusiva de service_role). No es un script de migración ni de operaciones sobre datos de negocio: la escritura acotada a esta tabla ES el propósito de la función. El guard de producción no aplica porque el destino real ES producción legítima del editor, no una escritura accidental.",
+    "scripts/cpsec-fx-table-forensic.mjs": "CP-SEC-EXCHANGE-RATES-BACKUP-HARDENING-001: sondeo forense READ-ONLY por Management API (endpoint database/query con SELECT de catálogo, estadísticas pg_stat y hash de contenido) — la señal de POST/escritura la dispara el propio endpoint de consulta SQL, pero el script NO ejecuta DML/DDL ni mutaciones: verificación read-only re-ejecutable."
   },
   "_doc_note_cpfx": "CP-FX-001: canal gobernado de recuperación histórica (assertNotProduction + doble flag)."
 }
