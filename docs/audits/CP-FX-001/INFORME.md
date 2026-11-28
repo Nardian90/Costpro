@@ -98,7 +98,7 @@ Detalle por fuente tras la recuperación: elToque 285 filas (166 real + 119 esti
 | UI real (read-only) | **13/13 PASS** (detalle en §D) |
 | Secretos en el diff | 0 (escaneo de los patrones de credenciales del prompt de inicio: PAT de GitHub y claves Supabase/JWT — la única coincidencia era este propio documento describiendo el escaneo, reformulado) |
 | Workflows | CI del PR (checks al abrirse; resultado en el PR) |
-| PR | Ver descripción del PR (número/enlace al abrirse) |
+| PR | **#1745** — https://github.com/Nardian90/Costpro/pull/1745 (SIN fusionar — espera autorización del propietario) |
 
 ### Incidencias pendientes / limitaciones
 1. **elTOQUE API sin token**: la TRMI volvió a publicar y la API está activa, pero el token se solicita por formulario y no estaba disponible. Cuando el propietario lo obtenga, la ruta `recover` es extensible para recuperar la era elToque con su fuente primaria (sustituyendo estimaciones por reales, sin tocar Diviza).
