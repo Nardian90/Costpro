@@ -54,6 +54,9 @@ const CHART_COLOR_INFORMAL = '#ea580c';
 const CHART_COLOR_TREND = '#71717a'; // gris neutro: línea auxiliar de tendencia (sin hue)
 const CHART_COLOR_FORECAST_OFICIAL = '#93c5fd'; // azul claro: proyección de la serie oficial (dashed)
 const CHART_COLOR_FORECAST_INFORMAL = '#c2410c';
+// CP-FX-001: estimaciones reconstruidas (interpolación) — ámbar discontinuo:
+// misma familia del informal pero distinguible de las observaciones reales.
+const CHART_COLOR_ESTIMATED = '#d97706'; // amber-600: contraste >=3:1 sobre blanco
 const CHART_COLOR_VARIATION_POS = '#16a34a'; // verde-600: contraste >=3:1 sobre blanco
 const CHART_COLOR_VARIATION_NEG = '#ef4444';
 
@@ -485,10 +488,18 @@ function HistoryTab({
 
     const historical = (filtered as any[]).map((d: any, i: number) => {
       const isLast = i === filtered.length - 1;
+      // CP-FX-001 (misión §5): separación honesta observado/estimado.
+      //   - `informal`: SOLO observaciones (real + arrastre virtual) — línea sólida.
+      //   - `informalEstimated`: SOLO reconstrucciones (capture_method='estimated')
+      //     — línea discontinua ámbar, jamás presentada como cotización del mercado.
+      const isEstimated = d.informalCaptureMethod === 'estimated';
       return {
         date: d.date,
         oficial: d.oficial != null ? Number(d.oficial) : null,
-        informal: d.informal != null ? Number(d.informal) : null,
+        informal: d.informal != null && !isEstimated ? Number(d.informal) : null,
+        informalEstimated: d.informal != null && isEstimated ? Number(d.informal) : null,
+        informalConfidence: d.informalConfidence ?? null,
+        informalReconstructionMethod: d.informalReconstructionMethod ?? null,
         trend: trendValues[i],
         // En el último punto histórico, sembrar los valores de proyección = valor real
         // para que la línea de proyección conecte visualmente con la línea histórica.
@@ -533,6 +544,9 @@ function HistoryTab({
           date: dateStr,
           oficial: null,
           informal: null,
+          informalEstimated: null,
+          informalConfidence: null,
+          informalReconstructionMethod: null,
           trend: null,
           forecastOficial: projOficial,
           forecastInformal: projInformal,
@@ -986,7 +1000,12 @@ function HistoryTab({
           <div className="flex items-center gap-2">
             <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_INFORMAL }} />
             <span className="text-foreground">USD Informal</span>
-            <span className="text-xs font-normal text-muted-foreground">(serie unificada: procedencia en el tooltip)</span>
+            <span className="text-xs font-normal text-muted-foreground">(observada; procedencia en el tooltip)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-6 h-1.5 rounded-full border-t-2 border-dashed" style={{ borderColor: CHART_COLOR_ESTIMATED }} />
+            <span className="text-foreground">USD Informal estimada</span>
+            <span className="text-xs font-normal text-muted-foreground">(reconstrucción, no es observación)</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block w-6 h-1.5 rounded-full" style={{ backgroundColor: CHART_COLOR_OFICIAL }} />
@@ -1060,10 +1079,10 @@ function HistoryTab({
               />
             )}
 
-            {/* Informal (serie unificada Diviza + elToque) — naranja (identidad categórica).
+            {/* Informal OBSERVADA (serie unificada Diviza + elToque + Cuba Clara real) — naranja.
                 IC-UX-HISTORY-004: SIN connectNulls — los días sin cotización
-                verificable permanecen como HUECOS visibles (misión §4: nunca
-                interpolar para que el gráfico parezca continuo). */}
+                verificable permanecen como HUECOS visibles. CP-FX-001: los días
+                RECONSTRUIDOS salieron de esta serie (van en informalEstimated). */}
             {chartMode === 'area' && (
               <Area
                 type="monotone"
@@ -1096,6 +1115,23 @@ function HistoryTab({
                 radius={[4, 4, 0, 0]}
               />
             )}
+
+            {/* CP-FX-001 (misión §5): cotizaciones ESTIMADAS (reconstrucción
+                estadística identificada) — línea DISCONTINUA ámbar con puntos:
+                continuidad visual sin presentarlas jamás como observaciones.
+                Los puntos sueltos (estimación aislada entre observaciones) se
+                ven como punto, no como tramo. */}
+            <Line
+              type="monotone"
+              dataKey="informalEstimated"
+              stroke={CHART_COLOR_ESTIMATED}
+              strokeWidth={2}
+              strokeDasharray="6 4"
+              dot={{ r: 2.5, fill: CHART_COLOR_ESTIMATED, stroke: 'hsl(var(--card))', strokeWidth: 1 }}
+              activeDot={{ r: 5, fill: CHART_COLOR_ESTIMATED, stroke: 'hsl(var(--card))', strokeWidth: 2 }}
+              name="USD Informal (estimada)"
+              connectNulls
+            />
 
             {/* BCC (oficial) — azul. Sin connectNulls: huecos honestos. */}
             {chartMode === 'area' && (
@@ -1312,21 +1348,43 @@ function HistoryTab({
 function UnifiedSeriesTooltip({ active, payload, label }: any) {
   if (!active || !payload || payload.length === 0) return null;
   const point = payload[0]?.payload as
-    | (UnifiedHistoryPoint & { isForecast?: boolean; trend?: number | null; forecastInformal?: number | null; forecastOficial?: number | null })
+    | (UnifiedHistoryPoint & {
+        isForecast?: boolean;
+        trend?: number | null;
+        forecastInformal?: number | null;
+        forecastOficial?: number | null;
+        /** CP-FX-001: valor ESTIMADO del día (reconstrucción estadística). */
+        informalEstimated?: number | null;
+        informalConfidence?: string | null;
+        informalReconstructionMethod?: string | null;
+      })
     | undefined;
   if (!point) return null;
 
   const fmt = (v: number | null | undefined) =>
     v != null && Number.isFinite(v) ? v.toFixed(0) : '—';
 
+  // CP-FX-001: el valor informal del día puede ser OBSERVADO (informal) o
+  // ESTIMADO (informalEstimated) — la fila del tooltip distingue ambos.
+  const observedInformal = point.informal != null ? Number(point.informal) : null;
+  const estimatedInformal =
+    point.informalEstimated != null ? Number(point.informalEstimated) : null;
+  const shownInformal = observedInformal ?? estimatedInformal;
+  const isEstimatedPoint = observedInformal == null && estimatedInformal != null;
+
   const provenanceLabel = (() => {
-    if (point.informal == null) return null;
+    if (shownInformal == null) return null;
     if (point.informalSource == null) return 'procedencia pendiente del archivo';
     if (point.informalCaptureMethod === 'carry_forward') {
       return `arrastre de ${point.informalSource} (valor del ${point.informalOriginalRateDate ?? '—'})`;
     }
     if (point.informalCaptureMethod === 'estimated') {
-      return `${point.informalSource} · estimada`;
+      // CP-FX-001: la procedencia de una estimación declara método y confianza.
+      const method = point.informalReconstructionMethod === 'interpolacion_lineal'
+        ? 'interpolación lineal'
+        : point.informalReconstructionMethod ?? 'reconstrucción estadística';
+      const conf = point.informalConfidence ? ` · confianza ${point.informalConfidence}` : '';
+      return `${point.informalSource} · ESTIMADA (${method}${conf}) — no es observación del mercado`;
     }
     return point.informalSource;
   })();
@@ -1340,17 +1398,17 @@ function UnifiedSeriesTooltip({ active, payload, label }: any) {
         borderColor: 'hsl(var(--border))',
         color: 'hsl(var(--foreground))',
         fontSize: '14px',
-        maxWidth: '320px',
+        maxWidth: '340px',
       }}
     >
       <p className="font-black mb-1.5 font-mono" style={{ color: 'hsl(var(--foreground))' }}>{label}</p>
-      {point.informal != null && (
-        <p className="flex items-center gap-2 py-0.5">
-          <span aria-hidden="true" className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: CHART_COLOR_INFORMAL }} />
-          <span className="font-bold">Informal:</span>
-          <span className="font-mono font-bold">{fmt(point.informal)} CUP</span>
+      {shownInformal != null && (
+        <p className="flex items-center gap-2 py-0.5 flex-wrap">
+          <span aria-hidden="true" className="inline-block w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: isEstimatedPoint ? CHART_COLOR_ESTIMATED : CHART_COLOR_INFORMAL }} />
+          <span className="font-bold">{isEstimatedPoint ? 'Informal (estimada):' : 'Informal:'}</span>
+          <span className="font-mono font-bold">{fmt(shownInformal)} CUP</span>
           {provenanceLabel && (
-            <span className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>· {provenanceLabel}</span>
+            <span className="text-xs w-full" style={{ color: 'hsl(var(--muted-foreground))' }}>· {provenanceLabel}</span>
           )}
         </p>
       )}
@@ -1366,7 +1424,7 @@ function UnifiedSeriesTooltip({ active, payload, label }: any) {
           Punto PROYECTADO (regresión) — no es una cotización observada.
         </p>
       )}
-      {point.informal == null && point.oficial == null && !point.isForecast && (
+      {shownInformal == null && point.oficial == null && !point.isForecast && (
         <p className="text-xs" style={{ color: 'hsl(var(--muted-foreground))' }}>Sin cotización verificable este día.</p>
       )}
     </div>

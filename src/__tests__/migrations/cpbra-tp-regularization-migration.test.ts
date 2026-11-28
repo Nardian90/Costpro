@@ -111,7 +111,7 @@ describe('CP-BRA FASE 4 — 20261127160000_cpbra_tienda_pueblo_receipts.sql', ()
     );
     // COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: el stream creció
     // a 226 con 20261128120000 (+1 R-06 de main) (create_sale_v2 /36, transfer identity).
-    expect(manifest.total_incluidos).toBe(226);
+    expect(manifest.total_incluidos).toBe(227); // CP-FX-001: +1 migración 20261128120000_cp_fx_recovery_traceability
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127160000_cpbra_tienda_pueblo_receipts.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

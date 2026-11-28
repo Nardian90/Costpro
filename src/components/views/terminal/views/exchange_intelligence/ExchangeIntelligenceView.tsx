@@ -150,6 +150,17 @@ const isInformalSource = isActiveInformalSource;
 const isRealCaptureRow = (r: ExchangeRate): boolean => r.capture_method !== 'carry_forward';
 
 /**
+ * CP-FX-001: OBSERVACIÓN verificada — real y no reconstruida. La selección de
+ * la tasa VIGENTE (tarjeta, brecha, indicadores) exige capture_method='real':
+ * las reconstrucciones estadísticas históricas ('estimated', importadas para
+ * continuidad por CP-FX-001) JAMÁS se presentan como tasa actual del mercado,
+ * igual que las virtuales carry_forward. Regla idéntica a informal_latest de
+ * /api/exchange-rates (sin divergencia cliente/servidor).
+ */
+const isObservedCaptureRow = (r: ExchangeRate): boolean =>
+  r.capture_method === 'real' || (r.capture_method ?? '') === '';
+
+/**
  * De varias filas informales del MISMO día, devuelve la prioritaria: la
  * REAL con captured_at más reciente (las virtuales solo si no hay reales —
  * continuidad del gráfico, nunca la selección de la tarjeta).
@@ -314,7 +325,7 @@ export function ExchangeIntelligenceView() {
   // la fecha operativa. Misma regla que la API (informal_latest) y el RPC
   // contable.
   const usdInformalRates = rates
-    .filter(r => isInformalSource(r.source) && r.currency === 'USD' && isRealCaptureRow(r))
+    .filter(r => isInformalSource(r.source) && r.currency === 'USD' && isObservedCaptureRow(r))
     .sort(byVigente);
   // El primero del array ordenado DESC es el más reciente (hoy).
   // Sin registro informal NO se inventa valor: null → estado "sin dato fiable".
@@ -443,7 +454,7 @@ export function ExchangeIntelligenceView() {
               (typeof data.operative_date === 'string' && data.operative_date) || todayStr,
             );
             const lastReal = (freshRates as ExchangeRate[])
-              .filter(r => isInformalSource(r.source) && r.currency === 'USD' && isRealCaptureRow(r))
+              .filter(r => isInformalSource(r.source) && r.currency === 'USD' && isObservedCaptureRow(r))
               .sort(byVigenteNow)[0];
             if (lastReal) {
               description += `. Última tasa real: ${lastReal.rate} CUP/USD del ${lastReal.rate_date} (${lastReal.source})`;

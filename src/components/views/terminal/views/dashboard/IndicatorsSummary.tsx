@@ -37,6 +37,11 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { useAuthStore } from '@/store';
 import { useProductComparison } from '@/hooks/api/useProductComparison';
 import { percentChange, previousMonthEquivalentWindow, toDateInputValue } from '@/lib/sales-dashboard/periods';
+// CP-FX-001 (FASE 1): tarjeta premium del dólar informal — MISMA fuente que
+// Inteligencia Cambiaria (/api/exchange-rates source=informal), sin segunda
+// fuente de datos. Se ubica tras el grid de KPIs: indicador financiero
+// externo (mercado cambiario) separado de los KPIs internos de la tienda.
+import { InformalUsdRateCard } from './InformalUsdRateCard';
 
 /** Variación absoluta con signo, redondeada al centavo. */
 function absDiff(current: number, previous: number): number {
@@ -263,6 +268,11 @@ export function IndicatorsSummary() {
           </p>
         </div>
       </div>
+
+      {/* CP-FX-001 — Tarjeta premium: dólar informal del mercado cubano.
+          La misma serie de Inteligencia Cambiaria (informal_latest), con
+          fecha real del dato, hora de actualización y variación diaria. */}
+      <InformalUsdRateCard />
 
       {/* Referencia separada de USD (misión §4.2: no mezclar monedas) */}
       {usdNominal !== 0 && (
