@@ -1147,7 +1147,13 @@ async function buildEstandarChildren(
       out.push(para([run(`${methodLabel(String(p.payment_method))} (${p.currency}) · ${p.ref_type === 'receipt' ? 'Recepción de Mercancía' : 'Servicio Recibido'}`, { bold: true, size: 18 })], { before: 60, after: 20, keepNext: true }));
       out.push(para([run(`${p.payment_count} pagos · Total: -${fmtStd(Number(p.total), String(p.currency))}`, { color: C_DANGER, size: 14 })], { after: 40 }));
       try {
-        const items = await fetchDetailRows(d.startDate, d.endDate, 'payment', String(p.payment_method), String(p.currency), String(p.ref_type));
+        const allItems = await fetchDetailRows(d.startDate, d.endDate, 'payment', String(p.payment_method), String(p.currency), String(p.ref_type));
+        // MISIÓN SRV-PAYMENT-DATE (FASE 2): el Word respeta la selección de pagos
+        // — los DESMARCADOS se excluyen del detalle y de sus cálculos (paridad
+        // exacta con el PDF; misma fuente y mismo filtro).
+        const items = ctx.excludedPaymentIds && ctx.excludedPaymentIds.size > 0
+          ? allItems.filter((it: any) => !ctx.excludedPaymentIds!.has(String(it.id)))
+          : allItems;
         if (items.length > 0) {
           const payRows: (string | number)[][] = items.map((it: any) => {
             const date = String(it.payment_date || it.created_at || '').slice(0, 16).replace('T', ' ');

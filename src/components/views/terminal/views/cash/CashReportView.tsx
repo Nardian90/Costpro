@@ -114,6 +114,16 @@ import {
   type SummaryConceptKey,
   type SaleCurrencyClass,
 } from '@/lib/cash-report/report-selection';
+// MISIÓN SRV-PAYMENT-DATE-AND-DELIVERY-REPORT-FILTERS-001 (FASE 2): selección
+// de PAGOS — espejo exacto de la selección de ventas para la sección «C. Pagos
+// efectivamente realizados · Proveedores»: checkbox por pago, selección
+// general con indeterminado, cuadre recalculado al instante y PDF/Excel/Word
+// que respetan la selección (los desmarcados no computan ni se exportan).
+import {
+  buildPaymentsAdjustedReport,
+  isSelectablePaymentRow,
+  type PaymentSelectionRow,
+} from '@/lib/cash-report/payments-selection';
 
 type ReportTab = 'resultados' | 'desglose' | 'preview';
 
@@ -211,6 +221,12 @@ export default function CashReportView() {
   // persiste: un reporte de otro día/tienda/período nunca hereda selecciones
   // (misión §6) — se reconstruye al cambiar de tienda o período.
   const [excludedSales, setExcludedSales] = useState<ReadonlySet<string>>(() => new Set<string>());
+  // ══ MISIÓN SRV-PAYMENT-DATE (FASE 2) · selección de PAGOS ══
+  // excludedPayments: ids DESMARCADOS (default = todo incluido, igual que las
+  // ventas). paymentDocs: filas individuales conocidas por grupo de acordeón
+  // (fuente de los checkboxes y del delta exacto — solo filas elegibles).
+  const [excludedPayments, setExcludedPayments] = useState<ReadonlySet<string>>(() => new Set<string>());
+  const [paymentDocs, setPaymentDocs] = useState<Record<string, PaymentSelectionRow[]>>({});
   // Filtro por composición REAL de los pagos (CUP/USD/Mixta) — no conversión.
   const [saleClassFilter, setSaleClassFilter] = useState<'' | SaleCurrencyClass>('');
 
@@ -406,6 +422,42 @@ export default function CashReportView() {
     }
     return buildSelectionAdjustedReport(applied.report, salesRows, effectiveExcluded);
   }, [applied, salesRows, effectiveExcluded]);
+
+  // ══ MISIÓN SRV-PAYMENT-DATE (FASE 2) · reporte AJUSTADO por selección de pagos ══
+  // Filas individuales conocidas (cache de acordeones de pagos, sin duplicados):
+  const paymentRows = useMemo<readonly PaymentSelectionRow[]>(() => {
+    const byId = new Map<string, PaymentSelectionRow>();
+    for (const rows of Object.values(paymentDocs)) {
+      for (const r of rows) if (!byId.has(r.id)) byId.set(r.id, r);
+    }
+    return [...byId.values()];
+  }, [paymentDocs]);
+  // Espejo exacto de `selection` (ventas): sustituye SOLO el campo `payments`
+  // (grupos) por el recalculado con los pagos desmarcados. La MISMA fórmula
+  // única (computeDailySummary) consume este objeto en pantalla, vista previa,
+  // PDF, Excel y Word — una sola fuente, sin algoritmo paralelo.
+  const paymentsSelection = useMemo(() => {
+    if (!applied?.report) {
+      return {
+        report: null as CashReport | null,
+        selectionActive: false,
+        totals: { groups: [], knownRows: 0, includedRows: 0, paymentCountIncluded: 0, paymentCountTotal: 0 },
+        rows: [] as readonly PaymentSelectionRow[],
+      };
+    }
+    return buildPaymentsAdjustedReport(selection.report ?? applied.report, paymentRows, excludedPayments);
+  }, [applied, selection, paymentRows, excludedPayments]);
+  // Acciones de selección de pagos (mismo lenguaje que las de ventas).
+  const togglePaymentExcluded = useCallback((id: string) => {
+    setExcludedPayments(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+  const setPaymentsIncluded = useCallback((included: boolean) => {
+    setExcludedPayments(included ? new Set<string>() : new Set(paymentRows.map(r => r.id)));
+  }, [paymentRows]);
   // MISIÓN REE-2026-11-09 · Selección INDEPENDIENTE por tarjeta (checkbox).
   // Cada tarjeta alterna EXCLUSIVAMENTE su propio estado; el resto conserva el
   // suyo SIEMPRE. Causa raíz corregida: antes, desde «Todos» el primer clic
@@ -453,11 +505,17 @@ export default function CashReportView() {
     setExpandedSaleGroups(new Set());
     setSaleRowsLimit({});
     setSelectedUsers('all'); // MISIÓN FILTRO MULTIUSUARIO: nuevo universo ⇒ Todos
+    // MISIÓN SRV-PAYMENT-DATE (FASE 2): la selección de pagos se RECONSTRUYE al
+    // cambiar de tienda o período (nunca hereda exclusiones de otro universo).
+    setExcludedPayments(new Set<string>());
+    setPaymentDocs({});
   }, [applied?.cfg.startDate, applied?.cfg.endDate, user?.activeStoreId]);
 
   // ── AUDITORÍA 2026-10: Resumen del Día con la fórmula centralizada (misma que PDF) ──
-  const cupSummaryMemo = useMemo<DailySummary>(() => computeDailySummary(selection.report, 'CUP'), [selection]);
-  const usdSummaryMemo = useMemo<DailySummary>(() => computeDailySummary(selection.report, 'USD'), [selection]);
+  // MISIÓN SRV-PAYMENT-DATE (FASE 2): el resumen consume el reporte ajustado
+  // TAMBIÉN por la selección de pagos — los desmarcados no computan en el cuadre.
+  const cupSummaryMemo = useMemo<DailySummary>(() => computeDailySummary(paymentsSelection.report, 'CUP'), [paymentsSelection]);
+  const usdSummaryMemo = useMemo<DailySummary>(() => computeDailySummary(paymentsSelection.report, 'USD'), [paymentsSelection]);
 
   // ── MISIÓN CONCILIACIÓN (2026-10-26): resultado personalizado + oficial ──
   // Misma fuente que vista previa, PDF, impresión y Excel (custom-result.ts):
@@ -467,7 +525,7 @@ export default function CashReportView() {
   const customResultsView = useMemo(() => {
     if (!applied?.report) return null;
     const base = applied.report;
-    const sel = selection.report ?? base;
+    const sel = paymentsSelection.report ?? base;
     const cupOficial = computeDailySummary(base, 'CUP');
     const usdOficial = computeDailySummary(base, 'USD');
     const cupSeleccion = computeDailySummary(sel, 'CUP');
@@ -479,7 +537,7 @@ export default function CashReportView() {
       CUP: computeCustomCurrencyResult('CUP', cupOficial, cupSeleccion, summaryConcepts, counts, usdOficial),
       USD: computeCustomCurrencyResult('USD', usdOficial, usdSeleccion, summaryConcepts, counts, cupOficial),
     };
-  }, [applied, selection, summaryConcepts]);
+  }, [applied, selection, paymentsSelection, summaryConcepts]);
 
   // ── Totales y esperados (§5.4: sin conversión, monedas separadas) ──
   const cupTotal = useMemo(() => breakdownTotal(cupBreakdown), [cupBreakdown]);
@@ -577,7 +635,11 @@ export default function CashReportView() {
     filterLabel: saleClassFilter ? (saleClassFilter === 'MIXTA' ? 'Mixta' : saleClassFilter === 'OTRA' ? 'Otra moneda' : saleClassFilter) : undefined,
     // MISIÓN FILTRO MULTIUSUARIO: el documento documenta el conjunto por creador.
     userLabel: userFilterLabel,
-  }), [selection.totals, saleClassFilter, userFilterLabel]);
+    // MISIÓN SRV-PAYMENT-DATE (FASE 2): el documento documenta el conjunto de
+    // pagos (universo completo del RPC vs. incluidos tras la selección).
+    paymentsIncluded: paymentsSelection.totals.paymentCountIncluded,
+    paymentsTotal: paymentsSelection.totals.paymentCountTotal,
+  }), [selection.totals, saleClassFilter, userFilterLabel, paymentsSelection.totals]);
 
   // Denominaciones visibles: activadas ∪ personalizadas ∪ con conteo (nada contado se oculta)
   const cupDisplayDenoms = useMemo(() => {
@@ -739,7 +801,22 @@ export default function CashReportView() {
         let url = `/api/cash-report/details?type=${type}&method=${method}&currency=${currency}&start_date=${encodeURIComponent(s)}&end_date=${encodeURIComponent(e)}`;
         if (refType) url += `&ref_type=${refType}`;
         const data = await apiFetch(url);
-        setItemDetails(prev => ({ ...prev, [key]: Array.isArray(data) ? data : (data?.data || []) }));
+        const rows = Array.isArray(data) ? data : (data?.data || []);
+        setItemDetails(prev => ({ ...prev, [key]: rows }));
+        // MISIÓN SRV-PAYMENT-DATE (FASE 2): cache de filas ELEGIBLES de pago
+        // (direction 'in' + documento válido — la misma elegibilidad que aplica
+        // el endpoint ahora). Es la fuente de los checkboxes y del DELTA exacto
+        // de los grupos ajustados; una fila solo puede desmarcarse si es visible.
+        if (type === 'payment') {
+          // Filtro booleano + cast explícito: el predicate del módulo no puede
+          // estrechar Record<string, unknown> directamente (TS2677 — la
+          // interfaz no lleva index signature) y el filter sin predicate cae a
+          // la sobrecarga booleana devolviendo el elemento original.
+          const eligible = (rows as Array<Record<string, unknown>>).filter(
+            r => isSelectablePaymentRow(r as unknown as PaymentSelectionRow),
+          ) as unknown as PaymentSelectionRow[];
+          setPaymentDocs(prev => ({ ...prev, [key]: eligible }));
+        }
       } catch {
         setItemDetails(prev => ({ ...prev, [key]: [] }));
         toast.error('Error al cargar documentos');
@@ -760,10 +837,13 @@ export default function CashReportView() {
     options: pdfOptionsWithConcepts, // opciones siempre parte de la firma
     concepts: summaryConcepts,
     excludedSales: [...excludedSales].sort(),
+    // MISIÓN SRV-PAYMENT-DATE (FASE 2): la selección de pagos invalida el cache
+    // — vista previa y descarga SIEMPRE reflejan el conjunto vigente.
+    excludedPayments: [...excludedPayments].sort(),
     cfg: applied?.cfg ?? null,
     cupBreakdown, usdBreakdown, deliveredBy, recipientName, madeBy,
     cupDenoms, usdDenoms, customDenoms,
-  }), [pdfTemplate, pdfOrientation, pdfOptions, summaryConcepts, excludedSales, applied, cupBreakdown, usdBreakdown, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, customDenoms]);
+  }), [pdfTemplate, pdfOrientation, pdfOptions, summaryConcepts, excludedSales, excludedPayments, applied, cupBreakdown, usdBreakdown, deliveredBy, recipientName, madeBy, cupDenoms, usdDenoms, customDenoms]);
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -797,7 +877,9 @@ export default function CashReportView() {
   // PDF, impresión, vista previa y Excel consumen el MISMO contrato con el
   // resultado personalizado + oficial + auditoría (misión §6).
   const buildSelectionCtx = useCallback(() => ({
-    report: (selection.report ?? applied?.report)!,
+    // MISIÓN SRV-PAYMENT-DATE (FASE 2): el reporte ajustado también por la
+    // selección de pagos (los grupos `payments` ya llegan sin los desmarcados).
+    report: (paymentsSelection.report ?? selection.report ?? applied?.report)!,
     officialReport: applied?.report ?? undefined,
     salesCounts: {
       validas: selection.totals.totalCount,
@@ -805,7 +887,11 @@ export default function CashReportView() {
     },
     concepts: summaryConcepts,
     selectionMeta,
-  }), [selection, applied, summaryConcepts, selectionMeta]);
+    // MISIÓN SRV-PAYMENT-DATE (FASE 2): el PDF/Word filtran las filas del
+    // detalle «SALIDAS DE DINERO» por estos ids — un pago desmarcado no aparece
+    // en el documento ni en sus cálculos (los grupos del resumen ya llegan ajustados).
+    excludedPaymentIds: excludedPayments,
+  }), [paymentsSelection, selection, applied, summaryConcepts, selectionMeta, excludedPayments]);
   const applySelectionToSummaries = useCallback((summaries: CashReportSummaries | undefined): CashReportSummaries | undefined => {
     if (!summaries || !selection.selectionActive) return summaries;
     // MISIÓN FILTRO MULTIUSUARIO: la tabla por producto se recalcula sobre el
@@ -848,6 +934,7 @@ export default function CashReportView() {
         orientation: pdfOrientation,
         concepts: selCtx.concepts,
         selectionMeta: selCtx.selectionMeta,
+        excludedPaymentIds: selCtx.excludedPaymentIds,
       }, summaries);
       const url = doc.output('bloburl');
       const old = previewUrlRef.current;
@@ -910,6 +997,7 @@ export default function CashReportView() {
         orientation: pdfOrientation,
         concepts: selCtx.concepts,
         selectionMeta: selCtx.selectionMeta,
+        excludedPaymentIds: selCtx.excludedPaymentIds,
       }, summaries);
       toast.success(`Excel generado: ${filename}`);
     } catch (err: unknown) {
@@ -954,6 +1042,7 @@ export default function CashReportView() {
         orientation: pdfOrientation,
         concepts: selCtx.concepts,
         selectionMeta: selCtx.selectionMeta,
+        excludedPaymentIds: selCtx.excludedPaymentIds,
       }, summaries);
       toast.success(`Word generado: ${filename}`);
     } catch (err: unknown) {
@@ -994,6 +1083,7 @@ export default function CashReportView() {
           orientation: pdfOrientation,
           concepts: selCtx.concepts,
           selectionMeta: selCtx.selectionMeta,
+          excludedPaymentIds: selCtx.excludedPaymentIds,
         }, summaries);
         if (previewSigRef.current === previewSignature) { previewDocRef.current = doc; }
       }
@@ -1312,6 +1402,15 @@ export default function CashReportView() {
                 setExpandedSaleGroups={setExpandedSaleGroups}
                 saleRowsLimit={saleRowsLimit}
                 setSaleRowsLimit={setSaleRowsLimit}
+                // MISIÓN SRV-PAYMENT-DATE (FASE 2): selección de pagos —
+                // grupos AJUSTADOS + estado y acciones (espejo de las ventas).
+                payments={((paymentsSelection.report ?? applied?.report) as CashReport | undefined)?.payments as Array<Record<string, unknown>> ?? []}
+                excludedPayments={excludedPayments}
+                onTogglePayment={togglePaymentExcluded}
+                onSetPaymentsIncluded={setPaymentsIncluded}
+                paymentDocs={paymentDocs}
+                paymentsIncludedCount={paymentsSelection.totals.paymentCountIncluded}
+                paymentsTotalCount={paymentsSelection.totals.paymentCountTotal}
                 userCards={userCards}
                 selectedUsers={selectedUsers}
                 onToggleUserCard={toggleUserCard}
@@ -2358,6 +2457,18 @@ interface ResultadosPanelProps {
   setExpandedSaleGroups: (v: Set<string>) => void;
   saleRowsLimit: Record<string, number>;
   setSaleRowsLimit: (v: Record<string, number>) => void;
+  // ══ MISIÓN SRV-PAYMENT-DATE (FASE 2) · selección de PAGOS ══
+  /** Grupos de pagos del reporte AJUSTADO (desmarcados ya restados). */
+  payments: Array<Record<string, unknown>>;
+  /** Ids de pagos DESMARCADOS (los no excluidos están incluidos por defecto). */
+  excludedPayments: ReadonlySet<string>;
+  onTogglePayment: (id: string) => void;
+  onSetPaymentsIncluded: (included: boolean) => void;
+  /** Filas individuales conocidas por acordeón (fuente de los checkboxes). */
+  paymentDocs: Record<string, PaymentSelectionRow[]>;
+  /** Universo completo del RPC vs. incluidos (para el contador/indeterminado). */
+  paymentsIncludedCount: number;
+  paymentsTotalCount: number;
   // ══ MISIÓN FILTRO MULTIUSUARIO (2026-11-08) ══
   userCards: SalesByUserCard[];
   selectedUsers: 'all' | ReadonlySet<string>;
@@ -2390,11 +2501,50 @@ function ResultadosPanel(p: ResultadosPanelProps) {
   const filterSales = (s: Record<string, unknown>) => (!p.filterCurrency || s.currency === p.filterCurrency) && (!p.filterMethod || s.payment_method === p.filterMethod);
   const filterPayments = (q: Record<string, unknown>) => (!p.filterCurrency || q.currency === p.filterCurrency) && (!p.filterMethod || q.payment_method === p.filterMethod);
 
-  const renderAccordionItem = (key: string, pm: string, currency: string, sublabel: string, amount: number, isNeg = false, refType?: string) => {
+  // ══ MISIÓN SRV-PAYMENT-DATE (FASE 2) · selección de pagos (espejo de ventas) ══
+  // Filas individuales conocidas del grupo (method × currency × ref_type): el
+  // RPC garantiza UNICIDAD de ese triple en `payments`, así que el match es
+  // exacto aunque la cache esté indexada por clave de acordeón.
+  const knownPaymentRows = useMemo(() => {
+    const out: PaymentSelectionRow[] = [];
+    for (const rows of Object.values(p.paymentDocs)) out.push(...rows);
+    return out;
+  }, [p.paymentDocs]);
+  const rowsForPaymentGroup = (pm: string, currency: string, refType: string) =>
+    knownPaymentRows.filter(r => r.payment_method === pm && String(r.currency).toUpperCase() === String(currency).toUpperCase() && r.ref_type === refType);
+  const allPaymentsIncluded = p.excludedPayments.size === 0;
+  const allPaymentsRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    // Indeterminado = selección PARCIAL: hay pagos desmarcados pero el reporte
+    // aún incluye algunos (universo completo del RPC).
+    if (allPaymentsRef.current) {
+      allPaymentsRef.current.indeterminate = !allPaymentsIncluded && p.paymentsIncludedCount > 0;
+    }
+  }, [allPaymentsIncluded, p.paymentsIncludedCount]);
+
+  const renderAccordionItem = (key: string, pm: string, currency: string, sublabel: string, amount: number, isNeg = false, refType?: string, selection?: { rows: PaymentSelectionRow[] }) => {
     const docs = p.itemDetails[key] || [];
     const isLoading = p.loadingDetails.has(key);
     const isExpanded = p.expandedItems.has(key);
+    // MISIÓN SRV-PAYMENT-DATE (FASE 2): con selección activa, el TOTAL del
+    // acordeón y del pie reflejan SOLO los documentos incluidos (los
+    // desmarcados permanecen visibles con opacidad, sin afectar el total).
+    const selectableDocs = selection
+      ? (docs as unknown[]).filter(
+          (d): d is PaymentSelectionRow => isSelectablePaymentRow(d as unknown as PaymentSelectionRow),
+        )
+      : [];
     const docsTotal = docs.reduce((s: number, d: unknown) => s + Number((d as Record<string, unknown>).amount_cup || (d as Record<string, unknown>).amount || (d as Record<string, unknown>).total || (d as Record<string, unknown>).total_amount || 0), 0);
+    const docsIncludedTotal = selection
+      ? selectableDocs.reduce((s: number, d) => {
+          if (p.excludedPayments.has(d.id)) return s;
+          const amt = Number((d as unknown as Record<string, unknown>).amount_cup || (d as unknown as Record<string, unknown>).amount || 0);
+          return s + amt;
+        }, 0)
+      : docsTotal;
+    const docsIncludedCount = selection
+      ? selectableDocs.filter(d => !p.excludedPayments.has(d.id)).length
+      : docs.length;
     return (
       <div key={key} className="rounded-lg border border-border/30 overflow-hidden">
         <button onClick={() => p.toggleAccordion(key, isNeg ? 'payment' : 'sale', pm, currency, refType)}
@@ -2423,6 +2573,7 @@ function ResultadosPanel(p: ResultadosPanelProps) {
                 <table className="w-full text-[10px]">
                   <thead className="sticky top-0 bg-muted/30 z-10">
                     <tr className="text-[9px] font-black uppercase text-muted-foreground border-b border-border/30">
+                      {selection && <th className="p-1.5 w-8 text-center"><span className="sr-only">Incluir en el reporte</span></th>}
                       <th className="p-1.5 text-left">Fecha</th>
                       <th className="p-1.5 text-left">Referencia / Cliente</th>
                       <th className="p-1.5 text-right shrink-0">Monto {currency}</th>
@@ -2437,8 +2588,31 @@ function ResultadosPanel(p: ResultadosPanelProps) {
                       const ref = String(doc.reference || doc.reference_doc || doc.notes || '');
                       const customer = String(doc.customer_name || '');
                       const docRefType = String(doc.ref_type || '');
+                      // MISIÓN SRV-PAYMENT-DATE (FASE 2): checkbox por pago —
+                      // mismo lenguaje visual que las ventas (opacidad en el
+                      // desmarcado + aria-label con fecha/importe).
+                      const docSelectable = selection ? isSelectablePaymentRow(doc as unknown as PaymentSelectionRow) : false;
+                      const docExcluded = docSelectable && p.excludedPayments.has(String(doc.id));
+                      const docId = docSelectable ? String(doc.id) : `__row_${i}`;
                       return (
-                        <tr key={i} className="border-b border-border/10 hover:bg-muted/20">
+                        <tr
+                          key={docId}
+                          className={cn('border-b border-border/10 hover:bg-muted/20', docExcluded && 'opacity-50')}
+                          data-excluded={docExcluded || undefined}
+                        >
+                          {selection && (
+                            <td className="p-1.5 text-center">
+                              {docSelectable && (
+                                <input
+                                  type="checkbox"
+                                  checked={!docExcluded}
+                                  onChange={() => p.onTogglePayment(String(doc.id))}
+                                  aria-label={`Incluir el pago del ${date}${ref ? ` (${ref})` : ''} por ${fmt(Math.abs(amt), currency)} ${currency} en el reporte`}
+                                  className="w-4 h-4 accent-primary cursor-pointer"
+                                />
+                              )}
+                            </td>
+                          )}
                           <td className="p-1.5 font-mono text-[9px] whitespace-nowrap">{date}</td>
                           <td className="p-1.5">
                             {customer && <p className="text-[10px] font-bold truncate max-w-[160px]">{customer}</p>}
@@ -2463,8 +2637,12 @@ function ResultadosPanel(p: ResultadosPanelProps) {
                   </tbody>
                   <tfoot className="sticky bottom-0 bg-primary/10 border-t-2 border-primary/30">
                     <tr className="text-[10px] font-black uppercase">
-                      <td className="p-1.5" colSpan={2}>TOTAL ({docs.length} docs)</td>
-                      <td className="p-1.5 text-right font-mono tabular-nums">{isNeg ? '−' : ''}{fmt(docsTotal, currency)}</td>
+                      <td className="p-1.5" colSpan={selection ? 3 : 2}>
+                        {selection
+                          ? `TOTAL INCLUIDO (${docsIncludedCount} de ${selectableDocs.length} docs)`
+                          : `TOTAL (${docs.length} docs)`}
+                      </td>
+                      <td className="p-1.5 text-right font-mono tabular-nums">{isNeg ? '−' : ''}{fmt(selection ? docsIncludedTotal : docsTotal, currency)}</td>
                       <td className="p-1.5"></td>
                     </tr>
                   </tfoot>
@@ -2500,7 +2678,9 @@ function ResultadosPanel(p: ResultadosPanelProps) {
   }
 
   const sales = (report.sales || []) as Array<Record<string, unknown>>;
-  const payments = (report.payments || []) as Array<Record<string, unknown>>;
+  // MISIÓN SRV-PAYMENT-DATE (FASE 2): los grupos vienen del reporte AJUSTADO
+  // (prop `payments`) — los pagos desmarcados ya fueron restados de su grupo.
+  const payments = p.payments;
   const commissions = (report.commissions || []) as Array<Record<string, unknown>>;
   const production = ((report as unknown as { production?: Array<Record<string, unknown>> }).production || []);
 
@@ -2777,12 +2957,57 @@ function ResultadosPanel(p: ResultadosPanelProps) {
       )}
 
       {/* Pagos — CP-OPS-ENERVIDA §2.1: categoría C (PAGOS EJECUTADOS):
-          salidas reales de efectivo/cuenta con su método y documento. */}
-      <div>
-        <h3 className="text-[11px] font-black uppercase text-muted-foreground mb-2">C. Pagos efectivamente realizados · Proveedores</h3>
+          salidas reales de efectivo/cuenta con su método y documento.
+          MISIÓN SRV-PAYMENT-DATE (FASE 2): con selección de pagos — checkbox
+          por pago (espejo exacto de las ventas), selección general con estado
+          indeterminado y totales recalculados al instante: los DESMARCADOS
+          permanecen visibles pero NO computan en el cuadre ni se exportan. */}
+      <div data-testid="pagos-seleccionables">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <h3 className="text-[11px] font-black uppercase text-muted-foreground">C. Pagos efectivamente realizados · Proveedores</h3>
+          <p className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-muted/40 text-muted-foreground" aria-live="polite" data-testid="pagos-seleccion-contador">
+            {p.paymentsIncludedCount} de {p.paymentsTotalCount} pagos seleccionados
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-3 mb-2">
+          <label className="flex items-center gap-2 text-[11px] font-bold text-foreground cursor-pointer">
+            <input
+              ref={allPaymentsRef}
+              type="checkbox"
+              checked={allPaymentsIncluded}
+              onChange={() => p.onSetPaymentsIncluded(!allPaymentsIncluded)}
+              aria-label="Incluir todos los pagos en el reporte"
+              className="w-4 h-4 accent-primary cursor-pointer"
+              data-testid="pagos-seleccion-general"
+            />
+            Todos los pagos
+          </label>
+          <button
+            onClick={() => p.onSetPaymentsIncluded(true)}
+            className="px-2.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted min-h-[36px]"
+            data-testid="pagos-incluir-todos"
+          >
+            Incluir todos
+          </button>
+          <button
+            onClick={() => p.onSetPaymentsIncluded(false)}
+            className="px-2.5 rounded-lg border border-border/40 text-[10px] font-black uppercase hover:bg-muted min-h-[36px]"
+            data-testid="pagos-desmarcar-todos"
+            title={`Desmarca los ${knownPaymentRows.length} pagos visibles (cargados al expandir los acordeones)`}
+          >
+            Desmarcar todos
+          </button>
+        </div>
+        <p className="text-[10px] text-muted-foreground mb-2">
+          Los pagos desmarcados permanecen visibles pero no computan en el cuadre ni aparecen en el PDF, la impresión, Excel o Word.
+          «Desmarcar todos» actúa sobre los pagos visibles (los acordeones cargan sus filas al expandirse).
+        </p>
         <div className="space-y-1">
           {payments.filter(filterPayments).length === 0 ? <p className="text-xs text-muted-foreground text-center py-2">Sin pagos</p> :
-            payments.filter(filterPayments).map((q, i) => renderAccordionItem(`p-${q.payment_method}-${q.currency}-${q.ref_type}-${i}`, String(q.payment_method), String(q.currency), `${q.payment_count} pagos`, Number(q.total), true, String(q.ref_type)))}
+            payments.filter(filterPayments).map((q, i) => renderAccordionItem(
+              `p-${q.payment_method}-${q.currency}-${q.ref_type}-${i}`, String(q.payment_method), String(q.currency), `${q.payment_count} pagos`, Number(q.total), true, String(q.ref_type),
+              { rows: rowsForPaymentGroup(String(q.payment_method), String(q.currency), String(q.ref_type)) },
+            ))}
         </div>
       </div>
 
