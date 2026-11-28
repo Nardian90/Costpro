@@ -59,3 +59,32 @@ decisión, acción de reparación, salida después, resultado, huecos histórico
   2026-11-20..23 es anterior a la instalación del diario (migración ADN-011
   aplicada el 24/11) — no son huecos de la cadena, son días pre-historia de
   la función; se listan por transparencia del instrumento.
+
+---
+
+## 2026-11-28T16:05Z — guardia manual (reparación del 28-nov)
+
+- Contexto: el publicador (nivel 1) disparó a las 10:30 La Habana
+  (run_count 5) pero a las 11:00 seguía sin insertar (verify: HUECO). El
+  watchdog v2 no tiene slot hoy (su next_run_time es el 29 a las 11:30: al
+  crearse el 27 por la tarde el planificador saltó el slot del día
+  siguiente inmediato). Se ejecuta la reparación en su lugar (PASO 2).
+- Artefactos (PASO 1A): presentes — entrypoint v2, instrumento,
+  topics-costpro.json, expediente.
+- Decisión de tipo: sin búsqueda de novedades oficials re-hecha (la de la
+  víspera no encontró nada más reciente que GOC No. 97, ya publicado el
+  27); se publica nota de plataforma con el tema del catálogo según el
+  algoritmo del publicador: index = 2 notas costpro % 10 = 2 →
+  tema-devoluciones (fuente: knowledge/help/02-como-hacer/19-como-
+  procesar-devolucion.md, leída antes de redactar).
+- Acción: INSERT idempotente service_role → HTTP 201:
+  slug costpro-2026-11-28-devoluciones-protegen-inventario.
+- Verificación POST (salida literal):
+  [verify-gaceta-daily] Ediciones visibles en public_gaceta_v: 5
+  [verify-gaceta-daily] Edición de hoy publicada: SÍ
+  [verify-gaceta-daily] Última fecha publicada: 2026-11-28
+- Nota de operación: si el publicador publica después su propia nota del
+  día, hoy quedará 1 costpro (esta) + la suya; sin conflicto (slug único).
+- Resultado: REPARADA.
+- Pendiente operacional: verificar el slot del watchdog del 29 (si vuelve
+  a saltarse, corregir su schedule — recrear el job con el mismo contenido).
