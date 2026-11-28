@@ -50,6 +50,52 @@ export interface ProductAnalysisInput {
   marginPct: number;
   /** Unidades vendidas al mes (usuario) — proyección de pérdida mensual. */
   unitsPerMonth: number;
+  /**
+   * CP-FX-UX-002 (misión §3.2): convención del porcentaje introducido.
+   *  - 'recargo' (DEFAULT — el comportamiento histórico de la vista):
+   *      precio = costo × (1 + x/100)   → x es RECARGO sobre costo (markup).
+   *  - 'margen':
+   *      precio = costo / (1 − x/100)   → x es MARGEN BRUTO sobre el precio
+   *      de venta (fracción del precio que queda como utilidad).
+   * No se cambia el significado de ningún indicador existente: con el default
+   * las fórmulas son IDÉNTICAS a las originales; 'margen' es la modalidad
+   * adicional explícita que exige la misión (auditar y no mezclar conceptos).
+   */
+  marginMode?: MarginMode;
+}
+
+export type MarginMode = 'recargo' | 'margen';
+
+/**
+ * Precio de venta a partir del costo y el porcentaje, según la convención.
+ * Exportado para que la UI explique la fórmula junto al campo de entrada.
+ */
+export function priceFromCost(cost: number, pct: number, mode: MarginMode): number | null {
+  if (!Number.isFinite(cost) || !Number.isFinite(pct) || cost < 0) return null;
+  if (mode === 'margen') {
+    // Margen bruto sobre precio: x% del PRECIO es utilidad → precio = costo/(1−x).
+    // x ≥ 100 es matemáticamente imposible (precio infinito) — se rechaza.
+    if (pct <= 0 || pct >= 100) return null;
+    return cost / (1 - pct / 100);
+  }
+  // Recargo sobre costo (default): precio = costo × (1 + x/100).
+  if (pct < 0) return null;
+  return cost * (1 + pct / 100);
+}
+
+/**
+ * Convierte entre convenciones (utilidad informativa de la UI):
+ * recargo r% equivale a margen bruto m% = r/(1+r).
+ */
+export function recargoToMargen(recargoPct: number): number | null {
+  if (!Number.isFinite(recargoPct) || recargoPct <= -100) return null;
+  return (recargoPct / (1 + recargoPct / 100));
+}
+
+/** margen m% equivale a recargo r% = m/(1−m). */
+export function margenToRecargo(margenPct: number): number | null {
+  if (!Number.isFinite(margenPct) || margenPct >= 100) return null;
+  return (margenPct / (1 - margenPct / 100));
 }
 
 export interface ProductAnalysisResult {
@@ -89,6 +135,11 @@ export interface ProductAnalysisResult {
   costChangeFuturePct: number | null;
   /** ¿Hay proyección disponible (aunque su confianza sea baja)? */
   hasForecast: boolean;
+  // ── CP-FX-UX-002 §3.2: transparencia de convención ──
+  /** Convención usada para los precios de venta (recargo o margen bruto). */
+  marginMode: MarginMode;
+  /** Utilidad del precio fijado como % del PRECIO de venta (margen bruto realizado). */
+  realMarginOnSalePct: number;
 }
 
 /** Umbral de R² a partir del cual la proyección se muestra (mismo criterio
@@ -139,15 +190,22 @@ export function linearRegression(values: number[]): LinearModel | null {
  */
 export function computeProductAnalysis(input: ProductAnalysisInput): ProductAnalysisResult {
   const { costUsd, purchaseRate, currentRate, forecastRate, marginPct, unitsPerMonth } = input;
+  const marginMode: MarginMode = input.marginMode ?? 'recargo';
 
   const costAtPurchaseCup = costUsd * purchaseRate;
-  const salePriceSetCup = costAtPurchaseCup * (1 + marginPct / 100);
+  const salePriceSetCup = priceFromCost(costAtPurchaseCup, marginPct, marginMode) ?? costAtPurchaseCup;
 
   const costNowCup = costUsd * currentRate;
-  const recommendedPriceNowCup = costNowCup * (1 + marginPct / 100);
+  const recommendedPriceNowCup = priceFromCost(costNowCup, marginPct, marginMode) ?? costNowCup;
 
   const realUtilityPerUnitCup = salePriceSetCup - costNowCup;
+  // Convención HISTÓRICA (recargo): utilidad / COSTO de reposición — se conserva
+  // verbatim para no cambiar silenciosamente el indicador existente.
   const realMarginPct = costNowCup > 0 ? (realUtilityPerUnitCup / costNowCup) * 100 : 0;
+  // Convención de margen bruto: utilidad / PRECIO de venta — el % del precio
+  // que queda como utilidad. Siempre se calcula (transparencia §6.7).
+  const realMarginOnSalePct =
+    salePriceSetCup > 0 ? (realUtilityPerUnitCup / salePriceSetCup) * 100 : 0;
 
   const priceAdjustmentCup = recommendedPriceNowCup - salePriceSetCup;
   const priceAdjustmentPct = salePriceSetCup > 0 ? (priceAdjustmentCup / salePriceSetCup) * 100 : 0;
@@ -186,5 +244,7 @@ export function computeProductAnalysis(input: ProductAnalysisInput): ProductAnal
     recommendedPriceFutureCup,
     costChangeFuturePct,
     hasForecast,
+    marginMode,
+    realMarginOnSalePct,
   };
 }
