@@ -67,6 +67,33 @@ surface == stream), así que se retira conforme al patrón establecido
 | `create_devolution_v2/12`, `delete_master_party/3`, `set_received_service_status/4`, `void_received_service_with_reversal/4` (`BODY_DRIFT_FROM_MIGRATION`) | Drifts LIVE-vs-replay de misiones anteriores aún no re-certificados por despliegue de su snapshot | **INTACTAS** — no corresponde a esta misión |
 | `security_definer_without_auth_check` (130 entradas, incl. 3 helpers R-06 declarados) | Baseline estático vigente | **INTACTA** |
 
+## 4b. Hallazgo EXTERNO durante los gates: `exchange_rates_backup_cpfx001` (producción)
+
+El gate en vivo **SQL DB Security Checks** (read-only contra producción, `DATABASE_URL`
+del repo) falló en el PR documental con **`tables_no_rls: 1 hallazgo NO permitido`** —
+ajeno al diff de este PR (cero SQL). Investigación read-only (script re-ejecutable
+`scripts/probe-stray-table-r06v.mjs`):
+
+| Dato verificado | Valor |
+| --- | --- |
+| Existe en | **Producción `wthkddeleylijmonclxg` únicamente** — NO existe en la BD aislada, ni en migraciones/repo (rg + `git log -S` vacíos), ni referenciada por el código de la app |
+| Contenido | Respaldo de tasas históricas de cambio: 1.607 filas, 20 columnas (rate_date, currency, source, rate, variaciones, reconstruction_method, notes…), fuentes públicas **BCC · Diviza · elToque**, última captura **2026-11-28T06:25Z** (escritura activa) |
+| Postura de seguridad | **RLS desactivada** (`relrowsecurity = false`) y **grants completos a anon + authenticated** (SELECT/INSERT/UPDATE/DELETE) — datos públicos de mercado (riesgo de exposición bajo), pero deuda de seguridad real en la postura certificada |
+| Ventana de creación | Entre el último CI verde de main `170a9f9be` (12:21Z) y el run del gate (14:45Z) del 2026-11-28 — artefacto concurrente del propietario creado fuera de banda (misma raíz de patrón que `create_sale_v2/36` durante R-06) |
+
+**Tratamiento aplicado (patrón de declaración tardía establecido — `register_ot_payment_batch`,
+`create_sale_v2/36`):** se declara en `ci-gate-allowlist.json` → `tables_without_rls`
+(con motivo completo, `expires 2026-12-31`), sin tocar producción (la misión prohíbe
+escrituras allí) ni alterar políticas. La remediación es del propietario en su misión
+FX: habilitar RLS + ACL privada (recomendado: `REVOKE anon`, `GRANT authenticated
+SELECT` o `service_role` exclusiva) o `DROP` tras la restauración, y formalizar la
+tabla en migración; la entrada se retirará al formalizar/descartar.
+
+Esta certificación (reglas de negocio) NO se altera: el hallazgo es de **postura de
+seguridad de tabla** (control infra), no de las 16 reglas certificadas; queda
+documentado como observación principal en `FINAL-STATUS.md` para decisión del
+propietario.
+
 ## 5. Estado final del contrato de superficie
 
 **CERRADO SIN DIVERGENCIAS**: LIVE producción == surface certificado == replay del

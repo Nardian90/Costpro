@@ -20,8 +20,8 @@ integración y cierre documental). Fecha: 2026-11-28. La certificación
 | 10 | Gate replay | **MATCH — sin deriva** | `build-migrations-replay.mjs --check`: `9cc7ff6c…` regenerado == commiteado |
 | 11 | Gate estático de contrato de seguridad | **0 divergencias bloqueantes, 233/233 representadas** | 3 warnings MEDIUM/LOW preexistentes (frescura, semántica idéntica al LIVE), sin cambios |
 | 12 | Allowlist — entradas retiradas y motivo | **1 entrada: `create_sale_v2/36` (LIVE_FUNCTION_NOT_REPRESENTED)** | drift realmente resuelto (stream ya representa /36 tras la fusión #1738+#1742); `source_of_truth_baseline` 6→5; commit `50aecef42`; changelog actualizado |
-| 13 | Allowlist — entradas conservadas | 5 de source_of_truth_baseline (incl. `create_sale_v2/34` histórica e inerte, candidata futura de limpieza) + baseline SD (130) | la misión ordena retirar exclusivamente la /36; ninguna otra eliminada |
-| 14 | CI final de main `170a9f9be` | **7/7 SUCCESS** (SQL Static · TypeCheck+Lint+Unit+Build · TS Security · SQL DB Security · Security Audit · Unit & Integration · Allowlist Review) | E2E Aislado = workflow manual: últimos runs 419 y 420 **success** (2026-11-28); CI del head #1738: 7/7 con E2E incluido |
+| 13 | Allowlist — entradas conservadas y AÑADIDAS | **AÑADIDA 1: `exchange_rates_backup_cpfx001` (`tables_without_rls`, declaración tardía, expira 2026-12-31)** — artefacto concurrente del propietario en producción (backup de tasas fuera de banda, RLS off + grants anon; ver §4b de SURFACE-CONTRACT-CLOSURE) | conservadas: 5 de source_of_truth_baseline (incl. `create_sale_v2/34` histórica inerte) + baseline SD (130) — ninguna eliminada más |
+| 14 | CI final de main `170a9f9be` + PR #1744 | **7/7 SUCCESS en main** (SQL Static · TypeCheck+Lint+Unit+Build · TS Security · SQL DB Security · Security Audit · Unit & Integration · Allowlist Review); E2E Aislado manual: últimos runs 419/420 success | el CI del PR #1744 detectó en el gate EN VIVO (contra producción) la tabla `exchange_rates_backup_cpfx001` del propietario (RLS off) — hallazgo EXTERNO al diff; declarada en allowlist (fila 13) con la deuda documentada |
 | 15 | Higiene de datos (BD aislada) | **`PASS — net delta = 0`** | residuos stores=0 users=0; 5 tiendas protegidas intactas; usuarios/tiendas del run eliminados |
 | 16 | PM2 local | **online** con `.env` PRINCIPAL (producción `wthkddeleylijmonclxg`) | réplica `costpro-env.txt` con hash idéntico al `.env` final |
 | 17 | Health | **HTTP 200** `{"status":"ok","service":"costpro-enterprise"}` | `GET http://localhost:3000/api/health` tras restauración; también 200 en producción `costpro4.vercel.app/api/health` |
@@ -37,14 +37,23 @@ integración y cierre documental). Fecha: 2026-11-28. La certificación
 - `evidencia/` — 9 capturas de la matriz UI + 3 capturas de producción Vercel +
   spec reproducible `e2e/creation/r06-ui-visual-matrix.spec.ts` (commiteado).
 
-## 3. Observaciones (no bloqueantes, sin acción en esta misión)
+## 3. Observaciones (acción recomendada para el propietario)
 
-1. **React #418** en la landing pública/404 de producción (hidratación texto
+1. **⚠️ `exchange_rates_backup_cpfx001` en producción (HALLAZGO NUEVO de esta misión,
+   fuera del diff):** tabla de respaldo de tasas creada fuera de banda el 2026-11-28
+   (escritura activa; fuentes públicas BCC/Diviza/elToque; 1.607 filas) con **RLS
+   desactivada y grants completos a anon/authenticated**. No toca las 16 reglas
+   certificadas (postura de tabla, control infra), pero exige decisión: **habilitar
+   RLS + ACL privada (REVOKE anon; GRANT authenticated SELECT o service_role) o DROP
+   tras la restauración**, formalizándola en migración; la entrada de allowlist
+   declarada se retira entonces. Detalle: SURFACE-CONTRACT-CLOSURE.md §4b; verificación
+   re-ejecutable `scripts/probe-stray-table-r06v.mjs` (read-only).
+2. **React #418** en la landing pública/404 de producción (hidratación texto
    servidor≠cliente). Preexistente, ámbito ajeno a recepciones/pagos; las vistas
    autenticadas registraron 0 errores de consola. Candidato a pulido UX futuro.
-2. **Entrada allowlist `create_sale_v2/34`** (histórica, inerte, expira 2026-12-31):
+3. **Entrada allowlist `create_sale_v2/34`** (histórica, inerte, expira 2026-12-31):
    conservada por instrucción de la misión; puede retirarse en el próximo re-cert.
-3. Los 3 warnings MEDIUM/LOW de frescura del gate estático persisten sin cambios
+4. Los 3 warnings MEDIUM/LOW de frescura del gate estático persisten sin cambios
    (semántica idéntica al LIVE), ya documentados en la certificación R-06.
 
 ## 4. Conclusión
@@ -56,7 +65,9 @@ integración y cierre documental). Fecha: 2026-11-28. La certificación
 - Estado final del contrato de superficie: **CERRADO SIN DIVERGENCIAS** (233/233;
   LIVE == surface == stream; replay MATCH; gate estático en verde).
 - Entradas de allowlist retiradas: **`create_sale_v2/36`** — única, con drift
-  realmente resuelto; el resto queda intacto y justificado.
+  realmente resuelto; AÑADIDA una declaración tardía (`exchange_rates_backup_cpfx001`)
+  por hallazgo externo del gate en vivo, con la deuda de seguridad documentada para
+  el propietario.
 - CI final: **7/7 en main** (E2E Aislado manual en verde en sus últimos runs).
 - SHA final de main: `170a9f9be…` (más el PR documental de esta expedición).
 - PM2 online con `.env` principal y health **200** (local y producción).
