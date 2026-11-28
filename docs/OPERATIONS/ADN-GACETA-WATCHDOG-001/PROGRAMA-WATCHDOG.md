@@ -20,19 +20,28 @@ expediente guarda el diseño, la matriz de decisión y el registro de guardias.
   ningún mecanismo que detecte el hueco — eso es exactamente lo que añade
   esta misión.
 
-## 2. Diseño de la cadena de 3 niveles
+## 2. Diseño de la cadena (v2, 2026-11-28: 2 niveles)
+
+> v1 (2026-11-27) definió 3 niveles. El propietario redujo la cadena a DOS
+> schedules de gaceta el 2026-11-28 (plan gratis de Z.ai: máximo 3 jobs y el
+> tercero lo ocupa el programa CP-CI). Se eliminó el nivel 3 (auditor); su
+> función esencial (auditar los artefactos de la cadena) la absorbió el
+> watchdog como PASO 1A de cada guardia.
 
 | Nivel | Rol | Mecanismo | Qué hace |
 |---|---|---|---|
 | 1 | Publicador | Z.ai Schedule «El Diario Contable» (existente) | Publica la edición diaria (1 gaceta + 1 costpro) sobre las 10:30 La Habana |
-| 2 | **Watchdog** (esta misión) | Z.ai Schedule «Gaceta Watchdog», 11:30 La Habana | Mide (read-only) y **repara**: si falta la edición del día, la publica él mismo |
-| 3 | Auditor del watchdog | Z.ai Schedule «Gaceta Auditor», 13:30 La Habana | Verifica que el nivel 2 exista y cumpliera; si nada publicó, publica la edición del día y registra la incidencia |
+| 2 | **Watchdog v2** (esta misión) | Z.ai Schedule «Gaceta Watchdog», 11:30 La Habana | Audita sus propios artefactos (PASO 1A), mide (read-only) y **repara**: si falta la edición del día, la publica él mismo |
 
 Reglas de la cadena:
-- El nivel 3 NO sustituye al nivel 2 salvo doble fallo (ambos sin publicar) —
-  así el reparto diario tiene dos disparos de reparación (11:30 y 13:30).
-- Todos los niveles usan el MISMO instrumento de medición y el MISMO contrato
+- Schedules activos del propietario en Z.ai (plan gratis, 3 en total):
+  «El Diario Contable» (10:30), «Gaceta Watchdog» (11:30) y el programa
+  CP-CI. El auditor (13:30) fue eliminado con su schedule.
+- Ambos niveles usan el MISMO instrumento de medición y el MISMO contrato
   de publicación (ADN-011): una sola verdad.
+- La defensa contra la pérdida de artefactos (p. ej. expolio de main) ya no
+  es un schedule separado: es el PASO 1A del propio watchdog (auditoría de
+  artefactos al inicio de cada guardia, hallazgo CRÍTICO si falta alguno).
 - Huecos históricos: nadie los rellena automáticamente; se listan al
   propietario (decisión editorial).
 
