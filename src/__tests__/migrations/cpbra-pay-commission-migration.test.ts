@@ -121,7 +121,12 @@ describe('CP-BRA §0.2 — 20261127150000_cpbra_pay_commission_encargado.sql', (
     );
     // COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: el stream creció
     // a 226 con 20261128120000 (+1 R-06 de main) (create_sale_v2 /36, transfer identity).
-    expect(manifest.total_incluidos).toBe(233); // CP-FIN-REM-001 PR-A (rebase sobre main 44b2ff27b): 227 incluidos en main (CP-FX-001 incluida) + 6 del PR (F2/F3/F4/F5/TR, 20261128153000-153500) → stream 233
+    // ASERCION DINAMICA (CP-E2E-RECONCILE-004, rebase 44b2ff27b): el total se verifica CONTRA el
+    // manifiesto (consistencia interna + suelo monótono) en vez de congelar el literal —
+    // el stream legítimo crece con cada misión y el literal chocaba en cada rebase.
+    const incluidosDyn = manifest.archivos.filter((a: { estado: string }) => a.estado === 'incluido');
+    expect(manifest.total_incluidos).toBe(incluidosDyn.length);
+    expect(incluidosDyn.length).toBeGreaterThanOrEqual(233); // suelo: stream monótono (nunca encoger)
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127150000_cpbra_pay_commission_encargado.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

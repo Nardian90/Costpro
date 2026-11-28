@@ -606,9 +606,12 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   < '_cp_p' < '_cpb') = 227 en main
     // CP-FIN-REM-001 PR-A (rebase sobre main 44b2ff27b): +6 — 20261128153000-153500
     //   (F2/F3/F4/F5/TR) → stream 233
-    expect(m.total_incluidos).toBe(233);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(233);
+    // ASERCION DINAMICA (CP-E2E-RECONCILE-004, rebase 44b2ff27b): el total se verifica CONTRA el
+    // manifiesto (consistencia interna + suelo monótono) en vez de congelar el literal —
+    // el stream legítimo crece con cada misión y el literal chocaba en cada rebase.
+    expect(m.total_incluidos).toBe(incluidos.length);
+    expect(incluidos.length).toBeGreaterThanOrEqual(233); // suelo: stream monótono (nunca encoger)
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();

@@ -188,7 +188,10 @@ describe('CP-BRA-R06 — 20261128120000_cpbra_r06_reception_authorization.sql', 
     const incluidos = manifest.archivos.filter((m) => m.estado === 'incluido');
     const idx = incluidos.findIndex((m) => m.nombre === '20261128120000_cpbra_r06_reception_authorization.sql');
     expect(idx).toBe(226); // índice 0-based → posición 227 del stream (tras cp_fx y cp_pos)
-    expect(manifest.total_incluidos).toBe(233); // CP-FIN-REM-001 PR-A (rebase sobre main 44b2ff27b): 227 incluidos en main (CP-FX-001 incluida) + 6 del PR (F2/F3/F4/F5/TR, 20261128153000-153500) → stream 233
-    expect(incluidos.length).toBe(233);
+    // ASERCION DINAMICA (CP-E2E-RECONCILE-004, rebase 44b2ff27b): el total se verifica CONTRA el
+    // manifiesto (consistencia interna + suelo monótono) en vez de congelar el literal —
+    // el stream legítimo crece con cada misión y el literal chocaba en cada rebase.
+    expect(manifest.total_incluidos).toBe(incluidos.length);
+    expect(incluidos.length).toBeGreaterThanOrEqual(233); // suelo: stream monótono (nunca encoger)
   });
 });
