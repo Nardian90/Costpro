@@ -1779,3 +1779,20 @@ Resumen del ciclo (detalle y evidencia por tarea: CSV + informe maestro):
 
 - Los PRs #1441–#1444 contienen las correcciones; NINGUNO fusionado por el agente.
 - La fila CP-SEC-012 (Misión B) y los bloques de conciliación de la Misión C NO se sobrescriben; este bloque solo se añade.
+
+---
+
+## 6. ACTUALIZACIÓN CP-FIN-REM-001 — REMEDIACIÓN REVISIÓN FINANCIERA (2026-11-28)
+
+**Informe maestro:** `CP-FIN_REVISION_INDEPENDIENTE.md` (este directorio). **PR-A:** `fix/cp-fin-hardening-f2-f5` (sin fusionar).
+
+| Punto | Estado honesto |
+|---|---|
+| F2 RLS libro + 6 RPC | RESUELTA EN CÓDIGO — PENDIENTE DE APLICAR EN PRODUCCIÓN (G1) |
+| F3 ámbito de reglas | RESUELTA EN CÓDIGO — PENDIENTE DE APLICAR EN PRODUCCIÓN (G1) |
+| F4 solo-adición del libro | RESUELTA EN CÓDIGO — PENDIENTE DE APLICAR EN PRODUCCIÓN (G1) |
+| F5 reversión residual/generación | RESUELTA EN CÓDIGO — PENDIENTE DE APLICAR EN PRODUCCIÓN (G1) |
+| Freno de TRUNCATE (16 tablas fin/nómina) | RESUELTA EN CÓDIGO — PENDIENTE DE APLICAR EN PRODUCCIÓN (G1) |
+| F1 monitor/instrumentación/impacto | PENDIENTE (PR-B — orden de la misión) |
+| Hueco del libro de migraciones (N1 ampliado: 34 sin registrar, 27 verificadas aplicadas) | PAQUETE PREPARADO — PENDIENTE DE AUTORIZACIÓN (`audit-evidence/CP-FIN-REVIEW-001/ledger-sync-pendiente.sql`) |
+| Producción | SOLO LECTURA — 0 escrituras en esta misión |
