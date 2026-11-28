@@ -149,7 +149,7 @@ describe('CP-BRA R-03 — 20261127140000_cpbra_r03_ot_payment_batch.sql', () => 
     );
     // COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: el stream creció
     // a 226 con 20261128120000 (+1 R-06 de main) (create_sale_v2 /36, transfer identity).
-    expect(manifest.total_incluidos).toBe(227); // CP-FX-001: +1 migración 20261128120000_cp_fx_recovery_traceability
+    expect(manifest.total_incluidos).toBe(233); // CP-FIN-REM-001 PR-A (rebase sobre main 44b2ff27b): 227 incluidos en main (CP-FX-001 incluida) + 6 del PR (F2/F3/F4/F5/TR, 20261128153000-153500) → stream 233
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127140000_cpbra_r03_ot_payment_batch.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

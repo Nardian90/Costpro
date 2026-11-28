@@ -187,10 +187,8 @@ describe('CP-BRA-R06 — 20261128120000_cpbra_r06_reception_authorization.sql', 
     ) as { archivos: Array<{ nombre: string; estado: string }>; total_incluidos: number };
     const incluidos = manifest.archivos.filter((m) => m.estado === 'incluido');
     const idx = incluidos.findIndex((m) => m.nombre === '20261128120000_cpbra_r06_reception_authorization.sql');
-    // CP-FX-001 (2026-11-28): la migración 20261128120000_cp_fx_recovery_traceability
-    // (posición 225: '_cp_f' < '_cp_p' < '_cpb') desplaza +1 a las previas.
     expect(idx).toBe(226); // índice 0-based → posición 227 del stream (tras cp_fx y cp_pos)
-    expect(manifest.total_incluidos).toBe(227);
-    expect(incluidos.length).toBe(227);
+    expect(manifest.total_incluidos).toBe(233); // CP-FIN-REM-001 PR-A (rebase sobre main 44b2ff27b): 227 incluidos en main (CP-FX-001 incluida) + 6 del PR (F2/F3/F4/F5/TR, 20261128153000-153500) → stream 233
+    expect(incluidos.length).toBe(233);
   });
 });
