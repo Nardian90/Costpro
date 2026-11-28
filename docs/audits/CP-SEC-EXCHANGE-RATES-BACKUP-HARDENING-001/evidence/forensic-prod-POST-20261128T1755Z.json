@@ -1,0 +1,252 @@
+{
+  "1_columnas": [
+    {
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "rate_date",
+      "data_type": "date",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "captured_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "currency",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "source",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "rate",
+      "data_type": "numeric",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "variation_daily",
+      "data_type": "numeric",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "variation_weekly",
+      "data_type": "numeric",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "variation_monthly",
+      "data_type": "numeric",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "variation_yearly",
+      "data_type": "numeric",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "segment",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "capture_method",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "source_updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "rate_source_url",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "reconstruction_method",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "confidence_level",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "notes",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "imported_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "import_batch",
+      "data_type": "text",
+      "is_nullable": "YES"
+    }
+  ],
+  "2_pk": [],
+  "3_indices": [],
+  "4_fks": [],
+  "5_triggers": [],
+  "7_policies": [],
+  "8_9_rls": [
+    {
+      "relrowsecurity": true,
+      "relforcerowsecurity": false,
+      "owner": "postgres",
+      "n_policies": 0
+    }
+  ],
+  "10_grants": [
+    {
+      "grantee": "service_role",
+      "privilege_type": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "UPDATE"
+    }
+  ],
+  "11_dependientes": [],
+  "12_publicaciones": [],
+  "13_stat": [
+    {
+      "n_live_tup": 1607,
+      "n_tup_ins": 1607,
+      "n_tup_upd": 0,
+      "n_tup_del": 0,
+      "last_autovacuum": "2026-11-28 13:27:53.00045+00",
+      "last_autoanalyze": "2026-11-28 13:27:53.02838+00"
+    }
+  ],
+  "14a_resumen": [
+    {
+      "filas": 1607,
+      "min_rate_date": "2025-12-25",
+      "max_rate_date": "2026-11-28",
+      "max_captured": "2026-11-28 06:25:50.736+00",
+      "max_created": "2026-11-28 06:25:51.078566+00"
+    }
+  ],
+  "14b_fuentes": [
+    {
+      "source": "BCC",
+      "n": 1004,
+      "ult_fecha": "2026-11-28"
+    },
+    {
+      "source": "elToque",
+      "n": 498,
+      "ult_fecha": "2026-07-28"
+    },
+    {
+      "source": "Diviza",
+      "n": 105,
+      "ult_fecha": "2026-11-28"
+    }
+  ],
+  "14e_hash": [
+    {
+      "content_hash": "4c151b16a1d2f32e89e95cc5bc849eb7"
+    }
+  ],
+  "15_sss": [
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "q": "CREATE TABLE IF NOT EXISTS public.exchange_rates_backup_cpfx001 AS SELECT * FROM public.ex"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 3,
+      "q": "SELECT\n    EXISTS (SELECT $1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 3,
+      "q": "SELECT count(*)::int AS n FROM public.exchange_rates_backup_cpfx001"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "q": "SELECT count(*)::int AS filas,\n          min(rate_date) AS min_rate_date, max(rate_date) A"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "q": "DO $cpsec$\nDECLARE\n  v_existe boolean;\n  v_rls boolean;\n  v_grants_anon text;\n  v_grants_a"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "q": "select min(imported_at)::text as min_imp, max(imported_at)::text as max_imp, min(captured_"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "q": "DO $do$\nBEGIN\n  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relname"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 3,
+      "q": "SELECT\n      (SELECT c.relrowsecurity FROM pg_class c JOIN pg_namespace n ON n.oid = c.rel"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "q": "SELECT count(*)::int AS filas, min(rate_date) AS min_rate_date, max(rate_date) AS max_rate"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "q": "SELECT md5(string_agg(concat_ws($1, rate_date::text, currency, source, segment, rate::text"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "q": "SELECT md5(string_agg(concat_ws($1, rate_date::text, currency, source, segment, rate::text"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "q": "COMMENT ON TABLE public.exchange_rates_backup_cpfx001 IS\n  'Respaldo CONGELADO de exchange"
+    }
+  ]
+}

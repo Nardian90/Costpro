@@ -70,8 +70,8 @@ const pre = await runSql(`
       WHERE g.table_schema='public' AND g.table_name='${T}' AND g.grantee='PUBLIC') AS grants_public,
     (SELECT count(*)::int FROM public.${T}) AS filas,
     (SELECT md5(string_agg(concat_ws('|', rate_date::text, currency, source, segment, rate::text,
-        coalesce(capture_method,''), coalesce(import_batch,'')), E'\\n' ORDER BY rate_date, source, segment)
-      FROM public.${T}) ) AS content_hash;
+        coalesce(capture_method,''), coalesce(import_batch,'')), E'\\n' ORDER BY rate_date, source, segment))
+      FROM public.${T}) AS content_hash;
 `);
 console.log('\n=== PRE (evidencia del estado previo en producción) ===');
 const p = pre[0];
@@ -96,8 +96,8 @@ async function checkMarks() {
         WHERE g.table_schema='public' AND g.table_name='${T}' AND g.grantee='PUBLIC') AS grants_public,
       (SELECT count(*)::int FROM public.${T}) AS filas,
       (SELECT md5(string_agg(concat_ws('|', rate_date::text, currency, source, segment, rate::text,
-          coalesce(capture_method,''), coalesce(import_batch,'')), E'\\n' ORDER BY rate_date, source, segment)
-        FROM public.${T})) AS content_hash,
+          coalesce(capture_method,''), coalesce(import_batch,'')), E'\\n' ORDER BY rate_date, source, segment))
+        FROM public.${T}) AS content_hash,
       (SELECT obj_description('${T}'::regclass, 'pg_class') LIKE '%EXCLUSIVAMENTE PRIVADA%') AS comment_doc;
   `);
   const q = post[0];

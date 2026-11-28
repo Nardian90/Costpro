@@ -22,7 +22,7 @@ La tabla es el **respaldo congelado de `exchange_rates`** creado UNA sola vez (2
 | 4 Preservación | Escritor legítimo intacto: service_role conserva acceso (E2E F6/F7 verdes); el DO del script fx endurece la postura completa en futuras ejecuciones (causa raíz cerrada); el cron de tasas no se toca (0 refs). |
 | 5 Implementación | Migración 20261128173000 + rollback + test contractual 11/11 + script §11g + batería E2E + sondeo forense al repo + writers.manifest +3 + **allowlist tables_without_rls RETIRADA** + replay 235 MATCH. |
 | 6 Validación E2E | Batería postura **17/17 PASS** · smoke 88/88 · guardrail **`PASS — net delta = 0`** · tsc/eslint/contract-static 0 · check-writers OK. |
-| 7 Producción | Aplicación §11g una sola vez + POST (ver MIGRATION-AND-APPLICATION.md §3, con PRE/POST reales) + verificación anónima bloqueada + writer legítimo verificado + PM2/health. |
+| 7 Producción | **PR #1746 fusionado** (`53e13d022`) con **CI 5/5 SUCCESS** (CI · Test Coverage · Security CI Gate · SQL Security Gate · E2E Aislado). §11g aplicado UNA vez (17:53Z): **POST 7/7 marcas** (grants 0, RLS on, filas 1607, hash idéntico) · anon POST 401/42501 (antes 200/[]) · service_role 206 0-0/1607 · cron de captura: últimos 5 runs success · idempotencia --check OK. |
 
 ## 3. Criterios de aceptación de la misión (§9)
 
@@ -36,7 +36,7 @@ La tabla es el **respaldo congelado de `exchange_rates`** creado UNA sola vez (2
 | El proceso legítimo de actualización funciona | ✓ | Cron no tocado (0 refs); E2E F6/F7 (canal privilegiado operativo); smoke 88/88 |
 | Datos históricos conservados | ✓ | 1.607 filas + hash idéntico PRE→POST (script §11g) |
 | E2E verde | ✓ | 17/17 + 88/88 + net delta = 0 |
-| CI verde | ✓ | (se completa tras el merge: MIGRATION-AND-APPLICATION.md) |
+| CI verde | ✓ | 5/5 SUCCESS en el PR #1746 (E2E Aislado incluido) |
 | Allowlist temporal retirada | ✓ | `ci-gate-allowlist.json` — entrada tables_without_rls retirada (drift resuelto REAL: RLS en vivo + migración formal) |
 | Contrato de seguridad sin divergencias | ✓ | contract-static 0 divergencias · 233/233 representadas |
 | Expediente con evidencias verificables | ✓ | 7 documentos + evidence/ (JSON re-ejecutables: forensic, writers, anon-PRE) |
