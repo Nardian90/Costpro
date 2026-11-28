@@ -600,9 +600,13 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     //   20261128120000_cp_pos_transfer_identity_validation (create_sale_v2 /36:
     //   p_customer_phone + puerta ERR_TRANSFER_IDENTITY_REQUIRED; al FINAL del
     //   orden lexicográfico — posiciones previas intactas) = 225
-    expect(m.total_incluidos).toBe(226);
+    // CP-FX-PREMIUM-DASHBOARD-AND-HISTORICAL-DATA-RECOVERY-001 (2026-11-28): +1 —
+    //   20261128120000_cp_fx_recovery_traceability (CHECK source + 'Cuba Clara',
+    //   columnas de trazabilidad; idempotente, sin DML; posición 225: '_cp_f'
+    //   < '_cp_p' < '_cpb') = 227
+    expect(m.total_incluidos).toBe(227);
     const incluidos = m.archivos.filter((e) => e.estado === 'incluido');
-    expect(incluidos.length).toBe(226);
+    expect(incluidos.length).toBe(227);
     const pos = (nombre: string): number => {
       const e = incluidos.find((x) => x.nombre === nombre);
       expect(e).toBeDefined();
@@ -718,12 +722,15 @@ describe('CP-E2E-RECONCILE-004 — migración de desbloqueo 20261024140000 (stre
     expect(pos('20261127160000_cpbra_tienda_pueblo_receipts.sql')).toBe(224);
     // CP-BRA-R06 (CP-BRA-R06-FINAL-CERTIFICATION-001): autorización de
     // COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: identidad del
-    // pagador en transferencias (create_sale_v2 /36) — posición 225 del stream
-    // (lexicográfico: '_cp_pos' < 'cpbra')
-    expect(pos('20261128120000_cp_pos_transfer_identity_validation.sql')).toBe(225);
+    // pagador en transferencias (create_sale_v2 /36) — posición 226 del stream
+    // (desplazada +1 por cp_fx: '_cp_f' < '_cp_p')
+    expect(pos('20261128120000_cp_pos_transfer_identity_validation.sql')).toBe(226);
+    // CP-FX-001 recuperación histórica (trazabilidad) — posición 225 del stream
+    // (lexicográfico: '_cp_f' < '_cp_p' < '_cpb')
+    expect(pos('20261128120000_cp_fx_recovery_traceability.sql')).toBe(225);
     // R-06 recepciones (crear=encargado|superadmin; confirmar/anular=creador|
-    // superadmin) — posición 226 del stream
-    expect(pos('20261128120000_cpbra_r06_reception_authorization.sql')).toBe(226);
+    // superadmin) — posición 227 del stream (desplazada +1)
+    expect(pos('20261128120000_cpbra_r06_reception_authorization.sql')).toBe(227);
     for (const e of incluidos) {
       expect(sha256(fs.readFileSync(path.join(DIR_MIGRACIONES, e.nombre)))).toBe(e.sha256_original);
     }

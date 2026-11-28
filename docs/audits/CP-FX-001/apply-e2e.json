@@ -1,0 +1,43 @@
+{
+  "generated": "2026-11-28T13:25:25.368Z",
+  "target": "e2e",
+  "projectRef": "lguovmvrozxgssupkwpf",
+  "mode": "apply",
+  "operativeDate": "2026-11-28",
+  "range": {
+    "from": "2026-10-29",
+    "to": "2026-11-27"
+  },
+  "cubaClara": {
+    "rows": 42,
+    "version": "2026-11-23",
+    "license": "CC BY 4.0",
+    "skippedNoMedio": 7
+  },
+  "plan": {
+    "total": 26,
+    "recovered": 26,
+    "estimated": 0,
+    "protectedReal": 0,
+    "unrecoverable": 4,
+    "classification": {
+      "likelyNoPublication": 8,
+      "likelyLost": 22
+    },
+    "byConfidence": {}
+  },
+  "existingRowsBefore": 0,
+  "applied": 26,
+  "verification": {
+    "realRowsChanged": 0,
+    "addedExpected": 26,
+    "addedActual": 26,
+    "futureBatchRows": 0,
+    "idempotency": {
+      "estimatedMismatch": 0,
+      "recoveredDuplicatesOnRerun": 0
+    },
+    "postRows": 26
+  },
+  "ok": true
+}

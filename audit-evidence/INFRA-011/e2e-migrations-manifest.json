@@ -162,10 +162,10 @@
   },
   "src_dir": "supabase/migrations",
   "out_dir": ".e2e-migrations",
-  "total_considerados": 641,
-  "total_incluidos": 226,
+  "total_considerados": 642,
+  "total_incluidos": 227,
   "total_excluidos": 415,
-  "digest": "86a22ad362bf7290fb97e852b4cb3addad95e4c8c5aa84dae0ec612b43fadd48",
+  "digest": "a0be9885913d3fcb4ee426997e47ae57fec17f20b7f5bbd6dc5c300738b36ba3",
   "archivos": [
     {
       "nombre": "202401230001_add_get_users_for_encargado.sql",
@@ -6346,6 +6346,17 @@
       "sha256_generado": "765c41bf4c788f9410bc04a1dd68bfcf46bd2987ae5741d28fa1c495ce8699c8"
     },
     {
+      "nombre": "20261128120000_cp_fx_recovery_traceability.sql",
+      "bytes": 7185,
+      "sha256_original": "f70eb119ff679c84315edd627b3d4f2eab31ca15cd87ab9d31fe256abb83ed0f",
+      "estado": "incluido",
+      "razon": null,
+      "timestamp": "20261128",
+      "observaciones": [],
+      "posicion": 225,
+      "sha256_generado": "f70eb119ff679c84315edd627b3d4f2eab31ca15cd87ab9d31fe256abb83ed0f"
+    },
+    {
       "nombre": "20261128120000_cp_pos_transfer_identity_validation.sql",
       "bytes": 81324,
       "sha256_original": "a5fcfb5d15bed6913696ee07ec955c8280dd5842db50ba31241e723e110ce87a",
@@ -6353,7 +6364,7 @@
       "razon": null,
       "timestamp": "20261128",
       "observaciones": [],
-      "posicion": 225,
+      "posicion": 226,
       "sha256_generado": "a5fcfb5d15bed6913696ee07ec955c8280dd5842db50ba31241e723e110ce87a"
     },
     {
@@ -6364,7 +6375,7 @@
       "razon": null,
       "timestamp": "20261128",
       "observaciones": [],
-      "posicion": 226,
+      "posicion": 227,
       "sha256_generado": "be4a4c8d77bfbfa5442e6bc31f8d1ef42071c35ec816abeac70bab301476d575"
     },
     {

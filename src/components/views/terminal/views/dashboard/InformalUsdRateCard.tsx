@@ -154,8 +154,11 @@ function computeCardState(json: FxApiResponse): Omit<CardState, 'loading' | 'err
   let variation: CardState['variation'] = null;
   let variationMissingPrevDay = false;
   if (prevRow && typeof prevRow.rate === 'number' && prevRow.rate > 0) {
-    const diffCup = Math.round((latest.rate - prevRow.rate) * 100) / 100;
-    const diffPct = Math.round((diffCup / prevRow.rate) * 10000) / 100;
+    // Normalización de cero negativo: Math.round(-0.1)/100 → -0, que
+    // toLocaleString renderiza como «-0.00». La estabilidad se muestra 0.00.
+    const normalizeZero = (v: number) => (Object.is(v, -0) ? 0 : v);
+    const diffCup = normalizeZero(Math.round((latest.rate - prevRow.rate) * 100) / 100);
+    const diffPct = normalizeZero(Math.round((diffCup / prevRow.rate) * 10000) / 100);
     variation = {
       diffCup,
       diffPct,

@@ -80,9 +80,12 @@ export function isValidInformalRate(raw: unknown): raw is number {
   );
 }
 
-/** Fecha ISO YYYY-MM-DD válida (formato estricto, sin horas). */
+/** Fecha ISO YYYY-MM-DD válida (calendario real: sin rollover de Date). */
 export function isIsoDate(s: unknown): s is string {
-  return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
+  if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(`${s}T00:00:00Z`);
+  // Round-trip: 2026-02-30 rueda a 2026-03-02 en Date → debe rechazarse.
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
 }
 
 /** Día siguiente a una fecha ISO (calendario, sin zonas horarias). */

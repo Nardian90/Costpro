@@ -392,14 +392,16 @@ describe('GET /api/exchange-rates — serie informal UNIFICADA del Histórico (I
     elToqueRow('2026-07-28', 475),
   ];
 
-  it('source=all consulta BCC + TODAS las informales (activas + históricas) y devuelve elToque con su procedencia', async () => {
+  it('source=all consulta BCC + TODAS las informales (activas + históricas + recuperadas) y devuelve elToque con su procedencia', async () => {
     queryResult.data = [...archivo, bccRow(TODAY, 380), divizaRow(TODAY, 840)];
 
     const res = await GET(makeRequest('?days=all&source=all&segment=3'));
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json.sources_queried).toEqual(['BCC', 'Diviza', 'elToque']);
+    // CP-FX-001: 'Cuba Clara' (fuente recuperada, CC BY 4.0) entra en la
+    // consulta del Histórico con el mismo trato de archivo verificable.
+    expect(json.sources_queried).toEqual(['BCC', 'Diviza', 'elToque', 'Cuba Clara']);
     // El archivo elToque VIAJA COMPLETO en la respuesta del Histórico…
     const elToqueRows = (json.rates as Row[]).filter(r => r.source === 'elToque');
     expect(elToqueRows).toHaveLength(3);
@@ -414,7 +416,8 @@ describe('GET /api/exchange-rates — serie informal UNIFICADA del Histórico (I
     const res = await GET(makeRequest('?days=all&source=informal-all&segment=3'));
     const json = await res.json();
 
-    expect(json.sources_queried).toEqual(['Diviza', 'elToque']);
+    // CP-FX-001: las pseudo-fuentes incluyen la fuente recuperada.
+    expect(json.sources_queried).toEqual(['Diviza', 'elToque', 'Cuba Clara']);
     expect((json.rates as Row[]).some(r => r.source === 'BCC')).toBe(false);
   });
 

@@ -243,11 +243,18 @@ describe('ExchangeIntelligenceView — informal Diviza + elToque', () => {
     expect(screen.queryByText(/Real · elToque/i)).not.toBeInTheDocument();
   });
 
-  it('estimación histórica se etiqueta "Estimada" — nunca "Real" (fuente activa)', async () => {
-    // IC-DIVIZA-003: la estimación de una fuente ACTIVA (Diviza) se etiqueta
-    // "Estimada". ElToque no puede llegar a esta tarjeta (excluida de la
-    // selección), por lo que la honestidad de la etiqueta se prueba con la
-    // fuente que sí alimenta la vigente.
+  it('estimación histórica NUNCA alimenta la vigente: solo estimada → "Sin dato fiable" (CP-FX-001)', async () => {
+    // CONTRATO ACTUALIZADO (CP-FX-001, 2026-11-28): la tarjeta de la tasa
+    // vigente muestra SOLO OBSERVACIONES REALES del proveedor activo
+    // (isObservedCaptureRow, misma regla que informal_latest de la API).
+    // Antes (IC-DIVIZA-003): una fila estimated aislada se mostraba con el
+    // badge «Estimada». Ahora la honestidad es más estricta: una
+    // reconstrucción estadística (interpolación histórica importada por la
+    // recuperación de CP-FX-001) JAMÁS se presenta como tasa actual del
+    // mercado, ni siquiera etiquetada — la vigente se reserva a capturas
+    // reales; sin ellas → «Sin dato fiable». Las estimaciones siguen
+    // visibles y diferenciadas en la pestaña Histórico (línea discontinua
+    // ámbar + tooltip con método y confianza).
     mockRatesApi([
       bccRow(TODAY, 380),
       {
@@ -259,8 +266,9 @@ describe('ExchangeIntelligenceView — informal Diviza + elToque', () => {
     render(<ExchangeIntelligenceView />);
 
     await waitFor(() => {
-      expect(screen.getByText(/^Estimada$/)).toBeInTheDocument();
+      expect(screen.getAllByText(/Sin dato fiable/i).length).toBeGreaterThan(0);
     });
+    // Nunca se presenta como Real (ni como valor vigente etiquetado Estimada)
     expect(screen.queryByText(/Real · Diviza/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Real · elToque/i)).not.toBeInTheDocument();
   });

@@ -1,0 +1,5434 @@
+{
+  "generated": "2026-11-28T13:27:04.362Z",
+  "target": "prod",
+  "projectRef": "wthkddeleylijmonclxg",
+  "informalRows": [
+    {
+      "rate_date": "2025-12-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 480,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 435,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 417.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 480,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 435,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 480,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 435,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 480,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 435,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 480,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2025-12-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 435,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 397.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 480,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 435,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 395,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 441.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 397.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 445,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 446,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 450,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 495,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 453,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 495,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 453,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 505,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 460,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 470,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 520,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 480,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 520,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 480,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 535,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 535,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-31",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-31",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 535,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-01-31",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 540,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-02",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-02",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 535,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-02",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 535,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 535,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 540,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 405,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 545,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 550,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 495,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 550,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 495,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-10",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-10",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 555,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-10",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 402.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 560,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 560,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 560,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 405,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 560,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 415,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 560,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 563,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 503,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 562.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 505,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 405,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 565,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 507,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 405,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 570,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 507,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 405,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 570,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 508,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 405,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 570,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-02-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-02",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-02",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 570,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-02",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 415,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 575,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 415,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 575,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 415,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 575,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 575,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 385,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 565,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 385,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 565,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 575,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 575,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 575,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 512,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 387.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 512,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 512,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 420,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 576,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 512.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-18",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 415.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-18",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 575,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-18",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 408,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 575,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 414,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 577.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 395,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 392.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 390,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-31",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 390,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-31",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-03-31",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 390,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 515,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-02",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-02",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-02",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 517,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 390,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 585,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 517,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 390,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 585,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 520,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 390,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 588,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 520,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 392.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 585,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 520,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 395,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 585,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 520,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 395,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 590,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 520,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 395,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 590,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 522,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 380,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 590,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 525,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 390,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 590,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 525,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 395,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 590,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 525,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 590,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 525,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 600,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 527,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 600,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-23",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-23",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 600,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-23",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 600,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 407.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 600,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 600,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 417.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 600,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 530,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 405,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 605,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 531,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 605,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 535,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 605,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-04-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 535,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 412.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 612.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 535,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 412.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 615,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 537,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 420,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 618,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 539,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 420,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 618,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 540,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 620,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 540,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 620,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 540.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 420,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 620,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-09",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 542,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-10",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 425,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-10",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 622.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-10",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 542,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 432.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 625,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 542,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 545,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 622.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 437.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 432.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 625,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 545,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 415,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 622,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 545,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 417.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 625,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 545,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 630,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 548,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-18",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 550,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-18",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 625,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-18",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 550,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 630,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 420,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 550,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 635,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 420,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 553,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 640,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 405,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 555,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 630,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 402.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-23",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 560,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-23",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 635,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-23",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 560,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 640,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 560,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 635,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 560,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 640,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 420,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 561.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 640,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 420,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 568,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 645,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 575,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 645,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 417.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 645,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 390,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-31",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 580,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-31",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 645,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-05-31",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 395,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 592,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 642.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 600,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 635,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-03",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 605,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 686,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-04",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 611,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 695,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-05",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 450,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 620,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 700,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-06",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 450,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 622,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 710,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-07",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 465,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 625,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 710,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-08",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 450,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-10",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 640,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-10",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 730,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-10",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 445,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 647,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 730,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-11",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 400,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 650,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 745,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-12",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 660,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 760,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-13",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 445,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 660,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 760,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-14",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 445,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 670,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 770,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-15",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 680,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 780,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-16",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 682,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 782.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-17",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-18",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 685,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-18",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 785,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-18",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 690,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 795,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-19",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 695,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 800,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-20",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 505,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 510,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 695,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-21",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 800,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 695,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 800,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-22",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-23",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 695,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-23",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 800,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-23",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 695,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 800,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-24",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 675,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 775,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-25",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 485,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 650,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 750,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-26",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 630,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 720,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-27",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 620,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 715,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-28",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 480,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 600,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 700,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-29",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 610,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 700,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-06-30",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 620,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 700,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-01",
+      "captured_at": "2026-07-03T22:16:39.55+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 500,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-03",
+      "captured_at": "2026-07-03T22:34:21.344+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 645,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-03",
+      "captured_at": "2026-07-03T22:34:21.344+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 720,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-03",
+      "captured_at": "2026-07-03T22:34:21.344+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-04",
+      "captured_at": "2026-07-04T20:54:02.943+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 750,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-04",
+      "captured_at": "2026-07-04T20:54:02.943+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-04",
+      "captured_at": "2026-07-04T20:54:02.943+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 660,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-05",
+      "captured_at": "2026-07-05T18:16:46.328+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 670,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-05",
+      "captured_at": "2026-07-05T18:16:46.328+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-05",
+      "captured_at": "2026-07-05T18:16:46.328+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 760,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-06",
+      "captured_at": "2026-07-06T12:35:02.641+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 670,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-06",
+      "captured_at": "2026-07-06T12:35:02.641+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 770,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-06",
+      "captured_at": "2026-07-06T12:35:02.641+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-08",
+      "captured_at": "2026-07-08T14:12:02.476+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 680,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-08",
+      "captured_at": "2026-07-08T14:12:02.476+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 760,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-08",
+      "captured_at": "2026-07-08T14:12:02.476+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 490,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-09",
+      "captured_at": "2026-07-09T19:34:07.885+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 675,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-09",
+      "captured_at": "2026-07-09T19:34:07.885+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 760,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-09",
+      "captured_at": "2026-07-09T19:34:07.885+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 460,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-10",
+      "captured_at": "2026-07-10T18:25:31.096+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 670,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-10",
+      "captured_at": "2026-07-10T18:25:31.096+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 760,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-10",
+      "captured_at": "2026-07-10T18:25:31.096+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 410,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-11",
+      "captured_at": "2026-07-11T17:35:19.591+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 460,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-11",
+      "captured_at": "2026-07-11T17:35:19.591+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 670,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-11",
+      "captured_at": "2026-07-11T17:35:19.591+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 760,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-12",
+      "captured_at": "2026-07-12T15:53:35.872+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 665,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-12",
+      "captured_at": "2026-07-12T15:53:35.872+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 760,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-12",
+      "captured_at": "2026-07-12T15:53:35.872+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 434.9,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-13",
+      "captured_at": "2026-07-13T12:53:08.17+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 660,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-13",
+      "captured_at": "2026-07-13T12:53:08.17+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 443.76,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-13",
+      "captured_at": "2026-07-13T12:53:08.17+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 760,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-14",
+      "captured_at": "2026-07-14T21:35:17.758+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 660,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-14",
+      "captured_at": "2026-07-14T21:35:17.758+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 760,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-14",
+      "captured_at": "2026-07-14T21:35:17.758+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 453.09,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-19",
+      "captured_at": "2026-07-19T12:08:53.456+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 665,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-19",
+      "captured_at": "2026-07-19T12:08:53.456+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 430.39,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-19",
+      "captured_at": "2026-07-19T12:08:53.456+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 770,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-21",
+      "captured_at": "2026-07-21T11:23:52.406+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 670,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-21",
+      "captured_at": "2026-07-21T11:23:52.406+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 427.48,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-21",
+      "captured_at": "2026-07-21T11:23:52.406+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 775,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-22",
+      "captured_at": "2026-07-22T04:44:13.036+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 780,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-22",
+      "captured_at": "2026-07-22T04:44:13.036+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 428.72,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-22",
+      "captured_at": "2026-07-22T04:44:13.036+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 670,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-23",
+      "captured_at": "2026-07-23T01:03:13.551+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 670,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-23",
+      "captured_at": "2026-07-23T01:03:13.551+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 464.51,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-23",
+      "captured_at": "2026-07-23T01:03:13.551+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 780,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-26",
+      "captured_at": "2026-07-26T03:38:06.863+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 675,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-26",
+      "captured_at": "2026-07-26T03:38:06.863+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 790,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-26",
+      "captured_at": "2026-07-26T03:38:06.863+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 495.85,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-27",
+      "captured_at": "2026-07-27T02:54:53.762+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 675,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-27",
+      "captured_at": "2026-07-27T02:54:53.762+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 787.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-27",
+      "captured_at": "2026-07-27T02:54:53.762+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 477.94,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-28",
+      "captured_at": "2026-07-28T03:32:28.657+00:00",
+      "currency": "MLC",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 463.96,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-28",
+      "captured_at": "2026-07-28T03:32:28.657+00:00",
+      "currency": "USD",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 675,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-07-28",
+      "captured_at": "2026-07-28T03:32:28.657+00:00",
+      "currency": "EUR",
+      "source": "elToque",
+      "segment": "3",
+      "rate": 790,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-25",
+      "captured_at": "2026-10-26T03:25:27.945+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 840,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-25",
+      "captured_at": "2026-10-26T03:25:27.945+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 925,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-25",
+      "captured_at": "2026-10-26T03:25:27.945+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 696.29,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-26",
+      "captured_at": "2026-10-27T03:49:28.925+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 845,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-26",
+      "captured_at": "2026-10-27T03:49:28.925+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 930,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-26",
+      "captured_at": "2026-10-27T03:49:28.925+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 700.64,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-27",
+      "captured_at": "2026-10-27T17:30:46.796+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 845,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-27",
+      "captured_at": "2026-10-27T17:30:46.796+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 702.76,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-27",
+      "captured_at": "2026-10-27T17:30:46.796+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 930,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-28",
+      "captured_at": "2026-10-28T17:55:12.935+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 850,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-28",
+      "captured_at": "2026-10-28T17:55:12.935+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 945,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-28",
+      "captured_at": "2026-10-28T17:55:12.935+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 721.37,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-29",
+      "captured_at": "2026-10-29T18:03:49.845+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 860,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-29",
+      "captured_at": "2026-10-29T18:03:49.845+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 950,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-29",
+      "captured_at": "2026-10-29T18:03:49.845+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 729.44,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-30",
+      "captured_at": "2026-10-30T17:44:12.127+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 870,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-30",
+      "captured_at": "2026-10-30T17:44:12.127+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 957.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-30",
+      "captured_at": "2026-10-30T17:44:12.127+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 732.22,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-31",
+      "captured_at": "2026-10-31T16:51:27.259+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 880,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-31",
+      "captured_at": "2026-10-31T16:51:27.259+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 970,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-10-31",
+      "captured_at": "2026-10-31T16:51:27.259+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 737.15,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-01",
+      "captured_at": "2026-11-02T04:35:34.04+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 900,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-01",
+      "captured_at": "2026-11-02T04:35:34.04+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 985,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-01",
+      "captured_at": "2026-11-02T04:35:34.04+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 740.13,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-02",
+      "captured_at": "2026-11-02T21:25:34.89+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 900,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-02",
+      "captured_at": "2026-11-02T21:25:34.89+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 990,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-02",
+      "captured_at": "2026-11-02T21:25:34.89+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 739.91,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-03",
+      "captured_at": "2026-11-04T04:56:23.881+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 910,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-03",
+      "captured_at": "2026-11-04T04:56:23.881+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1000,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-03",
+      "captured_at": "2026-11-04T04:56:23.881+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 745.03,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-04",
+      "captured_at": "2026-11-04T19:23:47.38+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 745.01,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-04",
+      "captured_at": "2026-11-04T19:23:47.38+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 915,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-04",
+      "captured_at": "2026-11-04T19:23:47.38+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1000,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-05",
+      "captured_at": "2026-11-05T19:31:58.538+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 920,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-05",
+      "captured_at": "2026-11-05T19:31:58.538+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1005,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-05",
+      "captured_at": "2026-11-05T19:31:58.538+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 747.51,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-06",
+      "captured_at": "2026-11-07T04:46:03.086+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 930,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-06",
+      "captured_at": "2026-11-07T04:46:03.086+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1015,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-06",
+      "captured_at": "2026-11-07T04:46:03.086+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 696.88,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-07",
+      "captured_at": "2026-11-08T04:36:17.831+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 758.44,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-07",
+      "captured_at": "2026-11-08T04:36:17.831+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 935,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-07",
+      "captured_at": "2026-11-08T04:36:17.831+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1025,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-08",
+      "captured_at": "2026-11-09T04:46:28.46+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 930,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-08",
+      "captured_at": "2026-11-09T04:46:28.46+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1015,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-08",
+      "captured_at": "2026-11-09T04:46:28.46+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 721.72,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-09",
+      "captured_at": "2026-11-09T21:57:29.666+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 925,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-09",
+      "captured_at": "2026-11-09T21:57:29.666+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1010,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-09",
+      "captured_at": "2026-11-09T21:57:29.666+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 769.92,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-10",
+      "captured_at": "2026-11-11T04:49:53.238+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 915,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-10",
+      "captured_at": "2026-11-11T04:49:53.238+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1005,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-10",
+      "captured_at": "2026-11-11T04:49:53.238+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 805.43,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-11",
+      "captured_at": "2026-11-11T19:16:11.966+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 910,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-11",
+      "captured_at": "2026-11-11T19:16:11.966+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1000,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-11",
+      "captured_at": "2026-11-11T19:16:11.966+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 807.62,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-12",
+      "captured_at": "2026-11-12T19:34:17.315+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 910,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-12",
+      "captured_at": "2026-11-12T19:34:17.315+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1000,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-12",
+      "captured_at": "2026-11-12T19:34:17.315+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 813.81,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-13",
+      "captured_at": "2026-11-14T03:38:57.775+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1000,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-13",
+      "captured_at": "2026-11-14T03:38:57.775+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 805.68,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-13",
+      "captured_at": "2026-11-14T03:38:57.775+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 910,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-14",
+      "captured_at": "2026-11-15T04:56:04.188+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 915,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-14",
+      "captured_at": "2026-11-15T04:56:04.188+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1000,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-14",
+      "captured_at": "2026-11-15T04:56:04.188+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 822.84,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-15",
+      "captured_at": "2026-11-16T04:52:44.37+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 920,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-15",
+      "captured_at": "2026-11-16T04:52:44.37+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1000,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-15",
+      "captured_at": "2026-11-16T04:52:44.37+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 831.42,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-16",
+      "captured_at": "2026-11-16T21:39:50.301+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 925,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-16",
+      "captured_at": "2026-11-16T21:39:50.301+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1000,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-16",
+      "captured_at": "2026-11-16T21:39:50.301+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 820.61,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-17",
+      "captured_at": "2026-11-17T20:29:17.486+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 930,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-17",
+      "captured_at": "2026-11-17T20:29:17.486+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1000,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-17",
+      "captured_at": "2026-11-17T20:29:17.486+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 834.45,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-18",
+      "captured_at": "2026-11-18T20:00:16.357+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 935,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-18",
+      "captured_at": "2026-11-18T20:00:16.357+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1010,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-18",
+      "captured_at": "2026-11-18T20:00:16.357+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 842.23,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-19",
+      "captured_at": "2026-11-19T19:58:32.662+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 935,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-19",
+      "captured_at": "2026-11-19T19:58:32.662+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1007.5,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-19",
+      "captured_at": "2026-11-19T19:58:32.662+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 847.68,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-20",
+      "captured_at": "2026-11-20T19:38:22.2+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 950,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-20",
+      "captured_at": "2026-11-20T19:38:22.2+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1020,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-20",
+      "captured_at": "2026-11-20T19:38:22.2+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 848.06,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-21",
+      "captured_at": "2026-11-21T18:43:37.036+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 844.47,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-21",
+      "captured_at": "2026-11-21T18:43:37.036+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1030,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-21",
+      "captured_at": "2026-11-21T18:43:37.036+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 955,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-22",
+      "captured_at": "2026-11-22T19:04:10.186+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 840.7,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-22",
+      "captured_at": "2026-11-22T19:04:10.186+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1030,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-22",
+      "captured_at": "2026-11-22T19:04:10.186+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 960,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-23",
+      "captured_at": "2026-11-23T23:25:09.942+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 839.79,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-23",
+      "captured_at": "2026-11-23T23:25:09.942+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1030,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-23",
+      "captured_at": "2026-11-23T23:25:09.942+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 970,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-24",
+      "captured_at": "2026-11-24T21:56:38.657+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 829.89,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-24",
+      "captured_at": "2026-11-24T21:56:38.657+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1035,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-24",
+      "captured_at": "2026-11-24T21:56:38.657+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 970,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-25",
+      "captured_at": "2026-11-25T21:06:09.801+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 817.44,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-25",
+      "captured_at": "2026-11-25T21:06:09.801+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1030,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-25",
+      "captured_at": "2026-11-25T21:06:09.801+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 975,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-26",
+      "captured_at": "2026-11-26T20:57:41.213+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 804.97,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-26",
+      "captured_at": "2026-11-26T20:57:41.213+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1040,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-26",
+      "captured_at": "2026-11-26T20:57:41.213+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 980,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-27",
+      "captured_at": "2026-11-27T20:42:32.322+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 803.11,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-27",
+      "captured_at": "2026-11-27T20:42:32.322+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1040,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-27",
+      "captured_at": "2026-11-27T20:42:32.322+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 980,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-28",
+      "captured_at": "2026-11-28T06:25:50.736+00:00",
+      "currency": "MLC",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 802.55,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-28",
+      "captured_at": "2026-11-28T06:25:50.736+00:00",
+      "currency": "EUR",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 1045,
+      "capture_method": "real"
+    },
+    {
+      "rate_date": "2026-11-28",
+      "captured_at": "2026-11-28T06:25:50.736+00:00",
+      "currency": "USD",
+      "source": "Diviza",
+      "segment": "3",
+      "rate": 980,
+      "capture_method": "real"
+    }
+  ]
+}
