@@ -1,7 +1,7 @@
 -- =====================================================================
 -- GENERATED FILE — DO NOT EDIT BY HAND
 -- Generator : scripts/export-contract-surface.cjs
--- Captured  : 2026-11-27T20:45:55.972Z
+-- Captured  : 2026-11-27T21:41:19.476Z
 -- Project   : wthkddeleylijmonclxg
 -- Functions : 233 (SECURITY DEFINER write functions, public schema)
 -- Source    : same census query as scripts/security-contract-test.cjs (LIVE)

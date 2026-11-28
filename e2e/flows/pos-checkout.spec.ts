@@ -352,6 +352,11 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
         subtotal: 100,
         cash_amount: 0,
         transfer_amount: 100,
+        // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: toda
+        // venta con transferencia exige identidad del pagador (4 datos).
+        customer_name: 'Cliente QA Transferencia',
+        customer_ci: '92031112345',
+        customer_phone: '+53 51234567',
         // El cliente real (usePOSCheckout) envía payment_components SIEMPRE que
         // hay referencia de transferencia (requiresPaymentComponents §5.1) — es
         // el ÚNICO camino que persiste la referencia por pago en el ledger.
@@ -386,6 +391,10 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
         subtotal: 100,
         cash_amount: 60,
         transfer_amount: 40,
+        // Misión TRANSFER-VALIDATION: la parte por transferencia exige identidad
+        customer_name: 'Cliente QA Mixto',
+        customer_ci: '92031112345',
+        customer_phone: '+53 51234567',
         items: [{
           product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
           payments: [
@@ -424,6 +433,10 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
         subtotal: total,
         cash_amount: 100 + 10,
         transfer_amount: 50 + 15,
+        // Misión TRANSFER-VALIDATION: hay filas de transferencia → identidad
+        customer_name: 'Cliente QA Multi',
+        customer_ci: '92031112345',
+        customer_phone: '+53 51234567',
         items: [
           { product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
             payments: [{ method: 'cash', currency: 'CUP', amount: 100 }] },
@@ -461,7 +474,7 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
     expect(sumLedger).toBe(total);
   });
 
-  test('E2E-POS-014 (F) venta con transferencia + cliente: customer_name y customer_ci persistidos', async ({ request }) => {
+  test('E2E-POS-014 (F) venta con transferencia + cliente: customer_name, customer_ci y customer_phone persistidos', async ({ request }) => {
     const res = await request.post('/api/pos/checkout', {
       headers: apiHeaders(adminToken),
       data: basePayload({
@@ -472,6 +485,9 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
         transfer_amount: 100,
         customer_name: 'Cliente QA Transferencia',
         customer_ci: '92031112345',
+        // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: el
+        // teléfono del pagador viaja y se persiste en transactions.customer_phone.
+        customer_phone: '+53 51234567',
         items: [{
           product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
           payments: [{ method: 'transfer', currency: 'CUP', amount: 100, reference: 'TR-E2E-F-1' }],
@@ -484,6 +500,7 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
     const tx = await getTransaction(json.transaction_id);
     expect(tx!.customer_name).toBe('Cliente QA Transferencia');
     expect(tx!.customer_ci).toBe('92031112345');
+    expect((tx as Record<string, unknown>)!.customer_phone).toBe('+53 51234567');
   });
 
   test('E2E-POS-014b (G) venta sin transferencia y sin CI: el campo queda null (no se exigen datos personales)', async ({ request }) => {
@@ -584,6 +601,12 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
         subtotal: 100,
         cash_amount: 0,
         transfer_amount: 100,
+        // Misión TRANSFER-VALIDATION: identidad COMPLETA para que el rechazo
+        // provenga de la regla §5.1 del RPC (referencia por fila), su autoridad
+        // canónica — la puerta de identidad del route no se dispara aquí.
+        customer_name: 'Cliente QA Sin Referencia',
+        customer_ci: '92031112345',
+        customer_phone: '+53 51234567',
         items: [{
           product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
           payments: [{ method: 'transfer', currency: 'CUP', amount: 100 }],
@@ -593,6 +616,62 @@ test.describe('POS Checkout V2 — API + integridad de datos', () => {
     expect(res.status()).toBe(422);
     const body = await res.json();
     expect(JSON.stringify(body)).toContain('Distribución de pago por producto inválida');
+  });
+
+  test('E2E-POS-019 venta con transferencia SIN identidad del pagador: 422 fail-closed (route gate, misión TRANSFER-VALIDATION)', async ({ request }) => {
+    // La obligatoriedad NUNCA depende solo del frontend: /api/pos/checkout
+    // rechaza (422, sin efectos) cuando la venta incluye transferencia por el
+    // canal canónico y faltan nombre/carné/teléfono — sin necesidad de llegar
+    // al RPC (que además lo revalida con ERR_TRANSFER_IDENTITY_REQUIRED).
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'transfer',
+        total_amount: 100,
+        subtotal: 100,
+        cash_amount: 0,
+        transfer_amount: 100,
+        payment_components: [{ method: 'transfer', currency: 'CUP', amount: 100, reference: 'TR-E2E-019' }],
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'transfer', currency: 'CUP', amount: 100, reference: 'TR-E2E-019' }],
+        }],
+      }),
+    });
+    expect(res.status()).toBe(422);
+    const body = await res.json();
+    expect(JSON.stringify(body)).toContain('faltan datos del pagador');
+    // La venta NO quedó registrada (sin efectos). Filtro preciso: las ventas
+    // de transferencia con total 100 de tests PREVIOS (E2E-POS-011/014) sí
+    // existen legítimamente — se distinguen por llevar identidad del pagador;
+    // la venta rechazada aquí no puede tenerla (no se envió).
+    const txCount = await sb.select<{ n: number }>(
+      'transactions', `store_id=eq.${store.id}&total_amount=eq.100&payment_method=eq.transfer&customer_name=is.null&select=id`,
+    );
+    expect(txCount.length).toBe(0);
+  });
+
+  test('E2E-POS-019b venta con transferencia y solo espacios en los datos: 422 fail-closed', async ({ request }) => {
+    const res = await request.post('/api/pos/checkout', {
+      headers: apiHeaders(adminToken),
+      data: basePayload({
+        payment_method: 'transfer',
+        total_amount: 100,
+        subtotal: 100,
+        cash_amount: 0,
+        transfer_amount: 100,
+        customer_name: '   ',
+        customer_ci: '  ',
+        customer_phone: ' ',
+        items: [{
+          product_id: product.id, quantity: 1, price: SALE_PRICE, cost: SALE_COST,
+          payments: [{ method: 'transfer', currency: 'CUP', amount: 100, reference: 'TR-E2E-019B' }],
+        }],
+      }),
+    });
+    expect(res.status()).toBe(422);
+    const body = await res.json();
+    expect(JSON.stringify(body)).toContain('faltan datos del pagador');
   });
 
   test('E2E-POS-017b distribución inválida (método desconocido): 422 fail-closed', async ({ request }) => {

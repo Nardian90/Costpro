@@ -180,6 +180,11 @@ export function usePOSCheckout() {
         // recoge en la pestaña «Datos de transferencia» de Cajero Express y
         // viaja al RPC (p_customer_ci → transactions.customer_ci).
         const customerCi = cartState.customerCi;
+        // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2):
+        // teléfono del pagador — se recoge junto a nombre y CI (ambos modos,
+        // componente compartido TransferIdentityFields) y viaja al RPC
+        // (p_customer_phone → transactions.customer_phone, columna existente).
+        const customerPhone = cartState.customerPhone;
         // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot COMPRADOR (SC-2-12)
         const customerAddress = cartState.customerAddress;
         const customerCode = cartState.customerCode;
@@ -342,6 +347,10 @@ export function usePOSCheckout() {
               // (solo se recoge cuando la venta tiene transferencia; null ⇒
               // ventas sin el dato — comportamiento idéntico al previo).
               customer_ci: customerCi || null,
+              // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001
+              // (FASE 2): teléfono del pagador (obligatorio con transferencia;
+              // null ⇒ ventas sin el dato — comportamiento idéntico al previo).
+              customer_phone: customerPhone || null,
               // MISIÓN CLASIFICADOR MAESTRO (FASE 4): snapshot del comprador —
               // create_sale_v2 (CLASIFICATOR-PARTIES) lo congela en la venta.
               customer_address: customerAddress || null,

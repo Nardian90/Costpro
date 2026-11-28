@@ -119,7 +119,9 @@ describe('CP-BRA §0.2 — 20261127150000_cpbra_pay_commission_encargado.sql', (
     const manifest = JSON.parse(
       readFileSync(join(process.cwd(), 'audit-evidence', 'INFRA-011', 'e2e-migrations-manifest.json'), 'utf8')
     );
-    expect(manifest.total_incluidos).toBe(225);
+    // COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: el stream creció
+    // a 226 con 20261128120000 (+1 R-06 de main) (create_sale_v2 /36, transfer identity).
+    expect(manifest.total_incluidos).toBe(226);
     const entry = manifest.archivos.find((a: { nombre: string }) => a.nombre === '20261127150000_cpbra_pay_commission_encargado.sql');
     expect(entry).toBeDefined();
     expect(entry.estado).toBe('incluido');

@@ -200,10 +200,21 @@ export interface CashReportPdfContext {
     total: number;
     filterLabel?: string;
     /** MISIÓN FILTRO MULTIUSUARIO (2026-11-08): conjunto por CREADOR incluido
-     *  («Todos los usuarios» | «Usuario X» | «N usuarios seleccionados») —
+     *  («Todos los usuarios» | «Usuario X» | «N usuarios seleccionados") —
      *  se imprime en el anexo de auditoría junto al filtro de composición. */
     userLabel?: string;
+    /** MISIÓN SRV-PAYMENT-DATE (FASE 2): selección de pagos — pagos INCLUIDOS
+     *  de M del período (universo completo del RPC). Se imprime junto al resto
+     *  del conjunto para que el destinatario sepa qué pagos computan. */
+    paymentsIncluded?: number;
+    paymentsTotal?: number;
   };
+  /** MISIÓN SRV-PAYMENT-DATE (FASE 2): ids de pagos DESMARCADOS por el usuario.
+   *  La sección «SALIDAS DE DINERO» (detailPayments) obtiene las filas en vivo
+   *  vía /api/cash-report/details — este filtro es lo que hace que el PDF
+   *  respete EXACTAMENTE la selección: un pago desmarcado no aparece en el
+   *  detalle ni en sus totales (los grupos del resumen ya llegan ajustados). */
+  excludedPaymentIds?: ReadonlySet<string>;
 }
 
 /** Datos auxiliares que los builders necesitan (fetchables fuera para cachearlos).
@@ -838,7 +849,13 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
       doc.setFontSize(7); doc.setFont('helvetica', 'normal'); setText(C_DANGER);
       doc.text(`${p.payment_count} pagos · Total: -${fmt(Number(p.total), String(p.currency))}`, m, y); y += 5;
       try {
-        const items = await fetchDetailRows(startDate, endDate, 'payment', String(p.payment_method), String(p.currency), String(p.ref_type));
+        const allItems = await fetchDetailRows(startDate, endDate, 'payment', String(p.payment_method), String(p.currency), String(p.ref_type));
+        // MISIÓN SRV-PAYMENT-DATE (FASE 2): el PDF respeta la selección de pagos
+        // — los DESMARCADOS se excluyen completamente del detalle y de sus
+        // cálculos (no basta con ocultarlos: no entran al TOTAL ni al conteo).
+        const items = ctx.excludedPaymentIds && ctx.excludedPaymentIds.size > 0
+          ? allItems.filter((it: any) => !ctx.excludedPaymentIds!.has(String(it.id)))
+          : allItems;
         if (items.length > 0) {
           const payRows: (string | number)[][] = items.map((it: any) => {
             const date = String(it.payment_date || it.created_at || '').slice(0, 16).replace('T', ' ');
@@ -956,7 +973,8 @@ async function buildEstandarPdf(doc: jsPDF, ctx: CashReportPdfContext, options: 
     estCfgConceptos,
     `Ventas: ${estandarCounts.seleccionadas} incluidas de ${estandarCounts.validas} válidas del período`
       + (ctx.selectionMeta?.filterLabel ? ` · Filtro: ${ctx.selectionMeta.filterLabel}` : '')
-      + (ctx.selectionMeta?.userLabel && ctx.selectionMeta.userLabel !== 'Todos los usuarios' ? ` · Usuarios: ${ctx.selectionMeta.userLabel}` : ''),
+      + (ctx.selectionMeta?.userLabel && ctx.selectionMeta.userLabel !== 'Todos los usuarios' ? ` · Usuarios: ${ctx.selectionMeta.userLabel}` : '')
+      + (ctx.selectionMeta && ctx.selectionMeta.paymentsTotal !== undefined && ctx.selectionMeta.paymentsIncluded !== undefined && ctx.selectionMeta.paymentsIncluded < ctx.selectionMeta.paymentsTotal ? ` · Pagos: ${ctx.selectionMeta.paymentsIncluded} de ${ctx.selectionMeta.paymentsTotal} seleccionados` : ''),
     'Convención de signos: diferencia = personalizado − oficial (positivo: el personalizado excede al oficial)',
   ]) {
     doc.text(line, m, y); y += 3.4;
