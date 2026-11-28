@@ -55,3 +55,22 @@ guardia del watchdog, salida literal del instrumento, resultado
   - Vercel Preview Comments → success
 - Resultado de la adenda: **CI-OK** (PR #1741 con todos los checks verdes
   en el head; el propietario decide el merge).
+
+---
+
+## 2026-11-28T12:45Z — cierre del nivel 3 (decisión del propietario)
+
+- Decisión del propietario: plan gratis de Z.ai = máximo 3 schedules; se
+  mantienen «El Diario Contable» (545571), «Gaceta Watchdog» (552783) y el
+  programa CP-CI (540736). El schedule «Gaceta Auditor» (552784) queda
+  ELIMINADO; este registro se conserva como memoria histórica de las
+  auditorías del nivel 3 (no habrá más entradas).
+- La función esencial del auditor (detectar pérdida de artefactos de la
+  cadena) fue absorbida por el watchdog v2 como PASO 1A de cada guardia
+  (SCHEDULER_ENTRYPOINT-WATCHDOG.txt v2): audita sus propios artefactos y
+  reporta hallazgo CRÍTICO si falta alguno.
+- Se retira además del repo `SCHEDULER_ENTRYPOINT-AUDITOR.txt` (huérfano sin
+  schedule). El trabajo del nivel 3 ya no depende de un schedule propio: la
+  auditoría de artefactos es parte de la guardia diaria del nivel 2.
+- Resultado del registro: CERRADO (nivel 3 retirado por decisión del
+  propietario; sin doble fallo que justificara mantenerlo).

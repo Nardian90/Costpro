@@ -1,18 +1,24 @@
 ================================================================================
- EL DIARIO CONTABLE (ADN-011) — WATCHDOG DE PUBLICACIÓN DIARIA
- SCHEDULER_ENTRYPOINT-WATCHDOG.txt · v1 (2026-11-27, misión ADN-GACETA-WATCHDOG-001)
+ EL DIARIO CONTABLE (ADN-011) — WATCHDOG DE PUBLICACIÓN DIARIA (v2)
+ SCHEDULER_ENTRYPOINT-WATCHDOG.txt · v2 (2026-11-28, misión ADN-GACETA-WATCHDOG-001)
 ================================================================================
-ESTE ARCHIVO ES LA INSTRUCCIÓN OPERATIVA COMPLETA del watchdog del Diario
-Contable. Un agente nuevo, sin acceso a conversaciones anteriores, debe poder
-ejecutar su guardia leyendo solo este archivo. El schedule es SOLO el
-disparador: su campo de contenido contiene únicamente la referencia a este
-archivo (ver APÉNDICE). NO improvises instrucciones alternativas.
+ESTE ARCHIVO ES TU INSTRUCCIÓN OPERATIVA COMPLETA. Un agente nuevo, sin acceso
+a conversaciones anteriores, debe poder ejecutar su guardia leyendo solo este
+archivo. El schedule es SOLO el disparador: su campo de contenido contiene
+únicamente la referencia a este archivo (ver APÉNDICE). NO improvises
+instrucciones alternativas.
+
+v2 (2026-11-28): el propietario redujo la cadena a DOS schedules de gaceta
+(plan gratis: 3 jobs totales junto al programa CP-CI). Se eliminó el nivel 3
+(auditor). Este watchdog absorbe su función esencial: auditar los PROPIOS
+artefactos de la cadena al inicio de cada guardia (PASO 1A), de modo que la
+pérdida de archivos (p. ej. si main se queda sin el expediente) se detecta y
+reporta sin depender de otro schedule.
 
 CONTEXTO (2 líneas): El Diario Contable (/gaceta de ADNegocio) se publica a
-diario por el schedule-publicador (nivel 1). ESTE watchdog es el nivel 2 de la
-cadena: comprueba que la edición del día exista y, si falta, la publica él
-mismo. El nivel 3 (auditor del watchdog) vigila que este archivo exista y que
-el nivel 2 haya cumplido; no lo sustituye salvo doble fallo.
+diario por el schedule-publicador (nivel 1, 10:30 La Habana). ESTE watchdog
+(nivel 2, 11:30 La Habana) comprueba que la edición del día exista y, si
+falta, la publica él mismo.
 
 JERARQUÍA DE FUENTES (patrón CP-CI, sin dos verdades):
   1. docs/OPERATIONS/ADN-GACETA-WATCHDOG-001/PROGRAMA-WATCHDOG.md — normativo.
@@ -31,33 +37,51 @@ SEGURIDAD (innegociable, hereda la matriz del programa CP-CI):
   otra tabla. Cero migraciones. Cero toques a RLS/policies existentes.
 - PROHIBIDO publicar notas con datos inventados: si no hay novedades oficiales
   verificables (Gaceta Oficial/ONAT/MIPymes), publícase nota de plataforma
-  (tipo 'costpro') con contenido real y verificable del repo/changelog —
-  nunca fabricar resoluciones, cifras o fechas.
+  (tipo 'costpro') con contenido real y verificable del repo (temas de
+  scripts/gaceta/topics-costpro.json, cada tema con su fuente citada) — nunca
+  fabricar resoluciones, cifras o fechas.
 - Credenciales: SOLO del entorno (.env del workspace), nunca incrustadas en
   el campo del schedule, informes, commits o URLs.
 - Producción CostproBD SOLO para esta tabla y solo el INSERT idempotente
-  documentado (ON CONFLICT (slug) DO NOTHING).
+  documentado (HTTP 409 = ya-publicada, no reintentar con otro slug).
 
 --------------------------------------------------------------------------------
 PASO 0 — PREPARACIÓN DEL ENTORNO (obligatorio en sandbox reciclado)
 --------------------------------------------------------------------------------
-1. Workspace esperado: /home/z/my-project/Costpro (si no existe: git clone
-   https://github.com/Nardian90/Costpro.git y git checkout main).
+1. Workspace esperado: /home/z/my-project/Costpro en rama `main` actualizada
+   (si no existe: git clone https://github.com/Nardian90/Costpro.git; si main
+   no contiene automation/gaceta-daily/, el PR de la misión aún no se ha
+   mergeado → informe BLOCKED indicándolo al propietario y DETENTE).
 2. Credenciales: el propietario las provee por entorno (archivo .env del
-   workspace con las variables de la app; ver sección CREDENCIALES). Si no
-   están disponibles: escribe el informe de guardia como BLOCKED
-   (limitación de entorno) y DETENTE. NO improvises credenciales.
+   workspace con NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY,
+   SUPABASE_SERVICE_ROLE_KEY). Si no están disponibles: escribe el informe
+   de guardia como BLOCKED (limitación de entorno) y DETENTE. NO improvises
+   credenciales.
 3. Node ≥ 20 disponible (para scripts .mjs).
 
 --------------------------------------------------------------------------------
-PASO 1 — MEDIR (read-only, re-ejecutable)
+PASO 1A — AUDITAR LOS PROPIOS ARTEFACTOS DE LA CADENA (nuevo en v2)
+--------------------------------------------------------------------------------
+Verifica que existen (en la rama main local, tras git pull --ff-only):
+  - automation/gaceta-daily/SCHEDULER_ENTRYPOINT-WATCHDOG.txt (este archivo)
+  - scripts/gaceta/verify-gaceta-daily.mjs (instrumento)
+  - scripts/gaceta/topics-costpro.json (catálogo de temas, con fuente real)
+  - docs/OPERATIONS/ADN-GACETA-WATCHDOG-001/ (expediente: programa + guardias.md)
+Si falta CUALQUIERA: la cadena está rota (artefacto perdido tras un merge o
+reciclaje) → informe de guardia con hallazgo CRÍTICO listando los ausentes y
+el commit donde estaban (git log --all --oneline -- <archivo>) y DETENTE sin
+publicar. NO recrees los artefactos tú (el propietario los repone desde el
+PR); solo si TAMBIÉN falta la edición del día puedes publicarla tras
+documentar el hallazgo.
+
+--------------------------------------------------------------------------------
+PASO 1B — MEDIR (read-only, re-ejecutable)
 --------------------------------------------------------------------------------
    set -a; source .env; set +a
    node scripts/gaceta/verify-gaceta-daily.mjs --verbose
 Criterios (salida literal del script):
 - exit 0 + "RESULTADO: OK" → la edición del día existe → guardia SATISFECHA:
-  escribe informe (sección INFORME) con la salida literal y DETENTE. No toques
-  la base.
+  escribe informe (PASO 3) con la salida literal y DETENTE. No toques la base.
 - exit 2 + "RESULTADO: HUECO" → continúa en PASO 2.
 - exit 3 → error de entorno/conectividad: 3 reintentos con pausa de 60 s;
   si persiste, informe BLOCKED y DETENTE.
@@ -68,8 +92,9 @@ PASO 2 — REPARAR EL HUECO DE HOY (publicar la edición del día)
 1. Decide el tipo de la edición del día:
    a. Novedades oficiales verificables del día (Gaceta Oficial de Cuba,
       ONAT, MIPymes) → nota tipo 'gaceta' (voz periodística, con fuente).
-   b. Sin novedades verificables → nota tipo 'costpro' (novedad real de
-      ADNegocio basada en el repo: changelog, audits, features recientes).
+   b. Sin novedades verificables → nota tipo 'costpro' con un tema REAL del
+      catálogo scripts/gaceta/topics-costpro.json (lee el archivo fuente del
+      tema citado antes de redactar: knowledge/help/... del repo).
    PROHIBIDO mezclar hechos oficiales inventados con notas de plataforma.
 2. Redacta en el formato del contrato ADN-011:
    - titular (<= 120 chars), bajada (1 frase), cuerpo = array de bloques
@@ -86,21 +111,23 @@ PASO 2 — REPARAR EL HUECO DE HOY (publicar la edición del día)
           "fuente": ..., "destacado": false, "estado": "publicada"}
    Slug repetido (reparación ya hecha) → HTTP 409: aceptado como ya-publicada;
    NO reintentar con otro slug.
-4. Verificación POST (re-ejecutar PASO 1): exit 0 y "RESULTADO: OK" con la
-   nota del día visible en public_gaceta_v → guardia REPARADA.
+4. Verificación POST (re-ejecutar PASO 1B): "Edición de hoy publicada: SÍ"
+   y la nota del día visible en public_gaceta_v → guardia REPARADA.
 5. Huecos históricos ANTERIORES a hoy (días sin edición): NO se rellenan
-   automáticamente (decision editorial del propietario). Se listan en el
+   automáticamente (decisión editorial del propietario). Se listan en el
    informe como "huecos pendientes de decisión" con las fechas exactas.
 
 --------------------------------------------------------------------------------
 PASO 3 — INFORME DE GUARDIA (docs/OPERATIONS/ADN-GACETA-WATCHDOG-001/)
 --------------------------------------------------------------------------------
 Añade (append, una sección por guardia) a guardias.md:
-  ## <fecha-hora-UTC> — guardia del watchdog
-  - Salida literal del PASO 1 (antes), decisión tomada, acción de reparación
-    (si la hubo: slug insertado), salida literal del PASO 1 (después),
-    resultado: SATISFECHA | REPARADA | BLOCKED, huecos históricos listados.
-Sin secretos ni tokens. Este archivo es el registro que lee el nivel 3.
+  ## <fecha-hora-UTC> — guardia del watchdog (v2)
+  - Artefactos de la cadena: presentes/ausentes (lista literal, PASO 1A).
+  - Salida literal del PASO 1B (antes), decisión tomada, acción de
+    reparación (si la hubo: slug insertado), salida literal del PASO 1B
+    (después), resultado: SATISFECHA | REPARADA | BLOCKED | CRÍTICA, huecos
+    históricos listados.
+Sin secretos ni tokens.
 
 TERMINACIÓN: tras el informe, DETENTE. No publiques ediciones extra, no
 toques código, no abras PRs, no ejecutes despliegues.
@@ -109,15 +136,16 @@ toques código, no abras PRs, no ejecutes despliegues.
 CREDENCIALES (solo por entorno, nunca en este archivo)
 --------------------------------------------------------------------------------
 Variables requeridas en el .env del workspace:
-  NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY (medición PASO 1),
+  NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY (medición PASO 1B),
   SUPABASE_SERVICE_ROLE_KEY (INSERT del PASO 2, únicamente gaceta_posts).
 El .env es gitignored (.gitignore:34 .env*) — verificar con
 git check-ignore -v .env antes de escribir.
 
 --------------------------------------------------------------------------------
-APÉNDICE — CONTENIDO EXACTO DEL CAMPO DE CONTENIDO DE Z.ai SCHEDULE (nivel 2)
+APÉNDICE — CONTENIDO EXACTO DEL CAMPO DE CONTENIDO DE Z.ai SCHEDULE
 --------------------------------------------------------------------------------
-El propietario configura el schedule del watchdog con EXACTAMENTE este texto:
+El schedule del watchdog (job activo del propietario, 11:30 La Habana) ya
+referencia este archivo. Si se recrea, su contenido es EXACTAMENTE:
 
 ----------------------------------------------------------------
 Lee íntegramente el archivo
@@ -128,9 +156,8 @@ detente e informa; no improvises instrucciones alternativas.
 ----------------------------------------------------------------
 
 Frecuencia: 1 vez/día, una hora DESPUÉS del publicador del Diario Contable
-(si el publicador corre a las 10:30 La Habana, el watchdog a las 11:30 La
-Habana). El schedule NO contiene reglas ni credenciales: este archivo es el
-cerebro operativo.
+(publicador 10:30 La Habana → watchdog 11:30 La Habana). El schedule NO
+contiene reglas ni credenciales: este archivo es el cerebro operativo.
 ================================================================================
-FIN DEL WATCHDOG — ADN-011 v1
+FIN DEL WATCHDOG v2 — ADN-011 (2026-11-28)
 ================================================================================
