@@ -181,14 +181,14 @@ describe('CP-BRA-R06 — 20261128120000_cpbra_r06_reception_authorization.sql', 
     expect(SQL).toMatch(/REVOKE EXECUTE ON FUNCTION public\.can_manage_reception\(uuid, uuid, uuid\) FROM PUBLIC, anon;/);
   });
 
-  it('14. el manifiesto replay incluye la migración en la posición 225 (stream 225)', () => {
+  it('14. el manifiesto replay incluye la migración en la posición 226 (stream 226)', () => {
     const manifest = JSON.parse(
       readFileSync(join(process.cwd(), 'audit-evidence', 'INFRA-011', 'e2e-migrations-manifest.json'), 'utf8'),
     ) as { archivos: Array<{ nombre: string; estado: string }>; total_incluidos: number };
     const incluidos = manifest.archivos.filter((m) => m.estado === 'incluido');
     const idx = incluidos.findIndex((m) => m.nombre === '20261128120000_cpbra_r06_reception_authorization.sql');
-    expect(idx).toBe(224); // índice 0-based → posición 225 del stream
-    expect(manifest.total_incluidos).toBe(225);
-    expect(incluidos.length).toBe(225);
+    expect(idx).toBe(225); // índice 0-based → posición 226 del stream (tras 20261128120000_cp_pos_transfer_identity)
+    expect(manifest.total_incluidos).toBe(226);
+    expect(incluidos.length).toBe(226);
   });
 });

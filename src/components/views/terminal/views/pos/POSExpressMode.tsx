@@ -91,6 +91,10 @@ import {
 import { isPosProductVisible } from "@/hooks/api/usePOSServerSearch";
 import { usePOSCheckout } from "./usePOSCheckout";
 import { POSPortalModal } from "./POSPortalModal";
+// MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2/3):
+// identidad del pagador (nombre/CI/teléfono) — el MISMO componente que el
+// Modo Carrito: una sola implementación, misma conducta garantizada.
+import { TransferIdentityFields } from "./TransferIdentityFields";
 // MISIÓN FECHA OPERATIVA (2026-10-17): selector de fecha económica también en Express.
 import { POSOperationDateSection, usePosSaleDate } from "./POSOperationDateSection";
 import ProductImage from "@/components/ui/ProductImage";
@@ -264,10 +268,12 @@ export function POSExpressMode({
     discount,
     setDiscount,
     getConsolidatedPayments,
-    setCustomer,
-    setCustomerCi,
     customerName,
     customerCi,
+    // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2):
+    // teléfono del pagador — tercer dato obligatorio con transferencia.
+    setCustomerPhone,
+    customerPhone,
   } = useCartStore(
     useShallow((s) => ({
       items: s.items,
@@ -282,10 +288,10 @@ export function POSExpressMode({
       discount: s.discount,
       setDiscount: s.setDiscount,
       getConsolidatedPayments: s.getConsolidatedPayments,
-      setCustomer: s.setCustomer,
-      setCustomerCi: s.setCustomerCi,
       customerName: s.customerName,
       customerCi: s.customerCi,
+      setCustomerPhone: s.setCustomerPhone,
+      customerPhone: s.customerPhone,
     })),
   );
 
@@ -349,16 +355,21 @@ export function POSExpressMode({
   /** ¿La venta incluye al menos una distribución por transferencia? */
   const hasTransfer = transferRows.length > 0;
 
-  /** Datos de transferencia completos (cliente + CI + referencia por fila). */
+  /** Datos de transferencia completos (cliente + CI + teléfono + referencia por fila).
+   *  MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001 (FASE 2):
+   *  los CUATRO datos son obligatorios cuando la venta incluye transferencia:
+   *  nombre, carné de identidad y teléfono del pagador + N.º de operación por
+   *  fila. Espacios como único contenido cuentan como vacío (trim). */
   const transferDataOk = useMemo(() => {
     if (!hasTransfer) return true;
     if (!(customerName || '').trim()) return false;
     if (!(customerCi || '').trim()) return false;
+    if (!(customerPhone || '').trim()) return false;
     return transferRows.every(({ item, rowId }) => {
       const row = (item.payments || []).find(p => p.id === rowId);
       return !!(row?.reference || '').trim();
     });
-  }, [hasTransfer, customerName, customerCi, transferRows]);
+  }, [hasTransfer, customerName, customerCi, customerPhone, transferRows]);
 
   /**
    * Resumen consolidado de la venta (misión §2.4) — SOLO agregaciones de los
@@ -1750,59 +1761,12 @@ export function POSExpressMode({
                   Identifica la operación bancaria de esta venta. Estos datos
                   quedan asociados a la venta y a cada pago por transferencia.
                 </p>
-                <div>
-                  <label
-                    htmlFor="pos-express-transfer-name"
-                    className="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
-                  >
-                    Nombre y apellidos del cliente <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    id="pos-express-transfer-name"
-                    type="text"
-                    value={customerName || ''}
-                    onChange={(e) => setCustomer(null, e.target.value || null)}
-                    maxLength={200}
-                    autoComplete="off"
-                    className={cn(
-                      "w-full mt-1 rounded-xl border bg-background px-3 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-primary/20",
-                      !(customerName || '').trim() ? "border-amber-500/60" : "border-border focus:border-primary",
-                    )}
-                    aria-label="Nombre y apellidos del cliente (requerido con transferencia)"
-                    aria-required="true"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="pos-express-transfer-ci"
-                    className="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
-                  >
-                    Carné de identidad <span className="text-destructive">*</span>
-                  </label>
-                  <input
-                    id="pos-express-transfer-ci"
-                    type="text"
-                    value={customerCi || ''}
-                    onChange={(e) => setCustomerCi(e.target.value || null)}
-                    maxLength={20}
-                    autoComplete="off"
-                    className={cn(
-                      "w-full mt-1 rounded-xl border bg-background px-3 py-2.5 text-sm font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary/20",
-                      !(customerCi || '').trim() ? "border-amber-500/60" : "border-border focus:border-primary",
-                    )}
-                    aria-label="Carné de identidad del cliente (requerido con transferencia)"
-                    aria-required="true"
-                    data-testid="pos-express-transfer-ci"
-                  />
-                  {/* COSTPRO no define una regla canónica de CI (decisión
-                      documentada en el diagnóstico): pista de formato 11
-                      dígitos sin bloquear identidades con letras. */}
-                  {!!(customerCi || '').trim() && !/^\d{11}$/.test(customerCi || '') && (
-                    <p className="text-[9px] text-amber-500 mt-0.5">
-                      Formato habitual: 11 dígitos (se aceptan CI con letras).
-                    </p>
-                  )}
-                </div>
+                {/* MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001
+                    (FASE 2/3): nombre + carné + teléfono del pagador — el MISMO
+                    componente compartido con el Modo Carrito (FASE 3), con
+                    mensajes de validación junto a cada campo. La venta no se
+                    confirma sin los tres datos (transferDataOk). */}
+                <TransferIdentityFields idPrefix="pos-express-transfer" />
                 <div className="space-y-1.5">
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                     Números de transferencia <span className="text-destructive">*</span>
@@ -1872,7 +1836,7 @@ export function POSExpressMode({
                   disabled={isProcessingSale || !saleDateValidation.valid || !transferDataOk}
                   title={
                     !transferDataOk
-                      ? "Completa cliente, carné de identidad y los números de transferencia"
+                      ? "Completa nombre, carné de identidad, teléfono y los números de transferencia"
                       : !saleDateValidation.valid
                         ? saleDateValidation.error
                         : undefined

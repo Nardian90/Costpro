@@ -161,7 +161,7 @@ beforeEach(() => {
   });
   useCartStore.setState({
     items: [], storeId: STORE, globalRates: {}, lastUpdated: Date.now(),
-    customerId: null, customerName: null, customerCi: null, customerAddress: null, customerCode: null,
+    customerId: null, customerName: null, customerCi: null, customerPhone: null, customerAddress: null, customerCode: null,
   });
 });
 
@@ -305,6 +305,9 @@ describe('CP-POS-PER-ITEM-PAYMENTS — carrito Express con pagos por producto', 
     useCartStore.setState({ items: [makeItem(P_AGUA, [row('transfer', 500, 'CUP', 'TR-F-1')])] });
     useCartStore.getState().setCustomer(null, 'Cliente QA');
     useCartStore.getState().setCustomerCi('92031112345');
+    // MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001: los 4 datos
+    // son obligatorios — el teléfono también debe estar completo para confirmar.
+    useCartStore.getState().setCustomerPhone('+53 51234567');
     const { cart } = renderExpress();
     fireEvent.click(within(cart).getByRole('button', { name: 'Cobrar venta' }));
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));

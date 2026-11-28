@@ -6,7 +6,9 @@
  *  · Pago por transferencia SIN referencia → alert «Falta el número de
  *    transferencia» + botón Confirmar deshabilitado (la referencia es parte
  *    del comprobante del cobro).
- *  · Con la referencia completa → sin alert, Confirmar habilitado.
+ *  · Con la referencia completa + identidad del pagador (nombre/CI/teléfono —
+ *    MISIÓN COSTPRO-SALES-MODAL-INPUT-AND-TRANSFER-VALIDATION-001) → sin
+ *    alert, Confirmar habilitado.
  *  · Efectivo puro → no se pide referencia (el campo vive en la fila de pago
  *    del carrito, no en el panel).
  *  · Nota general de la venta: textarea presente, editable, con contador —
@@ -47,7 +49,7 @@ import { useCartStore } from '@/store/cart';
 
 const STORE = '5e6fe821-5465-48b1-b3f1-3aa3182edc38';
 
-function setState(items: any[]) {
+function setState(items: any[], customer: { name?: string | null; ci?: string | null; phone?: string | null } = {}) {
   useCartStore.setState({
     items,
     discount: null,
@@ -58,7 +60,9 @@ function setState(items: any[]) {
     saleExchangeRate: 1.0,
     selectedPayment: 'transfer',
     customerId: null,
-    customerName: null,
+    customerName: customer.name ?? null,
+    customerCi: customer.ci ?? null,
+    customerPhone: customer.phone ?? null,
     lastUpdated: Date.now(),
   });
 }
@@ -153,13 +157,24 @@ describe('CP-LOG-UNIFICATION-001 §5.1 — referencia de transferencia en el cob
     expect((confirmBtn as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('transferencia CON referencia → sin alert, Confirmar habilitado', () => {
-    setState([makeTransferItem(5000, 'TRANSF-0451-BCC')]);
+  it('transferencia CON referencia + identidad del pagador → sin alert, Confirmar habilitado', () => {
+    setState([makeTransferItem(5000, 'TRANSF-0451-BCC')], {
+      name: 'Ana Pérez', ci: '92031112345', phone: '+53 51234567',
+    });
     renderPanel();
     openConfirm();
     expect(screen.queryByText(/Falta el número de transferencia/i)).toBeNull();
     const confirmBtn = screen.getByRole('button', { name: /confirmar/i });
     expect((confirmBtn as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('transferencia CON referencia pero SIN identidad del pagador → Confirmar deshabilitado (misión TRANSFER-VALIDATION)', () => {
+    setState([makeTransferItem(5000, 'TRANSF-0451-BCC')]);
+    renderPanel();
+    openConfirm();
+    expect(screen.queryByText(/Falta el número de transferencia/i)).toBeNull();
+    const confirmBtn = screen.getByRole('button', { name: /confirmar/i });
+    expect((confirmBtn as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('efectivo puro → no se pide referencia (alert ausente, Confirmar habilitado)', () => {
