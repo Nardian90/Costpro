@@ -273,8 +273,13 @@
 
   --success: #34d399;
   --success-light: #6ee7b7;
-  --warning: #fbbf24;
-  --warning-light: #fcd34d;
+  /* CP-FX-UX-002 (FASE 5.2): el amarillo saturado (#fbbf24 amber-400) no es
+     elegante en modo oscuro — se usa un dorado sobrio y desaturado, propio de
+     software financiero: mantiene la semántica de advertencia (hue ámbar) con
+     contraste AA sobre superficies oscuras (#1a1a1a ≈ 7.9:1) sin fondos
+     fluorescentes. warning-light sigue la misma familia. */
+  --warning: #e2c17c;
+  --warning-light: #eed9a8;
   --danger: #f87171;
   --danger-light: #fca5a5;
   --destructive: #ef4444;

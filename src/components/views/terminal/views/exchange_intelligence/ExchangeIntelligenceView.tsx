@@ -1098,61 +1098,6 @@ function getBrechaStatus(stats: ReturnType<typeof calcBrechaStats>) {
 }
 
 /**
- * Regresión lineal simple (mínimos cuadrados) sobre una serie de valores.
- * Retorna slope (pendiente por paso), intercept, r2 (bondad de ajuste) y el
- * valor proyectado a N pasos hacia adelante.
- *
- * R² cercano a 1 → tendencia lineal fuerte (proyección confiable).
- * R² cercano a 0 → sin tendencia lineal clara (proyección NO confiable).
- */
-function forecastTrend(
-  values: number[],
-  stepsAhead: number,
-): { slope: number; intercept: number; projected: number; r2: number; confidence: 'high' | 'medium' | 'low' } | null {
-  if (values.length < 5) return null;
-  const n = values.length;
-  const xs = values.map((_, i) => i);
-  const sumX = xs.reduce((a, b) => a + b, 0);
-  const sumY = values.reduce((a, b) => a + b, 0);
-  const sumXY = xs.reduce((s, x, i) => s + x * values[i], 0);
-  const sumXX = xs.reduce((s, x) => s + x * x, 0);
-  const denom = n * sumXX - sumX * sumX;
-  if (denom === 0) return null;
-  const slope = (n * sumXY - sumX * sumY) / denom;
-  const intercept = (sumY - slope * sumX) / n;
-
-  const meanY = sumY / n;
-  const ssTot = values.reduce((s, y) => s + (y - meanY) ** 2, 0);
-  const ssRes = values.reduce((s, y, i) => s + (y - (slope * i + intercept)) ** 2, 0);
-  const r2 = ssTot > 0 ? 1 - ssRes / ssTot : 0;
-
-  const projected = slope * (n - 1 + stepsAhead) + intercept;
-  let confidence: 'high' | 'medium' | 'low' = 'low';
-  if (r2 >= 0.7) confidence = 'high';
-  else if (r2 >= 0.4) confidence = 'medium';
-
-  return { slope, intercept, projected, r2, confidence };
-}
-
-/**
- * Calcula la volatilidad (desviación estándar) de los cambios diarios de una
- * serie temporal. Útil como KPI de "riesgo" en lugar del % de variación.
- */
-function calcVolatility(values: number[]): number {
-  if (values.length < 2) return 0;
-  const changes: number[] = [];
-  for (let i = 1; i < values.length; i++) {
-    if (values[i - 1] > 0) {
-      changes.push((values[i] - values[i - 1]) / values[i - 1]);
-    }
-  }
-  if (changes.length === 0) return 0;
-  const mean = changes.reduce((a, b) => a + b, 0) / changes.length;
-  const variance = changes.reduce((s, v) => s + (v - mean) ** 2, 0) / changes.length;
-  return Math.sqrt(variance) * 100; // en %
-}
-
-/**
  * InfoTooltip — pequeño ícono de información que abre un popover con explicación.
  * Útil para tarjetas donde el usuario necesita entender cómo se calcula un valor.
  */
@@ -1259,74 +1204,103 @@ function DashboardTab({
   );
   const brechaStatus = useMemo(() => getBrechaStatus(brechaStats), [brechaStats]);
 
-  // Variación 30 días (mantenida para Card 2)
-  const usdInformalRates = rates.filter((r: ExchangeRate) => isInformalSource(r.source) && r.currency === 'USD');
-  const last30 = usdInformalRates.slice(-30);
-  const monthStart = last30[0]?.rate ?? informalUsd ?? 0;
-  const monthEnd = last30[last30.length - 1]?.rate ?? informalUsd ?? 0;
-  const monthChange = monthStart > 0 ? ((monthEnd - monthStart) / monthStart) * 100 : 0;
-  // Días reales en la ventana (en caso de que haya menos de 30 muestras)
-  const monthWindowDays = last30.length;
-
-  // ─── Variación diaria (vs día anterior) para ambas tarjetas ───
-  // FIX-BADGE-REAL: Ordenar DESC por fecha + captured_at para garantizar
-  // que tomamos hoy (no ayer).
-  // IC-DIVIZA-002: informales REALES con prioridad de fecha operativa (una
-  // fila futura legado no dispara el «vs ayer»). Para la variación diaria se
-  // usa la serie deduplicada por fecha (un punto/día).
-  // IC-DIVIZA-003: isInformalSource = isActiveInformalSource → la serie es
-  // la del proveedor ACTIVO (Diviza); el archivo elToque no entra.
-  const byVigenteLocal = byOperativeDateFirstThenFreshness(operativeDate ?? getOperativeDate());
-  const usdInformalRatesLocal = rates
-    .filter((r: ExchangeRate) => isInformalSource(r.source) && r.currency === 'USD')
-    .sort(byVigenteLocal);
-  // Deduplicar por fecha: si hoy hay varias capturas, gana la más fresca.
-  const seenDates = new Set<string>();
-  const informalByDateDesc: ExchangeRate[] = [];
-  for (const r of usdInformalRatesLocal) {
-    if (!seenDates.has(r.rate_date)) {
-      seenDates.add(r.rate_date);
-      informalByDateDesc.push(r);
+  // ═══ CP-FX-UX-002 (FASE 4/6): series deduplicadas OBSERVADAS por fecha ═══
+  // Un punto por día (captura más fresca gana) y SOLO observaciones reales
+  // para el informal — las reconstrucciones (estimated) jamás alimentan
+  // variaciones ni volatilidad (misión §6.9). Misma base para tarjetas N1,
+  // «Indicadores de mercado» y la proyección: un solo conjunto de datos.
+  const observedInformalPoints = useMemo(() => {
+    const byDate = new Map<string, ExchangeRate>();
+    for (const r of rates) {
+      if (!isInformalSource(r.source) || r.currency !== 'USD' || !isObservedCaptureRow(r)) continue;
+      const cur = byDate.get(r.rate_date);
+      if (!cur || (r.captured_at || '') > (cur.captured_at || '')) byDate.set(r.rate_date, r);
     }
-  }
-  const informalToday = informalByDateDesc[0]?.rate;
-  const informalYesterday = informalByDateDesc[1]?.rate;
-  const informalDailyChange = (informalToday != null && informalYesterday != null)
-    ? informalToday - informalYesterday
-    : 0;
-  const informalDailyChangePct = (informalYesterday != null && informalYesterday > 0)
-    ? (informalDailyChange / informalYesterday) * 100
+    return [...byDate.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, r]) => ({ date, value: r.rate }));
+  }, [rates]);
+
+  const observedOfficialPoints = useMemo(() => {
+    const byDate = new Map<string, ExchangeRate>();
+    for (const r of rates) {
+      if (r.source !== 'BCC' || r.currency !== 'USD' || r.segment !== bccSegment) continue;
+      const cur = byDate.get(r.rate_date);
+      if (!cur || (r.captured_at || '') > (cur.captured_at || '')) byDate.set(r.rate_date, r);
+    }
+    return [...byDate.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, r]) => ({ date, value: r.rate }));
+  }, [rates, bccSegment]);
+
+  // Variaciones POR FECHA CALENDARIO (misión §6.4/§6.5) — la tabla de
+  // indicadores de mercado compara con la observación de hace exactamente
+  // 1/7/30 días naturales (tolerancia 2 días por fines de semana sin
+  // publicación); el cálculo por ÍNDICE del antiguo tab «Variaciones» podía
+  // comparar fechas separadas más de lo etiquetado.
+  const informalVars = useMemo(() => computeDateBasedVariations(observedInformalPoints), [observedInformalPoints]);
+  const officialVars = useMemo(() => computeDateBasedVariations(observedOfficialPoints), [observedOfficialPoints]);
+
+  // Variación 30 días (mantenida para Card 2 — serie observada deduplicada;
+  // ventana declarada en días naturales entre la primera y la última muestra)
+  const monthWindow = observedInformalPoints.slice(-31);
+  const monthStart = monthWindow[0]?.value ?? informalUsd ?? 0;
+  const monthEnd = monthWindow[monthWindow.length - 1]?.value ?? informalUsd ?? 0;
+  const monthChange =
+    monthWindow.length >= 2 && monthStart > 0
+      ? ((monthEnd - monthStart) / monthStart) * 100
+      : 0;
+  const monthWindowDays = monthWindow.length >= 2
+    ? Math.max(1, daysBetweenIsoDates(monthWindow[monthWindow.length - 1].date, monthWindow[0].date))
     : 0;
 
-  // BCC: últimos 2 registros oficiales para el segmento seleccionado
-  const usdOfficialRatesLocal = rates
-    .filter((r: ExchangeRate) => r.source === 'BCC' && r.currency === 'USD' && r.segment === bccSegment)
-    .sort(byVigenteLocal);
-  const officialToday = usdOfficialRatesLocal[0]?.rate;
-  const officialYesterday = usdOfficialRatesLocal[1]?.rate;
-  const officialDailyChange = (officialToday != null && officialYesterday != null)
-    ? officialToday - officialYesterday
-    : 0;
-  const officialDailyChangePct = (officialYesterday != null && officialYesterday > 0)
-    ? (officialDailyChange / officialYesterday) * 100
-    : 0;
+  // ═══ CP-FX-UX-002 (FASE 4): indicadores de mercado — de la MISMA serie ═══
+  // observada deduplicada. Volatilidad 7d = σ de cambios diarios SOLO entre
+  // fechas consecutivas (la volatilidad en cero de la auditoría surgía de
+  // promediar ventanas planas por índice sin respetar fechas).
+  const volatility7d = useMemo(() => volatilityPct(observedInformalPoints.slice(-8)), [observedInformalPoints]);
 
-  // KPIs secundarios (no duplican Card 2):
-  // 1) Volatilidad 7 días del USD informal (std-dev de cambios diarios)
-  const last7Informal = usdInformalRates.slice(-8).map((r: ExchangeRate) => r.rate);
-  const volatility7d = calcVolatility(last7Informal);
+  // Variaciones diarias de las tarjetas N1 — por FECHA, con hueco honesto:
+  // dos observaciones separadas >2 días naturales NO forman variación diaria.
+  const informalToday = observedInformalPoints[observedInformalPoints.length - 1]?.value;
+  const informalPrevPoint = observedInformalPoints[observedInformalPoints.length - 2];
+  const informalPrevGap =
+    informalToday != null && informalPrevPoint
+      ? daysBetweenIso(observedInformalPoints[observedInformalPoints.length - 1].date, informalPrevPoint.date)
+      : null;
+  const informalDailyChange =
+    informalToday != null && informalPrevPoint && informalPrevGap != null && informalPrevGap <= 2
+      ? informalToday - informalPrevPoint.value
+      : 0;
+  const informalDailyChangePct =
+    informalPrevPoint && informalPrevGap != null && informalPrevGap <= 2 && informalPrevPoint.value > 0
+      ? (informalDailyChange / informalPrevPoint.value) * 100
+      : 0;
 
-  // 2) Cambio semanal (%) — último 7 días
-  const weekStart = last7Informal[0] ?? informalUsd ?? 0;
-  const weekEnd = last7Informal[last7Informal.length - 1] ?? informalUsd ?? 0;
-  const weeklyChange = weekStart > 0 ? ((weekEnd - weekStart) / weekStart) * 100 : 0;
+  const officialToday = observedOfficialPoints[observedOfficialPoints.length - 1]?.value;
+  const officialPrevPoint = observedOfficialPoints[observedOfficialPoints.length - 2];
+  const officialPrevGap =
+    officialToday != null && officialPrevPoint
+      ? daysBetweenIsoDates(observedOfficialPoints[observedOfficialPoints.length - 1].date, officialPrevPoint.date)
+      : null;
+  const officialDailyChange =
+    officialToday != null && officialPrevPoint && officialPrevGap != null && officialPrevGap <= 2
+      ? officialToday - officialPrevPoint.value
+      : 0;
+  const officialDailyChangePct =
+    officialPrevPoint && officialPrevGap != null && officialPrevGap <= 2 && officialPrevPoint.value > 0
+      ? (officialDailyChange / officialPrevPoint.value) * 100
+      : 0;
 
-  // 3) Proyección 10 días (regresión lineal sobre últimos 30 días)
-  const last30Values = usdInformalRates.slice(-30).map((r: ExchangeRate) => r.rate);
-  const forecast10d = useMemo(() => forecastTrend(last30Values, 10), [last30Values]);
-  const forecastProjection = forecast10d?.projected ?? informalUsd ?? 0;
+  // Proyección 10 días con el MOTOR COMPARTIDO (misión §6.8): misma serie
+  // observada, ventana de 30 puntos declarada, R² y confianza explícitos.
+  const forecast10d = useMemo(
+    () => forecastRate(observedInformalPoints.map(p => ({ date: p.date, value: p.value })), { daysAhead: 10, windowPoints: 30 }),
+    [observedInformalPoints],
+  );
+  const forecastProjection = forecast10d?.reliable ? forecast10d.projected : null;
   const forecastR2 = forecast10d?.r2 ?? 0;
-  const forecastConfidence = forecast10d?.confidence ?? 'low';
+  const forecastConfidence = forecast10d?.confidence === 'alta' ? 'high' : forecast10d?.confidence === 'media' ? 'medium' : 'low';
 
   // Tendencia visual de la brecha (deprecada la antigua clasificación por umbral fijo)
   const trend = brechaStatus?.level ?? 'normal';
@@ -1401,7 +1375,7 @@ function DashboardTab({
       {/* ── Tarjetas BCC e Informal — superficie unificada, acento único ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Tarjeta BCC — superficie neutra; semántica solo en badges */}
-        <div className="rounded-2xl border-2 border-border bg-card p-6 hover:shadow-lg transition-shadow">
+        <div className="rounded-2xl border border-border bg-card p-5 hover:shadow-lg transition-shadow">
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -1458,7 +1432,7 @@ function DashboardTab({
         </div>
 
         {/* Tarjeta Informal — misma superficie; badge honesto con proveedor */}
-        <div className="rounded-2xl border-2 border-border bg-card p-6 hover:shadow-lg transition-shadow">
+        <div className="rounded-2xl border border-border bg-card p-5 hover:shadow-lg transition-shadow">
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -1593,7 +1567,7 @@ function DashboardTab({
 
       {/* ── Tarjeta Brecha — semántica moderada por estado, sin gradientes ── */}
       <div className={cn(
-        'rounded-2xl border-2 bg-card p-6',
+        'rounded-2xl border bg-card p-5',
         trend === 'critical' || trend === 'risk' ? 'border-destructive/40' :
         trend === 'warning' ? 'border-warning/40' : 'border-success/40'
       )}>
@@ -1646,183 +1620,182 @@ function DashboardTab({
               <p className="text-sm text-muted-foreground">Diferencia entre oficial e informal</p>
             </div>
           </div>
-          <div className="text-right shrink-0">
+          <div className="text-right shrink-0" data-testid="brecha-compacta">
             <p className={cn('text-3xl font-black font-mono', trendColor)}>+{diffPct}%</p>
-            <p className="text-sm text-muted-foreground">+{diff.toFixed(0)} CUP</p>
+            <p className="text-sm text-muted-foreground">
+              {diff >= 0 ? '+' : ''}{diff.toFixed(0)} CUP · base: tasa oficial
+            </p>
+            {brechaStats && (
+              <p className="text-xs text-muted-foreground mt-1" title="Evolución de la brecha respecto a hace 7 días (puntos porcentuales)">
+                Δ7d: <strong className={cn('font-mono', brechaStats.isAbruptChange ? 'text-destructive' : 'text-foreground')}>
+                  {brechaStats.delta7d >= 0 ? '+' : ''}{brechaStats.delta7d.toFixed(1)}pp
+                </strong>
+                {brechaStats.isAbruptChange && ' · cambio abrupto (2σ)'}
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Métricas científicas compactas */}
-        {brechaStats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
-            <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Promedio 90d</p>
-              <p className="text-sm font-black font-mono text-foreground">{brechaStats.avg.toFixed(0)}%</p>
-            </div>
-            <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Desv. estándar</p>
-              <p className="text-sm font-black font-mono text-foreground">{brechaStats.std.toFixed(0)}%</p>
-            </div>
-            <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Z-score</p>
-              <p className={cn('text-sm font-black font-mono', Math.abs(brechaStats.zScore) > 2 ? 'text-warning' : 'text-foreground')}>
-                {brechaStats.zScore.toFixed(0)}σ
-              </p>
-            </div>
-            <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Δ 7 días</p>
-              <p className={cn('text-sm font-black font-mono', brechaStats.isAbruptChange ? 'text-destructive' : 'text-foreground')}>
-                {brechaStats.delta7d >= 0 ? '+' : ''}{brechaStats.delta7d.toFixed(0)}pp
-              </p>
-            </div>
-            <div className="bg-background/60 rounded-lg p-2 border border-border/50 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Clasif. FMI</p>
-              <p className={cn('text-xs font-black uppercase', trendColor)}>{brechaStatus?.internationalLabel ?? '—'}</p>
-            </div>
-          </div>
-        )}
+      </div>
 
-        <div className={cn('flex items-start gap-2 px-4 py-3 rounded-xl border', trendBg,
-          trend === 'critical' || trend === 'risk' ? 'border-destructive/30' :
-          trend === 'warning' ? 'border-warning/30' : 'border-success/30'
-        )}>
-          {brechaStatus?.isAbruptChange
-            ? <AlertTriangle className={cn('w-5 h-5 shrink-0 mt-0.5', trendColor)} />
-            : trend === 'critical' || trend === 'risk'
-              ? <AlertTriangle className={cn('w-5 h-5 shrink-0 mt-0.5', trendColor)} />
-              : <Activity className={cn('w-5 h-5 shrink-0 mt-0.5', trendColor)} />}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-black uppercase tracking-widest mb-1" style={{ color: 'currentColor' }}>
-              <span className={trendColor}>{brechaStatus?.label ?? 'Análisis no disponible'}</span>
+
+      {/* ══ NIVEL 3 (CP-FX-UX-002): Indicadores de mercado — compactos y agrupados ══
+          Una sola tarjeta tabular reemplaza las antiguas KPIs sueltas y el tab
+          «Variaciones»: variaciones POR FECHA (24h/7d/30d de ambas tasas),
+          volatilidad 7d y estadística de la brecha. Los detalles (fórmulas,
+          z-score, promedio 90d) viven en tooltips — sin repetir el dato en
+          varias ubicaciones (misión §4.1 Nivel 3 y §5.1). */}
+      <div className="bg-card rounded-2xl border border-border p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">Indicadores de mercado</h3>
+          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+            {volatility7d != null ? (
+              <span title="Desviación estándar de los cambios diarios (solo días consecutivos) de la última semana observada">
+                Volatilidad 7d: <strong className="text-foreground font-mono">{volatility7d.toFixed(1)}%</strong>
+              </span>
+            ) : (
+              <span title="Se requieren ≥3 días consecutivos con cambios para medir volatilidad">Volatilidad 7d: —</span>
+            )}
+            {brechaStats && (
+              <span title={`Promedio de la brecha en 90 días: ${brechaStats.avg.toFixed(1)}% · σ ${brechaStats.std.toFixed(1)}pp`}>
+                Brecha media 90d: <strong className="text-foreground font-mono">{brechaStats.avg.toFixed(1)}%</strong>
+              </span>
+            )}
+            <span
+              className={cn(
+                'px-2 py-0.5 rounded-md border font-bold uppercase tracking-wider',
+                trend === 'critical' || trend === 'risk'
+                  ? 'bg-destructive/10 border-destructive/30 text-destructive'
+                  : trend === 'warning'
+                    ? 'bg-warning/10 border-warning/30 text-warning'
+                    : 'bg-success/10 border-success/30 text-success',
+              )}
+              title={brechaStatus?.explanation ?? 'Clasificación de presión cambiaria (estándar FMI / Reinhart-Rogoff)'}
+            >
+              {brechaStatus?.label ?? 'Presión: n/d'}
+            </span>
+          </div>
+        </div>
+        {/* Tabla compacta de variaciones — cálculo POR FECHA CALENDARIO */}
+        <div className="overflow-x-auto" data-testid="market-indicators-table">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left py-2 px-2 font-black uppercase tracking-widest text-xs text-muted-foreground">Tasa</th>
+                <th className="text-right py-2 px-2 font-black uppercase tracking-widest text-xs text-muted-foreground">Último</th>
+                <th className="text-right py-2 px-2 font-black uppercase tracking-widest text-xs text-muted-foreground">1 día</th>
+                <th className="text-right py-2 px-2 font-black uppercase tracking-widest text-xs text-muted-foreground">7 días</th>
+                <th className="text-right py-2 px-2 font-black uppercase tracking-widest text-xs text-muted-foreground">30 días</th>
+              </tr>
+            </thead>
+            <tbody>
+              {informalVars && (
+                <tr className="border-b border-border/50">
+                  <td className="py-2.5 px-2">
+                    <span className="font-black text-foreground">USD Informal</span>
+                    <span className="block text-xs text-muted-foreground">{informalVars.lastDate} · Diviza</span>
+                  </td>
+                  <td className="text-right py-2.5 px-2 font-black font-mono text-foreground">{informalVars.lastValue.toFixed(0)}</td>
+                  <td className="text-right py-2.5 px-2"><VariationPctCell pct={informalVars.pct24h} days={informalVars.days24h} /></td>
+                  <td className="text-right py-2.5 px-2"><VariationPctCell pct={informalVars.pct7d} days={informalVars.days7d} /></td>
+                  <td className="text-right py-2.5 px-2"><VariationPctCell pct={informalVars.pct30d} days={informalVars.days30d} /></td>
+                </tr>
+              )}
+              {officialVars && (
+                <tr>
+                  <td className="py-2.5 px-2">
+                    <span className="font-black text-foreground">USD BCC ({segmentShortLabels?.[bccSegment] ?? bccSegment})</span>
+                    <span className="block text-xs text-muted-foreground">{officialVars.lastDate} · oficial</span>
+                  </td>
+                  <td className="text-right py-2.5 px-2 font-black font-mono text-foreground">{officialVars.lastValue.toFixed(0)}</td>
+                  <td className="text-right py-2.5 px-2"><VariationPctCell pct={officialVars.pct24h} days={officialVars.days24h} /></td>
+                  <td className="text-right py-2.5 px-2"><VariationPctCell pct={officialVars.pct7d} days={officialVars.days7d} /></td>
+                  <td className="text-right py-2.5 px-2"><VariationPctCell pct={officialVars.pct30d} days={officialVars.days30d} /></td>
+                </tr>
+              )}
+              {!informalVars && !officialVars && (
+                <tr>
+                  <td colSpan={5} className="py-4 text-center text-muted-foreground text-xs">
+                    Sin observaciones suficientes para calcular variaciones por fecha.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Variaciones calculadas por fecha calendario (la observación de hace 1/7/30 días naturales; tolerancia de 2 días
+          por fechas sin publicación) sobre la serie observada deduplicada — sin mezclar estimaciones.
+        </p>
+      </div>
+
+      {/* ══ NIVEL 4 (CP-FX-UX-002): Proyección — bloque compacto, IDENTIFICADA como estimación ══ */}
+      <div className="bg-card rounded-2xl border border-border p-4 sm:p-5 flex items-center justify-between flex-wrap gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-sm font-black uppercase tracking-widest text-foreground">Proyección informal +10 días</h3>
+            <span className="px-2 py-0.5 rounded-md bg-muted border border-border text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+              Estimación
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {forecast10d?.window.from && forecast10d?.window.to
+              ? `Motor compartido · ${MODEL_LABEL_SHORT} · ventana ${forecast10d.window.samples} observaciones (${forecast10d.window.from} → ${forecast10d.window.to})`
+              : 'Motor compartido · regresión lineal · ventana de 30 observaciones'}
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="text-lg font-black font-mono text-foreground">
+              {forecastProjection != null ? `${forecastProjection.toFixed(0)} CUP` : '—'}
             </p>
-            <p className="text-sm text-foreground leading-relaxed">
-              {brechaStatus?.explanation ?? 'No hay suficientes datos históricos para análisis estadístico. Se requieren al menos 5 muestras de la brecha.'}
+            <p className="text-xs text-muted-foreground">
+              {forecastProjection != null
+                ? `R² ${forecastR2.toFixed(3)} · confianza ${forecastConfidence === 'high' ? 'alta' : forecastConfidence === 'medium' ? 'media' : 'baja'}`
+                : 'sin evidencia estadística suficiente'}
             </p>
           </div>
+          <InfoTooltip title="Proyección — lectura honesta">
+            <p className="mb-2">Proyección del USD informal a 10 días con el <strong>MISMO motor</strong> que el Simulador (regresión lineal sobre las últimas 30 observaciones reales).</p>
+            <code className="block bg-muted/60 rounded-md p-2 text-xs font-mono">tasa(t) = m·t + b</code>
+            <p className="mt-2 text-xs">
+              Un R² alto mide el ajuste al pasado, NO la certeza del futuro: esta cifra es un <strong>escenario estadístico</strong>, no una garantía. Para experimentar con modelos use el tab Simulador.
+            </p>
+          </InfoTooltip>
         </div>
       </div>
 
-      {/* ── KPIs secundarios — sin duplicar Card 2 ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <KpiCard
-          label="Volatilidad 7 días"
-          value={`${volatility7d.toFixed(0)}%`}
-          icon={Sigma}
-          color={volatility7d > 5 ? 'risk' : volatility7d > 2 ? 'warning' : 'success'}
-          subtitle="σ de cambios diarios del USD informal"
-          tooltip={
-            <InfoTooltip title="Volatilidad 7 días">
-              <p className="mb-2">
-                Es la <strong>desviación estándar</strong> de los cambios porcentuales diarios del USD informal en los últimos 7 días.
-              </p>
-              <code className="block bg-muted/60 rounded-md p-2 text-xs font-mono">
-                σ = √(Σ((Δᵢ − Δ̄)²) / N)
-              </code>
-              <p className="mt-2 text-xs">
-                <strong>Interpretación:</strong> valores altos indican que la tasa está oscilando mucho día a día (incertidumbre). Valores bajos indican estabilidad.
-              </p>
-              <p className="mt-1 text-xs">
-                <strong>Umbrales típicos:</strong> &lt;2% estable, 2-5% volátil, &gt;5% muy volátil.
-              </p>
-            </InfoTooltip>
-          }
-        />
-        <KpiCard
-          label="Cambio semanal"
-          value={`${weeklyChange >= 0 ? '+' : ''}${weeklyChange.toFixed(0)}%`}
-          icon={weeklyChange >= 0 ? TrendingUp : TrendingDown}
-          color={weeklyChange > 5 ? 'risk' : weeklyChange > 2 ? 'warning' : 'success'}
-          subtitle="USD informal últimos 7 días"
-          tooltip={
-            <InfoTooltip title="Cambio semanal — cálculo">
-              <p className="mb-2">
-                Variación porcentual del USD informal en los últimos 7 días:
-              </p>
-              <code className="block bg-muted/60 rounded-md p-2 text-xs font-mono">
-                var% = ((tasaHoy − tasaHace7d) / tasaHace7d) × 100
-              </code>
-              <ul className="list-disc pl-4 mt-2 text-xs space-y-0.5">
-                <li>Tasa hace 7 días: <strong>{weekStart.toFixed(0)} CUP</strong></li>
-                <li>Tasa actual: <strong>{weekEnd.toFixed(0)} CUP</strong></li>
-                <li>Variación: <strong>{weeklyChange >= 0 ? '+' : ''}{weeklyChange.toFixed(0)}%</strong></li>
-              </ul>
-            </InfoTooltip>
-          }
-        />
-        <KpiCard
-          label="Proyección 10 días"
-          value={`${forecastProjection.toFixed(0)} CUP`}
-          icon={Target}
-          color={forecastConfidence === 'high' ? 'success' : forecastConfidence === 'medium' ? 'warning' : 'risk'}
-          subtitle={`Regresión lineal · R²=${forecastR2.toFixed(4)} · conf.${forecastConfidence === 'high' ? 'alta' : forecastConfidence === 'medium' ? 'media' : 'baja'}`}
-          tooltip={
-            <InfoTooltip title="Proyección 10 días — regresión lineal">
-              <p className="mb-2">
-                Proyección del USD informal a 10 días usando <strong>regresión lineal por mínimos cuadrados</strong> sobre los últimos 30 días:
-              </p>
-              <code className="block bg-muted/60 rounded-md p-2 text-xs font-mono">
-                tasa(t) = m·t + b
-              </code>
-              <ul className="list-disc pl-4 mt-2 text-xs space-y-0.5">
-                <li>Pendiente (m): <strong>{forecast10d?.slope.toFixed(0) ?? '—'} CUP/día</strong></li>
-                <li>R² (bondad de ajuste): <strong>{forecastR2.toFixed(4)}</strong></li>
-                <li>Tasa actual: <strong>{(informalUsd ?? 0).toFixed(0)} CUP</strong></li>
-                <li>Proyección +10 días: <strong>{forecastProjection.toFixed(0)} CUP</strong></li>
-              </ul>
-              <p className="mt-2 text-xs pt-2 border-t border-border/50">
-                <strong>Confianza:</strong> R² ≥ 0.7 alta · 0.4-0.7 media · &lt;0.4 baja (no usar para decisiones).
-              </p>
-              <p className="mt-1 text-xs">
-                <strong>Limitación:</strong> la regresión lineal asume que la tendencia reciente continúa. No modela quiebres de régimen ni eventos imprevistos.
-              </p>
-            </InfoTooltip>
-          }
-        />
-      </div>
-
-      {/* ── Análisis Ejecutivo ── */}
-      <div className={cn('rounded-2xl p-6 border-2', trendBg,
+            {/* ══ NIVEL 5 (CP-FX-UX-002): Análisis Ejecutivo — interpretación, no repetición ══
+          Texto generado de los valores VIGENTES (brecha, variación mensual,
+          implicación para reposición de mercancía en USD). La estadística
+          detallada vive en Nivel 2/3/4 — aquí solo la lectura ejecutiva. */}
+      <div className={cn(
+        'rounded-2xl border p-4 sm:p-5 bg-card',
         trend === 'critical' || trend === 'risk' ? 'border-destructive/40' :
         trend === 'warning' ? 'border-warning/40' : 'border-success/40'
       )}>
-        <div className="flex items-center gap-3 mb-3">
+        <div className="flex items-center gap-2 mb-2">
           {brechaStatus?.isAbruptChange || trend === 'critical' || trend === 'risk'
-            ? <AlertTriangle className={cn('w-6 h-6', trendColor)} />
-            : <Activity className={cn('w-6 h-6', trendColor)} />}
-          <h3 className="text-lg font-black uppercase tracking-tight text-foreground">Análisis Ejecutivo</h3>
+            ? <AlertTriangle className={cn('w-5 h-5', trendColor)} aria-hidden="true" />
+            : <Activity className={cn('w-5 h-5', trendColor)} aria-hidden="true" />}
+          <h3 className="text-sm font-black uppercase tracking-widest text-foreground">Análisis ejecutivo</h3>
+          <span className="text-xs text-muted-foreground">· referencia: {(operativeDate ?? 'hoy')}</span>
         </div>
-        <p className="text-sm text-foreground leading-relaxed mb-3">
-          La brecha entre la tasa oficial ({officialUsd.toFixed(0)} CUP) y la informal ({(informalUsd ?? 0).toFixed(0)} CUP) es de <strong className={trendColor}>{diffPct}%</strong>.{' '}
-          {brechaStatus
-            ? brechaStatus.explanation
-            : 'No hay suficientes datos históricos para análisis estadístico. Se requieren al menos 5 muestras de la brecha.'}
+        <p className="text-sm text-foreground leading-relaxed" data-testid="executive-analysis">
+          La brecha cambiaria se sitúa en torno al <strong className={trendColor}>{diffPct}%</strong> — la tasa informal
+          ({(informalUsd ?? 0).toFixed(0)} CUP/USD) supera a la oficial BCC {segmentShortLabels?.[bccSegment] ?? bccSegment}
+          {' '}({officialUsd.toFixed(0)} CUP/USD) en <strong>{diff > 0 ? '+' : ''}{diff.toFixed(0)} CUP</strong>.{' '}
+          {monthWindowDays > 0 && (
+            <>En los últimos {monthWindowDays} días naturales, el dólar informal {monthChange >= 0 ? 'subió' : 'bajó'}{' '}
+            <strong>{Math.abs(monthChange).toFixed(1)}%</strong> (de {monthStart.toFixed(0)} a {monthEnd.toFixed(0)} CUP).{' '}</>
+          )}
+          {brechaStatus && !brechaStatus.isAbruptChange && `${brechaStatus.explanation} `}
+          {brechaStatus?.isAbruptChange && (
+            <span className="text-destructive font-bold">Se detectó un cambio abrupto de la brecha (z-score &gt; 2σ) — monitorear de cerca. </span>
+          )}
+          Para las empresas que reponen mercancía en USD, esta variación exige revisar el costo de reposición y los
+          precios de venta — use el tab Simulador para cuantificar el impacto sobre sus productos.
         </p>
-        {brechaStats && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-            <div className="bg-background/60 rounded-lg p-2 border border-border/50">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Brecha actual</p>
-              <p className={cn('text-sm font-black font-mono', trendColor)}>{brechaStats.current.toFixed(0)}%</p>
-            </div>
-            <div className="bg-background/60 rounded-lg p-2 border border-border/50">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">vs Promedio 90d</p>
-              <p className="text-sm font-black font-mono text-foreground">
-                {brechaStats.current >= brechaStats.avg ? '+' : ''}{(brechaStats.current - brechaStats.avg).toFixed(0)}pp
-              </p>
-            </div>
-            <div className="bg-background/60 rounded-lg p-2 border border-border/50">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Z-score</p>
-              <p className={cn('text-sm font-black font-mono', Math.abs(brechaStats.zScore) > 2 ? 'text-warning' : 'text-foreground')}>
-                {brechaStats.zScore.toFixed(0)}σ {Math.abs(brechaStats.zScore) > 2 && '⚠'}
-              </p>
-            </div>
-            <div className="bg-background/60 rounded-lg p-2 border border-border/50">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Proyección 10d</p>
-              <p className={cn('text-sm font-black font-mono', forecastProjection > (informalUsd ?? 0) ? 'text-destructive' : 'text-success')}>
-                {forecastProjection.toFixed(0)} CUP
-              </p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -1906,7 +1879,7 @@ function AlertsTab({ diffPct, historyData }: any) {
         const c = levelColors[alert.level];
         const Icon = c.icon;
         return (
-          <div key={i} className={cn('rounded-2xl p-5 border-2 flex items-start gap-4', c.bg, c.border)}>
+          <div key={i} className={cn('rounded-2xl p-4 border flex items-start gap-4', c.bg, c.border)}>
             <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border', c.bg, c.border)}>
               <Icon className={cn('w-5 h-5', c.text)} />
             </div>
@@ -1930,6 +1903,29 @@ function AlertsTab({ diffPct, historyData }: any) {
 }
 
 // ── Componentes auxiliares ──
+
+/**
+ * CP-FX-UX-002 (FASE 4 N3): celda compacta de variación % — verde/baja,
+ * rojo/sube (convención del módulo: subida = devaluación = adverso para
+ * quien paga en CUP), «—» con hueco honesto. El tooltip informa los días
+ * naturales reales usados en la comparación (transparencia §6.5).
+ */
+function VariationPctCell({ pct, days }: { pct: number | null; days: number | null }) {
+  if (pct == null) {
+    return <span className="font-mono text-sm text-muted-foreground">—</span>;
+  }
+  const up = pct >= 0;
+  return (
+    <span
+      className={cn('inline-flex items-center gap-1 font-mono text-sm font-bold', up ? 'text-destructive' : 'text-success')}
+      title={`Comparación con la observación de hace ${days ?? '?'} días naturales`}
+    >
+      {up ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+      {up ? '+' : ''}{pct.toFixed(1)}%
+    </span>
+  );
+}
+
 function KpiCard({ label, value, icon: Icon, color, subtitle, tooltip }: any) {
   const colorMap: Record<string, string> = {
     primary: 'text-primary bg-primary/15',
@@ -1939,7 +1935,7 @@ function KpiCard({ label, value, icon: Icon, color, subtitle, tooltip }: any) {
   };
   const cls = colorMap[color] || colorMap.primary;
   return (
-    <div className="bg-card rounded-2xl border-2 border-border p-5 hover:shadow-lg transition-shadow">
+    <div className="bg-card rounded-2xl border border-border p-5 hover:shadow-lg transition-shadow">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-1">
           <span className="text-sm font-black uppercase tracking-widest text-foreground">{label}</span>
@@ -2076,7 +2072,7 @@ function ConfiguracionTab({
   return (
     <div className="space-y-4 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* ── Estado de los proveedores ── */}
-      <div className="bg-card rounded-2xl border-2 border-border p-6">
+      <div className="bg-card rounded-2xl border border-border p-5">
         <h3 className="text-base font-black uppercase tracking-widest text-foreground mb-1">
           Estado de los proveedores
         </h3>
@@ -2120,7 +2116,7 @@ function ConfiguracionTab({
       </div>
 
       {/* ── Resumen de la base de datos ── */}
-      <div className="bg-card rounded-2xl border-2 border-border p-6">
+      <div className="bg-card rounded-2xl border border-border p-5">
         <h3 className="text-base font-black uppercase tracking-widest text-foreground mb-4">
           Base de datos de tasas
         </h3>
@@ -2147,7 +2143,7 @@ function ConfiguracionTab({
       </div>
 
       {/* ── Acciones de actualización ── */}
-      <div className="bg-card rounded-2xl border-2 border-border p-6 space-y-4">
+      <div className="bg-card rounded-2xl border border-border p-5 space-y-4">
         <h3 className="text-base font-black uppercase tracking-widest text-foreground">
           Actualización de tasas
         </h3>

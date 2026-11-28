@@ -715,7 +715,7 @@ function HistoryTab({
   return (
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* ═══ SERIE INFORMAL UNIFICADA — estado de la consulta + procedencia ═══ */}
-      <div className="bg-card rounded-2xl border-2 border-border p-4">
+      <div className="bg-card rounded-2xl border border-border p-4">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0">
             <h3 className="text-sm font-black uppercase tracking-widest text-foreground flex items-center gap-2">
@@ -799,7 +799,7 @@ function HistoryTab({
           <div
             role="alert"
             data-testid="archive-error"
-            className="mt-3 rounded-xl border-2 border-warning/40 bg-warning/10 p-3 flex items-start gap-2"
+            className="mt-3 rounded-xl border border-warning/40 bg-warning/10 p-3 flex items-start gap-2"
           >
             <Info className="w-4 h-4 text-warning shrink-0 mt-0.5" aria-hidden="true" />
             <p className="text-xs text-foreground leading-relaxed">
@@ -1089,7 +1089,7 @@ function HistoryTab({
                   }}
                   min={0}
                   max={90}
-                  className="w-16 h-9 px-2 rounded-lg border-2 border-border bg-background text-xs font-bold text-foreground text-center"
+                  className="w-16 h-9 px-2 rounded-lg border border-border bg-background text-xs font-bold text-foreground text-center"
                   title="Días personalizados a proyectar (0-90)"
                 />
                 <span className="text-xs text-muted-foreground">días</span>
@@ -1364,7 +1364,7 @@ function HistoryTab({
       </div>
 
       {/* ═══ GRÁFICO DE VARIACIÓN DIARIA (estilo cripto/bolsa) ═══ */}
-      <div className="bg-card rounded-2xl border-2 border-border p-6">
+      <div className="bg-card rounded-2xl border border-border p-5">
         <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <CandlestickChart className="w-5 h-5 text-primary" />
@@ -1542,7 +1542,7 @@ function UnifiedSeriesTooltip({ active, payload, label }: any) {
   return (
     <div
       role="tooltip"
-      className="rounded-xl border-2 bg-card p-3 shadow-xl"
+      className="rounded-xl border bg-card p-3 shadow-xl"
       style={{
         background: 'hsl(var(--card))',
         borderColor: 'hsl(var(--border))',
