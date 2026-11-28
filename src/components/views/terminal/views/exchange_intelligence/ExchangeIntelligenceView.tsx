@@ -44,6 +44,14 @@ import { getOperativeDate, BUSINESS_TIMEZONE, byOperativeDateFirstThenFreshness 
 // IC-DIVIZA-003: registro único de fuentes — la informal ACTIVA es Diviza;
 // elToque es archivo histórico y jamás alimenta la tasa vigente.
 import { isActiveInformalSource } from '@/lib/exchange-sources';
+// CP-FX-UX-002 (FASE 4/6): motor compartido de proyección + indicadores de
+// mercado por fecha calendario (un solo conjunto de datos en toda la vista).
+import { forecastRate } from '@/lib/exchange-intelligence/forecast';
+import {
+  computeDateBasedVariations,
+  volatilityPct,
+  daysBetweenIso as daysBetweenIsoDates,
+} from '@/lib/exchange-intelligence/market-indicators';
 
 /**
  * IC-2: Inteligencia Cambiaria — AUDIT-2/3/5: Conectado a datos reales de Supabase.
@@ -1266,7 +1274,7 @@ function DashboardTab({
   const informalPrevPoint = observedInformalPoints[observedInformalPoints.length - 2];
   const informalPrevGap =
     informalToday != null && informalPrevPoint
-      ? daysBetweenIso(observedInformalPoints[observedInformalPoints.length - 1].date, informalPrevPoint.date)
+      ? daysBetweenIsoDates(observedInformalPoints[observedInformalPoints.length - 1].date, informalPrevPoint.date)
       : null;
   const informalDailyChange =
     informalToday != null && informalPrevPoint && informalPrevGap != null && informalPrevGap <= 2
@@ -1740,7 +1748,7 @@ function DashboardTab({
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             {forecast10d?.window.from && forecast10d?.window.to
-              ? `Motor compartido · ${MODEL_LABEL_SHORT} · ventana ${forecast10d.window.samples} observaciones (${forecast10d.window.from} → ${forecast10d.window.to})`
+              ? `Motor compartido · regresión lineal · ventana ${forecast10d.window.samples} observaciones (${forecast10d.window.from} → ${forecast10d.window.to})`
               : 'Motor compartido · regresión lineal · ventana de 30 observaciones'}
           </p>
         </div>

@@ -50,9 +50,12 @@ export function daysBetweenIso(a: string, b: string): number | null {
 }
 
 /**
- * Busca la observación de hace ~n días naturales: exacta si existe; si no,
- * la más cercana ANTERIOR dentro de `tolerance` días (publicaciones que se
- * saltan fines de semana). Devuelve null si nada cumple.
+ * Busca la observación «de hace ~n días naturales» con la convención
+ * financiera estándar: la ÚLTIMA observación EN O ANTES de la fecha objetivo
+ * (lastDate − n), siempre que no sea más vieja que n − tolerance días.
+ *  - Fecha objetivo publicada → coincidencia exacta (gap = n).
+ *  - Objetivo sin publicación (fin de semana) → la más cercana ANTERIOR.
+ * Devuelve null si nada cumple la tolerancia.
  */
 function findAtNDaysAgo(
   points: MarketPoint[],
@@ -61,21 +64,32 @@ function findAtNDaysAgo(
 ): { point: MarketPoint; days: number } | null {
   if (points.length === 0) return null;
   const last = points[points.length - 1];
+  const targetDate = shiftIso(last.date, -targetDays);
+  if (!targetDate) return null;
+  const minGap = targetDays - tolerance;
   let best: { point: MarketPoint; days: number } | null = null;
+  // Recorrido desde el presente hacia el pasado: la PRIMERA observación con
+  // fecha ≤ objetivo y antigüedad ≥ objetivo − tolerancia es exactamente la
+  // convención «última publicada en o antes del día objetivo».
   for (let i = points.length - 1; i >= 0; i--) {
+    if (points[i].date > targetDate) continue; // publicada DESPUÉS del objetivo
     const d = daysBetweenIso(last.date, points[i].date);
-    if (d == null) continue;
-    // Solo mirar hacia el pasado (d ≥ targetDays − tolerance) y no pasarse
-    // de la tolerancia; la primera coincidencia desde el presente es la
-    // más cercana al objetivo.
-    if (d >= targetDays - tolerance && d <= targetDays + tolerance) {
-      best = { point: points[i], days: d };
-      break;
-    }
-    if (d < targetDays - tolerance) continue;
-    if (d > targetDays + tolerance) break; // orden ascendente → nada mejor
+    // Tolerancia simétrica: la observación puede ser como máximo `tolerance`
+    // días más vieja que el objetivo (fin de semana sin publicación). Un hueco
+    // mayor significa que la publicación cesó — comparar contra ella
+    // etiquetándolo «n días» sería fabricar la variación (misión §6.4).
+    if (d == null || d < minGap || d > targetDays + tolerance) return best;
+    best = { point: points[i], days: d };
+    break;
   }
   return best;
+}
+
+/** Fecha ISO desplazada n días naturales (aritmética UTC, sin zonas). */
+function shiftIso(iso: string, days: number): string | null {
+  const t = Date.parse(`${iso}T00:00:00Z`);
+  if (!Number.isFinite(t)) return null;
+  return new Date(t + days * 86_400_000).toISOString().slice(0, 10);
 }
 
 const pct = (oldV: number, newV: number): number | null =>

@@ -262,7 +262,9 @@ export function forecastRate(points: ForecastInputPoint[], options: ForecastOpti
     r2 >= R2_HIGH ? 'alta' : r2 >= r2Min ? 'media' : 'baja';
   const reliable = projected != null && Number.isFinite(projected) && r2 >= r2Min;
 
-  return { projected, r2, model, daysAhead, window, confidence, reliable, slope };
+  // Sin evidencia estadística suficiente el valor NO viaja: el consumidor no
+  // puede mostrar por descuido una cifra sin fundamento (misión §3.2).
+  return { projected: reliable ? projected : null, r2, model, daysAhead, window, confidence, reliable, slope };
 }
 
 /**

@@ -337,7 +337,10 @@ describe('ExchangeIntelligenceView — informal Diviza + elToque', () => {
     render(<ExchangeIntelligenceView />);
 
     await waitFor(() => {
-      expect(screen.getByText('840')).toBeInTheDocument();
+      // CP-FX-UX-002: la cifra aparece en la tarjeta principal Y en la nueva
+      // tabla «Indicadores de mercado» (variaciones por fecha) — se usa
+      // getAllByText y se exige al menos una aparición.
+      expect(screen.getAllByText('840').length).toBeGreaterThanOrEqual(1);
     });
     expect(screen.getByText(/Real · Diviza/i)).toBeInTheDocument();
     // SIN aviso de antigüedad: existe fila de la fecha operativa (prioridad)
@@ -803,7 +806,7 @@ describe('ExchangeIntelligenceView — sistema visual y accesibilidad', () => {
 // IC-UX-HISTORY-004 (2026-10-26) — eliminación de «Impacto Precios» y
 // «Mi Producto» como herramienta única de análisis por producto.
 // ════════════════════════════════════════════════════════════════════
-describe('ExchangeIntelligenceView — navegación sin «Impacto Precios» (IC-UX-HISTORY-004 §2)', () => {
+describe('ExchangeIntelligenceView — navegación consolidada (CP-FX-UX-002 FASE 3)', () => {
   it('criterio 1: «Impacto Precios» NO aparece en la navegación (ni su label ni su contenido)', async () => {
     mockRatesApi([bccRow(TODAY, 380), divizaRow(TODAY, 839)]);
     render(<ExchangeIntelligenceView />);
@@ -822,7 +825,7 @@ describe('ExchangeIntelligenceView — navegación sin «Impacto Precios» (IC-U
     expect(screen.queryByText(/Análisis de Impacto/i)).toBeNull();
   });
 
-  it('el resto de la navegación queda INTACTO (Histórico, Variaciones, Mi Producto, Alertas, Simulador, Configuración)', async () => {
+  it('la navegación queda consolidada (Dashboard, Histórico, Simulador, Alertas, Configuración)', async () => {
     mockRatesApi([bccRow(TODAY, 380), divizaRow(TODAY, 839)]);
     render(<ExchangeIntelligenceView />);
 
@@ -830,15 +833,16 @@ describe('ExchangeIntelligenceView — navegación sin «Impacto Precios» (IC-U
       expect(screen.getByText('839')).toBeInTheDocument();
     });
 
-    // UnifiedTabs renderiza la lista dos veces (navegación desktop y móvil):
-    // se deduplica por texto y se exige el conjunto EXACTO de pestañas.
+    // CP-FX-UX-002 (FASE 3): «Variaciones» y «Mi Producto» fueron consolidados
+    // en el tab ÚNICO «Simulador» — sus tabs independientes ya no existen.
     const labels = [...new Set(screen.getAllByRole('tab').map(t => (t.textContent ?? '').trim()))];
-    expect(labels.some(l => l.includes('Impacto'))).toBe(false);
-    for (const esperada of ['Dashboard', 'Histórico', 'Variaciones', 'Mi Producto', 'Alertas', 'Simulador', 'Configuración']) {
+    for (const esperada of ['Dashboard', 'Histórico', 'Simulador', 'Alertas', 'Configuración']) {
       expect(labels.some(l => l.includes(esperada))).toBe(true);
     }
-    // Sin pestañas fantasma: exactamente las 7 esperadas (admin ve Configuración).
-    expect(labels).toHaveLength(7);
+    expect(labels.some(l => l.includes('Variaciones'))).toBe(false);
+    expect(labels.some(l => l.includes('Mi Producto'))).toBe(false);
+    // Sin pestañas fantasma: exactamente las 5 esperadas (admin ve Configuración).
+    expect(labels).toHaveLength(5);
   });
 
   it('criterio 9 (defensa): las filas elToque del archivo NO llegan a la consulta por defecto de la vista', async () => {
