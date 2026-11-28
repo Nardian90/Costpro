@@ -215,15 +215,19 @@ writeFileSync(backupPath, JSON.stringify({ generated: new Date().toISOString(), 
 await mgmtQuery(
   'CREATE TABLE IF NOT EXISTS public.exchange_rates_backup_cpfx001 AS SELECT * FROM public.exchange_rates;',
 );
-// RLS deny-by-default (CP-TS-SEC / SQL Security Gate: toda tabla con RLS;
-// sin policies → solo service_role la lee, la app jamás).
+// Postura de tabla EXCLUSIVAMENTE PRIVADA (CP-SEC-EXCHANGE-RATES-BACKUP-
+// HARDENING-001): RLS sin policies (deny-all) + revocación de los grants que
+// los default privileges de Supabase otorgan a anon/authenticated a toda
+// tabla creada vía postgres. Defensa en profundidad: dos barreras. Idempotente.
 await mgmtQuery(`
   DO $do$
   BEGIN
     IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
-               WHERE c.relname = 'exchange_rates_backup_cpfx001' AND n.nspname = 'public'
-                 AND NOT c.relrowsecurity) THEN
+               WHERE c.relname = 'exchange_rates_backup_cpfx001' AND n.nspname = 'public') THEN
       ALTER TABLE public.exchange_rates_backup_cpfx001 ENABLE ROW LEVEL SECURITY;
+      REVOKE ALL ON TABLE public.exchange_rates_backup_cpfx001 FROM anon;
+      REVOKE ALL ON TABLE public.exchange_rates_backup_cpfx001 FROM authenticated;
+      REVOKE ALL ON TABLE public.exchange_rates_backup_cpfx001 FROM PUBLIC;
     END IF;
   END
   $do$;

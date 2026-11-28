@@ -1,0 +1,71 @@
+{
+  "sss_users": [
+    {
+      "ejecutor": "postgres",
+      "calls": 3,
+      "ms": "45.2",
+      "q": "SELECT count(*)::int AS n FROM public.exchange_rates_backup_cpfx001"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "ms": "89.1",
+      "q": "CREATE TABLE IF NOT EXISTS public.exchange_rates_backup_cpfx001 AS SELECT * FROM public.exchange_rat"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "ms": "37.9",
+      "q": "SELECT count(*)::int AS filas,\n          min(rate_date) AS min_rate_date, max(rate_date) AS max_rate"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "ms": "31.7",
+      "q": "select min(imported_at)::text as min_imp, max(imported_at)::text as max_imp, min(captured_at)::text "
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "ms": "26.4",
+      "q": "DO $do$\nBEGIN\n  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace\n    "
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "ms": "3.2",
+      "q": "SELECT md5(string_agg(concat_ws($1, rate_date::text, currency, source, segment, rate::text, coalesce"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "ms": "0.7",
+      "q": "SELECT source, capture_method, count(*)::int AS n, max(rate_date) AS ult_fecha\n    FROM public.excha"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "ms": "0.7",
+      "q": "SELECT coalesce(import_batch,$1) AS lote, count(*)::int AS n, min(rate_date) AS desde, max(rate_date"
+    },
+    {
+      "ejecutor": "postgres",
+      "calls": 1,
+      "ms": "0.6",
+      "q": "SELECT coalesce(segment,$1) AS segmento, count(*)::int AS n FROM public.exchange_rates_backup_cpfx00"
+    }
+  ],
+  "stat_exchange_rates": [
+    {
+      "relname": "exchange_rates",
+      "n_live_tup": 1745,
+      "n_tup_ins": 497,
+      "n_tup_upd": 936,
+      "n_tup_del": 0,
+      "last_autovacuum": null,
+      "last_autoanalyze": "2026-11-28 15:14:57.201337+00"
+    }
+  ],
+  "procs_ref": [],
+  "views_ref": []
+}

@@ -1,0 +1,371 @@
+{
+  "1_columnas": [
+    {
+      "column_name": "id",
+      "data_type": "uuid",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "rate_date",
+      "data_type": "date",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "captured_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "currency",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "source",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "rate",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "variation_daily",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "variation_weekly",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "variation_monthly",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "variation_yearly",
+      "data_type": "numeric",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "segment",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "capture_method",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "source_updated_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "rate_source_url",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "reconstruction_method",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "confidence_level",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "notes",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "imported_at",
+      "data_type": "timestamp with time zone",
+      "is_nullable": "YES",
+      "column_default": null
+    },
+    {
+      "column_name": "import_batch",
+      "data_type": "text",
+      "is_nullable": "YES",
+      "column_default": null
+    }
+  ],
+  "2_pk": [],
+  "3_indices": [],
+  "4_fks": [],
+  "5_triggers": [],
+  "6_dependencias": [],
+  "7_policies": [],
+  "8_9_rls": [
+    {
+      "relrowsecurity": true,
+      "relforcerowsecurity": false,
+      "owner": "postgres",
+      "n_policies": 0
+    }
+  ],
+  "10_grants": [
+    {
+      "grantee": "anon",
+      "privilege_type": "DELETE",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "anon",
+      "privilege_type": "INSERT",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "anon",
+      "privilege_type": "SELECT",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "anon",
+      "privilege_type": "UPDATE",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "authenticated",
+      "privilege_type": "DELETE",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "authenticated",
+      "privilege_type": "INSERT",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "authenticated",
+      "privilege_type": "SELECT",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "authenticated",
+      "privilege_type": "UPDATE",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "DELETE",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "INSERT",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "REFERENCES",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "SELECT",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "TRIGGER",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "TRUNCATE",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    },
+    {
+      "grantee": "service_role",
+      "privilege_type": "UPDATE",
+      "is_grantable": "NO",
+      "grantor": "postgres"
+    }
+  ],
+  "11_dependientes": [],
+  "12_publicaciones": [],
+  "13_stat": [
+    {
+      "schemaname": "public",
+      "relname": "exchange_rates_backup_cpfx001",
+      "n_live_tup": 1607,
+      "n_tup_ins": 1607,
+      "n_tup_upd": 0,
+      "n_tup_del": 0,
+      "n_tup_hot_upd": 0,
+      "last_vacuum": null,
+      "last_autovacuum": "2026-11-28 13:27:53.00045+00",
+      "last_analyze": null,
+      "last_autoanalyze": "2026-11-28 13:27:53.02838+00"
+    }
+  ],
+  "14a_resumen_datos": [
+    {
+      "filas": 1607,
+      "min_rate_date": "2025-12-25",
+      "max_rate_date": "2026-11-28",
+      "min_captured": "2026-06-24 14:41:00.355+00",
+      "max_captured": "2026-11-28 06:25:50.736+00",
+      "min_created": "2026-06-24 14:30:27.569689+00",
+      "max_created": "2026-11-28 06:25:51.078566+00",
+      "max_imported": null
+    }
+  ],
+  "14b_por_fuente": [
+    {
+      "source": "BCC",
+      "capture_method": "real",
+      "n": 1004,
+      "ult_fecha": "2026-11-28"
+    },
+    {
+      "source": "elToque",
+      "capture_method": "real",
+      "n": 498,
+      "ult_fecha": "2026-07-28"
+    },
+    {
+      "source": "Diviza",
+      "capture_method": "real",
+      "n": 105,
+      "ult_fecha": "2026-11-28"
+    }
+  ],
+  "14c_import_batch": [
+    {
+      "lote": "(sin lote)",
+      "n": 1607,
+      "desde": "2025-12-25",
+      "hasta": "2026-11-28"
+    }
+  ],
+  "14d_segmentos": [
+    {
+      "segmento": "3",
+      "n": 937
+    },
+    {
+      "segmento": "2",
+      "n": 335
+    },
+    {
+      "segmento": "1",
+      "n": 335
+    }
+  ],
+  "14e_hashes": [
+    {
+      "content_hash": "4c151b16a1d2f32e89e95cc5bc849eb7"
+    }
+  ],
+  "15_stat_statements": [
+    {
+      "queryid": "-2470080042344143020",
+      "calls": 1,
+      "rows": 1607,
+      "total_exec_time": 89.075795,
+      "q": "CREATE TABLE IF NOT EXISTS public.exchange_rates_backup_cpfx001 AS SELECT * FROM public.exchange_rates"
+    },
+    {
+      "queryid": "-3072498507626522054",
+      "calls": 3,
+      "rows": 3,
+      "total_exec_time": 45.23353,
+      "q": "SELECT count(*)::int AS n FROM public.exchange_rates_backup_cpfx001"
+    },
+    {
+      "queryid": "-1600410644613301869",
+      "calls": 1,
+      "rows": 1,
+      "total_exec_time": 37.875691,
+      "q": "SELECT count(*)::int AS filas,\n          min(rate_date) AS min_rate_date, max(rate_date) AS max_rate_date,\n          min"
+    },
+    {
+      "queryid": "-657659230293596805",
+      "calls": 1,
+      "rows": 1,
+      "total_exec_time": 31.71931,
+      "q": "select min(imported_at)::text as min_imp, max(imported_at)::text as max_imp, min(captured_at)::text as min_cap, max(capt"
+    },
+    {
+      "queryid": "-6075296809137837537",
+      "calls": 1,
+      "rows": 0,
+      "total_exec_time": 26.367957,
+      "q": "DO $do$\nBEGIN\n  IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace\n             WHERE c.rel"
+    },
+    {
+      "queryid": "3626017037040102973",
+      "calls": 1,
+      "rows": 1,
+      "total_exec_time": 3.167789,
+      "q": "SELECT md5(string_agg(concat_ws($1, rate_date::text, currency, source, segment, rate::text, coalesce(capture_method,$2),"
+    },
+    {
+      "queryid": "2525385741126105525",
+      "calls": 1,
+      "rows": 3,
+      "total_exec_time": 0.727434,
+      "q": "SELECT source, capture_method, count(*)::int AS n, max(rate_date) AS ult_fecha\n    FROM public.exchange_rates_backup_cpf"
+    },
+    {
+      "queryid": "-4140926478729087543",
+      "calls": 1,
+      "rows": 1,
+      "total_exec_time": 0.675915,
+      "q": "SELECT coalesce(import_batch,$1) AS lote, count(*)::int AS n, min(rate_date) AS desde, max(rate_date) AS hasta\n    FROM "
+    },
+    {
+      "queryid": "-3622236640225943373",
+      "calls": 1,
+      "rows": 3,
+      "total_exec_time": 0.607254,
+      "q": "SELECT coalesce(segment,$1) AS segmento, count(*)::int AS n FROM public.exchange_rates_backup_cpfx001 GROUP BY 1 ORDER B"
+    }
+  ]
+}
