@@ -1,5 +1,5 @@
 // scripts/e2e/cp-fin-hardening-battery.mjs — Batería de contrato CP-FIN-REM-001 PR-A
-// (F2/F3/F4/F5/TR) contra la BD E2E AISLADA (CostproE2E).
+// (F2/F3/F4/F5/TR + F2-ext snapshots/generations) contra la BD E2E AISLADA (CostproE2E).
 // ============================================================================
 // MECANISMO (lección CP-INFRA-011 + sesión E2E de create_sale_v2): TODO se
 // ejecuta en UNA SOLA llamada multi-sentencia transaccional BEGIN ... ROLLBACK.
@@ -12,7 +12,7 @@
 // CostproE2E; si algo no cuadra, la batería ABORTA sin ejecutar nada.
 //
 // Estructura: fixtures → demostración PRE (vulnerabilidades reales) →
-// migraciones M1..M6 (BEGIN/COMMIT despojados) → casos POST → rollbacks R6..R1
+// migraciones M1..M7 (BEGIN/COMMIT despojados) → casos POST → rollbacks R7..R1
 // → aserciones RESTORE (vuelve al estado vulnerable) → BATTERY-PASS → ROLLBACK.
 // Sin PII: usuarios/tiendas/fixtures sintéticos con UUIDs generados en runtime.
 // ============================================================================
@@ -47,6 +47,7 @@ const E_sup = randomUUID(), R_sup = randomUUID(), E_act2 = randomUUID(), R_act =
 const E_sacri = randomUUID(), E_S2 = randomUUID(), E3 = randomUUID();
 const RC1 = randomUUID(), RC2 = randomUUID();
 const G2_act = randomUUID();
+const SNAP1 = randomUUID();
 
 const strip = (f) => readFileSync(f, 'utf8')
   .replace(/^BEGIN;\s*$/m, '').replace(/^COMMIT;\s*$/m, '').trim();
@@ -56,8 +57,10 @@ const M = ['20261128153000_cp_fin_f2_book_read_management.sql',
   '20261128153200_cp_fin_f3_rule_scope_guard.sql',
   '20261128153300_cp_fin_f4_ledger_append_only.sql',
   '20261128153400_cp_fin_f5_reversal_fixes.sql',
-  '20261128153500_cp_infra_021_truncate_fin_payroll.sql'].map(f => strip(`${MIG}/${f}`));
-const R = ['20261128153500_rollback_cp_infra_021.sql',
+  '20261128153500_cp_infra_021_truncate_fin_payroll.sql',
+  '20261128153600_cp_fin_f2_snapshots_generations_management.sql'].map(f => strip(`${MIG}/${f}`));
+const R = ['20261128153600_rollback_cp_fin_f2_snapshots_generations.sql',
+  '20261128153500_rollback_cp_infra_021.sql',
   '20261128153400_rollback_cp_fin_f5.sql',
   '20261128153300_rollback_cp_fin_f4.sql',
   '20261128153200_rollback_cp_fin_f3.sql',
@@ -141,6 +144,12 @@ INSERT INTO public.fin_posting_generations (id, store_id, code, status) VALUES
   ('${G_act}','${S1}','GEN-BAT','active'),
   ('${G_sup}','${S1}','GEN-SUP','superseded');
 
+-- F2-ext: snapshot de conciliación en S1 (fixture para la matriz de roles)
+INSERT INTO public.fin_reconciliation_snapshots
+  (id, store_id, fecha_corte, metodologia_version, resumen, cuentas)
+VALUES
+  ('${SNAP1}','${S1}','2026-11-28','BAT-1.0','{}'::jsonb,'{}'::jsonb);
+
 INSERT INTO public.fin_rule_versions (id, document_type, store_id, movements, version) VALUES
   ('${RG}','VENTA',NULL,'[]'::jsonb,1),
   ('${RS}','VENTA','${S1}','[]'::jsonb,2);
@@ -210,6 +219,14 @@ BEGIN
   SELECT count(*) INTO v_n FROM public.fin_entries WHERE store_id='${S1}';
   IF v_n < 1 THEN RAISE EXCEPTION 'PRE-1 FAILED: el clerk debería ver el libro (estado vulnerable)'; END IF;
 END $pre1$;
+-- F2-ext PRE: la lectura directa de snapshots/generaciones está ROTA para
+-- authenticated (la política vigente referencia is_admin_check/has_store_access_as,
+-- helpers con EXECUTE revocado a authenticated desde w9_f06): cualquier SELECT
+-- directo muere con permission denied — ni siquiera evalúa. La app lee por RPC
+-- SECURITY DEFINER; el SELECT directo queda inservible para gestión.
+${asUser(U.clerk)}
+${expectErr('pre10', `SELECT count(*) FROM public.fin_reconciliation_snapshots WHERE store_id='${S1}';`, 'permission denied for function is_admin_check')}
+${expectErr('pre11', `SELECT count(*) FROM public.fin_posting_generations WHERE store_id='${S1}';`, 'permission denied for function is_admin_check')}
 DO $pre2$
 DECLARE ok boolean;
 BEGIN
@@ -237,7 +254,7 @@ INSERT INTO public.fin_posting_errors (store_id, document_type, event, error_cod
   ('${S1}','VENTA','reconocimiento','BAT-STORE','fixture tienda');
 UPDATE public.receipts SET status='pending' WHERE id='${RC1}';
 
--- ═══ MIGRACIONES M1..M6 (transaccionales dentro de la batería) ═════════════
+-- ═══ MIGRACIONES M1..M7 (transaccionales dentro de la batería) ═════════════
 ${M.join('\n\n')}
 
 -- ═══ CASOS POST ════════════════════════════════════════════════════════════
@@ -254,6 +271,11 @@ BEGIN
   IF v <> 0 THEN RAISE EXCEPTION 'F2-1c FAILED'; END IF;
   SELECT count(*) INTO v FROM public.fin_posting_errors;
   IF v <> 0 THEN RAISE EXCEPTION 'F2-1d FAILED: clerk vio % errores (globales+tienda)', v; END IF;
+  -- F2-ext: snapshots y generaciones también denegados al clerk
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='${S1}';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-1e FAILED: clerk vio % snapshots', v; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='${S1}';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-1f FAILED: clerk vio % generaciones', v; END IF;
 END $f2c$;
 ${asUser(U.user0)}
 DO $f2u$
@@ -261,6 +283,11 @@ DECLARE v int;
 BEGIN
   SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='${S1}';
   IF v <> 0 THEN RAISE EXCEPTION 'F2-2 FAILED: usuario sin membresía vio %', v; END IF;
+  -- F2-ext: sin membresía tampoco ve snapshots ni generaciones
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='${S1}';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-2b FAILED: usuario sin membresía vio % snapshots', v; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='${S1}';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-2c FAILED: usuario sin membresía vio % generaciones', v; END IF;
 END $f2u$;
 ${asUser(U.encargado)}
 DO $f2e$
@@ -268,6 +295,11 @@ DECLARE v int;
 BEGIN
   SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='${S1}';
   IF v < 1 THEN RAISE EXCEPTION 'F2-3 FAILED: encargado no ve su tienda'; END IF;
+  -- F2-ext: encargado (rol de gestión) sí ve snapshots y generaciones
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='${S1}';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-3b FAILED: encargado no ve snapshots'; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='${S1}';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-3c FAILED: encargado no ve generaciones'; END IF;
 END $f2e$;
 ${asUser(U.manager)}
 DO $f2m$
@@ -279,6 +311,11 @@ BEGIN
   IF v < 1 THEN RAISE EXCEPTION 'F2-4b FAILED: manager no ve errores de tienda'; END IF;
   SELECT count(*) INTO v FROM public.fin_posting_errors WHERE store_id IS NULL;
   IF v <> 0 THEN RAISE EXCEPTION 'F2-4c FAILED: manager vio % errores globales', v; END IF;
+  -- F2-ext: manager (rol de gestión) sí ve snapshots y generaciones
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='${S1}';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-4d FAILED: manager no ve snapshots'; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='${S1}';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-4e FAILED: manager no ve generaciones'; END IF;
 END $f2m$;
 ${asUser(U.adminT)}
 DO $f2a$
@@ -286,6 +323,11 @@ DECLARE v int;
 BEGIN
   SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='${S1}';
   IF v < 1 THEN RAISE EXCEPTION 'F2-5 FAILED: admin de tienda no ve'; END IF;
+  -- F2-ext: admin de tienda sí ve snapshots y generaciones
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='${S1}';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-5b FAILED: admin de tienda no ve snapshots'; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='${S1}';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-5c FAILED: admin de tienda no ve generaciones'; END IF;
 END $f2a$;
 ${asUser(U.adminG)}
 DO $f2g$
@@ -297,6 +339,11 @@ BEGIN
   IF v < 1 THEN RAISE EXCEPTION 'F2-6b FAILED: admin global no ve S2'; END IF;
   SELECT count(*) INTO v FROM public.fin_posting_errors;
   IF v <> 2 THEN RAISE EXCEPTION 'F2-6c FAILED: admin global debe ver 2 errores, ve %', v; END IF;
+  -- F2-ext: admin global ve snapshots y generaciones de CUALQUIER tienda
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots;
+  IF v < 1 THEN RAISE EXCEPTION 'F2-6d FAILED: admin global no ve snapshots'; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations;
+  IF v < 3 THEN RAISE EXCEPTION 'F2-6e FAILED: admin global debe ver >=3 generaciones, ve %', v; END IF;
 END $f2g$;
 ${asUser(U.tenant2)}
 DO $f2t$
@@ -306,9 +353,41 @@ BEGIN
   IF v <> 0 THEN RAISE EXCEPTION 'F2-7 FAILED: otro tenant vio % asientos de S1', v; END IF;
   SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='${S2}';
   IF v < 1 THEN RAISE EXCEPTION 'F2-7b FAILED: admin de S2 no ve SU tienda'; END IF;
+  -- F2-ext: otro tenant tampoco ve snapshots/generaciones ajenos, SÍ los suyos
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='${S1}';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-7c FAILED: otro tenant vio % snapshots de S1', v; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='${S1}';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-7d FAILED: otro tenant vio % generaciones de S1', v; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='${S2}';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-7e FAILED: admin de S2 no ve SUS generaciones'; END IF;
 END $f2t$;
 ${asAnon}
 ${expectErr('f2n', `SELECT count(*) FROM public.fin_entries WHERE store_id='${S1}';`, 'permission denied')}
+${expectErr('f2n2', `SELECT count(*) FROM public.fin_posting_generations;`, 'permission denied')}
+${expectErr('f2n3', `SELECT count(*) FROM public.fin_reconciliation_snapshots;`, 'permission denied')}
+
+-- F2-ext: contrato de la política — rol {public} ELIMINADO del alcance (TO authenticated)
+${asPostgres}
+DO $f2extroles$
+DECLARE v_roles text;
+BEGIN
+  SELECT roles::text INTO v_roles FROM pg_policies
+   WHERE schemaname='public' AND tablename='fin_posting_generations'
+     AND policyname='fin_posting_generations_select';
+  IF v_roles IS NULL OR position('authenticated' in v_roles) = 0 OR position('public' in v_roles) <> 0 THEN
+    RAISE EXCEPTION 'F2-EXT-1 FAILED: fin_posting_generations_select debe ser TO authenticated (sin {public}), roles=%', coalesce(v_roles, 'AUSENTE'); END IF;
+  SELECT roles::text INTO v_roles FROM pg_policies
+   WHERE schemaname='public' AND tablename='fin_reconciliation_snapshots'
+     AND policyname='fin_reconciliation_snapshots_select';
+  IF v_roles IS NULL OR position('authenticated' in v_roles) = 0 OR position('public' in v_roles) <> 0 THEN
+    RAISE EXCEPTION 'F2-EXT-2 FAILED: fin_reconciliation_snapshots_select debe ser TO authenticated, roles=%', coalesce(v_roles, 'AUSENTE'); END IF;
+  SELECT count(*) INTO v_roles FROM pg_policies
+   WHERE schemaname='public' AND policyname IN
+     ('fin_reconciliation_snapshots_select','fin_posting_generations_select')
+     AND qual LIKE '%has_store_role%';
+  IF v_roles::int <> 2 THEN
+    RAISE EXCEPTION 'F2-EXT-3 FAILED: las 2 políticas deben usar el predicado de gestión has_store_role (encontradas %)', v_roles::int; END IF;
+END $f2extroles$;
 
 -- F2-RPC: gate de gestión por LLAMADA DIRECTA
 ${asUser(U.clerk)}
@@ -424,7 +503,7 @@ BEGIN
   IF v_n <> 16 THEN RAISE EXCEPTION 'TR-3 FAILED: %/16 frenos ENABLE ALWAYS', v_n; END IF;
 END $tr3$;
 
--- ═══ ROLLBACKS R6..R1 ═════════════════════════════════════════════════════
+-- ═══ ROLLBACKS R7..R1 ═════════════════════════════════════════════════════
 ${R.join('\n\n')}
 
 -- ═══ ASERCIONES RESTORE (estado vulnerable de vuelta = rollback correcto) ══
@@ -457,6 +536,20 @@ BEGIN
   SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='${S1}';
   IF v < 1 THEN RAISE EXCEPTION 'RS-7 FAILED: la política amplia no volvió'; END IF;
 END $rs7$;
+-- F2-ext RESTORE: la lectura directa de snapshots/generaciones vuelve a estar
+-- ROTA para authenticated (política previa con helpers no ejecutables).
+${expectErr('rs8', `SELECT count(*) FROM public.fin_reconciliation_snapshots WHERE store_id='${S1}';`, 'permission denied for function is_admin_check')}
+${expectErr('rs9', `SELECT count(*) FROM public.fin_posting_generations WHERE store_id='${S1}';`, 'permission denied for function is_admin_check')}
+${asPostgres}
+DO $rs10$
+DECLARE v_roles text;
+BEGIN
+  SELECT roles::text INTO v_roles FROM pg_policies
+   WHERE schemaname='public' AND tablename='fin_posting_generations'
+     AND policyname='fin_posting_generations_select';
+  IF v_roles IS NULL OR position('public' in v_roles) = 0 THEN
+    RAISE EXCEPTION 'RS-10 FAILED: el alcance {public} de fin_posting_generations_select no fue restaurado (roles=%)', coalesce(v_roles, 'AUSENTE'); END IF;
+END $rs10$;
 
 SELECT 'BATTERY-PASS' AS verdict;
 
@@ -477,7 +570,7 @@ if (res.status === 200 || res.status === 201) {
   const j = JSON.parse(text);
   console.log('RESULTADO:', JSON.stringify(j).slice(0, 400));
   const verdict = Array.isArray(j) ? (j[j.length-1]?.verdict || j[0]?.verdict) : j?.r;
-  console.log(verdict === 'BATTERY-PASS' ? 'BATTERY-PASS ✔ (37+ casos PRE/POST/RESTORE en verde)' : `Resultado inesperado: ${JSON.stringify(j).slice(0, 300)}`);
+  console.log(verdict === 'BATTERY-PASS' ? 'BATTERY-PASS ✔ (PRE/POST/RESTORE en verde; matriz de roles F2 + F2-ext snapshots/generations)' : `Resultado inesperado: ${JSON.stringify(j).slice(0, 300)}`);
 } else {
   console.error(`HTTP ${res.status}:`, text.slice(0, 2000));
   process.exit(2);

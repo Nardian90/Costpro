@@ -10,109 +10,144 @@ END $guard$;
 
 -- ═══ FIXTURES (todo se revierte al final) ══════════════════════════════════
 INSERT INTO auth.users (id, email) VALUES
-  ('08b08515-be1a-49f8-ab92-884d55eec42d','bat-clerk@cpfin.invalid'),
-  ('0e274ac0-084c-4c9b-a784-6c1a4ee3379e','bat-encargado@cpfin.invalid'),
-  ('efeb3464-18ef-402c-b908-9a22793bff0b','bat-manager@cpfin.invalid'),
-  ('1e516186-fee3-4b72-83cd-3b51e7204e2e','bat-admint@cpfin.invalid'),
-  ('755d4dc3-a22e-46b7-af57-429731e49664','bat-adming@cpfin.invalid'),
-  ('e9c3be77-53da-49ec-abb1-fe5362627975','bat-super@cpfin.invalid'),
-  ('1ccbeefa-13b0-4591-8e87-bf63e26fac1c','bat-user@cpfin.invalid'),
-  ('e624583c-f850-48bb-b13e-71bb27c1fedb','bat-tenant2@cpfin.invalid');
+  ('7acd1613-4f35-4c05-9768-deab0095fca2','bat-clerk@cpfin.invalid'),
+  ('f6dbd1c2-ae74-4bc7-a055-cb510ad16843','bat-encargado@cpfin.invalid'),
+  ('86215013-f403-4cdc-981e-c2f1a4c66dd3','bat-manager@cpfin.invalid'),
+  ('ba0d1b62-26fa-4f64-8305-063d2f6d9011','bat-admint@cpfin.invalid'),
+  ('ab36db35-dfb1-48dc-8bcd-bfff18786ab5','bat-adming@cpfin.invalid'),
+  ('f1a66c79-85a2-40c9-aeec-080b85560858','bat-super@cpfin.invalid'),
+  ('ff550908-c158-4834-a5eb-85680086babe','bat-user@cpfin.invalid'),
+  ('86db026b-14f9-4cf4-a19f-090e46a68d41','bat-tenant2@cpfin.invalid');
 
-INSERT INTO public.stores (id, name) VALUES ('83ad8cc2-e75a-443f-a61d-9ee6a5020107','BAT-FIN S1'), ('dfe323c3-c980-43aa-8e82-092a4936ae1c','BAT-FIN S2'), ('7d773d03-8171-4e66-8846-378057691aa2','BAT-FIN S3');
+INSERT INTO public.stores (id, name) VALUES ('48d70e41-1fcf-497d-a8a2-203367c921ea','BAT-FIN S1'), ('7accd85b-0fc2-4f26-95e3-e0f4cdc72e39','BAT-FIN S2'), ('9369d8e8-edd2-45ef-ac22-20d92a9f5358','BAT-FIN S3');
 
 INSERT INTO public.user_store_memberships (user_id, store_id, role, status) VALUES
-  ('08b08515-be1a-49f8-ab92-884d55eec42d','83ad8cc2-e75a-443f-a61d-9ee6a5020107','clerk','active'),
-  ('0e274ac0-084c-4c9b-a784-6c1a4ee3379e','83ad8cc2-e75a-443f-a61d-9ee6a5020107','encargado','active'),
-  ('efeb3464-18ef-402c-b908-9a22793bff0b','83ad8cc2-e75a-443f-a61d-9ee6a5020107','manager','active'),
-  ('1e516186-fee3-4b72-83cd-3b51e7204e2e','83ad8cc2-e75a-443f-a61d-9ee6a5020107','admin','active'),
-  ('e624583c-f850-48bb-b13e-71bb27c1fedb','dfe323c3-c980-43aa-8e82-092a4936ae1c','admin','active');
+  ('7acd1613-4f35-4c05-9768-deab0095fca2','48d70e41-1fcf-497d-a8a2-203367c921ea','clerk','active'),
+  ('f6dbd1c2-ae74-4bc7-a055-cb510ad16843','48d70e41-1fcf-497d-a8a2-203367c921ea','encargado','active'),
+  ('86215013-f403-4cdc-981e-c2f1a4c66dd3','48d70e41-1fcf-497d-a8a2-203367c921ea','manager','active'),
+  ('ba0d1b62-26fa-4f64-8305-063d2f6d9011','48d70e41-1fcf-497d-a8a2-203367c921ea','admin','active'),
+  ('86db026b-14f9-4cf4-a19f-090e46a68d41','7accd85b-0fc2-4f26-95e3-e0f4cdc72e39','admin','active');
 
 -- El trigger de Supabase crea el profile al insertar el usuario; se AJUSTA el rol
 -- (DESPUÉS de las memberships: validate_active_store exige membership activa)
-UPDATE public.profiles SET active_store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107' WHERE id IN ('08b08515-be1a-49f8-ab92-884d55eec42d','0e274ac0-084c-4c9b-a784-6c1a4ee3379e','efeb3464-18ef-402c-b908-9a22793bff0b','1e516186-fee3-4b72-83cd-3b51e7204e2e');
-UPDATE public.profiles SET active_store_id='dfe323c3-c980-43aa-8e82-092a4936ae1c' WHERE id='e624583c-f850-48bb-b13e-71bb27c1fedb';
-UPDATE public.profiles SET role='admin' WHERE id='755d4dc3-a22e-46b7-af57-429731e49664';
-UPDATE public.profiles SET role='superadmin' WHERE id='e9c3be77-53da-49ec-abb1-fe5362627975';
+UPDATE public.profiles SET active_store_id='48d70e41-1fcf-497d-a8a2-203367c921ea' WHERE id IN ('7acd1613-4f35-4c05-9768-deab0095fca2','f6dbd1c2-ae74-4bc7-a055-cb510ad16843','86215013-f403-4cdc-981e-c2f1a4c66dd3','ba0d1b62-26fa-4f64-8305-063d2f6d9011');
+UPDATE public.profiles SET active_store_id='7accd85b-0fc2-4f26-95e3-e0f4cdc72e39' WHERE id='86db026b-14f9-4cf4-a19f-090e46a68d41';
+UPDATE public.profiles SET role='admin' WHERE id='ab36db35-dfb1-48dc-8bcd-bfff18786ab5';
+UPDATE public.profiles SET role='superadmin' WHERE id='f1a66c79-85a2-40c9-aeec-080b85560858';
 
 INSERT INTO public.fin_posting_generations (id, store_id, code, status) VALUES
-  ('1cacc862-ce22-4031-bd40-df108a9a1a14','83ad8cc2-e75a-443f-a61d-9ee6a5020107','GEN-BAT','active'),
-  ('2beeb3d7-185c-4851-b599-852b291caa2c','83ad8cc2-e75a-443f-a61d-9ee6a5020107','GEN-SUP','superseded');
+  ('29d6981c-f13e-4149-a253-9e756e1c2078','48d70e41-1fcf-497d-a8a2-203367c921ea','GEN-BAT','active'),
+  ('165c3a09-4658-4e72-8023-fc01bf7bcec2','48d70e41-1fcf-497d-a8a2-203367c921ea','GEN-SUP','superseded');
+
+-- F2-ext: snapshot de conciliación en S1 (fixture para la matriz de roles)
+INSERT INTO public.fin_reconciliation_snapshots
+  (id, store_id, fecha_corte, metodologia_version, resumen, cuentas)
+VALUES
+  ('f30fbfcb-a0d0-467c-bb7e-f5628b7d833e','48d70e41-1fcf-497d-a8a2-203367c921ea','2026-11-28','BAT-1.0','{}'::jsonb,'{}'::jsonb);
 
 INSERT INTO public.fin_rule_versions (id, document_type, store_id, movements, version) VALUES
-  ('db1195f2-aebf-43d7-9b4c-8efcb6143305','VENTA',NULL,'[]'::jsonb,1),
-  ('935ab06a-df11-459d-a753-fd2a14bf70af','VENTA','83ad8cc2-e75a-443f-a61d-9ee6a5020107','[]'::jsonb,2);
+  ('7e015afe-8785-4554-9913-77f4019bd061','VENTA',NULL,'[]'::jsonb,1),
+  ('f17d4694-6252-4cee-925c-60ad4c919ee7','VENTA','48d70e41-1fcf-497d-a8a2-203367c921ea','[]'::jsonb,2);
 
 INSERT INTO public.fin_posting_errors (store_id, document_type, event, error_code, error_detail) VALUES
   (NULL,'VENTA','reconocimiento','BAT-GLOBAL','fixture global'),
-  ('83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','reconocimiento','BAT-STORE','fixture tienda');
+  ('48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','reconocimiento','BAT-STORE','fixture tienda');
 
 -- Asientos y movimientos de fixtures
 INSERT INTO public.fin_entries (id, store_id, document_type, document_number, event, economic_date, generation_id, status) VALUES
-  ('0dd5d10b-b880-4e44-aad9-471d0603d441','83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','BAT-E1','reconocimiento','2026-11-01',NULL,'posted'),
-  ('20f9ba1d-c1d7-4f90-8c9d-aa7f89984838','83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','BAT-EA','reconocimiento','2026-11-01','1cacc862-ce22-4031-bd40-df108a9a1a14','posted'),
-  ('3fa68b0e-6e2e-48c2-8b6e-01dd1241fd35','83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','BAT-EB','reconocimiento','2026-11-01',NULL,'posted'),
-  ('0e33aba4-a79f-408b-ae68-4c3b790f90cc','83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','BAT-EB2','reconocimiento','2026-11-01','1cacc862-ce22-4031-bd40-df108a9a1a14','posted'),
-  ('664cc579-d6a3-44ae-9c65-6cff711288b2','83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','BAT-EOR','reconocimiento','2026-11-01','1cacc862-ce22-4031-bd40-df108a9a1a14','posted'),
-  ('dbba3d5b-89da-49e9-a87c-14f9bb354e56','83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','BAT-ERE','anulacion','2026-11-02','1cacc862-ce22-4031-bd40-df108a9a1a14','posted'),
-  ('b3620925-6291-4c35-9a0e-a3ff4eb8ae16','83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','BAT-E3M','reconocimiento','2026-11-01','1cacc862-ce22-4031-bd40-df108a9a1a14','posted'),
-  ('d4aab811-2656-4935-95d4-c5f9689d9c31','83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','BAT-E3R','anulacion','2026-11-02','1cacc862-ce22-4031-bd40-df108a9a1a14','posted'),
-  ('9146aa2c-0860-4586-b04f-5f35a1fd7539','83ad8cc2-e75a-443f-a61d-9ee6a5020107','RECEPCION','BAT-ES','reconocimiento','2026-11-01','2beeb3d7-185c-4851-b599-852b291caa2c','posted'),
-  ('fcf089e2-4f3c-4e25-94ac-6044cfc77e51','83ad8cc2-e75a-443f-a61d-9ee6a5020107','RECEPCION','BAT-RS','anulacion','2026-11-02','2beeb3d7-185c-4851-b599-852b291caa2c','posted'),
-  ('64513ca2-a578-408c-8e24-aa1f7438baa7','83ad8cc2-e75a-443f-a61d-9ee6a5020107','RECEPCION','BAT-EA2','reconocimiento','2026-11-01','1cacc862-ce22-4031-bd40-df108a9a1a14','posted'),
-  ('fc2ad4c0-7832-407e-b2bf-7d7e7eb60fd7','83ad8cc2-e75a-443f-a61d-9ee6a5020107','RECEPCION','BAT-RA','anulacion','2026-11-02','1cacc862-ce22-4031-bd40-df108a9a1a14','posted'),
-  ('8e959167-b706-4910-af6d-b2c3c7df5d1e','83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','BAT-ESAC','reconocimiento','2026-11-01',NULL,'posted'),
-  ('1a69f12e-eea9-46b7-9d87-846e7942d501','dfe323c3-c980-43aa-8e82-092a4936ae1c','VENTA','BAT-ES2','reconocimiento','2026-11-01',NULL,'posted'),
-  ('e48a0251-8f33-4191-8126-eabf1dc85e53','7d773d03-8171-4e66-8846-378057691aa2','VENTA','BAT-E3','reconocimiento','2026-11-01',NULL,'posted');
+  ('dce8ffc1-ad55-49eb-8a34-aecbd2d43957','48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','BAT-E1','reconocimiento','2026-11-01',NULL,'posted'),
+  ('ace88df2-c8ef-43ba-a8ef-e629555c588a','48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','BAT-EA','reconocimiento','2026-11-01','29d6981c-f13e-4149-a253-9e756e1c2078','posted'),
+  ('bdf36a17-f15b-4bfd-92e6-e6aa9e3791a8','48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','BAT-EB','reconocimiento','2026-11-01',NULL,'posted'),
+  ('a11200c2-e620-45c0-92a2-723366112051','48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','BAT-EB2','reconocimiento','2026-11-01','29d6981c-f13e-4149-a253-9e756e1c2078','posted'),
+  ('294986c9-9343-4514-bbc3-ebebefc76ee8','48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','BAT-EOR','reconocimiento','2026-11-01','29d6981c-f13e-4149-a253-9e756e1c2078','posted'),
+  ('1e32a765-3496-4d0c-b231-74458a31f3a5','48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','BAT-ERE','anulacion','2026-11-02','29d6981c-f13e-4149-a253-9e756e1c2078','posted'),
+  ('76bf4cb7-bb02-4a7e-a2ba-66233dfc902b','48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','BAT-E3M','reconocimiento','2026-11-01','29d6981c-f13e-4149-a253-9e756e1c2078','posted'),
+  ('59ba9eae-b1f1-4864-9e8d-ee0447c0b8cd','48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','BAT-E3R','anulacion','2026-11-02','29d6981c-f13e-4149-a253-9e756e1c2078','posted'),
+  ('dc50d825-35b0-40f9-8815-4165bd0f7b39','48d70e41-1fcf-497d-a8a2-203367c921ea','RECEPCION','BAT-ES','reconocimiento','2026-11-01','165c3a09-4658-4e72-8023-fc01bf7bcec2','posted'),
+  ('fb43cdbc-bb3a-49bf-b5e4-4cb519fe2010','48d70e41-1fcf-497d-a8a2-203367c921ea','RECEPCION','BAT-RS','anulacion','2026-11-02','165c3a09-4658-4e72-8023-fc01bf7bcec2','posted'),
+  ('62317de6-84a1-44e4-a38f-9c3f3803aa94','48d70e41-1fcf-497d-a8a2-203367c921ea','RECEPCION','BAT-EA2','reconocimiento','2026-11-01','29d6981c-f13e-4149-a253-9e756e1c2078','posted'),
+  ('1acee643-591c-4261-a0a4-3ae99c57df7c','48d70e41-1fcf-497d-a8a2-203367c921ea','RECEPCION','BAT-RA','anulacion','2026-11-02','29d6981c-f13e-4149-a253-9e756e1c2078','posted'),
+  ('a46bec18-2b84-4542-968b-c6cf5d377f46','48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','BAT-ESAC','reconocimiento','2026-11-01',NULL,'posted'),
+  ('8794445a-9149-42a7-b93e-1c7a1cc29aab','7accd85b-0fc2-4f26-95e3-e0f4cdc72e39','VENTA','BAT-ES2','reconocimiento','2026-11-01',NULL,'posted'),
+  ('86340a36-3f66-4562-ad37-20b965de9f15','9369d8e8-edd2-45ef-ac22-20d92a9f5358','VENTA','BAT-E3','reconocimiento','2026-11-01',NULL,'posted');
 
-UPDATE public.fin_entries SET reversal_of='664cc579-d6a3-44ae-9c65-6cff711288b2' WHERE id='dbba3d5b-89da-49e9-a87c-14f9bb354e56';
-UPDATE public.fin_entries SET reversal_of='b3620925-6291-4c35-9a0e-a3ff4eb8ae16' WHERE id='d4aab811-2656-4935-95d4-c5f9689d9c31';
-UPDATE public.fin_entries SET reversal_of='9146aa2c-0860-4586-b04f-5f35a1fd7539' WHERE id='fcf089e2-4f3c-4e25-94ac-6044cfc77e51';
-UPDATE public.fin_entries SET reversal_of='64513ca2-a578-408c-8e24-aa1f7438baa7' WHERE id='fc2ad4c0-7832-407e-b2bf-7d7e7eb60fd7';
-UPDATE public.fin_entries SET document_id='f6d5de22-7015-47fe-a91e-bf9d1c956da5' WHERE id IN ('9146aa2c-0860-4586-b04f-5f35a1fd7539','fcf089e2-4f3c-4e25-94ac-6044cfc77e51');
-UPDATE public.fin_entries SET document_id='aab2041a-a164-49c9-b32e-60b375b451a0' WHERE id IN ('64513ca2-a578-408c-8e24-aa1f7438baa7','fc2ad4c0-7832-407e-b2bf-7d7e7eb60fd7');
+UPDATE public.fin_entries SET reversal_of='294986c9-9343-4514-bbc3-ebebefc76ee8' WHERE id='1e32a765-3496-4d0c-b231-74458a31f3a5';
+UPDATE public.fin_entries SET reversal_of='76bf4cb7-bb02-4a7e-a2ba-66233dfc902b' WHERE id='59ba9eae-b1f1-4864-9e8d-ee0447c0b8cd';
+UPDATE public.fin_entries SET reversal_of='dc50d825-35b0-40f9-8815-4165bd0f7b39' WHERE id='fb43cdbc-bb3a-49bf-b5e4-4cb519fe2010';
+UPDATE public.fin_entries SET reversal_of='62317de6-84a1-44e4-a38f-9c3f3803aa94' WHERE id='1acee643-591c-4261-a0a4-3ae99c57df7c';
+UPDATE public.fin_entries SET document_id='72dce945-d427-4308-989e-13f1b32eb55d' WHERE id IN ('dc50d825-35b0-40f9-8815-4165bd0f7b39','fb43cdbc-bb3a-49bf-b5e4-4cb519fe2010');
+UPDATE public.fin_entries SET document_id='fb57c352-c14a-40ef-9381-a64319518178' WHERE id IN ('62317de6-84a1-44e4-a38f-9c3f3803aa94','1acee643-591c-4261-a0a4-3ae99c57df7c');
 
 INSERT INTO public.fin_movements (id, entry_id, store_id, category_code, sense, amount, currency, exchange_rate, economic_date) VALUES
-  ('dfeaf7b5-0b22-4bdc-9451-311dae63db55','8e959167-b706-4910-af6d-b2c3c7df5d1e','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
-  ('e7994d04-7183-41fe-9ab3-8e889b5c71a3','0dd5d10b-b880-4e44-aad9-471d0603d441','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
-  ('315afdbf-eb87-4ca0-88dd-68b53c20ad30','20f9ba1d-c1d7-4f90-8c9d-aa7f89984838','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
-  ('b3fe6837-c858-4040-b18d-bf4034aa50f8','3fa68b0e-6e2e-48c2-8b6e-01dd1241fd35','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
-  ('0a562453-1781-4a2c-8922-f945013293f6','0e33aba4-a79f-408b-ae68-4c3b790f90cc','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
-  ('34d53a08-a1d5-4399-8381-d65809a80a02','1a69f12e-eea9-46b7-9d87-846e7942d501','dfe323c3-c980-43aa-8e82-092a4936ae1c','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
-  ('75816519-3efa-4919-8478-c14335c5ab87','e48a0251-8f33-4191-8126-eabf1dc85e53','7d773d03-8171-4e66-8846-378057691aa2','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
+  ('3f3f0ac6-9c37-457a-bb68-3036bda9c7ac','a46bec18-2b84-4542-968b-c6cf5d377f46','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
+  ('c8729b61-d84c-4e36-a02d-563cfe253b3f','dce8ffc1-ad55-49eb-8a34-aecbd2d43957','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
+  ('2795ef5a-016d-46dc-b360-c0973f885da3','ace88df2-c8ef-43ba-a8ef-e629555c588a','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
+  ('0f6ca226-7adc-4731-b3ba-4e56a5df945b','bdf36a17-f15b-4bfd-92e6-e6aa9e3791a8','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
+  ('c0b4f898-7a6b-4d3b-bc4c-bc6d9cbb9e10','a11200c2-e620-45c0-92a2-723366112051','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
+  ('4648eb88-d32a-418e-bec5-89919ee90372','8794445a-9149-42a7-b93e-1c7a1cc29aab','7accd85b-0fc2-4f26-95e3-e0f4cdc72e39','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
+  ('7f9e1dfd-8d9a-4581-ba95-8ce2e41c59c0','86340a36-3f66-4562-ad37-20b965de9f15','9369d8e8-edd2-45ef-ac22-20d92a9f5358','ACT_EFECTIVO_CUP','debito',10,'CUP',1,'2026-11-01'),
   -- F5: original 100 USD × 2 = 200 CUP; reversión parcial 40 USD × 2 = 80 CUP → residual CUP 120
-  ('5021e61e-b722-4e44-8287-6fff55a43387','664cc579-d6a3-44ae-9c65-6cff711288b2','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_USD','debito',100,'USD',2,'2026-11-01'),
-  ('719b230f-11e1-4324-b7cd-4859a38e3564','dbba3d5b-89da-49e9-a87c-14f9bb354e56','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_USD','credito',40,'USD',2,'2026-11-02'),
+  ('a168b2a2-5ea7-467b-b658-e15591419905','294986c9-9343-4514-bbc3-ebebefc76ee8','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_USD','debito',100,'USD',2,'2026-11-01'),
+  ('dd7269c1-a2b8-4cc9-bca1-e1492878b08f','1e32a765-3496-4d0c-b231-74458a31f3a5','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_USD','credito',40,'USD',2,'2026-11-02'),
   -- F5 multimoneda: original 100 USD × 2 = 200 CUP; reversión 30 EUR × 1.1 = 33 CUP → residual 167
-  ('515efd17-dd5d-4324-b31e-e111eac1d127','b3620925-6291-4c35-9a0e-a3ff4eb8ae16','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_USD','debito',100,'USD',2,'2026-11-01'),
-  ('0f33d470-0c0f-4d48-869d-69119d760cb5','d4aab811-2656-4935-95d4-c5f9689d9c31','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_USD','credito',30,'EUR',1.1,'2026-11-02'),
+  ('417af21e-b233-4f42-a239-fc16dba44785','76bf4cb7-bb02-4a7e-a2ba-66233dfc902b','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_USD','debito',100,'USD',2,'2026-11-01'),
+  ('2f5205ff-b5e3-4187-81d6-3555138378f3','59ba9eae-b1f1-4864-9e8d-ee0447c0b8cd','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_USD','credito',30,'EUR',1.1,'2026-11-02'),
   -- T12: superseded 100 CUP / reversión 40 CUP (residual 60); activa idem
-  ('6cfe130f-3b38-4015-94db-37e90349419c','9146aa2c-0860-4586-b04f-5f35a1fd7539','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_CUP','debito',100,'CUP',1,'2026-11-01'),
-  ('3994b3f0-af30-4835-850b-3f17d10a33ee','fcf089e2-4f3c-4e25-94ac-6044cfc77e51','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_CUP','credito',40,'CUP',1,'2026-11-02'),
-  ('b76d1dfa-4ef9-47d2-90ad-e24600d6f795','64513ca2-a578-408c-8e24-aa1f7438baa7','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_CUP','debito',100,'CUP',1,'2026-11-01'),
-  ('5ca81888-342e-4cc3-8ec7-bbd05b8bd933','fc2ad4c0-7832-407e-b2bf-7d7e7eb60fd7','83ad8cc2-e75a-443f-a61d-9ee6a5020107','ACT_EFECTIVO_CUP','credito',40,'CUP',1,'2026-11-02');
+  ('e2554401-a9b8-461a-9f31-024fabc5e767','dc50d825-35b0-40f9-8815-4165bd0f7b39','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_CUP','debito',100,'CUP',1,'2026-11-01'),
+  ('ea41fa64-8140-4685-b060-63946cf8c02f','fb43cdbc-bb3a-49bf-b5e4-4cb519fe2010','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_CUP','credito',40,'CUP',1,'2026-11-02'),
+  ('b560179c-3e1d-4ac0-9752-f241e7502f1c','62317de6-84a1-44e4-a38f-9c3f3803aa94','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_CUP','debito',100,'CUP',1,'2026-11-01'),
+  ('91c346d6-eb14-488c-ac4a-1be9585bd721','1acee643-591c-4261-a0a4-3ae99c57df7c','48d70e41-1fcf-497d-a8a2-203367c921ea','ACT_EFECTIVO_CUP','credito',40,'CUP',1,'2026-11-02');
 
-INSERT INTO public.receipts (id, store_id, status) VALUES ('f6d5de22-7015-47fe-a91e-bf9d1c956da5','83ad8cc2-e75a-443f-a61d-9ee6a5020107','pending'), ('aab2041a-a164-49c9-b32e-60b375b451a0','83ad8cc2-e75a-443f-a61d-9ee6a5020107','pending');
+INSERT INTO public.receipts (id, store_id, status) VALUES ('72dce945-d427-4308-989e-13f1b32eb55d','48d70e41-1fcf-497d-a8a2-203367c921ea','pending'), ('fb57c352-c14a-40ef-9381-a64319518178','48d70e41-1fcf-497d-a8a2-203367c921ea','pending');
 
 -- G2_act para S2 se crea AQUÍ (después de los INSERT de entradas): E_S2 nació
 -- con generation_id NULL porque al insertarse S2 no tenía generación activa
 -- (el BEFORE INSERT fin_trg_entries_generation solo rellena si existe).
 INSERT INTO public.fin_posting_generations (id, store_id, code, status) VALUES
-  ('7c698678-6a1c-4cd5-9acf-aed5d3b9cf70','dfe323c3-c980-43aa-8e82-092a4936ae1c','GEN-BAT','active');
+  ('b9796bd8-e8f0-446e-9406-5715176021e1','7accd85b-0fc2-4f26-95e3-e0f4cdc72e39','GEN-BAT','active');
 
 -- ═══ DEMOSTRACIÓN PRE (vulnerabilidades reales del estado vigente) ═════════
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"08b08515-be1a-49f8-ab92-884d55eec42d","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"7acd1613-4f35-4c05-9768-deab0095fca2","role":"authenticated"}';
 DO $pre1$
 DECLARE v_n int;
 BEGIN
-  SELECT count(*) INTO v_n FROM public.fin_entries WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v_n FROM public.fin_entries WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v_n < 1 THEN RAISE EXCEPTION 'PRE-1 FAILED: el clerk debería ver el libro (estado vulnerable)'; END IF;
 END $pre1$;
+-- F2-ext PRE: la lectura directa de snapshots/generaciones está ROTA para
+-- authenticated (la política vigente referencia is_admin_check/has_store_access_as,
+-- helpers con EXECUTE revocado a authenticated desde w9_f06): cualquier SELECT
+-- directo muere con permission denied — ni siquiera evalúa. La app lee por RPC
+-- SECURITY DEFINER; el SELECT directo queda inservible para gestión.
+SET LOCAL ROLE authenticated;
+SET LOCAL request.jwt.claims TO '{"sub":"7acd1613-4f35-4c05-9768-deab0095fca2","role":"authenticated"}';
+
+DO $pre10$
+DECLARE v_err text; v_state text;
+BEGIN
+  BEGIN
+    SELECT count(*) FROM public.fin_reconciliation_snapshots WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
+  IF v_err IS NULL OR (position('permission denied for function is_admin_check' in v_err) = 0 AND coalesce(v_state,'') <> 'permission denied for function is_admin_check') THEN
+    RAISE EXCEPTION 'CASE pre10 FAILED: se esperaba permission denied for function is_admin_check, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
+  END IF;
+END $pre10$;
+
+DO $pre11$
+DECLARE v_err text; v_state text;
+BEGIN
+  BEGIN
+    SELECT count(*) FROM public.fin_posting_generations WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
+  IF v_err IS NULL OR (position('permission denied for function is_admin_check' in v_err) = 0 AND coalesce(v_state,'') <> 'permission denied for function is_admin_check') THEN
+    RAISE EXCEPTION 'CASE pre11 FAILED: se esperaba permission denied for function is_admin_check, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
+  END IF;
+END $pre11$;
 DO $pre2$
 DECLARE ok boolean;
 BEGIN
-  SELECT public.fin_get_dashboard('83ad8cc2-e75a-443f-a61d-9ee6a5020107','2026-01-01','2026-12-31') IS NOT NULL INTO ok;
+  SELECT public.fin_get_dashboard('48d70e41-1fcf-497d-a8a2-203367c921ea','2026-01-01','2026-12-31') IS NOT NULL INTO ok;
   IF NOT ok THEN RAISE EXCEPTION 'PRE-2 FAILED: dashboard nulo para clerk (estado vulnerable)'; END IF;
 END $pre2$;
 SET LOCAL ROLE postgres;
@@ -120,7 +155,7 @@ SET LOCAL request.jwt.claims TO '{}';
 DO $pre3$
 DECLARE v_r numeric;
 BEGIN
-  SELECT public.fin_entry_reversal_residual('664cc579-d6a3-44ae-9c65-6cff711288b2') INTO v_r;
+  SELECT public.fin_entry_reversal_residual('294986c9-9343-4514-bbc3-ebebefc76ee8') INTO v_r;
   IF v_r <> 60 THEN RAISE EXCEPTION 'PRE-3 FAILED: residual previo debería ser 60 (bug m.amount), obtuve %', v_r; END IF;
 END $pre3$;
 
@@ -128,39 +163,39 @@ DO $pre4$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.receipts SET status='voided' WHERE id='f6d5de22-7015-47fe-a91e-bf9d1c956da5';
+    UPDATE public.receipts SET status='voided' WHERE id='72dce945-d427-4308-989e-13f1b32eb55d';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_PARTIAL_REVERSAL_PENDING' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_PARTIAL_REVERSAL_PENDING') THEN
     RAISE EXCEPTION 'CASE pre4 FAILED: se esperaba ERR_PARTIAL_REVERSAL_PENDING, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
   END IF;
 END $pre4$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"1e516186-fee3-4b72-83cd-3b51e7204e2e","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"ba0d1b62-26fa-4f64-8305-063d2f6d9011","role":"authenticated"}';
 
 DO $pre5$
 BEGIN
-  UPDATE public.fin_rule_versions SET store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107' WHERE id='db1195f2-aebf-43d7-9b4c-8efcb6143305';
+  UPDATE public.fin_rule_versions SET store_id='48d70e41-1fcf-497d-a8a2-203367c921ea' WHERE id='7e015afe-8785-4554-9913-77f4019bd061';
   IF NOT FOUND THEN RAISE EXCEPTION 'PRE-5 FAILED: la reasignación de regla global DEBÍA ser posible (vulnerabilidad)'; END IF;
 END $pre5$;
 SET LOCAL ROLE postgres;
 SET LOCAL request.jwt.claims TO '{}';
-UPDATE public.fin_rule_versions SET store_id=NULL WHERE id='db1195f2-aebf-43d7-9b4c-8efcb6143305';
+UPDATE public.fin_rule_versions SET store_id=NULL WHERE id='7e015afe-8785-4554-9913-77f4019bd061';
 
 DO $pre6$
 BEGIN
-  UPDATE public.fin_entries SET description='hackeado' WHERE id='0dd5d10b-b880-4e44-aad9-471d0603d441';
+  UPDATE public.fin_entries SET description='hackeado' WHERE id='dce8ffc1-ad55-49eb-8a34-aecbd2d43957';
   IF NOT FOUND THEN RAISE EXCEPTION 'PRE-6 FAILED'; END IF;
 END $pre6$;
 
 DO $pre7$
 BEGIN
-  UPDATE public.fin_movements SET amount=5 WHERE entry_id='8e959167-b706-4910-af6d-b2c3c7df5d1e';
+  UPDATE public.fin_movements SET amount=5 WHERE entry_id='a46bec18-2b84-4542-968b-c6cf5d377f46';
   IF NOT FOUND THEN RAISE EXCEPTION 'PRE-7 FAILED'; END IF;
 END $pre7$;
 
 DO $pre8$
 BEGIN
-  DELETE FROM public.fin_movements WHERE entry_id='8e959167-b706-4910-af6d-b2c3c7df5d1e';
+  DELETE FROM public.fin_movements WHERE entry_id='a46bec18-2b84-4542-968b-c6cf5d377f46';
   IF NOT FOUND THEN RAISE EXCEPTION 'PRE-8 FAILED'; END IF;
 END $pre8$;
 
@@ -171,10 +206,10 @@ BEGIN
 END $pre9$;
 INSERT INTO public.fin_posting_errors (store_id, document_type, event, error_code, error_detail) VALUES
   (NULL,'VENTA','reconocimiento','BAT-GLOBAL','fixture global'),
-  ('83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','reconocimiento','BAT-STORE','fixture tienda');
-UPDATE public.receipts SET status='pending' WHERE id='f6d5de22-7015-47fe-a91e-bf9d1c956da5';
+  ('48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','reconocimiento','BAT-STORE','fixture tienda');
+UPDATE public.receipts SET status='pending' WHERE id='72dce945-d427-4308-989e-13f1b32eb55d';
 
--- ═══ MIGRACIONES M1..M6 (transaccionales dentro de la batería) ═════════════
+-- ═══ MIGRACIONES M1..M7 (transaccionales dentro de la batería) ═════════════
 -- ============================================================================
 -- Migration: 20261128153000_cp_fin_f2_book_read_management.sql
 -- Misión:    CP-FIN-REM-001 — PR-A F2 (lectura del libro solo para gestión)
@@ -2340,79 +2375,236 @@ begin
   raise notice 'CP-INFRA-021 POSTCHECK OK: 16/16 triggers ENABLE ALWAYS';
 end $$;
 
+-- ============================================================================
+-- Migration: 20261128153600_cp_fin_f2_snapshots_generations_management.sql
+-- Misión:    CP-FIN-REM-001 — PR-A F2 (ampliación post-rebase 44b2ff27b)
+-- Fecha:     2026-11-29
+-- ============================================================================
+-- F2 (ampliación de alcance, misma regla de F2) — SELECT SOLO GESTIÓN en
+--       fin_reconciliation_snapshots y fin_posting_generations.
+--
+-- Estado previo revalidado (definiciones vigentes del stream):
+--   fin_reconciliation_snapshots_select (20261121230000 §8):
+--     FOR SELECT TO authenticated
+--     USING (is_admin_check(auth.uid()) OR has_store_access_as(auth.uid(), store_id))
+--     → cualquier miembro activo (clerk incluido) lee los snapshots.
+--   fin_posting_generations_select (20261120120000):
+--     FOR SELECT USING (is_admin_check(auth.uid()) OR has_store_access_as(...))
+--     → SIN cláusula TO = rol {public} en el alcance de la política
+--       (pg_policies.roles = {public}); el ACL de tabla la restringe a
+--       authenticated, pero el contrato de seguridad exige eliminar el rol
+--       {public} del alcance de la política misma.
+--
+-- Semántica NUEVA (espejo de can_manage_store_as / F2 20261128153000):
+--   Permitido: admin global/superadmin (is_admin()), admin de tienda, manager
+--   de tienda, encargado de tienda (has_store_role con roles verificados:
+--   ARRAY['admin','manager','encargado']). service_role no pasa por RLS.
+--   Denegado: clerk, usuario operativo, sin membresía, otro tenant, anon,
+--   y el rol {public} como alcance de la política (ambas pasan a
+--   TO authenticated).
+--
+-- No se modifica: ACL de tablas (grants existentes), políticas de escritura
+-- (no existen por diseño: canal canónico service_role), ni ninguna otra
+-- política/configuración.
+--
+-- Idempotente: DROP+CREATE de las 2 políticas. Fail-closed: aborta si faltan
+-- tablas/helpers o si el estado previo no es el esperado (deriva).
+-- Rollback: supabase/rollbacks/20261128153600_rollback_cp_fin_f2_snapshots_generations.sql
+-- ============================================================================
+
+
+do $$
+declare
+  v_tablas text[];
+  v_faltan text[];
+  v_qual_previo text;
+  v_roles_previo text;
+begin
+  v_tablas := array['fin_reconciliation_snapshots','fin_posting_generations'];
+  select array_agg(t) into v_faltan
+    from unnest(v_tablas) t
+   where to_regclass('public.' || t) is null;
+  if coalesce(array_length(v_faltan, 1), 0) > 0 then
+    raise exception 'CP-FIN-F2-EXT PRECOND: tablas ausentes: %', array_to_string(v_faltan, ', ')
+      using errcode = 'P0001';
+  end if;
+  if to_regprocedure('public.is_admin()') is null
+     or to_regprocedure('public.has_store_role(uuid, text[])') is null then
+    raise exception 'CP-FIN-F2-EXT PRECOND: helpers is_admin()/has_store_role() ausentes'
+      using errcode = 'P0001';
+  end if;
+  -- Fail-closed contra deriva: el estado previo debe ser el descrito arriba.
+  select qual into v_qual_previo from pg_policies
+   where schemaname='public' and tablename='fin_reconciliation_snapshots'
+     and policyname='fin_reconciliation_snapshots_select';
+  if v_qual_previo is null or position('has_store_access_as' in v_qual_previo) = 0 then
+    raise exception 'CP-FIN-F2-EXT PRECOND: fin_reconciliation_snapshots_select no tiene el predicado amplio esperado (¿deriva?): %', coalesce(v_qual_previo, 'POLICY AUSENTE')
+      using errcode = 'P0001';
+  end if;
+  select qual, roles::text into v_qual_previo, v_roles_previo from pg_policies
+   where schemaname='public' and tablename='fin_posting_generations'
+     and policyname='fin_posting_generations_select';
+  if v_qual_previo is null or position('has_store_access_as' in v_qual_previo) = 0 then
+    raise exception 'CP-FIN-F2-EXT PRECOND: fin_posting_generations_select no tiene el predicado amplio esperado (¿deriva?): %', coalesce(v_qual_previo, 'POLICY AUSENTE')
+      using errcode = 'P0001';
+  end if;
+  if v_roles_previo is null or position('public' in v_roles_previo) = 0 then
+    raise exception 'CP-FIN-F2-EXT PRECOND: fin_posting_generations_select no tenía el rol {public} en su alcance (¿ya endurecida?): %', coalesce(v_roles_previo, 'ROLES AUSENTE')
+      using errcode = 'P0001';
+  end if;
+end $$;
+
+-- ── fin_reconciliation_snapshots: SELECT solo gestión ───────────────────────
+DROP POLICY IF EXISTS fin_reconciliation_snapshots_select ON public.fin_reconciliation_snapshots;
+CREATE POLICY fin_reconciliation_snapshots_select ON public.fin_reconciliation_snapshots
+  FOR SELECT TO authenticated
+  USING (is_admin() OR has_store_role(store_id, ARRAY['admin','manager','encargado']));
+
+-- ── fin_posting_generations: SELECT solo gestión (y SIN rol {public}) ──────
+DROP POLICY IF EXISTS fin_posting_generations_select ON public.fin_posting_generations;
+CREATE POLICY fin_posting_generations_select ON public.fin_posting_generations
+  FOR SELECT TO authenticated
+  USING (is_admin() OR has_store_role(store_id, ARRAY['admin','manager','encargado']));
+
+COMMENT ON TABLE public.fin_reconciliation_snapshots IS
+  'CP-FIN: evidencia histórica de ejecuciones de conciliación (escritura exclusiva del canal service_role vía RPC fin_reconciliation_snapshot_save). [CP-FIN-REM-001 F2-ext 2026-11-29: SELECT solo roles de gestión (admin/manager/encargado de la tienda o admin global); clerk/usuario operativo ya no leen los snapshots.]';
+COMMENT ON TABLE public.fin_posting_generations IS
+  'CP-FIN: generaciones del motor de contabilización (ciclo de vida building→candidate→active→superseded; escritura solo canal service_role/postgres). [CP-FIN-REM-001 F2-ext 2026-11-29: SELECT solo roles de gestión (admin/manager/encargado de la tienda o admin global) y el alcance de la política ya NO incluye el rol {public}: TO authenticated.]';
+
+-- Verificación post (fail-closed): 2 políticas con predicado de gestión y
+-- alcance TO authenticated (rol {public} eliminado).
+do $$
+declare
+  v_n int;
+  v_roles text;
+begin
+  select count(*) into v_n from pg_policies
+   where schemaname='public' and policyname in
+     ('fin_reconciliation_snapshots_select','fin_posting_generations_select')
+     and (qual like '%has_store_role%' or qual like '%is_admin()%');
+  if v_n <> 2 then
+    raise exception 'CP-FIN-F2-EXT POSTCHECK: esperadas 2 políticas endurecidas, encontradas %', v_n
+      using errcode = 'P0001';
+  end if;
+  select roles::text into v_roles from pg_policies
+   where schemaname='public' and tablename='fin_posting_generations'
+     and policyname='fin_posting_generations_select';
+  if v_roles is null or position('authenticated' in v_roles) = 0 or position('public' in v_roles) <> 0 then
+    raise exception 'CP-FIN-F2-EXT POSTCHECK: fin_posting_generations_select debe ser TO authenticated sin {public}, roles=%', coalesce(v_roles, 'AUSENTE')
+      using errcode = 'P0001';
+  end if;
+end $$;
+
 -- ═══ CASOS POST ════════════════════════════════════════════════════════════
 -- F2-1..F2-8: matriz SELECT RLS (propia tienda / otra tienda)
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"08b08515-be1a-49f8-ab92-884d55eec42d","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"7acd1613-4f35-4c05-9768-deab0095fca2","role":"authenticated"}';
 DO $f2c$
 DECLARE v int;
 BEGIN
-  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v <> 0 THEN RAISE EXCEPTION 'F2-1 FAILED: clerk vio % asientos (debía 0)', v; END IF;
-  SELECT count(*) INTO v FROM public.fin_movements WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_movements WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v <> 0 THEN RAISE EXCEPTION 'F2-1b FAILED: clerk vio % movimientos', v; END IF;
-  SELECT count(*) INTO v FROM public.fin_opening_balances WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_opening_balances WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v <> 0 THEN RAISE EXCEPTION 'F2-1c FAILED'; END IF;
   SELECT count(*) INTO v FROM public.fin_posting_errors;
   IF v <> 0 THEN RAISE EXCEPTION 'F2-1d FAILED: clerk vio % errores (globales+tienda)', v; END IF;
+  -- F2-ext: snapshots y generaciones también denegados al clerk
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-1e FAILED: clerk vio % snapshots', v; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-1f FAILED: clerk vio % generaciones', v; END IF;
 END $f2c$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"1ccbeefa-13b0-4591-8e87-bf63e26fac1c","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"ff550908-c158-4834-a5eb-85680086babe","role":"authenticated"}';
 DO $f2u$
 DECLARE v int;
 BEGIN
-  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v <> 0 THEN RAISE EXCEPTION 'F2-2 FAILED: usuario sin membresía vio %', v; END IF;
+  -- F2-ext: sin membresía tampoco ve snapshots ni generaciones
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-2b FAILED: usuario sin membresía vio % snapshots', v; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-2c FAILED: usuario sin membresía vio % generaciones', v; END IF;
 END $f2u$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"0e274ac0-084c-4c9b-a784-6c1a4ee3379e","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"f6dbd1c2-ae74-4bc7-a055-cb510ad16843","role":"authenticated"}';
 DO $f2e$
 DECLARE v int;
 BEGIN
-  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v < 1 THEN RAISE EXCEPTION 'F2-3 FAILED: encargado no ve su tienda'; END IF;
+  -- F2-ext: encargado (rol de gestión) sí ve snapshots y generaciones
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-3b FAILED: encargado no ve snapshots'; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-3c FAILED: encargado no ve generaciones'; END IF;
 END $f2e$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"efeb3464-18ef-402c-b908-9a22793bff0b","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"86215013-f403-4cdc-981e-c2f1a4c66dd3","role":"authenticated"}';
 DO $f2m$
 DECLARE v int;
 BEGIN
-  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v < 1 THEN RAISE EXCEPTION 'F2-4 FAILED: manager no ve su tienda'; END IF;
-  SELECT count(*) INTO v FROM public.fin_posting_errors WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_posting_errors WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v < 1 THEN RAISE EXCEPTION 'F2-4b FAILED: manager no ve errores de tienda'; END IF;
   SELECT count(*) INTO v FROM public.fin_posting_errors WHERE store_id IS NULL;
   IF v <> 0 THEN RAISE EXCEPTION 'F2-4c FAILED: manager vio % errores globales', v; END IF;
+  -- F2-ext: manager (rol de gestión) sí ve snapshots y generaciones
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-4d FAILED: manager no ve snapshots'; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-4e FAILED: manager no ve generaciones'; END IF;
 END $f2m$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"1e516186-fee3-4b72-83cd-3b51e7204e2e","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"ba0d1b62-26fa-4f64-8305-063d2f6d9011","role":"authenticated"}';
 DO $f2a$
 DECLARE v int;
 BEGIN
-  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v < 1 THEN RAISE EXCEPTION 'F2-5 FAILED: admin de tienda no ve'; END IF;
+  -- F2-ext: admin de tienda sí ve snapshots y generaciones
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-5b FAILED: admin de tienda no ve snapshots'; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-5c FAILED: admin de tienda no ve generaciones'; END IF;
 END $f2a$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"755d4dc3-a22e-46b7-af57-429731e49664","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"ab36db35-dfb1-48dc-8bcd-bfff18786ab5","role":"authenticated"}';
 DO $f2g$
 DECLARE v int;
 BEGIN
-  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v < 1 THEN RAISE EXCEPTION 'F2-6 FAILED: admin global no ve S1'; END IF;
-  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='dfe323c3-c980-43aa-8e82-092a4936ae1c';
+  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='7accd85b-0fc2-4f26-95e3-e0f4cdc72e39';
   IF v < 1 THEN RAISE EXCEPTION 'F2-6b FAILED: admin global no ve S2'; END IF;
   SELECT count(*) INTO v FROM public.fin_posting_errors;
   IF v <> 2 THEN RAISE EXCEPTION 'F2-6c FAILED: admin global debe ver 2 errores, ve %', v; END IF;
+  -- F2-ext: admin global ve snapshots y generaciones de CUALQUIER tienda
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots;
+  IF v < 1 THEN RAISE EXCEPTION 'F2-6d FAILED: admin global no ve snapshots'; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations;
+  IF v < 3 THEN RAISE EXCEPTION 'F2-6e FAILED: admin global debe ver >=3 generaciones, ve %', v; END IF;
 END $f2g$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"e624583c-f850-48bb-b13e-71bb27c1fedb","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"86db026b-14f9-4cf4-a19f-090e46a68d41","role":"authenticated"}';
 DO $f2t$
 DECLARE v int;
 BEGIN
-  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v <> 0 THEN RAISE EXCEPTION 'F2-7 FAILED: otro tenant vio % asientos de S1', v; END IF;
-  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='dfe323c3-c980-43aa-8e82-092a4936ae1c';
+  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='7accd85b-0fc2-4f26-95e3-e0f4cdc72e39';
   IF v < 1 THEN RAISE EXCEPTION 'F2-7b FAILED: admin de S2 no ve SU tienda'; END IF;
+  -- F2-ext: otro tenant tampoco ve snapshots/generaciones ajenos, SÍ los suyos
+  SELECT count(*) INTO v FROM public.fin_reconciliation_snapshots WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-7c FAILED: otro tenant vio % snapshots de S1', v; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  IF v <> 0 THEN RAISE EXCEPTION 'F2-7d FAILED: otro tenant vio % generaciones de S1', v; END IF;
+  SELECT count(*) INTO v FROM public.fin_posting_generations WHERE store_id='7accd85b-0fc2-4f26-95e3-e0f4cdc72e39';
+  IF v < 1 THEN RAISE EXCEPTION 'F2-7e FAILED: admin de S2 no ve SUS generaciones'; END IF;
 END $f2t$;
 SET LOCAL ROLE anon;
 SET LOCAL request.jwt.claims TO '{"role":"anon"}';
@@ -2421,41 +2613,87 @@ DO $f2n$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    SELECT count(*) FROM public.fin_entries WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+    SELECT count(*) FROM public.fin_entries WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('permission denied' in v_err) = 0 AND coalesce(v_state,'') <> 'permission denied') THEN
     RAISE EXCEPTION 'CASE f2n FAILED: se esperaba permission denied, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
   END IF;
 END $f2n$;
 
+DO $f2n2$
+DECLARE v_err text; v_state text;
+BEGIN
+  BEGIN
+    SELECT count(*) FROM public.fin_posting_generations;
+  EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
+  IF v_err IS NULL OR (position('permission denied' in v_err) = 0 AND coalesce(v_state,'') <> 'permission denied') THEN
+    RAISE EXCEPTION 'CASE f2n2 FAILED: se esperaba permission denied, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
+  END IF;
+END $f2n2$;
+
+DO $f2n3$
+DECLARE v_err text; v_state text;
+BEGIN
+  BEGIN
+    SELECT count(*) FROM public.fin_reconciliation_snapshots;
+  EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
+  IF v_err IS NULL OR (position('permission denied' in v_err) = 0 AND coalesce(v_state,'') <> 'permission denied') THEN
+    RAISE EXCEPTION 'CASE f2n3 FAILED: se esperaba permission denied, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
+  END IF;
+END $f2n3$;
+
+-- F2-ext: contrato de la política — rol {public} ELIMINADO del alcance (TO authenticated)
+SET LOCAL ROLE postgres;
+SET LOCAL request.jwt.claims TO '{}';
+DO $f2extroles$
+DECLARE v_roles text;
+BEGIN
+  SELECT roles::text INTO v_roles FROM pg_policies
+   WHERE schemaname='public' AND tablename='fin_posting_generations'
+     AND policyname='fin_posting_generations_select';
+  IF v_roles IS NULL OR position('authenticated' in v_roles) = 0 OR position('public' in v_roles) <> 0 THEN
+    RAISE EXCEPTION 'F2-EXT-1 FAILED: fin_posting_generations_select debe ser TO authenticated (sin {public}), roles=%', coalesce(v_roles, 'AUSENTE'); END IF;
+  SELECT roles::text INTO v_roles FROM pg_policies
+   WHERE schemaname='public' AND tablename='fin_reconciliation_snapshots'
+     AND policyname='fin_reconciliation_snapshots_select';
+  IF v_roles IS NULL OR position('authenticated' in v_roles) = 0 OR position('public' in v_roles) <> 0 THEN
+    RAISE EXCEPTION 'F2-EXT-2 FAILED: fin_reconciliation_snapshots_select debe ser TO authenticated, roles=%', coalesce(v_roles, 'AUSENTE'); END IF;
+  SELECT count(*) INTO v_roles FROM pg_policies
+   WHERE schemaname='public' AND policyname IN
+     ('fin_reconciliation_snapshots_select','fin_posting_generations_select')
+     AND qual LIKE '%has_store_role%';
+  IF v_roles::int <> 2 THEN
+    RAISE EXCEPTION 'F2-EXT-3 FAILED: las 2 políticas deben usar el predicado de gestión has_store_role (encontradas %)', v_roles::int; END IF;
+END $f2extroles$;
+
 -- F2-RPC: gate de gestión por LLAMADA DIRECTA
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"08b08515-be1a-49f8-ab92-884d55eec42d","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"7acd1613-4f35-4c05-9768-deab0095fca2","role":"authenticated"}';
 
 DO $f2rpc1$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    SELECT public.fin_get_dashboard('83ad8cc2-e75a-443f-a61d-9ee6a5020107','2026-01-01','2026-12-31');
+    SELECT public.fin_get_dashboard('48d70e41-1fcf-497d-a8a2-203367c921ea','2026-01-01','2026-12-31');
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_UNAUTHORIZED' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_UNAUTHORIZED') THEN
     RAISE EXCEPTION 'CASE f2rpc1 FAILED: se esperaba ERR_UNAUTHORIZED, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
   END IF;
 END $f2rpc1$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"efeb3464-18ef-402c-b908-9a22793bff0b","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"86215013-f403-4cdc-981e-c2f1a4c66dd3","role":"authenticated"}';
 
 DO $f2rpc2$
 BEGIN
-  PERFORM public.fin_get_dashboard('83ad8cc2-e75a-443f-a61d-9ee6a5020107','2026-01-01','2026-12-31');
+  PERFORM public.fin_get_dashboard('48d70e41-1fcf-497d-a8a2-203367c921ea','2026-01-01','2026-12-31');
   
 END $f2rpc2$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"0e274ac0-084c-4c9b-a784-6c1a4ee3379e","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"f6dbd1c2-ae74-4bc7-a055-cb510ad16843","role":"authenticated"}';
 
 DO $f2rpc3$
 BEGIN
-  PERFORM public.fin_get_income_statement('83ad8cc2-e75a-443f-a61d-9ee6a5020107','2026-01-01','2026-12-31');
+  PERFORM public.fin_get_income_statement('48d70e41-1fcf-497d-a8a2-203367c921ea','2026-01-01','2026-12-31');
   
 END $f2rpc3$;
 SET LOCAL ROLE service_role;
@@ -2465,7 +2703,7 @@ DO $f2rpc4$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    SELECT public.fin_get_balance_sheet('83ad8cc2-e75a-443f-a61d-9ee6a5020107','2026-11-28',NULL);
+    SELECT public.fin_get_balance_sheet('48d70e41-1fcf-497d-a8a2-203367c921ea','2026-11-28',NULL);
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_UNAUTHORIZED' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_UNAUTHORIZED') THEN
     RAISE EXCEPTION 'CASE f2rpc4 FAILED: se esperaba ERR_UNAUTHORIZED, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2474,7 +2712,7 @@ END $f2rpc4$;
 
 DO $f2rpc5$
 BEGIN
-  PERFORM public.fin_get_balance_sheet('83ad8cc2-e75a-443f-a61d-9ee6a5020107','2026-11-28','efeb3464-18ef-402c-b908-9a22793bff0b'::uuid);
+  PERFORM public.fin_get_balance_sheet('48d70e41-1fcf-497d-a8a2-203367c921ea','2026-11-28','86215013-f403-4cdc-981e-c2f1a4c66dd3'::uuid);
   
 END $f2rpc5$;
 SET LOCAL ROLE postgres;
@@ -2492,12 +2730,12 @@ END $f2rpc6$;
 
 -- F3: ámbito de reglas (RLS deniega en silencio 0 filas; el trigger aborta)
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"1e516186-fee3-4b72-83cd-3b51e7204e2e","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"ba0d1b62-26fa-4f64-8305-063d2f6d9011","role":"authenticated"}';
 
 DO $f3a$
 DECLARE v_n int := 0;
 BEGIN
-  UPDATE public.fin_rule_versions SET store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107' WHERE id='db1195f2-aebf-43d7-9b4c-8efcb6143305';
+  UPDATE public.fin_rule_versions SET store_id='48d70e41-1fcf-497d-a8a2-203367c921ea' WHERE id='7e015afe-8785-4554-9913-77f4019bd061';
   GET DIAGNOSTICS v_n = ROW_COUNT;
   IF v_n <> 0 THEN RAISE EXCEPTION 'CASE f3a FAILED: RLS debía denegar en silencio (0 filas), tocó %', v_n; END IF;
 END $f3a$;
@@ -2508,7 +2746,7 @@ DO $f3b$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_rule_versions SET store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107' WHERE id='db1195f2-aebf-43d7-9b4c-8efcb6143305';
+    UPDATE public.fin_rule_versions SET store_id='48d70e41-1fcf-497d-a8a2-203367c921ea' WHERE id='7e015afe-8785-4554-9913-77f4019bd061';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_RULE_SCOPE_IMMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_RULE_SCOPE_IMMUTABLE') THEN
     RAISE EXCEPTION 'CASE f3b FAILED: se esperaba ERR_FIN_RULE_SCOPE_IMMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2519,7 +2757,7 @@ DO $f3c$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_rule_versions SET store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107', notes='multi' WHERE id='db1195f2-aebf-43d7-9b4c-8efcb6143305';
+    UPDATE public.fin_rule_versions SET store_id='48d70e41-1fcf-497d-a8a2-203367c921ea', notes='multi' WHERE id='7e015afe-8785-4554-9913-77f4019bd061';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_RULE_SCOPE_IMMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_RULE_SCOPE_IMMUTABLE') THEN
     RAISE EXCEPTION 'CASE f3c FAILED: se esperaba ERR_FIN_RULE_SCOPE_IMMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2528,24 +2766,24 @@ END $f3c$;
 
 DO $f3d$
 BEGIN
-  UPDATE public.fin_rule_versions SET notes='admin-global-ok' WHERE id='db1195f2-aebf-43d7-9b4c-8efcb6143305';
+  UPDATE public.fin_rule_versions SET notes='admin-global-ok' WHERE id='7e015afe-8785-4554-9913-77f4019bd061';
   IF NOT FOUND THEN RAISE EXCEPTION 'F3-d FAILED'; END IF;
 END $f3d$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"1e516186-fee3-4b72-83cd-3b51e7204e2e","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"ba0d1b62-26fa-4f64-8305-063d2f6d9011","role":"authenticated"}';
 
 DO $f3e$
 BEGIN
-  UPDATE public.fin_rule_versions SET notes='admin-tienda-ok' WHERE id='935ab06a-df11-459d-a753-fd2a14bf70af';
+  UPDATE public.fin_rule_versions SET notes='admin-tienda-ok' WHERE id='f17d4694-6252-4cee-925c-60ad4c919ee7';
   IF NOT FOUND THEN RAISE EXCEPTION 'F3-e FAILED'; END IF;
 END $f3e$;
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"efeb3464-18ef-402c-b908-9a22793bff0b","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"86215013-f403-4cdc-981e-c2f1a4c66dd3","role":"authenticated"}';
 
 DO $f3f$
 DECLARE v_n int := 0;
 BEGIN
-  UPDATE public.fin_rule_versions SET notes='x' WHERE id='935ab06a-df11-459d-a753-fd2a14bf70af';
+  UPDATE public.fin_rule_versions SET notes='x' WHERE id='f17d4694-6252-4cee-925c-60ad4c919ee7';
   GET DIAGNOSTICS v_n = ROW_COUNT;
   IF v_n <> 0 THEN RAISE EXCEPTION 'CASE f3f FAILED: RLS debía denegar en silencio (0 filas), tocó %', v_n; END IF;
 END $f3f$;
@@ -2558,7 +2796,7 @@ DO $f4a$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_entries SET description='hack' WHERE id='0dd5d10b-b880-4e44-aad9-471d0603d441';
+    UPDATE public.fin_entries SET description='hack' WHERE id='dce8ffc1-ad55-49eb-8a34-aecbd2d43957';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4a FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2569,7 +2807,7 @@ DO $f4b$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_entries SET economic_date='2026-01-01' WHERE id='0dd5d10b-b880-4e44-aad9-471d0603d441';
+    UPDATE public.fin_entries SET economic_date='2026-01-01' WHERE id='dce8ffc1-ad55-49eb-8a34-aecbd2d43957';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4b FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2580,7 +2818,7 @@ DO $f4c$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    DELETE FROM public.fin_entries WHERE id='0dd5d10b-b880-4e44-aad9-471d0603d441';
+    DELETE FROM public.fin_entries WHERE id='dce8ffc1-ad55-49eb-8a34-aecbd2d43957';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4c FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2591,7 +2829,7 @@ DO $f4d$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_movements SET amount=5 WHERE entry_id='664cc579-d6a3-44ae-9c65-6cff711288b2';
+    UPDATE public.fin_movements SET amount=5 WHERE entry_id='294986c9-9343-4514-bbc3-ebebefc76ee8';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4d FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2602,7 +2840,7 @@ DO $f4e$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    DELETE FROM public.fin_movements WHERE entry_id='664cc579-d6a3-44ae-9c65-6cff711288b2';
+    DELETE FROM public.fin_movements WHERE entry_id='294986c9-9343-4514-bbc3-ebebefc76ee8';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4e FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2613,7 +2851,7 @@ DO $f4f$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_entries SET status='reversed' WHERE id='0dd5d10b-b880-4e44-aad9-471d0603d441';
+    UPDATE public.fin_entries SET status='reversed' WHERE id='dce8ffc1-ad55-49eb-8a34-aecbd2d43957';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4f FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2621,11 +2859,11 @@ BEGIN
 END $f4f$;
 -- (A) válida: contraasiento insertado antes en la MISMA transacción
 INSERT INTO public.fin_entries (id, store_id, document_type, document_number, event, economic_date, generation_id, status, reversal_of)
-VALUES ('2f078a17-1f76-44ef-8516-84a5c0138658','83ad8cc2-e75a-443f-a61d-9ee6a5020107','VENTA','BAT-EAC','anulacion','2026-11-01','1cacc862-ce22-4031-bd40-df108a9a1a14','posted','20f9ba1d-c1d7-4f90-8c9d-aa7f89984838');
+VALUES ('e9985ac7-8674-40fd-8181-34964fae9383','48d70e41-1fcf-497d-a8a2-203367c921ea','VENTA','BAT-EAC','anulacion','2026-11-01','29d6981c-f13e-4149-a253-9e756e1c2078','posted','ace88df2-c8ef-43ba-a8ef-e629555c588a');
 
 DO $f4g$
 BEGIN
-  UPDATE public.fin_entries SET status='reversed' WHERE id='20f9ba1d-c1d7-4f90-8c9d-aa7f89984838';
+  UPDATE public.fin_entries SET status='reversed' WHERE id='ace88df2-c8ef-43ba-a8ef-e629555c588a';
   IF NOT FOUND THEN RAISE EXCEPTION 'F4-g FAILED'; END IF;
 END $f4g$;
 
@@ -2633,7 +2871,7 @@ DO $f4h$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_entries SET status='posted' WHERE id='20f9ba1d-c1d7-4f90-8c9d-aa7f89984838';
+    UPDATE public.fin_entries SET status='posted' WHERE id='ace88df2-c8ef-43ba-a8ef-e629555c588a';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4h FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2643,7 +2881,7 @@ END $f4h$;
 
 DO $f4i$
 BEGIN
-  UPDATE public.fin_entries SET generation_id='7c698678-6a1c-4cd5-9acf-aed5d3b9cf70' WHERE id='1a69f12e-eea9-46b7-9d87-846e7942d501';
+  UPDATE public.fin_entries SET generation_id='b9796bd8-e8f0-446e-9406-5715176021e1' WHERE id='8794445a-9149-42a7-b93e-1c7a1cc29aab';
   IF NOT FOUND THEN RAISE EXCEPTION 'F4-i FAILED'; END IF;
 END $f4i$;
 
@@ -2651,7 +2889,7 @@ DO $f4j$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_entries SET generation_id=NULL WHERE id='1a69f12e-eea9-46b7-9d87-846e7942d501';
+    UPDATE public.fin_entries SET generation_id=NULL WHERE id='8794445a-9149-42a7-b93e-1c7a1cc29aab';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4j FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2662,7 +2900,7 @@ DO $f4k$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_entries SET generation_id='2beeb3d7-185c-4851-b599-852b291caa2c' WHERE id='1a69f12e-eea9-46b7-9d87-846e7942d501';
+    UPDATE public.fin_entries SET generation_id='165c3a09-4658-4e72-8023-fc01bf7bcec2' WHERE id='8794445a-9149-42a7-b93e-1c7a1cc29aab';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4k FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2673,7 +2911,7 @@ DO $f4l$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_entries SET generation_id='2beeb3d7-185c-4851-b599-852b291caa2c' WHERE id='0e33aba4-a79f-408b-ae68-4c3b790f90cc';
+    UPDATE public.fin_entries SET generation_id='165c3a09-4658-4e72-8023-fc01bf7bcec2' WHERE id='a11200c2-e620-45c0-92a2-723366112051';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4l FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2683,13 +2921,13 @@ END $f4l$;
 DO $f4r$
 DECLARE v_out jsonb;
 BEGIN
-  SELECT public.fin_rectification_apply('83ad8cc2-e75a-443f-a61d-9ee6a5020107','BAT-RECT-001','VENTA','2026-11-01','rect bat',
+  SELECT public.fin_rectification_apply('48d70e41-1fcf-497d-a8a2-203367c921ea','BAT-RECT-001','VENTA','2026-11-01','rect bat',
     '[{"categoria":"ACT_EFECTIVO_CUP","sentido":"debito","amount":10},{"categoria":"ACT_EFECTIVO_CUP","sentido":"credito","amount":10}]'::jsonb,
-    NULL,'efeb3464-18ef-402c-b908-9a22793bff0b',false) INTO v_out;
+    NULL,'86215013-f403-4cdc-981e-c2f1a4c66dd3',false) INTO v_out;
   IF (v_out->>'status') IS DISTINCT FROM 'creada' THEN RAISE EXCEPTION 'F4-r1 FAILED: %', v_out; END IF;
-  SELECT public.fin_rectification_apply('83ad8cc2-e75a-443f-a61d-9ee6a5020107','BAT-RECT-001','VENTA','2026-11-01','rect bat rep',
+  SELECT public.fin_rectification_apply('48d70e41-1fcf-497d-a8a2-203367c921ea','BAT-RECT-001','VENTA','2026-11-01','rect bat rep',
     '[{"categoria":"ACT_EFECTIVO_CUP","sentido":"debito","amount":20},{"categoria":"ACT_EFECTIVO_CUP","sentido":"credito","amount":20}]'::jsonb,
-    NULL,'efeb3464-18ef-402c-b908-9a22793bff0b',true) INTO v_out;
+    NULL,'86215013-f403-4cdc-981e-c2f1a4c66dd3',true) INTO v_out;
   IF (v_out->>'status') IS DISTINCT FROM 'reparada' THEN RAISE EXCEPTION 'F4-r2 FAILED: %', v_out; END IF;
   IF NOT EXISTS (SELECT 1 FROM public.audit_logs WHERE action='FIN_MAINTENANCE_ENTRY_RECTIFIED') THEN
     RAISE EXCEPTION 'F4-r3 FAILED: sin auditoría del bypass de entrada'; END IF;
@@ -2699,25 +2937,25 @@ END $f4r$;
 -- Bypass manual (FRENO, no candado — documentado): asiento equivocado o columna
 -- equivocada NO pasan; asiento correcto + columnas permitidas SÍ pasa (y audita).
 SET LOCAL costpro.fin_maintenance='on';
-SET LOCAL costpro.fin_rectification_entry='0dd5d10b-b880-4e44-aad9-471d0603d441';
+SET LOCAL costpro.fin_rectification_entry='dce8ffc1-ad55-49eb-8a34-aecbd2d43957';
 
 DO $f4s$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_entries SET economic_date='2026-01-01' WHERE id='0dd5d10b-b880-4e44-aad9-471d0603d441';
+    UPDATE public.fin_entries SET economic_date='2026-01-01' WHERE id='dce8ffc1-ad55-49eb-8a34-aecbd2d43957';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4s FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
   END IF;
 END $f4s$;
-SET LOCAL costpro.fin_rectification_entry='0e33aba4-a79f-408b-ae68-4c3b790f90cc';
+SET LOCAL costpro.fin_rectification_entry='a11200c2-e620-45c0-92a2-723366112051';
 
 DO $f4t$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.fin_entries SET description='otro-asiento' WHERE id='0dd5d10b-b880-4e44-aad9-471d0603d441';
+    UPDATE public.fin_entries SET description='otro-asiento' WHERE id='dce8ffc1-ad55-49eb-8a34-aecbd2d43957';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4t FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2726,7 +2964,7 @@ END $f4t$;
 
 DO $f4u$
 BEGIN
-  UPDATE public.fin_entries SET description='manual-permitido' WHERE id='0e33aba4-a79f-408b-ae68-4c3b790f90cc';
+  UPDATE public.fin_entries SET description='manual-permitido' WHERE id='a11200c2-e620-45c0-92a2-723366112051';
   IF NOT FOUND THEN RAISE EXCEPTION 'F4-u FAILED'; END IF;
 END $f4u$;
 SET LOCAL costpro.fin_maintenance='off';
@@ -2739,7 +2977,7 @@ DO $f4v$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    DELETE FROM public.stores WHERE id='7d773d03-8171-4e66-8846-378057691aa2';
+    DELETE FROM public.stores WHERE id='9369d8e8-edd2-45ef-ac22-20d92a9f5358';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('23503' in v_err) = 0 AND coalesce(v_state,'') <> '23503') THEN
     RAISE EXCEPTION 'CASE f4v FAILED: se esperaba 23503, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2750,7 +2988,7 @@ DO $f4v2$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    DELETE FROM public.fin_entries WHERE id='e48a0251-8f33-4191-8126-eabf1dc85e53';
+    DELETE FROM public.fin_entries WHERE id='86340a36-3f66-4562-ad37-20b965de9f15';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_FIN_INMUTABLE' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_FIN_INMUTABLE') THEN
     RAISE EXCEPTION 'CASE f4v2 FAILED: se esperaba ERR_FIN_INMUTABLE, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2759,7 +2997,7 @@ END $f4v2$;
 
 DO $f4w$
 BEGIN
-  PERFORM public.soft_delete_store('7d773d03-8171-4e66-8846-378057691aa2','efeb3464-18ef-402c-b908-9a22793bff0b');
+  PERFORM public.soft_delete_store('9369d8e8-edd2-45ef-ac22-20d92a9f5358','86215013-f403-4cdc-981e-c2f1a4c66dd3');
   
 END $f4w$;
 
@@ -2767,15 +3005,15 @@ END $f4w$;
 DO $f5a$
 DECLARE v_r numeric;
 BEGIN
-  SELECT public.fin_entry_reversal_residual('664cc579-d6a3-44ae-9c65-6cff711288b2') INTO v_r;
+  SELECT public.fin_entry_reversal_residual('294986c9-9343-4514-bbc3-ebebefc76ee8') INTO v_r;
   IF v_r <> 120 THEN RAISE EXCEPTION 'F5-1 FAILED: esperaba 120 CUP, obtuve %', v_r; END IF;
-  SELECT public.fin_entry_reversal_residual('b3620925-6291-4c35-9a0e-a3ff4eb8ae16') INTO v_r;
+  SELECT public.fin_entry_reversal_residual('76bf4cb7-bb02-4a7e-a2ba-66233dfc902b') INTO v_r;
   IF v_r <> 167 THEN RAISE EXCEPTION 'F5-2 FAILED: multimoneda esperaba 167, obtuve %', v_r; END IF;
 END $f5a$;
 
 DO $f5b$
 BEGIN
-  UPDATE public.receipts SET status='voided' WHERE id='f6d5de22-7015-47fe-a91e-bf9d1c956da5';
+  UPDATE public.receipts SET status='voided' WHERE id='72dce945-d427-4308-989e-13f1b32eb55d';
   IF NOT FOUND THEN RAISE EXCEPTION 'F5-3 FAILED'; END IF;
 END $f5b$;
 
@@ -2783,7 +3021,7 @@ DO $f5c$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.receipts SET status='voided' WHERE id='aab2041a-a164-49c9-b32e-60b375b451a0';
+    UPDATE public.receipts SET status='voided' WHERE id='fb57c352-c14a-40ef-9381-a64319518178';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_PARTIAL_REVERSAL_PENDING' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_PARTIAL_REVERSAL_PENDING') THEN
     RAISE EXCEPTION 'CASE f5c FAILED: se esperaba ERR_PARTIAL_REVERSAL_PENDING, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -2821,7 +3059,27 @@ BEGIN
   IF v_n <> 16 THEN RAISE EXCEPTION 'TR-3 FAILED: %/16 frenos ENABLE ALWAYS', v_n; END IF;
 END $tr3$;
 
--- ═══ ROLLBACKS R6..R1 ═════════════════════════════════════════════════════
+-- ═══ ROLLBACKS R7..R1 ═════════════════════════════════════════════════════
+-- ============================================================================
+-- Rollback: 20261128153600_rollback_cp_fin_f2_snapshots_generations.sql
+-- Restaura el SELECT amplio (has_store_access_as) en
+-- fin_reconciliation_snapshots y fin_posting_generations, y el alcance con rol
+-- {public} (sin TO) de fin_posting_generations_select — estado previo definido
+-- por 20261121230000 §8 y 20261120120000 respectivamente.
+-- NO borra datos; NO toca tablas comerciales. Solo restaura las 2 políticas.
+-- ============================================================================
+
+DROP POLICY IF EXISTS fin_reconciliation_snapshots_select ON public.fin_reconciliation_snapshots;
+CREATE POLICY fin_reconciliation_snapshots_select ON public.fin_reconciliation_snapshots
+  FOR SELECT TO authenticated
+  USING (public.is_admin_check(auth.uid()) OR public.has_store_access_as(auth.uid(), store_id));
+
+DROP POLICY IF EXISTS fin_posting_generations_select ON public.fin_posting_generations;
+CREATE POLICY fin_posting_generations_select ON public.fin_posting_generations
+  FOR SELECT USING (
+    public.is_admin_check(auth.uid())
+    OR public.has_store_access_as(auth.uid(), store_id));
+
 -- ============================================================================
 -- Rollback: 20261128153500_rollback_cp_infra_021.sql
 -- Retira el freno de TRUNCATE de las 16 tablas fin_*/nómina (CP-INFRA-021)
@@ -4462,7 +4720,7 @@ BEGIN
   IF position('has_store_access' in coalesce(v,'')) = 0 THEN RAISE EXCEPTION 'RS-1 FAILED: política no restaurada'; END IF;
   SELECT prosrc INTO v FROM pg_proc WHERE proname='fin_get_balance_sheet';
   IF position('has_store_access_as' in v) = 0 THEN RAISE EXCEPTION 'RS-2 FAILED: RPC sin patrón previo'; END IF;
-  SELECT public.fin_entry_reversal_residual('664cc579-d6a3-44ae-9c65-6cff711288b2') INTO v_r;
+  SELECT public.fin_entry_reversal_residual('294986c9-9343-4514-bbc3-ebebefc76ee8') INTO v_r;
   IF v_r <> 60 THEN RAISE EXCEPTION 'RS-3 FAILED: residual previo % (esperado 60)', v_r; END IF;
   IF EXISTS (SELECT 1 FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid
              JOIN pg_proc p ON p.oid=t.tgfoid
@@ -4478,7 +4736,7 @@ DO $rs6$
 DECLARE v_err text; v_state text;
 BEGIN
   BEGIN
-    UPDATE public.receipts SET status='voided' WHERE id='aab2041a-a164-49c9-b32e-60b375b451a0';
+    UPDATE public.receipts SET status='voided' WHERE id='fb57c352-c14a-40ef-9381-a64319518178';
   EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
   IF v_err IS NULL OR (position('ERR_PARTIAL_REVERSAL_PENDING' in v_err) = 0 AND coalesce(v_state,'') <> 'ERR_PARTIAL_REVERSAL_PENDING') THEN
     RAISE EXCEPTION 'CASE rs6 FAILED: se esperaba ERR_PARTIAL_REVERSAL_PENDING, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
@@ -4487,13 +4745,48 @@ END $rs6$;
 -- (RC1 fue anulada en f5b; RC2 sigue pending: bajo el estado previo la
 -- reversión parcial de la generación ACTIVA bloquea — comportamiento viejo restaurado)
 SET LOCAL ROLE authenticated;
-SET LOCAL request.jwt.claims TO '{"sub":"08b08515-be1a-49f8-ab92-884d55eec42d","role":"authenticated"}';
+SET LOCAL request.jwt.claims TO '{"sub":"7acd1613-4f35-4c05-9768-deab0095fca2","role":"authenticated"}';
 DO $rs7$
 DECLARE v int;
 BEGIN
-  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='83ad8cc2-e75a-443f-a61d-9ee6a5020107';
+  SELECT count(*) INTO v FROM public.fin_entries WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
   IF v < 1 THEN RAISE EXCEPTION 'RS-7 FAILED: la política amplia no volvió'; END IF;
 END $rs7$;
+-- F2-ext RESTORE: la lectura directa de snapshots/generaciones vuelve a estar
+-- ROTA para authenticated (política previa con helpers no ejecutables).
+
+DO $rs8$
+DECLARE v_err text; v_state text;
+BEGIN
+  BEGIN
+    SELECT count(*) FROM public.fin_reconciliation_snapshots WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
+  IF v_err IS NULL OR (position('permission denied for function is_admin_check' in v_err) = 0 AND coalesce(v_state,'') <> 'permission denied for function is_admin_check') THEN
+    RAISE EXCEPTION 'CASE rs8 FAILED: se esperaba permission denied for function is_admin_check, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
+  END IF;
+END $rs8$;
+
+DO $rs9$
+DECLARE v_err text; v_state text;
+BEGIN
+  BEGIN
+    SELECT count(*) FROM public.fin_posting_generations WHERE store_id='48d70e41-1fcf-497d-a8a2-203367c921ea';
+  EXCEPTION WHEN others THEN v_err := SQLERRM; v_state := SQLSTATE; END;
+  IF v_err IS NULL OR (position('permission denied for function is_admin_check' in v_err) = 0 AND coalesce(v_state,'') <> 'permission denied for function is_admin_check') THEN
+    RAISE EXCEPTION 'CASE rs9 FAILED: se esperaba permission denied for function is_admin_check, obtuve [%] %', v_state, coalesce(v_err, 'SIN ERROR');
+  END IF;
+END $rs9$;
+SET LOCAL ROLE postgres;
+SET LOCAL request.jwt.claims TO '{}';
+DO $rs10$
+DECLARE v_roles text;
+BEGIN
+  SELECT roles::text INTO v_roles FROM pg_policies
+   WHERE schemaname='public' AND tablename='fin_posting_generations'
+     AND policyname='fin_posting_generations_select';
+  IF v_roles IS NULL OR position('public' in v_roles) = 0 THEN
+    RAISE EXCEPTION 'RS-10 FAILED: el alcance {public} de fin_posting_generations_select no fue restaurado (roles=%)', coalesce(v_roles, 'AUSENTE'); END IF;
+END $rs10$;
 
 SELECT 'BATTERY-PASS' AS verdict;
 
