@@ -215,6 +215,19 @@ writeFileSync(backupPath, JSON.stringify({ generated: new Date().toISOString(), 
 await mgmtQuery(
   'CREATE TABLE IF NOT EXISTS public.exchange_rates_backup_cpfx001 AS SELECT * FROM public.exchange_rates;',
 );
+// RLS deny-by-default (CP-TS-SEC / SQL Security Gate: toda tabla con RLS;
+// sin policies → solo service_role la lee, la app jamás).
+await mgmtQuery(`
+  DO $do$
+  BEGIN
+    IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+               WHERE c.relname = 'exchange_rates_backup_cpfx001' AND n.nspname = 'public'
+                 AND NOT c.relrowsecurity) THEN
+      ALTER TABLE public.exchange_rates_backup_cpfx001 ENABLE ROW LEVEL SECURITY;
+    END IF;
+  END
+  $do$;
+`);
 const backupCount = JSON.parse(await mgmtQuery('SELECT count(*)::int AS n FROM public.exchange_rates_backup_cpfx001;'))[0]?.n;
 console.log(`RESPALDO: dump JSON (${backupPath}) + tabla congelada exchange_rates_backup_cpfx001 (${backupCount} filas).`);
 

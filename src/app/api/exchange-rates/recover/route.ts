@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuth, AuthenticatedSession } from '@/lib/auth-middleware';
 import { isAdminLevel } from '@/lib/roles';
+import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { getSupabaseAdminSafe } from '@/lib/supabase-admin';
 import { getOperativeDate, addDaysToDateString } from '@/lib/operative-date';
@@ -47,6 +48,10 @@ import {
 const CUBA_CLARA_JSON_URL = 'https://cubaclara.org/datos/dolar-cuba-clara.json';
 const CUBA_CLARA_TIMEOUT_MS = 20_000;
 const UPSERT_BATCH_SIZE = 100;
+
+// CP-TS-SEC: contrato del body con Zod (mismo patrón que bulk-upload).
+// Solo se permite { apply?: boolean } — nada más, nada menos.
+const RecoverBodySchema = z.object({ apply: z.boolean().optional() }).strict();
 
 type AdminClient = NonNullable<ReturnType<typeof getSupabaseAdminSafe>>;
 
@@ -138,8 +143,18 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
 
   let apply = false;
   try {
-    const body = (await req.json()) as { apply?: boolean } | null;
-    apply = body?.apply === true;
+    const rawBody: unknown = await req.json();
+    const parsedBody = RecoverBodySchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json(
+        {
+          error: 'Body inválido — se espera { "apply": boolean }',
+          issues: parsedBody.error.issues.slice(0, 5).map(i => i.message),
+        },
+        { status: 400 },
+      );
+    }
+    apply = parsedBody.data.apply === true;
   } catch {
     apply = false; // sin body → dry-run
   }
@@ -173,7 +188,7 @@ async function postHandler(req: NextRequest, session: AuthenticatedSession) {
     const rangeTo = addDaysToDateString(operativeDate, -1);
 
     const plan = buildRecoveryPlan({
-      existingRows: existingRows as Parameters<typeof buildRecoveryPlan>[0]['existingRows'],
+      existingRows: existingRows as unknown as Parameters<typeof buildRecoveryPlan>[0]['existingRows'],
       cubaClara,
       rangeFrom,
       rangeTo,

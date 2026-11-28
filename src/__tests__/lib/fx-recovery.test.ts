@@ -206,7 +206,7 @@ describe('interpolación lineal y confianza (matriz estadística)', () => {
     );
     expect(pts.map(p => p.rate)).toEqual([951.33, 952.67]);
     expect(pts.every(p => p.confidence === 'alta')).toBe(true);
-    expect(pts.every(p => p.source === 'Diviza' || true)).toBe(true);
+    expect(pts.every(p => p.method === 'interpolacion_lineal')).toBe(true);
   });
 
   it('UN día faltante entre dos observaciones: punto único', () => {
